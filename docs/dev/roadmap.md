@@ -30,18 +30,17 @@
      `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
      `reserve` operations to allocator-backed storage instead of fixed
      local-capacity traps
-2. Finish package caching for file-backed modules.
-   Compact module metadata and source-snapshot module caches can be emitted,
-   checked, and invalidated with cfg/search-path/source/import/item-specific
-   stale diagnostics today. Source records carry stable content hashes, cache
-   validation catches body changes even when declaration summaries stay the
-   same, import resolution is rechecked against the current package layout, and
-   old metadata summaries without source hashes are rejected, malformed
-   metadata with duplicate source/import/item records is rejected, and malformed
-   caches with duplicate source records are rejected before validation. The
-   current cache resolves file-backed imports from the validated cache table
-   after validation, rebuilds metadata from the cached source to catch
-   cache-summary tampering, then parses the cached source snapshot.
+2. Add AST/IR summary package caches for file-backed modules.
+   The source-snapshot cache goal is complete: compact module metadata and
+   source-snapshot module caches can be emitted, checked, and invalidated with
+   cfg/search-path/source/import/item-specific stale diagnostics. Source records
+   carry stable content hashes, cache validation catches body changes even when
+   declaration summaries stay the same, import resolution is rechecked against
+   the current package layout, old metadata summaries without source hashes are
+   rejected, malformed metadata with duplicate source/import/item records is
+   rejected, and malformed caches with duplicate source records are rejected
+   before validation. The remaining package-cache work is to replace dependency
+   source parsing with a cached AST or IR summary once validation succeeds.
    - [ast-summary] define a cached AST or IR summary format that can be loaded
      after metadata validation succeeds
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
