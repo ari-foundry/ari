@@ -402,7 +402,8 @@ private:
         declarations_ << "@stdin = external global ptr\n";
         for (const auto& fn : program_.extern_functions) {
             const std::string& symbol = extern_symbols_.at(fn.name);
-            if (has_runtime_c_declaration(symbol) || is_ari_builtin_symbol(symbol)) continue;
+            if (fn.abi == IrExternAbi::AriBuiltin) continue;
+            if (has_runtime_c_declaration(symbol)) continue;
             declarations_ << "declare " << llvm_type(fn.return_type) << " "
                           << quote_global(symbol) << "(";
             for (std::size_t i = 0; i < fn.params.size(); ++i) {

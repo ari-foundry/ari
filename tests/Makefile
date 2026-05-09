@@ -129,7 +129,9 @@ check-prelude: $(TARGET)
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
 	$(TARGET) tests/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
+	grep -q 'call i64 @"ari_builtin_newline"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	if grep -q 'declare i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
+	if grep -q 'declare i64 @"ari_builtin_newline"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
 	$(TARGET) tests/ok/std-prelude-unqualified.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
 	grep -q 'call i64 @"_ARNv10span_score"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
 	grep -q 'call ptr @"ari_builtin_zone_create"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll

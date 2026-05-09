@@ -283,10 +283,15 @@ struct IrParam {
     IrType type;
 };
 
+enum class IrExternAbi {
+    C,
+    AriBuiltin,
+};
+
 struct IrExternFunction {
     std::string name;
     std::string link_name;
-    std::string abi;
+    IrExternAbi abi = IrExternAbi::C;
     std::vector<IrParam> params;
     IrType return_type;
     bool is_variadic = false;

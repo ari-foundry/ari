@@ -69,7 +69,10 @@ The compiler keeps Ari-owned builtin source aliases and their `ari_builtin_*`
 symbols in one runtime table. That table is used by `extern "ari"` validation,
 LLVM builtin calls, and freestanding builtin offsets, so root re-export forms
 such as `std::write_i64` and direct forms such as `write_i64` share the same
-backend hook.
+backend hook. Semantic lowering also marks those declarations with an explicit
+Ari builtin ABI in IR, separate from ordinary C extern functions, so host LLVM
+output never has to guess from the symbol spelling whether a hook is foreign C
+or Ari runtime-owned.
 
 `print` and `println` are special IR forms after semantic checking because the
 format string must be known at compile time.
@@ -88,8 +91,9 @@ Other ABI strings, including `extern "C++"`, are intentionally rejected. C++
 interop should be exposed through C wrapper functions. Generic C extern
 declarations are rejected permanently because Ari binds concrete C symbols
 rather than foreign template/generic definitions. `extern "ari"` is not FFI; it
-names known `ari_builtin_*` hooks supplied by the Ari runtime/backend. The
-freestanding backend does not link external symbols.
+names known `ari_builtin_*` hooks supplied by the Ari runtime/backend and is
+carried through IR as a distinct builtin ABI. The freestanding backend does not
+link external symbols.
 
 ## Freestanding Output
 

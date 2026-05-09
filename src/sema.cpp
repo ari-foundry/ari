@@ -44,6 +44,11 @@ struct FunctionSig {
     SourceLocation loc;
 };
 
+static IrExternAbi ir_extern_abi_from_source(const std::string& abi) {
+    if (abi == "ari") return IrExternAbi::AriBuiltin;
+    return IrExternAbi::C;
+}
+
 struct EnumCaseInfo {
     std::string enum_name;
     IrType enum_type;
@@ -2462,7 +2467,7 @@ private:
             IrExternFunction fn;
             fn.name = item.first;
             fn.link_name = sig.link_name;
-            fn.abi = sig.extern_abi;
+            fn.abi = ir_extern_abi_from_source(sig.extern_abi);
             fn.return_type = sig.result;
             fn.is_variadic = sig.is_variadic;
             fn.loc = sig.loc;
