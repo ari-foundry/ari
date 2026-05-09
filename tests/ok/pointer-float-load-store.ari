@@ -1,0 +1,21 @@
+fn main() -> i64 {
+  var bits32: u32 = 0u32;
+  var copied32: u32 = 0u32;
+  let raw32: ptr f32 = ((ref mut bits32) as ptr u32) as ptr f32;
+  let copy32: ptr f32 = ((ref mut copied32) as ptr u32) as ptr f32;
+  ptr_store(raw32, 1.00000011920928955078125f32);
+  let loaded32: f32 = ptr_load(raw32);
+  ptr_store(copy32, loaded32);
+
+  var bits64: u64 = 0u64;
+  var copied64: u64 = 0u64;
+  let raw64: ptr f64 = ((ref mut bits64) as ptr u64) as ptr f64;
+  let copy64: ptr f64 = ((ref mut copied64) as ptr u64) as ptr f64;
+  ptr_store(raw64, 1.0000000000000002f64);
+  let loaded64: f64 = ptr_load(raw64);
+  ptr_store(copy64, loaded64);
+
+  let byte32: ptr u8 = ((ref mut copied32) as ptr u32) as ptr u8;
+  let byte64: ptr u8 = ((ref mut copied64) as ptr u64) as ptr u8;
+  return (ptr_load(byte32) as i64) + (ptr_load(byte64) as i64);
+}

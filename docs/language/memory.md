@@ -173,8 +173,11 @@ writes one scalar, plain Ari-layout aggregate, or supported aggregate enum
 value through a `ptr T` and returns `void`. The
 `mem::ptr_load` and `mem::ptr_store` spellings are the same compiler-known
 operations. These operations are deliberately unchecked: they do not test for
-null, bounds, alignment, aliasing, or lifetime. Aggregates that contain `own`,
-`ref`, or `ref mut` fields are rejected for whole raw-pointer copies for now.
+null, bounds, alignment, aliasing, or lifetime. On the freestanding backend,
+`ptr f32` and `ptr f64` load/store values as raw IEEE bit patterns; `f128`
+pointer access still waits for native float storage policy. Aggregates that
+contain `own`, `ref`, or `ref mut` fields are rejected for whole raw-pointer
+copies for now.
 
 The same scalar operation can be written with dereference syntax:
 

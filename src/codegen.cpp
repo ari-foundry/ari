@@ -2822,9 +2822,7 @@ private:
         if (is_aggregate_type(type)) {
             throw CompileError(where(loc) + ": freestanding backend can only materialize raw-pointer aggregates when copying into a local or pointer target");
         }
-        if (type.primitive == IrPrimitiveKind::F32 ||
-            type.primitive == IrPrimitiveKind::F64 ||
-            type.primitive == IrPrimitiveKind::F128 ||
+        if (type.primitive == IrPrimitiveKind::F128 ||
             type.primitive == IrPrimitiveKind::String) {
             throw CompileError(where(loc) + ": freestanding backend does not lower " + operation + " for " + type_name(type) + " yet");
         }

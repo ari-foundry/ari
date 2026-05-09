@@ -70,10 +70,10 @@ let scientific = 1.0e+1
 
 The default LLVM host backend lowers `f32`, `f64`, and `f128` values as LLVM
 `float`, `double`, and `fp128`. The `--freestanding` backend can store and load
-local `f32`/`f64` literal values as raw IEEE bit patterns, which is enough for
-inert locals and assignments. It still rejects `f128`, float calls, casts,
-arithmetic, and comparisons until native floating-point ABI and operator
-lowering are implemented.
+local `f32`/`f64` literal values as raw IEEE bit patterns, including
+`ptr_load`, `ptr_store`, and `*pointer` access through `ptr f32` or `ptr f64`.
+It still rejects `f128`, float calls, casts, arithmetic, and comparisons until
+native floating-point ABI and operator lowering are implemented.
 
 ## Strings
 

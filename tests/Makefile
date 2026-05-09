@@ -1381,6 +1381,13 @@ check-ffi: $(TARGET)
 	grep -q 'store i64' $(BUILD_DIR)/ffi/pointer-load-store.ll
 	$(TARGET) --freestanding tests/ok/pointer-load-store.ari -o $(BUILD_DIR)/ffi/pointer-load-store.raw
 	$(BUILD_DIR)/ffi/pointer-load-store.raw; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/pointer-float-load-store.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-float-load-store.ll
+	grep -q 'load float, ptr' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
+	grep -q 'store float' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
+	grep -q 'load double, ptr' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
+	grep -q 'store double' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
+	$(TARGET) --freestanding tests/ok/pointer-float-load-store.ari -o $(BUILD_DIR)/ffi/pointer-float-load-store.raw
+	$(BUILD_DIR)/ffi/pointer-float-load-store.raw; code=$$?; test $$code -eq 2
 	$(TARGET) tests/ok/pointer-deref.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-deref.ll
 	grep -q 'load i64, ptr' $(BUILD_DIR)/ffi/pointer-deref.ll
 	grep -q 'store i64' $(BUILD_DIR)/ffi/pointer-deref.ll
