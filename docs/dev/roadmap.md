@@ -26,9 +26,9 @@
    validation catches body changes even when declaration summaries stay the
    same, import resolution is rechecked against the current package layout, and
    old metadata summaries without source hashes are rejected. The current cache
-   skips dependency source discovery and source reads after validation, rebuilds
-   metadata from the cached source to catch cache-summary tampering, then parses
-   the cached source snapshot.
+   resolves file-backed imports from the validated cache table after validation,
+   rebuilds metadata from the cached source to catch cache-summary tampering,
+   then parses the cached source snapshot.
    - [ast-summary] define a cached AST or IR summary format that can be loaded
      after metadata validation succeeds
    - [cache-skip] avoid reparsing dependencies when the metadata summary and

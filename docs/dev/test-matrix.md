@@ -288,6 +288,8 @@ Checklist:
 - [x] source-snapshot module caches can be emitted and reused after validating
       search paths, cfg features, implicit `std`, source hashes, and import
       resolution
+- [x] validated source-snapshot module cache use resolves module imports from
+      the cached import table instead of rediscovering candidate files
 - [x] source-snapshot module cache use rechecks the parsed cached source graph
       against the cache's embedded metadata
 - [ ] AST/IR package cache summaries skip dependency parsing after validation

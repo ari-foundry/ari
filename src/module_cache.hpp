@@ -27,6 +27,7 @@ std::string serialize_module_cache(const ModuleCache& cache);
 ModuleCache parse_module_cache_text(const std::string& text, const std::string& display_path);
 ModuleCache read_module_cache_file(const std::string& path);
 const ModuleCacheSource* find_module_cache_source(const ModuleCache& cache, const std::string& path);
+const ModuleMetadataImport* find_module_cache_import(const ModuleCache& cache, const ModuleImport& import);
 void require_matching_module_cache_inputs(const ModuleCache& cache,
                                           const std::string& root_input,
                                           const ModuleLoadOptions& options,

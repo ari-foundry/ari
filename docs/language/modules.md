@@ -312,13 +312,16 @@ Cache validation checks the root input, module search paths, active cfg
 features, implicit `std` mode, current source content hashes, and whether each
 cached `mod` import still resolves to the same file. If any input changed, Ari
 rejects the cache and asks you to regenerate it with `--emit-module-cache`.
+After validation succeeds, file-backed module imports are resolved from the
+validated cache import table instead of searching candidate paths again.
 After reading from the cached source snapshot, Ari also rebuilds the module
 metadata and compares it with the metadata embedded in the cache. That catches
 edited or corrupted cache summaries before semantic checking relies on them.
 
-This first cache format skips dependency source discovery and source reads after
-validation. It still parses the cached source snapshot; a future AST or IR
-summary cache will skip dependency parsing as well.
+This first cache format skips dependency source discovery after validation and
+reads module source text from the cached snapshot. It still parses the cached
+source snapshot; a future AST or IR summary cache will skip dependency parsing
+as well.
 
 ## Nested Modules
 

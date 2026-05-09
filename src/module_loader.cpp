@@ -227,26 +227,37 @@ private:
                 throw CompileError(where(import.loc) + ": cyclic module import '" + import.name + "'");
             }
 
-            ModuleFileSearch found = find_module_file(import, base_dir, options_.module_search_paths);
-            add_module_metadata_import(metadata_, import, found.path);
+            std::string source_path;
+            if (options_.input_cache) {
+                const ModuleMetadataImport* cached = find_module_cache_import(*options_.input_cache, import);
+                if (!cached) {
+                    throw CompileError(where(import.loc) + ": module cache is missing validated import '" +
+                                       import.name + "' in module '" +
+                                       (import.module_name.empty() ? "<root>" : import.module_name) + "'");
+                }
+                source_path = cached->source_path;
+            } else {
+                source_path = find_module_file(import, base_dir, options_.module_search_paths).path;
+            }
+            add_module_metadata_import(metadata_, import, source_path);
             auto loaded = loaded_modules_.find(import.name);
             if (loaded != loaded_modules_.end()) {
-                if (loaded->second != found.path) {
+                if (loaded->second != source_path) {
                     throw CompileError(where(import.loc) + ": module '" + import.name +
                                        "' was already loaded from '" + loaded->second +
-                                       "', not '" + found.path + "'");
+                                       "', not '" + source_path + "'");
                 }
                 continue;
             }
 
             loading_modules_.insert(import.name);
             std::vector<std::string> module_path = split_qualified_path(import.name);
-            ParsedModuleFile child_file = parse_file_in_module(found.path, module_path, options_.cfg_features, options_.input_cache);
+            ParsedModuleFile child_file = parse_file_in_module(source_path, module_path, options_.cfg_features, options_.input_cache);
             Program child = std::move(child_file.program);
-            collect_source(found.path, child_file, module_path, child, false);
-            resolve_imports(child, dirname(found.path));
+            collect_source(source_path, child_file, module_path, child, false);
+            resolve_imports(child, dirname(source_path));
             loading_modules_.erase(import.name);
-            loaded_modules_.emplace(import.name, found.path);
+            loaded_modules_.emplace(import.name, source_path);
             append_program(program, std::move(child));
         }
     }

@@ -434,6 +434,9 @@ check-modules: $(TARGET)
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-tampered.err 2>&1; then exit 1; fi
 	grep -q "does not match the current source graph" $(BUILD_DIR)/modules/package-module-main-cache-tampered.err
 	grep -q "new item fn 'package_math::value'" $(BUILD_DIR)/modules/package-module-main-cache-tampered.err
+	sed 's/\\nimport\\t\\tpackage_math\\tpackage_math\\ttests\/packages\/package_math.ari\\t0//' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-missing-import.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-missing-import.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-missing-import.ll >$(BUILD_DIR)/modules/package-module-main-cache-missing-import.err 2>&1; then exit 1; fi
+	grep -q "module cache is missing validated import 'package_math'" $(BUILD_DIR)/modules/package-module-main-cache-missing-import.err
 	if $(TARGET) -Itests/packages --cfg-feature stale tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-stale.ll >$(BUILD_DIR)/modules/package-module-main-cache-stale.err 2>&1; then exit 1; fi
 	grep -q "current source graph has new cfg feature 'stale'" $(BUILD_DIR)/modules/package-module-main-cache-stale.err
 	rm -rf $(BUILD_DIR)/modules/cache-root $(BUILD_DIR)/modules/cache-packages

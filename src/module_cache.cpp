@@ -292,6 +292,18 @@ const ModuleCacheSource* find_module_cache_source(const ModuleCache& cache, cons
     return nullptr;
 }
 
+const ModuleMetadataImport* find_module_cache_import(const ModuleCache& cache, const ModuleImport& import) {
+    for (const auto& cached : cache.metadata.imports) {
+        if (cached.owner_module == import.module_name &&
+            cached.module_name == import.name &&
+            cached.local_name == import.local_name &&
+            cached.is_public == import.is_public) {
+            return &cached;
+        }
+    }
+    return nullptr;
+}
+
 void require_matching_module_cache_inputs(const ModuleCache& cache,
                                           const std::string& root_input,
                                           const ModuleLoadOptions& options,
