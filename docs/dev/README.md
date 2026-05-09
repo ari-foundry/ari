@@ -11,6 +11,7 @@ This folder is for people changing the compiler.
 - [Runtime And Backend](runtime-backend.md)
 - [Symbol Mangling](symbol-mangling.md)
 - [Roadmap](roadmap.md)
+- [Semantic Checker Decomposition](sema-decomposition.md)
 
 ## Source Map
 

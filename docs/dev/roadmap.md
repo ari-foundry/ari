@@ -23,13 +23,17 @@
    validation catches body changes even when declaration summaries stay the
    same, import resolution is rechecked against the current package layout, and
    old metadata summaries without source hashes are rejected. The current cache
-   skips dependency source discovery and source reads after validation, then
-   parses the cached source snapshot.
+   skips dependency source discovery and source reads after validation, rebuilds
+   metadata from the cached source to catch cache-summary tampering, then parses
+   the cached source snapshot.
    - [ast-summary] define a cached AST or IR summary format that can be loaded
      after metadata validation succeeds
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
+
+See also [Semantic Checker Decomposition](sema-decomposition.md) for the
+maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Medium-Term Language Work
 

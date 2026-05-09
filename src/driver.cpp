@@ -176,6 +176,9 @@ int run(int argc, char** argv) {
         load_options.input_cache = &input_cache;
     }
     ModuleLoadResult loaded = parse_file_with_module_metadata(input, std::move(load_options));
+    if (!module_cache_input.empty()) {
+        require_matching_module_metadata(input_cache.metadata, loaded.metadata, module_cache_input);
+    }
     if (!metadata_check.empty()) {
         ModuleMetadata expected = read_module_metadata_file(metadata_check);
         require_matching_module_metadata(expected, loaded.metadata, metadata_check);

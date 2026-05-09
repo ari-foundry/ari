@@ -430,6 +430,10 @@ check-modules: $(TARGET)
 	grep -q "source.*package_math.*tests/packages/package_math.ari" $(BUILD_DIR)/modules/package-module-main.aricache
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-module-main-cache.ll $(BUILD_DIR)/modules/package-module-main-cache-use.ll
+	sed '0,/package_math::value/s/package_math::value/package_math::wrong/' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-tampered.err 2>&1; then exit 1; fi
+	grep -q "does not match the current source graph" $(BUILD_DIR)/modules/package-module-main-cache-tampered.err
+	grep -q "new item fn 'package_math::value'" $(BUILD_DIR)/modules/package-module-main-cache-tampered.err
 	if $(TARGET) -Itests/packages --cfg-feature stale tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-stale.ll >$(BUILD_DIR)/modules/package-module-main-cache-stale.err 2>&1; then exit 1; fi
 	grep -q "current source graph has new cfg feature 'stale'" $(BUILD_DIR)/modules/package-module-main-cache-stale.err
 	rm -rf $(BUILD_DIR)/modules/cache-root $(BUILD_DIR)/modules/cache-packages
