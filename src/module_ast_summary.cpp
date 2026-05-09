@@ -1,11 +1,14 @@
 #include "module_ast_summary.hpp"
 
+#include "common.hpp"
 #include "module_metadata.hpp"
 #include "module_path.hpp"
 
 #include <cstdint>
+#include <limits>
 #include <sstream>
 #include <string>
+#include <utility>
 
 namespace ari {
 namespace {
@@ -85,6 +88,247 @@ void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) 
     }
     if (fn.has_return_type) append_type(out, fn.return_type);
 }
+
+struct DeclarationSummaryCounts {
+    std::uint64_t use_count = 0;
+    std::uint64_t module_import_count = 0;
+    std::uint64_t module_decl_count = 0;
+    std::uint64_t constant_count = 0;
+    std::uint64_t function_count = 0;
+    std::uint64_t struct_count = 0;
+    std::uint64_t enum_count = 0;
+    std::uint64_t trait_count = 0;
+    std::uint64_t impl_count = 0;
+};
+
+std::string summary_display(const ModuleCacheAstSummary& summary) {
+    return "'" + (summary.module_name.empty() ? "<root>" : summary.module_name) +
+           "' at '" + summary.path + "'";
+}
+
+class DeclarationSummaryReader {
+public:
+    DeclarationSummaryReader(const std::string& text, std::string display)
+        : text_(text), display_(std::move(display)) {}
+
+    DeclarationSummaryCounts parse() {
+        consume_literal("ari-ast-decls-v1;");
+        DeclarationSummaryCounts counts;
+
+        counts.use_count = read_count("use count");
+        for (std::uint64_t i = 0; i < counts.use_count; ++i) {
+            read_field("use module name");
+            read_field("use path");
+            read_field("use alias");
+            read_bool("use visibility");
+            read_bool("use glob flag");
+        }
+
+        counts.module_import_count = read_count("module import count");
+        for (std::uint64_t i = 0; i < counts.module_import_count; ++i) {
+            read_field("module import owner");
+            read_field("module import name");
+            read_field("module import local name");
+            read_bool("module import visibility");
+        }
+
+        counts.module_decl_count = read_count("module declaration count");
+        for (std::uint64_t i = 0; i < counts.module_decl_count; ++i) {
+            read_field("module declaration owner");
+            read_field("module declaration name");
+            read_bool("module declaration visibility");
+        }
+
+        counts.constant_count = read_count("constant count");
+        for (std::uint64_t i = 0; i < counts.constant_count; ++i) {
+            read_field("constant module name");
+            read_field("constant name");
+            read_bool("constant visibility");
+            skip_type("constant type");
+        }
+
+        counts.function_count = read_count("function count");
+        for (std::uint64_t i = 0; i < counts.function_count; ++i) skip_function_signature();
+
+        counts.struct_count = read_count("struct count");
+        for (std::uint64_t i = 0; i < counts.struct_count; ++i) {
+            read_field("struct module name");
+            read_field("struct name");
+            read_bool("struct visibility");
+            read_bool("tuple struct flag");
+            skip_generics();
+            skip_attributes();
+            std::uint64_t field_count = read_count("struct field count");
+            for (std::uint64_t j = 0; j < field_count; ++j) {
+                read_field("struct field name");
+                read_bool("struct field mutability");
+                skip_type("struct field type");
+            }
+        }
+
+        counts.enum_count = read_count("enum count");
+        for (std::uint64_t i = 0; i < counts.enum_count; ++i) {
+            read_field("enum module name");
+            read_field("enum name");
+            read_bool("enum visibility");
+            skip_generics();
+            skip_attributes();
+            std::uint64_t case_count = read_count("enum case count");
+            for (std::uint64_t j = 0; j < case_count; ++j) {
+                read_field("enum case name");
+                std::uint64_t payload_count = read_count("enum payload count");
+                for (std::uint64_t k = 0; k < payload_count; ++k) skip_type("enum payload type");
+            }
+        }
+
+        counts.trait_count = read_count("trait count");
+        for (std::uint64_t i = 0; i < counts.trait_count; ++i) {
+            read_field("trait module name");
+            read_field("trait name");
+            read_bool("trait visibility");
+            skip_generics();
+            skip_attributes();
+            std::uint64_t method_count = read_count("trait method count");
+            for (std::uint64_t j = 0; j < method_count; ++j) skip_function_signature();
+        }
+
+        counts.impl_count = read_count("impl count");
+        for (std::uint64_t i = 0; i < counts.impl_count; ++i) {
+            read_field("impl module name");
+            read_bool("impl visibility");
+            bool has_trait = read_bool("impl trait flag");
+            skip_generics();
+            skip_attributes();
+            if (has_trait) skip_type("impl trait type");
+            skip_type("impl target type");
+            std::uint64_t method_count = read_count("impl method count");
+            for (std::uint64_t j = 0; j < method_count; ++j) skip_function_signature();
+        }
+
+        if (pos_ != text_.size()) fail("trailing bytes after declaration summary");
+        return counts;
+    }
+
+private:
+    const std::string& text_;
+    std::string display_;
+    std::size_t pos_ = 0;
+
+    [[noreturn]] void fail(const std::string& detail) const {
+        throw CompileError("malformed declaration summary for " + display_ + ": " + detail);
+    }
+
+    void consume_literal(const std::string& literal) {
+        if (text_.compare(pos_, literal.size(), literal) != 0) {
+            fail("expected '" + literal + "'");
+        }
+        pos_ += literal.size();
+    }
+
+    void consume_char(char expected, const std::string& label) {
+        if (pos_ >= text_.size() || text_[pos_] != expected) {
+            fail("expected '" + std::string(1, expected) + "' after " + label);
+        }
+        ++pos_;
+    }
+
+    std::uint64_t read_decimal_until(char terminator, const std::string& label) {
+        if (pos_ >= text_.size()) fail("expected " + label);
+        std::uint64_t result = 0;
+        bool saw_digit = false;
+        while (pos_ < text_.size() && text_[pos_] != terminator) {
+            char c = text_[pos_++];
+            if (c < '0' || c > '9') fail("expected decimal " + label);
+            saw_digit = true;
+            std::uint64_t digit = static_cast<std::uint64_t>(c - '0');
+            if (result > (std::numeric_limits<std::uint64_t>::max() - digit) / 10) {
+                fail(label + " is too large");
+            }
+            result = result * 10 + digit;
+        }
+        if (!saw_digit) fail("expected decimal " + label);
+        consume_char(terminator, label);
+        return result;
+    }
+
+    std::uint64_t read_count(const std::string& label) {
+        return read_decimal_until(';', label);
+    }
+
+    std::string read_field(const std::string& label) {
+        std::uint64_t size = read_decimal_until(':', label + " length");
+        if (size > text_.size() - pos_) fail(label + " length exceeds remaining payload");
+        std::string value = text_.substr(pos_, static_cast<std::size_t>(size));
+        pos_ += static_cast<std::size_t>(size);
+        consume_char(';', label);
+        return value;
+    }
+
+    bool read_bool(const std::string& label) {
+        if (pos_ + 1 >= text_.size() || text_[pos_ + 1] != ';') {
+            fail("expected boolean " + label);
+        }
+        char value = text_[pos_];
+        pos_ += 2;
+        if (value == '0') return false;
+        if (value == '1') return true;
+        fail("expected boolean " + label);
+    }
+
+    void skip_type(const std::string& label) {
+        read_field(label + " qualifier");
+        read_field(label + " name");
+        read_bool(label + " dyn flag");
+        read_bool(label + " nullable flag");
+        read_count(label + " array size");
+        std::uint64_t arg_count = read_count(label + " argument count");
+        for (std::uint64_t i = 0; i < arg_count; ++i) skip_type(label + " argument");
+    }
+
+    void skip_generics() {
+        std::uint64_t count = read_count("generic parameter count");
+        for (std::uint64_t i = 0; i < count; ++i) {
+            read_field("generic parameter name");
+            bool has_constraint = read_bool("generic constraint flag");
+            if (has_constraint) skip_type("generic constraint type");
+        }
+    }
+
+    void skip_attributes() {
+        std::uint64_t count = read_count("attribute count");
+        for (std::uint64_t i = 0; i < count; ++i) {
+            read_field("attribute name");
+            read_bool("attribute args flag");
+            std::uint64_t arg_count = read_count("attribute token count");
+            for (std::uint64_t j = 0; j < arg_count; ++j) {
+                read_count("attribute token kind");
+                read_field("attribute token text");
+            }
+        }
+    }
+
+    void skip_function_signature() {
+        read_field("function module name");
+        read_field("function name");
+        read_bool("function meta flag");
+        read_bool("function extern flag");
+        read_bool("function visibility");
+        read_bool("function variadic flag");
+        read_field("function extern ABI");
+        read_field("function extern link name");
+        bool has_return_type = read_bool("function return type flag");
+        read_bool("function body flag");
+        skip_generics();
+        skip_attributes();
+        std::uint64_t param_count = read_count("function parameter count");
+        for (std::uint64_t i = 0; i < param_count; ++i) {
+            read_field("function parameter name");
+            read_bool("function parameter pattern flag");
+            skip_type("function parameter type");
+        }
+        if (has_return_type) skip_type("function return type");
+    }
+};
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
@@ -183,6 +427,21 @@ std::string declaration_summary_payload(const Program& program) {
     return out.str();
 }
 
+DeclarationSummaryCounts parse_declaration_summary_payload(const ModuleCacheAstSummary& summary) {
+    DeclarationSummaryReader reader(summary.declaration_summary, summary_display(summary));
+    return reader.parse();
+}
+
+void require_count_match(std::uint64_t recorded,
+                         std::uint64_t parsed,
+                         const std::string& label,
+                         const ModuleCacheAstSummary& summary) {
+    if (recorded == parsed) return;
+    throw CompileError("module cache AST summary for " + summary_display(summary) +
+                       " has " + label + " count " + std::to_string(recorded) +
+                       " but declaration summary contains " + std::to_string(parsed));
+}
+
 } // namespace
 
 ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
@@ -207,6 +466,36 @@ ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
     summary.trait_count = program.traits.size();
     summary.impl_count = program.impls.size();
     return summary;
+}
+
+void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary& summary,
+                                                    const std::string& display_path) {
+    if (summary.declaration_summary.empty()) {
+        throw CompileError("invalid module cache '" + display_path +
+                           "': AST summary for " + summary_display(summary) +
+                           " is missing a declaration summary");
+    }
+    std::string hash = module_metadata_source_hash(summary.declaration_summary);
+    if (hash != summary.declaration_hash) {
+        throw CompileError("invalid module cache '" + display_path +
+                           "': AST summary for " + summary_display(summary) +
+                           " declaration summary hashes to '" + hash +
+                           "' instead of recorded '" + summary.declaration_hash + "'");
+    }
+    try {
+        DeclarationSummaryCounts counts = parse_declaration_summary_payload(summary);
+        require_count_match(summary.use_count, counts.use_count, "use", summary);
+        require_count_match(summary.module_import_count, counts.module_import_count, "module import", summary);
+        require_count_match(summary.module_decl_count, counts.module_decl_count, "module declaration", summary);
+        require_count_match(summary.constant_count, counts.constant_count, "constant", summary);
+        require_count_match(summary.function_count, counts.function_count, "function", summary);
+        require_count_match(summary.struct_count, counts.struct_count, "struct", summary);
+        require_count_match(summary.enum_count, counts.enum_count, "enum", summary);
+        require_count_match(summary.trait_count, counts.trait_count, "trait", summary);
+        require_count_match(summary.impl_count, counts.impl_count, "impl", summary);
+    } catch (const CompileError& error) {
+        throw CompileError("invalid module cache '" + display_path + "': " + error.what());
+    }
 }
 
 } // namespace ari

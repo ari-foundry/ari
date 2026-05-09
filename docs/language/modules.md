@@ -326,8 +326,9 @@ validated cache import table instead of searching candidate paths again.
 After reading from the cached source snapshot, Ari also rebuilds the module
 metadata and per-source AST summaries, then compares them with the data embedded
 in the cache. AST summaries include counts, declaration fingerprints, and a
-compact declaration payload for the source-level item surface, so edited or
-corrupted summaries are caught before semantic checking relies on them.
+compact declaration payload for the source-level item surface. Cache loading
+parses that payload and checks its hash and counts, so edited or corrupted
+summaries are caught before semantic checking relies on them.
 
 This first cache format skips dependency source discovery after validation and
 reads module source text from the cached snapshot. It still parses the cached

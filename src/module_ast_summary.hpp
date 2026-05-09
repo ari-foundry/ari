@@ -9,5 +9,7 @@ ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
                                                     const std::vector<std::string>& module_path,
                                                     const Program& program,
                                                     bool is_root);
+void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary& summary,
+                                                    const std::string& display_path);
 
 } // namespace ari

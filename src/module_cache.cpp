@@ -1,6 +1,7 @@
 #include "module_cache.hpp"
 
 #include "common.hpp"
+#include "module_ast_summary.hpp"
 #include "module_loader.hpp"
 #include "module_path.hpp"
 
@@ -364,7 +365,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                                    ": duplicate ast-summary record for module '" +
                                    display_module_name(fields[1]) + "' at '" + fields[2] + "'");
             }
-            cache.ast_summaries.push_back(ModuleCacheAstSummary{
+            ModuleCacheAstSummary summary{
                 fields[1],
                 fields[2],
                 fields[4],
@@ -380,7 +381,11 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 parse_count_field(fields[count_offset + 6], display_path, line_number),
                 parse_count_field(fields[count_offset + 7], display_path, line_number),
                 parse_count_field(fields[count_offset + 8], display_path, line_number),
-            });
+            };
+            if (has_declaration_summary) {
+                require_valid_module_cache_ast_summary_payload(summary, display_path);
+            }
+            cache.ast_summaries.push_back(std::move(summary));
         } else {
             throw CompileError("invalid module cache '" + display_path + "' at line " +
                                std::to_string(line_number) + ": unknown record");

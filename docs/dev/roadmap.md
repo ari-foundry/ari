@@ -41,10 +41,11 @@
    rejected, and malformed caches with duplicate source or AST-summary records
    are rejected before validation. Module caches now carry v4 per-source AST
    summary records with declaration fingerprints and declaration-summary
-   payloads, then recheck them against the parsed cached source snapshot. The
-   remaining package-cache work is to parse those trusted summaries into
-   dependency declarations and then skip dependency source parsing once
-   validation succeeds.
+   payloads, parse those payloads during cache loading, and validate their
+   internal hashes and top-level counts before rechecking them against the
+   parsed cached source snapshot. The remaining package-cache work is to turn
+   those trusted summaries into dependency declarations and then skip
+   dependency source parsing once validation succeeds.
    - [summary-materialize] materialize dependency declarations from validated
      AST-summary declaration payloads or future IR-summary records instead of
      reparsing cached source text
