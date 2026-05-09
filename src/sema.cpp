@@ -12197,23 +12197,17 @@ private:
         }
     }
 
-    IrExprPtr make_vec_index_expr(SourceLocation loc, const std::string& name, const IrType& type, IrExprPtr index) const {
-        auto out = std::make_unique<IrExpr>();
-        out->kind = IrExprKind::Index;
-        out->loc = loc;
-        out->type = type.args[0];
-        out->operand = make_vec_local_lvalue(loc, name, type);
-        out->right = std::move(index);
-        return out;
-    }
-
     IrExprPtr check_vec_first_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) const {
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "first");
         if (!expr.type_args.empty()) fail(expr.loc, "Vec.first does not take type arguments");
         if (!expr.args.empty()) fail(expr.loc, "Vec.first expects no arguments");
-        return make_vec_index_expr(expr.loc, name, local.type, make_integer_literal(expr.loc, i64_type(expr.loc), 0));
+        return make_vec_index_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_integer_literal(expr.loc, i64_type(expr.loc), 0)
+        );
     }
 
     IrExprPtr check_vec_last_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
@@ -12230,7 +12224,32 @@ private:
         index->type = i64_type(expr.loc);
         index->left = make_collection_len_expr(expr.loc, make_vec_local_lvalue(expr.operand->loc, name, local.type));
         index->right = make_integer_literal(expr.loc, i64_type(expr.loc), 1);
-        return make_vec_index_expr(expr.loc, name, local.type, std::move(index));
+        return make_vec_index_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(index)
+        );
+    }
+
+    IrExprPtr check_vec_get_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_readable_vec_method_receiver(expr.loc, name, local, "get");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.get does not take type arguments");
+        if (expr.args.size() != 1) fail(expr.loc, "Vec.get expects one index argument");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr index = check_expr(*expr.args[0]);
+        if (!is_value_integer_type(index->type)) {
+            fail(expr.args[0]->loc, "Vec.get index must be an integer, got " + type_name(index->type));
+        }
+        release_temporary_borrows(borrow_mark);
+
+        return make_vec_index_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(index)
+        );
     }
 
     IrExprPtr check_vec_reserve_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
@@ -13163,6 +13182,11 @@ private:
         if (expr.name == "last") {
             if (LocalInfo* local = vec_local_method_receiver(expr, "last")) {
                 return check_vec_last_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "get") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "get")) {
+                return check_vec_get_method_call(expr, std::move(lowered), *local);
             }
         }
         if (expr.name == "reserve") {

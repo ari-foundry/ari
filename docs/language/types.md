@@ -383,8 +383,7 @@ let empty = values.is_empty()
 let literal = [10, 20, 30].len()
 ```
 
-Mutable local vectors also support fixed-capacity `reserve`, `push`, `pop`,
-`first`, and `last` on the LLVM backend:
+Local vectors also support fixed-capacity methods on the LLVM backend:
 
 ```ari
 var values: Vec[i64] = []
@@ -393,6 +392,7 @@ values.push(4)
 values.push(5)
 let first = values.first()
 let current_last = values.last()
+let by_index = values.get(1)
 let last = values.pop()
 let capacity = values.capacity()
 let empty = values.is_empty()
@@ -417,10 +417,15 @@ local capacity.
 `first()` and `last()` read the first or last copyable element without changing
 the runtime length, and use the same bounds checks as indexing, so empty
 vectors panic.
+`get(index)` reads a copyable element at a runtime index without changing the
+runtime length, and uses the same bounds checks as `values[index]`.
 `truncate(n)` shrinks the current runtime length to `n` when `n` is smaller
 than the current length, leaves it unchanged when `n` is larger, and panics for
 negative runtime lengths. `set(index, value)` overwrites an existing element
 inside the current runtime length and uses the same bounds checks as indexing.
+Mutating methods such as `reserve`, `push`, `pop`, `clear`, `truncate`, and
+`set` require a `var` binding. Read-only methods such as `capacity`,
+`is_empty`, `first`, `last`, and `get` work on immutable local vectors too.
 
 The compiler reserves enough local storage for the largest vector literal,
 explicit `reserve` capacity, or tracked `push` growth seen for that binding,

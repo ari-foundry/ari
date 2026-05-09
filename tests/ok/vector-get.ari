@@ -1,0 +1,14 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [];
+  values.push(9);
+  values.push(8);
+
+  let before: i64 = values.get(0);
+  values.set(0, values.get(1));
+  let after: i64 = values.get(0);
+
+  let frozen: Vec[i64] = [4, 5];
+  let read_only: i64 = frozen.get(1);
+
+  return before + after + len(values) + values.capacity() + read_only;
+}

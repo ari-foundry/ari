@@ -93,6 +93,25 @@ IrExprPtr make_vec_capacity_expr(SourceLocation loc, const IrType& type) {
     return make_i64_literal(loc, type.array_size);
 }
 
+IrExprPtr make_vec_index_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr index) {
+    if (!vector || !is_vector_storage_type(vector->type)) {
+        fail(loc, "Vec element access requires local Vec storage");
+    }
+    if (vector->type.args.empty()) {
+        fail(loc, "Vec element access requires an element type");
+    }
+    if (!index) {
+        fail(loc, "Vec element access expects an index");
+    }
+    auto out = std::make_unique<IrExpr>();
+    out->kind = IrExprKind::Index;
+    out->loc = loc;
+    out->type = vector->type.args[0];
+    out->operand = std::move(vector);
+    out->right = std::move(index);
+    return out;
+}
+
 IrExprPtr make_vec_pop_expr(SourceLocation loc, IrExprPtr vector) {
     if (!vector || !is_vector_storage_type(vector->type)) {
         fail(loc, "Vec.pop requires local Vec storage");
