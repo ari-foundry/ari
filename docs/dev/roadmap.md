@@ -52,8 +52,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Medium-Term Language Work
 
-1. Expand product-pattern analysis beyond the finite coverage engine.
-   - [symbolic-products] represent high-cardinality integer product coverage without enumerating every value
+1. Refine product-pattern diagnostics and enum payload patterns.
+   Symbolic rectangle coverage now proves high-cardinality integer/bool product
+   exhaustiveness without enumerating every value.
    - [diagnostics] suggest the smallest missing product shape when a product match is non-exhaustive
    - [enum-payloads] support literal, range, alias, or-pattern, and nested enum-case subpatterns inside aggregate enum payload slots
 2. Refine borrow checking beyond lexical named borrows.

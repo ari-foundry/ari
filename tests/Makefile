@@ -299,6 +299,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-struct-pattern.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/match-product-exhaustive.ari -o $(BUILD_DIR)/match/match-product-exhaustive.raw
 	$(BUILD_DIR)/match/match-product-exhaustive.raw; code=$$?; test $$code -eq 17
+	$(TARGET) --freestanding tests/ok/match-symbolic-product.ari -o $(BUILD_DIR)/match/match-symbolic-product.raw
+	$(BUILD_DIR)/match/match-symbolic-product.raw; code=$$?; test $$code -eq 5
 	$(TARGET) --freestanding tests/ok/match-or-binding.ari -o $(BUILD_DIR)/match/match-or-binding.raw
 	$(BUILD_DIR)/match/match-or-binding.raw; code=$$?; test $$code -eq 14
 	$(TARGET) --freestanding tests/ok/match-range-overlap.ari -o $(BUILD_DIR)/match/match-range-overlap.raw
@@ -354,6 +356,8 @@ check-match: $(TARGET)
 	grep -q "insertvalue \\[3 x i64\\]" $(BUILD_DIR)/match/constant-aggregates.ll
 	$(TARGET) tests/ok/array-patterns.ari --emit-llvm $(BUILD_DIR)/match/array-patterns.ll
 	grep -q "extractvalue \\[4 x i64\\]" $(BUILD_DIR)/match/array-patterns.ll
+	$(TARGET) tests/ok/match-symbolic-product.ari --emit-llvm $(BUILD_DIR)/match/match-symbolic-product.ll
+	grep -q "icmp ule i16" $(BUILD_DIR)/match/match-symbolic-product.ll
 	if $(TARGET) tests/errors/match-expression-type-mismatch.ari -o $(BUILD_DIR)/match/match-expression-type-mismatch.elf >$(BUILD_DIR)/match/match-expression-type-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/match/match-expression-type-mismatch.err
 	if $(TARGET) tests/errors/match-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-literal-nonexhaustive.err 2>&1; then exit 1; fi
@@ -369,9 +373,9 @@ check-match: $(TARGET)
 	if $(TARGET) tests/errors/match-or-pattern-binding-type.ari -o $(BUILD_DIR)/match/match-or-pattern-binding-type.elf >$(BUILD_DIR)/match/match-or-pattern-binding-type.err 2>&1; then exit 1; fi
 	grep -q "or-pattern binding 'value' has inconsistent types: i32 and u32" $(BUILD_DIR)/match/match-or-pattern-binding-type.err
 	if $(TARGET) tests/errors/match-tuple-nonexhaustive.ari -o $(BUILD_DIR)/match/match-tuple-nonexhaustive.elf >$(BUILD_DIR)/match/match-tuple-nonexhaustive.err 2>&1; then exit 1; fi
-	grep -q "tuple match must cover every finite product case" $(BUILD_DIR)/match/match-tuple-nonexhaustive.err
+	grep -q "tuple match must cover every supported product case" $(BUILD_DIR)/match/match-tuple-nonexhaustive.err
 	if $(TARGET) tests/errors/match-product-nonexhaustive-bool.ari -o $(BUILD_DIR)/match/match-product-nonexhaustive-bool.elf >$(BUILD_DIR)/match/match-product-nonexhaustive-bool.err 2>&1; then exit 1; fi
-	grep -q "tuple match must cover every finite product case" $(BUILD_DIR)/match/match-product-nonexhaustive-bool.err
+	grep -q "tuple match must cover every supported product case" $(BUILD_DIR)/match/match-product-nonexhaustive-bool.err
 	if $(TARGET) tests/errors/match-struct-pattern-missing-field.ari -o $(BUILD_DIR)/match/match-struct-pattern-missing-field.elf >$(BUILD_DIR)/match/match-struct-pattern-missing-field.err 2>&1; then exit 1; fi
 	grep -q "struct match pattern must mention all fields or use '..'" $(BUILD_DIR)/match/match-struct-pattern-missing-field.err
 	if $(TARGET) tests/errors/match-enum-payload-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-enum-payload-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-enum-payload-literal-nonexhaustive.err 2>&1; then exit 1; fi

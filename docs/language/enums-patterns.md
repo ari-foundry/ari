@@ -380,10 +380,11 @@ Tuple values can be matched with tuple patterns. Tuple match arms may use
 literal tests, ranges, `_`, immutable bindings, aliases, nested tuple patterns,
 and one `..` rest marker to skip middle fields. Product matches are exhaustive
 when they either contain an irrefutable arm such as `_`, `(..)`, or `(x, y)`,
-or when the finite product coverage engine can prove every combination is
-covered. The finite engine handles bool fields, small integer domains, nested
-tuples, fixed arrays, named structs, tuple structs, and `..` rest patterns.
-High-cardinality integer products should still use an irrefutable fallback arm.
+or when Ari can prove every combination is covered. Small bool/integer products
+use finite coverage. Larger integer products use symbolic rectangle coverage for
+literal, range, wildcard, binding, alias, or-pattern, nested tuple, fixed array,
+named struct, tuple-struct, and `..` rest patterns. Unsupported product shapes
+should still use an irrefutable fallback arm.
 If a later product arm is fully covered by earlier product arms, Ari reports a
 warning and keeps compiling.
 

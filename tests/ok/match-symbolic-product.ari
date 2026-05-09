@@ -1,0 +1,15 @@
+fn main() -> i64 {
+  let first = match (50000u16, false) {
+    (0u16..=32767u16, false) => 1,
+    (32768u16..=65535u16, false) => 2,
+    (0u16..=65535u16, true) => 3,
+  };
+
+  let second = match (1u16, true) {
+    (0u16..=32767u16, false) => 1,
+    (32768u16..=65535u16, false) => 2,
+    (0u16..=65535u16, true) => 3,
+  };
+
+  return first + second;
+}
