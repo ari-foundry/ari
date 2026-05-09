@@ -46,17 +46,6 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
-3. Finish control-flow or-pattern lowering.
-   `match` arms and refutable enum `let`/`var` declarations expand enum
-   or-patterns, including alias-wrapped alternatives, today. Enum `while let`
-   also lowers multi-alternative or-patterns through LLVM and freestanding
-   backends by filling shared bindings before one common loop body. The
-   remaining executable step is to share that expansion with `if let` without
-   duplicating user body declarations in ways that conflict with Ari's
-   no-shadowing rule.
-   - [if-let] expand enum or-patterns in statement and expression `if let`
-   - [binding-scope] preserve one semantic user body scope while still
-     materializing per-alternative payload/value binding stores for `if let`
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

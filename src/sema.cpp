@@ -8734,35 +8734,103 @@ private:
         return current;
     }
 
+    IrStmtPtr make_bool_assignment_stmt(SourceLocation loc, const std::string& name, bool value) const {
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::Assign;
+        stmt->loc = loc;
+        stmt->assign_name = name;
+        stmt->rhs = make_bool_literal_expr(loc, value);
+        return stmt;
+    }
+
+    std::vector<IrMatchArm> lower_if_let_enum_pattern_arms(
+        const Pattern& pattern,
+        const EnumInfo& enum_info,
+        const IrType& enum_value_type
+    ) {
+        EnumMatchCoverage coverage;
+        std::vector<IrMatchArm> arms = lower_match_arm_patterns(pattern, enum_info, enum_value_type, coverage);
+        if (arms.empty()) {
+            fail(pattern.loc, "if-let pattern did not lower to a match arm");
+        }
+        for (const auto& arm : arms) {
+            if (arm.wildcard) {
+                fail(pattern.loc, "if-let requires a refutable enum-case pattern");
+            }
+        }
+        return arms;
+    }
+
     Flow check_if_let(const Stmt& stmt, IrStmt& lowered) {
         IrExprPtr match_value = check_expr(*stmt.condition);
         if (is_aggregate_type(match_value->type)) {
             return check_aggregate_if_let(stmt, lowered, std::move(match_value));
         }
 
-        lowered.kind = IrStmtKind::Match;
-        lowered.match_value = std::move(match_value);
-        const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
-        IrType enum_value_type = lowered.match_value->type;
-        IrMatchArm then_arm = lower_enum_case_pattern(stmt.condition_pattern, enum_info, enum_value_type);
-        IrMatchArm else_arm;
-        else_arm.loc = stmt.loc;
-        else_arm.wildcard = true;
+        lowered.kind = IrStmtKind::Block;
+        IrType enum_value_type = match_value->type;
+        const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *match_value);
+        std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
+            stmt.condition_pattern,
+            enum_info,
+            enum_value_type
+        );
+
+        std::string subject_name = make_hidden_local("$iflet_enum");
+        declare_local(stmt.loc, subject_name, enum_value_type, false);
+        lowered.statements.push_back(make_ir_var_decl(
+            stmt.loc,
+            subject_name,
+            enum_value_type,
+            std::move(match_value),
+            false
+        ));
+
+        IrType matched_type = bool_type(stmt.loc);
+        std::string matched_name = make_hidden_local("$iflet_matched");
+        declare_local(stmt.loc, matched_name, matched_type, true);
+        lowered.statements.push_back(make_ir_var_decl(
+            stmt.loc,
+            matched_name,
+            matched_type,
+            make_bool_literal_expr(stmt.loc, false),
+            true
+        ));
+
+        auto pattern_match = std::make_unique<IrStmt>();
+        pattern_match->kind = IrStmtKind::Match;
+        pattern_match->loc = stmt.loc;
+        pattern_match->match_value = make_local_lvalue_expr(stmt.loc, subject_name, enum_value_type);
+        for (auto& arm : then_arms) {
+            arm.body.push_back(make_bool_assignment_stmt(arm.loc, matched_name, true));
+            pattern_match->match_arms.push_back(std::move(arm));
+        }
+        IrMatchArm no_match;
+        no_match.loc = stmt.loc;
+        no_match.wildcard = true;
+        pattern_match->match_arms.push_back(std::move(no_match));
+        lowered.statements.push_back(std::move(pattern_match));
 
         StateSnapshot branch_input = snapshot_states();
         push_scope();
-        declare_match_arm_bindings(then_arm);
+        declare_match_arm_bindings(lowered.statements.back()->match_arms.front());
         CheckedStatements then_checked = check_statements(stmt.then_body, false);
-        then_arm.body = std::move(then_checked.statements);
+        std::vector<IrStmtPtr> then_body = std::move(then_checked.statements);
         if (then_checked.flow == Flow::Returns) discard_scope();
         else if (then_checked.flow == Flow::Stops) discard_scope();
         else {
-            append_current_scope_auto_destroy_cleanup(stmt.loc, then_arm.body);
+            append_current_scope_auto_destroy_cleanup(stmt.loc, then_body);
             pop_scope();
         }
         StateSnapshot then_state = snapshot_states();
 
         restore_states(branch_input);
+
+        auto if_stmt = std::make_unique<IrStmt>();
+        if_stmt->kind = IrStmtKind::If;
+        if_stmt->loc = stmt.loc;
+        if_stmt->condition = make_local_lvalue_expr(stmt.loc, matched_name, matched_type);
+        if_stmt->then_body = std::move(then_body);
 
         if (stmt.else_body.empty()) {
             if (then_checked.flow == Flow::Continues) {
@@ -8771,17 +8839,15 @@ private:
             } else {
                 restore_states(branch_input);
             }
-            lowered.match_arms.push_back(std::move(then_arm));
-            lowered.match_arms.push_back(std::move(else_arm));
+            lowered.statements.push_back(std::move(if_stmt));
             return Flow::Continues;
         }
 
         CheckedStatements else_checked = check_statements(stmt.else_body, true);
-        else_arm.body = std::move(else_checked.statements);
+        if_stmt->else_body = std::move(else_checked.statements);
         StateSnapshot else_state = snapshot_states();
 
-        lowered.match_arms.push_back(std::move(then_arm));
-        lowered.match_arms.push_back(std::move(else_arm));
+        lowered.statements.push_back(std::move(if_stmt));
 
         if (then_checked.flow != Flow::Continues && else_checked.flow != Flow::Continues) {
             restore_states(branch_input);
@@ -10843,25 +10909,65 @@ private:
             return check_aggregate_if_let_expr(expr, std::move(lowered), std::move(match_value));
         }
 
-        lowered->kind = IrExprKind::Match;
-        lowered->match_value = std::move(match_value);
-        const EnumInfo& enum_info = require_enum_match_value(expr.loc, *lowered->match_value);
-        IrType enum_value_type = lowered->match_value->type;
+        lowered->kind = IrExprKind::Block;
+        lowered->match_arms.clear();
+        IrType enum_value_type = match_value->type;
+        const EnumInfo& enum_info = require_enum_match_value(expr.loc, *match_value);
+        std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
+            expr.condition_pattern,
+            enum_info,
+            enum_value_type
+        );
 
-        IrMatchArm then_pattern = lower_enum_case_pattern(expr.condition_pattern, enum_info, enum_value_type);
-        IrMatchExprArm then_arm = make_match_expr_arm(std::move(then_pattern));
-        IrMatchExprArm else_arm;
-        else_arm.loc = expr.loc;
-        else_arm.wildcard = true;
+        std::string subject_name = make_hidden_local("$iflet_enum");
+        declare_local(expr.loc, subject_name, enum_value_type, false);
+        lowered->block_body.push_back(make_ir_var_decl(
+            expr.loc,
+            subject_name,
+            enum_value_type,
+            std::move(match_value),
+            false
+        ));
+
+        IrType matched_type = bool_type(expr.loc);
+        std::string matched_name = make_hidden_local("$iflet_matched");
+        declare_local(expr.loc, matched_name, matched_type, true);
+        lowered->block_body.push_back(make_ir_var_decl(
+            expr.loc,
+            matched_name,
+            matched_type,
+            make_bool_literal_expr(expr.loc, false),
+            true
+        ));
 
         StateSnapshot branch_input = snapshot_states();
-        CheckedExprBlock then_checked = check_value_block_with_match_payload(
+        push_scope();
+        declare_match_arm_bindings(then_arms.front());
+        CheckedStatements then_statements = check_statements(expr.then_body, false);
+        if (then_statements.flow == Flow::Returns) {
+            discard_scope();
+            fail(expr.loc, "if-let expression arm must reach its final value");
+        }
+        IrExprPtr then_value = check_expr(*expr.then_value);
+        if (contains_borrow_type(then_value->type)) {
+            pop_scope();
+            fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
+        }
+        if (is_void_value_type(then_value->type)) {
+            pop_scope();
+            fail(expr.loc, "if-let expression arm must produce a value");
+        }
+        IrType result_type = then_value->type;
+        then_value = materialize_value_before_auto_destroy_cleanup(
             expr.loc,
-            "if-let expression arm",
-            then_arm,
-            expr.then_body,
-            *expr.then_value);
-        IrType result_type = then_checked.value->type;
+            std::move(then_value),
+            then_statements.statements,
+            scopes_.size() - 1,
+            "$block",
+            "if-let expression arm result"
+        );
+        pop_scope();
+        StateSnapshot then_state = snapshot_states();
 
         restore_states(branch_input);
         CheckedExprBlock else_checked = check_value_block(
@@ -10872,18 +10978,36 @@ private:
         coerce_expr_to_expected(*else_checked.value, result_type);
         require_assignable(expr.loc, result_type, else_checked.value->type);
 
-        require_same_states(expr.loc, then_checked.state, else_checked.state,
+        require_same_states(expr.loc, then_state, else_checked.state,
                             "has incompatible ownership states after if-let expression branches");
-        restore_states(merge_zone_generations(then_checked.state, else_checked.state));
+        restore_states(merge_zone_generations(then_state, else_checked.state));
 
-        then_arm.body = std::move(then_checked.statements);
-        then_arm.value = std::move(then_checked.value);
-        else_arm.body = std::move(else_checked.statements);
-        else_arm.value = std::move(else_checked.value);
+        auto pattern_match = std::make_unique<IrStmt>();
+        pattern_match->kind = IrStmtKind::Match;
+        pattern_match->loc = expr.loc;
+        pattern_match->match_value = make_local_lvalue_expr(expr.loc, subject_name, enum_value_type);
+        for (auto& arm : then_arms) {
+            arm.body.push_back(make_bool_assignment_stmt(arm.loc, matched_name, true));
+            pattern_match->match_arms.push_back(std::move(arm));
+        }
+        IrMatchArm no_match;
+        no_match.loc = expr.loc;
+        no_match.wildcard = true;
+        pattern_match->match_arms.push_back(std::move(no_match));
+        lowered->block_body.push_back(std::move(pattern_match));
+
+        auto if_expr = std::make_unique<IrExpr>();
+        if_expr->kind = IrExprKind::If;
+        if_expr->loc = expr.loc;
+        if_expr->type = result_type;
+        if_expr->condition = make_local_lvalue_expr(expr.loc, matched_name, matched_type);
+        if_expr->then_body = std::move(then_statements.statements);
+        if_expr->then_value = std::move(then_value);
+        if_expr->else_body = std::move(else_checked.statements);
+        if_expr->else_value = std::move(else_checked.value);
 
         lowered->type = result_type;
-        lowered->match_arms.push_back(std::move(then_arm));
-        lowered->match_arms.push_back(std::move(else_arm));
+        lowered->block_value = std::move(if_expr);
         return lowered;
     }
 

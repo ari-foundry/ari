@@ -62,6 +62,10 @@ if let Some(value) = maybe_value {
   return 0;
 }
 
+if let picked @ (Left(value) | Right(value)) = choice {
+  return weight(picked) + (value as i64);
+}
+
 if let (x, true) = pair {
   return x;
 } else {
@@ -73,9 +77,10 @@ if let Point { x: px, flag: true, .. } = point {
 }
 ```
 
-`if let` can also produce a value when it has an `else` arm. The pattern arm
-can bind a payload or aggregate fields, and each arm follows the same
-final-expression rule as plain `if` expressions:
+Enum `if let` supports same-name/same-type or-pattern alternatives and
+alias-wrapped alternatives. `if let` can also produce a value when it has an
+`else` arm. The pattern arm can bind a payload or aggregate fields, and each
+arm follows the same final-expression rule as plain `if` expressions:
 
 ```ari
 let score = if let Some(value) = maybe_value {
@@ -83,6 +88,12 @@ let score = if let Some(value) = maybe_value {
   (value as i64) + bonus
 } else {
   0
+};
+
+let side_score = if let (Left(value) | Right(value)) = choice {
+  value as i64
+} else {
+  -1
 };
 
 let aggregate_score = if let (Point { y: py, .. }, Rgb(red, false)) = (point, color) {

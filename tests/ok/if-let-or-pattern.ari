@@ -1,0 +1,48 @@
+enum Choice {
+  Left(i32),
+  Right(i32),
+  Empty,
+}
+
+fn choose(index: i64) -> Choice {
+  if index == 0 {
+    return Left(5i32);
+  }
+  if index == 1 {
+    return Right(7i32);
+  }
+  return Empty;
+}
+
+fn weight(choice: Choice) -> i64 {
+  return match choice {
+    Left(_) => 10,
+    Right(_) => 20,
+    Empty => 0,
+  };
+}
+
+fn main() -> i64 {
+  var total = 0;
+  if let picked @ (Left(value) | Right(value)) = choose(1) {
+    let bonus = 3;
+    total = total + (value as i64) + bonus + weight(picked);
+  } else {
+    total = 1;
+  }
+
+  let expression = if let (Left(score) | Right(score)) = choose(0) {
+    let doubled = score + score;
+    doubled as i64
+  } else {
+    100
+  };
+
+  let missing = if let (Left(other) | Right(other)) = choose(2) {
+    other as i64
+  } else {
+    4
+  };
+
+  return total + expression + missing;
+}

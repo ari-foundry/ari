@@ -189,6 +189,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/if-expression.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/if-let-expression.ari -o $(BUILD_DIR)/control-flow/if-let-expression.raw
 	$(BUILD_DIR)/control-flow/if-let-expression.raw; code=$$?; test $$code -eq 23
+	$(TARGET) --freestanding tests/ok/if-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-or-pattern.raw
+	$(BUILD_DIR)/control-flow/if-let-or-pattern.raw; code=$$?; test $$code -eq 44
 	$(TARGET) --freestanding tests/ok/if-let-aggregate-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-aggregate-pattern.raw
 	$(BUILD_DIR)/control-flow/if-let-aggregate-pattern.raw; code=$$?; test $$code -eq 17
 	$(TARGET) --freestanding tests/ok/block-expression.ari -o $(BUILD_DIR)/control-flow/block-expression.raw
@@ -240,14 +242,19 @@ check-control-flow: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-pattern.elf; code=$$?; test $$code -eq 50; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-stored.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-stored.elf; $(BUILD_DIR)/control-flow/for-vector-stored.elf; code=$$?; test $$code -eq 20; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/while-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; code=$$?; test $$code -eq 55; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/if-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/if-let-or-pattern.elf; $(BUILD_DIR)/control-flow/if-let-or-pattern.elf; code=$$?; test $$code -eq 44; fi
 	$(TARGET) tests/ok/labeled-block.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block.ll
 	grep -q "block.end" $(BUILD_DIR)/control-flow/labeled-block.ll
 	$(TARGET) tests/ok/if-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/if-expression.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-expression.ll
 	grep -q "if.expr.end" $(BUILD_DIR)/control-flow/if-expression.ll
 	$(TARGET) tests/ok/if-let-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/if-let-expression.ll
-	grep -q "match.expr.arm" $(BUILD_DIR)/control-flow/if-let-expression.ll
+	grep -q "match.arm" $(BUILD_DIR)/control-flow/if-let-expression.ll
+	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-let-expression.ll
 	grep -q "lshr" $(BUILD_DIR)/control-flow/if-let-expression.ll
+	$(TARGET) tests/ok/if-let-or-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/if-let-or-pattern.ll
+	grep -q "match.arm" $(BUILD_DIR)/control-flow/if-let-or-pattern.ll
+	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-let-or-pattern.ll
 	$(TARGET) tests/ok/block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/block-expression.ll
 	grep -q "_ARNv4main" $(BUILD_DIR)/control-flow/block-expression.ll
 	$(TARGET) tests/ok/labeled-block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-expression.ll
