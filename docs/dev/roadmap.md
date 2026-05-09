@@ -46,6 +46,17 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
+3. Finish control-flow or-pattern lowering.
+   `match` arms and refutable enum `let`/`var` declarations expand enum
+   or-patterns, including alias-wrapped alternatives, today. The next
+   executable step is to share that expansion with control-flow pattern forms
+   without duplicating user body declarations in ways that conflict with Ari's
+   no-shadowing rule.
+   - [if-let] expand enum or-patterns in statement and expression `if let`
+   - [while-let] lower multi-alternative `while let` through every backend
+     instead of only inspecting the first lowered arm
+   - [binding-scope] preserve one semantic user body scope while still
+     materializing per-alternative payload/value binding stores
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -66,9 +77,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    - [or-bindings] support binding unification for or-patterns in all aggregate
      pattern positions
-   - [control-flow-or] expand or-patterns, including alias-wrapped
-     alternatives, in `if let` and `while let` without duplicating user body
-     declarations
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and function-parameter patterns on one shared binding-mode engine
 3. Implement user-defined compile-time meta expansion for `meta fn`.
