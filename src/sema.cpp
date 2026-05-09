@@ -12172,11 +12172,65 @@ private:
                                              const std::string& name,
                                              LocalInfo& local,
                                              const std::string& method_name) {
+        if (local.state != LocalState::Alive) {
+            fail(loc, "cannot use " + state_name(local.state) + " binding '" + name + "'");
+        }
         if (!local.mutable_binding) fail(loc, "cannot call Vec." + method_name + " on immutable binding '" + name + "'");
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
         }
         require_not_borrowed(loc, name, local, "mutate Vec with ." + method_name);
+    }
+
+    void require_readable_vec_method_receiver(SourceLocation loc,
+                                              const std::string& name,
+                                              const LocalInfo& local,
+                                              const std::string& method_name) const {
+        if (local.state != LocalState::Alive) {
+            fail(loc, "cannot use " + state_name(local.state) + " binding '" + name + "'");
+        }
+        if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
+            fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
+        }
+        if (local.mutable_borrows > 0 || has_mutable_field_borrows(local)) {
+            fail(loc, "cannot read mutably borrowed Vec binding '" + name + "'");
+        }
+    }
+
+    IrExprPtr make_vec_index_expr(SourceLocation loc, const std::string& name, const IrType& type, IrExprPtr index) const {
+        auto out = std::make_unique<IrExpr>();
+        out->kind = IrExprKind::Index;
+        out->loc = loc;
+        out->type = type.args[0];
+        out->operand = make_vec_local_lvalue(loc, name, type);
+        out->right = std::move(index);
+        return out;
+    }
+
+    IrExprPtr check_vec_first_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) const {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_readable_vec_method_receiver(expr.loc, name, local, "first");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.first does not take type arguments");
+        if (!expr.args.empty()) fail(expr.loc, "Vec.first expects no arguments");
+        return make_vec_index_expr(expr.loc, name, local.type, make_integer_literal(expr.loc, i64_type(expr.loc), 0));
+    }
+
+    IrExprPtr check_vec_last_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_readable_vec_method_receiver(expr.loc, name, local, "last");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.last does not take type arguments");
+        if (!expr.args.empty()) fail(expr.loc, "Vec.last expects no arguments");
+
+        auto index = std::make_unique<IrExpr>();
+        index->kind = IrExprKind::Binary;
+        index->loc = expr.loc;
+        index->op = IrBinaryOp::Sub;
+        index->type = i64_type(expr.loc);
+        index->left = make_collection_len_expr(expr.loc, make_vec_local_lvalue(expr.operand->loc, name, local.type));
+        index->right = make_integer_literal(expr.loc, i64_type(expr.loc), 1);
+        return make_vec_index_expr(expr.loc, name, local.type, std::move(index));
     }
 
     IrExprPtr check_vec_reserve_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
@@ -13100,6 +13154,16 @@ private:
         }
         if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr.operand)) {
             return check_collection_is_empty_method_call(expr);
+        }
+        if (expr.name == "first") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "first")) {
+                return check_vec_first_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "last") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "last")) {
+                return check_vec_last_method_call(expr, std::move(lowered), *local);
+            }
         }
         if (expr.name == "reserve") {
             if (LocalInfo* local = vec_local_method_receiver(expr, "reserve")) {

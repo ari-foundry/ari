@@ -383,14 +383,16 @@ let empty = values.is_empty()
 let literal = [10, 20, 30].len()
 ```
 
-Mutable local vectors also support fixed-capacity `reserve`, `push`, and `pop`
-on the LLVM backend:
+Mutable local vectors also support fixed-capacity `reserve`, `push`, `pop`,
+`first`, and `last` on the LLVM backend:
 
 ```ari
 var values: Vec[i64] = []
 values.reserve(3)
 values.push(4)
 values.push(5)
+let first = values.first()
+let current_last = values.last()
 let last = values.pop()
 let capacity = values.capacity()
 let empty = values.is_empty()
@@ -412,6 +414,9 @@ to zero while keeping the reserved local capacity.
 `pop()` returns the last copyable element, decreases the current runtime length,
 and panics through `panic` when the vector is empty. It does not shrink reserved
 local capacity.
+`first()` and `last()` read the first or last copyable element without changing
+the runtime length, and use the same bounds checks as indexing, so empty
+vectors panic.
 `truncate(n)` shrinks the current runtime length to `n` when `n` is smaller
 than the current length, leaves it unchanged when `n` is larger, and panics for
 negative runtime lengths. `set(index, value)` overwrites an existing element
