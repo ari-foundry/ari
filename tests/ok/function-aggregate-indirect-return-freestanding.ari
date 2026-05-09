@@ -1,0 +1,50 @@
+struct Pair {
+  x: i64,
+  y: i64,
+}
+
+enum Choice {
+  Both(i64, i64),
+  None,
+}
+
+fn make_pair(seed: i64) -> Pair {
+  return Pair { x: seed + 1, y: seed + 2 };
+}
+
+fn flip(pair: Pair) -> Pair {
+  return Pair { x: pair.y, y: pair.x };
+}
+
+fn make_choice(left: i64, right: i64) -> Choice {
+  return Both(left, right);
+}
+
+fn score(choice: Choice) -> i64 {
+  return match choice {
+    Both(left, right) => left + right,
+    None => 0,
+  };
+}
+
+fn accept_pair(pair: Pair) -> i64 {
+  return pair.x * 10 + pair.y;
+}
+
+fn main() -> i64 {
+  let maker: fn(i64) -> Pair = make_pair;
+  let flipper: fn(Pair) -> Pair = flip;
+  let chooser: fn(i64, i64) -> Choice = make_choice;
+  let scorer: fn(Choice) -> i64 = score;
+
+  let pair = maker(4);
+  let flipped = flipper(pair);
+  let choice = chooser(pair.x, flipped.x);
+
+  make_pair(100);
+  maker(200);
+  flipper(Pair { x: 1, y: 2 });
+  chooser(1, 2);
+
+  return accept_pair(flipped) + scorer(choice);
+}

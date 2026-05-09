@@ -68,16 +68,17 @@
    pointer-backed aggregate-enum copies, and local aggregate-enum
    tag/payload-binding/literal/range/nested-compact-enum matches. Narrow scalar
    returns are normalized at the freestanding function boundary, including
-   unsigned wraparound results from `u8`/`u16`/`u32` functions. Direct
-   freestanding calls can pass and return tuple, struct, fixed-array, and
-   aggregate enum values through explicit hidden pointer slots, copying
-   parameters into callee-local storage and returning into caller-provided
-   result storage. The remaining aggregate lowering gap is expression-result
-   coverage for aggregate values, then explicit aggregate and external ABI
+   unsigned wraparound results from `u8`/`u16`/`u32` functions. Freestanding
+   direct and function-pointer calls can pass and return tuple,
+   struct, fixed-array, and aggregate enum values through explicit hidden
+   pointer slots, copying parameters into callee-local storage and returning
+   into caller-provided result storage or hidden discard temporaries. The
+   remaining aggregate lowering gap is control-flow expression-result coverage
+   for aggregate values, then explicit aggregate and external ABI
    classification.
-   - [abi-aggregate-expr-results] materialize aggregate-returning calls in
-     expression-only positions, function-pointer calls, and aggregate-valued
-     `if`/`match`/block expressions on raw targets
+   - [abi-aggregate-control-results] materialize aggregate-valued `if`/`match`
+     expressions and expression-only block results on raw targets outside
+     scalar/store contexts
    - [abi-extern-exports] define platform ABI lowering for `@export`,
      `@no_mangle`, and future imported symbols on raw/freestanding targets;
      direct `extern "C"` calls are rejected there until a real C ABI/link path

@@ -1535,6 +1535,8 @@ check-functions: $(TARGET) check-function-errors
 	$(BUILD_DIR)/functions/function-aggregate-return-freestanding.elf; code=$$?; test $$code -eq 69
 	$(TARGET) --freestanding tests/ok/function-aggregate-params-freestanding.ari -o $(BUILD_DIR)/functions/function-aggregate-params-freestanding.elf
 	$(BUILD_DIR)/functions/function-aggregate-params-freestanding.elf; code=$$?; test $$code -eq 149
+	$(TARGET) --freestanding tests/ok/function-aggregate-indirect-return-freestanding.ari -o $(BUILD_DIR)/functions/function-aggregate-indirect-return-freestanding.elf
+	$(BUILD_DIR)/functions/function-aggregate-indirect-return-freestanding.elf; code=$$?; test $$code -eq 76
 	$(TARGET) --freestanding tests/ok/function-generic-surface.ari -o $(BUILD_DIR)/functions/function-generic-surface.elf
 	$(BUILD_DIR)/functions/function-generic-surface.elf; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/function-generic-call.ari -o $(BUILD_DIR)/functions/function-generic-call.elf
