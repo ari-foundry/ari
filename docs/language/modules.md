@@ -312,6 +312,8 @@ Cache validation checks the root input, module search paths, active cfg
 features, implicit `std` mode, current source content hashes, and whether each
 cached `mod` import still resolves to the same file. If any input changed, Ari
 rejects the cache and asks you to regenerate it with `--emit-module-cache`.
+Malformed caches that repeat a source snapshot for the same module/path/root
+record are rejected before validation.
 After validation succeeds, file-backed module imports are resolved from the
 validated cache import table instead of searching candidate paths again.
 After reading from the cached source snapshot, Ari also rebuilds the module

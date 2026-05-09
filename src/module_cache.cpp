@@ -222,6 +222,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
     ModuleCache cache;
     bool saw_header = false;
     bool saw_metadata = false;
+    std::set<std::string> seen_sources;
 
     while (std::getline(in, line)) {
         ++line_number;
@@ -254,12 +255,20 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 throw CompileError("invalid module cache '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed source record");
             }
+            bool is_root = parse_bool_field(fields[3], display_path, line_number);
+            std::string key = source_key(fields[1], fields[2], is_root);
+            if (!seen_sources.insert(key).second) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) +
+                                   ": duplicate source record for module '" +
+                                   display_module_name(fields[1]) + "' at '" + fields[2] + "'");
+            }
             cache.sources.push_back(ModuleCacheSource{
                 fields[1],
                 fields[2],
                 fields[4],
                 fields[5],
-                parse_bool_field(fields[3], display_path, line_number),
+                is_root,
             });
         } else {
             throw CompileError("invalid module cache '" + display_path + "' at line " +

@@ -299,6 +299,7 @@ Checklist:
       the cached import table instead of rediscovering candidate files
 - [x] source-snapshot module cache use rechecks the parsed cached source graph
       against the cache's embedded metadata
+- [x] source-snapshot module cache parsing rejects duplicate source records
 - [ ] AST/IR package cache summaries skip dependency parsing after validation
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports

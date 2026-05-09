@@ -14,29 +14,33 @@
    Local `push` and `insert` now auto-widen stack storage when sema can track
    the current length, so empty `Vec[T]` locals can grow through
    straight-line appends/inserts without an explicit `reserve`.
-   Vec storage helper logic is split out of `sema.cpp` into
-   `vector_semantics` so the allocator-backed work can grow outside the main
-   semantic checker. Introduce the explicit allocation/capability path before
-   broadening vector patterns.
+   This local API is now frozen as a temporary executable subset: do not add
+   more compiler-known `Vec` convenience methods before the allocator-backed
+   library design lands. Vec storage helper logic is split out of `sema.cpp`
+   into `vector_semantics` so the allocator-backed work can grow outside the
+   main semantic checker. Introduce the explicit allocation/capability path
+   before broadening vector patterns or std collection APIs.
    - [allocator] thread explicit allocator/capability values through creation
    - [capacity] replace local literal/reserve capacity with runtime heap
      capacity growth
-   - [local-api] keep filling small checked local methods that map cleanly onto
-     allocator-backed vectors later, such as equality-driven search extensions
-     after user-defined `Eq`/trait constraints exist
-   - [ops-runtime] connect `push`, `insert`, `pop`, `remove`, `first`, `last`,
-     `get`, `swap`, `contains`, `index_of`, `count`, and `reserve` to
-     allocator-backed storage instead of fixed local-capacity traps
+   - [api-freeze] keep the current compiler-known local methods only as
+     compatibility coverage; future Vec methods belong in the std collection
+     library after generic impls and allocator capabilities are real
+   - [ops-runtime] port the existing `push`, `insert`, `pop`, `remove`,
+     `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
+     `reserve` operations to allocator-backed storage instead of fixed
+     local-capacity traps
 2. Finish package caching for file-backed modules.
    Compact module metadata and source-snapshot module caches can be emitted,
    checked, and invalidated with cfg/search-path/source/import/item-specific
    stale diagnostics today. Source records carry stable content hashes, cache
    validation catches body changes even when declaration summaries stay the
    same, import resolution is rechecked against the current package layout, and
-   old metadata summaries without source hashes are rejected. The current cache
-   resolves file-backed imports from the validated cache table after validation,
-   rebuilds metadata from the cached source to catch cache-summary tampering,
-   then parses the cached source snapshot.
+   old metadata summaries without source hashes are rejected, and malformed
+   caches with duplicate source records are rejected before validation. The
+   current cache resolves file-backed imports from the validated cache table
+   after validation, rebuilds metadata from the cached source to catch
+   cache-summary tampering, then parses the cached source snapshot.
    - [ast-summary] define a cached AST or IR summary format that can be loaded
      after metadata validation succeeds
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
@@ -122,6 +126,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     reserve capacity seen in the binding, while the stored length still shrinks
     and expands per assignment. The allocator, runtime capacity, and real
     grow-on-push behavior remain near-term.
+    - [std-api] define ergonomic std collection methods only after generic
+      impls, allocator capabilities, and runtime growth are in place, so the
+      temporary compiler-known local API does not become permanent surface area
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
     - [freestanding] lower stored local vector values in the raw backend
