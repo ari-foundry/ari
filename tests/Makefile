@@ -494,7 +494,7 @@ check-modules: $(TARGET)
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-duplicate-import.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-duplicate-import.ll >$(BUILD_DIR)/modules/package-module-main-duplicate-import.err 2>&1; then exit 1; fi
 	grep -q "duplicate import record" $(BUILD_DIR)/modules/package-module-main-duplicate-import.err
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache.ll
-	grep -q "ari-module-cache-v3" $(BUILD_DIR)/modules/package-module-main.aricache
+	grep -q "ari-module-cache-v4" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -q "metadata.*ari-module-metadata-v2" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -q "source.*package_math.*tests/packages/package_math.ari" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -Eq "ast-summary.*package_math.*tests/packages/package_math.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-module-main.aricache
@@ -512,12 +512,15 @@ check-modules: $(TARGET)
 	sed '/ast-summary.*package_math.*tests\/packages\/package_math.ari/d' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-missing-summary.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-missing-summary.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-missing-summary.ll >$(BUILD_DIR)/modules/package-module-main-cache-missing-summary.err 2>&1; then exit 1; fi
 	grep -q "missing AST summary" $(BUILD_DIR)/modules/package-module-main-cache-missing-summary.err
-	awk 'BEGIN { FS=OFS="\t" } $$1 == "ast-summary" && $$2 == "package_math" { $$11 = "99" } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.aricache
+	awk 'BEGIN { FS=OFS="\t" } $$1 == "ast-summary" && $$2 == "package_math" { $$12 = "99" } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.err 2>&1; then exit 1; fi
 	grep -q "function count changed" $(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.err
 	awk 'BEGIN { FS=OFS="\t" } $$1 == "ast-summary" && $$2 == "package_math" { $$6 = "0000000000000000" } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-summary-hash-tampered.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-summary-hash-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-summary-hash-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-summary-hash-tampered.err 2>&1; then exit 1; fi
 	grep -q "declaration hash changed" $(BUILD_DIR)/modules/package-module-main-cache-summary-hash-tampered.err
+	awk 'BEGIN { FS=OFS="\t" } $$1 == "ast-summary" && $$2 == "package_math" { $$7 = "tampered" } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.err 2>&1; then exit 1; fi
+	grep -q "declaration summary changed" $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.err
 	sed '0,/package_math::value/s/package_math::value/package_math::wrong/' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-tampered.err 2>&1; then exit 1; fi
 	grep -q "does not match the current source graph" $(BUILD_DIR)/modules/package-module-main-cache-tampered.err

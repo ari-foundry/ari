@@ -17,7 +17,7 @@ namespace ari {
 
 namespace {
 
-constexpr int kModuleCacheVersion = 3;
+constexpr int kModuleCacheVersion = 4;
 
 std::string read_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -261,6 +261,7 @@ std::string serialize_module_cache(const ModuleCache& cache) {
             summary.is_root ? "1" : "0",
             summary.content_hash,
             summary.declaration_hash,
+            summary.declaration_summary,
             count_key(summary.use_count),
             count_key(summary.module_import_count),
             count_key(summary.module_decl_count),
@@ -294,9 +295,11 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 cache.format_version = 2;
             } else if (line == "ari-module-cache-v3") {
                 cache.format_version = 3;
+            } else if (line == "ari-module-cache-v4") {
+                cache.format_version = 4;
             } else {
                 throw CompileError("invalid module cache '" + display_path +
-                                   "': expected ari-module-cache-v1, ari-module-cache-v2, or ari-module-cache-v3 header");
+                                   "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, or ari-module-cache-v4 header");
             }
             saw_header = true;
             continue;
@@ -336,15 +339,23 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 is_root,
             });
         } else if (tag == "ast-summary") {
-            if (fields.size() != 14 && fields.size() != 15) {
+            if (fields.size() != 14 && fields.size() != 15 && fields.size() != 16) {
                 throw CompileError("invalid module cache '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed ast-summary record");
             }
-            if (cache.format_version >= 3 && fields.size() != 15) {
+            if (cache.format_version >= 4 && fields.size() != 16) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) +
+                                   ": malformed ast-summary record; v4 requires a declaration summary");
+            }
+            if (cache.format_version >= 3 && fields.size() < 15) {
                 throw CompileError("invalid module cache '" + display_path + "' at line " +
                                    std::to_string(line_number) +
                                    ": malformed ast-summary record; v3 requires a declaration hash");
             }
+            const bool has_declaration_hash = fields.size() >= 15;
+            const bool has_declaration_summary = fields.size() >= 16;
+            const std::size_t count_offset = has_declaration_summary ? 7 : (has_declaration_hash ? 6 : 5);
             bool is_root = parse_bool_field(fields[3], display_path, line_number);
             std::string key = source_key(fields[1], fields[2], is_root);
             if (!seen_ast_summaries.insert(key).second) {
@@ -357,17 +368,18 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 fields[1],
                 fields[2],
                 fields[4],
-                fields.size() == 15 ? fields[5] : "",
+                has_declaration_hash ? fields[5] : "",
+                has_declaration_summary ? fields[6] : "",
                 is_root,
-                parse_count_field(fields[fields.size() == 15 ? 6 : 5], display_path, line_number),
-                parse_count_field(fields[fields.size() == 15 ? 7 : 6], display_path, line_number),
-                parse_count_field(fields[fields.size() == 15 ? 8 : 7], display_path, line_number),
-                parse_count_field(fields[fields.size() == 15 ? 9 : 8], display_path, line_number),
-                parse_count_field(fields[fields.size() == 15 ? 10 : 9], display_path, line_number),
-                parse_count_field(fields[fields.size() == 15 ? 11 : 10], display_path, line_number),
-                parse_count_field(fields[fields.size() == 15 ? 12 : 11], display_path, line_number),
-                parse_count_field(fields[fields.size() == 15 ? 13 : 12], display_path, line_number),
-                parse_count_field(fields[fields.size() == 15 ? 14 : 13], display_path, line_number),
+                parse_count_field(fields[count_offset], display_path, line_number),
+                parse_count_field(fields[count_offset + 1], display_path, line_number),
+                parse_count_field(fields[count_offset + 2], display_path, line_number),
+                parse_count_field(fields[count_offset + 3], display_path, line_number),
+                parse_count_field(fields[count_offset + 4], display_path, line_number),
+                parse_count_field(fields[count_offset + 5], display_path, line_number),
+                parse_count_field(fields[count_offset + 6], display_path, line_number),
+                parse_count_field(fields[count_offset + 7], display_path, line_number),
+                parse_count_field(fields[count_offset + 8], display_path, line_number),
             });
         } else {
             throw CompileError("invalid module cache '" + display_path + "' at line " +
@@ -377,7 +389,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
 
     if (!saw_header) {
         throw CompileError("invalid module cache '" + display_path +
-                           "': expected ari-module-cache-v1, ari-module-cache-v2, or ari-module-cache-v3 header");
+                           "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, or ari-module-cache-v4 header");
     }
     if (!saw_metadata) {
         throw CompileError("invalid module cache '" + display_path + "': missing metadata record");
@@ -423,6 +435,9 @@ void require_matching_module_cache_ast_summary(const ModuleCacheAstSummary& expe
     if (expected.declaration_hash != actual.declaration_hash) {
         fail("declaration hash changed from '" + expected.declaration_hash +
              "' to '" + actual.declaration_hash + "'");
+    }
+    if (expected.declaration_summary != actual.declaration_summary) {
+        fail("declaration summary changed");
     }
 #define ARI_CHECK_SUMMARY_COUNT(field, label) \
     if (expected.field != actual.field) { \

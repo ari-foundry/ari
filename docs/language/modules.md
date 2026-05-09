@@ -304,10 +304,10 @@ ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build
 
 The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, and a compact AST summary for each cached source. Current
-caches are written as `ari-module-cache-v3`; older v1/v2 caches are treated as
-stale because they do not carry the current AST-summary declaration
-fingerprints. A later build can validate the cache and parse from that
-snapshot:
+caches are written as `ari-module-cache-v4`; older v1/v2/v3 caches are treated
+as stale because they do not carry the current AST-summary declaration
+fingerprints and declaration payloads. A later build can validate the cache and
+parse from that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll
@@ -325,9 +325,9 @@ After validation succeeds, file-backed module imports are resolved from the
 validated cache import table instead of searching candidate paths again.
 After reading from the cached source snapshot, Ari also rebuilds the module
 metadata and per-source AST summaries, then compares them with the data embedded
-in the cache. AST summaries include counts and declaration fingerprints for the
-source-level item surface, so edited or corrupted summaries are caught before
-semantic checking relies on them.
+in the cache. AST summaries include counts, declaration fingerprints, and a
+compact declaration payload for the source-level item surface, so edited or
+corrupted summaries are caught before semantic checking relies on them.
 
 This first cache format skips dependency source discovery after validation and
 reads module source text from the cached snapshot. It still parses the cached

@@ -23,6 +23,7 @@ struct ModuleCacheAstSummary {
     std::string path;
     std::string content_hash;
     std::string declaration_hash;
+    std::string declaration_summary;
     bool is_root = false;
     std::uint64_t use_count = 0;
     std::uint64_t module_import_count = 0;

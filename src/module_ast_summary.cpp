@@ -86,7 +86,7 @@ void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) 
     if (fn.has_return_type) append_type(out, fn.return_type);
 }
 
-std::string declaration_fingerprint(const Program& program) {
+std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
     out << "ari-ast-decls-v1;";
 
@@ -180,7 +180,7 @@ std::string declaration_fingerprint(const Program& program) {
         for (const auto& method : decl.methods) append_function_signature(out, method);
     }
 
-    return module_metadata_source_hash(out.str());
+    return out.str();
 }
 
 } // namespace
@@ -194,7 +194,8 @@ ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
     summary.module_name = join_qualified_path(module_path);
     summary.path = path;
     summary.content_hash = content_hash;
-    summary.declaration_hash = declaration_fingerprint(program);
+    summary.declaration_summary = declaration_summary_payload(program);
+    summary.declaration_hash = module_metadata_source_hash(summary.declaration_summary);
     summary.is_root = is_root;
     summary.use_count = program.uses.size();
     summary.module_import_count = program.module_imports.size();
