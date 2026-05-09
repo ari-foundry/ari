@@ -4734,6 +4734,9 @@ private:
         if (expr.kind == ExprKind::TupleIndex) {
             return check_tuple_field_assignment_target(expr);
         }
+        if (expr.kind == ExprKind::Index) {
+            return check_slice_index_assignment_target(expr);
+        }
         if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
             return check_pointer_deref_assignment_target(expr);
         }
@@ -5009,6 +5012,42 @@ private:
         lowered->tuple_index = expr.tuple_index;
         lowered->type = field_type;
         lowered->operand = make_local_lvalue_expr(expr.operand->loc, base_name, local.type);
+        return lowered;
+    }
+
+    void require_slice_element_materializable(SourceLocation loc, const IrType& element_type, const std::string& operation) const {
+        if (!is_raw_pointer_deref_value_type(element_type)) {
+            fail(loc, operation + " currently supports scalar or aggregate element types, got " + type_name(element_type));
+        }
+        if (is_aggregate_type(element_type) &&
+            (is_owner_type(element_type) || contains_borrow_type(element_type))) {
+            fail(loc, operation + " cannot copy ownership- or borrow-valued aggregate elements yet");
+        }
+    }
+
+    IrExprPtr check_slice_index_assignment_target(const Expr& expr) {
+        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        if (!is_prelude_slice_type(operand->type)) {
+            fail(expr.loc,
+                 "dynamic index assignment currently supports Slice values; "
+                 "use Vec.set(...) for local Vec values or a constant index for local arrays/vectors");
+        }
+        IrExprPtr index = check_expr(*expr.right);
+        if (!is_value_integer_type(index->type)) {
+            fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
+        }
+        if (index->kind == IrExprKind::Integer && index->int_negative) {
+            fail(expr.loc, "Slice index must be non-negative");
+        }
+        const IrType element_type = operand->type.args[0];
+        require_slice_element_materializable(expr.loc, element_type, "Slice element assignment");
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::Index;
+        lowered->loc = expr.loc;
+        lowered->type = element_type;
+        lowered->operand = std::move(operand);
+        lowered->right = std::move(index);
         return lowered;
     }
 
@@ -10438,9 +10477,11 @@ private:
             if (index->kind == IrExprKind::Integer && index->int_negative) {
                 fail(expr.loc, "Slice index must be non-negative");
             }
+            const IrType element_type = operand->type.args[0];
+            require_slice_element_materializable(expr.loc, element_type, "Slice indexing");
             lowered->kind = IrExprKind::Index;
             lowered->loc = expr.loc;
-            lowered->type = operand->type.args[0];
+            lowered->type = element_type;
             lowered->operand = std::move(operand);
             lowered->right = std::move(index);
             return lowered;

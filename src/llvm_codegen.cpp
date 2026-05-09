@@ -1466,9 +1466,12 @@ private:
             return ptr;
         }
         if (expr.kind == IrExprKind::Index && expr.operand && expr.right) {
+            if (is_prelude_slice_type(expr.operand->type)) {
+                return emit_slice_element_ptr(expr);
+            }
             if (expr.operand->type.primitive != IrPrimitiveKind::Array &&
                 expr.operand->type.primitive != IrPrimitiveKind::Vector) {
-                throw CompileError(where(expr.loc) + ": LLVM backend can only index array or vector lvalues");
+                throw CompileError(where(expr.loc) + ": LLVM backend can only index array, vector, or Slice lvalues");
             }
             std::string base = emit_lvalue_ptr(*expr.operand);
             IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
@@ -1583,6 +1586,13 @@ private:
     }
 
     Value emit_slice_index(const IrExpr& expr) {
+        std::string ptr = emit_slice_element_ptr(expr);
+        std::string out = temp();
+        line("  " + out + " = load " + llvm_type(expr.type) + ", ptr " + ptr);
+        return Value{llvm_type(expr.type), out, expr.type};
+    }
+
+    std::string emit_slice_element_ptr(const IrExpr& expr) {
         if (!expr.operand || !expr.right || !is_prelude_slice_type(expr.operand->type)) {
             throw CompileError(where(expr.loc) + ": malformed Slice index during LLVM lowering");
         }
@@ -1597,9 +1607,7 @@ private:
         std::string ptr = temp();
         line("  " + ptr + " = getelementptr inbounds " + llvm_type(expr.type) +
              ", ptr " + data + ", i64 " + index.name);
-        std::string out = temp();
-        line("  " + out + " = load " + llvm_type(expr.type) + ", ptr " + ptr);
-        return Value{llvm_type(expr.type), out, expr.type};
+        return ptr;
     }
 
     Value emit_vector_push(const IrExpr& expr) {

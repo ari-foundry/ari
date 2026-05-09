@@ -48,6 +48,19 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
+3. Finish non-owning `Slice[T]` view conveniences.
+   The source `std::Slice[T]` layout, `slice(data, len)` construction,
+   `len(view)` / `view.len()` / `view.is_empty()`, and checked
+   `view[index]` read/write access lower on the LLVM backend today. This is a
+   nearer dependency than allocator-backed collection APIs because it gives
+   arrays, vectors, and FFI buffers one shared view shape before `Vec[T]`
+   moves to heap storage.
+   - [array-view] add borrowed fixed-array and stored-vector helper functions
+     that build `Slice[T]` without exposing pointer arithmetic at every callsite
+   - [slice-expr] add `view[start..end]` and `view[start..=end]` expressions
+     once range-to-length bounds rules are explicit
+   - [patterns] add slice patterns after the shared pattern binding-mode engine
+     decides reference/ownership binding behavior
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -112,17 +125,17 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `?`/`??` on the LLVM aggregate-enum path. `Slice[T]` is a source `std`
     view struct with `data: ptr T` and `len: i64`; `slice(data, len)` builds
     that view from a raw pointer and length, while `len(view)`, `view.len()`,
-    `view.is_empty()`, and `view[index]` read through the stored view metadata.
-    It is non-owning and still relies on explicit raw-pointer discipline.
+    `view.is_empty()`, `view[index]`, and `view[index] = value` use the stored
+    view metadata with runtime bounds checks. It is non-owning and still relies
+    on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]`/`Maybe[T]` ADT path.
     - [owned] `Box[T]`
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host
       reusable line buffer
-    - [views] add slicing expressions, mutable slice element assignment,
-      array/vector borrowed slice helpers, and slice patterns after layout and
-      borrowing policy are defined
+    Slice view follow-ups that do not require allocator-backed ownership have
+    moved to Near-Term Compiler Work.
 7. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
