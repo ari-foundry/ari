@@ -42,17 +42,15 @@
    are rejected before validation. Module caches now carry v5 per-source AST
    summary records with declaration fingerprints and declaration-summary
    payloads, parse those payloads during cache loading, and validate their
-   internal hashes, top-level counts, scalar constant initializers, and
-   declaration materialization round-trips before rechecking them against the
-   parsed cached source snapshot. Header-like cached dependencies whose
-   summaries contain only declaration-safe items, including scalar constants,
-   can now feed materialized declarations directly into the loader without
-   reparsing the cached source snapshot. The remaining package-cache work is to
-   extend that path to aggregate constant initializers and future IR summaries
-   for dependencies with executable bodies, then skip dependency source parsing
-   whenever validation succeeds.
-   - [const-summary] add aggregate, enum, tuple, struct, and array constant
-     initializer payloads to declaration summaries
+   internal hashes, top-level counts, scalar and aggregate constant
+   initializers, and declaration materialization round-trips before rechecking
+   them against the parsed cached source snapshot. Header-like cached
+   dependencies whose summaries contain only declaration-safe items, including
+   constants, can now feed materialized declarations directly into the loader
+   without reparsing the cached source snapshot. The remaining package-cache
+   work is to extend that path to future IR summaries for dependencies with
+   executable bodies, then skip dependency source parsing whenever validation
+   succeeds.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies with executable function or impl bodies
    - [cache-skip] avoid reparsing dependencies when the metadata summary and

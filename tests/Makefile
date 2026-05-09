@@ -510,6 +510,15 @@ check-modules: $(TARGET)
 	grep -Eq "ast-summary.*cache_consts.*tests/packages/cache_consts.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-const-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-const-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-const-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-header-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-const-header-cache.ll $(BUILD_DIR)/modules/package-cache-const-header-cache-use.ll
+	$(TARGET) -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache.ll
+	grep -q "ari-ast-decls-v2" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -Eq "ast-summary.*cache_const_aggregates.*tests/packages/cache_const_aggregates.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "5:tuple" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "6:struct" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "6:vector" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "4:call" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	$(TARGET) -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache-use.ll
+	cmp -s $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache.ll $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache-use.ll
 	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache.ll
 	grep -Eq "ast-summary.*extern_header.*tests/packages/extern_header.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-extern-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache-use.ll

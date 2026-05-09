@@ -1,0 +1,24 @@
+pub struct Point {
+  x: i64,
+  y: i64,
+}
+
+pub struct FlagPair(bool, bool)
+
+pub enum Choice {
+  Zero,
+  Score(i32),
+}
+
+pub enum Slot[T] {
+  Empty,
+  Full(T),
+}
+
+pub const POINT: Point = Point { x: 7, y: 4 };
+pub const FLAGS: FlagPair = FlagPair(true, false);
+pub const PAIR: (i64, bool) = (3, true);
+pub const NUMS: [i64, 3] = [2, 5, 8];
+pub const CHOSEN: Choice = Score(6i32);
+pub const EMPTY: Choice = Zero;
+pub const FULL_SLOT: Slot[i32] = Full<i32>(9i32);

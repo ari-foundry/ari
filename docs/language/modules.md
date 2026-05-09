@@ -306,8 +306,8 @@ The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, and a compact AST summary for each cached source. Current
 caches are written as `ari-module-cache-v5`; older v1/v2/v3/v4 caches are
 treated as stale because they do not carry the current AST-summary declaration
-fingerprints and scalar-constant initializer payloads. A later build can
-validate the cache and parse from that snapshot:
+fingerprints and constant initializer payloads. A later build can validate the
+cache and parse from that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll
@@ -329,10 +329,13 @@ in the cache. AST summaries include counts, declaration fingerprints, and a
 compact declaration payload for the source-level item surface. Cache loading
 parses that payload and checks its hash and counts, so edited or corrupted
 summaries are caught before semantic checking relies on them.
-Header-like modules with declaration-only functions and scalar constant
-initializers can be materialized directly from the AST summary. Constants whose
-initializers use aggregate construction or other unsupported summary forms fall
-back to parsing the cached source snapshot.
+Header-like modules with declaration-only functions and supported constant
+initializers can be materialized directly from the AST summary. Supported
+constant initializer payloads include integer and bool expressions, constant
+name references, tuple literals, fixed-array literals, named struct literals,
+tuple-struct constructors, enum cases, enum payload constructors, and explicit
+generic constructor type arguments. Constants whose initializers use unsupported
+summary forms fall back to parsing the cached source snapshot.
 
 This cache format skips dependency source discovery after validation and reads
 module source text from the cached snapshot. Header-like dependencies can skip

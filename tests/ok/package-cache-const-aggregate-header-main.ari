@@ -1,0 +1,26 @@
+mod cache_const_aggregates;
+
+fn main() -> i64 {
+  let p = cache_const_aggregates::POINT;
+  let flags = cache_const_aggregates::FLAGS;
+  let pair = cache_const_aggregates::PAIR;
+  let nums = cache_const_aggregates::NUMS;
+  let direct = cache_const_aggregates::POINT.y + cache_const_aggregates::NUMS[2];
+  let choice = match cache_const_aggregates::CHOSEN {
+    cache_const_aggregates::Score(value) => value as i64,
+    cache_const_aggregates::Zero => 0,
+  };
+  let empty = match cache_const_aggregates::EMPTY {
+    cache_const_aggregates::Zero => 1,
+    cache_const_aggregates::Score(_) => 0,
+  };
+  let slot = match cache_const_aggregates::FULL_SLOT {
+    cache_const_aggregates::Full(inner) => inner as i64,
+    cache_const_aggregates::Empty => 0,
+  };
+  if flags.0 && pair.1 {
+    p.x + nums[1] + pair.0 + choice + empty + direct + slot
+  } else {
+    0
+  }
+}

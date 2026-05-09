@@ -115,6 +115,13 @@ bool is_summary_const_binary_op(TokenKind op) {
     }
 }
 
+bool append_const_expr_list(std::ostringstream& out, const std::vector<ExprPtr>& args);
+
+void append_type_arguments(std::ostringstream& out, const std::vector<TypeRef>& type_args) {
+    append_count(out, type_args.size());
+    for (const auto& type_arg : type_args) append_type(out, type_arg);
+}
+
 bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
     switch (expr.kind) {
         case ExprKind::Integer:
@@ -152,9 +159,59 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             out << right.str();
             return true;
         }
+        case ExprKind::Tuple: {
+            std::ostringstream args;
+            if (!append_const_expr_list(args, expr.args)) return false;
+            append_field(out, "tuple");
+            out << args.str();
+            return true;
+        }
+        case ExprKind::Vector: {
+            std::ostringstream args;
+            if (!append_const_expr_list(args, expr.args)) return false;
+            append_field(out, "vector");
+            out << args.str();
+            return true;
+        }
+        case ExprKind::StructLiteral: {
+            if (expr.field_names.size() != expr.args.size()) return false;
+            std::vector<std::ostringstream> values(expr.args.size());
+            for (std::size_t i = 0; i < expr.args.size(); ++i) {
+                if (!append_const_expr_payload(values[i], *expr.args[i])) return false;
+            }
+            append_field(out, "struct");
+            append_field(out, expr.name);
+            append_type_arguments(out, expr.type_args);
+            append_count(out, expr.args.size());
+            for (std::size_t i = 0; i < expr.args.size(); ++i) {
+                append_field(out, expr.field_names[i]);
+                out << values[i].str();
+            }
+            return true;
+        }
+        case ExprKind::Call: {
+            if (expr.operand) return false;
+            std::ostringstream args;
+            if (!append_const_expr_list(args, expr.args)) return false;
+            append_field(out, "call");
+            append_field(out, expr.name);
+            append_type_arguments(out, expr.type_args);
+            out << args.str();
+            return true;
+        }
         default:
             return false;
     }
+}
+
+bool append_const_expr_list(std::ostringstream& out, const std::vector<ExprPtr>& args) {
+    std::vector<std::ostringstream> payloads(args.size());
+    for (std::size_t i = 0; i < args.size(); ++i) {
+        if (!args[i] || !append_const_expr_payload(payloads[i], *args[i])) return false;
+    }
+    append_count(out, args.size());
+    for (const auto& payload : payloads) out << payload.str();
+    return true;
 }
 
 void append_const_initializer(std::ostringstream& out, const ExprPtr& init) {
@@ -637,6 +694,26 @@ private:
         return static_cast<TokenKind>(read_count(label));
     }
 
+    std::vector<TypeRef> read_type_arguments(const std::string& label) {
+        std::uint64_t count = read_count(label + " count");
+        std::vector<TypeRef> type_args;
+        type_args.reserve(static_cast<std::size_t>(count));
+        for (std::uint64_t i = 0; i < count; ++i) {
+            type_args.push_back(read_type(label + " type argument"));
+        }
+        return type_args;
+    }
+
+    std::vector<ExprPtr> read_const_expr_list(const std::string& label) {
+        std::uint64_t count = read_count(label + " count");
+        std::vector<ExprPtr> args;
+        args.reserve(static_cast<std::size_t>(count));
+        for (std::uint64_t i = 0; i < count; ++i) {
+            args.push_back(read_const_expr(label + " item"));
+        }
+        return args;
+    }
+
     ExprPtr read_const_expr(const std::string& label) {
         std::string kind = read_field(label + " kind");
         auto expr = std::make_unique<Expr>();
@@ -671,6 +748,36 @@ private:
             if (!is_summary_const_binary_op(expr->op)) fail("unsupported constant summary binary operator");
             expr->left = read_const_expr(label + " binary left operand");
             expr->right = read_const_expr(label + " binary right operand");
+            return expr;
+        }
+        if (kind == "tuple") {
+            expr->kind = ExprKind::Tuple;
+            expr->args = read_const_expr_list(label + " tuple values");
+            return expr;
+        }
+        if (kind == "vector") {
+            expr->kind = ExprKind::Vector;
+            expr->args = read_const_expr_list(label + " vector values");
+            return expr;
+        }
+        if (kind == "struct") {
+            expr->kind = ExprKind::StructLiteral;
+            expr->name = read_field(label + " struct name");
+            expr->type_args = read_type_arguments(label + " struct type arguments");
+            std::uint64_t field_count = read_count(label + " struct field count");
+            expr->field_names.reserve(static_cast<std::size_t>(field_count));
+            expr->args.reserve(static_cast<std::size_t>(field_count));
+            for (std::uint64_t i = 0; i < field_count; ++i) {
+                expr->field_names.push_back(read_field(label + " struct field name"));
+                expr->args.push_back(read_const_expr(label + " struct field value"));
+            }
+            return expr;
+        }
+        if (kind == "call") {
+            expr->kind = ExprKind::Call;
+            expr->name = read_field(label + " call name");
+            expr->type_args = read_type_arguments(label + " call type arguments");
+            expr->args = read_const_expr_list(label + " call arguments");
             return expr;
         }
         fail("unknown constant expression summary kind '" + kind + "'");
