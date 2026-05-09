@@ -16,8 +16,8 @@ fn main() -> i64 {
   var first = 5;
   var second = 7;
   var third = 11;
-  let one: Slice[i64] = Slice<i64> { data: (ref mut first) as ptr i64, len: 1 };
-  let two: std::Slice[i64] = std::Slice<i64> { data: (ref mut second) as ptr i64, len: 2 };
-  let three: core::Slice[i64] = core::Slice<i64> { data: (ref mut third) as ptr i64, len: 3 };
+  let one: Slice[i64] = slice((ref mut first) as ptr i64, 1);
+  let two: std::Slice[i64] = std::slice((ref mut second) as ptr i64, 2);
+  let three: core::Slice[i64] = core::slice((ref mut third) as ptr i64, 3);
   return score(one) + qualified(two) + aliased(three);
 }

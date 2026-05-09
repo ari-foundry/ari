@@ -34,6 +34,10 @@ pub struct Slice[T] {
   len: i64,
 }
 
+pub fn slice[T](data: ptr T, len: i64) -> Slice[T] {
+  return Slice<T> { data: data, len: len };
+}
+
 pub extern "ari" fn assert(condition: bool) -> i64 = "ari_builtin_assert";
 pub extern "ari" fn debug_assert(condition: bool) -> i64 = "ari_builtin_assert";
 pub extern "ari" fn assert_eq_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_eq_i64";

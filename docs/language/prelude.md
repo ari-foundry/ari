@@ -238,6 +238,8 @@ context::argc() -> i64
 context::arg(index: i64) -> string
 arg_count() -> i64
 arg(index: i64) -> string
+slice<T>(data: ptr T, len: i64) -> Slice[T]
+std::slice<T>(data: ptr T, len: i64) -> std::Slice[T]
 ```
 
 On the default LLVM/glibc host backend, IO builtins lower to C stdio calls. On
@@ -391,7 +393,7 @@ let fixed = [1, 2, 3]
 let span: Range[i64] = 1..4
 let byte_span: Range[u8] = range(1, 4)
 var first = 1
-let view: Slice[i64] = Slice<i64> { data: (ref mut first) as ptr i64, len: 1 }
+let view: Slice[i64] = slice((ref mut first) as ptr i64, 1)
 ```
 
 These names are available without `std::` when implicit `std` loading is on.
@@ -417,10 +419,12 @@ struct Slice[T] {
 }
 ```
 
-It is non-owning and carries no hidden borrow lifetime yet; constructing one is
-the same explicit raw-pointer promise as other `ptr T` uses. Slicing
-expressions, borrowed slice construction helpers, and slice patterns are still
-planned after the layout and borrowing policy are nailed down.
+It is non-owning and carries no hidden borrow lifetime yet. The helper
+`slice(data, len)` constructs the same view and is available as `std::slice` or
+through a `std` alias. Passing its `data` is the same explicit raw-pointer
+promise as other `ptr T` uses. Slicing expressions, array/vector borrowed slice
+helpers, and slice patterns are still planned after the layout and borrowing
+policy are nailed down.
 
 Ranges are compiler-known two-field values:
 

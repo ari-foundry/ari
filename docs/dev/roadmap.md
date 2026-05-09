@@ -110,16 +110,17 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `Maybe[T]` as a public alias of `Option[T]`, and `Result[T, E]` are source
     `std` generic enums exposed through the implicit prelude and connected to
     `?`/`??` on the LLVM aggregate-enum path. `Slice[T]` is a source `std`
-    view struct with `data: ptr T` and `len: i64`; it is non-owning and still
-    relies on explicit raw-pointer discipline.
+    view struct with `data: ptr T` and `len: i64`; `slice(data, len)` builds
+    that view from a raw pointer and length. It is non-owning and still relies
+    on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]`/`Maybe[T]` ADT path.
     - [owned] `Box[T]`
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host
       reusable line buffer
-    - [views] add slicing expressions, borrowed slice construction helpers, and
-      slice patterns after slice layout and borrowing are defined
+    - [views] add slicing expressions, array/vector borrowed slice helpers, and
+      slice patterns after layout and borrowing policy are defined
 7. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
