@@ -89,14 +89,15 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      aggregates and the policy for ownership/borrow-qualified fields
    - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate offsets, scalar/plain-Ari-aggregate load/store helpers, scalar/plain-Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate field/element pointer access, and `size_of<T>()` / `align_of<T>()` layout queries are implemented
 5. Expand aggregate enum payload storage.
-   Aggregate enum payload slots support integer, bool, and one-word enum values
+   Aggregate enum payload slots support integer, bool, pointer-shaped values
+   such as `string`, `ptr T`, and `fn(...) -> ...`, plus one-word enum values
    today. Nested enum-case subpatterns can inspect one-word enum payload slots
    on the LLVM backend, but the stored payload universe is still intentionally
    narrow.
    - [nested-aggregate-enums] allow aggregate enum payload slots to store
      nested aggregate-enum values once the ABI and copy rules are explicit
-   - [aggregate-values] allow string, tuple, struct, vector, and owned payload
-     values after their non-local ABI/storage rules are defined
+   - [aggregate-values] allow tuple, struct, vector, and owned payload values
+     after their non-local ABI/storage rules are defined
    - [freestanding] lower aggregate enum payload storage and tests in the raw backend
 6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and

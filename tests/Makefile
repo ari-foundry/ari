@@ -369,6 +369,11 @@ check-match: $(TARGET)
 	grep -q "insertvalue { i32, i64, i64, i64 }" $(BUILD_DIR)/match/enum-multi-payload.ll
 	grep -q "extractvalue { i32, i64, i64, i64 }" $(BUILD_DIR)/match/enum-multi-payload.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-multi-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-multi-payload.elf; $(BUILD_DIR)/match/enum-multi-payload.elf; code=$$?; test $$code -eq 33; fi
+	$(TARGET) tests/ok/enum-pointer-shaped-payloads.ari --emit-llvm $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
+	grep -q "ptrtoint ptr" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
+	grep -q "inttoptr i64" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
+	grep -q "call i64 %" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-pointer-shaped-payloads.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-pointer-shaped-payloads.elf; $(BUILD_DIR)/match/enum-pointer-shaped-payloads.elf; code=$$?; test $$code -eq 25; fi
 	if $(TARGET) --freestanding tests/ok/enum-multi-payload.ari -o $(BUILD_DIR)/match/enum-multi-payload.raw >$(BUILD_DIR)/match/enum-multi-payload-freestanding.err 2>&1; then exit 1; fi
 	grep -q "backend does not lower aggregate parameters yet" $(BUILD_DIR)/match/enum-multi-payload-freestanding.err
 	$(TARGET) tests/ok/constant-patterns.ari --emit-llvm $(BUILD_DIR)/match/constant-patterns.ll
@@ -1560,7 +1565,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/invalid-cast.ari -o $(BUILD_DIR)/errors/invalid-cast.elf >$(BUILD_DIR)/errors/invalid-cast.err 2>&1; then exit 1; fi
 	grep -q "explicit casts currently require integer types or raw pointer casts, got bool as i64" $(BUILD_DIR)/errors/invalid-cast.err
 	if $(TARGET) tests/errors/enum-payload-too-wide.ari -o $(BUILD_DIR)/errors/enum-payload-too-wide.elf >$(BUILD_DIR)/errors/enum-payload-too-wide.err 2>&1; then exit 1; fi
-	grep -q "enum aggregate payloads currently support integer, bool, or one-word enum values" $(BUILD_DIR)/errors/enum-payload-too-wide.err
+	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, or one-word enum values" $(BUILD_DIR)/errors/enum-payload-too-wide.err
 	if $(TARGET) tests/errors/enum-payload-count.ari -o $(BUILD_DIR)/errors/enum-payload-count.elf >$(BUILD_DIR)/errors/enum-payload-count.err 2>&1; then exit 1; fi
 	grep -q "wrong payload count for enum case 'Some'" $(BUILD_DIR)/errors/enum-payload-count.err
 	if $(TARGET) tests/errors/match-nonexhaustive.ari -o $(BUILD_DIR)/errors/match-nonexhaustive.elf >$(BUILD_DIR)/errors/match-nonexhaustive.err 2>&1; then exit 1; fi

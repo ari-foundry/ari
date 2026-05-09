@@ -97,10 +97,11 @@ backend switches that enum to an aggregate layout:
 { i32 tag, i64 payload0, i64 payload1, ... }
 ```
 
-Aggregate enum payload slots currently accept integer, bool, and one-word enum
-values. Strings, tuples, structs, vectors, and nested aggregate-enum payloads
-remain planned. The freestanding backend still lowers only the compact one-word
-enum layout.
+Aggregate enum payload slots currently accept integer, bool, pointer-shaped
+values such as `string`, `ptr T`, and `fn(...) -> ...`, plus one-word enum
+values. Tuples, structs, vectors, owned values, and nested aggregate-enum
+payloads remain planned. The freestanding backend still lowers only the compact
+one-word enum layout.
 
 ## Passing And Returning
 

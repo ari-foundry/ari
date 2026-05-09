@@ -2197,7 +2197,7 @@ private:
         if (payload_needs_aggregate) aggregate_layout = true;
         if (payload_needs_aggregate && !is_aggregate_enum_payload_type(payload_type)) {
             fail(loc,
-                 "enum aggregate payloads currently support integer, bool, or one-word enum values, got " +
+                 "enum aggregate payloads currently support integer, bool, pointer-shaped, or one-word enum values, got " +
                      type_name(payload_type));
         }
         if (!payload_needs_aggregate && !is_legacy_enum_payload_type(payload_type)) {

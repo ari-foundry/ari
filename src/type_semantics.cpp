@@ -191,9 +191,14 @@ bool is_legacy_enum_payload_type(const IrType& type) {
 }
 
 bool is_aggregate_enum_payload_type(const IrType& type) {
+    if (type.qualifier == TypeQualifier::Ptr) return true;
     if (type.qualifier != TypeQualifier::Value) return false;
     if (type.primitive == IrPrimitiveKind::Bool) return true;
     if (is_integer_primitive(type.primitive)) return true;
+    if (type.primitive == IrPrimitiveKind::String ||
+        type.primitive == IrPrimitiveKind::Function) {
+        return true;
+    }
     return type.primitive == IrPrimitiveKind::Enum && type.field_types.empty();
 }
 

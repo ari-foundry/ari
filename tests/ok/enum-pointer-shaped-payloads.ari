@@ -1,0 +1,30 @@
+extern "C" fn strlen(text: string) -> u64;
+
+enum Payload {
+  Text(string),
+  Raw(ptr i64),
+  Call(fn(i64) -> i64),
+  Pair(i64, string),
+}
+
+fn add_seven(value: i64) -> i64 {
+  return value + 7;
+}
+
+fn score(value: Payload, input: i64) -> i64 {
+  return match value {
+    Text(text_value) => strlen(text_value) as i64,
+    Raw(pointer) => *pointer,
+    Call(op) => op(input),
+    Pair(base, pair_text) => base + strlen(pair_text) as i64,
+  };
+}
+
+fn main() -> i64 {
+  var number = 5;
+  let pointer: ptr i64 = (ref mut number) as ptr i64;
+  return score(Text("ari"), 0) +
+         score(Raw(pointer), 0) +
+         score(Call(add_seven), 4) +
+         score(Pair(2, "lang"), 0);
+}
