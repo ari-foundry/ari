@@ -133,6 +133,7 @@ private:
     }
 
     static int local_size_bytes(const IrType& type) {
+        if (is_aggregate_type(type)) return local_slot_count(type) * 8;
         std::uint64_t size = 0;
         if (ari_layout_size_bytes(type, size) &&
             size <= static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
@@ -142,6 +143,7 @@ private:
     }
 
     static int local_align_bytes(const IrType& type) {
+        if (is_aggregate_type(type)) return local_slot_count(type) == 0 ? 1 : 8;
         std::uint64_t align = 0;
         if (ari_layout_align_bytes(type, align) &&
             align > 0 &&

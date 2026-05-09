@@ -60,11 +60,15 @@
    Width-aware scalar local loads/stores and byte-packed standalone scalar
    local offsets are implemented for local bindings, parameter spills, loop
    temps, match bindings, tuple/array scalar field reads, and raw-pointer-
-   mutated narrow integer reloads. The raw backend still uses the old 8-byte
-   slot model inside aggregate layouts, so the remaining work is shared
-   aggregate byte layout and ABI classification.
-   - [aggregate-offsets] share byte-accurate tuple, struct, fixed-array, and
-     enum field offsets with the LLVM/layout code
+   mutated narrow integer reloads. Shared layout queries now compute natural
+   byte sizes, alignments, and field-offset tables for tuple, struct,
+   fixed-array, and aggregate-enum values. The raw backend still uses the old
+   8-byte slot model for local aggregate field addressing and whole-aggregate
+   copies, so the remaining work is to consume those shared offsets in raw
+   aggregate lowering and then finish ABI classification.
+   - [raw-aggregate-offsets] use shared byte field offsets for raw backend
+     tuple, struct, fixed-array, aggregate-enum, and raw-pointer aggregate
+     lowering
    - [abi] pass and return narrow scalars and aggregates with explicit
      platform ABI rules instead of relying on the current local-slot model
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

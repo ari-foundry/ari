@@ -1315,7 +1315,7 @@ check-ffi: $(TARGET)
 	$(TARGET) tests/ok/layout-query.ari --emit-llvm $(BUILD_DIR)/ffi/layout-query.ll
 	grep -q 'getelementptr i8, ptr' $(BUILD_DIR)/ffi/layout-query.ll
 	$(TARGET) --freestanding tests/ok/layout-query.ari -o $(BUILD_DIR)/ffi/layout-query.raw
-	$(BUILD_DIR)/ffi/layout-query.raw; code=$$?; test $$code -eq 75
+	$(BUILD_DIR)/ffi/layout-query.raw; code=$$?; test $$code -eq 35
 	$(TARGET) tests/ok/zone-allocation.ari --emit-llvm $(BUILD_DIR)/ffi/zone-allocation.ll
 	grep -q '@ari_builtin_zone_create' $(BUILD_DIR)/ffi/zone-allocation.ll
 	grep -q 'declare ptr @malloc' $(BUILD_DIR)/ffi/zone-allocation.ll
@@ -1391,7 +1391,7 @@ check-ffi: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-null-pointer.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-null-pointer.elf; $(BUILD_DIR)/ffi/ffi-c-null-pointer.elf; code=$$?; test $$code -eq 3; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-casts.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/pointer-casts.elf; $(BUILD_DIR)/ffi/pointer-casts.elf; code=$$?; test $$code -eq 1; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-offset.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-offset.elf; $(BUILD_DIR)/ffi/pointer-offset.elf; code=$$?; test $$code -eq 8; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/layout-query.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/layout-query.elf; $(BUILD_DIR)/ffi/layout-query.elf; code=$$?; test $$code -eq 75; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/layout-query.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/layout-query.elf; $(BUILD_DIR)/ffi/layout-query.elf; code=$$?; test $$code -eq 35; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-allocation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-allocation.elf; $(BUILD_DIR)/ffi/zone-allocation.elf; code=$$?; test $$code -eq 54; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-typed-allocation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-typed-allocation.elf; $(BUILD_DIR)/ffi/zone-typed-allocation.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-placement-new.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-placement-new.elf; $(BUILD_DIR)/ffi/zone-placement-new.elf; code=$$?; test $$code -eq 46; fi

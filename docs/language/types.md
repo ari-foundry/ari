@@ -634,8 +634,13 @@ loading from memory. `ptr_add(pointer, count)` performs typed pointer
 arithmetic, scaling by the current Ari layout size of `T` for `ptr T`; scalar
 and aggregate element types are supported. `size_of<T>()` and `align_of<T>()`
 return the current scalar or Ari-layout aggregate byte size/alignment as `i64`.
-Aggregate layout queries describe Ari's executable local layout, not a C ABI
-promise. `ptr_load(pointer)` and
+Aggregate layout queries use field order, natural scalar alignment, array
+element stride padding, and final aggregate padding to the maximum field
+alignment. They are Ari layout queries, not a C ABI promise; use `@repr(C)`
+surfaces for foreign layout once that ABI is fully specified. The raw
+`--freestanding` backend still lowers local aggregate field addressing with its
+older slot model until the shared byte-offset tables are consumed there.
+`ptr_load(pointer)` and
 `ptr_store(pointer, value)` provide explicit unchecked scalar or plain
 Ari-layout aggregate memory access through raw pointers. `*pointer` provides
 the same dereference operation, and `(*pointer).field`, `(*pointer).0`, or
