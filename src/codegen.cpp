@@ -457,6 +457,99 @@ private:
         }
     }
 
+    void emit_normalize_aggregate_enum_payload_value(SourceLocation loc, const IrType& type) {
+        if (type.qualifier == TypeQualifier::Ptr) return;
+        if (type.qualifier != TypeQualifier::Value) return;
+        if (is_integer_primitive(type.primitive)) {
+            emit_cast_to_type(loc, type);
+            return;
+        }
+        if (type.primitive == IrPrimitiveKind::Bool) {
+            emit_cmp_rax_zero();
+            emit_setcc(0x95);
+            return;
+        }
+        if (type.primitive == IrPrimitiveKind::Enum && type.field_types.empty()) return;
+        if (type.primitive == IrPrimitiveKind::Function ||
+            type.primitive == IrPrimitiveKind::String ||
+            type.primitive == IrPrimitiveKind::Zone) {
+            return;
+        }
+        throw CompileError(where(loc) + ": freestanding backend cannot store aggregate enum payload of type " +
+                           type_name(type) + " yet");
+    }
+
+    void emit_cast_aggregate_enum_payload_slot_to_type(SourceLocation loc, const IrType& type) {
+        if (type.qualifier == TypeQualifier::Ptr) return;
+        if (type.qualifier != TypeQualifier::Value) return;
+        if (is_integer_primitive(type.primitive)) {
+            emit_cast_to_type(loc, type);
+            return;
+        }
+        if (type.primitive == IrPrimitiveKind::Bool) return;
+        if (type.primitive == IrPrimitiveKind::Enum && type.field_types.empty()) return;
+        if (type.primitive == IrPrimitiveKind::Function ||
+            type.primitive == IrPrimitiveKind::String ||
+            type.primitive == IrPrimitiveKind::Zone) {
+            return;
+        }
+        throw CompileError(where(loc) + ": freestanding backend cannot bind aggregate enum payload of type " +
+                           type_name(type) + " yet");
+    }
+
+    void emit_store_aggregate_enum_construct_to_offset(const IrType& target_type,
+                                                       const IrExpr& value,
+                                                       int target_offset) {
+        if (target_type.field_types.empty()) {
+            throw CompileError(where(value.loc) + ": aggregate enum layout is missing during codegen");
+        }
+
+        int tag_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, 0);
+        emit_mov_reg_imm64(Reg::RAX, value.enum_tag);
+        emit_store_rax_to_local(tag_offset, target_type.field_types[0]);
+
+        for (std::size_t i = 1; i < target_type.field_types.size(); ++i) {
+            int payload_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, i);
+            emit_mov_reg_imm64(Reg::RAX, 0);
+            emit_store_rax_to_local(payload_offset, target_type.field_types[i]);
+        }
+
+        for (std::size_t i = 0; i < value.args.size(); ++i) {
+            std::size_t field_index = i + 1;
+            if (field_index >= target_type.field_types.size()) {
+                throw CompileError(where(value.loc) + ": aggregate enum payload slot is missing during codegen");
+            }
+            int payload_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, field_index);
+            emit_expr(*value.args[i]);
+            emit_normalize_aggregate_enum_payload_value(value.args[i]->loc, value.args[i]->type);
+            emit_store_rax_to_local(payload_offset, target_type.field_types[field_index]);
+        }
+    }
+
+    void emit_store_aggregate_enum_value_to_offset(const IrType& target_type,
+                                                   const IrExpr& value,
+                                                   int target_offset) {
+        if (value.kind == IrExprKind::EnumConstruct) {
+            emit_store_aggregate_enum_construct_to_offset(target_type, value, target_offset);
+            return;
+        }
+        if (value.kind == IrExprKind::Block) {
+            emit_block_expr_to_offset(value, target_type, target_offset);
+            return;
+        }
+        if (value.kind == IrExprKind::Local && is_aggregate_type(value.type)) {
+            copy_local_bytes_to_offset(value.loc, local_offset(value.loc, value.name), target_offset, target_type);
+            return;
+        }
+        if (value.kind == IrExprKind::TupleIndex && is_aggregate_type(value.type) &&
+            value.operand && value.operand->kind == IrExprKind::Local) {
+            copy_local_bytes_to_offset(value.loc, lvalue_offset(value), target_offset, target_type);
+            return;
+        }
+        throw CompileError(where(value.loc) +
+                           ": freestanding backend can only store local multi-payload enum values or constructors yet");
+    }
+
     void emit_store_value_to_pointer_base(SourceLocation loc,
                                           const IrExpr& value,
                                           const IrType& target_type,
@@ -513,7 +606,8 @@ private:
             return;
         }
         if (has_aggregate_enum_layout(target_type)) {
-            throw CompileError(where(value.loc) + ": freestanding backend does not lower multi-payload enum values yet");
+            emit_store_aggregate_enum_value_to_offset(target_type, value, target_offset);
+            return;
         }
 
         if (value.kind == IrExprKind::Block) {
@@ -1344,6 +1438,11 @@ private:
     }
 
     void emit_match(const IrStmt& stmt) {
+        if (stmt.match_value && has_aggregate_enum_layout(stmt.match_value->type)) {
+            emit_aggregate_enum_match(stmt);
+            return;
+        }
+
         emit_expr(*stmt.match_value);
         emit_push(Reg::RAX);
 
@@ -1368,6 +1467,123 @@ private:
         }
 
         emit_pop(Reg::RCX);
+        std::size_t end = out_.size();
+        for (std::size_t patch : end_patches) patch_rel32(patch, end);
+    }
+
+    int aggregate_enum_match_base_offset(const IrExpr& value) const {
+        if (value.kind == IrExprKind::Local) return local_offset(value.loc, value.name);
+        if (value.kind == IrExprKind::TupleIndex && value.operand) return lvalue_offset(value);
+        throw CompileError(where(value.loc) +
+                           ": freestanding backend can only match local multi-payload enum values yet");
+    }
+
+    template <typename Arm>
+    std::vector<std::size_t> emit_aggregate_enum_match_arm_fail_jumps(const Arm& arm,
+                                                                      int match_base_offset,
+                                                                      const IrType& enum_type) {
+        require_aggregate_enum_match_arm_supported(arm);
+
+        int tag_offset = aggregate_lvalue_field_offset(arm.loc, match_base_offset, enum_type, 0);
+        if (enum_type.field_types.empty()) {
+            throw CompileError(where(arm.loc) + ": aggregate enum layout is missing during codegen");
+        }
+        const IrType& tag_type = enum_type.field_types[0];
+        emit_load_rax_from_local(tag_offset, tag_type);
+        emit_mov_reg_imm64(Reg::RCX, arm.enum_tag);
+        emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+        return {emit_jcc_placeholder(0x85)};
+    }
+
+    template <typename Arm>
+    void require_aggregate_enum_match_arm_supported(const Arm& arm) const {
+        if (arm.has_literal || arm.has_range ||
+            !arm.payload_literal_conditions.empty() ||
+            !arm.payload_range_conditions.empty() ||
+            !arm.payload_enum_conditions.empty()) {
+            throw CompileError(where(arm.loc) +
+                               ": freestanding backend does not lower aggregate enum payload test patterns yet");
+        }
+    }
+
+    void emit_aggregate_enum_payload_binding(SourceLocation loc,
+                                             int match_base_offset,
+                                             const IrType& enum_type,
+                                             std::uint32_t payload_index,
+                                             const std::string& name,
+                                             const IrType& type) {
+        std::size_t field_index = static_cast<std::size_t>(payload_index) + 1;
+        if (field_index >= enum_type.field_types.size()) {
+            throw CompileError(where(loc) + ": aggregate enum payload slot is missing during codegen");
+        }
+        int payload_offset = aggregate_lvalue_field_offset(loc, match_base_offset, enum_type, field_index);
+        emit_load_rax_from_local(payload_offset, enum_type.field_types[field_index]);
+        emit_cast_aggregate_enum_payload_slot_to_type(loc, type);
+        emit_store_rax_to_local(local_offset(loc, name), type);
+    }
+
+    template <typename Arm>
+    void emit_aggregate_enum_match_arm_bindings(const Arm& arm,
+                                                int match_base_offset,
+                                                const IrType& enum_type) {
+        require_aggregate_enum_match_arm_supported(arm);
+
+        if (arm.has_value_binding) {
+            copy_local_bytes_to_offset(arm.loc,
+                                       match_base_offset,
+                                       local_offset(arm.loc, arm.value_name),
+                                       arm.value_type);
+        }
+
+        if (!arm.payload_bindings.empty()) {
+            for (const auto& binding : arm.payload_bindings) {
+                if (binding.compact_enum_payload) {
+                    throw CompileError(where(arm.loc) +
+                                       ": freestanding backend does not lower nested aggregate enum payload bindings yet");
+                }
+                emit_aggregate_enum_payload_binding(arm.loc,
+                                                    match_base_offset,
+                                                    enum_type,
+                                                    binding.index,
+                                                    binding.name,
+                                                    binding.type);
+            }
+            return;
+        }
+
+        if (arm.has_payload_binding) {
+            emit_aggregate_enum_payload_binding(arm.loc,
+                                                match_base_offset,
+                                                enum_type,
+                                                arm.payload_index,
+                                                arm.payload_name,
+                                                arm.payload_type);
+        }
+    }
+
+    void emit_aggregate_enum_match(const IrStmt& stmt) {
+        if (!stmt.match_value) throw CompileError(where(stmt.loc) + ": match value missing during codegen");
+        int match_base_offset = aggregate_enum_match_base_offset(*stmt.match_value);
+        const IrType& enum_type = stmt.match_value->type;
+
+        std::vector<std::size_t> end_patches;
+        for (const auto& arm : stmt.match_arms) {
+            bool has_next_patch = false;
+            std::vector<std::size_t> next_patches;
+            if (!arm.wildcard) {
+                next_patches = emit_aggregate_enum_match_arm_fail_jumps(arm, match_base_offset, enum_type);
+                has_next_patch = true;
+            }
+
+            emit_aggregate_enum_match_arm_bindings(arm, match_base_offset, enum_type);
+            emit_statements(arm.body);
+            end_patches.push_back(emit_jmp_placeholder());
+
+            if (has_next_patch) {
+                for (std::size_t patch : next_patches) patch_rel32(patch, out_.size());
+            }
+        }
+
         std::size_t end = out_.size();
         for (std::size_t patch : end_patches) patch_rel32(patch, end);
     }
@@ -1613,6 +1829,11 @@ private:
         }
         if (expr.match_arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during codegen");
 
+        if (expr.match_value && has_aggregate_enum_layout(expr.match_value->type)) {
+            emit_aggregate_enum_match_expr(expr);
+            return;
+        }
+
         emit_expr(*expr.match_value);
         emit_push(Reg::RAX);
 
@@ -1640,6 +1861,36 @@ private:
             emit_statements(arm.body);
             emit_expr(*arm.value);
             emit_pop(Reg::RCX);
+            end_patches.push_back(emit_jmp_placeholder());
+
+            if (has_next_patch) {
+                for (std::size_t patch : next_patches) patch_rel32(patch, out_.size());
+            }
+        }
+
+        std::size_t end = out_.size();
+        for (std::size_t patch : end_patches) patch_rel32(patch, end);
+    }
+
+    void emit_aggregate_enum_match_expr(const IrExpr& expr) {
+        if (!expr.match_value) throw CompileError(where(expr.loc) + ": match value missing during codegen");
+        int match_base_offset = aggregate_enum_match_base_offset(*expr.match_value);
+        const IrType& enum_type = expr.match_value->type;
+
+        std::vector<std::size_t> end_patches;
+        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
+            const IrMatchExprArm& arm = expr.match_arms[i];
+            bool has_next_patch = false;
+            std::vector<std::size_t> next_patches;
+
+            if (!arm.wildcard && i + 1 != expr.match_arms.size()) {
+                next_patches = emit_aggregate_enum_match_arm_fail_jumps(arm, match_base_offset, enum_type);
+                has_next_patch = true;
+            }
+
+            emit_aggregate_enum_match_arm_bindings(arm, match_base_offset, enum_type);
+            emit_statements(arm.body);
+            emit_expr(*arm.value);
             end_patches.push_back(emit_jmp_placeholder());
 
             if (has_next_patch) {

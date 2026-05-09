@@ -63,14 +63,16 @@
    mutated narrow integer reloads. Shared layout queries now compute natural
    byte sizes, alignments, and field-offset tables for tuple, struct,
    fixed-array, and aggregate-enum values. The raw backend consumes those byte
-   offsets for tuple, struct, and fixed-array local storage, whole plain
-   aggregate copies, and raw-pointer scalar field/index access. Narrow scalar
-   returns are normalized at the freestanding function boundary, including
-   unsigned wraparound results from `u8`/`u16`/`u32` functions. The remaining
-   aggregate lowering gap is multi-payload aggregate enum storage in the raw
-   backend, then explicit aggregate and external ABI classification.
-   - [raw-aggregate-enums] lower multi-payload aggregate enum storage and
-     field/payload access in the raw backend with the shared layout tables
+   offsets for tuple, struct, fixed-array, and local aggregate-enum storage,
+   whole plain aggregate copies, raw-pointer scalar field/index access, and
+   local aggregate-enum tag/payload-binding matches. Narrow scalar returns are
+   normalized at the freestanding function boundary, including unsigned
+   wraparound results from `u8`/`u16`/`u32` functions. The remaining aggregate
+   lowering gap is payload-test/pointer/ABI coverage for aggregate enums, then
+   explicit aggregate and external ABI classification.
+   - [raw-aggregate-enums] lower aggregate enum payload literal/range/nested
+     tests, pointer-backed aggregate enum copies, and direct enum-constructor
+     temporaries in the raw backend with the shared layout tables
    - [abi-aggregate-calls] pass and return tuple, struct, fixed-array, and
      aggregate enum values with explicit platform ABI rules instead of relying
      on local-stack materialization
@@ -136,7 +138,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      nested aggregate-enum values once the ABI and copy rules are explicit
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
-   - [freestanding] lower aggregate enum payload storage and tests in the raw backend
+   - [freestanding] extend raw aggregate enum lowering beyond local
+     constructor/copy and tag/payload-binding matches to payload literal,
+     range, and nested enum-case tests
 6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]`,
     `Maybe[T]` as a public alias of `Option[T]`, and `Result[T, E]` are source

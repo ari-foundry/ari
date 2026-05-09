@@ -100,14 +100,17 @@ backend switches that enum to an aggregate layout:
 Aggregate enum payload slots currently accept integer, bool, pointer-shaped
 values such as `string`, `ptr T`, and `fn(...) -> ...`, plus one-word enum
 values. Tuples, structs, vectors, owned values, and nested aggregate-enum
-payloads remain planned. The freestanding backend still lowers only the compact
-one-word enum layout.
+payloads remain planned. The freestanding backend can store and copy local
+aggregate enum values, then match local values by tag with positional payload
+bindings. Payload literal/range/nested tests, pointer-backed aggregate enum
+copies, and aggregate enum parameters/returns remain planned there.
 
 ## Passing And Returning
 
-Lowered enum values can be stored, passed, and returned. Compact one-word enum
-values can also be compared with `==` and `!=`; aggregate enum comparison is
-planned.
+The LLVM backend can store, pass, and return lowered enum values. Compact
+one-word enum values can also be compared with `==` and `!=`; aggregate enum
+comparison is planned. The freestanding backend currently keeps aggregate enum
+support local-stack-only.
 
 ```ari
 fn choose(flag: bool) -> OptionI32 {
@@ -580,9 +583,11 @@ Payload bindings are immutable branch-local values.
 
 Expression-valued `match` currently supports enum patterns and copyable
 payloads. Borrow-valued arm results are rejected until the borrow checker grows
-richer expression lifetime tracking. Tuple-valued and aggregate-enum match
-expressions are lowered by the LLVM backend, but the freestanding backend only
-materializes scalar and compact-enum arm results for now.
+richer expression lifetime tracking. Tuple-valued and aggregate-enum match arm
+results are lowered by the LLVM backend, but the freestanding backend only
+materializes scalar and compact-enum arm results for now. Freestanding scalar
+arm results work for local aggregate enum matches that use tag checks and
+payload bindings.
 
 ## Match Diagnostics
 

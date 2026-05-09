@@ -391,6 +391,8 @@ check-match: $(TARGET)
 	grep -q "insertvalue { i32, i64, i64, i64 }" $(BUILD_DIR)/match/enum-multi-payload.ll
 	grep -q "extractvalue { i32, i64, i64, i64 }" $(BUILD_DIR)/match/enum-multi-payload.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-multi-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-multi-payload.elf; $(BUILD_DIR)/match/enum-multi-payload.elf; code=$$?; test $$code -eq 33; fi
+	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-local.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-local.raw
+	$(BUILD_DIR)/match/freestanding-aggregate-enum-local.raw; code=$$?; test $$code -eq 30
 	$(TARGET) tests/ok/enum-pointer-shaped-payloads.ari --emit-llvm $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "ptrtoint ptr" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "inttoptr i64" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll

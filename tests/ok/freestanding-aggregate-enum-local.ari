@@ -1,0 +1,39 @@
+enum Color {
+  Rgb(u8, u8, u8),
+  Gray(i64),
+  Off,
+}
+
+fn main() -> i64 {
+  let color: Color = Rgb(2u8, 3u8, 4u8);
+  let copy: Color = color;
+  let gray: Color = Gray(7);
+  let off: Color = Off;
+
+  let color_score: i64 = match copy {
+    Rgb(red, green, blue) => (red as i64) + (green as i64) * 2 + (blue as i64) * 3,
+    Gray(level) => level,
+    Off => 5;
+  };
+
+  let gray_score: i64 = match gray {
+    Rgb(first, ..) => first as i64,
+    Gray(gray_level) => gray_level,
+    Off => 11;
+  };
+
+  var off_score: i64 = 0;
+  match off {
+    Rgb(..) => {
+      off_score = 1;
+    }
+    Gray(..) => {
+      off_score = 2;
+    }
+    Off => {
+      off_score = 3;
+    }
+  }
+
+  return color_score + gray_score + off_score;
+}
