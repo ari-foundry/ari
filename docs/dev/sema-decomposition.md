@@ -8,6 +8,8 @@ construction. Some helpers have already moved out to focused files:
 - `attribute_semantics` for attribute validation helpers
 - `prelude_resolver` for compiler-known standard-library spellings
 - `try_model` for `?` residual shape helpers
+- `type_semantics` for shared type predicates, raw-pointer type checks,
+  literal range checks, and assignability/operand diagnostics
 - `vector_semantics` for local `Vec[T]` storage helpers
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions, and
@@ -25,25 +27,19 @@ reuse the existing feature check target for the moved responsibility.
 These areas can move first because they mostly depend on `IrType`, `Pattern`,
 or `SourceLocation`, not on the whole `SemanticChecker` state.
 
-1. Extract type predicates and formatting into `type_semantics`.
-   - Move `is_borrow_type`, `contains_borrow_type`, raw pointer checks,
-     materializable aggregate checks, integer literal range helpers, and shared
-     `type_name`-adjacent validation helpers.
-   - Keep `resolve_executable_type` in `SemanticChecker` until name resolution
-     state is split.
-2. Continue extracting basic IR construction into `ir_builders`.
+1. Continue extracting basic IR construction into `ir_builders`.
    - Local lvalues, IR var declarations, tuple/vector index helpers, scalar
      literals, casts, bool binary conditions, and direct builtin call nodes are
      already outside `sema.cpp`.
    - Next small targets are enum constructors, pointer operation nodes, and
      block/match/if expression assembly once their semantic checks have narrow
      inputs.
-3. Extract constant evaluation into `constant_semantics`.
+2. Extract constant evaluation into `constant_semantics`.
    - Move `ConstantValue`, literal folding, constant binary evaluation,
      constant pattern conversion, cycle diagnostics, and constant-to-IR literal
      construction.
    - Keep the constant declaration table owned by `SemanticChecker` initially.
-4. Continue extracting pattern coverage helpers into `pattern_coverage`.
+3. Continue extracting pattern coverage helpers into `pattern_coverage`.
    - Product rectangle math now lives in `product_coverage`.
    - Move scalar range interval math, finite product domain enumeration,
      duplicate/shadow detection helpers, and the remaining sema-bound
