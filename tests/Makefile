@@ -662,6 +662,12 @@ check-operators: $(TARGET)
 	grep -q "fcmp ogt double" $(BUILD_DIR)/operators/operators-float-llvm.ll
 	$(TARGET) --freestanding tests/ok/operators-float-llvm.ari -o $(BUILD_DIR)/operators/operators-float-llvm.raw
 	$(BUILD_DIR)/operators/operators-float-llvm.raw; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/operators-float-casts.ari --emit-llvm $(BUILD_DIR)/operators/operators-float-casts.ll
+	grep -q "fpext float" $(BUILD_DIR)/operators/operators-float-casts.ll
+	grep -q "fptrunc double" $(BUILD_DIR)/operators/operators-float-casts.ll
+	$(TARGET) --freestanding tests/ok/operators-float-casts.ari -o $(BUILD_DIR)/operators/operators-float-casts.raw
+	$(BUILD_DIR)/operators/operators-float-casts.raw; code=$$?; test $$code -eq 15
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/operators-float-casts.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/operators/operators-float-casts.elf; $(BUILD_DIR)/operators/operators-float-casts.elf; code=$$?; test $$code -eq 15; fi
 	$(TARGET) tests/ok/operators-f128-llvm.ari --emit-llvm $(BUILD_DIR)/operators/operators-f128-llvm.ll
 	grep -q "alloca fp128" $(BUILD_DIR)/operators/operators-f128-llvm.ll
 	grep -q "fadd fp128" $(BUILD_DIR)/operators/operators-f128-llvm.ll
@@ -1695,7 +1701,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/not-non-bool.ari -o $(BUILD_DIR)/errors/not-non-bool.elf >$(BUILD_DIR)/errors/not-non-bool.err 2>&1; then exit 1; fi
 	grep -q "logical operand must be bool, got i64" $(BUILD_DIR)/errors/not-non-bool.err
 	if $(TARGET) tests/errors/invalid-cast.ari -o $(BUILD_DIR)/errors/invalid-cast.elf >$(BUILD_DIR)/errors/invalid-cast.err 2>&1; then exit 1; fi
-	grep -q "explicit casts currently require integer types or raw pointer casts, got bool as i64" $(BUILD_DIR)/errors/invalid-cast.err
+	grep -q "explicit casts currently require integer types, float types, or raw pointer casts, got bool as i64" $(BUILD_DIR)/errors/invalid-cast.err
 	if $(TARGET) tests/errors/enum-payload-too-wide.ari -o $(BUILD_DIR)/errors/enum-payload-too-wide.elf >$(BUILD_DIR)/errors/enum-payload-too-wide.err 2>&1; then exit 1; fi
 	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, or one-word enum values" $(BUILD_DIR)/errors/enum-payload-too-wide.err
 	if $(TARGET) tests/errors/enum-payload-count.ari -o $(BUILD_DIR)/errors/enum-payload-count.elf >$(BUILD_DIR)/errors/enum-payload-count.err 2>&1; then exit 1; fi

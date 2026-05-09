@@ -967,6 +967,14 @@ private:
         emit_movzx_eax_al();
     }
 
+    void emit_sse_float_width_cast(const IrType& from, const IrType& to) {
+        if (from.primitive == to.primitive) return;
+        out_.u8(from.primitive == IrPrimitiveKind::F32 ? 0xF3 : 0xF2);
+        out_.u8(0x0F);
+        out_.u8(0x5A);
+        emit_modrm(3, 0, 0);
+    }
+
     void emit_mov_mem_reg(int offset, Reg src) {
         int s = reg_code(src);
         emit_rex(true, s, reg_code(Reg::RBP));
@@ -2777,8 +2785,17 @@ private:
 
     void emit_cast(const IrExpr& expr) {
         if ((expr.operand && is_raw_float_type(expr.operand->type)) || is_raw_float_type(expr.type)) {
-            throw CompileError(where(expr.loc) +
-                               ": freestanding backend does not lower float casts yet");
+            if (!expr.operand ||
+                !is_raw_f32_or_f64_type(expr.operand->type) ||
+                !is_raw_f32_or_f64_type(expr.type)) {
+                throw CompileError(where(expr.loc) +
+                                   ": freestanding backend does not lower f128 or integer/float casts yet");
+            }
+            emit_expr(*expr.operand);
+            emit_mov_gp_to_xmm(0, Reg::RAX);
+            emit_sse_float_width_cast(expr.operand->type, expr.type);
+            emit_mov_xmm_to_gp(Reg::RAX, 0);
+            return;
         }
         emit_expr(*expr.operand);
         emit_cast_to_type(expr.loc, expr.type);

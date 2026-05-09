@@ -11526,9 +11526,10 @@ private:
         }
 
         bool integer_cast = is_value_integer_type(operand->type) && is_value_integer_type(target);
+        bool float_cast = is_value_float_type(operand->type) && is_value_float_type(target);
         bool raw_pointer_cast = is_raw_pointer_cast(operand->type, target);
-        if (!integer_cast && !raw_pointer_cast) {
-            fail(expr.loc, "explicit casts currently require integer types or raw pointer casts, got " +
+        if (!integer_cast && !float_cast && !raw_pointer_cast) {
+            fail(expr.loc, "explicit casts currently require integer types, float types, or raw pointer casts, got " +
                            type_name(operand->type) + " as " + type_name(target));
         }
 

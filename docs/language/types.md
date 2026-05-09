@@ -45,17 +45,20 @@ Conditions for `if`, `while`, `&&`, `||`, and `!` must be `bool`.
 
 ## Casts
 
-Integer casts use explicit `as`:
+Integer and float-width casts use explicit `as`:
 
 ```ari
 let byte: u8 = 255
 let signed: i64 = byte as i64
 let wrapped: u8 = 300 as u8
+let wide: f64 = 1.5f32 as f64
+let narrow: f32 = 2.25f64 as f32
 ```
 
 Narrowing keeps the low bits. Signed targets sign-extend after truncation, and
-unsigned targets zero-extend. Ari does not implicitly cast between integer
-widths.
+unsigned targets zero-extend. Float-width casts between `f32`, `f64`, and
+`f128` are explicit as well. Ari does not implicitly cast between integer or
+float widths.
 
 ## Floats
 
@@ -73,8 +76,9 @@ The default LLVM host backend lowers `f32`, `f64`, and `f128` values as LLVM
 local `f32`/`f64` literal values as raw IEEE bit patterns, including
 `ptr_load`, `ptr_store`, and `*pointer` access through `ptr f32` or `ptr f64`.
 It also lowers `f32`/`f64` arithmetic and ordered comparisons with SSE scalar
-instructions. It still rejects `f128`, float calls, and float casts until the
-remaining native floating-point ABI work is implemented.
+instructions, including `f32`/`f64` width casts. It still rejects `f128`, float
+calls, and integer/float casts until the remaining native floating-point ABI
+work is implemented.
 
 ## Strings
 
