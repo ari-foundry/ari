@@ -1,0 +1,54 @@
+enum Wide {
+  Big(i64),
+  Small(u8),
+  Flag(bool),
+  None,
+}
+
+fn main() -> i64 {
+  let twelve: Wide = Big(12i64);
+  let exact: Wide = Big(20i64);
+  let ranged: Wide = Big(32i64);
+  let small: Wide = Small(250u8);
+  let flag: Wide = Flag(false);
+  let none: Wide = None;
+
+  let a: i64 = match twelve {
+    Big(10i64 | 12i64) => 1,
+    Big(_) => 2,
+    _ => 0;
+  };
+
+  let b: i64 = match exact {
+    Big(exact_amount @ 20i64) => exact_amount,
+    Big(_) => 3,
+    _ => 0;
+  };
+
+  let c: i64 = match ranged {
+    Big(ranged_amount @ 30i64..=35i64) => ranged_amount,
+    Big(_) => 4,
+    _ => 0;
+  };
+
+  let d: i64 = match small {
+    Small(250u8) => 9,
+    Small(_) => 1,
+    _ => 0;
+  };
+
+  let e: i64 = match flag {
+    Flag(true) => 4,
+    Flag(false) => 5,
+    _ => 0;
+  };
+
+  let f: i64 = match none {
+    Big(_) => 1,
+    Small(_) => 2,
+    Flag(_) => 3,
+    None => 6;
+  };
+
+  return a + b + c + d + e + f;
+}

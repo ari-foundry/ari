@@ -1492,18 +1492,68 @@ private:
         emit_load_rax_from_local(tag_offset, tag_type);
         emit_mov_reg_imm64(Reg::RCX, arm.enum_tag);
         emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
-        return {emit_jcc_placeholder(0x85)};
+        std::vector<std::size_t> patches;
+        patches.push_back(emit_jcc_placeholder(0x85));
+
+        for (const auto& condition : arm.payload_literal_conditions) {
+            emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+            emit_mov_reg_imm64(Reg::RCX, aggregate_payload_literal_bits(condition));
+            emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+            patches.push_back(emit_jcc_placeholder(0x85));
+        }
+
+        for (const auto& condition : arm.payload_range_conditions) {
+            if (condition.compact_enum_payload) {
+                throw CompileError(where(arm.loc) +
+                                   ": freestanding backend does not lower nested aggregate enum payload test patterns yet");
+            }
+            emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+            emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.type);
+            emit_mov_reg_imm64(Reg::RCX, payload_range_start_bits(condition));
+            emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+            patches.push_back(emit_jcc_placeholder(condition.is_unsigned ? 0x82 : 0x8C));
+
+            emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+            emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.type);
+            emit_mov_reg_imm64(Reg::RCX, payload_range_end_bits(condition));
+            emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+            patches.push_back(emit_jcc_placeholder(payload_range_past_end_cc(condition)));
+        }
+
+        return patches;
     }
 
     template <typename Arm>
     void require_aggregate_enum_match_arm_supported(const Arm& arm) const {
         if (arm.has_literal || arm.has_range ||
-            !arm.payload_literal_conditions.empty() ||
-            !arm.payload_range_conditions.empty() ||
             !arm.payload_enum_conditions.empty()) {
             throw CompileError(where(arm.loc) +
                                ": freestanding backend does not lower aggregate enum payload test patterns yet");
         }
+    }
+
+    std::size_t aggregate_enum_payload_field_index(SourceLocation loc,
+                                                   const IrType& enum_type,
+                                                   std::uint32_t payload_index) const {
+        std::size_t field_index = static_cast<std::size_t>(payload_index) + 1;
+        if (field_index >= enum_type.field_types.size()) {
+            throw CompileError(where(loc) + ": aggregate enum payload slot is missing during codegen");
+        }
+        return field_index;
+    }
+
+    void emit_load_aggregate_enum_payload_slot(std::uint32_t payload_index,
+                                               SourceLocation loc,
+                                               int match_base_offset,
+                                               const IrType& enum_type) {
+        std::size_t field_index = aggregate_enum_payload_field_index(loc, enum_type, payload_index);
+        int payload_offset = aggregate_lvalue_field_offset(loc, match_base_offset, enum_type, field_index);
+        emit_load_rax_from_local(payload_offset, enum_type.field_types[field_index]);
+    }
+
+    static std::uint64_t aggregate_payload_literal_bits(const IrPayloadLiteralCondition& condition) {
+        if (condition.is_bool) return condition.bool_value ? 1 : 0;
+        return condition.value;
     }
 
     void emit_aggregate_enum_payload_binding(SourceLocation loc,
@@ -1512,12 +1562,7 @@ private:
                                              std::uint32_t payload_index,
                                              const std::string& name,
                                              const IrType& type) {
-        std::size_t field_index = static_cast<std::size_t>(payload_index) + 1;
-        if (field_index >= enum_type.field_types.size()) {
-            throw CompileError(where(loc) + ": aggregate enum payload slot is missing during codegen");
-        }
-        int payload_offset = aggregate_lvalue_field_offset(loc, match_base_offset, enum_type, field_index);
-        emit_load_rax_from_local(payload_offset, enum_type.field_types[field_index]);
+        emit_load_aggregate_enum_payload_slot(payload_index, loc, match_base_offset, enum_type);
         emit_cast_aggregate_enum_payload_slot_to_type(loc, type);
         emit_store_rax_to_local(local_offset(loc, name), type);
     }
