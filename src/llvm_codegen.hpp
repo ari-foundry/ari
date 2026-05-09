@@ -6,6 +6,10 @@
 
 namespace ari {
 
-std::string emit_llvm_ir(const IrProgram& program);
+struct LlvmEmitOptions {
+    bool shared_library = false;
+};
+
+std::string emit_llvm_ir(const IrProgram& program, LlvmEmitOptions options = {});
 
 } // namespace ari

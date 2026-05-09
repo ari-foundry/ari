@@ -208,6 +208,11 @@ pub fn increment(value: i64) -> i64 {
 Explicit symbols must be C identifiers. See
 [Symbol Mangling](../dev/symbol-mangling.md) for the default encoding.
 
+In `--shared` builds, `pub` Ari functions and explicit export/no-mangle
+functions remain default-visible. Private helper functions are emitted with
+hidden LLVM visibility, and Ari-owned runtime helpers are hidden as internal
+implementation details.
+
 ## Type Mapping
 
 Current LLVM host C FFI type mapping targets the default x86-64 Linux/glibc

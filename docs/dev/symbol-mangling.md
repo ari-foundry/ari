@@ -25,5 +25,10 @@ function to bypass Ari mangling and emit a C symbol directly. The argument form
 chooses an exact symbol; the no-argument forms use the final source path
 segment. Exported symbols must be C identifiers.
 
-This mangling is intentionally still a v0 ABI. Future visibility controls may
-limit which public definitions are placed in a dynamic symbol table.
+When emitting host LLVM IR for `--shared`, public Ari functions and explicit
+`@export`/`@no_mangle` functions keep default visibility. Private Ari helper
+functions and Ari-owned runtime helpers are emitted with hidden LLVM
+visibility, so they are not intended to be part of the dynamic library ABI.
+
+This mangling is intentionally still a v0 ABI. Future overloading or ABI
+versioning work may revise the symbol identity rules.

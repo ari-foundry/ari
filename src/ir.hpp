@@ -380,6 +380,7 @@ struct IrFunction {
     IrType return_type;
     std::vector<IrStmtPtr> body;
     SourceLocation loc;
+    bool shared_export = false;
 };
 
 struct IrProgram {

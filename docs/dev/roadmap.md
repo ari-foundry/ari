@@ -185,13 +185,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Backend Work
 
-1. Refine shared-library export policy. Path-only v0 Ari symbol mangling is
-   implemented, and source declarations can opt into explicit C symbols with
-   `@export`, `@export("symbol")`, or `@no_mangle`.
-   - [visibility] select only exported/public symbols for dynamic export once object visibility is controlled
-2. Add exact integer-width stack and ABI layout in `--freestanding`.
-3. Emit relocatable object files for the native backend.
-4. Define non-local aggregate ABI layouts for tuple parameters/returns,
+1. Add exact integer-width stack and ABI layout in `--freestanding`.
+2. Emit relocatable object files for the native backend.
+3. Define non-local aggregate ABI layouts for tuple parameters/returns,
    structs, fixed arrays, and vectors. Fixed-size local tuple/array/vector
    stack layout, LLVM aggregate enum layout, and tuple/array/vector index access
    are implemented on the LLVM backend.
@@ -202,15 +198,15 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      expressions in the freestanding backend
    - [vectors] define non-local and growable vector ABI after allocator-backed `Vec[T]` storage exists
    - [enums] lower multi-payload aggregate enum layout in the freestanding backend and define its FFI ABI
-5. Add freestanding runtime string storage so raw ELF output can lower string
+4. Add freestanding runtime string storage so raw ELF output can lower string
    values and line input helpers without relying on the host C runtime.
-6. Lower floating-point scalar values and calls in the freestanding backend.
+5. Lower floating-point scalar values and calls in the freestanding backend.
    - [values] materialize `f32`, `f64`, and eventual `f128` scalar expressions
    - [abi] pass and return supported floats with the platform calling convention
    - [ops] lower arithmetic, comparisons, casts, and raw pointer load/store for
      float pointee types
-7. Expand FFI type coverage beyond the x86-64 Linux C aliases.
-8. Decide whether source-level function overloading belongs in Ari. The current
+6. Expand FFI type coverage beyond the x86-64 Linux C aliases.
+7. Decide whether source-level function overloading belongs in Ari. The current
    v0 mangling intentionally omits parameter types because overloading is not
    supported.
 

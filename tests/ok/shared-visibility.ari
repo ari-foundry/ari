@@ -1,0 +1,16 @@
+fn helper(value: i64) -> i64 {
+  value + 1
+}
+
+pub fn public_api(value: i64) -> i64 {
+  helper(value)
+}
+
+@export("ari_named_private")
+fn named_private(value: i64) -> i64 {
+  value + 2
+}
+
+fn main() -> i64 {
+  public_api(1) + named_private(2)
+}

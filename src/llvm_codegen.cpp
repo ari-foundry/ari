@@ -142,7 +142,8 @@ static bool is_prelude_slice_type(const IrType& type) {
 
 class LlvmEmitter {
 public:
-    explicit LlvmEmitter(const IrProgram& program) : program_(program) {}
+    LlvmEmitter(const IrProgram& program, LlvmEmitOptions options)
+        : program_(program), options_(options) {}
 
     std::string emit() {
         collect_symbols();
@@ -214,6 +215,7 @@ private:
     }
 
     const IrProgram& program_;
+    LlvmEmitOptions options_;
     std::ostringstream declarations_;
     std::ostringstream runtime_;
     std::ostringstream functions_;
@@ -431,12 +433,13 @@ private:
 
     void emit_runtime() {
         out_ = &runtime_;
+        const std::string runtime_visibility = options_.shared_library ? "hidden " : "";
         std::string fmt_i64 = string_ptr("%lld");
         std::string fmt_bool = string_ptr("%d");
         std::string empty = string_ptr("");
         std::string line_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_line_buffer, i64 0, i64 0)";
 
-        line("define void @ari_context_init(i32 %argc, ptr %argv) {");
+        line("define " + runtime_visibility + "void @ari_context_init(i32 %argc, ptr %argv) {");
         line("entry:");
         line("  store i32 %argc, ptr @ari_argc");
         line("  store ptr %argv, ptr @ari_argv");
@@ -444,13 +447,13 @@ private:
         line("}");
         line();
 
-        line("define void @ari_context_shutdown() {");
+        line("define " + runtime_visibility + "void @ari_context_shutdown() {");
         line("entry:");
         line("  ret void");
         line("}");
         line();
 
-        line("define i64 @ari_builtin_context_argc() {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_context_argc() {");
         line("entry:");
         line("  %argc = load i32, ptr @ari_argc");
         line("  %wide = sext i32 %argc to i64");
@@ -458,7 +461,7 @@ private:
         line("}");
         line();
 
-        line("define ptr @ari_builtin_context_arg(i64 %index) {");
+        line("define " + runtime_visibility + "ptr @ari_builtin_context_arg(i64 %index) {");
         line("entry:");
         line("  %argc32 = load i32, ptr @ari_argc");
         line("  %argc = sext i32 %argc32 to i64");
@@ -476,14 +479,14 @@ private:
         line("}");
         line();
 
-        line("define i64 @ari_builtin_write_i64(i64 %value) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_write_i64(i64 %value) {");
         line("entry:");
         line("  call i32 (ptr, ...) @printf(ptr " + fmt_i64 + ", i64 %value)");
         line("  ret i64 0");
         line("}");
         line();
 
-        line("define i64 @ari_builtin_write_bool(i1 %value) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_write_bool(i1 %value) {");
         line("entry:");
         line("  %wide = zext i1 %value to i32");
         line("  call i32 (ptr, ...) @printf(ptr " + fmt_bool + ", i32 %wide)");
@@ -491,7 +494,7 @@ private:
         line("}");
         line();
 
-        line("define i64 @ari_builtin_write_byte(i8 %value) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_write_byte(i8 %value) {");
         line("entry:");
         line("  %wide = zext i8 %value to i32");
         line("  call i32 @putchar(i32 %wide)");
@@ -499,14 +502,14 @@ private:
         line("}");
         line();
 
-        line("define i64 @ari_builtin_newline() {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_newline() {");
         line("entry:");
         line("  call i32 @putchar(i32 10)");
         line("  ret i64 0");
         line("}");
         line();
 
-        line("define i64 @ari_builtin_read_byte() {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_read_byte() {");
         line("entry:");
         line("  %ch = call i32 @getchar()");
         line("  %wide = sext i32 %ch to i64");
@@ -514,7 +517,7 @@ private:
         line("}");
         line();
 
-        line("define ptr @ari_builtin_read_line() {");
+        line("define " + runtime_visibility + "ptr @ari_builtin_read_line() {");
         line("entry:");
         line("  %stdin.file = load ptr, ptr @stdin");
         line("  %line = call ptr @fgets(ptr " + line_buffer + ", i32 4096, ptr %stdin.file)");
@@ -547,7 +550,7 @@ private:
         line("}");
         line();
 
-        line("define ptr @ari_builtin_zone_create(i64 %capacity) {");
+        line("define " + runtime_visibility + "ptr @ari_builtin_zone_create(i64 %capacity) {");
         line("entry:");
         line("  %bad.capacity = icmp sle i64 %capacity, 0");
         line("  br i1 %bad.capacity, label %fail, label %alloc.data");
@@ -576,7 +579,7 @@ private:
         line("}");
         line();
 
-        line("define ptr @ari_builtin_zone_alloc(ptr %zone.slot, i64 %bytes, i64 %align) {");
+        line("define " + runtime_visibility + "ptr @ari_builtin_zone_alloc(ptr %zone.slot, i64 %bytes, i64 %align) {");
         line("entry:");
         line("  %zone = load ptr, ptr %zone.slot");
         line("  %zone.null = icmp eq ptr %zone, null");
@@ -615,7 +618,7 @@ private:
         line("}");
         line();
 
-        line("define void @ari_builtin_zone_reset(ptr %zone.slot) {");
+        line("define " + runtime_visibility + "void @ari_builtin_zone_reset(ptr %zone.slot) {");
         line("entry:");
         line("  %zone = load ptr, ptr %zone.slot");
         line("  %zone.null = icmp eq ptr %zone, null");
@@ -630,7 +633,7 @@ private:
         line("}");
         line();
 
-        line("define void @ari_builtin_zone_destroy(ptr %zone) {");
+        line("define " + runtime_visibility + "void @ari_builtin_zone_destroy(ptr %zone) {");
         line("entry:");
         line("  %zone.null = icmp eq ptr %zone, null");
         line("  br i1 %zone.null, label %fail, label %destroy");
@@ -646,7 +649,7 @@ private:
         line("}");
         line();
 
-        line("define i64 @ari_builtin_assert(i1 %condition) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_assert(i1 %condition) {");
         line("entry:");
         line("  br i1 %condition, label %ok, label %fail");
         line("ok:");
@@ -657,7 +660,7 @@ private:
         line("}");
         line();
 
-        line("define i64 @ari_builtin_assert_eq_i64(i64 %left, i64 %right) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_assert_eq_i64(i64 %left, i64 %right) {");
         line("entry:");
         line("  %ok = icmp eq i64 %left, %right");
         line("  br i1 %ok, label %pass, label %fail");
@@ -669,7 +672,7 @@ private:
         line("}");
         line();
 
-        line("define i64 @ari_builtin_assert_ne_i64(i64 %left, i64 %right) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_assert_ne_i64(i64 %left, i64 %right) {");
         line("entry:");
         line("  %ok = icmp ne i64 %left, %right");
         line("  br i1 %ok, label %pass, label %fail");
@@ -681,7 +684,7 @@ private:
         line("}");
         line();
 
-        line("define i64 @ari_builtin_assert_eq_bool(i1 %left, i1 %right) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_assert_eq_bool(i1 %left, i1 %right) {");
         line("entry:");
         line("  %ok = icmp eq i1 %left, %right");
         line("  br i1 %ok, label %pass, label %fail");
@@ -693,7 +696,7 @@ private:
         line("}");
         line();
 
-        line("define i64 @ari_builtin_assert_ne_bool(i1 %left, i1 %right) {");
+        line("define " + runtime_visibility + "i64 @ari_builtin_assert_ne_bool(i1 %left, i1 %right) {");
         line("entry:");
         line("  %ok = icmp ne i1 %left, %right");
         line("  br i1 %ok, label %pass, label %fail");
@@ -705,7 +708,7 @@ private:
         line("}");
         line();
 
-        line("define void @ari_builtin_panic() {");
+        line("define " + runtime_visibility + "void @ari_builtin_panic() {");
         line("entry:");
         line("  call void @exit(i32 1)");
         line("  unreachable");
@@ -883,7 +886,9 @@ private:
         current_label_.clear();
         current_return_ = fn.return_type;
 
-        line("define " + llvm_type(fn.return_type) + " " + quote_global(function_symbols_.at(fn.name)) + "(" + param_decl(fn.params) + ") {");
+        std::string visibility;
+        if (options_.shared_library && !fn.shared_export) visibility = "hidden ";
+        line("define " + visibility + llvm_type(fn.return_type) + " " + quote_global(function_symbols_.at(fn.name)) + "(" + param_decl(fn.params) + ") {");
         emit_label("entry");
 
         std::vector<std::pair<std::string, IrType>> local_types;
@@ -2931,8 +2936,8 @@ private:
 
 } // namespace
 
-std::string emit_llvm_ir(const IrProgram& program) {
-    LlvmEmitter emitter(program);
+std::string emit_llvm_ir(const IrProgram& program, LlvmEmitOptions options) {
+    LlvmEmitter emitter(program, options);
     return emitter.emit();
 }
 

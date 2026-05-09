@@ -50,6 +50,12 @@ ABI only. Ari functions are emitted with Ari mangled names such as
 length-prefixed scheme. Parameter names, parameter types, and return types are
 not encoded because Ari does not support function overloading yet.
 
+For `--shared` host output, sema marks public functions plus explicit
+`@export`/`@no_mangle` functions as ABI-visible. The LLVM backend emits private
+Ari helper functions and Ari-owned runtime helper functions with hidden
+visibility in that mode, while normal executable and plain `--emit-llvm` output
+keep the previous default visibility.
+
 The freestanding backend still uses the small internal integer/bool calling
 convention: the first six scalar arguments use registers and later arguments use
 caller-provided stack slots. Sema caps functions and calls at 65,535
@@ -121,7 +127,6 @@ The backends still intentionally reject or do not ABI-lower:
 
 ## Next Backend Work
 
-1. Add source-level export policy for shared libraries.
-2. Add object-file output for the freestanding/backend-native path.
-3. Define non-local aggregate ABI layouts for tuples, structs, and vectors.
-4. Move compiler-known prelude stubs toward Ari source modules where possible.
+1. Add object-file output for the freestanding/backend-native path.
+2. Define non-local aggregate ABI layouts for tuples, structs, and vectors.
+3. Move compiler-known prelude stubs toward Ari source modules where possible.

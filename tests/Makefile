@@ -782,6 +782,14 @@ check-meta: $(TARGET)
 	grep -q 'define i64 @"increment"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"reset"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'call i64 @"ari_public_add"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
+	$(TARGET) tests/ok/shared-visibility.ari --shared --emit-llvm $(BUILD_DIR)/meta/shared-visibility.ll
+	grep -q 'define hidden i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility.ll
+	grep -q 'define i64 @"_ARNv10public_api"' $(BUILD_DIR)/meta/shared-visibility.ll
+	grep -q 'define i64 @"ari_named_private"' $(BUILD_DIR)/meta/shared-visibility.ll
+	grep -q 'define hidden i64 @ari_builtin_write_i64' $(BUILD_DIR)/meta/shared-visibility.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v nm >/dev/null 2>&1; then $(TARGET) tests/ok/shared-visibility.ari --shared --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/meta/shared-visibility.so; nm -D $(BUILD_DIR)/meta/shared-visibility.so >$(BUILD_DIR)/meta/shared-visibility.sym; grep -q '_ARNv10public_api' $(BUILD_DIR)/meta/shared-visibility.sym; grep -q 'ari_named_private' $(BUILD_DIR)/meta/shared-visibility.sym; if grep -Eq '_ARNv6helper|_ARNv4main|ari_builtin_' $(BUILD_DIR)/meta/shared-visibility.sym; then exit 1; fi; fi
+	$(TARGET) tests/ok/shared-visibility.ari --emit-llvm $(BUILD_DIR)/meta/shared-visibility-exe.ll
+	grep -q 'define i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility-exe.ll
 	$(TARGET) --freestanding tests/ok/meta-function-surface.ari -o $(BUILD_DIR)/meta/meta-function-surface.raw
 	$(BUILD_DIR)/meta/meta-function-surface.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.raw

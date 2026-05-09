@@ -3060,7 +3060,10 @@ private:
         ir_fn.loc = fn.loc;
         ir_fn.return_type = current_return_;
         auto sig_found = functions_.find(lowered_name);
-        if (sig_found != functions_.end()) ir_fn.link_name = sig_found->second.link_name;
+        if (sig_found != functions_.end()) {
+            ir_fn.link_name = sig_found->second.link_name;
+            ir_fn.shared_export = sig_found->second.is_public || !sig_found->second.link_name.empty();
+        }
 
         std::vector<IrStmtPtr> parameter_pattern_prelude;
         std::size_t zone_return_param_count = 0;

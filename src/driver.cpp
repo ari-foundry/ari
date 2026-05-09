@@ -214,7 +214,9 @@ int run(int argc, char** argv) {
         return 0;
     }
 
-    std::string llvm = emit_llvm_ir(ir);
+    LlvmEmitOptions llvm_options;
+    llvm_options.shared_library = shared_library;
+    std::string llvm = emit_llvm_ir(ir, llvm_options);
     std::string llvm_path = llvm_output.empty() ? output + ".ll" : llvm_output;
     write_text_file(llvm_path, llvm);
     if (emit_llvm_only) {
