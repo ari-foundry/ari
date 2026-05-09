@@ -4857,7 +4857,9 @@ private:
             }
             if (index->kind != IrExprKind::Integer || index->int_negative) {
                 if (is_owner_type(base.type.args[0])) {
-                    fail(expr.loc, "moving owning aggregate elements through dynamic indexes is planned but not supported yet");
+                    fail(expr.loc,
+                         "moving owning aggregate elements through dynamic indexes is not supported; "
+                         "use a constant index or move the whole aggregate");
                 }
                 return false;
             }

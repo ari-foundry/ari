@@ -1160,8 +1160,10 @@ check-variables: $(TARGET)
 	grep -q "cannot move partially moved owning binding 'holder'" $(BUILD_DIR)/variables/ownership-aggregate-partial-move.err
 	if $(TARGET) tests/errors/ownership-array-element-use-after-move.ari -o $(BUILD_DIR)/variables/ownership-array-element-use-after-move.elf >$(BUILD_DIR)/variables/ownership-array-element-use-after-move.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved owned field 'values.0'" $(BUILD_DIR)/variables/ownership-array-element-use-after-move.err
+	if $(TARGET) tests/errors/ownership-array-dynamic-element-move.ari -o $(BUILD_DIR)/variables/ownership-array-dynamic-element-move.elf >$(BUILD_DIR)/variables/ownership-array-dynamic-element-move.err 2>&1; then exit 1; fi
+	grep -q "moving owning aggregate elements through dynamic indexes is not supported; use a constant index or move the whole aggregate" $(BUILD_DIR)/variables/ownership-array-dynamic-element-move.err
 	if $(TARGET) tests/errors/ownership-vector-dynamic-element-move.ari -o $(BUILD_DIR)/variables/ownership-vector-dynamic-element-move.elf >$(BUILD_DIR)/variables/ownership-vector-dynamic-element-move.err 2>&1; then exit 1; fi
-	grep -q "moving owning aggregate elements through dynamic indexes is planned but not supported yet" $(BUILD_DIR)/variables/ownership-vector-dynamic-element-move.err
+	grep -q "moving owning aggregate elements through dynamic indexes is not supported; use a constant index or move the whole aggregate" $(BUILD_DIR)/variables/ownership-vector-dynamic-element-move.err
 	if $(TARGET) tests/errors/array-size-mismatch.ari -o $(BUILD_DIR)/variables/array-size-mismatch.elf >$(BUILD_DIR)/variables/array-size-mismatch.err 2>&1; then exit 1; fi
 	grep -q "array literal has 3 elements but type expects 2" $(BUILD_DIR)/variables/array-size-mismatch.err
 	if $(TARGET) tests/errors/array-index-out-of-range.ari -o $(BUILD_DIR)/variables/array-index-out-of-range.elf >$(BUILD_DIR)/variables/array-index-out-of-range.err 2>&1; then exit 1; fi

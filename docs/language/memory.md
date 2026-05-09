@@ -110,8 +110,8 @@ moving the whole aggregate. Owned struct and tuple-struct fields, nested owned
 field paths, and constant fixed-array/vector indexes can be moved independently
 and later reinitialized through mutable field or element assignment; while any
 owned field or element has been moved out, moving the whole aggregate is
-rejected. Dynamic indexes into owning arrays or vectors are still rejected until
-the checker can model element states symbolically.
+rejected. Moving an owning array or vector element through a dynamic index is
+rejected; use a constant index or move the whole aggregate.
 
 ## Allocation Direction
 

@@ -215,6 +215,7 @@ drop values;
 
 After an owned field is moved, reading it again is rejected until a mutable
 field or indexed-element assignment reinitializes it. Moving the whole
-aggregate after one of its owned fields has moved is rejected. Dynamic indexes
-into owning arrays or vectors remain planned because the checker cannot name a
-single tracked element path statically.
+aggregate after one of its owned fields has moved is rejected. Moving an owning
+array or vector element through a dynamic index is rejected because the checker
+cannot name a single tracked element path statically; use a constant index or
+move the whole aggregate.
