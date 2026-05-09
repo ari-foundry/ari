@@ -1370,6 +1370,8 @@ check-ffi: $(TARGET)
 	grep -q 'store i64' $(BUILD_DIR)/ffi/pointer-aggregate-access.ll
 	$(TARGET) --freestanding tests/ok/pointer-aggregate-access.ari -o $(BUILD_DIR)/ffi/pointer-aggregate-access.raw
 	$(BUILD_DIR)/ffi/pointer-aggregate-access.raw; code=$$?; test $$code -eq 45
+	$(TARGET) --freestanding tests/ok/freestanding-aggregate-byte-layout.ari -o $(BUILD_DIR)/ffi/freestanding-aggregate-byte-layout.raw
+	$(BUILD_DIR)/ffi/freestanding-aggregate-byte-layout.raw; code=$$?; test $$code -eq 45
 	$(TARGET) tests/ok/pointer-aggregate-load-store.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-aggregate-load-store.ll
 	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/ffi/pointer-aggregate-load-store.ll
 	grep -q 'store { i64, i64 }' $(BUILD_DIR)/ffi/pointer-aggregate-load-store.ll

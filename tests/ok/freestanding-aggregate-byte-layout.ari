@@ -1,0 +1,30 @@
+struct Packed {
+  a: i8,
+  mut b: u16,
+  mut c: i32,
+}
+
+struct Pair(i8, mut u16)
+
+fn main() -> i64 {
+  var packed = Packed { a: -1i8, b: 20u16, c: -7i32 };
+  let packed_ptr: ptr Packed = (ref mut packed) as ptr Packed;
+  (*packed_ptr).b = (*packed_ptr).b + 1u16;
+  (*packed_ptr).c = (*packed_ptr).c - 1i32;
+
+  var pair = Pair(3i8, 4u16);
+  let pair_ptr: ptr Pair = (ref mut pair) as ptr Pair;
+  (*pair_ptr).1 = (*packed_ptr).b;
+
+  var bytes: [u8, 3] = [1u8, 2u8, 3u8];
+  let bytes_ptr: ptr [u8, 3] = (ref mut bytes) as ptr [u8, 3];
+  let middle = 1;
+  (*bytes_ptr)[middle] = 9u8;
+
+  ((*packed_ptr).a as i64) +
+    ((*packed_ptr).b as i64) +
+    ((*packed_ptr).c as i64) +
+    ((*pair_ptr).0 as i64) +
+    ((*pair_ptr).1 as i64) +
+    ((*bytes_ptr)[middle] as i64)
+}

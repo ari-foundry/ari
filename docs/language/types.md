@@ -29,8 +29,9 @@ are read or written. On the raw `--freestanding` backend this includes narrow
 local reloads after explicit raw-pointer writes, so an `i8`, `i16`, or `i32`
 slot is sign-extended when read back through the local binding. Standalone
 scalar locals are placed with byte-sized offsets and their natural alignment on
-the raw backend; aggregate field layout and full ABI classification still use
-the older slot model until the shared byte-layout work lands.
+the raw backend. Local tuple, struct, tuple-struct, and fixed-array storage also
+uses the shared Ari byte layout for field and element addressing. Full function
+ABI classification is still planned.
 
 ## Bool
 
@@ -638,8 +639,10 @@ Aggregate layout queries use field order, natural scalar alignment, array
 element stride padding, and final aggregate padding to the maximum field
 alignment. They are Ari layout queries, not a C ABI promise; use `@repr(C)`
 surfaces for foreign layout once that ABI is fully specified. The raw
-`--freestanding` backend still lowers local aggregate field addressing with its
-older slot model until the shared byte-offset tables are consumed there.
+`--freestanding` backend uses this Ari layout for local tuple, struct,
+tuple-struct, and fixed-array storage, whole plain aggregate copies, and scalar
+field or element access through raw aggregate pointers. Multi-payload aggregate
+enums and function ABI classification remain planned there.
 `ptr_load(pointer)` and
 `ptr_store(pointer, value)` provide explicit unchecked scalar or plain
 Ari-layout aggregate memory access through raw pointers. `*pointer` provides

@@ -62,13 +62,13 @@
    temps, match bindings, tuple/array scalar field reads, and raw-pointer-
    mutated narrow integer reloads. Shared layout queries now compute natural
    byte sizes, alignments, and field-offset tables for tuple, struct,
-   fixed-array, and aggregate-enum values. The raw backend still uses the old
-   8-byte slot model for local aggregate field addressing and whole-aggregate
-   copies, so the remaining work is to consume those shared offsets in raw
-   aggregate lowering and then finish ABI classification.
-   - [raw-aggregate-offsets] use shared byte field offsets for raw backend
-     tuple, struct, fixed-array, aggregate-enum, and raw-pointer aggregate
-     lowering
+   fixed-array, and aggregate-enum values. The raw backend consumes those byte
+   offsets for tuple, struct, and fixed-array local storage, whole plain
+   aggregate copies, and raw-pointer scalar field/index access. The remaining
+   aggregate lowering gap is multi-payload aggregate enum storage in the raw
+   backend, then explicit ABI classification for calls and returns.
+   - [raw-aggregate-enums] lower multi-payload aggregate enum storage and
+     field/payload access in the raw backend with the shared layout tables
    - [abi] pass and return narrow scalars and aggregates with explicit
      platform ABI rules instead of relying on the current local-slot model
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

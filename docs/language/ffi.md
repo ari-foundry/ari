@@ -115,7 +115,10 @@ values can also be loaded and stored with `*pointer` dereference syntax. Raw
 pointers to Ari aggregate layouts can address scalar fields and elements with
 `(*pointer).field`, `(*pointer).0`, and `(*pointer)[index]`.
 `size_of<T>()` and `align_of<T>()` expose the current scalar and Ari-layout
-aggregate size/alignment model for explicit pointer code.
+aggregate size/alignment model for explicit pointer code. The raw
+`--freestanding` backend uses those same Ari byte offsets for tuple, struct,
+tuple-struct, and fixed-array pointer field/element access; aggregate enum
+payload storage there is still planned.
 Host LLVM builds can allocate raw memory from explicit zones with
 `zone::create`, `zone::alloc`, `zone::reset`, and `zone::destroy`; the result of
 raw byte allocation is a `ptr u8` that can be cast and used with the same raw

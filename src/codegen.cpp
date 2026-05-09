@@ -133,7 +133,6 @@ private:
     }
 
     static int local_size_bytes(const IrType& type) {
-        if (is_aggregate_type(type)) return local_slot_count(type) * 8;
         std::uint64_t size = 0;
         if (ari_layout_size_bytes(type, size) &&
             size <= static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
@@ -143,7 +142,6 @@ private:
     }
 
     static int local_align_bytes(const IrType& type) {
-        if (is_aggregate_type(type)) return local_slot_count(type) == 0 ? 1 : 8;
         std::uint64_t align = 0;
         if (ari_layout_align_bytes(type, align) &&
             align > 0 &&
@@ -226,10 +224,43 @@ private:
         return static_cast<int>(raw_memory_bits(type) / 8);
     }
 
+    static int layout_size_bytes(SourceLocation loc, const IrType& type) {
+        std::uint64_t size = 0;
+        if (!ari_layout_size_bytes(type, size) ||
+            size > static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
+            throw CompileError(where(loc) + ": backend cannot compute layout size for " + type_name(type));
+        }
+        return static_cast<int>(size);
+    }
+
+    static int field_offset_bytes(SourceLocation loc, const IrType& type, std::uint64_t index) {
+        std::uint64_t offset = 0;
+        if (!ari_layout_field_offset_bytes(type, index, offset) ||
+            offset > static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
+            throw CompileError(where(loc) + ": backend cannot compute aggregate field offset for " + type_name(type));
+        }
+        return static_cast<int>(offset);
+    }
+
+    static int aggregate_lvalue_field_offset(SourceLocation loc,
+                                             int base_offset,
+                                             const IrType& type,
+                                             std::uint64_t index) {
+        return base_offset - field_offset_bytes(loc, type, index);
+    }
+
     static IrType i64_type(SourceLocation loc) {
         IrType type;
         type.primitive = IrPrimitiveKind::I64;
         type.name = "i64";
+        type.loc = loc;
+        return type;
+    }
+
+    static IrType u8_type(SourceLocation loc) {
+        IrType type;
+        type.primitive = IrPrimitiveKind::U8;
+        type.name = "u8";
         type.loc = loc;
         return type;
     }
@@ -239,7 +270,7 @@ private:
         int size = local_size_bytes(type);
         int align = local_align_bytes(type);
         stack_offset_ = align_to(stack_offset_, align);
-        locals_[name] = is_aggregate_type(type) && size > 0 ? stack_offset_ + 8 : stack_offset_ + size;
+        locals_[name] = stack_offset_ + size;
         local_types_[name] = type;
         stack_offset_ += size;
     }
@@ -368,60 +399,59 @@ private:
         return found->second;
     }
 
-    static int tuple_element_offset(int base_offset, const IrType& tuple_type, std::uint64_t index) {
-        int offset = base_offset;
-        const std::vector<IrType>& fields = aggregate_field_types(tuple_type);
-        for (std::size_t i = 0; i < static_cast<std::size_t>(index); ++i) {
-            offset += local_slot_count(fields[i]) * 8;
-        }
-        return offset;
-    }
-
-    void copy_tuple_slots(int source_offset, int target_offset, int slots) {
-        for (int i = 0; i < slots; ++i) {
-            emit_mov_reg_mem(Reg::RAX, source_offset + i * 8);
-            emit_mov_mem_reg(target_offset + i * 8, Reg::RAX);
+    void copy_local_bytes_to_offset(SourceLocation loc, int source_offset, int target_offset, const IrType& target_type) {
+        int size = layout_size_bytes(loc, target_type);
+        IrType byte_type = u8_type(loc);
+        for (int byte = 0; byte < size; ++byte) {
+            emit_load_rax_from_local(source_offset - byte, byte_type);
+            emit_store_rax_to_local(target_offset - byte, byte_type);
         }
     }
 
-    void copy_pointer_slots_to_offset(const IrExpr& source, const IrType& target_type, int target_offset) {
+    void copy_pointer_bytes_to_offset(const IrExpr& source, const IrType& target_type, int target_offset) {
         if (has_aggregate_enum_layout(target_type)) {
             throw CompileError(where(source.loc) + ": freestanding backend does not lower multi-payload enum values yet");
         }
+        int size = layout_size_bytes(source.loc, target_type);
+        IrType byte_type = u8_type(source.loc);
         emit_pointer_lvalue_address(source);
         emit_mov_reg_reg(Reg::RBX, Reg::RAX);
-        for (int i = 0; i < local_slot_count(target_type); ++i) {
+        for (int byte = 0; byte < size; ++byte) {
             emit_mov_reg_reg(Reg::RCX, Reg::RBX);
-            emit_adjust_pointer_reg(Reg::RCX, i * 8);
-            emit_mov_reg_ptr(Reg::RAX, Reg::RCX);
-            emit_mov_mem_reg(target_offset + i * 8, Reg::RAX);
+            emit_add_pointer_offset_reg(Reg::RCX, byte);
+            emit_load_rax_from_ptr(Reg::RCX, byte_type);
+            emit_store_rax_to_local(target_offset - byte, byte_type);
         }
     }
 
-    void copy_local_slots_to_pointer_base(int source_offset, const IrType& target_type, int byte_offset) {
-        for (int i = 0; i < local_slot_count(target_type); ++i) {
-            emit_mov_reg_mem(Reg::RAX, source_offset + i * 8);
+    void copy_local_bytes_to_pointer_base(SourceLocation loc, int source_offset, const IrType& target_type, int byte_offset) {
+        int size = layout_size_bytes(loc, target_type);
+        IrType byte_type = u8_type(loc);
+        for (int byte = 0; byte < size; ++byte) {
+            emit_load_rax_from_local(source_offset - byte, byte_type);
             emit_mov_reg_reg(Reg::RCX, Reg::RBX);
-            emit_adjust_pointer_reg(Reg::RCX, byte_offset + i * 8);
-            emit_store_rax_to_ptr(Reg::RCX, i64_type({}));
+            emit_add_pointer_offset_reg(Reg::RCX, byte_offset + byte);
+            emit_store_rax_to_ptr(Reg::RCX, byte_type);
         }
     }
 
-    void copy_pointer_slots_to_pointer_base(const IrExpr& source, const IrType& target_type, int byte_offset) {
+    void copy_pointer_bytes_to_pointer_base(const IrExpr& source, const IrType& target_type, int byte_offset) {
         if (has_aggregate_enum_layout(target_type)) {
             throw CompileError(where(source.loc) + ": freestanding backend does not lower multi-payload enum values yet");
         }
+        int size = layout_size_bytes(source.loc, target_type);
+        IrType byte_type = u8_type(source.loc);
         emit_push(Reg::RBX);
         emit_pointer_lvalue_address(source);
         emit_mov_reg_reg(Reg::RDX, Reg::RAX);
         emit_pop(Reg::RBX);
-        for (int i = 0; i < local_slot_count(target_type); ++i) {
+        for (int byte = 0; byte < size; ++byte) {
             emit_mov_reg_reg(Reg::RCX, Reg::RDX);
-            emit_adjust_pointer_reg(Reg::RCX, i * 8);
-            emit_mov_reg_ptr(Reg::RAX, Reg::RCX);
+            emit_add_pointer_offset_reg(Reg::RCX, byte);
+            emit_load_rax_from_ptr(Reg::RCX, byte_type);
             emit_mov_reg_reg(Reg::RCX, Reg::RBX);
-            emit_adjust_pointer_reg(Reg::RCX, byte_offset + i * 8);
-            emit_store_rax_to_ptr(Reg::RCX, i64_type({}));
+            emit_add_pointer_offset_reg(Reg::RCX, byte_offset + byte);
+            emit_store_rax_to_ptr(Reg::RCX, byte_type);
         }
     }
 
@@ -435,7 +465,7 @@ private:
             if (is_integer_primitive(target_type.primitive)) emit_cast_to_type(loc, target_type);
             emit_pop(Reg::RCX);
             emit_mov_reg_reg(Reg::RBX, Reg::RCX);
-            emit_adjust_pointer_reg(Reg::RCX, byte_offset);
+            emit_add_pointer_offset_reg(Reg::RCX, byte_offset);
             emit_store_rax_to_ptr(Reg::RCX, target_type);
             return;
         }
@@ -448,25 +478,25 @@ private:
             (value.kind == IrExprKind::Vector && target_type.primitive == IrPrimitiveKind::Array)) {
             const std::vector<IrType>& fields = aggregate_field_types(target_type);
             for (std::size_t i = 0; i < fields.size(); ++i) {
-                int offset = byte_offset + tuple_element_offset(0, target_type, i);
+                int offset = byte_offset + field_offset_bytes(value.loc, target_type, i);
                 emit_store_value_to_pointer_base(loc, *value.args[i], fields[i], offset);
             }
             return;
         }
 
         if (value.kind == IrExprKind::Local && is_aggregate_type(value.type)) {
-            copy_local_slots_to_pointer_base(local_offset(value.loc, value.name), target_type, byte_offset);
+            copy_local_bytes_to_pointer_base(value.loc, local_offset(value.loc, value.name), target_type, byte_offset);
             return;
         }
 
         if (value.kind == IrExprKind::TupleIndex && is_aggregate_type(value.type) &&
             value.operand && value.operand->kind == IrExprKind::Local) {
-            copy_local_slots_to_pointer_base(lvalue_offset(value), target_type, byte_offset);
+            copy_local_bytes_to_pointer_base(value.loc, lvalue_offset(value), target_type, byte_offset);
             return;
         }
 
         if (is_pointer_backed_lvalue(value) && is_aggregate_type(value.type)) {
-            copy_pointer_slots_to_pointer_base(value, target_type, byte_offset);
+            copy_pointer_bytes_to_pointer_base(value, target_type, byte_offset);
             return;
         }
 
@@ -493,25 +523,25 @@ private:
             (value.kind == IrExprKind::Vector && target_type.primitive == IrPrimitiveKind::Array)) {
             const std::vector<IrType>& fields = aggregate_field_types(target_type);
             for (std::size_t i = 0; i < fields.size(); ++i) {
-                int offset = tuple_element_offset(target_offset, target_type, i);
+                int offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, i);
                 emit_store_value_to_offset(fields[i], *value.args[i], offset);
             }
             return;
         }
 
         if (value.kind == IrExprKind::Local && is_aggregate_type(value.type)) {
-            copy_tuple_slots(local_offset(value.loc, value.name), target_offset, local_slot_count(target_type));
+            copy_local_bytes_to_offset(value.loc, local_offset(value.loc, value.name), target_offset, target_type);
             return;
         }
 
         if (value.kind == IrExprKind::TupleIndex && is_aggregate_type(value.type) &&
             value.operand && value.operand->kind == IrExprKind::Local) {
-            copy_tuple_slots(lvalue_offset(value), target_offset, local_slot_count(target_type));
+            copy_local_bytes_to_offset(value.loc, lvalue_offset(value), target_offset, target_type);
             return;
         }
 
         if (is_pointer_backed_lvalue(value) && is_aggregate_type(value.type)) {
-            copy_pointer_slots_to_offset(value, target_type, target_offset);
+            copy_pointer_bytes_to_offset(value, target_type, target_offset);
             return;
         }
 
@@ -793,10 +823,10 @@ private:
         emit_modrm(3, s, d);
     }
 
-    void emit_adjust_pointer_reg(Reg reg, int byte_offset) {
+    void emit_add_pointer_offset_reg(Reg reg, int byte_offset) {
         if (byte_offset == 0) return;
         emit_mov_reg_imm64(Reg::RSI, static_cast<std::uint64_t>(byte_offset));
-        emit_sub_reg_reg(reg, Reg::RSI);
+        emit_add_reg_reg(reg, Reg::RSI);
     }
 
     void emit_and_reg_reg(Reg dst, Reg src) {
@@ -1491,7 +1521,7 @@ private:
         const IrExpr& operand = *expr.operand;
         if (operand.kind == IrExprKind::Local || operand.kind == IrExprKind::TupleIndex) {
             int base = lvalue_offset(operand);
-            int offset = tuple_element_offset(base, operand.type, expr.tuple_index);
+            int offset = aggregate_lvalue_field_offset(expr.loc, base, operand.type, expr.tuple_index);
             if (expr.type.primitive == IrPrimitiveKind::Tuple ||
                 expr.type.primitive == IrPrimitiveKind::Array ||
                 expr.type.primitive == IrPrimitiveKind::Struct) {
@@ -1533,13 +1563,13 @@ private:
             throw CompileError(where(expr.loc) + ": backend cannot materialize nested aggregate values; index a scalar field");
         }
         int base = local_offset(expr.operand->loc, expr.operand->name);
-        int stride = local_slot_count(expr.type) * 8;
+        int stride = layout_size_bytes(expr.loc, expr.type);
         emit_expr(*expr.right);
         emit_array_bounds_check(expr.operand->type.array_size);
         emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(stride));
         emit_imul_reg_reg(Reg::RAX, Reg::RCX);
         emit_lea_reg_local(Reg::RCX, base);
-        emit_sub_reg_reg(Reg::RCX, Reg::RAX);
+        emit_add_reg_reg(Reg::RCX, Reg::RAX);
         emit_load_rax_from_ptr(Reg::RCX, expr.type);
     }
 
@@ -1566,7 +1596,7 @@ private:
         if (expr.kind == IrExprKind::Local) return local_offset(expr.loc, expr.name);
         if (expr.kind == IrExprKind::TupleIndex && expr.operand) {
             int base = lvalue_offset(*expr.operand);
-            return tuple_element_offset(base, expr.operand->type, expr.tuple_index);
+            return aggregate_lvalue_field_offset(expr.loc, base, expr.operand->type, expr.tuple_index);
         }
         throw CompileError(where(expr.loc) + ": backend can only assign to local fields yet");
     }
@@ -1981,10 +2011,10 @@ private:
         }
         if (expr.kind == IrExprKind::TupleIndex && expr.operand) {
             emit_pointer_lvalue_address(*expr.operand);
-            int offset = tuple_element_offset(0, expr.operand->type, expr.tuple_index);
+            int offset = field_offset_bytes(expr.loc, expr.operand->type, expr.tuple_index);
             if (offset != 0) {
                 emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(offset));
-                emit_sub_reg_reg(Reg::RAX, Reg::RCX);
+                emit_add_reg_reg(Reg::RAX, Reg::RCX);
             }
             return;
         }
@@ -1996,10 +2026,10 @@ private:
             emit_push(Reg::RAX);
             emit_expr(*expr.right);
             emit_array_bounds_check(expr.operand->type.array_size);
-            emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(local_slot_count(expr.type) * 8));
+            emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(layout_size_bytes(expr.loc, expr.type)));
             emit_imul_reg_reg(Reg::RAX, Reg::RCX);
             emit_pop(Reg::RCX);
-            emit_sub_reg_reg(Reg::RCX, Reg::RAX);
+            emit_add_reg_reg(Reg::RCX, Reg::RAX);
             emit_mov_reg_reg(Reg::RAX, Reg::RCX);
             return;
         }
