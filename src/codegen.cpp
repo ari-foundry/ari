@@ -116,6 +116,7 @@ private:
     CodeBuffer out_;
     std::map<std::string, int> locals_;
     std::map<std::string, IrType> local_types_;
+    std::map<const IrExpr*, int> aggregate_argument_temps_;
     int stack_offset_ = 0;
     int stack_size_ = 0;
     int aggregate_return_pointer_offset_ = 0;
@@ -299,6 +300,15 @@ private:
         stack_offset_ += size;
     }
 
+    void add_aggregate_argument_temp(const IrExpr& expr) {
+        if (aggregate_argument_temps_.count(&expr)) return;
+        int size = local_size_bytes(expr.type);
+        int align = local_align_bytes(expr.type);
+        stack_offset_ = align_to(stack_offset_, align);
+        aggregate_argument_temps_[&expr] = stack_offset_ + size;
+        stack_offset_ += size;
+    }
+
     void collect_locals(const std::vector<IrStmtPtr>& statements) {
         for (const auto& stmt : statements) collect_locals(*stmt);
     }
@@ -322,6 +332,11 @@ private:
         collect_expr_locals(expr.block_value);
         collect_expr_locals(expr.match_value);
         for (const auto& arg : expr.args) collect_expr_locals(arg);
+        if (expr.kind == IrExprKind::Call || expr.kind == IrExprKind::IndirectCall) {
+            for (const auto& arg : expr.args) {
+                if (is_aggregate_type(arg->type)) add_aggregate_argument_temp(*arg);
+            }
+        }
         for (const auto& arm : expr.match_arms) {
             if (arm.has_value_binding) add_local(arm.value_name, arm.value_type);
             add_payload_binding_locals(arm);
@@ -423,6 +438,14 @@ private:
         return found->second;
     }
 
+    int aggregate_argument_temp_offset(SourceLocation loc, const IrExpr& expr) const {
+        auto found = aggregate_argument_temps_.find(&expr);
+        if (found == aggregate_argument_temps_.end()) {
+            throw CompileError(where(loc) + ": missing aggregate argument temporary during codegen");
+        }
+        return found->second;
+    }
+
     void copy_local_bytes_to_offset(SourceLocation loc, int source_offset, int target_offset, const IrType& target_type) {
         int size = layout_size_bytes(loc, target_type);
         IrType byte_type = u8_type(loc);
@@ -432,17 +455,24 @@ private:
         }
     }
 
-    void copy_pointer_bytes_to_offset(const IrExpr& source, const IrType& target_type, int target_offset) {
-        int size = layout_size_bytes(source.loc, target_type);
-        IrType byte_type = u8_type(source.loc);
-        emit_pointer_lvalue_address(source);
-        emit_mov_reg_reg(Reg::RBX, Reg::RAX);
+    void copy_pointer_base_to_offset(SourceLocation loc,
+                                     const IrType& target_type,
+                                     int target_offset,
+                                     int byte_offset = 0) {
+        int size = layout_size_bytes(loc, target_type);
+        IrType byte_type = u8_type(loc);
         for (int byte = 0; byte < size; ++byte) {
             emit_mov_reg_reg(Reg::RCX, Reg::RBX);
-            emit_add_pointer_offset_reg(Reg::RCX, byte);
+            emit_add_pointer_offset_reg(Reg::RCX, byte_offset + byte);
             emit_load_rax_from_ptr(Reg::RCX, byte_type);
             emit_store_rax_to_local(target_offset - byte, byte_type);
         }
+    }
+
+    void copy_pointer_bytes_to_offset(const IrExpr& source, const IrType& target_type, int target_offset) {
+        emit_pointer_lvalue_address(source);
+        emit_mov_reg_reg(Reg::RBX, Reg::RAX);
+        copy_pointer_base_to_offset(source.loc, target_type, target_offset);
     }
 
     void copy_local_bytes_to_pointer_base(SourceLocation loc, int source_offset, const IrType& target_type, int byte_offset) {
@@ -1152,18 +1182,15 @@ private:
         return total_args < 6 ? total_args : 6;
     }
 
-    void require_scalar_call_arguments(const IrExpr& expr) const {
-        for (const auto& arg : expr.args) {
-            if (is_aggregate_type(arg->type)) {
-                throw CompileError(where(arg->loc) +
-                                   ": freestanding backend does not lower aggregate function arguments yet");
-            }
-        }
-    }
-
     void emit_call_arguments_to_stack(const IrExpr& expr, std::size_t abi_shift) {
-        require_scalar_call_arguments(expr);
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            if (is_aggregate_type(expr.args[i]->type)) {
+                int temp_offset = aggregate_argument_temp_offset(expr.args[i]->loc, *expr.args[i]);
+                emit_store_value_to_offset(expr.args[i]->type, *expr.args[i], temp_offset);
+                emit_lea_reg_local(Reg::RAX, temp_offset);
+                emit_mov_mem_rsp_reg(static_cast<int>((i + abi_shift) * 8), Reg::RAX);
+                continue;
+            }
             emit_expr(*expr.args[i]);
             emit_mov_mem_rsp_reg(static_cast<int>((i + abi_shift) * 8), Reg::RAX);
         }
@@ -1191,16 +1218,17 @@ private:
         }
         for (std::size_t i = 0; i < fn_.params.size(); ++i) {
             if (local_slot_count(fn_.params[i].type) == 0) continue;
-            if (is_aggregate_type(fn_.params[i].type)) {
-                throw CompileError(where(fn_.loc) + ": backend does not lower aggregate parameters yet");
-            }
             int offset = local_offset(fn_.loc, fn_.params[i].name);
             std::size_t abi_index = i + abi_shift;
             if (abi_index < 6) {
                 emit_mov_reg_reg(Reg::RAX, call_arg_reg(abi_index));
-                emit_store_rax_to_local(offset, fn_.params[i].type);
             } else {
                 emit_mov_reg_stack_arg(Reg::RAX, 16 + static_cast<int>((abi_index - 6) * 8));
+            }
+            if (is_aggregate_type(fn_.params[i].type)) {
+                emit_mov_reg_reg(Reg::RBX, Reg::RAX);
+                copy_pointer_base_to_offset(fn_.params[i].type.loc, fn_.params[i].type, offset);
+            } else {
                 emit_store_rax_to_local(offset, fn_.params[i].type);
             }
         }

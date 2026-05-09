@@ -50,9 +50,11 @@ freestanding backend uses registers for the first six scalar arguments and stack
 slots for the rest. Narrow integer returns from freestanding functions are
 normalized at the return boundary, so `u8`, `u16`, and `u32` results wrap to
 their declared width before callers observe them. Direct freestanding calls can
-return tuple, struct, fixed-array, and currently supported aggregate enum values
-into caller-owned result storage. Aggregate parameters and aggregate-returning
-function pointer calls remain planned on that backend.
+pass and return tuple, struct, fixed-array, and currently supported aggregate
+enum values through hidden pointer slots. Aggregate parameters are copied into
+callee-local storage at function entry, so mutating a parameter copy does not
+mutate the caller's value. Aggregate-returning function pointer calls remain
+planned on that backend.
 
 ## Return
 

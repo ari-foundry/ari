@@ -106,8 +106,8 @@ bindings, scalar payload literal/range tests, and one-level compact enum-case
 payload tests. Pointer-backed aggregate enum copies work through `ptr_load`,
 `ptr_store`, and `*pointer` when the pointer is a `ptr EnumType`; storing a
 direct enum constructor through those pointer helpers is also supported.
-Direct freestanding calls can return aggregate enum values into caller-provided
-result storage. Aggregate enum parameters remain planned there.
+Direct freestanding calls can pass and return aggregate enum values through
+hidden pointer slots.
 
 ## Passing And Returning
 

@@ -1,0 +1,60 @@
+struct Pair {
+  mut x: i64,
+  y: i64,
+}
+
+enum Choice {
+  Both(i64, i64),
+  None,
+}
+
+fn sum_pair(pair: Pair) -> i64 {
+  var local = pair;
+  local.x = local.x + 10;
+  return local.x + local.y;
+}
+
+fn flip(pair: Pair) -> Pair {
+  return Pair { x: pair.y, y: pair.x };
+}
+
+fn sum_tuple(pair: (i64, i64)) -> i64 {
+  return pair.0 + pair.1;
+}
+
+fn sum_array(values: [i64, 2]) -> i64 {
+  return values[0] + values[1];
+}
+
+fn score(choice: Choice) -> i64 {
+  return match choice {
+    Both(left, right) => left + right,
+    None => 0,
+  };
+}
+
+fn many(a: i64, b: i64, c: i64, d: i64, e: i64, f: i64, pair: Pair) -> i64 {
+  return a + b + c + d + e + f + pair.x + pair.y;
+}
+
+fn main() -> i64 {
+  let pair = Pair { x: 3, y: 4 };
+  let tuple = (5, 6);
+  let values: [i64, 2] = [7, 8];
+  let choice = Both(9i64, 10i64);
+
+  let a = sum_pair(pair);
+  let unchanged = pair.x + pair.y;
+  let b = sum_tuple(tuple);
+  let c = sum_array(values);
+  let d = score(choice);
+  let e = sum_pair(Pair { x: 1, y: 2 });
+  let flipped = flip(pair);
+  let f = flipped.x + flipped.y;
+  let g = sum_pair(flip(Pair { x: 2, y: 3 }));
+  let h = many(1, 2, 3, 4, 5, 6, pair);
+  let op: fn(Pair) -> i64 = sum_pair;
+  let i = op(pair);
+
+  return a + unchanged + b + c + d + e + f + g + h + i;
+}
