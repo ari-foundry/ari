@@ -52,10 +52,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Medium-Term Language Work
 
-1. Refine product-pattern diagnostics and enum payload patterns.
+1. Expand aggregate enum payload patterns.
    Symbolic rectangle coverage now proves high-cardinality integer/bool product
-   exhaustiveness without enumerating every value.
-   - [diagnostics] suggest the smallest missing product shape when a product match is non-exhaustive
+   exhaustiveness without enumerating every value, and non-exhaustive product
+   matches now suggest a missing product shape when Ari can express the gap.
    - [enum-payloads] support literal, range, alias, or-pattern, and nested enum-case subpatterns inside aggregate enum payload slots
 2. Refine borrow checking beyond lexical named borrows.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it

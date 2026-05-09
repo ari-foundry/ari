@@ -385,6 +385,9 @@ use finite coverage. Larger integer products use symbolic rectangle coverage for
 literal, range, wildcard, binding, alias, or-pattern, nested tuple, fixed array,
 named struct, tuple-struct, and `..` rest patterns. Unsupported product shapes
 should still use an irrefutable fallback arm.
+When Ari rejects a non-exhaustive product match, it includes a missing case hint
+when the gap can be represented as a literal, range, wildcard, or nested product
+pattern.
 If a later product arm is fully covered by earlier product arms, Ari reports a
 warning and keeps compiling.
 

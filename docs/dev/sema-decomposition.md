@@ -13,6 +13,8 @@ construction. Some helpers have already moved out to focused files:
   var declarations, tuple/vector indexes, literals, casts, bool conditions, and
   direct builtin calls
 - `module_metadata` and `module_cache` for package graph summaries and caches
+- `product_coverage` for symbolic product-rectangle coverage math used by
+  aggregate pattern exhaustiveness diagnostics
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or
@@ -41,9 +43,11 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      constant pattern conversion, cycle diagnostics, and constant-to-IR literal
      construction.
    - Keep the constant declaration table owned by `SemanticChecker` initially.
-4. Extract pattern coverage helpers into `pattern_coverage`.
+4. Continue extracting pattern coverage helpers into `pattern_coverage`.
+   - Product rectangle math now lives in `product_coverage`.
    - Move scalar range interval math, finite product domain enumeration,
-     duplicate/shadow detection helpers, and exhaustiveness diagnostics.
+     duplicate/shadow detection helpers, and the remaining sema-bound
+     exhaustiveness formatting.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
      abstracted.
 

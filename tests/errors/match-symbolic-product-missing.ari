@@ -1,0 +1,5 @@
+fn main() -> i64 {
+  return match (42u16, false) {
+    (0u16..=65535u16, false) => 1,
+  };
+}

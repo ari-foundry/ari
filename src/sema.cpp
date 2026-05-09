@@ -9,6 +9,7 @@
 #include "parser.hpp"
 #include "prelude_macros.hpp"
 #include "prelude_resolver.hpp"
+#include "product_coverage.hpp"
 #include "try_model.hpp"
 #include "vector_semantics.hpp"
 
@@ -88,13 +89,6 @@ struct ScalarMatchCoverage {
     std::set<std::string> covered_patterns;
     std::vector<std::pair<std::uint64_t, std::uint64_t>> integer_intervals;
 };
-
-struct ProductInterval {
-    std::uint64_t start = 0;
-    std::uint64_t end = 0;
-};
-
-using ProductRect = std::vector<ProductInterval>;
 
 struct TupleMatchCoverage {
     bool has_irrefutable_arm = false;
@@ -7607,94 +7601,6 @@ private:
         return false;
     }
 
-    static bool product_rect_intersection(const ProductRect& left,
-                                          const ProductRect& right,
-                                          ProductRect& out) {
-        if (left.size() != right.size()) return false;
-        out.clear();
-        out.reserve(left.size());
-        for (std::size_t i = 0; i < left.size(); ++i) {
-            std::uint64_t start = std::max(left[i].start, right[i].start);
-            std::uint64_t end = std::min(left[i].end, right[i].end);
-            if (start > end) return false;
-            out.push_back(ProductInterval{start, end});
-        }
-        return true;
-    }
-
-    static void subtract_product_rect(const ProductRect& target,
-                                      const ProductRect& cover,
-                                      std::vector<ProductRect>& out) {
-        ProductRect intersection;
-        if (!product_rect_intersection(target, cover, intersection)) {
-            out.push_back(target);
-            return;
-        }
-
-        ProductRect middle = target;
-        for (std::size_t i = 0; i < target.size(); ++i) {
-            if (middle[i].start < intersection[i].start) {
-                ProductRect piece = middle;
-                piece[i].end = intersection[i].start - 1;
-                out.push_back(std::move(piece));
-                middle[i].start = intersection[i].start;
-            }
-            if (intersection[i].end < middle[i].end) {
-                ProductRect piece = middle;
-                piece[i].start = intersection[i].end + 1;
-                out.push_back(std::move(piece));
-                middle[i].end = intersection[i].end;
-            }
-        }
-    }
-
-    static bool product_rect_is_covered_by(const ProductRect& target,
-                                           const std::vector<ProductRect>& covers) {
-        std::vector<ProductRect> remaining{target};
-        for (const auto& cover : covers) {
-            if (remaining.empty()) return true;
-            std::vector<ProductRect> next;
-            for (const auto& item : remaining) {
-                subtract_product_rect(item, cover, next);
-            }
-            remaining = std::move(next);
-        }
-        return remaining.empty();
-    }
-
-    static bool product_rects_are_covered_by(const std::vector<ProductRect>& targets,
-                                             const std::vector<ProductRect>& covers) {
-        for (const auto& target : targets) {
-            if (!product_rect_is_covered_by(target, covers)) return false;
-        }
-        return true;
-    }
-
-    static void append_product_rect(ProductRect& out, const ProductRect& item) {
-        out.insert(out.end(), item.begin(), item.end());
-    }
-
-    static bool combine_product_rect_domains(const std::vector<std::vector<ProductRect>>& domains,
-                                             std::vector<ProductRect>& out) {
-        std::vector<ProductRect> result{ProductRect{}};
-        for (const auto& domain : domains) {
-            if (domain.empty()) return false;
-            if (result.size() > kMaxSymbolicProductRectangles / domain.size()) return false;
-            std::vector<ProductRect> next;
-            next.reserve(result.size() * domain.size());
-            for (const auto& prefix : result) {
-                for (const auto& item : domain) {
-                    ProductRect combined = prefix;
-                    append_product_rect(combined, item);
-                    next.push_back(std::move(combined));
-                }
-            }
-            result = std::move(next);
-        }
-        out = std::move(result);
-        return true;
-    }
-
     bool symbolic_product_domain(const IrType& type, ProductRect& out) const {
         if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
             out.push_back(ProductInterval{0, 1});
@@ -7806,7 +7712,7 @@ private:
             if (!ok) return false;
             domains.push_back(std::move(field_rects));
         }
-        return combine_product_rect_domains(domains, out);
+        return combine_product_rect_domains(domains, kMaxSymbolicProductRectangles, out);
     }
 
     bool symbolic_tuple_struct_product_pattern_rects(const Pattern& pattern,
@@ -7856,7 +7762,7 @@ private:
             if (!ok) return false;
             domains.push_back(std::move(field_rects));
         }
-        return combine_product_rect_domains(domains, out);
+        return combine_product_rect_domains(domains, kMaxSymbolicProductRectangles, out);
     }
 
     bool symbolic_product_pattern_rects(const Pattern& pattern,
@@ -7939,23 +7845,24 @@ private:
                                      const IrType& subject_type,
                                      TupleMatchCoverage& coverage) {
         initialize_product_match_coverage(subject_type, coverage);
+        bool finite_handled = false;
         if (coverage.has_finite_universe) {
             std::vector<std::string> values;
-            if (!finite_product_pattern_values(pattern, subject_type, values)) return;
-
-            bool added = false;
-            for (const auto& value : values) {
-                added = coverage.covered_products.insert(value).second || added;
+            if (finite_product_pattern_values(pattern, subject_type, values)) {
+                finite_handled = true;
+                bool added = false;
+                for (const auto& value : values) {
+                    added = coverage.covered_products.insert(value).second || added;
+                }
+                if (!added) warn_aggregate_match_shadow(pattern.loc);
             }
-            if (!added) warn_aggregate_match_shadow(pattern.loc);
-            return;
         }
 
         if (!coverage.has_symbolic_universe) return;
         std::vector<ProductRect> rects;
         if (!symbolic_product_pattern_rects(pattern, subject_type, rects)) return;
         if (rects.empty()) return;
-        if (product_rects_are_covered_by(rects, coverage.covered_symbolic_products)) {
+        if (!finite_handled && product_rects_are_covered_by(rects, coverage.covered_symbolic_products)) {
             warn_aggregate_match_shadow(pattern.loc);
             return;
         }
@@ -8258,9 +8165,111 @@ private:
         }
     }
 
-    static void require_tuple_match_exhaustive(SourceLocation loc,
-                                               const IrType& match_type,
-                                               const TupleMatchCoverage& coverage) {
+    static std::string join_product_pattern_parts(const std::vector<std::string>& parts,
+                                                  const std::string& separator) {
+        std::string out;
+        for (std::size_t i = 0; i < parts.size(); ++i) {
+            if (i != 0) out += separator;
+            out += parts[i];
+        }
+        return out;
+    }
+
+    static std::string ordered_integer_product_literal(std::uint64_t ordered_value,
+                                                       const IrType& type) {
+        std::string suffix = type_name(type);
+        if (is_unsigned_integer_primitive(type.primitive)) {
+            return std::to_string(ordered_value) + suffix;
+        }
+
+        std::uint64_t bias = signed_negative_limit(type.primitive);
+        if (ordered_value < bias) {
+            return "-" + std::to_string(bias - ordered_value) + suffix;
+        }
+        return std::to_string(ordered_value - bias) + suffix;
+    }
+
+    static bool product_interval_covers_domain(const ProductInterval& interval,
+                                               const IrType& type) {
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+            return interval.start == 0 && interval.end == 1;
+        }
+        if (is_value_integer_type(type)) {
+            return interval.start == 0 && interval.end == integer_pattern_max_order_value(type);
+        }
+        return false;
+    }
+
+    std::string format_product_missing_case(const IrType& type,
+                                            const ProductRect& rect,
+                                            std::size_t& dimension) const {
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+            if (dimension >= rect.size()) return "_";
+            const ProductInterval interval = rect[dimension++];
+            if (product_interval_covers_domain(interval, type)) return "_";
+            if (interval.start == interval.end) return interval.start == 0 ? "false" : "true";
+            return "_";
+        }
+        if (is_value_integer_type(type)) {
+            if (dimension >= rect.size()) return "_";
+            const ProductInterval interval = rect[dimension++];
+            if (product_interval_covers_domain(interval, type)) return "_";
+            if (interval.start == interval.end) {
+                return ordered_integer_product_literal(interval.start, type);
+            }
+            return ordered_integer_product_literal(interval.start, type) + "..=" +
+                   ordered_integer_product_literal(interval.end, type);
+        }
+        if (type.primitive == IrPrimitiveKind::Tuple ||
+            type.primitive == IrPrimitiveKind::Array ||
+            type.primitive == IrPrimitiveKind::Struct) {
+            std::vector<std::string> parts;
+            const std::vector<IrType>& fields = aggregate_field_types(type);
+            parts.reserve(fields.size());
+            for (const auto& field_type : fields) {
+                parts.push_back(format_product_missing_case(field_type, rect, dimension));
+            }
+
+            if (type.primitive == IrPrimitiveKind::Tuple) {
+                return "(" + join_product_pattern_parts(parts, ", ") + ")";
+            }
+            if (type.primitive == IrPrimitiveKind::Array) {
+                return "[" + join_product_pattern_parts(parts, ", ") + "]";
+            }
+
+            auto struct_found = structs_.find(type.name);
+            bool tuple_struct = struct_found != structs_.end() && struct_found->second.tuple_struct;
+            if (tuple_struct) {
+                return type.name + "(" + join_product_pattern_parts(parts, ", ") + ")";
+            }
+
+            std::vector<std::string> named_parts;
+            named_parts.reserve(parts.size());
+            for (std::size_t i = 0; i < parts.size(); ++i) {
+                std::string field_name = i < type.field_names.size()
+                    ? type.field_names[i]
+                    : ("_" + std::to_string(i));
+                named_parts.push_back(field_name + ": " + parts[i]);
+            }
+            return type.name + " { " + join_product_pattern_parts(named_parts, ", ") + " }";
+        }
+        return "_";
+    }
+
+    std::string product_missing_case_hint(const IrType& match_type,
+                                          const TupleMatchCoverage& coverage) const {
+        if (!coverage.has_symbolic_universe) return "";
+        ProductRect missing;
+        if (!product_rect_first_gap(coverage.symbolic_universe, coverage.covered_symbolic_products, missing)) {
+            return "";
+        }
+        std::size_t dimension = 0;
+        return format_product_missing_case(match_type, missing, dimension);
+    }
+
+    void require_tuple_match_exhaustive(SourceLocation loc,
+                                        const IrType& match_type,
+                                        const TupleMatchCoverage& coverage) const {
         if (coverage.has_irrefutable_arm) return;
         if (coverage.has_finite_universe &&
             coverage.universe_size > 0 &&
@@ -8274,7 +8283,12 @@ private:
         std::string kind = match_type.primitive == IrPrimitiveKind::Struct
             ? "struct"
             : (match_type.primitive == IrPrimitiveKind::Array ? "array" : "tuple");
-        fail(loc, kind + " match must cover every supported product case or include an irrefutable arm such as _ or a binding-only pattern");
+        std::string message = kind + " match must cover every supported product case or include an irrefutable arm such as _ or a binding-only pattern";
+        std::string missing = product_missing_case_hint(match_type, coverage);
+        if (!missing.empty()) {
+            message += "; missing case such as " + missing;
+        }
+        fail(loc, message);
     }
 
     std::vector<IrStmtPtr> build_tuple_match_if_chain(std::vector<TupleCheckedStmtArm>& arms) {
