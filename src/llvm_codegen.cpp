@@ -1387,6 +1387,10 @@ private:
                 return emit_vector_remove(expr);
             case IrExprKind::VectorInsert:
                 return emit_vector_insert(expr);
+            case IrExprKind::VectorContains:
+                return emit_vector_search(expr, false);
+            case IrExprKind::VectorIndexOf:
+                return emit_vector_search(expr, true);
             case IrExprKind::Noop:
                 return Value{"void", "", expr.type};
             case IrExprKind::FormatPrint:
@@ -1859,6 +1863,82 @@ private:
         line("  " + next_len + " = add i64 " + len + ", 1");
         line("  store i64 " + next_len + ", ptr " + len_ptr);
         return Value{"void", "", expr.type};
+    }
+
+    std::string emit_vector_value_eq(const IrType& element_type,
+                                     const Value& left,
+                                     const Value& right) {
+        std::string matched = temp();
+        bool is_float = is_llvm_float_type(element_type);
+        line("  " + matched + " = " + std::string(is_float ? "fcmp oeq " : "icmp eq ") +
+             left.type + " " + left.name + ", " + right.name);
+        return matched;
+    }
+
+    Value emit_vector_search(const IrExpr& expr, bool return_index) {
+        if (!expr.operand || !expr.payload ||
+            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec search lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        const IrType& element_type = vector_type.args[0];
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        Value needle = cast_value(emit_expr(*expr.payload), element_type);
+        std::string element_llvm = llvm_type(element_type);
+        std::string len_ptr = temp();
+        std::string len = temp();
+        line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 0");
+        line("  " + len + " = load i64, ptr " + len_ptr);
+
+        std::string entry_label = current_label_;
+        std::string cond_label = label(return_index ? "vector.index_of.cond" : "vector.contains.cond");
+        std::string body_label = label(return_index ? "vector.index_of.body" : "vector.contains.body");
+        std::string next_label = label(return_index ? "vector.index_of.next" : "vector.contains.next");
+        std::string found_label = label(return_index ? "vector.index_of.found" : "vector.contains.found");
+        std::string missing_label = label(return_index ? "vector.index_of.missing" : "vector.contains.missing");
+        std::string end_label = label(return_index ? "vector.index_of.end" : "vector.contains.end");
+        std::string cursor = temp();
+        std::string keep_scanning = temp();
+        std::string item_ptr = temp();
+        std::string item = temp();
+        std::string next_cursor = temp();
+
+        line("  br label %" + cond_label);
+        emit_label(cond_label);
+        line("  " + cursor + " = phi i64 [ 0, %" + entry_label +
+             " ], [ " + next_cursor + ", %" + next_label + " ]");
+        line("  " + keep_scanning + " = icmp slt i64 " + cursor + ", " + len);
+        line("  br i1 " + keep_scanning + ", label %" + body_label + ", label %" + missing_label);
+
+        emit_label(body_label);
+        line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + cursor);
+        line("  " + item + " = load " + element_llvm + ", ptr " + item_ptr);
+        std::string matched = emit_vector_value_eq(element_type, Value{element_llvm, item, element_type}, needle);
+        line("  br i1 " + matched + ", label %" + found_label + ", label %" + next_label);
+
+        emit_label(next_label);
+        line("  " + next_cursor + " = add i64 " + cursor + ", 1");
+        line("  br label %" + cond_label);
+
+        emit_label(found_label);
+        line("  br label %" + end_label);
+
+        emit_label(missing_label);
+        line("  br label %" + end_label);
+
+        emit_label(end_label);
+        std::string out = temp();
+        if (return_index) {
+            line("  " + out + " = phi i64 [ " + cursor + ", %" + found_label +
+                 " ], [ -1, %" + missing_label + " ]");
+            return Value{"i64", out, expr.type};
+        }
+        line("  " + out + " = phi i1 [ true, %" + found_label +
+             " ], [ false, %" + missing_label + " ]");
+        return Value{"i1", out, expr.type};
     }
 
     void emit_vector_bounds_check(const Value& index, const IrType& vector_type, const std::string& vector_ptr) {

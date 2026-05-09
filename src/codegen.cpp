@@ -1322,6 +1322,10 @@ private:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.remove yet");
             case IrExprKind::VectorInsert:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.insert yet");
+            case IrExprKind::VectorContains:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.contains yet");
+            case IrExprKind::VectorIndexOf:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.index_of yet");
             case IrExprKind::Noop:
                 emit_mov_reg_imm64(Reg::RAX, 0);
                 break;

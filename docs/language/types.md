@@ -395,6 +395,8 @@ let current_last = values.last()
 let by_index = values.get(1)
 values.swap(0, 1)
 values.insert(1, 7)
+let has_seven = values.contains(7)
+let seven_index = values.index_of(7)
 let last = values.pop()
 let capacity = values.capacity()
 let empty = values.is_empty()
@@ -422,6 +424,9 @@ the runtime length, and use the same bounds checks as indexing, so empty
 vectors panic.
 `get(index)` reads a copyable element at a runtime index without changing the
 runtime length, and uses the same bounds checks as `values[index]`.
+`contains(value)` returns `true` when a copyable comparable element equal to
+`value` appears inside the current runtime length. `index_of(value)` returns
+the first matching runtime index as `i64`, or `-1` when no element matches.
 `truncate(n)` shrinks the current runtime length to `n` when `n` is smaller
 than the current length, leaves it unchanged when `n` is larger, and panics for
 negative runtime lengths. `set(index, value)` overwrites an existing element
@@ -435,8 +440,8 @@ the current runtime length, shifts later elements one slot toward the back,
 stores the new copyable value, and increases the runtime length. Mutating
 methods such as `reserve`, `push`, `insert`, `pop`, `remove`, `clear`,
 `truncate`, and `set`/`swap` require a `var` binding. Read-only methods such as
-`capacity`, `is_empty`, `first`, `last`, and `get` work on immutable local
-vectors too.
+`capacity`, `is_empty`, `first`, `last`, `get`, `contains`, and `index_of`
+work on immutable local vectors too.
 
 The compiler reserves enough local storage for the largest vector literal,
 explicit `reserve` capacity, or tracked `push` growth seen for that binding,

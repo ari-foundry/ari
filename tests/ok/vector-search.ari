@@ -1,0 +1,16 @@
+fn main() -> i64 {
+  let values: Vec[i64] = [4, 7, 9, 7];
+  let flags: Vec[bool] = [true, false];
+
+  let has_seven: bool = values.contains(7);
+  let has_eight: bool = values.contains(8);
+  let seven_index: i64 = values.index_of(7);
+  let missing_index: i64 = values.index_of(8);
+  let false_index: i64 = flags.index_of(false);
+
+  if has_seven && !has_eight && flags.contains(false) {
+    return seven_index + (0 - missing_index) + len(values) + false_index;
+  }
+
+  return 99;
+}
