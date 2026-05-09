@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ast.hpp"
+#include "module_cache.hpp"
 #include "module_metadata.hpp"
 
 #include <set>
@@ -12,11 +13,13 @@ namespace ari {
 struct ModuleLoadResult {
     Program program;
     ModuleMetadata metadata;
+    ModuleCache cache;
 };
 
 struct ModuleLoadOptions {
     std::vector<std::string> module_search_paths;
     std::set<std::string> cfg_features;
+    const ModuleCache* input_cache = nullptr;
     bool implicit_std = true;
 };
 

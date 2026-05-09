@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "elf.hpp"
 #include "llvm_codegen.hpp"
+#include "module_cache.hpp"
 #include "module_loader.hpp"
 #include "module_metadata.hpp"
 #include "parser.hpp"
@@ -61,6 +62,7 @@ static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--emit-llvm path] [--freestanding]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--emit-module-metadata path] [--check-module-metadata path]\n"
+                 "           [--emit-module-cache path] [--use-module-cache path]\n"
                  "           [--no-implicit-std]\n"
                  "           [-L path] [-l name] [--link name] [--shared]\n"
                  "           [--test] [--cfg-feature name]\n";
@@ -78,6 +80,8 @@ int run(int argc, char** argv) {
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
     std::string metadata_check;
+    std::string module_cache_output;
+    std::string module_cache_input;
     std::vector<std::string> module_search_paths;
     std::vector<std::string> link_args;
     std::set<std::string> cfg_features;
@@ -121,6 +125,12 @@ int run(int argc, char** argv) {
         } else if (arg == "--check-module-metadata") {
             if (i + 1 >= argc) throw CompileError("--check-module-metadata expects a path");
             metadata_check = argv[++i];
+        } else if (arg == "--emit-module-cache") {
+            if (i + 1 >= argc) throw CompileError("--emit-module-cache expects a path");
+            module_cache_output = argv[++i];
+        } else if (arg == "--use-module-cache") {
+            if (i + 1 >= argc) throw CompileError("--use-module-cache expects a path");
+            module_cache_input = argv[++i];
         } else if (arg == "-I") {
             if (i + 1 >= argc) throw CompileError("-I expects a path");
             module_search_paths.push_back(argv[++i]);
@@ -159,6 +169,12 @@ int run(int argc, char** argv) {
     load_options.module_search_paths = std::move(module_search_paths);
     load_options.cfg_features = cfg_features;
     load_options.implicit_std = implicit_std;
+    ModuleCache input_cache;
+    if (!module_cache_input.empty()) {
+        input_cache = read_module_cache_file(module_cache_input);
+        require_matching_module_cache_inputs(input_cache, input, load_options, module_cache_input);
+        load_options.input_cache = &input_cache;
+    }
     ModuleLoadResult loaded = parse_file_with_module_metadata(input, std::move(load_options));
     if (!metadata_check.empty()) {
         ModuleMetadata expected = read_module_metadata_file(metadata_check);
@@ -167,6 +183,10 @@ int run(int argc, char** argv) {
     if (!metadata_output.empty()) {
         write_text_file(metadata_output, serialize_module_metadata(loaded.metadata));
         std::cout << "wrote " << metadata_output << " (module metadata)\n";
+    }
+    if (!module_cache_output.empty()) {
+        write_text_file(module_cache_output, serialize_module_cache(loaded.cache));
+        std::cout << "wrote " << module_cache_output << " (module cache)\n";
     }
     Program program = std::move(loaded.program);
     SemaOptions sema_options;

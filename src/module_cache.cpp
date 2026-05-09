@@ -1,0 +1,383 @@
+#include "module_cache.hpp"
+
+#include "common.hpp"
+#include "module_loader.hpp"
+
+#include <algorithm>
+#include <fstream>
+#include <map>
+#include <set>
+#include <sstream>
+#include <utility>
+#include <vector>
+
+namespace ari {
+
+namespace {
+
+constexpr int kModuleCacheVersion = 1;
+
+std::string read_file(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) throw CompileError("cannot open input file '" + path + "'");
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    return ss.str();
+}
+
+bool file_exists(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    return static_cast<bool>(in);
+}
+
+std::string dirname(const std::string& path) {
+    std::size_t split = path.find_last_of("/\\");
+    if (split == std::string::npos) return ".";
+    if (split == 0) return path.substr(0, 1);
+    return path.substr(0, split);
+}
+
+std::string path_join(const std::string& left, const std::string& right) {
+    if (left.empty() || left == ".") return right;
+    char back = left[left.size() - 1];
+    if (back == '/' || back == '\\') return left + right;
+    return left + "/" + right;
+}
+
+void add_module_candidates(const std::string& dir,
+                           const std::string& local_name,
+                           std::vector<std::string>& candidates) {
+    candidates.push_back(path_join(dir, local_name + ".ari"));
+    candidates.push_back(path_join(dir, local_name + ".arih"));
+    candidates.push_back(path_join(path_join(dir, local_name), "mod.ari"));
+    candidates.push_back(path_join(path_join(dir, local_name), "mod.arih"));
+}
+
+std::string find_module_file_for_cache(const ModuleMetadataImport& import,
+                                       const std::string& base_dir,
+                                       const std::vector<std::string>& module_search_paths) {
+    std::vector<std::string> candidates;
+    add_module_candidates(base_dir, import.local_name, candidates);
+    for (const auto& search_path : module_search_paths) {
+        if (!search_path.empty()) add_module_candidates(search_path, import.local_name, candidates);
+    }
+    for (const auto& candidate : candidates) {
+        if (file_exists(candidate)) return candidate;
+    }
+    return "";
+}
+
+std::string escape_field(const std::string& text) {
+    std::string escaped;
+    for (char c : text) {
+        switch (c) {
+            case '\\': escaped += "\\\\"; break;
+            case '\t': escaped += "\\t"; break;
+            case '\n': escaped += "\\n"; break;
+            case '\r': escaped += "\\r"; break;
+            default: escaped.push_back(c); break;
+        }
+    }
+    return escaped;
+}
+
+std::string unescape_field(const std::string& text, const std::string& display_path, std::size_t line) {
+    std::string unescaped;
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        char c = text[i];
+        if (c != '\\') {
+            unescaped.push_back(c);
+            continue;
+        }
+        if (i + 1 >= text.size()) {
+            throw CompileError("invalid module cache '" + display_path + "' at line " +
+                               std::to_string(line) + ": dangling escape");
+        }
+        char next = text[++i];
+        switch (next) {
+            case '\\': unescaped.push_back('\\'); break;
+            case 't': unescaped.push_back('\t'); break;
+            case 'n': unescaped.push_back('\n'); break;
+            case 'r': unescaped.push_back('\r'); break;
+            default:
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line) + ": unknown escape");
+        }
+    }
+    return unescaped;
+}
+
+std::vector<std::string> split_cache_line(const std::string& line,
+                                          const std::string& display_path,
+                                          std::size_t line_number) {
+    std::vector<std::string> fields;
+    std::size_t start = 0;
+    for (;;) {
+        std::size_t split = line.find('\t', start);
+        std::string field = split == std::string::npos
+            ? line.substr(start)
+            : line.substr(start, split - start);
+        fields.push_back(unescape_field(field, display_path, line_number));
+        if (split == std::string::npos) break;
+        start = split + 1;
+    }
+    return fields;
+}
+
+bool parse_bool_field(const std::string& value, const std::string& display_path, std::size_t line) {
+    if (value == "0") return false;
+    if (value == "1") return true;
+    throw CompileError("invalid module cache '" + display_path + "' at line " +
+                       std::to_string(line) + ": expected boolean 0 or 1");
+}
+
+void write_line(std::ostringstream& out, const std::vector<std::string>& fields) {
+    for (std::size_t i = 0; i < fields.size(); ++i) {
+        if (i > 0) out << '\t';
+        out << escape_field(fields[i]);
+    }
+    out << '\n';
+}
+
+std::string bool_key(bool value) {
+    return value ? "1" : "0";
+}
+
+std::string display_module_name(const std::string& module_name) {
+    return module_name.empty() ? "<root>" : module_name;
+}
+
+void fail_stale(const std::string& display_path, const std::string& detail) {
+    throw CompileError("module cache '" + display_path + "' is stale: " + detail +
+                       "; regenerate it with --emit-module-cache");
+}
+
+void require_same_search_paths(const ModuleCache& cache,
+                               const ModuleLoadOptions& options,
+                               const std::string& display_path) {
+    if (cache.metadata.module_search_paths.size() != options.module_search_paths.size()) {
+        fail_stale(display_path, "module search path count changed");
+    }
+    for (std::size_t i = 0; i < options.module_search_paths.size(); ++i) {
+        if (cache.metadata.module_search_paths[i] != options.module_search_paths[i]) {
+            fail_stale(display_path,
+                       "module search path #" + std::to_string(i + 1) + " changed from '" +
+                       cache.metadata.module_search_paths[i] + "' to '" +
+                       options.module_search_paths[i] + "'");
+        }
+    }
+}
+
+void require_same_cfg(const ModuleCache& cache,
+                      const ModuleLoadOptions& options,
+                      const std::string& display_path) {
+    for (const auto& feature : options.cfg_features) {
+        if (!cache.metadata.cfg_features.count(feature)) {
+            fail_stale(display_path, "current source graph has new cfg feature '" + feature + "'");
+        }
+    }
+    for (const auto& feature : cache.metadata.cfg_features) {
+        if (!options.cfg_features.count(feature)) {
+            fail_stale(display_path, "module cache still lists cfg feature '" + feature +
+                       "' missing from the current source graph");
+        }
+    }
+}
+
+std::string source_key(const std::string& module_name, const std::string& path, bool is_root) {
+    return module_name + "\t" + path + "\t" + bool_key(is_root);
+}
+
+std::map<std::string, const ModuleCacheSource*> cache_sources_by_key(const ModuleCache& cache) {
+    std::map<std::string, const ModuleCacheSource*> by_key;
+    for (const auto& source : cache.sources) {
+        by_key.emplace(source_key(source.module_name, source.path, source.is_root), &source);
+    }
+    return by_key;
+}
+
+} // namespace
+
+std::string serialize_module_cache(const ModuleCache& cache) {
+    std::ostringstream out;
+    out << "ari-module-cache-v" << kModuleCacheVersion << "\n";
+    write_line(out, {"metadata", serialize_module_metadata(cache.metadata)});
+    for (const auto& source : cache.sources) {
+        write_line(out, {
+            "source",
+            source.module_name,
+            source.path,
+            source.is_root ? "1" : "0",
+            source.content_hash,
+            source.source,
+        });
+    }
+    return out.str();
+}
+
+ModuleCache parse_module_cache_text(const std::string& text, const std::string& display_path) {
+    std::istringstream in(text);
+    std::string line;
+    std::size_t line_number = 0;
+    ModuleCache cache;
+    bool saw_header = false;
+    bool saw_metadata = false;
+
+    while (std::getline(in, line)) {
+        ++line_number;
+        if (!saw_header) {
+            if (line == "ari-module-cache-v1") {
+                cache.format_version = 1;
+            } else {
+                throw CompileError("invalid module cache '" + display_path +
+                                   "': expected ari-module-cache-v1 header");
+            }
+            saw_header = true;
+            continue;
+        }
+        if (line.empty()) continue;
+        std::vector<std::string> fields = split_cache_line(line, display_path, line_number);
+        const std::string& tag = fields[0];
+        if (tag == "metadata") {
+            if (fields.size() != 2) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) + ": malformed metadata record");
+            }
+            if (saw_metadata) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) + ": duplicate metadata record");
+            }
+            cache.metadata = parse_module_metadata_text(fields[1], display_path + ":metadata");
+            saw_metadata = true;
+        } else if (tag == "source") {
+            if (fields.size() != 6) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) + ": malformed source record");
+            }
+            cache.sources.push_back(ModuleCacheSource{
+                fields[1],
+                fields[2],
+                fields[4],
+                fields[5],
+                parse_bool_field(fields[3], display_path, line_number),
+            });
+        } else {
+            throw CompileError("invalid module cache '" + display_path + "' at line " +
+                               std::to_string(line_number) + ": unknown record");
+        }
+    }
+
+    if (!saw_header) {
+        throw CompileError("invalid module cache '" + display_path +
+                           "': expected ari-module-cache-v1 header");
+    }
+    if (!saw_metadata) {
+        throw CompileError("invalid module cache '" + display_path + "': missing metadata record");
+    }
+    return cache;
+}
+
+ModuleCache read_module_cache_file(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in) throw CompileError("cannot open module cache file '" + path + "'");
+    std::ostringstream ss;
+    ss << in.rdbuf();
+    return parse_module_cache_text(ss.str(), path);
+}
+
+const ModuleCacheSource* find_module_cache_source(const ModuleCache& cache, const std::string& path) {
+    for (const auto& source : cache.sources) {
+        if (source.path == path) return &source;
+    }
+    return nullptr;
+}
+
+void require_matching_module_cache_inputs(const ModuleCache& cache,
+                                          const std::string& root_input,
+                                          const ModuleLoadOptions& options,
+                                          const std::string& display_path) {
+    if (cache.format_version < kModuleCacheVersion) {
+        fail_stale(display_path, "old module cache format");
+    }
+    if (cache.metadata.format_version < 2) {
+        fail_stale(display_path, "embedded metadata does not include source content hashes");
+    }
+    require_same_search_paths(cache, options, display_path);
+    require_same_cfg(cache, options, display_path);
+    if (cache.metadata.implicit_std != options.implicit_std) {
+        fail_stale(display_path, "implicit_std option changed from " +
+                   bool_key(cache.metadata.implicit_std) + " to " +
+                   bool_key(options.implicit_std));
+    }
+
+    const auto by_key = cache_sources_by_key(cache);
+    std::set<std::string> metadata_source_keys;
+    std::map<std::string, std::string> source_path_by_module;
+    bool matched_root = false;
+    for (const auto& source : cache.metadata.sources) {
+        metadata_source_keys.insert(source_key(source.module_name, source.path, source.is_root));
+        if (source.is_root) {
+            matched_root = matched_root || source.path == root_input;
+        }
+        source_path_by_module[source.module_name] = source.path;
+
+        auto cached_it = by_key.find(source_key(source.module_name, source.path, source.is_root));
+        if (cached_it == by_key.end()) {
+            fail_stale(display_path, "missing cached source '" +
+                       display_module_name(source.module_name) + "' at '" + source.path + "'");
+        }
+        const ModuleCacheSource& cached = *cached_it->second;
+        if (cached.content_hash != source.content_hash) {
+            fail_stale(display_path, "cached source '" + display_module_name(source.module_name) +
+                       "' hash does not match embedded metadata");
+        }
+        std::string cached_hash = module_metadata_source_hash(cached.source);
+        if (cached_hash != cached.content_hash) {
+            fail_stale(display_path, "cached source text for '" +
+                       display_module_name(source.module_name) + "' hashes to '" +
+                       cached_hash + "' instead of recorded '" + cached.content_hash + "'");
+        }
+
+        std::string current = read_file(source.path);
+        std::string current_hash = module_metadata_source_hash(current);
+        if (current_hash != source.content_hash) {
+            fail_stale(display_path, "source '" + display_module_name(source.module_name) +
+                       "' at '" + source.path + "' content hash changed from '" +
+                       source.content_hash + "' to '" + current_hash + "'");
+        }
+    }
+    if (!matched_root) {
+        fail_stale(display_path, "root input changed to '" + root_input + "'");
+    }
+
+    for (const auto& source : cache.sources) {
+        if (!metadata_source_keys.count(source_key(source.module_name, source.path, source.is_root))) {
+            fail_stale(display_path, "cached source '" + display_module_name(source.module_name) +
+                       "' at '" + source.path + "' is not listed by embedded metadata");
+        }
+    }
+
+    for (const auto& import : cache.metadata.imports) {
+        auto owner_it = source_path_by_module.find(import.owner_module);
+        if (owner_it == source_path_by_module.end()) {
+            fail_stale(display_path, "cached import owner '" +
+                       display_module_name(import.owner_module) + "' has no source record");
+        }
+        std::string resolved = find_module_file_for_cache(
+            import,
+            dirname(owner_it->second),
+            options.module_search_paths
+        );
+        if (resolved.empty()) {
+            fail_stale(display_path, "module import '" + import.module_name +
+                       "' can no longer be resolved");
+        }
+        if (resolved != import.source_path) {
+            fail_stale(display_path, "module import '" + import.module_name +
+                       "' resolved to '" + resolved + "' instead of cached '" +
+                       import.source_path + "'");
+        }
+    }
+}
+
+} // namespace ari

@@ -270,8 +270,8 @@ ari app.ari -I packages --emit-module-metadata build/app.arimeta --emit-llvm bui
 
 The metadata file records the module search paths, active cfg features, source
 files with stable content hashes, resolved file-backed imports, and declaration
-names seen in each source file. It is intentionally a summary format, not a
-compiled cache; the compiler still reparses source files for normal builds.
+names seen in each source file. It is intentionally a summary format; use a
+module cache when you want to reuse a validated package source snapshot.
 Current metadata is written as `ari-module-metadata-v2`; older v1 summaries can
 be parsed for diagnostics, but `--check-module-metadata` asks you to regenerate
 them because v1 lacks source content hashes.
@@ -291,6 +291,31 @@ search path, cfg feature, implicit standard-library option, source file, resolve
 import, declaration item, or source content hash. That keeps package-cache
 failures tied to the module, import, item, or source file that actually changed
 instead of a generic cache miss.
+
+## Module Cache
+
+Ari can also write a source-snapshot module cache:
+
+```sh
+ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build/app.ll
+```
+
+The cache embeds the same metadata summary plus the source text for every file
+in the resolved graph. A later build can validate the cache and parse from that
+snapshot:
+
+```sh
+ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll
+```
+
+Cache validation checks the root input, module search paths, active cfg
+features, implicit `std` mode, current source content hashes, and whether each
+cached `mod` import still resolves to the same file. If any input changed, Ari
+rejects the cache and asks you to regenerate it with `--emit-module-cache`.
+
+This first cache format skips dependency source discovery and source reads after
+validation. It still parses the cached source snapshot; a future AST or IR
+summary cache will skip dependency parsing as well.
 
 ## Nested Modules
 
@@ -344,5 +369,6 @@ mod Outer {
 
 - Module declarations themselves do not have runtime values.
 - Duplicate `use` aliases in the same module scope are rejected.
-- Module metadata validates the source graph and file content hashes, but
-  package dependency caching is still planned.
+- Module caches currently store source snapshots. They validate dependency
+  inputs before reuse, but they do not yet store AST or IR summaries that skip
+  dependency parsing.

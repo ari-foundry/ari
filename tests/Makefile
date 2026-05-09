@@ -70,6 +70,10 @@ check-cli: $(TARGET)
 	grep -q -- "--emit-module-metadata expects a path" $(BUILD_DIR)/cli/missing-emit-module-metadata.err
 	if $(TARGET) tests/ok/package-module-main.ari --check-module-metadata >$(BUILD_DIR)/cli/missing-check-module-metadata.err 2>&1; then exit 1; fi
 	grep -q -- "--check-module-metadata expects a path" $(BUILD_DIR)/cli/missing-check-module-metadata.err
+	if $(TARGET) tests/ok/package-module-main.ari --emit-module-cache >$(BUILD_DIR)/cli/missing-emit-module-cache.err 2>&1; then exit 1; fi
+	grep -q -- "--emit-module-cache expects a path" $(BUILD_DIR)/cli/missing-emit-module-cache.err
+	if $(TARGET) tests/ok/package-module-main.ari --use-module-cache >$(BUILD_DIR)/cli/missing-use-module-cache.err 2>&1; then exit 1; fi
+	grep -q -- "--use-module-cache expects a path" $(BUILD_DIR)/cli/missing-use-module-cache.err
 	if $(TARGET) tests/ok/package-module-main.ari -I >$(BUILD_DIR)/cli/missing-I.err 2>&1; then exit 1; fi
 	grep -q -- "-I expects a path" $(BUILD_DIR)/cli/missing-I.err
 	if $(TARGET) examples/count.ari --backend llvm >$(BUILD_DIR)/cli/backend-removed.err 2>&1; then exit 1; fi
@@ -420,6 +424,34 @@ check-modules: $(TARGET)
 	grep -q "import.*package_math::nested.*tests/packages/nested/mod.ari" $(BUILD_DIR)/modules/package-module-main.arimeta
 	grep -q "item.*fn.*package_math::value" $(BUILD_DIR)/modules/package-module-main.arimeta
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-metadata-check.ll
+	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache.ll
+	grep -q "ari-module-cache-v1" $(BUILD_DIR)/modules/package-module-main.aricache
+	grep -q "metadata.*ari-module-metadata-v2" $(BUILD_DIR)/modules/package-module-main.aricache
+	grep -q "source.*package_math.*tests/packages/package_math.ari" $(BUILD_DIR)/modules/package-module-main.aricache
+	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-use.ll
+	cmp -s $(BUILD_DIR)/modules/package-module-main-cache.ll $(BUILD_DIR)/modules/package-module-main-cache-use.ll
+	if $(TARGET) -Itests/packages --cfg-feature stale tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-stale.ll >$(BUILD_DIR)/modules/package-module-main-cache-stale.err 2>&1; then exit 1; fi
+	grep -q "current source graph has new cfg feature 'stale'" $(BUILD_DIR)/modules/package-module-main-cache-stale.err
+	rm -rf $(BUILD_DIR)/modules/cache-root $(BUILD_DIR)/modules/cache-packages
+	mkdir -p $(BUILD_DIR)/modules/cache-root $(BUILD_DIR)/modules/cache-packages/nested
+	cp tests/ok/package-module-main.ari $(BUILD_DIR)/modules/cache-root/app.ari
+	cp tests/packages/package_math.ari $(BUILD_DIR)/modules/cache-packages/package_math.ari
+	cp tests/packages/package_header.arih $(BUILD_DIR)/modules/cache-packages/package_header.arih
+	cp tests/packages/nested/mod.ari $(BUILD_DIR)/modules/cache-packages/nested/mod.ari
+	$(TARGET) -I$(BUILD_DIR)/modules/cache-packages $(BUILD_DIR)/modules/cache-root/app.ari --emit-module-cache $(BUILD_DIR)/modules/cache-source.aricache --emit-llvm $(BUILD_DIR)/modules/cache-source.ll
+	printf '\n// stale\n' >>$(BUILD_DIR)/modules/cache-packages/package_math.ari
+	if $(TARGET) -I$(BUILD_DIR)/modules/cache-packages $(BUILD_DIR)/modules/cache-root/app.ari --use-module-cache $(BUILD_DIR)/modules/cache-source.aricache --emit-llvm $(BUILD_DIR)/modules/cache-source-stale.ll >$(BUILD_DIR)/modules/cache-source-stale.err 2>&1; then exit 1; fi
+	grep -q "content hash changed" $(BUILD_DIR)/modules/cache-source-stale.err
+	rm -rf $(BUILD_DIR)/modules/cache-shadow-root $(BUILD_DIR)/modules/cache-shadow-packages
+	mkdir -p $(BUILD_DIR)/modules/cache-shadow-root $(BUILD_DIR)/modules/cache-shadow-packages/nested
+	cp tests/ok/package-module-main.ari $(BUILD_DIR)/modules/cache-shadow-root/app.ari
+	cp tests/packages/package_math.ari $(BUILD_DIR)/modules/cache-shadow-packages/package_math.ari
+	cp tests/packages/package_header.arih $(BUILD_DIR)/modules/cache-shadow-packages/package_header.arih
+	cp tests/packages/nested/mod.ari $(BUILD_DIR)/modules/cache-shadow-packages/nested/mod.ari
+	$(TARGET) -I$(BUILD_DIR)/modules/cache-shadow-packages $(BUILD_DIR)/modules/cache-shadow-root/app.ari --emit-module-cache $(BUILD_DIR)/modules/cache-shadow.aricache --emit-llvm $(BUILD_DIR)/modules/cache-shadow.ll
+	printf 'pub fn value() -> i64 {\n  99\n}\n' >$(BUILD_DIR)/modules/cache-shadow-root/package_math.ari
+	if $(TARGET) -I$(BUILD_DIR)/modules/cache-shadow-packages $(BUILD_DIR)/modules/cache-shadow-root/app.ari --use-module-cache $(BUILD_DIR)/modules/cache-shadow.aricache --emit-llvm $(BUILD_DIR)/modules/cache-shadow-stale.ll >$(BUILD_DIR)/modules/cache-shadow-stale.err 2>&1; then exit 1; fi
+	grep -q "resolved to" $(BUILD_DIR)/modules/cache-shadow-stale.err
 	awk 'BEGIN { FS=OFS="\t" } NR == 1 { print "ari-module-metadata-v1"; next } $$1 == "source" { print $$1, $$2, $$3, $$4; next } { print }' $(BUILD_DIR)/modules/package-module-main.arimeta >$(BUILD_DIR)/modules/package-module-main-v1.arimeta
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-v1.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-v1-check.ll >$(BUILD_DIR)/modules/package-module-main-v1-check.err 2>&1; then exit 1; fi
 	grep -q "does not include source content hashes" $(BUILD_DIR)/modules/package-module-main-v1-check.err

@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "lexer.hpp"
+#include "module_cache.hpp"
 #include "module_metadata.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
@@ -28,6 +29,7 @@ struct ModuleFileSearch {
 struct ParsedModuleFile {
     Program program;
     std::string content_hash;
+    std::string source;
 };
 
 std::string read_file(const std::string& path) {
@@ -134,13 +136,22 @@ void append_program(Program& dst, Program&& src) {
 
 ParsedModuleFile parse_file_in_module(const std::string& path,
                                       const std::vector<std::string>& module_path,
-                                      const std::set<std::string>& cfg_features) {
-    std::string source = read_file(path);
+                                      const std::set<std::string>& cfg_features,
+                                      const ModuleCache* input_cache) {
+    std::string source;
+    if (input_cache) {
+        const ModuleCacheSource* cached = find_module_cache_source(*input_cache, path);
+        if (!cached) throw CompileError("module cache is missing source '" + path + "'");
+        source = cached->source;
+    } else {
+        source = read_file(path);
+    }
     std::string content_hash = module_metadata_source_hash(source);
-    std::vector<Token> tokens = lex_source(std::move(source));
+    std::vector<Token> tokens = lex_source(source);
     return ParsedModuleFile{
         parse_tokens_in_module(std::move(tokens), module_path, cfg_features),
         std::move(content_hash),
+        std::move(source),
     };
 }
 
@@ -153,19 +164,38 @@ public:
         metadata_.module_search_paths = options_.module_search_paths;
         metadata_.cfg_features = options_.cfg_features;
         metadata_.implicit_std = options_.implicit_std;
-        ParsedModuleFile root = parse_file_in_module(input, {}, options_.cfg_features);
+        ParsedModuleFile root = parse_file_in_module(input, {}, options_.cfg_features, options_.input_cache);
         Program program = std::move(root.program);
-        collect_module_metadata_source(metadata_, input, std::move(root.content_hash), {}, program, true);
+        collect_source(input, root, {}, program, true);
         if (options_.implicit_std) load_standard_module(program);
         resolve_imports(program, dirname(input));
-        return ModuleLoadResult{std::move(program), std::move(metadata_)};
+        ModuleCache cache;
+        cache.metadata = metadata_;
+        cache.sources = std::move(cache_sources_);
+        return ModuleLoadResult{std::move(program), std::move(metadata_), std::move(cache)};
     }
 
 private:
     ModuleLoadOptions options_;
     ModuleMetadata metadata_;
+    std::vector<ModuleCacheSource> cache_sources_;
     std::map<std::string, std::string> loaded_modules_;
     std::set<std::string> loading_modules_;
+
+    void collect_source(const std::string& path,
+                        const ParsedModuleFile& parsed,
+                        const std::vector<std::string>& module_path,
+                        const Program& program,
+                        bool is_root) {
+        collect_module_metadata_source(metadata_, path, parsed.content_hash, module_path, program, is_root);
+        cache_sources_.push_back(ModuleCacheSource{
+            join_qualified_path(module_path),
+            path,
+            parsed.content_hash,
+            parsed.source,
+            is_root,
+        });
+    }
 
     void load_standard_module(Program& program) {
         const std::string name = "std";
@@ -181,9 +211,9 @@ private:
         program.modules.push_back(std::move(decl));
 
         std::vector<std::string> module_path{name};
-        ParsedModuleFile standard_file = parse_file_in_module(*path, module_path, options_.cfg_features);
+        ParsedModuleFile standard_file = parse_file_in_module(*path, module_path, options_.cfg_features, options_.input_cache);
         Program standard = std::move(standard_file.program);
-        collect_module_metadata_source(metadata_, *path, std::move(standard_file.content_hash), module_path, standard, false);
+        collect_source(*path, standard_file, module_path, standard, false);
         loaded_modules_.emplace(name, *path);
         append_program(program, std::move(standard));
     }
@@ -211,9 +241,9 @@ private:
 
             loading_modules_.insert(import.name);
             std::vector<std::string> module_path = split_qualified_path(import.name);
-            ParsedModuleFile child_file = parse_file_in_module(found.path, module_path, options_.cfg_features);
+            ParsedModuleFile child_file = parse_file_in_module(found.path, module_path, options_.cfg_features, options_.input_cache);
             Program child = std::move(child_file.program);
-            collect_module_metadata_source(metadata_, found.path, std::move(child_file.content_hash), module_path, child, false);
+            collect_source(found.path, child_file, module_path, child, false);
             resolve_imports(child, dirname(found.path));
             loading_modules_.erase(import.name);
             loaded_modules_.emplace(import.name, found.path);
