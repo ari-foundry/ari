@@ -65,14 +65,15 @@
    fixed-array, and aggregate-enum values. The raw backend consumes those byte
    offsets for tuple, struct, fixed-array, and local aggregate-enum storage,
    whole plain aggregate copies, raw-pointer scalar field/index access, and
-   local aggregate-enum tag/payload-binding/literal/range matches. Narrow
-   scalar returns are normalized at the freestanding function boundary,
-   including unsigned wraparound results from `u8`/`u16`/`u32` functions. The
-   remaining aggregate lowering gap is pointer/temporary/ABI coverage for
-   aggregate enums, then explicit aggregate and external ABI classification.
-   - [raw-aggregate-enums] lower nested enum-case payload tests,
-     pointer-backed aggregate enum copies, and direct enum-constructor
-     temporaries in the raw backend with the shared layout tables
+   local aggregate-enum tag/payload-binding/literal/range/nested-compact-enum
+   matches. Narrow scalar returns are normalized at the freestanding function
+   boundary, including unsigned wraparound results from `u8`/`u16`/`u32`
+   functions. The remaining aggregate lowering gap is pointer/temporary/ABI
+   coverage for aggregate enums, then explicit aggregate and external ABI
+   classification.
+   - [raw-aggregate-enums] lower pointer-backed aggregate enum copies and
+     direct enum-constructor temporaries in the raw backend with the shared
+     layout tables
    - [abi-aggregate-calls] pass and return tuple, struct, fixed-array, and
      aggregate enum values with explicit platform ABI rules instead of relying
      on local-stack materialization
@@ -139,8 +140,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
    - [freestanding] extend raw aggregate enum lowering beyond local
-     constructor/copy and tag/payload-binding/literal/range matches to nested
-     enum-case tests
+     constructor/copy and tag/payload-binding/literal/range/nested-compact-enum
+     matches to pointer-backed copies and direct constructor temporaries
 6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]`,
     `Maybe[T]` as a public alias of `Option[T]`, and `Result[T, E]` are source

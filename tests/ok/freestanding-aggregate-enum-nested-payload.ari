@@ -1,0 +1,66 @@
+enum Inner {
+  Empty,
+  Small(i32),
+  Flag(bool),
+}
+
+enum Outer {
+  Wrap(Inner),
+  Other(i64),
+  None,
+}
+
+fn main() -> i64 {
+  let ranged: Outer = Wrap(Small(3));
+  let literal: Outer = Wrap(Small(6));
+  let flag_true: Outer = Wrap(Flag(true));
+  let flag_false: Outer = Wrap(Flag(false));
+  let empty: Outer = Wrap(Empty);
+  let other: Outer = Other(9i64);
+  let none: Outer = None;
+
+  let a: i64 = match ranged {
+    Wrap(Small(1)) => 10,
+    Wrap(Small(ranged_inner @ 2..=4)) => ranged_inner as i64,
+    Wrap(_) => 1,
+    _ => 0;
+  };
+
+  let b: i64 = match literal {
+    Wrap(Small(5 | 6)) => 40,
+    Wrap(_) => 1,
+    _ => 0;
+  };
+
+  let c: i64 = match flag_true {
+    Wrap(Flag(true)) => 20,
+    Wrap(_) => 1,
+    _ => 0;
+  };
+
+  let d: i64 = match flag_false {
+    Wrap(Flag(true)) => 20,
+    Wrap(_) => 1,
+    _ => 0;
+  };
+
+  let e: i64 = match empty {
+    Wrap(Empty) => 30,
+    Wrap(_) => 1,
+    _ => 0;
+  };
+
+  let f: i64 = match other {
+    Wrap(_) => 1,
+    Other(_) => 2,
+    None => 3;
+  };
+
+  let g: i64 = match none {
+    Wrap(_) => 1,
+    Other(_) => 2,
+    None => 3;
+  };
+
+  return a + b + c + d + e + f + g;
+}

@@ -1520,13 +1520,46 @@ private:
             patches.push_back(emit_jcc_placeholder(payload_range_past_end_cc(condition)));
         }
 
+        for (const auto& condition : arm.payload_enum_conditions) {
+            emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+            emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
+            emit_and_reg_reg(Reg::RAX, Reg::RCX);
+            emit_mov_reg_imm64(Reg::RCX, condition.tag);
+            emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+            patches.push_back(emit_jcc_placeholder(0x85));
+
+            if (condition.has_payload_literal) {
+                emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+                emit_shr_rax_imm8(32);
+                emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
+                emit_mov_reg_imm64(Reg::RCX, nested_payload_literal_bits(condition));
+                emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+                patches.push_back(emit_jcc_placeholder(0x85));
+            }
+
+            if (condition.has_payload_range) {
+                emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+                emit_shr_rax_imm8(32);
+                emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
+                emit_mov_reg_imm64(Reg::RCX, nested_payload_range_start_bits(condition));
+                emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+                patches.push_back(emit_jcc_placeholder(condition.range_is_unsigned ? 0x82 : 0x8C));
+
+                emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+                emit_shr_rax_imm8(32);
+                emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
+                emit_mov_reg_imm64(Reg::RCX, nested_payload_range_end_bits(condition));
+                emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+                patches.push_back(emit_jcc_placeholder(nested_payload_range_past_end_cc(condition)));
+            }
+        }
+
         return patches;
     }
 
     template <typename Arm>
     void require_aggregate_enum_match_arm_supported(const Arm& arm) const {
-        if (arm.has_literal || arm.has_range ||
-            !arm.payload_enum_conditions.empty()) {
+        if (arm.has_literal || arm.has_range) {
             throw CompileError(where(arm.loc) +
                                ": freestanding backend does not lower aggregate enum payload test patterns yet");
         }
@@ -1556,6 +1589,25 @@ private:
         return condition.value;
     }
 
+    static std::uint64_t nested_payload_literal_bits(const IrPayloadEnumCondition& condition) {
+        if (condition.payload_literal_is_bool) return condition.payload_literal_bool ? 1 : 0;
+        return condition.payload_literal_negative ? 0 - condition.payload_literal_int
+                                                  : condition.payload_literal_int;
+    }
+
+    static std::uint64_t nested_payload_range_start_bits(const IrPayloadEnumCondition& condition) {
+        return condition.range_start_negative ? 0 - condition.range_start_int : condition.range_start_int;
+    }
+
+    static std::uint64_t nested_payload_range_end_bits(const IrPayloadEnumCondition& condition) {
+        return condition.range_end_negative ? 0 - condition.range_end_int : condition.range_end_int;
+    }
+
+    static std::uint8_t nested_payload_range_past_end_cc(const IrPayloadEnumCondition& condition) {
+        if (condition.range_inclusive) return condition.range_is_unsigned ? 0x87 : 0x8F;
+        return condition.range_is_unsigned ? 0x83 : 0x8D;
+    }
+
     void emit_aggregate_enum_payload_binding(SourceLocation loc,
                                              int match_base_offset,
                                              const IrType& enum_type,
@@ -1583,8 +1635,11 @@ private:
         if (!arm.payload_bindings.empty()) {
             for (const auto& binding : arm.payload_bindings) {
                 if (binding.compact_enum_payload) {
-                    throw CompileError(where(arm.loc) +
-                                       ": freestanding backend does not lower nested aggregate enum payload bindings yet");
+                    emit_load_aggregate_enum_payload_slot(binding.index, arm.loc, match_base_offset, enum_type);
+                    emit_shr_rax_imm8(32);
+                    emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, binding.type);
+                    emit_store_rax_to_local(local_offset(arm.loc, binding.name), binding.type);
+                    continue;
                 }
                 emit_aggregate_enum_payload_binding(arm.loc,
                                                     match_base_offset,

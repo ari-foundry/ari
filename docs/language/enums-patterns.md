@@ -102,8 +102,8 @@ values such as `string`, `ptr T`, and `fn(...) -> ...`, plus one-word enum
 values. Tuples, structs, vectors, owned values, and nested aggregate-enum
 payloads remain planned. The freestanding backend can store and copy local
 aggregate enum values, then match local values by tag with positional payload
-bindings plus scalar payload literal and range tests. Nested enum-case payload
-tests, pointer-backed aggregate enum copies, and aggregate enum
+bindings, scalar payload literal/range tests, and one-level compact enum-case
+payload tests. Pointer-backed aggregate enum copies and aggregate enum
 parameters/returns remain planned there.
 
 ## Passing And Returning
@@ -588,7 +588,8 @@ richer expression lifetime tracking. Tuple-valued and aggregate-enum match arm
 results are lowered by the LLVM backend, but the freestanding backend only
 materializes scalar and compact-enum arm results for now. Freestanding scalar
 arm results work for local aggregate enum matches that use tag checks and
-payload bindings or scalar payload literal/range checks.
+payload bindings, scalar payload literal/range checks, or one-level compact
+enum-case payload checks.
 
 ## Match Diagnostics
 
