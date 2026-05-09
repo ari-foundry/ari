@@ -1,0 +1,24 @@
+fn main() -> i64 {
+  var score: i64 = 0;
+  let signed_value: i64 = -3;
+  let unsigned_value: u8 = 4u8;
+  let wide_float: f64 = 5.75f64;
+  let narrow_float: f32 = 6.25f32;
+  let signed_to_float: f64 = signed_value as f64;
+  let unsigned_to_float: f32 = unsigned_value as f32;
+  let float_to_signed: i64 = wide_float as i64;
+  let float_to_unsigned: u8 = narrow_float as u8;
+  if signed_to_float == -3.0f64 {
+    score = score + 1;
+  }
+  if unsigned_to_float == 4.0f32 {
+    score = score + 2;
+  }
+  if float_to_signed == 5 {
+    score = score + 4;
+  }
+  if float_to_unsigned == 6u8 {
+    score = score + 8;
+  }
+  return score;
+}

@@ -184,6 +184,10 @@ private:
                 type.primitive == IrPrimitiveKind::F64);
     }
 
+    static bool is_raw_integer_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value && is_integer_primitive(type.primitive);
+    }
+
     void reject_float_function_abi() const {
         for (const auto& param : fn_.params) {
             if (is_raw_float_type(param.type)) {
@@ -973,6 +977,22 @@ private:
         out_.u8(0x0F);
         out_.u8(0x5A);
         emit_modrm(3, 0, 0);
+    }
+
+    void emit_sse_int_to_float_cast(const IrType& to) {
+        out_.u8(to.primitive == IrPrimitiveKind::F32 ? 0xF3 : 0xF2);
+        emit_rex(true, 0, reg_code(Reg::RAX));
+        out_.u8(0x0F);
+        out_.u8(0x2A);
+        emit_modrm(3, 0, reg_code(Reg::RAX));
+    }
+
+    void emit_sse_float_to_int_cast(const IrType& from) {
+        out_.u8(from.primitive == IrPrimitiveKind::F32 ? 0xF3 : 0xF2);
+        emit_rex(true, reg_code(Reg::RAX), 0);
+        out_.u8(0x0F);
+        out_.u8(0x2C);
+        emit_modrm(3, reg_code(Reg::RAX), 0);
     }
 
     void emit_mov_mem_reg(int offset, Reg src) {
@@ -2785,17 +2805,32 @@ private:
 
     void emit_cast(const IrExpr& expr) {
         if ((expr.operand && is_raw_float_type(expr.operand->type)) || is_raw_float_type(expr.type)) {
-            if (!expr.operand ||
-                !is_raw_f32_or_f64_type(expr.operand->type) ||
-                !is_raw_f32_or_f64_type(expr.type)) {
+            if (!expr.operand) {
                 throw CompileError(where(expr.loc) +
-                                   ": freestanding backend does not lower f128 or integer/float casts yet");
+                                   ": malformed cast during freestanding lowering");
             }
-            emit_expr(*expr.operand);
-            emit_mov_gp_to_xmm(0, Reg::RAX);
-            emit_sse_float_width_cast(expr.operand->type, expr.type);
-            emit_mov_xmm_to_gp(Reg::RAX, 0);
-            return;
+            if (is_raw_f32_or_f64_type(expr.operand->type) && is_raw_f32_or_f64_type(expr.type)) {
+                emit_expr(*expr.operand);
+                emit_mov_gp_to_xmm(0, Reg::RAX);
+                emit_sse_float_width_cast(expr.operand->type, expr.type);
+                emit_mov_xmm_to_gp(Reg::RAX, 0);
+                return;
+            }
+            if (is_raw_integer_type(expr.operand->type) && is_raw_f32_or_f64_type(expr.type)) {
+                emit_expr(*expr.operand);
+                emit_sse_int_to_float_cast(expr.type);
+                emit_mov_xmm_to_gp(Reg::RAX, 0);
+                return;
+            }
+            if (is_raw_f32_or_f64_type(expr.operand->type) && is_raw_integer_type(expr.type)) {
+                emit_expr(*expr.operand);
+                emit_mov_gp_to_xmm(0, Reg::RAX);
+                emit_sse_float_to_int_cast(expr.operand->type);
+                emit_cast_to_type(expr.loc, expr.type);
+                return;
+            }
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend does not lower f128 float casts yet");
         }
         emit_expr(*expr.operand);
         emit_cast_to_type(expr.loc, expr.type);

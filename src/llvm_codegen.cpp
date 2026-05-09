@@ -2611,6 +2611,18 @@ private:
         }
         int from_float_bits = float_bits(value.ir_type);
         int to_float_bits = float_bits(target);
+        if (from_bits > 0 && to_float_bits > 0) {
+            std::string out = temp();
+            std::string op = is_unsigned_integer_type(value.ir_type) ? "uitofp" : "sitofp";
+            line("  " + out + " = " + op + " " + value.type + " " + value.name + " to " + target_type);
+            return Value{target_type, out, target};
+        }
+        if (from_float_bits > 0 && to_bits > 0) {
+            std::string out = temp();
+            std::string op = is_unsigned_integer_type(target) ? "fptoui" : "fptosi";
+            line("  " + out + " = " + op + " " + value.type + " " + value.name + " to " + target_type);
+            return Value{target_type, out, target};
+        }
         if (from_float_bits > 0 && to_float_bits > 0) {
             std::string out = temp();
             if (from_float_bits < to_float_bits) {
