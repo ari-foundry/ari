@@ -6022,6 +6022,11 @@ private:
                                   const IrMatchArm& lowered_arm,
                                   bool covers_case,
                                   EnumMatchCoverage& coverage) const {
+        if (!lowered_arm.payload_literal_conditions.empty() ||
+            !lowered_arm.payload_range_conditions.empty() ||
+            !lowered_arm.payload_enum_conditions.empty()) {
+            covers_case = false;
+        }
         if (coverage.covered_tags.count(case_info.tag)) {
             fail(pattern.loc, "duplicate match arm for enum case '" + pattern.case_name + "'");
         }
@@ -6044,7 +6049,9 @@ private:
     }
 
     static std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
-        if (!arm.payload_literal_conditions.empty() || !arm.payload_range_conditions.empty()) {
+        if (!arm.payload_literal_conditions.empty() ||
+            !arm.payload_range_conditions.empty() ||
+            !arm.payload_enum_conditions.empty()) {
             std::string key = std::to_string(arm.enum_tag);
             for (const auto& condition : arm.payload_literal_conditions) {
                 key += ":L" + std::to_string(condition.index) + ":" + std::to_string(condition.value);
@@ -6054,6 +6061,25 @@ private:
                        (condition.start_negative ? "-" : "") + std::to_string(condition.start_int) + ":" +
                        (condition.end_negative ? "-" : "") + std::to_string(condition.end_int) + ":" +
                        (condition.inclusive ? "1" : "0");
+            }
+            for (const auto& condition : arm.payload_enum_conditions) {
+                key += ":E" + std::to_string(condition.index) + ":" + condition.enum_type.name + ":" +
+                       std::to_string(condition.tag);
+                if (condition.has_payload_literal) {
+                    key += std::string(":L") +
+                           (condition.payload_literal_negative ? "-" : "") +
+                           std::to_string(condition.payload_literal_int) + ":" +
+                           (condition.payload_literal_is_bool ? "B" : "I") + ":" +
+                           (condition.payload_literal_bool ? "1" : "0");
+                }
+                if (condition.has_payload_range) {
+                    key += std::string(":R") +
+                           (condition.range_start_negative ? "-" : "") +
+                           std::to_string(condition.range_start_int) + ":" +
+                           (condition.range_end_negative ? "-" : "") +
+                           std::to_string(condition.range_end_int) + ":" +
+                           (condition.range_inclusive ? "1" : "0");
+                }
             }
             return key;
         }
@@ -6410,6 +6436,10 @@ private:
                                          bool aggregate_layout) {
         switch (payload.kind) {
             case PatternKind::Binding:
+                if (aggregate_layout && is_value_enum_type(payload_type) && !has_aggregate_enum_layout(payload_type) &&
+                    try_lower_nested_zero_payload_case(payload.loc, payload.payload_name, payload_type, lowered_arm, payload_index)) {
+                    return false;
+                }
                 add_payload_binding(lowered_arm, payload_index, payload.payload_name, payload_type);
                 return true;
             case PatternKind::Wildcard:
@@ -6449,6 +6479,10 @@ private:
             case PatternKind::Or:
                 fail(payload.loc, "or-pattern enum payloads outside match arms are planned but are not supported yet");
             case PatternKind::EnumCase: {
+                if (aggregate_layout && is_value_enum_type(payload_type) && !has_aggregate_enum_layout(payload_type)) {
+                    lower_nested_enum_payload_pattern(payload, payload_type, lowered_arm, payload_index);
+                    return false;
+                }
                 ConstantValue constant_pattern;
                 if (try_constant_pattern_value(payload, constant_pattern)) {
                     if (aggregate_layout) {
@@ -6519,6 +6553,10 @@ private:
             case PatternKind::Or:
                 fail(aliased.loc, "or-pattern enum payloads outside match arms are planned but are not supported yet");
             case PatternKind::EnumCase: {
+                if (aggregate_layout && is_value_enum_type(payload_type) && !has_aggregate_enum_layout(payload_type)) {
+                    lower_nested_enum_payload_pattern(aliased, payload_type, lowered_arm, payload_index);
+                    return;
+                }
                 ConstantValue constant_pattern;
                 if (try_constant_pattern_value(aliased, constant_pattern)) {
                     if (aggregate_layout) {
@@ -6661,6 +6699,223 @@ private:
         });
     }
 
+    void lower_nested_enum_payload_pattern(const Pattern& pattern,
+                                           const IrType& payload_type,
+                                           IrMatchArm& lowered_arm,
+                                           std::uint32_t payload_index) {
+        std::string case_name = resolve_enum_case_name(pattern.case_name);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) {
+            fail(pattern.loc, "unknown nested enum case '" + pattern.case_name + "'");
+        }
+        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, payload_type);
+        require_enum_case_access(pattern.loc, case_info);
+        if (case_info.enum_name != payload_type.name) {
+            fail(pattern.loc,
+                 "enum case '" + pattern.case_name + "' does not belong to payload enum " + payload_type.name);
+        }
+        if (has_aggregate_enum_layout(case_info.enum_type)) {
+            fail(pattern.loc, "nested aggregate enum payload patterns are planned but are not supported yet");
+        }
+        if (case_info.payloads.empty() && pattern.has_payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
+        }
+        if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+        }
+        if (case_info.payloads.size() > 1) {
+            fail(pattern.loc, "nested multi-payload enum case patterns are planned but are not supported yet");
+        }
+
+        IrPayloadEnumCondition condition;
+        condition.index = payload_index;
+        condition.enum_type = payload_type;
+        condition.tag = case_info.tag;
+
+        if (!case_info.payloads.empty()) {
+            lower_nested_enum_payload_slot_pattern(
+                *pattern.payload_pattern,
+                case_info.payloads[0],
+                payload_type,
+                lowered_arm,
+                payload_index,
+                condition
+            );
+        }
+
+        lowered_arm.payload_enum_conditions.push_back(std::move(condition));
+    }
+
+    bool try_lower_nested_zero_payload_case(SourceLocation loc,
+                                            const std::string& name,
+                                            const IrType& payload_type,
+                                            IrMatchArm& lowered_arm,
+                                            std::uint32_t payload_index) {
+        std::string case_name = resolve_enum_case_name(name);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) return false;
+        EnumCaseInfo case_info = enum_case_for_match_value(loc, case_found->second, payload_type);
+        if (case_info.enum_name != payload_type.name || !case_info.payloads.empty()) return false;
+        require_enum_case_access(loc, case_info);
+
+        IrPayloadEnumCondition condition;
+        condition.index = payload_index;
+        condition.enum_type = payload_type;
+        condition.tag = case_info.tag;
+        lowered_arm.payload_enum_conditions.push_back(std::move(condition));
+        return true;
+    }
+
+    void lower_nested_enum_payload_slot_pattern(const Pattern& pattern,
+                                                const IrType& nested_payload_type,
+                                                const IrType& nested_enum_type,
+                                                IrMatchArm& lowered_arm,
+                                                std::uint32_t payload_index,
+                                                IrPayloadEnumCondition& condition) {
+        switch (pattern.kind) {
+            case PatternKind::Binding:
+                add_compact_enum_payload_binding(lowered_arm, payload_index, pattern.payload_name, nested_payload_type, nested_enum_type);
+                return;
+            case PatternKind::Wildcard:
+                return;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased payload pattern");
+                if (pattern_has_binding(*pattern.alias_pattern)) {
+                    fail(pattern.loc, "alias payload patterns cannot contain another binding yet");
+                }
+                add_compact_enum_payload_binding(lowered_arm, payload_index, pattern.alias_name, nested_payload_type, nested_enum_type);
+                lower_nested_enum_payload_slot_pattern(
+                    *pattern.alias_pattern,
+                    nested_payload_type,
+                    nested_enum_type,
+                    lowered_arm,
+                    payload_index,
+                    condition
+                );
+                return;
+            case PatternKind::IntegerLiteral:
+                set_nested_enum_payload_integer_literal(pattern, nested_payload_type, condition);
+                return;
+            case PatternKind::BoolLiteral:
+                set_nested_enum_payload_bool_literal(pattern.loc, pattern.bool_value, nested_payload_type, condition);
+                return;
+            case PatternKind::Range:
+                set_nested_enum_payload_range(pattern, nested_payload_type, condition);
+                return;
+            case PatternKind::EnumCase: {
+                ConstantValue constant_pattern;
+                if (try_constant_pattern_value(pattern, constant_pattern)) {
+                    set_nested_enum_payload_constant_literal(pattern.loc, constant_pattern, nested_payload_type, condition);
+                    return;
+                }
+                fail(pattern.loc, "nested enum payload subpatterns deeper than one compact enum are planned but are not supported yet");
+            }
+            case PatternKind::Or:
+                fail(pattern.loc, "or-pattern enum payloads outside match arms are planned but are not supported yet");
+            case PatternKind::Tuple:
+                if (pattern.has_rest && pattern.elements.empty()) return;
+                fail(pattern.loc, "nested tuple enum payload patterns are planned but are not supported yet");
+            case PatternKind::Array:
+                fail(pattern.loc, "array enum payload patterns are planned after aggregate enum payload layout");
+            case PatternKind::Struct:
+                fail(pattern.loc, "struct enum payload patterns are planned after aggregate enum payload layout");
+        }
+        fail(pattern.loc, "unsupported nested enum payload pattern");
+    }
+
+    static void set_nested_enum_payload_integer_literal(const Pattern& pattern,
+                                                        const IrType& nested_payload_type,
+                                                        IrPayloadEnumCondition& condition) {
+        if (!is_value_integer_type(nested_payload_type)) {
+            fail(pattern.loc, "integer nested enum payload patterns require an integer enum payload");
+        }
+        make_payload_range_endpoint_literal(
+            pattern.loc,
+            pattern.int_value,
+            pattern.int_negative,
+            pattern.literal_suffix,
+            nested_payload_type
+        );
+        condition.has_payload_literal = true;
+        condition.payload_literal_int = pattern.int_value;
+        condition.payload_literal_negative = pattern.int_negative;
+        condition.payload_literal_is_bool = false;
+        condition.payload_type = nested_payload_type;
+    }
+
+    static void set_nested_enum_payload_bool_literal(SourceLocation loc,
+                                                     bool value,
+                                                     const IrType& nested_payload_type,
+                                                     IrPayloadEnumCondition& condition) {
+        if (nested_payload_type.qualifier != TypeQualifier::Value ||
+            nested_payload_type.primitive != IrPrimitiveKind::Bool) {
+            fail(loc, "bool nested enum payload patterns require a bool enum payload");
+        }
+        condition.has_payload_literal = true;
+        condition.payload_literal_int = value ? 1ULL : 0ULL;
+        condition.payload_literal_negative = false;
+        condition.payload_literal_is_bool = true;
+        condition.payload_literal_bool = value;
+        condition.payload_type = nested_payload_type;
+    }
+
+    static void set_nested_enum_payload_range(const Pattern& pattern,
+                                              const IrType& nested_payload_type,
+                                              IrPayloadEnumCondition& condition) {
+        if (!is_value_integer_type(nested_payload_type)) {
+            fail(pattern.loc, "range nested enum payload patterns require an integer enum payload");
+        }
+        make_payload_range_endpoint_literal(
+            pattern.loc,
+            pattern.int_value,
+            pattern.int_negative,
+            pattern.literal_suffix,
+            nested_payload_type
+        );
+        make_payload_range_endpoint_literal(
+            pattern.loc,
+            pattern.range_end_value,
+            pattern.range_end_negative,
+            pattern.range_end_suffix,
+            nested_payload_type
+        );
+        if (!range_start_le_end(pattern, nested_payload_type)) {
+            fail(pattern.loc, "range pattern start must be <= end");
+        }
+        condition.has_payload_range = true;
+        condition.range_start_int = pattern.int_value;
+        condition.range_start_negative = pattern.int_negative;
+        condition.range_end_int = pattern.range_end_value;
+        condition.range_end_negative = pattern.range_end_negative;
+        condition.range_inclusive = pattern.range_inclusive;
+        condition.range_is_unsigned = is_unsigned_integer_primitive(nested_payload_type.primitive);
+        condition.payload_type = nested_payload_type;
+    }
+
+    static void set_nested_enum_payload_constant_literal(SourceLocation loc,
+                                                         const ConstantValue& value,
+                                                         const IrType& nested_payload_type,
+                                                         IrPayloadEnumCondition& condition) {
+        if (nested_payload_type.qualifier == TypeQualifier::Value &&
+            nested_payload_type.primitive == IrPrimitiveKind::Bool) {
+            if (!value.is_bool) fail(loc, "bool nested enum payload constant pattern must have type bool");
+            set_nested_enum_payload_bool_literal(loc, value.bool_value, nested_payload_type, condition);
+            return;
+        }
+        if (!is_value_integer_type(nested_payload_type)) {
+            fail(loc, "constant nested enum payload patterns require integer or bool payloads");
+        }
+        if (value.is_bool || !is_value_integer_type(value.type)) {
+            fail(loc, "integer nested enum payload constant pattern must have an integer type");
+        }
+        require_assignable(loc, nested_payload_type, value.type);
+        condition.has_payload_literal = true;
+        condition.payload_literal_int = value.int_value;
+        condition.payload_literal_negative = value.int_negative;
+        condition.payload_literal_is_bool = false;
+        condition.payload_type = nested_payload_type;
+    }
+
     static void lower_aggregate_enum_payload_constant_pattern(SourceLocation loc,
                                                               const ConstantValue& value,
                                                               const IrType& payload_type,
@@ -6798,6 +7053,7 @@ private:
         expr_arm.range_is_unsigned = arm.range_is_unsigned;
         expr_arm.payload_literal_conditions = std::move(arm.payload_literal_conditions);
         expr_arm.payload_range_conditions = std::move(arm.payload_range_conditions);
+        expr_arm.payload_enum_conditions = std::move(arm.payload_enum_conditions);
         expr_arm.case_name = std::move(arm.case_name);
         expr_arm.enum_tag = arm.enum_tag;
         expr_arm.has_value_binding = arm.has_value_binding;
@@ -6844,6 +7100,26 @@ private:
         binding.index = index;
         binding.name = name;
         binding.type = type;
+        arm.payload_bindings.push_back(binding);
+        if (!arm.has_payload_binding) {
+            arm.has_payload_binding = true;
+            arm.payload_index = index;
+            arm.payload_name = name;
+            arm.payload_type = type;
+        }
+    }
+
+    static void add_compact_enum_payload_binding(IrMatchArm& arm,
+                                                 std::uint32_t index,
+                                                 const std::string& name,
+                                                 const IrType& type,
+                                                 const IrType& enum_type) {
+        IrPayloadBinding binding;
+        binding.index = index;
+        binding.name = name;
+        binding.type = type;
+        binding.compact_enum_payload = true;
+        binding.compact_enum_type = enum_type;
         arm.payload_bindings.push_back(binding);
         if (!arm.has_payload_binding) {
             arm.has_payload_binding = true;

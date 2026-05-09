@@ -2060,6 +2060,14 @@ private:
         return Value{slot_type, payload, value.ir_type.field_types[field_index]};
     }
 
+    Value emit_compact_enum_payload_value(SourceLocation loc,
+                                          const Value& value,
+                                          std::uint32_t index,
+                                          const IrType& enum_type) {
+        Value payload = emit_enum_payload_slot(loc, value, index);
+        return Value{llvm_type(enum_type), payload.name, enum_type};
+    }
+
     static IrType enum_tag_storage_type(SourceLocation loc) {
         return IrType{TypeQualifier::Value, IrPrimitiveKind::I32, "i32", {}, {}, {}, {}, loc};
     }
@@ -2072,7 +2080,13 @@ private:
     void emit_payload_bindings(const Arm& arm, const Value& enum_value) {
         if (!arm.payload_bindings.empty()) {
             for (const auto& binding : arm.payload_bindings) {
-                Value payload = emit_enum_payload_slot(arm.loc, enum_value, binding.index);
+                Value payload = binding.compact_enum_payload
+                    ? emit_enum_payload_slot(
+                          arm.loc,
+                          emit_compact_enum_payload_value(arm.loc, enum_value, binding.index, binding.compact_enum_type),
+                          0
+                      )
+                    : emit_enum_payload_slot(arm.loc, enum_value, binding.index);
                 payload = cast_value(payload, binding.type);
                 line("  store " + payload.type + " " + payload.name + ", ptr " + local_slot(arm.loc, binding.name));
             }
@@ -2196,6 +2210,47 @@ private:
             line("  " + both + " = and i1 " + condition + ", " + range);
             condition = both;
         }
+        for (const auto& payload_condition : arm.payload_enum_conditions) {
+            Value nested = emit_compact_enum_payload_value(arm.loc, value, payload_condition.index, payload_condition.enum_type);
+            Value tag = emit_enum_tag_value(arm.loc, nested);
+            std::string tag_cmp = temp();
+            std::string tag_both = temp();
+            line("  " + tag_cmp + " = icmp eq " + tag.type + " " + tag.name + ", " +
+                 std::to_string(payload_condition.tag));
+            line("  " + tag_both + " = and i1 " + condition + ", " + tag_cmp);
+            condition = tag_both;
+
+            if (payload_condition.has_payload_literal) {
+                Value nested_payload = emit_enum_payload_slot(arm.loc, nested, 0);
+                nested_payload = cast_value(nested_payload, payload_condition.payload_type);
+                std::string payload_cmp = temp();
+                std::string both = temp();
+                line("  " + payload_cmp + " = icmp eq " + nested_payload.type + " " + nested_payload.name + ", " +
+                     nested_payload_literal_constant(payload_condition));
+                line("  " + both + " = and i1 " + condition + ", " + payload_cmp);
+                condition = both;
+            }
+
+            if (payload_condition.has_payload_range) {
+                Value nested_payload = emit_enum_payload_slot(arm.loc, nested, 0);
+                nested_payload = cast_value(nested_payload, payload_condition.payload_type);
+                std::string lower = temp();
+                std::string upper = temp();
+                std::string range = temp();
+                std::string both = temp();
+                std::string lower_op = payload_condition.range_is_unsigned ? "uge" : "sge";
+                std::string upper_op = payload_condition.range_inclusive
+                    ? (payload_condition.range_is_unsigned ? "ule" : "sle")
+                    : (payload_condition.range_is_unsigned ? "ult" : "slt");
+                line("  " + lower + " = icmp " + lower_op + " " + nested_payload.type + " " +
+                     nested_payload.name + ", " + nested_payload_range_start_constant(payload_condition));
+                line("  " + upper + " = icmp " + upper_op + " " + nested_payload.type + " " +
+                     nested_payload.name + ", " + nested_payload_range_end_constant(payload_condition));
+                line("  " + range + " = and i1 " + lower + ", " + upper);
+                line("  " + both + " = and i1 " + condition + ", " + range);
+                condition = both;
+            }
+        }
         return condition;
     }
 
@@ -2217,6 +2272,19 @@ private:
 
     static std::string match_payload_range_end_constant(const IrPayloadRangeCondition& condition) {
         return (condition.end_negative ? "-" : "") + std::to_string(condition.end_int);
+    }
+
+    static std::string nested_payload_literal_constant(const IrPayloadEnumCondition& condition) {
+        if (condition.payload_literal_is_bool) return condition.payload_literal_bool ? "1" : "0";
+        return (condition.payload_literal_negative ? "-" : "") + std::to_string(condition.payload_literal_int);
+    }
+
+    static std::string nested_payload_range_start_constant(const IrPayloadEnumCondition& condition) {
+        return (condition.range_start_negative ? "-" : "") + std::to_string(condition.range_start_int);
+    }
+
+    static std::string nested_payload_range_end_constant(const IrPayloadEnumCondition& condition) {
+        return (condition.range_end_negative ? "-" : "") + std::to_string(condition.range_end_int);
     }
 
     template <typename Arm>

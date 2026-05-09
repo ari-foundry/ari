@@ -46,16 +46,6 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
-3. Finish enum payload pattern coverage.
-   Symbolic rectangle coverage now proves high-cardinality integer/bool product
-   exhaustiveness without enumerating every value, and non-exhaustive product
-   matches now suggest a missing product shape when Ari can express the gap.
-   Compact one-word enum payload slots now support literal, range, alias, and
-   or-pattern alternatives over literal/range payloads in match patterns.
-   Aggregate enum payload slots support scalar literal, constant, alias, and
-   or-pattern alternatives over literal/range payloads on the LLVM backend.
-   - [enum-nested] support nested enum-case subpatterns inside aggregate enum payload slots
-
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -97,7 +87,17 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      aggregates and the policy for ownership/borrow-qualified fields
    - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate offsets, scalar/plain-Ari-aggregate load/store helpers, scalar/plain-Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate field/element pointer access, and `size_of<T>()` / `align_of<T>()` layout queries are implemented
    - [abi] represent non-C ABI shims explicitly
-5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
+5. Expand aggregate enum payload storage.
+   Aggregate enum payload slots support integer, bool, and one-word enum values
+   today. Nested enum-case subpatterns can inspect one-word enum payload slots
+   on the LLVM backend, but the stored payload universe is still intentionally
+   narrow.
+   - [nested-aggregate-enums] allow aggregate enum payload slots to store
+     nested aggregate-enum values once the ABI and copy rules are explicit
+   - [aggregate-values] allow string, tuple, struct, vector, and owned payload
+     values after their non-local ABI/storage rules are defined
+   - [freestanding] lower aggregate enum payload storage and tests in the raw backend
+6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today.
     - [sum] `Option[T]`, `Maybe[T]`, and `Result[T, E]`, connected to the existing `?`/`??` propagation model
     - [nullable-values] decide whether value-level `T?` should remain raw-pointer-only syntax or grow an `Option[T]`/`Maybe[T]` lowering for non-pointer values
@@ -106,7 +106,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       `read_line` can return independent buffers instead of the current host
       reusable line buffer
     - [views] `Slice[T]`, including slice patterns after slice layout and borrowing are defined
-6. Design `std` smart-pointer and explicit move surfaces.
+7. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
     for common heap and shared-resource patterns.
@@ -120,7 +120,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       ref-count increments, and deterministic release
     - [interop] decide how smart pointers expose raw pointers for FFI without
       pretending Ari has a globally safe borrow model
-7. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
+8. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, and
@@ -137,21 +137,21 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
     - [freestanding] lower stored local vector values in the raw backend
-8. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
+9. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
     loops, and stored local vector loops lower today without trait dispatch; the
     general iterator model needs trait-bound resolution plus generic
     `Option[T]`/`Maybe[T]` result lowering for `next`.
     - [trait] resolve `IntoIterator[T]`/`Iterator[T]`
     - [loop] lower `next`-style iteration state
     - [pattern] bind refutable enum-case loop-head patterns after the iterator failure/skip semantics are designed
-9. Track move-only aggregate elements more precisely.
+10. Track move-only aggregate elements more precisely.
     - [fields] move owned fields out of local aggregate values without moving
       unrelated fields
     - [temporary-fields] define whether owned fields can be moved out of
       temporary aggregate values
     - [dynamic-indexes] support or deliberately reject moving owning aggregate
       elements through dynamic vector/array indexes with clear semantics
-10. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+11. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot

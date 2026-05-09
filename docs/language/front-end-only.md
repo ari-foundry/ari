@@ -66,7 +66,7 @@ Non-generic enums lower today, including LLVM aggregate layout for multi-payload
 and single `i64`/`u64` payload cases. Generic enum monomorphization is planned.
 
 `..` can ignore the rest of a struct, tuple, array, or multi-payload ADT pattern.
-Slice patterns and nested enum-case payload patterns are still planned.
+Slice patterns are still planned.
 
 ## Generic Functions
 

@@ -1,0 +1,34 @@
+enum Inner {
+  Empty,
+  Small(i32),
+  Flag(bool),
+}
+
+enum Outer {
+  Wrap(Inner),
+  Other(i64),
+  None,
+}
+
+fn score(value: Outer) -> i64 {
+  return match value {
+    Wrap(Small(1)) => 10,
+    Wrap(Small(n @ 2..=4)) => n as i64,
+    Wrap(Small(5 | 6)) => 40,
+    Wrap(Flag(true)) => 20,
+    Wrap(Empty) => 30,
+    Wrap(_) => 1,
+    Other(_) => 2,
+    None => 3,
+  };
+}
+
+fn main() -> i64 {
+  return score(Wrap(Small(3))) +
+         score(Wrap(Small(6))) +
+         score(Wrap(Flag(true))) +
+         score(Wrap(Flag(false))) +
+         score(Wrap(Empty)) +
+         score(Other(9i64)) +
+         score(None);
+}

@@ -206,6 +206,29 @@ let flag_score = match maybe_flag {
 };
 ```
 
+When an aggregate enum payload slot stores a one-word enum value, a nested
+enum-case subpattern can inspect the inner tag and its compact payload on the
+LLVM backend:
+
+```ari
+enum Inner {
+  Empty,
+  Small(i32),
+}
+
+enum Outer {
+  Wrap(Inner),
+  Other(i64),
+}
+
+let score = match value {
+  Wrap(Small(n @ 2..=4)) => n as i64,
+  Wrap(Empty) => 10,
+  Wrap(_) => 0,
+  Other(_) => -1,
+};
+```
+
 The same forms work for concrete generic enum values:
 
 ```ari
@@ -487,8 +510,7 @@ let nested_struct = match (point, color) {
 };
 ```
 
-Slice patterns and nested enum-case payload patterns remain planned for the
-shared richer pattern engine.
+Slice patterns remain planned for the shared richer pattern engine.
 
 Alias patterns bind the matched value while still testing an inner pattern:
 
