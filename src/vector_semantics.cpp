@@ -221,6 +221,23 @@ IrExprPtr make_vec_remove_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr i
     return lowered;
 }
 
+IrExprPtr make_vec_insert_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr index, IrExprPtr value) {
+    if (!vector || !is_vector_storage_type(vector->type)) {
+        fail(loc, "Vec.insert requires local Vec storage");
+    }
+    if (!index || !value) {
+        fail(loc, "Vec.insert expects an index and value");
+    }
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::VectorInsert;
+    lowered->loc = loc;
+    lowered->type = void_type(loc);
+    lowered->operand = std::move(vector);
+    lowered->right = std::move(index);
+    lowered->payload = std::move(value);
+    return lowered;
+}
+
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length) {
     auto empty = std::make_unique<IrExpr>();
     empty->kind = IrExprKind::Binary;

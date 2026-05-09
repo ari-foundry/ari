@@ -12411,6 +12411,33 @@ private:
         );
     }
 
+    IrExprPtr check_vec_insert_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_mutable_vec_method_receiver(expr.loc, name, local, "insert");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.insert does not take type arguments");
+        if (expr.args.size() != 2) fail(expr.loc, "Vec.insert expects an index and value");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr index = check_expr(*expr.args[0]);
+        if (!is_value_integer_type(index->type)) {
+            fail(expr.args[0]->loc, "Vec.insert index must be an integer, got " + type_name(index->type));
+        }
+        IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);
+        coerce_expr_to_expected(*value, local.type.args[0]);
+        require_assignable(expr.args[1]->loc, local.type.args[0], value->type);
+        release_temporary_borrows(borrow_mark);
+
+        widen_vector_storage_for_push(local);
+
+        return make_vec_insert_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(index),
+            std::move(value)
+        );
+    }
+
     IrExprPtr check_vec_push_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "push");
@@ -13282,6 +13309,11 @@ private:
         if (expr.name == "remove") {
             if (LocalInfo* local = vec_local_method_receiver(expr, "remove")) {
                 return check_vec_remove_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "insert") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "insert")) {
+                return check_vec_insert_method_call(expr, std::move(lowered), *local);
             }
         }
         if (expr.name == "push") {

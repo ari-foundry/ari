@@ -7,11 +7,11 @@
    `Vec.pop()` / `Vec.first()` / `Vec.last()` / `Vec.capacity()` /
    `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` /
    `Vec.get(index)` / `Vec.set(index, value)` / `Vec.swap(a, b)` /
-   `Vec.remove(index)` lower today on the LLVM backend as stack-backed values
-   with compile-time capacity and runtime length checks. Local `push` now
-   auto-widens stack storage when sema can track the current length, so empty
-   `Vec[T]` locals can grow through straight-line pushes without an explicit
-   `reserve`.
+   `Vec.remove(index)` / `Vec.insert(index, value)` lower today on the LLVM
+   backend as stack-backed values with compile-time capacity and runtime length
+   checks. Local `push` and `insert` now auto-widen stack storage when sema can
+   track the current length, so empty `Vec[T]` locals can grow through
+   straight-line appends/inserts without an explicit `reserve`.
    Vec storage helper logic is split out of `sema.cpp` into
    `vector_semantics` so the allocator-backed work can grow outside the main
    semantic checker. Introduce the explicit allocation/capability path before
@@ -20,10 +20,10 @@
    - [capacity] replace local literal/reserve capacity with runtime heap
      capacity growth
    - [local-api] keep filling small checked local methods that map cleanly onto
-     allocator-backed vectors later, such as `insert` after growth semantics are
-     settled
-   - [ops-runtime] connect `push`, `pop`, `remove`, `first`, `last`, `get`,
-     `swap`, and `reserve` to allocator-backed storage instead of fixed
+     allocator-backed vectors later, such as `contains`/`index_of` after
+     equality semantics are settled
+   - [ops-runtime] connect `push`, `insert`, `pop`, `remove`, `first`, `last`,
+     `get`, `swap`, and `reserve` to allocator-backed storage instead of fixed
      local-capacity traps
 2. Finish package caching for file-backed modules.
    Compact module metadata and source-snapshot module caches can be emitted,

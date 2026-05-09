@@ -1021,6 +1021,9 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/vector-remove.ari --emit-llvm $(BUILD_DIR)/variables/vector-remove.ll
 	grep -q "alloca { i64, \\[4 x i64\\] }" $(BUILD_DIR)/variables/vector-remove.ll
 	grep -q "vector.remove.body" $(BUILD_DIR)/variables/vector-remove.ll
+	$(TARGET) tests/ok/vector-insert.ari --emit-llvm $(BUILD_DIR)/variables/vector-insert.ll
+	grep -q "alloca { i64, \\[5 x i64\\] }" $(BUILD_DIR)/variables/vector-insert.ll
+	grep -q "vector.insert.body" $(BUILD_DIR)/variables/vector-insert.ll
 	$(TARGET) tests/ok/array-len-literal.ari --emit-llvm $(BUILD_DIR)/variables/array-len-literal.ll
 	grep -q "ret i64 4" $(BUILD_DIR)/variables/array-len-literal.ll
 	$(TARGET) tests/ok/field-borrow.ari --emit-llvm $(BUILD_DIR)/variables/field-borrow.ll
@@ -1054,6 +1057,7 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-get.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-get.elf; $(BUILD_DIR)/variables/vector-get.elf; code=$$?; test $$code -eq 26; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-swap.elf; $(BUILD_DIR)/variables/vector-swap.elf; code=$$?; test $$code -eq 24; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-remove.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-remove.elf; $(BUILD_DIR)/variables/vector-remove.elf; code=$$?; test $$code -eq 32; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-insert.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-insert.elf; $(BUILD_DIR)/variables/vector-insert.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/field-borrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/field-borrow.elf; $(BUILD_DIR)/variables/field-borrow.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/array-dynamic-index-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; if $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-storage-shrink-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; if $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; then exit 1; fi; fi

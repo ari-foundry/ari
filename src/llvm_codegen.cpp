@@ -1385,6 +1385,8 @@ private:
                 return emit_vector_swap(expr);
             case IrExprKind::VectorRemove:
                 return emit_vector_remove(expr);
+            case IrExprKind::VectorInsert:
+                return emit_vector_insert(expr);
             case IrExprKind::Noop:
                 return Value{"void", "", expr.type};
             case IrExprKind::FormatPrint:
@@ -1773,6 +1775,90 @@ private:
         emit_label(end_label);
         line("  store i64 " + next_len + ", ptr " + len_ptr);
         return Value{element_llvm, removed, element_type};
+    }
+
+    Value emit_vector_insert(const IrExpr& expr) {
+        if (!expr.operand || !expr.right || !expr.payload ||
+            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.insert lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        const IrType& element_type = vector_type.args[0];
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
+        Value index = cast_value(emit_expr(*expr.right), index_type);
+
+        std::string len_ptr = temp();
+        std::string len = temp();
+        std::string low = temp();
+        std::string high = temp();
+        std::string bad_index = temp();
+        std::string bounds_fail_label = label("vector.insert.bounds.fail");
+        std::string bounds_ok_label = label("vector.insert.bounds.ok");
+        line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 0");
+        line("  " + len + " = load i64, ptr " + len_ptr);
+        line("  " + low + " = icmp slt i64 " + index.name + ", 0");
+        line("  " + high + " = icmp sgt i64 " + index.name + ", " + len);
+        line("  " + bad_index + " = or i1 " + low + ", " + high);
+        line("  br i1 " + bad_index + ", label %" + bounds_fail_label + ", label %" + bounds_ok_label);
+        emit_label(bounds_fail_label);
+        line("  call void @ari_builtin_panic()");
+        line("  unreachable");
+        emit_label(bounds_ok_label);
+
+        std::string full = temp();
+        std::string full_fail_label = label("vector.insert.full");
+        std::string full_ok_label = label("vector.insert.ok");
+        line("  " + full + " = icmp sge i64 " + len + ", " + std::to_string(vector_type.array_size));
+        line("  br i1 " + full + ", label %" + full_fail_label + ", label %" + full_ok_label);
+        emit_label(full_fail_label);
+        line("  call void @ari_builtin_panic()");
+        line("  unreachable");
+        emit_label(full_ok_label);
+
+        Value value = cast_value(emit_expr(*expr.payload), element_type);
+        std::string element_llvm = llvm_type(element_type);
+        std::string entry_label = current_label_;
+        std::string cond_label = label("vector.insert.cond");
+        std::string body_label = label("vector.insert.body");
+        std::string end_label = label("vector.insert.end");
+        std::string cursor = temp();
+        std::string should_shift = temp();
+        std::string src_index = temp();
+        std::string dst_ptr = temp();
+        std::string src_ptr = temp();
+        std::string moved = temp();
+        std::string next_cursor = temp();
+
+        line("  br label %" + cond_label);
+        emit_label(cond_label);
+        line("  " + cursor + " = phi i64 [ " + len + ", %" + entry_label +
+             " ], [ " + next_cursor + ", %" + body_label + " ]");
+        line("  " + should_shift + " = icmp sgt i64 " + cursor + ", " + index.name);
+        line("  br i1 " + should_shift + ", label %" + body_label + ", label %" + end_label);
+
+        emit_label(body_label);
+        line("  " + src_index + " = add i64 " + cursor + ", -1");
+        line("  " + dst_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + cursor);
+        line("  " + src_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + src_index);
+        line("  " + moved + " = load " + element_llvm + ", ptr " + src_ptr);
+        line("  store " + element_llvm + " " + moved + ", ptr " + dst_ptr);
+        line("  " + next_cursor + " = add i64 " + cursor + ", -1");
+        line("  br label %" + cond_label);
+
+        emit_label(end_label);
+        std::string item_ptr = temp();
+        std::string next_len = temp();
+        line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + index.name);
+        line("  store " + value.type + " " + value.name + ", ptr " + item_ptr);
+        line("  " + next_len + " = add i64 " + len + ", 1");
+        line("  store i64 " + next_len + ", ptr " + len_ptr);
+        return Value{"void", "", expr.type};
     }
 
     void emit_vector_bounds_check(const Value& index, const IrType& vector_type, const std::string& vector_ptr) {

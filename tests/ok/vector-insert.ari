@@ -1,0 +1,12 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [];
+  values.push(1);
+  values.push(3);
+  values.push(5);
+
+  values.insert(1, 2);
+  values.insert(4, 8);
+
+  return values.get(0) + values.get(1) + values.get(2) +
+    values.get(3) + values.get(4) + len(values) + values.capacity();
+}
