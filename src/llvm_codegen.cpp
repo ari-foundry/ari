@@ -2167,6 +2167,15 @@ private:
         std::string arm_subject_type = arm.has_literal ? value.type : tag_subject_type;
         line("  " + cmp + " = icmp eq " + arm_subject_type + " " + arm_subject + ", " +
              match_arm_constant(arm));
+        if (arm.has_payload_literal_condition) {
+            Value payload = emit_enum_payload_slot(arm.loc, value, arm.payload_literal_index);
+            std::string payload_cmp = temp();
+            std::string both = temp();
+            line("  " + payload_cmp + " = icmp eq " + payload.type + " " + payload.name + ", " +
+                 match_payload_literal_constant(arm));
+            line("  " + both + " = and i1 " + cmp + ", " + payload_cmp);
+            return both;
+        }
         return cmp;
     }
 
@@ -2175,6 +2184,12 @@ private:
         if (!arm.has_literal) return std::to_string(arm.enum_tag);
         if (arm.literal_is_bool) return arm.literal_bool ? "1" : "0";
         return (arm.literal_negative ? "-" : "") + std::to_string(arm.literal_int);
+    }
+
+    template <typename Arm>
+    static std::string match_payload_literal_constant(const Arm& arm) {
+        if (arm.payload_literal_is_bool) return arm.payload_literal_bool ? "1" : "0";
+        return std::to_string(arm.payload_literal_int);
     }
 
     template <typename Arm>

@@ -1,0 +1,20 @@
+enum Wide {
+  Big(i64),
+  Flag(bool),
+  None,
+}
+
+fn score(value: Wide) -> i64 {
+  return match value {
+    Big(10i64 | 12i64) => 1,
+    Big(amount @ 20i64) => amount,
+    Big(_) => 3,
+    Flag(true) => 4,
+    Flag(false) => 5,
+    None => 6,
+  };
+}
+
+fn main() -> i64 {
+  return score(Big(12i64)) + score(Big(20i64)) + score(Flag(false)) + score(None);
+}

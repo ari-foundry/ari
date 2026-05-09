@@ -80,7 +80,7 @@ struct EnumInfo {
 struct EnumMatchCoverage {
     bool has_wildcard = false;
     std::set<std::uint32_t> covered_tags;
-    std::set<std::uint64_t> covered_payload_literals;
+    std::set<std::string> covered_payload_literals;
     std::map<std::uint32_t, unsigned> covered_bool_payloads;
 };
 
@@ -6030,7 +6030,7 @@ private:
             return;
         }
 
-        if (!coverage.covered_payload_literals.insert(lowered_arm.literal_int).second) {
+        if (!coverage.covered_payload_literals.insert(enum_payload_pattern_coverage_key(lowered_arm)).second) {
             fail(pattern.loc, "duplicate match arm for enum payload pattern '" + pattern.case_name + "'");
         }
         if (is_bool_payload_literal_pattern(pattern, case_info)) {
@@ -6041,6 +6041,15 @@ private:
                 coverage.covered_tags.insert(case_info.tag);
             }
         }
+    }
+
+    static std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
+        if (arm.has_payload_literal_condition) {
+            return std::to_string(arm.enum_tag) + ":" +
+                   std::to_string(arm.payload_literal_index) + ":" +
+                   std::to_string(arm.payload_literal_int);
+        }
+        return std::to_string(arm.literal_int);
     }
 
     static bool is_bool_payload_literal_pattern(const Pattern& pattern, const EnumCaseInfo& case_info) {
@@ -6399,7 +6408,8 @@ private:
                 return true;
             case PatternKind::IntegerLiteral:
                 if (aggregate_layout) {
-                    fail(payload.loc, "literal patterns inside aggregate enum payloads are planned but are not supported yet");
+                    lower_aggregate_enum_payload_integer_literal(payload, payload_type, lowered_arm, payload_index);
+                    return false;
                 }
                 lowered_arm.has_literal = true;
                 lowered_arm.literal_int = encode_enum_payload_integer_literal(payload, payload_type, case_info.tag);
@@ -6407,7 +6417,8 @@ private:
                 return false;
             case PatternKind::BoolLiteral:
                 if (aggregate_layout) {
-                    fail(payload.loc, "literal patterns inside aggregate enum payloads are planned but are not supported yet");
+                    lower_aggregate_enum_payload_bool_literal(payload.loc, payload.bool_value, payload_type, lowered_arm, payload_index);
+                    return false;
                 }
                 if (payload_type.qualifier != TypeQualifier::Value ||
                     payload_type.primitive != IrPrimitiveKind::Bool) {
@@ -6428,7 +6439,8 @@ private:
                 ConstantValue constant_pattern;
                 if (try_constant_pattern_value(payload, constant_pattern)) {
                     if (aggregate_layout) {
-                        fail(payload.loc, "constant patterns inside aggregate enum payloads are planned but are not supported yet");
+                        lower_aggregate_enum_payload_constant_pattern(payload.loc, constant_pattern, payload_type, lowered_arm, payload_index);
+                        return false;
                     }
                     lower_enum_payload_constant_pattern(payload.loc, constant_pattern, payload_type, case_info, lowered_arm);
                     return false;
@@ -6464,7 +6476,8 @@ private:
                 return;
             case PatternKind::IntegerLiteral:
                 if (aggregate_layout) {
-                    fail(aliased.loc, "literal patterns inside aggregate enum payloads are planned but are not supported yet");
+                    lower_aggregate_enum_payload_integer_literal(aliased, payload_type, lowered_arm, payload_index);
+                    return;
                 }
                 lowered_arm.has_literal = true;
                 lowered_arm.literal_int = encode_enum_payload_integer_literal(aliased, payload_type, case_info.tag);
@@ -6472,7 +6485,8 @@ private:
                 return;
             case PatternKind::BoolLiteral:
                 if (aggregate_layout) {
-                    fail(aliased.loc, "literal patterns inside aggregate enum payloads are planned but are not supported yet");
+                    lower_aggregate_enum_payload_bool_literal(aliased.loc, aliased.bool_value, payload_type, lowered_arm, payload_index);
+                    return;
                 }
                 if (payload_type.qualifier != TypeQualifier::Value ||
                     payload_type.primitive != IrPrimitiveKind::Bool) {
@@ -6490,7 +6504,8 @@ private:
                 ConstantValue constant_pattern;
                 if (try_constant_pattern_value(aliased, constant_pattern)) {
                     if (aggregate_layout) {
-                        fail(aliased.loc, "constant patterns inside aggregate enum payloads are planned but are not supported yet");
+                        lower_aggregate_enum_payload_constant_pattern(aliased.loc, constant_pattern, payload_type, lowered_arm, payload_index);
+                        return;
                     }
                     lower_enum_payload_constant_pattern(aliased.loc, constant_pattern, payload_type, case_info, lowered_arm);
                     return;
@@ -6509,6 +6524,83 @@ private:
                 fail(aliased.loc, "alias payload patterns cannot contain another binding yet");
         }
         fail(aliased.loc, "unsupported aliased enum payload pattern");
+    }
+
+    static void set_aggregate_enum_payload_literal_condition(IrMatchArm& lowered_arm,
+                                                             std::uint32_t payload_index,
+                                                             std::uint64_t payload_bits) {
+        lowered_arm.has_payload_literal_condition = true;
+        lowered_arm.payload_literal_index = payload_index;
+        lowered_arm.payload_literal_int = payload_bits;
+    }
+
+    static void lower_aggregate_enum_payload_bool_literal(SourceLocation loc,
+                                                          bool value,
+                                                          const IrType& payload_type,
+                                                          IrMatchArm& lowered_arm,
+                                                          std::uint32_t payload_index) {
+        if (payload_type.qualifier != TypeQualifier::Value ||
+            payload_type.primitive != IrPrimitiveKind::Bool) {
+            fail(loc, "bool payload patterns require a bool enum payload");
+        }
+        set_aggregate_enum_payload_literal_condition(lowered_arm, payload_index, value ? 1ULL : 0ULL);
+        lowered_arm.payload_literal_is_bool = true;
+        lowered_arm.payload_literal_bool = value;
+    }
+
+    static void lower_aggregate_enum_payload_integer_literal(const Pattern& pattern,
+                                                             const IrType& payload_type,
+                                                             IrMatchArm& lowered_arm,
+                                                             std::uint32_t payload_index) {
+        if (!is_value_integer_type(payload_type)) {
+            fail(pattern.loc, "integer payload patterns require an integer enum payload");
+        }
+
+        IrExpr literal;
+        literal.kind = IrExprKind::Integer;
+        literal.loc = pattern.loc;
+        literal.int_value = pattern.int_value;
+        literal.int_negative = pattern.int_negative;
+        literal.type = pattern.literal_suffix.empty()
+            ? payload_type
+            : integer_literal_suffix_type(pattern.literal_suffix, pattern.loc);
+        if (!integer_literal_fits(literal, literal.type)) {
+            fail(pattern.loc, "integer literal " + integer_literal_name(literal) +
+                              " is out of range for " + type_name(literal.type));
+        }
+        require_assignable(pattern.loc, payload_type, literal.type);
+
+        set_aggregate_enum_payload_literal_condition(
+            lowered_arm,
+            payload_index,
+            integer_literal_payload_bits(pattern.int_value, pattern.int_negative, payload_type)
+        );
+    }
+
+    static void lower_aggregate_enum_payload_constant_pattern(SourceLocation loc,
+                                                              const ConstantValue& value,
+                                                              const IrType& payload_type,
+                                                              IrMatchArm& lowered_arm,
+                                                              std::uint32_t payload_index) {
+        if (payload_type.qualifier == TypeQualifier::Value &&
+            payload_type.primitive == IrPrimitiveKind::Bool) {
+            if (!value.is_bool) fail(loc, "bool payload constant pattern must have type bool");
+            lower_aggregate_enum_payload_bool_literal(loc, value.bool_value, payload_type, lowered_arm, payload_index);
+            return;
+        }
+
+        if (!is_value_integer_type(payload_type)) {
+            fail(loc, "constant enum payload patterns require integer or bool payloads");
+        }
+        if (value.is_bool || !is_value_integer_type(value.type)) {
+            fail(loc, "integer payload constant pattern must have an integer type");
+        }
+        require_assignable(loc, payload_type, value.type);
+        set_aggregate_enum_payload_literal_condition(
+            lowered_arm,
+            payload_index,
+            integer_literal_payload_bits(value.int_value, value.int_negative, payload_type)
+        );
     }
 
     void lower_enum_payload_constant_pattern(SourceLocation loc,
@@ -6620,6 +6712,11 @@ private:
         expr_arm.range_end_negative = arm.range_end_negative;
         expr_arm.range_inclusive = arm.range_inclusive;
         expr_arm.range_is_unsigned = arm.range_is_unsigned;
+        expr_arm.has_payload_literal_condition = arm.has_payload_literal_condition;
+        expr_arm.payload_literal_index = arm.payload_literal_index;
+        expr_arm.payload_literal_int = arm.payload_literal_int;
+        expr_arm.payload_literal_is_bool = arm.payload_literal_is_bool;
+        expr_arm.payload_literal_bool = arm.payload_literal_bool;
         expr_arm.case_name = std::move(arm.case_name);
         expr_arm.enum_tag = arm.enum_tag;
         expr_arm.has_value_binding = arm.has_value_binding;

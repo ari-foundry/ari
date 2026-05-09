@@ -185,9 +185,11 @@ fn score(value: OptionI32) -> i64 {
 }
 ```
 
-Single-payload enum cases can match a binding, `_`, or a scalar literal inside
-the payload slot. A bool payload case is exhaustive when both `true` and
-`false` payload literals are covered:
+Single-payload enum cases can match a binding, `_`, a scalar literal, an alias
+around those forms, or an or-pattern of literal payload alternatives inside the
+payload slot. This works for compact enum payloads and for aggregate enum
+layouts such as `i64`/`u64` payload storage. A bool payload case is exhaustive
+when both `true` and `false` payload literals are covered:
 
 ```ari
 let score = match value {
@@ -484,9 +486,8 @@ let nested_struct = match (point, color) {
 };
 ```
 
-Slice patterns, nested enum-case payload patterns, and literal subpatterns
-inside aggregate enum payload slots remain planned for the shared richer pattern
-engine.
+Slice patterns, range payload patterns, and nested enum-case payload patterns
+remain planned for the shared richer pattern engine.
 
 Alias patterns bind the matched value while still testing an inner pattern:
 

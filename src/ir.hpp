@@ -102,6 +102,11 @@ struct IrMatchExprArm {
     bool range_end_negative = false;
     bool range_inclusive = false;
     bool range_is_unsigned = false;
+    bool has_payload_literal_condition = false;
+    std::uint32_t payload_literal_index = 0;
+    std::uint64_t payload_literal_int = 0;
+    bool payload_literal_is_bool = false;
+    bool payload_literal_bool = false;
     std::string case_name;
     std::uint32_t enum_tag = 0;
     bool has_value_binding = false;
@@ -218,6 +223,11 @@ struct IrMatchArm {
     bool range_end_negative = false;
     bool range_inclusive = false;
     bool range_is_unsigned = false;
+    bool has_payload_literal_condition = false;
+    std::uint32_t payload_literal_index = 0;
+    std::uint64_t payload_literal_int = 0;
+    bool payload_literal_is_bool = false;
+    bool payload_literal_bool = false;
     std::string case_name;
     std::uint32_t enum_tag = 0;
     bool has_value_binding = false;

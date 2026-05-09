@@ -56,7 +56,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    Symbolic rectangle coverage now proves high-cardinality integer/bool product
    exhaustiveness without enumerating every value, and non-exhaustive product
    matches now suggest a missing product shape when Ari can express the gap.
-   - [enum-payloads] support literal, range, alias, or-pattern, and nested enum-case subpatterns inside aggregate enum payload slots
+   Aggregate enum payload slots now support scalar literal, constant, alias, and
+   or-pattern alternatives over literal payloads on the LLVM backend.
+   - [enum-ranges] support range payload patterns inside aggregate enum payload slots
+   - [enum-nested] support nested enum-case subpatterns inside aggregate enum payload slots
 2. Refine borrow checking beyond lexical named borrows.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
    - [reborrow] allow safe reborrowing from existing borrow bindings
