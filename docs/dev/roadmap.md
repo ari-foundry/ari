@@ -39,10 +39,11 @@
    the current package layout, old metadata summaries without source hashes are
    rejected, malformed metadata with duplicate source/import/item records is
    rejected, and malformed caches with duplicate source or AST-summary records
-   are rejected before validation. Module caches now carry v2 per-source AST
-   summary records and recheck them against the parsed cached source snapshot.
-   The remaining package-cache work is to replace dependency source parsing
-   with a trusted cached AST or IR summary once validation succeeds.
+   are rejected before validation. Module caches now carry v3 per-source AST
+   summary records with declaration fingerprints and recheck them against the
+   parsed cached source snapshot. The remaining package-cache work is to
+   replace dependency source parsing with a trusted cached AST or IR summary
+   once validation succeeds.
    - [summary-reuse] materialize dependency declarations from validated
      AST-summary or IR-summary records instead of reparsing cached source text
    - [cache-skip] avoid reparsing dependencies when the metadata summary and

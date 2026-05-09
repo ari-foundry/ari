@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "lexer.hpp"
+#include "module_ast_summary.hpp"
 #include "module_cache.hpp"
 #include "module_metadata.hpp"
 #include "module_path.hpp"

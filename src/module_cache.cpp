@@ -17,7 +17,7 @@ namespace ari {
 
 namespace {
 
-constexpr int kModuleCacheVersion = 2;
+constexpr int kModuleCacheVersion = 3;
 
 std::string read_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -239,28 +239,6 @@ std::uint64_t parse_count_field(const std::string& value,
 
 } // namespace
 
-ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
-                                                    const std::string& content_hash,
-                                                    const std::vector<std::string>& module_path,
-                                                    const Program& program,
-                                                    bool is_root) {
-    ModuleCacheAstSummary summary;
-    summary.module_name = join_qualified_path(module_path);
-    summary.path = path;
-    summary.content_hash = content_hash;
-    summary.is_root = is_root;
-    summary.use_count = program.uses.size();
-    summary.module_import_count = program.module_imports.size();
-    summary.module_decl_count = program.modules.size();
-    summary.constant_count = program.constants.size();
-    summary.function_count = program.functions.size();
-    summary.struct_count = program.structs.size();
-    summary.enum_count = program.enums.size();
-    summary.trait_count = program.traits.size();
-    summary.impl_count = program.impls.size();
-    return summary;
-}
-
 std::string serialize_module_cache(const ModuleCache& cache) {
     std::ostringstream out;
     out << "ari-module-cache-v" << kModuleCacheVersion << "\n";
@@ -282,6 +260,7 @@ std::string serialize_module_cache(const ModuleCache& cache) {
             summary.path,
             summary.is_root ? "1" : "0",
             summary.content_hash,
+            summary.declaration_hash,
             count_key(summary.use_count),
             count_key(summary.module_import_count),
             count_key(summary.module_decl_count),
@@ -313,9 +292,11 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 cache.format_version = 1;
             } else if (line == "ari-module-cache-v2") {
                 cache.format_version = 2;
+            } else if (line == "ari-module-cache-v3") {
+                cache.format_version = 3;
             } else {
                 throw CompileError("invalid module cache '" + display_path +
-                                   "': expected ari-module-cache-v1 or ari-module-cache-v2 header");
+                                   "': expected ari-module-cache-v1, ari-module-cache-v2, or ari-module-cache-v3 header");
             }
             saw_header = true;
             continue;
@@ -355,9 +336,14 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 is_root,
             });
         } else if (tag == "ast-summary") {
-            if (fields.size() != 14) {
+            if (fields.size() != 14 && fields.size() != 15) {
                 throw CompileError("invalid module cache '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed ast-summary record");
+            }
+            if (cache.format_version >= 3 && fields.size() != 15) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) +
+                                   ": malformed ast-summary record; v3 requires a declaration hash");
             }
             bool is_root = parse_bool_field(fields[3], display_path, line_number);
             std::string key = source_key(fields[1], fields[2], is_root);
@@ -371,16 +357,17 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 fields[1],
                 fields[2],
                 fields[4],
+                fields.size() == 15 ? fields[5] : "",
                 is_root,
-                parse_count_field(fields[5], display_path, line_number),
-                parse_count_field(fields[6], display_path, line_number),
-                parse_count_field(fields[7], display_path, line_number),
-                parse_count_field(fields[8], display_path, line_number),
-                parse_count_field(fields[9], display_path, line_number),
-                parse_count_field(fields[10], display_path, line_number),
-                parse_count_field(fields[11], display_path, line_number),
-                parse_count_field(fields[12], display_path, line_number),
-                parse_count_field(fields[13], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 6 : 5], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 7 : 6], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 8 : 7], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 9 : 8], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 10 : 9], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 11 : 10], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 12 : 11], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 13 : 12], display_path, line_number),
+                parse_count_field(fields[fields.size() == 15 ? 14 : 13], display_path, line_number),
             });
         } else {
             throw CompileError("invalid module cache '" + display_path + "' at line " +
@@ -390,7 +377,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
 
     if (!saw_header) {
         throw CompileError("invalid module cache '" + display_path +
-                           "': expected ari-module-cache-v1 or ari-module-cache-v2 header");
+                           "': expected ari-module-cache-v1, ari-module-cache-v2, or ari-module-cache-v3 header");
     }
     if (!saw_metadata) {
         throw CompileError("invalid module cache '" + display_path + "': missing metadata record");
@@ -433,6 +420,10 @@ void require_matching_module_cache_ast_summary(const ModuleCacheAstSummary& expe
     if (expected.path != actual.path) fail("source path changed");
     if (expected.is_root != actual.is_root) fail("root-source flag changed");
     if (expected.content_hash != actual.content_hash) fail("content hash changed");
+    if (expected.declaration_hash != actual.declaration_hash) {
+        fail("declaration hash changed from '" + expected.declaration_hash +
+             "' to '" + actual.declaration_hash + "'");
+    }
 #define ARI_CHECK_SUMMARY_COUNT(field, label) \
     if (expected.field != actual.field) { \
         fail(std::string(label) + " count changed from " + \
