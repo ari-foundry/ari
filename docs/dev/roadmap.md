@@ -64,13 +64,18 @@
    byte sizes, alignments, and field-offset tables for tuple, struct,
    fixed-array, and aggregate-enum values. The raw backend consumes those byte
    offsets for tuple, struct, and fixed-array local storage, whole plain
-   aggregate copies, and raw-pointer scalar field/index access. The remaining
+   aggregate copies, and raw-pointer scalar field/index access. Narrow scalar
+   returns are normalized at the freestanding function boundary, including
+   unsigned wraparound results from `u8`/`u16`/`u32` functions. The remaining
    aggregate lowering gap is multi-payload aggregate enum storage in the raw
-   backend, then explicit ABI classification for calls and returns.
+   backend, then explicit aggregate and external ABI classification.
    - [raw-aggregate-enums] lower multi-payload aggregate enum storage and
      field/payload access in the raw backend with the shared layout tables
-   - [abi] pass and return narrow scalars and aggregates with explicit
-     platform ABI rules instead of relying on the current local-slot model
+   - [abi-aggregate-calls] pass and return tuple, struct, fixed-array, and
+     aggregate enum values with explicit platform ABI rules instead of relying
+     on local-stack materialization
+   - [abi-extern] document and enforce the split between Ari-internal scalar
+     call lowering and platform C ABI lowering for exported/imported symbols
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

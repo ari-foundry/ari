@@ -1517,6 +1517,8 @@ check-functions: $(TARGET) check-function-errors
 	$(BUILD_DIR)/functions/function-eight-args-freestanding.elf; code=$$?; test $$code -eq 36
 	$(TARGET) --freestanding tests/ok/function-seven-args-host.ari -o $(BUILD_DIR)/functions/function-seven-args-host.elf
 	$(BUILD_DIR)/functions/function-seven-args-host.elf; code=$$?; test $$code -eq 28
+	$(TARGET) --freestanding tests/ok/function-narrow-return-freestanding.ari -o $(BUILD_DIR)/functions/function-narrow-return-freestanding.elf
+	$(BUILD_DIR)/functions/function-narrow-return-freestanding.elf; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/function-generic-surface.ari -o $(BUILD_DIR)/functions/function-generic-surface.elf
 	$(BUILD_DIR)/functions/function-generic-surface.elf; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/function-generic-call.ari -o $(BUILD_DIR)/functions/function-generic-call.elf

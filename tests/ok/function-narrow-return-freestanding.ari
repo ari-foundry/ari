@@ -1,0 +1,25 @@
+fn wrap_u8(value: u8) -> u8 {
+  return value + 250u8;
+}
+
+fn wrap_u16(value: u16) -> u16 {
+  return value + 1000u16;
+}
+
+fn wrap_u32(value: u32) -> u32 {
+  return value + 4000000000u32;
+}
+
+fn main() -> i64 {
+  var score = 0;
+  if wrap_u8(10u8) == 4u8 {
+    score += 5;
+  }
+  if wrap_u16(65000u16) == 464u16 {
+    score += 7;
+  }
+  if wrap_u32(4000000000u32) == 3705032704u32 {
+    score += 11;
+  }
+  score
+}

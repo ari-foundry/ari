@@ -47,7 +47,9 @@ fn clamp(value: i64, low: i64, high: i64) -> i64 {
 Functions and calls are limited to 65,535 parameters/arguments at the language
 checking layer. The LLVM/glibc backend lowers calls as LLVM calls. The
 freestanding backend uses registers for the first six scalar arguments and stack
-slots for the rest.
+slots for the rest. Narrow integer returns from freestanding functions are
+normalized at the return boundary, so `u8`, `u16`, and `u32` results wrap to
+their declared width before callers observe them.
 
 ## Return
 

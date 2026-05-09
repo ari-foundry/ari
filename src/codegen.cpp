@@ -1022,8 +1022,12 @@ private:
                 emit_expr(*stmt.expr);
                 break;
             case IrStmtKind::Return:
-                if (stmt.expr) emit_expr(*stmt.expr);
-                else emit_mov_reg_imm64(Reg::RAX, 0);
+                if (stmt.expr) {
+                    emit_expr(*stmt.expr);
+                    emit_normalize_return_value(stmt.loc);
+                } else {
+                    emit_mov_reg_imm64(Reg::RAX, 0);
+                }
                 return_jumps_.push_back(emit_jmp_placeholder());
                 break;
             case IrStmtKind::If:
@@ -1980,6 +1984,19 @@ private:
         if (is_integer_primitive(element_type.primitive)) emit_cast_to_type(loc, element_type);
         emit_pop(Reg::RCX);
         emit_store_rax_to_ptr(Reg::RCX, element_type);
+    }
+
+    void emit_normalize_return_value(SourceLocation loc) {
+        if (fn_.return_type.qualifier == TypeQualifier::Value &&
+            is_integer_primitive(fn_.return_type.primitive)) {
+            emit_cast_to_type(loc, fn_.return_type);
+            return;
+        }
+        if (fn_.return_type.qualifier == TypeQualifier::Value &&
+            fn_.return_type.primitive == IrPrimitiveKind::Bool) {
+            emit_cmp_rax_zero();
+            emit_setcc(0x95);
+        }
     }
 
     void require_pointer_scalar_codegen(SourceLocation loc, const IrType& type, const std::string& operation) const {
