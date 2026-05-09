@@ -1,0 +1,34 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Rgb(i64, bool)
+
+fn main() -> i64 {
+  var total = 0;
+
+  for item @ value in [1, 2, 3] {
+    total = total + item + value;
+  }
+
+  for whole @ (first, second) in [(1, 2), (3, 4)] {
+    total = total + whole.0 + first + second;
+  }
+
+  let p1 = Point { x: 1, y: 7 };
+  let p2 = Point { x: 2, y: 8 };
+  for point @ Point { x, y } in [p1, p2] {
+    total = total + point.y + x + y;
+  }
+
+  for color @ Rgb(red, flag) in [Rgb(5, true), Rgb(6, false)] {
+    if flag {
+      total = total + color.0 + red;
+    } else {
+      total = total + red;
+    }
+  }
+
+  return total;
+}

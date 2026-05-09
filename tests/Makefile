@@ -213,6 +213,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/range-generic-bounds.raw; code=$$?; test $$code -eq 32
 	$(TARGET) --freestanding tests/ok/for-vector-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-pattern.raw
 	$(BUILD_DIR)/control-flow/for-vector-pattern.raw; code=$$?; test $$code -eq 50
+	$(TARGET) --freestanding tests/ok/for-vector-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw
+	$(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw; code=$$?; test $$code -eq 75
 	$(TARGET) --freestanding tests/ok/if-while-let.ari -o $(BUILD_DIR)/control-flow/if-while-let.raw
 	$(BUILD_DIR)/control-flow/if-while-let.raw; code=$$?; test $$code -eq 5
 	$(TARGET) --freestanding tests/ok/while-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/while-let-or-pattern.raw
@@ -240,11 +242,17 @@ check-control-flow: $(TARGET)
 	grep -q "icmp ult i64" $(BUILD_DIR)/control-flow/range-generic-bounds.ll
 	$(TARGET) tests/ok/for-vector-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-pattern.ll
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/for-vector-pattern.ll
+	$(TARGET) tests/ok/for-vector-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-alias-pattern.ll
+	grep -q "extractvalue" $(BUILD_DIR)/control-flow/for-vector-alias-pattern.ll
 	$(TARGET) tests/ok/for-vector-stored.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-stored.ll
 	grep -q "getelementptr inbounds { i64, \\[3 x i64\\] }" $(BUILD_DIR)/control-flow/for-vector-stored.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/control-flow/for-vector-stored.ll
+	$(TARGET) tests/ok/for-vector-stored-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.ll
+	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-pattern.elf; code=$$?; test $$code -eq 50; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-alias-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-alias-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-alias-pattern.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-stored.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-stored.elf; $(BUILD_DIR)/control-flow/for-vector-stored.elf; code=$$?; test $$code -eq 20; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-stored-alias-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.elf; code=$$?; test $$code -eq 28; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/while-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; code=$$?; test $$code -eq 55; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/if-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/if-let-or-pattern.elf; $(BUILD_DIR)/control-flow/if-let-or-pattern.elf; code=$$?; test $$code -eq 44; fi
 	$(TARGET) tests/ok/labeled-block.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block.ll
@@ -271,6 +279,8 @@ check-control-flow: $(TARGET)
 	grep -q "for enum-case patterns are planned for Iterator\\[T\\] values" $(BUILD_DIR)/control-flow/for-pattern-planned.err
 	if $(TARGET) tests/errors/for-vector-refutable-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-refutable-pattern.elf >$(BUILD_DIR)/control-flow/for-vector-refutable-pattern.err 2>&1; then exit 1; fi
 	grep -q "refutable for-loop patterns are planned for Iterator\\[T\\] filtering" $(BUILD_DIR)/control-flow/for-vector-refutable-pattern.err
+	if $(TARGET) tests/errors/for-vector-alias-refutable-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-alias-refutable-pattern.elf >$(BUILD_DIR)/control-flow/for-vector-alias-refutable-pattern.err 2>&1; then exit 1; fi
+	grep -q "refutable for-loop patterns are planned for Iterator\\[T\\] filtering" $(BUILD_DIR)/control-flow/for-vector-alias-refutable-pattern.err
 	if $(TARGET) tests/errors/range-type-non-integer.ari -o $(BUILD_DIR)/control-flow/range-type-non-integer.elf >$(BUILD_DIR)/control-flow/range-type-non-integer.err 2>&1; then exit 1; fi
 	grep -q "prelude range types require integer bounds" $(BUILD_DIR)/control-flow/range-type-non-integer.err
 	if $(TARGET) tests/errors/break-unknown-label.ari -o $(BUILD_DIR)/control-flow/break-unknown-label.elf >$(BUILD_DIR)/control-flow/break-unknown-label.err 2>&1; then exit 1; fi

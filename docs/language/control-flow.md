@@ -236,7 +236,8 @@ stored-vector control flow. Stored local vector loops currently lower on the
 LLVM backend; the raw freestanding backend still rejects stored vector values.
 
 List-literal and stored-vector loops can destructure irrefutable aggregate
-element patterns:
+element patterns. They also support alias patterns when the wrapped pattern is
+irrefutable, so the loop body can use both the whole element and its parts:
 
 ```ari
 for (x, (y, z)) in [(1, (2, 3)), (4, (5, 6))] {
@@ -249,6 +250,10 @@ for Point { x: px, y, .. } in [p1, p2] {
 
 for Rgb(red, _) in [Rgb(7, true), Rgb(8, false)] {
   total = total + red;
+}
+
+for whole @ (left, right) in [(1, 2), (3, 4)] {
+  total = total + whole.0 + left + right;
 }
 ```
 
@@ -408,7 +413,7 @@ The older `init ... while ... next ...` form remains accepted for now.
   `start..end`, `start..=end`, non-empty list literals, or stored local vector
   values.
 - Range `for` patterns currently support a binding name or `_`. Vector loops
-  also support irrefutable tuple, array, named struct, and tuple-struct product
-  patterns. Enum-case and other refutable loop-head patterns are reserved for
-  future iterator lowering.
+  also support irrefutable alias, tuple, array, named struct, and tuple-struct
+  product patterns. Enum-case and other refutable loop-head patterns are
+  reserved for future iterator lowering.
 - Loops currently cannot change the ownership state of an outer binding.

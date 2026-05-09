@@ -69,7 +69,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [or-bindings] support binding unification for or-patterns in all aggregate
      pattern positions
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
-   - [positions] keep `let`/`var`, match, control-flow, for-loop, and function-parameter patterns on one shared binding-mode engine
+   - [positions] keep `let`/`var`, match, control-flow, for-loop, and
+     function-parameter patterns on one shared binding-mode engine; value alias
+     patterns now work in list-literal and stored-vector loop heads when the
+     wrapped pattern is irrefutable, but reference/ownership binding modes
+     still need shared lowering
 3. Implement user-defined compile-time meta expansion for `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
    Meta functions are intentionally non-generic; define concrete meta entry

@@ -8340,6 +8340,14 @@ private:
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                declare_local(pattern.loc, pattern.alias_name, source_type, false);
+                statements.push_back(make_ir_var_decl(
+                    pattern.loc,
+                    pattern.alias_name,
+                    source_type,
+                    make_local_lvalue_expr(pattern.loc, source_name, source_type),
+                    false
+                ));
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     source_name,
@@ -9353,7 +9361,7 @@ private:
 
     void fail_refutable_for_pattern(SourceLocation loc) const {
         fail(loc,
-             "refutable for-loop patterns are planned for Iterator[T] filtering; vector loop heads currently support irrefutable binding, tuple, struct, and tuple-struct patterns");
+             "refutable for-loop patterns are planned for Iterator[T] filtering; vector loop heads currently support irrefutable binding, alias, tuple, struct, and tuple-struct patterns");
     }
 
     void require_irrefutable_tuple_struct_for_pattern(const Pattern& pattern, const IrType& value_type) {
@@ -9446,7 +9454,8 @@ private:
                      "for enum-case patterns are planned for Iterator[T] values but are not supported yet");
                 return;
             case PatternKind::Alias:
-                fail(pattern.loc, "alias patterns in for-loop heads are planned after advanced pattern binding modes");
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased for-loop pattern");
+                require_irrefutable_for_vector_pattern(*pattern.alias_pattern, value_type);
                 return;
             case PatternKind::IntegerLiteral:
             case PatternKind::BoolLiteral:

@@ -1,0 +1,10 @@
+fn main() -> i64 {
+  let pairs: Vec[(i64, i64)] = [(2, 5), (4, 6)];
+  var total = 0;
+
+  for pair @ (lhs, rhs) in pairs {
+    total = total + pair.1 + lhs + rhs;
+  }
+
+  return total;
+}

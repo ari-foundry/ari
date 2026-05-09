@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  for pair @ (value, true) in [(1, true), (2, false)] {
+    return pair.0 + value;
+  }
+
+  return 0;
+}
