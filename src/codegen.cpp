@@ -1,5 +1,6 @@
 #include "codegen.hpp"
 
+#include "ari_builtin.hpp"
 #include "layout.hpp"
 #include "symbol_mangle.hpp"
 
@@ -1305,6 +1306,17 @@ private:
                     throw CompileError(where(expr.loc) + ": backend cannot materialize array values; bind the array or index it");
                 }
                 throw CompileError(where(expr.loc) + ": backend does not lower vector values yet");
+            case IrExprKind::VectorPush:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.push yet");
+            case IrExprKind::VectorClear:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.clear yet");
+            case IrExprKind::VectorTruncate:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.truncate yet");
+            case IrExprKind::VectorSet:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.set yet");
+            case IrExprKind::Noop:
+                emit_mov_reg_imm64(Reg::RAX, 0);
+                break;
             case IrExprKind::FormatPrint:
                 emit_format_print(expr);
                 break;
@@ -1563,19 +1575,9 @@ private:
 
     void emit_call(const IrExpr& expr) {
         static const Reg arg_regs[] = {Reg::RDI, Reg::RSI, Reg::RDX, Reg::RCX, Reg::R8, Reg::R9};
-        if (expr.name == "read_line" ||
-            expr.name == "io::read_line" ||
-            expr.name == "input" ||
-            expr.name == "input::line") {
-            throw CompileError(where(expr.loc) + ": freestanding backend does not lower line input helpers yet; use the LLVM host backend");
-        }
-        if (expr.name == "zone::create" ||
-            expr.name == "zone::temp" ||
-            expr.name == "zone::alloc" ||
-            expr.name == "zone::new" ||
-            expr.name == "zone::reset" ||
-            expr.name == "zone::destroy") {
-            throw CompileError(where(expr.loc) + ": freestanding backend does not lower zone allocation yet; use the LLVM host backend");
+        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(expr.name)) {
+            throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
+                               *blocked + " yet; use the LLVM host backend");
         }
         if (expr.args.size() > static_cast<std::size_t>(0xffff)) {
             throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
@@ -2405,52 +2407,49 @@ private:
         emit_builtin_epilogue();
     }
 
+    void register_builtin_aliases(const std::string& symbol, std::size_t offset) {
+        for (const auto& alias : ari_builtin_source_aliases()) {
+            if (alias.symbol == symbol) function_offsets_[alias.source_name] = offset;
+        }
+    }
+
     void emit_builtin_functions() {
         std::size_t write_byte = code_.size();
-        function_offsets_["io::write_byte"] = write_byte;
-        function_offsets_["write_byte"] = write_byte;
+        register_builtin_aliases("ari_builtin_write_byte", write_byte);
         emit_builtin_write_byte();
 
         std::size_t newline = code_.size();
-        function_offsets_["io::newline"] = newline;
-        function_offsets_["newline"] = newline;
+        register_builtin_aliases("ari_builtin_newline", newline);
         emit_builtin_newline();
 
         std::size_t read_byte = code_.size();
-        function_offsets_["io::read_byte"] = read_byte;
-        function_offsets_["read_byte"] = read_byte;
-        function_offsets_["input::read_byte"] = read_byte;
+        register_builtin_aliases("ari_builtin_read_byte", read_byte);
         emit_builtin_read_byte();
 
         std::size_t write_bool = code_.size();
-        function_offsets_["io::write_bool"] = write_bool;
-        function_offsets_["write_bool"] = write_bool;
+        register_builtin_aliases("ari_builtin_write_bool", write_bool);
         emit_builtin_write_bool();
 
         std::size_t write_i64 = code_.size();
-        function_offsets_["io::write_i64"] = write_i64;
-        function_offsets_["write_i64"] = write_i64;
+        register_builtin_aliases("ari_builtin_write_i64", write_i64);
         emit_builtin_write_i64();
 
         std::size_t assert_fn = code_.size();
-        function_offsets_["assert"] = assert_fn;
-        function_offsets_["debug_assert"] = assert_fn;
+        register_builtin_aliases("ari_builtin_assert", assert_fn);
         emit_builtin_assert();
 
         std::size_t assert_eq = code_.size();
-        function_offsets_["assert_eq_i64"] = assert_eq;
-        function_offsets_["assert_eq_bool"] = assert_eq;
+        register_builtin_aliases("ari_builtin_assert_eq_i64", assert_eq);
+        register_builtin_aliases("ari_builtin_assert_eq_bool", assert_eq);
         emit_builtin_assert_compare(0x84);
 
         std::size_t assert_ne = code_.size();
-        function_offsets_["assert_ne_i64"] = assert_ne;
-        function_offsets_["assert_ne_bool"] = assert_ne;
+        register_builtin_aliases("ari_builtin_assert_ne_i64", assert_ne);
+        register_builtin_aliases("ari_builtin_assert_ne_bool", assert_ne);
         emit_builtin_assert_compare(0x85);
 
         std::size_t panic = code_.size();
-        function_offsets_["panic"] = panic;
-        function_offsets_["todo"] = panic;
-        function_offsets_["unreachable"] = panic;
+        register_builtin_aliases("ari_builtin_panic", panic);
         emit_builtin_panic();
     }
 

@@ -372,21 +372,50 @@ values = [9]
 ```
 
 Use `len(values)` or method syntax `values.len()` to read the current runtime
-length. Array lengths, including direct array literal lengths, are folded
-directly:
+length. Use `values.is_empty()` to compare that runtime length with zero.
+Array lengths, including direct array literal lengths, are folded directly:
 
 ```ari
 let before = len(values)
 values = [3, 4, 5]
 let after = values.len()
+let empty = values.is_empty()
 let literal = [10, 20, 30].len()
 ```
 
+Mutable local vectors also support fixed-capacity `reserve` and `push` on the
+LLVM backend:
+
+```ari
+var values: Vec[i64] = []
+values.reserve(3)
+values.push(4)
+values.push(5)
+let capacity = values.capacity()
+let empty = values.is_empty()
+values.truncate(1)
+values.set(0, 9)
+values.clear()
+```
+
+`reserve(n)` currently expects a non-negative integer literal. It widens the
+compiler-known local storage capacity for that binding; it does not allocate
+heap storage yet. `push(value)` appends a copyable element, increments the
+runtime length, and traps through `panic` if the current length has already
+reached the reserved local capacity. `capacity()` returns that reserved local
+capacity as an `i64`. `is_empty()` returns `true` when the current runtime
+length is zero and does not inspect reserved capacity. `clear()` sets the
+current runtime length to zero while keeping the reserved local capacity.
+`truncate(n)` shrinks the current runtime length to `n` when `n` is smaller
+than the current length, leaves it unchanged when `n` is larger, and panics for
+negative runtime lengths. `set(index, value)` overwrites an existing element
+inside the current runtime length and uses the same bounds checks as indexing.
+
 The compiler reserves enough local storage for the largest vector literal seen
-for that binding, but indexing checks the current runtime length, not the
-reserved capacity. The storage is deliberately not heap allocation yet.
-Allocator-backed growth, push, reserve, slicing, and non-local vector ABI are
-still planned.
+or explicit `reserve` capacity for that binding, but indexing checks the
+current runtime length, not the reserved capacity. The storage is deliberately
+not heap allocation yet. Allocator-backed growth, slicing, and non-local vector
+ABI are still planned.
 
 Array literals support constant indexing without materializing a runtime
 aggregate:
@@ -475,8 +504,9 @@ Meanings:
 - `ref mut T`: exclusive mutable borrow
 - `mut ref T`: accepted as another spelling of `ref mut T`
 - `ptr T`: raw pointer surface for FFI and explicit memory code
+- `T?`: nullable raw-pointer spelling for `ptr T`
 - `null`: nullable raw-pointer literal; it defaults to `ptr c_void` unless a
-  `ptr T` type is expected
+  `ptr T` or `T?` type is expected
 - `value as ptr U`: raw pointer casts, pointer/integer address casts, and
   `(ref mut value) as ptr U` borrow-to-raw-pointer casts use ordinary explicit
   casts
@@ -510,8 +540,10 @@ Meanings:
   `value as dyn Trait[...]` conversions are checked against matching impls.
   Concrete copyable non-borrow values lower on the LLVM backend as
   `{data pointer, vtable pointer}` and method calls dispatch through vtable
-  thunks. Generic impl vtables, generic dyn methods, dyn upcasts, non-copy dyn
-  data ownership, and raw backend lowering are still planned.
+  thunks. Generic impls can be specialized into vtables for concrete object
+  types. Generic trait methods are not object-safe and stay statically
+  dispatched. Dyn upcasts, non-copy dyn data ownership, and raw backend lowering
+  are still planned.
 
 The executable subset supports scalar `own`, `ref`, and `ref mut` values and
 can preserve those qualifiers inside local tuple, fixed-array, vector, and
@@ -536,7 +568,11 @@ constant `ref value[index]`; unrelated field paths remain available while that
 borrow is live.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
-value. `null` can initialize or be passed to any `ptr T` expected type.
+value. `T?` is accepted as the nullable spelling of the same raw pointer type,
+so `i64?` canonicalizes to `ptr i64` and `c_void?` canonicalizes to
+`ptr c_void`. `?` is a postfix type suffix and cannot be combined with
+`own`, `ref`, or `ptr` qualifiers. `null` can initialize or be passed to any
+`ptr T` / `T?` expected type.
 `ptr_offset(pointer, bytes)` performs byte-wise address arithmetic without
 loading from memory. `ptr_add(pointer, count)` performs typed pointer
 arithmetic, scaling by the current Ari layout size of `T` for `ptr T`; scalar

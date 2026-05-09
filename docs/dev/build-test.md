@@ -69,8 +69,9 @@ parameters.
 `make check-traits` covers concrete trait impls, trait-bound static dispatch,
 generic trait impl method and associated-function specialization, generic trait
 method type-argument inference, method-level bounds on generic trait methods,
-generic impl bounds, `dyn Trait[...]` type surface validation, and trait impl
-coherence diagnostics.
+generic impl bounds, `dyn Trait[...]` type surface validation, concrete and
+generic-impl-specialized LLVM dyn dispatch, dyn object-safety diagnostics for
+generic trait methods, and trait impl coherence diagnostics.
 
 `make check-meta` runs attribute and meta-syntax tests for built-in attributes,
 `@repr(C)` layout guard diagnostics, `@cfg(true/false)` declaration pruning,
@@ -79,10 +80,12 @@ deprecated use warnings, `@test` runner generation, user-defined attribute
 names reserved by `meta fn`, meta signatures over `token_stream`/`ast`, and
 planned Rust-style `name!(...)` macro invocation diagnostics.
 
-`make check-prelude` runs prelude IO, formatting, input, assertion, and builtin
-macro tests. It covers function and macro assertion forms, `print!`/`println!`,
-host `read_line`/`input`, freestanding byte IO, and planned `format!` string
-allocation diagnostics.
+`make check-prelude` runs prelude IO, formatting, input, assertion, source
+header, and builtin macro tests. It covers function and macro assertion forms,
+auto-loaded explicit `std::...` header calls, implicit Rust-like standard
+aliases such as `Vec`/`Range`/`range`, explicit `mod std;` loading under
+`--no-implicit-std`, `print!`/`println!`, host `read_line`/`input`,
+freestanding byte IO, and planned `format!` string allocation diagnostics.
 
 `make check-traits` runs trait-focused tests for generic trait declarations,
 impl conformance, bare `self` signature inference, concrete method-call static
@@ -99,7 +102,8 @@ LLVM branch lowering, freestanding execution, and planned expression-valued
 file-backed modules, selected imports, glob imports, module aliases, public
 re-exports, public glob re-exports, duplicate glob aliases, and private alias
 visibility. It also checks package module search paths through `--module-path`
-and `-I`.
+and `-I`, plus module metadata emission, source content hashes, and metadata
+read-back validation, including old metadata-version rejection.
 
 `make check-structs` runs struct and ADT-focused tests for struct declarations,
 generic struct field resolution, named struct literals, tuple-struct
@@ -113,9 +117,10 @@ bindings, host string/float bindings, and pattern bindings inside `match` arms.
 
 `make check-ffi` runs C FFI tests for libc declarations, explicit C link names,
 module externs, x86-64 C ABI type aliases, `ptr c_char` string arguments,
-`c_void` returns, `ref mut` pointer parameters, and the by-value `c_void`
-diagnostic. When `clang` and `ar` are available it also builds and links a
-small C helper library.
+`c_void` returns, `ref mut` pointer parameters, C varargs with default
+promotions, variadic function-pointer rejection, permanent generic-extern
+rejection, and the by-value `c_void` diagnostic. When `clang` and `ar` are
+available it also builds and links a small C helper library.
 
 `make check-functions` runs the function-focused suite: `main` rules, return
 checking, recursion, void functions, argument counts/types, generic calls,

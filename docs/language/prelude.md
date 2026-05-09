@@ -2,10 +2,77 @@
 
 ## What The Prelude Is
 
-Ari injects a small compiler-known prelude into every executable module. You can
-call these names without a `use`.
+Ari auto-loads the source `std` surface into ordinary executable modules and
+adds implicit aliases for its public prelude names. You can call those names
+without a `use`.
 
-The current prelude is implemented inside the compiler, not as Ari source files.
+The source declaration header lives at `lib/std.arih`. The compiler auto-loads
+it as the `std` module when the file is present, so explicit `std::...` names
+work without a `mod std;` declaration:
+
+```ari
+use std::io::{write_i64, newline};
+
+fn main() -> i64 {
+  write_i64(42);
+  newline();
+  return std::mem::size_of<i64>()
+}
+```
+
+The header exposes declaration-shaped IO, input, context, assertion, trait,
+range, pointer/memory, and zone surfaces. Ari-owned runtime hooks are declared
+with `extern "ari"` and explicit `ari_builtin_*` symbols, not `extern "C"`;
+they are compiler/runtime builtins, not libc bindings. The semantic checker
+uses those source declarations for ordinary function and trait signatures.
+Formatting `print`/`println`, layout queries, range constructors, typed memory
+helpers, and lexical temporary-zone helpers still lower through compiler hooks
+after the matching source `std` surface is visible.
+
+Like Rust, public standard names are imported by the implicit prelude when
+`std` is auto-loaded. The source header decides this surface: public root items,
+root `pub use` re-exports, and public `std` child modules from `lib/std.arih`
+become visible in ordinary code. Write `Vec[T]`, `Range[T]`, `Iterator[T]`,
+`range(...)`, `size_of<T>()`, `write_i64(...)`, `create(...)`, `new<T>(...)`,
+and pointer helpers directly. Nested forms such as `fmt::Display`,
+`iter::Iterator[T]`, `mem::size_of<T>()`, `input::read_byte()`, and
+`zone::new<T>(...)` resolve through implicit aliases to the source `std`
+module, even when a root re-export such as `input()` shares the prefix.
+The explicit paths still exist as `std::Vec`, `std::iter::range`,
+`std::mem::size_of`, and `std::zone::new`; `std::vec::Vec` is not the normal
+spelling. Local declarations and explicit `use` aliases win over these
+implicit prelude names. If you want a separate namespace handle, alias the
+module explicitly:
+
+```ari
+use std as core
+
+fn main() -> i64 {
+  return core::mem::size_of<i64>()
+}
+```
+
+Pass `--no-implicit-std` when testing the source header as ordinary module
+code only. In that mode `use std::...` does not load anything by itself; import
+the header through the normal module system instead. Compiler-known helper
+lowering such as unqualified `size_of<T>()`, `range(...)`, `ptr_load<T>()`,
+and `zone::new<T>(...)` is also disabled until the `std` module is present.
+Source function signatures such as `write_i64(...)`, `io::write_i64(...)`,
+`arg_count()`, and `zone::create(...)` follow the same rule; without implicit
+`std` or an explicit `mod std;`, they are ordinary unknown calls. Prelude trait
+names such as `Debug`, `Drop`, and `Iterable[T]` also come from source `std`,
+so they are unavailable in that mode unless the source `std` module is loaded.
+For helper surfaces that `lib/std.arih` can describe as generic function
+declarations, the declaration must actually exist; a partial custom `std`
+header does not silently inherit those compiler-known names:
+
+```ari
+mod std;
+use std::io::write_i64;
+```
+
+Compile it with a module search path that can find `lib/std.arih`, for example
+`ari app.ari --no-implicit-std --module-path lib`.
 
 ## Formatting
 
@@ -40,7 +107,14 @@ print("x={}", 1)
 println("x={}", 1)
 io::print("x={}", 1)
 io::println("x={}", 1)
+std::print("x={}", 1)
+std::println("x={}", 1)
+std::io::print("x={}", 1)
+std::io::println("x={}", 1)
 ```
+
+If `std` is imported under an alias, the same builtin formatting lowering is
+available through that alias, such as `use std as core; core::println("x={}", 1)`.
 
 ## Lower-Level IO
 
@@ -122,13 +196,20 @@ as `match`, so enum, scalar, tuple, array, struct, tuple-struct, alias, and
 or-pattern forms follow the same rules. `format!` is reserved until Ari has
 owned runtime strings.
 
-## Current Prelude Signatures
+## Current Source Signatures
+
+These signatures are declared by `lib/std.arih` and exposed through implicit
+prelude aliases when source `std` is loaded:
 
 ```ari
 print(format: string, ...) -> i64
 println(format: string, ...) -> i64
 io::print(format: string, ...) -> i64
 io::println(format: string, ...) -> i64
+std::print(format: string, ...) -> i64
+std::println(format: string, ...) -> i64
+std::io::print(format: string, ...) -> i64
+std::io::println(format: string, ...) -> i64
 io::write_i64(value: i64) -> i64
 io::write_bool(value: bool) -> i64
 io::write_byte(value: u8) -> i64
@@ -165,8 +246,8 @@ syscalls.
 
 ## Prelude Traits
 
-The prelude reserves iterator trait names so libraries can use one shared ABI
-surface before the full source standard library exists:
+Prelude traits are ordinary public trait declarations in `lib/std.arih`. The
+implicit prelude exposes the root forms and the child-module forms:
 
 ```ari
 Debug
@@ -215,8 +296,8 @@ state operation.
 
 The compiler validates trait existence, type-argument count, visibility,
 duplicate impls, declared method conformance, and generic function trait
-bounds. Concrete impl method calls and trait-bound generic calls lower through
-static dispatch; vtable-backed trait objects are still planned.
+bounds. Concrete impl method calls, trait-bound generic calls, and the current
+copyable LLVM trait-object subset lower through the same source trait table.
 
 ## Context
 
@@ -290,6 +371,11 @@ storing them into longer-lived bindings or aggregates, or sending them through
 escape-prone calls is rejected with a diagnostic that names the pointer and the
 temporary zone.
 
+The source header `lib/std.arih` exposes the declaration-shaped zone API:
+`std::zone::create`, raw and typed `alloc`, `new`, `promote`, `reset`, and
+`destroy`. `zone::temp` and `zone::scratch` remain compiler-known lexical
+helpers until source declarations can express their hidden lifetime cleanup.
+
 ## Reserved Aggregate Surfaces
 
 The prelude also reserves language-known aggregate surfaces:
@@ -302,6 +388,10 @@ let fixed = [1, 2, 3]
 let span: Range[i64] = 1..4
 let byte_span: Range[u8] = range(1, 4)
 ```
+
+These names are available without `std::` when implicit `std` loading is on.
+Use explicit paths only when you want to show the source module, for example
+`std::Vec[i64]` or `std::iter::range(1, 4)`.
 
 Tuples, fixed arrays, local vector values, and prelude ranges lower as local
 stack aggregate values. Non-empty `[...]` defaults to a fixed array when no

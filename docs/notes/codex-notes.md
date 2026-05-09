@@ -17,7 +17,7 @@ Prefer:
 - traits over classes or interfaces
 - tagged ADTs plus pattern matching over inheritance
 - module paths with clear visibility
-- compiler-known prelude first, source prelude later
+- compiler-known prelude first, source `std` declarations as the stable path
 - capability-style allocation over a global heap primitive
 
 Avoid:

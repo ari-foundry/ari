@@ -65,6 +65,12 @@ On `--freestanding`, output lowers to direct Linux `write` syscalls,
 helpers use the Linux `exit` syscall. Freestanding line input is rejected until
 the raw backend has runtime string storage.
 
+The compiler keeps Ari-owned builtin source aliases and their `ari_builtin_*`
+symbols in one runtime table. That table is used by `extern "ari"` validation,
+LLVM builtin calls, and freestanding builtin offsets, so root re-export forms
+such as `std::write_i64` and direct forms such as `write_i64` share the same
+backend hook.
+
 `print` and `println` are special IR forms after semantic checking because the
 format string must be known at compile time.
 
@@ -72,14 +78,18 @@ format string must be known at compile time.
 
 The LLVM host backend supports:
 
-- `extern "C" fn ...;`
-- `extern fn ...;` as shorthand for C ABI
+- non-generic `extern "C" fn ...;`
+- non-generic `extern fn ...;` as shorthand for C ABI
+- reserved `extern "ari"` declarations for compiler/runtime builtin symbols
 - explicit link names with `= "symbol"`
 - `-L`, `-l`, and `--link` library options
 
 Other ABI strings, including `extern "C++"`, are intentionally rejected. C++
-interop should be exposed through C wrapper functions. The freestanding backend
-does not link external symbols.
+interop should be exposed through C wrapper functions. Generic C extern
+declarations are rejected permanently because Ari binds concrete C symbols
+rather than foreign template/generic definitions. `extern "ari"` is not FFI; it
+names known `ari_builtin_*` hooks supplied by the Ari runtime/backend. The
+freestanding backend does not link external symbols.
 
 ## Freestanding Output
 

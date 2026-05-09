@@ -139,6 +139,11 @@ enum class IrExprKind {
     TupleIndex,
     Index,
     Vector,
+    VectorPush,
+    VectorClear,
+    VectorTruncate,
+    VectorSet,
+    Noop,
     FormatPrint,
     Match,
     If,
@@ -228,6 +233,7 @@ struct IrParam {
 struct IrExternFunction {
     std::string name;
     std::string link_name;
+    std::string abi;
     std::vector<IrParam> params;
     IrType return_type;
     bool is_variadic = false;

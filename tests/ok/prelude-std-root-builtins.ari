@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  std::assert(true);
+  std::debug_assert(1 < 2);
+  std::assert_eq_i64(3, 3);
+  std::assert_ne_i64(3, 4);
+  std::assert_eq_bool(true, true);
+  std::assert_ne_bool(true, false);
+  std::write_i64(4);
+  std::newline();
+  return 9;
+}

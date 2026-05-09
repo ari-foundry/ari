@@ -1,0 +1,11 @@
+trait Convert {
+  fn keep[Value](self, value: Value) -> Value
+}
+
+fn use_dyn(item: dyn Convert) -> i64 {
+  item.keep(7)
+}
+
+fn main() -> i64 {
+  0
+}

@@ -1,0 +1,9 @@
+mod std;
+
+use std::io::{write_i64, newline};
+
+fn main() -> i64 {
+  write_i64(2);
+  newline();
+  return std::mem::size_of<i64>() + 2;
+}

@@ -1,0 +1,6 @@
+extern "C" fn printf(format: string, ...) -> c_int;
+
+fn main() -> i64 {
+  let printer = printf;
+  return 0;
+}

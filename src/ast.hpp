@@ -18,6 +18,7 @@ struct TypeRef {
     SourceLocation loc;
     std::uint64_t array_size = 0;
     bool is_dyn_object = false;
+    bool nullable = false;
 };
 
 struct UseDecl {
@@ -255,6 +256,7 @@ struct FunctionDecl {
     bool is_extern = false;
     bool is_public = false;
     bool is_variadic = false;
+    std::string extern_abi = "C";
     std::string extern_link_name;
     std::vector<Attribute> attributes;
     std::vector<GenericParam> generics;

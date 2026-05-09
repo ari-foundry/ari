@@ -216,6 +216,11 @@ that cannot be inferred and are not written explicitly are rejected during
 lowering, and a single type parameter must resolve to one concrete type for the
 whole call.
 
+This generic syntax is for Ari declarations. `extern "C"` declarations remain
+concrete C symbols and cannot have `[T]` parameters; expose one concrete C
+wrapper per foreign specialization and call those wrappers from Ari code.
+Reserved `extern "ari"` builtin declarations are also concrete and non-generic.
+
 ## Parameter Patterns
 
 Function parameters can be named bindings:

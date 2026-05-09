@@ -29,8 +29,34 @@ extern "C" fn c_puts(text: string) -> i32 = "puts";
 extern fn puts(text: string) -> i32;
 ```
 
-Other ABI strings, including `extern "C++"`, are rejected. C++ interop should
-go through an explicit `extern "C"` wrapper function.
+Other foreign ABI strings, including `extern "C++"`, are rejected. C++ interop
+should go through an explicit `extern "C"` wrapper function.
+
+## Ari Builtin ABI
+
+`extern "ari"` is not C FFI. It is reserved for compiler/runtime builtins that
+Ari itself defines, such as the standard `std` header declarations for IO,
+assertions, context, and zones:
+
+```ari
+extern "ari" fn write_i64(value: i64) -> i64 = "ari_builtin_write_i64";
+```
+
+These declarations must name a known `ari_builtin_*` symbol explicitly. They
+are for Ari's own standard surface and should not be used to bind libc or other
+foreign libraries.
+
+Extern declarations describe concrete C symbols. They cannot be generic because
+C has no source-level generic ABI for Ari to instantiate:
+
+```ari
+extern "C" fn sort_i64(values: ptr i64, len: size_t) -> c_void;
+```
+
+When a foreign library exposes C++ templates, C macros, or another generic API,
+provide concrete C wrapper symbols and bind those wrappers from Ari. Ari
+generic functions can call concrete extern declarations, but the extern
+declaration itself must not have a `[T]` parameter list.
 
 ## C Varargs
 
@@ -48,9 +74,13 @@ fn main() -> i64 {
 
 The fixed parameters are checked normally. Extra variadic arguments may be
 integer, float, bool, string, compact enum, pointer, or borrow-shaped values.
-Ari does not yet apply C's default argument promotions for non-literal values,
-so pass the width the C format expects, such as `42i32` for `%d`, `42i64` for
-`%lld`, and `1.0f64` for `%f`.
+Ari applies C's default argument promotions at variadic call sites: `bool`,
+`i8`, `u8`, `i16`, and `u16` become `i32`, and `f32` becomes `f64`. Wider
+integer and float values keep their declared width, so pass `42i64` for `%lld`.
+
+Variadic extern functions can be called directly but cannot be used as function
+pointer values. Ari's current `fn(...) -> ...` function pointer type describes
+fixed-arity calls only.
 
 ## C Callbacks
 
@@ -211,24 +241,27 @@ compact enum      -> i64 tagged union word
 parameters. Use `ptr c_void` for C `void*`; a by-value `c_void` parameter is
 rejected.
 
-The `null` literal can initialize or be passed to any `ptr T` type:
+The `null` literal can initialize or be passed to any `ptr T` type. `T?` is a
+nullable raw-pointer spelling for the same type, so `c_void?` and `ptr c_void`
+are equivalent in checked executable code:
 
 ```ari
 extern "C" fn takes_buffer(data: ptr c_void) -> i64;
 
 fn main() -> i64 {
-  let data: ptr c_void = null;
+  let data: c_void? = null;
   return takes_buffer(data) + takes_buffer(null);
 }
 ```
 
 When `null` is used without an expected type, it defaults to `ptr c_void`.
-Pointer-to-pointer casts and pointer/integer address casts use explicit `as`
-casts:
+Pointer-to-pointer casts, nullable raw-pointer casts, and pointer/integer
+address casts use explicit `as` casts:
 
 ```ari
 let raw: ptr c_void = null;
 let bytes: ptr c_char = raw as ptr c_char;
+let slot: i64? = (ref mut value) as i64?;
 let addr: u64 = bytes as u64;
 ```
 

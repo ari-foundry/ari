@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let bad: ptr i64? = null;
+  return 0;
+}

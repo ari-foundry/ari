@@ -196,11 +196,13 @@ private:
     }
 
     FunctionDecl parse_extern_function(bool public_decl, std::vector<Attribute> attributes) {
+        std::string abi_name = "C";
         if (check(TokenKind::String)) {
             Token abi = tokens_[pos_++];
-            if (abi.text != "C") {
-                fail(abi.loc, "extern ABI must be \"C\"");
+            if (abi.text != "C" && abi.text != "ari") {
+                fail(abi.loc, "extern ABI must be \"C\" or \"ari\"");
             }
+            abi_name = abi.text;
         }
         expect(TokenKind::KwFn, "expected fn after extern ABI");
         FunctionDecl fn = parse_function(false, false, public_decl, std::move(attributes));
@@ -208,6 +210,7 @@ private:
             fail(peek().loc, "extern functions cannot have a body");
         }
         fn.is_extern = true;
+        fn.extern_abi = std::move(abi_name);
         if (match(TokenKind::Equal)) {
             Token link = expect(TokenKind::String, "expected external link name string after =");
             fn.extern_link_name = link.text;
@@ -398,7 +401,7 @@ private:
                 result.loc = fn.loc;
                 type.args.push_back(std::move(result));
             }
-            return type;
+            return finish_type(std::move(type));
         }
 
         if (match(TokenKind::KwDyn)) {
@@ -417,7 +420,7 @@ private:
                 }
                 expect(TokenKind::RBracket, "expected ] after dyn trait type arguments");
             }
-            return type;
+            return finish_type(std::move(type));
         }
 
         if (match(TokenKind::LBracket)) {
@@ -431,7 +434,7 @@ private:
             if (size.int_value == 0) fail(size.loc, "array types require a size greater than zero");
             type.array_size = size.int_value;
             expect(TokenKind::RBracket, "expected ] after array type");
-            return type;
+            return finish_type(std::move(type));
         }
 
         if (match(TokenKind::LParen)) {
@@ -439,13 +442,13 @@ private:
             type.qualifier = qualifier;
             type.name = "Tuple";
             type.loc = loc;
-            if (match(TokenKind::RParen)) return type;
+            if (match(TokenKind::RParen)) return finish_type(std::move(type));
             do {
                 type.args.push_back(parse_type());
             } while (match(TokenKind::Comma));
             expect(TokenKind::RParen, "expected ) after tuple type");
             if (type.args.size() == 1) fail(loc, "single-element tuple types are not supported");
-            return type;
+            return finish_type(std::move(type));
         }
 
         Token name = expect(TokenKind::Identifier, "expected type name");
@@ -460,6 +463,16 @@ private:
                 } while (match(TokenKind::Comma));
             }
             expect(TokenKind::RBracket, "expected ] after type arguments");
+        }
+        return finish_type(std::move(type));
+    }
+
+    TypeRef finish_type(TypeRef type) {
+        if (match(TokenKind::Question)) {
+            type.nullable = true;
+            if (check(TokenKind::Question)) {
+                fail(peek().loc, "nullable type suffix ? can only appear once");
+            }
         }
         return type;
     }

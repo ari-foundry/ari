@@ -1,3 +1,4 @@
+#include "ari_builtin.hpp"
 #include "llvm_codegen.hpp"
 
 #include "common.hpp"
@@ -57,6 +58,15 @@ static bool is_llvm_float_type(const IrType& type) {
     return type.primitive == IrPrimitiveKind::F32 ||
            type.primitive == IrPrimitiveKind::F64 ||
            type.primitive == IrPrimitiveKind::F128;
+}
+
+static int float_bits(const IrType& type) {
+    switch (type.primitive) {
+        case IrPrimitiveKind::F32: return 32;
+        case IrPrimitiveKind::F64: return 64;
+        case IrPrimitiveKind::F128: return 128;
+        default: return 0;
+    }
 }
 
 static std::uint64_t double_bits(double value) {
@@ -340,47 +350,6 @@ private:
                global.name + ", i64 0, i64 0)";
     }
 
-    static bool is_builtin_name(const std::string& name) {
-        return name == "io::write_i64" || name == "write_i64" ||
-               name == "io::write_bool" || name == "write_bool" ||
-               name == "io::write_byte" || name == "write_byte" ||
-               name == "io::newline" || name == "newline" ||
-               name == "io::read_byte" || name == "read_byte" || name == "input::read_byte" ||
-               name == "io::read_line" || name == "read_line" ||
-               name == "input" || name == "input::line" ||
-               name == "assert" || name == "debug_assert" ||
-               name == "assert_eq_i64" || name == "assert_ne_i64" ||
-               name == "assert_eq_bool" || name == "assert_ne_bool" ||
-               name == "panic" || name == "todo" || name == "unreachable" ||
-               name == "context::argc" || name == "arg_count" ||
-               name == "context::arg" || name == "arg" ||
-               name == "zone::create" || name == "zone::temp" || name == "zone::alloc" ||
-               name == "zone::reset" || name == "zone::destroy";
-    }
-
-    static std::string builtin_symbol(const std::string& name) {
-        if (name == "io::write_i64" || name == "write_i64") return "ari_builtin_write_i64";
-        if (name == "io::write_bool" || name == "write_bool") return "ari_builtin_write_bool";
-        if (name == "io::write_byte" || name == "write_byte") return "ari_builtin_write_byte";
-        if (name == "io::newline" || name == "newline") return "ari_builtin_newline";
-        if (name == "io::read_byte" || name == "read_byte" || name == "input::read_byte") return "ari_builtin_read_byte";
-        if (name == "io::read_line" || name == "read_line" ||
-            name == "input" || name == "input::line") return "ari_builtin_read_line";
-        if (name == "assert" || name == "debug_assert") return "ari_builtin_assert";
-        if (name == "assert_eq_i64") return "ari_builtin_assert_eq_i64";
-        if (name == "assert_ne_i64") return "ari_builtin_assert_ne_i64";
-        if (name == "assert_eq_bool") return "ari_builtin_assert_eq_bool";
-        if (name == "assert_ne_bool") return "ari_builtin_assert_ne_bool";
-        if (name == "panic" || name == "todo" || name == "unreachable") return "ari_builtin_panic";
-        if (name == "context::argc" || name == "arg_count") return "ari_builtin_context_argc";
-        if (name == "context::arg" || name == "arg") return "ari_builtin_context_arg";
-        if (name == "zone::create" || name == "zone::temp") return "ari_builtin_zone_create";
-        if (name == "zone::alloc") return "ari_builtin_zone_alloc";
-        if (name == "zone::reset") return "ari_builtin_zone_reset";
-        if (name == "zone::destroy") return "ari_builtin_zone_destroy";
-        return "";
-    }
-
     static bool has_runtime_c_declaration(const std::string& symbol) {
         return symbol == "printf" ||
                symbol == "putchar" ||
@@ -391,20 +360,19 @@ private:
                symbol == "exit";
     }
 
-    static IrType builtin_result_type(const std::string& name, SourceLocation loc) {
-        if (name == "zone::create" || name == "zone::temp") {
+    static IrType builtin_result_type(const std::string& symbol, SourceLocation loc) {
+        if (symbol == "ari_builtin_zone_create") {
             return IrType{TypeQualifier::Own, IrPrimitiveKind::Zone, "Zone", {}, {}, {}, {}, loc};
         }
-        if (name == "zone::alloc") {
+        if (symbol == "ari_builtin_zone_alloc") {
             return IrType{TypeQualifier::Ptr, IrPrimitiveKind::U8, "u8", {}, {}, {}, {}, loc};
         }
-        if (name == "context::arg" || name == "arg" ||
-            name == "io::read_line" || name == "read_line" ||
-            name == "input" || name == "input::line") {
+        if (symbol == "ari_builtin_context_arg" || symbol == "ari_builtin_read_line") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
         }
-        if (name == "panic" || name == "todo" || name == "unreachable" ||
-            name == "zone::reset" || name == "zone::destroy") {
+        if (symbol == "ari_builtin_panic" ||
+            symbol == "ari_builtin_zone_reset" ||
+            symbol == "ari_builtin_zone_destroy") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
         }
         return IrType{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, loc};
@@ -433,9 +401,10 @@ private:
         declarations_ << "declare void @exit(i32)\n";
         declarations_ << "@stdin = external global ptr\n";
         for (const auto& fn : program_.extern_functions) {
-            if (has_runtime_c_declaration(extern_symbols_.at(fn.name))) continue;
+            const std::string& symbol = extern_symbols_.at(fn.name);
+            if (has_runtime_c_declaration(symbol) || is_ari_builtin_symbol(symbol)) continue;
             declarations_ << "declare " << llvm_type(fn.return_type) << " "
-                          << quote_global(extern_symbols_.at(fn.name)) << "(";
+                          << quote_global(symbol) << "(";
             for (std::size_t i = 0; i < fn.params.size(); ++i) {
                 if (i > 0) declarations_ << ", ";
                 declarations_ << llvm_type(fn.params[i].type);
@@ -1402,6 +1371,16 @@ private:
                 if (expr.type.primitive == IrPrimitiveKind::Array) return emit_tuple(expr);
                 if (expr.type.primitive == IrPrimitiveKind::Vector) return emit_vector(expr);
                 throw CompileError(where(expr.loc) + ": LLVM backend cannot lower vector value type " + type_name(expr.type));
+            case IrExprKind::VectorPush:
+                return emit_vector_push(expr);
+            case IrExprKind::VectorClear:
+                return emit_vector_clear(expr);
+            case IrExprKind::VectorTruncate:
+                return emit_vector_truncate(expr);
+            case IrExprKind::VectorSet:
+                return emit_vector_set(expr);
+            case IrExprKind::Noop:
+                return Value{"void", "", expr.type};
             case IrExprKind::FormatPrint:
                 return emit_format_print(expr);
             case IrExprKind::Match:
@@ -1556,6 +1535,110 @@ private:
         std::string out = temp();
         line("  " + out + " = load " + llvm_type(expr.type) + ", ptr " + ptr);
         return Value{llvm_type(expr.type), out, expr.type};
+    }
+
+    Value emit_vector_push(const IrExpr& expr) {
+        if (!expr.operand || !expr.right || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.push lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        const IrType& element_type = vector_type.args[0];
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string len_ptr = temp();
+        std::string len = temp();
+        std::string full = temp();
+        std::string fail_label = label("vector.push.full");
+        std::string ok_label = label("vector.push.ok");
+
+        line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 0");
+        line("  " + len + " = load i64, ptr " + len_ptr);
+        line("  " + full + " = icmp sge i64 " + len + ", " + std::to_string(vector_type.array_size));
+        line("  br i1 " + full + ", label %" + fail_label + ", label %" + ok_label);
+        emit_label(fail_label);
+        line("  call void @ari_builtin_panic()");
+        line("  unreachable");
+        emit_label(ok_label);
+
+        Value value = cast_value(emit_expr(*expr.right), element_type);
+        std::string item_ptr = temp();
+        std::string next_len = temp();
+        line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + len);
+        line("  store " + value.type + " " + value.name + ", ptr " + item_ptr);
+        line("  " + next_len + " = add i64 " + len + ", 1");
+        line("  store i64 " + next_len + ", ptr " + len_ptr);
+        return Value{"void", "", expr.type};
+    }
+
+    Value emit_vector_clear(const IrExpr& expr) {
+        if (!expr.operand || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.clear lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string len_ptr = temp();
+        line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 0");
+        line("  store i64 0, ptr " + len_ptr);
+        return Value{"void", "", expr.type};
+    }
+
+    Value emit_vector_truncate(const IrExpr& expr) {
+        if (!expr.operand || !expr.right || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.truncate lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
+        Value new_len = cast_value(emit_expr(*expr.right), index_type);
+
+        std::string negative = temp();
+        std::string trap_label = label("vector.truncate.negative");
+        std::string ok_label = label("vector.truncate.ok");
+        line("  " + negative + " = icmp slt i64 " + new_len.name + ", 0");
+        line("  br i1 " + negative + ", label %" + trap_label + ", label %" + ok_label);
+        emit_label(trap_label);
+        line("  call void @ari_builtin_panic()");
+        line("  unreachable");
+        emit_label(ok_label);
+
+        std::string len_ptr = temp();
+        std::string len = temp();
+        std::string should_shrink = temp();
+        std::string kept_len = temp();
+        line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 0");
+        line("  " + len + " = load i64, ptr " + len_ptr);
+        line("  " + should_shrink + " = icmp slt i64 " + new_len.name + ", " + len);
+        line("  " + kept_len + " = select i1 " + should_shrink +
+             ", i64 " + new_len.name + ", i64 " + len);
+        line("  store i64 " + kept_len + ", ptr " + len_ptr);
+        return Value{"void", "", expr.type};
+    }
+
+    Value emit_vector_set(const IrExpr& expr) {
+        if (!expr.operand || !expr.right || !expr.payload ||
+            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.set lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        const IrType& element_type = vector_type.args[0];
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
+        Value index = cast_value(emit_expr(*expr.right), index_type);
+        emit_vector_bounds_check(index, vector_type, base);
+
+        Value value = cast_value(emit_expr(*expr.payload), element_type);
+        std::string item_ptr = temp();
+        line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + index.name);
+        line("  store " + value.type + " " + value.name + ", ptr " + item_ptr);
+        return Value{"void", "", expr.type};
     }
 
     void emit_vector_bounds_check(const Value& index, const IrType& vector_type, const std::string& vector_ptr) {
@@ -1905,6 +1988,19 @@ private:
             }
             return Value{target_type, out, target};
         }
+        int from_float_bits = float_bits(value.ir_type);
+        int to_float_bits = float_bits(target);
+        if (from_float_bits > 0 && to_float_bits > 0) {
+            std::string out = temp();
+            if (from_float_bits < to_float_bits) {
+                line("  " + out + " = fpext " + value.type + " " + value.name + " to " + target_type);
+            } else if (from_float_bits > to_float_bits) {
+                line("  " + out + " = fptrunc " + value.type + " " + value.name + " to " + target_type);
+            } else {
+                out = value.name;
+            }
+            return Value{target_type, out, target};
+        }
         throw CompileError(where(target.loc) + ": LLVM backend cannot cast " + type_name(value.ir_type) + " to " + type_name(target));
     }
 
@@ -2147,13 +2243,17 @@ private:
         std::string symbol;
         IrType result;
         std::vector<IrParam> params;
-        if (is_builtin_name(expr.name)) {
-            symbol = builtin_symbol(expr.name);
-            result = expr.name == "zone::alloc" ? expr.type : builtin_result_type(expr.name, expr.loc);
-        } else if (extern_symbols_.count(expr.name)) {
+        if (extern_symbols_.count(expr.name)) {
             symbol = extern_symbols_.at(expr.name);
             result = extern_results_.at(expr.name);
             params = extern_params_.at(expr.name);
+        } else if (function_symbols_.count(expr.name)) {
+            symbol = function_symbols_.at(expr.name);
+            result = function_results_.at(expr.name);
+            params = function_params_.at(expr.name);
+        } else if (std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(expr.name)) {
+            symbol = *builtin_symbol;
+            result = symbol == "ari_builtin_zone_alloc" ? expr.type : builtin_result_type(symbol, expr.loc);
         } else {
             symbol = function_symbols_.at(expr.name);
             result = function_results_.at(expr.name);

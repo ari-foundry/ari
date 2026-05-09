@@ -1,0 +1,5 @@
+mod std;
+
+fn main() -> i64 {
+  return std::mem::size_of<i64>();
+}

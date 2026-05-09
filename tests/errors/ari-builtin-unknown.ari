@@ -1,0 +1,5 @@
+extern "ari" fn bad() -> i64 = "puts";
+
+fn main() -> i64 {
+  return 0;
+}

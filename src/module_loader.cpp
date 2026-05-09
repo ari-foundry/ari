@@ -2,12 +2,14 @@
 
 #include "common.hpp"
 #include "lexer.hpp"
+#include "module_metadata.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
 
 #include <fstream>
 #include <iterator>
 #include <map>
+#include <optional>
 #include <set>
 #include <sstream>
 #include <string>
@@ -21,6 +23,11 @@ namespace {
 struct ModuleFileSearch {
     std::string path;
     std::vector<std::string> searched;
+};
+
+struct ParsedModuleFile {
+    Program program;
+    std::string content_hash;
 };
 
 std::string read_file(const std::string& path) {
@@ -88,6 +95,26 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
                        "'; searched " + searched_paths_text(result.searched));
 }
 
+std::optional<std::string> find_standard_header_file() {
+    const std::string path = "lib/std.arih";
+    if (file_exists(path)) return path;
+    return std::nullopt;
+}
+
+bool has_root_module_decl(const Program& program, const std::string& name) {
+    for (const auto& module : program.modules) {
+        if (module.module_name.empty() && module.name == name) return true;
+    }
+    return false;
+}
+
+bool has_root_module_import(const Program& program, const std::string& name) {
+    for (const auto& import : program.module_imports) {
+        if (import.module_name.empty() && import.name == name) return true;
+    }
+    return false;
+}
+
 template <typename T>
 void move_append(std::vector<T>& dst, std::vector<T>& src) {
     dst.insert(dst.end(), std::make_move_iterator(src.begin()), std::make_move_iterator(src.end()));
@@ -105,31 +132,61 @@ void append_program(Program& dst, Program&& src) {
     move_append(dst.impls, src.impls);
 }
 
-Program parse_file_in_module(const std::string& path,
-                             const std::vector<std::string>& module_path,
-                             const std::set<std::string>& cfg_features) {
+ParsedModuleFile parse_file_in_module(const std::string& path,
+                                      const std::vector<std::string>& module_path,
+                                      const std::set<std::string>& cfg_features) {
     std::string source = read_file(path);
+    std::string content_hash = module_metadata_source_hash(source);
     std::vector<Token> tokens = lex_source(std::move(source));
-    return parse_tokens_in_module(std::move(tokens), module_path, cfg_features);
+    return ParsedModuleFile{
+        parse_tokens_in_module(std::move(tokens), module_path, cfg_features),
+        std::move(content_hash),
+    };
 }
 
 class ModuleLoader {
 public:
-    ModuleLoader(std::vector<std::string> module_search_paths, std::set<std::string> cfg_features)
-        : module_search_paths_(std::move(module_search_paths)),
-          cfg_features_(std::move(cfg_features)) {}
+    ModuleLoader(ModuleLoadOptions options)
+        : options_(std::move(options)) {}
 
-    Program load(const std::string& input) {
-        Program program = parse_file_in_module(input, {}, cfg_features_);
+    ModuleLoadResult load(const std::string& input) {
+        metadata_.module_search_paths = options_.module_search_paths;
+        metadata_.cfg_features = options_.cfg_features;
+        metadata_.implicit_std = options_.implicit_std;
+        ParsedModuleFile root = parse_file_in_module(input, {}, options_.cfg_features);
+        Program program = std::move(root.program);
+        collect_module_metadata_source(metadata_, input, std::move(root.content_hash), {}, program, true);
+        if (options_.implicit_std) load_standard_module(program);
         resolve_imports(program, dirname(input));
-        return program;
+        return ModuleLoadResult{std::move(program), std::move(metadata_)};
     }
 
 private:
-    std::vector<std::string> module_search_paths_;
-    std::set<std::string> cfg_features_;
+    ModuleLoadOptions options_;
+    ModuleMetadata metadata_;
     std::map<std::string, std::string> loaded_modules_;
     std::set<std::string> loading_modules_;
+
+    void load_standard_module(Program& program) {
+        const std::string name = "std";
+        if (has_root_module_decl(program, name) || has_root_module_import(program, name)) return;
+        std::optional<std::string> path = find_standard_header_file();
+        if (!path) return;
+
+        ModuleDecl decl;
+        decl.name = name;
+        decl.module_name = "";
+        decl.is_public = true;
+        decl.loc = SourceLocation{1, 1};
+        program.modules.push_back(std::move(decl));
+
+        std::vector<std::string> module_path{name};
+        ParsedModuleFile standard_file = parse_file_in_module(*path, module_path, options_.cfg_features);
+        Program standard = std::move(standard_file.program);
+        collect_module_metadata_source(metadata_, *path, std::move(standard_file.content_hash), module_path, standard, false);
+        loaded_modules_.emplace(name, *path);
+        append_program(program, std::move(standard));
+    }
 
     void resolve_imports(Program& program, const std::string& base_dir) {
         std::vector<ModuleImport> imports = std::move(program.module_imports);
@@ -140,7 +197,8 @@ private:
                 throw CompileError(where(import.loc) + ": cyclic module import '" + import.name + "'");
             }
 
-            ModuleFileSearch found = find_module_file(import, base_dir, module_search_paths_);
+            ModuleFileSearch found = find_module_file(import, base_dir, options_.module_search_paths);
+            add_module_metadata_import(metadata_, import, found.path);
             auto loaded = loaded_modules_.find(import.name);
             if (loaded != loaded_modules_.end()) {
                 if (loaded->second != found.path) {
@@ -152,7 +210,10 @@ private:
             }
 
             loading_modules_.insert(import.name);
-            Program child = parse_file_in_module(found.path, split_qualified_path(import.name), cfg_features_);
+            std::vector<std::string> module_path = split_qualified_path(import.name);
+            ParsedModuleFile child_file = parse_file_in_module(found.path, module_path, options_.cfg_features);
+            Program child = std::move(child_file.program);
+            collect_module_metadata_source(metadata_, found.path, std::move(child_file.content_hash), module_path, child, false);
             resolve_imports(child, dirname(found.path));
             loading_modules_.erase(import.name);
             loaded_modules_.emplace(import.name, found.path);
@@ -165,14 +226,35 @@ private:
 
 Program parse_file_with_modules(const std::string& input,
                                 const std::vector<std::string>& module_search_paths) {
-    ModuleLoader loader(module_search_paths, {});
-    return loader.load(input);
+    ModuleLoadOptions options;
+    options.module_search_paths = module_search_paths;
+    ModuleLoader loader(std::move(options));
+    return loader.load(input).program;
 }
 
 Program parse_file_with_modules(const std::string& input,
                                 const std::vector<std::string>& module_search_paths,
                                 std::set<std::string> cfg_features) {
-    ModuleLoader loader(module_search_paths, std::move(cfg_features));
+    ModuleLoadOptions options;
+    options.module_search_paths = module_search_paths;
+    options.cfg_features = std::move(cfg_features);
+    ModuleLoader loader(std::move(options));
+    return loader.load(input).program;
+}
+
+ModuleLoadResult parse_file_with_module_metadata(const std::string& input,
+                                                 const std::vector<std::string>& module_search_paths,
+                                                 std::set<std::string> cfg_features) {
+    ModuleLoadOptions options;
+    options.module_search_paths = module_search_paths;
+    options.cfg_features = std::move(cfg_features);
+    ModuleLoader loader(std::move(options));
+    return loader.load(input);
+}
+
+ModuleLoadResult parse_file_with_module_metadata(const std::string& input,
+                                                 ModuleLoadOptions options) {
+    ModuleLoader loader(std::move(options));
     return loader.load(input);
 }
 

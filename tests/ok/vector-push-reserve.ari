@@ -1,0 +1,23 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [];
+  let empty_before: bool = values.is_empty();
+  values.reserve(3);
+  values.push(4);
+  values.push(5);
+  values.push(6);
+  let empty_after: bool = values.is_empty();
+  let before_clear_len: i64 = values.len();
+  values.clear();
+  let empty_after_clear: bool = values.is_empty();
+  values.push(7);
+  values.truncate(5);
+  values.push(8);
+  values.truncate(2);
+  values.set(1, 9);
+  if empty_before && !empty_after {
+    if empty_after_clear {
+      return values.capacity() + before_clear_len + len(values) + values[0] + values[1];
+    }
+  }
+  return 0;
+}

@@ -1,0 +1,10 @@
+extern "C" fn printf(format: string, ...) -> c_int;
+
+fn main() -> i64 {
+  let signed: i8 = 7i8;
+  let unsigned: u16 = 9u16;
+  let flag = true;
+  let value: f32 = 1.5f32;
+  printf("ari promotions: %d %d %d %.1f\n", signed, unsigned, flag, value);
+  return 0;
+}

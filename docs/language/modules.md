@@ -65,9 +65,28 @@ forms. Loaded module names are cached during one compiler run, so repeated
 imports of the same module path are resolved once and cycles are diagnosed
 before parsing loops indefinitely.
 
+The standard library prelude is special-cased before general library loading:
+when `lib/std.arih` exists, the compiler auto-loads it as the public `std`
+module. User code can write `std::io::write_i64` or
+`use std::mem::size_of;` without declaring `mod std;`. Rust-like implicit
+prelude aliases also bring the public `std` root items and root re-exports into
+ordinary module scopes, so names such as `Vec`, `Range`, `Iterator`, `range`,
+`size_of`, `write_i64`, `create`, and `new` can be used without `std::`.
+Local declarations or explicit `use` aliases take priority. If code wants a
+namespace handle for clarity or collision management, write `use std as core`
+and call through `core::...`. Other library modules still require normal
+`mod name;` declarations for now.
+
+Use `--no-implicit-std` to disable that special case. Then `std` behaves like
+any other file-backed module, so code must declare `mod std;` and pass a search
+path such as `--module-path lib` if it wants the repository `lib/std.arih`
+header.
+
 `.arih` is Ari's header-like source surface. It is parsed like normal Ari, but
 the convention is to keep declarations, extern bindings, ABI declarations, and
-small public module surfaces there.
+small public module surfaces there. Ari's own `lib/std.arih` uses
+`extern "ari"` for compiler/runtime builtin declarations; C libraries should
+still use `extern "C"`.
 
 Example header module:
 
@@ -241,6 +260,38 @@ The compiler searches for `mathlib.ari`, `mathlib.arih`, `mathlib/mod.ari`, or
 `mathlib/mod.arih` in the importing file's directory and then in package search
 paths, then places the loaded declarations under `Math`.
 
+## Module Metadata
+
+Ari can emit a compact module graph summary for file-backed package work:
+
+```sh
+ari app.ari -I packages --emit-module-metadata build/app.arimeta --emit-llvm build/app.ll
+```
+
+The metadata file records the module search paths, active cfg features, source
+files with stable content hashes, resolved file-backed imports, and declaration
+names seen in each source file. It is intentionally a summary format, not a
+compiled cache; the compiler still reparses source files for normal builds.
+Current metadata is written as `ari-module-metadata-v2`; older v1 summaries can
+be parsed for diagnostics, but `--check-module-metadata` asks you to regenerate
+them because v1 lacks source content hashes.
+
+Use `--check-module-metadata` to read an existing summary and verify that the
+current source graph still matches it:
+
+```sh
+ari app.ari -I packages --check-module-metadata build/app.arimeta --emit-llvm build/app.ll
+```
+
+This is the validation layer for later package caching. If source contents,
+search paths, cfg features, imports, or declarations change, regenerate the
+metadata.
+Stale metadata diagnostics name the first changed input class they can identify:
+search path, cfg feature, implicit standard-library option, source file, resolved
+import, declaration item, or source content hash. That keeps package-cache
+failures tied to the module, import, item, or source file that actually changed
+instead of a generic cache miss.
+
 ## Nested Modules
 
 Nested modules are addressed with their full path:
@@ -293,4 +344,5 @@ mod Outer {
 
 - Module declarations themselves do not have runtime values.
 - Duplicate `use` aliases in the same module scope are rejected.
-- Compiled package metadata is planned.
+- Module metadata validates the source graph and file content hashes, but
+  package dependency caching is still planned.

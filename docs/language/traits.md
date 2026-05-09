@@ -308,7 +308,7 @@ impl Eq[i64] for i64 {
 
 Today this lets libraries agree on the same names while the compiler grows
 associated types, `Result`-based conversion traits, iterator lowering, and
-source-level prelude modules. Concrete impl method calls and trait-bound
+source-level standard modules. Concrete impl method calls and trait-bound
 generic calls already lower through static dispatch. `Hash` is intentionally not reserved in the
 prelude; it should live in an explicit collection/hash module later.
 
@@ -366,9 +366,13 @@ rejected.
 On the LLVM backend, concrete copyable non-borrow values are materialized as a
 pair of data pointer and vtable pointer. The vtable stores erased receiver
 thunks, so `value.score()` dispatches through the vtable slot while the thunk
-loads the concrete receiver and calls the original impl method. Generic impl
-vtables, generic trait methods, trait-object upcasts, `own`/borrow-valued dyn
-data pointers, and raw `--freestanding` lowering are still planned.
+loads the concrete receiver and calls the original impl method. Generic impls
+such as `impl[T] Score[T] for Box[T]` can also be specialized into vtables for
+concrete object types such as `Box[i64] as dyn Score[i64]`. Generic trait
+methods are not object-safe: they remain available through static dispatch and
+are rejected at `as dyn` conversion or dyn method-call sites. Trait-object
+upcasts, `own`/borrow-valued dyn data pointers, and raw `--freestanding`
+lowering are still planned.
 
 ## Current Status
 
@@ -381,6 +385,7 @@ such as `T::new(...)` and `Box::new<i64>(...)`, and trait impl associated
 functions such as `Box::make<i64>(...)` are executable. Generic trait methods
 with method-level bounds are executable. `dyn Trait[...]` type syntax resolves,
 and explicit concrete-to-`dyn` conversions plus LLVM vtable dispatch are
-executable for concrete copyable source values. Associated types, generic impl
-vtables, generic dyn methods, dyn upcasts, and non-copy dyn data ownership are
-still planned.
+executable for concrete copyable source values, including vtables built from
+generic impl specializations. Generic trait methods are deliberately static-only
+for dyn objects. Associated types, dyn upcasts, non-copy dyn data ownership, and
+raw backend dyn dispatch are still planned.

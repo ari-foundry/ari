@@ -1,0 +1,13 @@
+use std::io::{write_i64, newline};
+
+fn main() -> i64 {
+  write_i64(1);
+  newline();
+
+  var memory = std::zone::create(128);
+  let slot = std::zone::new<i64>(ref mut memory, 5);
+  let copied = std::mem::ptr_load(slot);
+
+  std::zone::destroy(memory);
+  return std::mem::size_of<i64>() + std::mem::align_of<i64>() + copied;
+}

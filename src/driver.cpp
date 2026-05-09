@@ -5,6 +5,7 @@
 #include "elf.hpp"
 #include "llvm_codegen.hpp"
 #include "module_loader.hpp"
+#include "module_metadata.hpp"
 #include "parser.hpp"
 #include "sema.hpp"
 #include "toolchain.hpp"
@@ -18,6 +19,7 @@
 #include <iostream>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <sys/stat.h>
@@ -58,6 +60,8 @@ static std::string shell_quote(const std::string& text) {
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--emit-llvm path] [--freestanding]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
+                 "           [--emit-module-metadata path] [--check-module-metadata path]\n"
+                 "           [--no-implicit-std]\n"
                  "           [-L path] [-l name] [--link name] [--shared]\n"
                  "           [--test] [--cfg-feature name]\n";
 }
@@ -72,6 +76,8 @@ int run(int argc, char** argv) {
     std::string output = "a.out";
     std::string llvm_output;
     std::string llvm_compiler = default_llvm_compiler();
+    std::string metadata_output;
+    std::string metadata_check;
     std::vector<std::string> module_search_paths;
     std::vector<std::string> link_args;
     std::set<std::string> cfg_features;
@@ -79,6 +85,7 @@ int run(int argc, char** argv) {
     bool emit_llvm_only = false;
     bool shared_library = false;
     bool test_mode = false;
+    bool implicit_std = true;
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "-o") {
@@ -90,6 +97,8 @@ int run(int argc, char** argv) {
             shared_library = true;
         } else if (arg == "--test") {
             test_mode = true;
+        } else if (arg == "--no-implicit-std") {
+            implicit_std = false;
         } else if (arg == "--cfg-feature" || arg == "--feature") {
             if (i + 1 >= argc) throw CompileError(arg + " expects a feature name");
             cfg_features.insert(argv[++i]);
@@ -106,6 +115,12 @@ int run(int argc, char** argv) {
         } else if (arg == "--module-path") {
             if (i + 1 >= argc) throw CompileError("--module-path expects a path");
             module_search_paths.push_back(argv[++i]);
+        } else if (arg == "--emit-module-metadata") {
+            if (i + 1 >= argc) throw CompileError("--emit-module-metadata expects a path");
+            metadata_output = argv[++i];
+        } else if (arg == "--check-module-metadata") {
+            if (i + 1 >= argc) throw CompileError("--check-module-metadata expects a path");
+            metadata_check = argv[++i];
         } else if (arg == "-I") {
             if (i + 1 >= argc) throw CompileError("-I expects a path");
             module_search_paths.push_back(argv[++i]);
@@ -140,10 +155,24 @@ int run(int argc, char** argv) {
         throw CompileError("--freestanding cannot be combined with --emit-llvm or --shared");
     }
 
-    Program program = parse_file_with_modules(input, module_search_paths, cfg_features);
+    ModuleLoadOptions load_options;
+    load_options.module_search_paths = std::move(module_search_paths);
+    load_options.cfg_features = cfg_features;
+    load_options.implicit_std = implicit_std;
+    ModuleLoadResult loaded = parse_file_with_module_metadata(input, std::move(load_options));
+    if (!metadata_check.empty()) {
+        ModuleMetadata expected = read_module_metadata_file(metadata_check);
+        require_matching_module_metadata(expected, loaded.metadata, metadata_check);
+    }
+    if (!metadata_output.empty()) {
+        write_text_file(metadata_output, serialize_module_metadata(loaded.metadata));
+        std::cout << "wrote " << metadata_output << " (module metadata)\n";
+    }
+    Program program = std::move(loaded.program);
     SemaOptions sema_options;
     sema_options.require_main = !shared_library && !test_mode;
     sema_options.test_mode = test_mode;
+    sema_options.implicit_std = implicit_std;
     sema_options.cfg_features = cfg_features;
     IrProgram ir = check_program(program, std::move(sema_options));
     for (const auto& warning : ir.warnings) {

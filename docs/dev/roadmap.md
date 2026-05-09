@@ -2,9 +2,32 @@
 
 ## Near-Term Compiler Work
 
-No active near-term compiler work is queued after the concrete trait-object
-dispatch slice. Promote the next small Medium-Term item here when it becomes
-the next implementation target.
+1. Start allocator-backed growable `Vec[T]`.
+   Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
+   `Vec.capacity()` / `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` /
+   `Vec.set(index, value)` lower today on the LLVM backend as stack-backed
+   values with compile-time capacity and runtime length checks.
+   Vec storage helper logic is split out of `sema.cpp` into
+   `vector_semantics` so the allocator-backed work can grow outside the main
+   semantic checker. Introduce the explicit allocation/capability path before
+   broadening vector patterns.
+   - [allocator] thread explicit allocator/capability values through creation
+   - [capacity] replace local literal/reserve capacity with runtime heap
+     capacity growth
+   - [ops-runtime] connect `push` and `reserve` to allocator-backed growth
+     instead of fixed local-capacity traps
+2. Add package caching for file-backed modules.
+   Compact module metadata can be emitted, checked, and invalidated with
+   cfg/search-path/source/import/item-specific stale diagnostics today. Source
+   records now include stable content hashes, so cache validation catches body
+   changes even when declaration summaries stay the same. Metadata checks also
+   reject old v1 summaries because they do not carry source hashes. Use this as
+   the stable validation layer before skipping source reparses.
+   - [cache-read] define a cached AST/IR summary format that can be loaded after
+     metadata validation succeeds
+   - [cache-skip] avoid reparsing dependencies when the metadata summary and
+     source hashes still match the current source graph and cfg/search-path
+     inputs
 
 ## Medium-Term Language Work
 
@@ -22,9 +45,7 @@ the next implementation target.
    - [loop-state] track ownership and borrow state through loops, init-while
      updates, owning loop bindings, and owning break values instead of rejecting
      all state changes inside loops
-3. Move compiler-known prelude traits/functions toward source-level standard
-   library modules.
-4. Extend pattern binding modes beyond value bindings.
+3. Extend pattern binding modes beyond value bindings.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    - [refutable-let] lower refutable enum-case `let`/`var` patterns after the
@@ -34,7 +55,7 @@ the next implementation target.
    - [alias-or] support alias patterns wrapped around or-patterns
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and function-parameter patterns on one shared binding-mode engine
-5. Implement user-defined compile-time meta expansion for `meta fn`.
+4. Implement user-defined compile-time meta expansion for `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
@@ -45,35 +66,46 @@ the next implementation target.
      signatures are represented
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
-6. Expand the FFI surface.
+5. Expand the FFI surface.
    - [repr] finish `repr(C)` aggregate ABI layout, including generic
      aggregates and the policy for ownership/borrow-qualified fields
-   - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable raw-pointer literals, pointer casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate offsets, scalar/plain-Ari-aggregate load/store helpers, scalar/plain-Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate field/element pointer access, and `size_of<T>()` / `align_of<T>()` layout queries are implemented
-   - [varargs] apply C default argument promotions for non-literal variadic
-     arguments and define whether variadic functions can be used as function
-     pointer values
-   - [generic-extern] keep extern declarations non-generic by design or define
-     explicit wrapper monomorphization for generic foreign declarations
+   - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate offsets, scalar/plain-Ari-aggregate load/store helpers, scalar/plain-Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate field/element pointer access, and `size_of<T>()` / `align_of<T>()` layout queries are implemented
    - [abi] represent non-C ABI shims explicitly
-7. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
+6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today.
     - [sum] `Option[T]`, `Maybe[T]`, and `Result[T, E]`, connected to the existing `?`/`??` propagation model
+    - [nullable-values] decide whether value-level `T?` should remain raw-pointer-only syntax or grow an `Option[T]`/`Maybe[T]` lowering for non-pointer values
     - [owned] `Box[T]`
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host
       reusable line buffer
     - [views] `Slice[T]`, including slice patterns after slice layout and borrowing are defined
-8. Add allocator-backed growable `Vec[T]`. Non-empty `[...]` now defaults to
+7. Design `std` smart-pointer and explicit move surfaces.
+    Ari's core memory model is zone/capability-oriented rather than strictly
+    borrow-safe, but the standard library still needs clear ownership helpers
+    for common heap and shared-resource patterns.
+    - [unique] define `Unique[T]` / `Box[T]` as unique heap owners with explicit
+      zone or allocator capability construction
+    - [shared] define `Shared[T]` and `Weak[T]` reference-counted handles,
+      including whether counts are atomic or single-threaded by default
+    - [move] add explicit `move(value)` / `take(place)` style helpers for APIs
+      that should visibly consume bindings instead of relying on read syntax
+    - [clone-drop] define `Clone`/`Drop` interaction for smart pointers,
+      ref-count increments, and deterministic release
+    - [interop] decide how smart pointers expose raw pointers for FFI without
+      pretending Ari has a globally safe borrow model
+8. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, and
     `len(value)` / `value.len()` length queries for arrays and vectors are
-    implemented on the LLVM backend today. The current local vector storage
-    grows to the largest literal capacity seen in the binding, while the stored
-    length still shrinks and expands per assignment.
-    - [allocator] thread explicit allocator/capability values through creation
-    - [ops] lower explicit push, reserve, and iteration primitives for allocator-backed vectors
-    - [capacity] replace the current compile-time local max-literal capacity with runtime heap capacity growth
+    implemented on the LLVM backend today. Fixed-capacity local
+    `reserve(n)`/`push(value)` also lowers on LLVM for copyable element
+    vectors. The current local vector storage grows to the largest literal or
+    reserve capacity seen in the binding, while the stored length still shrinks
+    and expands per assignment. The allocator, runtime capacity, and real
+    grow-on-push behavior remain near-term.
+    - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
     - [freestanding] lower stored local vector values in the raw backend
 9. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
@@ -90,18 +122,12 @@ the next implementation target.
       temporary aggregate values
     - [dynamic-indexes] support or deliberately reject moving owning aggregate
       elements through dynamic vector/array indexes with clear semantics
-11. Add package metadata for file-backed modules.
-    - [metadata] write and read compiled package/module summaries
-    - [cache] use package metadata to avoid repeatedly reparsing stable module
-      dependencies
-12. Extend trait-object dispatch beyond the concrete copyable LLVM subset.
+11. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+    subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot
-    method calls are implemented for concrete, copyable, non-borrow source
-    values on the LLVM backend.
-    - [generic-impls] build vtables from generic trait impl specializations
-    - [generic-methods] decide whether generic trait methods are object-safe or
-      must remain statically dispatched
+    method calls are implemented for concrete and generic-impl-specialized,
+    copyable, non-borrow source values on the LLVM backend.
     - [ownership] define dyn object data-pointer ownership for `own` and
       borrow-valued source types
     - [upcasts] support or reject `dyn SubTrait as dyn SuperTrait`

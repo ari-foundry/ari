@@ -1,0 +1,2 @@
+pub struct Vec[T] {
+}

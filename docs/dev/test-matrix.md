@@ -25,7 +25,7 @@ For each feature:
 | --- | --- | --- | --- | --- |
 | CLI/build modes | explicit output, `--emit-llvm`, `--module-path`/`-I`, `--shared`, `--freestanding` | incompatible flags, removed C++ options, missing input/output/compiler/search-path arg, unexpected arg | LLVM IR, optional LLVM link, and raw ELF | good first pass |
 | Functions | `main`, calls, named params, unit-returning functions, tuple/array/struct/enum/wildcard parameter patterns, return values, recursion, void functions, function pointer values/calls, generics surface | missing `main`, wrong `main`, wrong arg count, bad parameter pattern type, missing return, bad return type, private module function | host and freestanding calls, function-entry parameter destructuring, indirect calls, unit return lowering | good first pass |
-| Variables | `let`, `var`, annotations, assignment, scalar inference, unit `()` values, fixed-size array locals, default non-empty `[]` array literals, constant and local dynamic array indexing with runtime bounds checks, typed empty local `Vec[T]` literals, local `Vec[T]` literal reassignment with changing runtime length, `len(value)` / `value.len()` array and vector length queries, tuple/wildcard/unit/array/struct `let` and `var` pattern bindings, refutable single-payload enum `let`/`var` bindings, match payload bindings | immutable assignment, shadowing, type mismatch, fixed array size/index/pattern mismatch, untyped empty `[]` literals, vector length/type mismatch, vector shrink bounds trap, tuple pattern arity/type mismatch, struct pattern non-struct/field mismatch | stack/local lowering, host string/float slots, unit `zeroinitializer`, fixed arrays, tuple/array/struct destructuring on host and freestanding, refutable enum binding panic path, vector LLVM storage and freestanding backend rejection | good first pass |
+| Variables | `let`, `var`, annotations, assignment, scalar inference, unit `()` values, fixed-size array locals, default non-empty `[]` array literals, constant and local dynamic array indexing with runtime bounds checks, typed empty local `Vec[T]` literals, local `Vec[T]` literal reassignment with changing runtime length, fixed-capacity local `Vec.reserve(n)` / `Vec.push(value)` / `Vec.capacity()` / `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` / `Vec.set(index, value)`, `len(value)` / `value.len()` array and vector length queries, tuple/wildcard/unit/array/struct `let` and `var` pattern bindings, refutable single-payload enum `let`/`var` bindings, match payload bindings | immutable assignment, shadowing, type mismatch, fixed array size/index/pattern mismatch, untyped empty `[]` literals, vector length/type mismatch, vector shrink bounds trap, tuple pattern arity/type mismatch, struct pattern non-struct/field mismatch | stack/local lowering, host string/float slots, unit `zeroinitializer`, fixed arrays, tuple/array/struct destructuring on host and freestanding, refutable enum binding panic path, vector LLVM storage and freestanding backend rejection | good first pass |
 | Constants | top-level scalar constants, module paths/imports, scalar folding, scalar constant patterns, tuple/struct/tuple-struct/fixed-array/enum constant values, generic enum constant values from concrete annotations | cycle path diagnostics, private constants, scalar pattern type mismatch, aggregate arity mismatch, generic enum constant type mismatch, ownership/borrow-valued aggregate constants | inline scalar and aggregate IR lowering on LLVM and freestanding where the aggregate backend is supported | good first pass |
 | Generics | generic functions, explicit `<T>` generic call type arguments, repeated function specializations, generic function names specialized as function pointer values from expected `fn(...) -> ...` types, generic structs, explicit and inferred generic struct literal / tuple-struct construction, generic inherent impl methods with `self` receivers, explicit and inferred method-level generic calls on inherent impl methods, generic inherent associated functions, explicit and inferred method-level generic associated calls, generic trait impl methods with `self` receivers, explicit and inferred generic trait method calls, method-level bounds on generic trait methods, generic trait impl associated functions, generic impl bounds, generic trait impl coherence, generic traits, generic ADT surface, generic enum constructors, generic enum constants, generic enum `?` / `??`, generic enum match and refutable payload bindings | inference conflicts, uninferred parameters, uninferred generic function pointer parameters, explicit type-argument arity/mismatch, duplicate generic parameters, unsatisfied generic impl bounds, overlapping generic/concrete trait impls, generic method arity mismatch, uninferred generic method parameters, generic trait method bound mismatch, generic associated arity mismatch, uninferred generic associated parameters, ambiguous trait associated functions, generic enum constructor errors, generic enum `??` fallback type mismatch, generic enum payload pattern type mismatch, generic enum constant mismatch | monomorphized function calls, specialized generic function pointer refs, specialized generic impl method and associated calls, aggregate surface validation, generic enum LLVM aggregate construction, try/coalesce extraction, compact payload pattern extraction, and inline generic enum constants | partial |
 | Primitive types | signed/unsigned widths, suffix literals, bool, float/string host values | literal ranges, invalid casts, invalid suffixes | exact host types, freestanding scalar slots | partial |
@@ -36,21 +36,23 @@ For each feature:
 | Structs and tuples | comma-separated fields, named struct literals, generic struct declarations, tuple structs, inherent associated constructors, module-visible field types, field `mut` assignment, unit/empty tuple type and literal, fixed-size local tuples, tuple index access, struct field/index access | semicolon field separators, duplicate structs, duplicate fields, unknown/private field types, bad generic arity, immutable field assignment, immutable binding field assignment, unknown/private associated constructors, unknown fields, tuple index range | front-end validation, tuple stack lowering, empty tuple lowering, local struct stack lowering on LLVM and freestanding, LLVM aggregate-return constructor calls | good first pass |
 | Enums | comma-separated cases, constructors, compact payloads, LLVM aggregate layout for multi-payload and i64/u64 payload cases, equality for compact enums, generic ADT surface, generic enum type applications, explicit and payload-inferred generic enum constructors, generic enum constants | semicolon case separators, payload count, unsupported aggregate payload types, duplicate cases, generic enum constructor arity, uninferred generic enum constructor type arguments, generic enum constructor type mismatch, generic enum constant mismatch | tagged-union lowering, LLVM aggregate-enum lowering, freestanding aggregate-enum rejection | partial |
 | Pattern matching | exhaustive enum match, generic and non-generic enum payload bindings, wildcard, grouped patterns, unit `()` patterns, or-patterns with same-name/same-type bindings, alias patterns, payload binding, enum payload literal patterns, bool payload literal exhaustiveness, multi-payload enum positional/rest binding patterns, module-qualified cases, integer/bool literal and range patterns, ordered first-match range overlap, scalar shadow warnings, finite integer range exhaustiveness, nested tuple match patterns, tuple `..` rest patterns, named struct patterns, tuple-struct patterns, finite product exhaustiveness, aggregate shadow warnings, expression-valued match | non-exhaustive enum/integer/bool/tuple/struct matches, missing payload pattern, duplicate payload literals, invalid range order, mismatched or-pattern bindings, incomplete integer range coverage, incomplete bool payload coverage, incomplete finite product coverage, slice/nested-enum patterns still planned, incompatible expression arms, wrong literal kind | branch lowering, expression phi/scalar result lowering, aggregate match if-chain lowering, aggregate enum LLVM extraction | good first pass |
-| Modules | inline `mod`, file `mod`, `.arih`, package search paths, module load cache, `pub`, `pub mod`, `use`, use groups, glob imports, module aliases, `pub use` re-exports, `A::B`, `self::`/`super::` relative paths | private access, private nested modules, duplicate aliases, missing file modules, private re-export aliases, root `super::` | name resolution | good first pass |
-| Prelude IO/format/input/assert | `print`, `println`, `print!`, `println!`, `matches!`, IO aliases, `read_byte`, host `read_line`/`input`, assertion function and macro helpers, escaped braces | bad placeholder count, nonliteral format, planned `format!`, freestanding line input, bad assert type, bad assert macro type, bad `matches!` arity/patterns | stdio, getchar/fgets, syscall byte IO, assertion exits, pattern-engine macro lowering | partial |
+| Modules | inline `mod`, file `mod`, `.arih`, package search paths, module load cache, compact module metadata emission/read-back validation, source content hashes, metadata format-version gating, `pub`, `pub mod`, `use`, use groups, glob imports, module aliases, `pub use` re-exports, `A::B`, `self::`/`super::` relative paths | private access, private nested modules, duplicate aliases, missing file modules, stale module metadata, stale source content hash, old metadata version without hashes, private re-export aliases, root `super::` | name resolution, module graph summary serialization | good first pass |
+| Prelude IO/format/input/assert | `print`, `println`, `std::print`, `std::println`, `std`-alias qualified print names, `print!`, `println!`, `matches!`, IO aliases, `read_byte`, host `read_line`/`input`, assertion function and macro helpers, escaped braces | bad placeholder count, nonliteral format, planned `format!`, freestanding line input, bad assert type, bad assert macro type, bad `matches!` arity/patterns | stdio, getchar/fgets, syscall byte IO, assertion exits, pattern-engine macro lowering | partial |
 | Context runtime | `context::argc`, `context::arg`, aliases, `@ari_entry`/`ari::main` host wrapper | out-of-range behavior, shared-library context use | host runtime init | partial |
-| C FFI | libc calls, aliases, module externs, C ABI type aliases, C varargs, C callback/function-pointer params, helper library, `ref mut` pointers, `ptr c_char` strings, `null` raw-pointer literals, raw-pointer casts, byte-wise `ptr_offset`, typed scalar/aggregate `ptr_add`, `size_of<T>()` / `align_of<T>()`, scalar/plain-aggregate `ptr_load`/`ptr_store`, scalar/plain-aggregate `*pointer` dereference load/store, scalar struct/tuple/fixed-array field and element access through raw pointers, `c_void` returns | rejected ABI, body, generics, bad link symbol, by-value `c_void` param, non-extern varargs, unsupported aggregate varargs, null used as non-pointer, bad layout query arity, dereference of non-pointer values, whole raw-pointer copies of ownership/borrow-valued aggregates | LLVM declarations, function pointer params as `ptr`, `ptrtoint`/`inttoptr`, `getelementptr i8`, typed scalar and aggregate pointer GEP, scalar and aggregate layout literals, scalar and plain-aggregate raw pointer load/store, pointer dereference load/store, aggregate pointer GEP, raw backend pointer-backed field/array addressing, raw backend address add, and host linker | good first pass |
+| C FFI | libc calls, aliases, module externs, concrete C ABI bindings only, C ABI type aliases, C varargs with default promotions, C callback/function-pointer params, helper library, `ref mut` pointers, `ptr c_char` strings, `null` raw-pointer literals, nullable `T?` raw-pointer type spelling, raw-pointer casts, byte-wise `ptr_offset`, typed scalar/aggregate `ptr_add`, `size_of<T>()` / `align_of<T>()`, scalar/plain-aggregate `ptr_load`/`ptr_store`, scalar/plain-aggregate `*pointer` dereference load/store, scalar struct/tuple/fixed-array field and element access through raw pointers, `c_void` returns | rejected ABI, body, generic extern declarations, bad link symbol, by-value `c_void` param, non-extern varargs, unsupported aggregate varargs, variadic extern function pointer values, null used as non-pointer, nullable `?` combined with `own`/`ref`/`ptr`, bad layout query arity, dereference of non-pointer values, whole raw-pointer copies of ownership/borrow-valued aggregates | LLVM declarations, function pointer params as `ptr`, vararg bool/narrow-int/f32 promotion casts, `ptrtoint`/`inttoptr`, `getelementptr i8`, typed scalar and aggregate pointer GEP, scalar and aggregate layout literals, scalar and plain-aggregate raw pointer load/store, pointer dereference load/store, aggregate pointer GEP, raw backend pointer-backed field/array addressing, raw backend address add, and host linker | good first pass |
 | Explicit memory zones | `Zone`, `zone::create`, lexical `zone::temp`, raw `zone::alloc`, typed `zone::alloc<T>`, placement `zone::new<T>`, local scratch `zone::scratch<T>`, explicit scratch promotion `zone::promote<T>`, zone-backed associated `T::new(ref mut Zone, ...)`, `zone::reset`, `zone::destroy`, raw `ptr u8` and typed `ptr T` allocation used with layout queries and pointer load/store | missing destroy for non-temporary `own Zone`, rejected `drop zone`, rejected movement of temporary zones, rejected temporary-zone pointer escape through returns, outer bindings, aggregates, or call arguments, `zone::scratch<T>` rejected outside local pointer binding initializers, bad typed allocation arity, zero-sized typed allocation, bad placement-construction/promotion arity, ownership/borrow-valued placement/promotion rejection, direct local and single-zone wrapper zone-pointer use after reset/destroy, reset invalidation after `if`/`match`/loop joins, aggregate/FFI/multi-zone zone-pointer escape rejection, freestanding zone allocation rejection | LLVM host runtime backed by `malloc`/`free`, ownership move into `zone::destroy`, automatic destroy insertion for temporary-zone scope fallthrough, returns, and escaping `break`/`continue`/labeled-block exits, `zone::scratch<T>` lowered to hidden `zone::temp` plus placement `zone::new<T>`, `zone::promote<T>` lowered to pointer load plus placement `zone::new<T>` in the target zone, typed allocation lowered to raw allocation with compile-time layout, placement construction lowered to allocation plus store, inherent associated call to zone placement, direct and single-zone wrapper pointer provenance invalidation with named temporary-zone escape diagnostics, control-flow zone generation merge, deliberate host-only zone policy | good first pass |
 | Shared libraries | compile library, Ari-mangled symbols, `@export`, `@export("symbol")`, `@no_mangle` | main not required only with `--shared`, invalid export symbols | dynamic symbol table | partial |
 | Comments | line and nested block comments | unterminated block comment | lexer | partial |
 | Attributes and meta | built-in attributes, `@repr(C)` layout guards, `@cfg(true/false)` declaration pruning, boolean/target/feature cfg predicates, command-line cfg feature flags, deprecated use warnings, `@test` runner generation, `@export`/`@no_mangle` symbol controls, user-reserved attribute names via `meta fn`, meta signatures over `token_stream`/`ast`/`type` | unknown attributes, bad attribute placement, bad `repr`, bad `@cfg` predicate, bad deprecated/export arguments, bad `@test` signature, bad meta signatures, planned macro invocation | parser pruning, sema validation, warning emission, freestanding test runner, LLVM/shared symbol selection | good first pass |
-| Front-end surfaces | structs, traits, trait generics, `dyn Trait[...]` trait-object type syntax, explicit `value as dyn Trait[...]` impl checks, concrete copyable LLVM dyn dispatch, impl conformance, concrete method dispatch, generic function trait bounds, constrained static dispatch, generics, meta syntax, Rust-like prelude trait names, required `Drop::drop` method | removed class/interface syntax, unknown traits and trait bounds, invalid trait object arity/qualifiers, implicit concrete-to-dyn assignment, missing dyn-conversion impls, generic dyn methods, generic-impl dyn conversions, duplicate impls, missing/mismatched trait methods, missing impls for generic trait bounds, unknown/ambiguous method calls, planned aggregate destructuring syntax, reserved prelude ADTs | parser/sema validation, static method-call lowering, constrained generic method selection, LLVM dyn vtable globals and erased receiver thunks; freestanding dyn dispatch remains planned | partial |
+| Front-end surfaces | structs, traits, trait generics, `dyn Trait[...]` trait-object type syntax, explicit `value as dyn Trait[...]` impl checks, concrete and generic-impl-specialized copyable LLVM dyn dispatch, impl conformance, concrete method dispatch, generic function trait bounds, constrained static dispatch, generics, meta syntax, Rust-like prelude trait names, required `Drop::drop` method | removed class/interface syntax, unknown traits and trait bounds, invalid trait object arity/qualifiers, implicit concrete-to-dyn assignment, missing dyn-conversion impls, non-object-safe generic trait methods under dyn dispatch, duplicate impls, missing/mismatched trait methods, missing impls for generic trait bounds, unknown/ambiguous method calls, planned aggregate destructuring syntax, reserved prelude ADTs | parser/sema validation, static method-call lowering, constrained generic method selection, LLVM dyn vtable globals and erased receiver thunks for concrete and generic impls; freestanding dyn dispatch remains planned | partial |
 | Unsupported aggregates | vector type checking, list literal constant indexing, fixed-size array surface, non-local aggregate ABI gaps | backend rejection, vector index bounds, non-local aggregate ABI rejection | clear diagnostics | partial |
 
 ## Completed Sprint: C FFI
 
-Goal: C FFI must be boring and reliable. Ari supports only C ABI at the source
-level; C++ interop should go through explicit C wrapper functions.
+Goal: C FFI must be boring and reliable. Ari supports only C ABI for foreign
+libraries at the source level; C++ interop should go through explicit C wrapper
+functions. Ari-owned runtime hooks use the separate reserved `extern "ari"`
+ABI and validated `ari_builtin_*` symbols.
 
 Checklist:
 
@@ -63,6 +65,7 @@ Checklist:
 - [x] external string arguments
 - [x] external `ref mut` argument lowered as pointer
 - [x] nullable raw-pointer literals for `ptr T`
+- [x] nullable raw-pointer type suffix `T?`
 - [x] raw-pointer casts lower to LLVM `ptrtoint`/`inttoptr`
 - [x] byte-wise `ptr_offset` lowers to LLVM `getelementptr i8` and raw address add
 - [x] typed scalar `ptr_add` lowers to LLVM typed `getelementptr` and raw scaled address add
@@ -71,11 +74,12 @@ Checklist:
 - [x] scalar `ptr_load`/`ptr_store` lower on LLVM and raw freestanding backends
 - [x] plain aggregate `ptr_load`/`ptr_store` and `*pointer` whole-copy lower on LLVM and raw freestanding backends
 - [x] scalar field/element access through raw aggregate pointers lowers on LLVM and raw freestanding backends
-- [x] C variadic extern declarations and calls
+- [x] C variadic extern declarations, default promotions, calls, and function-pointer rejection
 - [x] C callback/function-pointer parameters lower as `ptr` and accept Ari function names
+- [x] reserved `extern "ari"` builtin declarations for the source `std` header
 - [x] reject `extern "C++"`
 - [x] reject extern functions with bodies
-- [x] reject generic extern functions
+- [x] reject generic extern declarations as a permanent concrete-C-symbol policy
 - [x] reject invalid external link symbols
 
 ## Completed Sprint: CLI And Build Modes
@@ -180,6 +184,12 @@ Checklist:
 - [x] checked dynamic indexing of stored local `Vec[T]`
 - [x] local `Vec[T]` literal reassignment with changing runtime length
 - [x] `len(value)` and `value.len()` for local vectors, fixed arrays, and constant-folded literal length
+- [x] fixed-capacity local `Vec.reserve(n)` and `Vec.push(value)` on the LLVM backend
+- [x] fixed-capacity local `Vec.capacity()` on the LLVM backend
+- [x] `value.is_empty()` for local vectors, fixed arrays, and constant-folded literals
+- [x] fixed-capacity local `Vec.clear()` on the LLVM backend
+- [x] fixed-capacity local `Vec.truncate(n)` on the LLVM backend
+- [x] checked local `Vec.set(index, value)` on the LLVM backend
 - [x] keep stored local `Vec[T]` rejected on the raw freestanding backend
 - [x] `init ... while ... next ...` normal update path
 - [x] `let ... while ... next ...` loop-state spelling
@@ -271,6 +281,10 @@ Checklist:
 - [x] header-like `mod name;` loads `name.arih`
 - [x] package search paths work with `--module-path`, `-I path`, and `-Ipath`
 - [x] repeated file-backed module imports are cached by resolved module name
+- [x] compact module metadata can be emitted and read back for source-graph validation
+- [x] metadata records stable source content hashes for cache invalidation
+- [x] metadata check rejects old v1 summaries that cannot validate source hashes
+- [x] stale module metadata reports changed cfg, source, import, and item records
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias
@@ -287,7 +301,7 @@ Checklist:
 
 Goal: make common Rust-like prelude names part of the compiler-known ABI
 surface so library code can refer to one stable spelling before trait-bound
-dispatch, source prelude modules, macro expansion, and allocator-backed types are
+dispatch, source standard modules, macro expansion, and allocator-backed types are
 implemented.
 
 Checklist:
@@ -322,4 +336,34 @@ Checklist:
 - [x] reject reserved `Option`/`Maybe`/`Result`/`Box`/`Slice` surfaces
       with roadmap-backed diagnostics
 - [x] reject non-`i64` prelude range bounds until generic range lowering exists
+- [x] add `lib/std.arih` source declarations for the stable
+      declaration-shaped prelude surface, auto-load it as `std`, and verify
+      explicit `std::...` calls through the LLVM backend
+- [x] support `--no-implicit-std` so the same header can be tested only through
+      ordinary `mod std;` file-backed module loading
+- [x] reject compiler-known prelude helpers under `--no-implicit-std` until a
+      real source `std` module is loaded
+- [x] reject bare and prelude-path compiler-known function signatures such as
+      `write_i64` and `io::write_i64` under `--no-implicit-std` until source
+      `std` is loaded
+- [x] reject compiler-known prelude trait names such as `Debug` under
+      `--no-implicit-std` until source `std` is loaded
+- [x] require source generic declarations before lowering declaration-shaped
+      `std::mem`, `std::iter`, and typed `std::zone` helpers through compiler
+      hooks
+- [x] remove compiler-injected concrete prelude function signatures and trait
+      fallback declarations; ordinary calls and impls now resolve against
+      source `std` declarations plus implicit aliases
+- [x] split Ari-owned builtins from C FFI with `extern "ari"` declarations and
+      reject unknown `ari_builtin_*` symbols
+- [x] add Rust-like implicit prelude aliases for public `std` root items and
+      root re-exports, including type/trait names, IO helpers, zone helpers,
+      and sema-lowered helpers while preserving local shadowing
+- [x] add implicit aliases for public `std` child modules so nested prelude
+      forms such as `fmt::Display` and `iter::Iterator[T]` resolve through
+      source `std` declarations
+- [x] allow root re-exports such as `input()` to coexist with child-module
+      paths such as `input::read_byte()`
+- [x] centralize Ari builtin source aliases so LLVM and freestanding lowering
+      accept the same root `std::...` re-export spellings
 - [x] keep `Hash` out of the prelude

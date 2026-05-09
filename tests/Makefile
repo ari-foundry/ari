@@ -66,6 +66,10 @@ check-cli: $(TARGET)
 	grep -q -- "--emit-llvm expects a path" $(BUILD_DIR)/cli/missing-emit-llvm.err
 	if $(TARGET) tests/ok/package-module-main.ari --module-path >$(BUILD_DIR)/cli/missing-module-path.err 2>&1; then exit 1; fi
 	grep -q -- "--module-path expects a path" $(BUILD_DIR)/cli/missing-module-path.err
+	if $(TARGET) tests/ok/package-module-main.ari --emit-module-metadata >$(BUILD_DIR)/cli/missing-emit-module-metadata.err 2>&1; then exit 1; fi
+	grep -q -- "--emit-module-metadata expects a path" $(BUILD_DIR)/cli/missing-emit-module-metadata.err
+	if $(TARGET) tests/ok/package-module-main.ari --check-module-metadata >$(BUILD_DIR)/cli/missing-check-module-metadata.err 2>&1; then exit 1; fi
+	grep -q -- "--check-module-metadata expects a path" $(BUILD_DIR)/cli/missing-check-module-metadata.err
 	if $(TARGET) tests/ok/package-module-main.ari -I >$(BUILD_DIR)/cli/missing-I.err 2>&1; then exit 1; fi
 	grep -q -- "-I expects a path" $(BUILD_DIR)/cli/missing-I.err
 	if $(TARGET) examples/count.ari --backend llvm >$(BUILD_DIR)/cli/backend-removed.err 2>&1; then exit 1; fi
@@ -83,6 +87,9 @@ check-prelude: $(TARGET)
 	mkdir -p $(BUILD_DIR)/prelude
 	$(TARGET) --freestanding tests/ok/prelude-builtins.ari -o $(BUILD_DIR)/prelude/prelude-builtins.raw
 	$(BUILD_DIR)/prelude/prelude-builtins.raw; code=$$?; test $$code -eq 7
+	$(TARGET) --freestanding tests/ok/prelude-std-root-builtins.ari -o $(BUILD_DIR)/prelude/prelude-std-root-builtins.raw
+	$(BUILD_DIR)/prelude/prelude-std-root-builtins.raw >$(BUILD_DIR)/prelude/prelude-std-root-builtins.out; code=$$?; test $$code -eq 9
+	grep -qx "4" $(BUILD_DIR)/prelude/prelude-std-root-builtins.out
 	$(TARGET) --freestanding tests/ok/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.raw
 	$(BUILD_DIR)/prelude/prelude-macros.raw >$(BUILD_DIR)/prelude/prelude-macros.out; code=$$?; test $$code -eq 7
 	grep -q "macro=5 ok=1" $(BUILD_DIR)/prelude/prelude-macros.out
@@ -93,6 +100,10 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_read_byte" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "@ari_builtin_context_arg" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "declare i32 @getchar" $(BUILD_DIR)/prelude/prelude-input.ll
+	$(TARGET) tests/ok/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
+	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
+	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-std-qualified-print.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf; $(BUILD_DIR)/prelude/prelude-std-qualified-print.elf >$(BUILD_DIR)/prelude/prelude-std-qualified-print.out; code=$$?; test $$code -eq 6; grep -qx "std root 1" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std io 2" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; grep -qx "std alias 3" $(BUILD_DIR)/prelude/prelude-std-qualified-print.out; fi
 	$(TARGET) tests/ok/prelude-read-line.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "@ari_builtin_read_line" $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "declare ptr @fgets" $(BUILD_DIR)/prelude/prelude-read-line.ll
@@ -107,6 +118,50 @@ check-prelude: $(TARGET)
 	fi
 	$(TARGET) --freestanding tests/ok/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.raw
 	$(BUILD_DIR)/prelude/prelude-trait-surface.raw; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/prelude-header-main.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-header-main.ll
+	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-main.ll
+	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/prelude-header-main.ll
+	grep -q 'call void @"ari_builtin_zone_destroy"' $(BUILD_DIR)/prelude/prelude-header-main.ll
+	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
+	$(TARGET) tests/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
+	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
+	if grep -q 'declare i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
+	$(TARGET) tests/ok/std-prelude-unqualified.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
+	grep -q 'call i64 @"_ARNv10span_score"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
+	grep -q 'call ptr @"ari_builtin_zone_create"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
+	grep -q 'call void @"ari_builtin_zone_destroy"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
+	grep -F -q 'getelementptr inbounds { i64, [3 x i64] }' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
+	$(TARGET) tests/ok/std-prelude-local-shadow.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-local-shadow.ll
+	grep -q 'call i64 @"_ARNv5Debug"' $(BUILD_DIR)/prelude/std-prelude-local-shadow.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
+		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
+		$(BUILD_DIR)/prelude/prelude-header-main.elf >$(BUILD_DIR)/prelude/prelude-header-main.out; \
+		code=$$?; test $$code -eq 21; \
+		grep -qx "1" $(BUILD_DIR)/prelude/prelude-header-main.out; \
+	fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
+	$(TARGET) --no-implicit-std --module-path lib tests/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
+	grep -q 'option	implicit_std	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std	lib/std.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'item	std::io	extern-ari-fn	std::io::write_i64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
+	if $(TARGET) --no-implicit-std tests/errors/std-use-without-implicit.ari -o $(BUILD_DIR)/prelude/std-use-without-implicit.elf >$(BUILD_DIR)/prelude/std-use-without-implicit.err 2>&1; then exit 1; fi
+	grep -q "unknown function or enum case 'write_i64'" $(BUILD_DIR)/prelude/std-use-without-implicit.err
+	if $(TARGET) --no-implicit-std tests/errors/prelude-bare-without-std.ari -o $(BUILD_DIR)/prelude/prelude-bare-without-std.elf >$(BUILD_DIR)/prelude/prelude-bare-without-std.err 2>&1; then exit 1; fi
+	grep -q "unknown function or enum case 'write_i64'" $(BUILD_DIR)/prelude/prelude-bare-without-std.err
+	if $(TARGET) --no-implicit-std tests/errors/prelude-path-without-std.ari -o $(BUILD_DIR)/prelude/prelude-path-without-std.elf >$(BUILD_DIR)/prelude/prelude-path-without-std.err 2>&1; then exit 1; fi
+	grep -q "unknown function or enum case 'io::write_i64'" $(BUILD_DIR)/prelude/prelude-path-without-std.err
+	if $(TARGET) --no-implicit-std tests/errors/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
+	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
+	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/errors/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi
+	grep -q "unknown function or enum case 'std::mem::size_of'" $(BUILD_DIR)/prelude/prelude-special-missing-decl.err
+	if $(TARGET) --no-implicit-std tests/errors/prelude-trait-without-std.ari -o $(BUILD_DIR)/prelude/prelude-trait-without-std.elf >$(BUILD_DIR)/prelude/prelude-trait-without-std.err 2>&1; then exit 1; fi
+	grep -q "unknown trait 'Debug'" $(BUILD_DIR)/prelude/prelude-trait-without-std.err
+	if $(TARGET) tests/errors/ari-builtin-unknown.ari -o $(BUILD_DIR)/prelude/ari-builtin-unknown.elf >$(BUILD_DIR)/prelude/ari-builtin-unknown.err 2>&1; then exit 1; fi
+	grep -q "unknown Ari builtin symbol 'puts'" $(BUILD_DIR)/prelude/ari-builtin-unknown.err
+	if $(TARGET) tests/errors/ari-builtin-missing-link.ari -o $(BUILD_DIR)/prelude/ari-builtin-missing-link.elf >$(BUILD_DIR)/prelude/ari-builtin-missing-link.err 2>&1; then exit 1; fi
+	grep -q 'extern "ari" builtin declarations require an explicit builtin symbol' $(BUILD_DIR)/prelude/ari-builtin-missing-link.err
 	if $(TARGET) tests/errors/prelude-option-planned.ari -o $(BUILD_DIR)/prelude/prelude-option-planned.elf >$(BUILD_DIR)/prelude/prelude-option-planned.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Option' is reserved for Maybe/Result values but generic ADT lowering is not implemented yet" $(BUILD_DIR)/prelude/prelude-option-planned.err
 	if $(TARGET) tests/errors/prelude-result-arity.ari -o $(BUILD_DIR)/prelude/prelude-result-arity.elf >$(BUILD_DIR)/prelude/prelude-result-arity.err 2>&1; then exit 1; fi
@@ -358,6 +413,31 @@ check-modules: $(TARGET)
 	$(BUILD_DIR)/modules/package-module-main.raw; code=$$?; test $$code -eq 31
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --emit-llvm $(BUILD_DIR)/modules/package-module-main.ll
 	grep -q '_ARNv12package_math5value' $(BUILD_DIR)/modules/package-module-main.ll
+	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --emit-module-metadata $(BUILD_DIR)/modules/package-module-main.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-metadata.ll
+	grep -q "ari-module-metadata-v2" $(BUILD_DIR)/modules/package-module-main.arimeta
+	grep -q "source.*package_math.*tests/packages/package_math.ari" $(BUILD_DIR)/modules/package-module-main.arimeta
+	grep -Eq "source.*package_math.*tests/packages/package_math.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-module-main.arimeta
+	grep -q "import.*package_math::nested.*tests/packages/nested/mod.ari" $(BUILD_DIR)/modules/package-module-main.arimeta
+	grep -q "item.*fn.*package_math::value" $(BUILD_DIR)/modules/package-module-main.arimeta
+	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-metadata-check.ll
+	awk 'BEGIN { FS=OFS="\t" } NR == 1 { print "ari-module-metadata-v1"; next } $$1 == "source" { print $$1, $$2, $$3, $$4; next } { print }' $(BUILD_DIR)/modules/package-module-main.arimeta >$(BUILD_DIR)/modules/package-module-main-v1.arimeta
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-v1.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-v1-check.ll >$(BUILD_DIR)/modules/package-module-main-v1-check.err 2>&1; then exit 1; fi
+	grep -q "does not include source content hashes" $(BUILD_DIR)/modules/package-module-main-v1-check.err
+	if $(TARGET) -Itests/packages --cfg-feature stale tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-stale.ll >$(BUILD_DIR)/modules/package-module-main-stale.err 2>&1; then exit 1; fi
+	grep -q "does not match the current source graph" $(BUILD_DIR)/modules/package-module-main-stale.err
+	grep -q "new cfg feature 'stale'" $(BUILD_DIR)/modules/package-module-main-stale.err
+	sed '/source.*package_math.*tests\/packages\/package_math.ari/s/[0-9a-f][0-9a-f]*$$/deadbeefdeadbeef/' $(BUILD_DIR)/modules/package-module-main.arimeta >$(BUILD_DIR)/modules/package-module-main-stale-source-hash.arimeta
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-stale-source-hash.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-stale-source-hash.ll >$(BUILD_DIR)/modules/package-module-main-stale-source-hash.err 2>&1; then exit 1; fi
+	grep -q "content hash changed" $(BUILD_DIR)/modules/package-module-main-stale-source-hash.err
+	sed '/source.*package_math.*tests\/packages\/package_math.ari/d' $(BUILD_DIR)/modules/package-module-main.arimeta >$(BUILD_DIR)/modules/package-module-main-missing-source.arimeta
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-missing-source.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-missing-source.ll >$(BUILD_DIR)/modules/package-module-main-missing-source.err 2>&1; then exit 1; fi
+	grep -q "new source 'package_math' at 'tests/packages/package_math.ari'" $(BUILD_DIR)/modules/package-module-main-missing-source.err
+	sed '/import.*package_math::nested.*tests\/packages\/nested\/mod.ari/d' $(BUILD_DIR)/modules/package-module-main.arimeta >$(BUILD_DIR)/modules/package-module-main-missing-import.arimeta
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-missing-import.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-missing-import.ll >$(BUILD_DIR)/modules/package-module-main-missing-import.err 2>&1; then exit 1; fi
+	grep -q "new import 'package_math::nested as nested'" $(BUILD_DIR)/modules/package-module-main-missing-import.err
+	sed '/item.*fn.*package_math::value/d' $(BUILD_DIR)/modules/package-module-main.arimeta >$(BUILD_DIR)/modules/package-module-main-missing-item.arimeta
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-missing-item.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-missing-item.ll >$(BUILD_DIR)/modules/package-module-main-missing-item.err 2>&1; then exit 1; fi
+	grep -q "new item fn 'package_math::value'" $(BUILD_DIR)/modules/package-module-main-missing-item.err
 	if $(TARGET) tests/errors/module-private-reexport.ari -o $(BUILD_DIR)/modules/module-private-reexport.elf >$(BUILD_DIR)/modules/module-private-reexport.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'Api::answer'" $(BUILD_DIR)/modules/module-private-reexport.err
 	if $(TARGET) tests/errors/module-glob-private.ari -o $(BUILD_DIR)/modules/module-glob-private.elf >$(BUILD_DIR)/modules/module-glob-private.err 2>&1; then exit 1; fi
@@ -602,10 +682,14 @@ check-traits: $(TARGET)
 	$(TARGET) --freestanding tests/ok/trait-method-call.ari -o $(BUILD_DIR)/traits/trait-method-call.raw
 	$(BUILD_DIR)/traits/trait-method-call.raw; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/trait-method-call.ari --emit-llvm $(BUILD_DIR)/traits/trait-method-call.ll
-	grep -q "_ARNv4impl3i642Eq2eq" $(BUILD_DIR)/traits/trait-method-call.ll
+	grep -q "_ARNv4impl3i647std__Eq2eq" $(BUILD_DIR)/traits/trait-method-call.ll
 	$(TARGET) tests/ok/trait-object-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_AddTo_i64_" $(BUILD_DIR)/traits/trait-object-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-dispatch.elf; $(BUILD_DIR)/traits/trait-object-dispatch.elf; code=$$?; test $$code -eq 11; fi
+	$(TARGET) tests/ok/trait-object-generic-impl-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
+	grep -q "dyn::vtable::Box_i64_::dyn_Score_i64_" $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
+	grep -q "_ARNv4impl8Box_i64_5Score5score" $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-generic-impl-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; code=$$?; test $$code -eq 11; fi
 	$(TARGET) --freestanding tests/ok/trait-bound-static-dispatch.ari -o $(BUILD_DIR)/traits/trait-bound-static-dispatch.raw
 	$(BUILD_DIR)/traits/trait-bound-static-dispatch.raw; code=$$?; test $$code -eq 6
 	$(TARGET) --freestanding tests/ok/trait-bound-generic-args.ari -o $(BUILD_DIR)/traits/trait-bound-generic-args.raw
@@ -635,7 +719,7 @@ check-traits: $(TARGET)
 	grep -q "Score" $(BUILD_DIR)/traits/generic-trait-method-bound.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/generic-trait-method-bound.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/generic-trait-method-bound.elf; $(BUILD_DIR)/traits/generic-trait-method-bound.elf; code=$$?; test $$code -eq 45; fi
 	if $(TARGET) tests/errors/trait-drop-missing-method.ari -o $(BUILD_DIR)/traits/trait-drop-missing-method.elf >$(BUILD_DIR)/traits/trait-drop-missing-method.err 2>&1; then exit 1; fi
-	grep -q "impl of trait 'Drop' for i64 is missing method 'drop'" $(BUILD_DIR)/traits/trait-drop-missing-method.err
+	grep -q "impl of trait 'std::Drop' for i64 is missing method 'drop'" $(BUILD_DIR)/traits/trait-drop-missing-method.err
 	if $(TARGET) tests/errors/unknown-trait-impl.ari -o $(BUILD_DIR)/traits/unknown-trait-impl.elf >$(BUILD_DIR)/traits/unknown-trait-impl.err 2>&1; then exit 1; fi
 	grep -q "unknown trait 'MissingTrait'" $(BUILD_DIR)/traits/unknown-trait-impl.err
 	if $(TARGET) tests/errors/trait-object-unknown.ari -o $(BUILD_DIR)/traits/trait-object-unknown.elf >$(BUILD_DIR)/traits/trait-object-unknown.err 2>&1; then exit 1; fi
@@ -648,10 +732,14 @@ check-traits: $(TARGET)
 	grep -q "type mismatch: expected dyn Score, got i64" $(BUILD_DIR)/traits/trait-object-value-planned.err
 	if $(TARGET) tests/errors/trait-object-coerce-missing-impl.ari -o $(BUILD_DIR)/traits/trait-object-coerce-missing-impl.elf >$(BUILD_DIR)/traits/trait-object-coerce-missing-impl.err 2>&1; then exit 1; fi
 	grep -q "type i64 does not implement trait 'Score' for dyn conversion" $(BUILD_DIR)/traits/trait-object-coerce-missing-impl.err
+	if $(TARGET) tests/errors/trait-object-generic-method-conversion.ari -o $(BUILD_DIR)/traits/trait-object-generic-method-conversion.elf >$(BUILD_DIR)/traits/trait-object-generic-method-conversion.err 2>&1; then exit 1; fi
+	grep -q "trait object method 'keep' is generic and is not object-safe" $(BUILD_DIR)/traits/trait-object-generic-method-conversion.err
+	if $(TARGET) tests/errors/trait-object-generic-method-call.ari -o $(BUILD_DIR)/traits/trait-object-generic-method-call.elf >$(BUILD_DIR)/traits/trait-object-generic-method-call.err 2>&1; then exit 1; fi
+	grep -q "trait object method 'keep' is generic and is not object-safe" $(BUILD_DIR)/traits/trait-object-generic-method-call.err
 	if $(TARGET) tests/errors/iterable-trait-arity.ari -o $(BUILD_DIR)/traits/iterable-trait-arity.elf >$(BUILD_DIR)/traits/iterable-trait-arity.err 2>&1; then exit 1; fi
-	grep -q "trait 'Iterable' expects 1 type argument" $(BUILD_DIR)/traits/iterable-trait-arity.err
+	grep -q "trait 'std::Iterable' expects 1 type argument" $(BUILD_DIR)/traits/iterable-trait-arity.err
 	if $(TARGET) tests/errors/duplicate-trait-impl.ari -o $(BUILD_DIR)/traits/duplicate-trait-impl.elf >$(BUILD_DIR)/traits/duplicate-trait-impl.err 2>&1; then exit 1; fi
-	grep -q "duplicate impl of trait 'Iterable' for Vec\\[i64\\]" $(BUILD_DIR)/traits/duplicate-trait-impl.err
+	grep -q "duplicate impl of trait 'std::Iterable' for Vec\\[i64\\]" $(BUILD_DIR)/traits/duplicate-trait-impl.err
 	if $(TARGET) tests/errors/trait-duplicate-decl.ari -o $(BUILD_DIR)/traits/trait-duplicate-decl.elf >$(BUILD_DIR)/traits/trait-duplicate-decl.err 2>&1; then exit 1; fi
 	grep -q "duplicate trait 'Show'" $(BUILD_DIR)/traits/trait-duplicate-decl.err
 	if $(TARGET) tests/errors/trait-duplicate-method.ari -o $(BUILD_DIR)/traits/trait-duplicate-method.elf >$(BUILD_DIR)/traits/trait-duplicate-method.err 2>&1; then exit 1; fi
@@ -839,9 +927,9 @@ check-variables: $(TARGET)
 	grep -q "alloca { i64, i64 }" $(BUILD_DIR)/variables/ownership-aggregate-storage.ll
 	grep -q "alloca { ptr, ptr }" $(BUILD_DIR)/variables/ownership-aggregate-storage.ll
 	$(TARGET) tests/ok/drop-aggregate-fields.ari --emit-llvm $(BUILD_DIR)/variables/drop-aggregate-fields.ll
-	test $$(grep -c 'call void @"_ARNv4impl3i644Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-fields.ll) -eq 2
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-fields.ll) -eq 2
 	$(TARGET) tests/ok/drop-aggregate-moved-field.ari --emit-llvm $(BUILD_DIR)/variables/drop-aggregate-moved-field.ll
-	test $$(grep -c 'call void @"_ARNv4impl3i644Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-moved-field.ll) -eq 2
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-moved-field.ll) -eq 2
 	$(TARGET) tests/ok/ownership-aggregate-field-access.ari --emit-llvm $(BUILD_DIR)/variables/ownership-aggregate-field-access.ll
 	grep -q "store i64" $(BUILD_DIR)/variables/ownership-aggregate-field-access.ll
 	$(TARGET) tests/ok/ownership-aggregate-field-move.ari --emit-llvm $(BUILD_DIR)/variables/ownership-aggregate-field-move.ll
@@ -870,6 +958,12 @@ check-variables: $(TARGET)
 	grep -q "store { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-empty-typed.ll
 	$(TARGET) tests/ok/vector-len.ari --emit-llvm $(BUILD_DIR)/variables/vector-len.ll
 	grep -q "extractvalue { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-len.ll
+	$(TARGET) tests/ok/vector-push-reserve.ari --emit-llvm $(BUILD_DIR)/variables/vector-push-reserve.ll
+	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	grep -q "vector.push.full" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	grep -q "store i64 0, ptr" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	grep -q "vector.truncate.negative" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	grep -q "store i64 9, ptr" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	$(TARGET) tests/ok/array-len-literal.ari --emit-llvm $(BUILD_DIR)/variables/array-len-literal.ll
 	grep -q "ret i64 4" $(BUILD_DIR)/variables/array-len-literal.ll
 	$(TARGET) tests/ok/field-borrow.ari --emit-llvm $(BUILD_DIR)/variables/field-borrow.ll
@@ -896,6 +990,7 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-storage-reassign.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-storage-reassign.elf; $(BUILD_DIR)/variables/vector-storage-reassign.elf; code=$$?; test $$code -eq 14; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-empty-typed.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-empty-typed.elf; $(BUILD_DIR)/variables/vector-empty-typed.elf; code=$$?; test $$code -eq 3; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-len.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-len.elf; $(BUILD_DIR)/variables/vector-len.elf; code=$$?; test $$code -eq 10; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-reserve.elf; $(BUILD_DIR)/variables/vector-push-reserve.elf; code=$$?; test $$code -eq 24; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/field-borrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/field-borrow.elf; $(BUILD_DIR)/variables/field-borrow.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/array-dynamic-index-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; if $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-storage-shrink-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; if $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; then exit 1; fi; fi
@@ -965,6 +1060,11 @@ check-ffi: $(TARGET)
 	$(TARGET) tests/ok/ffi-c-null-pointer.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
 	grep -q 'declare i64 @"ari_test_is_null"(ptr)' $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
 	grep -q 'store ptr null' $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
+	$(TARGET) tests/ok/nullable-type-pointer.ari --emit-llvm $(BUILD_DIR)/ffi/nullable-type-pointer.ll
+	grep -q 'load i64, ptr' $(BUILD_DIR)/ffi/nullable-type-pointer.ll
+	grep -q 'store ptr null' $(BUILD_DIR)/ffi/nullable-type-pointer.ll
+	$(TARGET) --freestanding tests/ok/nullable-type-pointer.ari -o $(BUILD_DIR)/ffi/nullable-type-pointer.raw
+	$(BUILD_DIR)/ffi/nullable-type-pointer.raw; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/pointer-casts.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-casts.ll
 	grep -q 'ptrtoint ptr' $(BUILD_DIR)/ffi/pointer-casts.ll
 	grep -q 'inttoptr i64' $(BUILD_DIR)/ffi/pointer-casts.ll
@@ -1040,6 +1140,11 @@ check-ffi: $(TARGET)
 	$(TARGET) tests/ok/ffi-c-varargs.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-varargs.ll
 	grep -q 'declare i32 @printf(ptr, ...)' $(BUILD_DIR)/ffi/ffi-c-varargs.ll
 	grep -q 'call i32 @"printf"(ptr' $(BUILD_DIR)/ffi/ffi-c-varargs.ll
+	$(TARGET) tests/ok/ffi-c-varargs-promotions.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-varargs-promotions.ll
+	grep -q 'sext i8' $(BUILD_DIR)/ffi/ffi-c-varargs-promotions.ll
+	grep -q 'zext i16' $(BUILD_DIR)/ffi/ffi-c-varargs-promotions.ll
+	grep -q 'zext i1' $(BUILD_DIR)/ffi/ffi-c-varargs-promotions.ll
+	grep -q 'fpext float' $(BUILD_DIR)/ffi/ffi-c-varargs-promotions.ll
 	$(TARGET) tests/ok/ffi-c-callback.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-callback.ll
 	grep -q 'declare i64 @"ari_test_apply_i64"(ptr, i64)' $(BUILD_DIR)/ffi/ffi-c-callback.ll
 	grep -q 'call i64 @"ari_test_apply_i64"(ptr @"_ARNv7add_ten", i64 5)' $(BUILD_DIR)/ffi/ffi-c-callback.ll
@@ -1065,6 +1170,7 @@ check-ffi: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-aggregate-load-store.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-aggregate-load-store.elf; $(BUILD_DIR)/ffi/pointer-aggregate-load-store.elf; code=$$?; test $$code -eq 48; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-libc-types.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/ffi-c-libc-types.elf; $(BUILD_DIR)/ffi/ffi-c-libc-types.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-varargs.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/ffi-c-varargs.elf; $(BUILD_DIR)/ffi/ffi-c-varargs.elf >$(BUILD_DIR)/ffi/ffi-c-varargs.out; code=$$?; test $$code -eq 0; grep -q "ari varargs: 7 ok" $(BUILD_DIR)/ffi/ffi-c-varargs.out; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-varargs-promotions.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/ffi-c-varargs-promotions.elf; $(BUILD_DIR)/ffi/ffi-c-varargs-promotions.elf >$(BUILD_DIR)/ffi/ffi-c-varargs-promotions.out; code=$$?; test $$code -eq 0; grep -q "ari promotions: 7 9 1 1.5" $(BUILD_DIR)/ffi/ffi-c-varargs-promotions.out; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-callback.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-callback.elf; $(BUILD_DIR)/ffi/ffi-c-callback.elf; code=$$?; test $$code -eq 15; fi
 	if $(TARGET) tests/errors/extern-void-param.ari -o $(BUILD_DIR)/ffi/extern-void-param.elf >$(BUILD_DIR)/ffi/extern-void-param.err 2>&1; then exit 1; fi
 	grep -q "extern parameter cannot have void type; use ptr c_void for void\\*" $(BUILD_DIR)/ffi/extern-void-param.err
@@ -1074,8 +1180,14 @@ check-ffi: $(TARGET)
 	grep -q "C variadic extern functions require at least one fixed parameter" $(BUILD_DIR)/ffi/extern-varargs-empty.err
 	if $(TARGET) tests/errors/extern-varargs-aggregate.ari -o $(BUILD_DIR)/ffi/extern-varargs-aggregate.elf >$(BUILD_DIR)/ffi/extern-varargs-aggregate.err 2>&1; then exit 1; fi
 	grep -q "C variadic argument type is not supported: (i64, i64)" $(BUILD_DIR)/ffi/extern-varargs-aggregate.err
+	if $(TARGET) tests/errors/extern-varargs-function-pointer.ari -o $(BUILD_DIR)/ffi/extern-varargs-function-pointer.elf >$(BUILD_DIR)/ffi/extern-varargs-function-pointer.err 2>&1; then exit 1; fi
+	grep -q "variadic extern function 'printf' cannot be used as a function pointer value" $(BUILD_DIR)/ffi/extern-varargs-function-pointer.err
+	if $(TARGET) tests/errors/extern-generic.ari -o $(BUILD_DIR)/ffi/extern-generic.elf >$(BUILD_DIR)/ffi/extern-generic.err 2>&1; then exit 1; fi
+	grep -q "extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C" $(BUILD_DIR)/ffi/extern-generic.err
 	if $(TARGET) tests/errors/null-non-pointer.ari -o $(BUILD_DIR)/ffi/null-non-pointer.elf >$(BUILD_DIR)/ffi/null-non-pointer.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got ptr void" $(BUILD_DIR)/ffi/null-non-pointer.err
+	if $(TARGET) tests/errors/nullable-qualified.ari -o $(BUILD_DIR)/ffi/nullable-qualified.elf >$(BUILD_DIR)/ffi/nullable-qualified.err 2>&1; then exit 1; fi
+	grep -q "nullable type suffix ? cannot be combined with own, ref, or ptr qualifiers" $(BUILD_DIR)/ffi/nullable-qualified.err
 	if $(TARGET) tests/errors/pointer-deref-non-pointer.ari -o $(BUILD_DIR)/ffi/pointer-deref-non-pointer.elf >$(BUILD_DIR)/ffi/pointer-deref-non-pointer.err 2>&1; then exit 1; fi
 	grep -q "pointer dereference expects a raw pointer, got i64" $(BUILD_DIR)/ffi/pointer-deref-non-pointer.err
 	if $(TARGET) tests/errors/layout-query-type-args.ari -o $(BUILD_DIR)/ffi/layout-query-type-args.elf >$(BUILD_DIR)/ffi/layout-query-type-args.err 2>&1; then exit 1; fi
@@ -1219,7 +1331,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/own-bool-condition.ari -o $(BUILD_DIR)/errors/own-bool-condition.elf >$(BUILD_DIR)/errors/own-bool-condition.err 2>&1; then exit 1; fi
 	grep -q "condition must be bool or integer-convertible, got own bool" $(BUILD_DIR)/errors/own-bool-condition.err
 	$(TARGET) tests/ok/drop-destructor-lowering.ari --emit-llvm $(BUILD_DIR)/errors/drop-destructor-lowering.ll
-	grep -q 'call void @"_ARNv4impl3i644Drop4drop"' $(BUILD_DIR)/errors/drop-destructor-lowering.ll
+	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/errors/drop-destructor-lowering.ll
 	$(TARGET) --freestanding tests/ok/drop-destructor-lowering.ari -o $(BUILD_DIR)/errors/drop-destructor-lowering.raw
 	$(BUILD_DIR)/errors/drop-destructor-lowering.raw; code=$$?; test $$code -eq 0
 	if $(TARGET) tests/errors/if-drop-one-branch.ari -o $(BUILD_DIR)/errors/if-drop-one-branch.elf >$(BUILD_DIR)/errors/if-drop-one-branch.err 2>&1; then exit 1; fi
@@ -1284,9 +1396,9 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/unknown-trait-impl.ari -o $(BUILD_DIR)/errors/unknown-trait-impl.elf >$(BUILD_DIR)/errors/unknown-trait-impl.err 2>&1; then exit 1; fi
 	grep -q "unknown trait 'MissingTrait'" $(BUILD_DIR)/errors/unknown-trait-impl.err
 	if $(TARGET) tests/errors/iterable-trait-arity.ari -o $(BUILD_DIR)/errors/iterable-trait-arity.elf >$(BUILD_DIR)/errors/iterable-trait-arity.err 2>&1; then exit 1; fi
-	grep -q "trait 'Iterable' expects 1 type argument" $(BUILD_DIR)/errors/iterable-trait-arity.err
+	grep -q "trait 'std::Iterable' expects 1 type argument" $(BUILD_DIR)/errors/iterable-trait-arity.err
 	if $(TARGET) tests/errors/duplicate-trait-impl.ari -o $(BUILD_DIR)/errors/duplicate-trait-impl.elf >$(BUILD_DIR)/errors/duplicate-trait-impl.err 2>&1; then exit 1; fi
-	grep -q "duplicate impl of trait 'Iterable' for Vec\\[i64\\]" $(BUILD_DIR)/errors/duplicate-trait-impl.err
+	grep -q "duplicate impl of trait 'std::Iterable' for Vec\\[i64\\]" $(BUILD_DIR)/errors/duplicate-trait-impl.err
 	if $(TARGET) tests/errors/logical-non-bool.ari -o $(BUILD_DIR)/errors/logical-non-bool.elf >$(BUILD_DIR)/errors/logical-non-bool.err 2>&1; then exit 1; fi
 	grep -q "logical operand must be bool, got i64" $(BUILD_DIR)/errors/logical-non-bool.err
 	if $(TARGET) tests/errors/not-non-bool.ari -o $(BUILD_DIR)/errors/not-non-bool.elf >$(BUILD_DIR)/errors/not-non-bool.err 2>&1; then exit 1; fi
@@ -1334,10 +1446,10 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/format-nonliteral.ari -o $(BUILD_DIR)/errors/format-nonliteral.elf >$(BUILD_DIR)/errors/format-nonliteral.err 2>&1; then exit 1; fi
 	grep -q "expects a string literal format argument" $(BUILD_DIR)/errors/format-nonliteral.err
 	if $(TARGET) tests/errors/extern-cpp-removed.ari -o $(BUILD_DIR)/errors/extern-cpp-removed.elf >$(BUILD_DIR)/errors/extern-cpp-removed.err 2>&1; then exit 1; fi
-	grep -q 'extern ABI must be "C"' $(BUILD_DIR)/errors/extern-cpp-removed.err
+	grep -q 'extern ABI must be "C" or "ari"' $(BUILD_DIR)/errors/extern-cpp-removed.err
 	if $(TARGET) tests/errors/extern-body.ari -o $(BUILD_DIR)/errors/extern-body.elf >$(BUILD_DIR)/errors/extern-body.err 2>&1; then exit 1; fi
 	grep -q "extern functions cannot have a body" $(BUILD_DIR)/errors/extern-body.err
 	if $(TARGET) tests/errors/extern-generic.ari -o $(BUILD_DIR)/errors/extern-generic.elf >$(BUILD_DIR)/errors/extern-generic.err 2>&1; then exit 1; fi
-	grep -q "extern functions cannot be generic yet" $(BUILD_DIR)/errors/extern-generic.err
+	grep -q "extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C" $(BUILD_DIR)/errors/extern-generic.err
 	if $(TARGET) tests/errors/extern-invalid-link-name.ari -o $(BUILD_DIR)/errors/extern-invalid-link-name.elf >$(BUILD_DIR)/errors/extern-invalid-link-name.err 2>&1; then exit 1; fi
 	grep -q "invalid external link symbol 'bad-symbol'" $(BUILD_DIR)/errors/extern-invalid-link-name.err

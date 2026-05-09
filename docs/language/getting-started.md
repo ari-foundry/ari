@@ -59,6 +59,7 @@ Useful options:
 --shared            build a shared library instead of an executable
 --freestanding      use the raw direct-syscall ELF backend
 --test              build a generated test runner for @test functions
+--no-implicit-std   require explicit mod std; instead of auto-loading lib/std.arih
 --cfg-feature name  enable feature("name") inside @cfg(...)
 ```
 

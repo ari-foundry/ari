@@ -19,10 +19,12 @@ struct Holder {
 `dyn Trait[...]` types are parsed and resolved in declarations. The compiler
 checks that the trait exists, is visible, and receives the right number of type
 arguments. Explicit `value as dyn Trait[...]` conversions for concrete
-copyable non-borrow values lower on the LLVM backend with vtable dispatch.
-The remaining front-end-only/planned pieces are generic impl vtables, generic
-dyn methods, dyn upcasts, `own`/borrow-valued dyn data pointers, and
-freestanding backend lowering.
+copyable non-borrow values lower on the LLVM backend with vtable dispatch,
+including generic impl vtables specialized for concrete object types. The
+compiler rejects generic trait methods as non-object-safe at dyn conversion and
+dyn method-call sites. The remaining front-end-only/planned pieces are dyn
+upcasts, `own`/borrow-valued dyn data pointers, and freestanding backend
+lowering.
 
 ## Generic And Destructured Structs
 

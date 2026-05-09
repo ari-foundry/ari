@@ -1,0 +1,201 @@
+pub mod io {
+  pub extern "ari" fn write_i64(value: i64) -> i64 = "ari_builtin_write_i64";
+  pub extern "ari" fn write_bool(value: bool) -> i64 = "ari_builtin_write_bool";
+  pub extern "ari" fn write_byte(value: u8) -> i64 = "ari_builtin_write_byte";
+  pub extern "ari" fn newline() -> i64 = "ari_builtin_newline";
+  pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
+  pub extern "ari" fn read_line() -> string = "ari_builtin_read_line";
+}
+
+pub mod input {
+  pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
+  pub extern "ari" fn line() -> string = "ari_builtin_read_line";
+}
+
+pub mod context {
+  pub extern "ari" fn argc() -> i64 = "ari_builtin_context_argc";
+  pub extern "ari" fn arg(index: i64) -> string = "ari_builtin_context_arg";
+}
+
+pub extern "ari" fn assert(condition: bool) -> i64 = "ari_builtin_assert";
+pub extern "ari" fn debug_assert(condition: bool) -> i64 = "ari_builtin_assert";
+pub extern "ari" fn assert_eq_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_eq_i64";
+pub extern "ari" fn assert_ne_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_ne_i64";
+pub extern "ari" fn assert_eq_bool(left: bool, right: bool) -> i64 = "ari_builtin_assert_eq_bool";
+pub extern "ari" fn assert_ne_bool(left: bool, right: bool) -> i64 = "ari_builtin_assert_ne_bool";
+pub extern "ari" fn panic() -> void = "ari_builtin_panic";
+pub extern "ari" fn todo() -> void = "ari_builtin_panic";
+pub extern "ari" fn unreachable() -> void = "ari_builtin_panic";
+
+pub mod mem {
+  pub fn size_of[T]() -> i64;
+  pub fn align_of[T]() -> i64;
+  pub fn ptr_offset[T](base: ptr T, bytes: i64) -> ptr T;
+  pub fn ptr_add[T](base: ptr T, count: i64) -> ptr T;
+  pub fn ptr_load[T](source: ptr T) -> T;
+  pub fn ptr_store[T](target: ptr T, value: T) -> void;
+}
+
+pub mod zone {
+  pub extern "ari" fn create(capacity: i64) -> own Zone = "ari_builtin_zone_create";
+  pub extern "ari" fn alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8 = "ari_builtin_zone_alloc";
+  pub fn alloc[T](zone: ref mut Zone) -> ptr T;
+  pub fn new[T](zone: ref mut Zone, value: T) -> ptr T;
+  pub fn promote[T](target: ref mut Zone, source: ptr T) -> ptr T;
+  pub extern "ari" fn reset(zone: ref mut Zone) -> void = "ari_builtin_zone_reset";
+  pub extern "ari" fn destroy(zone: own Zone) -> void = "ari_builtin_zone_destroy";
+}
+
+pub mod iter {
+  pub struct Range[T] {
+    start: T,
+    end: T,
+  }
+
+  pub struct RangeInclusive[T] {
+    start: T,
+    end: T,
+  }
+
+  pub fn range[T](start: T, end: T) -> Range[T];
+  pub fn range_inclusive[T](start: T, end: T) -> RangeInclusive[T];
+
+  pub trait Iterable[T] {
+  }
+
+  pub trait Iterator[T] {
+  }
+
+  pub trait IntoIterator[T] {
+  }
+}
+
+pub mod fmt {
+  pub trait Debug {
+  }
+
+  pub trait Display {
+  }
+}
+
+pub mod cmp {
+  pub trait Eq[T] {
+    fn eq(self, other: T) -> bool;
+  }
+
+  pub trait PartialEq[T] {
+    fn eq(self, other: T) -> bool;
+  }
+
+  pub trait Ord[T] {
+    fn lt(self, other: T) -> bool;
+  }
+
+  pub trait PartialOrd[T] {
+    fn lt(self, other: T) -> bool;
+  }
+}
+
+pub mod convert {
+  pub trait From[T] {
+    fn from(value: T) -> Self;
+  }
+
+  pub trait Into[T] {
+    fn into(self) -> T;
+  }
+
+  pub trait TryFrom[T] {
+  }
+
+  pub trait TryInto[T] {
+  }
+}
+
+pub struct Vec[T] {
+}
+
+pub struct Range[T] {
+  start: T,
+  end: T,
+}
+
+pub struct RangeInclusive[T] {
+  start: T,
+  end: T,
+}
+
+pub trait Debug {
+}
+
+pub trait Display {
+}
+
+pub trait Default {
+  fn default() -> Self;
+}
+
+pub trait Clone {
+  fn clone(self) -> Self;
+}
+
+pub trait Copy {
+}
+
+pub trait Drop {
+  fn drop(self) -> void;
+}
+
+pub trait Eq[T] {
+  fn eq(self, other: T) -> bool;
+}
+
+pub trait PartialEq[T] {
+  fn eq(self, other: T) -> bool;
+}
+
+pub trait Ord[T] {
+  fn lt(self, other: T) -> bool;
+}
+
+pub trait PartialOrd[T] {
+  fn lt(self, other: T) -> bool;
+}
+
+pub trait From[T] {
+  fn from(value: T) -> Self;
+}
+
+pub trait Into[T] {
+  fn into(self) -> T;
+}
+
+pub trait TryFrom[T] {
+}
+
+pub trait TryInto[T] {
+}
+
+pub trait Iterable[T] {
+}
+
+pub trait Iterator[T] {
+}
+
+pub trait IntoIterator[T] {
+}
+
+pub trait ToString {
+  fn to_string(self) -> string;
+}
+
+pub trait ToOwned {
+}
+
+pub use io::{write_i64, write_bool, write_byte, newline, read_byte, read_line};
+pub use input::line as input;
+pub use context::argc as arg_count;
+pub use context::arg as arg;
+pub use mem::{size_of, align_of, ptr_offset, ptr_add, ptr_load, ptr_store};
+pub use zone::{create, alloc, new, promote, reset, destroy};
+pub use iter::{range, range_inclusive};

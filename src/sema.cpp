@@ -1,12 +1,15 @@
 #include "sema.hpp"
 
 #include "attribute_semantics.hpp"
+#include "ari_builtin.hpp"
 #include "cfg_eval.hpp"
 #include "layout.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
 #include "prelude_macros.hpp"
+#include "prelude_resolver.hpp"
 #include "try_model.hpp"
+#include "vector_semantics.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -31,6 +34,7 @@ struct FunctionSig {
     bool is_public = false;
     bool is_extern = false;
     bool is_variadic = false;
+    std::string extern_abi;
     bool deprecated = false;
     std::string deprecated_message;
     SourceLocation loc;
@@ -257,8 +261,6 @@ public:
         collect_uses();
         collect_meta_functions();
         validate_attributes();
-        collect_prelude_signatures();
-        collect_prelude_traits();
         collect_trait_decls();
         collect_struct_decls();
         collect_enum_layouts();
@@ -448,24 +450,6 @@ private:
         return !fn.meta && !fn.is_extern && fn.has_body && fn.generics.empty();
     }
 
-    static bool is_format_print_name(const std::string& name) {
-        return name == "print" ||
-               name == "println" ||
-               name == "io::print" ||
-               name == "io::println";
-    }
-
-    static bool is_println_name(const std::string& name) {
-        return name == "println" || name == "io::println";
-    }
-
-    static TypeRef prelude_type_ref(const std::string& name, SourceLocation loc) {
-        TypeRef type;
-        type.name = name;
-        type.loc = loc;
-        return type;
-    }
-
     static std::string unqualified_name(const std::string& name) {
         std::size_t split = name.rfind("::");
         if (split == std::string::npos) return name;
@@ -474,84 +458,6 @@ private:
 
     static bool is_planned_prelude_macro_name(const std::string& name) {
         return is_prelude_macro_name(unqualified_name(name));
-    }
-
-    static bool is_planned_prelude_function_name(const std::string& name) {
-        return name == "range" ||
-               name == "iter::range" ||
-               name == "range_inclusive" ||
-               name == "iter::range_inclusive";
-    }
-
-    static bool is_prelude_range_function_name(const std::string& name) {
-        return name == "range" ||
-               name == "iter::range" ||
-               name == "range_inclusive" ||
-               name == "iter::range_inclusive";
-    }
-
-    static bool is_prelude_vec_len_function_name(const std::string& name) {
-        return name == "len" || name == "vec::len" || name == "prelude::len";
-    }
-
-    static bool is_prelude_pointer_offset_function_name(const std::string& name) {
-        return name == "ptr_offset" ||
-               name == "mem::ptr_offset" ||
-               name == "prelude::ptr_offset";
-    }
-
-    static bool is_prelude_pointer_add_function_name(const std::string& name) {
-        return name == "ptr_add" ||
-               name == "mem::ptr_add" ||
-               name == "prelude::ptr_add";
-    }
-
-    static bool is_prelude_pointer_load_function_name(const std::string& name) {
-        return name == "ptr_load" ||
-               name == "mem::ptr_load" ||
-               name == "prelude::ptr_load";
-    }
-
-    static bool is_prelude_pointer_store_function_name(const std::string& name) {
-        return name == "ptr_store" ||
-               name == "mem::ptr_store" ||
-               name == "prelude::ptr_store";
-    }
-
-    static bool is_prelude_size_of_function_name(const std::string& name) {
-        return name == "size_of" ||
-               name == "mem::size_of" ||
-               name == "prelude::size_of";
-    }
-
-    static bool is_prelude_align_of_function_name(const std::string& name) {
-        return name == "align_of" ||
-               name == "mem::align_of" ||
-               name == "prelude::align_of";
-    }
-
-    static bool is_zone_alloc_function_name(const std::string& name) {
-        return name == "zone::alloc";
-    }
-
-    static bool is_zone_new_function_name(const std::string& name) {
-        return name == "zone::new";
-    }
-
-    static bool is_zone_promote_function_name(const std::string& name) {
-        return name == "zone::promote";
-    }
-
-    static bool is_zone_scratch_function_name(const std::string& name) {
-        return name == "zone::scratch";
-    }
-
-    static bool is_zone_temp_function_name(const std::string& name) {
-        return name == "zone::temp";
-    }
-
-    static bool is_prelude_inclusive_range_function_name(const std::string& name) {
-        return name == "range_inclusive" || name == "iter::range_inclusive";
     }
 
     static bool is_prelude_range_type_name(const std::string& name) {
@@ -563,44 +469,6 @@ private:
         return type.primitive == IrPrimitiveKind::Struct &&
                (type.name == "Range" || type.name == "RangeInclusive") &&
                type.args.size() == 1;
-    }
-
-    static std::string planned_prelude_function_message(const std::string& name) {
-        if (name == "range" || name == "iter::range") {
-            return "range(start, end) is a built-in range constructor";
-        }
-        if (name == "range_inclusive" || name == "iter::range_inclusive") {
-            return "range_inclusive(start, end) is a built-in inclusive range constructor";
-        }
-        return "prelude function '" + name + "' is planned but not implemented yet";
-    }
-
-    static bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
-        std::string base = unqualified_name(name);
-        if (base == "Option" || base == "Maybe" || base == "Box" ||
-            base == "Slice") {
-            arity = 1;
-            return true;
-        }
-        if (base == "Result") {
-            arity = 2;
-            return true;
-        }
-        return false;
-    }
-
-    static std::string planned_prelude_type_message(const std::string& name) {
-        std::string base = unqualified_name(name);
-        if (base == "Option" || base == "Maybe" || base == "Result") {
-            return "prelude type '" + base + "' is reserved for Maybe/Result values but generic ADT lowering is not implemented yet";
-        }
-        if (base == "Box") {
-            return "prelude type 'Box' is planned but needs explicit allocator capabilities first";
-        }
-        if (base == "Slice") {
-            return "prelude type 'Slice' is planned but slice layout and borrowing are not implemented yet";
-        }
-        return "prelude type '" + name + "' is planned but not implemented yet";
     }
 
     static bool is_qualified_name(const std::string& name) {
@@ -704,8 +572,8 @@ private:
 
     std::string resolve_one_use_path(const std::string& name) const {
         std::string relative = resolve_current_relative_name(name);
+        if (const UseInfo* direct = find_use(relative)) return direct->path;
         if (!is_qualified_name(relative)) {
-            if (const UseInfo* use = find_use(relative)) return use->path;
             return relative;
         }
 
@@ -713,9 +581,18 @@ private:
         for (std::size_t split = parts.size() - 1; split >= 1; --split) {
             std::string module_name = join_qualified_parts(parts, 0, split);
             const std::string& alias = parts[split];
+            std::string candidate_module = join_qualified_parts(parts, 0, split + 1);
+            if (modules_.count(candidate_module)) {
+                if (split == 1) break;
+                continue;
+            }
             if (const UseInfo* use = find_use_in_module(module_name, alias)) {
                 if (can_access_use(*use)) {
                     std::string rest = join_qualified_parts(parts, split + 1, parts.size());
+                    if (!rest.empty() && !modules_.count(use->path)) {
+                        if (split == 1) break;
+                        continue;
+                    }
                     return rest.empty() ? use->path : use->path + "::" + rest;
                 }
             }
@@ -725,6 +602,14 @@ private:
         const UseInfo* prefix = find_use(parts[0]);
         if (prefix) {
             std::string rest = join_qualified_parts(parts, 1, parts.size());
+            if (!rest.empty() && !modules_.count(prefix->path)) {
+                std::string std_child_module = "std::" + parts[0];
+                std::string std_child_prefix = std_child_module + "::";
+                if (prefix->path.rfind(std_child_prefix, 0) == 0 && modules_.count(std_child_module)) {
+                    return std_child_module + "::" + rest;
+                }
+                return relative;
+            }
             return rest.empty() ? prefix->path : prefix->path + "::" + rest;
         }
 
@@ -916,6 +801,7 @@ private:
             if (use.is_glob) collect_glob_use(use);
             else add_use_info(use.module_name, use.alias, use.path, use.is_public, use.loc);
         }
+        collect_implicit_std_prelude_uses();
     }
 
     void add_use_info(
@@ -929,6 +815,201 @@ private:
         std::string resolved_path = resolve_relative_name(loc, module_name, path);
         auto inserted = scope.emplace(alias, UseInfo{resolved_path, module_name, is_public, loc});
         if (!inserted.second) fail(loc, "duplicate use alias '" + alias + "'");
+    }
+
+    static bool is_std_module_name(const std::string& module_name) {
+        return module_name == "std" ||
+               (module_name.size() > 5 && module_name.compare(0, 5, "std::") == 0);
+    }
+
+    static bool is_std_descendant_module_name(const std::string& module_name) {
+        return module_name.size() > 5 && module_name.compare(0, 5, "std::") == 0;
+    }
+
+    bool has_source_std_surface() const {
+        for (const auto& decl : program_.structs) {
+            if (decl.name == "std::Vec") return true;
+        }
+        return false;
+    }
+
+    bool prelude_specials_available() const {
+        return has_source_std_surface();
+    }
+
+    bool source_std_generic_function_available(const std::string& name) const {
+        auto found = generic_functions_.find(resolve_generic_function_name(name));
+        if (found != generic_functions_.end() && is_std_module_name(found->second->module_name)) {
+            return true;
+        }
+        std::string resolved = resolve_use_path(name);
+        std::string resolved_base = basename_of_qualified_name(resolved);
+        bool resolved_is_special = is_source_declared_prelude_special_name(resolved);
+        for (const auto& fn : program_.functions) {
+            if (fn.generics.empty() || !is_std_module_name(fn.module_name)) continue;
+            std::string qualified = qualify_in_module(fn.module_name, fn.name);
+            if (qualified == resolved && is_source_declared_prelude_special_name(qualified)) {
+                return true;
+            }
+            if (resolved_is_special &&
+                basename_of_qualified_name(qualified) == resolved_base &&
+                is_source_declared_prelude_special_name(qualified)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::vector<std::pair<std::string, std::string>> implicit_std_prelude_items() const {
+        std::vector<std::pair<std::string, std::string>> items;
+        auto add = [&items](const std::string& alias, const std::string& path) {
+            if (!alias.empty() && !path.empty()) items.emplace_back(alias, path);
+        };
+
+        for (const auto& decl : program_.constants) {
+            if (decl.module_name == "std" && decl.is_public) {
+                add(basename_of_qualified_name(decl.name), decl.name);
+            }
+        }
+        for (const auto& decl : program_.functions) {
+            if (decl.module_name == "std" && decl.is_public) {
+                add(basename_of_qualified_name(decl.name), decl.name);
+            }
+        }
+        for (const auto& decl : program_.structs) {
+            if (decl.module_name == "std" && decl.is_public) {
+                add(basename_of_qualified_name(decl.name), decl.name);
+            }
+        }
+        for (const auto& decl : program_.enums) {
+            if (decl.module_name != "std" || !decl.is_public) continue;
+            add(basename_of_qualified_name(decl.name), decl.name);
+            for (const auto& item : decl.cases) {
+                add(item.name, qualify_in_module(decl.module_name, item.name));
+            }
+        }
+        for (const auto& decl : program_.traits) {
+            if (decl.module_name == "std" && decl.is_public) {
+                add(basename_of_qualified_name(decl.name), decl.name);
+            }
+        }
+
+        auto root_uses = uses_.find("std");
+        if (root_uses != uses_.end()) {
+            for (const auto& item : root_uses->second) {
+                if (item.second.is_public) add(item.first, item.second.path);
+            }
+        }
+
+        for (const auto& decl : program_.modules) {
+            if (is_std_descendant_module_name(decl.name) && decl.is_public) {
+                add(basename_of_qualified_name(decl.name), decl.name);
+            }
+        }
+        for (const auto& decl : program_.constants) {
+            if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
+                std::string alias = basename_of_qualified_name(decl.name);
+                add(alias, decl.name);
+                add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
+            }
+        }
+        for (const auto& decl : program_.functions) {
+            if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
+                std::string alias = basename_of_qualified_name(decl.name);
+                add(alias, decl.name);
+                add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
+            }
+        }
+        for (const auto& decl : program_.structs) {
+            if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
+                std::string alias = basename_of_qualified_name(decl.name);
+                add(alias, decl.name);
+                add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
+            }
+        }
+        for (const auto& decl : program_.enums) {
+            if (!is_std_descendant_module_name(decl.module_name) || !decl.is_public) continue;
+            std::string enum_alias = basename_of_qualified_name(decl.name);
+            std::string module_alias = basename_of_qualified_name(decl.module_name);
+            add(enum_alias, decl.name);
+            add(module_alias + "::" + enum_alias, decl.name);
+            for (const auto& item : decl.cases) {
+                std::string case_name = qualify_in_module(decl.module_name, item.name);
+                add(item.name, case_name);
+                add(module_alias + "::" + item.name, case_name);
+            }
+        }
+        for (const auto& decl : program_.traits) {
+            if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
+                std::string alias = basename_of_qualified_name(decl.name);
+                add(alias, decl.name);
+                add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
+            }
+        }
+
+        return items;
+    }
+
+    bool module_declares_alias(const std::string& module_name, const std::string& alias) const {
+        for (const auto& decl : program_.modules) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
+        }
+        for (const auto& decl : program_.constants) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
+        }
+        for (const auto& decl : program_.functions) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
+        }
+        for (const auto& decl : program_.structs) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
+        }
+        for (const auto& decl : program_.enums) {
+            if (decl.module_name != module_name) continue;
+            if (basename_of_qualified_name(decl.name) == alias) return true;
+            for (const auto& item : decl.cases) {
+                if (item.name == alias) return true;
+            }
+        }
+        for (const auto& decl : program_.traits) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
+        }
+        return false;
+    }
+
+    bool unqualified_decl_shadows_prelude_name(const std::string& name, const std::string& resolved) const {
+        return !is_qualified_name(name) &&
+               resolved == name &&
+               module_declares_alias(current_module_name_, name);
+    }
+
+    void add_implicit_use_info(const std::string& module_name,
+                               const std::string& alias,
+                               const std::string& path) {
+        auto& scope = uses_[module_name];
+        if (scope.count(alias) || module_declares_alias(module_name, alias)) return;
+        scope.emplace(alias, UseInfo{path, module_name, false, SourceLocation{1, 1}});
+    }
+
+    void collect_implicit_std_prelude_uses() {
+        if (!options_.implicit_std || !has_source_std_surface()) return;
+
+        std::set<std::string> module_names;
+        module_names.insert("");
+        for (const auto& decl : program_.modules) module_names.insert(decl.name);
+        for (const auto& decl : program_.constants) module_names.insert(decl.module_name);
+        for (const auto& decl : program_.functions) module_names.insert(decl.module_name);
+        for (const auto& decl : program_.structs) module_names.insert(decl.module_name);
+        for (const auto& decl : program_.enums) module_names.insert(decl.module_name);
+        for (const auto& decl : program_.traits) module_names.insert(decl.module_name);
+        for (const auto& decl : program_.impls) module_names.insert(decl.module_name);
+
+        std::vector<std::pair<std::string, std::string>> prelude_items = implicit_std_prelude_items();
+        for (const auto& module_name : module_names) {
+            if (is_std_module_name(module_name)) continue;
+            for (const auto& item : prelude_items) {
+                add_implicit_use_info(module_name, item.first, item.second);
+            }
+        }
     }
 
     bool can_glob_import_item(const UseDecl& use, const std::string& item_module, bool item_public) const {
@@ -990,6 +1071,7 @@ private:
 
     static bool is_meta_type_ref(const TypeRef& type) {
         return type.qualifier == TypeQualifier::Value &&
+               !type.nullable &&
                type.args.empty() &&
                (type.name == "token_stream" || type.name == "ast" || type.name == "type");
     }
@@ -1243,194 +1325,6 @@ private:
         }
     }
 
-    void add_prelude_function(const std::string& name, std::vector<IrType> params, IrType result) {
-        FunctionSig sig;
-        sig.params = std::move(params);
-        sig.result = std::move(result);
-        sig.module_name = module_of_qualified_name(name);
-        sig.is_public = true;
-        sig.loc = SourceLocation{1, 1};
-        functions_.emplace(name, std::move(sig));
-    }
-
-    void collect_prelude_signatures() {
-        SourceLocation loc{1, 1};
-        IrType i64 = integer_type(IrPrimitiveKind::I64, loc);
-        IrType u8 = integer_type(IrPrimitiveKind::U8, loc);
-        IrType boolean = bool_type(loc);
-        IrType void_result = void_type(loc);
-
-        add_prelude_function("io::write_i64", {i64}, i64);
-        add_prelude_function("io::write_bool", {boolean}, i64);
-        add_prelude_function("io::write_byte", {u8}, i64);
-        add_prelude_function("io::newline", {}, i64);
-        add_prelude_function("io::read_byte", {}, i64);
-
-        add_prelude_function("write_i64", {i64}, i64);
-        add_prelude_function("write_bool", {boolean}, i64);
-        add_prelude_function("write_byte", {u8}, i64);
-        add_prelude_function("newline", {}, i64);
-        add_prelude_function("read_byte", {}, i64);
-        add_prelude_function("input::read_byte", {}, i64);
-
-        add_prelude_function("assert", {boolean}, i64);
-        add_prelude_function("debug_assert", {boolean}, i64);
-        add_prelude_function("assert_eq_i64", {i64, i64}, i64);
-        add_prelude_function("assert_ne_i64", {i64, i64}, i64);
-        add_prelude_function("assert_eq_bool", {boolean, boolean}, i64);
-        add_prelude_function("assert_ne_bool", {boolean, boolean}, i64);
-        add_prelude_function("panic", {}, void_result);
-        add_prelude_function("todo", {}, void_result);
-        add_prelude_function("unreachable", {}, void_result);
-
-        IrType string = primitive_type(IrPrimitiveKind::String, "string", loc);
-        add_prelude_function("io::read_line", {}, string);
-        add_prelude_function("read_line", {}, string);
-        add_prelude_function("input", {}, string);
-        add_prelude_function("input::line", {}, string);
-        add_prelude_function("context::argc", {}, i64);
-        add_prelude_function("context::arg", {i64}, string);
-        add_prelude_function("arg_count", {}, i64);
-        add_prelude_function("arg", {i64}, string);
-
-        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", loc);
-        IrType own_zone = zone;
-        own_zone.qualifier = TypeQualifier::Own;
-        IrType mut_zone = zone;
-        mut_zone.qualifier = TypeQualifier::MutRef;
-        IrType ptr_u8 = u8;
-        ptr_u8.qualifier = TypeQualifier::Ptr;
-        add_prelude_function("zone::create", {i64}, own_zone);
-        add_prelude_function("zone::temp", {i64}, own_zone);
-        add_prelude_function("zone::alloc", {mut_zone, i64, i64}, ptr_u8);
-        add_prelude_function("zone::reset", {mut_zone}, void_result);
-        add_prelude_function("zone::destroy", {own_zone}, void_result);
-    }
-
-    static std::vector<std::string> prelude_generic_names(std::size_t generic_arity) {
-        static const char* names[] = {"T", "E", "U", "V"};
-        std::vector<std::string> generics;
-        for (std::size_t i = 0; i < generic_arity; ++i) {
-            generics.push_back(i < 4 ? names[i] : "T" + std::to_string(i));
-        }
-        return generics;
-    }
-
-    static TraitInfo::Method prelude_method(
-        const std::string& name,
-        std::vector<TypeRef> params,
-        TypeRef result,
-        SourceLocation loc
-    ) {
-        TraitInfo::Method method;
-        method.name = name;
-        method.params = std::move(params);
-        method.result = std::move(result);
-        method.has_result = true;
-        method.loc = loc;
-        return method;
-    }
-
-    void add_prelude_trait(
-        const std::string& name,
-        std::size_t generic_arity,
-        std::vector<TraitInfo::Method> methods = {}
-    ) {
-        TraitInfo info;
-        info.name = name;
-        info.module_name = module_of_qualified_name(name);
-        info.generic_arity = generic_arity;
-        info.generic_names = prelude_generic_names(generic_arity);
-        for (auto& method : methods) info.methods.emplace(method.name, std::move(method));
-        info.is_public = true;
-        info.loc = SourceLocation{1, 1};
-        traits_.emplace(name, std::move(info));
-    }
-
-    void collect_prelude_traits() {
-        SourceLocation loc{1, 1};
-        TypeRef self = prelude_type_ref("Self", loc);
-        TypeRef t = prelude_type_ref("T", loc);
-        TypeRef boolean;
-        boolean.name = "bool";
-        boolean.loc = loc;
-        TypeRef string;
-        string.name = "string";
-        string.loc = loc;
-        TypeRef void_ref;
-        void_ref.name = "void";
-        void_ref.loc = loc;
-
-        add_prelude_trait("Debug", 0);
-        add_prelude_trait("fmt::Debug", 0);
-        add_prelude_trait("Display", 0);
-        add_prelude_trait("fmt::Display", 0);
-        add_prelude_trait("Default", 0, {
-            prelude_method("default", {}, self, loc),
-        });
-        add_prelude_trait("Clone", 0, {
-            prelude_method("clone", {self}, self, loc),
-        });
-        add_prelude_trait("Copy", 0);
-        add_prelude_trait("Drop", 0, {
-            prelude_method("drop", {self}, void_ref, loc),
-        });
-
-        add_prelude_trait("Eq", 1, {
-            prelude_method("eq", {self, t}, boolean, loc),
-        });
-        add_prelude_trait("PartialEq", 1, {
-            prelude_method("eq", {self, t}, boolean, loc),
-        });
-        add_prelude_trait("cmp::Eq", 1, {
-            prelude_method("eq", {self, t}, boolean, loc),
-        });
-        add_prelude_trait("cmp::PartialEq", 1, {
-            prelude_method("eq", {self, t}, boolean, loc),
-        });
-        add_prelude_trait("Ord", 1, {
-            prelude_method("lt", {self, t}, boolean, loc),
-        });
-        add_prelude_trait("PartialOrd", 1, {
-            prelude_method("lt", {self, t}, boolean, loc),
-        });
-        add_prelude_trait("cmp::Ord", 1, {
-            prelude_method("lt", {self, t}, boolean, loc),
-        });
-        add_prelude_trait("cmp::PartialOrd", 1, {
-            prelude_method("lt", {self, t}, boolean, loc),
-        });
-
-        add_prelude_trait("From", 1, {
-            prelude_method("from", {t}, self, loc),
-        });
-        add_prelude_trait("Into", 1, {
-            prelude_method("into", {self}, t, loc),
-        });
-        add_prelude_trait("convert::From", 1, {
-            prelude_method("from", {t}, self, loc),
-        });
-        add_prelude_trait("convert::Into", 1, {
-            prelude_method("into", {self}, t, loc),
-        });
-        add_prelude_trait("TryFrom", 1);
-        add_prelude_trait("TryInto", 1);
-        add_prelude_trait("convert::TryFrom", 1);
-        add_prelude_trait("convert::TryInto", 1);
-
-        add_prelude_trait("Iterable", 1);
-        add_prelude_trait("Iterator", 1);
-        add_prelude_trait("IntoIterator", 1);
-        add_prelude_trait("iter::Iterable", 1);
-        add_prelude_trait("iter::Iterator", 1);
-        add_prelude_trait("iter::IntoIterator", 1);
-
-        add_prelude_trait("ToString", 0, {
-            prelude_method("to_string", {self}, string, loc),
-        });
-        add_prelude_trait("ToOwned", 0);
-    }
-
     void collect_constant_decls() {
         for (const auto& decl : program_.constants) {
             ConstantInfo info;
@@ -1574,6 +1468,7 @@ private:
 
         if (type.name == "Array" && type.args.size() == 1) {
             key += "[" + type_ref_key(type.args[0]) + ", " + std::to_string(type.array_size) + "]";
+            if (type.nullable) key += "?";
             return key;
         }
 
@@ -1588,6 +1483,7 @@ private:
                 }
                 key += "]";
             }
+            if (type.nullable) key += "?";
             return key;
         }
 
@@ -1601,11 +1497,12 @@ private:
             }
             key += ") -> ";
             key += type_ref_key(type.args[param_count]);
+            if (type.nullable) key += "?";
             return key;
         }
 
         if (type.name == "int") key += "i64";
-        else if (type.name == "prelude::Vec") key += "Vec";
+        else if (type.name == "std::Vec" || type.name == "prelude::Vec") key += "Vec";
         else key += type.name;
 
         if (!type.args.empty()) {
@@ -1616,6 +1513,7 @@ private:
             }
             key += "]";
         }
+        if (type.nullable) key += "?";
         return key;
     }
 
@@ -2197,7 +2095,7 @@ private:
                 info.is_public = impl.is_public || method.is_public;
                 info.loc = method.loc;
                 info.lowered_name = impl_method_lowered_name(self_type, trait_name, method_name);
-                if (trait_name == "Drop" && method_name == "drop") {
+                if ((trait_name == "Drop" || trait_name == "std::Drop") && method_name == "drop") {
                     drop_impls_[drop_impl_key(self_type)] = info;
                 }
 
@@ -2484,9 +2382,19 @@ private:
         if (fn.params.size() > std::numeric_limits<std::uint16_t>::max()) {
             fail(fn.loc, "functions support up to 65535 parameters");
         }
+        bool is_c_abi = fn.extern_abi == "C";
+        bool is_ari_abi = fn.extern_abi == "ari";
         if (fn.meta) fail(fn.loc, "extern functions cannot be meta functions");
-        if (!fn.generics.empty()) fail(fn.loc, "extern functions cannot be generic yet");
+        if (!fn.generics.empty()) {
+            if (is_ari_abi) {
+                fail(fn.loc, "extern \"ari\" builtin declarations cannot be generic");
+            }
+            fail(fn.loc, "extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C");
+        }
         if (fn.has_body) fail(fn.loc, "extern functions cannot have a body");
+        if (fn.is_variadic && !is_c_abi) {
+            fail(fn.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+        }
         if (fn.is_variadic && fn.params.empty()) {
             fail(fn.variadic_loc, "C variadic extern functions require at least one fixed parameter");
         }
@@ -2498,7 +2406,14 @@ private:
         if (enum_cases_.count(fn.name)) fail(fn.loc, "extern function '" + fn.name + "' conflicts with enum case constructor");
         if (is_format_print_name(fn.name)) fail(fn.loc, "extern function '" + fn.name + "' conflicts with prelude print builtin");
         (void)exported_link_name(fn);
-        if (!fn.extern_link_name.empty() && !is_c_symbol_name(fn.extern_link_name)) {
+        if (is_ari_abi) {
+            if (fn.extern_link_name.empty()) {
+                fail(fn.loc, "extern \"ari\" builtin declarations require an explicit builtin symbol");
+            }
+            if (!is_ari_builtin_symbol(fn.extern_link_name)) {
+                fail(fn.loc, "unknown Ari builtin symbol '" + fn.extern_link_name + "'");
+            }
+        } else if (!fn.extern_link_name.empty() && !is_c_symbol_name(fn.extern_link_name)) {
             fail(fn.loc, "invalid external link symbol '" + fn.extern_link_name + "'");
         }
 
@@ -2508,6 +2423,7 @@ private:
         sig.is_public = fn.is_public;
         sig.is_extern = true;
         sig.is_variadic = fn.is_variadic;
+        sig.extern_abi = fn.extern_abi;
         sig.link_name = fn.extern_link_name;
         sig.deprecated = deprecated_attribute(fn.attributes) != nullptr;
         sig.deprecated_message = deprecated_message(fn.attributes);
@@ -2534,6 +2450,7 @@ private:
             IrExternFunction fn;
             fn.name = item.first;
             fn.link_name = sig.link_name;
+            fn.abi = sig.extern_abi;
             fn.return_type = sig.result;
             fn.is_variadic = sig.is_variadic;
             fn.loc = sig.loc;
@@ -2771,7 +2688,26 @@ private:
         }
     }
 
+    IrType resolve_nullable_type(const TypeRef& ast_type) {
+        if (ast_type.qualifier != TypeQualifier::Value) {
+            fail(ast_type.loc, "nullable type suffix ? cannot be combined with own, ref, or ptr qualifiers");
+        }
+
+        TypeRef base = ast_type;
+        base.nullable = false;
+        IrType type = resolve_executable_type(base);
+        if (type.qualifier != TypeQualifier::Value) {
+            fail(ast_type.loc, "nullable type suffix ? expects a plain value type");
+        }
+
+        type.qualifier = TypeQualifier::Ptr;
+        type.loc = ast_type.loc;
+        return type;
+    }
+
     IrType resolve_executable_type(const TypeRef& ast_type) {
+        if (ast_type.nullable) return resolve_nullable_type(ast_type);
+
         auto substitution = current_type_substitutions_.find(ast_type.name);
         if (substitution != current_type_substitutions_.end() && ast_type.args.empty()) {
             IrType type = substitution->second;
@@ -2884,7 +2820,10 @@ private:
         } else if (type.name == "type") {
             reject_type_args(ast_type);
             type.primitive = IrPrimitiveKind::MetaType;
-        } else if (type.name == "Zone" || type.name == "mem::Zone" || type.name == "prelude::Zone") {
+        } else if (type.name == "Zone" ||
+                   type.name == "mem::Zone" ||
+                   type.name == "std::Zone" ||
+                   type.name == "prelude::Zone") {
             reject_type_args(ast_type);
             type.primitive = IrPrimitiveKind::Zone;
             type.name = "Zone";
@@ -2909,7 +2848,7 @@ private:
                 type.field_types.push_back(element);
                 type.field_mutable.push_back(false);
             }
-        } else if (type.name == "Vec" || type.name == "prelude::Vec") {
+        } else if (type.name == "Vec" || type.name == "std::Vec" || type.name == "prelude::Vec") {
             if (ast_type.args.size() != 1) fail(type.loc, "Vec requires exactly one element type");
             type.primitive = IrPrimitiveKind::Vector;
             type.name = "Vec";
@@ -3787,8 +3726,8 @@ private:
         if (target.type.qualifier != TypeQualifier::Ptr) return;
 
         const IrExpr& source = zone_pointer_source_expr(value);
-        if ((source.kind == IrExprKind::Call && source.name == "zone::alloc") ||
-            (source.kind == IrExprKind::Call && source.name == "zone::new")) {
+        if (source.kind == IrExprKind::Call &&
+            (is_zone_alloc_function_name(source.name) || is_zone_new_function_name(source.name))) {
             if (!source.args.empty()) set_zone_pointer_source_from_zone_arg(target, *source.args[0]);
             return;
         }
@@ -3820,7 +3759,9 @@ private:
     }
 
     void mark_zone_reset_call(const IrExpr& call) {
-        if (call.kind != IrExprKind::Call || call.name != "zone::reset" || call.args.empty()) return;
+        if (call.kind != IrExprKind::Call || call.args.empty()) return;
+        std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(call.name);
+        if (!builtin_symbol || *builtin_symbol != "ari_builtin_zone_reset") return;
         const IrExpr& zone_arg = *call.args[0];
         std::string source_name;
         if (!zone_source_name_from_arg(zone_arg, source_name)) return;
@@ -4024,8 +3965,11 @@ private:
         return CheckedStatement{std::move(lowered), flow};
     }
 
-    static bool is_zone_scratch_initializer(const Expr& expr) {
-        return expr.kind == ExprKind::Call && is_zone_scratch_function_name(expr.name);
+    bool is_zone_scratch_initializer(const Expr& expr) const {
+        if (expr.kind != ExprKind::Call || !prelude_specials_available()) return false;
+        std::string name = resolve_use_path(expr.name);
+        return !unqualified_decl_shadows_prelude_name(expr.name, name) &&
+               is_zone_scratch_function_name(name);
     }
 
     IrExprPtr make_mutable_zone_borrow(SourceLocation loc, const std::string& zone_name) {
@@ -4248,32 +4192,14 @@ private:
         );
     }
 
-    void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init) const {
-        if (declared.primitive != IrPrimitiveKind::Vector ||
-            init.type.primitive != IrPrimitiveKind::Vector ||
-            declared.args.size() != 1 ||
-            init.type.args.size() != 1 ||
-            declared.array_size != 0 ||
-            init.type.array_size == 0) {
-            return;
-        }
-        declared.array_size = init.type.array_size;
-    }
-
-    static bool is_vector_storage(const IrType& type) {
-        return type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1;
-    }
-
     void widen_vector_storage(LocalInfo& local, std::uint64_t capacity) const {
-        if (!is_vector_storage(local.type) || capacity <= local.type.array_size) return;
-        local.type.array_size = capacity;
-        if (local.ir_storage_type && is_vector_storage(*local.ir_storage_type)) {
-            local.ir_storage_type->array_size = capacity;
+        if (!is_vector_storage_type(local.type) || capacity <= local.type.array_size) return;
+        widen_vector_storage_type(local.type, capacity);
+        if (local.ir_storage_type) {
+            widen_vector_storage_type(*local.ir_storage_type, capacity);
         }
-        if (local.ir_init_expr &&
-            local.ir_init_expr->kind == IrExprKind::Vector &&
-            is_vector_storage(local.ir_init_expr->type)) {
-            local.ir_init_expr->type.array_size = capacity;
+        if (local.ir_init_expr) {
+            widen_vector_storage_literal(*local.ir_init_expr, capacity);
         }
     }
 
@@ -4684,7 +4610,7 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*stmt.rhs, target.type);
-        if (is_vector_storage(target.type) &&
+        if (is_vector_storage_type(target.type) &&
             value->kind == IrExprKind::Vector &&
             value->args.size() > target.type.array_size) {
             widen_vector_storage(target, static_cast<std::uint64_t>(value->args.size()));
@@ -8721,14 +8647,22 @@ private:
     }
 
     void check_for(const Stmt& stmt, IrStmt& lowered) {
-        if (stmt.for_iterable &&
-            stmt.for_iterable->kind == ExprKind::Call &&
-            is_prelude_range_function_name(stmt.for_iterable->name)) {
+        std::string range_call_name;
+        bool is_range_call = false;
+        if (stmt.for_iterable && stmt.for_iterable->kind == ExprKind::Call) {
+            range_call_name = resolve_use_path(stmt.for_iterable->name);
+            is_range_call =
+                prelude_specials_available() &&
+                source_std_generic_function_available(range_call_name) &&
+                !unqualified_decl_shadows_prelude_name(stmt.for_iterable->name, range_call_name) &&
+                is_prelude_range_function_name(range_call_name);
+        }
+        if (is_range_call) {
             if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
                 fail(stmt.for_pattern.loc,
                      "range for-loop patterns must be a binding or _; richer loop-head patterns are implemented for list literals and planned for Iterator[T]");
             }
-            check_for_range(stmt, lowered);
+            check_for_range(stmt, lowered, range_call_name);
             return;
         }
         if (stmt.for_iterable && stmt.for_iterable->kind == ExprKind::Vector) {
@@ -8752,12 +8686,13 @@ private:
              "for currently supports range values, range(start, end), range_inclusive(start, end), 0..end, 0..=end, list literals, or stored local vector values; Iterator[T] lowering is planned");
     }
 
-    void check_for_range(const Stmt& stmt, IrStmt& lowered) {
+    void check_for_range(const Stmt& stmt, IrStmt& lowered, const std::string& call_name = "") {
         const Expr& call = *stmt.for_iterable;
-        if (!is_prelude_range_function_name(call.name)) {
+        const std::string& range_name = call_name.empty() ? call.name : call_name;
+        if (!is_prelude_range_function_name(range_name)) {
             fail(call.loc, "for currently supports range(start, end) iterator expressions");
         }
-        IrExprPtr range = check_range_call(call, std::make_unique<IrExpr>());
+        IrExprPtr range = check_range_call(call, std::make_unique<IrExpr>(), nullptr, range_name);
         if (range->args.size() != 2) throw CompileError("internal error: range call did not lower to two bounds");
         bool inclusive = range->type.name == "RangeInclusive";
         IrExprPtr start = std::move(range->args[0]);
@@ -9243,8 +9178,15 @@ private:
                 }
             }
         }
-        if (expr.kind == ExprKind::Call && is_prelude_range_function_name(expr.name) && is_prelude_range_type(expected)) {
-            return check_range_call(expr, std::make_unique<IrExpr>(), &expected);
+        if (expr.kind == ExprKind::Call) {
+            std::string range_name = resolve_use_path(expr.name);
+            if (prelude_specials_available() &&
+                source_std_generic_function_available(range_name) &&
+                !unqualified_decl_shadows_prelude_name(expr.name, range_name) &&
+                is_prelude_range_function_name(range_name) &&
+                is_prelude_range_type(expected)) {
+                return check_range_call(expr, std::make_unique<IrExpr>(), &expected, range_name);
+            }
         }
         return check_expr(expr);
     }
@@ -9311,7 +9253,7 @@ private:
                     if (function_found != functions_.end()) {
                         const FunctionSig& sig = function_found->second;
                         if (sig.is_variadic) {
-                            fail(expr.loc, "variadic function '" + expr.name + "' cannot be used as a function pointer yet");
+                            fail(expr.loc, "variadic extern function '" + expr.name + "' cannot be used as a function pointer value");
                         }
                         require_function_access(expr.loc, sig, function_name);
                         if (sig.deprecated) {
@@ -9465,7 +9407,7 @@ private:
             return true;
         }
 
-        if (pattern.name == "Vec" || pattern.name == "prelude::Vec") {
+        if (pattern.name == "Vec" || pattern.name == "std::Vec" || pattern.name == "prelude::Vec") {
             if (actual.primitive != IrPrimitiveKind::Vector || pattern.args.size() != 1 || actual.args.size() != 1) {
                 return false;
             }
@@ -10632,6 +10574,94 @@ private:
         return selected;
     }
 
+    void require_trait_object_method_object_safe(SourceLocation loc, const TraitInfo::Method& method) {
+        if (!method.generics.empty()) {
+            fail(loc,
+                 "trait object method '" + method.name +
+                     "' is generic and is not object-safe; use static dispatch for generic trait methods");
+        }
+        if (method.params.empty() ||
+            method.params[0].name != "Self" ||
+            method.params[0].qualifier != TypeQualifier::Value) {
+            fail(method.loc,
+                 "trait object method '" + method.name + "' must take value self as its first parameter");
+        }
+        for (std::size_t i = 1; i < method.params.size(); ++i) {
+            if (type_ref_mentions_name(method.params[i], "Self")) {
+                fail(method.params[i].loc,
+                     "trait object method '" + method.name + "' cannot mention Self outside the receiver yet");
+            }
+        }
+        if (method.has_result && type_ref_mentions_name(method.result, "Self")) {
+            fail(method.result.loc, "trait object method '" + method.name + "' cannot return Self yet");
+        }
+    }
+
+    bool try_specialize_generic_trait_method_impl(
+        SourceLocation loc,
+        const IrType& source,
+        const IrType& target,
+        const std::string& method_name,
+        ImplMethodInfo& selected
+    ) {
+        struct Match {
+            const ImplMethodInfo* method = nullptr;
+            std::map<std::string, IrType> substitutions;
+        };
+
+        std::vector<Match> matches;
+        std::string first_bound_failure;
+        for (const auto& candidate : generic_method_impls_) {
+            if (basename_of_qualified_name(candidate.fn->name) != method_name) continue;
+            if (candidate.trait_name != target.name) continue;
+            if (candidate.trait_args.size() != target.args.size()) continue;
+
+            std::map<std::string, IrType> substitutions;
+            if (!infer_generic_impl_method_substitutions(candidate, source, substitutions)) continue;
+
+            bool trait_args_match = true;
+            for (std::size_t i = 0; i < target.args.size(); ++i) {
+                if (!infer_generic_impl_pattern_type(
+                        candidate.trait_args[i],
+                        target.args[i],
+                        candidate.generic_names,
+                        substitutions)) {
+                    trait_args_match = false;
+                    break;
+                }
+            }
+            if (!trait_args_match) continue;
+
+            std::set<std::string> visiting;
+            std::string bound_failure;
+            if (!impl_generic_bounds_satisfied(candidate.generic_bounds, substitutions, visiting, &bound_failure)) {
+                if (first_bound_failure.empty()) first_bound_failure = bound_failure;
+                continue;
+            }
+            if (!impl_generic_bounds_satisfied(candidate.method_generic_bounds, substitutions, visiting, &bound_failure)) {
+                if (first_bound_failure.empty()) first_bound_failure = bound_failure;
+                continue;
+            }
+
+            matches.push_back(Match{&candidate, std::move(substitutions)});
+        }
+
+        if (matches.empty()) {
+            if (!first_bound_failure.empty()) fail(loc, first_bound_failure);
+            return false;
+        }
+        if (matches.size() > 1) {
+            fail(loc, "trait object method '" + method_name + "' for " + type_name(source) + " is ambiguous");
+        }
+
+        selected = specialize_generic_impl_method_with_substitutions(
+            *matches.front().method,
+            source,
+            method_name,
+            std::move(matches.front().substitutions));
+        return true;
+    }
+
     std::string register_trait_object_vtable(SourceLocation loc, const IrType& source, const IrType& target) {
         std::string key = type_name(source) + " as " + type_name(target);
         auto existing = trait_object_vtable_names_.find(key);
@@ -10649,47 +10679,31 @@ private:
 
         for (const auto& item : trait.methods) {
             const TraitInfo::Method& trait_method = item.second;
-            if (!trait_method.generics.empty()) {
-                fail(trait_method.loc,
-                     "trait object method '" + trait_method.name + "' cannot be generic yet");
-            }
-            if (trait_method.params.empty() ||
-                trait_method.params[0].name != "Self" ||
-                trait_method.params[0].qualifier != TypeQualifier::Value) {
-                fail(trait_method.loc,
-                     "trait object method '" + trait_method.name + "' must take value self as its first parameter");
-            }
-            for (std::size_t i = 1; i < trait_method.params.size(); ++i) {
-                if (type_ref_mentions_name(trait_method.params[i], "Self")) {
-                    fail(trait_method.params[i].loc,
-                         "trait object method '" + trait_method.name + "' cannot mention Self outside the receiver yet");
-                }
-            }
-            if (trait_method.has_result && type_ref_mentions_name(trait_method.result, "Self")) {
-                fail(trait_method.result.loc,
-                     "trait object method '" + trait_method.name + "' cannot return Self yet");
-            }
+            require_trait_object_method_object_safe(loc, trait_method);
 
-            const ImplMethodInfo* impl = find_concrete_trait_method_impl(loc, source, target, trait_method.name);
-            if (!impl) {
+            ImplMethodInfo method_impl;
+            const ImplMethodInfo* concrete_impl = find_concrete_trait_method_impl(loc, source, target, trait_method.name);
+            if (concrete_impl) {
+                method_impl = *concrete_impl;
+            } else if (!try_specialize_generic_trait_method_impl(loc, source, target, trait_method.name, method_impl)) {
                 fail(loc,
-                     "trait object conversions through generic impls are planned but are not supported yet for " +
+                     "trait object conversion could not find impl method '" + trait_method.name + "' for " +
                          trait_application_display(target.name, target.args) + " for " + type_name(source));
             }
-            queue_impl_method_for_lowering(*impl);
+            queue_impl_method_for_lowering(method_impl);
 
             IrTraitObjectVTableMethod method;
-            method.impl_name = impl->lowered_name;
+            method.impl_name = method_impl.lowered_name;
             method.thunk_name = table.name + "::" + trait_method.name;
             method.concrete_receiver_type = source;
-            method.result_type = impl->sig.result;
-            method.impl_params = impl->sig.params;
-            method.erased_params.reserve(impl->sig.params.size());
+            method.result_type = method_impl.sig.result;
+            method.impl_params = method_impl.sig.params;
+            method.erased_params.reserve(method_impl.sig.params.size());
             IrType data_pointer = void_type(loc);
             data_pointer.qualifier = TypeQualifier::Ptr;
             method.erased_params.push_back(data_pointer);
-            for (std::size_t i = 1; i < impl->sig.params.size(); ++i) {
-                method.erased_params.push_back(impl->sig.params[i]);
+            for (std::size_t i = 1; i < method_impl.sig.params.size(); ++i) {
+                method.erased_params.push_back(method_impl.sig.params[i]);
             }
             table.methods.push_back(std::move(method));
         }
@@ -10931,7 +10945,7 @@ private:
         return parts;
     }
 
-    IrExprPtr check_format_print(const Expr& expr, IrExprPtr lowered) {
+    IrExprPtr check_format_print(const Expr& expr, IrExprPtr lowered, const std::string& print_name) {
         if (expr.args.empty()) fail(expr.loc, "'" + expr.name + "' expects a string literal format argument");
         const Expr& format = *expr.args[0];
         if (format.kind != ExprKind::String) {
@@ -10940,7 +10954,7 @@ private:
 
         lowered->kind = IrExprKind::FormatPrint;
         lowered->type = i64_type(expr.loc);
-        lowered->print_newline = is_println_name(expr.name);
+        lowered->print_newline = is_println_name(print_name);
         lowered->format_parts = parse_format_string(format.loc, format.string_value, expr.args.size() - 1);
         lowered->args.reserve(expr.args.size() - 1);
 
@@ -11976,11 +11990,15 @@ private:
         }
     }
 
-    IrExprPtr check_range_call(const Expr& expr, IrExprPtr lowered, const IrType* expected_range = nullptr) {
+    IrExprPtr check_range_call(const Expr& expr,
+                               IrExprPtr lowered,
+                               const IrType* expected_range = nullptr,
+                               const std::string& call_name = "") {
         if (!expr.type_args.empty()) {
             fail(expr.loc, "range constructors do not take type arguments");
         }
         if (expr.args.size() != 2) fail(expr.loc, "range expects start and end values");
+        const std::string& range_name = call_name.empty() ? expr.name : call_name;
 
         IrType bound = i64_type(expr.loc);
         bool has_bound = expected_range &&
@@ -12000,7 +12018,7 @@ private:
         lowered->loc = expr.loc;
         lowered->type = prelude_range_type(
             expr.loc,
-            is_prelude_inclusive_range_function_name(expr.name),
+            is_prelude_inclusive_range_function_name(range_name),
             bound
         );
         lowered->args.reserve(2);
@@ -12014,7 +12032,7 @@ private:
             bound = start->type;
             lowered->type = prelude_range_type(
                 expr.loc,
-                is_prelude_inclusive_range_function_name(expr.name),
+                is_prelude_inclusive_range_function_name(range_name),
                 bound
             );
         }
@@ -12065,6 +12083,133 @@ private:
         }
         if (expr.args.size() != 1) fail(expr.loc, "len expects one array or Vec value");
         return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.args[0]));
+    }
+
+    IrExprPtr check_collection_is_empty_method_call(const Expr& expr) {
+        if (!expr.type_args.empty()) fail(expr.loc, "is_empty does not take type arguments");
+        if (!expr.args.empty()) fail(expr.loc, "is_empty expects no method arguments");
+        IrExprPtr length = make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.operand));
+        return make_collection_is_empty_expr(expr.loc, std::move(length));
+    }
+
+    LocalInfo* vec_local_method_receiver(const Expr& method_expr, const std::string& method_name) {
+        (void)method_name;
+        if (!method_expr.operand || method_expr.operand->kind != ExprKind::Name) return nullptr;
+        LocalInfo* local = find_local_slot(method_expr.operand->name);
+        if (!local || !is_vector_storage_type(local->type)) {
+            return nullptr;
+        }
+        return local;
+    }
+
+    void require_mutable_vec_method_receiver(SourceLocation loc,
+                                             const std::string& name,
+                                             LocalInfo& local,
+                                             const std::string& method_name) {
+        if (!local.mutable_binding) fail(loc, "cannot call Vec." + method_name + " on immutable binding '" + name + "'");
+        if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
+            fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
+        }
+        require_not_borrowed(loc, name, local, "mutate Vec with ." + method_name);
+    }
+
+    IrExprPtr check_vec_reserve_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_mutable_vec_method_receiver(expr.loc, name, local, "reserve");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.reserve does not take type arguments");
+        if (expr.args.size() != 1) fail(expr.loc, "Vec.reserve expects one capacity argument");
+        const Expr& capacity_expr = *expr.args[0];
+        if (capacity_expr.kind != ExprKind::Integer || capacity_expr.int_negative) {
+            fail(capacity_expr.loc, "Vec.reserve currently expects a non-negative integer literal capacity");
+        }
+        widen_vector_storage(local, capacity_expr.int_value);
+        return make_void_noop_expr(expr.loc);
+    }
+
+    IrExprPtr check_vec_capacity_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) const {
+        (void)lowered;
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.capacity does not take type arguments");
+        if (!expr.args.empty()) fail(expr.loc, "Vec.capacity expects no arguments");
+        return make_vec_capacity_expr(expr.loc, local.type);
+    }
+
+    IrExprPtr check_vec_clear_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_mutable_vec_method_receiver(expr.loc, name, local, "clear");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.clear does not take type arguments");
+        if (!expr.args.empty()) fail(expr.loc, "Vec.clear expects no arguments");
+        return make_vec_clear_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type)
+        );
+    }
+
+    IrExprPtr check_vec_truncate_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_mutable_vec_method_receiver(expr.loc, name, local, "truncate");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.truncate does not take type arguments");
+        if (expr.args.size() != 1) fail(expr.loc, "Vec.truncate expects one length argument");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr new_length = check_expr(*expr.args[0]);
+        if (!is_value_integer_type(new_length->type)) {
+            fail(expr.args[0]->loc, "Vec.truncate length must be an integer, got " + type_name(new_length->type));
+        }
+        release_temporary_borrows(borrow_mark);
+
+        return make_vec_truncate_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(new_length)
+        );
+    }
+
+    IrExprPtr check_vec_set_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_mutable_vec_method_receiver(expr.loc, name, local, "set");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.set does not take type arguments");
+        if (expr.args.size() != 2) fail(expr.loc, "Vec.set expects an index and value");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr index = check_expr(*expr.args[0]);
+        if (!is_value_integer_type(index->type)) {
+            fail(expr.args[0]->loc, "Vec.set index must be an integer, got " + type_name(index->type));
+        }
+        IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);
+        coerce_expr_to_expected(*value, local.type.args[0]);
+        require_assignable(expr.args[1]->loc, local.type.args[0], value->type);
+        release_temporary_borrows(borrow_mark);
+
+        return make_vec_set_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(index),
+            std::move(value)
+        );
+    }
+
+    IrExprPtr check_vec_push_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        const std::string& name = expr.operand->name;
+        require_mutable_vec_method_receiver(expr.loc, name, local, "push");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.push does not take type arguments");
+        if (expr.args.size() != 1) fail(expr.loc, "Vec.push expects one value argument");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
+        coerce_expr_to_expected(*value, local.type.args[0]);
+        require_assignable(expr.args[0]->loc, local.type.args[0], value->type);
+        release_temporary_borrows(borrow_mark);
+
+        lowered->kind = IrExprKind::VectorPush;
+        lowered->loc = expr.loc;
+        lowered->type = void_type(expr.loc);
+        lowered->operand = make_vec_local_lvalue(expr.operand->loc, name, local.type);
+        lowered->right = std::move(value);
+        return lowered;
     }
 
     IrExprPtr check_pointer_offset_call(const Expr& expr, IrExprPtr lowered) {
@@ -12399,6 +12544,31 @@ private:
         return lowered;
     }
 
+    IrExprPtr check_zone_temp_call(const Expr& expr, IrExprPtr lowered) {
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "zone::temp does not take type arguments");
+        }
+        if (expr.args.size() != 1) {
+            fail(expr.loc, "zone::temp expects a capacity");
+        }
+
+        IrType capacity_type = i64_type(expr.loc);
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr capacity = check_expr(*expr.args[0]);
+        coerce_expr_to_expected(*capacity, capacity_type);
+        require_assignable(expr.args[0]->loc, capacity_type, capacity->type);
+        release_temporary_borrows(borrow_mark);
+
+        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", expr.loc);
+        zone.qualifier = TypeQualifier::Own;
+        lowered->kind = IrExprKind::Call;
+        lowered->loc = expr.loc;
+        lowered->name = "zone::temp";
+        lowered->type = zone;
+        lowered->args.push_back(std::move(capacity));
+        return lowered;
+    }
+
     bool is_collection_len_method_receiver(const Expr& expr) {
         if (expr.kind == ExprKind::Vector) return true;
         if (expr.kind != ExprKind::Name) return false;
@@ -12557,52 +12727,61 @@ private:
             local_expr.name = expr.name;
             return check_indirect_call(expr.loc, check_expr(local_expr), expr.args, std::move(lowered));
         }
-        if (is_format_print_name(expr.name)) {
+        std::string prelude_name = resolve_use_path(expr.name);
+        bool local_decl_shadows_prelude = unqualified_decl_shadows_prelude_name(expr.name, prelude_name);
+        const std::string& special_name = local_decl_shadows_prelude ? expr.name : prelude_name;
+        bool can_use_prelude_special = prelude_specials_available() && !local_decl_shadows_prelude;
+        bool can_use_source_declared_prelude_special =
+            can_use_prelude_special && source_std_generic_function_available(special_name);
+
+        if (can_use_prelude_special && is_format_print_name(special_name)) {
             if (!expr.type_args.empty()) {
                 fail(expr.loc, "function '" + expr.name + "' does not take type arguments");
             }
-            return check_format_print(expr, std::move(lowered));
+            return check_format_print(expr, std::move(lowered), special_name);
         }
-        if (is_prelude_vec_len_function_name(expr.name)) {
+
+        if (can_use_prelude_special && is_prelude_vec_len_function_name(special_name)) {
             return check_vec_len_call(expr, std::move(lowered));
         }
-        if (is_prelude_pointer_offset_function_name(expr.name)) {
+        if (can_use_source_declared_prelude_special && is_prelude_pointer_offset_function_name(special_name)) {
             return check_pointer_offset_call(expr, std::move(lowered));
         }
-        if (is_prelude_pointer_add_function_name(expr.name)) {
+        if (can_use_source_declared_prelude_special && is_prelude_pointer_add_function_name(special_name)) {
             return check_pointer_add_call(expr, std::move(lowered));
         }
-        if (is_prelude_pointer_load_function_name(expr.name)) {
+        if (can_use_source_declared_prelude_special && is_prelude_pointer_load_function_name(special_name)) {
             return check_pointer_load_call(expr, std::move(lowered));
         }
-        if (is_prelude_pointer_store_function_name(expr.name)) {
+        if (can_use_source_declared_prelude_special && is_prelude_pointer_store_function_name(special_name)) {
             return check_pointer_store_call(expr, std::move(lowered));
         }
-        if (is_prelude_size_of_function_name(expr.name)) {
+        if (can_use_source_declared_prelude_special && is_prelude_size_of_function_name(special_name)) {
             return check_layout_query_call(expr, std::move(lowered), false);
         }
-        if (is_prelude_align_of_function_name(expr.name)) {
+        if (can_use_source_declared_prelude_special && is_prelude_align_of_function_name(special_name)) {
             return check_layout_query_call(expr, std::move(lowered), true);
         }
-        if (is_zone_alloc_function_name(expr.name) && !expr.type_args.empty()) {
+        if (can_use_source_declared_prelude_special && is_zone_alloc_function_name(special_name) && !expr.type_args.empty()) {
             return check_typed_zone_alloc_call(expr, std::move(lowered));
         }
-        if (is_zone_new_function_name(expr.name)) {
+        if (can_use_source_declared_prelude_special && is_zone_new_function_name(special_name)) {
             return check_zone_new_call(expr, std::move(lowered));
         }
-        if (is_zone_promote_function_name(expr.name)) {
+        if (can_use_source_declared_prelude_special && is_zone_promote_function_name(special_name)) {
             return check_zone_promote_call(expr, std::move(lowered));
         }
-        if (is_zone_scratch_function_name(expr.name)) {
+        if (can_use_prelude_special && is_zone_scratch_function_name(special_name)) {
             fail(expr.loc, "zone::scratch<T> can only initialize a local pointer binding");
         }
-        if (is_zone_temp_function_name(expr.name)) {
+        if (can_use_prelude_special && is_zone_temp_function_name(special_name)) {
             if (!allow_zone_temp_init_) {
                 fail(expr.loc, "zone::temp can only initialize a local temporary zone binding");
             }
+            return check_zone_temp_call(expr, std::move(lowered));
         }
-        if (is_prelude_range_function_name(expr.name)) {
-            return check_range_call(expr, std::move(lowered));
+        if (can_use_source_declared_prelude_special && is_prelude_range_function_name(special_name)) {
+            return check_range_call(expr, std::move(lowered), nullptr, special_name);
         }
 
         std::string function_name = resolve_function_name(expr.name);
@@ -12670,9 +12849,14 @@ private:
                 require_assignable(expr.loc, sig.params[i], arg->type);
             } else if (!is_c_vararg_value_type(arg->type)) {
                 fail(expr.args[i]->loc, "C variadic argument type is not supported: " + type_name(arg->type));
+            } else {
+                arg = promote_c_vararg(std::move(arg), expr.args[i]->loc);
             }
             if (sig.is_extern) {
-                require_no_zone_pointer_escape(expr.args[i]->loc, *arg, "extern C call argument");
+                const char* escape_context = sig.extern_abi == "ari"
+                    ? "extern ari builtin call argument"
+                    : "extern C call argument";
+                require_no_zone_pointer_escape(expr.args[i]->loc, *arg, escape_context);
             }
             lowered->args.push_back(std::move(arg));
         }
@@ -12760,23 +12944,10 @@ private:
             fail(expr.loc, "unknown method '" + expr.name + "' for type " + type_name(receiver->type));
         }
         const TraitInfo::Method& method = method_found->second;
-        if (!expr.type_args.empty() || !method.generics.empty()) {
-            fail(expr.loc, "trait object method '" + expr.name + "' cannot be generic yet");
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "trait object method '" + expr.name + "' does not accept type arguments under dyn dispatch");
         }
-        if (method.params.empty() ||
-            method.params[0].name != "Self" ||
-            method.params[0].qualifier != TypeQualifier::Value) {
-            fail(method.loc, "trait object method '" + expr.name + "' must take value self as its first parameter");
-        }
-        for (std::size_t i = 1; i < method.params.size(); ++i) {
-            if (type_ref_mentions_name(method.params[i], "Self")) {
-                fail(method.params[i].loc,
-                     "trait object method '" + expr.name + "' cannot mention Self outside the receiver yet");
-            }
-        }
-        if (method.has_result && type_ref_mentions_name(method.result, "Self")) {
-            fail(method.result.loc, "trait object method '" + expr.name + "' cannot return Self yet");
-        }
+        require_trait_object_method_object_safe(expr.loc, method);
         if (method.params.size() != expr.args.size() + 1) {
             fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
         }
@@ -12830,8 +13001,42 @@ private:
 
     IrExprPtr check_method_call(const Expr& expr, IrExprPtr lowered) {
         if (expr.name == "len" && is_collection_len_method_receiver(*expr.operand)) {
+            if (!expr.type_args.empty()) fail(expr.loc, "len does not take type arguments");
             if (!expr.args.empty()) fail(expr.loc, "len expects no method arguments");
             return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.operand));
+        }
+        if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr.operand)) {
+            return check_collection_is_empty_method_call(expr);
+        }
+        if (expr.name == "reserve") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "reserve")) {
+                return check_vec_reserve_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "capacity") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "capacity")) {
+                return check_vec_capacity_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "clear") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "clear")) {
+                return check_vec_clear_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "truncate") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "truncate")) {
+                return check_vec_truncate_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "set") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "set")) {
+                return check_vec_set_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "push") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "push")) {
+                return check_vec_push_method_call(expr, std::move(lowered), *local);
+            }
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();
@@ -13048,6 +13253,26 @@ private:
             return true;
         }
         return type.primitive == IrPrimitiveKind::Enum && type.field_types.empty();
+    }
+
+    static IrType c_vararg_promoted_type(const IrType& type) {
+        if (type.qualifier != TypeQualifier::Value) return type;
+        if (type.primitive == IrPrimitiveKind::Bool ||
+            type.primitive == IrPrimitiveKind::I8 ||
+            type.primitive == IrPrimitiveKind::U8 ||
+            type.primitive == IrPrimitiveKind::I16 ||
+            type.primitive == IrPrimitiveKind::U16) {
+            return integer_type(IrPrimitiveKind::I32, type.loc);
+        }
+        if (type.primitive == IrPrimitiveKind::F32) {
+            return primitive_type(IrPrimitiveKind::F64, "f64", type.loc);
+        }
+        return type;
+    }
+
+    static IrExprPtr promote_c_vararg(IrExprPtr arg, SourceLocation loc) {
+        IrType promoted = c_vararg_promoted_type(arg->type);
+        return make_cast_expr(loc, std::move(arg), promoted);
     }
 
     static bool is_owner_type(const IrType& type) {

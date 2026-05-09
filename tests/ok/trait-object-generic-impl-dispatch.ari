@@ -1,0 +1,19 @@
+trait Score[T] {
+  fn score(self, bonus: T) -> T
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl[T] Score[T] for Box[T] {
+  fn score(self, bonus: T) -> T {
+    self.value + bonus
+  }
+}
+
+fn main() -> i64 {
+  let boxed = Box { value: 8 };
+  let value: dyn Score[i64] = boxed as dyn Score[i64];
+  value.score(3)
+}

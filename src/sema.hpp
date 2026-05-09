@@ -11,6 +11,7 @@ namespace ari {
 struct SemaOptions {
     bool require_main = true;
     bool test_mode = false;
+    bool implicit_std = true;
     std::set<std::string> cfg_features;
 };
 

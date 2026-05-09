@@ -138,11 +138,13 @@ memory operations cannot go wrong. The language should still allow explicit
 escape hatches such as pointer casts, manual zone management, and explicit
 pointer loads/stores.
 
-`ptr T` can be stored and passed as an FFI pointer-shaped value, and `null`
-constructs a nullable raw pointer. Raw pointer casts use ordinary explicit
-casts, including `ptr T` to `ptr U`, `ptr T` to an integer address, and an
-integer address back to `ptr T`. An explicit borrow can also be converted to a
-raw pointer with `(ref value) as ptr T` or `(ref mut value) as ptr T`.
+`ptr T` can be stored and passed as an FFI pointer-shaped value, and `T?` is a
+nullable spelling for the same raw pointer type. `null` constructs a nullable
+raw pointer. Raw pointer casts use ordinary explicit casts, including `ptr T`
+to `ptr U`, `T?` to another raw pointer type, `ptr T` to an integer address,
+and an integer address back to `ptr T`. An explicit borrow can also be
+converted to a raw pointer with `(ref value) as ptr T`, `(ref mut value) as
+ptr T`, or the nullable spelling `(ref mut value) as T?`.
 
 `ptr_offset(pointer, bytes)` performs an explicit byte-wise address offset and
 returns the same raw pointer type as `pointer`. `mem::ptr_offset` is the same
