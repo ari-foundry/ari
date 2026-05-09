@@ -1,0 +1,16 @@
+@repr(C)
+enum WireTag[T] {
+  Empty,
+  Full,
+}
+
+fn score(value: WireTag[i64]) -> i64 {
+  return match value {
+    Empty => 2,
+    Full => 9,
+  };
+}
+
+fn main() -> i64 {
+  return score(Empty<i64>()) + score(Full<i64>());
+}

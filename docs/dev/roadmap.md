@@ -87,7 +87,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    foreign C layout and pointer interop.
    - [repr] finish `repr(C)` aggregate ABI layout, including value-stored
      generic fields and the policy for ownership-qualified fields; generic
-     `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots
+     `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
+     and generic fieldless enums are accepted because their layout is payload-free
    - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate offsets, scalar/plain-Ari-aggregate load/store helpers, scalar/plain-Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate field/element pointer access, and `size_of<T>()` / `align_of<T>()` layout queries are implemented
 5. Expand aggregate enum payload storage.
    Aggregate enum payload slots support integer, bool, pointer-shaped values

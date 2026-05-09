@@ -1358,9 +1358,6 @@ private:
     void validate_repr_c_enum(const EnumDecl& decl) const {
         const Attribute* repr = find_attribute(decl.attributes, "repr");
         if (!repr) return;
-        if (!decl.generics.empty()) {
-            fail(repr->loc, "attribute '@repr(C)' on generic enums is planned after generic aggregate layout");
-        }
         for (const auto& item : decl.cases) {
             if (!item.payloads.empty()) {
                 fail(item.loc, "attribute '@repr(C)' currently supports only fieldless enums");

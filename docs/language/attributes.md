@@ -24,7 +24,8 @@ Generic structs are accepted when generic parameters appear only in pointer-size
 slots such as `ptr T`, `ref T`, or `ref mut T`; value-stored generic fields are
 rejected until generic aggregate layout is explicit. `own` fields are rejected
 until the ownership ABI policy is explicit.
-`@repr(C)` enums currently must be fieldless.
+`@repr(C)` enums currently must be fieldless, including generic enums; generic
+parameters are accepted only when they do not appear in payload storage.
 
 `@cfg(...)` prunes top-level declarations before name collection and type
 checking. Disabled declarations must still parse, but their names, types, and

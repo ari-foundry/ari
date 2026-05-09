@@ -728,6 +728,10 @@ check-meta: $(TARGET)
 	$(TARGET) tests/ok/attribute-repr-generic-pointer-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-generic-pointer-fields.ll
 	grep -q "{ ptr, ptr, ptr, i64 }" $(BUILD_DIR)/meta/attribute-repr-generic-pointer-fields.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/attribute-repr-generic-pointer-fields.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/meta/attribute-repr-generic-pointer-fields.elf; $(BUILD_DIR)/meta/attribute-repr-generic-pointer-fields.elf; code=$$?; test $$code -eq 26; fi
+	$(TARGET) --freestanding tests/ok/attribute-repr-generic-fieldless-enum.ari -o $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.raw
+	$(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.raw; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/attribute-repr-generic-fieldless-enum.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.ll
+	grep -q "icmp eq i64" $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.ll
 	$(TARGET) --freestanding tests/ok/attributes-user-meta.ari -o $(BUILD_DIR)/meta/attributes-user-meta.raw
 	$(BUILD_DIR)/meta/attributes-user-meta.raw; code=$$?; test $$code -eq 9
 	$(TARGET) --freestanding tests/ok/attribute-cfg.ari -o $(BUILD_DIR)/meta/attribute-cfg.raw

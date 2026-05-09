@@ -117,8 +117,8 @@ use value, raw pointer, `ref`, or `ref mut` types. Generic structs are accepted
 when generic parameters appear only in pointer-sized slots such as `ptr T`,
 `ref T`, or `ref mut T`; value-stored generic fields are rejected until generic
 aggregate layout is explicit. `own` fields are rejected until the ownership ABI
-policy is explicit. `@repr(C)` enums currently must be fieldless because C
-tagged-union payload layout is not implemented yet.
+policy is explicit. `@repr(C)` enums currently must be fieldless, including
+generic enums; C tagged-union payload layout is not implemented yet.
 
 `@cfg(false)` prunes a declaration before name collection and type checking.
 The disabled declaration must still parse, but its names, types, and body are
