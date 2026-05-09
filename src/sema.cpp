@@ -11388,7 +11388,7 @@ private:
             fail(loc, "trait object conversions currently require value operands, got " + type_name(source));
         }
         if (source.primitive == IrPrimitiveKind::TraitObject) {
-            fail(loc, "trait object upcasts are planned but are not supported yet");
+            fail(loc, "trait object upcasts are not supported; convert from a concrete value with as dyn Trait[...]");
         }
         if (is_owner_type(source) || contains_borrow_type(source)) {
             fail(loc, "trait object conversions currently require copyable non-borrow values, got " + type_name(source));

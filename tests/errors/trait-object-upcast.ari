@@ -1,0 +1,25 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+trait Show {
+  fn show(self) -> i64
+}
+
+impl Score for i64 {
+  fn score(self) -> i64 {
+    self
+  }
+}
+
+impl Show for i64 {
+  fn show(self) -> i64 {
+    self
+  }
+}
+
+fn main() -> i64 {
+  let score: dyn Score = 7 as dyn Score;
+  let show: dyn Show = score as dyn Show;
+  return show.show();
+}

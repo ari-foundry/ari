@@ -371,8 +371,10 @@ such as `impl[T] Score[T] for Box[T]` can also be specialized into vtables for
 concrete object types such as `Box[i64] as dyn Score[i64]`. Generic trait
 methods are not object-safe: they remain available through static dispatch and
 are rejected at `as dyn` conversion or dyn method-call sites. Trait-object
-upcasts, `own`/borrow-valued dyn data pointers, and raw `--freestanding`
-lowering are still planned.
+upcasts are rejected: Ari does not reinterpret one dyn object as another dyn
+trait object, so create the target dyn value from a concrete source with
+`as dyn Trait[...]`. `own`/borrow-valued dyn data pointers and raw
+`--freestanding` lowering are still planned.
 
 ## Current Status
 
@@ -387,5 +389,5 @@ with method-level bounds are executable. `dyn Trait[...]` type syntax resolves,
 and explicit concrete-to-`dyn` conversions plus LLVM vtable dispatch are
 executable for concrete copyable source values, including vtables built from
 generic impl specializations. Generic trait methods are deliberately static-only
-for dyn objects. Associated types, dyn upcasts, non-copy dyn data ownership, and
-raw backend dyn dispatch are still planned.
+for dyn objects. Associated types, non-copy dyn data ownership, and raw backend
+dyn dispatch are still planned. Dyn-to-dyn upcasts are explicitly rejected.

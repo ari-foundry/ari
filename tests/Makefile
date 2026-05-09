@@ -829,6 +829,8 @@ check-traits: $(TARGET)
 	grep -q "type mismatch: expected dyn Score, got i64" $(BUILD_DIR)/traits/trait-object-value-planned.err
 	if $(TARGET) tests/errors/trait-object-coerce-missing-impl.ari -o $(BUILD_DIR)/traits/trait-object-coerce-missing-impl.elf >$(BUILD_DIR)/traits/trait-object-coerce-missing-impl.err 2>&1; then exit 1; fi
 	grep -q "type i64 does not implement trait 'Score' for dyn conversion" $(BUILD_DIR)/traits/trait-object-coerce-missing-impl.err
+	if $(TARGET) tests/errors/trait-object-upcast.ari -o $(BUILD_DIR)/traits/trait-object-upcast.elf >$(BUILD_DIR)/traits/trait-object-upcast.err 2>&1; then exit 1; fi
+	grep -q "trait object upcasts are not supported; convert from a concrete value with as dyn Trait\\[...\\]" $(BUILD_DIR)/traits/trait-object-upcast.err
 	if $(TARGET) tests/errors/trait-object-generic-method-conversion.ari -o $(BUILD_DIR)/traits/trait-object-generic-method-conversion.elf >$(BUILD_DIR)/traits/trait-object-generic-method-conversion.err 2>&1; then exit 1; fi
 	grep -q "trait object method 'keep' is generic and is not object-safe" $(BUILD_DIR)/traits/trait-object-generic-method-conversion.err
 	if $(TARGET) tests/errors/trait-object-generic-method-call.ari -o $(BUILD_DIR)/traits/trait-object-generic-method-call.elf >$(BUILD_DIR)/traits/trait-object-generic-method-call.err 2>&1; then exit 1; fi

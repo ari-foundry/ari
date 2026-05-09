@@ -158,10 +158,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot
     method calls are implemented for concrete and generic-impl-specialized,
-    copyable, non-borrow source values on the LLVM backend.
+    copyable, non-borrow source values on the LLVM backend. Dyn-to-dyn upcasts
+    are deliberately rejected; build a new dyn value from a concrete source
+    instead.
     - [ownership] define dyn object data-pointer ownership for `own` and
       borrow-valued source types
-    - [upcasts] support or reject `dyn SubTrait as dyn SuperTrait`
     - [freestanding] lower trait-object values and dispatch in the raw backend
 
 ## Backend Work

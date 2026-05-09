@@ -577,8 +577,8 @@ Meanings:
   `{data pointer, vtable pointer}` and method calls dispatch through vtable
   thunks. Generic impls can be specialized into vtables for concrete object
   types. Generic trait methods are not object-safe and stay statically
-  dispatched. Dyn upcasts, non-copy dyn data ownership, and raw backend lowering
-  are still planned.
+  dispatched. Dyn-to-dyn upcasts are rejected; non-copy dyn data ownership and
+  raw backend lowering are still planned.
 
 The executable subset supports scalar `own`, `ref`, and `ref mut` values and
 can preserve those qualifiers inside local tuple, fixed-array, vector, and
