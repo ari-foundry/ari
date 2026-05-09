@@ -150,15 +150,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     - [trait] resolve `IntoIterator[T]`/`Iterator[T]`
     - [loop] lower `next`-style iteration state
     - [pattern] bind refutable enum-case loop-head patterns after the iterator failure/skip semantics are designed
-10. Track move-only aggregate elements more precisely.
-    Dynamic indexes into owning arrays or vectors are deliberately rejected
-    because the checker cannot name a single element state statically; use a
-    constant index or move the whole aggregate.
-    - [fields] move owned fields out of local aggregate values without moving
-      unrelated fields
-    - [temporary-fields] define whether owned fields can be moved out of
-      temporary aggregate values
-11. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+10. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot

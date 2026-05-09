@@ -111,7 +111,9 @@ field paths, and constant fixed-array/vector indexes can be moved independently
 and later reinitialized through mutable field or element assignment; while any
 owned field or element has been moved out, moving the whole aggregate is
 rejected. Moving an owning array or vector element through a dynamic index is
-rejected; use a constant index or move the whole aggregate.
+rejected; use a constant index or move the whole aggregate. Owned fields and
+elements can be moved only from named local aggregates; moving them directly
+out of temporary aggregate expressions is rejected, so bind the aggregate first.
 
 ## Allocation Direction
 

@@ -1160,6 +1160,12 @@ check-variables: $(TARGET)
 	grep -q "cannot use moved owned field 'holder.0'" $(BUILD_DIR)/variables/ownership-aggregate-field-use-after-move.err
 	if $(TARGET) tests/errors/ownership-aggregate-partial-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-partial-move.elf >$(BUILD_DIR)/variables/ownership-aggregate-partial-move.err 2>&1; then exit 1; fi
 	grep -q "cannot move partially moved owning binding 'holder'" $(BUILD_DIR)/variables/ownership-aggregate-partial-move.err
+	if $(TARGET) tests/errors/ownership-temporary-field-move.ari -o $(BUILD_DIR)/variables/ownership-temporary-field-move.elf >$(BUILD_DIR)/variables/ownership-temporary-field-move.err 2>&1; then exit 1; fi
+	grep -q "moving owned fields out of temporary aggregate values is not supported; bind the aggregate first" $(BUILD_DIR)/variables/ownership-temporary-field-move.err
+	if $(TARGET) tests/errors/ownership-temporary-tuple-field-move.ari -o $(BUILD_DIR)/variables/ownership-temporary-tuple-field-move.elf >$(BUILD_DIR)/variables/ownership-temporary-tuple-field-move.err 2>&1; then exit 1; fi
+	grep -q "moving owned fields out of temporary aggregate values is not supported; bind the aggregate first" $(BUILD_DIR)/variables/ownership-temporary-tuple-field-move.err
+	if $(TARGET) tests/errors/ownership-temporary-array-element-move.ari -o $(BUILD_DIR)/variables/ownership-temporary-array-element-move.elf >$(BUILD_DIR)/variables/ownership-temporary-array-element-move.err 2>&1; then exit 1; fi
+	grep -q "moving owning aggregate elements out of temporary values is not supported; bind the aggregate first" $(BUILD_DIR)/variables/ownership-temporary-array-element-move.err
 	if $(TARGET) tests/errors/ownership-array-element-use-after-move.ari -o $(BUILD_DIR)/variables/ownership-array-element-use-after-move.elf >$(BUILD_DIR)/variables/ownership-array-element-use-after-move.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved owned field 'values.0'" $(BUILD_DIR)/variables/ownership-array-element-use-after-move.err
 	if $(TARGET) tests/errors/ownership-array-dynamic-element-move.ari -o $(BUILD_DIR)/variables/ownership-array-dynamic-element-move.elf >$(BUILD_DIR)/variables/ownership-array-dynamic-element-move.err 2>&1; then exit 1; fi

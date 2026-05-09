@@ -10357,7 +10357,7 @@ private:
         }
         if (is_owner_type(operand->type) && is_owner_type(fields[static_cast<std::size_t>(expr.tuple_index)])) {
             if (!operand || operand->kind != IrExprKind::Local) {
-                fail(expr.loc, "moving owned fields out of temporary aggregate values is planned but not supported yet");
+                fail(expr.loc, "moving owned fields out of temporary aggregate values is not supported; bind the aggregate first");
             }
             mark_owned_field_moved(expr.loc, operand->name, std::to_string(expr.tuple_index));
         }
@@ -10391,7 +10391,7 @@ private:
             }
         }
         if (is_owner_type(operand->type)) {
-            fail(expr.loc, "moving elements out of owning aggregate values is planned but not supported yet");
+            fail(expr.loc, "moving owning aggregate elements out of temporary values is not supported; bind the aggregate first");
         }
 
         if (operand->kind == IrExprKind::Vector) {
@@ -10474,7 +10474,7 @@ private:
         std::size_t index = struct_field_index(expr.loc, operand->type, expr.name);
         if (is_owner_type(operand->type) && is_owner_type(operand->type.field_types[index])) {
             if (!operand || operand->kind != IrExprKind::Local) {
-                fail(expr.loc, "moving owned fields out of temporary aggregate values is planned but not supported yet");
+                fail(expr.loc, "moving owned fields out of temporary aggregate values is not supported; bind the aggregate first");
             }
             mark_owned_field_moved(expr.loc, operand->name, std::to_string(index));
         }

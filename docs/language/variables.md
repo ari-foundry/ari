@@ -218,4 +218,6 @@ field or indexed-element assignment reinitializes it. Moving the whole
 aggregate after one of its owned fields has moved is rejected. Moving an owning
 array or vector element through a dynamic index is rejected because the checker
 cannot name a single tracked element path statically; use a constant index or
-move the whole aggregate.
+move the whole aggregate. Owned fields and elements can be moved only from
+named local aggregates; moving them directly out of temporary aggregate
+expressions is rejected, so bind the aggregate first.
