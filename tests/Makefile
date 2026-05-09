@@ -209,6 +209,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/for-vector-pattern.raw; code=$$?; test $$code -eq 50
 	$(TARGET) --freestanding tests/ok/if-while-let.ari -o $(BUILD_DIR)/control-flow/if-while-let.raw
 	$(BUILD_DIR)/control-flow/if-while-let.raw; code=$$?; test $$code -eq 5
+	$(TARGET) --freestanding tests/ok/while-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/while-let-or-pattern.raw
+	$(BUILD_DIR)/control-flow/while-let-or-pattern.raw; code=$$?; test $$code -eq 55
 	$(TARGET) --freestanding tests/ok/let-while.ari -o $(BUILD_DIR)/control-flow/let-while.raw
 	$(BUILD_DIR)/control-flow/let-while.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/labeled-break.ari -o $(BUILD_DIR)/control-flow/labeled-break.raw
@@ -218,6 +220,9 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/if-while-let.ari --emit-llvm $(BUILD_DIR)/control-flow/if-while-let.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/if-while-let.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/if-while-let.ll
+	$(TARGET) tests/ok/while-let-or-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-or-pattern.ll
+	grep -q "whilelet.arm" $(BUILD_DIR)/control-flow/while-let-or-pattern.ll
+	grep -q "whilelet.test" $(BUILD_DIR)/control-flow/while-let-or-pattern.ll
 	$(TARGET) tests/ok/for-range-inclusive.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-inclusive.ll
 	grep -q "icmp sle" $(BUILD_DIR)/control-flow/for-range-inclusive.ll
 	$(TARGET) tests/ok/range-values.ari --emit-llvm $(BUILD_DIR)/control-flow/range-values.ll
@@ -234,6 +239,7 @@ check-control-flow: $(TARGET)
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/control-flow/for-vector-stored.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-pattern.elf; code=$$?; test $$code -eq 50; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-stored.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-stored.elf; $(BUILD_DIR)/control-flow/for-vector-stored.elf; code=$$?; test $$code -eq 20; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/while-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; code=$$?; test $$code -eq 55; fi
 	$(TARGET) tests/ok/labeled-block.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block.ll
 	grep -q "block.end" $(BUILD_DIR)/control-flow/labeled-block.ll
 	$(TARGET) tests/ok/if-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/if-expression.ll

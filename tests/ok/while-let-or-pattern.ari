@@ -1,0 +1,36 @@
+enum Step {
+  Add(i32),
+  Sub(i32),
+  Done,
+}
+
+fn step_at(index: i64) -> Step {
+  if index == 0 {
+    return Add(4i32);
+  }
+  if index == 1 {
+    return Sub(2i32);
+  }
+  if index == 2 {
+    return Add(6i32);
+  }
+  return Done;
+}
+
+fn weight(step: Step) -> i64 {
+  return match step {
+    Add(_) => 10,
+    Sub(_) => 20,
+    Done => 0,
+  };
+}
+
+fn main() -> i64 {
+  var index = 0;
+  var total = 0;
+  while let chosen @ (Add(value) | Sub(value)) = step_at(index) {
+    total = total + weight(chosen) + (value as i64);
+    index = index + 1;
+  }
+  return total + index;
+}

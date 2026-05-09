@@ -985,23 +985,24 @@ private:
 
     void emit_while_let(const IrStmt& stmt) {
         if (stmt.match_arms.empty()) throw CompileError(where(stmt.loc) + ": while-let missing lowered pattern");
-        const IrMatchArm& arm = stmt.match_arms[0];
         std::size_t cond = out_.size();
         emit_expr(*stmt.match_value);
         emit_push(Reg::RAX);
-        std::vector<std::size_t> jump_end = emit_match_arm_fail_jumps(arm);
 
-        if (arm.has_value_binding) {
-            emit_mov_reg_rsp(Reg::RAX);
-            emit_mov_mem_reg(local_offset(arm.loc, arm.value_name), Reg::RAX);
+        std::vector<std::size_t> jump_body;
+        for (const auto& arm : stmt.match_arms) {
+            std::vector<std::size_t> jump_next = emit_match_arm_fail_jumps(arm);
+            emit_match_arm_bindings(arm);
+            emit_pop(Reg::RCX);
+            jump_body.push_back(emit_jmp_placeholder());
+            for (std::size_t patch : jump_next) patch_rel32(patch, out_.size());
         }
-        if (arm.has_payload_binding) {
-            emit_mov_reg_rsp(Reg::RAX);
-            emit_shr_rax_imm8(32);
-            emit_cast_payload_to_type(arm.loc, arm.payload_type);
-            emit_mov_mem_reg(local_offset(arm.loc, arm.payload_name), Reg::RAX);
-        }
+
         emit_pop(Reg::RCX);
+        std::size_t jump_failed = emit_jmp_placeholder();
+
+        std::size_t body = out_.size();
+        for (std::size_t patch : jump_body) patch_rel32(patch, body);
 
         LoopLabels labels;
         labels.plain_continue_known = true;
@@ -1012,10 +1013,8 @@ private:
         emit_statements(stmt.loop_body);
         patch_rel32(emit_jmp_placeholder(), cond);
 
-        std::size_t fail_cleanup = out_.size();
-        for (std::size_t patch : jump_end) patch_rel32(patch, fail_cleanup);
-        emit_pop(Reg::RCX);
         std::size_t end = out_.size();
+        patch_rel32(jump_failed, end);
         for (std::size_t patch : loops_.back().break_patches) patch_rel32(patch, end);
         loops_.pop_back();
     }
@@ -1208,16 +1207,7 @@ private:
                 has_next_patch = true;
             }
 
-            if (arm.has_value_binding) {
-                emit_mov_reg_rsp(Reg::RAX);
-                emit_mov_mem_reg(local_offset(arm.loc, arm.value_name), Reg::RAX);
-            }
-            if (arm.has_payload_binding) {
-                emit_mov_reg_rsp(Reg::RAX);
-                emit_shr_rax_imm8(32);
-                emit_cast_payload_to_type(arm.loc, arm.payload_type);
-                emit_mov_mem_reg(local_offset(arm.loc, arm.payload_name), Reg::RAX);
-            }
+            emit_match_arm_bindings(arm);
             emit_pop(Reg::RCX);
             emit_statements(arm.body);
             end_patches.push_back(emit_jmp_placeholder());
@@ -1230,6 +1220,20 @@ private:
         emit_pop(Reg::RCX);
         std::size_t end = out_.size();
         for (std::size_t patch : end_patches) patch_rel32(patch, end);
+    }
+
+    template <typename Arm>
+    void emit_match_arm_bindings(const Arm& arm) {
+        if (arm.has_value_binding) {
+            emit_mov_reg_rsp(Reg::RAX);
+            emit_mov_mem_reg(local_offset(arm.loc, arm.value_name), Reg::RAX);
+        }
+        if (arm.has_payload_binding) {
+            emit_mov_reg_rsp(Reg::RAX);
+            emit_shr_rax_imm8(32);
+            emit_cast_payload_to_type(arm.loc, arm.payload_type);
+            emit_mov_mem_reg(local_offset(arm.loc, arm.payload_name), Reg::RAX);
+        }
     }
 
     void emit_expr(const IrExpr& expr) {

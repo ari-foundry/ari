@@ -9191,14 +9191,28 @@ private:
         lowered.match_value = check_expr(*stmt.condition);
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
         IrType enum_value_type = lowered.match_value->type;
-        IrMatchArm pattern_arm = lower_enum_case_pattern(stmt.condition_pattern, enum_info, enum_value_type);
+        EnumMatchCoverage coverage;
+        std::vector<IrMatchArm> pattern_arms = lower_match_arm_patterns(
+            stmt.condition_pattern,
+            enum_info,
+            enum_value_type,
+            coverage
+        );
+        if (pattern_arms.empty()) {
+            fail(stmt.condition_pattern.loc, "while-let pattern did not lower to a match arm");
+        }
+        for (const auto& arm : pattern_arms) {
+            if (arm.wildcard) {
+                fail(stmt.condition_pattern.loc, "while-let requires a refutable enum-case pattern");
+            }
+        }
         StateSnapshot loop_input = snapshot_states();
 
         LoopInfo loop;
         loop.label = stmt.label;
         push_loop(stmt.loc, loop);
         push_scope();
-        declare_match_arm_bindings(pattern_arm);
+        declare_match_arm_bindings(pattern_arms.front());
         CheckedStatements body = check_statements(stmt.loop_body, false);
         lowered.loop_body = std::move(body.statements);
         if (body.flow == Flow::Returns) discard_scope();
@@ -9216,7 +9230,9 @@ private:
         } else {
             restore_states(loop_input);
         }
-        lowered.match_arms.push_back(std::move(pattern_arm));
+        for (auto& arm : pattern_arms) {
+            lowered.match_arms.push_back(std::move(arm));
+        }
     }
 
     void fail_refutable_for_pattern(SourceLocation loc) const {

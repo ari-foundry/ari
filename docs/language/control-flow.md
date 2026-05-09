@@ -135,7 +135,17 @@ while value < 10 {
 while let Some(value) = next(index) {
   index = index + 1;
 }
+
+while let chosen @ (Add(value) | Sub(value)) = next(index) {
+  total = total + weight(chosen) + (value as i64);
+  index = index + 1;
+}
 ```
+
+Enum `while let` supports same-name/same-type or-pattern alternatives and
+alias-wrapped alternatives. The loop body is checked once with the shared
+bindings, then each matching alternative fills those bindings before entering
+the body.
 
 Loops currently cannot change the ownership state of an outer binding. That
 rule is conservative until the checker can track loop invariants.

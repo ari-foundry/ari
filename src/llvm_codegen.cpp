@@ -1091,30 +1091,47 @@ private:
 
     void emit_while_let(const IrStmt& stmt) {
         if (stmt.match_arms.empty()) throw CompileError(where(stmt.loc) + ": while-let missing lowered pattern");
-        const IrMatchArm& arm = stmt.match_arms[0];
         std::string cond_label = label("whilelet.cond");
         std::string body_label = label("whilelet.body");
         std::string end_label = label("whilelet.end");
+        std::vector<std::string> arm_labels;
+        arm_labels.reserve(stmt.match_arms.size());
+        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
+            arm_labels.push_back(label("whilelet.arm"));
+        }
+
         line("  br label %" + cond_label);
         emit_label(cond_label);
         Value value = emit_expr(*stmt.match_value);
         std::string subject = value.name;
         std::string subject_type = value.type;
-        if (!arm.has_literal) {
+        if (value.ir_type.primitive == IrPrimitiveKind::Enum) {
             Value tag = emit_enum_tag_value(stmt.loc, value);
             subject = tag.name;
             subject_type = tag.type;
         }
-        std::string cmp = emit_match_condition(arm, value, subject, subject_type);
-        line("  br i1 " + cmp + ", label %" + body_label + ", label %" + end_label);
+
+        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
+            const IrMatchArm& arm = stmt.match_arms[i];
+            std::string next = (i + 1 == stmt.match_arms.size()) ? end_label : label("whilelet.test");
+            std::string cmp = emit_match_condition(arm, value, subject, subject_type);
+            line("  br i1 " + cmp + ", label %" + arm_labels[i] + ", label %" + next);
+            if (next != end_label) emit_label(next);
+        }
+
+        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
+            const IrMatchArm& arm = stmt.match_arms[i];
+            emit_label(arm_labels[i]);
+            if (arm.has_value_binding) {
+                Value bound = cast_value(value, arm.value_type);
+                line("  store " + bound.type + " " + bound.name + ", ptr " + local_slot(arm.loc, arm.value_name));
+            }
+            emit_payload_bindings(arm, value);
+            line("  br label %" + body_label);
+        }
 
         loops_.push_back(make_loop_context(end_label, cond_label, cond_label, stmt.label));
         emit_label(body_label);
-        if (arm.has_value_binding) {
-            Value bound = cast_value(value, arm.value_type);
-            line("  store " + bound.type + " " + bound.name + ", ptr " + local_slot(arm.loc, arm.value_name));
-        }
-        emit_payload_bindings(arm, value);
         emit_statements(stmt.loop_body);
         if (!block_terminated_) line("  br label %" + cond_label);
         loops_.pop_back();

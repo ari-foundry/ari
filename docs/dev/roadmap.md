@@ -48,15 +48,15 @@
      inputs
 3. Finish control-flow or-pattern lowering.
    `match` arms and refutable enum `let`/`var` declarations expand enum
-   or-patterns, including alias-wrapped alternatives, today. The next
-   executable step is to share that expansion with control-flow pattern forms
-   without duplicating user body declarations in ways that conflict with Ari's
+   or-patterns, including alias-wrapped alternatives, today. Enum `while let`
+   also lowers multi-alternative or-patterns through LLVM and freestanding
+   backends by filling shared bindings before one common loop body. The
+   remaining executable step is to share that expansion with `if let` without
+   duplicating user body declarations in ways that conflict with Ari's
    no-shadowing rule.
    - [if-let] expand enum or-patterns in statement and expression `if let`
-   - [while-let] lower multi-alternative `while let` through every backend
-     instead of only inspecting the first lowered arm
    - [binding-scope] preserve one semantic user body scope while still
-     materializing per-alternative payload/value binding stores
+     materializing per-alternative payload/value binding stores for `if let`
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
