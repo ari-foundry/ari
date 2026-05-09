@@ -1,0 +1,9 @@
+mod cache_consts;
+
+fn main() -> i64 {
+  if cache_consts::READY {
+    cache_consts::PICK + (cache_consts::SMALL as i64)
+  } else {
+    0
+  }
+}

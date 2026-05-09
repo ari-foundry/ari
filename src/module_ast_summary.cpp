@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -89,6 +90,87 @@ void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) 
     if (fn.has_return_type) append_type(out, fn.return_type);
 }
 
+bool is_summary_const_unary_op(TokenKind op) {
+    return op == TokenKind::Bang || op == TokenKind::Minus;
+}
+
+bool is_summary_const_binary_op(TokenKind op) {
+    switch (op) {
+        case TokenKind::AmpAmp:
+        case TokenKind::PipePipe:
+        case TokenKind::EqEq:
+        case TokenKind::BangEq:
+        case TokenKind::Less:
+        case TokenKind::LessEq:
+        case TokenKind::Greater:
+        case TokenKind::GreaterEq:
+        case TokenKind::Plus:
+        case TokenKind::Minus:
+        case TokenKind::Star:
+        case TokenKind::Slash:
+        case TokenKind::Percent:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
+    switch (expr.kind) {
+        case ExprKind::Integer:
+            append_field(out, "integer");
+            append_bool(out, expr.int_negative);
+            append_count(out, expr.int_value);
+            append_field(out, expr.literal_suffix);
+            return true;
+        case ExprKind::Bool:
+            append_field(out, "bool");
+            append_bool(out, expr.bool_value);
+            return true;
+        case ExprKind::Name:
+            append_field(out, "name");
+            append_field(out, expr.name);
+            return true;
+        case ExprKind::Unary: {
+            if (!expr.operand || !is_summary_const_unary_op(expr.op)) return false;
+            std::ostringstream operand;
+            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            append_field(out, "unary");
+            append_count(out, static_cast<std::uint64_t>(expr.op));
+            out << operand.str();
+            return true;
+        }
+        case ExprKind::Binary: {
+            if (!expr.left || !expr.right || !is_summary_const_binary_op(expr.op)) return false;
+            std::ostringstream left;
+            std::ostringstream right;
+            if (!append_const_expr_payload(left, *expr.left)) return false;
+            if (!append_const_expr_payload(right, *expr.right)) return false;
+            append_field(out, "binary");
+            append_count(out, static_cast<std::uint64_t>(expr.op));
+            out << left.str();
+            out << right.str();
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+void append_const_initializer(std::ostringstream& out, const ExprPtr& init) {
+    if (!init) {
+        append_bool(out, false);
+        return;
+    }
+    std::ostringstream payload;
+    if (!append_const_expr_payload(payload, *init)) {
+        append_bool(out, false);
+        return;
+    }
+    append_bool(out, true);
+    out << payload.str();
+}
+
 struct DeclarationSummaryCounts {
     std::uint64_t use_count = 0;
     std::uint64_t module_import_count = 0;
@@ -112,7 +194,7 @@ public:
         : text_(text), display_(std::move(display)) {}
 
     DeclarationSummaryCounts parse() {
-        consume_literal("ari-ast-decls-v1;");
+        consume_header();
         DeclarationSummaryCounts counts;
 
         counts.use_count = read_count("use count");
@@ -145,6 +227,7 @@ public:
             read_field("constant name");
             read_bool("constant visibility");
             skip_type("constant type");
+            if (version_ >= 2) skip_const_initializer("constant initializer");
         }
 
         counts.function_count = read_count("function count");
@@ -210,7 +293,7 @@ public:
     }
 
     Program parse_program() {
-        consume_literal("ari-ast-decls-v1;");
+        consume_header();
         Program program;
 
         std::uint64_t use_count = read_count("use count");
@@ -257,6 +340,9 @@ public:
             decl.name = read_field("constant name");
             decl.is_public = read_bool("constant visibility");
             decl.type = read_type("constant type");
+            if (version_ >= 2) {
+                decl.init = read_const_initializer("constant initializer");
+            }
             decl.loc = default_loc();
             program.constants.push_back(std::move(decl));
         }
@@ -362,6 +448,7 @@ private:
     const std::string& text_;
     std::string display_;
     std::size_t pos_ = 0;
+    int version_ = 0;
 
     [[noreturn]] void fail(const std::string& detail) const {
         throw CompileError("malformed declaration summary for " + display_ + ": " + detail);
@@ -371,11 +458,20 @@ private:
         return SourceLocation{1, 1};
     }
 
-    void consume_literal(const std::string& literal) {
-        if (text_.compare(pos_, literal.size(), literal) != 0) {
-            fail("expected '" + literal + "'");
+    void consume_header() {
+        const std::string v2 = "ari-ast-decls-v2;";
+        const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v2.size(), v2) == 0) {
+            version_ = 2;
+            pos_ += v2.size();
+            return;
         }
-        pos_ += literal.size();
+        if (text_.compare(pos_, v1.size(), v1) == 0) {
+            version_ = 1;
+            pos_ += v1.size();
+            return;
+        }
+        fail("expected 'ari-ast-decls-v2;' or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -536,11 +632,63 @@ private:
     void skip_function_signature() {
         (void)read_function_signature();
     }
+
+    TokenKind read_token_kind(const std::string& label) {
+        return static_cast<TokenKind>(read_count(label));
+    }
+
+    ExprPtr read_const_expr(const std::string& label) {
+        std::string kind = read_field(label + " kind");
+        auto expr = std::make_unique<Expr>();
+        expr->loc = default_loc();
+        if (kind == "integer") {
+            expr->kind = ExprKind::Integer;
+            expr->int_negative = read_bool(label + " integer sign");
+            expr->int_value = read_count(label + " integer value");
+            expr->literal_suffix = read_field(label + " integer suffix");
+            return expr;
+        }
+        if (kind == "bool") {
+            expr->kind = ExprKind::Bool;
+            expr->bool_value = read_bool(label + " bool value");
+            return expr;
+        }
+        if (kind == "name") {
+            expr->kind = ExprKind::Name;
+            expr->name = read_field(label + " name");
+            return expr;
+        }
+        if (kind == "unary") {
+            expr->kind = ExprKind::Unary;
+            expr->op = read_token_kind(label + " unary operator");
+            if (!is_summary_const_unary_op(expr->op)) fail("unsupported constant summary unary operator");
+            expr->operand = read_const_expr(label + " unary operand");
+            return expr;
+        }
+        if (kind == "binary") {
+            expr->kind = ExprKind::Binary;
+            expr->op = read_token_kind(label + " binary operator");
+            if (!is_summary_const_binary_op(expr->op)) fail("unsupported constant summary binary operator");
+            expr->left = read_const_expr(label + " binary left operand");
+            expr->right = read_const_expr(label + " binary right operand");
+            return expr;
+        }
+        fail("unknown constant expression summary kind '" + kind + "'");
+    }
+
+    ExprPtr read_const_initializer(const std::string& label) {
+        if (!read_bool(label + " flag")) return nullptr;
+        return read_const_expr(label);
+    }
+
+    void skip_const_initializer(const std::string& label) {
+        (void)read_const_initializer(label);
+    }
 };
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v1;";
+    out << "ari-ast-decls-v2;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {
@@ -572,6 +720,7 @@ std::string declaration_summary_payload(const Program& program) {
         append_field(out, decl.name);
         append_bool(out, decl.is_public);
         append_type(out, decl.type);
+        append_const_initializer(out, decl.init);
     }
 
     append_count(out, program.functions.size());
@@ -733,7 +882,9 @@ Program materialize_module_cache_ast_summary_declarations(const ModuleCacheAstSu
 }
 
 bool can_load_module_cache_ast_summary_declarations(const Program& program) {
-    if (!program.constants.empty()) return false;
+    for (const auto& decl : program.constants) {
+        if (!decl.init) return false;
+    }
     for (const auto& fn : program.functions) {
         if (fn.has_body && !fn.is_extern) return false;
     }

@@ -494,17 +494,22 @@ check-modules: $(TARGET)
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-duplicate-import.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-duplicate-import.ll >$(BUILD_DIR)/modules/package-module-main-duplicate-import.err 2>&1; then exit 1; fi
 	grep -q "duplicate import record" $(BUILD_DIR)/modules/package-module-main-duplicate-import.err
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache.ll
-	grep -q "ari-module-cache-v4" $(BUILD_DIR)/modules/package-module-main.aricache
+	grep -q "ari-module-cache-v5" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -q "metadata.*ari-module-metadata-v2" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -q "source.*package_math.*tests/packages/package_math.ari" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -Eq "ast-summary.*package_math.*tests/packages/package_math.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-module-main.aricache
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-module-main-cache.ll $(BUILD_DIR)/modules/package-module-main-cache-use.ll
 	$(TARGET) -Itests/packages tests/ok/package-cache-decls-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-decls.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-decls-cache.ll
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/modules/package-cache-decls.aricache
+	grep -q "ari-ast-decls-v2" $(BUILD_DIR)/modules/package-cache-decls.aricache
 	grep -Eq "ast-summary.*cache_decls.*tests/packages/cache_decls.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-decls.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-decls-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-decls.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-decls-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-decls-cache.ll $(BUILD_DIR)/modules/package-cache-decls-cache-use.ll
+	$(TARGET) -Itests/packages tests/ok/package-cache-const-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-const-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-header-cache.ll
+	grep -q "ari-ast-decls-v2" $(BUILD_DIR)/modules/package-cache-const-header.aricache
+	grep -Eq "ast-summary.*cache_consts.*tests/packages/cache_consts.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-const-header.aricache
+	$(TARGET) -Itests/packages tests/ok/package-cache-const-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-const-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-header-cache-use.ll
+	cmp -s $(BUILD_DIR)/modules/package-cache-const-header-cache.ll $(BUILD_DIR)/modules/package-cache-const-header-cache-use.ll
 	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache.ll
 	grep -Eq "ast-summary.*extern_header.*tests/packages/extern_header.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-extern-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache-use.ll
