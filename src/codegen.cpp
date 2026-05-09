@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <string>
 #include <utility>
@@ -131,6 +132,25 @@ private:
         return count;
     }
 
+    static int local_size_bytes(const IrType& type) {
+        std::uint64_t size = 0;
+        if (ari_layout_size_bytes(type, size) &&
+            size <= static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
+            return static_cast<int>(size);
+        }
+        return local_slot_count(type) * 8;
+    }
+
+    static int local_align_bytes(const IrType& type) {
+        std::uint64_t align = 0;
+        if (ari_layout_align_bytes(type, align) &&
+            align > 0 &&
+            align <= static_cast<std::uint64_t>(std::numeric_limits<int>::max())) {
+            return static_cast<int>(align);
+        }
+        return 8;
+    }
+
     static bool is_aggregate_type(const IrType& type) {
         return type.qualifier == TypeQualifier::Value &&
                (type.primitive == IrPrimitiveKind::Tuple ||
@@ -214,10 +234,12 @@ private:
 
     void add_local(const std::string& name, const IrType& type) {
         if (locals_.count(name)) return;
-        int slots = local_slot_count(type);
-        locals_[name] = stack_offset_ + 8;
+        int size = local_size_bytes(type);
+        int align = local_align_bytes(type);
+        stack_offset_ = align_to(stack_offset_, align);
+        locals_[name] = is_aggregate_type(type) && size > 0 ? stack_offset_ + 8 : stack_offset_ + size;
         local_types_[name] = type;
-        stack_offset_ += slots * 8;
+        stack_offset_ += size;
     }
 
     void collect_locals(const std::vector<IrStmtPtr>& statements) {

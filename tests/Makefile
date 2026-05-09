@@ -1054,6 +1054,10 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/variables-widths.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/freestanding-scalar-width-local.ari -o $(BUILD_DIR)/variables/freestanding-scalar-width-local.raw
 	$(BUILD_DIR)/variables/freestanding-scalar-width-local.raw; code=$$?; test $$code -eq 23
+	$(TARGET) --freestanding tests/ok/freestanding-scalar-stack-pack.ari -o $(BUILD_DIR)/variables/freestanding-scalar-stack-pack.raw
+	$(BUILD_DIR)/variables/freestanding-scalar-stack-pack.raw; code=$$?; test $$code -eq 10
+	objdump -d $(BUILD_DIR)/variables/freestanding-scalar-stack-pack.raw >$(BUILD_DIR)/variables/freestanding-scalar-stack-pack.asm
+	grep -q 'sub.*0x10,%rsp' $(BUILD_DIR)/variables/freestanding-scalar-stack-pack.asm
 	$(TARGET) --freestanding tests/ok/variables-match-binding.ari -o $(BUILD_DIR)/variables/variables-match-binding.raw
 	$(BUILD_DIR)/variables/variables-match-binding.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/variables-tuple-pattern.ari -o $(BUILD_DIR)/variables/variables-tuple-pattern.raw

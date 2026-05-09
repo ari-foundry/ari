@@ -27,9 +27,10 @@ let delta: i32 = -10
 Both executable backends preserve the declared integer width when scalar locals
 are read or written. On the raw `--freestanding` backend this includes narrow
 local reloads after explicit raw-pointer writes, so an `i8`, `i16`, or `i32`
-slot is sign-extended when read back through the local binding. The raw backend
-still reserves one 8-byte local stack slot per scalar until packed stack layout
-and full ABI classification are implemented.
+slot is sign-extended when read back through the local binding. Standalone
+scalar locals are placed with byte-sized offsets and their natural alignment on
+the raw backend; aggregate field layout and full ABI classification still use
+the older slot model until the shared byte-layout work lands.
 
 ## Bool
 

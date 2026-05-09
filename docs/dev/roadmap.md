@@ -57,14 +57,12 @@
      source hashes still match the current source graph and cfg/search-path
      inputs
 3. Finish exact integer-width stack and ABI layout in `--freestanding`.
-   Width-aware scalar local loads/stores are implemented for local bindings,
-   parameter spills, loop temps, match bindings, tuple/array scalar field reads,
-   and raw-pointer-mutated narrow integer reloads. The raw backend still uses
-   one 8-byte stack slot per scalar local, so the remaining work is stack
-   packing and ABI classification rather than value-width correctness for
-   normal scalar locals.
-   - [stack-pack] assign byte-accurate local offsets and alignment instead of
-     reserving one 8-byte slot for every scalar
+   Width-aware scalar local loads/stores and byte-packed standalone scalar
+   local offsets are implemented for local bindings, parameter spills, loop
+   temps, match bindings, tuple/array scalar field reads, and raw-pointer-
+   mutated narrow integer reloads. The raw backend still uses the old 8-byte
+   slot model inside aggregate layouts, so the remaining work is shared
+   aggregate byte layout and ABI classification.
    - [aggregate-offsets] share byte-accurate tuple, struct, fixed-array, and
      enum field offsets with the LLVM/layout code
    - [abi] pass and return narrow scalars and aggregates with explicit
