@@ -184,7 +184,7 @@ Checklist:
 - [x] checked dynamic indexing of stored local `Vec[T]`
 - [x] local `Vec[T]` literal reassignment with changing runtime length
 - [x] `len(value)` and `value.len()` for local vectors, fixed arrays, and constant-folded literal length
-- [x] fixed-capacity local `Vec.reserve(n)` and `Vec.push(value)` on the LLVM backend
+- [x] fixed-capacity local `Vec.reserve(n)` and auto-widening local `Vec.push(value)` on the LLVM backend
 - [x] fixed-capacity local `Vec.capacity()` on the LLVM backend
 - [x] `value.is_empty()` for local vectors, fixed arrays, and constant-folded literals
 - [x] fixed-capacity local `Vec.clear()` on the LLVM backend

@@ -214,6 +214,8 @@ struct LocalInfo {
     IrExpr* ir_init_expr = nullptr;
     bool mutable_binding = false;
     bool auto_destroy_zone = false;
+    bool vector_length_known = false;
+    std::uint64_t vector_known_length = 0;
     LocalState state = LocalState::Alive;
     std::map<std::string, LocalState> owned_field_states;
     int immutable_borrows = 0;
@@ -309,6 +311,8 @@ private:
     struct StateSnapshotEntry {
         LocalState state = LocalState::Alive;
         std::uint64_t zone_generation = 0;
+        bool vector_length_known = false;
+        std::uint64_t vector_known_length = 0;
     };
 
     using StateSnapshot = std::map<std::string, StateSnapshotEntry>;
@@ -3444,7 +3448,12 @@ private:
         StateSnapshot snapshot;
         for (const auto& scope : scopes_) {
             for (const auto& item : scope) {
-                snapshot[item.first] = StateSnapshotEntry{item.second.state, item.second.zone_generation};
+                snapshot[item.first] = StateSnapshotEntry{
+                    item.second.state,
+                    item.second.zone_generation,
+                    item.second.vector_length_known,
+                    item.second.vector_known_length
+                };
                 for (const auto& field : item.second.owned_field_states) {
                     snapshot[field_state_key(item.first, field.first)] = StateSnapshotEntry{field.second, 0};
                 }
@@ -3463,6 +3472,8 @@ private:
                 LocalInfo& local = local_slot_by_name(item.first);
                 local.state = item.second.state;
                 local.zone_generation = item.second.zone_generation;
+                local.vector_length_known = item.second.vector_length_known;
+                local.vector_known_length = item.second.vector_known_length;
             }
         }
     }
@@ -3484,6 +3495,13 @@ private:
                 continue;
             }
             found->second.zone_generation = std::max(found->second.zone_generation, item.second.zone_generation);
+            if (found->second.vector_length_known &&
+                item.second.vector_length_known &&
+                found->second.vector_known_length == item.second.vector_known_length) {
+                continue;
+            }
+            found->second.vector_length_known = false;
+            found->second.vector_known_length = 0;
         }
     }
 
@@ -3495,6 +3513,13 @@ private:
             auto found = source.find(item.first);
             if (found == source.end()) continue;
             item.second.zone_generation = std::max(item.second.zone_generation, found->second.zone_generation);
+            if (item.second.vector_length_known &&
+                found->second.vector_length_known &&
+                item.second.vector_known_length == found->second.vector_known_length) {
+                continue;
+            }
+            item.second.vector_length_known = false;
+            item.second.vector_known_length = 0;
         }
     }
 
@@ -4083,6 +4108,34 @@ private:
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
 
+    static bool vector_literal_length(const IrExpr& expr, std::uint64_t& out) {
+        if (expr.kind != IrExprKind::Vector) return false;
+        out = static_cast<std::uint64_t>(expr.args.size());
+        return true;
+    }
+
+    static void set_vector_known_length(LocalInfo& local, std::uint64_t length) {
+        if (!is_vector_storage_type(local.type)) return;
+        local.vector_length_known = true;
+        local.vector_known_length = length;
+    }
+
+    static void invalidate_vector_known_length(LocalInfo& local) {
+        if (!is_vector_storage_type(local.type)) return;
+        local.vector_length_known = false;
+        local.vector_known_length = 0;
+    }
+
+    static void set_vector_known_length_from_expr(LocalInfo& local, const IrExpr& expr) {
+        if (!is_vector_storage_type(local.type)) return;
+        std::uint64_t length = 0;
+        if (vector_literal_length(expr, length)) {
+            set_vector_known_length(local, length);
+            return;
+        }
+        invalidate_vector_known_length(local);
+    }
+
     void check_var_decl(const Stmt& stmt, IrStmt& lowered) {
         if (stmt.binding.has_pattern) {
             check_pattern_var_decl(stmt, lowered);
@@ -4138,6 +4191,7 @@ private:
         local.ir_init_expr = lowered.binding.init.get();
         local.generic_origin = std::move(generic_origin);
         local.auto_destroy_zone = is_zone_temp_call(*local.ir_init_expr);
+        set_vector_known_length_from_expr(local, *local.ir_init_expr);
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
 
@@ -4201,6 +4255,17 @@ private:
         if (local.ir_init_expr) {
             widen_vector_storage_literal(*local.ir_init_expr, capacity);
         }
+    }
+
+    void widen_vector_storage_for_push(LocalInfo& local) const {
+        if (!is_vector_storage_type(local.type)) return;
+        if (local.vector_length_known) {
+            std::uint64_t required_capacity = local.vector_known_length + 1;
+            widen_vector_storage(local, required_capacity);
+            local.vector_known_length = required_capacity;
+            return;
+        }
+        widen_vector_storage(local, local.type.array_size + 1);
     }
 
     IrStmtPtr make_ir_var_decl(SourceLocation loc, std::string name, IrType type, IrExprPtr init, bool mutable_binding) {
@@ -4620,6 +4685,7 @@ private:
         release_temporary_borrows(borrow_mark);
         target.state = LocalState::Alive;
         initialize_owned_field_states(target);
+        set_vector_known_length_from_expr(target, *value);
         set_zone_pointer_source_from_expr(target, *value);
         lowered.assign_name = stmt.assign_name;
         lowered.rhs = std::move(value);
@@ -12140,6 +12206,7 @@ private:
         require_mutable_vec_method_receiver(expr.loc, name, local, "clear");
         if (!expr.type_args.empty()) fail(expr.loc, "Vec.clear does not take type arguments");
         if (!expr.args.empty()) fail(expr.loc, "Vec.clear expects no arguments");
+        set_vector_known_length(local, 0);
         return make_vec_clear_expr(
             expr.loc,
             make_vec_local_lvalue(expr.operand->loc, name, local.type)
@@ -12157,6 +12224,11 @@ private:
         IrExprPtr new_length = check_expr(*expr.args[0]);
         if (!is_value_integer_type(new_length->type)) {
             fail(expr.args[0]->loc, "Vec.truncate length must be an integer, got " + type_name(new_length->type));
+        }
+        if (local.vector_length_known && new_length->kind == IrExprKind::Integer && !new_length->int_negative) {
+            local.vector_known_length = std::min(local.vector_known_length, new_length->int_value);
+        } else {
+            invalidate_vector_known_length(local);
         }
         release_temporary_borrows(borrow_mark);
 
@@ -12203,6 +12275,8 @@ private:
         coerce_expr_to_expected(*value, local.type.args[0]);
         require_assignable(expr.args[0]->loc, local.type.args[0], value->type);
         release_temporary_borrows(borrow_mark);
+
+        widen_vector_storage_for_push(local);
 
         lowered->kind = IrExprKind::VectorPush;
         lowered->loc = expr.loc;

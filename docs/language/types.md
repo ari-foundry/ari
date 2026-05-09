@@ -401,21 +401,23 @@ values.clear()
 `reserve(n)` currently expects a non-negative integer literal. It widens the
 compiler-known local storage capacity for that binding; it does not allocate
 heap storage yet. `push(value)` appends a copyable element, increments the
-runtime length, and traps through `panic` if the current length has already
-reached the reserved local capacity. `capacity()` returns that reserved local
-capacity as an `i64`. `is_empty()` returns `true` when the current runtime
-length is zero and does not inspect reserved capacity. `clear()` sets the
-current runtime length to zero while keeping the reserved local capacity.
+runtime length, and auto-widens the stack-backed local capacity when the
+compiler can track the binding's current length. If the length is not precise,
+`push` reserves one additional static slot so the immediate append cannot hit a
+full local buffer. `capacity()` returns that reserved local capacity as an
+`i64`. `is_empty()` returns `true` when the current runtime length is zero and
+does not inspect reserved capacity. `clear()` sets the current runtime length
+to zero while keeping the reserved local capacity.
 `truncate(n)` shrinks the current runtime length to `n` when `n` is smaller
 than the current length, leaves it unchanged when `n` is larger, and panics for
 negative runtime lengths. `set(index, value)` overwrites an existing element
 inside the current runtime length and uses the same bounds checks as indexing.
 
-The compiler reserves enough local storage for the largest vector literal seen
-or explicit `reserve` capacity for that binding, but indexing checks the
-current runtime length, not the reserved capacity. The storage is deliberately
-not heap allocation yet. Allocator-backed growth, slicing, and non-local vector
-ABI are still planned.
+The compiler reserves enough local storage for the largest vector literal,
+explicit `reserve` capacity, or tracked `push` growth seen for that binding,
+but indexing checks the current runtime length, not the reserved capacity. The
+storage is deliberately not heap allocation yet. Allocator-backed growth,
+slicing, and non-local vector ABI are still planned.
 
 Array literals support constant indexing without materializing a runtime
 aggregate:

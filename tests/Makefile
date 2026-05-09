@@ -1000,6 +1000,9 @@ check-variables: $(TARGET)
 	grep -q "store i64 0, ptr" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "vector.truncate.negative" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "store i64 9, ptr" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	$(TARGET) tests/ok/vector-push-autogrow.ari --emit-llvm $(BUILD_DIR)/variables/vector-push-autogrow.ll
+	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-push-autogrow.ll
+	grep -q "alloca { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-push-autogrow.ll
 	$(TARGET) tests/ok/array-len-literal.ari --emit-llvm $(BUILD_DIR)/variables/array-len-literal.ll
 	grep -q "ret i64 4" $(BUILD_DIR)/variables/array-len-literal.ll
 	$(TARGET) tests/ok/field-borrow.ari --emit-llvm $(BUILD_DIR)/variables/field-borrow.ll
@@ -1027,6 +1030,7 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-empty-typed.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-empty-typed.elf; $(BUILD_DIR)/variables/vector-empty-typed.elf; code=$$?; test $$code -eq 3; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-len.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-len.elf; $(BUILD_DIR)/variables/vector-len.elf; code=$$?; test $$code -eq 10; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-reserve.elf; $(BUILD_DIR)/variables/vector-push-reserve.elf; code=$$?; test $$code -eq 24; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-autogrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-autogrow.elf; $(BUILD_DIR)/variables/vector-push-autogrow.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/field-borrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/field-borrow.elf; $(BUILD_DIR)/variables/field-borrow.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/array-dynamic-index-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; if $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-storage-shrink-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; if $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; then exit 1; fi; fi

@@ -6,7 +6,10 @@
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
    `Vec.capacity()` / `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` /
    `Vec.set(index, value)` lower today on the LLVM backend as stack-backed
-   values with compile-time capacity and runtime length checks.
+   values with compile-time capacity and runtime length checks. Local `push`
+   now auto-widens stack storage when sema can track the current length, so
+   empty `Vec[T]` locals can grow through straight-line pushes without an
+   explicit `reserve`.
    Vec storage helper logic is split out of `sema.cpp` into
    `vector_semantics` so the allocator-backed work can grow outside the main
    semantic checker. Introduce the explicit allocation/capability path before

@@ -1,0 +1,16 @@
+fn main() -> i64 {
+  var direct: Vec[i64] = [];
+  direct.push(4);
+  direct.push(5);
+  direct.push(6);
+
+  var branched: Vec[i64] = [];
+  let take_branch: bool = true;
+  if take_branch {
+    branched.push(1);
+  }
+  branched.push(2);
+
+  return direct.capacity() + len(direct) + direct[0] + direct[2] +
+         branched.capacity() + len(branched) + branched[0] + branched[1];
+}
