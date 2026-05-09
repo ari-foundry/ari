@@ -6,10 +6,14 @@ fn main() -> i64 {
   let has_eight: bool = values.contains(8);
   let seven_index: i64 = values.index_of(7);
   let missing_index: i64 = values.index_of(8);
+  let seven_count: i64 = values.count(7);
+  let missing_count: i64 = values.count(8);
   let false_index: i64 = flags.index_of(false);
+  let false_count: i64 = flags.count(false);
 
   if has_seven && !has_eight && flags.contains(false) {
-    return seven_index + (0 - missing_index) + len(values) + false_index;
+    return seven_index + (0 - missing_index) + len(values) +
+      false_index + seven_count + missing_count + false_count;
   }
 
   return 99;

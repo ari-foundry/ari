@@ -1326,6 +1326,8 @@ private:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.contains yet");
             case IrExprKind::VectorIndexOf:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.index_of yet");
+            case IrExprKind::VectorCount:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.count yet");
             case IrExprKind::Noop:
                 emit_mov_reg_imm64(Reg::RAX, 0);
                 break;

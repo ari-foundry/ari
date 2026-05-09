@@ -1391,6 +1391,8 @@ private:
                 return emit_vector_search(expr, false);
             case IrExprKind::VectorIndexOf:
                 return emit_vector_search(expr, true);
+            case IrExprKind::VectorCount:
+                return emit_vector_count(expr);
             case IrExprKind::Noop:
                 return Value{"void", "", expr.type};
             case IrExprKind::FormatPrint:
@@ -1939,6 +1941,59 @@ private:
         line("  " + out + " = phi i1 [ true, %" + found_label +
              " ], [ false, %" + missing_label + " ]");
         return Value{"i1", out, expr.type};
+    }
+
+    Value emit_vector_count(const IrExpr& expr) {
+        if (!expr.operand || !expr.payload ||
+            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.count lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        const IrType& element_type = vector_type.args[0];
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        Value needle = cast_value(emit_expr(*expr.payload), element_type);
+        std::string element_llvm = llvm_type(element_type);
+        std::string len_ptr = temp();
+        std::string len = temp();
+        line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 0");
+        line("  " + len + " = load i64, ptr " + len_ptr);
+
+        std::string entry_label = current_label_;
+        std::string cond_label = label("vector.count.cond");
+        std::string body_label = label("vector.count.body");
+        std::string end_label = label("vector.count.end");
+        std::string cursor = temp();
+        std::string count = temp();
+        std::string keep_scanning = temp();
+        std::string item_ptr = temp();
+        std::string item = temp();
+        std::string increment = temp();
+        std::string next_count = temp();
+        std::string next_cursor = temp();
+
+        line("  br label %" + cond_label);
+        emit_label(cond_label);
+        line("  " + cursor + " = phi i64 [ 0, %" + entry_label +
+             " ], [ " + next_cursor + ", %" + body_label + " ]");
+        line("  " + count + " = phi i64 [ 0, %" + entry_label +
+             " ], [ " + next_count + ", %" + body_label + " ]");
+        line("  " + keep_scanning + " = icmp slt i64 " + cursor + ", " + len);
+        line("  br i1 " + keep_scanning + ", label %" + body_label + ", label %" + end_label);
+
+        emit_label(body_label);
+        line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + cursor);
+        line("  " + item + " = load " + element_llvm + ", ptr " + item_ptr);
+        std::string matched = emit_vector_value_eq(element_type, Value{element_llvm, item, element_type}, needle);
+        line("  " + increment + " = zext i1 " + matched + " to i64");
+        line("  " + next_count + " = add i64 " + count + ", " + increment);
+        line("  " + next_cursor + " = add i64 " + cursor + ", 1");
+        line("  br label %" + cond_label);
+
+        emit_label(end_label);
+        return Value{"i64", count, expr.type};
     }
 
     void emit_vector_bounds_check(const Value& index, const IrType& vector_type, const std::string& vector_ptr) {

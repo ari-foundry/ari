@@ -8,11 +8,11 @@
    `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` /
    `Vec.get(index)` / `Vec.set(index, value)` / `Vec.swap(a, b)` /
    `Vec.remove(index)` / `Vec.insert(index, value)` /
-   `Vec.contains(value)` / `Vec.index_of(value)` lower today on the LLVM
-   backend as stack-backed values with compile-time capacity, runtime length
-   checks, and linear search over copyable comparable elements. Local `push`
-   and `insert` now auto-widen stack storage when sema can track the current
-   length, so empty `Vec[T]` locals can grow through
+   `Vec.contains(value)` / `Vec.index_of(value)` / `Vec.count(value)` lower
+   today on the LLVM backend as stack-backed values with compile-time capacity,
+   runtime length checks, and linear search over copyable comparable elements.
+   Local `push` and `insert` now auto-widen stack storage when sema can track
+   the current length, so empty `Vec[T]` locals can grow through
    straight-line appends/inserts without an explicit `reserve`.
    Vec storage helper logic is split out of `sema.cpp` into
    `vector_semantics` so the allocator-backed work can grow outside the main
@@ -25,8 +25,8 @@
      allocator-backed vectors later, such as equality-driven search extensions
      after user-defined `Eq`/trait constraints exist
    - [ops-runtime] connect `push`, `insert`, `pop`, `remove`, `first`, `last`,
-     `get`, `swap`, `contains`, `index_of`, and `reserve` to allocator-backed
-     storage instead of fixed local-capacity traps
+     `get`, `swap`, `contains`, `index_of`, `count`, and `reserve` to
+     allocator-backed storage instead of fixed local-capacity traps
 2. Finish package caching for file-backed modules.
    Compact module metadata and source-snapshot module caches can be emitted,
    checked, and invalidated with cfg/search-path/source/import/item-specific

@@ -149,6 +149,7 @@ enum class IrExprKind {
     VectorInsert,
     VectorContains,
     VectorIndexOf,
+    VectorCount,
     Noop,
     FormatPrint,
     Match,

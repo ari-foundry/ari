@@ -270,6 +270,22 @@ IrExprPtr make_vec_index_of_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr
     return lowered;
 }
 
+IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value) {
+    if (!vector || !is_vector_storage_type(vector->type)) {
+        fail(loc, "Vec.count requires local Vec storage");
+    }
+    if (!value) {
+        fail(loc, "Vec.count expects a value");
+    }
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::VectorCount;
+    lowered->loc = loc;
+    lowered->type = i64_type(loc);
+    lowered->operand = std::move(vector);
+    lowered->payload = std::move(value);
+    return lowered;
+}
+
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length) {
     auto empty = std::make_unique<IrExpr>();
     empty->kind = IrExprKind::Binary;

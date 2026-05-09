@@ -12387,6 +12387,26 @@ private:
         );
     }
 
+    IrExprPtr check_vec_count_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_readable_vec_method_receiver(expr.loc, name, local, "count");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.count does not take type arguments");
+        if (expr.args.size() != 1) fail(expr.loc, "Vec.count expects one value argument");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
+        coerce_expr_to_expected(*value, local.type.args[0]);
+        require_comparable_operands(expr.args[0]->loc, local.type.args[0], value->type);
+        release_temporary_borrows(borrow_mark);
+
+        return make_vec_count_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(value)
+        );
+    }
+
     IrExprPtr check_vec_push_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "push");
@@ -13273,6 +13293,11 @@ private:
         if (expr.name == "index_of") {
             if (LocalInfo* local = vec_local_method_receiver(expr, "index_of")) {
                 return check_vec_index_of_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "count") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "count")) {
+                return check_vec_count_method_call(expr, std::move(lowered), *local);
             }
         }
         if (expr.name == "push") {

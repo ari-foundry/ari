@@ -25,6 +25,7 @@ IrExprPtr make_vec_remove_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr i
 IrExprPtr make_vec_insert_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr index, IrExprPtr value);
 IrExprPtr make_vec_contains_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
 IrExprPtr make_vec_index_of_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
+IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length);
 
 } // namespace ari
