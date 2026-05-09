@@ -46,21 +46,23 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
+3. Finish enum payload pattern coverage.
+   Symbolic rectangle coverage now proves high-cardinality integer/bool product
+   exhaustiveness without enumerating every value, and non-exhaustive product
+   matches now suggest a missing product shape when Ari can express the gap.
+   Aggregate enum payload slots now support scalar literal, constant, alias, and
+   or-pattern alternatives over literal/range payloads on the LLVM backend.
+   - [enum-nested] support nested enum-case subpatterns inside aggregate enum payload slots
+   - [compact-ranges] support range and or-pattern alternatives for compact
+     one-word enum payload slots, or retire that packed payload matching path in
+     favor of aggregate enum matching
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Medium-Term Language Work
 
-1. Expand aggregate enum payload patterns.
-   Symbolic rectangle coverage now proves high-cardinality integer/bool product
-   exhaustiveness without enumerating every value, and non-exhaustive product
-   matches now suggest a missing product shape when Ari can express the gap.
-   Aggregate enum payload slots now support scalar literal, constant, alias, and
-   or-pattern alternatives over literal payloads on the LLVM backend.
-   - [enum-ranges] support range payload patterns inside aggregate enum payload slots
-   - [enum-nested] support nested enum-case subpatterns inside aggregate enum payload slots
-2. Refine borrow checking beyond lexical named borrows.
+1. Refine borrow checking beyond lexical named borrows.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
    - [reborrow] allow safe reborrowing from existing borrow bindings
    - [borrow-results] allow borrow-valued function returns, `if`/`match`/block
@@ -70,7 +72,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [loop-state] track ownership and borrow state through loops, init-while
      updates, owning loop bindings, and owning break values instead of rejecting
      all state changes inside loops
-3. Extend pattern binding modes beyond value bindings.
+2. Extend pattern binding modes beyond value bindings.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    - [refutable-let] lower refutable enum-case `let`/`var` patterns after the
@@ -80,7 +82,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [alias-or] support alias patterns wrapped around or-patterns
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and function-parameter patterns on one shared binding-mode engine
-4. Implement user-defined compile-time meta expansion for `meta fn`.
+3. Implement user-defined compile-time meta expansion for `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
@@ -91,12 +93,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      signatures are represented
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
-5. Expand the FFI surface.
+4. Expand the FFI surface.
    - [repr] finish `repr(C)` aggregate ABI layout, including generic
      aggregates and the policy for ownership/borrow-qualified fields
    - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate offsets, scalar/plain-Ari-aggregate load/store helpers, scalar/plain-Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate field/element pointer access, and `size_of<T>()` / `align_of<T>()` layout queries are implemented
    - [abi] represent non-C ABI shims explicitly
-6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
+5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today.
     - [sum] `Option[T]`, `Maybe[T]`, and `Result[T, E]`, connected to the existing `?`/`??` propagation model
     - [nullable-values] decide whether value-level `T?` should remain raw-pointer-only syntax or grow an `Option[T]`/`Maybe[T]` lowering for non-pointer values
@@ -105,7 +107,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       `read_line` can return independent buffers instead of the current host
       reusable line buffer
     - [views] `Slice[T]`, including slice patterns after slice layout and borrowing are defined
-7. Design `std` smart-pointer and explicit move surfaces.
+6. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
     for common heap and shared-resource patterns.
@@ -119,7 +121,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       ref-count increments, and deterministic release
     - [interop] decide how smart pointers expose raw pointers for FFI without
       pretending Ari has a globally safe borrow model
-8. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
+7. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, and
@@ -136,21 +138,21 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
     - [freestanding] lower stored local vector values in the raw backend
-9. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
+8. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
     loops, and stored local vector loops lower today without trait dispatch; the
     general iterator model needs trait-bound resolution plus generic
     `Option[T]`/`Maybe[T]` result lowering for `next`.
     - [trait] resolve `IntoIterator[T]`/`Iterator[T]`
     - [loop] lower `next`-style iteration state
     - [pattern] bind refutable enum-case loop-head patterns after the iterator failure/skip semantics are designed
-10. Track move-only aggregate elements more precisely.
+9. Track move-only aggregate elements more precisely.
     - [fields] move owned fields out of local aggregate values without moving
       unrelated fields
     - [temporary-fields] define whether owned fields can be moved out of
       temporary aggregate values
     - [dynamic-indexes] support or deliberately reject moving owning aggregate
       elements through dynamic vector/array indexes with clear semantics
-11. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+10. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot

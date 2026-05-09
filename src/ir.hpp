@@ -88,6 +88,24 @@ struct IrPayloadBinding {
     IrType type;
 };
 
+struct IrPayloadLiteralCondition {
+    std::uint32_t index = 0;
+    std::uint64_t value = 0;
+    bool is_bool = false;
+    bool bool_value = false;
+};
+
+struct IrPayloadRangeCondition {
+    std::uint32_t index = 0;
+    std::uint64_t start_int = 0;
+    bool start_negative = false;
+    std::uint64_t end_int = 0;
+    bool end_negative = false;
+    bool inclusive = false;
+    bool is_unsigned = false;
+    IrType type;
+};
+
 struct IrMatchExprArm {
     bool wildcard = false;
     bool has_literal = false;
@@ -102,11 +120,8 @@ struct IrMatchExprArm {
     bool range_end_negative = false;
     bool range_inclusive = false;
     bool range_is_unsigned = false;
-    bool has_payload_literal_condition = false;
-    std::uint32_t payload_literal_index = 0;
-    std::uint64_t payload_literal_int = 0;
-    bool payload_literal_is_bool = false;
-    bool payload_literal_bool = false;
+    std::vector<IrPayloadLiteralCondition> payload_literal_conditions;
+    std::vector<IrPayloadRangeCondition> payload_range_conditions;
     std::string case_name;
     std::uint32_t enum_tag = 0;
     bool has_value_binding = false;
@@ -223,11 +238,8 @@ struct IrMatchArm {
     bool range_end_negative = false;
     bool range_inclusive = false;
     bool range_is_unsigned = false;
-    bool has_payload_literal_condition = false;
-    std::uint32_t payload_literal_index = 0;
-    std::uint64_t payload_literal_int = 0;
-    bool payload_literal_is_bool = false;
-    bool payload_literal_bool = false;
+    std::vector<IrPayloadLiteralCondition> payload_literal_conditions;
+    std::vector<IrPayloadRangeCondition> payload_range_conditions;
     std::string case_name;
     std::uint32_t enum_tag = 0;
     bool has_value_binding = false;

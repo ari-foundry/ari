@@ -301,7 +301,7 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-product-exhaustive.raw; code=$$?; test $$code -eq 17
 	$(TARGET) --freestanding tests/ok/match-symbolic-product.ari -o $(BUILD_DIR)/match/match-symbolic-product.raw
 	$(BUILD_DIR)/match/match-symbolic-product.raw; code=$$?; test $$code -eq 5
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-payload-literals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; code=$$?; test $$code -eq 32; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-payload-literals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; code=$$?; test $$code -eq 64; fi
 	$(TARGET) --freestanding tests/ok/match-or-binding.ari -o $(BUILD_DIR)/match/match-or-binding.raw
 	$(BUILD_DIR)/match/match-or-binding.raw; code=$$?; test $$code -eq 14
 	$(TARGET) --freestanding tests/ok/match-range-overlap.ari -o $(BUILD_DIR)/match/match-range-overlap.raw
@@ -362,6 +362,7 @@ check-match: $(TARGET)
 	$(TARGET) tests/ok/match-aggregate-enum-payload-literals.ari --emit-llvm $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.ll
 	grep -q "extractvalue { i32, i64 }" $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.ll
 	grep -q "icmp eq i64" $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.ll
+	grep -q "icmp sle i64" $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.ll
 	if $(TARGET) tests/errors/match-expression-type-mismatch.ari -o $(BUILD_DIR)/match/match-expression-type-mismatch.elf >$(BUILD_DIR)/match/match-expression-type-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/match/match-expression-type-mismatch.err
 	if $(TARGET) tests/errors/match-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-literal-nonexhaustive.err 2>&1; then exit 1; fi

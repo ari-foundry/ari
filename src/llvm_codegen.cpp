@@ -2167,16 +2167,36 @@ private:
         std::string arm_subject_type = arm.has_literal ? value.type : tag_subject_type;
         line("  " + cmp + " = icmp eq " + arm_subject_type + " " + arm_subject + ", " +
              match_arm_constant(arm));
-        if (arm.has_payload_literal_condition) {
-            Value payload = emit_enum_payload_slot(arm.loc, value, arm.payload_literal_index);
+        std::string condition = cmp;
+        for (const auto& payload_condition : arm.payload_literal_conditions) {
+            Value payload = emit_enum_payload_slot(arm.loc, value, payload_condition.index);
             std::string payload_cmp = temp();
             std::string both = temp();
             line("  " + payload_cmp + " = icmp eq " + payload.type + " " + payload.name + ", " +
-                 match_payload_literal_constant(arm));
-            line("  " + both + " = and i1 " + cmp + ", " + payload_cmp);
-            return both;
+                 match_payload_literal_constant(payload_condition));
+            line("  " + both + " = and i1 " + condition + ", " + payload_cmp);
+            condition = both;
         }
-        return cmp;
+        for (const auto& payload_condition : arm.payload_range_conditions) {
+            Value payload = emit_enum_payload_slot(arm.loc, value, payload_condition.index);
+            payload = cast_value(payload, payload_condition.type);
+            std::string lower = temp();
+            std::string upper = temp();
+            std::string range = temp();
+            std::string both = temp();
+            std::string lower_op = payload_condition.is_unsigned ? "uge" : "sge";
+            std::string upper_op = payload_condition.inclusive
+                ? (payload_condition.is_unsigned ? "ule" : "sle")
+                : (payload_condition.is_unsigned ? "ult" : "slt");
+            line("  " + lower + " = icmp " + lower_op + " " + payload.type + " " +
+                 payload.name + ", " + match_payload_range_start_constant(payload_condition));
+            line("  " + upper + " = icmp " + upper_op + " " + payload.type + " " +
+                 payload.name + ", " + match_payload_range_end_constant(payload_condition));
+            line("  " + range + " = and i1 " + lower + ", " + upper);
+            line("  " + both + " = and i1 " + condition + ", " + range);
+            condition = both;
+        }
+        return condition;
     }
 
     template <typename Arm>
@@ -2186,10 +2206,17 @@ private:
         return (arm.literal_negative ? "-" : "") + std::to_string(arm.literal_int);
     }
 
-    template <typename Arm>
-    static std::string match_payload_literal_constant(const Arm& arm) {
-        if (arm.payload_literal_is_bool) return arm.payload_literal_bool ? "1" : "0";
-        return std::to_string(arm.payload_literal_int);
+    static std::string match_payload_literal_constant(const IrPayloadLiteralCondition& condition) {
+        if (condition.is_bool) return condition.bool_value ? "1" : "0";
+        return std::to_string(condition.value);
+    }
+
+    static std::string match_payload_range_start_constant(const IrPayloadRangeCondition& condition) {
+        return (condition.start_negative ? "-" : "") + std::to_string(condition.start_int);
+    }
+
+    static std::string match_payload_range_end_constant(const IrPayloadRangeCondition& condition) {
+        return (condition.end_negative ? "-" : "") + std::to_string(condition.end_int);
     }
 
     template <typename Arm>

@@ -1497,8 +1497,8 @@ private:
 
     template <typename Arm>
     std::vector<std::size_t> emit_match_arm_fail_jumps(const Arm& arm) {
-        if (arm.has_payload_literal_condition) {
-            throw CompileError(where(arm.loc) + ": freestanding backend does not lower aggregate enum payload literal patterns yet");
+        if (!arm.payload_literal_conditions.empty() || !arm.payload_range_conditions.empty()) {
+            throw CompileError(where(arm.loc) + ": freestanding backend does not lower aggregate enum payload test patterns yet");
         }
         if (arm.has_range) return emit_match_range_fail_jumps(arm);
         emit_match_arm_test(arm);

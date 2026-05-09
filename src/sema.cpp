@@ -6044,10 +6044,18 @@ private:
     }
 
     static std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
-        if (arm.has_payload_literal_condition) {
-            return std::to_string(arm.enum_tag) + ":" +
-                   std::to_string(arm.payload_literal_index) + ":" +
-                   std::to_string(arm.payload_literal_int);
+        if (!arm.payload_literal_conditions.empty() || !arm.payload_range_conditions.empty()) {
+            std::string key = std::to_string(arm.enum_tag);
+            for (const auto& condition : arm.payload_literal_conditions) {
+                key += ":L" + std::to_string(condition.index) + ":" + std::to_string(condition.value);
+            }
+            for (const auto& condition : arm.payload_range_conditions) {
+                key += ":R" + std::to_string(condition.index) + ":" +
+                       (condition.start_negative ? "-" : "") + std::to_string(condition.start_int) + ":" +
+                       (condition.end_negative ? "-" : "") + std::to_string(condition.end_int) + ":" +
+                       (condition.inclusive ? "1" : "0");
+            }
+            return key;
         }
         return std::to_string(arm.literal_int);
     }
@@ -6432,9 +6440,13 @@ private:
                 lower_alias_payload_pattern(payload, payload_type, case_info, lowered_arm, payload_index, aggregate_layout);
                 return payload.alias_pattern && payload.alias_pattern->kind == PatternKind::Wildcard;
             case PatternKind::Range:
-                fail(payload.loc, "range payload patterns are planned but are not supported yet");
+                if (aggregate_layout) {
+                    lower_aggregate_enum_payload_range_pattern(payload, payload_type, lowered_arm, payload_index);
+                    return false;
+                }
+                fail(payload.loc, "range payload patterns for compact enum payloads are planned but are not supported yet");
             case PatternKind::Or:
-                fail(payload.loc, "or-pattern enum payloads are planned but are not supported yet");
+                fail(payload.loc, "or-patterns for compact enum payloads are planned but are not supported yet");
             case PatternKind::EnumCase: {
                 ConstantValue constant_pattern;
                 if (try_constant_pattern_value(payload, constant_pattern)) {
@@ -6497,9 +6509,13 @@ private:
                 lowered_arm.literal_negative = false;
                 return;
             case PatternKind::Range:
-                fail(aliased.loc, "range payload patterns are planned but are not supported yet");
+                if (aggregate_layout) {
+                    lower_aggregate_enum_payload_range_pattern(aliased, payload_type, lowered_arm, payload_index);
+                    return;
+                }
+                fail(aliased.loc, "range payload patterns for compact enum payloads are planned but are not supported yet");
             case PatternKind::Or:
-                fail(aliased.loc, "or-pattern enum payloads are planned but are not supported yet");
+                fail(aliased.loc, "or-patterns for compact enum payloads are planned but are not supported yet");
             case PatternKind::EnumCase: {
                 ConstantValue constant_pattern;
                 if (try_constant_pattern_value(aliased, constant_pattern)) {
@@ -6529,9 +6545,12 @@ private:
     static void set_aggregate_enum_payload_literal_condition(IrMatchArm& lowered_arm,
                                                              std::uint32_t payload_index,
                                                              std::uint64_t payload_bits) {
-        lowered_arm.has_payload_literal_condition = true;
-        lowered_arm.payload_literal_index = payload_index;
-        lowered_arm.payload_literal_int = payload_bits;
+        lowered_arm.payload_literal_conditions.push_back(IrPayloadLiteralCondition{
+            payload_index,
+            payload_bits,
+            false,
+            false
+        });
     }
 
     static void lower_aggregate_enum_payload_bool_literal(SourceLocation loc,
@@ -6544,8 +6563,8 @@ private:
             fail(loc, "bool payload patterns require a bool enum payload");
         }
         set_aggregate_enum_payload_literal_condition(lowered_arm, payload_index, value ? 1ULL : 0ULL);
-        lowered_arm.payload_literal_is_bool = true;
-        lowered_arm.payload_literal_bool = value;
+        lowered_arm.payload_literal_conditions.back().is_bool = true;
+        lowered_arm.payload_literal_conditions.back().bool_value = value;
     }
 
     static void lower_aggregate_enum_payload_integer_literal(const Pattern& pattern,
@@ -6575,6 +6594,64 @@ private:
             payload_index,
             integer_literal_payload_bits(pattern.int_value, pattern.int_negative, payload_type)
         );
+    }
+
+    static IrExpr make_payload_range_endpoint_literal(SourceLocation loc,
+                                                      std::uint64_t value,
+                                                      bool negative,
+                                                      const std::string& suffix,
+                                                      const IrType& payload_type) {
+        IrExpr literal;
+        literal.kind = IrExprKind::Integer;
+        literal.loc = loc;
+        literal.int_value = value;
+        literal.int_negative = negative;
+        literal.type = suffix.empty()
+            ? payload_type
+            : integer_literal_suffix_type(suffix, loc);
+        if (!integer_literal_fits(literal, literal.type)) {
+            fail(loc, "integer literal " + integer_literal_name(literal) +
+                      " is out of range for " + type_name(literal.type));
+        }
+        require_assignable(loc, payload_type, literal.type);
+        return literal;
+    }
+
+    static void lower_aggregate_enum_payload_range_pattern(const Pattern& pattern,
+                                                           const IrType& payload_type,
+                                                           IrMatchArm& lowered_arm,
+                                                           std::uint32_t payload_index) {
+        if (!is_value_integer_type(payload_type)) {
+            fail(pattern.loc, "range payload patterns require an integer enum payload");
+        }
+        make_payload_range_endpoint_literal(
+            pattern.loc,
+            pattern.int_value,
+            pattern.int_negative,
+            pattern.literal_suffix,
+            payload_type
+        );
+        make_payload_range_endpoint_literal(
+            pattern.loc,
+            pattern.range_end_value,
+            pattern.range_end_negative,
+            pattern.range_end_suffix,
+            payload_type
+        );
+        if (!range_start_le_end(pattern, payload_type)) {
+            fail(pattern.loc, "range pattern start must be <= end");
+        }
+
+        lowered_arm.payload_range_conditions.push_back(IrPayloadRangeCondition{
+            payload_index,
+            pattern.int_value,
+            pattern.int_negative,
+            pattern.range_end_value,
+            pattern.range_end_negative,
+            pattern.range_inclusive,
+            is_unsigned_integer_primitive(payload_type.primitive),
+            payload_type
+        });
     }
 
     static void lower_aggregate_enum_payload_constant_pattern(SourceLocation loc,
@@ -6712,11 +6789,8 @@ private:
         expr_arm.range_end_negative = arm.range_end_negative;
         expr_arm.range_inclusive = arm.range_inclusive;
         expr_arm.range_is_unsigned = arm.range_is_unsigned;
-        expr_arm.has_payload_literal_condition = arm.has_payload_literal_condition;
-        expr_arm.payload_literal_index = arm.payload_literal_index;
-        expr_arm.payload_literal_int = arm.payload_literal_int;
-        expr_arm.payload_literal_is_bool = arm.payload_literal_is_bool;
-        expr_arm.payload_literal_bool = arm.payload_literal_bool;
+        expr_arm.payload_literal_conditions = std::move(arm.payload_literal_conditions);
+        expr_arm.payload_range_conditions = std::move(arm.payload_range_conditions);
         expr_arm.case_name = std::move(arm.case_name);
         expr_arm.enum_tag = arm.enum_tag;
         expr_arm.has_value_binding = arm.has_value_binding;
