@@ -1,0 +1,32 @@
+@repr(C)
+struct GenericSlots[T] {
+  shared: ref T,
+  unique: ref mut T,
+  raw: ptr T,
+  tag: i64,
+}
+
+fn inspect(value: ref i64) -> i64 {
+  return 7;
+}
+
+fn touch(value: ref mut i64) -> i64 {
+  return 11;
+}
+
+fn use_slots(slots: GenericSlots[i64]) -> i64 {
+  return inspect(slots.shared) + touch(slots.unique) + ptr_load(slots.raw) + slots.tag;
+}
+
+fn main() -> i64 {
+  var shared_source = 1;
+  var unique_source = 2;
+  var raw_source = 3;
+  let slots = GenericSlots<i64> {
+    shared: ref shared_source,
+    unique: ref mut unique_source,
+    raw: (ref mut raw_source) as ptr i64,
+    tag: 5,
+  };
+  return use_slots(slots);
+}

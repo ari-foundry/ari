@@ -85,9 +85,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    Ari-owned `extern "ari"` builtin hooks are represented as explicit
    non-C ABI shims in IR, so the remaining FFI work can stay focused on
    foreign C layout and pointer interop.
-   - [repr] finish `repr(C)` aggregate ABI layout, including generic
-     aggregates and the policy for ownership-qualified fields; `ref` and
-     `ref mut` fields are accepted as pointer-sized C layout slots
+   - [repr] finish `repr(C)` aggregate ABI layout, including value-stored
+     generic fields and the policy for ownership-qualified fields; generic
+     `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots
    - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate offsets, scalar/plain-Ari-aggregate load/store helpers, scalar/plain-Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate field/element pointer access, and `size_of<T>()` / `align_of<T>()` layout queries are implemented
 5. Expand aggregate enum payload storage.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
