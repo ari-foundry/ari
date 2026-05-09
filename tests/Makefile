@@ -315,6 +315,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-product-shadow-warning.raw; code=$$?; test $$code -eq 1
 	$(TARGET) --freestanding tests/ok/match-alias-pattern.ari -o $(BUILD_DIR)/match/match-alias-pattern.raw
 	$(BUILD_DIR)/match/match-alias-pattern.raw; code=$$?; test $$code -eq 28
+	$(TARGET) --freestanding tests/ok/match-alias-or-pattern.ari -o $(BUILD_DIR)/match/match-alias-or-pattern.raw
+	$(BUILD_DIR)/match/match-alias-or-pattern.raw; code=$$?; test $$code -eq 66
 	$(TARGET) --freestanding tests/ok/match-enum-payload-literals.ari -o $(BUILD_DIR)/match/match-enum-payload-literals.raw
 	$(BUILD_DIR)/match/match-enum-payload-literals.raw; code=$$?; test $$code -eq 66
 	$(TARGET) --freestanding tests/ok/constant-patterns.ari -o $(BUILD_DIR)/match/constant-patterns.raw
@@ -339,6 +341,9 @@ check-match: $(TARGET)
 	$(TARGET) tests/ok/match-alias-pattern.ari --emit-llvm $(BUILD_DIR)/match/match-alias-pattern.ll
 	grep -q "store i64" $(BUILD_DIR)/match/match-alias-pattern.ll
 	grep -q "store i8" $(BUILD_DIR)/match/match-alias-pattern.ll
+	$(TARGET) tests/ok/match-alias-or-pattern.ari --emit-llvm $(BUILD_DIR)/match/match-alias-or-pattern.ll
+	grep -q "match.expr.arm" $(BUILD_DIR)/match/match-alias-or-pattern.ll
+	grep -q "store { i64, i1 }" $(BUILD_DIR)/match/match-alias-or-pattern.ll
 	$(TARGET) tests/ok/match-enum-payload-literals.ari --emit-llvm $(BUILD_DIR)/match/match-enum-payload-literals.ll
 	grep -q "4294967297" $(BUILD_DIR)/match/match-enum-payload-literals.ll
 	grep -q "icmp eq i64" $(BUILD_DIR)/match/match-enum-payload-literals.ll

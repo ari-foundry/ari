@@ -331,6 +331,22 @@ let mirrored = match pair {
 };
 ```
 
+Aliases can wrap an or-pattern in match arms. Ari expands the alternatives and
+binds the alias in each expanded arm:
+
+```ari
+let score = match event {
+  whole @ (Add(1) | Sub(2)) => classify(whole),
+  rest @ (Add(amount) | Sub(amount)) => (amount as i64) + classify(rest),
+  End => 0,
+};
+
+let tuple_score = match pair {
+  matched_pair @ ((1, true) | (2, false)) => matched_pair.0,
+  _ => 0,
+};
+```
+
 An or-pattern such as `Some(value) | None` is rejected because `None` does not
 bind `value`. `Small(value) | Big(value)` is also rejected if the two payload
 types differ.
@@ -527,8 +543,9 @@ let score = match value {
 };
 ```
 
-The alias is immutable and scoped to its arm. Payload aliases are also supported
-for the current single-payload enum surface:
+The alias is immutable and scoped to its arm. Alias patterns may wrap literal,
+range, enum-case, tuple, array, struct, or or-pattern forms in match arms.
+Payload aliases are also supported for the current single-payload enum surface:
 
 ```ari
 let score = match value {

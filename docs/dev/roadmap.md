@@ -68,7 +68,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      failure behavior is designed
    - [or-bindings] support binding unification for or-patterns in all aggregate
      pattern positions
-   - [alias-or] support alias patterns wrapped around or-patterns
+   - [control-flow-or] expand or-patterns, including alias-wrapped
+     alternatives, in `if let`, `while let`, and refutable `let`/`var`
+     patterns without duplicating user body declarations
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and function-parameter patterns on one shared binding-mode engine
 3. Implement user-defined compile-time meta expansion for `meta fn`.

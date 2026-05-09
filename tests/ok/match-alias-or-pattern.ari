@@ -1,0 +1,56 @@
+enum Token {
+  Add(i32),
+  Sub(i32),
+  End,
+}
+
+fn token_tag(value: Token) -> i64 {
+  return match value {
+    Add(_) => 10,
+    Sub(_) => 20,
+    End => 30,
+  };
+}
+
+fn enum_score(value: Token) -> i64 {
+  return match value {
+    whole @ (Add(1) | Sub(2)) => token_tag(whole),
+    rest @ (Add(amount) | Sub(amount)) => (amount as i64) + token_tag(rest),
+    End => 3,
+  };
+}
+
+fn scalar_score(value: u8) -> i64 {
+  return match value {
+    small @ (1u8 | 2u8) => small as i64,
+    bigger @ (3u8..=5u8 | 6u8) => (bigger as i64) * 2,
+    _ => 0,
+  };
+}
+
+fn main() -> i64 {
+  let pair_one = match (2, false) {
+    first_pair @ ((1, true) | (2, false)) => first_pair.0,
+    _ => 0,
+  };
+  let pair_two = match (3, true) {
+    second_pair @ ((1, true) | (2, false)) => second_pair.0,
+    third_pair @ ((3, true) | (4, false)) => third_pair.0 * 2,
+    _ => 0,
+  };
+  let pair_three = match (9, false) {
+    fourth_pair @ ((1, true) | (2, false)) => fourth_pair.0,
+    _ => 0,
+  };
+
+  return enum_score(Add(1i32)) +
+         enum_score(Sub(2i32)) +
+         enum_score(Add(5i32)) +
+         enum_score(End) +
+         scalar_score(2u8) +
+         scalar_score(4u8) +
+         scalar_score(9u8) +
+         pair_one +
+         pair_two +
+         pair_three;
+}
