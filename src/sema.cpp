@@ -3,6 +3,7 @@
 #include "attribute_semantics.hpp"
 #include "ari_builtin.hpp"
 #include "cfg_eval.hpp"
+#include "ir_builders.hpp"
 #include "layout.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
@@ -4268,51 +4269,11 @@ private:
         widen_vector_storage(local, local.type.array_size + 1);
     }
 
-    IrStmtPtr make_ir_var_decl(SourceLocation loc, std::string name, IrType type, IrExprPtr init, bool mutable_binding) {
-        auto stmt = std::make_unique<IrStmt>();
-        stmt->kind = IrStmtKind::VarDecl;
-        stmt->loc = loc;
-        stmt->binding.name = std::move(name);
-        stmt->binding.loc = loc;
-        stmt->binding.mutable_binding = mutable_binding;
-        stmt->binding.type = std::move(type);
-        stmt->binding.init = std::move(init);
-        return stmt;
-    }
-
     static bool is_aggregate_type(const IrType& type) {
         return type.qualifier == TypeQualifier::Value &&
                (type.primitive == IrPrimitiveKind::Tuple ||
                 type.primitive == IrPrimitiveKind::Array ||
                 type.primitive == IrPrimitiveKind::Struct);
-    }
-
-    IrExprPtr make_tuple_index_expr(SourceLocation loc, const std::string& source_name, const IrType& source_type, std::size_t index) const {
-        const std::vector<IrType>& fields = aggregate_field_types(source_type);
-        auto expr = std::make_unique<IrExpr>();
-        expr->kind = IrExprKind::TupleIndex;
-        expr->loc = loc;
-        expr->tuple_index = index;
-        expr->type = fields[index];
-        expr->operand = make_local_lvalue_expr(loc, source_name, source_type);
-        return expr;
-    }
-
-    IrExprPtr make_vector_index_expr(SourceLocation loc,
-                                     const std::string& source_name,
-                                     const IrType& source_type,
-                                     const std::string& index_name,
-                                     const IrType& index_type) const {
-        if (source_type.primitive != IrPrimitiveKind::Vector || source_type.args.size() != 1) {
-            fail(loc, "internal error: vector index expression requires a vector source");
-        }
-        auto expr = std::make_unique<IrExpr>();
-        expr->kind = IrExprKind::Index;
-        expr->loc = loc;
-        expr->type = source_type.args[0];
-        expr->operand = make_local_lvalue_expr(loc, source_name, source_type);
-        expr->right = make_local_lvalue_expr(loc, index_name, index_type);
-        return expr;
     }
 
     void lower_binding_pattern_from_local(
@@ -4760,15 +4721,6 @@ private:
         if (!local.mutable_binding) fail(loc, "cannot assign to field of immutable binding '" + expr.name + "'");
         require_not_borrowed(loc, expr.name, local, "assign to");
         return local;
-    }
-
-    IrExprPtr make_local_lvalue_expr(SourceLocation loc, const std::string& name, const IrType& type) const {
-        auto base = std::make_unique<IrExpr>();
-        base->kind = IrExprKind::Local;
-        base->loc = loc;
-        base->name = name;
-        base->type = type;
-        return base;
     }
 
     bool try_build_tracked_aggregate_access(const Expr& expr, TrackedAggregateAccess& out) {
@@ -6923,15 +6875,6 @@ private:
         return arms;
     }
 
-    IrExprPtr make_bool_literal_expr(SourceLocation loc, bool value) const {
-        auto literal = std::make_unique<IrExpr>();
-        literal->kind = IrExprKind::Bool;
-        literal->loc = loc;
-        literal->type = bool_type(loc);
-        literal->bool_value = value;
-        return literal;
-    }
-
     IrExprPtr make_pattern_integer_expr(const Pattern& pattern, const IrType& expected) const {
         IrExpr literal = make_pattern_integer_literal(
             pattern.loc,
@@ -6965,17 +6908,6 @@ private:
 
         auto expr = std::make_unique<IrExpr>();
         *expr = std::move(literal);
-        return expr;
-    }
-
-    IrExprPtr make_bool_binary_expr(SourceLocation loc, IrBinaryOp op, IrExprPtr left, IrExprPtr right) const {
-        auto expr = std::make_unique<IrExpr>();
-        expr->kind = IrExprKind::Binary;
-        expr->loc = loc;
-        expr->op = op;
-        expr->type = bool_type(loc);
-        expr->left = std::move(left);
-        expr->right = std::move(right);
         return expr;
     }
 
@@ -11794,29 +11726,6 @@ private:
         return nullptr;
     }
 
-    static IrExprPtr make_cast_expr(SourceLocation loc, IrExprPtr value, const IrType& target) {
-        if (same_type(value->type, target)) return value;
-        auto cast = std::make_unique<IrExpr>();
-        cast->kind = IrExprKind::Cast;
-        cast->loc = loc;
-        cast->type = target;
-        cast->operand = std::move(value);
-        return cast;
-    }
-
-    IrExprPtr make_builtin_call(SourceLocation loc,
-                                const std::string& name,
-                                std::vector<IrExprPtr> args,
-                                const IrType& result) const {
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::Call;
-        lowered->loc = loc;
-        lowered->name = name;
-        lowered->type = result;
-        lowered->args = std::move(args);
-        return lowered;
-    }
-
     IrExprPtr check_assert_compare_macro(const Expr& expr, PreludeMacroKind kind, std::vector<ExprPtr> args) {
         if (args.size() != 2) fail(expr.loc, "wrong argument count for '" + expr.name + "!'");
 
@@ -14208,19 +14117,6 @@ private:
         if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Bool) {
             fail(loc, "condition must be bool or integer-convertible, got " + type_name(type));
         }
-    }
-
-    static IrExprPtr make_integer_literal(SourceLocation loc, const IrType& type, std::uint64_t value) {
-        auto zero = std::make_unique<IrExpr>();
-        zero->kind = IrExprKind::Integer;
-        zero->loc = loc;
-        zero->type = type;
-        zero->int_value = value;
-        return zero;
-    }
-
-    static IrExprPtr make_integer_zero(SourceLocation loc, const IrType& type) {
-        return make_integer_literal(loc, type, 0);
     }
 
     static void coerce_condition_to_bool(SourceLocation loc, IrExprPtr& expr) {

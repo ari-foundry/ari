@@ -9,6 +9,9 @@ construction. Some helpers have already moved out to focused files:
 - `prelude_resolver` for compiler-known standard-library spellings
 - `try_model` for `?` residual shape helpers
 - `vector_semantics` for local `Vec[T]` storage helpers
+- `ir_builders` for basic IR node construction helpers such as local lvalues,
+  var declarations, tuple/vector indexes, literals, casts, bool conditions, and
+  direct builtin calls
 - `module_metadata` and `module_cache` for package graph summaries and caches
 
 The next refactors should keep behavior unchanged and move one responsibility at
@@ -26,12 +29,19 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      `type_name`-adjacent validation helpers.
    - Keep `resolve_executable_type` in `SemanticChecker` until name resolution
      state is split.
-2. Extract constant evaluation into `constant_semantics`.
+2. Continue extracting basic IR construction into `ir_builders`.
+   - Local lvalues, IR var declarations, tuple/vector index helpers, scalar
+     literals, casts, bool binary conditions, and direct builtin call nodes are
+     already outside `sema.cpp`.
+   - Next small targets are enum constructors, pointer operation nodes, and
+     block/match/if expression assembly once their semantic checks have narrow
+     inputs.
+3. Extract constant evaluation into `constant_semantics`.
    - Move `ConstantValue`, literal folding, constant binary evaluation,
      constant pattern conversion, cycle diagnostics, and constant-to-IR literal
      construction.
    - Keep the constant declaration table owned by `SemanticChecker` initially.
-3. Extract pattern coverage helpers into `pattern_coverage`.
+4. Extract pattern coverage helpers into `pattern_coverage`.
    - Move scalar range interval math, finite product domain enumeration,
      duplicate/shadow detection helpers, and exhaustiveness diagnostics.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
@@ -106,14 +116,15 @@ surface.
 
 ## Suggested Order
 
-1. `constant_semantics`
-2. `pattern_coverage`
-3. `local_state`
-4. `borrow_semantics`
-5. `zone_semantics`
-6. `name_resolution`
-7. `trait_semantics`
-8. `expr_lowering` / `stmt_lowering`
+1. `ir_builders` continuation
+2. `constant_semantics`
+3. `pattern_coverage`
+4. `local_state`
+5. `borrow_semantics`
+6. `zone_semantics`
+7. `name_resolution`
+8. `trait_semantics`
+9. `expr_lowering` / `stmt_lowering`
 
 This order keeps early patches mostly pure, then moves stateful pieces only
 after their dependencies have a stable API. The end state should make

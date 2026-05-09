@@ -948,6 +948,9 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/variables-tuple-pattern.ari --emit-llvm $(BUILD_DIR)/variables/variables-tuple-pattern.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/variables/variables-tuple-pattern.ll
 	grep -q "extractvalue { { i64, i1 }, i64 }" $(BUILD_DIR)/variables/variables-tuple-pattern.ll
+	$(TARGET) tests/ok/ir-builder-smoke.ari --emit-llvm $(BUILD_DIR)/variables/ir-builder-smoke.ll
+	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/variables/ir-builder-smoke.ll
+	grep -q "getelementptr inbounds { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/ir-builder-smoke.ll
 	$(TARGET) tests/ok/unit-empty-tuple.ari --emit-llvm $(BUILD_DIR)/variables/unit-empty-tuple.ll
 	grep -q "define {}" $(BUILD_DIR)/variables/unit-empty-tuple.ll
 	grep -q "store {} zeroinitializer" $(BUILD_DIR)/variables/unit-empty-tuple.ll
@@ -1038,6 +1041,7 @@ check-variables: $(TARGET)
 	$(TARGET) --freestanding tests/ok/variables-enum-pattern-binding-trap.ari -o $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.raw
 	if $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.raw; then exit 1; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-basic.elf; $(BUILD_DIR)/variables/variables-basic.elf; code=$$?; test $$code -eq 12; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ir-builder-smoke.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/ir-builder-smoke.elf; $(BUILD_DIR)/variables/ir-builder-smoke.elf; code=$$?; test $$code -eq 16; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/unit-empty-tuple.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/unit-empty-tuple.elf; $(BUILD_DIR)/variables/unit-empty-tuple.elf; code=$$?; test $$code -eq 10; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-host-scalars.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-host-scalars.elf; $(BUILD_DIR)/variables/variables-host-scalars.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ownership-aggregate-storage.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/ownership-aggregate-storage.elf; $(BUILD_DIR)/variables/ownership-aggregate-storage.elf; code=$$?; test $$code -eq 47; fi

@@ -1,0 +1,19 @@
+fn main() -> i64 {
+  let pair = (3, 4);
+  let first = pair.0;
+  let second = pair.1;
+  let small: i8 = 3i8;
+  let widened = small as i64;
+  let values: Vec[i64] = [1, 2, 3];
+  var total = 0;
+
+  for value in values {
+    total = total + value;
+  }
+
+  if total != 6 {
+    return 99;
+  }
+
+  return first + second + widened + total;
+}
