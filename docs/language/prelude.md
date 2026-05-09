@@ -390,6 +390,8 @@ let empty: Vec[i64] = []
 let fixed = [1, 2, 3]
 let span: Range[i64] = 1..4
 let byte_span: Range[u8] = range(1, 4)
+var first = 1
+let view: Slice[i64] = Slice<i64> { data: (ref mut first) as ptr i64, len: 1 }
 ```
 
 These names are available without `std::` when implicit `std` loading is on.
@@ -405,6 +407,20 @@ the largest vector literal assigned to the binding. A typed `Vec[T]` context
 supplies the element type for empty `[]`. `len(values)` and `values.len()` read
 vector runtime length or fixed array length. Growable heap vectors remain an
 explicit-allocator feature for later.
+
+`Slice[T]` is a source `std` view struct:
+
+```ari
+struct Slice[T] {
+  data: ptr T,
+  len: i64,
+}
+```
+
+It is non-owning and carries no hidden borrow lifetime yet; constructing one is
+the same explicit raw-pointer promise as other `ptr T` uses. Slicing
+expressions, borrowed slice construction helpers, and slice patterns are still
+planned after the layout and borrowing policy are nailed down.
 
 Ranges are compiler-known two-field values:
 
@@ -451,7 +467,6 @@ Additional Rust-like standard surfaces are reserved with clear diagnostics:
 
 ```ari
 Box[T]
-Slice[T]
 ```
 
 `Hash` and hash-map containers are intentionally not part of the prelude. They

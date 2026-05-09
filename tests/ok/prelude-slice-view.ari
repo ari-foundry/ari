@@ -1,0 +1,23 @@
+use std as core;
+
+fn score(slice: Slice[i64]) -> i64 {
+  return ptr_load(slice.data) + slice.len;
+}
+
+fn qualified(slice: std::Slice[i64]) -> i64 {
+  return std::mem::ptr_load(slice.data) + slice.len;
+}
+
+fn aliased(slice: core::Slice[i64]) -> i64 {
+  return core::mem::ptr_load(slice.data) + slice.len;
+}
+
+fn main() -> i64 {
+  var first = 5;
+  var second = 7;
+  var third = 11;
+  let one: Slice[i64] = Slice<i64> { data: (ref mut first) as ptr i64, len: 1 };
+  let two: std::Slice[i64] = std::Slice<i64> { data: (ref mut second) as ptr i64, len: 2 };
+  let three: core::Slice[i64] = core::Slice<i64> { data: (ref mut third) as ptr i64, len: 3 };
+  return score(one) + qualified(two) + aliased(three);
+}

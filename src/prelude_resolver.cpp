@@ -232,7 +232,7 @@ bool is_source_declared_prelude_special_name(const std::string& name) {
 
 bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
     std::string base = unqualified_name(name);
-    if (base == "Box" || base == "Slice") {
+    if (base == "Box") {
         arity = 1;
         return true;
     }
@@ -243,9 +243,6 @@ std::string planned_prelude_type_message(const std::string& name) {
     std::string base = unqualified_name(name);
     if (base == "Box") {
         return "prelude type 'Box' is planned but needs explicit allocator capabilities first";
-    }
-    if (base == "Slice") {
-        return "prelude type 'Slice' is planned but slice layout and borrowing are not implemented yet";
     }
     return "prelude type '" + name + "' is planned but not implemented yet";
 }

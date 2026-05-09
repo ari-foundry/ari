@@ -145,8 +145,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/prelude-maybe-alias.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
 	grep -q "try.ok" $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
 	grep -q "coalesce.ok" $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
+	$(TARGET) tests/ok/prelude-slice-view.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-view.ll
+	grep -q "getelementptr inbounds" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-maybe-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; code=$$?; test $$code -eq 25; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
 		$(BUILD_DIR)/prelude/prelude-header-main.elf >$(BUILD_DIR)/prelude/prelude-header-main.out; \
