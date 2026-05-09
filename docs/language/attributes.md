@@ -19,6 +19,8 @@ struct Point {
 
 `@repr(C)` may be used on structs and enums. The compiler validates that the
 current aggregate surface can use C layout. Generic aggregates are rejected, and
+`@repr(C)` struct fields may use value, raw pointer, `ref`, or `ref mut` types;
+`own` fields are rejected until the ownership ABI policy is explicit.
 `@repr(C)` enums currently must be fieldless.
 
 `@cfg(...)` prunes top-level declarations before name collection and type

@@ -112,10 +112,11 @@ The compiler accepts a small built-in attribute surface:
 - `@test` on functions
 - `@cfg(...)` on top-level declarations
 
-`@repr(C)` is constrained to the supported C-layout surface. Generic
-aggregates are rejected until generic aggregate layout exists, and `@repr(C)`
-enums currently must be fieldless because C tagged-union payload layout is not
-implemented yet.
+`@repr(C)` is constrained to the supported C-layout surface. Struct fields may
+use value, raw pointer, `ref`, or `ref mut` types; `own` fields are rejected
+until the ownership ABI policy is explicit. Generic aggregates are rejected
+until generic aggregate layout exists, and `@repr(C)` enums currently must be
+fieldless because C tagged-union payload layout is not implemented yet.
 
 `@cfg(false)` prunes a declaration before name collection and type checking.
 The disabled declaration must still parse, but its names, types, and body are

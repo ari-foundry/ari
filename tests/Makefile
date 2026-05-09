@@ -721,6 +721,10 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/attributes-builtin.raw; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/attributes-builtin.ari --emit-llvm $(BUILD_DIR)/meta/attributes-builtin.ll >$(BUILD_DIR)/meta/attribute-deprecated.warn 2>&1
 	grep -q "warning: use of deprecated function 'old_value': use next_value" $(BUILD_DIR)/meta/attribute-deprecated.warn
+	$(TARGET) tests/ok/attribute-repr-borrow-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
+	grep -q "{ ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
+	grep -q "extractvalue { ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/attribute-repr-borrow-fields.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/meta/attribute-repr-borrow-fields.elf; $(BUILD_DIR)/meta/attribute-repr-borrow-fields.elf; code=$$?; test $$code -eq 38; fi
 	$(TARGET) --freestanding tests/ok/attributes-user-meta.ari -o $(BUILD_DIR)/meta/attributes-user-meta.raw
 	$(BUILD_DIR)/meta/attributes-user-meta.raw; code=$$?; test $$code -eq 9
 	$(TARGET) --freestanding tests/ok/attribute-cfg.ari -o $(BUILD_DIR)/meta/attribute-cfg.raw
@@ -746,6 +750,8 @@ check-meta: $(TARGET)
 	grep -q "attribute '@repr' currently supports only C layout" $(BUILD_DIR)/meta/attribute-repr-unsupported.err
 	if $(TARGET) tests/errors/attribute-repr-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-repr-enum-payload.elf >$(BUILD_DIR)/meta/attribute-repr-enum-payload.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr(C)' currently supports only fieldless enums" $(BUILD_DIR)/meta/attribute-repr-enum-payload.err
+	if $(TARGET) tests/errors/attribute-repr-own-field.ari -o $(BUILD_DIR)/meta/attribute-repr-own-field.elf >$(BUILD_DIR)/meta/attribute-repr-own-field.err 2>&1; then exit 1; fi
+	grep -q "attribute '@repr(C)' fields cannot use ownership qualifiers yet" $(BUILD_DIR)/meta/attribute-repr-own-field.err
 	if $(TARGET) tests/errors/attribute-cfg-argument.ari -o $(BUILD_DIR)/meta/attribute-cfg-argument.elf >$(BUILD_DIR)/meta/attribute-cfg-argument.err 2>&1; then exit 1; fi
 	grep -q "unknown cfg predicate 'enabled'" $(BUILD_DIR)/meta/attribute-cfg-argument.err
 	if $(TARGET) tests/errors/attribute-deprecated-argument.ari -o $(BUILD_DIR)/meta/attribute-deprecated-argument.elf >$(BUILD_DIR)/meta/attribute-deprecated-argument.err 2>&1; then exit 1; fi

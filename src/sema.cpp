@@ -1326,8 +1326,10 @@ private:
         }
         for (const auto& field : decl.fields) {
             if (field.type.qualifier != TypeQualifier::Value &&
+                field.type.qualifier != TypeQualifier::Ref &&
+                field.type.qualifier != TypeQualifier::MutRef &&
                 field.type.qualifier != TypeQualifier::Ptr) {
-                fail(field.loc, "attribute '@repr(C)' fields cannot use ownership or borrow qualifiers yet");
+                fail(field.loc, "attribute '@repr(C)' fields cannot use ownership qualifiers yet");
             }
         }
     }

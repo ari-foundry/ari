@@ -1,0 +1,30 @@
+@repr(C)
+struct BorrowSlots {
+  shared: ref i64,
+  unique: ref mut i64,
+  raw: ptr i64,
+}
+
+fn inspect(value: ref i64) -> i64 {
+  return 3;
+}
+
+fn touch(value: ref mut i64) -> i64 {
+  return 5;
+}
+
+fn use_slots(slots: BorrowSlots) -> i64 {
+  return inspect(slots.shared) + touch(slots.unique) + ptr_load(slots.raw);
+}
+
+fn main() -> i64 {
+  var shared_source = 10;
+  var unique_source = 20;
+  var raw_source = 30;
+  let slots = BorrowSlots {
+    shared: ref shared_source,
+    unique: ref mut unique_source,
+    raw: (ref mut raw_source) as ptr i64,
+  };
+  return use_slots(slots);
+}
