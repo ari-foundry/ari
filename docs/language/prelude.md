@@ -407,8 +407,8 @@ expected type is present, and the same syntax initializes `Vec[T]` when a
 local storage keeps a runtime length plus a local stack capacity chosen from
 the largest vector literal assigned to the binding. A typed `Vec[T]` context
 supplies the element type for empty `[]`. `len(values)` and `values.len()` read
-vector runtime length or fixed array length. Growable heap vectors remain an
-explicit-allocator feature for later.
+vector runtime length, fixed array length, or `Slice[T].len`. Growable heap
+vectors remain an explicit-allocator feature for later.
 
 `Slice[T]` is a source `std` view struct:
 
@@ -425,6 +425,7 @@ through a `std` alias. Passing its `data` is the same explicit raw-pointer
 promise as other `ptr T` uses. Slicing expressions, array/vector borrowed slice
 helpers, and slice patterns are still planned after the layout and borrowing
 policy are nailed down.
+`len(view)`, `view.len()`, and `view.is_empty()` read the stored length.
 
 Ranges are compiler-known two-field values:
 

@@ -488,6 +488,15 @@ private:
                type.args.size() == 1;
     }
 
+    static bool is_prelude_slice_type(const IrType& type) {
+        return type.primitive == IrPrimitiveKind::Struct &&
+               type.name == "std::Slice" &&
+               type.args.size() == 1 &&
+               type.field_names.size() == 2 &&
+               type.field_names[0] == "data" &&
+               type.field_names[1] == "len";
+    }
+
     static bool is_qualified_name(const std::string& name) {
         return is_qualified_path(name);
     }
@@ -12905,9 +12914,10 @@ private:
 
     IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value) {
         if ((value->type.primitive != IrPrimitiveKind::Vector &&
-             value->type.primitive != IrPrimitiveKind::Array) ||
+             value->type.primitive != IrPrimitiveKind::Array &&
+             !is_prelude_slice_type(value->type)) ||
             value->type.args.size() != 1) {
-            fail(loc, "len expects an array or Vec value, got " + type_name(value->type));
+            fail(loc, "len expects an array, Vec, or Slice value, got " + type_name(value->type));
         }
         if (value->type.primitive == IrPrimitiveKind::Array) {
             if (value->kind == IrExprKind::Vector && is_owner_type(value->type)) {
@@ -12925,7 +12935,7 @@ private:
         auto lowered = std::make_unique<IrExpr>();
         lowered->kind = IrExprKind::TupleIndex;
         lowered->loc = loc;
-        lowered->tuple_index = 0;
+        lowered->tuple_index = is_prelude_slice_type(value->type) ? 1 : 0;
         lowered->type = i64_type(loc);
         lowered->operand = std::move(value);
         return lowered;
@@ -12936,7 +12946,7 @@ private:
         if (!expr.type_args.empty()) {
             fail(expr.loc, "len does not take type arguments");
         }
-        if (expr.args.size() != 1) fail(expr.loc, "len expects one array or Vec value");
+        if (expr.args.size() != 1) fail(expr.loc, "len expects one array, Vec, or Slice value");
         return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.args[0]));
     }
 
@@ -13620,7 +13630,8 @@ private:
         if (expr.kind != ExprKind::Name) return false;
         const LocalInfo* local = find_local_slot(expr.name);
         return local && (local->type.primitive == IrPrimitiveKind::Vector ||
-                         local->type.primitive == IrPrimitiveKind::Array);
+                         local->type.primitive == IrPrimitiveKind::Array ||
+                         is_prelude_slice_type(local->type));
     }
 
     const ImplMethodInfo* select_constrained_method_impl(

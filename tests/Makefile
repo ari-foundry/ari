@@ -149,7 +149,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std12slice__G_i64' $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-maybe-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; code=$$?; test $$code -eq 25; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 29; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 36; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
 		$(BUILD_DIR)/prelude/prelude-header-main.elf >$(BUILD_DIR)/prelude/prelude-header-main.out; \
@@ -1214,7 +1214,7 @@ check-variables: $(TARGET)
 	if $(TARGET) tests/errors/array-index-out-of-range.ari -o $(BUILD_DIR)/variables/array-index-out-of-range.elf >$(BUILD_DIR)/variables/array-index-out-of-range.err 2>&1; then exit 1; fi
 	grep -q "array index 2 is out of range for 2 elements" $(BUILD_DIR)/variables/array-index-out-of-range.err
 	if $(TARGET) tests/errors/vector-len-non-vec.ari -o $(BUILD_DIR)/variables/vector-len-non-vec.elf >$(BUILD_DIR)/variables/vector-len-non-vec.err 2>&1; then exit 1; fi
-	grep -q "len expects an array or Vec value, got i64" $(BUILD_DIR)/variables/vector-len-non-vec.err
+	grep -q "len expects an array, Vec, or Slice value, got i64" $(BUILD_DIR)/variables/vector-len-non-vec.err
 	if $(TARGET) tests/errors/vector-empty-untyped.ari -o $(BUILD_DIR)/variables/vector-empty-untyped.elf >$(BUILD_DIR)/variables/vector-empty-untyped.err 2>&1; then exit 1; fi
 	grep -Fq "empty [] literals need an explicit Vec[T] type or non-empty array elements" $(BUILD_DIR)/variables/vector-empty-untyped.err
 	if $(TARGET) tests/errors/variables-match-binding-immutable.ari -o $(BUILD_DIR)/variables/variables-match-binding-immutable.elf >$(BUILD_DIR)/variables/variables-match-binding-immutable.err 2>&1; then exit 1; fi

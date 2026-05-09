@@ -373,7 +373,9 @@ values = [9]
 
 Use `len(values)` or method syntax `values.len()` to read the current runtime
 length. Use `values.is_empty()` to compare that runtime length with zero.
-Array lengths, including direct array literal lengths, are folded directly:
+The same `len(view)`, `view.len()`, and `view.is_empty()` forms read the stored
+length from a `Slice[T]` view. Array lengths, including direct array literal
+lengths, are folded directly:
 
 ```ari
 let before = len(values)

@@ -111,8 +111,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `std` generic enums exposed through the implicit prelude and connected to
     `?`/`??` on the LLVM aggregate-enum path. `Slice[T]` is a source `std`
     view struct with `data: ptr T` and `len: i64`; `slice(data, len)` builds
-    that view from a raw pointer and length. It is non-owning and still relies
-    on explicit raw-pointer discipline.
+    that view from a raw pointer and length, while `len(view)`, `view.len()`,
+    and `view.is_empty()` read the stored length. It is non-owning and still
+    relies on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]`/`Maybe[T]` ADT path.
     - [owned] `Box[T]`
