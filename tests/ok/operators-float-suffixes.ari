@@ -3,5 +3,9 @@ fn main() -> i64 {
   let ten = 1.0e+1f64;
   let half: f32 = 0.5f32;
   let precise: f64 = 2.5f64;
+  var stored: f64 = ten;
+  stored = precise;
+  var narrow: f32 = one;
+  narrow = half;
   return 0;
 }

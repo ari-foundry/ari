@@ -69,8 +69,11 @@ let scientific = 1.0e+1
 ```
 
 The default LLVM host backend lowers `f32`, `f64`, and `f128` values as LLVM
-`float`, `double`, and `fp128`. The `--freestanding` backend still rejects
-runtime float values until native floating-point lowering is implemented.
+`float`, `double`, and `fp128`. The `--freestanding` backend can store and load
+local `f32`/`f64` literal values as raw IEEE bit patterns, which is enough for
+inert locals and assignments. It still rejects `f128`, float calls, casts,
+arithmetic, and comparisons until native floating-point ABI and operator
+lowering are implemented.
 
 ## Strings
 

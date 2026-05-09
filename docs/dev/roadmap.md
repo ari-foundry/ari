@@ -206,7 +206,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 3. Add freestanding runtime string storage so raw ELF output can lower string
    values and line input helpers without relying on the host C runtime.
 4. Lower floating-point scalar values and calls in the freestanding backend.
-   - [values] materialize `f32`, `f64`, and eventual `f128` scalar expressions
+   Raw local `f32`/`f64` literals and assignments can now be materialized as
+   IEEE bit-pattern scalar storage. This intentionally does not pretend to be
+   real native float lowering yet: arithmetic, comparisons, casts, calls, and
+   `f128` still fail with dedicated freestanding diagnostics.
+   - [values] materialize eventual `f128` scalar expressions
    - [abi] pass and return supported floats with the platform calling convention
    - [ops] lower arithmetic, comparisons, casts, and raw pointer load/store for
      float pointee types

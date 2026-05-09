@@ -622,6 +622,8 @@ check-operators: $(TARGET)
 	$(BUILD_DIR)/operators/operators-numeric-suffixes.raw; code=$$?; test $$code -eq 41
 	$(TARGET) --freestanding tests/ok/operators-numeric-bases.ari -o $(BUILD_DIR)/operators/operators-numeric-bases.raw
 	$(BUILD_DIR)/operators/operators-numeric-bases.raw; code=$$?; test $$code -eq 33
+	$(TARGET) --freestanding tests/ok/operators-float-suffixes.ari -o $(BUILD_DIR)/operators/operators-float-suffixes.raw
+	$(BUILD_DIR)/operators/operators-float-suffixes.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/operators-bitwise-not.ari -o $(BUILD_DIR)/operators/operators-bitwise-not.raw
 	$(BUILD_DIR)/operators/operators-bitwise-not.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/operators-compound-assignment.ari -o $(BUILD_DIR)/operators/operators-compound-assignment.raw
@@ -1660,7 +1662,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/integer-literal-too-large.ari -o $(BUILD_DIR)/errors/integer-literal-too-large.elf >$(BUILD_DIR)/errors/integer-literal-too-large.err 2>&1; then exit 1; fi
 	grep -q "integer literal is too large" $(BUILD_DIR)/errors/integer-literal-too-large.err
 	if $(TARGET) --freestanding tests/errors/float-backend.ari -o $(BUILD_DIR)/errors/float-backend.elf >$(BUILD_DIR)/errors/float-backend.err 2>&1; then exit 1; fi
-	grep -q "backend does not lower float values yet" $(BUILD_DIR)/errors/float-backend.err
+	grep -q "freestanding backend does not lower float operators yet" $(BUILD_DIR)/errors/float-backend.err
 	if $(TARGET) --freestanding tests/errors/string-backend.ari -o $(BUILD_DIR)/errors/string-backend.elf >$(BUILD_DIR)/errors/string-backend.err 2>&1; then exit 1; fi
 	grep -q "backend does not lower string values yet" $(BUILD_DIR)/errors/string-backend.err
 	if $(TARGET) tests/errors/class-removed.ari -o $(BUILD_DIR)/errors/class-removed.elf >$(BUILD_DIR)/errors/class-removed.err 2>&1; then exit 1; fi

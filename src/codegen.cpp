@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <map>
 #include <string>
@@ -71,6 +72,7 @@ public:
         : fn_(fn), extern_abis_(extern_abis) {}
 
     CompiledFunction emit() {
+        reject_float_function_abi();
         if (has_aggregate_return()) add_aggregate_return_pointer_local();
         for (const auto& param : fn_.params) add_local(param.name, param.type);
         collect_locals(fn_.body);
@@ -167,6 +169,26 @@ private:
 
     bool has_aggregate_return() const {
         return is_aggregate_type(fn_.return_type);
+    }
+
+    static bool is_raw_float_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               (type.primitive == IrPrimitiveKind::F32 ||
+                type.primitive == IrPrimitiveKind::F64 ||
+                type.primitive == IrPrimitiveKind::F128);
+    }
+
+    void reject_float_function_abi() const {
+        for (const auto& param : fn_.params) {
+            if (is_raw_float_type(param.type)) {
+                throw CompileError(where(param.type.loc) +
+                                   ": freestanding backend does not lower float parameters yet");
+            }
+        }
+        if (is_raw_float_type(fn_.return_type)) {
+            throw CompileError(where(fn_.loc) +
+                               ": freestanding backend does not lower float return values yet");
+        }
     }
 
     IrType aggregate_return_pointer_type(SourceLocation loc) const {
@@ -854,6 +876,33 @@ private:
         out_.u64(value);
     }
 
+    static std::uint64_t float_literal_bits(SourceLocation loc, const IrExpr& expr) {
+        if (expr.type.qualifier != TypeQualifier::Value) {
+            throw CompileError(where(loc) + ": freestanding backend cannot materialize non-value float literal");
+        }
+        if (expr.type.primitive == IrPrimitiveKind::F32) {
+            float value = static_cast<float>(expr.float_value);
+            std::uint32_t bits = 0;
+            std::memcpy(&bits, &value, sizeof(bits));
+            return bits;
+        }
+        if (expr.type.primitive == IrPrimitiveKind::F64) {
+            double value = expr.float_value;
+            std::uint64_t bits = 0;
+            std::memcpy(&bits, &value, sizeof(bits));
+            return bits;
+        }
+        if (expr.type.primitive == IrPrimitiveKind::F128) {
+            throw CompileError(where(loc) +
+                               ": freestanding backend does not lower f128 float values yet");
+        }
+        throw CompileError(where(loc) + ": freestanding backend expected a float literal");
+    }
+
+    void emit_float_literal(const IrExpr& expr) {
+        emit_mov_reg_imm64(Reg::RAX, float_literal_bits(expr.loc, expr));
+    }
+
     void emit_mov_reg_reg(Reg dst, Reg src) {
         int d = reg_code(dst);
         int s = reg_code(src);
@@ -1257,6 +1306,10 @@ private:
                 emit_lea_reg_local(Reg::RAX, temp_offset);
                 emit_mov_mem_rsp_reg(static_cast<int>((i + abi_shift) * 8), Reg::RAX);
                 continue;
+            }
+            if (is_raw_float_type(expr.args[i]->type)) {
+                throw CompileError(where(expr.args[i]->loc) +
+                                   ": freestanding backend does not lower float call arguments yet");
             }
             emit_expr(*expr.args[i]);
             emit_mov_mem_rsp_reg(static_cast<int>((i + abi_shift) * 8), Reg::RAX);
@@ -1929,7 +1982,8 @@ private:
                 emit_mov_reg_imm64(Reg::RAX, expr.int_negative ? 0 - expr.int_value : expr.int_value);
                 break;
             case IrExprKind::Float:
-                throw CompileError(where(expr.loc) + ": backend does not lower float values yet");
+                emit_float_literal(expr);
+                break;
             case IrExprKind::String:
                 throw CompileError(where(expr.loc) + ": backend does not lower string values yet");
             case IrExprKind::Bool:
@@ -2555,6 +2609,10 @@ private:
             emit_lea_reg_local(Reg::RAX, temp_offset);
             return;
         }
+        if (is_raw_float_type(expr.type)) {
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend does not lower float call return values yet");
+        }
         if (expr.args.size() > static_cast<std::size_t>(0xffff)) {
             throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
         }
@@ -2592,6 +2650,10 @@ private:
             emit_indirect_call_with_sret_to_offset(expr, temp_offset);
             emit_lea_reg_local(Reg::RAX, temp_offset);
             return;
+        }
+        if (is_raw_float_type(expr.type)) {
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend does not lower float call return values yet");
         }
         if (expr.args.size() > static_cast<std::size_t>(0xffff)) {
             throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
@@ -2658,6 +2720,10 @@ private:
     }
 
     void emit_cast(const IrExpr& expr) {
+        if ((expr.operand && is_raw_float_type(expr.operand->type)) || is_raw_float_type(expr.type)) {
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend does not lower float casts yet");
+        }
         emit_expr(*expr.operand);
         emit_cast_to_type(expr.loc, expr.type);
     }
@@ -2935,6 +3001,13 @@ private:
         if (expr.op == IrBinaryOp::LogicalAnd || expr.op == IrBinaryOp::LogicalOr) {
             emit_logical(expr);
             return;
+        }
+
+        if ((expr.left && is_raw_float_type(expr.left->type)) ||
+            (expr.right && is_raw_float_type(expr.right->type)) ||
+            is_raw_float_type(expr.type)) {
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend does not lower float operators yet");
         }
 
         emit_expr(*expr.left);
