@@ -167,9 +167,10 @@ types, and Ari-layout aggregates. Aggregate results describe Ari's current
 executable local layout, where aggregate fields and fixed-array elements occupy
 8-byte slots; they are not a `repr(C)` ABI promise.
 
-`ptr_load(pointer)` reads one scalar or plain Ari-layout aggregate value from a
-`ptr T` and returns `T`. `ptr_store(pointer, value)` writes one scalar or plain
-Ari-layout aggregate value through a `ptr T` and returns `void`. The
+`ptr_load(pointer)` reads one scalar, plain Ari-layout aggregate, or supported
+aggregate enum value from a `ptr T` and returns `T`. `ptr_store(pointer, value)`
+writes one scalar, plain Ari-layout aggregate, or supported aggregate enum
+value through a `ptr T` and returns `void`. The
 `mem::ptr_load` and `mem::ptr_store` spellings are the same compiler-known
 operations. These operations are deliberately unchecked: they do not test for
 null, bounds, alignment, aliasing, or lifetime. Aggregates that contain `own`,

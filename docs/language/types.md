@@ -573,12 +573,12 @@ Meanings:
   aggregate types, returned as `i64`
 - `align_of<T>()`: compiler-known layout alignment query for scalar and
   Ari-layout aggregate types, returned as `i64`
-- `ptr_load(value)`: explicit scalar or plain Ari-layout aggregate raw pointer
-  load from `ptr T`
-- `ptr_store(value, item)`: explicit scalar or plain Ari-layout aggregate raw
-  pointer store through `ptr T`
-- `*value`: scalar or plain Ari-layout aggregate dereference load/store syntax
-  for `ptr T`
+- `ptr_load(value)`: explicit scalar, plain Ari-layout aggregate, or supported
+  aggregate enum raw pointer load from `ptr T`
+- `ptr_store(value, item)`: explicit scalar, plain Ari-layout aggregate, or
+  supported aggregate enum raw pointer store through `ptr T`
+- `*value`: scalar, plain Ari-layout aggregate, or supported aggregate enum
+  dereference load/store syntax for `ptr T`
 - `(*value).field`, `(*value).0`, `(*value)[index]`: scalar field or fixed-array
   element access through a raw pointer to an Ari aggregate layout
 - `Zone`: explicit allocation region capability; `zone::create` returns
@@ -641,14 +641,16 @@ alignment. They are Ari layout queries, not a C ABI promise; use `@repr(C)`
 surfaces for foreign layout once that ABI is fully specified. The raw
 `--freestanding` backend uses this Ari layout for local tuple, struct,
 tuple-struct, and fixed-array storage, whole plain aggregate copies, and scalar
-field or element access through raw aggregate pointers. Multi-payload aggregate
-enums and function ABI classification remain planned there.
+field or element access through raw aggregate pointers. Local and
+pointer-backed aggregate enum storage works for the currently supported payload
+slot types; aggregate enum function ABI classification remains planned there.
 `ptr_load(pointer)` and
-`ptr_store(pointer, value)` provide explicit unchecked scalar or plain
-Ari-layout aggregate memory access through raw pointers. `*pointer` provides
-the same dereference operation, and `(*pointer).field`, `(*pointer).0`, or
-`(*pointer)[index]` can read and write scalar slots inside a raw pointer to a
-struct, tuple struct, tuple, or fixed array. Whole-aggregate raw pointer copies
+`ptr_store(pointer, value)` provide explicit unchecked scalar, plain
+Ari-layout aggregate, or supported aggregate enum memory access through raw
+pointers. `*pointer` provides the same dereference operation, and
+`(*pointer).field`, `(*pointer).0`, or `(*pointer)[index]` can read and write
+scalar slots inside a raw pointer to a struct, tuple struct, tuple, or fixed
+array. Whole-aggregate raw pointer copies
 are intentionally rejected for aggregates that contain `own`, `ref`, or
 `ref mut` fields until the zone and ownership diagnostics are broadened.
 

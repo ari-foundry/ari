@@ -520,6 +520,43 @@ private:
         }
     }
 
+    void emit_store_aggregate_enum_construct_to_pointer_base(const IrType& target_type,
+                                                             const IrExpr& value,
+                                                             int byte_offset) {
+        if (target_type.field_types.empty()) {
+            throw CompileError(where(value.loc) + ": aggregate enum layout is missing during codegen");
+        }
+
+        int tag_offset = byte_offset + field_offset_bytes(value.loc, target_type, 0);
+        emit_mov_reg_imm64(Reg::RAX, value.enum_tag);
+        emit_mov_reg_reg(Reg::RCX, Reg::RBX);
+        emit_add_pointer_offset_reg(Reg::RCX, tag_offset);
+        emit_store_rax_to_ptr(Reg::RCX, target_type.field_types[0]);
+
+        for (std::size_t i = 1; i < target_type.field_types.size(); ++i) {
+            int payload_offset = byte_offset + field_offset_bytes(value.loc, target_type, i);
+            emit_mov_reg_imm64(Reg::RAX, 0);
+            emit_mov_reg_reg(Reg::RCX, Reg::RBX);
+            emit_add_pointer_offset_reg(Reg::RCX, payload_offset);
+            emit_store_rax_to_ptr(Reg::RCX, target_type.field_types[i]);
+        }
+
+        for (std::size_t i = 0; i < value.args.size(); ++i) {
+            std::size_t field_index = i + 1;
+            if (field_index >= target_type.field_types.size()) {
+                throw CompileError(where(value.loc) + ": aggregate enum payload slot is missing during codegen");
+            }
+            int payload_offset = byte_offset + field_offset_bytes(value.loc, target_type, field_index);
+            emit_push(Reg::RBX);
+            emit_expr(*value.args[i]);
+            emit_normalize_aggregate_enum_payload_value(value.args[i]->loc, value.args[i]->type);
+            emit_pop(Reg::RCX);
+            emit_mov_reg_reg(Reg::RBX, Reg::RCX);
+            emit_add_pointer_offset_reg(Reg::RCX, payload_offset);
+            emit_store_rax_to_ptr(Reg::RCX, target_type.field_types[field_index]);
+        }
+    }
+
     void emit_store_aggregate_enum_value_to_offset(const IrType& target_type,
                                                    const IrExpr& value,
                                                    int target_offset) {
@@ -560,6 +597,11 @@ private:
             emit_mov_reg_reg(Reg::RBX, Reg::RCX);
             emit_add_pointer_offset_reg(Reg::RCX, byte_offset);
             emit_store_rax_to_ptr(Reg::RCX, target_type);
+            return;
+        }
+
+        if (has_aggregate_enum_layout(target_type) && value.kind == IrExprKind::EnumConstruct) {
+            emit_store_aggregate_enum_construct_to_pointer_base(target_type, value, byte_offset);
             return;
         }
 

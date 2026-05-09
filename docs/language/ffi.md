@@ -118,8 +118,10 @@ pointers to Ari aggregate layouts can address scalar fields and elements with
 aggregate size/alignment model for explicit pointer code. The raw
 `--freestanding` backend uses those same Ari byte offsets for tuple, struct,
 tuple-struct, and fixed-array pointer field/element access; aggregate enum
-pointer loads and stores can copy the whole aggregate enum value, but direct
-payload field pointer access remains planned.
+pointer loads and stores can copy the whole aggregate enum value, and direct
+enum-constructor stores such as `ptr_store(raw, Some(5))` or `*raw = Some(5)`
+write the current Ari tag/payload layout. Direct payload field pointer access
+remains planned.
 The raw `--freestanding` backend does not link or call external C symbols yet;
 calling an `extern "C"` function there is rejected with a backend diagnostic.
 Use the LLVM host backend for C interop, or expose the operation through a

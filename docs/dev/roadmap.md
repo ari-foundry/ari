@@ -69,10 +69,8 @@
    tag/payload-binding/literal/range/nested-compact-enum matches. Narrow scalar
    returns are normalized at the freestanding function boundary, including
    unsigned wraparound results from `u8`/`u16`/`u32` functions. The remaining
-   aggregate lowering gap is temporary/ABI coverage for aggregate enums, then
-   explicit aggregate and external ABI classification.
-   - [raw-aggregate-enums] lower direct enum-constructor temporaries in the raw
-     backend with the shared layout tables
+   aggregate lowering gap is ABI coverage for aggregate values, then explicit
+   aggregate and external ABI classification.
    - [abi-aggregate-calls] pass and return tuple, struct, fixed-array, and
      aggregate enum values with explicit platform ABI rules instead of relying
      on local-stack materialization
@@ -132,15 +130,14 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, plus one-word enum values
    today. Nested enum-case subpatterns can inspect one-word enum payload slots
-   on the LLVM backend, but the stored payload universe is still intentionally
-   narrow.
+   on the LLVM and freestanding local-value paths, and the freestanding backend
+   can store/copy local and pointer-backed aggregate enum values, including
+   direct enum-constructor stores through raw pointers. The stored payload
+   universe is still intentionally narrow.
    - [nested-aggregate-enums] allow aggregate enum payload slots to store
      nested aggregate-enum values once the ABI and copy rules are explicit
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
-   - [freestanding] extend raw aggregate enum lowering beyond local and
-     pointer-backed copies plus tag/payload-binding/literal/range/
-     nested-compact-enum matches to direct constructor temporaries
 6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]`,
     `Maybe[T]` as a public alias of `Option[T]`, and `Result[T, E]` are source

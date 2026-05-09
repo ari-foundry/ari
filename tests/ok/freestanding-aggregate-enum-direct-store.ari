@@ -1,0 +1,38 @@
+enum Inner {
+  Empty,
+  Small(i32),
+}
+
+enum Outer {
+  Wrap(Inner),
+  Other(i64),
+  None,
+}
+
+fn main() -> i64 {
+  var slot: Outer = None;
+  let raw: ptr Outer = (ref mut slot) as ptr Outer;
+
+  ptr_store(raw, Wrap(Small(5)));
+  let first: Outer = *raw;
+  let a: i64 = match first {
+    Wrap(Small(first_value @ 5)) => first_value as i64,
+    _ => 0;
+  };
+
+  *raw = Other(7i64);
+  let second: Outer = ptr_load(raw);
+  let b: i64 = match second {
+    Other(second_value) => second_value,
+    _ => 0;
+  };
+
+  ptr_store(raw, None);
+  let third: Outer = *raw;
+  let c: i64 = match third {
+    None => 11,
+    _ => 0;
+  };
+
+  return a + b + c;
+}
