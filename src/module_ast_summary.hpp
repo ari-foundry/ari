@@ -11,5 +11,7 @@ ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
                                                     bool is_root);
 void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary& summary,
                                                     const std::string& display_path);
+Program materialize_module_cache_ast_summary_declarations(const ModuleCacheAstSummary& summary,
+                                                          const std::string& display_path);
 
 } // namespace ari

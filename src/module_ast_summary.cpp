@@ -209,6 +209,155 @@ public:
         return counts;
     }
 
+    Program parse_program() {
+        consume_literal("ari-ast-decls-v1;");
+        Program program;
+
+        std::uint64_t use_count = read_count("use count");
+        program.uses.reserve(static_cast<std::size_t>(use_count));
+        for (std::uint64_t i = 0; i < use_count; ++i) {
+            UseDecl decl;
+            decl.module_name = read_field("use module name");
+            decl.path = read_field("use path");
+            decl.alias = read_field("use alias");
+            decl.is_public = read_bool("use visibility");
+            decl.is_glob = read_bool("use glob flag");
+            decl.loc = default_loc();
+            program.uses.push_back(std::move(decl));
+        }
+
+        std::uint64_t import_count = read_count("module import count");
+        program.module_imports.reserve(static_cast<std::size_t>(import_count));
+        for (std::uint64_t i = 0; i < import_count; ++i) {
+            ModuleImport decl;
+            decl.module_name = read_field("module import owner");
+            decl.name = read_field("module import name");
+            decl.local_name = read_field("module import local name");
+            decl.is_public = read_bool("module import visibility");
+            decl.loc = default_loc();
+            program.module_imports.push_back(std::move(decl));
+        }
+
+        std::uint64_t module_count = read_count("module declaration count");
+        program.modules.reserve(static_cast<std::size_t>(module_count));
+        for (std::uint64_t i = 0; i < module_count; ++i) {
+            ModuleDecl decl;
+            decl.module_name = read_field("module declaration owner");
+            decl.name = read_field("module declaration name");
+            decl.is_public = read_bool("module declaration visibility");
+            decl.loc = default_loc();
+            program.modules.push_back(std::move(decl));
+        }
+
+        std::uint64_t constant_count = read_count("constant count");
+        program.constants.reserve(static_cast<std::size_t>(constant_count));
+        for (std::uint64_t i = 0; i < constant_count; ++i) {
+            ConstDecl decl;
+            decl.module_name = read_field("constant module name");
+            decl.name = read_field("constant name");
+            decl.is_public = read_bool("constant visibility");
+            decl.type = read_type("constant type");
+            decl.loc = default_loc();
+            program.constants.push_back(std::move(decl));
+        }
+
+        std::uint64_t function_count = read_count("function count");
+        program.functions.reserve(static_cast<std::size_t>(function_count));
+        for (std::uint64_t i = 0; i < function_count; ++i) {
+            program.functions.push_back(read_function_signature());
+        }
+
+        std::uint64_t struct_count = read_count("struct count");
+        program.structs.reserve(static_cast<std::size_t>(struct_count));
+        for (std::uint64_t i = 0; i < struct_count; ++i) {
+            StructDecl decl;
+            decl.module_name = read_field("struct module name");
+            decl.name = read_field("struct name");
+            decl.is_public = read_bool("struct visibility");
+            decl.tuple_struct = read_bool("tuple struct flag");
+            decl.generics = read_generics();
+            decl.attributes = read_attributes();
+            std::uint64_t field_count = read_count("struct field count");
+            decl.fields.reserve(static_cast<std::size_t>(field_count));
+            for (std::uint64_t j = 0; j < field_count; ++j) {
+                StructField field;
+                field.name = read_field("struct field name");
+                field.mutable_field = read_bool("struct field mutability");
+                field.type = read_type("struct field type");
+                field.loc = default_loc();
+                decl.fields.push_back(std::move(field));
+            }
+            decl.loc = default_loc();
+            program.structs.push_back(std::move(decl));
+        }
+
+        std::uint64_t enum_count = read_count("enum count");
+        program.enums.reserve(static_cast<std::size_t>(enum_count));
+        for (std::uint64_t i = 0; i < enum_count; ++i) {
+            EnumDecl decl;
+            decl.module_name = read_field("enum module name");
+            decl.name = read_field("enum name");
+            decl.is_public = read_bool("enum visibility");
+            decl.generics = read_generics();
+            decl.attributes = read_attributes();
+            std::uint64_t case_count = read_count("enum case count");
+            decl.cases.reserve(static_cast<std::size_t>(case_count));
+            for (std::uint64_t j = 0; j < case_count; ++j) {
+                EnumCase item;
+                item.name = read_field("enum case name");
+                std::uint64_t payload_count = read_count("enum payload count");
+                item.payloads.reserve(static_cast<std::size_t>(payload_count));
+                for (std::uint64_t k = 0; k < payload_count; ++k) {
+                    item.payloads.push_back(read_type("enum payload type"));
+                }
+                item.loc = default_loc();
+                decl.cases.push_back(std::move(item));
+            }
+            decl.loc = default_loc();
+            program.enums.push_back(std::move(decl));
+        }
+
+        std::uint64_t trait_count = read_count("trait count");
+        program.traits.reserve(static_cast<std::size_t>(trait_count));
+        for (std::uint64_t i = 0; i < trait_count; ++i) {
+            TraitDecl decl;
+            decl.module_name = read_field("trait module name");
+            decl.name = read_field("trait name");
+            decl.is_public = read_bool("trait visibility");
+            decl.generics = read_generics();
+            decl.attributes = read_attributes();
+            std::uint64_t method_count = read_count("trait method count");
+            decl.methods.reserve(static_cast<std::size_t>(method_count));
+            for (std::uint64_t j = 0; j < method_count; ++j) {
+                decl.methods.push_back(read_function_signature());
+            }
+            decl.loc = default_loc();
+            program.traits.push_back(std::move(decl));
+        }
+
+        std::uint64_t impl_count = read_count("impl count");
+        program.impls.reserve(static_cast<std::size_t>(impl_count));
+        for (std::uint64_t i = 0; i < impl_count; ++i) {
+            ImplDecl decl;
+            decl.module_name = read_field("impl module name");
+            decl.is_public = read_bool("impl visibility");
+            decl.has_trait = read_bool("impl trait flag");
+            decl.generics = read_generics();
+            decl.attributes = read_attributes();
+            if (decl.has_trait) decl.trait_type = read_type("impl trait type");
+            decl.for_type = read_type("impl target type");
+            std::uint64_t method_count = read_count("impl method count");
+            decl.methods.reserve(static_cast<std::size_t>(method_count));
+            for (std::uint64_t j = 0; j < method_count; ++j) {
+                decl.methods.push_back(read_function_signature());
+            }
+            program.impls.push_back(std::move(decl));
+        }
+
+        if (pos_ != text_.size()) fail("trailing bytes after declaration summary");
+        return program;
+    }
+
 private:
     const std::string& text_;
     std::string display_;
@@ -216,6 +365,10 @@ private:
 
     [[noreturn]] void fail(const std::string& detail) const {
         throw CompileError("malformed declaration summary for " + display_ + ": " + detail);
+    }
+
+    SourceLocation default_loc() const {
+        return SourceLocation{1, 1};
     }
 
     void consume_literal(const std::string& literal) {
@@ -275,58 +428,113 @@ private:
         fail("expected boolean " + label);
     }
 
-    void skip_type(const std::string& label) {
-        read_field(label + " qualifier");
-        read_field(label + " name");
-        read_bool(label + " dyn flag");
-        read_bool(label + " nullable flag");
-        read_count(label + " array size");
+    TypeQualifier read_qualifier(const std::string& label) {
+        std::string value = read_field(label);
+        if (value == "value") return TypeQualifier::Value;
+        if (value == "own") return TypeQualifier::Own;
+        if (value == "ref") return TypeQualifier::Ref;
+        if (value == "ref mut") return TypeQualifier::MutRef;
+        if (value == "ptr") return TypeQualifier::Ptr;
+        fail("unknown type qualifier '" + value + "'");
+    }
+
+    TypeRef read_type(const std::string& label) {
+        TypeRef type;
+        type.qualifier = read_qualifier(label + " qualifier");
+        type.name = read_field(label + " name");
+        type.is_dyn_object = read_bool(label + " dyn flag");
+        type.nullable = read_bool(label + " nullable flag");
+        type.array_size = read_count(label + " array size");
         std::uint64_t arg_count = read_count(label + " argument count");
-        for (std::uint64_t i = 0; i < arg_count; ++i) skip_type(label + " argument");
+        type.args.reserve(static_cast<std::size_t>(arg_count));
+        for (std::uint64_t i = 0; i < arg_count; ++i) {
+            type.args.push_back(read_type(label + " argument"));
+        }
+        type.loc = default_loc();
+        return type;
+    }
+
+    void skip_type(const std::string& label) {
+        (void)read_type(label);
+    }
+
+    std::vector<GenericParam> read_generics() {
+        std::uint64_t count = read_count("generic parameter count");
+        std::vector<GenericParam> generics;
+        generics.reserve(static_cast<std::size_t>(count));
+        for (std::uint64_t i = 0; i < count; ++i) {
+            GenericParam generic;
+            generic.name = read_field("generic parameter name");
+            generic.has_constraint = read_bool("generic constraint flag");
+            if (generic.has_constraint) generic.constraint = read_type("generic constraint type");
+            generic.loc = default_loc();
+            generics.push_back(std::move(generic));
+        }
+        return generics;
     }
 
     void skip_generics() {
-        std::uint64_t count = read_count("generic parameter count");
+        (void)read_generics();
+    }
+
+    std::vector<Attribute> read_attributes() {
+        std::uint64_t count = read_count("attribute count");
+        std::vector<Attribute> attributes;
+        attributes.reserve(static_cast<std::size_t>(count));
         for (std::uint64_t i = 0; i < count; ++i) {
-            read_field("generic parameter name");
-            bool has_constraint = read_bool("generic constraint flag");
-            if (has_constraint) skip_type("generic constraint type");
+            Attribute attr;
+            attr.name = read_field("attribute name");
+            attr.has_args = read_bool("attribute args flag");
+            std::uint64_t arg_count = read_count("attribute token count");
+            attr.args.reserve(static_cast<std::size_t>(arg_count));
+            for (std::uint64_t j = 0; j < arg_count; ++j) {
+                Token token;
+                token.kind = static_cast<TokenKind>(read_count("attribute token kind"));
+                token.text = read_field("attribute token text");
+                token.loc = default_loc();
+                attr.args.push_back(std::move(token));
+            }
+            attr.loc = default_loc();
+            attributes.push_back(std::move(attr));
         }
+        return attributes;
     }
 
     void skip_attributes() {
-        std::uint64_t count = read_count("attribute count");
-        for (std::uint64_t i = 0; i < count; ++i) {
-            read_field("attribute name");
-            read_bool("attribute args flag");
-            std::uint64_t arg_count = read_count("attribute token count");
-            for (std::uint64_t j = 0; j < arg_count; ++j) {
-                read_count("attribute token kind");
-                read_field("attribute token text");
-            }
+        (void)read_attributes();
+    }
+
+    FunctionDecl read_function_signature() {
+        FunctionDecl fn;
+        fn.module_name = read_field("function module name");
+        fn.name = read_field("function name");
+        fn.meta = read_bool("function meta flag");
+        fn.is_extern = read_bool("function extern flag");
+        fn.is_public = read_bool("function visibility");
+        fn.is_variadic = read_bool("function variadic flag");
+        fn.extern_abi = read_field("function extern ABI");
+        fn.extern_link_name = read_field("function extern link name");
+        fn.has_return_type = read_bool("function return type flag");
+        fn.has_body = read_bool("function body flag");
+        fn.generics = read_generics();
+        fn.attributes = read_attributes();
+        std::uint64_t param_count = read_count("function parameter count");
+        fn.params.reserve(static_cast<std::size_t>(param_count));
+        for (std::uint64_t i = 0; i < param_count; ++i) {
+            Param param;
+            param.name = read_field("function parameter name");
+            param.has_pattern = read_bool("function parameter pattern flag");
+            param.type = read_type("function parameter type");
+            fn.params.push_back(std::move(param));
         }
+        if (fn.has_return_type) fn.return_type = read_type("function return type");
+        fn.loc = default_loc();
+        fn.variadic_loc = default_loc();
+        return fn;
     }
 
     void skip_function_signature() {
-        read_field("function module name");
-        read_field("function name");
-        read_bool("function meta flag");
-        read_bool("function extern flag");
-        read_bool("function visibility");
-        read_bool("function variadic flag");
-        read_field("function extern ABI");
-        read_field("function extern link name");
-        bool has_return_type = read_bool("function return type flag");
-        read_bool("function body flag");
-        skip_generics();
-        skip_attributes();
-        std::uint64_t param_count = read_count("function parameter count");
-        for (std::uint64_t i = 0; i < param_count; ++i) {
-            read_field("function parameter name");
-            read_bool("function parameter pattern flag");
-            skip_type("function parameter type");
-        }
-        if (has_return_type) skip_type("function return type");
+        (void)read_function_signature();
     }
 };
 
@@ -432,6 +640,11 @@ DeclarationSummaryCounts parse_declaration_summary_payload(const ModuleCacheAstS
     return reader.parse();
 }
 
+Program materialize_declaration_summary_payload(const ModuleCacheAstSummary& summary) {
+    DeclarationSummaryReader reader(summary.declaration_summary, summary_display(summary));
+    return reader.parse_program();
+}
+
 void require_count_match(std::uint64_t recorded,
                          std::uint64_t parsed,
                          const std::string& label,
@@ -493,6 +706,27 @@ void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary&
         require_count_match(summary.enum_count, counts.enum_count, "enum", summary);
         require_count_match(summary.trait_count, counts.trait_count, "trait", summary);
         require_count_match(summary.impl_count, counts.impl_count, "impl", summary);
+        Program declarations = materialize_declaration_summary_payload(summary);
+        ModuleCacheAstSummary round_trip = make_module_cache_ast_summary(
+            summary.path,
+            summary.content_hash,
+            split_qualified_path(summary.module_name),
+            declarations,
+            summary.is_root
+        );
+        if (round_trip.declaration_summary != summary.declaration_summary ||
+            round_trip.declaration_hash != summary.declaration_hash) {
+            throw CompileError("declaration summary does not round-trip through materialized declarations");
+        }
+    } catch (const CompileError& error) {
+        throw CompileError("invalid module cache '" + display_path + "': " + error.what());
+    }
+}
+
+Program materialize_module_cache_ast_summary_declarations(const ModuleCacheAstSummary& summary,
+                                                          const std::string& display_path) {
+    try {
+        return materialize_declaration_summary_payload(summary);
     } catch (const CompileError& error) {
         throw CompileError("invalid module cache '" + display_path + "': " + error.what());
     }

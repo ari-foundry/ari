@@ -1,0 +1,5 @@
+mod cache_decls;
+
+fn main() -> i64 {
+  cache_decls::value()
+}

@@ -309,6 +309,8 @@ Checklist:
 - [x] AST summary records include declaration fingerprints and declaration
       payloads, then reject tampered fingerprints, payloads, or count/payload
       disagreement
+- [x] AST summary declaration payloads materialize back into declaration-only
+      `Program` records and round-trip before cache use
 - [ ] AST/IR package cache summaries skip dependency parsing after validation
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports

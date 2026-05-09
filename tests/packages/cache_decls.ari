@@ -1,0 +1,45 @@
+pub const MARK: i64 = 7;
+
+@deprecated("cache surface")
+pub fn old_value() -> i64 {
+  1
+}
+
+@repr(C)
+pub struct CacheHeader {
+  tag: i64,
+}
+
+pub struct CachePair[T] {
+  left: T,
+  right: i64,
+}
+
+pub struct CacheTuple[T](T, i64)
+
+pub enum CacheChoice[T] {
+  Empty,
+  Full(T),
+}
+
+pub trait CacheScore[T] {
+  fn score(self) -> T
+}
+
+impl CacheScore[i64] for CachePair[i64] {
+  fn score(self) -> i64 {
+    self.left + self.right
+  }
+}
+
+pub impl CachePair[i64] {
+  fn new(left: i64, right: i64) -> CachePair[i64] {
+    CachePair { left: left, right: right }
+  }
+}
+
+pub fn value() -> i64 {
+  let pair = CachePair { left: 5, right: 7 };
+  let header = CacheHeader { tag: 2 };
+  pair.score() + header.tag
+}

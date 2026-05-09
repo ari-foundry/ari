@@ -42,13 +42,14 @@
    are rejected before validation. Module caches now carry v4 per-source AST
    summary records with declaration fingerprints and declaration-summary
    payloads, parse those payloads during cache loading, and validate their
-   internal hashes and top-level counts before rechecking them against the
-   parsed cached source snapshot. The remaining package-cache work is to turn
-   those trusted summaries into dependency declarations and then skip
-   dependency source parsing once validation succeeds.
-   - [summary-materialize] materialize dependency declarations from validated
-     AST-summary declaration payloads or future IR-summary records instead of
-     reparsing cached source text
+   internal hashes, top-level counts, and declaration materialization
+   round-trips before rechecking them against the parsed cached source
+   snapshot. The remaining package-cache work is to wire those trusted
+   materialized declarations into dependency loading and then skip dependency
+   source parsing once validation succeeds.
+   - [loader-materialize] feed materialized AST-summary declarations or future
+     IR-summary declarations into the module loader instead of reparsing cached
+     dependency source text
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
