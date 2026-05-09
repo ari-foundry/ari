@@ -1,0 +1,5 @@
+fn main() -> i64 {
+  let number = 7;
+  ref number;
+  return 0;
+}

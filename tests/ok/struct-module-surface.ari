@@ -1,0 +1,17 @@
+mod geometry {
+  pub struct Point {
+    x: i64,
+    y: i64,
+  }
+}
+
+use geometry::Point
+
+struct Segment {
+  start: Point,
+  end: geometry::Point,
+}
+
+fn main() -> i64 {
+  return 0;
+}

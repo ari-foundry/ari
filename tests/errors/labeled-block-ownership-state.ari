@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  let token: own i64 = 5;
+  let value = done: {
+    while true {
+      break done 1;
+    }
+    drop token;
+    2
+  };
+  return value;
+}

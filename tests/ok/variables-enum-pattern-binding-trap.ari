@@ -1,0 +1,9 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+fn main() -> i64 {
+  let Some(value) = None;
+  value as i64
+}

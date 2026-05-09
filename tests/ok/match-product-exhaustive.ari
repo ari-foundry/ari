@@ -1,0 +1,38 @@
+struct Flags {
+  left: bool,
+  right: bool,
+}
+
+struct Bits(bool, bool)
+
+fn main() -> i64 {
+  let tuple_score = match (true, false) {
+    (true, true) => 4,
+    (true, false) => 3,
+    (false, true) => 2,
+    (false, false) => 1,
+  };
+
+  let nested_score = match ((false, true), false) {
+    ((true, _), _) => 1,
+    ((false, true), true) => 2,
+    ((false, true), false) => 3,
+    ((false, false), true) => 4,
+    ((false, false), false) => 5,
+  };
+
+  let flags = Flags { left: false, right: true };
+  let struct_score = match flags {
+    Flags { left: true, right: true } => 5,
+    Flags { left: true, right: false } => 6,
+    Flags { left: false, .. } => 7,
+  };
+
+  let tuple_struct_score = match Bits(false, true) {
+    Bits(true, true) => 1,
+    Bits(true, false) => 2,
+    Bits(false, _) => 4,
+  };
+
+  return tuple_score + nested_score + struct_score + tuple_struct_score;
+}

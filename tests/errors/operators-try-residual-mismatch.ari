@@ -1,0 +1,22 @@
+mod IntResult {
+  pub enum ResultI32 {
+    Err(i32),
+    Ok(i32),
+  }
+}
+
+mod BoolErrResult {
+  pub enum ResultI32 {
+    Err(bool),
+    Ok(i32),
+  }
+}
+
+fn bad(value: IntResult::ResultI32) -> BoolErrResult::ResultI32 {
+  let inner = value?;
+  return BoolErrResult::Ok(inner);
+}
+
+fn main() -> i64 {
+  return 0;
+}

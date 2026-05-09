@@ -1,0 +1,12 @@
+fn make_number(zone: ref mut Zone) -> ptr i64 {
+  zone::new<i64>(zone, 9)
+}
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let item = make_number(ref mut zone);
+  zone::reset(ref mut zone);
+  let value = *item;
+  zone::destroy(zone);
+  value
+}

@@ -1,0 +1,15 @@
+mod Math {
+  pub fn add(left: i64, right: i64) -> i64 {
+    return left + right;
+  }
+
+  pub fn sub(left: i64, right: i64) -> i64 {
+    return left - right;
+  }
+}
+
+use Math::{add, sub as minus}
+
+fn main() -> i64 {
+  return add(4, 6) + minus(9, 4);
+}

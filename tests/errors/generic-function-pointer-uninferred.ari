@@ -1,0 +1,8 @@
+fn keep[T](value: i64) -> i64 {
+  value
+}
+
+fn main() -> i64 {
+  let op: fn(i64) -> i64 = keep;
+  op(1)
+}

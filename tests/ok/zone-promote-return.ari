@@ -1,0 +1,17 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+fn make_point(zone: ref mut Zone) -> ptr Point {
+  let scratch = zone::scratch<Point>(64, Point { x: 19, y: 23 });
+  return zone::promote<Point>(zone, scratch);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let point = make_point(ref mut zone);
+  let result = (*point).x + (*point).y;
+  zone::destroy(zone);
+  return result;
+}

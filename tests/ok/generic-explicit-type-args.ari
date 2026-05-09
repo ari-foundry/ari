@@ -1,0 +1,23 @@
+fn identity[Value](value: Value) -> Value {
+  return value;
+}
+
+fn make[Value]() -> Value {
+  return 7;
+}
+
+struct Box[Item] {
+  value: Item,
+}
+
+struct Pair[Left, Right](Left, Right)
+
+fn main() -> i64 {
+  let base = make<i64>();
+  let boxed = Box<i64> { value: identity<i64>(20) };
+  let pair = Pair<i64, bool>(boxed.value + base, identity<bool>(true));
+  if pair.1 {
+    return pair.0;
+  }
+  return 0;
+}

@@ -1,0 +1,28 @@
+enum Option[T] {
+  None,
+  Some(T),
+}
+
+fn score(value: Option[i32]) -> i64 {
+  return match value {
+    Some(inner) => inner as i64,
+    None => 0,
+  };
+}
+
+fn bind(value: Option[i32]) -> i64 {
+  let Some(inner) = value;
+  return inner as i64;
+}
+
+fn check(value: Option[i32]) -> i64 {
+  if let Some(inner) = value {
+    return inner as i64;
+  } else {
+    return 1;
+  }
+}
+
+fn main() -> i64 {
+  return score(Some(10i32)) + score(None<i32>()) + bind(Some(5i32)) + check(Some(7i32)) + check(None<i32>());
+}

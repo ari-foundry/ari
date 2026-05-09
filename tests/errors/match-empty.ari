@@ -1,0 +1,11 @@
+enum Choice {
+  A,
+  B,
+}
+
+fn main() -> i64 {
+  let value = A;
+  match value {
+  }
+  return 0;
+}

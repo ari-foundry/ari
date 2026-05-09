@@ -1,0 +1,15 @@
+fn main() -> i64 {
+  let immutable = 7;
+  let typed: i32 = 5;
+  let inferred_bool = true;
+  var counter = 0;
+  var toggled = false;
+
+  counter = counter + immutable;
+  toggled = !toggled;
+
+  if inferred_bool && toggled {
+    return counter + (typed as i64);
+  }
+  return 1;
+}

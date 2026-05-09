@@ -1,0 +1,72 @@
+mod IntResult {
+  pub enum ResultI32 {
+    Err(i32),
+    Ok(i32),
+  }
+}
+
+mod BoolResult {
+  pub enum ResultBool {
+    Err(i32),
+    Ok(bool),
+  }
+}
+
+mod IntMaybe {
+  pub enum MaybeI32 {
+    None,
+    Some(i32),
+  }
+}
+
+mod BoolMaybe {
+  pub enum MaybeBool {
+    None,
+    Some(bool),
+  }
+}
+
+fn to_bool_result(value: IntResult::ResultI32) -> BoolResult::ResultBool {
+  let inner = value?;
+  return BoolResult::Ok(inner > 0i32);
+}
+
+fn to_bool_maybe(value: IntMaybe::MaybeI32) -> BoolMaybe::MaybeBool {
+  let inner = value?;
+  return BoolMaybe::Some(inner > 0i32);
+}
+
+fn score_result(value: BoolResult::ResultBool) -> i64 {
+  match value {
+    BoolResult::Ok(flag) => {
+      if flag {
+        return 1;
+      }
+      return 2;
+    }
+    BoolResult::Err(code) => {
+      return code as i64;
+    }
+  }
+}
+
+fn score_maybe(value: BoolMaybe::MaybeBool) -> i64 {
+  match value {
+    BoolMaybe::Some(flag2) => {
+      if flag2 {
+        return 4;
+      }
+      return 8;
+    }
+    BoolMaybe::None => {
+      return 16;
+    }
+  }
+}
+
+fn main() -> i64 {
+  return score_result(to_bool_result(IntResult::Ok(5i32))) +
+         score_result(to_bool_result(IntResult::Err(40i32))) +
+         score_maybe(to_bool_maybe(IntMaybe::Some(-1i32))) +
+         score_maybe(to_bool_maybe(IntMaybe::None));
+}

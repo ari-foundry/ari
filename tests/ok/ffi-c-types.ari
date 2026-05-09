@@ -1,0 +1,9 @@
+extern "C" fn ari_test_add_i64(left: c_longlong, right: c_longlong) -> c_longlong;
+extern "C" fn ari_test_strlen(text: ptr c_char) -> c_size_t;
+extern "C" fn ari_test_inc_i64(value: ref mut c_longlong) -> c_void;
+
+fn main() -> i64 {
+  var value: c_longlong = ari_test_add_i64(20, 11);
+  ari_test_inc_i64(ref mut value);
+  return value + ari_test_strlen("abcd") as i64;
+}

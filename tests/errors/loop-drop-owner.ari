@@ -1,0 +1,8 @@
+fn main() -> i64 {
+  let condition = true;
+  let token: own i64 = 5;
+  while condition {
+    drop token;
+  }
+  return 0;
+}

@@ -1,0 +1,6 @@
+extern "C" fn printf(format: string, ...) -> c_int;
+
+fn main() -> i64 {
+  printf("ari varargs: %lld %s\n", 7i64, "ok");
+  return 0;
+}

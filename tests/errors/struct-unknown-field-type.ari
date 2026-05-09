@@ -1,0 +1,7 @@
+struct Wrapper {
+  value: Missing,
+}
+
+fn main() -> i64 {
+  return 0;
+}

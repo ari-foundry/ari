@@ -1,0 +1,16 @@
+impl Eq[i64] for i64 {
+  fn eq(self, other: i64) -> bool {
+    return self == other;
+  }
+}
+
+fn same[T: Eq[T]](left: T, right: T) -> i64 {
+  if left.eq(right) {
+    return 11;
+  }
+  return 3;
+}
+
+fn main() -> i64 {
+  return same<i64>(9, 9);
+}

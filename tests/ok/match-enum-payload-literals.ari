@@ -1,0 +1,41 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+enum MaybeBool {
+  Empty,
+  Flag(bool),
+}
+
+fn score(value: OptionI32) -> i64 {
+  return match value {
+    (Some(1)) => 10,
+    Some((amount)) => amount as i64,
+    (None) => 0,
+  };
+}
+
+fn flag_score(value: MaybeBool) -> i64 {
+  return match value {
+    (Flag(true)) => 5,
+    Flag((false)) => 7,
+    (Empty) => 11,
+  };
+}
+
+fn main() -> i64 {
+  var total = 0;
+  match Some(2) {
+    (Some(1)) => {
+      total = 100;
+    },
+    Some((other)) => {
+      total = other as i64;
+    },
+    (None) => {
+      total = 50;
+    },
+  }
+  return total + score(Some(1)) + score(Some(4)) + score(None) + flag_score(Flag(true)) + flag_score(Flag(false)) + flag_score(Empty);
+}

@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  let left = 1.0f128;
+  let right: f128 = 2.0f128;
+  let sum = left + right;
+  if sum > 2.5f128 {
+    return 0;
+  }
+  return 1;
+}

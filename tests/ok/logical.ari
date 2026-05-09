@@ -1,0 +1,12 @@
+fn main() -> i64 {
+  let zero = 0;
+  if false && (1 / zero) == 0 {
+    return 1;
+  }
+  if true || (1 / zero) == 0 {
+    if !(false || false) && true {
+      return 4;
+    }
+  }
+  return 2;
+}

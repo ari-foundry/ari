@@ -1,0 +1,23 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+fn choose(flag: bool) -> OptionI32 {
+  if flag {
+    return Some(7);
+  }
+  return None;
+}
+
+fn main() -> i64 {
+  let value = choose(true);
+  match value {
+    Some(inner) => {
+      return inner as i64;
+    }
+    None => {
+      return 0;
+    }
+  }
+}

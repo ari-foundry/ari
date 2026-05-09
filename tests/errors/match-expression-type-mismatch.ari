@@ -1,0 +1,12 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+fn main() -> i64 {
+  let value = Some(1);
+  return match value {
+    Some(inner) => inner as i64,
+    None => false;
+  };
+}

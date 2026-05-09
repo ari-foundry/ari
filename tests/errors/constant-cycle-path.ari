@@ -1,0 +1,7 @@
+const A: i64 = B + 1;
+const B: i64 = C + 1;
+const C: i64 = A + 1;
+
+fn main() -> i64 {
+  return A;
+}

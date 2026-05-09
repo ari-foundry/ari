@@ -1,0 +1,17 @@
+mod A {
+  pub fn one() -> i64 {
+    return 1;
+  }
+}
+
+mod B {
+  use A::one as first
+
+  pub fn sum() -> i64 {
+    return first() + A::one();
+  }
+}
+
+fn main() -> i64 {
+  return B::sum() + A::one();
+}

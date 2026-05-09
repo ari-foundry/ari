@@ -1,0 +1,13 @@
+mod Hidden {
+  struct Secret {
+    value: i64,
+  }
+}
+
+struct Holder {
+  item: Hidden::Secret,
+}
+
+fn main() -> i64 {
+  return 0;
+}

@@ -1,0 +1,11 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+fn main() -> i64 {
+  let number = zone::scratch<i64>(64, 17);
+  let point = zone::scratch<Point>(128, Point { x: *number + 3, y: 5 });
+
+  return *number + (*point).x + (*point).y;
+}

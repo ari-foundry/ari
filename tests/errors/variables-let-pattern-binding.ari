@@ -1,0 +1,10 @@
+enum Maybe {
+  None,
+  Some(i32),
+}
+
+fn main() -> i64 {
+  let Some(inner) = Some(1);
+  inner = 2;
+  return 0;
+}

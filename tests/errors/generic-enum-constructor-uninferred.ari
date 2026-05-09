@@ -1,0 +1,9 @@
+enum Option[T] {
+  None,
+  Some(T),
+}
+
+fn main() -> i64 {
+  let value = None();
+  return 0;
+}

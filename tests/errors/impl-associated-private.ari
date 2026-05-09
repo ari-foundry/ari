@@ -1,0 +1,16 @@
+mod Factory {
+  pub struct Point {
+    x: i64,
+  }
+
+  impl Point {
+    fn new(x: i64) -> Point {
+      Point { x: x }
+    }
+  }
+}
+
+fn main() -> i64 {
+  let point = Factory::Point::new(7);
+  point.x
+}

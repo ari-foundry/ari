@@ -1,0 +1,15 @@
+pub struct Point {
+  x: i64,
+  y: i64,
+}
+
+pub impl Point {
+  fn new(x: i64, y: i64) -> Point {
+    Point { x: x, y: y }
+  }
+}
+
+fn main() -> i64 {
+  let point = Point::new(4, 5);
+  point.x + point.y
+}

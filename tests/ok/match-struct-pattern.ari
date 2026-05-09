@@ -1,0 +1,31 @@
+struct Point {
+  x: i64,
+  y: i64,
+  flag: bool,
+}
+
+struct Rgb(i64, bool)
+
+fn main() -> i64 {
+  let point = Point { x: 4, y: 8, flag: true };
+  let named_score = match point {
+    Point { x: 0, .. } => 99,
+    Point { x: px, flag: true, .. } => px,
+    _ => 0,
+  };
+
+  let tuple_score = match Rgb(3, false) {
+    Rgb(1, _) => 99,
+    Rgb(red, false) => red,
+    _ => 0,
+  };
+
+  let nested_point = Point { x: 2, y: 5, flag: false };
+  let nested_color = Rgb(9, true);
+  let nested_score = match (nested_point, nested_color) {
+    (Point { y: py, .. }, Rgb(pr, true)) => py + pr,
+    _ => 0,
+  };
+
+  return named_score + tuple_score + nested_score;
+}

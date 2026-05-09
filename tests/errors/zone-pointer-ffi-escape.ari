@@ -1,0 +1,9 @@
+extern "C" fn ari_take_zone_ptr(value: ptr i64) -> c_void;
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let item = zone::new<i64>(ref mut zone, 5);
+  ari_take_zone_ptr(item);
+  zone::destroy(zone);
+  0
+}

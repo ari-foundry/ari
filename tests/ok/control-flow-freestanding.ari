@@ -1,0 +1,27 @@
+fn main() -> i64 {
+  var sum = 0;
+  var i = 0;
+  while i < 4 {
+    i = i + 1;
+    if i == 2 {
+      continue;
+    }
+    if i == 4 {
+      break;
+    }
+    sum = sum + i;
+  }
+
+  for value in range(0, 4) {
+    if value == 1 {
+      continue;
+    }
+    sum = sum + value;
+  }
+
+  init n = 0, acc = 0 while n < 3 {
+    acc = acc + n;
+  } next n + 1, acc
+
+  return sum + acc;
+}

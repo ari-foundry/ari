@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  var pair = (2, false);
+  pair = (9, true);
+  let immediate = (4, false).0;
+  if pair.1 {
+    return pair.0 + immediate;
+  }
+  return 0;
+}

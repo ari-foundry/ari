@@ -1,0 +1,24 @@
+struct Point {
+  mut x: i64,
+  mut y: i64,
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+
+  let number = zone::alloc<i64>(ref mut zone);
+  *number = 11;
+
+  let point = zone::alloc<Point>(ref mut zone);
+  *point = Point { x: *number + 20, y: 6 };
+
+  let first = (*point).x + (*point).y;
+  zone::reset(ref mut zone);
+
+  let again = zone::alloc<i64>(ref mut zone);
+  *again = first + 5;
+  let result = *again;
+
+  zone::destroy(zone);
+  return result;
+}

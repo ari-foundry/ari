@@ -1,0 +1,11 @@
+fn mark(value: i64) {
+  if value == 1 {
+    return;
+  }
+}
+
+fn main() -> i64 {
+  mark(0);
+  mark(1);
+  return 7;
+}

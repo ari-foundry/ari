@@ -1,0 +1,7 @@
+fn take_i64(value: i64) -> i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  return take_i64(true);
+}

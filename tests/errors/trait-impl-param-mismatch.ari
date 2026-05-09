@@ -1,0 +1,9 @@
+impl Eq[i64] for i64 {
+  fn eq(self, other: bool) -> bool {
+    return other;
+  }
+}
+
+fn main() -> i64 {
+  return 0;
+}

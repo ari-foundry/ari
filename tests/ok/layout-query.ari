@@ -1,0 +1,20 @@
+struct Point {
+  x: i64,
+  flag: bool,
+}
+
+struct Pair(i8, u16)
+
+fn main() -> i64 {
+  let base: ptr c_void = 1000u64 as ptr c_void;
+  let shifted: ptr c_void = ptr_offset(base, size_of<Point>());
+  let diff = ((shifted as u64) - (base as u64)) as i64;
+
+  return size_of<i8>() +
+    align_of<i16>() +
+    diff +
+    mem::align_of<Point>() +
+    size_of<[i8, 3]>() +
+    mem::align_of<[i8, 3]>() +
+    size_of<Pair>();
+}

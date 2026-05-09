@@ -1,0 +1,11 @@
+enum Option[T] {
+  None,
+  Some(T),
+}
+
+const BAD: Option[i32] = Some<bool>(true);
+
+fn main() -> i64 {
+  let value = BAD;
+  return 0;
+}

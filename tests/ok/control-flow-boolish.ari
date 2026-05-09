@@ -1,0 +1,22 @@
+fn main() -> i64 {
+  var flag = 1;
+  var total = 0;
+  if flag {
+    total = total + 2;
+  }
+  flag = 0;
+  if flag {
+    total = 100;
+  } else {
+    total = total + 3;
+  }
+  while flag {
+    total = 100;
+  }
+  flag = 1;
+  while flag {
+    total = total + 5;
+    flag = 0;
+  }
+  return total;
+}

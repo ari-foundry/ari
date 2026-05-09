@@ -1,0 +1,15 @@
+fn main() -> i64 {
+  let escaped = done: {
+    let base = 4;
+    break done base + 8;
+    1
+  };
+
+  let completed = keep: {
+    let left = 2;
+    let right = 3;
+    left + right
+  };
+
+  return escaped + completed;
+}

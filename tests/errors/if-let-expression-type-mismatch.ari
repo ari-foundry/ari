@@ -1,0 +1,17 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+fn choose() -> OptionI32 {
+  return Some(1);
+}
+
+fn main() -> i64 {
+  let value = if let Some(item) = choose() {
+    item as i64
+  } else {
+    false
+  };
+  return value;
+}

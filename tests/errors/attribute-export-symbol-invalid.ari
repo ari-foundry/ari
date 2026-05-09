@@ -1,0 +1,4 @@
+@export("bad-symbol")
+fn value() -> i64 {
+  return 1;
+}

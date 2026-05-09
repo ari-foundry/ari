@@ -1,0 +1,22 @@
+enum Status {
+  Ready,
+  Busy(i32),
+  Done,
+}
+
+fn classify(value: Status) -> i64 {
+  var score = 0;
+  match value {
+    Busy(amount) => {
+      score = amount as i64;
+    }
+    _ => {
+      score = 7;
+    }
+  }
+  return score;
+}
+
+fn main() -> i64 {
+  return classify(Ready) + classify(Busy(4)) + classify(Done);
+}

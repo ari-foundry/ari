@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  let value = done: {
+    break done false;
+    1
+  };
+  return value;
+}

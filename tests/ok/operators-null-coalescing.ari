@@ -1,0 +1,17 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+fn maybe(flag: bool) -> MaybeI32 {
+  if flag {
+    return Some(7i32);
+  }
+  return None;
+}
+
+fn main() -> i64 {
+  let success = maybe(true) ?? 3i32;
+  let fallback = maybe(false) ?? 5i32;
+  return (success as i64) + (fallback as i64);
+}

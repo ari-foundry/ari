@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  let base: ptr c_void = 0u64 as ptr c_void;
+  let shifted: ptr c_void = ptr_offset(base, 5);
+  let bytes: ptr c_char = mem::ptr_offset(shifted as ptr c_char, 3);
+  return (bytes as u64) as i64;
+}

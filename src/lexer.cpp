@@ -1,0 +1,474 @@
+#include "lexer.hpp"
+
+#include "literal.hpp"
+
+#include <map>
+#include <stdexcept>
+#include <utility>
+
+namespace ari {
+
+class Lexer {
+public:
+    explicit Lexer(std::string source) : source_(std::move(source)) {}
+
+    std::vector<Token> lex() {
+        std::vector<Token> tokens;
+        for (;;) {
+            skip_space_and_comments();
+            SourceLocation loc{line_, column_};
+            char c = peek();
+            if (c == '\0') {
+                tokens.push_back(Token{TokenKind::End, "", 0, loc, 0.0, ""});
+                return tokens;
+            }
+            if (is_alpha(c) || c == '_') {
+                tokens.push_back(identifier(loc));
+                continue;
+            }
+            if (is_digit(c)) {
+                tokens.push_back(number(loc));
+                continue;
+            }
+            advance();
+            switch (c) {
+                case '(': tokens.push_back(simple(TokenKind::LParen, "(", loc)); break;
+                case ')': tokens.push_back(simple(TokenKind::RParen, ")", loc)); break;
+                case '{': tokens.push_back(simple(TokenKind::LBrace, "{", loc)); break;
+                case '}': tokens.push_back(simple(TokenKind::RBrace, "}", loc)); break;
+                case '[': tokens.push_back(simple(TokenKind::LBracket, "[", loc)); break;
+                case ']': tokens.push_back(simple(TokenKind::RBracket, "]", loc)); break;
+                case ',': tokens.push_back(simple(TokenKind::Comma, ",", loc)); break;
+                case '.':
+                    if (match('.')) {
+                        if (match('=')) tokens.push_back(simple(TokenKind::DotDotEqual, "..=", loc));
+                        else if (match('.')) tokens.push_back(simple(TokenKind::Ellipsis, "...", loc));
+                        else tokens.push_back(simple(TokenKind::DotDot, "..", loc));
+                    } else {
+                        tokens.push_back(simple(TokenKind::Dot, ".", loc));
+                    }
+                    break;
+                case ':':
+                    if (match(':')) tokens.push_back(simple(TokenKind::ColonColon, "::", loc));
+                    else tokens.push_back(simple(TokenKind::Colon, ":", loc));
+                    break;
+                case ';': tokens.push_back(simple(TokenKind::Semicolon, ";", loc)); break;
+                case '@': tokens.push_back(simple(TokenKind::At, "@", loc)); break;
+                case '?':
+                    if (match('?')) tokens.push_back(simple(TokenKind::QuestionQuestion, "??", loc));
+                    else tokens.push_back(simple(TokenKind::Question, "?", loc));
+                    break;
+                case '+':
+                    if (match('=')) tokens.push_back(simple(TokenKind::PlusEqual, "+=", loc));
+                    else tokens.push_back(simple(TokenKind::Plus, "+", loc));
+                    break;
+                case '*':
+                    if (match('=')) tokens.push_back(simple(TokenKind::StarEqual, "*=", loc));
+                    else tokens.push_back(simple(TokenKind::Star, "*", loc));
+                    break;
+                case '%':
+                    if (match('=')) tokens.push_back(simple(TokenKind::PercentEqual, "%=", loc));
+                    else tokens.push_back(simple(TokenKind::Percent, "%", loc));
+                    break;
+                case '&':
+                    if (match('&')) tokens.push_back(simple(TokenKind::AmpAmp, "&&", loc));
+                    else if (match('=')) tokens.push_back(simple(TokenKind::AmpEqual, "&=", loc));
+                    else tokens.push_back(simple(TokenKind::Amp, "&", loc));
+                    break;
+                case '|':
+                    if (match('|')) tokens.push_back(simple(TokenKind::PipePipe, "||", loc));
+                    else if (match('=')) tokens.push_back(simple(TokenKind::PipeEqual, "|=", loc));
+                    else tokens.push_back(simple(TokenKind::Pipe, "|", loc));
+                    break;
+                case '^':
+                    if (match('=')) tokens.push_back(simple(TokenKind::CaretEqual, "^=", loc));
+                    else tokens.push_back(simple(TokenKind::Caret, "^", loc));
+                    break;
+                case '/':
+                    if (match('=')) tokens.push_back(simple(TokenKind::SlashEqual, "/=", loc));
+                    else tokens.push_back(simple(TokenKind::Slash, "/", loc));
+                    break;
+                case '"': tokens.push_back(string(loc)); break;
+                case '-':
+                    if (match('>')) tokens.push_back(simple(TokenKind::Arrow, "->", loc));
+                    else if (match('=')) tokens.push_back(simple(TokenKind::MinusEqual, "-=", loc));
+                    else tokens.push_back(simple(TokenKind::Minus, "-", loc));
+                    break;
+                case '=':
+                    if (match('>')) tokens.push_back(simple(TokenKind::FatArrow, "=>", loc));
+                    else if (match('=')) tokens.push_back(simple(TokenKind::EqEq, "==", loc));
+                    else tokens.push_back(simple(TokenKind::Equal, "=", loc));
+                    break;
+                case '!':
+                    if (match('=')) tokens.push_back(simple(TokenKind::BangEq, "!=", loc));
+                    else tokens.push_back(simple(TokenKind::Bang, "!", loc));
+                    break;
+                case '~': tokens.push_back(simple(TokenKind::Tilde, "~", loc)); break;
+                case '<':
+                    if (match('<')) {
+                        if (match('=')) tokens.push_back(simple(TokenKind::LessLessEqual, "<<=", loc));
+                        else tokens.push_back(simple(TokenKind::LessLess, "<<", loc));
+                    }
+                    else if (match('=')) tokens.push_back(simple(TokenKind::LessEq, "<=", loc));
+                    else tokens.push_back(simple(TokenKind::Less, "<", loc));
+                    break;
+                case '>':
+                    if (match('>')) {
+                        if (match('=')) tokens.push_back(simple(TokenKind::GreaterGreaterEqual, ">>=", loc));
+                        else tokens.push_back(simple(TokenKind::GreaterGreater, ">>", loc));
+                    }
+                    else if (match('=')) tokens.push_back(simple(TokenKind::GreaterEq, ">=", loc));
+                    else tokens.push_back(simple(TokenKind::Greater, ">", loc));
+                    break;
+                default:
+                    fail(loc, std::string("unexpected character '") + c + "'");
+            }
+        }
+    }
+
+private:
+    std::string source_;
+    std::size_t index_ = 0;
+    int line_ = 1;
+    int column_ = 1;
+
+    static bool is_alpha(char c) {
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    }
+
+    static bool is_digit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
+    static bool is_suffix_char(char c) {
+        return is_alpha(c) || is_digit(c) || c == '_';
+    }
+
+    static bool is_integer_suffix(const std::string& suffix) {
+        return suffix == "i8" || suffix == "i16" || suffix == "i32" || suffix == "i64" ||
+               suffix == "u8" || suffix == "u16" || suffix == "u32" || suffix == "u64";
+    }
+
+    static bool is_float_suffix(const std::string& suffix) {
+        return suffix == "f32" || suffix == "f64" || suffix == "f128";
+    }
+
+    static bool is_octal_digit(char c) {
+        return c >= '0' && c <= '7';
+    }
+
+    char peek(int offset = 0) const {
+        std::size_t at = index_ + static_cast<std::size_t>(offset);
+        if (at >= source_.size()) return '\0';
+        return source_[at];
+    }
+
+    char advance() {
+        char c = peek();
+        if (c == '\0') return c;
+        ++index_;
+        if (c == '\n') {
+            ++line_;
+            column_ = 1;
+        } else {
+            ++column_;
+        }
+        return c;
+    }
+
+    bool match(char expected) {
+        if (peek() != expected) return false;
+        advance();
+        return true;
+    }
+
+    void skip_space_and_comments() {
+        for (;;) {
+            while (peek() == ' ' || peek() == '\t' || peek() == '\r' || peek() == '\n') {
+                advance();
+            }
+            if (peek() == '/' && peek(1) == '/') {
+                while (peek() != '\n' && peek() != '\0') advance();
+                continue;
+            }
+            if (peek() == '/' && peek(1) == '*') {
+                skip_block_comment();
+                continue;
+            }
+            break;
+        }
+    }
+
+    void skip_block_comment() {
+        SourceLocation loc{line_, column_};
+        advance();
+        advance();
+        int depth = 1;
+        while (depth > 0) {
+            if (peek() == '\0') fail(loc, "unterminated block comment");
+            if (peek() == '/' && peek(1) == '*') {
+                advance();
+                advance();
+                ++depth;
+            } else if (peek() == '*' && peek(1) == '/') {
+                advance();
+                advance();
+                --depth;
+            } else {
+                advance();
+            }
+        }
+    }
+
+    static Token simple(TokenKind kind, std::string text, SourceLocation loc) {
+        return Token{kind, std::move(text), 0, loc, 0.0, ""};
+    }
+
+    Token identifier(SourceLocation loc) {
+        std::string text;
+        while (is_alpha(peek()) || is_digit(peek()) || peek() == '_') {
+            text.push_back(advance());
+        }
+        static const std::map<std::string, TokenKind> keywords = {
+            {"fn", TokenKind::KwFn},
+            {"const", TokenKind::KwConst},
+            {"as", TokenKind::KwAs},
+            {"meta", TokenKind::KwMeta},
+            {"struct", TokenKind::KwStruct},
+            {"extern", TokenKind::KwExtern},
+            {"enum", TokenKind::KwEnum},
+            {"trait", TokenKind::KwTrait},
+            {"dyn", TokenKind::KwDyn},
+            {"match", TokenKind::KwMatch},
+            {"mod", TokenKind::KwMod},
+            {"pub", TokenKind::KwPub},
+            {"use", TokenKind::KwUse},
+            {"impl", TokenKind::KwImpl},
+            {"for", TokenKind::KwFor},
+            {"in", TokenKind::KwIn},
+            {"let", TokenKind::KwLet},
+            {"var", TokenKind::KwVar},
+            {"own", TokenKind::KwOwn},
+            {"ref", TokenKind::KwRef},
+            {"mut", TokenKind::KwMut},
+            {"ptr", TokenKind::KwPtr},
+            {"return", TokenKind::KwReturn},
+            {"if", TokenKind::KwIf},
+            {"else", TokenKind::KwElse},
+            {"while", TokenKind::KwWhile},
+            {"init", TokenKind::KwInit},
+            {"next", TokenKind::KwNext},
+            {"continue", TokenKind::KwContinue},
+            {"break", TokenKind::KwBreak},
+            {"drop", TokenKind::KwDrop},
+            {"null", TokenKind::KwNull},
+            {"true", TokenKind::KwTrue},
+            {"false", TokenKind::KwFalse}
+        };
+        auto found = keywords.find(text);
+        if (found != keywords.end()) return Token{found->second, text, 0, loc, 0.0, ""};
+        return Token{TokenKind::Identifier, text, 0, loc, 0.0, ""};
+    }
+
+    Token number(SourceLocation loc) {
+        if (peek() == '0' && (peek(1) == 'x' || peek(1) == 'X' ||
+                              peek(1) == 'o' || peek(1) == 'O' ||
+                              peek(1) == 'b' || peek(1) == 'B')) {
+            return based_integer(loc);
+        }
+
+        std::string text;
+        bool is_float = false;
+        while (is_digit(peek())) text.push_back(advance());
+        if (peek() == '.' && is_digit(peek(1))) {
+            is_float = true;
+            text.push_back(advance());
+            while (is_digit(peek())) text.push_back(advance());
+        }
+        if ((peek() == 'e' || peek() == 'E') &&
+            (is_digit(peek(1)) || ((peek(1) == '+' || peek(1) == '-') && is_digit(peek(2))))) {
+            is_float = true;
+            text.push_back(advance());
+            if (peek() == '+' || peek() == '-') text.push_back(advance());
+            while (is_digit(peek())) text.push_back(advance());
+        }
+        std::string suffix;
+        if (is_alpha(peek())) {
+            while (is_suffix_char(peek())) suffix.push_back(advance());
+            if (is_float) {
+                if (!is_float_suffix(suffix)) fail(loc, "float literal suffix must be f32, f64, or f128");
+            } else if (is_float_suffix(suffix)) {
+                is_float = true;
+            } else if (!is_integer_suffix(suffix)) {
+                fail(loc, "unsupported numeric literal suffix '" + suffix + "'");
+            }
+        }
+        if (is_float) {
+            try {
+                Token token{TokenKind::Float, text, 0, loc, 0.0, ""};
+                token.literal_suffix = std::move(suffix);
+                token.float_value = std::stod(text);
+                return token;
+            } catch (const std::out_of_range&) {
+                fail(loc, "float literal is too large");
+            } catch (const std::invalid_argument&) {
+                fail(loc, "invalid float literal");
+            }
+        }
+        try {
+            Token token{TokenKind::Integer, text, parse_integer_digits(loc, text, 10, "decimal"), loc, 0.0, ""};
+            token.literal_suffix = std::move(suffix);
+            return token;
+        } catch (const CompileError&) {
+            throw;
+        }
+    }
+
+    Token based_integer(SourceLocation loc) {
+        std::string text;
+        text.push_back(advance());
+        char marker = advance();
+        text.push_back(marker);
+
+        int base = 10;
+        std::string kind;
+        if (marker == 'x' || marker == 'X') {
+            base = 16;
+            kind = "hexadecimal";
+        } else if (marker == 'o' || marker == 'O') {
+            base = 8;
+            kind = "octal";
+        } else {
+            base = 2;
+            kind = "binary";
+        }
+
+        std::string digits;
+        while (is_digit_for_base(peek(), base)) {
+            char c = advance();
+            text.push_back(c);
+            digits.push_back(c);
+        }
+
+        if (digits.empty()) fail(loc, kind + " literal requires at least one digit after " + text);
+        if ((base == 2 || base == 8) && is_digit(peek())) {
+            char invalid = peek();
+            fail(SourceLocation{line_, column_}, "invalid digit '" + std::string(1, invalid) + "' in " + kind + " literal");
+        }
+        if (peek() == '.') fail(SourceLocation{line_, column_}, "non-decimal float literals are not supported");
+
+        std::string suffix;
+        if (is_alpha(peek())) {
+            while (is_suffix_char(peek())) suffix.push_back(advance());
+            if (is_float_suffix(suffix)) fail(loc, "non-decimal float literal suffixes are not supported");
+            if (!is_integer_suffix(suffix)) fail(loc, "unsupported numeric literal suffix '" + suffix + "'");
+        }
+
+        Token token{TokenKind::Integer, text, parse_integer_digits(loc, digits, base, kind), loc, 0.0, ""};
+        token.literal_suffix = std::move(suffix);
+        return token;
+    }
+
+    Token string(SourceLocation loc) {
+        std::string text;
+        for (;;) {
+            char c = advance();
+            if (c == '\0' || c == '\n') fail(loc, "unterminated string literal");
+            if (c == '"') return Token{TokenKind::String, text, 0, loc, 0.0, ""};
+            if (c == '\\') {
+                append_string_escape(text, loc);
+            } else {
+                text.push_back(c);
+            }
+        }
+    }
+
+    void append_string_escape(std::string& text, SourceLocation string_loc) {
+        SourceLocation escape_loc{line_, column_};
+        char escaped = advance();
+        switch (escaped) {
+            case 'a': text.push_back('\a'); break;
+            case 'b': text.push_back('\b'); break;
+            case 'e': text.push_back('\x1b'); break;
+            case 'f': text.push_back('\f'); break;
+            case 'n': text.push_back('\n'); break;
+            case 'r': text.push_back('\r'); break;
+            case 't': text.push_back('\t'); break;
+            case 'v': text.push_back('\v'); break;
+            case '"': text.push_back('"'); break;
+            case '\'': text.push_back('\''); break;
+            case '?': text.push_back('?'); break;
+            case '\\': text.push_back('\\'); break;
+            case 'x': append_hex_byte_escape(text, escape_loc); break;
+            case 'u': append_unicode_escape(text, escape_loc, 4); break;
+            case 'U': append_unicode_escape(text, escape_loc, 8); break;
+            case '\n':
+                break;
+            case '\0':
+                fail(string_loc, "unterminated string literal");
+            default:
+                if (is_octal_digit(escaped)) {
+                    append_octal_escape(text, escape_loc, escaped);
+                    break;
+                }
+                fail(escape_loc, "unsupported string escape");
+        }
+    }
+
+    std::string read_digits_for_escape(SourceLocation loc, int base, const std::string& kind, bool require_digit) {
+        std::string digits;
+        while (is_digit_for_base(peek(), base)) digits.push_back(advance());
+        if (require_digit && digits.empty()) fail(loc, kind + " escape requires at least one digit");
+        return digits;
+    }
+
+    void append_hex_byte_escape(std::string& text, SourceLocation loc) {
+        std::string digits = read_digits_for_escape(loc, 16, "\\x", true);
+        std::uint64_t value = parse_integer_digits(loc, digits, 16, "hex escape");
+        if (value > 0xff) fail(loc, "\\x escape value must fit in one byte");
+        text.push_back(static_cast<char>(value));
+    }
+
+    void append_octal_escape(std::string& text, SourceLocation loc, char first) {
+        std::string digits;
+        digits.push_back(first);
+        while (is_octal_digit(peek())) digits.push_back(advance());
+        std::uint64_t value = parse_integer_digits(loc, digits, 8, "octal escape");
+        if (value > 0xff) fail(loc, "octal escape value must fit in one byte");
+        text.push_back(static_cast<char>(value));
+    }
+
+    void append_unicode_escape(std::string& text, SourceLocation loc, int fixed_digits) {
+        std::string digits;
+        if (fixed_digits == 4 && match('{')) {
+            while (peek() != '}') {
+                if (peek() == '\0' || peek() == '\n') fail(loc, "unterminated Unicode escape");
+                if (!is_digit_for_base(peek(), 16)) fail(SourceLocation{line_, column_}, "invalid digit in Unicode escape");
+                digits.push_back(advance());
+            }
+            advance();
+            if (digits.empty()) fail(loc, "\\u{} escape requires at least one digit");
+        } else {
+            for (int i = 0; i < fixed_digits; ++i) {
+                if (!is_digit_for_base(peek(), 16)) {
+                    fail(loc, fixed_digits == 4 ? "\\u escape requires exactly 4 hex digits" : "\\U escape requires exactly 8 hex digits");
+                }
+                digits.push_back(advance());
+            }
+        }
+
+        std::uint64_t value = parse_integer_digits(loc, digits, 16, "Unicode escape");
+        append_utf8(text, loc, static_cast<std::uint32_t>(value));
+    }
+
+    [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
+        throw CompileError(where(loc) + ": " + message);
+    }
+};
+
+std::vector<Token> lex_source(std::string source) {
+    Lexer lexer(std::move(source));
+    return lexer.lex();
+}
+
+} // namespace ari

@@ -1,0 +1,24 @@
+trait Make[Item] {
+  fn make(value: Item) -> Self
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl[T] Make[T] for Box[T] {
+  fn make(value: T) -> Box[T] {
+    Box { value: value }
+  }
+}
+
+fn main() -> i64 {
+  let inferred = Box::make(20);
+  let explicit = Box::make<i64>(1);
+  let flag = Box::make(true);
+  if flag.value {
+    inferred.value + explicit.value
+  } else {
+    0
+  }
+}

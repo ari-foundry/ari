@@ -1,0 +1,11 @@
+trait Show[T] {
+  fn show(self) -> i64
+}
+
+trait Show[T] {
+  fn show(self) -> i64
+}
+
+fn main() -> i64 {
+  return 0;
+}

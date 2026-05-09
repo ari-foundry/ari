@@ -1,0 +1,6 @@
+extern "C" fn abs(value: c_int) -> c_int;
+extern "C" fn strlen(text: ptr c_char) -> size_t;
+
+fn main() -> i64 {
+  return abs(-9i32) as i64 + strlen("abc") as i64;
+}

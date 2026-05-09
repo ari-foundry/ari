@@ -1,0 +1,11 @@
+struct Holder {
+  item: ptr i64,
+}
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let item = zone::new<i64>(ref mut zone, 5);
+  let holder = Holder { item: item };
+  zone::destroy(zone);
+  0
+}

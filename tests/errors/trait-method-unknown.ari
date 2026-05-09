@@ -1,0 +1,14 @@
+impl Eq[i64] for i64 {
+  fn eq(self, other: i64) -> bool {
+    self == other
+  }
+}
+
+fn main() -> i64 {
+  let value = 1;
+  if value.missing() {
+    1
+  } else {
+    0
+  }
+}

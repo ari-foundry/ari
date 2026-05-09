@@ -1,0 +1,5 @@
+mod definitely_missing_module;
+
+fn main() -> i64 {
+  return 0;
+}

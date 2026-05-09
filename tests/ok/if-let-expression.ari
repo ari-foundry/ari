@@ -1,0 +1,35 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+fn choose(flag: bool) -> OptionI32 {
+  if flag {
+    return Some(7);
+  }
+  return None();
+}
+
+fn main() -> i64 {
+  let present = if let Some(value) = choose(true) {
+    let extra = 4;
+    (value as i64) + extra
+  } else {
+    0
+  };
+  let missing = if let Some(value2) = choose(false) {
+    value2 as i64
+  } else {
+    let fallback = 3;
+    fallback
+  };
+  let chain = if let Some(first) = choose(false) {
+    first as i64
+  } else if let Some(second) = choose(true) {
+    let add = 2;
+    (second as i64) + add
+  } else {
+    99
+  };
+  return present + missing + chain;
+}

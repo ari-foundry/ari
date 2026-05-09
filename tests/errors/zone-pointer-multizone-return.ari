@@ -1,0 +1,12 @@
+fn choose(left: ref mut Zone, right: ref mut Zone) -> ptr i64 {
+  zone::new<i64>(left, 5)
+}
+
+fn main() -> i64 {
+  var left = zone::create(64);
+  var right = zone::create(64);
+  let item = choose(ref mut left, ref mut right);
+  zone::destroy(left);
+  zone::destroy(right);
+  0
+}

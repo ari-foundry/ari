@@ -1,0 +1,27 @@
+trait LeftScore {
+  fn score(self) -> i64
+}
+
+trait RightScore {
+  fn score(self) -> i64
+}
+
+impl LeftScore for i64 {
+  fn score(self) -> i64 {
+    return self + 1;
+  }
+}
+
+impl RightScore for i64 {
+  fn score(self) -> i64 {
+    return self + 10;
+  }
+}
+
+fn choose_left[T: LeftScore](value: T) -> i64 {
+  return value.score();
+}
+
+fn main() -> i64 {
+  return choose_left<i64>(5);
+}

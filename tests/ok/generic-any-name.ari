@@ -1,0 +1,23 @@
+fn identity[Foo](value: Foo) -> Foo {
+  return value;
+}
+
+fn first[LeftType, RightType](left: LeftType, right: RightType) -> LeftType {
+  return left;
+}
+
+fn choose_named[ResultType](left: ResultType, right: ResultType, flag: bool) -> ResultType {
+  if flag {
+    return left;
+  }
+  return right;
+}
+
+fn main() -> i64 {
+  let number = identity(9);
+  let flag = identity(true);
+  if flag {
+    return first(number + 10, false) + choose_named(3, 4, false);
+  }
+  return 1;
+}

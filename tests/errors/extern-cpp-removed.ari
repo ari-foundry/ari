@@ -1,0 +1,6 @@
+extern "C++" fn cpp_add(left: i64, right: i64) -> i64;
+
+fn main() -> i64 {
+  return 0;
+}
+

@@ -1,0 +1,17 @@
+mod Math {
+  fn hidden() -> i64 {
+    return 3;
+  }
+
+  pub fn value() -> i64 {
+    return 7;
+  }
+
+  pub fn call_hidden() -> i64 {
+    return hidden();
+  }
+}
+
+fn main() -> i64 {
+  return Math::value() + Math::call_hidden();
+}

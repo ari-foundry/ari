@@ -1,0 +1,12 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+fn main() -> i64 {
+  let Some(value) = Some(6i32);
+  var Some(total) = Some(2i32);
+  total = total + 5i32;
+  let Some(_) = Some(99i32);
+  (value as i64) + (total as i64)
+}

@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let number: u64 = 18446744073709551616;
+  return 0;
+}

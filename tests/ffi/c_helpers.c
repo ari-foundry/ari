@@ -1,0 +1,25 @@
+#include <stdint.h>
+
+int64_t ari_test_add_i64(int64_t left, int64_t right) {
+    return left + right;
+}
+
+int64_t ari_test_strlen(const char* text) {
+    int64_t count = 0;
+    while (text[count] != '\0') {
+        ++count;
+    }
+    return count;
+}
+
+void ari_test_inc_i64(int64_t* value) {
+    *value += 1;
+}
+
+int64_t ari_test_is_null(const void* value) {
+    return value == 0 ? 1 : 0;
+}
+
+int64_t ari_test_apply_i64(int64_t (*op)(int64_t), int64_t value) {
+    return op(value);
+}

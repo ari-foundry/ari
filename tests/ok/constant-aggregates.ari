@@ -1,0 +1,39 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct FlagPair(bool, bool)
+
+enum Choice {
+  Zero,
+  Score(i32),
+}
+
+const POINT: Point = Point { x: 7, y: 4 };
+const FLAGS: FlagPair = FlagPair(true, false);
+const PAIR: (i64, bool) = (3, true);
+const NUMS: [i64, 3] = [2, 5, 8];
+const CHOSEN: Choice = Score(6i32);
+const EMPTY: Choice = Zero;
+
+fn main() -> i64 {
+  let p = POINT;
+  let flags = FLAGS;
+  let pair = PAIR;
+  let nums = NUMS;
+  let direct = POINT.y + NUMS[2];
+  let choice = match CHOSEN {
+    Score(value) => value as i64,
+    Zero => 0,
+  };
+  let empty = match EMPTY {
+    Zero => 1,
+    Score(_) => 0,
+  };
+  if flags.0 && pair.1 {
+    p.x + nums[1] + pair.0 + choice + empty + direct
+  } else {
+    0
+  }
+}

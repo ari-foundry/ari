@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  var number = 7;
+  var other = 8;
+  var shared = ref number;
+  shared = ref other;
+  return 0;
+}

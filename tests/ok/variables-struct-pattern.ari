@@ -1,0 +1,31 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Line {
+  start: Point,
+  end: Point,
+}
+
+fn main() -> i64 {
+  let point = Point { x: 4, y: 5 };
+  let Point { x, y: renamed } = point;
+
+  var Point { x: total, y: other } = Point { x: x + renamed, y: 2 };
+  total += other;
+
+  let line = Line {
+    start: Point { x: 1, y: 2 },
+    end: Point { x: 3, y: 4 },
+  };
+  let Line {
+    start: Point { x: sx, y: _ },
+    end: Point { y: ey, x: ex, .. },
+    ..
+  } = line;
+
+  let Point { x: rest_x, .. } = Point { x: 6, y: 7 };
+
+  total + sx + ex + ey + rest_x
+}

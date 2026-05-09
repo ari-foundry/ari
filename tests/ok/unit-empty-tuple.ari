@@ -1,0 +1,19 @@
+fn takes_unit(value: ()) -> i64 {
+  let () = value;
+  3
+}
+
+fn write_unit() -> () {
+  ()
+}
+
+fn main() -> i64 {
+  let unit: () = ();
+  let () = unit;
+  let matched = match unit {
+    () => 7,
+  };
+
+  write_unit();
+  takes_unit(()) + matched
+}

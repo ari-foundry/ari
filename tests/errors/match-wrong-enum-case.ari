@@ -1,0 +1,19 @@
+enum Left {
+  A,
+}
+
+enum Right {
+  B,
+}
+
+fn main() -> i64 {
+  let value = A;
+  match value {
+    B => {
+      return 1;
+    }
+    A => {
+      return 0;
+    }
+  }
+}

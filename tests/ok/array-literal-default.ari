@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  let values = [2, 4, 8];
+  let typed: [i64, 2] = [3, 5];
+
+  return values[2] + typed[0] + len(values);
+}

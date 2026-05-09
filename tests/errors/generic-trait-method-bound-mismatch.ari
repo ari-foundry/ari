@@ -1,0 +1,21 @@
+trait Score {}
+
+trait Other {}
+
+trait Convert {
+  fn keep[Value: Score](self, value: Value) -> Value
+}
+
+struct Box {
+  value: i64,
+}
+
+impl Convert for Box {
+  fn keep[Out: Other](self, value: Out) -> Out {
+    value
+  }
+}
+
+fn main() -> i64 {
+  0
+}

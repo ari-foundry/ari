@@ -1,0 +1,393 @@
+# Control Flow
+
+## Return
+
+```ari
+fn main() -> i64 {
+  return 0;
+}
+```
+
+`return` exits the current function with a value.
+
+## If
+
+```ari
+if value < 10 {
+  return 1;
+} else if value < 20 {
+  return 2;
+} else {
+  return 3;
+}
+```
+
+Conditions must be `bool` or an integer value. Integer conditions are treated
+as `value != 0`; ownership-qualified values are not implicitly converted.
+
+`if` can also be used as an expression when both arms produce a value:
+
+```ari
+let score = if passed { 10 } else { 0 };
+let adjusted = if score > 0 { score } else if retry { 1 } else { 0 };
+```
+
+Expression arms are scoped blocks that may contain local statements before a
+final value expression. Both branches must produce compatible types, and the
+checker merges ownership state across the branches just like statement `if`.
+
+The final value can come after several local statements:
+
+```ari
+let score = if passed {
+  let base = 8;
+  var bonus = 1;
+  bonus += 1;
+  base + bonus
+} else {
+  0
+};
+```
+
+Ownership state is merged across branches. If one branch moves or drops an
+owner and the other branch leaves it live, the checker rejects the program until
+both paths make the same ownership state explicit.
+
+Enum payload and aggregate tests can use `if let`:
+
+```ari
+if let Some(value) = maybe_value {
+  return value as i64;
+} else {
+  return 0;
+}
+
+if let (x, true) = pair {
+  return x;
+} else {
+  return 0;
+}
+
+if let Point { x: px, flag: true, .. } = point {
+  return px;
+}
+```
+
+`if let` can also produce a value when it has an `else` arm. The pattern arm
+can bind a payload or aggregate fields, and each arm follows the same
+final-expression rule as plain `if` expressions:
+
+```ari
+let score = if let Some(value) = maybe_value {
+  let bonus = 2;
+  (value as i64) + bonus
+} else {
+  0
+};
+
+let aggregate_score = if let (Point { y: py, .. }, Rgb(red, false)) = (point, color) {
+  py + red
+} else {
+  0
+};
+```
+
+Aggregate `if let` supports the same tuple, named struct, and tuple-struct
+patterns as `match`. Irrefutable aggregate patterns such as `(x, y)` do not
+need `if let`; Ari rejects them when an `else` arm is present.
+
+## Block Expressions
+
+Plain `{ ... }` blocks can produce values in expression positions. The block
+opens a local scope, may contain local statements, and must end with a final
+value expression:
+
+```ari
+let value = {
+  identity(1);
+  let base = 2;
+  var total = base + 3;
+  total += 4;
+  total
+};
+```
+
+Inside value-producing blocks and `if` expression arms, a non-final expression
+statement must end with `;`. The final value expression omits `;`; adding one
+makes it a discarded statement, so the block no longer has a result value.
+Ordinary statement blocks use the same `;` rule for expression statements.
+
+The result type is the type of the final expression. Borrow-valued block
+results are not supported yet.
+
+## While
+
+```ari
+var value = 0;
+while value < 10 {
+  value = value + 1;
+}
+```
+
+`while let` repeats while an enum-case pattern matches:
+
+```ari
+while let Some(value) = next(index) {
+  index = index + 1;
+}
+```
+
+Loops currently cannot change the ownership state of an outer binding. That
+rule is conservative until the checker can track loop invariants.
+
+## For
+
+The first working `for` loop is a range iterator:
+
+```ari
+var total = 0;
+for value in range(0, 5) {
+  if value == 3 {
+    continue;
+  }
+  total = total + value;
+}
+```
+
+The `0..5` spelling is equivalent:
+
+```ari
+for value in 0..5 {
+  total = total + value;
+}
+```
+
+This iterates `0, 1, 2, 3, 4`. The loop binding is immutable inside the body.
+Inclusive `..=` ranges include the end value:
+
+```ari
+for value in 0..=5 {
+  total = total + value;
+}
+```
+
+The intended long-term model is iterator `next` plus enum pattern matching. The
+current executable subset recognizes `range(start, end)`, `iter::range(start,
+end)`, `range_inclusive(start, end)`, `iter::range_inclusive(start, end)`,
+`start..end`, and `start..=end` as concrete iterator forms and lowers them like
+checked while loops.
+
+Range expressions also produce local range values. `Range[T]` and
+`RangeInclusive[T]` expose `start`/`end` fields and tuple indices `.0`/`.1`
+for integer bound types, so a range can be named before it is iterated:
+
+```ari
+let span: Range[i64] = 2..5;
+for value in span {
+  total = total + value;
+}
+
+let bytes: Range[u8] = range(1, 4);
+for byte in bytes {
+  total = total + byte as i64;
+}
+```
+
+Non-empty list literals and stored local vectors can also be iterated directly:
+
+```ari
+var total = 0;
+for value in [1, 2, 3] {
+  total = total + value;
+}
+
+let values: Vec[i64] = [4, 5, 6];
+for value in values {
+  total = total + value;
+}
+```
+
+`for _ in [1, 2, 3]` runs once per element while ignoring the element value.
+Bare empty `[]` cannot be iterated directly because it has no element type by
+itself. Give the value a typed local binding first, such as
+`let values: Vec[i64] = []`, when an empty vector should participate in normal
+stored-vector control flow. Stored local vector loops currently lower on the
+LLVM backend; the raw freestanding backend still rejects stored vector values.
+
+List-literal and stored-vector loops can destructure irrefutable aggregate
+element patterns:
+
+```ari
+for (x, (y, z)) in [(1, (2, 3)), (4, (5, 6))] {
+  total = total + x + y + z;
+}
+
+for Point { x: px, y, .. } in [p1, p2] {
+  total = total + px + y;
+}
+
+for Rgb(red, _) in [Rgb(7, true), Rgb(8, false)] {
+  total = total + red;
+}
+```
+
+These loop heads are destructuring bindings, not filters. Literal, range,
+or-pattern, and enum-case loop heads are still rejected until the general
+`Iterator[T]` model defines how failed matches advance the iterator.
+
+Enum-case patterns in `for`, such as `for Some(value) in items`, are reserved
+for the future `Iterator[T]` lowering model.
+
+## Break
+
+```ari
+while true {
+  break;
+}
+```
+
+`break` exits the nearest loop.
+
+Loops can be labeled, and `break label` exits the matching active loop:
+
+```ari
+outer: while true {
+  while true {
+    break outer;
+  }
+}
+```
+
+Blocks can also be labeled as statement scopes. A labeled block can be exited
+early with `break label`:
+
+```ari
+block: {
+  cleanup_step();
+  break block;
+  unreachable_step();
+}
+```
+
+In expression position, a labeled block can produce a value. `break label value`
+stores the block result and exits early:
+
+```ari
+let result = done: {
+  let base = 4;
+  if base > 3 {
+    break done base + 8;
+  }
+  1
+};
+```
+
+The break value and the final block value must have compatible types. Borrow
+and owning break values are not supported yet. Tuple and struct results can be
+bound from labeled blocks:
+
+```ari
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+let point = done: {
+  break done Point { x: 4, y: 5 };
+  Point { x: 0, y: 0 }
+};
+```
+
+If a labeled block expression has both a final-value path and one or more
+`break label value` paths, every path must leave outer owning bindings in the
+same state. For example, one path cannot drop an `own` binding while another
+typed-break path leaves it alive.
+
+## Continue
+
+```ari
+while value < 10 {
+  value = value + 1;
+  continue;
+}
+```
+
+`continue` jumps to the next loop iteration.
+
+`continue` with values is only valid in `init while` loops. Plain `while` and
+`for` loops reject value continues because they do not have positional loop
+state to update.
+
+## Init-While Sugar
+
+```ari
+init a = 1, b = 5 while a < b {
+  if a == 3 {
+    continue a + 1, b
+  }
+} next a + 1, b
+```
+
+The `init` bindings are created before the loop. The expression after `while`
+is the loop condition. The `next` values are assigned positionally after a
+normal iteration.
+
+For:
+
+```ari
+init a = 1, b = 5 while a < b {
+  ...
+} next 3, 4
+```
+
+the normal end-of-iteration update behaves like:
+
+```ari
+a = 3
+b = 4
+```
+
+Inside the loop:
+
+```ari
+continue 2, 5
+```
+
+behaves like:
+
+```ari
+a = 2
+b = 5
+continue
+```
+
+The number of values in `continue` and `next` must match the number of `init`
+bindings.
+
+`let ... while ... next ...` is accepted as the preferred spelling for the same
+loop-state form:
+
+```ari
+let a = 1, b = 5 while a < b {
+  continue a + 1, b
+} next a + 1, b
+```
+
+The older `init ... while ... next ...` form remains accepted for now.
+
+## Limits And Diagnostics
+
+- `if`, `while`, `while let`, `init while`, and `let while` conditions must be
+  `bool` or integer-convertible.
+- Plain `break` and `continue` must appear inside a loop.
+- `break label` must name an active loop or block label.
+- `for` currently accepts integer `Range[T]` and `RangeInclusive[T]` values,
+  `range(start, end)`, `iter::range(start, end)`,
+  `range_inclusive(start, end)`, `iter::range_inclusive(start, end)`,
+  `start..end`, `start..=end`, non-empty list literals, or stored local vector
+  values.
+- Range `for` patterns currently support a binding name or `_`. Vector loops
+  also support irrefutable tuple, array, named struct, and tuple-struct product
+  patterns. Enum-case and other refutable loop-head patterns are reserved for
+  future iterator lowering.
+- Loops currently cannot change the ownership state of an outer binding.

@@ -1,0 +1,17 @@
+enum Choice {
+  A,
+  B,
+}
+
+fn main() -> i64 {
+  let token: own i64 = 1;
+  let value = A;
+  match value {
+    A => {
+      drop token;
+    }
+    B => {
+    }
+  }
+  return 0;
+}

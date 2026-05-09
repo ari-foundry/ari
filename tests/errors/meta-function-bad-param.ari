@@ -1,0 +1,6 @@
+meta fn bad(input: i64) -> token_stream {
+}
+
+fn main() -> i64 {
+  return 0;
+}

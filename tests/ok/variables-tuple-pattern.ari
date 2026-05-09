@@ -1,0 +1,17 @@
+fn main() -> i64 {
+  let _ = (0, false);
+  let (left, right) = (4, 5);
+  var (total, flag): (i64, bool) = (left + right, true);
+  total += 1;
+
+  let (_, kept) = (99, total);
+  let ((nested_left, _), nested_right) = ((2, false), 3);
+  let (first, .., last) = (1, 40, 50, 2);
+  let (.., suffix) = (8, 9, 10);
+
+  if flag {
+    total + kept + nested_left + nested_right + first + last + suffix
+  } else {
+    0
+  }
+}

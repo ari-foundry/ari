@@ -1,0 +1,9 @@
+extern "C" fn ari_test_is_null(value: ptr c_void) -> i64;
+
+fn main() -> i64 {
+  let raw: ptr c_void = null;
+  let bytes: ptr c_char = raw as ptr c_char;
+  let addr: u64 = bytes as u64;
+  let back: ptr c_void = addr as ptr c_void;
+  return ari_test_is_null(back);
+}

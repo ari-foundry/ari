@@ -1,0 +1,16 @@
+enum Maybe {
+  None,
+  Some(i32),
+}
+
+fn main() -> i64 {
+  let item = Some(1);
+  match item {
+    Some(inner) => {
+      inner = 2;
+    }
+    None => {
+    }
+  }
+  return 0;
+}

@@ -1,0 +1,34 @@
+@cfg(false)
+fn chosen() -> i64 {
+  return missing_name();
+}
+
+@cfg(true)
+fn chosen() -> i64 {
+  return 7;
+}
+
+@cfg(any(target("windows"), feature("disabled")))
+fn platform() -> i64 {
+  return missing_name();
+}
+
+@cfg(all(target("unix"), not(feature("disabled"))))
+fn platform() -> i64 {
+  return 3;
+}
+
+@cfg(false)
+struct Disabled {
+  value: MissingType,
+}
+
+@cfg(true)
+struct Enabled {
+  value: i64,
+}
+
+fn main() -> i64 {
+  let item = Enabled { value: chosen() };
+  return item.value + platform();
+}

@@ -1,0 +1,18 @@
+mod Hidden {
+  enum Secret {
+    A,
+  }
+
+  pub fn make() -> Secret {
+    return A;
+  }
+}
+
+fn main() -> i64 {
+  let value = Hidden::make();
+  match value {
+    Hidden::A => {
+      return 1;
+    }
+  }
+}

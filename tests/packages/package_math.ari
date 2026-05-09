@@ -1,0 +1,6 @@
+pub fn value() -> i64 {
+  return self::nested::bonus() + self::package_header::header_value();
+}
+
+mod nested;
+mod package_header;

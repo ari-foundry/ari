@@ -1,0 +1,33 @@
+struct Point {
+  x: i64,
+  y: i64,
+  flag: bool,
+}
+
+struct Rgb(i64, bool)
+
+fn main() -> i64 {
+  let pair = (4, true);
+  var total = 0;
+  if let (x, true) = pair {
+    total = total + x;
+  } else {
+    total = 99;
+  }
+
+  let point = Point { x: 3, y: 7, flag: true };
+  if let Point { x: px, flag: false, .. } = point {
+    total = total + px;
+  } else {
+    total = total + 1;
+  }
+
+  let color = Rgb(5, false);
+  let expr_score = if let (Point { y: py, .. }, Rgb(red, false)) = (point, color) {
+    py + red
+  } else {
+    0
+  };
+
+  return total + expr_score;
+}

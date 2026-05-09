@@ -1,0 +1,38 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+fn inspect(value: ref i64) -> i64 {
+  return 1;
+}
+
+fn touch(value: ref mut i64) -> i64 {
+  return 2;
+}
+
+fn main() -> i64 {
+  var pair = Pair { left: 10, right: 20 };
+  var total = 0;
+
+  {
+    let left_ref = ref pair.left;
+    pair.right = pair.right + 1;
+    total = total + inspect(left_ref);
+  }
+
+  {
+    let right_ref = ref mut pair.right;
+    pair.left = pair.left + 1;
+    total = total + touch(right_ref);
+  }
+
+  var values: [i64, 2] = [4, 5];
+  {
+    let first_ref = ref values[0];
+    values[1] = values[1] + 1;
+    total = total + inspect(first_ref);
+  }
+
+  return total + pair.left + pair.right + values[1];
+}

@@ -1,0 +1,11 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+fn main() -> i64 {
+  for Some(value) in [Some(1), None()] {
+    return value as i64;
+  }
+  return 0;
+}

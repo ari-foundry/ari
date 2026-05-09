@@ -1,0 +1,19 @@
+trait Build {
+  fn build(x: i64, y: i64) -> Self
+}
+
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+impl Build for Point {
+  fn build(x: i64, y: i64) -> Point {
+    Point { x: x, y: y }
+  }
+}
+
+fn main() -> i64 {
+  let point = Point::build(4, 5);
+  point.x + point.y
+}

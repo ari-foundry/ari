@@ -1,0 +1,11 @@
+fn score(value: u8) -> i64 {
+  match value {
+    0..=10 => 1,
+    10..=20 => 2,
+    _ => 0,
+  }
+}
+
+fn main() -> i64 {
+  score(10u8)
+}

@@ -1,0 +1,43 @@
+mod Base {
+  pub fn inc(value: i64) -> i64 {
+    return value + 1;
+  }
+
+  pub fn add(left: i64, right: i64) -> i64 {
+    return left + right;
+  }
+
+  fn hidden_scale(value: i64) -> i64 {
+    return value * 2;
+  }
+
+  pub fn scale(value: i64) -> i64 {
+    return hidden_scale(value);
+  }
+}
+
+mod Feature {
+  use Base::inc as bump
+
+  pub fn run(value: i64) -> i64 {
+    return bump(value) + Base::scale(value);
+  }
+}
+
+mod Outer {
+  pub mod Inner {
+    pub fn value() -> i64 {
+      return 5;
+    }
+  }
+
+  pub fn value() -> i64 {
+    return Outer::Inner::value() + 1;
+  }
+}
+
+use Base::add as plus
+
+fn main() -> i64 {
+  return plus(2, 3) + Feature::run(4) + Outer::value() + Outer::Inner::value();
+}

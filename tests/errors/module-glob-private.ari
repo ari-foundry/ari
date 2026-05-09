@@ -1,0 +1,11 @@
+mod Secret {
+  fn hidden() -> i64 {
+    return 1;
+  }
+}
+
+use Secret::*
+
+fn main() -> i64 {
+  return hidden();
+}

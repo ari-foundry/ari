@@ -1,0 +1,31 @@
+mod Core {
+  pub enum OptionI32 {
+    None,
+    Some(i32),
+  }
+
+  pub fn value() -> i64 {
+    return 11;
+  }
+}
+
+mod Api {
+  pub use Core::value as answer
+  pub use Core::OptionI32 as Maybe
+  pub use Core::{Some, None}
+}
+
+fn score(value: Api::Maybe) -> i64 {
+  match value {
+    Api::Some(inner) => {
+      return inner as i64;
+    }
+    Api::None => {
+      return 0;
+    }
+  }
+}
+
+fn main() -> i64 {
+  return Api::answer() + score(Api::Some(5));
+}

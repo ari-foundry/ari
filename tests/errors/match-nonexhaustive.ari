@@ -1,0 +1,14 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+fn main() -> i64 {
+  let value = Some(1);
+  match value {
+    Some(_) => {
+      return 1;
+    }
+  }
+  return 0;
+}

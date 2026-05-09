@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  var value = 1;
+  block: {
+    value = value + 1;
+    break block;
+    value = 99;
+  }
+  return value;
+}

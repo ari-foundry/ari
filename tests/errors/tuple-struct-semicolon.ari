@@ -1,0 +1,5 @@
+struct Pair(i64, bool);
+
+fn main() -> i64 {
+  return 0;
+}

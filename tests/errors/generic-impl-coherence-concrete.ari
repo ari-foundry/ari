@@ -1,0 +1,23 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl[T] Score for Box[T] {
+  fn score(self) -> i64 {
+    0
+  }
+}
+
+impl Score for Box[i64] {
+  fn score(self) -> i64 {
+    1
+  }
+}
+
+fn main() -> i64 {
+  0
+}

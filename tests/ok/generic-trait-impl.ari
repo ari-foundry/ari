@@ -1,0 +1,27 @@
+trait Inner[T] {
+  fn inner(self) -> T
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl[T] Inner[T] for Box[T] {
+  fn inner(self) -> T {
+    self.value
+  }
+}
+
+fn use_inner[Wrapped: Inner[i64]](value: Wrapped) -> i64 {
+  value.inner()
+}
+
+fn main() -> i64 {
+  let number = Box { value: 20 };
+  let flag = Box { value: true };
+  if flag.inner() {
+    use_inner(number) + 1
+  } else {
+    0
+  }
+}

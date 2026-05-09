@@ -1,0 +1,5 @@
+const BAD: [i64, 2] = [1];
+
+fn main() -> i64 {
+  BAD[0]
+}

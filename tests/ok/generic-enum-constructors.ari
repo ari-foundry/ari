@@ -1,0 +1,26 @@
+enum Option[T] {
+  None,
+  Some(T),
+}
+
+fn keep(value: Option[i64]) -> Option[i64] {
+  return value;
+}
+
+fn make_none() -> Option[i64] {
+  return None<i64>();
+}
+
+fn make_some() -> Option[i64] {
+  return Some(42);
+}
+
+fn main() -> i64 {
+  let inferred: Option[i64] = Some(20);
+  let explicit = Some<i64>(30);
+  let empty = None<i64>();
+  let round = keep(inferred);
+  let from_fn = make_some();
+  let none = make_none();
+  return 0;
+}

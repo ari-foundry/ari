@@ -1,0 +1,16 @@
+fn main() -> i64 {
+  var total = 0;
+  for value in [2, 3, 4, 5] {
+    if value == 3 {
+      continue;
+    }
+    if value == 5 {
+      break;
+    }
+    total = total + value;
+  }
+  for _ in [1, 1, 1] {
+    total = total + 1;
+  }
+  return total;
+}

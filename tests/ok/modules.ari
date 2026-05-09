@@ -1,0 +1,19 @@
+mod Math {
+  pub fn add(left: i64, right: i64) -> i64 {
+    return left + right;
+  }
+
+  pub fn double(value: i64) -> i64 {
+    return add(value, value);
+  }
+
+  fn hidden() -> i64 {
+    return 99;
+  }
+}
+
+use Math::add
+
+fn main() -> i64 {
+  return add(2, 3) + Math::double(4);
+}

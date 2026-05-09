@@ -1,0 +1,26 @@
+fn main() -> i64 {
+  {
+    identity(3);
+  }
+  let value = {
+    identity(1);
+    if false { identity(99) } else { identity(2) };
+    let first = 2;
+    var total = first + 3;
+    total += 4;
+    total
+  };
+  let nested = {
+    let inner = {
+      let inner_left = 1;
+      let inner_right = 2;
+      inner_left + inner_right
+    };
+    inner * value
+  };
+  return nested;
+}
+
+fn identity(value: i64) -> i64 {
+  return value;
+}

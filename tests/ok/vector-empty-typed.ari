@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  let empty: Vec[i64] = [];
+  let before = len(empty);
+
+  var values: Vec[i64] = [];
+  values = [4, 5, 6];
+  let after = values.len();
+
+  values = [];
+  return before + after + values.len();
+}

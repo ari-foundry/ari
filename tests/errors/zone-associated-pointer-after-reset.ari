@@ -1,0 +1,19 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+impl Point {
+  fn new(zone: ref mut Zone, x: i64, y: i64) -> ptr Point {
+    zone::new<Point>(zone, Point { x: x, y: y })
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let point = Point::new(ref mut zone, 4, 8);
+  zone::reset(ref mut zone);
+  let value = (*point).x;
+  zone::destroy(zone);
+  value
+}

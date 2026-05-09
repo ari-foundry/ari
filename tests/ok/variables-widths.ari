@@ -1,0 +1,30 @@
+fn main() -> i64 {
+  var tiny: i8 = -8;
+  var short: i16 = 1234;
+  var signed: i32 = -2000;
+  var byte: u8 = 250;
+  var word: u16 = 65000;
+  var count: u32 = 40;
+  var big: u64 = 9;
+  var ready: bool = false;
+
+  tiny = -7;
+  short = short + 1;
+  signed = signed + 2001;
+  byte = 251;
+  word = word - 1;
+  count = count + 2;
+  big = big + 1;
+  ready = true;
+
+  if ready && tiny == -7 {
+    if short == 1235 && signed == 1 {
+      if byte == 251 && word == 64999 {
+        if count == 42 && big == 10 {
+          return 0;
+        }
+      }
+    }
+  }
+  return 1;
+}

@@ -1,0 +1,6 @@
+mod cheader;
+
+fn main() -> i64 {
+  cheader::puts("header-ok");
+  return 0;
+}

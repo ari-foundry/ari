@@ -1,0 +1,24 @@
+trait Pick {
+  fn pick(self) -> i64
+}
+
+struct Pair[Left, Right] {
+  left: Left,
+  right: Right,
+}
+
+impl[T] Pick for Pair[T, T] {
+  fn pick(self) -> i64 {
+    1
+  }
+}
+
+impl[First, Second] Pick for Pair[First, Second] {
+  fn pick(self) -> i64 {
+    2
+  }
+}
+
+fn main() -> i64 {
+  0
+}

@@ -1,0 +1,5 @@
+extern "C" fn bad(value: c_void);
+
+fn main() -> i64 {
+  return 0;
+}

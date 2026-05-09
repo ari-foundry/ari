@@ -1,0 +1,26 @@
+fn identity[T](value: T) -> T {
+  value
+}
+
+fn apply_i64(op: fn(i64) -> i64, value: i64) -> i64 {
+  op(value)
+}
+
+fn apply_bool(op: fn(bool) -> bool, value: bool) -> bool {
+  op(value)
+}
+
+fn pick_i64_identity() -> fn(i64) -> i64 {
+  return identity;
+}
+
+fn main() -> i64 {
+  let local: fn(i64) -> i64 = identity;
+  let returned = pick_i64_identity();
+  let ok: fn(bool) -> bool = identity;
+  if apply_bool(ok, true) {
+    apply_i64(identity, 40) + returned(2) + local(0)
+  } else {
+    0
+  }
+}

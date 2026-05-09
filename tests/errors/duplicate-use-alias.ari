@@ -1,0 +1,18 @@
+mod A {
+  pub fn one() -> i64 {
+    return 1;
+  }
+}
+
+mod B {
+  pub fn two() -> i64 {
+    return 2;
+  }
+}
+
+use A::one as value
+use B::two as value
+
+fn main() -> i64 {
+  return value();
+}

@@ -1,0 +1,6 @@
+extern "C" fn puts(text: string) -> i64 = "puts";
+
+fn main() -> i64 {
+  puts("function-extern-ok");
+  return 0;
+}

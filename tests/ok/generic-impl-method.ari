@@ -1,0 +1,31 @@
+struct Box[T] {
+  value: T,
+}
+
+struct Pair[Left, Right](Left, Right)
+
+impl[T] Box[T] {
+  fn get(self) -> T {
+    self.value
+  }
+}
+
+impl[Left, Right] Pair[Left, Right] {
+  fn first(self) -> Left {
+    self.0
+  }
+
+  fn second(self) -> Right {
+    self.1
+  }
+}
+
+fn main() -> i64 {
+  let boxed = Box { value: 21 };
+  let pair = Pair(boxed.get(), Box { value: true }.get());
+  if pair.second() {
+    pair.first()
+  } else {
+    0
+  }
+}

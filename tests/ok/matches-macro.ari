@@ -1,0 +1,32 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+struct Point {
+  x: i64,
+  flag: bool,
+}
+
+fn main() -> i64 {
+  let maybe = Some(7);
+  let point = Point { x: 3, flag: true };
+  var score = 0;
+
+  if matches!(maybe, Some(7)) {
+    score += 1;
+  }
+  if matches!(maybe, None) {
+    score += 10;
+  } else {
+    score += 2;
+  }
+  if matches!((point, (1, true)), (Point { flag: true, .. }, (_, true))) {
+    score += 4;
+  }
+  if matches!(5, 1 | 5) {
+    score += 8;
+  }
+
+  return score;
+}

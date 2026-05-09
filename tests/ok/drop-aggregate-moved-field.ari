@@ -1,0 +1,22 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+struct Pair {
+  first: own i64,
+  second: own i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let pair = Pair { first: make_owned(1), second: make_owned(2) };
+  let first = pair.first;
+  drop first;
+  drop pair;
+  return 0;
+}

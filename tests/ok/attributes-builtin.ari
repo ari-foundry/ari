@@ -1,0 +1,26 @@
+@deprecated("use next_value")
+fn old_value() -> i64 {
+  return 4;
+}
+
+@derive(Debug)
+@repr(C)
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+@derive(Debug)
+enum Maybe {
+  None,
+  Some(i32),
+}
+
+@test
+fn smoke() -> i64 {
+  return 0;
+}
+
+fn main() -> i64 {
+  return old_value();
+}

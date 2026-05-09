@@ -1,0 +1,35 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl Score for i64 {
+  fn score(self) -> i64 {
+    self + 1
+  }
+}
+
+impl[T] Box[T] {
+  fn new(value: T) -> Box[T] {
+    Box { value: value }
+  }
+}
+
+impl[T: Score] Box[T] {
+  fn scored(value: T) -> i64 {
+    value.score()
+  }
+}
+
+fn main() -> i64 {
+  let number = Box::new<i64>(20);
+  let flag = Box::new<bool>(true);
+  if flag.value {
+    number.value + Box::scored<i64>(1)
+  } else {
+    0
+  }
+}

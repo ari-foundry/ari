@@ -1,0 +1,13 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume_owned(value: own i64) -> i64 {
+  drop value;
+  return 3;
+}
+
+fn main() -> i64 {
+  let token = make_owned(9);
+  return consume_owned(token);
+}

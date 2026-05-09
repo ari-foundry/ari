@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  init a = 0, b = 3 while a < b {
+    continue a + 1;
+  } next a + 1, b
+  return a;
+}

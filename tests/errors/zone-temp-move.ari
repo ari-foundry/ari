@@ -1,0 +1,9 @@
+fn consume(zone: own Zone) {
+  zone::destroy(zone);
+}
+
+fn main() -> i64 {
+  var scratch = zone::temp(64);
+  consume(scratch);
+  return 0;
+}

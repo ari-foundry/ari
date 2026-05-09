@@ -1,0 +1,21 @@
+fn score_number(value: i64) -> i64 {
+  match value {
+    0..=10 => 1,
+    5 => 2,
+    2..=4 => 3,
+    11..=12 => 4,
+    _ => 0,
+  }
+}
+
+fn score_bool(flag: bool) -> i64 {
+  match flag {
+    true => 8,
+    true => 16,
+    false => 32,
+  }
+}
+
+fn main() -> i64 {
+  score_number(5) + score_number(11) + score_bool(true)
+}

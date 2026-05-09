@@ -1,0 +1,14 @@
+struct Box[T] {
+  value: T,
+}
+
+impl[T] Box[T] {
+  fn new(value: T) -> Box[T] {
+    Box { value: value }
+  }
+}
+
+fn main() -> i64 {
+  let value = Box::new<i64, bool>(1);
+  value.value
+}

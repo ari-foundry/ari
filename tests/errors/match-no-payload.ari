@@ -1,0 +1,16 @@
+enum Choice {
+  A,
+  B(i32),
+}
+
+fn main() -> i64 {
+  let value = A;
+  match value {
+    A(_) => {
+      return 1;
+    }
+    B(_) => {
+      return 2;
+    }
+  }
+}

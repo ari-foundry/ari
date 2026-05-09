@@ -1,0 +1,29 @@
+fn main() -> i64 {
+  let bytes: Range[u8] = range(1, 4);
+  var total = bytes.start as i64 + bytes.end as i64 + bytes.0 as i64 + bytes.1 as i64;
+
+  for byte in bytes {
+    total = total + byte as i64;
+  }
+
+  let inclusive: RangeInclusive[u8] = range_inclusive(2, 4);
+  for included in inclusive {
+    total = total + included as i64;
+  }
+
+  for wide in range(1u64, 3u64) {
+    total = total + wide as i64;
+  }
+
+  for direct16 in 0..2u16 {
+    total = total + direct16 as i64;
+  }
+
+  let small: Range[u16] = 0..2;
+  total = total + small.end as i64;
+  for small_value in small {
+    total = total + small_value as i64;
+  }
+
+  return total;
+}

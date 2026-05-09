@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  var value: i64 = 3;
+  let raw: ptr i64 = (ref mut value) as ptr i64;
+  ptr_store(raw, ptr_load(raw) + 9);
+  return value;
+}

@@ -1,0 +1,43 @@
+struct TokenBox {
+  token: own i64,
+  flag: bool,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume_pair(value: (own i64, i64)) -> i64 {
+  drop value;
+  return 4;
+}
+
+fn consume_box(value: TokenBox) -> i64 {
+  drop value;
+  return 8;
+}
+
+fn borrow_pair(value: (ref i64, ref mut i64)) -> i64 {
+  return 3;
+}
+
+fn main() -> i64 {
+  var number = 10;
+  var other = 20;
+  var total = 0;
+
+  {
+    let borrowed = (ref number, ref mut other);
+    total = total + borrow_pair(borrowed);
+  }
+  number = number + 1;
+  other = other + 1;
+
+  let pair = (make_owned(1), 2);
+  total = total + consume_pair(pair);
+
+  let box = TokenBox { token: make_owned(5), flag: true };
+  total = total + consume_box(box);
+
+  return total + number + other;
+}

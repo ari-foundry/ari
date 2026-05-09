@@ -1,0 +1,29 @@
+fn loop_value() -> i64 {
+  var total = 0;
+  while total < 5 {
+    var scratch = zone::temp(64);
+    let step = zone::new<i64>(ref mut scratch, 1);
+    total = total + *step;
+    if total == 2 {
+      continue;
+    }
+    if total == 4 {
+      break;
+    }
+  }
+  return total;
+}
+
+fn block_value() -> i64 {
+  let escaped = done: {
+    var scratch = zone::temp(64);
+    let item = zone::new<i64>(ref mut scratch, 33);
+    break done *item;
+    0
+  };
+  return escaped;
+}
+
+fn main() -> i64 {
+  return loop_value() + block_value();
+}

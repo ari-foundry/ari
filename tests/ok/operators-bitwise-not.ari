@@ -1,0 +1,18 @@
+fn main() -> i64 {
+  let all: i64 = ~0;
+  if all != -1 {
+    return 1;
+  }
+
+  let byte: u8 = ~0u8;
+  if byte as i64 != 255 {
+    return 2;
+  }
+
+  let word: i16 = ~10i16;
+  if word as i64 != -11 {
+    return 3;
+  }
+
+  return (~10i64) + 34;
+}

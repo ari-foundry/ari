@@ -1,0 +1,21 @@
+struct Point {
+  x: i64,
+  mut y: i64,
+  flag: bool,
+}
+
+struct Pair(i64, mut i64)
+
+fn main() -> i64 {
+  var point = Point { x: 10, y: 2, flag: true };
+  point.y = point.x + 5;
+
+  var pair = Pair(3, 4);
+  pair.1 = point.y;
+
+  if point.flag {
+    pair.0 + pair.1
+  } else {
+    0
+  }
+}

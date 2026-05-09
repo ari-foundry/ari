@@ -1,0 +1,39 @@
+trait Convert {
+  fn keep[Value](self, value: Value) -> Value
+}
+
+struct Box {
+  value: i64,
+}
+
+struct Wrapper[T] {
+  value: T,
+}
+
+impl Convert for Box {
+  fn keep[Out](self, value: Out) -> Out {
+    value
+  }
+}
+
+impl[T] Convert for Wrapper[T] {
+  fn keep[Out](self, value: Out) -> Out {
+    value
+  }
+}
+
+fn use_convert[Item: Convert](value: Item) -> i64 {
+  value.keep(7)
+}
+
+fn main() -> i64 {
+  let direct = Box { value: 1 }.keep<i64>(20);
+  let inferred_bool = Box { value: 2 }.keep(true);
+  let generic_impl = Wrapper { value: true }.keep(3);
+  let bound = use_convert(Box { value: 4 });
+  if inferred_bool {
+    direct + generic_impl + bound
+  } else {
+    0
+  }
+}

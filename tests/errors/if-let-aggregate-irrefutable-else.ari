@@ -1,0 +1,8 @@
+fn main() -> i64 {
+  let pair = (1, 2);
+  if let (x, y) = pair {
+    return x + y;
+  } else {
+    return 0;
+  }
+}

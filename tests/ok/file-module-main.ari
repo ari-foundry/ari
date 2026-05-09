@@ -1,0 +1,5 @@
+mod mathlib;
+
+fn main() -> i64 {
+  return mathlib::add(20, 2);
+}

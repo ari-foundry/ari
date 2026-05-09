@@ -1,0 +1,5 @@
+mod module_file_source as Imported;
+
+fn main() -> i64 {
+  return Imported::value();
+}

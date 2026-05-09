@@ -1,0 +1,16 @@
+struct TokenBox {
+  token: own i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  var box = TokenBox { token: make_owned(1) };
+  let raw: ptr TokenBox = (ref mut box) as ptr TokenBox;
+  let copy = *raw;
+  drop copy;
+  drop box;
+  return 0;
+}

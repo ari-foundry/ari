@@ -1,0 +1,38 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Holder {
+  mut left: Point,
+  right: Point,
+}
+
+fn main() -> i64 {
+  var point = Point { x: 3, y: 4 };
+  let raw: ptr Point = (ref mut point) as ptr Point;
+  let copy = *raw;
+  *raw = Point { x: copy.x + 5, y: copy.y + 6 };
+
+  let after = ptr_load(raw);
+  var other = Point { x: 1, y: 2 };
+  let other_raw: ptr Point = (ref mut other) as ptr Point;
+  ptr_store(other_raw, after);
+
+  let intermediate = *other_raw;
+  *raw = Point { x: intermediate.x + 1, y: intermediate.y + 2 };
+  *other_raw = *raw;
+  let moved = ptr_load(other_raw);
+
+  var numbers: [i64, 2] = [5, 6];
+  let numbers_raw: ptr [i64, 2] = (ref mut numbers) as ptr [i64, 2];
+  let numbers_copy = ptr_load(numbers_raw);
+  *numbers_raw = [numbers_copy[1], moved.x];
+
+  var holder = Holder { left: Point { x: 0, y: 0 }, right: Point { x: 1, y: 1 } };
+  let holder_raw: ptr Holder = (ref mut holder) as ptr Holder;
+  (*holder_raw).left = moved;
+  let nested = (*holder_raw).left;
+
+  return moved.x + moved.y + (*numbers_raw)[0] + (*numbers_raw)[1] + nested.y;
+}

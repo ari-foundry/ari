@@ -1,0 +1,37 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+trait WrappedScore {
+  fn wrapped_score(self) -> i64
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl Score for i64 {
+  fn score(self) -> i64 {
+    self + 1
+  }
+}
+
+impl[T: Score] Box[T] {
+  fn score(self) -> i64 {
+    self.value.score()
+  }
+}
+
+impl[T: Score] WrappedScore for Box[T] {
+  fn wrapped_score(self) -> i64 {
+    self.value.score()
+  }
+}
+
+fn use_wrapped[Wrapped: WrappedScore](value: Wrapped) -> i64 {
+  value.wrapped_score()
+}
+
+fn main() -> i64 {
+  Box { value: 20 }.score() + use_wrapped(Box { value: 1 })
+}

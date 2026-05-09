@@ -1,0 +1,9 @@
+fn inspect(value: ref i64) -> i64 {
+  return 0;
+}
+
+fn main() -> i64 {
+  var number = 7;
+  let unique = ref mut number;
+  return inspect(ref number);
+}

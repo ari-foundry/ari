@@ -1,0 +1,7 @@
+extern "C" fn printf(format: string, ...) -> c_int;
+
+fn main() -> i64 {
+  let pair = (1, 2);
+  printf("%lld", pair);
+  return 0;
+}

@@ -1,0 +1,13 @@
+impl Iterable[i64] for Vec[i64] {
+}
+
+impl iter::Iterator[i64] for Vec[i64] {
+}
+
+fn main() -> i64 {
+  var total = 0;
+  for value in [1, 2, 3] {
+    total = total + value;
+  }
+  return total;
+}

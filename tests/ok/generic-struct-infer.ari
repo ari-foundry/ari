@@ -1,0 +1,15 @@
+struct Box[T] {
+  value: T,
+}
+
+struct Pair[Left, Right](Left, Right)
+
+fn main() -> i64 {
+  let boxed = Box { value: 20 };
+  let pair = Pair(boxed.value, true);
+  if pair.1 {
+    pair.0 + boxed.value
+  } else {
+    0
+  }
+}

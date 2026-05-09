@@ -1,0 +1,84 @@
+impl Debug for i64 {
+}
+
+impl fmt::Display for i64 {
+}
+
+impl Default for i64 {
+  fn default() -> i64 {
+    return 0;
+  }
+}
+
+impl Clone for i64 {
+  fn clone(self) -> i64 {
+    return self;
+  }
+}
+
+impl Copy for i64 {
+}
+
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+impl Eq[i64] for i64 {
+  fn eq(self, other: i64) -> bool {
+    return self == other;
+  }
+}
+
+impl PartialEq[i64] for i64 {
+  fn eq(self, other: i64) -> bool {
+    return self == other;
+  }
+}
+
+impl Ord[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+impl PartialOrd[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+impl From[i32] for i64 {
+  fn from(value: i32) -> i64 {
+    return value as i64;
+  }
+}
+
+impl Into[i64] for i32 {
+  fn into(self) -> i64 {
+    return self as i64;
+  }
+}
+
+impl TryFrom[i64] for i64 {
+}
+
+impl TryInto[i64] for i64 {
+}
+
+impl IntoIterator[i64] for Vec[i64] {
+}
+
+impl ToString for i64 {
+  fn to_string(self) -> string {
+    return "";
+  }
+}
+
+impl ToOwned for i64 {
+}
+
+fn main() -> i64 {
+  return 0;
+}

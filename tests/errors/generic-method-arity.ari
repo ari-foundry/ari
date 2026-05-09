@@ -1,0 +1,14 @@
+struct Box[T] {
+  value: T,
+}
+
+impl[T] Box[T] {
+  fn replace[U](self, value: U) -> Box[U] {
+    Box { value: value }
+  }
+}
+
+fn main() -> i64 {
+  let value = Box { value: true }.replace<i64, bool>(1);
+  value.value
+}

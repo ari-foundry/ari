@@ -1,0 +1,8 @@
+struct Phantom[T] {
+  value: i64,
+}
+
+fn main() -> i64 {
+  let phantom = Phantom { value: 1 };
+  return phantom.value;
+}

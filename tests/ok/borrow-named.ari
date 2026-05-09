@@ -1,0 +1,23 @@
+fn inspect(value: ref i64) -> i64 {
+  return 1;
+}
+
+fn touch(value: ref mut i64) -> i64 {
+  return 2;
+}
+
+fn main() -> i64 {
+  var number = 7;
+  var total = 0;
+  {
+    let shared: ref i64 = ref number;
+    total = total + inspect(shared);
+  }
+  number = number + 1;
+  {
+    let unique = ref mut number;
+    total = total + touch(unique);
+  }
+  number = number + 1;
+  return number + total;
+}

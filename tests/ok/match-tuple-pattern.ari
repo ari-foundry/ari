@@ -1,0 +1,41 @@
+fn main() -> i64 {
+  let pair = (1, true);
+  let first_score = match pair {
+    (0, _) => 99,
+    (1, true) => 10,
+    (x, _) => x + 20,
+  };
+
+  var total = first_score;
+  match (2, false) {
+    (1, _) => {
+      total = 99;
+    },
+    (y, false) => {
+      total = total + y;
+    },
+    _ => {
+      total = 0;
+    },
+  }
+
+  let alias_score = match (3, true) {
+    (z @ 1..=3, true) => z,
+    _ => 0,
+  };
+
+  let nested_score = match ((4, false), 8) {
+    ((1, _), _) => 99,
+    ((n, false), tail @ 8) => n + tail,
+    _ => 0,
+  };
+
+  let rest_score = match (5, 6, true) {
+    (0, ..) => 99,
+    (head, .., true) => head,
+    _ => 0,
+  };
+
+  total = total + alias_score + nested_score + rest_score;
+  return total;
+}

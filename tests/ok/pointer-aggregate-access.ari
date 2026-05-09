@@ -1,0 +1,23 @@
+struct Point {
+  x: i64,
+  mut y: i64,
+}
+
+struct Pair(i64, mut i64)
+
+fn main() -> i64 {
+  var point = Point { x: 4, y: 5 };
+  let point_ptr: ptr Point = (ref mut point) as ptr Point;
+  (*point_ptr).y = (*point_ptr).x + 8;
+
+  var pair = Pair(2, 3);
+  let pair_ptr: ptr Pair = (ref mut pair) as ptr Pair;
+  (*pair_ptr).1 += (*point_ptr).y;
+
+  var numbers: [i64, 3] = [1, 2, 3];
+  let numbers_ptr: ptr [i64, 3] = (ref mut numbers) as ptr [i64, 3];
+  let middle = 1;
+  (*numbers_ptr)[middle] = (*pair_ptr).1 + (*numbers_ptr)[2];
+
+  (*point_ptr).y + (*pair_ptr).1 + (*numbers_ptr)[middle]
+}

@@ -1,0 +1,35 @@
+struct Allocator {
+  state: ptr u8,
+}
+
+struct Buffer[T] {
+  data: ptr T,
+  len: i64,
+  cap: i64,
+  allocator: ref Allocator,
+}
+
+trait Sink[T] {
+  fn push(self: ref mut Sink[T], value: own T) -> bool
+}
+
+fn borrow_demo[T](input: ref T, output: mut ref Buffer[T], owned: own T) -> bool {
+  return true;
+}
+
+fn consume_owned(value: own i64) -> i64 {
+  drop value;
+  return 0;
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let temporary = 1;
+  drop temporary;
+  let token: own i64 = make_owned(42);
+  consume_owned(token);
+  return 0;
+}

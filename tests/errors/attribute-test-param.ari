@@ -1,0 +1,4 @@
+@test
+fn bad(value: i64) {
+  assert(value == 0);
+}

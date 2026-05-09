@@ -1,0 +1,28 @@
+enum Token {
+  Add(i32),
+  Sub(i32),
+  End,
+}
+
+fn enum_score(value: Token) -> i64 {
+  return match value {
+    Add(amount) | Sub(amount) => amount as i64,
+    End => 0,
+  };
+}
+
+fn main() -> i64 {
+  let pair = (0, 7);
+  let pair_value = match pair {
+    (value, 0) | (0, value) => value,
+    _ => 99,
+  };
+
+  let nested = (2, true);
+  let nested_value = match nested {
+    (amount @ 1 | amount @ 2, true) => amount,
+    _ => 0,
+  };
+
+  return enum_score(Sub(5)) + pair_value + nested_value;
+}

@@ -1,0 +1,36 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+struct Factory {
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl Score for i64 {
+  fn score(self) -> i64 {
+    self + 1
+  }
+}
+
+impl Factory {
+  fn make[U](value: U) -> Box[U] {
+    Box { value: value }
+  }
+
+  fn scored[U: Score](value: U) -> i64 {
+    value.score()
+  }
+}
+
+fn main() -> i64 {
+  let explicit = Factory::make<i64>(20);
+  let inferred = Factory::make(true);
+  if inferred.value {
+    explicit.value + Factory::scored(1)
+  } else {
+    0
+  }
+}

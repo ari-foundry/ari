@@ -1,0 +1,13715 @@
+#include "sema.hpp"
+
+#include "attribute_semantics.hpp"
+#include "cfg_eval.hpp"
+#include "layout.hpp"
+#include "module_path.hpp"
+#include "parser.hpp"
+#include "prelude_macros.hpp"
+#include "try_model.hpp"
+
+#include <algorithm>
+#include <cctype>
+#include <cstddef>
+#include <cstdint>
+#include <functional>
+#include <limits>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace ari {
+
+struct FunctionSig {
+    std::vector<IrType> params;
+    IrType result;
+    std::string module_name;
+    std::string link_name;
+    bool is_public = false;
+    bool is_extern = false;
+    bool is_variadic = false;
+    bool deprecated = false;
+    std::string deprecated_message;
+    SourceLocation loc;
+};
+
+struct EnumCaseInfo {
+    std::string enum_name;
+    IrType enum_type;
+    std::string name;
+    std::string module_name;
+    std::uint32_t tag = 0;
+    std::vector<IrType> payloads;
+    std::vector<TypeRef> payload_refs;
+    std::vector<std::string> generic_names;
+    bool is_generic = false;
+    SourceLocation loc;
+};
+
+struct EnumInfo {
+    struct Case {
+        std::string name;
+        std::string qualified_name;
+        std::uint32_t tag = 0;
+        std::vector<TypeRef> payloads;
+        SourceLocation loc;
+    };
+
+    std::string name;
+    std::string module_name;
+    IrType type;
+    SourceLocation loc;
+    std::vector<std::string> case_names;
+    std::size_t generic_arity = 0;
+    std::vector<std::string> generic_names;
+    std::vector<Case> cases;
+    bool is_public = false;
+    bool deprecated = false;
+    std::string deprecated_message;
+};
+
+struct EnumMatchCoverage {
+    bool has_wildcard = false;
+    std::set<std::uint32_t> covered_tags;
+    std::set<std::uint64_t> covered_payload_literals;
+    std::map<std::uint32_t, unsigned> covered_bool_payloads;
+};
+
+struct ScalarMatchCoverage {
+    bool has_wildcard = false;
+    std::set<std::string> covered_patterns;
+    std::vector<std::pair<std::uint64_t, std::uint64_t>> integer_intervals;
+};
+
+struct TupleMatchCoverage {
+    bool has_irrefutable_arm = false;
+    bool checked_finite_universe = false;
+    bool has_finite_universe = false;
+    std::size_t universe_size = 0;
+    std::set<std::string> covered_products;
+};
+
+struct TupleCheckedStmtArm {
+    SourceLocation loc;
+    IrExprPtr condition;
+    std::vector<IrStmtPtr> body;
+};
+
+struct TupleCheckedExprArm {
+    SourceLocation loc;
+    IrExprPtr condition;
+    std::vector<IrStmtPtr> body;
+    IrExprPtr value;
+};
+
+struct StructInfo {
+    struct Field {
+        std::string name;
+        TypeRef type;
+        bool mutable_field = false;
+        SourceLocation loc;
+    };
+
+    std::string name;
+    std::string module_name;
+    std::size_t generic_arity = 0;
+    std::vector<std::string> generic_names;
+    std::vector<Field> fields;
+    bool tuple_struct = false;
+    bool is_public = false;
+    bool deprecated = false;
+    std::string deprecated_message;
+    SourceLocation loc;
+};
+
+struct TraitInfo {
+    struct Method {
+        std::string name;
+        std::vector<GenericParam> generics;
+        std::vector<TypeRef> params;
+        TypeRef result;
+        bool has_result = false;
+        SourceLocation loc;
+    };
+
+    std::string name;
+    std::string module_name;
+    std::size_t generic_arity = 0;
+    std::vector<std::string> generic_names;
+    std::map<std::string, Method> methods;
+    bool is_public = false;
+    SourceLocation loc;
+};
+
+struct MetaFunctionInfo {
+    std::string name;
+    std::string module_name;
+    SourceLocation loc;
+};
+
+struct UseInfo {
+    std::string path;
+    std::string module_name;
+    bool is_public = false;
+    SourceLocation loc;
+};
+
+struct ModuleInfo {
+    std::string name;
+    std::string module_name;
+    bool is_public = false;
+    SourceLocation loc;
+};
+
+enum class ConstantValueKind {
+    Integer,
+    Bool,
+    Tuple,
+    Struct,
+    Array,
+    Enum
+};
+
+struct ConstantValue {
+    ConstantValueKind kind = ConstantValueKind::Integer;
+    IrType type;
+    bool is_bool = false;
+    std::uint64_t int_value = 0;
+    bool int_negative = false;
+    bool bool_value = false;
+    std::vector<ConstantValue> elements;
+    std::string enum_name;
+    std::string case_name;
+    std::uint32_t enum_tag = 0;
+};
+
+struct ConstantInfo {
+    std::string name;
+    std::string module_name;
+    bool is_public = false;
+    TypeRef type_ref;
+    const Expr* init = nullptr;
+    SourceLocation loc;
+    bool evaluating = false;
+    bool evaluated = false;
+    ConstantValue value;
+};
+
+enum class LocalState {
+    Alive,
+    Moved,
+    Dropped
+};
+
+struct LocalInfo {
+    IrType type;
+    IrType* ir_storage_type = nullptr;
+    IrExpr* ir_init_expr = nullptr;
+    bool mutable_binding = false;
+    bool auto_destroy_zone = false;
+    LocalState state = LocalState::Alive;
+    std::map<std::string, LocalState> owned_field_states;
+    int immutable_borrows = 0;
+    int mutable_borrows = 0;
+    struct FieldBorrowCounts {
+        int immutable = 0;
+        int mutable_ = 0;
+    };
+    std::map<std::string, FieldBorrowCounts> field_borrows;
+    std::string borrow_source;
+    std::string borrow_source_path;
+    bool borrow_source_mutable = false;
+    bool zone_pointer = false;
+    std::string zone_pointer_source;
+    std::uint64_t zone_pointer_generation = 0;
+    std::uint64_t zone_generation = 0;
+    std::string generic_origin;
+    struct BorrowSource {
+        std::string name;
+        std::string path;
+        bool mutable_borrow = false;
+    };
+    std::vector<BorrowSource> aggregate_borrow_sources;
+    SourceLocation loc;
+};
+
+struct TrackedAggregateAccess {
+    std::string base_name;
+    IrType base_type;
+    IrType type;
+    std::string path;
+    IrExprPtr expr;
+    bool has_final_field_mutability = false;
+    bool final_field_mutable = true;
+    std::string final_field_label;
+    std::string final_container_name;
+};
+
+class SemanticChecker {
+public:
+    explicit SemanticChecker(const Program& program, SemaOptions options) : program_(program), options_(options) {}
+
+    IrProgram check() {
+        collect_module_decls();
+        collect_uses();
+        collect_meta_functions();
+        validate_attributes();
+        collect_prelude_signatures();
+        collect_prelude_traits();
+        collect_trait_decls();
+        collect_struct_decls();
+        collect_enum_layouts();
+        collect_constant_decls();
+        validate_struct_decls();
+        validate_generic_constraints();
+        validate_impls();
+        collect_impl_method_signatures();
+        collect_function_signatures();
+        std::vector<const FunctionDecl*> test_functions = collect_test_functions();
+        if (options_.require_main) require_main();
+        if (options_.test_mode && test_functions.empty()) {
+            throw CompileError("test mode requires at least one @test function");
+        }
+
+        IrProgram ir;
+        ir.require_main = options_.require_main || options_.test_mode;
+        collect_ir_extern_functions(ir);
+        for (const auto& fn : program_.functions) {
+            if (!is_executable_function(fn)) continue;
+            if (options_.test_mode && fn.name == "main") continue;
+            ir.functions.push_back(check_function(fn));
+        }
+        if (options_.test_mode) {
+            ir.functions.push_back(make_test_main(test_functions));
+        }
+        std::size_t impl_method_index = 0;
+        std::size_t specialization_index = 0;
+        while (impl_method_index < impl_methods_to_lower_.size() ||
+               specialization_index < pending_specializations_.size()) {
+            while (impl_method_index < impl_methods_to_lower_.size()) {
+                const ImplMethodInfo& item = impl_methods_to_lower_[impl_method_index++];
+                ir.functions.push_back(check_function_as(*item.fn, item.lowered_name, item.substitutions));
+            }
+            while (specialization_index < pending_specializations_.size()) {
+                const PendingSpecialization& item = pending_specializations_[specialization_index++];
+                ir.functions.push_back(check_function_as(*item.fn, item.name, item.substitutions));
+            }
+        }
+        ir.trait_object_vtables = trait_object_vtables_;
+        ir.warnings = warnings_;
+        return ir;
+    }
+
+private:
+    struct StateSnapshotEntry {
+        LocalState state = LocalState::Alive;
+        std::uint64_t zone_generation = 0;
+    };
+
+    using StateSnapshot = std::map<std::string, StateSnapshotEntry>;
+
+    enum class Flow {
+        Continues,
+        Stops,
+        Returns
+    };
+
+    struct CheckedStatements {
+        std::vector<IrStmtPtr> statements;
+        Flow flow = Flow::Continues;
+    };
+
+    struct CheckedStatement {
+        IrStmtPtr statement;
+        Flow flow = Flow::Continues;
+    };
+
+    struct CheckedExprBlock {
+        std::vector<IrStmtPtr> statements;
+        IrExprPtr value;
+        StateSnapshot state;
+    };
+
+    struct LoopInfo {
+        std::vector<std::string> names;
+        std::vector<IrType> types;
+        std::string label;
+        bool is_loop = true;
+        bool supports_values = false;
+        bool supports_break_values = false;
+        std::size_t scope_depth = 0;
+        bool has_break_result_type = false;
+        IrType break_result_type;
+        std::vector<StateSnapshot> break_state_snapshots;
+    };
+
+    struct TemporaryBorrow {
+        std::string name;
+        std::string path;
+        bool mutable_borrow = false;
+    };
+
+    struct PendingSpecialization {
+        const FunctionDecl* fn = nullptr;
+        std::string name;
+        std::map<std::string, IrType> substitutions;
+    };
+
+    struct GenericTraitBound {
+        std::string generic_name;
+        std::string trait_name;
+        std::vector<IrType> trait_args;
+        SourceLocation loc;
+    };
+
+    struct ImplMethodInfo {
+        const FunctionDecl* fn = nullptr;
+        std::string lowered_name;
+        std::string trait_name;
+        std::vector<IrType> trait_args;
+        IrType receiver_type;
+        std::vector<std::string> generic_names;
+        std::vector<std::string> method_generic_names;
+        std::vector<GenericTraitBound> generic_bounds;
+        std::vector<GenericTraitBound> method_generic_bounds;
+        FunctionSig sig;
+        std::map<std::string, IrType> substitutions;
+        std::string module_name;
+        bool is_public = false;
+        SourceLocation loc;
+    };
+
+    struct GenericTraitImplInfo {
+        std::string trait_name;
+        std::vector<IrType> trait_args;
+        IrType self_type;
+        std::vector<std::string> generic_names;
+        std::vector<GenericTraitBound> generic_bounds;
+        std::string module_name;
+        SourceLocation loc;
+    };
+
+    struct TraitImplCoherenceInfo {
+        std::string trait_name;
+        std::vector<IrType> trait_args;
+        IrType self_type;
+        std::vector<std::string> generic_names;
+        SourceLocation loc;
+    };
+
+    const Program& program_;
+    SemaOptions options_;
+    std::map<std::string, FunctionSig> functions_;
+    std::map<std::string, const FunctionDecl*> generic_functions_;
+    std::map<std::string, MetaFunctionInfo> meta_functions_;
+    std::map<std::string, ConstantInfo> constants_;
+    std::map<std::string, StructInfo> structs_;
+    std::map<std::string, EnumInfo> enums_;
+    std::map<std::string, EnumCaseInfo> enum_cases_;
+    std::map<std::string, TraitInfo> traits_;
+    std::map<std::string, ModuleInfo> modules_;
+    std::map<std::string, std::map<std::string, UseInfo>> uses_;
+    std::set<std::string> impl_keys_;
+    std::vector<std::map<std::string, LocalInfo>> scopes_;
+    std::set<std::string> used_local_names_;
+    std::vector<LoopInfo> loops_;
+    std::vector<TemporaryBorrow> temporary_borrows_;
+    std::set<std::string> reusable_pattern_binding_names_;
+    std::map<std::string, IrType> current_type_substitutions_;
+    std::vector<GenericTraitBound> current_generic_bounds_;
+    std::vector<IrFunction> specialized_functions_;
+    std::vector<PendingSpecialization> pending_specializations_;
+    std::set<std::string> queued_specializations_;
+    std::map<std::string, std::vector<ImplMethodInfo>> method_impls_;
+    std::map<std::string, std::vector<ImplMethodInfo>> associated_impls_;
+    std::vector<ImplMethodInfo> generic_method_impls_;
+    std::vector<ImplMethodInfo> generic_associated_impls_;
+    std::vector<GenericTraitImplInfo> generic_trait_impls_;
+    std::vector<TraitImplCoherenceInfo> trait_impl_coherence_;
+    std::map<std::string, ImplMethodInfo> drop_impls_;
+    std::vector<ImplMethodInfo> impl_methods_to_lower_;
+    std::set<std::string> queued_impl_methods_;
+    std::vector<IrTraitObjectVTable> trait_object_vtables_;
+    std::map<std::string, std::string> trait_object_vtable_names_;
+    std::map<std::string, std::string> exported_symbols_;
+    std::vector<std::string> constant_eval_stack_;
+    std::vector<std::string> warnings_;
+    IrType current_return_;
+    std::string current_module_name_;
+    bool current_zone_pointer_return_allowed_ = false;
+    std::string current_zone_pointer_return_source_;
+    bool allow_zone_temp_init_ = false;
+    int hidden_local_counter_ = 0;
+
+    static bool is_executable_function(const FunctionDecl& fn) {
+        return !fn.meta && !fn.is_extern && fn.has_body && fn.generics.empty();
+    }
+
+    static bool is_format_print_name(const std::string& name) {
+        return name == "print" ||
+               name == "println" ||
+               name == "io::print" ||
+               name == "io::println";
+    }
+
+    static bool is_println_name(const std::string& name) {
+        return name == "println" || name == "io::println";
+    }
+
+    static TypeRef prelude_type_ref(const std::string& name, SourceLocation loc) {
+        TypeRef type;
+        type.name = name;
+        type.loc = loc;
+        return type;
+    }
+
+    static std::string unqualified_name(const std::string& name) {
+        std::size_t split = name.rfind("::");
+        if (split == std::string::npos) return name;
+        return name.substr(split + 2);
+    }
+
+    static bool is_planned_prelude_macro_name(const std::string& name) {
+        return is_prelude_macro_name(unqualified_name(name));
+    }
+
+    static bool is_planned_prelude_function_name(const std::string& name) {
+        return name == "range" ||
+               name == "iter::range" ||
+               name == "range_inclusive" ||
+               name == "iter::range_inclusive";
+    }
+
+    static bool is_prelude_range_function_name(const std::string& name) {
+        return name == "range" ||
+               name == "iter::range" ||
+               name == "range_inclusive" ||
+               name == "iter::range_inclusive";
+    }
+
+    static bool is_prelude_vec_len_function_name(const std::string& name) {
+        return name == "len" || name == "vec::len" || name == "prelude::len";
+    }
+
+    static bool is_prelude_pointer_offset_function_name(const std::string& name) {
+        return name == "ptr_offset" ||
+               name == "mem::ptr_offset" ||
+               name == "prelude::ptr_offset";
+    }
+
+    static bool is_prelude_pointer_add_function_name(const std::string& name) {
+        return name == "ptr_add" ||
+               name == "mem::ptr_add" ||
+               name == "prelude::ptr_add";
+    }
+
+    static bool is_prelude_pointer_load_function_name(const std::string& name) {
+        return name == "ptr_load" ||
+               name == "mem::ptr_load" ||
+               name == "prelude::ptr_load";
+    }
+
+    static bool is_prelude_pointer_store_function_name(const std::string& name) {
+        return name == "ptr_store" ||
+               name == "mem::ptr_store" ||
+               name == "prelude::ptr_store";
+    }
+
+    static bool is_prelude_size_of_function_name(const std::string& name) {
+        return name == "size_of" ||
+               name == "mem::size_of" ||
+               name == "prelude::size_of";
+    }
+
+    static bool is_prelude_align_of_function_name(const std::string& name) {
+        return name == "align_of" ||
+               name == "mem::align_of" ||
+               name == "prelude::align_of";
+    }
+
+    static bool is_zone_alloc_function_name(const std::string& name) {
+        return name == "zone::alloc";
+    }
+
+    static bool is_zone_new_function_name(const std::string& name) {
+        return name == "zone::new";
+    }
+
+    static bool is_zone_promote_function_name(const std::string& name) {
+        return name == "zone::promote";
+    }
+
+    static bool is_zone_scratch_function_name(const std::string& name) {
+        return name == "zone::scratch";
+    }
+
+    static bool is_zone_temp_function_name(const std::string& name) {
+        return name == "zone::temp";
+    }
+
+    static bool is_prelude_inclusive_range_function_name(const std::string& name) {
+        return name == "range_inclusive" || name == "iter::range_inclusive";
+    }
+
+    static bool is_prelude_range_type_name(const std::string& name) {
+        std::string base = unqualified_name(name);
+        return base == "Range" || base == "RangeInclusive";
+    }
+
+    static bool is_prelude_range_type(const IrType& type) {
+        return type.primitive == IrPrimitiveKind::Struct &&
+               (type.name == "Range" || type.name == "RangeInclusive") &&
+               type.args.size() == 1;
+    }
+
+    static std::string planned_prelude_function_message(const std::string& name) {
+        if (name == "range" || name == "iter::range") {
+            return "range(start, end) is a built-in range constructor";
+        }
+        if (name == "range_inclusive" || name == "iter::range_inclusive") {
+            return "range_inclusive(start, end) is a built-in inclusive range constructor";
+        }
+        return "prelude function '" + name + "' is planned but not implemented yet";
+    }
+
+    static bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
+        std::string base = unqualified_name(name);
+        if (base == "Option" || base == "Maybe" || base == "Box" ||
+            base == "Slice") {
+            arity = 1;
+            return true;
+        }
+        if (base == "Result") {
+            arity = 2;
+            return true;
+        }
+        return false;
+    }
+
+    static std::string planned_prelude_type_message(const std::string& name) {
+        std::string base = unqualified_name(name);
+        if (base == "Option" || base == "Maybe" || base == "Result") {
+            return "prelude type '" + base + "' is reserved for Maybe/Result values but generic ADT lowering is not implemented yet";
+        }
+        if (base == "Box") {
+            return "prelude type 'Box' is planned but needs explicit allocator capabilities first";
+        }
+        if (base == "Slice") {
+            return "prelude type 'Slice' is planned but slice layout and borrowing are not implemented yet";
+        }
+        return "prelude type '" + name + "' is planned but not implemented yet";
+    }
+
+    static bool is_qualified_name(const std::string& name) {
+        return is_qualified_path(name);
+    }
+
+    static bool is_c_symbol_name(const std::string& name) {
+        if (name.empty()) return false;
+        unsigned char first = static_cast<unsigned char>(name[0]);
+        if (!(std::isalpha(first) || name[0] == '_')) return false;
+        for (char c : name) {
+            unsigned char ch = static_cast<unsigned char>(c);
+            if (!(std::isalnum(ch) || c == '_')) return false;
+        }
+        return true;
+    }
+
+    static std::string qualify_in_module(const std::string& module_name, const std::string& name) {
+        if (module_name.empty() || is_qualified_name(name)) return name;
+        return module_name + "::" + name;
+    }
+
+    static std::string module_of_qualified_name(const std::string& name) {
+        return qualified_parent(name);
+    }
+
+    static std::string basename_of_qualified_name(const std::string& name) {
+        return qualified_basename(name);
+    }
+
+    static std::vector<std::string> split_qualified_name(const std::string& name) {
+        return split_qualified_path(name);
+    }
+
+    static std::string join_qualified_parts(
+        const std::vector<std::string>& parts,
+        std::size_t begin,
+        std::size_t end
+    ) {
+        return join_qualified_path(parts, begin, end);
+    }
+
+    const UseInfo* find_use_in_module(const std::string& module_name, const std::string& alias) const {
+        auto scoped = uses_.find(module_name);
+        if (scoped != uses_.end()) {
+            auto found = scoped->second.find(alias);
+            if (found != scoped->second.end()) return &found->second;
+        }
+        return nullptr;
+    }
+
+    const UseInfo* find_use(const std::string& alias) const {
+        return find_use_in_module(current_module_name_, alias);
+    }
+
+    bool can_access_use(const UseInfo& use) const {
+        return use.module_name == current_module_name_ || use.is_public;
+    }
+
+    static bool is_same_or_descendant_module(const std::string& module_name,
+                                             const std::string& ancestor) {
+        if (module_name == ancestor) return true;
+        if (ancestor.empty()) return true;
+        return module_name.size() > ancestor.size() &&
+               module_name.compare(0, ancestor.size(), ancestor) == 0 &&
+               module_name[ancestor.size()] == ':' &&
+               module_name[ancestor.size() + 1] == ':';
+    }
+
+    bool can_access_module(const ModuleInfo& module) const {
+        if (module.is_public) return true;
+        return is_same_or_descendant_module(current_module_name_, module.module_name);
+    }
+
+    void require_module_path_access(SourceLocation loc, const std::string& module_name) const {
+        if (module_name.empty()) return;
+        std::vector<std::string> parts = split_qualified_name(module_name);
+        for (std::size_t i = 1; i <= parts.size(); ++i) {
+            std::string prefix = join_qualified_parts(parts, 0, i);
+            auto found = modules_.find(prefix);
+            if (found == modules_.end()) continue;
+            if (!can_access_module(found->second)) {
+                fail(loc, "module '" + prefix + "' is not public");
+            }
+        }
+    }
+
+    static std::string resolve_relative_name(SourceLocation loc,
+                                             const std::string& module_name,
+                                             const std::string& name) {
+        return resolve_relative_path(loc, module_name, name);
+    }
+
+    std::string resolve_current_relative_name(const std::string& name) const {
+        try {
+            return resolve_relative_name(SourceLocation{}, current_module_name_, name);
+        } catch (const CompileError&) {
+            return name;
+        }
+    }
+
+    std::string resolve_one_use_path(const std::string& name) const {
+        std::string relative = resolve_current_relative_name(name);
+        if (!is_qualified_name(relative)) {
+            if (const UseInfo* use = find_use(relative)) return use->path;
+            return relative;
+        }
+
+        std::vector<std::string> parts = split_qualified_name(relative);
+        for (std::size_t split = parts.size() - 1; split >= 1; --split) {
+            std::string module_name = join_qualified_parts(parts, 0, split);
+            const std::string& alias = parts[split];
+            if (const UseInfo* use = find_use_in_module(module_name, alias)) {
+                if (can_access_use(*use)) {
+                    std::string rest = join_qualified_parts(parts, split + 1, parts.size());
+                    return rest.empty() ? use->path : use->path + "::" + rest;
+                }
+            }
+            if (split == 1) break;
+        }
+
+        const UseInfo* prefix = find_use(parts[0]);
+        if (prefix) {
+            std::string rest = join_qualified_parts(parts, 1, parts.size());
+            return rest.empty() ? prefix->path : prefix->path + "::" + rest;
+        }
+
+        return relative;
+    }
+
+    std::string resolve_use_path(const std::string& name) const {
+        std::string resolved = name;
+        for (int i = 0; i < 16; ++i) {
+            std::string next = resolve_one_use_path(resolved);
+            if (next == resolved) return resolved;
+            resolved = std::move(next);
+        }
+        return resolved;
+    }
+
+    std::string import_or_qualified_name(const std::string& name) const {
+        return resolve_use_path(name);
+    }
+
+    std::string resolve_enum_type_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (enums_.count(scoped)) return scoped;
+        return resolved;
+    }
+
+    std::string resolve_struct_type_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (structs_.count(scoped)) return scoped;
+        return resolved;
+    }
+
+    std::string resolve_function_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (functions_.count(scoped)) return scoped;
+        return resolved;
+    }
+
+    std::string resolve_generic_function_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (generic_functions_.count(scoped)) return scoped;
+        return resolved;
+    }
+
+    std::string resolve_constant_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (constants_.count(scoped)) return scoped;
+        return resolved;
+    }
+
+    std::string resolve_meta_function_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (meta_functions_.count(scoped)) return scoped;
+        return resolved;
+    }
+
+    std::string resolve_enum_case_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (enum_cases_.count(scoped)) return scoped;
+        return resolved;
+    }
+
+    std::string resolve_trait_name(const std::string& name) const {
+        std::string resolved = import_or_qualified_name(name);
+        if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
+        std::string scoped = current_module_name_ + "::" + resolved;
+        if (traits_.count(scoped)) return scoped;
+        return resolved;
+    }
+
+    bool try_resolve_associated_receiver_type(SourceLocation loc, const std::string& name, IrType& out) {
+        std::string struct_name = resolve_struct_type_name(name);
+        if (structs_.count(struct_name)) {
+            TypeRef type;
+            type.name = name;
+            type.loc = loc;
+            out = resolve_executable_type(type);
+            return true;
+        }
+
+        std::string enum_name = resolve_enum_type_name(name);
+        if (enums_.count(enum_name)) {
+            TypeRef type;
+            type.name = name;
+            type.loc = loc;
+            out = resolve_executable_type(type);
+            return true;
+        }
+
+        if (!is_qualified_name(name)) {
+            std::string base = unqualified_name(name);
+            if (base == "i8" || base == "i16" || base == "i32" || base == "i64" ||
+                base == "u8" || base == "u16" || base == "u32" || base == "u64" ||
+                base == "bool" || base == "string") {
+                TypeRef type;
+                type.name = name;
+                type.loc = loc;
+                out = resolve_executable_type(type);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool can_access(const std::string& module_name, bool is_public) const {
+        return module_name.empty() || module_name == current_module_name_ || is_public;
+    }
+
+    void require_enum_case_access(SourceLocation loc, const EnumCaseInfo& info) const {
+        auto enum_found = enums_.find(info.enum_name);
+        if (enum_found == enums_.end()) fail(loc, "unknown enum '" + info.enum_name + "'");
+        require_module_path_access(loc, enum_found->second.module_name);
+        if (!can_access(enum_found->second.module_name, enum_found->second.is_public)) {
+            fail(loc, "enum case '" + info.name + "' is not public");
+        }
+    }
+
+    void require_struct_access(SourceLocation loc, const StructInfo& info) const {
+        require_module_path_access(loc, info.module_name);
+        if (!can_access(info.module_name, info.is_public)) {
+            fail(loc, "struct '" + info.name + "' is not public");
+        }
+    }
+
+    void require_function_access(SourceLocation loc, const FunctionSig& sig, const std::string& name) const {
+        require_module_path_access(loc, sig.module_name);
+        if (!can_access(sig.module_name, sig.is_public)) {
+            fail(loc, "function '" + name + "' is not public");
+        }
+    }
+
+    void require_constant_access(SourceLocation loc, const ConstantInfo& info, const std::string& name) const {
+        require_module_path_access(loc, info.module_name);
+        if (!can_access(info.module_name, info.is_public)) {
+            fail(loc, "constant '" + name + "' is not public");
+        }
+    }
+
+    void require_trait_access(SourceLocation loc, const TraitInfo& info) const {
+        require_module_path_access(loc, info.module_name);
+        if (!can_access(info.module_name, info.is_public)) {
+            fail(loc, "trait '" + info.name + "' is not public");
+        }
+    }
+
+    void require_impl_method_access(SourceLocation loc, const ImplMethodInfo& info, const std::string& method_name) const {
+        require_module_path_access(loc, info.module_name);
+        if (!can_access(info.module_name, info.is_public)) {
+            fail(loc, "method '" + method_name + "' for type " + type_name(info.receiver_type) + " is not public");
+        }
+    }
+
+    void require_function_decl_access(SourceLocation loc, const FunctionDecl& fn, const std::string& name) const {
+        require_module_path_access(loc, fn.module_name);
+        if (!can_access(fn.module_name, fn.is_public)) {
+            fail(loc, "function '" + name + "' is not public");
+        }
+    }
+
+    void collect_module_decls() {
+        for (const auto& decl : program_.modules) {
+            ModuleInfo info;
+            info.name = decl.name;
+            info.module_name = decl.module_name;
+            info.is_public = decl.is_public;
+            info.loc = decl.loc;
+            auto inserted = modules_.emplace(decl.name, std::move(info));
+            if (!inserted.second) fail(decl.loc, "duplicate module '" + decl.name + "'");
+        }
+    }
+
+    void collect_uses() {
+        for (const auto& use : program_.uses) {
+            if (use.is_glob) collect_glob_use(use);
+            else add_use_info(use.module_name, use.alias, use.path, use.is_public, use.loc);
+        }
+    }
+
+    void add_use_info(
+        const std::string& module_name,
+        const std::string& alias,
+        const std::string& path,
+        bool is_public,
+        SourceLocation loc
+    ) {
+        auto& scope = uses_[module_name];
+        std::string resolved_path = resolve_relative_name(loc, module_name, path);
+        auto inserted = scope.emplace(alias, UseInfo{resolved_path, module_name, is_public, loc});
+        if (!inserted.second) fail(loc, "duplicate use alias '" + alias + "'");
+    }
+
+    bool can_glob_import_item(const UseDecl& use, const std::string& item_module, bool item_public) const {
+        return item_module == use.path && (item_public || item_module == use.module_name);
+    }
+
+    void collect_glob_use(const UseDecl& use) {
+        std::string relative_path = resolve_relative_name(use.loc, use.module_name, use.path);
+        std::string previous_module = current_module_name_;
+        current_module_name_ = use.module_name;
+        std::string module_path = resolve_use_path(relative_path);
+        current_module_name_ = previous_module;
+        require_module_path_access(use.loc, module_path);
+        UseDecl expanded = use;
+        expanded.path = module_path;
+
+        for (const auto& fn : program_.functions) {
+            if (can_glob_import_item(expanded, fn.module_name, fn.is_public)) {
+                add_use_info(use.module_name, basename_of_qualified_name(fn.name), fn.name, use.is_public, use.loc);
+            }
+        }
+        for (const auto& decl : program_.constants) {
+            if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
+                add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
+            }
+        }
+        for (const auto& decl : program_.structs) {
+            if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
+                add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
+            }
+        }
+        for (const auto& decl : program_.enums) {
+            if (!can_glob_import_item(expanded, decl.module_name, decl.is_public)) continue;
+            add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
+            for (const auto& item : decl.cases) {
+                std::string case_name = qualify_in_module(decl.module_name, item.name);
+                add_use_info(use.module_name, item.name, case_name, use.is_public, use.loc);
+            }
+        }
+        for (const auto& decl : program_.traits) {
+            if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
+                add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
+            }
+        }
+    }
+
+    static void require_unique_generic_params(
+        const std::vector<GenericParam>& generics,
+        const std::string& owner_kind,
+        const std::string& owner_name
+    ) {
+        std::set<std::string> names;
+        for (const auto& generic : generics) {
+            if (!names.insert(generic.name).second) {
+                fail(generic.loc, "duplicate generic parameter '" + generic.name + "' in " + owner_kind + " '" + owner_name + "'");
+            }
+        }
+    }
+
+    static bool is_meta_type_ref(const TypeRef& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.args.empty() &&
+               (type.name == "token_stream" || type.name == "ast" || type.name == "type");
+    }
+
+    static std::string meta_type_names() {
+        return "token_stream, ast, or type";
+    }
+
+    void validate_meta_function_signature(const FunctionDecl& fn) const {
+        require_unique_generic_params(fn.generics, "meta function", fn.name);
+        if (!fn.generics.empty()) fail(fn.loc, "meta functions cannot be generic yet");
+        if (!fn.has_body) fail(fn.loc, "meta functions must have a body");
+        if (!fn.has_return_type) fail(fn.loc, "meta functions must declare a meta return type");
+        for (const auto& param : fn.params) {
+            if (param.has_pattern) {
+                fail(param.pattern.loc, "meta function parameters cannot use patterns");
+            }
+            if (!is_meta_type_ref(param.type)) {
+                fail(param.type.loc,
+                     "meta function parameters must use " + meta_type_names() + ", got " + type_ref_key(param.type));
+            }
+        }
+        if (!is_meta_type_ref(fn.return_type)) {
+            fail(fn.return_type.loc,
+                 "meta function return type must be " + meta_type_names() + ", got " + type_ref_key(fn.return_type));
+        }
+    }
+
+    void collect_meta_functions() {
+        for (const auto& fn : program_.functions) {
+            if (!fn.meta) continue;
+            validate_meta_function_signature(fn);
+            auto inserted = meta_functions_.emplace(
+                fn.name,
+                MetaFunctionInfo{fn.name, fn.module_name, fn.loc}
+            );
+            if (!inserted.second) fail(fn.loc, "duplicate meta function '" + fn.name + "'");
+        }
+    }
+
+    static bool is_builtin_attribute(const std::string& name) {
+        return name == "derive" ||
+               name == "deprecated" ||
+               name == "export" ||
+               name == "no_mangle" ||
+               name == "repr" ||
+               name == "test" ||
+               name == "cfg";
+    }
+
+    static void require_attribute_args(const Attribute& attr) {
+        if (!attr.has_args || attr.args.empty()) {
+            fail(attr.loc, "attribute '@" + attr.name + "' expects arguments");
+        }
+    }
+
+    static void reject_attribute_args(const Attribute& attr) {
+        if (attr.has_args) {
+            fail(attr.loc, "attribute '@" + attr.name + "' does not take arguments");
+        }
+    }
+
+    void validate_builtin_attribute(const Attribute& attr, const std::string& target_kind) const {
+        if (attr.name == "derive") {
+            if (target_kind != "struct" && target_kind != "enum") {
+                fail(attr.loc, "attribute '@derive' is only supported on structs and enums");
+            }
+            require_attribute_args(attr);
+            return;
+        }
+        if (attr.name == "repr") {
+            if (target_kind != "struct" && target_kind != "enum") {
+                fail(attr.loc, "attribute '@repr' is only supported on structs and enums");
+            }
+            require_attribute_args(attr);
+            if (!attribute_has_single_identifier_argument(attr, "C")) {
+                fail(attr.loc, "attribute '@repr' currently supports only C layout");
+            }
+            return;
+        }
+        if (attr.name == "test") {
+            if (target_kind != "function") {
+                fail(attr.loc, "attribute '@test' is only supported on functions");
+            }
+            reject_attribute_args(attr);
+            return;
+        }
+        if (attr.name == "export") {
+            if (target_kind != "function") {
+                fail(attr.loc, "attribute '@export' is only supported on functions");
+            }
+            if (attr.has_args &&
+                (attr.args.size() != 1 || attr.args[0].kind != TokenKind::String)) {
+                fail(attr.loc, "attribute '@export' expects no arguments or one string symbol name");
+            }
+            return;
+        }
+        if (attr.name == "no_mangle") {
+            if (target_kind != "function") {
+                fail(attr.loc, "attribute '@no_mangle' is only supported on functions");
+            }
+            reject_attribute_args(attr);
+            return;
+        }
+        if (attr.name == "cfg") {
+            (void)cfg_attribute_enabled(attr, options_.cfg_features);
+            return;
+        }
+        if (attr.name == "deprecated") {
+            if (attr.has_args &&
+                (attr.args.size() != 1 || attr.args[0].kind != TokenKind::String)) {
+                fail(attr.loc, "attribute '@deprecated' expects no arguments or one string message");
+            }
+            return;
+        }
+    }
+
+    static const Attribute* deprecated_attribute(const std::vector<Attribute>& attributes) {
+        return find_attribute(attributes, "deprecated");
+    }
+
+    static std::string deprecated_message(const std::vector<Attribute>& attributes) {
+        const Attribute* attr = deprecated_attribute(attributes);
+        if (!attr || !attr->has_args || attr->args.empty()) return "";
+        return attr->args[0].text;
+    }
+
+    std::string exported_link_name(const FunctionDecl& fn) const {
+        const Attribute* export_attr = find_attribute(fn.attributes, "export");
+        const Attribute* no_mangle_attr = find_attribute(fn.attributes, "no_mangle");
+        if (export_attr && no_mangle_attr) {
+            fail(export_attr->loc, "attributes '@export' and '@no_mangle' cannot be combined");
+        }
+        if (!export_attr && !no_mangle_attr) return "";
+        if (fn.is_extern) {
+            SourceLocation loc = export_attr ? export_attr->loc : no_mangle_attr->loc;
+            fail(loc, "attribute '@" + std::string(export_attr ? "export" : "no_mangle") + "' cannot be used on extern functions");
+        }
+        if (fn.meta) {
+            SourceLocation loc = export_attr ? export_attr->loc : no_mangle_attr->loc;
+            fail(loc, "attribute '@" + std::string(export_attr ? "export" : "no_mangle") + "' cannot be used on meta functions");
+        }
+        if (!fn.generics.empty()) {
+            SourceLocation loc = export_attr ? export_attr->loc : no_mangle_attr->loc;
+            fail(loc, "exporting generic function definitions is planned after generic export ABI is defined");
+        }
+
+        std::string symbol = basename_of_qualified_name(fn.name);
+        SourceLocation loc = fn.loc;
+        if (export_attr) {
+            loc = export_attr->loc;
+            if (export_attr->has_args) symbol = export_attr->args[0].text;
+        } else {
+            loc = no_mangle_attr->loc;
+        }
+        if (!is_c_symbol_name(symbol)) {
+            fail(loc, "invalid exported symbol '" + symbol + "'");
+        }
+        if (options_.require_main && symbol == "main") {
+            fail(loc, "exported symbol 'main' conflicts with the generated C entry point");
+        }
+        return symbol;
+    }
+
+    void warn_deprecated_use(SourceLocation loc,
+                             const std::string& kind,
+                             const std::string& name,
+                             const std::string& message) {
+        std::string warning = where(loc) + ": warning: use of deprecated " + kind + " '" + name + "'";
+        if (!message.empty()) warning += ": " + message;
+        warnings_.push_back(std::move(warning));
+    }
+
+    void warn_scalar_match_shadow(SourceLocation loc) {
+        warnings_.push_back(where(loc) +
+                            ": warning: scalar match pattern is fully shadowed by earlier match arms");
+    }
+
+    void warn_aggregate_match_shadow(SourceLocation loc) {
+        warnings_.push_back(where(loc) +
+                            ": warning: aggregate match pattern is fully shadowed by earlier match arms");
+    }
+
+    void validate_attribute_list(
+        const std::vector<Attribute>& attributes,
+        const std::string& target_kind,
+        const std::string& module_name
+    ) {
+        std::string previous_module = current_module_name_;
+        current_module_name_ = module_name;
+        for (const auto& attr : attributes) {
+            if (is_builtin_attribute(attr.name)) {
+                validate_builtin_attribute(attr, target_kind);
+                continue;
+            }
+            std::string meta_name = resolve_meta_function_name(attr.name);
+            if (!meta_functions_.count(meta_name)) {
+                current_module_name_ = previous_module;
+                fail(attr.loc,
+                     "unknown attribute '@" + attr.name +
+                         "'; define a meta function with token_stream or ast input to reserve it");
+            }
+        }
+        current_module_name_ = previous_module;
+    }
+
+    void validate_attributes() {
+        for (const auto& fn : program_.functions) {
+            validate_attribute_list(fn.attributes, "function", fn.module_name);
+        }
+        for (const auto& decl : program_.structs) {
+            validate_attribute_list(decl.attributes, "struct", decl.module_name);
+            validate_repr_c_struct(decl);
+        }
+        for (const auto& decl : program_.enums) {
+            validate_attribute_list(decl.attributes, "enum", decl.module_name);
+            validate_repr_c_enum(decl);
+        }
+        for (const auto& decl : program_.traits) {
+            validate_attribute_list(decl.attributes, "trait", decl.module_name);
+        }
+        for (const auto& decl : program_.impls) {
+            validate_attribute_list(decl.attributes, "impl", decl.module_name);
+        }
+    }
+
+    void validate_repr_c_struct(const StructDecl& decl) const {
+        const Attribute* repr = find_attribute(decl.attributes, "repr");
+        if (!repr) return;
+        if (!decl.generics.empty()) {
+            fail(repr->loc, "attribute '@repr(C)' on generic structs is planned after generic aggregate layout");
+        }
+        for (const auto& field : decl.fields) {
+            if (field.type.qualifier != TypeQualifier::Value &&
+                field.type.qualifier != TypeQualifier::Ptr) {
+                fail(field.loc, "attribute '@repr(C)' fields cannot use ownership or borrow qualifiers yet");
+            }
+        }
+    }
+
+    void validate_repr_c_enum(const EnumDecl& decl) const {
+        const Attribute* repr = find_attribute(decl.attributes, "repr");
+        if (!repr) return;
+        if (!decl.generics.empty()) {
+            fail(repr->loc, "attribute '@repr(C)' on generic enums is planned after generic aggregate layout");
+        }
+        for (const auto& item : decl.cases) {
+            if (!item.payloads.empty()) {
+                fail(item.loc, "attribute '@repr(C)' currently supports only fieldless enums");
+            }
+        }
+    }
+
+    void add_prelude_function(const std::string& name, std::vector<IrType> params, IrType result) {
+        FunctionSig sig;
+        sig.params = std::move(params);
+        sig.result = std::move(result);
+        sig.module_name = module_of_qualified_name(name);
+        sig.is_public = true;
+        sig.loc = SourceLocation{1, 1};
+        functions_.emplace(name, std::move(sig));
+    }
+
+    void collect_prelude_signatures() {
+        SourceLocation loc{1, 1};
+        IrType i64 = integer_type(IrPrimitiveKind::I64, loc);
+        IrType u8 = integer_type(IrPrimitiveKind::U8, loc);
+        IrType boolean = bool_type(loc);
+        IrType void_result = void_type(loc);
+
+        add_prelude_function("io::write_i64", {i64}, i64);
+        add_prelude_function("io::write_bool", {boolean}, i64);
+        add_prelude_function("io::write_byte", {u8}, i64);
+        add_prelude_function("io::newline", {}, i64);
+        add_prelude_function("io::read_byte", {}, i64);
+
+        add_prelude_function("write_i64", {i64}, i64);
+        add_prelude_function("write_bool", {boolean}, i64);
+        add_prelude_function("write_byte", {u8}, i64);
+        add_prelude_function("newline", {}, i64);
+        add_prelude_function("read_byte", {}, i64);
+        add_prelude_function("input::read_byte", {}, i64);
+
+        add_prelude_function("assert", {boolean}, i64);
+        add_prelude_function("debug_assert", {boolean}, i64);
+        add_prelude_function("assert_eq_i64", {i64, i64}, i64);
+        add_prelude_function("assert_ne_i64", {i64, i64}, i64);
+        add_prelude_function("assert_eq_bool", {boolean, boolean}, i64);
+        add_prelude_function("assert_ne_bool", {boolean, boolean}, i64);
+        add_prelude_function("panic", {}, void_result);
+        add_prelude_function("todo", {}, void_result);
+        add_prelude_function("unreachable", {}, void_result);
+
+        IrType string = primitive_type(IrPrimitiveKind::String, "string", loc);
+        add_prelude_function("io::read_line", {}, string);
+        add_prelude_function("read_line", {}, string);
+        add_prelude_function("input", {}, string);
+        add_prelude_function("input::line", {}, string);
+        add_prelude_function("context::argc", {}, i64);
+        add_prelude_function("context::arg", {i64}, string);
+        add_prelude_function("arg_count", {}, i64);
+        add_prelude_function("arg", {i64}, string);
+
+        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", loc);
+        IrType own_zone = zone;
+        own_zone.qualifier = TypeQualifier::Own;
+        IrType mut_zone = zone;
+        mut_zone.qualifier = TypeQualifier::MutRef;
+        IrType ptr_u8 = u8;
+        ptr_u8.qualifier = TypeQualifier::Ptr;
+        add_prelude_function("zone::create", {i64}, own_zone);
+        add_prelude_function("zone::temp", {i64}, own_zone);
+        add_prelude_function("zone::alloc", {mut_zone, i64, i64}, ptr_u8);
+        add_prelude_function("zone::reset", {mut_zone}, void_result);
+        add_prelude_function("zone::destroy", {own_zone}, void_result);
+    }
+
+    static std::vector<std::string> prelude_generic_names(std::size_t generic_arity) {
+        static const char* names[] = {"T", "E", "U", "V"};
+        std::vector<std::string> generics;
+        for (std::size_t i = 0; i < generic_arity; ++i) {
+            generics.push_back(i < 4 ? names[i] : "T" + std::to_string(i));
+        }
+        return generics;
+    }
+
+    static TraitInfo::Method prelude_method(
+        const std::string& name,
+        std::vector<TypeRef> params,
+        TypeRef result,
+        SourceLocation loc
+    ) {
+        TraitInfo::Method method;
+        method.name = name;
+        method.params = std::move(params);
+        method.result = std::move(result);
+        method.has_result = true;
+        method.loc = loc;
+        return method;
+    }
+
+    void add_prelude_trait(
+        const std::string& name,
+        std::size_t generic_arity,
+        std::vector<TraitInfo::Method> methods = {}
+    ) {
+        TraitInfo info;
+        info.name = name;
+        info.module_name = module_of_qualified_name(name);
+        info.generic_arity = generic_arity;
+        info.generic_names = prelude_generic_names(generic_arity);
+        for (auto& method : methods) info.methods.emplace(method.name, std::move(method));
+        info.is_public = true;
+        info.loc = SourceLocation{1, 1};
+        traits_.emplace(name, std::move(info));
+    }
+
+    void collect_prelude_traits() {
+        SourceLocation loc{1, 1};
+        TypeRef self = prelude_type_ref("Self", loc);
+        TypeRef t = prelude_type_ref("T", loc);
+        TypeRef boolean;
+        boolean.name = "bool";
+        boolean.loc = loc;
+        TypeRef string;
+        string.name = "string";
+        string.loc = loc;
+        TypeRef void_ref;
+        void_ref.name = "void";
+        void_ref.loc = loc;
+
+        add_prelude_trait("Debug", 0);
+        add_prelude_trait("fmt::Debug", 0);
+        add_prelude_trait("Display", 0);
+        add_prelude_trait("fmt::Display", 0);
+        add_prelude_trait("Default", 0, {
+            prelude_method("default", {}, self, loc),
+        });
+        add_prelude_trait("Clone", 0, {
+            prelude_method("clone", {self}, self, loc),
+        });
+        add_prelude_trait("Copy", 0);
+        add_prelude_trait("Drop", 0, {
+            prelude_method("drop", {self}, void_ref, loc),
+        });
+
+        add_prelude_trait("Eq", 1, {
+            prelude_method("eq", {self, t}, boolean, loc),
+        });
+        add_prelude_trait("PartialEq", 1, {
+            prelude_method("eq", {self, t}, boolean, loc),
+        });
+        add_prelude_trait("cmp::Eq", 1, {
+            prelude_method("eq", {self, t}, boolean, loc),
+        });
+        add_prelude_trait("cmp::PartialEq", 1, {
+            prelude_method("eq", {self, t}, boolean, loc),
+        });
+        add_prelude_trait("Ord", 1, {
+            prelude_method("lt", {self, t}, boolean, loc),
+        });
+        add_prelude_trait("PartialOrd", 1, {
+            prelude_method("lt", {self, t}, boolean, loc),
+        });
+        add_prelude_trait("cmp::Ord", 1, {
+            prelude_method("lt", {self, t}, boolean, loc),
+        });
+        add_prelude_trait("cmp::PartialOrd", 1, {
+            prelude_method("lt", {self, t}, boolean, loc),
+        });
+
+        add_prelude_trait("From", 1, {
+            prelude_method("from", {t}, self, loc),
+        });
+        add_prelude_trait("Into", 1, {
+            prelude_method("into", {self}, t, loc),
+        });
+        add_prelude_trait("convert::From", 1, {
+            prelude_method("from", {t}, self, loc),
+        });
+        add_prelude_trait("convert::Into", 1, {
+            prelude_method("into", {self}, t, loc),
+        });
+        add_prelude_trait("TryFrom", 1);
+        add_prelude_trait("TryInto", 1);
+        add_prelude_trait("convert::TryFrom", 1);
+        add_prelude_trait("convert::TryInto", 1);
+
+        add_prelude_trait("Iterable", 1);
+        add_prelude_trait("Iterator", 1);
+        add_prelude_trait("IntoIterator", 1);
+        add_prelude_trait("iter::Iterable", 1);
+        add_prelude_trait("iter::Iterator", 1);
+        add_prelude_trait("iter::IntoIterator", 1);
+
+        add_prelude_trait("ToString", 0, {
+            prelude_method("to_string", {self}, string, loc),
+        });
+        add_prelude_trait("ToOwned", 0);
+    }
+
+    void collect_constant_decls() {
+        for (const auto& decl : program_.constants) {
+            ConstantInfo info;
+            info.name = decl.name;
+            info.module_name = decl.module_name;
+            info.is_public = decl.is_public;
+            info.type_ref = decl.type;
+            info.init = decl.init.get();
+            info.loc = decl.loc;
+            auto inserted = constants_.emplace(decl.name, std::move(info));
+            if (!inserted.second) fail(decl.loc, "duplicate constant '" + decl.name + "'");
+        }
+    }
+
+    void collect_struct_decls() {
+        for (const auto& decl : program_.structs) {
+            StructInfo info;
+            info.name = decl.name;
+            info.module_name = decl.module_name;
+            info.generic_arity = decl.generics.size();
+            info.tuple_struct = decl.tuple_struct;
+            info.is_public = decl.is_public;
+            info.deprecated = deprecated_attribute(decl.attributes) != nullptr;
+            info.deprecated_message = deprecated_message(decl.attributes);
+            info.loc = decl.loc;
+
+            std::set<std::string> generic_names;
+            for (const auto& generic : decl.generics) {
+                if (!generic_names.insert(generic.name).second) {
+                    fail(decl.loc, "duplicate generic parameter '" + generic.name + "' in struct '" + decl.name + "'");
+                }
+                info.generic_names.push_back(generic.name);
+            }
+
+            std::set<std::string> field_names;
+            for (const auto& field : decl.fields) {
+                if (!field_names.insert(field.name).second) {
+                    fail(field.loc, "duplicate field '" + field.name + "' in struct '" + decl.name + "'");
+                }
+                info.fields.push_back(StructInfo::Field{field.name, field.type, field.mutable_field, field.loc});
+            }
+
+            auto inserted = structs_.emplace(decl.name, std::move(info));
+            if (!inserted.second) fail(decl.loc, "duplicate struct '" + decl.name + "'");
+        }
+    }
+
+    void validate_struct_decls() {
+        for (const auto& decl : program_.structs) {
+            auto found = structs_.find(decl.name);
+            if (found == structs_.end()) continue;
+
+            std::map<std::string, IrType> substitutions;
+            for (const auto& generic : decl.generics) {
+                IrType placeholder;
+                placeholder.qualifier = TypeQualifier::Value;
+                placeholder.primitive = IrPrimitiveKind::Unknown;
+                placeholder.name = generic.name;
+                placeholder.loc = decl.loc;
+                substitutions.emplace(generic.name, placeholder);
+            }
+
+            std::string previous_module = current_module_name_;
+            std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+            current_module_name_ = decl.module_name;
+            current_type_substitutions_ = std::move(substitutions);
+            for (const auto& field : decl.fields) {
+                (void)resolve_executable_type(field.type);
+            }
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+        }
+    }
+
+    void collect_trait_decls() {
+        for (const auto& decl : program_.traits) {
+            require_unique_generic_params(decl.generics, "trait", decl.name);
+            TraitInfo info;
+            info.name = decl.name;
+            info.module_name = decl.module_name;
+            info.generic_arity = decl.generics.size();
+            for (const auto& generic : decl.generics) info.generic_names.push_back(generic.name);
+            info.is_public = decl.is_public;
+            info.loc = decl.loc;
+
+            std::set<std::string> trait_generic_names;
+            for (const auto& generic : decl.generics) trait_generic_names.insert(generic.name);
+
+            for (const auto& method : decl.methods) {
+                std::string method_name = basename_of_qualified_name(method.name);
+                require_unique_generic_params(method.generics, "trait method", method_name);
+                for (const auto& generic : method.generics) {
+                    if (trait_generic_names.count(generic.name)) {
+                        fail(generic.loc,
+                             "trait method generic parameter '" + generic.name +
+                                 "' conflicts with a trait generic parameter");
+                    }
+                }
+                if (method.is_variadic) fail(method.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+                TraitInfo::Method trait_method;
+                trait_method.name = method_name;
+                trait_method.generics = method.generics;
+                trait_method.loc = method.loc;
+                trait_method.has_result = method.has_return_type;
+                if (method.has_return_type) trait_method.result = method.return_type;
+                for (const auto& param : method.params) {
+                    if (param.has_pattern) {
+                        fail(param.pattern.loc, "trait method parameters cannot use patterns");
+                    }
+                    trait_method.params.push_back(param.type);
+                }
+                auto method_inserted = info.methods.emplace(trait_method.name, std::move(trait_method));
+                if (!method_inserted.second) {
+                    fail(method.loc, "duplicate method '" + method_name + "' in trait '" + decl.name + "'");
+                }
+            }
+
+            auto inserted = traits_.emplace(decl.name, std::move(info));
+            if (!inserted.second) fail(decl.loc, "duplicate trait '" + decl.name + "'");
+        }
+    }
+
+    static std::string type_ref_key(const TypeRef& type) {
+        std::string key;
+        switch (type.qualifier) {
+            case TypeQualifier::Value:
+                break;
+            case TypeQualifier::Own:
+                key += "own ";
+                break;
+            case TypeQualifier::Ref:
+                key += "ref ";
+                break;
+            case TypeQualifier::MutRef:
+                key += "ref mut ";
+                break;
+            case TypeQualifier::Ptr:
+                key += "ptr ";
+                break;
+        }
+
+        if (type.name == "Array" && type.args.size() == 1) {
+            key += "[" + type_ref_key(type.args[0]) + ", " + std::to_string(type.array_size) + "]";
+            return key;
+        }
+
+        if (type.is_dyn_object) {
+            key += "dyn ";
+            key += type.name;
+            if (!type.args.empty()) {
+                key += "[";
+                for (std::size_t i = 0; i < type.args.size(); ++i) {
+                    if (i > 0) key += ", ";
+                    key += type_ref_key(type.args[i]);
+                }
+                key += "]";
+            }
+            return key;
+        }
+
+        if (type.name == "fn" && !type.args.empty()) {
+            key += "fn(";
+            std::size_t param_count = static_cast<std::size_t>(type.array_size);
+            if (param_count + 1 > type.args.size()) param_count = type.args.size() - 1;
+            for (std::size_t i = 0; i < param_count; ++i) {
+                if (i > 0) key += ", ";
+                key += type_ref_key(type.args[i]);
+            }
+            key += ") -> ";
+            key += type_ref_key(type.args[param_count]);
+            return key;
+        }
+
+        if (type.name == "int") key += "i64";
+        else if (type.name == "prelude::Vec") key += "Vec";
+        else key += type.name;
+
+        if (!type.args.empty()) {
+            key += "[";
+            for (std::size_t i = 0; i < type.args.size(); ++i) {
+                if (i > 0) key += ", ";
+                key += type_ref_key(type.args[i]);
+            }
+            key += "]";
+        }
+        return key;
+    }
+
+    static std::string trait_application_display(const std::string& trait_name, const std::vector<IrType>& trait_args) {
+        std::string out = trait_name;
+        if (!trait_args.empty()) {
+            out += "[";
+            for (std::size_t i = 0; i < trait_args.size(); ++i) {
+                if (i > 0) out += ", ";
+                out += type_name(trait_args[i]);
+            }
+            out += "]";
+        }
+        return out;
+    }
+
+    static std::string trait_impl_key(
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const IrType& self_type
+    ) {
+        return trait_application_display(trait_name, trait_args) + " for " + type_name(self_type);
+    }
+
+    static bool same_type_list(const std::vector<IrType>& left, const std::vector<IrType>& right) {
+        if (left.size() != right.size()) return false;
+        for (std::size_t i = 0; i < left.size(); ++i) {
+            if (!same_type(left[i], right[i])) return false;
+        }
+        return true;
+    }
+
+    static bool has_name(const std::vector<std::string>& names, const std::string& name) {
+        return std::find(names.begin(), names.end(), name) != names.end();
+    }
+
+    static bool is_impl_coherence_generic_var(const IrType& type, const std::vector<std::string>& names) {
+        return type.primitive == IrPrimitiveKind::Unknown && type.args.empty() && has_name(names, type.name);
+    }
+
+    static bool contains_impl_coherence_generic_var(
+        const IrType& type,
+        const std::vector<std::string>& left_names,
+        const std::vector<std::string>& right_names
+    ) {
+        if (is_impl_coherence_generic_var(type, left_names) ||
+            is_impl_coherence_generic_var(type, right_names)) {
+            return true;
+        }
+        for (const auto& arg : type.args) {
+            if (contains_impl_coherence_generic_var(arg, left_names, right_names)) return true;
+        }
+        for (const auto& field_type : type.field_types) {
+            if (contains_impl_coherence_generic_var(field_type, left_names, right_names)) return true;
+        }
+        return false;
+    }
+
+    static bool bind_impl_coherence_generic_var(
+        const std::string& key,
+        const IrType& concrete,
+        const std::vector<std::string>& left_names,
+        const std::vector<std::string>& right_names,
+        std::map<std::string, IrType>& bindings
+    ) {
+        if (contains_impl_coherence_generic_var(concrete, left_names, right_names)) return true;
+        auto found = bindings.find(key);
+        if (found == bindings.end()) {
+            bindings.emplace(key, concrete);
+            return true;
+        }
+        return same_type(found->second, concrete);
+    }
+
+    static bool trait_impl_type_patterns_overlap(
+        const IrType& left,
+        const std::vector<std::string>& left_names,
+        const IrType& right,
+        const std::vector<std::string>& right_names,
+        std::map<std::string, IrType>& bindings
+    ) {
+        if (is_impl_coherence_generic_var(left, left_names)) {
+            return bind_impl_coherence_generic_var("left:" + left.name, right, left_names, right_names, bindings);
+        }
+        if (is_impl_coherence_generic_var(right, right_names)) {
+            return bind_impl_coherence_generic_var("right:" + right.name, left, left_names, right_names, bindings);
+        }
+
+        if (left.qualifier != right.qualifier ||
+            left.primitive != right.primitive ||
+            left.name != right.name ||
+            left.array_size != right.array_size ||
+            left.args.size() != right.args.size()) {
+            return false;
+        }
+
+        for (std::size_t i = 0; i < left.args.size(); ++i) {
+            if (!trait_impl_type_patterns_overlap(left.args[i], left_names, right.args[i], right_names, bindings)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    static bool trait_impl_patterns_overlap(const TraitImplCoherenceInfo& left, const TraitImplCoherenceInfo& right) {
+        if (left.trait_name != right.trait_name) return false;
+        if (left.trait_args.size() != right.trait_args.size()) return false;
+
+        std::map<std::string, IrType> bindings;
+        for (std::size_t i = 0; i < left.trait_args.size(); ++i) {
+            if (!trait_impl_type_patterns_overlap(
+                    left.trait_args[i], left.generic_names, right.trait_args[i], right.generic_names, bindings)) {
+                return false;
+            }
+        }
+        return trait_impl_type_patterns_overlap(left.self_type, left.generic_names, right.self_type, right.generic_names, bindings);
+    }
+
+    static std::string trait_impl_coherence_kind(const TraitImplCoherenceInfo& impl) {
+        return impl.generic_names.empty() ? "impl" : "generic impl";
+    }
+
+    std::map<std::string, IrType> generic_placeholder_substitutions(const std::vector<GenericParam>& generics) const {
+        std::map<std::string, IrType> substitutions;
+        for (const auto& generic : generics) {
+            IrType placeholder;
+            placeholder.qualifier = TypeQualifier::Value;
+            placeholder.primitive = IrPrimitiveKind::Unknown;
+            placeholder.name = generic.name;
+            placeholder.loc = generic.loc;
+            substitutions.emplace(generic.name, placeholder);
+        }
+        return substitutions;
+    }
+
+    GenericTraitBound resolve_generic_trait_bound(const GenericParam& generic) {
+        const TypeRef& constraint = generic.constraint;
+        if (constraint.qualifier != TypeQualifier::Value) {
+            fail(constraint.loc, "trait bounds cannot use ownership qualifiers");
+        }
+
+        std::string trait_name = resolve_trait_name(constraint.name);
+        auto found = traits_.find(trait_name);
+        if (found == traits_.end()) {
+            fail(constraint.loc, "unknown trait bound '" + constraint.name + "'");
+        }
+        const TraitInfo& trait = found->second;
+        require_trait_access(constraint.loc, trait);
+        if (constraint.args.size() != trait.generic_arity) {
+            fail(constraint.loc,
+                 "trait '" + trait.name + "' expects " + std::to_string(trait.generic_arity) +
+                     " type argument" + (trait.generic_arity == 1 ? "" : "s"));
+        }
+
+        GenericTraitBound bound;
+        bound.generic_name = generic.name;
+        bound.trait_name = trait.name;
+        bound.loc = constraint.loc;
+        bound.trait_args.reserve(constraint.args.size());
+        for (const auto& arg : constraint.args) {
+            bound.trait_args.push_back(resolve_executable_type(arg));
+        }
+        return bound;
+    }
+
+    std::vector<GenericTraitBound> resolve_generic_trait_bounds(const std::vector<GenericParam>& generics) {
+        std::vector<GenericTraitBound> bounds;
+        for (const auto& generic : generics) {
+            if (generic.has_constraint) bounds.push_back(resolve_generic_trait_bound(generic));
+        }
+        return bounds;
+    }
+
+    GenericTraitBound resolve_generic_trait_bound_with_context(
+        const GenericParam& generic,
+        const std::string& module_name,
+        std::map<std::string, IrType> substitutions
+    ) {
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = module_name;
+        current_type_substitutions_ = std::move(substitutions);
+        GenericTraitBound bound = resolve_generic_trait_bound(generic);
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
+        return bound;
+    }
+
+    void validate_generic_constraints_for(
+        const std::vector<GenericParam>& generics,
+        const std::string& module_name,
+        std::map<std::string, IrType> substitutions
+    ) {
+        if (generics.empty()) return;
+        bool has_constraint = false;
+        for (const auto& generic : generics) {
+            if (generic.has_constraint) {
+                has_constraint = true;
+                break;
+            }
+        }
+        if (!has_constraint) return;
+
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = module_name;
+        current_type_substitutions_ = std::move(substitutions);
+        for (const auto& generic : generics) {
+            if (generic.has_constraint) (void)resolve_generic_trait_bound(generic);
+        }
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
+    }
+
+    void validate_generic_constraints_for(
+        const std::vector<GenericParam>& generics,
+        const std::string& module_name
+    ) {
+        validate_generic_constraints_for(generics, module_name, generic_placeholder_substitutions(generics));
+    }
+
+    void validate_generic_constraints() {
+        for (const auto& decl : program_.structs) {
+            validate_generic_constraints_for(decl.generics, decl.module_name);
+        }
+        for (const auto& decl : program_.enums) {
+            validate_generic_constraints_for(decl.generics, decl.module_name);
+        }
+        for (const auto& decl : program_.traits) {
+            validate_generic_constraints_for(decl.generics, decl.module_name);
+            std::map<std::string, IrType> trait_substitutions = generic_placeholder_substitutions(decl.generics);
+            for (const auto& method : decl.methods) {
+                std::map<std::string, IrType> method_substitutions = trait_substitutions;
+                for (const auto& item : generic_placeholder_substitutions(method.generics)) {
+                    method_substitutions.emplace(item.first, item.second);
+                }
+                validate_generic_constraints_for(method.generics, decl.module_name, std::move(method_substitutions));
+            }
+        }
+        for (const auto& fn : program_.functions) {
+            validate_generic_constraints_for(fn.generics, fn.module_name);
+        }
+        for (const auto& impl : program_.impls) {
+            validate_generic_constraints_for(impl.generics, impl.module_name);
+        }
+    }
+
+    IrType resolve_impl_method_type(const TypeRef& type, const std::map<std::string, IrType>& substitutions) {
+        return resolve_type_with_substitutions(type, substitutions);
+    }
+
+    static std::string no_trait_bound_display() {
+        return "none";
+    }
+
+    static bool same_trait_bound(const GenericTraitBound& left, const GenericTraitBound& right) {
+        return left.trait_name == right.trait_name && same_type_list(left.trait_args, right.trait_args);
+    }
+
+    void validate_trait_method_generic_bound(
+        const std::string& method_name,
+        std::size_t index,
+        const GenericParam& expected,
+        const GenericParam& actual,
+        const std::map<std::string, IrType>& expected_substitutions,
+        const std::map<std::string, IrType>& actual_substitutions,
+        const TraitInfo& trait,
+        const ImplDecl& impl
+    ) {
+        if (expected.has_constraint != actual.has_constraint) {
+            std::string expected_display = expected.has_constraint
+                ? type_ref_key(expected.constraint)
+                : no_trait_bound_display();
+            std::string actual_display = actual.has_constraint
+                ? type_ref_key(actual.constraint)
+                : no_trait_bound_display();
+            fail(actual.loc,
+                 "method '" + method_name + "' generic parameter " + std::to_string(index + 1) +
+                     " bound mismatch: expected " + expected_display + ", got " + actual_display);
+        }
+        if (!expected.has_constraint) return;
+
+        GenericTraitBound expected_bound = resolve_generic_trait_bound_with_context(
+            expected,
+            trait.module_name,
+            expected_substitutions);
+        GenericTraitBound actual_bound = resolve_generic_trait_bound_with_context(
+            actual,
+            impl.module_name,
+            actual_substitutions);
+        if (!same_trait_bound(expected_bound, actual_bound)) {
+            fail(actual.constraint.loc,
+                 "method '" + method_name + "' generic parameter " + std::to_string(index + 1) +
+                     " bound mismatch: expected " +
+                     trait_application_display(expected_bound.trait_name, expected_bound.trait_args) +
+                     ", got " +
+                     trait_application_display(actual_bound.trait_name, actual_bound.trait_args));
+        }
+    }
+
+    void validate_trait_impl_methods(
+        const ImplDecl& impl,
+        const TraitInfo& trait,
+        const std::map<std::string, IrType>& expected_substitutions,
+        const std::map<std::string, IrType>& actual_substitutions
+    ) {
+        std::map<std::string, const FunctionDecl*> impl_methods;
+        std::set<std::string> impl_generic_names;
+        for (const auto& item : actual_substitutions) impl_generic_names.insert(item.first);
+        for (const auto& method : impl.methods) {
+            if (method.is_variadic) fail(method.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+            std::string name = basename_of_qualified_name(method.name);
+            require_unique_generic_params(method.generics, "impl method", name);
+            for (const auto& generic : method.generics) {
+                if (impl_generic_names.count(generic.name)) {
+                    fail(generic.loc,
+                         "impl method generic parameter '" + generic.name +
+                             "' conflicts with an impl generic parameter");
+                }
+            }
+            auto inserted = impl_methods.emplace(name, &method);
+            if (!inserted.second) fail(method.loc, "duplicate method '" + name + "' in impl");
+            if (!trait.methods.count(name)) {
+                fail(method.loc, "method '" + name + "' is not declared by trait '" + trait.name + "'");
+            }
+        }
+
+        for (const auto& item : trait.methods) {
+            const TraitInfo::Method& expected_method = item.second;
+            auto found = impl_methods.find(item.first);
+            if (found == impl_methods.end()) {
+                fail(impl.trait_type.loc,
+                     "impl of trait '" + trait.name + "' for " + type_ref_key(impl.for_type) +
+                         " is missing method '" + item.first + "'");
+            }
+            const FunctionDecl& actual_method = *found->second;
+            if (actual_method.generics.size() != expected_method.generics.size()) {
+                fail(actual_method.loc,
+                     "method '" + item.first + "' generic parameter count mismatch: trait expects " +
+                         std::to_string(expected_method.generics.size()) + ", impl has " +
+                         std::to_string(actual_method.generics.size()));
+            }
+            std::map<std::string, IrType> expected_method_substitutions = expected_substitutions;
+            std::map<std::string, IrType> actual_method_substitutions = actual_substitutions;
+            for (std::size_t i = 0; i < expected_method.generics.size(); ++i) {
+                IrType placeholder;
+                placeholder.qualifier = TypeQualifier::Value;
+                placeholder.primitive = IrPrimitiveKind::Unknown;
+                placeholder.name = "$method_generic" + std::to_string(i);
+                placeholder.loc = actual_method.loc;
+                expected_method_substitutions[expected_method.generics[i].name] = placeholder;
+                actual_method_substitutions[actual_method.generics[i].name] = placeholder;
+            }
+            for (std::size_t i = 0; i < expected_method.generics.size(); ++i) {
+                validate_trait_method_generic_bound(
+                    item.first,
+                    i,
+                    expected_method.generics[i],
+                    actual_method.generics[i],
+                    expected_method_substitutions,
+                    actual_method_substitutions,
+                    trait,
+                    impl);
+            }
+            if (actual_method.params.size() != expected_method.params.size()) {
+                fail(actual_method.loc,
+                     "method '" + item.first + "' parameter count mismatch: trait expects " +
+                         std::to_string(expected_method.params.size()) + ", impl has " +
+                         std::to_string(actual_method.params.size()));
+            }
+            for (std::size_t i = 0; i < expected_method.params.size(); ++i) {
+                IrType expected = resolve_impl_method_type(expected_method.params[i], expected_method_substitutions);
+                IrType actual = resolve_impl_method_type(actual_method.params[i].type, actual_method_substitutions);
+                if (!same_type(expected, actual)) {
+                    fail(actual_method.params[i].type.loc,
+                         "method '" + item.first + "' parameter " + std::to_string(i + 1) +
+                             " type mismatch: expected " + type_name(expected) +
+                             ", got " + type_name(actual));
+                }
+            }
+
+            IrType expected_result = expected_method.has_result
+                ? resolve_impl_method_type(expected_method.result, expected_method_substitutions)
+                : void_type(expected_method.loc);
+            IrType actual_result = actual_method.has_return_type
+                ? resolve_impl_method_type(actual_method.return_type, actual_method_substitutions)
+                : void_type(actual_method.loc);
+            if (!same_type(expected_result, actual_result)) {
+                fail(actual_method.loc,
+                     "method '" + item.first + "' return type mismatch: expected " +
+                         type_name(expected_result) + ", got " + type_name(actual_result));
+            }
+        }
+    }
+
+    void validate_inherent_impl_methods(const ImplDecl& impl) const {
+        std::set<std::string> names;
+        std::set<std::string> impl_generic_names;
+        for (const auto& generic : impl.generics) impl_generic_names.insert(generic.name);
+        for (const auto& method : impl.methods) {
+            if (method.is_variadic) fail(method.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+            std::string name = basename_of_qualified_name(method.name);
+            if (!names.insert(name).second) fail(method.loc, "duplicate method '" + name + "' in impl");
+            require_unique_generic_params(method.generics, "impl method", name);
+            for (const auto& generic : method.generics) {
+                if (impl_generic_names.count(generic.name)) {
+                    fail(generic.loc,
+                         "impl method generic parameter '" + generic.name +
+                             "' conflicts with an impl generic parameter");
+                }
+            }
+        }
+    }
+
+    void validate_impls() {
+        for (const auto& impl : program_.impls) {
+            require_unique_generic_params(impl.generics, "impl", "impl");
+            if (!impl.has_trait) {
+                validate_inherent_impl_methods(impl);
+                continue;
+            }
+            if (impl.trait_type.qualifier != TypeQualifier::Value) {
+                fail(impl.trait_type.loc, "impl trait type cannot have an ownership qualifier");
+            }
+
+            std::string previous_module = current_module_name_;
+            std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+            current_module_name_ = impl.module_name;
+            std::map<std::string, IrType> impl_substitutions = generic_placeholder_substitutions(impl.generics);
+            current_type_substitutions_ = impl_substitutions;
+            std::vector<GenericTraitBound> impl_bounds = resolve_generic_trait_bounds(impl.generics);
+            std::string trait_name = resolve_trait_name(impl.trait_type.name);
+            auto found = traits_.find(trait_name);
+            if (found == traits_.end()) {
+                current_type_substitutions_ = std::move(previous_substitutions);
+                current_module_name_ = previous_module;
+                fail(impl.trait_type.loc, "unknown trait '" + impl.trait_type.name + "'");
+            }
+            const TraitInfo& trait = found->second;
+            require_trait_access(impl.trait_type.loc, trait);
+            if (impl.trait_type.args.size() != trait.generic_arity) {
+                current_type_substitutions_ = std::move(previous_substitutions);
+                current_module_name_ = previous_module;
+                fail(impl.trait_type.loc,
+                     "trait '" + trait.name + "' expects " + std::to_string(trait.generic_arity) +
+                         " type argument" + (trait.generic_arity == 1 ? "" : "s"));
+            }
+
+            IrType self_type = resolve_executable_type(impl.for_type);
+            std::map<std::string, IrType> expected_substitutions;
+            expected_substitutions.emplace("Self", self_type);
+            std::map<std::string, IrType> actual_substitutions = impl_substitutions;
+            actual_substitutions.emplace("Self", self_type);
+            std::vector<IrType> trait_args;
+            for (std::size_t i = 0; i < trait.generic_names.size(); ++i) {
+                IrType trait_arg = resolve_executable_type(impl.trait_type.args[i]);
+                trait_args.push_back(trait_arg);
+                expected_substitutions[trait.generic_names[i]] = std::move(trait_arg);
+            }
+            std::string key = impl.generics.empty()
+                ? trait_impl_key(trait.name, trait_args, self_type)
+                : ("generic " + type_ref_key(impl.trait_type) + " for " + type_ref_key(impl.for_type));
+            if (!impl_keys_.insert(key).second) {
+                current_type_substitutions_ = std::move(previous_substitutions);
+                current_module_name_ = previous_module;
+                fail(impl.trait_type.loc, "duplicate impl of trait '" + trait.name + "' for " + type_name(self_type));
+            }
+
+            TraitImplCoherenceInfo coherence;
+            coherence.trait_name = trait.name;
+            coherence.trait_args = trait_args;
+            coherence.self_type = self_type;
+            for (const auto& generic : impl.generics) coherence.generic_names.push_back(generic.name);
+            coherence.loc = impl.trait_type.loc;
+            for (const auto& previous : trait_impl_coherence_) {
+                if (!trait_impl_patterns_overlap(coherence, previous)) continue;
+                current_type_substitutions_ = std::move(previous_substitutions);
+                current_module_name_ = previous_module;
+                fail(impl.trait_type.loc,
+                     trait_impl_coherence_kind(coherence) + " of trait '" +
+                         trait_application_display(coherence.trait_name, coherence.trait_args) +
+                         "' for " + type_name(coherence.self_type) + " overlaps " +
+                         trait_impl_coherence_kind(previous) + " of trait '" +
+                         trait_application_display(previous.trait_name, previous.trait_args) +
+                         "' for " + type_name(previous.self_type));
+            }
+
+            validate_trait_impl_methods(impl, trait, expected_substitutions, actual_substitutions);
+            trait_impl_coherence_.push_back(std::move(coherence));
+            if (!impl.generics.empty()) {
+                GenericTraitImplInfo generic_impl;
+                generic_impl.trait_name = trait.name;
+                generic_impl.trait_args = trait_args;
+                generic_impl.self_type = self_type;
+                for (const auto& generic : impl.generics) generic_impl.generic_names.push_back(generic.name);
+                generic_impl.generic_bounds = impl_bounds;
+                generic_impl.module_name = impl.module_name;
+                generic_impl.loc = impl.trait_type.loc;
+                generic_trait_impls_.push_back(std::move(generic_impl));
+            }
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+        }
+    }
+
+    void collect_impl_method_signatures() {
+        for (const auto& impl : program_.impls) {
+            std::string previous_module = current_module_name_;
+            current_module_name_ = impl.module_name;
+
+            std::map<std::string, IrType> substitutions = generic_placeholder_substitutions(impl.generics);
+            std::map<std::string, IrType> outer_previous_substitutions = std::move(current_type_substitutions_);
+            current_type_substitutions_ = substitutions;
+            IrType self_type = resolve_executable_type(impl.for_type);
+            substitutions.emplace("Self", self_type);
+            current_type_substitutions_ = substitutions;
+            std::vector<GenericTraitBound> impl_bounds = resolve_generic_trait_bounds(impl.generics);
+
+            std::string trait_name;
+            std::vector<IrType> trait_args;
+            if (impl.has_trait) {
+                trait_name = resolve_trait_name(impl.trait_type.name);
+                auto trait_found = traits_.find(trait_name);
+                if (trait_found == traits_.end()) {
+                    current_module_name_ = previous_module;
+                    fail(impl.trait_type.loc, "unknown trait '" + impl.trait_type.name + "'");
+                }
+                const TraitInfo& trait = trait_found->second;
+                for (std::size_t i = 0; i < trait.generic_names.size(); ++i) {
+                    IrType trait_arg = resolve_executable_type(impl.trait_type.args[i]);
+                    trait_args.push_back(trait_arg);
+                    substitutions.emplace(trait.generic_names[i], std::move(trait_arg));
+                }
+            }
+            current_type_substitutions_ = std::move(outer_previous_substitutions);
+
+            std::set<std::string> local_method_names;
+            for (const auto& method : impl.methods) {
+                if (!method.has_body) {
+                    current_module_name_ = previous_module;
+                    fail(method.loc, "impl method '" + basename_of_qualified_name(method.name) + "' must have a body");
+                }
+                std::string method_name = basename_of_qualified_name(method.name);
+                if (!local_method_names.insert(method_name).second) {
+                    current_module_name_ = previous_module;
+                    fail(method.loc, "duplicate method '" + method_name + "' in impl");
+                }
+
+                std::map<std::string, IrType> method_substitutions = substitutions;
+                for (const auto& item : generic_placeholder_substitutions(method.generics)) {
+                    method_substitutions.emplace(item.first, item.second);
+                }
+
+                std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+                current_type_substitutions_ = method_substitutions;
+                std::vector<GenericTraitBound> method_bounds = resolve_generic_trait_bounds(method.generics);
+
+                FunctionSig sig;
+                sig.loc = method.loc;
+                sig.module_name = method.module_name;
+                sig.is_public = false;
+                for (const auto& param : method.params) sig.params.push_back(resolve_executable_type(param.type));
+                sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
+
+                current_type_substitutions_ = std::move(previous_substitutions);
+
+                ImplMethodInfo info;
+                info.fn = &method;
+                info.trait_name = trait_name;
+                info.trait_args = trait_args;
+                info.receiver_type = self_type;
+                for (const auto& generic : impl.generics) info.generic_names.push_back(generic.name);
+                for (const auto& generic : method.generics) info.method_generic_names.push_back(generic.name);
+                info.generic_bounds = impl_bounds;
+                info.method_generic_bounds = method_bounds;
+                info.sig = sig;
+                info.substitutions = substitutions;
+                info.module_name = impl.module_name;
+                info.is_public = impl.is_public || method.is_public;
+                info.loc = method.loc;
+                info.lowered_name = impl_method_lowered_name(self_type, trait_name, method_name);
+                if (trait_name == "Drop" && method_name == "drop") {
+                    drop_impls_[drop_impl_key(self_type)] = info;
+                }
+
+                if (!impl.generics.empty() || !method.generics.empty()) {
+                    if (info.sig.params.empty() || !same_type(info.sig.params[0], self_type)) {
+                        generic_associated_impls_.push_back(std::move(info));
+                    } else {
+                        generic_method_impls_.push_back(std::move(info));
+                    }
+                } else {
+                    auto inserted = functions_.emplace(info.lowered_name, info.sig);
+                    if (!inserted.second) {
+                        current_module_name_ = previous_module;
+                        fail(method.loc, "duplicate lowered impl method '" + method_name + "' for " + type_name(self_type));
+                    }
+
+                    if (!info.sig.params.empty() && same_type(info.sig.params[0], self_type)) {
+                        method_impls_[method_lookup_key(info.sig.params[0], method_name)].push_back(std::move(info));
+                    } else {
+                        associated_impls_[method_lookup_key(self_type, method_name)].push_back(std::move(info));
+                    }
+                }
+            }
+
+            current_module_name_ = previous_module;
+        }
+    }
+
+    std::map<std::string, IrType> enum_type_arg_substitutions(
+        SourceLocation loc,
+        const EnumInfo& info,
+        const std::vector<IrType>& type_args
+    ) const {
+        if (type_args.size() != info.generic_arity) {
+            fail(loc,
+                 "enum '" + info.name + "' expects " + std::to_string(info.generic_arity) +
+                     " type argument" + (info.generic_arity == 1 ? "" : "s"));
+        }
+
+        std::map<std::string, IrType> substitutions;
+        for (std::size_t i = 0; i < type_args.size(); ++i) {
+            substitutions.emplace(info.generic_names[i], type_args[i]);
+        }
+        return substitutions;
+    }
+
+    std::vector<IrType> resolve_enum_payload_refs(
+        const EnumInfo& info,
+        const std::vector<TypeRef>& payload_refs,
+        const std::map<std::string, IrType>& substitutions
+    ) {
+        std::map<std::string, IrType> previous_substitutions = current_type_substitutions_;
+        std::string previous_module = current_module_name_;
+
+        for (const auto& item : substitutions) {
+            current_type_substitutions_[item.first] = item.second;
+        }
+        current_module_name_ = info.module_name;
+
+        std::vector<IrType> payloads;
+        payloads.reserve(payload_refs.size());
+        for (const auto& payload : payload_refs) {
+            payloads.push_back(resolve_executable_type(payload));
+        }
+
+        current_module_name_ = previous_module;
+        current_type_substitutions_ = std::move(previous_substitutions);
+        return payloads;
+    }
+
+    void note_enum_payload_layout_requirement(
+        SourceLocation loc,
+        const IrType& payload_type,
+        std::size_t payload_count,
+        bool& aggregate_layout
+    ) const {
+        bool payload_needs_aggregate =
+            !is_legacy_enum_payload_type(payload_type) || payload_count > 1;
+        if (payload_needs_aggregate) aggregate_layout = true;
+        if (payload_needs_aggregate && !is_aggregate_enum_payload_type(payload_type)) {
+            fail(loc,
+                 "enum aggregate payloads currently support integer, bool, or one-word enum values, got " +
+                     type_name(payload_type));
+        }
+        if (!payload_needs_aggregate && !is_legacy_enum_payload_type(payload_type)) {
+            fail(loc, "enum payload must fit the 32-bit tagged-union payload slot, got " + type_name(payload_type));
+        }
+    }
+
+    IrType resolve_enum_type_application(
+        SourceLocation loc,
+        const EnumInfo& info,
+        const std::vector<IrType>& type_args
+    ) {
+        std::map<std::string, IrType> substitutions =
+            enum_type_arg_substitutions(loc, info, type_args);
+
+        IrType type;
+        type.qualifier = TypeQualifier::Value;
+        type.primitive = IrPrimitiveKind::Enum;
+        type.name = info.name;
+        type.loc = loc;
+        type.args = type_args;
+
+        bool aggregate_layout = false;
+        std::size_t max_payloads = 0;
+        for (const auto& item : info.cases) {
+            if (item.payloads.size() > 1) aggregate_layout = true;
+            max_payloads = std::max(max_payloads, item.payloads.size());
+            std::vector<IrType> payloads = resolve_enum_payload_refs(info, item.payloads, substitutions);
+            for (std::size_t i = 0; i < payloads.size(); ++i) {
+                note_enum_payload_layout_requirement(item.payloads[i].loc, payloads[i], item.payloads.size(), aggregate_layout);
+            }
+        }
+
+        if (aggregate_layout) {
+            type.field_types.push_back(enum_tag_storage_type(loc));
+            type.field_names.push_back("$tag");
+            type.field_mutable.push_back(false);
+            for (std::size_t i = 0; i < max_payloads; ++i) {
+                type.field_types.push_back(enum_payload_storage_type(loc));
+                type.field_names.push_back("$payload" + std::to_string(i));
+                type.field_mutable.push_back(false);
+            }
+        }
+        return type;
+    }
+
+    EnumCaseInfo specialize_enum_case_info(
+        SourceLocation loc,
+        const EnumCaseInfo& info,
+        const std::vector<IrType>& type_args
+    ) {
+        auto enum_found = enums_.find(info.enum_name);
+        if (enum_found == enums_.end()) fail(loc, "unknown enum '" + info.enum_name + "'");
+        const EnumInfo& enum_info = enum_found->second;
+        std::map<std::string, IrType> substitutions =
+            enum_type_arg_substitutions(loc, enum_info, type_args);
+
+        EnumCaseInfo specialized = info;
+        specialized.enum_type = resolve_enum_type_application(loc, enum_info, type_args);
+        specialized.payloads = resolve_enum_payload_refs(enum_info, info.payload_refs, substitutions);
+        specialized.generic_names.clear();
+        specialized.is_generic = false;
+        return specialized;
+    }
+
+    static IrType generic_enum_payload_placeholder(const TypeRef& payload) {
+        IrType type;
+        type.qualifier = TypeQualifier::Value;
+        type.primitive = IrPrimitiveKind::Unknown;
+        type.name = type_ref_key(payload);
+        type.loc = payload.loc;
+        return type;
+    }
+
+    void collect_enum_layouts() {
+        for (const auto& decl : program_.enums) {
+            require_unique_generic_params(decl.generics, "enum", decl.name);
+            if (structs_.count(decl.name)) {
+                fail(decl.loc, "enum '" + decl.name + "' conflicts with struct of the same name");
+            }
+            if (decl.cases.size() > static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max())) {
+                fail(decl.loc, "enum '" + decl.name + "' has too many cases");
+            }
+
+            IrType type;
+            type.qualifier = TypeQualifier::Value;
+            type.primitive = IrPrimitiveKind::Enum;
+            type.name = decl.name;
+            type.loc = decl.loc;
+
+            EnumInfo info;
+            info.name = decl.name;
+            info.module_name = decl.module_name;
+            info.type = type;
+            info.loc = decl.loc;
+            info.generic_arity = decl.generics.size();
+            info.is_public = decl.is_public;
+            info.deprecated = deprecated_attribute(decl.attributes) != nullptr;
+            info.deprecated_message = deprecated_message(decl.attributes);
+            for (const auto& generic : decl.generics) info.generic_names.push_back(generic.name);
+
+            for (std::size_t i = 0; i < decl.cases.size(); ++i) {
+                const EnumCase& item = decl.cases[i];
+                EnumInfo::Case case_info;
+                case_info.name = item.name;
+                case_info.qualified_name = qualify_in_module(decl.module_name, item.name);
+                case_info.tag = static_cast<std::uint32_t>(i);
+                case_info.payloads = item.payloads;
+                case_info.loc = item.loc;
+                info.case_names.push_back(item.name);
+                info.cases.push_back(std::move(case_info));
+            }
+
+            auto inserted = enums_.emplace(decl.name, std::move(info));
+            if (!inserted.second) fail(decl.loc, "duplicate enum '" + decl.name + "'");
+        }
+
+        for (auto& [enum_name, enum_info] : enums_) {
+            if (enum_info.generic_arity == 0) {
+                enum_info.type = resolve_enum_type_application(enum_info.loc, enum_info, {});
+            }
+
+            for (const auto& item : enum_info.cases) {
+                EnumCaseInfo info;
+                info.enum_name = enum_name;
+                info.enum_type = enum_info.type;
+                info.name = item.qualified_name;
+                info.module_name = enum_info.module_name;
+                info.tag = item.tag;
+                info.payload_refs = item.payloads;
+                info.generic_names = enum_info.generic_names;
+                info.is_generic = enum_info.generic_arity != 0;
+                info.loc = item.loc;
+
+                if (info.is_generic) {
+                    for (const auto& payload : item.payloads) {
+                        info.payloads.push_back(generic_enum_payload_placeholder(payload));
+                    }
+                } else {
+                    info = specialize_enum_case_info(item.loc, info, {});
+                }
+
+                std::string case_key = info.name;
+                auto inserted = enum_cases_.emplace(case_key, std::move(info));
+                if (!inserted.second) {
+                    fail(item.loc, "duplicate enum case constructor '" + case_key + "'");
+                }
+            }
+        }
+    }
+
+    void collect_function_signatures() {
+        for (const auto& fn : program_.functions) {
+            require_unique_generic_params(fn.generics, fn.meta ? "meta function" : "function", fn.name);
+            if (fn.params.size() > std::numeric_limits<std::uint16_t>::max()) {
+                fail(fn.loc, "functions support up to 65535 parameters");
+            }
+            if (fn.is_variadic && !fn.is_extern) {
+                fail(fn.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
+            }
+            if (fn.is_extern) {
+                collect_extern_function_signature(fn);
+                continue;
+            }
+            (void)exported_link_name(fn);
+            if (!fn.generics.empty()) {
+                auto inserted = generic_functions_.emplace(fn.name, &fn);
+                if (!inserted.second) fail(fn.loc, "duplicate generic function '" + fn.name + "'");
+                continue;
+            }
+            if (!is_executable_function(fn)) continue;
+            if (enum_cases_.count(fn.name)) fail(fn.loc, "function '" + fn.name + "' conflicts with enum case constructor");
+            if (is_format_print_name(fn.name)) fail(fn.loc, "function '" + fn.name + "' conflicts with prelude print builtin");
+
+            FunctionSig sig;
+            sig.loc = fn.loc;
+            sig.module_name = fn.module_name;
+            sig.is_public = fn.is_public;
+            sig.deprecated = deprecated_attribute(fn.attributes) != nullptr;
+            sig.deprecated_message = deprecated_message(fn.attributes);
+            sig.link_name = exported_link_name(fn);
+            if (!sig.link_name.empty()) {
+                auto exported = exported_symbols_.emplace(sig.link_name, fn.name);
+                if (!exported.second) {
+                    fail(fn.loc,
+                         "exported symbol '" + sig.link_name + "' is already used by function '" +
+                             exported.first->second + "'");
+                }
+            }
+            std::string previous_module = current_module_name_;
+            current_module_name_ = fn.module_name;
+            for (const auto& param : fn.params) sig.params.push_back(resolve_executable_type(param.type));
+            sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+            current_module_name_ = previous_module;
+
+            auto inserted = functions_.emplace(fn.name, std::move(sig));
+            if (!inserted.second) fail(fn.loc, "duplicate executable function '" + fn.name + "'");
+        }
+    }
+
+    void collect_extern_function_signature(const FunctionDecl& fn) {
+        if (fn.params.size() > std::numeric_limits<std::uint16_t>::max()) {
+            fail(fn.loc, "functions support up to 65535 parameters");
+        }
+        if (fn.meta) fail(fn.loc, "extern functions cannot be meta functions");
+        if (!fn.generics.empty()) fail(fn.loc, "extern functions cannot be generic yet");
+        if (fn.has_body) fail(fn.loc, "extern functions cannot have a body");
+        if (fn.is_variadic && fn.params.empty()) {
+            fail(fn.variadic_loc, "C variadic extern functions require at least one fixed parameter");
+        }
+        for (const auto& param : fn.params) {
+            if (param.has_pattern) {
+                fail(param.pattern.loc, "extern function parameters cannot use patterns");
+            }
+        }
+        if (enum_cases_.count(fn.name)) fail(fn.loc, "extern function '" + fn.name + "' conflicts with enum case constructor");
+        if (is_format_print_name(fn.name)) fail(fn.loc, "extern function '" + fn.name + "' conflicts with prelude print builtin");
+        (void)exported_link_name(fn);
+        if (!fn.extern_link_name.empty() && !is_c_symbol_name(fn.extern_link_name)) {
+            fail(fn.loc, "invalid external link symbol '" + fn.extern_link_name + "'");
+        }
+
+        FunctionSig sig;
+        sig.loc = fn.loc;
+        sig.module_name = fn.module_name;
+        sig.is_public = fn.is_public;
+        sig.is_extern = true;
+        sig.is_variadic = fn.is_variadic;
+        sig.link_name = fn.extern_link_name;
+        sig.deprecated = deprecated_attribute(fn.attributes) != nullptr;
+        sig.deprecated_message = deprecated_message(fn.attributes);
+        std::string previous_module = current_module_name_;
+        current_module_name_ = fn.module_name;
+        for (const auto& param : fn.params) {
+            IrType param_type = resolve_executable_type(param.type);
+            if (param_type.qualifier == TypeQualifier::Value && param_type.primitive == IrPrimitiveKind::Void) {
+                fail(param.type.loc, "extern parameter cannot have void type; use ptr c_void for void*");
+            }
+            sig.params.push_back(param_type);
+        }
+        sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+        current_module_name_ = previous_module;
+
+        auto inserted = functions_.emplace(fn.name, std::move(sig));
+        if (!inserted.second) fail(fn.loc, "duplicate function '" + fn.name + "'");
+    }
+
+    void collect_ir_extern_functions(IrProgram& ir) const {
+        for (const auto& item : functions_) {
+            const FunctionSig& sig = item.second;
+            if (!sig.is_extern) continue;
+            IrExternFunction fn;
+            fn.name = item.first;
+            fn.link_name = sig.link_name;
+            fn.return_type = sig.result;
+            fn.is_variadic = sig.is_variadic;
+            fn.loc = sig.loc;
+            fn.params.reserve(sig.params.size());
+            for (std::size_t i = 0; i < sig.params.size(); ++i) {
+                fn.params.push_back(IrParam{"arg" + std::to_string(i), sig.params[i]});
+            }
+            ir.extern_functions.push_back(std::move(fn));
+        }
+    }
+
+    std::vector<const FunctionDecl*> collect_test_functions() const {
+        std::vector<const FunctionDecl*> tests;
+        for (const auto& fn : program_.functions) {
+            if (!find_attribute(fn.attributes, "test")) continue;
+            if (fn.is_extern) fail(fn.loc, "@test functions cannot be extern");
+            if (fn.meta) fail(fn.loc, "@test functions cannot be meta functions");
+            if (!fn.generics.empty()) fail(fn.loc, "@test functions cannot be generic");
+            if (!fn.has_body) fail(fn.loc, "@test functions must have a body");
+            if (fn.name == "main") fail(fn.loc, "@test function cannot be named main");
+            if (!fn.params.empty()) fail(fn.loc, "@test functions cannot take parameters");
+            auto found = functions_.find(fn.name);
+            if (found == functions_.end()) fail(fn.loc, "internal error: missing @test function signature for '" + fn.name + "'");
+            const IrType& result = found->second.result;
+            if (result.primitive != IrPrimitiveKind::Void && result.primitive != IrPrimitiveKind::I64) {
+                fail(fn.loc, "@test functions must return i64 or void");
+            }
+            tests.push_back(&fn);
+        }
+        return tests;
+    }
+
+    IrFunction make_test_main(const std::vector<const FunctionDecl*>& test_functions) const {
+        SourceLocation loc{1, 1};
+        IrFunction fn;
+        fn.name = "main";
+        fn.return_type = i64_type(loc);
+        fn.loc = loc;
+
+        for (const FunctionDecl* test : test_functions) {
+            auto sig = functions_.find(test->name);
+            if (sig == functions_.end()) throw CompileError("internal error: missing @test function '" + test->name + "'");
+
+            auto call = std::make_unique<IrExpr>();
+            call->kind = IrExprKind::Call;
+            call->loc = test->loc;
+            call->name = test->name;
+            call->type = sig->second.result;
+
+            auto stmt = std::make_unique<IrStmt>();
+            stmt->kind = IrStmtKind::ExprStmt;
+            stmt->loc = test->loc;
+            stmt->expr = std::move(call);
+            fn.body.push_back(std::move(stmt));
+        }
+
+        auto zero = std::make_unique<IrExpr>();
+        zero->kind = IrExprKind::Integer;
+        zero->loc = loc;
+        zero->type = fn.return_type;
+        zero->int_value = 0;
+
+        auto ret = std::make_unique<IrStmt>();
+        ret->kind = IrStmtKind::Return;
+        ret->loc = loc;
+        ret->expr = std::move(zero);
+        fn.body.push_back(std::move(ret));
+
+        return fn;
+    }
+
+    void require_main() const {
+        auto found = functions_.find("main");
+        if (found == functions_.end()) throw CompileError("missing executable function 'main'");
+        if (!found->second.params.empty()) fail(found->second.loc, "main cannot take parameters");
+        if (found->second.result.qualifier != TypeQualifier::Value ||
+            found->second.result.primitive != IrPrimitiveKind::I64) {
+            fail(found->second.loc, "main must return i64 in the executable subset");
+        }
+    }
+
+    static IrType primitive_type(IrPrimitiveKind primitive, std::string name, SourceLocation loc) {
+        IrType type;
+        type.primitive = primitive;
+        type.name = std::move(name);
+        type.loc = loc;
+        return type;
+    }
+
+    static IrType void_type(SourceLocation loc) {
+        return primitive_type(IrPrimitiveKind::Void, "void", loc);
+    }
+
+    static IrType null_pointer_type(SourceLocation loc) {
+        IrType type = void_type(loc);
+        type.qualifier = TypeQualifier::Ptr;
+        return type;
+    }
+
+    static IrType function_pointer_type(const FunctionSig& sig, SourceLocation loc) {
+        IrType type = primitive_type(IrPrimitiveKind::Function, "fn", loc);
+        type.array_size = sig.params.size();
+        type.args = sig.params;
+        type.args.push_back(sig.result);
+        return type;
+    }
+
+    static IrType function_pointer_result_type(const IrType& type) {
+        if (type.primitive != IrPrimitiveKind::Function ||
+            type.args.empty() ||
+            type.array_size + 1 != type.args.size()) {
+            throw CompileError(where(type.loc) + ": malformed function pointer type");
+        }
+        return type.args[static_cast<std::size_t>(type.array_size)];
+    }
+
+    static IrType integer_type(IrPrimitiveKind primitive, SourceLocation loc) {
+        return primitive_type(primitive, primitive_name(primitive), loc);
+    }
+
+    static IrType i64_type(SourceLocation loc) {
+        return integer_type(IrPrimitiveKind::I64, loc);
+    }
+
+    static IrType bool_type(SourceLocation loc) {
+        return primitive_type(IrPrimitiveKind::Bool, "bool", loc);
+    }
+
+    static IrType prelude_range_type(SourceLocation loc, bool inclusive, IrType bound) {
+        IrType type = primitive_type(
+            IrPrimitiveKind::Struct,
+            inclusive ? "RangeInclusive" : "Range",
+            loc
+        );
+        type.args.push_back(bound);
+        type.field_names.push_back("start");
+        type.field_types.push_back(bound);
+        type.field_mutable.push_back(false);
+        type.field_names.push_back("end");
+        type.field_types.push_back(bound);
+        type.field_mutable.push_back(false);
+        return type;
+    }
+
+    static IrType prelude_range_type(SourceLocation loc, bool inclusive) {
+        return prelude_range_type(loc, inclusive, i64_type(loc));
+    }
+
+    static IrType vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
+        IrType type = primitive_type(IrPrimitiveKind::Vector, "Vec", loc);
+        type.args.push_back(element);
+        type.array_size = length;
+        return type;
+    }
+
+    static IrType array_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
+        IrType type = primitive_type(IrPrimitiveKind::Array, "Array", loc);
+        type.args.push_back(element);
+        type.array_size = length;
+        type.field_types.reserve(static_cast<std::size_t>(length));
+        type.field_mutable.reserve(static_cast<std::size_t>(length));
+        for (std::uint64_t i = 0; i < length; ++i) {
+            type.field_types.push_back(element);
+            type.field_mutable.push_back(false);
+        }
+        return type;
+    }
+
+    static bool c_abi_type_alias(const std::string& name, IrPrimitiveKind& primitive, std::string& canonical) {
+        std::string base = unqualified_name(name);
+        if (base == "c_char" || base == "c_schar") {
+            primitive = IrPrimitiveKind::I8;
+            canonical = "i8";
+            return true;
+        }
+        if (base == "c_uchar") {
+            primitive = IrPrimitiveKind::U8;
+            canonical = "u8";
+            return true;
+        }
+        if (base == "c_short") {
+            primitive = IrPrimitiveKind::I16;
+            canonical = "i16";
+            return true;
+        }
+        if (base == "c_ushort") {
+            primitive = IrPrimitiveKind::U16;
+            canonical = "u16";
+            return true;
+        }
+        if (base == "c_int") {
+            primitive = IrPrimitiveKind::I32;
+            canonical = "i32";
+            return true;
+        }
+        if (base == "c_uint") {
+            primitive = IrPrimitiveKind::U32;
+            canonical = "u32";
+            return true;
+        }
+        if (base == "c_long" || base == "c_longlong" || base == "isize" ||
+            base == "ssize_t" || base == "c_ssize_t" || base == "intptr_t" ||
+            base == "ptrdiff_t") {
+            primitive = IrPrimitiveKind::I64;
+            canonical = "i64";
+            return true;
+        }
+        if (base == "c_ulong" || base == "c_ulonglong" || base == "usize" ||
+            base == "size_t" || base == "c_size_t" || base == "uintptr_t") {
+            primitive = IrPrimitiveKind::U64;
+            canonical = "u64";
+            return true;
+        }
+        if (base == "c_float") {
+            primitive = IrPrimitiveKind::F32;
+            canonical = "f32";
+            return true;
+        }
+        if (base == "c_double") {
+            primitive = IrPrimitiveKind::F64;
+            canonical = "f64";
+            return true;
+        }
+        if (base == "c_void") {
+            primitive = IrPrimitiveKind::Void;
+            canonical = "void";
+            return true;
+        }
+        return false;
+    }
+
+    static void reject_type_args(const TypeRef& ast_type) {
+        if (!ast_type.args.empty()) {
+            fail(ast_type.loc, "generic type applications are parsed but not supported for '" + ast_type.name + "' yet");
+        }
+    }
+
+    IrType resolve_executable_type(const TypeRef& ast_type) {
+        auto substitution = current_type_substitutions_.find(ast_type.name);
+        if (substitution != current_type_substitutions_.end() && ast_type.args.empty()) {
+            IrType type = substitution->second;
+            type.qualifier = ast_type.qualifier;
+            type.loc = ast_type.loc;
+            return type;
+        }
+
+        IrType type;
+        type.qualifier = ast_type.qualifier;
+        type.name = ast_type.name;
+        type.loc = ast_type.loc;
+
+        if (type.qualifier != TypeQualifier::Value &&
+            type.qualifier != TypeQualifier::Own &&
+            type.qualifier != TypeQualifier::Ref &&
+            type.qualifier != TypeQualifier::MutRef &&
+            type.qualifier != TypeQualifier::Ptr) {
+            fail(type.loc, "only value, own, ref, ref mut, and ptr types are supported in the executable subset yet");
+        }
+        IrPrimitiveKind c_primitive = IrPrimitiveKind::Unknown;
+        std::string c_canonical;
+        if (ast_type.is_dyn_object) {
+            if (type.qualifier != TypeQualifier::Value) {
+                fail(type.loc, "trait object ownership qualifiers are planned; use dyn Trait as a value type for now");
+            }
+
+            std::string trait_name = resolve_trait_name(type.name);
+            auto trait_found = traits_.find(trait_name);
+            if (trait_found == traits_.end()) {
+                fail(type.loc, "unknown trait '" + type.name + "' in trait object type");
+            }
+            const TraitInfo& trait = trait_found->second;
+            require_trait_access(type.loc, trait);
+            if (ast_type.args.size() != trait.generic_arity) {
+                fail(type.loc,
+                     "trait '" + trait.name + "' expects " + std::to_string(trait.generic_arity) +
+                         " type argument" + (trait.generic_arity == 1 ? "" : "s"));
+            }
+
+            type.primitive = IrPrimitiveKind::TraitObject;
+            type.name = trait.name;
+            for (const auto& arg : ast_type.args) {
+                type.args.push_back(resolve_executable_type(arg));
+            }
+        } else if (c_abi_type_alias(type.name, c_primitive, c_canonical)) {
+            reject_type_args(ast_type);
+            type.primitive = c_primitive;
+            type.name = c_canonical;
+        } else if (type.name == "fn") {
+            if (type.qualifier != TypeQualifier::Value) {
+                fail(type.loc, "function pointer types do not support ownership qualifiers");
+            }
+            if (ast_type.args.empty() || ast_type.array_size + 1 != ast_type.args.size()) {
+                fail(type.loc, "function pointer types use fn(param_types...) -> result_type");
+            }
+            type.primitive = IrPrimitiveKind::Function;
+            type.name = "fn";
+            type.array_size = ast_type.array_size;
+            for (const auto& arg : ast_type.args) type.args.push_back(resolve_executable_type(arg));
+            for (std::size_t i = 0; i < type.array_size; ++i) {
+                if (is_void_value_type(type.args[i])) {
+                    fail(ast_type.args[i].loc, "function pointer parameter cannot have void type");
+                }
+            }
+        } else if (type.name == "i8") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::I8;
+        } else if (type.name == "i16") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::I16;
+        } else if (type.name == "i32") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::I32;
+        } else if (type.name == "i64" || type.name == "int") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::I64;
+            type.name = "i64";
+        } else if (type.name == "u8") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::U8;
+        } else if (type.name == "u16") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::U16;
+        } else if (type.name == "u32") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::U32;
+        } else if (type.name == "u64") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::U64;
+        } else if (type.name == "f32") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::F32;
+        } else if (type.name == "f64" || type.name == "float") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::F64;
+            type.name = "f64";
+        } else if (type.name == "f128") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::F128;
+        } else if (type.name == "bool") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::Bool;
+        } else if (type.name == "string") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::String;
+        } else if (type.name == "void") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::Void;
+        } else if (type.name == "type") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::MetaType;
+        } else if (type.name == "Zone" || type.name == "mem::Zone" || type.name == "prelude::Zone") {
+            reject_type_args(ast_type);
+            type.primitive = IrPrimitiveKind::Zone;
+            type.name = "Zone";
+        } else if (type.name == "Tuple") {
+            if (ast_type.args.size() == 1) fail(type.loc, "single-element tuple types are not supported");
+            type.primitive = IrPrimitiveKind::Tuple;
+            for (const auto& arg : ast_type.args) type.args.push_back(resolve_executable_type(arg));
+        } else if (type.name == "Array") {
+            if (ast_type.args.size() != 1 || ast_type.array_size == 0) {
+                fail(type.loc, "array types use [element_type, size]");
+            }
+            if (type.qualifier != TypeQualifier::Value && type.qualifier != TypeQualifier::Ptr) {
+                fail(type.loc, "array ownership qualifiers are not supported in the executable subset yet");
+            }
+            type.primitive = IrPrimitiveKind::Array;
+            type.name = "Array";
+            type.array_size = ast_type.array_size;
+            IrType element = resolve_executable_type(ast_type.args[0]);
+            require_plain_prelude_aggregate_element(type.loc, element, "array");
+            type.args.push_back(element);
+            for (std::uint64_t i = 0; i < type.array_size; ++i) {
+                type.field_types.push_back(element);
+                type.field_mutable.push_back(false);
+            }
+        } else if (type.name == "Vec" || type.name == "prelude::Vec") {
+            if (ast_type.args.size() != 1) fail(type.loc, "Vec requires exactly one element type");
+            type.primitive = IrPrimitiveKind::Vector;
+            type.name = "Vec";
+            type.args.push_back(resolve_executable_type(ast_type.args[0]));
+        } else if (is_prelude_range_type_name(type.name)) {
+            if (ast_type.args.size() != 1) {
+                fail(type.loc,
+                     "prelude type '" + unqualified_name(type.name) + "' expects 1 type argument");
+            }
+            if (type.qualifier != TypeQualifier::Value) {
+                fail(type.loc, "range ownership qualifiers are not supported in the executable subset yet");
+            }
+            IrType bound = resolve_executable_type(ast_type.args[0]);
+            if (!is_value_integer_type(bound)) {
+                fail(type.loc, "prelude range types require integer bounds");
+            }
+            type = prelude_range_type(type.loc, unqualified_name(type.name) == "RangeInclusive", bound);
+        } else {
+            std::string resolved_struct_name = resolve_struct_type_name(type.name);
+            auto struct_found = structs_.find(resolved_struct_name);
+            if (struct_found != structs_.end()) {
+                const StructInfo& info = struct_found->second;
+                require_struct_access(type.loc, info);
+                if (info.deprecated) {
+                    warn_deprecated_use(type.loc, "struct", info.name, info.deprecated_message);
+                }
+                if (ast_type.args.size() != info.generic_arity) {
+                    fail(type.loc,
+                         "struct '" + info.name + "' expects " + std::to_string(info.generic_arity) +
+                             " type argument" + (info.generic_arity == 1 ? "" : "s"));
+                }
+                if (type.qualifier != TypeQualifier::Value && type.qualifier != TypeQualifier::Ptr) {
+                    fail(type.loc, "struct ownership qualifiers are not supported in the executable subset yet");
+                }
+                type.primitive = IrPrimitiveKind::Struct;
+                type.name = info.name;
+
+                std::map<std::string, IrType> substitutions;
+                for (std::size_t i = 0; i < ast_type.args.size(); ++i) {
+                    IrType arg = resolve_executable_type(ast_type.args[i]);
+                    type.args.push_back(arg);
+                    substitutions.emplace(info.generic_names[i], arg);
+                }
+
+                std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+                for (const auto& item : substitutions) current_type_substitutions_.emplace(item.first, item.second);
+                for (const auto& field : info.fields) {
+                    type.field_names.push_back(field.name);
+                    type.field_types.push_back(resolve_executable_type(field.type));
+                    type.field_mutable.push_back(field.mutable_field);
+                }
+                current_type_substitutions_ = std::move(previous_substitutions);
+            } else {
+                std::string resolved_name = resolve_enum_type_name(type.name);
+                auto enum_found = enums_.find(resolved_name);
+                if (enum_found != enums_.end()) {
+                    if (type.qualifier != TypeQualifier::Value) {
+                        fail(type.loc, "enum ownership qualifiers are not supported in the executable subset yet");
+                    }
+                    require_module_path_access(type.loc, enum_found->second.module_name);
+                    if (!can_access(enum_found->second.module_name, enum_found->second.is_public)) {
+                        fail(type.loc, "enum '" + enum_found->second.name + "' is not public");
+                    }
+                    if (enum_found->second.deprecated) {
+                        warn_deprecated_use(type.loc, "enum", enum_found->second.name, enum_found->second.deprecated_message);
+                    }
+                    std::vector<IrType> type_args;
+                    type_args.reserve(ast_type.args.size());
+                    for (const auto& arg : ast_type.args) {
+                        type_args.push_back(resolve_executable_type(arg));
+                    }
+                    type = resolve_enum_type_application(ast_type.loc, enum_found->second, type_args);
+                    type.qualifier = TypeQualifier::Value;
+                    type.loc = ast_type.loc;
+                } else {
+                    std::size_t planned_arity = 0;
+                    if (planned_prelude_type_arity(type.name, planned_arity)) {
+                        if (ast_type.args.size() != planned_arity) {
+                            fail(type.loc,
+                                 "prelude type '" + unqualified_name(type.name) + "' expects " +
+                                     std::to_string(planned_arity) + " type argument" +
+                                     (planned_arity == 1 ? "" : "s"));
+                        }
+                        fail(type.loc, planned_prelude_type_message(type.name));
+                    }
+                    reject_type_args(ast_type);
+                    fail(type.loc, "unsupported executable type '" + type.name + "'");
+                }
+            }
+        }
+
+        if (type.primitive == IrPrimitiveKind::MetaType) {
+            fail(type.loc, "type values are only supported in meta functions yet");
+        }
+        if (type.qualifier == TypeQualifier::Own && !is_owned_executable_primitive(type.primitive)) {
+            fail(type.loc, "own is not supported for " + type_name(type) + " in the executable subset yet");
+        }
+        if ((type.qualifier == TypeQualifier::Ref || type.qualifier == TypeQualifier::MutRef) &&
+            !is_owned_executable_primitive(type.primitive)) {
+            fail(type.loc, "borrowed references are not supported for " + type_name(type) + " in the executable subset yet");
+        }
+        return type;
+    }
+
+    std::string generic_origin_from_type_ref(const TypeRef& type) const {
+        if (type.is_dyn_object) return "";
+        if (!type.args.empty()) return "";
+        return current_type_substitutions_.count(type.name) ? type.name : "";
+    }
+
+    std::string generic_origin_from_expr(const Expr& expr) {
+        if (expr.kind != ExprKind::Name) return "";
+        LocalInfo* local = find_local_slot(expr.name);
+        return local ? local->generic_origin : "";
+    }
+
+    IrFunction check_function(const FunctionDecl& fn) {
+        return check_function_as(fn, fn.name, {});
+    }
+
+    IrFunction check_function_as(const FunctionDecl& fn, const std::string& lowered_name, std::map<std::string, IrType> substitutions) {
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        std::vector<GenericTraitBound> previous_generic_bounds = std::move(current_generic_bounds_);
+        bool previous_zone_pointer_return_allowed = current_zone_pointer_return_allowed_;
+        std::string previous_zone_pointer_return_source = std::move(current_zone_pointer_return_source_);
+        current_module_name_ = fn.module_name;
+        current_type_substitutions_ = std::move(substitutions);
+        current_generic_bounds_.clear();
+        for (const auto& generic : fn.generics) {
+            if (generic.has_constraint) current_generic_bounds_.push_back(resolve_generic_trait_bound(generic));
+        }
+        current_zone_pointer_return_allowed_ = false;
+        current_zone_pointer_return_source_.clear();
+        allow_zone_temp_init_ = false;
+        scopes_.clear();
+        used_local_names_.clear();
+        loops_.clear();
+        temporary_borrows_.clear();
+        push_scope();
+
+        current_return_ = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+
+        IrFunction ir_fn;
+        ir_fn.name = lowered_name;
+        ir_fn.loc = fn.loc;
+        ir_fn.return_type = current_return_;
+        auto sig_found = functions_.find(lowered_name);
+        if (sig_found != functions_.end()) ir_fn.link_name = sig_found->second.link_name;
+
+        std::vector<IrStmtPtr> parameter_pattern_prelude;
+        std::size_t zone_return_param_count = 0;
+        std::string zone_return_param_name;
+        for (const auto& param : fn.params) {
+            IrType type = resolve_executable_type(param.type);
+            if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Void) {
+                fail(fn.loc, "parameter cannot have void type");
+            }
+            if (param.has_pattern) {
+                if (is_owner_type(type)) {
+                    fail(param.pattern.loc, "owning parameter patterns are planned after ownership through parameter destructuring is defined");
+                }
+                if (contains_borrow_type(type)) {
+                    fail(param.pattern.loc, "borrow parameter patterns are not supported yet; use a named parameter");
+                }
+            }
+            std::string ir_param_name = param.has_pattern
+                ? make_hidden_local("$param")
+                : param.name;
+            declare_local(fn.loc, ir_param_name, type, false);
+            local_slot_by_name(ir_param_name).generic_origin = param.has_pattern ? "" : generic_origin_from_type_ref(param.type);
+            ir_fn.params.push_back(IrParam{ir_param_name, type});
+            if (is_zone_borrow_type(type)) {
+                ++zone_return_param_count;
+                zone_return_param_name = ir_param_name;
+            }
+            if (param.has_pattern) {
+                lower_binding_pattern_from_local(
+                    param.pattern,
+                    ir_param_name,
+                    type,
+                    false,
+                    parameter_pattern_prelude
+                );
+            }
+        }
+        if (current_return_.qualifier == TypeQualifier::Ptr && zone_return_param_count == 1) {
+            current_zone_pointer_return_allowed_ = true;
+            current_zone_pointer_return_source_ = zone_return_param_name;
+        }
+
+        CheckedStatements body = check_statements(fn.body, false);
+        if (body.flow == Flow::Continues) {
+            append_auto_destroy_zone_cleanup(fn.loc, body.statements);
+        }
+        ir_fn.body = std::move(parameter_pattern_prelude);
+        for (auto& stmt : body.statements) ir_fn.body.push_back(std::move(stmt));
+        if (body.flow == Flow::Continues && !is_void_value_type(current_return_)) {
+            fail(fn.loc, "function '" + fn.name + "' must return a value on all paths");
+        }
+        if (body.flow == Flow::Returns) discard_scope();
+        else pop_scope();
+        current_module_name_ = previous_module;
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_generic_bounds_ = std::move(previous_generic_bounds);
+        current_zone_pointer_return_allowed_ = previous_zone_pointer_return_allowed;
+        current_zone_pointer_return_source_ = std::move(previous_zone_pointer_return_source);
+        return ir_fn;
+    }
+
+    void push_scope() {
+        scopes_.push_back({});
+    }
+
+    void end_scope(bool check_owners) {
+        for (const auto& item : scopes_.back()) {
+            release_named_borrow(item.second);
+        }
+        if (check_owners) {
+            for (const auto& item : scopes_.back()) {
+                const LocalInfo& local = item.second;
+                if (has_live_owner(local)) {
+                    fail(local.loc, "owning binding '" + item.first + "' must be moved or dropped before scope exit");
+                }
+            }
+        }
+        scopes_.pop_back();
+    }
+
+    void pop_scope() {
+        end_scope(true);
+    }
+
+    void discard_scope() {
+        end_scope(false);
+    }
+
+    static std::string borrow_path_display(const std::string& name, const std::string& path) {
+        return path.empty() ? name : name + "." + path;
+    }
+
+    static bool field_borrow_counts_active(const LocalInfo::FieldBorrowCounts& counts) {
+        return counts.immutable > 0 || counts.mutable_ > 0;
+    }
+
+    static bool borrow_paths_overlap(const std::string& left, const std::string& right) {
+        if (left.empty() || right.empty()) return true;
+        return owned_field_path_matches(left, right) || owned_field_path_matches(right, left);
+    }
+
+    static bool has_active_field_borrows(const LocalInfo& local) {
+        for (const auto& item : local.field_borrows) {
+            if (field_borrow_counts_active(item.second)) return true;
+        }
+        return false;
+    }
+
+    static bool has_mutable_field_borrows(const LocalInfo& local) {
+        for (const auto& item : local.field_borrows) {
+            if (item.second.mutable_ > 0) return true;
+        }
+        return false;
+    }
+
+    static bool has_overlapping_field_borrows(const LocalInfo& local, const std::string& path) {
+        for (const auto& item : local.field_borrows) {
+            if (field_borrow_counts_active(item.second) && borrow_paths_overlap(item.first, path)) return true;
+        }
+        return false;
+    }
+
+    static bool has_overlapping_mutable_field_borrows(const LocalInfo& local, const std::string& path) {
+        for (const auto& item : local.field_borrows) {
+            if (item.second.mutable_ > 0 && borrow_paths_overlap(item.first, path)) return true;
+        }
+        return false;
+    }
+
+    void add_borrow_source(LocalInfo& source, const std::string& path, bool mutable_borrow) {
+        if (path.empty()) {
+            int& count = mutable_borrow ? source.mutable_borrows : source.immutable_borrows;
+            ++count;
+            return;
+        }
+        LocalInfo::FieldBorrowCounts& counts = source.field_borrows[path];
+        int& count = mutable_borrow ? counts.mutable_ : counts.immutable;
+        ++count;
+    }
+
+    void release_borrow_source(const std::string& name, const std::string& path, bool mutable_borrow) {
+        LocalInfo& source = local_slot_by_name(name);
+        if (path.empty()) {
+            int& count = mutable_borrow ? source.mutable_borrows : source.immutable_borrows;
+            if (count <= 0) throw CompileError("internal error: named borrow count underflow for '" + name + "'");
+            --count;
+            return;
+        }
+
+        auto found = source.field_borrows.find(path);
+        if (found == source.field_borrows.end()) {
+            throw CompileError("internal error: field borrow count underflow for '" + borrow_path_display(name, path) + "'");
+        }
+        int& count = mutable_borrow ? found->second.mutable_ : found->second.immutable;
+        if (count <= 0) {
+            throw CompileError("internal error: field borrow count underflow for '" + borrow_path_display(name, path) + "'");
+        }
+        --count;
+        if (!field_borrow_counts_active(found->second)) source.field_borrows.erase(found);
+    }
+
+    void release_named_borrow(const LocalInfo& borrow) {
+        if (!borrow.borrow_source.empty()) {
+            release_borrow_source(borrow.borrow_source, borrow.borrow_source_path, borrow.borrow_source_mutable);
+        }
+        for (const auto& item : borrow.aggregate_borrow_sources) {
+            release_borrow_source(item.name, item.path, item.mutable_borrow);
+        }
+    }
+
+    void promote_temporary_borrow_to_named(SourceLocation loc, const IrExpr& init, const std::string& binding_name) {
+        if (init.kind != IrExprKind::Borrow) {
+            fail(loc, "borrow bindings must be initialized directly with ref or ref mut");
+        }
+        if (temporary_borrows_.empty() ||
+            temporary_borrows_.back().name != init.name ||
+            temporary_borrows_.back().path != init.label ||
+            temporary_borrows_.back().mutable_borrow != init.mutable_borrow) {
+            throw CompileError("internal error: borrow binding '" + binding_name + "' did not match the active temporary borrow");
+        }
+        temporary_borrows_.pop_back();
+        LocalInfo& binding = local_slot_by_name(binding_name);
+        binding.borrow_source = init.name;
+        binding.borrow_source_path = init.label;
+        binding.borrow_source_mutable = init.mutable_borrow;
+    }
+
+    void promote_temporary_borrows_to_aggregate(std::size_t mark, const std::string& binding_name) {
+        if (temporary_borrows_.size() == mark) return;
+        LocalInfo& binding = local_slot_by_name(binding_name);
+        for (std::size_t i = mark; i < temporary_borrows_.size(); ++i) {
+            const TemporaryBorrow& borrow = temporary_borrows_[i];
+            binding.aggregate_borrow_sources.push_back({borrow.name, borrow.path, borrow.mutable_borrow});
+        }
+        temporary_borrows_.resize(mark);
+    }
+
+    void declare_local(SourceLocation loc, const std::string& name, const IrType& type, bool mutable_binding) {
+        if (used_local_names_.count(name)) {
+            if (reusable_pattern_binding_names_.count(name)) {
+                LocalInfo local;
+                local.type = type;
+                local.mutable_binding = mutable_binding;
+                local.state = LocalState::Alive;
+                initialize_owned_field_states(local);
+                local.loc = loc;
+                scopes_.back()[name] = local;
+                return;
+            }
+            fail(loc, "local name '" + name + "' shadows or redeclares an existing local");
+        }
+        used_local_names_.insert(name);
+        LocalInfo local;
+        local.type = type;
+        local.mutable_binding = mutable_binding;
+        local.state = LocalState::Alive;
+        initialize_owned_field_states(local);
+        local.loc = loc;
+        scopes_.back()[name] = local;
+    }
+
+    static bool is_auto_destroy_zone(const LocalInfo& local) {
+        return local.auto_destroy_zone &&
+               local.type.qualifier == TypeQualifier::Own &&
+               local.type.primitive == IrPrimitiveKind::Zone;
+    }
+
+    bool local_scope_index(const std::string& name, std::size_t& out) const {
+        for (std::size_t index = scopes_.size(); index > 0; --index) {
+            if (scopes_[index - 1].find(name) != scopes_[index - 1].end()) {
+                out = index - 1;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::string zone_pointer_escape_name(const IrExpr& value) const {
+        const IrExpr& source = zone_pointer_source_expr(value);
+        if (source.kind == IrExprKind::Local) return source.name;
+        return "value";
+    }
+
+    bool temporary_zone_source_from_expr(
+        const IrExpr& value,
+        std::string& source_name,
+        std::size_t& source_scope_index
+    ) {
+        if (!zone_pointer_source_name_from_expr(value, source_name)) return false;
+        if (source_name == "<multiple zones>") return false;
+        LocalInfo* zone = find_local_slot(source_name);
+        if (!zone || !is_auto_destroy_zone(*zone)) return false;
+        return local_scope_index(source_name, source_scope_index);
+    }
+
+    void fail_temporary_zone_pointer_escape(
+        SourceLocation loc,
+        const IrExpr& value,
+        const std::string& source_name,
+        const std::string& context
+    ) const {
+        fail(loc,
+             "zone pointer '" + zone_pointer_escape_name(value) +
+                 "' from temporary zone '" + source_name +
+                 "' cannot escape through " + context);
+    }
+
+    void require_zone_pointer_not_escape_temporary_scope(
+        SourceLocation loc,
+        const IrExpr& value,
+        std::size_t first_scope_index,
+        const std::string& context
+    ) {
+        std::string source_name;
+        std::size_t source_scope_index = 0;
+        if (!temporary_zone_source_from_expr(value, source_name, source_scope_index)) return;
+        if (source_scope_index < first_scope_index) return;
+        fail_temporary_zone_pointer_escape(loc, value, source_name, context);
+    }
+
+    IrStmtPtr make_zone_destroy_stmt(SourceLocation loc, const std::string& name, const IrType& type) const {
+        std::vector<IrExprPtr> args;
+        args.push_back(make_local_lvalue_expr(loc, name, type));
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::ExprStmt;
+        stmt->loc = loc;
+        stmt->expr = make_builtin_call(loc, "zone::destroy", std::move(args), void_type(loc));
+        return stmt;
+    }
+
+    bool has_auto_destroy_zone_cleanup(std::size_t first_scope_index) const {
+        if (first_scope_index >= scopes_.size()) return false;
+        for (std::size_t scope_index = first_scope_index; scope_index < scopes_.size(); ++scope_index) {
+            const auto& scope = scopes_[scope_index];
+            for (const auto& item : scope) {
+                const LocalInfo& local = item.second;
+                if (is_auto_destroy_zone(local) && local.state == LocalState::Alive) return true;
+            }
+        }
+        return false;
+    }
+
+    void require_no_outer_zone_pointer_escape_from_cleanup(
+        SourceLocation loc,
+        std::size_t first_scope_index
+    ) {
+        if (first_scope_index == 0 || first_scope_index >= scopes_.size()) return;
+        std::map<std::string, bool> temporary_zones;
+        for (std::size_t scope_index = first_scope_index; scope_index < scopes_.size(); ++scope_index) {
+            for (const auto& item : scopes_[scope_index]) {
+                const LocalInfo& local = item.second;
+                if (is_auto_destroy_zone(local) && local.state == LocalState::Alive) {
+                    temporary_zones[item.first] = true;
+                }
+            }
+        }
+        if (temporary_zones.empty()) return;
+
+        for (std::size_t scope_index = 0; scope_index < first_scope_index; ++scope_index) {
+            for (const auto& item : scopes_[scope_index]) {
+                const LocalInfo& local = item.second;
+                if (!local.zone_pointer || local.state != LocalState::Alive) continue;
+                if (temporary_zones.find(local.zone_pointer_source) == temporary_zones.end()) continue;
+                fail(loc,
+                     "zone pointer '" + item.first +
+                         "' from temporary zone '" + local.zone_pointer_source +
+                         "' cannot outlive the temporary zone scope");
+            }
+        }
+    }
+
+    void append_auto_destroy_zone_cleanup(
+        SourceLocation loc,
+        std::vector<IrStmtPtr>& statements,
+        std::size_t first_scope_index
+    ) {
+        if (first_scope_index >= scopes_.size()) return;
+        require_no_outer_zone_pointer_escape_from_cleanup(loc, first_scope_index);
+        for (std::size_t offset = scopes_.size(); offset > first_scope_index; --offset) {
+            auto& scope = scopes_[offset - 1];
+            for (auto& item : scope) {
+                LocalInfo& local = item.second;
+                if (!is_auto_destroy_zone(local) || local.state != LocalState::Alive) continue;
+                statements.push_back(make_zone_destroy_stmt(loc, item.first, local.type));
+                local.state = LocalState::Moved;
+                ++local.zone_generation;
+            }
+        }
+    }
+
+    void append_auto_destroy_zone_cleanup(SourceLocation loc, std::vector<IrStmtPtr>& statements) {
+        append_auto_destroy_zone_cleanup(loc, statements, 0);
+    }
+
+    void append_current_scope_auto_destroy_cleanup(SourceLocation loc, std::vector<IrStmtPtr>& statements) {
+        if (scopes_.empty()) return;
+        append_auto_destroy_zone_cleanup(loc, statements, scopes_.size() - 1);
+    }
+
+    IrExprPtr materialize_value_before_auto_destroy_cleanup(
+        SourceLocation loc,
+        IrExprPtr value,
+        std::vector<IrStmtPtr>& statements,
+        std::size_t first_scope_index,
+        const std::string& hidden_prefix,
+        const std::string& escape_context
+    ) {
+        if (value) {
+            require_zone_pointer_not_escape_temporary_scope(loc, *value, first_scope_index, escape_context);
+        }
+        if (!has_auto_destroy_zone_cleanup(first_scope_index)) return value;
+        if (value && !is_void_value_type(value->type)) {
+            IrType saved_type = value->type;
+            std::string saved_name = make_hidden_local(hidden_prefix);
+            statements.push_back(make_ir_var_decl(loc, saved_name, saved_type, std::move(value), false));
+            value = make_local_lvalue_expr(loc, saved_name, saved_type);
+        }
+        append_auto_destroy_zone_cleanup(loc, statements, first_scope_index);
+        return value;
+    }
+
+    static bool is_zone_temp_call(const IrExpr& expr) {
+        return expr.kind == IrExprKind::Call && expr.name == "zone::temp";
+    }
+
+    static bool contains_zone_temp_call(const IrExpr& expr) {
+        if (is_zone_temp_call(expr)) return true;
+        auto has_temp = [](const IrExprPtr& child) {
+            return child && contains_zone_temp_call(*child);
+        };
+        if (has_temp(expr.operand) || has_temp(expr.payload) || has_temp(expr.left) ||
+            has_temp(expr.right) || has_temp(expr.condition) || has_temp(expr.then_value) ||
+            has_temp(expr.else_value) || has_temp(expr.block_value) || has_temp(expr.match_value)) {
+            return true;
+        }
+        for (const auto& arg : expr.args) {
+            if (has_temp(arg)) return true;
+        }
+        return false;
+    }
+
+    LocalInfo* find_local_slot(const std::string& name) {
+        for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
+            auto found = scope->find(name);
+            if (found != scope->end()) return &found->second;
+        }
+        return nullptr;
+    }
+
+    LocalInfo& require_local_slot(SourceLocation loc, const std::string& name) {
+        if (LocalInfo* local = find_local_slot(name)) return *local;
+        fail(loc, "unknown name '" + name + "'");
+    }
+
+    LocalInfo& local_slot_by_name(const std::string& name) {
+        for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
+            auto found = scope->find(name);
+            if (found != scope->end()) return found->second;
+        }
+        throw CompileError("internal error: missing local '" + name + "' while restoring state");
+    }
+
+    LocalInfo& require_live_local(SourceLocation loc, const std::string& name) {
+        LocalInfo& local = require_local_slot(loc, name);
+        if (local.state != LocalState::Alive) {
+            fail(loc, "cannot use " + state_name(local.state) + " binding '" + name + "'");
+        }
+        return local;
+    }
+
+    static std::string field_state_key(const std::string& name, const std::string& path) {
+        return name + "#field:" + path;
+    }
+
+    static bool split_field_state_key(const std::string& key, std::string& name, std::string& path) {
+        std::size_t split = key.find("#field:");
+        if (split == std::string::npos) return false;
+        name = key.substr(0, split);
+        path = key.substr(split + 7);
+        return true;
+    }
+
+    StateSnapshot snapshot_states() const {
+        StateSnapshot snapshot;
+        for (const auto& scope : scopes_) {
+            for (const auto& item : scope) {
+                snapshot[item.first] = StateSnapshotEntry{item.second.state, item.second.zone_generation};
+                for (const auto& field : item.second.owned_field_states) {
+                    snapshot[field_state_key(item.first, field.first)] = StateSnapshotEntry{field.second, 0};
+                }
+            }
+        }
+        return snapshot;
+    }
+
+    void restore_states(const StateSnapshot& snapshot) {
+        for (const auto& item : snapshot) {
+            std::string local_name;
+            std::string field_path;
+            if (split_field_state_key(item.first, local_name, field_path)) {
+                local_slot_by_name(local_name).owned_field_states[field_path] = item.second.state;
+            } else {
+                LocalInfo& local = local_slot_by_name(item.first);
+                local.state = item.second.state;
+                local.zone_generation = item.second.zone_generation;
+            }
+        }
+    }
+
+    static LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name) {
+        auto found = snapshot.find(name);
+        if (found == snapshot.end()) return LocalState::Alive;
+        return found->second.state;
+    }
+
+    static void merge_zone_generations_into(StateSnapshot& target, const StateSnapshot& source) {
+        for (const auto& item : source) {
+            std::string local_name;
+            std::string field_path;
+            if (split_field_state_key(item.first, local_name, field_path)) continue;
+            auto found = target.find(item.first);
+            if (found == target.end()) {
+                target.emplace(item.first, item.second);
+                continue;
+            }
+            found->second.zone_generation = std::max(found->second.zone_generation, item.second.zone_generation);
+        }
+    }
+
+    static void merge_existing_zone_generations_into(StateSnapshot& target, const StateSnapshot& source) {
+        for (auto& item : target) {
+            std::string local_name;
+            std::string field_path;
+            if (split_field_state_key(item.first, local_name, field_path)) continue;
+            auto found = source.find(item.first);
+            if (found == source.end()) continue;
+            item.second.zone_generation = std::max(item.second.zone_generation, found->second.zone_generation);
+        }
+    }
+
+    static StateSnapshot merge_zone_generations(StateSnapshot target, const StateSnapshot& source) {
+        merge_zone_generations_into(target, source);
+        return target;
+    }
+
+    static void require_same_states(
+        SourceLocation loc,
+        const StateSnapshot& left,
+        const StateSnapshot& right,
+        const std::string& message
+    ) {
+        for (const auto& item : left) {
+            if (item.second.state != snapshot_state(right, item.first)) {
+                fail(loc, "binding '" + item.first + "' " + message);
+            }
+        }
+    }
+
+    void collect_owned_field_states(const IrType& type,
+                                    const std::string& path,
+                                    std::map<std::string, LocalState>& states) const {
+        if (type.qualifier == TypeQualifier::Own) {
+            if (!path.empty()) states.emplace(path, LocalState::Alive);
+            return;
+        }
+
+        if (type.primitive == IrPrimitiveKind::Tuple ||
+            type.primitive == IrPrimitiveKind::Array ||
+            type.primitive == IrPrimitiveKind::Struct) {
+            const std::vector<IrType>& fields = aggregate_field_types(type);
+            for (std::size_t i = 0; i < fields.size(); ++i) {
+                std::string child_path = path.empty()
+                    ? std::to_string(i)
+                    : path + "." + std::to_string(i);
+                collect_owned_field_states(fields[i], child_path, states);
+            }
+            return;
+        }
+
+        if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size != 0) {
+            for (std::uint64_t i = 0; i < type.array_size; ++i) {
+                std::string child_path = path.empty()
+                    ? std::to_string(i)
+                    : path + "." + std::to_string(i);
+                collect_owned_field_states(type.args[0], child_path, states);
+            }
+        }
+    }
+
+    void initialize_owned_field_states(LocalInfo& local) const {
+        local.owned_field_states.clear();
+        collect_owned_field_states(local.type, "", local.owned_field_states);
+    }
+
+    static bool has_tracked_owned_fields(const LocalInfo& local) {
+        return !local.owned_field_states.empty();
+    }
+
+    static bool has_live_owned_fields(const LocalInfo& local) {
+        if (local.state != LocalState::Alive) return false;
+        for (const auto& item : local.owned_field_states) {
+            if (item.second == LocalState::Alive) return true;
+        }
+        return false;
+    }
+
+    static bool has_live_owner(const LocalInfo& local) {
+        if (has_tracked_owned_fields(local)) return has_live_owned_fields(local);
+        return is_owner_type(local.type) && local.state == LocalState::Alive;
+    }
+
+    static bool is_zone_value_type(const IrType& type) {
+        return type.primitive == IrPrimitiveKind::Zone &&
+               (type.qualifier == TypeQualifier::Value ||
+                type.qualifier == TypeQualifier::Own);
+    }
+
+    static bool is_zone_borrow_type(const IrType& type) {
+        return type.primitive == IrPrimitiveKind::Zone &&
+               (type.qualifier == TypeQualifier::Ref ||
+                type.qualifier == TypeQualifier::MutRef);
+    }
+
+    static bool is_zone_source_type(const IrType& type) {
+        return is_zone_value_type(type) || is_zone_borrow_type(type);
+    }
+
+    void clear_zone_pointer_source(LocalInfo& local) {
+        local.zone_pointer = false;
+        local.zone_pointer_source.clear();
+        local.zone_pointer_generation = 0;
+    }
+
+    bool set_zone_pointer_source_from_zone_arg(LocalInfo& target, const IrExpr& zone_arg) {
+        std::string source_name;
+        if (!zone_source_name_from_arg(zone_arg, source_name)) return false;
+        LocalInfo* zone = find_local_slot(source_name);
+        if (!zone || !is_zone_source_type(zone->type)) return false;
+        target.zone_pointer = true;
+        target.zone_pointer_source = source_name;
+        target.zone_pointer_generation = zone->zone_generation;
+        return true;
+    }
+
+    bool zone_source_name_from_arg(const IrExpr& zone_arg, std::string& out) {
+        if (zone_arg.kind == IrExprKind::Borrow && zone_arg.label.empty()) {
+            const LocalInfo* zone = find_local_slot(zone_arg.name);
+            if (!zone || !is_zone_value_type(zone->type)) return false;
+            out = zone_arg.name;
+            return true;
+        }
+        if (zone_arg.kind == IrExprKind::Local) {
+            const LocalInfo* zone = find_local_slot(zone_arg.name);
+            if (!zone || !is_zone_borrow_type(zone->type)) return false;
+            out = zone_arg.name;
+            return true;
+        }
+        return false;
+    }
+
+    const IrExpr& zone_pointer_source_expr(const IrExpr& value) const {
+        if (value.kind == IrExprKind::Cast && value.operand) {
+            return zone_pointer_source_expr(*value.operand);
+        }
+        return value;
+    }
+
+    bool set_zone_pointer_source_from_single_zone_return(LocalInfo& target, const IrExpr& call) {
+        if (call.kind != IrExprKind::Call) return false;
+        auto found = functions_.find(call.name);
+        if (found == functions_.end()) return false;
+        const FunctionSig& sig = found->second;
+        if (sig.result.qualifier != TypeQualifier::Ptr) return false;
+
+        std::size_t zone_index = 0;
+        bool has_zone_param = false;
+        for (std::size_t i = 0; i < sig.params.size(); ++i) {
+            if (!is_zone_borrow_type(sig.params[i])) continue;
+            if (has_zone_param) return false;
+            has_zone_param = true;
+            zone_index = i;
+        }
+        if (!has_zone_param || zone_index >= call.args.size()) return false;
+        return set_zone_pointer_source_from_zone_arg(target, *call.args[zone_index]);
+    }
+
+    bool zone_pointer_source_name_from_expr(const IrExpr& value, std::string& out) {
+        if (value.type.qualifier != TypeQualifier::Ptr) return false;
+        const IrExpr& source = zone_pointer_source_expr(value);
+        auto merge_source = [&](const IrExprPtr& expr, bool& found_any) {
+            if (!expr) return;
+            std::string nested_source;
+            if (!zone_pointer_source_name_from_expr(*expr, nested_source)) return;
+            if (!found_any) {
+                out = nested_source;
+                found_any = true;
+            } else if (out != nested_source) {
+                out = "<multiple zones>";
+            }
+        };
+
+        if ((source.kind == IrExprKind::Call && source.name == "zone::alloc") ||
+            (source.kind == IrExprKind::Call && source.name == "zone::new")) {
+            return !source.args.empty() && zone_source_name_from_arg(*source.args[0], out);
+        }
+        if (source.kind == IrExprKind::Call) {
+            auto found = functions_.find(source.name);
+            if (found == functions_.end()) return false;
+            const FunctionSig& sig = found->second;
+            if (sig.result.qualifier != TypeQualifier::Ptr) return false;
+
+            std::size_t zone_index = 0;
+            bool has_zone_param = false;
+            for (std::size_t i = 0; i < sig.params.size(); ++i) {
+                if (!is_zone_borrow_type(sig.params[i])) continue;
+                if (has_zone_param) return false;
+                has_zone_param = true;
+                zone_index = i;
+            }
+            if (!has_zone_param || zone_index >= source.args.size()) return false;
+            return zone_source_name_from_arg(*source.args[zone_index], out);
+        }
+        if (source.kind == IrExprKind::Local) {
+            const LocalInfo* local = find_local_slot(source.name);
+            if (!local || !local->zone_pointer) return false;
+            out = local->zone_pointer_source;
+            return true;
+        }
+        if (source.kind == IrExprKind::If) {
+            bool found_any = false;
+            merge_source(source.then_value, found_any);
+            merge_source(source.else_value, found_any);
+            return found_any;
+        }
+        if (source.kind == IrExprKind::Block) {
+            return source.block_value &&
+                   zone_pointer_source_name_from_expr(*source.block_value, out);
+        }
+        if (source.kind == IrExprKind::Match) {
+            bool found_any = false;
+            for (const auto& arm : source.match_arms) {
+                merge_source(arm.value, found_any);
+            }
+            return found_any;
+        }
+        return false;
+    }
+
+    bool is_zone_pointer_expr(const IrExpr& value) {
+        std::string source_name;
+        return zone_pointer_source_name_from_expr(value, source_name);
+    }
+
+    void require_no_zone_pointer_escape(SourceLocation loc, const IrExpr& value, const std::string& context) {
+        std::string source_name;
+        if (!zone_pointer_source_name_from_expr(value, source_name)) return;
+        std::size_t source_scope_index = 0;
+        if (temporary_zone_source_from_expr(value, source_name, source_scope_index)) {
+            fail_temporary_zone_pointer_escape(loc, value, source_name, context);
+        }
+        fail(loc, "zone pointer cannot escape into " + context + "; keep it in a local ptr binding");
+    }
+
+    void set_zone_pointer_source_from_expr(LocalInfo& target, const IrExpr& value) {
+        clear_zone_pointer_source(target);
+        if (target.type.qualifier != TypeQualifier::Ptr) return;
+
+        const IrExpr& source = zone_pointer_source_expr(value);
+        if ((source.kind == IrExprKind::Call && source.name == "zone::alloc") ||
+            (source.kind == IrExprKind::Call && source.name == "zone::new")) {
+            if (!source.args.empty()) set_zone_pointer_source_from_zone_arg(target, *source.args[0]);
+            return;
+        }
+
+        if (set_zone_pointer_source_from_single_zone_return(target, source)) return;
+
+        if (source.kind == IrExprKind::Local) {
+            LocalInfo* local = find_local_slot(source.name);
+            if (!local || !local->zone_pointer) return;
+            target.zone_pointer = true;
+            target.zone_pointer_source = local->zone_pointer_source;
+            target.zone_pointer_generation = local->zone_pointer_generation;
+        }
+    }
+
+    void require_zone_pointer_valid(SourceLocation loc,
+                                    const std::string& pointer_name,
+                                    const LocalInfo& pointer) {
+        if (!pointer.zone_pointer) return;
+        LocalInfo* zone = find_local_slot(pointer.zone_pointer_source);
+        if (!zone ||
+            !is_zone_source_type(zone->type) ||
+            zone->state != LocalState::Alive ||
+            zone->zone_generation != pointer.zone_pointer_generation) {
+            fail(loc,
+                 "cannot use zone pointer '" + pointer_name + "' after zone '" +
+                     pointer.zone_pointer_source + "' was reset or destroyed");
+        }
+    }
+
+    void mark_zone_reset_call(const IrExpr& call) {
+        if (call.kind != IrExprKind::Call || call.name != "zone::reset" || call.args.empty()) return;
+        const IrExpr& zone_arg = *call.args[0];
+        std::string source_name;
+        if (!zone_source_name_from_arg(zone_arg, source_name)) return;
+        LocalInfo* zone = find_local_slot(source_name);
+        if (!zone || !is_zone_source_type(zone->type)) return;
+        ++zone->zone_generation;
+    }
+
+    static bool has_moved_or_dropped_owned_fields(const LocalInfo& local) {
+        for (const auto& item : local.owned_field_states) {
+            if (item.second != LocalState::Alive) return true;
+        }
+        return false;
+    }
+
+    void require_no_live_owners_before_return(SourceLocation loc) const {
+        for (const auto& scope : scopes_) {
+            for (const auto& item : scope) {
+                const LocalInfo& local = item.second;
+                if (has_live_owner(local)) {
+                    fail(loc, "owning binding '" + item.first + "' must be moved or dropped before return");
+                }
+            }
+        }
+    }
+
+    static bool has_active_borrows(const LocalInfo& local) {
+        return local.immutable_borrows > 0 || local.mutable_borrows > 0;
+    }
+
+    static void require_not_borrowed(SourceLocation loc, const std::string& name, const LocalInfo& local, const std::string& action) {
+        if (has_active_borrows(local) || has_active_field_borrows(local)) {
+            fail(loc, "cannot " + action + " borrowed binding '" + name + "'");
+        }
+    }
+
+    void require_can_read_borrow_path(SourceLocation loc,
+                                      const std::string& name,
+                                      const LocalInfo& local,
+                                      const std::string& path) const {
+        if (path.empty()) {
+            if (local.mutable_borrows > 0 || has_mutable_field_borrows(local)) {
+                fail(loc, "cannot read mutably borrowed binding '" + name + "'");
+            }
+            return;
+        }
+        if (local.mutable_borrows > 0 || has_overlapping_mutable_field_borrows(local, path)) {
+            fail(loc, "cannot read mutably borrowed field '" + borrow_path_display(name, path) + "'");
+        }
+    }
+
+    void require_can_assign_borrow_path(SourceLocation loc,
+                                        const std::string& name,
+                                        const LocalInfo& local,
+                                        const std::string& path) const {
+        if (path.empty()) {
+            require_not_borrowed(loc, name, local, "assign to");
+            return;
+        }
+        if (has_active_borrows(local) || has_overlapping_field_borrows(local, path)) {
+            fail(loc, "cannot assign to borrowed field '" + borrow_path_display(name, path) + "'");
+        }
+    }
+
+    void require_can_borrow_path(SourceLocation loc,
+                                 const std::string& name,
+                                 const LocalInfo& local,
+                                 const std::string& path,
+                                 bool mutable_borrow) const {
+        if (path.empty()) {
+            if (mutable_borrow) {
+                if (has_active_borrows(local) || has_active_field_borrows(local)) {
+                    fail(loc, "cannot mutably borrow already borrowed binding '" + name + "'");
+                }
+                return;
+            }
+            if (local.mutable_borrows > 0 || has_mutable_field_borrows(local)) {
+                fail(loc, "cannot immutably borrow mutably borrowed binding '" + name + "'");
+            }
+            return;
+        }
+        if (mutable_borrow) {
+            if (has_active_borrows(local) || has_overlapping_field_borrows(local, path)) {
+                fail(loc, "cannot mutably borrow already borrowed field '" + borrow_path_display(name, path) + "'");
+            }
+            return;
+        }
+        if (local.mutable_borrows > 0 || has_overlapping_mutable_field_borrows(local, path)) {
+            fail(loc, "cannot immutably borrow mutably borrowed field '" + borrow_path_display(name, path) + "'");
+        }
+    }
+
+    std::size_t temporary_borrow_mark() const {
+        return temporary_borrows_.size();
+    }
+
+    void release_temporary_borrows(std::size_t mark) {
+        for (std::size_t i = temporary_borrows_.size(); i > mark; --i) {
+            const TemporaryBorrow& borrow = temporary_borrows_[i - 1];
+            release_borrow_source(borrow.name, borrow.path, borrow.mutable_borrow);
+        }
+        temporary_borrows_.resize(mark);
+    }
+
+    CheckedStatements check_statements(const std::vector<StmtPtr>& statements, bool scoped) {
+        if (scoped) push_scope();
+
+        CheckedStatements checked;
+        checked.statements.reserve(statements.size());
+        for (const auto& stmt : statements) {
+            if (checked.flow == Flow::Returns) fail(stmt->loc, "unreachable statement after return");
+            CheckedStatement lowered = check_statement(*stmt);
+            if (lowered.flow != Flow::Continues) checked.flow = lowered.flow;
+            checked.statements.push_back(std::move(lowered.statement));
+        }
+
+        if (scoped) {
+            if (checked.flow == Flow::Returns) discard_scope();
+            else if (checked.flow == Flow::Stops) discard_scope();
+            else {
+                SourceLocation cleanup_loc = statements.empty() ? SourceLocation{} : statements.back()->loc;
+                append_current_scope_auto_destroy_cleanup(cleanup_loc, checked.statements);
+                pop_scope();
+            }
+        }
+        return checked;
+    }
+
+    CheckedStatement check_statement(const Stmt& stmt) {
+        auto lowered = std::make_unique<IrStmt>();
+        lowered->kind = lower_stmt_kind(stmt.kind, stmt.loc);
+        lowered->loc = stmt.loc;
+        Flow flow = Flow::Continues;
+
+        switch (stmt.kind) {
+            case StmtKind::Block:
+                {
+                    lowered->label = stmt.label;
+                    if (!stmt.label.empty()) push_labeled_block(stmt.loc, stmt.label);
+                    CheckedStatements block = check_statements(stmt.statements, true);
+                    if (!stmt.label.empty()) loops_.pop_back();
+                    flow = block.flow;
+                    if (!stmt.label.empty() && flow == Flow::Stops) flow = Flow::Continues;
+                    lowered->statements = std::move(block.statements);
+                }
+                break;
+            case StmtKind::VarDecl:
+                check_var_decl(stmt, *lowered);
+                break;
+            case StmtKind::Assign:
+                check_assign(stmt, *lowered);
+                break;
+            case StmtKind::ExprStmt:
+                {
+                    std::size_t borrow_mark = temporary_borrow_mark();
+                    lowered->expr = check_expr(*stmt.expr);
+                    if (!contains_borrow_type(lowered->expr->type)) release_temporary_borrows(borrow_mark);
+                }
+                if (contains_borrow_type(lowered->expr->type)) {
+                    fail(stmt.loc, "borrow expression result must be passed directly to a call");
+                }
+                if (is_owner_type(lowered->expr->type)) {
+                    fail(stmt.loc, "owning expression result must be bound, returned, passed, or dropped");
+                }
+                break;
+            case StmtKind::Return:
+                check_return(stmt, *lowered);
+                flow = Flow::Returns;
+                break;
+            case StmtKind::If:
+                flow = check_if(stmt, *lowered);
+                break;
+            case StmtKind::While:
+                check_while(stmt, *lowered);
+                break;
+            case StmtKind::WhileLet:
+                check_while_let(stmt, *lowered);
+                break;
+            case StmtKind::For:
+                check_for(stmt, *lowered);
+                break;
+            case StmtKind::InitWhile:
+                check_init_while(stmt, *lowered);
+                break;
+            case StmtKind::Continue:
+                check_continue(stmt, *lowered);
+                flow = Flow::Stops;
+                break;
+            case StmtKind::Break:
+                check_break(stmt, *lowered);
+                flow = Flow::Stops;
+                break;
+            case StmtKind::Match:
+                flow = check_match(stmt, *lowered);
+                break;
+            case StmtKind::Drop:
+                check_drop(stmt, *lowered);
+                break;
+        }
+
+        return CheckedStatement{std::move(lowered), flow};
+    }
+
+    static bool is_zone_scratch_initializer(const Expr& expr) {
+        return expr.kind == ExprKind::Call && is_zone_scratch_function_name(expr.name);
+    }
+
+    IrExprPtr make_mutable_zone_borrow(SourceLocation loc, const std::string& zone_name) {
+        Expr borrow;
+        borrow.kind = ExprKind::Borrow;
+        borrow.loc = loc;
+        borrow.name = zone_name;
+        borrow.mutable_borrow = true;
+        return check_expr(borrow);
+    }
+
+    void check_zone_scratch_var_decl(const Stmt& stmt, IrStmt& lowered) {
+        const Expr& call = *stmt.binding.init;
+        if (call.type_args.size() != 1) {
+            fail(call.loc, "zone::scratch<T> expects exactly one type argument");
+        }
+        if (call.args.size() != 2) {
+            fail(call.loc, "zone::scratch<T> expects a capacity and a value");
+        }
+
+        IrType allocated = resolve_executable_type(call.type_args[0]);
+        if (allocated.qualifier != TypeQualifier::Value) {
+            fail(call.type_args[0].loc, "zone::scratch<T> expects a value type, got " + type_name(allocated));
+        }
+        if (is_owner_type(allocated) || contains_borrow_type(allocated)) {
+            fail(call.type_args[0].loc, "zone::scratch<T> cannot place ownership- or borrow-valued types yet");
+        }
+
+        std::uint64_t size_bytes = 0;
+        std::uint64_t align_bytes = 0;
+        if (!ari_layout_size_bytes(allocated, size_bytes) ||
+            !ari_layout_align_bytes(allocated, align_bytes)) {
+            fail(call.type_args[0].loc, "zone::scratch<T> does not support " + type_name(allocated));
+        }
+        if (size_bytes == 0) {
+            fail(call.type_args[0].loc, "zone::scratch<T> requires a non-zero-sized type");
+        }
+        if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
+            align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+            fail(call.type_args[0].loc, "zone::scratch<T> layout is too large for i64");
+        }
+
+        IrType pointer_type = allocated;
+        pointer_type.qualifier = TypeQualifier::Ptr;
+        IrType declared = stmt.binding.has_type ? resolve_executable_type(stmt.binding.type) : pointer_type;
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrType i64 = i64_type(call.loc);
+        IrExprPtr capacity = check_expr(*call.args[0]);
+        coerce_expr_to_expected(*capacity, i64);
+        require_assignable(call.args[0]->loc, i64, capacity->type);
+
+        IrType own_zone = primitive_type(IrPrimitiveKind::Zone, "Zone", call.loc);
+        own_zone.qualifier = TypeQualifier::Own;
+        std::string zone_name = make_hidden_local("$scratch_" + stmt.binding.name + "_zone");
+        std::vector<IrExprPtr> temp_args;
+        temp_args.push_back(std::move(capacity));
+        IrExprPtr temp_init = make_builtin_call(call.loc, "zone::temp", std::move(temp_args), own_zone);
+
+        lowered.kind = IrStmtKind::Block;
+        lowered.loc = stmt.loc;
+        declare_local(call.loc, zone_name, own_zone, true);
+        IrStmtPtr zone_decl = make_ir_var_decl(call.loc, zone_name, own_zone, std::move(temp_init), true);
+        IrStmt* zone_decl_ptr = zone_decl.get();
+        lowered.statements.push_back(std::move(zone_decl));
+        LocalInfo& zone_local = local_slot_by_name(zone_name);
+        zone_local.ir_storage_type = &zone_decl_ptr->binding.type;
+        zone_local.ir_init_expr = zone_decl_ptr->binding.init.get();
+        zone_local.auto_destroy_zone = true;
+
+        IrType mut_zone = primitive_type(IrPrimitiveKind::Zone, "Zone", call.loc);
+        mut_zone.qualifier = TypeQualifier::MutRef;
+
+        IrExprPtr zone_arg = make_mutable_zone_borrow(call.loc, zone_name);
+        coerce_expr_to_expected(*zone_arg, mut_zone);
+        require_assignable(call.loc, mut_zone, zone_arg->type);
+
+        IrExprPtr value = check_expr(*call.args[1]);
+        coerce_expr_to_expected(*value, allocated);
+        require_assignable(call.args[1]->loc, allocated, value->type);
+
+        auto init = std::make_unique<IrExpr>();
+        init->kind = IrExprKind::Call;
+        init->loc = call.loc;
+        init->name = "zone::new";
+        init->type = pointer_type;
+        init->args.reserve(4);
+        init->args.push_back(std::move(zone_arg));
+        init->args.push_back(make_integer_literal(call.loc, i64_type(call.loc), size_bytes));
+        init->args.push_back(make_integer_literal(call.loc, i64_type(call.loc), align_bytes));
+        init->args.push_back(std::move(value));
+
+        coerce_expr_to_expected(*init, declared);
+        require_assignable(stmt.loc, declared, init->type);
+        release_temporary_borrows(borrow_mark);
+
+        declare_local(stmt.binding.loc, stmt.binding.name, declared, stmt.binding.mutable_binding);
+        IrStmtPtr value_decl = make_ir_var_decl(
+            stmt.loc,
+            stmt.binding.name,
+            declared,
+            std::move(init),
+            stmt.binding.mutable_binding
+        );
+        IrStmt* value_decl_ptr = value_decl.get();
+        lowered.statements.push_back(std::move(value_decl));
+
+        LocalInfo& local = local_slot_by_name(stmt.binding.name);
+        local.ir_storage_type = &value_decl_ptr->binding.type;
+        local.ir_init_expr = value_decl_ptr->binding.init.get();
+        set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
+    }
+
+    void check_var_decl(const Stmt& stmt, IrStmt& lowered) {
+        if (stmt.binding.has_pattern) {
+            check_pattern_var_decl(stmt, lowered);
+            return;
+        }
+        if (is_zone_scratch_initializer(*stmt.binding.init)) {
+            check_zone_scratch_var_decl(stmt, lowered);
+            return;
+        }
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrType declared;
+        IrExprPtr init;
+        bool previous_zone_temp_init = allow_zone_temp_init_;
+        allow_zone_temp_init_ = true;
+        if (stmt.binding.has_type) {
+            declared = resolve_executable_type(stmt.binding.type);
+            init = check_expr_with_expected(*stmt.binding.init, declared);
+        } else {
+            init = check_expr(*stmt.binding.init);
+            declared = init->type;
+        }
+        allow_zone_temp_init_ = previous_zone_temp_init;
+        if (contains_zone_temp_call(*init) && !is_zone_temp_call(*init)) {
+            fail(stmt.binding.init->loc, "zone::temp can only initialize a local temporary zone binding");
+        }
+        coerce_expr_to_expected(*init, declared);
+        specialize_vector_storage_from_init(declared, *init);
+        require_assignable(stmt.loc, declared, init->type);
+        bool borrow_binding = is_borrow_type(declared);
+        if (borrow_binding && init->kind != IrExprKind::Borrow) {
+            fail(stmt.loc, "borrow bindings must be initialized directly with ref or ref mut");
+        }
+        std::string generic_origin = stmt.binding.has_type
+            ? generic_origin_from_type_ref(stmt.binding.type)
+            : generic_origin_from_expr(*stmt.binding.init);
+        declare_local(stmt.binding.loc, stmt.binding.name, declared, stmt.binding.mutable_binding);
+        if (borrow_binding) {
+            promote_temporary_borrow_to_named(stmt.loc, *init, stmt.binding.name);
+        } else if (contains_borrow_type(declared)) {
+            promote_temporary_borrows_to_aggregate(borrow_mark, stmt.binding.name);
+        } else {
+            release_temporary_borrows(borrow_mark);
+        }
+
+        lowered.binding.name = stmt.binding.name;
+        lowered.binding.loc = stmt.binding.loc;
+        lowered.binding.mutable_binding = stmt.binding.mutable_binding;
+        lowered.binding.type = declared;
+        lowered.binding.init = std::move(init);
+        LocalInfo& local = local_slot_by_name(stmt.binding.name);
+        local.ir_storage_type = &lowered.binding.type;
+        local.ir_init_expr = lowered.binding.init.get();
+        local.generic_origin = std::move(generic_origin);
+        local.auto_destroy_zone = is_zone_temp_call(*local.ir_init_expr);
+        set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
+    }
+
+    void check_pattern_var_decl(const Stmt& stmt, IrStmt& lowered) {
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrType declared;
+        IrExprPtr init;
+        if (stmt.binding.has_type) {
+            declared = resolve_executable_type(stmt.binding.type);
+            init = check_expr_with_expected(*stmt.binding.init, declared);
+        } else {
+            init = check_expr(*stmt.binding.init);
+            declared = init->type;
+        }
+        coerce_expr_to_expected(*init, declared);
+        specialize_vector_storage_from_init(declared, *init);
+        require_assignable(stmt.loc, declared, init->type);
+        if (is_borrow_type(declared)) {
+            fail(stmt.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
+        }
+        if (contains_borrow_type(declared)) {
+            fail(stmt.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
+        }
+        release_temporary_borrows(borrow_mark);
+
+        lowered.kind = IrStmtKind::Block;
+        if (stmt.binding.pattern.kind == PatternKind::Wildcard && !is_aggregate_type(declared)) {
+            if (is_owner_type(declared)) {
+                fail(stmt.loc, "owning expression result must be bound, returned, passed, or dropped");
+            }
+            auto discard = std::make_unique<IrStmt>();
+            discard->kind = IrStmtKind::ExprStmt;
+            discard->loc = stmt.loc;
+            discard->expr = std::move(init);
+            lowered.statements.push_back(std::move(discard));
+            return;
+        }
+
+        if (is_owner_type(declared)) {
+            fail(stmt.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+        }
+
+        std::string source_name = make_hidden_local("$pattern");
+        declare_local(stmt.loc, source_name, declared, false);
+        lowered.statements.push_back(make_ir_var_decl(stmt.loc, source_name, declared, std::move(init), false));
+        lower_binding_pattern_from_local(
+            stmt.binding.pattern,
+            source_name,
+            declared,
+            stmt.binding.mutable_binding,
+            lowered.statements
+        );
+    }
+
+    void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init) const {
+        if (declared.primitive != IrPrimitiveKind::Vector ||
+            init.type.primitive != IrPrimitiveKind::Vector ||
+            declared.args.size() != 1 ||
+            init.type.args.size() != 1 ||
+            declared.array_size != 0 ||
+            init.type.array_size == 0) {
+            return;
+        }
+        declared.array_size = init.type.array_size;
+    }
+
+    static bool is_vector_storage(const IrType& type) {
+        return type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1;
+    }
+
+    void widen_vector_storage(LocalInfo& local, std::uint64_t capacity) const {
+        if (!is_vector_storage(local.type) || capacity <= local.type.array_size) return;
+        local.type.array_size = capacity;
+        if (local.ir_storage_type && is_vector_storage(*local.ir_storage_type)) {
+            local.ir_storage_type->array_size = capacity;
+        }
+        if (local.ir_init_expr &&
+            local.ir_init_expr->kind == IrExprKind::Vector &&
+            is_vector_storage(local.ir_init_expr->type)) {
+            local.ir_init_expr->type.array_size = capacity;
+        }
+    }
+
+    IrStmtPtr make_ir_var_decl(SourceLocation loc, std::string name, IrType type, IrExprPtr init, bool mutable_binding) {
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::VarDecl;
+        stmt->loc = loc;
+        stmt->binding.name = std::move(name);
+        stmt->binding.loc = loc;
+        stmt->binding.mutable_binding = mutable_binding;
+        stmt->binding.type = std::move(type);
+        stmt->binding.init = std::move(init);
+        return stmt;
+    }
+
+    static bool is_aggregate_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               (type.primitive == IrPrimitiveKind::Tuple ||
+                type.primitive == IrPrimitiveKind::Array ||
+                type.primitive == IrPrimitiveKind::Struct);
+    }
+
+    IrExprPtr make_tuple_index_expr(SourceLocation loc, const std::string& source_name, const IrType& source_type, std::size_t index) const {
+        const std::vector<IrType>& fields = aggregate_field_types(source_type);
+        auto expr = std::make_unique<IrExpr>();
+        expr->kind = IrExprKind::TupleIndex;
+        expr->loc = loc;
+        expr->tuple_index = index;
+        expr->type = fields[index];
+        expr->operand = make_local_lvalue_expr(loc, source_name, source_type);
+        return expr;
+    }
+
+    IrExprPtr make_vector_index_expr(SourceLocation loc,
+                                     const std::string& source_name,
+                                     const IrType& source_type,
+                                     const std::string& index_name,
+                                     const IrType& index_type) const {
+        if (source_type.primitive != IrPrimitiveKind::Vector || source_type.args.size() != 1) {
+            fail(loc, "internal error: vector index expression requires a vector source");
+        }
+        auto expr = std::make_unique<IrExpr>();
+        expr->kind = IrExprKind::Index;
+        expr->loc = loc;
+        expr->type = source_type.args[0];
+        expr->operand = make_local_lvalue_expr(loc, source_name, source_type);
+        expr->right = make_local_lvalue_expr(loc, index_name, index_type);
+        return expr;
+    }
+
+    void lower_binding_pattern_from_local(
+        const Pattern& pattern,
+        const std::string& source_name,
+        const IrType& source_type,
+        bool mutable_binding,
+        std::vector<IrStmtPtr>& statements
+    ) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+                return;
+            case PatternKind::Binding:
+                if (is_borrow_type(source_type)) {
+                    fail(pattern.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
+                }
+                if (is_owner_type(source_type)) {
+                    fail(pattern.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+                }
+                declare_local(pattern.loc, pattern.payload_name, source_type, mutable_binding);
+                statements.push_back(make_ir_var_decl(
+                    pattern.loc,
+                    pattern.payload_name,
+                    source_type,
+                    make_local_lvalue_expr(pattern.loc, source_name, source_type),
+                    mutable_binding
+                ));
+                return;
+            case PatternKind::Tuple:
+                lower_tuple_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                return;
+            case PatternKind::Array:
+                lower_tuple_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                return;
+            case PatternKind::Struct:
+                lower_struct_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                return;
+            case PatternKind::EnumCase:
+            case PatternKind::Alias:
+                lower_refutable_enum_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                return;
+            default:
+                fail(pattern.loc, "let/var enum pattern bindings are planned but are not supported yet");
+        }
+    }
+
+    void lower_refutable_enum_binding_pattern_from_local(
+        const Pattern& pattern,
+        const std::string& source_name,
+        const IrType& source_type,
+        bool mutable_binding,
+        std::vector<IrStmtPtr>& statements
+    ) {
+        IrExprPtr source = make_local_lvalue_expr(pattern.loc, source_name, source_type);
+        const EnumInfo& enum_info = require_enum_match_value(pattern.loc, *source);
+        IrMatchArm success = lower_enum_case_pattern(pattern, enum_info, source_type);
+        declare_refutable_binding_locals(success, mutable_binding);
+
+        IrMatchArm failure;
+        failure.loc = pattern.loc;
+        failure.wildcard = true;
+        failure.body.push_back(make_panic_stmt(pattern.loc));
+
+        auto match = std::make_unique<IrStmt>();
+        match->kind = IrStmtKind::Match;
+        match->loc = pattern.loc;
+        match->match_value = std::move(source);
+        match->match_arms.push_back(std::move(success));
+        match->match_arms.push_back(std::move(failure));
+        statements.push_back(std::move(match));
+    }
+
+    void declare_refutable_binding_locals(const IrMatchArm& arm, bool mutable_binding) {
+        if (arm.has_value_binding) {
+            if (is_owner_type(arm.value_type)) {
+                fail(arm.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+            }
+            declare_local(arm.loc, arm.value_name, arm.value_type, mutable_binding);
+        }
+        if (!arm.payload_bindings.empty()) {
+            for (const auto& binding : arm.payload_bindings) {
+                if (is_owner_type(binding.type)) {
+                    fail(arm.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+                }
+                declare_local(arm.loc, binding.name, binding.type, mutable_binding);
+            }
+        } else if (arm.has_payload_binding) {
+            if (is_owner_type(arm.payload_type)) {
+                fail(arm.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+            }
+            declare_local(arm.loc, arm.payload_name, arm.payload_type, mutable_binding);
+        }
+    }
+
+    IrStmtPtr make_panic_stmt(SourceLocation loc) const {
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::ExprStmt;
+        stmt->loc = loc;
+        stmt->expr = make_builtin_call(loc, "panic", {}, void_type(loc));
+        return stmt;
+    }
+
+    void lower_tuple_binding_pattern_from_local(
+        const Pattern& pattern,
+        const std::string& source_name,
+        const IrType& source_type,
+        bool mutable_binding,
+        std::vector<IrStmtPtr>& statements
+    ) {
+        bool array_pattern = pattern.kind == PatternKind::Array;
+        IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
+        const char* pattern_name = array_pattern ? "array" : "tuple";
+        if (source_type.primitive != expected_primitive) {
+            fail(pattern.loc, std::string(pattern_name) + " binding pattern requires a " +
+                              pattern_name + " value, got " + type_name(source_type));
+        }
+        const std::vector<IrType>& fields = aggregate_field_types(source_type);
+        if (pattern.has_rest) {
+            if (pattern.elements.size() > fields.size()) {
+                fail(pattern.loc,
+                     std::string(pattern_name) + " binding pattern has " + std::to_string(pattern.elements.size()) +
+                     " non-rest elements but value has " + std::to_string(fields.size()));
+            }
+        } else if (pattern.elements.size() != fields.size()) {
+            fail(pattern.loc,
+                 std::string(pattern_name) + " binding pattern has " + std::to_string(pattern.elements.size()) +
+                 " elements but value has " + std::to_string(fields.size()));
+        }
+        std::size_t suffix_count = 0;
+        if (pattern.has_rest) suffix_count = pattern.elements.size() - pattern.rest_index;
+        for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+            const Pattern& item = pattern.elements[i];
+            if (item.kind == PatternKind::Wildcard) continue;
+            std::size_t field_index = i;
+            if (pattern.has_rest && i >= pattern.rest_index) {
+                field_index = fields.size() - suffix_count + (i - pattern.rest_index);
+            }
+            IrExprPtr field = make_tuple_index_expr(item.loc, source_name, source_type, field_index);
+            if (item.kind == PatternKind::Tuple) {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(item.loc, nested_name, fields[field_index], false);
+                statements.push_back(make_ir_var_decl(item.loc, nested_name, fields[field_index], std::move(field), false));
+                lower_tuple_binding_pattern_from_local(item, nested_name, fields[field_index], mutable_binding, statements);
+                continue;
+            }
+            if (item.kind == PatternKind::Array) {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(item.loc, nested_name, fields[field_index], false);
+                statements.push_back(make_ir_var_decl(item.loc, nested_name, fields[field_index], std::move(field), false));
+                lower_tuple_binding_pattern_from_local(item, nested_name, fields[field_index], mutable_binding, statements);
+                continue;
+            }
+            if (item.kind == PatternKind::Struct) {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(item.loc, nested_name, fields[field_index], false);
+                statements.push_back(make_ir_var_decl(item.loc, nested_name, fields[field_index], std::move(field), false));
+                lower_struct_binding_pattern_from_local(item, nested_name, fields[field_index], mutable_binding, statements);
+                continue;
+            }
+            lower_binding_pattern_value(item, fields[field_index], std::move(field), mutable_binding, statements);
+        }
+    }
+
+    void lower_struct_binding_pattern_from_local(
+        const Pattern& pattern,
+        const std::string& source_name,
+        const IrType& source_type,
+        bool mutable_binding,
+        std::vector<IrStmtPtr>& statements
+    ) {
+        if (source_type.primitive != IrPrimitiveKind::Struct) {
+            fail(pattern.loc, "struct binding pattern requires a struct value, got " + type_name(source_type));
+        }
+        std::string struct_name = resolve_struct_type_name(pattern.case_name);
+        auto struct_found = structs_.find(struct_name);
+        if (struct_found == structs_.end()) {
+            fail(pattern.loc, "unknown struct '" + pattern.case_name + "' in binding pattern");
+        }
+        require_struct_access(pattern.loc, struct_found->second);
+        if (struct_name != source_type.name) {
+            fail(pattern.loc,
+                 "struct binding pattern type '" + struct_name + "' does not match value type " + type_name(source_type));
+        }
+        if (pattern.field_names.size() != pattern.elements.size()) {
+            throw CompileError("internal error: struct binding pattern field/value arity mismatch");
+        }
+
+        std::set<std::string> seen_fields;
+        for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+            const std::string& field_name = pattern.field_names[i];
+            if (!seen_fields.insert(field_name).second) {
+                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct binding pattern");
+            }
+            std::size_t field_index = struct_field_index(pattern.elements[i].loc, source_type, field_name);
+            const IrType& field_type = source_type.field_types[field_index];
+            const Pattern& item = pattern.elements[i];
+            if (item.kind == PatternKind::Wildcard) continue;
+            IrExprPtr field = make_tuple_index_expr(item.loc, source_name, source_type, field_index);
+            if (item.kind == PatternKind::Tuple) {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(item.loc, nested_name, field_type, false);
+                statements.push_back(make_ir_var_decl(item.loc, nested_name, field_type, std::move(field), false));
+                lower_tuple_binding_pattern_from_local(item, nested_name, field_type, mutable_binding, statements);
+                continue;
+            }
+            if (item.kind == PatternKind::Array) {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(item.loc, nested_name, field_type, false);
+                statements.push_back(make_ir_var_decl(item.loc, nested_name, field_type, std::move(field), false));
+                lower_tuple_binding_pattern_from_local(item, nested_name, field_type, mutable_binding, statements);
+                continue;
+            }
+            if (item.kind == PatternKind::Struct) {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(item.loc, nested_name, field_type, false);
+                statements.push_back(make_ir_var_decl(item.loc, nested_name, field_type, std::move(field), false));
+                lower_struct_binding_pattern_from_local(item, nested_name, field_type, mutable_binding, statements);
+                continue;
+            }
+            lower_binding_pattern_value(item, field_type, std::move(field), mutable_binding, statements);
+        }
+    }
+
+    void lower_binding_pattern_value(
+        const Pattern& pattern,
+        const IrType& value_type,
+        IrExprPtr value,
+        bool mutable_binding,
+        std::vector<IrStmtPtr>& statements
+    ) {
+        if (pattern.kind == PatternKind::Wildcard) return;
+        if (pattern.kind != PatternKind::Binding) {
+            fail(pattern.loc, "let/var enum pattern bindings are planned but are not supported yet");
+        }
+        if (is_borrow_type(value_type)) {
+            fail(pattern.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
+        }
+        if (is_owner_type(value_type)) {
+            fail(pattern.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+        }
+        declare_local(pattern.loc, pattern.payload_name, value_type, mutable_binding);
+        statements.push_back(make_ir_var_decl(pattern.loc, pattern.payload_name, value_type, std::move(value), mutable_binding));
+    }
+
+    static std::string child_field_path(const std::string& base, std::size_t index) {
+        return base.empty() ? std::to_string(index) : base + "." + std::to_string(index);
+    }
+
+    static bool owned_field_path_matches(const std::string& candidate, const std::string& selected) {
+        return candidate == selected ||
+               (candidate.size() > selected.size() &&
+                candidate.compare(0, selected.size(), selected) == 0 &&
+                candidate[selected.size()] == '.');
+    }
+
+    static bool selected_owned_field_is_live(const LocalInfo& local, const std::string& path) {
+        for (const auto& item : local.owned_field_states) {
+            if (owned_field_path_matches(item.first, path) && item.second == LocalState::Alive) return true;
+        }
+        return false;
+    }
+
+    static bool selected_owned_field_has_state(const LocalInfo& local, const std::string& path) {
+        for (const auto& item : local.owned_field_states) {
+            if (owned_field_path_matches(item.first, path)) return true;
+        }
+        return false;
+    }
+
+    static void mark_selected_owned_field_state(LocalInfo& local, const std::string& path, LocalState state) {
+        for (auto& item : local.owned_field_states) {
+            if (owned_field_path_matches(item.first, path)) item.second = state;
+        }
+    }
+
+    void require_owned_field_alive(SourceLocation loc, const std::string& base_name, LocalInfo& local, const std::string& path) {
+        if (!selected_owned_field_has_state(local, path)) {
+            throw CompileError("internal error: missing owned field state for '" + base_name + "." + path + "'");
+        }
+        for (const auto& item : local.owned_field_states) {
+            if (!owned_field_path_matches(item.first, path)) continue;
+            if (item.second != LocalState::Alive) {
+                fail(loc, "cannot use " + state_name(item.second) + " owned field '" + base_name + "." + path + "'");
+            }
+        }
+    }
+
+    void mark_owned_field_moved(SourceLocation loc, const std::string& base_name, const std::string& path) {
+        LocalInfo& local = require_live_local(loc, base_name);
+        require_not_borrowed(loc, base_name, local, "move field from");
+        require_owned_field_alive(loc, base_name, local, path);
+        mark_selected_owned_field_state(local, path, LocalState::Moved);
+    }
+
+    void require_can_assign_owned_field(SourceLocation loc, const std::string& base_name, const std::string& path) {
+        LocalInfo& local = require_live_local(loc, base_name);
+        if (!selected_owned_field_has_state(local, path)) {
+            throw CompileError("internal error: missing owned field assignment state for '" + base_name + "." + path + "'");
+        }
+        if (selected_owned_field_is_live(local, path)) {
+            fail(loc, "cannot overwrite owning field '" + base_name + "." + path + "' before it is moved or dropped");
+        }
+    }
+
+    bool tracked_ir_access_path(const IrExpr& expr, std::string& base_name, std::string& path) const {
+        if (expr.kind == IrExprKind::Local) {
+            base_name = expr.name;
+            path.clear();
+            return true;
+        }
+        if (expr.kind == IrExprKind::TupleIndex && expr.operand) {
+            if (!tracked_ir_access_path(*expr.operand, base_name, path)) return false;
+            path = child_field_path(path, static_cast<std::size_t>(expr.tuple_index));
+            return true;
+        }
+        if (expr.kind == IrExprKind::Index && expr.operand && expr.right &&
+            expr.right->kind == IrExprKind::Integer && !expr.right->int_negative) {
+            if (!tracked_ir_access_path(*expr.operand, base_name, path)) return false;
+            path = child_field_path(path, static_cast<std::size_t>(expr.right->int_value));
+            return true;
+        }
+        return false;
+    }
+
+    void mark_owned_field_assigned(const IrExpr& target) {
+        if (!is_owner_type(target.type)) return;
+        std::string base_name;
+        std::string path;
+        if (!tracked_ir_access_path(target, base_name, path) || path.empty()) return;
+        LocalInfo& local = local_slot_by_name(base_name);
+        mark_selected_owned_field_state(local, path, LocalState::Alive);
+    }
+
+    void check_assign(const Stmt& stmt, IrStmt& lowered) {
+        if (stmt.assign_target) {
+            IrExprPtr target = check_assignment_target(*stmt.assign_target);
+            IrType target_type = target->type;
+            IrExprPtr value = check_expr_with_expected(*stmt.rhs, target_type);
+            coerce_expr_to_expected(*value, target_type);
+            require_assignable(stmt.loc, target_type, value->type);
+            require_no_zone_pointer_escape(stmt.rhs->loc, *value, "aggregate or raw-pointer storage");
+            mark_owned_field_assigned(*target);
+            lowered.assign_target = std::move(target);
+            lowered.rhs = std::move(value);
+            return;
+        }
+
+        LocalInfo& target = require_local_slot(stmt.loc, stmt.assign_name);
+        if (is_borrow_type(target.type)) {
+            fail(stmt.loc, "cannot assign to borrow binding '" + stmt.assign_name + "'");
+        }
+        if (!target.mutable_binding) fail(stmt.loc, "cannot assign to immutable binding '" + stmt.assign_name + "'");
+        require_not_borrowed(stmt.loc, stmt.assign_name, target, "assign to");
+        if (is_owner_type(target.type) && has_live_owner(target)) {
+            fail(stmt.loc, "cannot overwrite owning binding '" + stmt.assign_name + "' before it is moved or dropped");
+        }
+        if (contains_borrow_type(target.type)) {
+            fail(stmt.loc, "cannot assign to borrow-valued aggregate binding '" + stmt.assign_name + "' yet");
+        }
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr value = check_expr_with_expected(*stmt.rhs, target.type);
+        if (is_vector_storage(target.type) &&
+            value->kind == IrExprKind::Vector &&
+            value->args.size() > target.type.array_size) {
+            widen_vector_storage(target, static_cast<std::uint64_t>(value->args.size()));
+        }
+        coerce_expr_to_expected(*value, target.type);
+        require_assignable(stmt.loc, target.type, value->type);
+        release_temporary_borrows(borrow_mark);
+        target.state = LocalState::Alive;
+        initialize_owned_field_states(target);
+        set_zone_pointer_source_from_expr(target, *value);
+        lowered.assign_name = stmt.assign_name;
+        lowered.rhs = std::move(value);
+    }
+
+    IrExprPtr check_assignment_target(const Expr& expr) {
+        if (expr.kind == ExprKind::FieldAccess ||
+            expr.kind == ExprKind::TupleIndex ||
+            expr.kind == ExprKind::Index) {
+            TrackedAggregateAccess access;
+            if (try_build_tracked_aggregate_access(expr, access)) {
+                return check_tracked_assignment_target(expr.loc, std::move(access));
+            }
+            if (has_raw_pointer_deref_base(expr)) {
+                return check_raw_pointer_aggregate_assignment_target(expr);
+            }
+        }
+        if (expr.kind == ExprKind::FieldAccess) {
+            return check_field_assignment_target(expr);
+        }
+        if (expr.kind == ExprKind::TupleIndex) {
+            return check_tuple_field_assignment_target(expr);
+        }
+        if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
+            return check_pointer_deref_assignment_target(expr);
+        }
+        fail(expr.loc, "assignment target must be a binding, field access, index access, or pointer dereference");
+    }
+
+    bool has_raw_pointer_deref_base(const Expr& expr) const {
+        if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) return true;
+        if ((expr.kind == ExprKind::FieldAccess ||
+             expr.kind == ExprKind::TupleIndex ||
+             expr.kind == ExprKind::Index) &&
+            expr.operand) {
+            return has_raw_pointer_deref_base(*expr.operand);
+        }
+        return false;
+    }
+
+    static bool is_raw_pointer_backed_lvalue(const IrExpr& expr) {
+        if (expr.kind == IrExprKind::PointerLoad) return true;
+        if ((expr.kind == IrExprKind::TupleIndex ||
+             expr.kind == IrExprKind::Index) &&
+            expr.operand) {
+            return is_raw_pointer_backed_lvalue(*expr.operand);
+        }
+        return false;
+    }
+
+    IrExprPtr check_raw_pointer_aggregate_assignment_target(const Expr& expr) {
+        IrExprPtr target = check_expr(expr);
+        if (!is_raw_pointer_backed_lvalue(*target)) {
+            fail(expr.loc, "assignment target must be a raw-pointer field or element access");
+        }
+        if (is_aggregate_type(target->type) &&
+            (is_owner_type(target->type) || contains_borrow_type(target->type))) {
+            fail(expr.loc, "raw pointer aggregate assignment cannot copy ownership- or borrow-valued aggregates yet");
+        }
+        if (contains_borrow_type(target->type)) {
+            fail(expr.loc, "assigning borrow-valued raw pointer fields independently is planned but not supported yet");
+        }
+        return target;
+    }
+
+    LocalInfo& require_mutable_base_local(SourceLocation loc, const Expr& expr, std::string& base_name) {
+        if (expr.kind != ExprKind::Name) {
+            fail(loc, "field assignment currently requires a local struct binding");
+        }
+        base_name = expr.name;
+        LocalInfo& local = require_live_local(loc, expr.name);
+        if (!local.mutable_binding) fail(loc, "cannot assign to field of immutable binding '" + expr.name + "'");
+        require_not_borrowed(loc, expr.name, local, "assign to");
+        return local;
+    }
+
+    IrExprPtr make_local_lvalue_expr(SourceLocation loc, const std::string& name, const IrType& type) const {
+        auto base = std::make_unique<IrExpr>();
+        base->kind = IrExprKind::Local;
+        base->loc = loc;
+        base->name = name;
+        base->type = type;
+        return base;
+    }
+
+    bool try_build_tracked_aggregate_access(const Expr& expr, TrackedAggregateAccess& out) {
+        if (expr.kind == ExprKind::Name) {
+            LocalInfo* local_slot = find_local_slot(expr.name);
+            if (!local_slot) return false;
+            LocalInfo& local = *local_slot;
+            if (local.state != LocalState::Alive) {
+                fail(expr.loc, "cannot use " + state_name(local.state) + " binding '" + expr.name + "'");
+            }
+            out.base_name = expr.name;
+            out.base_type = local.type;
+            out.type = local.type;
+            out.path.clear();
+            out.expr = make_local_lvalue_expr(expr.loc, expr.name, local.type);
+            out.has_final_field_mutability = false;
+            out.final_field_mutable = true;
+            out.final_field_label.clear();
+            out.final_container_name.clear();
+            return true;
+        }
+
+        if (expr.kind == ExprKind::FieldAccess) {
+            TrackedAggregateAccess base;
+            if (!try_build_tracked_aggregate_access(*expr.operand, base)) return false;
+            if (base.type.primitive != IrPrimitiveKind::Struct) {
+                fail(expr.loc, "field access requires a struct value, got " + type_name(base.type));
+            }
+            std::size_t index = struct_field_index(expr.loc, base.type, expr.name);
+            const IrType field_type = base.type.field_types[index];
+
+            auto lowered = std::make_unique<IrExpr>();
+            lowered->kind = IrExprKind::TupleIndex;
+            lowered->loc = expr.loc;
+            lowered->tuple_index = index;
+            lowered->type = field_type;
+            lowered->operand = std::move(base.expr);
+
+            out.base_name = std::move(base.base_name);
+            out.base_type = std::move(base.base_type);
+            out.type = field_type;
+            out.path = child_field_path(base.path, index);
+            out.expr = std::move(lowered);
+            out.has_final_field_mutability = true;
+            out.final_field_mutable = base.type.field_mutable[index];
+            out.final_field_label = expr.name;
+            out.final_container_name = base.type.name;
+            return true;
+        }
+
+        if (expr.kind == ExprKind::TupleIndex) {
+            TrackedAggregateAccess base;
+            if (!try_build_tracked_aggregate_access(*expr.operand, base)) return false;
+            if (base.type.primitive != IrPrimitiveKind::Tuple &&
+                base.type.primitive != IrPrimitiveKind::Struct) {
+                fail(expr.loc, "tuple index access requires tuple or tuple struct value, got " + type_name(base.type));
+            }
+            const std::vector<IrType>& fields = aggregate_field_types(base.type);
+            if (expr.tuple_index >= fields.size()) {
+                fail(expr.loc,
+                     "tuple index " + std::to_string(expr.tuple_index) +
+                     " is out of range for " + type_name(base.type));
+            }
+            const IrType field_type = fields[static_cast<std::size_t>(expr.tuple_index)];
+
+            auto lowered = std::make_unique<IrExpr>();
+            lowered->kind = IrExprKind::TupleIndex;
+            lowered->loc = expr.loc;
+            lowered->tuple_index = expr.tuple_index;
+            lowered->type = field_type;
+            lowered->operand = std::move(base.expr);
+
+            out.base_name = std::move(base.base_name);
+            out.base_type = std::move(base.base_type);
+            out.type = field_type;
+            out.path = child_field_path(base.path, static_cast<std::size_t>(expr.tuple_index));
+            out.expr = std::move(lowered);
+            out.has_final_field_mutability = base.type.primitive == IrPrimitiveKind::Struct;
+            out.final_field_mutable = !out.has_final_field_mutability ||
+                base.type.field_mutable[static_cast<std::size_t>(expr.tuple_index)];
+            out.final_field_label = std::to_string(expr.tuple_index);
+            out.final_container_name = base.type.name;
+            return true;
+        }
+
+        if (expr.kind == ExprKind::Index) {
+            TrackedAggregateAccess base;
+            if (!try_build_tracked_aggregate_access(*expr.operand, base)) return false;
+            if (base.type.primitive != IrPrimitiveKind::Array &&
+                base.type.primitive != IrPrimitiveKind::Vector) {
+                fail(expr.loc, "index access requires an array or vector value, got " + type_name(base.type));
+            }
+            if (base.type.args.size() != 1) {
+                throw CompileError("internal error: aggregate index without element type");
+            }
+            IrExprPtr index = check_expr(*expr.right);
+            if (!is_value_integer_type(index->type)) {
+                fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
+            }
+            if (index->kind != IrExprKind::Integer || index->int_negative) {
+                if (is_owner_type(base.type.args[0])) {
+                    fail(expr.loc, "moving owning aggregate elements through dynamic indexes is planned but not supported yet");
+                }
+                return false;
+            }
+            if (base.type.array_size == 0) {
+                fail(expr.loc, "indexing Vec values requires local vector storage with a known length");
+            }
+            std::uint64_t index_value = index->int_value;
+            if (index_value >= base.type.array_size) {
+                std::string label = base.type.primitive == IrPrimitiveKind::Array ? "array" : "vector";
+                fail(expr.loc,
+                     label + " index " + std::to_string(index_value) +
+                     " is out of range for " + std::to_string(base.type.array_size) + " elements");
+            }
+
+            const IrType element_type = base.type.args[0];
+            auto lowered = std::make_unique<IrExpr>();
+            lowered->loc = expr.loc;
+            lowered->type = element_type;
+            if (base.type.primitive == IrPrimitiveKind::Array) {
+                lowered->kind = IrExprKind::TupleIndex;
+                lowered->tuple_index = index_value;
+                lowered->operand = std::move(base.expr);
+            } else {
+                lowered->kind = IrExprKind::Index;
+                lowered->operand = std::move(base.expr);
+                lowered->right = std::move(index);
+            }
+
+            out.base_name = std::move(base.base_name);
+            out.base_type = std::move(base.base_type);
+            out.type = element_type;
+            out.path = child_field_path(base.path, static_cast<std::size_t>(index_value));
+            out.expr = std::move(lowered);
+            out.has_final_field_mutability = false;
+            out.final_field_mutable = true;
+            out.final_field_label.clear();
+            out.final_container_name.clear();
+            return true;
+        }
+
+        return false;
+    }
+
+    IrExprPtr check_tracked_assignment_target(SourceLocation loc, TrackedAggregateAccess access) {
+        LocalInfo& local = require_live_local(loc, access.base_name);
+        if (!local.mutable_binding) fail(loc, "cannot assign to field of immutable binding '" + access.base_name + "'");
+        require_can_assign_borrow_path(loc, access.base_name, local, access.path);
+        if (access.has_final_field_mutability && !access.final_field_mutable) {
+            fail(loc,
+                 "cannot assign to immutable field '" + access.final_field_label +
+                 "' of struct '" + access.final_container_name + "'");
+        }
+        if (is_owner_type(access.type)) {
+            require_can_assign_owned_field(loc, access.base_name, access.path);
+        }
+        if (contains_borrow_type(access.type)) {
+            fail(loc, "assigning borrow-valued aggregate fields independently is planned but not supported yet");
+        }
+        return std::move(access.expr);
+    }
+
+    IrExprPtr check_field_assignment_target(const Expr& expr) {
+        std::string base_name;
+        LocalInfo& local = require_mutable_base_local(expr.loc, *expr.operand, base_name);
+        if (local.type.primitive != IrPrimitiveKind::Struct) {
+            fail(expr.loc, "field assignment requires a struct value, got " + type_name(local.type));
+        }
+
+        std::size_t index = struct_field_index(expr.loc, local.type, expr.name);
+        const IrType& field_type = local.type.field_types[index];
+        if (is_owner_type(field_type)) {
+            require_can_assign_owned_field(expr.loc, base_name, std::to_string(index));
+        }
+        if (contains_borrow_type(field_type)) {
+            fail(expr.loc, "assigning borrow-valued aggregate fields independently is planned but not supported yet");
+        }
+        if (!local.type.field_mutable[index]) {
+            fail(expr.loc, "cannot assign to immutable field '" + expr.name + "' of struct '" + local.type.name + "'");
+        }
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::TupleIndex;
+        lowered->loc = expr.loc;
+        lowered->tuple_index = index;
+        lowered->type = field_type;
+        lowered->operand = make_local_lvalue_expr(expr.operand->loc, base_name, local.type);
+        return lowered;
+    }
+
+    IrExprPtr check_tuple_field_assignment_target(const Expr& expr) {
+        std::string base_name;
+        LocalInfo& local = require_mutable_base_local(expr.loc, *expr.operand, base_name);
+        if (local.type.primitive != IrPrimitiveKind::Struct) {
+            fail(expr.loc, "tuple-field assignment requires a tuple struct value, got " + type_name(local.type));
+        }
+        if (expr.tuple_index >= local.type.field_types.size()) {
+            fail(expr.loc,
+                 "tuple field index " + std::to_string(expr.tuple_index) +
+                 " is out of range for " + type_name(local.type));
+        }
+        const IrType& field_type = local.type.field_types[static_cast<std::size_t>(expr.tuple_index)];
+        if (is_owner_type(field_type)) {
+            require_can_assign_owned_field(expr.loc, base_name, std::to_string(expr.tuple_index));
+        }
+        if (contains_borrow_type(field_type)) {
+            fail(expr.loc, "assigning borrow-valued aggregate fields independently is planned but not supported yet");
+        }
+        if (!local.type.field_mutable[static_cast<std::size_t>(expr.tuple_index)]) {
+            fail(expr.loc,
+                 "cannot assign to immutable field '" + std::to_string(expr.tuple_index) +
+                 "' of struct '" + local.type.name + "'");
+        }
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::TupleIndex;
+        lowered->loc = expr.loc;
+        lowered->tuple_index = expr.tuple_index;
+        lowered->type = field_type;
+        lowered->operand = make_local_lvalue_expr(expr.operand->loc, base_name, local.type);
+        return lowered;
+    }
+
+    IrExprPtr check_pointer_deref_assignment_target(const Expr& expr) {
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr pointer = check_expr(*expr.operand);
+        release_temporary_borrows(borrow_mark);
+
+        IrType element_type = require_raw_pointer_materializable_type(expr.loc, pointer->type, "pointer dereference");
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::PointerLoad;
+        lowered->loc = expr.loc;
+        lowered->type = element_type;
+        lowered->operand = std::move(pointer);
+        return lowered;
+    }
+
+    IrExprPtr check_pointer_deref_access_operand(const Expr& expr) {
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr pointer = check_expr(*expr.operand);
+        release_temporary_borrows(borrow_mark);
+
+        IrType element_type = require_raw_pointer_deref_type(expr.loc, pointer->type, "pointer dereference");
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::PointerLoad;
+        lowered->loc = expr.loc;
+        lowered->type = element_type;
+        lowered->operand = std::move(pointer);
+        return lowered;
+    }
+
+    using DropValueFactory = std::function<IrExprPtr()>;
+
+    IrExprPtr make_field_value_expr(SourceLocation loc, DropValueFactory make_source, std::size_t index, const IrType& field_type) const {
+        auto expr = std::make_unique<IrExpr>();
+        expr->kind = IrExprKind::TupleIndex;
+        expr->loc = loc;
+        expr->tuple_index = index;
+        expr->type = field_type;
+        expr->operand = make_source();
+        return expr;
+    }
+
+    IrExprPtr make_vector_element_expr(SourceLocation loc, DropValueFactory make_source, std::uint64_t index, const IrType& element_type) const {
+        auto expr = std::make_unique<IrExpr>();
+        expr->kind = IrExprKind::Index;
+        expr->loc = loc;
+        expr->type = element_type;
+        expr->operand = make_source();
+        expr->right = make_integer_literal(loc, i64_type(loc), index);
+        return expr;
+    }
+
+    IrStmtPtr make_drop_call_stmt(SourceLocation loc, const ImplMethodInfo& method, DropValueFactory make_value) {
+        if (method.sig.params.size() != 1 || method.sig.result.primitive != IrPrimitiveKind::Void) {
+            throw CompileError("internal error: invalid Drop impl method for " + type_name(method.receiver_type));
+        }
+        auto call = std::make_unique<IrExpr>();
+        call->kind = IrExprKind::Call;
+        call->loc = loc;
+        call->name = method.lowered_name;
+        call->type = method.sig.result;
+        call->args.push_back(make_value());
+        queue_impl_method_for_lowering(method);
+
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::ExprStmt;
+        stmt->loc = loc;
+        stmt->expr = std::move(call);
+        return stmt;
+    }
+
+    void append_drop_stmts_for_value(SourceLocation loc,
+                                     const IrType& type,
+                                     DropValueFactory make_value,
+                                     std::vector<IrStmtPtr>& statements,
+                                     const LocalInfo* tracked_local = nullptr,
+                                     const std::string& path = "") {
+        if (tracked_local && !path.empty() && !selected_owned_field_is_live(*tracked_local, path)) {
+            return;
+        }
+
+        IrType dropped_type = type;
+        dropped_type.qualifier = TypeQualifier::Value;
+        auto destructor = drop_impls_.find(drop_impl_key(dropped_type));
+        bool can_call_destructor = destructor != drop_impls_.end();
+        if (can_call_destructor && tracked_local && path.empty() && has_moved_or_dropped_owned_fields(*tracked_local)) {
+            can_call_destructor = false;
+        }
+        if (can_call_destructor) {
+            statements.push_back(make_drop_call_stmt(loc, destructor->second, make_value));
+        }
+
+        if (type.primitive == IrPrimitiveKind::Tuple ||
+            type.primitive == IrPrimitiveKind::Array ||
+            type.primitive == IrPrimitiveKind::Struct) {
+            const std::vector<IrType>& fields = aggregate_field_types(type);
+            for (std::size_t i = 0; i < fields.size(); ++i) {
+                const IrType& field_type = fields[i];
+                if (!is_owner_type(field_type)) continue;
+                std::string field_path = child_field_path(path, i);
+                DropValueFactory make_field = [this, loc, make_value, i, field_type]() {
+                    return make_field_value_expr(loc, make_value, i, field_type);
+                };
+                append_drop_stmts_for_value(loc, field_type, make_field, statements, tracked_local, field_path);
+            }
+            return;
+        }
+
+        if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size != 0 && is_owner_type(type.args[0])) {
+            const IrType element_type = type.args[0];
+            for (std::uint64_t i = 0; i < type.array_size; ++i) {
+                std::string element_path = child_field_path(path, static_cast<std::size_t>(i));
+                DropValueFactory make_element = [this, loc, make_value, i, element_type]() {
+                    return make_vector_element_expr(loc, make_value, i, element_type);
+                };
+                append_drop_stmts_for_value(loc, element_type, make_element, statements, tracked_local, element_path);
+            }
+        }
+    }
+
+    void check_drop(const Stmt& stmt, IrStmt& lowered) {
+        LocalInfo& local = require_live_local(stmt.loc, stmt.drop_name);
+        require_not_borrowed(stmt.loc, stmt.drop_name, local, "drop");
+        if (local.type.qualifier == TypeQualifier::Own && local.type.primitive == IrPrimitiveKind::Zone) {
+            fail(stmt.loc, "use zone::destroy(" + stmt.drop_name + ") to release a Zone");
+        }
+        DropValueFactory make_value = [this, loc = stmt.loc, name = stmt.drop_name, type = local.type]() {
+            return make_local_lvalue_expr(loc, name, type);
+        };
+        std::vector<IrStmtPtr> drop_statements;
+        append_drop_stmts_for_value(stmt.loc, local.type, make_value, drop_statements, &local);
+        if (!drop_statements.empty()) {
+            lowered.kind = IrStmtKind::Block;
+            lowered.statements = std::move(drop_statements);
+        }
+        for (auto& item : local.owned_field_states) item.second = LocalState::Dropped;
+        local.state = LocalState::Dropped;
+        lowered.drop_name = stmt.drop_name;
+    }
+
+    void check_return(const Stmt& stmt, IrStmt& lowered) {
+        IrExprPtr value = stmt.expr ? check_expr_with_expected(*stmt.expr, current_return_) : nullptr;
+        IrType actual = value ? value->type : void_type(stmt.loc);
+        if (value) {
+            coerce_expr_to_expected(*value, current_return_);
+            actual = value->type;
+        }
+        require_assignable(stmt.loc, current_return_, actual);
+        if (contains_borrow_type(actual)) {
+            fail(stmt.loc, "borrowed references cannot be returned in the executable subset yet");
+        }
+        if (value) {
+            require_zone_pointer_not_escape_temporary_scope(stmt.loc, *value, 0, "function return");
+            std::string zone_source;
+            if (zone_pointer_source_name_from_expr(*value, zone_source) &&
+                (!current_zone_pointer_return_allowed_ ||
+                 zone_source != current_zone_pointer_return_source_)) {
+                fail(stmt.loc,
+                     "zone pointer returns must come from the function's single zone borrow parameter");
+            }
+        }
+        std::vector<IrStmtPtr> cleanup;
+        value = materialize_value_before_auto_destroy_cleanup(
+            stmt.loc,
+            std::move(value),
+            cleanup,
+            0,
+            "$return",
+            "function return"
+        );
+        require_no_live_owners_before_return(stmt.loc);
+        if (!cleanup.empty()) {
+            std::vector<IrStmtPtr> block;
+            for (auto& cleanup_stmt : cleanup) block.push_back(std::move(cleanup_stmt));
+            auto return_stmt = std::make_unique<IrStmt>();
+            return_stmt->kind = IrStmtKind::Return;
+            return_stmt->loc = stmt.loc;
+            return_stmt->expr = std::move(value);
+            block.push_back(std::move(return_stmt));
+            lowered.kind = IrStmtKind::Block;
+            lowered.statements = std::move(block);
+            return;
+        }
+        lowered.expr = std::move(value);
+    }
+
+    Flow check_if(const Stmt& stmt, IrStmt& lowered) {
+        if (stmt.has_condition_pattern) return check_if_let(stmt, lowered);
+        lowered.condition = check_expr(*stmt.condition);
+        coerce_condition_to_bool(stmt.loc, lowered.condition);
+        StateSnapshot branch_input = snapshot_states();
+
+        CheckedStatements then_checked = check_statements(stmt.then_body, true);
+        lowered.then_body = std::move(then_checked.statements);
+        StateSnapshot then_state = snapshot_states();
+
+        restore_states(branch_input);
+
+        if (stmt.else_body.empty()) {
+            if (then_checked.flow == Flow::Continues) {
+                require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if without else");
+                restore_states(merge_zone_generations(branch_input, then_state));
+            } else {
+                restore_states(branch_input);
+            }
+            return Flow::Continues;
+        }
+
+        CheckedStatements else_checked = check_statements(stmt.else_body, true);
+        lowered.else_body = std::move(else_checked.statements);
+        StateSnapshot else_state = snapshot_states();
+
+        if (then_checked.flow != Flow::Continues && else_checked.flow != Flow::Continues) {
+            restore_states(branch_input);
+            if (then_checked.flow == Flow::Returns && else_checked.flow == Flow::Returns) return Flow::Returns;
+            return Flow::Stops;
+        }
+        if (then_checked.flow != Flow::Continues) {
+            restore_states(else_state);
+            return Flow::Continues;
+        }
+        if (else_checked.flow != Flow::Continues) {
+            restore_states(then_state);
+            return Flow::Continues;
+        }
+
+        require_same_states(stmt.loc, then_state, else_state, "has incompatible ownership states after if branches");
+        restore_states(merge_zone_generations(then_state, else_state));
+        return Flow::Continues;
+    }
+
+    ConstantValue evaluate_constant(ConstantInfo& info) {
+        if (info.evaluated) return info.value;
+        if (info.evaluating) fail(info.loc, "constant cycle: " + constant_cycle_path(info.name));
+
+        struct ConstantStackGuard {
+            std::vector<std::string>& stack;
+            explicit ConstantStackGuard(std::vector<std::string>& stack, std::string name) : stack(stack) {
+                stack.push_back(std::move(name));
+            }
+            ~ConstantStackGuard() {
+                stack.pop_back();
+            }
+        } stack_guard(constant_eval_stack_, info.name);
+
+        info.evaluating = true;
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = info.module_name;
+        current_type_substitutions_.clear();
+
+        IrType expected = resolve_executable_type(info.type_ref);
+        info.value = evaluate_constant_expr(*info.init, expected);
+        info.value.type = expected;
+        info.evaluated = true;
+        info.evaluating = false;
+
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
+        return info.value;
+    }
+
+    std::string constant_cycle_path(const std::string& repeated_name) const {
+        auto first = std::find(constant_eval_stack_.begin(), constant_eval_stack_.end(), repeated_name);
+        std::string path;
+        if (first == constant_eval_stack_.end()) first = constant_eval_stack_.begin();
+        for (auto it = first; it != constant_eval_stack_.end(); ++it) {
+            if (!path.empty()) path += " -> ";
+            path += *it;
+        }
+        if (!path.empty()) path += " -> ";
+        path += repeated_name;
+        return path;
+    }
+
+    static bool is_untyped_integer_literal_expr(const Expr& expr) {
+        return expr.kind == ExprKind::Integer && expr.literal_suffix.empty();
+    }
+
+    IrType infer_constant_expr_type(const Expr& expr, const IrType& fallback) {
+        if (expr.kind == ExprKind::Integer) {
+            return expr.literal_suffix.empty()
+                ? fallback
+                : integer_literal_suffix_type(expr.literal_suffix, expr.loc);
+        }
+        if (expr.kind == ExprKind::Bool) return bool_type(expr.loc);
+        if (expr.kind == ExprKind::Name) {
+            ConstantValue value;
+            if (!resolve_constant_value(expr.loc, expr.name, value)) {
+                fail(expr.loc, "constant initializer name '" + expr.name + "' must refer to a constant");
+            }
+            return value.type;
+        }
+        if (expr.kind == ExprKind::Unary) {
+            if (expr.op == TokenKind::Bang) return bool_type(expr.loc);
+            return infer_constant_expr_type(*expr.operand, fallback);
+        }
+        if (expr.kind == ExprKind::Binary) {
+            if (expr.op == TokenKind::AmpAmp ||
+                expr.op == TokenKind::PipePipe ||
+                expr.op == TokenKind::EqEq ||
+                expr.op == TokenKind::BangEq ||
+                expr.op == TokenKind::Less ||
+                expr.op == TokenKind::LessEq ||
+                expr.op == TokenKind::Greater ||
+                expr.op == TokenKind::GreaterEq) {
+                return bool_type(expr.loc);
+            }
+            return infer_constant_binary_integer_type(expr.loc, *expr.left, *expr.right, fallback);
+        }
+        fail(expr.loc, "constant initializers currently support scalar and aggregate constant expressions");
+    }
+
+    IrType infer_constant_binary_integer_type(
+        SourceLocation loc,
+        const Expr& left,
+        const Expr& right,
+        const IrType& fallback
+    ) {
+        IrType left_type = infer_constant_expr_type(left, fallback);
+        IrType right_fallback = is_untyped_integer_literal_expr(left) ? fallback : left_type;
+        IrType right_type = infer_constant_expr_type(right, right_fallback);
+        if (is_untyped_integer_literal_expr(left) && !is_untyped_integer_literal_expr(right)) {
+            left_type = right_type;
+        } else if (!is_untyped_integer_literal_expr(left) && is_untyped_integer_literal_expr(right)) {
+            right_type = left_type;
+        }
+        if (!is_value_integer_type(left_type) || !is_value_integer_type(right_type)) {
+            fail(loc, "constant arithmetic operands must be integers, got " +
+                      type_name(left_type) + " and " + type_name(right_type));
+        }
+        require_numeric_operands(loc, left_type, right_type);
+        return left_type;
+    }
+
+    static std::uint64_t int64_min_magnitude() {
+        return static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) + 1ULL;
+    }
+
+    static std::int64_t constant_integer_to_i64(SourceLocation loc, const ConstantValue& value) {
+        if (value.int_negative) {
+            if (value.int_value == int64_min_magnitude()) return std::numeric_limits<std::int64_t>::min();
+            if (value.int_value > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+                fail(loc, "constant integer expression operand is out of range for i64");
+            }
+            return -static_cast<std::int64_t>(value.int_value);
+        }
+        if (value.int_value > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+            fail(loc, "constant integer expression operand is out of range for i64");
+        }
+        return static_cast<std::int64_t>(value.int_value);
+    }
+
+    static std::uint64_t constant_integer_to_u64(SourceLocation loc, const ConstantValue& value) {
+        if (value.int_negative) fail(loc, "unsigned constant arithmetic cannot use negative operands");
+        return value.int_value;
+    }
+
+    ConstantValue make_signed_integer_constant(SourceLocation loc, const IrType& type, std::int64_t result) {
+        ConstantValue value;
+        value.kind = ConstantValueKind::Integer;
+        value.type = type;
+        value.int_negative = result < 0;
+        value.int_value = result == std::numeric_limits<std::int64_t>::min()
+            ? int64_min_magnitude()
+            : static_cast<std::uint64_t>(value.int_negative ? -result : result);
+
+        IrExpr literal;
+        literal.kind = IrExprKind::Integer;
+        literal.loc = loc;
+        literal.type = type;
+        literal.int_value = value.int_value;
+        literal.int_negative = value.int_negative;
+        if (!integer_literal_fits(literal, type)) {
+            fail(loc, "constant integer expression result is out of range for " + type_name(type));
+        }
+        return value;
+    }
+
+    ConstantValue make_unsigned_integer_constant(SourceLocation loc, const IrType& type, std::uint64_t result) {
+        ConstantValue value;
+        value.kind = ConstantValueKind::Integer;
+        value.type = type;
+        value.int_value = result;
+        value.int_negative = false;
+
+        IrExpr literal;
+        literal.kind = IrExprKind::Integer;
+        literal.loc = loc;
+        literal.type = type;
+        literal.int_value = value.int_value;
+        literal.int_negative = false;
+        if (!integer_literal_fits(literal, type)) {
+            fail(loc, "constant integer expression result is out of range for " + type_name(type));
+        }
+        return value;
+    }
+
+    ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, bool result) {
+        if (expected.qualifier != TypeQualifier::Value || expected.primitive != IrPrimitiveKind::Bool) {
+            fail(loc, "type mismatch: expected " + type_name(expected) + ", got bool");
+        }
+        ConstantValue value;
+        value.kind = ConstantValueKind::Bool;
+        value.type = expected;
+        value.is_bool = true;
+        value.bool_value = result;
+        return value;
+    }
+
+    ConstantValue evaluate_constant_binary_expr(const Expr& expr, const IrType& expected) {
+        if (expected.qualifier == TypeQualifier::Value && expected.primitive == IrPrimitiveKind::Bool) {
+            if (expr.op == TokenKind::AmpAmp || expr.op == TokenKind::PipePipe) {
+                ConstantValue left = evaluate_constant_expr(*expr.left, expected);
+                ConstantValue right = evaluate_constant_expr(*expr.right, expected);
+                return make_bool_constant(
+                    expr.loc,
+                    expected,
+                    expr.op == TokenKind::AmpAmp
+                        ? left.bool_value && right.bool_value
+                        : left.bool_value || right.bool_value
+                );
+            }
+
+            if (expr.op == TokenKind::EqEq || expr.op == TokenKind::BangEq) {
+                IrType left_type = infer_constant_expr_type(*expr.left, i64_type(expr.loc));
+                if (left_type.qualifier == TypeQualifier::Value && left_type.primitive == IrPrimitiveKind::Bool) {
+                    ConstantValue left = evaluate_constant_expr(*expr.left, left_type);
+                    ConstantValue right = evaluate_constant_expr(*expr.right, left_type);
+                    bool equal = left.bool_value == right.bool_value;
+                    return make_bool_constant(expr.loc, expected, expr.op == TokenKind::EqEq ? equal : !equal);
+                }
+            }
+
+            switch (expr.op) {
+                case TokenKind::EqEq:
+                case TokenKind::BangEq:
+                case TokenKind::Less:
+                case TokenKind::LessEq:
+                case TokenKind::Greater:
+                case TokenKind::GreaterEq:
+                    break;
+                default:
+                    fail(expr.loc, "constant bool expressions support logical and comparison operators");
+            }
+
+            IrType operand_type = infer_constant_binary_integer_type(expr.loc, *expr.left, *expr.right, i64_type(expr.loc));
+            ConstantValue left = evaluate_constant_expr(*expr.left, operand_type);
+            ConstantValue right = evaluate_constant_expr(*expr.right, operand_type);
+            bool result = false;
+            if (is_signed_integer_primitive(operand_type.primitive)) {
+                std::int64_t lhs = constant_integer_to_i64(expr.loc, left);
+                std::int64_t rhs = constant_integer_to_i64(expr.loc, right);
+                switch (expr.op) {
+                    case TokenKind::EqEq: result = lhs == rhs; break;
+                    case TokenKind::BangEq: result = lhs != rhs; break;
+                    case TokenKind::Less: result = lhs < rhs; break;
+                    case TokenKind::LessEq: result = lhs <= rhs; break;
+                    case TokenKind::Greater: result = lhs > rhs; break;
+                    case TokenKind::GreaterEq: result = lhs >= rhs; break;
+                    default: break;
+                }
+            } else {
+                std::uint64_t lhs = constant_integer_to_u64(expr.loc, left);
+                std::uint64_t rhs = constant_integer_to_u64(expr.loc, right);
+                switch (expr.op) {
+                    case TokenKind::EqEq: result = lhs == rhs; break;
+                    case TokenKind::BangEq: result = lhs != rhs; break;
+                    case TokenKind::Less: result = lhs < rhs; break;
+                    case TokenKind::LessEq: result = lhs <= rhs; break;
+                    case TokenKind::Greater: result = lhs > rhs; break;
+                    case TokenKind::GreaterEq: result = lhs >= rhs; break;
+                    default: break;
+                }
+            }
+            return make_bool_constant(expr.loc, expected, result);
+        }
+
+        if (!is_value_integer_type(expected)) {
+            fail(expr.loc, "constant arithmetic expressions require an integer result type");
+        }
+        switch (expr.op) {
+            case TokenKind::Plus:
+            case TokenKind::Minus:
+            case TokenKind::Star:
+            case TokenKind::Slash:
+            case TokenKind::Percent:
+                break;
+            default:
+                fail(expr.loc, "constant integer expressions support +, -, *, /, and %");
+        }
+
+        ConstantValue left = evaluate_constant_expr(*expr.left, expected);
+        ConstantValue right = evaluate_constant_expr(*expr.right, expected);
+        if (is_signed_integer_primitive(expected.primitive)) {
+            std::int64_t lhs = constant_integer_to_i64(expr.loc, left);
+            std::int64_t rhs = constant_integer_to_i64(expr.loc, right);
+            if ((expr.op == TokenKind::Slash || expr.op == TokenKind::Percent) && rhs == 0) {
+                fail(expr.loc, "constant expression divides by zero");
+            }
+            if ((expr.op == TokenKind::Slash || expr.op == TokenKind::Percent) &&
+                lhs == std::numeric_limits<std::int64_t>::min() && rhs == -1) {
+                fail(expr.loc, "constant integer expression result is out of range for " + type_name(expected));
+            }
+
+            std::int64_t result = 0;
+            bool overflow = false;
+            switch (expr.op) {
+                case TokenKind::Plus: overflow = __builtin_add_overflow(lhs, rhs, &result); break;
+                case TokenKind::Minus: overflow = __builtin_sub_overflow(lhs, rhs, &result); break;
+                case TokenKind::Star: overflow = __builtin_mul_overflow(lhs, rhs, &result); break;
+                case TokenKind::Slash: result = lhs / rhs; break;
+                case TokenKind::Percent: result = lhs % rhs; break;
+                default: break;
+            }
+            if (overflow) {
+                fail(expr.loc, "constant integer expression result is out of range for " + type_name(expected));
+            }
+            return make_signed_integer_constant(expr.loc, expected, result);
+        }
+
+        std::uint64_t lhs = constant_integer_to_u64(expr.loc, left);
+        std::uint64_t rhs = constant_integer_to_u64(expr.loc, right);
+        if ((expr.op == TokenKind::Slash || expr.op == TokenKind::Percent) && rhs == 0) {
+            fail(expr.loc, "constant expression divides by zero");
+        }
+        std::uint64_t result = 0;
+        bool overflow = false;
+        switch (expr.op) {
+            case TokenKind::Plus: overflow = __builtin_add_overflow(lhs, rhs, &result); break;
+            case TokenKind::Minus: overflow = __builtin_sub_overflow(lhs, rhs, &result); break;
+            case TokenKind::Star: overflow = __builtin_mul_overflow(lhs, rhs, &result); break;
+            case TokenKind::Slash: result = lhs / rhs; break;
+            case TokenKind::Percent: result = lhs % rhs; break;
+            default: break;
+        }
+        if (overflow) {
+            fail(expr.loc, "constant integer expression result is out of range for " + type_name(expected));
+        }
+        return make_unsigned_integer_constant(expr.loc, expected, result);
+    }
+
+    ConstantValue evaluate_constant_unary_expr(const Expr& expr, const IrType& expected) {
+        if (expr.op == TokenKind::Bang) {
+            ConstantValue value = evaluate_constant_expr(*expr.operand, expected);
+            if (!value.is_bool) fail(expr.loc, "constant ! operand must be bool");
+            return make_bool_constant(expr.loc, expected, !value.bool_value);
+        }
+        if (expr.op == TokenKind::Minus) {
+            if (!is_value_integer_type(expected)) fail(expr.loc, "constant unary - operand must be integer");
+            ConstantValue value = evaluate_constant_expr(*expr.operand, expected);
+            if (!is_signed_integer_primitive(expected.primitive)) {
+                fail(expr.loc, "constant unary - requires a signed integer result type");
+            }
+            std::int64_t operand = constant_integer_to_i64(expr.loc, value);
+            if (operand == std::numeric_limits<std::int64_t>::min()) {
+                fail(expr.loc, "constant integer expression result is out of range for " + type_name(expected));
+            }
+            return make_signed_integer_constant(expr.loc, expected, -operand);
+        }
+        fail(expr.loc, "unsupported constant unary operator");
+    }
+
+    std::vector<ConstantValue> evaluate_constant_expr_list(
+        SourceLocation loc,
+        const std::vector<ExprPtr>& args,
+        const std::vector<IrType>& expected_types,
+        const std::string& aggregate
+    ) {
+        if (args.size() != expected_types.size()) {
+            fail(loc,
+                 aggregate + " constant has " + std::to_string(args.size()) +
+                     " element" + (args.size() == 1 ? "" : "s") +
+                     " but type expects " + std::to_string(expected_types.size()));
+        }
+
+        std::vector<ConstantValue> values;
+        values.reserve(args.size());
+        for (std::size_t i = 0; i < args.size(); ++i) {
+            values.push_back(evaluate_constant_expr(*args[i], expected_types[i]));
+        }
+        return values;
+    }
+
+    ConstantValue make_aggregate_constant(ConstantValueKind kind,
+                                          SourceLocation loc,
+                                          const IrType& expected,
+                                          std::vector<ConstantValue> elements) {
+        if (contains_borrow_type(expected) || is_owner_type(expected)) {
+            fail(loc, "constant aggregate values cannot contain ownership or borrow-qualified fields yet");
+        }
+        ConstantValue value;
+        value.kind = kind;
+        value.type = expected;
+        value.elements = std::move(elements);
+        return value;
+    }
+
+    ConstantValue evaluate_constant_tuple_expr(const Expr& expr, const IrType& expected) {
+        if (expected.qualifier != TypeQualifier::Value || expected.primitive != IrPrimitiveKind::Tuple) {
+            fail(expr.loc, "tuple constant initializer requires a tuple type, got " + type_name(expected));
+        }
+        return make_aggregate_constant(
+            ConstantValueKind::Tuple,
+            expr.loc,
+            expected,
+            evaluate_constant_expr_list(expr.loc, expr.args, expected.args, "tuple")
+        );
+    }
+
+    ConstantValue evaluate_constant_array_expr(const Expr& expr, const IrType& expected) {
+        if (expected.qualifier != TypeQualifier::Value ||
+            expected.primitive != IrPrimitiveKind::Array ||
+            expected.args.size() != 1) {
+            fail(expr.loc, "fixed-array constant initializer requires a fixed-array type, got " + type_name(expected));
+        }
+        if (expr.args.size() != expected.array_size) {
+            fail(expr.loc,
+                 "array constant has " + std::to_string(expr.args.size()) +
+                     " element" + (expr.args.size() == 1 ? "" : "s") +
+                     " but type expects " + std::to_string(expected.array_size));
+        }
+
+        std::vector<IrType> element_types;
+        element_types.reserve(expr.args.size());
+        for (std::size_t i = 0; i < expr.args.size(); ++i) element_types.push_back(expected.args[0]);
+        return make_aggregate_constant(
+            ConstantValueKind::Array,
+            expr.loc,
+            expected,
+            evaluate_constant_expr_list(expr.loc, expr.args, element_types, "array")
+        );
+    }
+
+    ConstantValue evaluate_constant_struct_literal_expr(const Expr& expr, const IrType& expected) {
+        if (expected.qualifier != TypeQualifier::Value || expected.primitive != IrPrimitiveKind::Struct) {
+            fail(expr.loc, "struct constant initializer requires a struct type, got " + type_name(expected));
+        }
+
+        std::vector<IrType> explicit_type_args;
+        explicit_type_args.reserve(expr.type_args.size());
+        for (const auto& type_arg : expr.type_args) {
+            explicit_type_args.push_back(resolve_executable_type(type_arg));
+        }
+        if (explicit_type_args.empty() && !expected.args.empty()) {
+            explicit_type_args = expected.args;
+        }
+        IrType literal_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
+        require_assignable(expr.loc, expected, literal_type);
+        if (literal_type.field_names.size() != expr.field_names.size()) {
+            fail(expr.loc,
+                 "struct literal for '" + literal_type.name + "' expects " +
+                     std::to_string(literal_type.field_names.size()) + " field" +
+                     (literal_type.field_names.size() == 1 ? "" : "s"));
+        }
+
+        std::map<std::string, const Expr*> values;
+        for (std::size_t i = 0; i < expr.field_names.size(); ++i) {
+            const std::string& field_name = expr.field_names[i];
+            if (!values.emplace(field_name, expr.args[i].get()).second) {
+                fail(expr.loc, "duplicate field '" + field_name + "' in struct literal");
+            }
+        }
+
+        std::vector<ConstantValue> elements;
+        elements.reserve(expected.field_names.size());
+        for (std::size_t i = 0; i < expected.field_names.size(); ++i) {
+            const std::string& field_name = expected.field_names[i];
+            auto found = values.find(field_name);
+            if (found == values.end()) {
+                fail(expr.loc, "missing field '" + field_name + "' in struct literal for '" + expected.name + "'");
+            }
+            elements.push_back(evaluate_constant_expr(*found->second, expected.field_types[i]));
+        }
+        return make_aggregate_constant(ConstantValueKind::Struct, expr.loc, expected, std::move(elements));
+    }
+
+    ConstantValue evaluate_constant_tuple_struct_call_expr(const Expr& expr,
+                                                           const StructInfo& info,
+                                                           const IrType& expected) {
+        if (!info.tuple_struct) {
+            fail(expr.loc, "named struct '" + info.name + "' must be constructed with field literal syntax");
+        }
+        if (expected.qualifier != TypeQualifier::Value || expected.primitive != IrPrimitiveKind::Struct) {
+            fail(expr.loc, "tuple-struct constant initializer requires a struct type, got " + type_name(expected));
+        }
+
+        std::vector<IrType> explicit_type_args;
+        explicit_type_args.reserve(expr.type_args.size());
+        for (const auto& type_arg : expr.type_args) {
+            explicit_type_args.push_back(resolve_executable_type(type_arg));
+        }
+        if (explicit_type_args.empty() && !expected.args.empty()) {
+            explicit_type_args = expected.args;
+        }
+        IrType literal_type = resolve_struct_literal_type(expr.loc, info.name, explicit_type_args);
+        require_assignable(expr.loc, expected, literal_type);
+        if (expr.args.size() != expected.field_types.size()) {
+            fail(expr.loc,
+                 "tuple struct '" + info.name + "' expects " + std::to_string(expected.field_types.size()) +
+                     " value" + (expected.field_types.size() == 1 ? "" : "s"));
+        }
+
+        return make_aggregate_constant(
+            ConstantValueKind::Struct,
+            expr.loc,
+            expected,
+            evaluate_constant_expr_list(expr.loc, expr.args, expected.field_types, "tuple struct")
+        );
+    }
+
+    ConstantValue make_enum_constant(SourceLocation loc,
+                                     const IrType& expected,
+                                     const EnumCaseInfo& info,
+                                     std::vector<ConstantValue> payloads) {
+        require_enum_case_access(loc, info);
+        require_assignable(loc, expected, info.enum_type);
+        if (payloads.size() != info.payloads.size()) {
+            fail(loc, "wrong payload count for enum case '" + info.name + "'");
+        }
+        if (contains_borrow_type(expected) || is_owner_type(expected)) {
+            fail(loc, "constant enum values cannot contain ownership or borrow-qualified payloads yet");
+        }
+
+        ConstantValue value;
+        value.kind = ConstantValueKind::Enum;
+        value.type = expected;
+        value.elements = std::move(payloads);
+        value.enum_name = info.enum_name;
+        value.case_name = info.name;
+        value.enum_tag = info.tag;
+        return value;
+    }
+
+    ConstantValue evaluate_constant_enum_case_name(SourceLocation loc,
+                                                   const std::string& name,
+                                                   const IrType& expected) {
+        std::string case_name = resolve_enum_case_name(name);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) {
+            fail(loc, "constant initializer name '" + name + "' must refer to a constant");
+        }
+        EnumCaseInfo info = case_found->second;
+        if (info.is_generic) {
+            info = specialize_enum_case_info(loc, info, expected.args);
+        }
+        if (!info.payloads.empty()) {
+            fail(loc, "enum case '" + name + "' requires a payload");
+        }
+        return make_enum_constant(loc, expected, info, {});
+    }
+
+    ConstantValue evaluate_constant_enum_call_expr(const Expr& expr,
+                                                   const EnumCaseInfo& info,
+                                                   const IrType& expected) {
+        EnumCaseInfo case_info = info;
+        if (info.is_generic) {
+            std::vector<IrType> type_args;
+            type_args.reserve(expr.type_args.size());
+            for (const auto& type_arg : expr.type_args) {
+                type_args.push_back(resolve_executable_type(type_arg));
+            }
+            if (type_args.empty()) {
+                type_args = expected.args;
+            }
+            case_info = specialize_enum_case_info(expr.loc, info, type_args);
+        } else if (!expr.type_args.empty()) {
+            fail(expr.loc, "enum case constructor '" + expr.name + "' does not take type arguments");
+        }
+        return make_enum_constant(
+            expr.loc,
+            expected,
+            case_info,
+            evaluate_constant_expr_list(expr.loc, expr.args, case_info.payloads, "enum payload")
+        );
+    }
+
+    ConstantValue evaluate_constant_expr(const Expr& expr, const IrType& expected) {
+        if (is_value_integer_type(expected) && expr.kind == ExprKind::Integer) {
+            IrType literal_type = expr.literal_suffix.empty()
+                ? expected
+                : integer_literal_suffix_type(expr.literal_suffix, expr.loc);
+            IrExpr literal;
+            literal.kind = IrExprKind::Integer;
+            literal.loc = expr.loc;
+            literal.int_value = expr.int_value;
+            literal.int_negative = expr.int_negative;
+            literal.type = literal_type;
+            if (!integer_literal_fits(literal, literal_type)) {
+                fail(expr.loc, "integer literal " + integer_literal_name(literal) +
+                               " is out of range for " + type_name(literal_type));
+            }
+            require_assignable(expr.loc, expected, literal_type);
+
+            ConstantValue value;
+            value.kind = ConstantValueKind::Integer;
+            value.type = expected;
+            value.int_value = expr.int_value;
+            value.int_negative = expr.int_negative;
+            return value;
+        }
+
+        if (expected.qualifier == TypeQualifier::Value &&
+            expected.primitive == IrPrimitiveKind::Bool &&
+            expr.kind == ExprKind::Bool) {
+            ConstantValue value;
+            value.kind = ConstantValueKind::Bool;
+            value.type = expected;
+            value.is_bool = true;
+            value.bool_value = expr.bool_value;
+            return value;
+        }
+
+        if (expr.kind == ExprKind::Name) {
+            ConstantValue value;
+            if (!resolve_constant_value(expr.loc, expr.name, value)) {
+                if (expected.qualifier == TypeQualifier::Value && expected.primitive == IrPrimitiveKind::Enum) {
+                    return evaluate_constant_enum_case_name(expr.loc, expr.name, expected);
+                }
+                fail(expr.loc, "constant initializer name '" + expr.name + "' must refer to a constant");
+            }
+            require_assignable(expr.loc, expected, value.type);
+            value.type = expected;
+            return value;
+        }
+
+        if (expr.kind == ExprKind::Tuple) {
+            return evaluate_constant_tuple_expr(expr, expected);
+        }
+
+        if (expr.kind == ExprKind::StructLiteral) {
+            return evaluate_constant_struct_literal_expr(expr, expected);
+        }
+
+        if (expr.kind == ExprKind::Vector) {
+            return evaluate_constant_array_expr(expr, expected);
+        }
+
+        if (expr.kind == ExprKind::Call) {
+            std::string case_name = resolve_enum_case_name(expr.name);
+            auto case_found = enum_cases_.find(case_name);
+            if (case_found != enum_cases_.end()) {
+                return evaluate_constant_enum_call_expr(expr, case_found->second, expected);
+            }
+            std::string struct_name = resolve_struct_type_name(expr.name);
+            auto struct_found = structs_.find(struct_name);
+            if (struct_found != structs_.end()) {
+                require_struct_access(expr.loc, struct_found->second);
+                return evaluate_constant_tuple_struct_call_expr(expr, struct_found->second, expected);
+            }
+        }
+
+        if (expr.kind == ExprKind::Unary) {
+            return evaluate_constant_unary_expr(expr, expected);
+        }
+
+        if (expr.kind == ExprKind::Binary) {
+            return evaluate_constant_binary_expr(expr, expected);
+        }
+
+        fail(expr.loc, "constant initializers currently support scalar and aggregate constant expressions");
+    }
+
+    bool resolve_constant_value(SourceLocation loc, const std::string& name, ConstantValue& value) {
+        std::string constant_name = resolve_constant_name(name);
+        auto found = constants_.find(constant_name);
+        if (found == constants_.end()) return false;
+        require_constant_access(loc, found->second, constant_name);
+        value = evaluate_constant(found->second);
+        return true;
+    }
+
+    bool try_constant_pattern_value(const Pattern& pattern, ConstantValue& value) {
+        if (pattern.kind != PatternKind::EnumCase ||
+            pattern.has_payload_pattern ||
+            pattern.has_payload_binding) {
+            return false;
+        }
+        if (!resolve_constant_value(pattern.loc, pattern.case_name, value)) return false;
+        return value.kind == ConstantValueKind::Integer || value.kind == ConstantValueKind::Bool;
+    }
+
+    IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value) const {
+        auto expr = std::make_unique<IrExpr>();
+        expr->loc = loc;
+        expr->type = value.type;
+
+        switch (value.kind) {
+            case ConstantValueKind::Bool:
+                expr->kind = IrExprKind::Bool;
+                expr->bool_value = value.bool_value;
+                return expr;
+            case ConstantValueKind::Tuple:
+            case ConstantValueKind::Struct:
+                expr->kind = IrExprKind::Tuple;
+                expr->args.reserve(value.elements.size());
+                for (const auto& item : value.elements) {
+                    expr->args.push_back(make_constant_expr(loc, item));
+                }
+                return expr;
+            case ConstantValueKind::Array:
+                expr->kind = IrExprKind::Vector;
+                expr->args.reserve(value.elements.size());
+                for (const auto& item : value.elements) {
+                    expr->args.push_back(make_constant_expr(loc, item));
+                }
+                return expr;
+            case ConstantValueKind::Enum:
+                expr->kind = IrExprKind::EnumConstruct;
+                expr->enum_name = value.enum_name;
+                expr->case_name = value.case_name;
+                expr->enum_tag = value.enum_tag;
+                expr->has_payload = !value.elements.empty();
+                if (has_aggregate_enum_layout(value.type)) {
+                    expr->args.reserve(value.elements.size());
+                    for (const auto& item : value.elements) {
+                        expr->args.push_back(make_constant_expr(loc, item));
+                    }
+                } else if (!value.elements.empty()) {
+                    expr->payload_type = value.elements[0].type;
+                    expr->payload = make_constant_expr(loc, value.elements[0]);
+                }
+                return expr;
+            case ConstantValueKind::Integer:
+                break;
+        }
+        expr->kind = IrExprKind::Integer;
+        expr->int_value = value.int_value;
+        expr->int_negative = value.int_negative;
+        return expr;
+    }
+
+    EnumCaseInfo enum_case_for_match_value(
+        SourceLocation loc,
+        const EnumCaseInfo& info,
+        const IrType& enum_value_type
+    ) {
+        if (info.is_generic) {
+            return specialize_enum_case_info(loc, info, enum_value_type.args);
+        }
+        return info;
+    }
+
+    IrMatchArm lower_enum_case_pattern(
+        const Pattern& pattern,
+        const EnumInfo& enum_info,
+        const IrType& enum_value_type
+    ) {
+        if (pattern.kind == PatternKind::Alias) {
+            if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+            if (pattern.alias_pattern->kind == PatternKind::Or) {
+                fail(pattern.loc, "alias patterns around or-patterns are planned but are not supported yet");
+            }
+            IrMatchArm lowered_arm = lower_enum_case_pattern(*pattern.alias_pattern, enum_info, enum_value_type);
+            apply_value_binding(lowered_arm, pattern.loc, pattern.alias_name, enum_match_value_type(pattern.loc, enum_value_type));
+            return lowered_arm;
+        }
+        if (pattern.kind != PatternKind::EnumCase) {
+            fail(pattern.loc, "control-flow let patterns require an enum case pattern");
+        }
+
+        std::string case_name = resolve_enum_case_name(pattern.case_name);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) {
+            fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
+        }
+        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
+        require_enum_case_access(pattern.loc, case_info);
+        if (case_info.enum_name != enum_info.name) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' does not belong to " + enum_info.name);
+        }
+        if (case_info.payloads.empty() && pattern.has_payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
+        }
+        if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+        }
+
+        IrMatchArm lowered_arm;
+        lowered_arm.loc = pattern.loc;
+        lowered_arm.case_name = case_info.name;
+        lowered_arm.enum_tag = case_info.tag;
+        lower_enum_payload_pattern(pattern, case_info, lowered_arm);
+        return lowered_arm;
+    }
+
+    const EnumInfo& require_enum_match_value(SourceLocation loc, const IrExpr& value) const {
+        if (is_borrow_type(value.type)) {
+            fail(loc, "borrow expression result must be passed directly to a call");
+        }
+        if (!is_value_enum_type(value.type)) {
+            fail(loc, "pattern control flow requires an enum value, got " + type_name(value.type));
+        }
+        auto enum_found = enums_.find(value.type.name);
+        if (enum_found == enums_.end()) {
+            fail(loc, "unknown enum type '" + value.type.name + "'");
+        }
+        return enum_found->second;
+    }
+
+    IrMatchArm lower_match_arm_pattern(const Pattern& pattern,
+                                       const EnumInfo& enum_info,
+                                       const IrType& enum_value_type,
+                                       EnumMatchCoverage& coverage) {
+        if (coverage.has_wildcard) fail(pattern.loc, "unreachable match arm after wildcard");
+
+        if (pattern.kind == PatternKind::Alias) {
+            if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+            if (pattern.alias_pattern->kind == PatternKind::Or) {
+                fail(pattern.loc, "alias patterns around or-patterns are planned but are not supported yet");
+            }
+            IrMatchArm lowered_arm = lower_match_arm_pattern(*pattern.alias_pattern, enum_info, enum_value_type, coverage);
+            apply_value_binding(lowered_arm, pattern.loc, pattern.alias_name, enum_match_value_type(pattern.loc, enum_value_type));
+            return lowered_arm;
+        }
+
+        IrMatchArm lowered_arm;
+        lowered_arm.loc = pattern.loc;
+
+        if (pattern.kind == PatternKind::Wildcard) {
+            lowered_arm.wildcard = true;
+            coverage.has_wildcard = true;
+            return lowered_arm;
+        }
+        if (pattern.kind != PatternKind::EnumCase) {
+            fail(pattern.loc, "enum match patterns must be enum cases or _");
+        }
+
+        std::string case_name = resolve_enum_case_name(pattern.case_name);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) {
+            fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
+        }
+        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
+        require_enum_case_access(pattern.loc, case_info);
+        if (case_info.enum_name != enum_info.name) {
+            fail(pattern.loc,
+                 "enum case '" + pattern.case_name + "' does not belong to " + enum_info.name);
+        }
+        if (case_info.payloads.empty() && pattern.has_payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
+        }
+        if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+        }
+
+        lowered_arm.case_name = case_info.name;
+        lowered_arm.enum_tag = case_info.tag;
+        bool covers_case = lower_enum_payload_pattern(pattern, case_info, lowered_arm);
+        note_enum_match_coverage(pattern, case_info, lowered_arm, covers_case, coverage);
+        return lowered_arm;
+    }
+
+    std::vector<IrMatchArm> lower_match_arm_patterns(const Pattern& pattern,
+                                                     const EnumInfo& enum_info,
+                                                     const IrType& enum_value_type,
+                                                     EnumMatchCoverage& coverage) {
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
+        if (pattern_contains_or(pattern)) {
+            require_same_or_pattern_bindings(pattern.loc, alternatives, enum_match_value_type(pattern.loc, enum_value_type));
+        }
+
+        std::vector<IrMatchArm> arms;
+        for (const auto& alternative : alternatives) {
+            arms.push_back(lower_match_arm_pattern(alternative, enum_info, enum_value_type, coverage));
+        }
+        return arms;
+    }
+
+    void note_enum_match_coverage(const Pattern& pattern,
+                                  const EnumCaseInfo& case_info,
+                                  const IrMatchArm& lowered_arm,
+                                  bool covers_case,
+                                  EnumMatchCoverage& coverage) const {
+        if (coverage.covered_tags.count(case_info.tag)) {
+            fail(pattern.loc, "duplicate match arm for enum case '" + pattern.case_name + "'");
+        }
+        if (covers_case) {
+            coverage.covered_tags.insert(case_info.tag);
+            return;
+        }
+
+        if (!coverage.covered_payload_literals.insert(lowered_arm.literal_int).second) {
+            fail(pattern.loc, "duplicate match arm for enum payload pattern '" + pattern.case_name + "'");
+        }
+        if (is_bool_payload_literal_pattern(pattern, case_info)) {
+            unsigned bit = pattern.payload_pattern->bool_value ? 0b10 : 0b01;
+            unsigned& mask = coverage.covered_bool_payloads[case_info.tag];
+            mask |= bit;
+            if ((mask & 0b11) == 0b11) {
+                coverage.covered_tags.insert(case_info.tag);
+            }
+        }
+    }
+
+    static bool is_bool_payload_literal_pattern(const Pattern& pattern, const EnumCaseInfo& case_info) {
+        if (!pattern.payload_pattern || pattern.payload_pattern->kind != PatternKind::BoolLiteral) return false;
+        if (case_info.payloads.empty()) return false;
+        const IrType& payload_type = case_info.payloads[0];
+        return payload_type.qualifier == TypeQualifier::Value &&
+               payload_type.primitive == IrPrimitiveKind::Bool;
+    }
+
+    static bool pattern_has_binding(const Pattern& pattern) {
+        if (pattern.kind == PatternKind::Binding) return true;
+        if (pattern.kind == PatternKind::Alias) return true;
+        if (pattern.alias_pattern && pattern_has_binding(*pattern.alias_pattern)) return true;
+        if (pattern.payload_pattern && pattern_has_binding(*pattern.payload_pattern)) return true;
+        for (const auto& alternative : pattern.alternatives) {
+            if (pattern_has_binding(alternative)) return true;
+        }
+        for (const auto& element : pattern.elements) {
+            if (pattern_has_binding(element)) return true;
+        }
+        return false;
+    }
+
+    static bool pattern_contains_or(const Pattern& pattern) {
+        if (pattern.kind == PatternKind::Or) return true;
+        if (pattern.alias_pattern && pattern_contains_or(*pattern.alias_pattern)) return true;
+        if (pattern.payload_pattern && pattern_contains_or(*pattern.payload_pattern)) return true;
+        for (const auto& alternative : pattern.alternatives) {
+            if (pattern_contains_or(alternative)) return true;
+        }
+        for (const auto& element : pattern.elements) {
+            if (pattern_contains_or(element)) return true;
+        }
+        return false;
+    }
+
+    static Pattern clone_pattern_without_children(const Pattern& pattern) {
+        Pattern copy;
+        copy.kind = pattern.kind;
+        copy.case_name = pattern.case_name;
+        copy.has_payload_pattern = pattern.has_payload_pattern;
+        copy.has_payload_binding = pattern.has_payload_binding;
+        copy.payload_name = pattern.payload_name;
+        copy.int_value = pattern.int_value;
+        copy.int_negative = pattern.int_negative;
+        copy.literal_suffix = pattern.literal_suffix;
+        copy.range_end_value = pattern.range_end_value;
+        copy.range_end_negative = pattern.range_end_negative;
+        copy.range_end_suffix = pattern.range_end_suffix;
+        copy.range_inclusive = pattern.range_inclusive;
+        copy.bool_value = pattern.bool_value;
+        copy.field_names = pattern.field_names;
+        copy.has_rest = pattern.has_rest;
+        copy.rest_index = pattern.rest_index;
+        copy.alias_name = pattern.alias_name;
+        copy.loc = pattern.loc;
+        return copy;
+    }
+
+    static Pattern clone_pattern(const Pattern& pattern) {
+        Pattern copy = clone_pattern_without_children(pattern);
+        if (pattern.payload_pattern) {
+            copy.payload_pattern = std::make_unique<Pattern>(clone_pattern(*pattern.payload_pattern));
+        }
+        if (pattern.alias_pattern) {
+            copy.alias_pattern = std::make_unique<Pattern>(clone_pattern(*pattern.alias_pattern));
+        }
+        copy.alternatives.reserve(pattern.alternatives.size());
+        for (const auto& alternative : pattern.alternatives) {
+            copy.alternatives.push_back(clone_pattern(alternative));
+        }
+        copy.elements.reserve(pattern.elements.size());
+        for (const auto& element : pattern.elements) {
+            copy.elements.push_back(clone_pattern(element));
+        }
+        return copy;
+    }
+
+    static constexpr std::size_t kMaxOrPatternExpansions = 64;
+
+    static void append_pattern_expansion(std::vector<Pattern>& out, Pattern pattern, SourceLocation loc) {
+        if (out.size() >= kMaxOrPatternExpansions) {
+            fail(loc, "or-pattern expands to too many alternatives");
+        }
+        out.push_back(std::move(pattern));
+    }
+
+    static std::vector<Pattern> expand_or_pattern_alternatives(const Pattern& pattern) {
+        if (pattern.kind == PatternKind::Or) {
+            std::vector<Pattern> out;
+            for (const auto& alternative : pattern.alternatives) {
+                std::vector<Pattern> expanded = expand_or_pattern_alternatives(alternative);
+                for (auto& item : expanded) append_pattern_expansion(out, std::move(item), pattern.loc);
+            }
+            return out;
+        }
+
+        std::vector<Pattern> expanded;
+        expanded.push_back(clone_pattern_without_children(pattern));
+
+        if (pattern.alias_pattern) {
+            std::vector<Pattern> child_expansions = expand_or_pattern_alternatives(*pattern.alias_pattern);
+            std::vector<Pattern> next;
+            for (const auto& base : expanded) {
+                for (const auto& child : child_expansions) {
+                    Pattern copy = clone_pattern(base);
+                    copy.alias_pattern = std::make_unique<Pattern>(clone_pattern(child));
+                    append_pattern_expansion(next, std::move(copy), pattern.loc);
+                }
+            }
+            expanded = std::move(next);
+        }
+
+        if (pattern.payload_pattern) {
+            std::vector<Pattern> child_expansions = expand_or_pattern_alternatives(*pattern.payload_pattern);
+            std::vector<Pattern> next;
+            for (const auto& base : expanded) {
+                for (const auto& child : child_expansions) {
+                    Pattern copy = clone_pattern(base);
+                    copy.payload_pattern = std::make_unique<Pattern>(clone_pattern(child));
+                    append_pattern_expansion(next, std::move(copy), pattern.loc);
+                }
+            }
+            expanded = std::move(next);
+        }
+
+        for (const auto& element : pattern.elements) {
+            std::vector<Pattern> child_expansions = expand_or_pattern_alternatives(element);
+            std::vector<Pattern> next;
+            for (const auto& base : expanded) {
+                for (const auto& child : child_expansions) {
+                    Pattern copy = clone_pattern(base);
+                    copy.elements.push_back(clone_pattern(child));
+                    append_pattern_expansion(next, std::move(copy), pattern.loc);
+                }
+            }
+            expanded = std::move(next);
+        }
+
+        return expanded;
+    }
+
+    using PatternBindingSignature = std::map<std::string, IrType>;
+
+    static void add_pattern_binding(SourceLocation loc,
+                                    PatternBindingSignature& bindings,
+                                    const std::string& name,
+                                    const IrType& type) {
+        auto inserted = bindings.emplace(name, type);
+        if (!inserted.second) {
+            fail(loc, "duplicate binding '" + name + "' in pattern");
+        }
+    }
+
+    void collect_pattern_bindings(const Pattern& pattern,
+                                  const IrType& type,
+                                  PatternBindingSignature& bindings) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+                return;
+            case PatternKind::Binding:
+                add_pattern_binding(pattern.loc, bindings, pattern.payload_name, type);
+                return;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                add_pattern_binding(pattern.loc, bindings, pattern.alias_name, type);
+                collect_pattern_bindings(*pattern.alias_pattern, type, bindings);
+                return;
+            case PatternKind::Or:
+                fail(pattern.loc, "internal error: or-pattern should be expanded before binding collection");
+            case PatternKind::Tuple:
+            case PatternKind::Array: {
+                IrPrimitiveKind expected = pattern.kind == PatternKind::Array
+                    ? IrPrimitiveKind::Array
+                    : IrPrimitiveKind::Tuple;
+                if (type.primitive != expected) return;
+                const std::vector<IrType>& fields = aggregate_field_types(type);
+                require_tuple_pattern_arity(pattern, type, fields);
+                for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+                    std::size_t field_index = tuple_pattern_field_index(pattern, fields.size(), i);
+                    collect_pattern_bindings(pattern.elements[i], fields[field_index], bindings);
+                }
+                return;
+            }
+            case PatternKind::Struct: {
+                if (type.primitive != IrPrimitiveKind::Struct) return;
+                require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
+                if (!pattern.has_rest && pattern.field_names.size() != type.field_names.size()) {
+                    fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
+                }
+                std::set<std::string> seen_fields;
+                for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+                    if (!seen_fields.insert(pattern.field_names[i]).second) {
+                        fail(pattern.elements[i].loc, "duplicate field '" + pattern.field_names[i] + "' in struct match pattern");
+                    }
+                    std::size_t field_index = struct_field_index(pattern.elements[i].loc, type, pattern.field_names[i]);
+                    collect_pattern_bindings(pattern.elements[i], type.field_types[field_index], bindings);
+                }
+                return;
+            }
+            case PatternKind::EnumCase:
+                break;
+        }
+
+        if (type.primitive == IrPrimitiveKind::Struct) {
+            const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
+            if (!info.tuple_struct) return;
+            if (!pattern.has_payload_pattern || !pattern.payload_pattern) return;
+            const std::vector<IrType>& fields = aggregate_field_types(type);
+            if (pattern.payload_pattern->kind == PatternKind::Tuple) {
+                require_tuple_pattern_arity(*pattern.payload_pattern, type, fields);
+                for (std::size_t i = 0; i < pattern.payload_pattern->elements.size(); ++i) {
+                    std::size_t field_index = tuple_pattern_field_index(*pattern.payload_pattern, fields.size(), i);
+                    collect_pattern_bindings(pattern.payload_pattern->elements[i], fields[field_index], bindings);
+                }
+                return;
+            }
+            if (fields.size() == 1) collect_pattern_bindings(*pattern.payload_pattern, fields[0], bindings);
+            return;
+        }
+
+        if (is_value_enum_type(type)) {
+            auto enum_found = enums_.find(type.name);
+            if (enum_found == enums_.end()) fail(pattern.loc, "unknown enum type '" + type.name + "'");
+            std::string case_name = resolve_enum_case_name(pattern.case_name);
+            auto case_found = enum_cases_.find(case_name);
+            if (case_found == enum_cases_.end()) fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
+            EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, type);
+            require_enum_case_access(pattern.loc, case_info);
+            if (case_info.enum_name != enum_found->second.name) {
+                fail(pattern.loc, "enum case '" + pattern.case_name + "' does not belong to " + enum_found->second.name);
+            }
+            if (case_info.payloads.empty()) return;
+            if (!pattern.has_payload_pattern || !pattern.payload_pattern) {
+                fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+            }
+            if (case_info.payloads.size() == 1) {
+                const Pattern& payload = *pattern.payload_pattern;
+                if (payload.kind == PatternKind::Tuple && payload.has_rest && payload.elements.empty()) return;
+                collect_pattern_bindings(payload, case_info.payloads[0], bindings);
+                return;
+            }
+            const Pattern& payload = *pattern.payload_pattern;
+            if (payload.kind != PatternKind::Tuple) return;
+            require_tuple_pattern_arity(payload, case_info.enum_type, case_info.payloads);
+            std::size_t suffix_count = payload.has_rest ? payload.elements.size() - payload.rest_index : 0;
+            for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+                std::size_t payload_index = i;
+                if (payload.has_rest && i >= payload.rest_index) {
+                    payload_index = case_info.payloads.size() - suffix_count + (i - payload.rest_index);
+                }
+                collect_pattern_bindings(payload.elements[i], case_info.payloads[payload_index], bindings);
+            }
+            return;
+        }
+
+        ConstantValue constant_pattern;
+        if (try_constant_pattern_value(pattern, constant_pattern)) return;
+    }
+
+    std::set<std::string> require_same_or_pattern_bindings(SourceLocation loc,
+                                                           const std::vector<Pattern>& alternatives,
+                                                           const IrType& type) {
+        if (alternatives.size() <= 1) return {};
+
+        std::vector<PatternBindingSignature> signatures;
+        signatures.reserve(alternatives.size());
+        for (const auto& alternative : alternatives) {
+            PatternBindingSignature signature;
+            collect_pattern_bindings(alternative, type, signature);
+            signatures.push_back(std::move(signature));
+        }
+
+        const PatternBindingSignature& expected = signatures[0];
+        for (std::size_t i = 1; i < signatures.size(); ++i) {
+            const PatternBindingSignature& actual = signatures[i];
+            if (actual.size() != expected.size()) {
+                fail(loc, "or-pattern alternatives must bind the same names");
+            }
+            for (const auto& [name, expected_type] : expected) {
+                auto found = actual.find(name);
+                if (found == actual.end()) {
+                    fail(loc, "or-pattern alternatives must bind the same names");
+                }
+                if (!same_type(expected_type, found->second)) {
+                    fail(loc,
+                         "or-pattern binding '" + name + "' has inconsistent types: " +
+                             type_name(expected_type) + " and " + type_name(found->second));
+                }
+            }
+        }
+
+        std::set<std::string> names;
+        for (const auto& [name, type] : expected) {
+            (void)type;
+            names.insert(name);
+        }
+        return names;
+    }
+
+    bool lower_enum_payload_pattern(const Pattern& pattern,
+                                    const EnumCaseInfo& case_info,
+                                    IrMatchArm& lowered_arm) {
+        if (case_info.payloads.empty()) return true;
+        if (!pattern.payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+        }
+
+        const Pattern& payload = *pattern.payload_pattern;
+        bool aggregate_layout = has_aggregate_enum_layout(case_info.enum_type);
+        if (case_info.payloads.size() > 1) {
+            if (payload.kind != PatternKind::Tuple) {
+                fail(payload.loc, "multi-payload enum case patterns must use positional payload patterns");
+            }
+            require_tuple_pattern_arity(payload, case_info.enum_type, case_info.payloads);
+            bool covers_case = true;
+            std::size_t suffix_count = payload.has_rest ? payload.elements.size() - payload.rest_index : 0;
+            for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+                std::size_t payload_index = i;
+                if (payload.has_rest && i >= payload.rest_index) {
+                    payload_index = case_info.payloads.size() - suffix_count + (i - payload.rest_index);
+                }
+                covers_case = lower_enum_payload_slot_pattern(
+                    payload.elements[i],
+                    case_info.payloads[payload_index],
+                    case_info,
+                    lowered_arm,
+                    static_cast<std::uint32_t>(payload_index),
+                    aggregate_layout
+                ) && covers_case;
+            }
+            return covers_case;
+        }
+
+        if (payload.kind == PatternKind::Tuple && payload.has_rest && payload.elements.empty()) {
+            return true;
+        }
+        return lower_enum_payload_slot_pattern(payload, case_info.payloads[0], case_info, lowered_arm, 0, aggregate_layout);
+    }
+
+    bool lower_enum_payload_slot_pattern(const Pattern& payload,
+                                         const IrType& payload_type,
+                                         const EnumCaseInfo& case_info,
+                                         IrMatchArm& lowered_arm,
+                                         std::uint32_t payload_index,
+                                         bool aggregate_layout) {
+        switch (payload.kind) {
+            case PatternKind::Binding:
+                add_payload_binding(lowered_arm, payload_index, payload.payload_name, payload_type);
+                return true;
+            case PatternKind::Wildcard:
+                return true;
+            case PatternKind::IntegerLiteral:
+                if (aggregate_layout) {
+                    fail(payload.loc, "literal patterns inside aggregate enum payloads are planned but are not supported yet");
+                }
+                lowered_arm.has_literal = true;
+                lowered_arm.literal_int = encode_enum_payload_integer_literal(payload, payload_type, case_info.tag);
+                lowered_arm.literal_negative = false;
+                return false;
+            case PatternKind::BoolLiteral:
+                if (aggregate_layout) {
+                    fail(payload.loc, "literal patterns inside aggregate enum payloads are planned but are not supported yet");
+                }
+                if (payload_type.qualifier != TypeQualifier::Value ||
+                    payload_type.primitive != IrPrimitiveKind::Bool) {
+                    fail(payload.loc, "bool payload patterns require a bool enum payload");
+                }
+                lowered_arm.has_literal = true;
+                lowered_arm.literal_int = ((payload.bool_value ? 1ULL : 0ULL) << 32) | case_info.tag;
+                lowered_arm.literal_negative = false;
+                return false;
+            case PatternKind::Alias:
+                lower_alias_payload_pattern(payload, payload_type, case_info, lowered_arm, payload_index, aggregate_layout);
+                return payload.alias_pattern && payload.alias_pattern->kind == PatternKind::Wildcard;
+            case PatternKind::Range:
+                fail(payload.loc, "range payload patterns are planned but are not supported yet");
+            case PatternKind::Or:
+                fail(payload.loc, "or-pattern enum payloads are planned but are not supported yet");
+            case PatternKind::EnumCase: {
+                ConstantValue constant_pattern;
+                if (try_constant_pattern_value(payload, constant_pattern)) {
+                    if (aggregate_layout) {
+                        fail(payload.loc, "constant patterns inside aggregate enum payloads are planned but are not supported yet");
+                    }
+                    lower_enum_payload_constant_pattern(payload.loc, constant_pattern, payload_type, case_info, lowered_arm);
+                    return false;
+                }
+                fail(payload.loc, "nested enum payload patterns are planned but are not supported yet");
+            }
+            case PatternKind::Tuple:
+                if (payload.has_rest && payload.elements.empty()) return true;
+                fail(payload.loc, "nested tuple enum payload patterns are planned but are not supported yet");
+            case PatternKind::Array:
+                fail(payload.loc, "array enum payload patterns are planned after aggregate enum payload layout");
+            case PatternKind::Struct:
+                fail(payload.loc, "struct enum payload patterns are planned after aggregate enum payload layout");
+        }
+        fail(payload.loc, "unsupported enum payload pattern");
+    }
+
+    void lower_alias_payload_pattern(const Pattern& payload,
+                                     const IrType& payload_type,
+                                     const EnumCaseInfo& case_info,
+                                     IrMatchArm& lowered_arm,
+                                     std::uint32_t payload_index,
+                                     bool aggregate_layout) {
+        if (!payload.alias_pattern) fail(payload.loc, "missing aliased payload pattern");
+        if (pattern_has_binding(*payload.alias_pattern)) {
+            fail(payload.loc, "alias payload patterns cannot contain another binding yet");
+        }
+        add_payload_binding(lowered_arm, payload_index, payload.alias_name, payload_type);
+
+        const Pattern& aliased = *payload.alias_pattern;
+        switch (aliased.kind) {
+            case PatternKind::Wildcard:
+                return;
+            case PatternKind::IntegerLiteral:
+                if (aggregate_layout) {
+                    fail(aliased.loc, "literal patterns inside aggregate enum payloads are planned but are not supported yet");
+                }
+                lowered_arm.has_literal = true;
+                lowered_arm.literal_int = encode_enum_payload_integer_literal(aliased, payload_type, case_info.tag);
+                lowered_arm.literal_negative = false;
+                return;
+            case PatternKind::BoolLiteral:
+                if (aggregate_layout) {
+                    fail(aliased.loc, "literal patterns inside aggregate enum payloads are planned but are not supported yet");
+                }
+                if (payload_type.qualifier != TypeQualifier::Value ||
+                    payload_type.primitive != IrPrimitiveKind::Bool) {
+                    fail(aliased.loc, "bool payload patterns require a bool enum payload");
+                }
+                lowered_arm.has_literal = true;
+                lowered_arm.literal_int = ((aliased.bool_value ? 1ULL : 0ULL) << 32) | case_info.tag;
+                lowered_arm.literal_negative = false;
+                return;
+            case PatternKind::Range:
+                fail(aliased.loc, "range payload patterns are planned but are not supported yet");
+            case PatternKind::Or:
+                fail(aliased.loc, "or-pattern enum payloads are planned but are not supported yet");
+            case PatternKind::EnumCase: {
+                ConstantValue constant_pattern;
+                if (try_constant_pattern_value(aliased, constant_pattern)) {
+                    if (aggregate_layout) {
+                        fail(aliased.loc, "constant patterns inside aggregate enum payloads are planned but are not supported yet");
+                    }
+                    lower_enum_payload_constant_pattern(aliased.loc, constant_pattern, payload_type, case_info, lowered_arm);
+                    return;
+                }
+                fail(aliased.loc, "nested enum payload patterns are planned but are not supported yet");
+            }
+            case PatternKind::Tuple:
+                if (aliased.has_rest && aliased.elements.empty()) return;
+                fail(aliased.loc, "nested tuple enum payload patterns are planned but are not supported yet");
+            case PatternKind::Array:
+                fail(aliased.loc, "array enum payload patterns are planned after aggregate enum payload layout");
+            case PatternKind::Struct:
+                fail(aliased.loc, "struct enum payload patterns are planned after aggregate enum payload layout");
+            case PatternKind::Binding:
+            case PatternKind::Alias:
+                fail(aliased.loc, "alias payload patterns cannot contain another binding yet");
+        }
+        fail(aliased.loc, "unsupported aliased enum payload pattern");
+    }
+
+    void lower_enum_payload_constant_pattern(SourceLocation loc,
+                                             const ConstantValue& value,
+                                             const IrType& payload_type,
+                                             const EnumCaseInfo& case_info,
+                                             IrMatchArm& lowered_arm) const {
+        if (payload_type.qualifier == TypeQualifier::Value &&
+            payload_type.primitive == IrPrimitiveKind::Bool) {
+            if (!value.is_bool) fail(loc, "bool payload constant pattern must have type bool");
+            lowered_arm.has_literal = true;
+            lowered_arm.literal_int = ((value.bool_value ? 1ULL : 0ULL) << 32) | case_info.tag;
+            lowered_arm.literal_negative = false;
+            return;
+        }
+
+        if (!is_value_integer_type(payload_type)) {
+            fail(loc, "constant enum payload patterns require integer or bool payloads");
+        }
+        if (value.is_bool || !is_value_integer_type(value.type)) {
+            fail(loc, "integer payload constant pattern must have an integer type");
+        }
+        require_assignable(loc, payload_type, value.type);
+
+        std::uint64_t payload_bits = integer_literal_payload_bits(
+            value.int_value,
+            value.int_negative,
+            payload_type
+        );
+        lowered_arm.has_literal = true;
+        lowered_arm.literal_int = (payload_bits << 32) | case_info.tag;
+        lowered_arm.literal_negative = false;
+    }
+
+    static std::uint64_t encode_enum_payload_integer_literal(const Pattern& pattern,
+                                                            const IrType& payload_type,
+                                                            std::uint32_t tag) {
+        if (!is_value_integer_type(payload_type)) {
+            fail(pattern.loc, "integer payload patterns require an integer enum payload");
+        }
+
+        IrExpr literal;
+        literal.kind = IrExprKind::Integer;
+        literal.loc = pattern.loc;
+        literal.int_value = pattern.int_value;
+        literal.int_negative = pattern.int_negative;
+        literal.type = pattern.literal_suffix.empty()
+            ? payload_type
+            : integer_literal_suffix_type(pattern.literal_suffix, pattern.loc);
+        if (!integer_literal_fits(literal, literal.type)) {
+            fail(pattern.loc, "integer literal " + integer_literal_name(literal) +
+                              " is out of range for " + type_name(literal.type));
+        }
+        require_assignable(pattern.loc, payload_type, literal.type);
+
+        std::uint64_t payload_bits = integer_literal_payload_bits(
+            pattern.int_value,
+            pattern.int_negative,
+            payload_type
+        );
+        return (payload_bits << 32) | tag;
+    }
+
+    static std::uint64_t integer_literal_payload_bits(std::uint64_t value,
+                                                      bool negative,
+                                                      const IrType& payload_type) {
+        std::uint64_t raw = negative ? 0 - value : value;
+        unsigned width = integer_payload_width(payload_type.primitive);
+        if (width == 64) return raw;
+        std::uint64_t mask = (1ULL << width) - 1;
+        raw &= mask;
+        if (is_signed_integer_primitive(payload_type.primitive) && (raw & (1ULL << (width - 1)))) {
+            raw |= ~mask;
+        }
+        return raw;
+    }
+
+    static unsigned integer_payload_width(IrPrimitiveKind primitive) {
+        switch (primitive) {
+            case IrPrimitiveKind::I8:
+            case IrPrimitiveKind::U8:
+                return 8;
+            case IrPrimitiveKind::I16:
+            case IrPrimitiveKind::U16:
+                return 16;
+            case IrPrimitiveKind::I32:
+            case IrPrimitiveKind::U32:
+                return 32;
+            case IrPrimitiveKind::I64:
+            case IrPrimitiveKind::U64:
+                return 64;
+            default:
+                return 64;
+        }
+    }
+
+    static IrMatchExprArm make_match_expr_arm(IrMatchArm arm) {
+        IrMatchExprArm expr_arm;
+        expr_arm.wildcard = arm.wildcard;
+        expr_arm.has_literal = arm.has_literal;
+        expr_arm.literal_is_bool = arm.literal_is_bool;
+        expr_arm.literal_int = arm.literal_int;
+        expr_arm.literal_negative = arm.literal_negative;
+        expr_arm.literal_bool = arm.literal_bool;
+        expr_arm.has_range = arm.has_range;
+        expr_arm.range_start_int = arm.range_start_int;
+        expr_arm.range_start_negative = arm.range_start_negative;
+        expr_arm.range_end_int = arm.range_end_int;
+        expr_arm.range_end_negative = arm.range_end_negative;
+        expr_arm.range_inclusive = arm.range_inclusive;
+        expr_arm.range_is_unsigned = arm.range_is_unsigned;
+        expr_arm.case_name = std::move(arm.case_name);
+        expr_arm.enum_tag = arm.enum_tag;
+        expr_arm.has_value_binding = arm.has_value_binding;
+        expr_arm.value_name = std::move(arm.value_name);
+        expr_arm.value_type = std::move(arm.value_type);
+        expr_arm.has_payload_binding = arm.has_payload_binding;
+        expr_arm.payload_name = std::move(arm.payload_name);
+        expr_arm.payload_type = std::move(arm.payload_type);
+        expr_arm.payload_index = arm.payload_index;
+        expr_arm.payload_bindings = std::move(arm.payload_bindings);
+        expr_arm.loc = arm.loc;
+        return expr_arm;
+    }
+
+    static void require_match_exhaustive(SourceLocation loc,
+                                         const EnumInfo& enum_info,
+                                         const EnumMatchCoverage& coverage) {
+        if (!coverage.has_wildcard && coverage.covered_tags.size() != enum_info.case_names.size()) {
+            fail(loc, "match must cover all cases of enum '" + enum_info.name + "'");
+        }
+    }
+
+    static IrType enum_match_value_type(SourceLocation loc, const IrType& enum_value_type) {
+        IrType type = enum_value_type;
+        type.loc = loc;
+        return type;
+    }
+
+    static void apply_value_binding(IrMatchArm& arm,
+                                    SourceLocation loc,
+                                    const std::string& name,
+                                    const IrType& type) {
+        arm.has_value_binding = true;
+        arm.value_name = name;
+        arm.value_type = type;
+        arm.loc = loc;
+    }
+
+    static void add_payload_binding(IrMatchArm& arm,
+                                    std::uint32_t index,
+                                    const std::string& name,
+                                    const IrType& type) {
+        IrPayloadBinding binding;
+        binding.index = index;
+        binding.name = name;
+        binding.type = type;
+        arm.payload_bindings.push_back(binding);
+        if (!arm.has_payload_binding) {
+            arm.has_payload_binding = true;
+            arm.payload_index = index;
+            arm.payload_name = name;
+            arm.payload_type = type;
+        }
+    }
+
+    template <typename Arm>
+    void declare_match_arm_bindings(const Arm& arm) {
+        if (arm.has_value_binding) {
+            declare_local(arm.loc, arm.value_name, arm.value_type, false);
+        }
+        if (!arm.payload_bindings.empty()) {
+            for (const auto& binding : arm.payload_bindings) {
+                declare_local(arm.loc, binding.name, binding.type, false);
+            }
+        } else if (arm.has_payload_binding) {
+            declare_local(arm.loc, arm.payload_name, arm.payload_type, false);
+        }
+    }
+
+    IrMatchArm lower_scalar_constant_match_arm_pattern(const Pattern& pattern,
+                                                       const ConstantValue& value,
+                                                       const IrType& match_type,
+                                                       ScalarMatchCoverage& coverage) {
+        IrMatchArm lowered_arm;
+        lowered_arm.loc = pattern.loc;
+
+        if (match_type.qualifier == TypeQualifier::Value && match_type.primitive == IrPrimitiveKind::Bool) {
+            if (!value.is_bool) {
+                fail(pattern.loc, "bool match constant pattern must have type bool");
+            }
+            std::string key = value.bool_value ? "true" : "false";
+            if (coverage.covered_patterns.count(key)) warn_scalar_match_shadow(pattern.loc);
+            coverage.covered_patterns.insert(key);
+            lowered_arm.has_literal = true;
+            lowered_arm.literal_is_bool = true;
+            lowered_arm.literal_bool = value.bool_value;
+            return lowered_arm;
+        }
+
+        if (!is_value_integer_type(match_type)) {
+            fail(pattern.loc, "constant match patterns require integer or bool match values");
+        }
+        if (value.is_bool || !is_value_integer_type(value.type)) {
+            fail(pattern.loc, "integer match constant pattern must have an integer type");
+        }
+        require_assignable(pattern.loc, match_type, value.type);
+
+        std::uint64_t point = integer_pattern_order_value(value.int_value, value.int_negative, match_type);
+        if (integer_interval_is_fully_covered(coverage, point, point)) {
+            warn_scalar_match_shadow(pattern.loc);
+        }
+        note_integer_coverage(coverage, match_type, value.int_value, value.int_negative);
+        lowered_arm.has_literal = true;
+        lowered_arm.literal_int = value.int_value;
+        lowered_arm.literal_negative = value.int_negative;
+        return lowered_arm;
+    }
+
+    IrMatchArm lower_scalar_match_arm_pattern(const Pattern& pattern,
+                                              const IrType& match_type,
+                                              ScalarMatchCoverage& coverage) {
+        if (coverage.has_wildcard) fail(pattern.loc, "unreachable match arm after wildcard");
+
+        if (pattern.kind == PatternKind::Alias) {
+            if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+            if (pattern.alias_pattern->kind == PatternKind::Or) {
+                fail(pattern.loc, "alias patterns around or-patterns are planned but are not supported yet");
+            }
+            IrMatchArm lowered_arm = lower_scalar_match_arm_pattern(*pattern.alias_pattern, match_type, coverage);
+            apply_value_binding(lowered_arm, pattern.loc, pattern.alias_name, match_type);
+            return lowered_arm;
+        }
+
+        IrMatchArm lowered_arm;
+        lowered_arm.loc = pattern.loc;
+        if (pattern.kind == PatternKind::Wildcard) {
+            lowered_arm.wildcard = true;
+            coverage.has_wildcard = true;
+            return lowered_arm;
+        }
+        if (pattern.kind == PatternKind::Binding) {
+            lowered_arm.wildcard = true;
+            coverage.has_wildcard = true;
+            apply_value_binding(lowered_arm, pattern.loc, pattern.payload_name, match_type);
+            return lowered_arm;
+        }
+
+        ConstantValue constant_pattern;
+        if (try_constant_pattern_value(pattern, constant_pattern)) {
+            return lower_scalar_constant_match_arm_pattern(pattern, constant_pattern, match_type, coverage);
+        }
+
+        if (match_type.qualifier == TypeQualifier::Value && match_type.primitive == IrPrimitiveKind::Bool) {
+            if (pattern.kind != PatternKind::BoolLiteral) {
+                fail(pattern.loc, "bool match patterns must be true, false, or _");
+            }
+            std::string key = pattern.bool_value ? "true" : "false";
+            if (coverage.covered_patterns.count(key)) warn_scalar_match_shadow(pattern.loc);
+            coverage.covered_patterns.insert(key);
+            lowered_arm.has_literal = true;
+            lowered_arm.literal_is_bool = true;
+            lowered_arm.literal_bool = pattern.bool_value;
+            return lowered_arm;
+        }
+
+        if (!is_value_integer_type(match_type)) {
+            fail(pattern.loc, "literal match patterns require integer or bool match values");
+        }
+        if (pattern.kind == PatternKind::Range) {
+            return lower_integer_range_match_arm_pattern(pattern, match_type, coverage);
+        }
+        if (pattern.kind != PatternKind::IntegerLiteral) {
+            fail(pattern.loc, "integer match patterns must be integer literals or _");
+        }
+
+        IrExpr literal;
+        literal.kind = IrExprKind::Integer;
+        literal.loc = pattern.loc;
+        literal.int_value = pattern.int_value;
+        literal.int_negative = pattern.int_negative;
+        literal.type = pattern.literal_suffix.empty()
+            ? match_type
+            : integer_literal_suffix_type(pattern.literal_suffix, pattern.loc);
+        if (!integer_literal_fits(literal, literal.type)) {
+            fail(pattern.loc, "integer literal " + integer_literal_name(literal) +
+                              " is out of range for " + type_name(literal.type));
+        }
+        require_assignable(pattern.loc, match_type, literal.type);
+
+        std::string key = integer_literal_name(literal);
+        std::uint64_t point = integer_pattern_order_value(pattern.int_value, pattern.int_negative, match_type);
+        if (integer_interval_is_fully_covered(coverage, point, point)) {
+            warn_scalar_match_shadow(pattern.loc);
+        }
+        coverage.covered_patterns.insert(key);
+        note_integer_coverage(coverage, match_type, pattern.int_value, pattern.int_negative);
+        lowered_arm.has_literal = true;
+        lowered_arm.literal_int = pattern.int_value;
+        lowered_arm.literal_negative = pattern.int_negative;
+        return lowered_arm;
+    }
+
+    IrMatchArm lower_integer_range_match_arm_pattern(const Pattern& pattern,
+                                                     const IrType& match_type,
+                                                     ScalarMatchCoverage& coverage) {
+        IrExpr start = make_pattern_integer_literal(
+            pattern.loc, pattern.int_value, pattern.int_negative, pattern.literal_suffix, match_type);
+        IrExpr end = make_pattern_integer_literal(
+            pattern.loc, pattern.range_end_value, pattern.range_end_negative, pattern.range_end_suffix, match_type);
+        if (!integer_literal_fits(start, start.type)) {
+            fail(pattern.loc, "integer literal " + integer_literal_name(start) +
+                              " is out of range for " + type_name(start.type));
+        }
+        if (!integer_literal_fits(end, end.type)) {
+            fail(pattern.loc, "integer literal " + integer_literal_name(end) +
+                              " is out of range for " + type_name(end.type));
+        }
+        require_assignable(pattern.loc, match_type, start.type);
+        require_assignable(pattern.loc, match_type, end.type);
+        if (!range_start_le_end(pattern, match_type)) {
+            fail(pattern.loc, "range pattern start must be <= end");
+        }
+
+        std::uint64_t covered_start = 0;
+        std::uint64_t covered_end = 0;
+        if (integer_range_coverage_interval(pattern, match_type, covered_start, covered_end) &&
+            integer_interval_is_fully_covered(coverage, covered_start, covered_end)) {
+            warn_scalar_match_shadow(pattern.loc);
+        }
+        note_integer_range_coverage(coverage, match_type, pattern);
+
+        IrMatchArm lowered_arm;
+        lowered_arm.loc = pattern.loc;
+        lowered_arm.has_range = true;
+        lowered_arm.range_start_int = pattern.int_value;
+        lowered_arm.range_start_negative = pattern.int_negative;
+        lowered_arm.range_end_int = pattern.range_end_value;
+        lowered_arm.range_end_negative = pattern.range_end_negative;
+        lowered_arm.range_inclusive = pattern.range_inclusive;
+        lowered_arm.range_is_unsigned = is_unsigned_integer_primitive(match_type.primitive);
+        return lowered_arm;
+    }
+
+    static void require_scalar_match_exhaustive(SourceLocation loc,
+                                                const IrType& match_type,
+                                                const ScalarMatchCoverage& coverage) {
+        if (coverage.has_wildcard) return;
+        if (match_type.qualifier == TypeQualifier::Value && match_type.primitive == IrPrimitiveKind::Bool) {
+            if (coverage.covered_patterns.count("true") && coverage.covered_patterns.count("false")) return;
+            fail(loc, "bool match must cover true and false or include a wildcard arm");
+        }
+        if (integer_coverage_is_exhaustive(match_type, coverage.integer_intervals)) return;
+        fail(loc, "integer match must include a wildcard arm");
+    }
+
+    std::vector<IrMatchArm> lower_scalar_match_arm_patterns(const Pattern& pattern,
+                                                            const IrType& match_type,
+                                                            ScalarMatchCoverage& coverage) {
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
+        if (pattern_contains_or(pattern)) {
+            require_same_or_pattern_bindings(pattern.loc, alternatives, match_type);
+        }
+
+        std::vector<IrMatchArm> arms;
+        for (const auto& alternative : alternatives) {
+            arms.push_back(lower_scalar_match_arm_pattern(alternative, match_type, coverage));
+        }
+        return arms;
+    }
+
+    IrExprPtr make_bool_literal_expr(SourceLocation loc, bool value) const {
+        auto literal = std::make_unique<IrExpr>();
+        literal->kind = IrExprKind::Bool;
+        literal->loc = loc;
+        literal->type = bool_type(loc);
+        literal->bool_value = value;
+        return literal;
+    }
+
+    IrExprPtr make_pattern_integer_expr(const Pattern& pattern, const IrType& expected) const {
+        IrExpr literal = make_pattern_integer_literal(
+            pattern.loc,
+            pattern.int_value,
+            pattern.int_negative,
+            pattern.literal_suffix,
+            expected
+        );
+        if (!integer_literal_fits(literal, literal.type)) {
+            fail(pattern.loc, "integer literal " + integer_literal_name(literal) +
+                              " is out of range for " + type_name(literal.type));
+        }
+        require_assignable(pattern.loc, expected, literal.type);
+
+        auto expr = std::make_unique<IrExpr>();
+        *expr = std::move(literal);
+        return expr;
+    }
+
+    IrExprPtr make_pattern_range_endpoint_expr(SourceLocation loc,
+                                               std::uint64_t value,
+                                               bool negative,
+                                               const std::string& suffix,
+                                               const IrType& expected) const {
+        IrExpr literal = make_pattern_integer_literal(loc, value, negative, suffix, expected);
+        if (!integer_literal_fits(literal, literal.type)) {
+            fail(loc, "integer literal " + integer_literal_name(literal) +
+                      " is out of range for " + type_name(literal.type));
+        }
+        require_assignable(loc, expected, literal.type);
+
+        auto expr = std::make_unique<IrExpr>();
+        *expr = std::move(literal);
+        return expr;
+    }
+
+    IrExprPtr make_bool_binary_expr(SourceLocation loc, IrBinaryOp op, IrExprPtr left, IrExprPtr right) const {
+        auto expr = std::make_unique<IrExpr>();
+        expr->kind = IrExprKind::Binary;
+        expr->loc = loc;
+        expr->op = op;
+        expr->type = bool_type(loc);
+        expr->left = std::move(left);
+        expr->right = std::move(right);
+        return expr;
+    }
+
+    IrExprPtr combine_tuple_match_conditions(SourceLocation loc, IrBinaryOp op, IrExprPtr left, IrExprPtr right) const {
+        if (!left) return right;
+        if (!right) return left;
+        return make_bool_binary_expr(loc, op, std::move(left), std::move(right));
+    }
+
+    static std::size_t tuple_pattern_field_index(const Pattern& pattern,
+                                                 std::size_t field_count,
+                                                 std::size_t pattern_index) {
+        if (!pattern.has_rest || pattern_index < pattern.rest_index) return pattern_index;
+        std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+        return field_count - suffix_count + (pattern_index - pattern.rest_index);
+    }
+
+    static void require_tuple_pattern_arity(const Pattern& pattern,
+                                            const IrType& source_type,
+                                            const std::vector<IrType>& fields) {
+        const char* pattern_name = pattern.kind == PatternKind::Array ? "array" : "tuple";
+        if (pattern.has_rest) {
+            if (pattern.elements.size() > fields.size()) {
+                fail(pattern.loc,
+                     std::string(pattern_name) + " match pattern has " + std::to_string(pattern.elements.size()) +
+                     " non-rest elements but value has " + std::to_string(fields.size()));
+            }
+            return;
+        }
+        if (pattern.elements.size() != fields.size()) {
+            fail(pattern.loc,
+                 std::string(pattern_name) + " match pattern has " + std::to_string(pattern.elements.size()) +
+                 " elements but value has " + std::to_string(fields.size()));
+        }
+        (void)source_type;
+    }
+
+    IrExprPtr lower_tuple_element_match_condition(const Pattern& pattern,
+                                                  const std::string& source_name,
+                                                  const IrType& source_type,
+                                                  std::size_t field_index,
+                                                  std::vector<IrStmtPtr>& prelude) {
+        const std::vector<IrType>& fields = aggregate_field_types(source_type);
+        const IrType& field_type = fields[field_index];
+
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return nullptr;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                return lower_tuple_element_match_condition(
+                    *pattern.alias_pattern,
+                    source_name,
+                    source_type,
+                    field_index,
+                    prelude
+                );
+            case PatternKind::IntegerLiteral:
+                if (!is_value_integer_type(field_type)) {
+                    fail(pattern.loc, "integer tuple patterns require an integer tuple field");
+                }
+                return make_bool_binary_expr(
+                    pattern.loc,
+                    IrBinaryOp::Eq,
+                    make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                    make_pattern_integer_expr(pattern, field_type)
+                );
+            case PatternKind::BoolLiteral:
+                if (field_type.qualifier != TypeQualifier::Value ||
+                    field_type.primitive != IrPrimitiveKind::Bool) {
+                    fail(pattern.loc, "bool tuple patterns require a bool tuple field");
+                }
+                return make_bool_binary_expr(
+                    pattern.loc,
+                    IrBinaryOp::Eq,
+                    make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                    make_bool_literal_expr(pattern.loc, pattern.bool_value)
+                );
+            case PatternKind::Range: {
+                if (!is_value_integer_type(field_type)) {
+                    fail(pattern.loc, "range tuple patterns require an integer tuple field");
+                }
+                if (!range_start_le_end(pattern, field_type)) {
+                    fail(pattern.loc, "range pattern start must be <= end");
+                }
+                IrExprPtr lower = make_bool_binary_expr(
+                    pattern.loc,
+                    IrBinaryOp::Ge,
+                    make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                    make_pattern_range_endpoint_expr(
+                        pattern.loc,
+                        pattern.int_value,
+                        pattern.int_negative,
+                        pattern.literal_suffix,
+                        field_type
+                    )
+                );
+                IrExprPtr upper = make_bool_binary_expr(
+                    pattern.loc,
+                    pattern.range_inclusive ? IrBinaryOp::Le : IrBinaryOp::Lt,
+                    make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                    make_pattern_range_endpoint_expr(
+                        pattern.loc,
+                        pattern.range_end_value,
+                        pattern.range_end_negative,
+                        pattern.range_end_suffix,
+                        field_type
+                    )
+                );
+                return combine_tuple_match_conditions(pattern.loc, IrBinaryOp::LogicalAnd, std::move(lower), std::move(upper));
+            }
+            case PatternKind::Or: {
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                IrExprPtr condition;
+                for (const auto& alternative : pattern.alternatives) {
+                    IrExprPtr alternative_condition = lower_tuple_element_match_condition(
+                        alternative,
+                        source_name,
+                        source_type,
+                        field_index,
+                        prelude
+                    );
+                    if (!alternative_condition) return nullptr;
+                    condition = combine_tuple_match_conditions(
+                        pattern.loc,
+                        IrBinaryOp::LogicalOr,
+                        std::move(condition),
+                        std::move(alternative_condition)
+                    );
+                }
+                return condition;
+            }
+            case PatternKind::EnumCase:
+                {
+                    ConstantValue constant_pattern;
+                    if (try_constant_pattern_value(pattern, constant_pattern)) {
+                        if (field_type.qualifier == TypeQualifier::Value &&
+                            field_type.primitive == IrPrimitiveKind::Bool) {
+                            if (!constant_pattern.is_bool) {
+                                fail(pattern.loc, "bool tuple constant pattern must have type bool");
+                            }
+                        } else if (is_value_integer_type(field_type)) {
+                            if (constant_pattern.is_bool || !is_value_integer_type(constant_pattern.type)) {
+                                fail(pattern.loc, "integer tuple constant pattern must have an integer type");
+                            }
+                            require_assignable(pattern.loc, field_type, constant_pattern.type);
+                        } else {
+                            fail(pattern.loc, "constant tuple patterns require integer or bool fields");
+                        }
+                        return make_bool_binary_expr(
+                            pattern.loc,
+                            IrBinaryOp::Eq,
+                            make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                            make_constant_expr(pattern.loc, constant_pattern)
+                        );
+                    }
+                }
+                if (field_type.primitive != IrPrimitiveKind::Struct) {
+                    fail(pattern.loc, "tuple-struct tuple element patterns require a tuple-struct field");
+                }
+                {
+                    std::string nested_name = make_hidden_local("$match_struct");
+                    declare_local(pattern.loc, nested_name, field_type, false);
+                    prelude.push_back(make_ir_var_decl(
+                        pattern.loc,
+                        nested_name,
+                        field_type,
+                        make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                        false
+                    ));
+                    return lower_struct_match_pattern_condition(pattern, nested_name, field_type, prelude);
+                }
+            case PatternKind::Tuple: {
+                if (field_type.primitive != IrPrimitiveKind::Tuple) {
+                    fail(pattern.loc, "nested tuple pattern requires a tuple field, got " + type_name(field_type));
+                }
+                std::string nested_name = make_hidden_local("$match_tuple");
+                declare_local(pattern.loc, nested_name, field_type, false);
+                prelude.push_back(make_ir_var_decl(
+                    pattern.loc,
+                    nested_name,
+                    field_type,
+                    make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                    false
+                ));
+                return lower_tuple_match_pattern_condition(pattern, nested_name, field_type, prelude);
+            }
+            case PatternKind::Array: {
+                if (field_type.primitive != IrPrimitiveKind::Array) {
+                    fail(pattern.loc, "nested array pattern requires an array field, got " + type_name(field_type));
+                }
+                std::string nested_name = make_hidden_local("$match_array");
+                declare_local(pattern.loc, nested_name, field_type, false);
+                prelude.push_back(make_ir_var_decl(
+                    pattern.loc,
+                    nested_name,
+                    field_type,
+                    make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                    false
+                ));
+                return lower_tuple_match_pattern_condition(pattern, nested_name, field_type, prelude);
+            }
+            case PatternKind::Struct: {
+                if (field_type.primitive != IrPrimitiveKind::Struct) {
+                    fail(pattern.loc, "struct tuple element patterns require a struct field");
+                }
+                std::string nested_name = make_hidden_local("$match_struct");
+                declare_local(pattern.loc, nested_name, field_type, false);
+                prelude.push_back(make_ir_var_decl(
+                    pattern.loc,
+                    nested_name,
+                    field_type,
+                    make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                    false
+                ));
+                return lower_struct_match_pattern_condition(pattern, nested_name, field_type, prelude);
+            }
+        }
+        fail(pattern.loc, "unsupported tuple element pattern");
+    }
+
+    IrExprPtr lower_positional_product_match_pattern_condition(const Pattern& pattern,
+                                                               const std::string& source_name,
+                                                               const IrType& source_type,
+                                                               std::vector<IrStmtPtr>& prelude) {
+        const std::vector<IrType>& fields = aggregate_field_types(source_type);
+        require_tuple_pattern_arity(pattern, source_type, fields);
+
+        IrExprPtr condition;
+        for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+            std::size_t field_index = tuple_pattern_field_index(pattern, fields.size(), i);
+            IrExprPtr field_condition = lower_tuple_element_match_condition(
+                pattern.elements[i],
+                source_name,
+                source_type,
+                field_index,
+                prelude
+            );
+            condition = combine_tuple_match_conditions(
+                pattern.elements[i].loc,
+                IrBinaryOp::LogicalAnd,
+                std::move(condition),
+                std::move(field_condition)
+            );
+        }
+        return condition;
+    }
+
+    IrExprPtr lower_tuple_match_pattern_condition(const Pattern& pattern,
+                                                  const std::string& source_name,
+                                                  const IrType& source_type,
+                                                  std::vector<IrStmtPtr>& prelude) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return nullptr;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                return lower_tuple_match_pattern_condition(*pattern.alias_pattern, source_name, source_type, prelude);
+            case PatternKind::Or: {
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                IrExprPtr condition;
+                for (const auto& alternative : pattern.alternatives) {
+                    IrExprPtr alternative_condition = lower_tuple_match_pattern_condition(
+                        alternative,
+                        source_name,
+                        source_type,
+                        prelude
+                    );
+                    if (!alternative_condition) return nullptr;
+                    condition = combine_tuple_match_conditions(
+                        pattern.loc,
+                        IrBinaryOp::LogicalOr,
+                        std::move(condition),
+                        std::move(alternative_condition)
+                    );
+                }
+                return condition;
+            }
+            case PatternKind::Tuple:
+            case PatternKind::Array:
+                break;
+            default:
+                fail(pattern.loc, "tuple and array match patterns must use matching positional patterns or _");
+        }
+
+        bool array_pattern = pattern.kind == PatternKind::Array;
+        IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
+        const char* pattern_name = array_pattern ? "array" : "tuple";
+        if (source_type.primitive != expected_primitive) {
+            fail(pattern.loc, std::string(pattern_name) + " match pattern requires a " +
+                              pattern_name + " value, got " + type_name(source_type));
+        }
+
+        return lower_positional_product_match_pattern_condition(pattern, source_name, source_type, prelude);
+    }
+
+    const StructInfo& require_struct_match_pattern_type(SourceLocation loc,
+                                                        const std::string& name,
+                                                        const IrType& source_type) const {
+        if (source_type.primitive != IrPrimitiveKind::Struct) {
+            fail(loc, "struct match pattern requires a struct value, got " + type_name(source_type));
+        }
+        std::string struct_name = resolve_struct_type_name(name);
+        auto struct_found = structs_.find(struct_name);
+        if (struct_found == structs_.end()) {
+            fail(loc, "unknown struct '" + name + "' in match pattern");
+        }
+        require_struct_access(loc, struct_found->second);
+        if (struct_name != source_type.name) {
+            fail(loc, "struct match pattern type '" + struct_name + "' does not match value type " + type_name(source_type));
+        }
+        return struct_found->second;
+    }
+
+    IrExprPtr lower_tuple_struct_match_pattern_condition(const Pattern& pattern,
+                                                         const std::string& source_name,
+                                                         const IrType& source_type,
+                                                         std::vector<IrStmtPtr>& prelude) {
+        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
+        if (!info.tuple_struct) {
+            fail(pattern.loc, "tuple-struct pattern requires a tuple struct");
+        }
+        if (!pattern.has_payload_pattern || !pattern.payload_pattern) {
+            fail(pattern.loc, "tuple-struct pattern '" + pattern.case_name + "' requires positional fields");
+        }
+        const std::vector<IrType>& fields = aggregate_field_types(source_type);
+        const Pattern& payload = *pattern.payload_pattern;
+        if (payload.kind == PatternKind::Tuple) {
+            return lower_positional_product_match_pattern_condition(payload, source_name, source_type, prelude);
+        }
+        if (fields.size() != 1) {
+            fail(payload.loc,
+                 "tuple-struct pattern for '" + info.name + "' has 1 field but value has " +
+                     std::to_string(fields.size()));
+        }
+        return lower_tuple_element_match_condition(payload, source_name, source_type, 0, prelude);
+    }
+
+    IrExprPtr lower_struct_match_pattern_condition(const Pattern& pattern,
+                                                   const std::string& source_name,
+                                                   const IrType& source_type,
+                                                   std::vector<IrStmtPtr>& prelude) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return nullptr;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                return lower_struct_match_pattern_condition(*pattern.alias_pattern, source_name, source_type, prelude);
+            case PatternKind::Or: {
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                IrExprPtr condition;
+                for (const auto& alternative : pattern.alternatives) {
+                    IrExprPtr alternative_condition = lower_struct_match_pattern_condition(
+                        alternative,
+                        source_name,
+                        source_type,
+                        prelude
+                    );
+                    if (!alternative_condition) return nullptr;
+                    condition = combine_tuple_match_conditions(
+                        pattern.loc,
+                        IrBinaryOp::LogicalOr,
+                        std::move(condition),
+                        std::move(alternative_condition)
+                    );
+                }
+                return condition;
+            }
+            case PatternKind::EnumCase:
+                return lower_tuple_struct_match_pattern_condition(pattern, source_name, source_type, prelude);
+            case PatternKind::Struct:
+                break;
+            default:
+                fail(pattern.loc, "struct match patterns must be struct patterns, tuple-struct patterns, or _");
+        }
+
+        require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
+        if (pattern.field_names.size() != pattern.elements.size()) {
+            throw CompileError("internal error: struct match pattern field/value arity mismatch");
+        }
+        if (!pattern.has_rest && pattern.field_names.size() != source_type.field_names.size()) {
+            fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
+        }
+
+        std::set<std::string> seen_fields;
+        IrExprPtr condition;
+        for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+            const std::string& field_name = pattern.field_names[i];
+            if (!seen_fields.insert(field_name).second) {
+                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
+            }
+            std::size_t field_index = struct_field_index(pattern.elements[i].loc, source_type, field_name);
+            IrExprPtr field_condition = lower_tuple_element_match_condition(
+                pattern.elements[i],
+                source_name,
+                source_type,
+                field_index,
+                prelude
+            );
+            condition = combine_tuple_match_conditions(
+                pattern.elements[i].loc,
+                IrBinaryOp::LogicalAnd,
+                std::move(condition),
+                std::move(field_condition)
+            );
+        }
+        return condition;
+    }
+
+    IrExprPtr lower_product_match_pattern_condition(const Pattern& pattern,
+                                                    const std::string& source_name,
+                                                    const IrType& source_type,
+                                                    std::vector<IrStmtPtr>& prelude) {
+        if (source_type.primitive == IrPrimitiveKind::Tuple) {
+            return lower_tuple_match_pattern_condition(pattern, source_name, source_type, prelude);
+        }
+        if (source_type.primitive == IrPrimitiveKind::Array) {
+            return lower_tuple_match_pattern_condition(pattern, source_name, source_type, prelude);
+        }
+        if (source_type.primitive == IrPrimitiveKind::Struct) {
+            return lower_struct_match_pattern_condition(pattern, source_name, source_type, prelude);
+        }
+        fail(pattern.loc, "aggregate match pattern requires tuple, array, or struct value");
+    }
+
+    static constexpr std::size_t kMaxFiniteProductCoverageValues = 4096;
+
+    static std::string product_coverage_join(const std::string& prefix, const std::string& suffix) {
+        if (prefix.empty()) return suffix;
+        return prefix + "\x1f" + suffix;
+    }
+
+    static std::string bool_product_value(bool value) {
+        return value ? "b1" : "b0";
+    }
+
+    static std::string integer_product_value(std::uint64_t ordered_value) {
+        return "i" + std::to_string(ordered_value);
+    }
+
+    static bool combine_product_domains(const std::vector<std::vector<std::string>>& domains,
+                                        std::vector<std::string>& out) {
+        std::vector<std::string> result{""};
+        for (const auto& domain : domains) {
+            if (domain.empty()) return false;
+            if (result.size() > kMaxFiniteProductCoverageValues / domain.size()) return false;
+            std::vector<std::string> next;
+            next.reserve(result.size() * domain.size());
+            for (const auto& prefix : result) {
+                for (const auto& value : domain) {
+                    next.push_back(product_coverage_join(prefix, value));
+                }
+            }
+            result = std::move(next);
+        }
+        out = std::move(result);
+        return true;
+    }
+
+    bool finite_product_domain(const IrType& type, std::vector<std::string>& out) const {
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+            out = {bool_product_value(false), bool_product_value(true)};
+            return true;
+        }
+        if (is_value_integer_type(type)) {
+            std::uint64_t max = integer_pattern_max_order_value(type);
+            if (max >= kMaxFiniteProductCoverageValues) return false;
+            out.clear();
+            out.reserve(static_cast<std::size_t>(max + 1));
+            for (std::uint64_t value = 0; value <= max; ++value) {
+                out.push_back(integer_product_value(value));
+            }
+            return true;
+        }
+        if (type.primitive != IrPrimitiveKind::Tuple &&
+            type.primitive != IrPrimitiveKind::Array &&
+            type.primitive != IrPrimitiveKind::Struct) {
+            return false;
+        }
+
+        std::vector<std::vector<std::string>> domains;
+        for (const auto& field_type : aggregate_field_types(type)) {
+            std::vector<std::string> field_domain;
+            if (!finite_product_domain(field_type, field_domain)) return false;
+            domains.push_back(std::move(field_domain));
+        }
+        return combine_product_domains(domains, out);
+    }
+
+    bool finite_integer_pattern_values(const Pattern& pattern,
+                                       const IrType& type,
+                                       std::vector<std::string>& out) const {
+        if (!is_value_integer_type(type)) return false;
+        IrExpr literal = make_pattern_integer_literal(
+            pattern.loc,
+            pattern.int_value,
+            pattern.int_negative,
+            pattern.literal_suffix,
+            type
+        );
+        if (!integer_literal_fits(literal, literal.type)) {
+            fail(pattern.loc, "integer literal " + integer_literal_name(literal) +
+                              " is out of range for " + type_name(literal.type));
+        }
+        require_assignable(pattern.loc, type, literal.type);
+        out = {integer_product_value(integer_pattern_order_value(pattern.int_value, pattern.int_negative, type))};
+        return true;
+    }
+
+    bool finite_integer_range_pattern_values(const Pattern& pattern,
+                                             const IrType& type,
+                                             std::vector<std::string>& out) const {
+        if (!is_value_integer_type(type)) return false;
+        if (!range_start_le_end(pattern, type)) {
+            fail(pattern.loc, "range pattern start must be <= end");
+        }
+        std::uint64_t start = 0;
+        std::uint64_t end = 0;
+        if (!integer_range_coverage_interval(pattern, type, start, end)) return true;
+        if (end - start + 1 > kMaxFiniteProductCoverageValues) return false;
+        out.clear();
+        for (std::uint64_t value = start; value <= end; ++value) {
+            out.push_back(integer_product_value(value));
+        }
+        return true;
+    }
+
+    bool finite_constant_product_values(SourceLocation loc,
+                                        const ConstantValue& value,
+                                        const IrType& type,
+                                        std::vector<std::string>& out) const {
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+            if (!value.is_bool) fail(loc, "bool tuple constant pattern must have type bool");
+            out = {bool_product_value(value.bool_value)};
+            return true;
+        }
+        if (!is_value_integer_type(type)) return false;
+        if (value.is_bool || !is_value_integer_type(value.type)) {
+            fail(loc, "integer tuple constant pattern must have an integer type");
+        }
+        require_assignable(loc, type, value.type);
+        out = {integer_product_value(integer_pattern_order_value(value.int_value, value.int_negative, type))};
+        return true;
+    }
+
+    bool finite_positional_product_pattern_values(const Pattern& pattern,
+                                                  const IrType& type,
+                                                  std::vector<std::string>& out) {
+        const std::vector<IrType>& fields = aggregate_field_types(type);
+        require_tuple_pattern_arity(pattern, type, fields);
+
+        std::size_t suffix_count = pattern.has_rest ? pattern.elements.size() - pattern.rest_index : 0;
+        std::vector<std::vector<std::string>> domains;
+        domains.reserve(fields.size());
+        for (std::size_t field_index = 0; field_index < fields.size(); ++field_index) {
+            const Pattern* item = nullptr;
+            if (!pattern.has_rest) {
+                item = &pattern.elements[field_index];
+            } else if (field_index < pattern.rest_index) {
+                item = &pattern.elements[field_index];
+            } else if (field_index >= fields.size() - suffix_count) {
+                item = &pattern.elements[pattern.rest_index + field_index - (fields.size() - suffix_count)];
+            }
+
+            std::vector<std::string> field_values;
+            bool ok = item
+                ? finite_product_pattern_values(*item, fields[field_index], field_values)
+                : finite_product_domain(fields[field_index], field_values);
+            if (!ok) return false;
+            domains.push_back(std::move(field_values));
+        }
+        return combine_product_domains(domains, out);
+    }
+
+    bool finite_tuple_struct_product_pattern_values(const Pattern& pattern,
+                                                    const IrType& type,
+                                                    std::vector<std::string>& out) {
+        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
+        if (!info.tuple_struct) return false;
+        if (!pattern.has_payload_pattern || !pattern.payload_pattern) return false;
+        const std::vector<IrType>& fields = aggregate_field_types(type);
+        const Pattern& payload = *pattern.payload_pattern;
+        if (payload.kind == PatternKind::Tuple) {
+            return finite_positional_product_pattern_values(payload, type, out);
+        }
+        if (fields.size() != 1) return false;
+        return finite_product_pattern_values(payload, fields[0], out);
+    }
+
+    bool finite_struct_product_pattern_values(const Pattern& pattern,
+                                              const IrType& type,
+                                              std::vector<std::string>& out) {
+        require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
+        if (pattern.field_names.size() != pattern.elements.size()) {
+            throw CompileError("internal error: struct match pattern field/value arity mismatch");
+        }
+        if (!pattern.has_rest && pattern.field_names.size() != type.field_names.size()) {
+            fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
+        }
+
+        std::vector<const Pattern*> field_patterns(type.field_names.size(), nullptr);
+        std::set<std::string> seen_fields;
+        for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+            const std::string& field_name = pattern.field_names[i];
+            if (!seen_fields.insert(field_name).second) {
+                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
+            }
+            std::size_t field_index = struct_field_index(pattern.elements[i].loc, type, field_name);
+            field_patterns[field_index] = &pattern.elements[i];
+        }
+
+        std::vector<std::vector<std::string>> domains;
+        domains.reserve(type.field_types.size());
+        for (std::size_t field_index = 0; field_index < type.field_types.size(); ++field_index) {
+            std::vector<std::string> field_values;
+            bool ok = field_patterns[field_index]
+                ? finite_product_pattern_values(*field_patterns[field_index], type.field_types[field_index], field_values)
+                : finite_product_domain(type.field_types[field_index], field_values);
+            if (!ok) return false;
+            domains.push_back(std::move(field_values));
+        }
+        return combine_product_domains(domains, out);
+    }
+
+    bool finite_product_pattern_values(const Pattern& pattern,
+                                       const IrType& type,
+                                       std::vector<std::string>& out) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return finite_product_domain(type, out);
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                return finite_product_pattern_values(*pattern.alias_pattern, type, out);
+            case PatternKind::Or: {
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                std::set<std::string> values;
+                for (const auto& alternative : pattern.alternatives) {
+                    std::vector<std::string> alternative_values;
+                    if (!finite_product_pattern_values(alternative, type, alternative_values)) return false;
+                    values.insert(alternative_values.begin(), alternative_values.end());
+                }
+                out.assign(values.begin(), values.end());
+                return true;
+            }
+            case PatternKind::BoolLiteral:
+                if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Bool) return false;
+                out = {bool_product_value(pattern.bool_value)};
+                return true;
+            case PatternKind::IntegerLiteral:
+                return finite_integer_pattern_values(pattern, type, out);
+            case PatternKind::Range:
+                return finite_integer_range_pattern_values(pattern, type, out);
+            case PatternKind::EnumCase: {
+                ConstantValue constant_pattern;
+                if (try_constant_pattern_value(pattern, constant_pattern)) {
+                    return finite_constant_product_values(pattern.loc, constant_pattern, type, out);
+                }
+                if (type.primitive == IrPrimitiveKind::Struct) {
+                    return finite_tuple_struct_product_pattern_values(pattern, type, out);
+                }
+                return false;
+            }
+            case PatternKind::Tuple:
+                if (type.primitive != IrPrimitiveKind::Tuple) return false;
+                return finite_positional_product_pattern_values(pattern, type, out);
+            case PatternKind::Array:
+                if (type.primitive != IrPrimitiveKind::Array) return false;
+                return finite_positional_product_pattern_values(pattern, type, out);
+            case PatternKind::Struct:
+                if (type.primitive != IrPrimitiveKind::Struct) return false;
+                return finite_struct_product_pattern_values(pattern, type, out);
+        }
+        return false;
+    }
+
+    void initialize_product_match_coverage(const IrType& subject_type, TupleMatchCoverage& coverage) {
+        if (coverage.checked_finite_universe) return;
+        coverage.checked_finite_universe = true;
+        std::vector<std::string> universe;
+        if (!finite_product_domain(subject_type, universe)) return;
+        coverage.has_finite_universe = true;
+        coverage.universe_size = universe.size();
+    }
+
+    void note_product_match_coverage(const Pattern& pattern,
+                                     const IrType& subject_type,
+                                     TupleMatchCoverage& coverage) {
+        initialize_product_match_coverage(subject_type, coverage);
+        if (!coverage.has_finite_universe) return;
+
+        std::vector<std::string> values;
+        if (!finite_product_pattern_values(pattern, subject_type, values)) return;
+
+        bool added = false;
+        for (const auto& value : values) {
+            added = coverage.covered_products.insert(value).second || added;
+        }
+        if (!added) warn_aggregate_match_shadow(pattern.loc);
+    }
+
+    void lower_tuple_match_value_bindings(const Pattern& pattern,
+                                          const IrType& value_type,
+                                          IrExprPtr value,
+                                          std::vector<IrStmtPtr>& statements) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+                return;
+            case PatternKind::EnumCase:
+                if (value_type.primitive == IrPrimitiveKind::Struct) {
+                    std::string nested_name = make_hidden_local("$pattern");
+                    declare_local(pattern.loc, nested_name, value_type, false);
+                    statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
+                    lower_struct_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements);
+                }
+                return;
+            case PatternKind::Binding:
+                lower_binding_pattern_value(pattern, value_type, std::move(value), false, statements);
+                return;
+            case PatternKind::Alias: {
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                if (is_borrow_type(value_type)) {
+                    fail(pattern.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
+                }
+                if (is_owner_type(value_type)) {
+                    fail(pattern.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+                }
+                declare_local(pattern.loc, pattern.alias_name, value_type, false);
+                statements.push_back(make_ir_var_decl(pattern.loc, pattern.alias_name, value_type, std::move(value), false));
+                lower_product_match_pattern_bindings_from_local(
+                    *pattern.alias_pattern,
+                    pattern.alias_name,
+                    value_type,
+                    statements
+                );
+                return;
+            }
+            case PatternKind::Tuple: {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(pattern.loc, nested_name, value_type, false);
+                statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
+                lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements);
+                return;
+            }
+            case PatternKind::Array: {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(pattern.loc, nested_name, value_type, false);
+                statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
+                lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements);
+                return;
+            }
+            case PatternKind::Struct: {
+                std::string nested_name = make_hidden_local("$pattern");
+                declare_local(pattern.loc, nested_name, value_type, false);
+                statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
+                lower_struct_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements);
+                return;
+            }
+            case PatternKind::Or:
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                return;
+        }
+        fail(pattern.loc, "unsupported tuple match binding pattern");
+    }
+
+    void lower_product_match_pattern_bindings_from_local(const Pattern& pattern,
+                                                         const std::string& source_name,
+                                                         const IrType& source_type,
+                                                         std::vector<IrStmtPtr>& statements) {
+        if (source_type.primitive == IrPrimitiveKind::Tuple) {
+            lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+            return;
+        }
+        if (source_type.primitive == IrPrimitiveKind::Array) {
+            lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+            return;
+        }
+        if (source_type.primitive == IrPrimitiveKind::Struct) {
+            lower_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+            return;
+        }
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+            case PatternKind::EnumCase:
+            case PatternKind::Struct:
+            case PatternKind::Tuple:
+            case PatternKind::Array:
+                return;
+            case PatternKind::Binding:
+                lower_binding_pattern_from_local(pattern, source_name, source_type, false, statements);
+                return;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                lower_product_match_pattern_bindings_from_local(
+                    *pattern.alias_pattern,
+                    source_name,
+                    source_type,
+                    statements
+                );
+                return;
+            case PatternKind::Or:
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                return;
+        }
+    }
+
+    void lower_positional_product_match_pattern_bindings_from_local(const Pattern& pattern,
+                                                                    const std::string& source_name,
+                                                                    const IrType& source_type,
+                                                                    std::vector<IrStmtPtr>& statements) {
+        const std::vector<IrType>& fields = aggregate_field_types(source_type);
+        require_tuple_pattern_arity(pattern, source_type, fields);
+
+        for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+            const Pattern& item = pattern.elements[i];
+            if (item.kind == PatternKind::Wildcard) continue;
+            std::size_t field_index = tuple_pattern_field_index(pattern, fields.size(), i);
+            lower_tuple_match_value_bindings(
+                item,
+                fields[field_index],
+                make_tuple_index_expr(item.loc, source_name, source_type, field_index),
+                statements
+            );
+        }
+    }
+
+    void lower_tuple_match_pattern_bindings_from_local(const Pattern& pattern,
+                                                       const std::string& source_name,
+                                                       const IrType& source_type,
+                                                       std::vector<IrStmtPtr>& statements) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+                return;
+            case PatternKind::Binding:
+                lower_binding_pattern_from_local(pattern, source_name, source_type, false, statements);
+                return;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                declare_local(pattern.loc, pattern.alias_name, source_type, false);
+                statements.push_back(make_ir_var_decl(
+                    pattern.loc,
+                    pattern.alias_name,
+                    source_type,
+                    make_local_lvalue_expr(pattern.loc, source_name, source_type),
+                    false
+                ));
+                lower_product_match_pattern_bindings_from_local(
+                    *pattern.alias_pattern,
+                    source_name,
+                    source_type,
+                    statements
+                );
+                return;
+            case PatternKind::Or:
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                return;
+            case PatternKind::EnumCase:
+            case PatternKind::Struct:
+                if (source_type.primitive == IrPrimitiveKind::Struct) {
+                    lower_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+                    return;
+                }
+                return;
+            case PatternKind::Tuple:
+            case PatternKind::Array:
+                break;
+        }
+
+        bool array_pattern = pattern.kind == PatternKind::Array;
+        IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
+        const char* pattern_name = array_pattern ? "array" : "tuple";
+        if (source_type.primitive != expected_primitive) {
+            fail(pattern.loc, std::string(pattern_name) + " match pattern requires a " +
+                              pattern_name + " value, got " + type_name(source_type));
+        }
+        lower_positional_product_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+    }
+
+    void lower_tuple_struct_match_pattern_bindings_from_local(const Pattern& pattern,
+                                                              const std::string& source_name,
+                                                              const IrType& source_type,
+                                                              std::vector<IrStmtPtr>& statements) {
+        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
+        if (!info.tuple_struct) {
+            fail(pattern.loc, "tuple-struct pattern requires a tuple struct");
+        }
+        if (!pattern.has_payload_pattern || !pattern.payload_pattern) {
+            fail(pattern.loc, "tuple-struct pattern '" + pattern.case_name + "' requires positional fields");
+        }
+        const std::vector<IrType>& fields = aggregate_field_types(source_type);
+        const Pattern& payload = *pattern.payload_pattern;
+        if (payload.kind == PatternKind::Tuple) {
+            lower_positional_product_match_pattern_bindings_from_local(payload, source_name, source_type, statements);
+            return;
+        }
+        if (fields.size() != 1) {
+            fail(payload.loc,
+                 "tuple-struct pattern for '" + info.name + "' has 1 field but value has " +
+                     std::to_string(fields.size()));
+        }
+        lower_tuple_match_value_bindings(
+            payload,
+            fields[0],
+            make_tuple_index_expr(payload.loc, source_name, source_type, 0),
+            statements
+        );
+    }
+
+    void lower_struct_match_pattern_bindings_from_local(const Pattern& pattern,
+                                                        const std::string& source_name,
+                                                        const IrType& source_type,
+                                                        std::vector<IrStmtPtr>& statements) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+                return;
+            case PatternKind::Binding:
+                lower_binding_pattern_from_local(pattern, source_name, source_type, false, statements);
+                return;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                declare_local(pattern.loc, pattern.alias_name, source_type, false);
+                statements.push_back(make_ir_var_decl(
+                    pattern.loc,
+                    pattern.alias_name,
+                    source_type,
+                    make_local_lvalue_expr(pattern.loc, source_name, source_type),
+                    false
+                ));
+                lower_struct_match_pattern_bindings_from_local(
+                    *pattern.alias_pattern,
+                    source_name,
+                    source_type,
+                    statements
+                );
+                return;
+            case PatternKind::Or:
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                return;
+            case PatternKind::EnumCase:
+                lower_tuple_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+                return;
+            case PatternKind::Tuple:
+                fail(pattern.loc, "tuple patterns cannot match named struct values; use the tuple-struct name");
+            case PatternKind::Array:
+                fail(pattern.loc, "array patterns cannot match named struct values");
+            case PatternKind::Struct:
+                break;
+        }
+
+        require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
+        if (pattern.field_names.size() != pattern.elements.size()) {
+            throw CompileError("internal error: struct match pattern field/value arity mismatch");
+        }
+        if (!pattern.has_rest && pattern.field_names.size() != source_type.field_names.size()) {
+            fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
+        }
+
+        std::set<std::string> seen_fields;
+        for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+            const std::string& field_name = pattern.field_names[i];
+            if (!seen_fields.insert(field_name).second) {
+                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
+            }
+            std::size_t field_index = struct_field_index(pattern.elements[i].loc, source_type, field_name);
+            lower_tuple_match_value_bindings(
+                pattern.elements[i],
+                source_type.field_types[field_index],
+                make_tuple_index_expr(pattern.elements[i].loc, source_name, source_type, field_index),
+                statements
+            );
+        }
+    }
+
+    static void require_tuple_match_exhaustive(SourceLocation loc,
+                                               const IrType& match_type,
+                                               const TupleMatchCoverage& coverage) {
+        if (coverage.has_irrefutable_arm) return;
+        if (coverage.has_finite_universe &&
+            coverage.universe_size > 0 &&
+            coverage.covered_products.size() == coverage.universe_size) {
+            return;
+        }
+        std::string kind = match_type.primitive == IrPrimitiveKind::Struct
+            ? "struct"
+            : (match_type.primitive == IrPrimitiveKind::Array ? "array" : "tuple");
+        fail(loc, kind + " match must cover every finite product case or include an irrefutable arm such as _ or a binding-only pattern");
+    }
+
+    std::vector<IrStmtPtr> build_tuple_match_if_chain(std::vector<TupleCheckedStmtArm>& arms) {
+        std::vector<IrStmtPtr> current;
+        for (std::size_t i = arms.size(); i-- > 0;) {
+            TupleCheckedStmtArm& arm = arms[i];
+            if (!arm.condition) {
+                current = std::move(arm.body);
+                continue;
+            }
+
+            auto if_stmt = std::make_unique<IrStmt>();
+            if_stmt->kind = IrStmtKind::If;
+            if_stmt->loc = arm.loc;
+            if_stmt->condition = std::move(arm.condition);
+            if_stmt->then_body = std::move(arm.body);
+            if_stmt->else_body = std::move(current);
+            current.clear();
+            current.push_back(std::move(if_stmt));
+        }
+        return current;
+    }
+
+    IrExprPtr make_tuple_match_block_value(SourceLocation loc,
+                                           IrType result_type,
+                                           std::vector<IrStmtPtr> body,
+                                           IrExprPtr value) {
+        auto block = std::make_unique<IrExpr>();
+        block->kind = IrExprKind::Block;
+        block->loc = loc;
+        block->type = std::move(result_type);
+        block->block_body = std::move(body);
+        block->block_value = std::move(value);
+        return block;
+    }
+
+    IrExprPtr make_default_value_expr(SourceLocation loc, const IrType& type) const {
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+            return make_bool_literal_expr(loc, false);
+        }
+        if (has_aggregate_enum_layout(type)) {
+            auto value = std::make_unique<IrExpr>();
+            value->kind = IrExprKind::EnumConstruct;
+            value->loc = loc;
+            value->type = type;
+            value->enum_name = type.name;
+            value->enum_tag = 0;
+            value->has_payload = false;
+            return value;
+        }
+        if (is_value_integer_type(type) ||
+            type.primitive == IrPrimitiveKind::Enum) {
+            return make_integer_zero(loc, type);
+        }
+        if (type.primitive == IrPrimitiveKind::F32 ||
+            type.primitive == IrPrimitiveKind::F64 ||
+            type.primitive == IrPrimitiveKind::F128) {
+            auto value = std::make_unique<IrExpr>();
+            value->kind = IrExprKind::Float;
+            value->loc = loc;
+            value->type = type;
+            value->float_value = 0.0;
+            return value;
+        }
+        if (type.primitive == IrPrimitiveKind::String) {
+            auto value = std::make_unique<IrExpr>();
+            value->kind = IrExprKind::String;
+            value->loc = loc;
+            value->type = type;
+            return value;
+        }
+        if (type.primitive == IrPrimitiveKind::Tuple ||
+            type.primitive == IrPrimitiveKind::Array ||
+            type.primitive == IrPrimitiveKind::Struct) {
+            auto value = std::make_unique<IrExpr>();
+            value->kind = IrExprKind::Tuple;
+            value->loc = loc;
+            value->type = type;
+            for (const auto& field_type : aggregate_field_types(type)) {
+                value->args.push_back(make_default_value_expr(loc, field_type));
+            }
+            return value;
+        }
+        fail(loc, "internal error: cannot build unreachable match fallback for " + type_name(type));
+    }
+
+    IrExprPtr make_unreachable_match_fallback_expr(SourceLocation loc, const IrType& result_type) {
+        std::vector<IrStmtPtr> body;
+        body.push_back(make_panic_stmt(loc));
+        return make_tuple_match_block_value(
+            loc,
+            result_type,
+            std::move(body),
+            make_default_value_expr(loc, result_type)
+        );
+    }
+
+    IrExprPtr build_tuple_match_if_expr_chain(std::vector<TupleCheckedExprArm>& arms,
+                                              const IrType& result_type) {
+        IrExprPtr current;
+        for (std::size_t i = arms.size(); i-- > 0;) {
+            TupleCheckedExprArm& arm = arms[i];
+            if (!arm.condition) {
+                current = make_tuple_match_block_value(
+                    arm.loc,
+                    result_type,
+                    std::move(arm.body),
+                    std::move(arm.value)
+                );
+                continue;
+            }
+            if (!current) {
+                current = make_unreachable_match_fallback_expr(arm.loc, result_type);
+            }
+
+            auto if_expr = std::make_unique<IrExpr>();
+            if_expr->kind = IrExprKind::If;
+            if_expr->loc = arm.loc;
+            if_expr->type = result_type;
+            if_expr->condition = std::move(arm.condition);
+            if_expr->then_body = std::move(arm.body);
+            if_expr->then_value = std::move(arm.value);
+            if_expr->else_value = std::move(current);
+            current = std::move(if_expr);
+        }
+        return current;
+    }
+
+    Flow check_if_let(const Stmt& stmt, IrStmt& lowered) {
+        IrExprPtr match_value = check_expr(*stmt.condition);
+        if (is_aggregate_type(match_value->type)) {
+            return check_aggregate_if_let(stmt, lowered, std::move(match_value));
+        }
+
+        lowered.kind = IrStmtKind::Match;
+        lowered.match_value = std::move(match_value);
+        const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
+        IrType enum_value_type = lowered.match_value->type;
+        IrMatchArm then_arm = lower_enum_case_pattern(stmt.condition_pattern, enum_info, enum_value_type);
+        IrMatchArm else_arm;
+        else_arm.loc = stmt.loc;
+        else_arm.wildcard = true;
+
+        StateSnapshot branch_input = snapshot_states();
+        push_scope();
+        declare_match_arm_bindings(then_arm);
+        CheckedStatements then_checked = check_statements(stmt.then_body, false);
+        then_arm.body = std::move(then_checked.statements);
+        if (then_checked.flow == Flow::Returns) discard_scope();
+        else if (then_checked.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, then_arm.body);
+            pop_scope();
+        }
+        StateSnapshot then_state = snapshot_states();
+
+        restore_states(branch_input);
+
+        if (stmt.else_body.empty()) {
+            if (then_checked.flow == Flow::Continues) {
+                require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if-let without else");
+                restore_states(merge_zone_generations(branch_input, then_state));
+            } else {
+                restore_states(branch_input);
+            }
+            lowered.match_arms.push_back(std::move(then_arm));
+            lowered.match_arms.push_back(std::move(else_arm));
+            return Flow::Continues;
+        }
+
+        CheckedStatements else_checked = check_statements(stmt.else_body, true);
+        else_arm.body = std::move(else_checked.statements);
+        StateSnapshot else_state = snapshot_states();
+
+        lowered.match_arms.push_back(std::move(then_arm));
+        lowered.match_arms.push_back(std::move(else_arm));
+
+        if (then_checked.flow != Flow::Continues && else_checked.flow != Flow::Continues) {
+            restore_states(branch_input);
+            if (then_checked.flow == Flow::Returns && else_checked.flow == Flow::Returns) return Flow::Returns;
+            return Flow::Stops;
+        }
+        if (then_checked.flow != Flow::Continues) {
+            restore_states(else_state);
+            return Flow::Continues;
+        }
+        if (else_checked.flow != Flow::Continues) {
+            restore_states(then_state);
+            return Flow::Continues;
+        }
+
+        require_same_states(stmt.loc, then_state, else_state, "has incompatible ownership states after if-let branches");
+        restore_states(merge_zone_generations(then_state, else_state));
+        return Flow::Continues;
+    }
+
+    Flow check_aggregate_if_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
+        IrType subject_type = subject->type;
+        lowered.kind = IrStmtKind::Block;
+
+        std::string subject_name = make_hidden_local(
+            subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple");
+        declare_local(stmt.loc, subject_name, subject_type, false);
+        lowered.statements.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
+
+        std::vector<IrStmtPtr> condition_prelude;
+        IrExprPtr condition = lower_product_match_pattern_condition(
+            stmt.condition_pattern,
+            subject_name,
+            subject_type,
+            condition_prelude
+        );
+        for (auto& statement : condition_prelude) {
+            lowered.statements.push_back(std::move(statement));
+        }
+
+        if (!condition && !stmt.else_body.empty()) {
+            fail(stmt.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
+        }
+
+        StateSnapshot branch_input = snapshot_states();
+        std::vector<IrStmtPtr> then_body;
+        push_scope();
+        lower_product_match_pattern_bindings_from_local(stmt.condition_pattern, subject_name, subject_type, then_body);
+        CheckedStatements then_checked = check_statements(stmt.then_body, false);
+        for (auto& statement : then_checked.statements) {
+            then_body.push_back(std::move(statement));
+        }
+        if (then_checked.flow == Flow::Returns) discard_scope();
+        else if (then_checked.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, then_body);
+            pop_scope();
+        }
+        StateSnapshot then_state = snapshot_states();
+
+        if (!condition) {
+            for (auto& statement : then_body) {
+                lowered.statements.push_back(std::move(statement));
+            }
+            if (then_checked.flow == Flow::Returns) {
+                restore_states(branch_input);
+                return Flow::Returns;
+            }
+            if (then_checked.flow == Flow::Stops) {
+                restore_states(branch_input);
+                return Flow::Stops;
+            }
+            restore_states(then_state);
+            return Flow::Continues;
+        }
+
+        restore_states(branch_input);
+        auto if_stmt = std::make_unique<IrStmt>();
+        if_stmt->kind = IrStmtKind::If;
+        if_stmt->loc = stmt.loc;
+        if_stmt->condition = std::move(condition);
+        if_stmt->then_body = std::move(then_body);
+
+        if (stmt.else_body.empty()) {
+            if (then_checked.flow == Flow::Continues) {
+                require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if-let without else");
+                restore_states(merge_zone_generations(branch_input, then_state));
+            } else {
+                restore_states(branch_input);
+            }
+            lowered.statements.push_back(std::move(if_stmt));
+            return Flow::Continues;
+        }
+
+        CheckedStatements else_checked = check_statements(stmt.else_body, true);
+        if_stmt->else_body = std::move(else_checked.statements);
+        StateSnapshot else_state = snapshot_states();
+        lowered.statements.push_back(std::move(if_stmt));
+
+        if (then_checked.flow != Flow::Continues && else_checked.flow != Flow::Continues) {
+            restore_states(branch_input);
+            if (then_checked.flow == Flow::Returns && else_checked.flow == Flow::Returns) return Flow::Returns;
+            return Flow::Stops;
+        }
+        if (then_checked.flow != Flow::Continues) {
+            restore_states(else_state);
+            return Flow::Continues;
+        }
+        if (else_checked.flow != Flow::Continues) {
+            restore_states(then_state);
+            return Flow::Continues;
+        }
+
+        require_same_states(stmt.loc, then_state, else_state,
+                            "has incompatible ownership states after if-let branches");
+        restore_states(merge_zone_generations(then_state, else_state));
+        return Flow::Continues;
+    }
+
+    Flow check_tuple_match(const Stmt& stmt, IrStmt& lowered) {
+        IrExprPtr subject = std::move(lowered.match_value);
+        IrType subject_type = subject->type;
+        if (!is_aggregate_type(subject_type)) {
+            fail(stmt.loc, "aggregate match requires a tuple, array, or struct value, got " + type_name(subject_type));
+        }
+
+        lowered.kind = IrStmtKind::Block;
+        std::string subject_name = make_hidden_local(
+            subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple");
+        declare_local(stmt.loc, subject_name, subject_type, false);
+        lowered.statements.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
+
+        StateSnapshot branch_input = snapshot_states();
+        StateSnapshot continuing_state;
+        bool has_continuing_state = false;
+        bool all_return = true;
+        bool all_non_continuing = true;
+        TupleMatchCoverage coverage;
+        std::vector<TupleCheckedStmtArm> checked_arms;
+
+        for (const auto& arm : stmt.match_arms) {
+            if (coverage.has_irrefutable_arm) {
+                fail(arm.pattern.loc, "unreachable match arm after irrefutable pattern");
+            }
+
+            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+            std::set<std::string> reusable_names;
+            if (pattern_contains_or(arm.pattern)) {
+                reusable_names = require_same_or_pattern_bindings(arm.pattern.loc, alternatives, subject_type);
+            }
+
+            std::size_t alternative_index = 0;
+            for (const auto& pattern : alternatives) {
+                TupleCheckedStmtArm lowered_arm;
+                lowered_arm.loc = arm.loc;
+                std::vector<IrStmtPtr> condition_prelude;
+                lowered_arm.condition = lower_product_match_pattern_condition(
+                    pattern,
+                    subject_name,
+                    subject_type,
+                    condition_prelude
+                );
+                for (auto& statement : condition_prelude) {
+                    lowered.statements.push_back(std::move(statement));
+                }
+                note_product_match_coverage(pattern, subject_type, coverage);
+                if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
+
+                restore_states(branch_input);
+                push_scope();
+                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
+                reusable_pattern_binding_names_.clear();
+                CheckedStatements checked = check_statements(arm.body, false);
+                for (auto& statement : checked.statements) {
+                    lowered_arm.body.push_back(std::move(statement));
+                }
+                if (checked.flow == Flow::Returns) discard_scope();
+                else if (checked.flow == Flow::Stops) discard_scope();
+                else {
+                    append_current_scope_auto_destroy_cleanup(arm.loc, lowered_arm.body);
+                    pop_scope();
+                }
+
+                StateSnapshot branch_state = snapshot_states();
+                if (checked.flow == Flow::Continues) {
+                    all_return = false;
+                    all_non_continuing = false;
+                    if (!has_continuing_state) {
+                        continuing_state = branch_state;
+                        has_continuing_state = true;
+                    } else {
+                        require_same_states(arm.loc, continuing_state, branch_state,
+                                            "has incompatible ownership states after match arms");
+                        merge_zone_generations_into(continuing_state, branch_state);
+                    }
+                } else if (checked.flow == Flow::Stops) {
+                    all_return = false;
+                }
+
+                checked_arms.push_back(std::move(lowered_arm));
+                ++alternative_index;
+            }
+        }
+
+        require_tuple_match_exhaustive(stmt.loc, subject_type, coverage);
+        std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
+        for (auto& statement : chain) {
+            lowered.statements.push_back(std::move(statement));
+        }
+
+        if (all_non_continuing) {
+            restore_states(branch_input);
+            return all_return ? Flow::Returns : Flow::Stops;
+        }
+        restore_states(continuing_state);
+        return Flow::Continues;
+    }
+
+    Flow check_match(const Stmt& stmt, IrStmt& lowered) {
+        if (stmt.match_arms.empty()) fail(stmt.loc, "match must have at least one arm");
+
+        lowered.match_value = check_expr(*stmt.match_value);
+        if (is_borrow_type(lowered.match_value->type)) {
+            fail(stmt.loc, "borrow expression result must be passed directly to a call");
+        }
+        if (!is_value_enum_type(lowered.match_value->type)) {
+            if (is_value_integer_type(lowered.match_value->type) ||
+                (lowered.match_value->type.qualifier == TypeQualifier::Value &&
+                 lowered.match_value->type.primitive == IrPrimitiveKind::Bool)) {
+                return check_scalar_match(stmt, lowered);
+            }
+            if (is_aggregate_type(lowered.match_value->type)) {
+                return check_tuple_match(stmt, lowered);
+            }
+            fail(stmt.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(lowered.match_value->type));
+        }
+
+        auto enum_found = enums_.find(lowered.match_value->type.name);
+        if (enum_found == enums_.end()) {
+            fail(stmt.loc, "unknown enum type '" + lowered.match_value->type.name + "'");
+        }
+        const EnumInfo& enum_info = enum_found->second;
+        IrType enum_value_type = lowered.match_value->type;
+
+        StateSnapshot branch_input = snapshot_states();
+        StateSnapshot continuing_state;
+        bool has_continuing_state = false;
+        bool all_return = true;
+        bool all_non_continuing = true;
+        EnumMatchCoverage coverage;
+
+        for (const auto& arm : stmt.match_arms) {
+            std::set<std::string> reusable_names;
+            if (pattern_contains_or(arm.pattern)) {
+                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+                reusable_names = require_same_or_pattern_bindings(
+                    arm.pattern.loc,
+                    alternatives,
+                    enum_match_value_type(arm.pattern.loc, enum_value_type)
+                );
+            }
+            std::vector<IrMatchArm> lowered_patterns = lower_match_arm_patterns(
+                arm.pattern,
+                enum_info,
+                enum_value_type,
+                coverage);
+            std::size_t alternative_index = 0;
+            for (auto& lowered_arm : lowered_patterns) {
+                restore_states(branch_input);
+                push_scope();
+                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                declare_match_arm_bindings(lowered_arm);
+                reusable_pattern_binding_names_.clear();
+
+                CheckedStatements checked = check_statements(arm.body, false);
+                lowered_arm.body = std::move(checked.statements);
+                if (checked.flow == Flow::Returns) discard_scope();
+                else if (checked.flow == Flow::Stops) discard_scope();
+                else {
+                    append_current_scope_auto_destroy_cleanup(arm.loc, lowered_arm.body);
+                    pop_scope();
+                }
+
+                StateSnapshot branch_state = snapshot_states();
+                if (checked.flow == Flow::Continues) {
+                    all_return = false;
+                    all_non_continuing = false;
+                    if (!has_continuing_state) {
+                        continuing_state = branch_state;
+                        has_continuing_state = true;
+                    } else {
+                        require_same_states(arm.loc, continuing_state, branch_state,
+                                            "has incompatible ownership states after match arms");
+                        merge_zone_generations_into(continuing_state, branch_state);
+                    }
+                } else if (checked.flow == Flow::Stops) {
+                    all_return = false;
+                }
+
+                lowered.match_arms.push_back(std::move(lowered_arm));
+                ++alternative_index;
+            }
+        }
+
+        require_match_exhaustive(stmt.loc, enum_info, coverage);
+
+        if (all_non_continuing) {
+            restore_states(branch_input);
+            return all_return ? Flow::Returns : Flow::Stops;
+        }
+        restore_states(continuing_state);
+        return Flow::Continues;
+    }
+
+    Flow check_scalar_match(const Stmt& stmt, IrStmt& lowered) {
+        StateSnapshot branch_input = snapshot_states();
+        StateSnapshot continuing_state;
+        bool has_continuing_state = false;
+        bool all_return = true;
+        bool all_non_continuing = true;
+        ScalarMatchCoverage coverage;
+
+        for (const auto& arm : stmt.match_arms) {
+            std::set<std::string> reusable_names;
+            if (pattern_contains_or(arm.pattern)) {
+                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+                reusable_names = require_same_or_pattern_bindings(
+                    arm.pattern.loc,
+                    alternatives,
+                    lowered.match_value->type
+                );
+            }
+            std::vector<IrMatchArm> lowered_patterns = lower_scalar_match_arm_patterns(
+                arm.pattern, lowered.match_value->type, coverage);
+            std::size_t alternative_index = 0;
+            for (auto& lowered_arm : lowered_patterns) {
+                restore_states(branch_input);
+                push_scope();
+                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                declare_match_arm_bindings(lowered_arm);
+                reusable_pattern_binding_names_.clear();
+                CheckedStatements checked = check_statements(arm.body, false);
+                lowered_arm.body = std::move(checked.statements);
+                if (checked.flow == Flow::Returns) discard_scope();
+                else if (checked.flow == Flow::Stops) discard_scope();
+                else {
+                    append_current_scope_auto_destroy_cleanup(arm.loc, lowered_arm.body);
+                    pop_scope();
+                }
+
+                StateSnapshot branch_state = snapshot_states();
+                if (checked.flow == Flow::Continues) {
+                    all_return = false;
+                    all_non_continuing = false;
+                    if (!has_continuing_state) {
+                        continuing_state = branch_state;
+                        has_continuing_state = true;
+                    } else {
+                        require_same_states(arm.loc, continuing_state, branch_state,
+                                            "has incompatible ownership states after match arms");
+                        merge_zone_generations_into(continuing_state, branch_state);
+                    }
+                } else if (checked.flow == Flow::Stops) {
+                    all_return = false;
+                }
+
+                lowered.match_arms.push_back(std::move(lowered_arm));
+                ++alternative_index;
+            }
+        }
+
+        require_scalar_match_exhaustive(stmt.loc, lowered.match_value->type, coverage);
+        if (all_non_continuing) {
+            restore_states(branch_input);
+            return all_return ? Flow::Returns : Flow::Stops;
+        }
+        restore_states(continuing_state);
+        return Flow::Continues;
+    }
+
+    void check_while(const Stmt& stmt, IrStmt& lowered) {
+        lowered.condition = check_expr(*stmt.condition);
+        coerce_condition_to_bool(stmt.loc, lowered.condition);
+        StateSnapshot loop_input = snapshot_states();
+
+        LoopInfo loop;
+        loop.label = stmt.label;
+        push_loop(stmt.loc, loop);
+        CheckedStatements body = check_statements(stmt.loop_body, true);
+        lowered.loop_body = std::move(body.statements);
+        StateSnapshot loop_body_state = snapshot_states();
+        loops_.pop_back();
+
+        if (body.flow == Flow::Continues) {
+            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
+            restore_states(merge_zone_generations(loop_input, loop_body_state));
+        } else {
+            restore_states(loop_input);
+        }
+        lowered.label = stmt.label;
+    }
+
+    void check_while_let(const Stmt& stmt, IrStmt& lowered) {
+        lowered.kind = IrStmtKind::WhileLet;
+        lowered.label = stmt.label;
+        lowered.match_value = check_expr(*stmt.condition);
+        const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
+        IrType enum_value_type = lowered.match_value->type;
+        IrMatchArm pattern_arm = lower_enum_case_pattern(stmt.condition_pattern, enum_info, enum_value_type);
+        StateSnapshot loop_input = snapshot_states();
+
+        LoopInfo loop;
+        loop.label = stmt.label;
+        push_loop(stmt.loc, loop);
+        push_scope();
+        declare_match_arm_bindings(pattern_arm);
+        CheckedStatements body = check_statements(stmt.loop_body, false);
+        lowered.loop_body = std::move(body.statements);
+        if (body.flow == Flow::Returns) discard_scope();
+        else if (body.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, lowered.loop_body);
+            pop_scope();
+        }
+        StateSnapshot loop_body_state = snapshot_states();
+        loops_.pop_back();
+
+        if (body.flow == Flow::Continues) {
+            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
+            restore_states(merge_zone_generations(loop_input, loop_body_state));
+        } else {
+            restore_states(loop_input);
+        }
+        lowered.match_arms.push_back(std::move(pattern_arm));
+    }
+
+    void fail_refutable_for_pattern(SourceLocation loc) const {
+        fail(loc,
+             "refutable for-loop patterns are planned for Iterator[T] filtering; vector loop heads currently support irrefutable binding, tuple, struct, and tuple-struct patterns");
+    }
+
+    void require_irrefutable_tuple_struct_for_pattern(const Pattern& pattern, const IrType& value_type) {
+        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, value_type);
+        if (!info.tuple_struct) {
+            fail(pattern.loc, "tuple-struct for-loop pattern requires a tuple struct");
+        }
+        if (!pattern.has_payload_pattern || !pattern.payload_pattern) {
+            fail(pattern.loc, "tuple-struct for-loop pattern '" + pattern.case_name + "' requires positional fields");
+        }
+
+        const std::vector<IrType>& fields = aggregate_field_types(value_type);
+        const Pattern& payload = *pattern.payload_pattern;
+        if (payload.kind == PatternKind::Tuple) {
+            require_tuple_pattern_arity(payload, value_type, fields);
+            for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+                require_irrefutable_for_vector_pattern(
+                    payload.elements[i],
+                    fields[tuple_pattern_field_index(payload, fields.size(), i)]
+                );
+            }
+            return;
+        }
+        if (fields.size() != 1) {
+            fail(payload.loc,
+                 "tuple-struct for-loop pattern for '" + info.name + "' has 1 field but value has " +
+                     std::to_string(fields.size()));
+        }
+        require_irrefutable_for_vector_pattern(payload, fields[0]);
+    }
+
+    void require_irrefutable_for_vector_pattern(const Pattern& pattern, const IrType& value_type) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return;
+            case PatternKind::Tuple: {
+                if (value_type.primitive != IrPrimitiveKind::Tuple) {
+                    fail(pattern.loc, "tuple for-loop pattern requires a tuple element, got " + type_name(value_type));
+                }
+                const std::vector<IrType>& fields = aggregate_field_types(value_type);
+                require_tuple_pattern_arity(pattern, value_type, fields);
+                for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+                    require_irrefutable_for_vector_pattern(
+                        pattern.elements[i],
+                        fields[tuple_pattern_field_index(pattern, fields.size(), i)]
+                    );
+                }
+                return;
+            }
+            case PatternKind::Array: {
+                if (value_type.primitive != IrPrimitiveKind::Array) {
+                    fail(pattern.loc, "array for-loop pattern requires an array element, got " + type_name(value_type));
+                }
+                const std::vector<IrType>& fields = aggregate_field_types(value_type);
+                require_tuple_pattern_arity(pattern, value_type, fields);
+                for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+                    require_irrefutable_for_vector_pattern(
+                        pattern.elements[i],
+                        fields[tuple_pattern_field_index(pattern, fields.size(), i)]
+                    );
+                }
+                return;
+            }
+            case PatternKind::Struct: {
+                require_struct_match_pattern_type(pattern.loc, pattern.case_name, value_type);
+                if (pattern.field_names.size() != pattern.elements.size()) {
+                    throw CompileError("internal error: struct for-loop pattern field/value arity mismatch");
+                }
+                if (!pattern.has_rest && pattern.field_names.size() != value_type.field_names.size()) {
+                    fail(pattern.loc, "struct for-loop pattern must mention all fields or use '..'");
+                }
+                std::set<std::string> seen_fields;
+                for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+                    const std::string& field_name = pattern.field_names[i];
+                    if (!seen_fields.insert(field_name).second) {
+                        fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct for-loop pattern");
+                    }
+                    std::size_t field_index = struct_field_index(pattern.elements[i].loc, value_type, field_name);
+                    require_irrefutable_for_vector_pattern(pattern.elements[i], value_type.field_types[field_index]);
+                }
+                return;
+            }
+            case PatternKind::EnumCase:
+                if (value_type.primitive == IrPrimitiveKind::Struct) {
+                    require_irrefutable_tuple_struct_for_pattern(pattern, value_type);
+                    return;
+                }
+                fail(pattern.loc,
+                     "for enum-case patterns are planned for Iterator[T] values but are not supported yet");
+                return;
+            case PatternKind::Alias:
+                fail(pattern.loc, "alias patterns in for-loop heads are planned after advanced pattern binding modes");
+                return;
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+            case PatternKind::Or:
+                fail_refutable_for_pattern(pattern.loc);
+                return;
+        }
+    }
+
+    void check_for(const Stmt& stmt, IrStmt& lowered) {
+        if (stmt.for_iterable &&
+            stmt.for_iterable->kind == ExprKind::Call &&
+            is_prelude_range_function_name(stmt.for_iterable->name)) {
+            if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
+                fail(stmt.for_pattern.loc,
+                     "range for-loop patterns must be a binding or _; richer loop-head patterns are implemented for list literals and planned for Iterator[T]");
+            }
+            check_for_range(stmt, lowered);
+            return;
+        }
+        if (stmt.for_iterable && stmt.for_iterable->kind == ExprKind::Vector) {
+            check_for_vector(stmt, lowered);
+            return;
+        }
+        IrExprPtr iterable = check_expr(*stmt.for_iterable);
+        if (is_prelude_range_type(iterable->type)) {
+            if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
+                fail(stmt.for_pattern.loc,
+                     "range for-loop patterns must be a binding or _; richer loop-head patterns are implemented for list literals and planned for Iterator[T]");
+            }
+            check_for_range_value(stmt, lowered, std::move(iterable));
+            return;
+        }
+        if (iterable->type.primitive == IrPrimitiveKind::Vector) {
+            check_for_vector_value(stmt, lowered, std::move(iterable));
+            return;
+        }
+        fail(stmt.loc,
+             "for currently supports range values, range(start, end), range_inclusive(start, end), 0..end, 0..=end, list literals, or stored local vector values; Iterator[T] lowering is planned");
+    }
+
+    void check_for_range(const Stmt& stmt, IrStmt& lowered) {
+        const Expr& call = *stmt.for_iterable;
+        if (!is_prelude_range_function_name(call.name)) {
+            fail(call.loc, "for currently supports range(start, end) iterator expressions");
+        }
+        IrExprPtr range = check_range_call(call, std::make_unique<IrExpr>());
+        if (range->args.size() != 2) throw CompileError("internal error: range call did not lower to two bounds");
+        bool inclusive = range->type.name == "RangeInclusive";
+        IrExprPtr start = std::move(range->args[0]);
+        IrExprPtr end = std::move(range->args[1]);
+        finish_for_range(stmt, lowered, std::move(start), std::move(end), inclusive);
+    }
+
+    void check_for_range_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
+        IrType range_type = iterable->type;
+        bool inclusive = range_type.name == "RangeInclusive";
+
+        lowered.kind = IrStmtKind::Block;
+        std::string range_name = make_hidden_local("$for_range");
+        declare_local(stmt.loc, range_name, range_type, false);
+        lowered.statements.push_back(make_ir_var_decl(stmt.loc, range_name, range_type, std::move(iterable), false));
+
+        auto loop = std::make_unique<IrStmt>();
+        loop->loc = stmt.loc;
+        IrExprPtr start = make_tuple_index_expr(stmt.loc, range_name, range_type, 0);
+        IrExprPtr end = make_tuple_index_expr(stmt.loc, range_name, range_type, 1);
+        finish_for_range(stmt, *loop, std::move(start), std::move(end), inclusive);
+        lowered.statements.push_back(std::move(loop));
+    }
+
+    void finish_for_range(const Stmt& stmt, IrStmt& lowered, IrExprPtr start, IrExprPtr end, bool inclusive) {
+        IrType bound_type = start->type;
+        lowered.kind = IrStmtKind::ForRange;
+        lowered.label = stmt.label;
+        lowered.for_inclusive = inclusive;
+        lowered.for_binding_type = bound_type;
+        lowered.for_start = std::move(start);
+        lowered.for_end = std::move(end);
+        lowered.for_index_name = make_hidden_local("$for_index");
+        lowered.for_end_name = make_hidden_local("$for_end");
+        declare_local(stmt.loc, lowered.for_index_name, bound_type, true);
+        declare_local(stmt.loc, lowered.for_end_name, bound_type, false);
+
+        StateSnapshot loop_input = snapshot_states();
+        LoopInfo loop;
+        loop.label = stmt.label;
+        push_loop(stmt.loc, loop);
+        push_scope();
+        if (stmt.for_pattern.kind == PatternKind::Binding) {
+            lowered.for_binding_name = stmt.for_pattern.payload_name;
+            declare_local(stmt.for_pattern.loc, lowered.for_binding_name, bound_type, false);
+        }
+        CheckedStatements body = check_statements(stmt.loop_body, false);
+        lowered.loop_body = std::move(body.statements);
+        if (body.flow == Flow::Returns) discard_scope();
+        else if (body.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, lowered.loop_body);
+            pop_scope();
+        }
+        StateSnapshot loop_body_state = snapshot_states();
+        loops_.pop_back();
+
+        if (body.flow == Flow::Continues) {
+            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
+            restore_states(merge_zone_generations(loop_input, loop_body_state));
+        } else {
+            restore_states(loop_input);
+        }
+    }
+
+    void check_for_vector(const Stmt& stmt, IrStmt& lowered) {
+        IrExprPtr iterable = check_expr(*stmt.for_iterable);
+        if (iterable->kind != IrExprKind::Vector || iterable->type.args.size() != 1) {
+            fail(stmt.loc, "for currently supports list literal iterator expressions");
+        }
+
+        lowered.kind = IrStmtKind::ForVector;
+        lowered.label = stmt.label;
+        lowered.for_binding_type = iterable->type.args[0];
+        lowered.for_values = std::move(iterable->args);
+
+        StateSnapshot loop_input = snapshot_states();
+        LoopInfo loop;
+        loop.label = stmt.label;
+        push_loop(stmt.loc, loop);
+        push_scope();
+        std::vector<IrStmtPtr> pattern_prelude;
+        if (stmt.for_pattern.kind == PatternKind::Binding) {
+            lowered.for_binding_name = stmt.for_pattern.payload_name;
+            declare_local(stmt.for_pattern.loc, lowered.for_binding_name, lowered.for_binding_type, false);
+        } else if (stmt.for_pattern.kind == PatternKind::Wildcard) {
+            if (is_aggregate_type(lowered.for_binding_type)) {
+                lowered.for_binding_name = make_hidden_local("$for_item");
+                declare_local(stmt.for_pattern.loc, lowered.for_binding_name, lowered.for_binding_type, false);
+            }
+        } else {
+            require_irrefutable_for_vector_pattern(stmt.for_pattern, lowered.for_binding_type);
+            lowered.for_binding_name = make_hidden_local("$for_item");
+            declare_local(stmt.for_pattern.loc, lowered.for_binding_name, lowered.for_binding_type, false);
+            lower_product_match_pattern_bindings_from_local(
+                stmt.for_pattern,
+                lowered.for_binding_name,
+                lowered.for_binding_type,
+                pattern_prelude
+            );
+        }
+        CheckedStatements body = check_statements(stmt.loop_body, false);
+        lowered.loop_body = std::move(pattern_prelude);
+        for (auto& body_stmt : body.statements) {
+            lowered.loop_body.push_back(std::move(body_stmt));
+        }
+        if (body.flow == Flow::Returns) discard_scope();
+        else if (body.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, lowered.loop_body);
+            pop_scope();
+        }
+        StateSnapshot loop_body_state = snapshot_states();
+        loops_.pop_back();
+
+        if (body.flow == Flow::Continues) {
+            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
+            restore_states(merge_zone_generations(loop_input, loop_body_state));
+        } else {
+            restore_states(loop_input);
+        }
+    }
+
+    void check_for_vector_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
+        if (iterable->type.args.size() != 1 || iterable->type.array_size == 0) {
+            fail(stmt.loc, "for currently supports stored local vector values with a known length");
+        }
+
+        IrType vector_type = iterable->type;
+        IrType element_type = vector_type.args[0];
+        IrType i64 = i64_type(stmt.loc);
+
+        lowered.kind = IrStmtKind::Block;
+        std::string vector_name = make_hidden_local("$for_vec");
+        declare_local(stmt.loc, vector_name, vector_type, false);
+        lowered.statements.push_back(make_ir_var_decl(stmt.loc, vector_name, vector_type, std::move(iterable), false));
+
+        auto loop = std::make_unique<IrStmt>();
+        loop->kind = IrStmtKind::ForRange;
+        loop->loc = stmt.loc;
+        loop->label = stmt.label;
+        loop->for_inclusive = false;
+        loop->for_binding_type = i64;
+        loop->for_start = make_integer_literal(stmt.loc, i64, 0);
+        loop->for_end = make_integer_literal(stmt.loc, i64, vector_type.array_size);
+        loop->for_index_name = make_hidden_local("$for_index");
+        loop->for_end_name = make_hidden_local("$for_end");
+        declare_local(stmt.loc, loop->for_index_name, i64, true);
+        declare_local(stmt.loc, loop->for_end_name, i64, false);
+
+        StateSnapshot loop_input = snapshot_states();
+        LoopInfo loop_info;
+        loop_info.label = stmt.label;
+        push_loop(stmt.loc, loop_info);
+        push_scope();
+
+        std::vector<IrStmtPtr> pattern_prelude;
+        IrExprPtr element = make_vector_index_expr(stmt.loc, vector_name, vector_type, loop->for_index_name, i64);
+        if (stmt.for_pattern.kind == PatternKind::Binding) {
+            declare_local(stmt.for_pattern.loc, stmt.for_pattern.payload_name, element_type, false);
+            pattern_prelude.push_back(
+                make_ir_var_decl(stmt.for_pattern.loc, stmt.for_pattern.payload_name, element_type, std::move(element), false)
+            );
+        } else if (stmt.for_pattern.kind == PatternKind::Wildcard) {
+            if (is_aggregate_type(element_type)) {
+                std::string item_name = make_hidden_local("$for_item");
+                declare_local(stmt.for_pattern.loc, item_name, element_type, false);
+                pattern_prelude.push_back(
+                    make_ir_var_decl(stmt.for_pattern.loc, item_name, element_type, std::move(element), false)
+                );
+            }
+        } else {
+            require_irrefutable_for_vector_pattern(stmt.for_pattern, element_type);
+            std::string item_name = make_hidden_local("$for_item");
+            declare_local(stmt.for_pattern.loc, item_name, element_type, false);
+            pattern_prelude.push_back(
+                make_ir_var_decl(stmt.for_pattern.loc, item_name, element_type, std::move(element), false)
+            );
+            lower_product_match_pattern_bindings_from_local(
+                stmt.for_pattern,
+                item_name,
+                element_type,
+                pattern_prelude
+            );
+        }
+
+        CheckedStatements body = check_statements(stmt.loop_body, false);
+        loop->loop_body = std::move(pattern_prelude);
+        for (auto& body_stmt : body.statements) {
+            loop->loop_body.push_back(std::move(body_stmt));
+        }
+        if (body.flow == Flow::Returns) discard_scope();
+        else if (body.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, loop->loop_body);
+            pop_scope();
+        }
+        StateSnapshot loop_body_state = snapshot_states();
+        loops_.pop_back();
+
+        if (body.flow == Flow::Continues) {
+            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
+            restore_states(merge_zone_generations(loop_input, loop_body_state));
+        } else {
+            restore_states(loop_input);
+        }
+        lowered.statements.push_back(std::move(loop));
+    }
+
+    std::string make_hidden_local(const std::string& prefix) {
+        return prefix + std::to_string(hidden_local_counter_++);
+    }
+
+    void push_loop(SourceLocation loc, LoopInfo loop) {
+        if (!loop.label.empty()) {
+            for (const auto& active : loops_) {
+                if (active.label == loop.label) {
+                    fail(loc, "duplicate active loop label '" + loop.label + "'");
+                }
+            }
+        }
+        loop.scope_depth = scopes_.size();
+        loops_.push_back(loop);
+    }
+
+    void push_labeled_block(SourceLocation loc, const std::string& label) {
+        for (const auto& active : loops_) {
+            if (active.label == label) {
+                fail(loc, "duplicate active label '" + label + "'");
+            }
+        }
+        LoopInfo block;
+        block.label = label;
+        block.is_loop = false;
+        block.scope_depth = scopes_.size();
+        loops_.push_back(block);
+    }
+
+    void check_init_while(const Stmt& stmt, IrStmt& lowered) {
+        LoopInfo loop;
+        loop.supports_values = true;
+        loop.label = stmt.label;
+        lowered.label = stmt.label;
+        for (const auto& binding : stmt.init_bindings) {
+            IrExprPtr init = check_expr(*binding.init);
+            IrType declared = binding.has_type ? resolve_executable_type(binding.type) : init->type;
+            coerce_expr_to_expected(*init, declared);
+            require_assignable(binding.loc, declared, init->type);
+            if (is_owner_type(declared)) {
+                fail(binding.loc, "owning init-while bindings are not supported yet");
+            }
+            if (is_borrow_type(declared)) {
+                fail(binding.loc, "borrow bindings are not supported in init-while yet");
+            }
+            declare_local(binding.loc, binding.name, declared, true);
+            loop.names.push_back(binding.name);
+            loop.types.push_back(declared);
+
+            IrBinding ir_binding;
+            ir_binding.name = binding.name;
+            ir_binding.type = declared;
+            ir_binding.init = std::move(init);
+            ir_binding.mutable_binding = true;
+            ir_binding.loc = binding.loc;
+            lowered.init_bindings.push_back(std::move(ir_binding));
+        }
+
+        lowered.condition = check_expr(*stmt.condition);
+        coerce_condition_to_bool(stmt.loc, lowered.condition);
+        StateSnapshot loop_input = snapshot_states();
+
+        push_loop(stmt.loc, loop);
+        CheckedStatements body = check_statements(stmt.loop_body, true);
+        lowered.loop_body = std::move(body.statements);
+        StateSnapshot loop_body_state = snapshot_states();
+        if (body.flow == Flow::Continues) {
+            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
+            restore_states(merge_zone_generations(loop_input, loop_body_state));
+        } else {
+            restore_states(loop_input);
+        }
+
+        if (body.flow == Flow::Continues && !stmt.updates.empty()) {
+            if (stmt.updates.size() != loop.types.size()) {
+                fail(stmt.loc, "next value count must match init binding count");
+            }
+            StateSnapshot update_input = snapshot_states();
+            lowered.updates.reserve(stmt.updates.size());
+            for (std::size_t i = 0; i < stmt.updates.size(); ++i) {
+                IrExprPtr update = check_expr(*stmt.updates[i]);
+                coerce_expr_to_expected(*update, loop.types[i]);
+                require_assignable(stmt.loc, loop.types[i], update->type);
+                lowered.updates.push_back(std::move(update));
+            }
+            StateSnapshot update_state = snapshot_states();
+            require_same_states(stmt.loc, update_input, update_state, "cannot change ownership state in loop updates yet");
+            restore_states(merge_zone_generations(update_input, update_state));
+        }
+        loops_.pop_back();
+    }
+
+    const LoopInfo& loop_for_break(SourceLocation loc, const std::string& label) const {
+        if (label.empty()) {
+            for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
+                if (loop->is_loop) return *loop;
+            }
+            fail(loc, "break used outside a loop");
+        }
+        for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
+            if (loop->label == label) return *loop;
+        }
+        fail(loc, "unknown loop label '" + label + "'");
+    }
+
+    LoopInfo& mutable_loop_for_break(SourceLocation loc, const std::string& label) {
+        if (label.empty()) {
+            for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
+                if (loop->is_loop) return *loop;
+            }
+            fail(loc, "break used outside a loop");
+        }
+        for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
+            if (loop->label == label) return *loop;
+        }
+        fail(loc, "unknown loop label '" + label + "'");
+    }
+
+    const LoopInfo& loop_for_continue(SourceLocation loc) const {
+        for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
+            if (loop->is_loop) return *loop;
+        }
+        fail(loc, "continue used outside a loop");
+    }
+
+    void check_break(const Stmt& stmt, IrStmt& lowered) {
+        LoopInfo& target = mutable_loop_for_break(stmt.loc, stmt.break_label);
+        lowered.break_label = stmt.break_label;
+        if (!stmt.break_value) {
+            if (target.supports_break_values) {
+                fail(stmt.loc, "break from labeled block expression must provide a value");
+            }
+            std::vector<IrStmtPtr> cleanup;
+            append_auto_destroy_zone_cleanup(stmt.loc, cleanup, target.scope_depth);
+            if (!cleanup.empty()) {
+                auto break_stmt = std::make_unique<IrStmt>();
+                break_stmt->kind = IrStmtKind::Break;
+                break_stmt->loc = stmt.loc;
+                break_stmt->break_label = stmt.break_label;
+                cleanup.push_back(std::move(break_stmt));
+                lowered.kind = IrStmtKind::Block;
+                lowered.statements = std::move(cleanup);
+            }
+            return;
+        }
+        if (!target.supports_break_values) {
+            fail(stmt.loc, "break values are only valid for labeled block expressions");
+        }
+        IrExprPtr value = check_expr(*stmt.break_value);
+        if (contains_borrow_type(value->type)) {
+            fail(stmt.loc, "break values cannot be borrow values yet");
+        }
+        if (is_owner_type(value->type)) {
+            fail(stmt.loc, "break values cannot move owning values yet");
+        }
+        if (is_void_value_type(value->type)) {
+            fail(stmt.loc, "break value must produce a value");
+        }
+        if (target.has_break_result_type) {
+            coerce_expr_to_expected(*value, target.break_result_type);
+            require_assignable(stmt.loc, target.break_result_type, value->type);
+        } else {
+            target.break_result_type = value->type;
+            target.has_break_result_type = true;
+        }
+        std::vector<IrStmtPtr> cleanup;
+        value = materialize_value_before_auto_destroy_cleanup(
+            stmt.loc,
+            std::move(value),
+            cleanup,
+            target.scope_depth,
+            "$break",
+            "labeled block break value"
+        );
+        target.break_state_snapshots.push_back(snapshot_states());
+        if (!cleanup.empty()) {
+            auto break_stmt = std::make_unique<IrStmt>();
+            break_stmt->kind = IrStmtKind::Break;
+            break_stmt->loc = stmt.loc;
+            break_stmt->break_label = stmt.break_label;
+            break_stmt->break_value = std::move(value);
+            cleanup.push_back(std::move(break_stmt));
+            lowered.kind = IrStmtKind::Block;
+            lowered.statements = std::move(cleanup);
+            return;
+        }
+        lowered.break_value = std::move(value);
+    }
+
+    void check_continue(const Stmt& stmt, IrStmt& lowered) {
+        const LoopInfo& loop = loop_for_continue(stmt.loc);
+        if (stmt.updates.empty()) {
+            std::vector<IrStmtPtr> cleanup;
+            append_auto_destroy_zone_cleanup(stmt.loc, cleanup, loop.scope_depth);
+            if (!cleanup.empty()) {
+                auto continue_stmt = std::make_unique<IrStmt>();
+                continue_stmt->kind = IrStmtKind::Continue;
+                continue_stmt->loc = stmt.loc;
+                cleanup.push_back(std::move(continue_stmt));
+                lowered.kind = IrStmtKind::Block;
+                lowered.statements = std::move(cleanup);
+            }
+            return;
+        }
+        if (!loop.supports_values) fail(stmt.loc, "continue values are only valid inside init-while loops");
+        if (stmt.updates.size() != loop.types.size()) {
+            fail(stmt.loc, "continue value count must match init binding count");
+        }
+        std::vector<IrExprPtr> updates;
+        updates.reserve(stmt.updates.size());
+        for (std::size_t i = 0; i < stmt.updates.size(); ++i) {
+            IrExprPtr update = check_expr(*stmt.updates[i]);
+            coerce_expr_to_expected(*update, loop.types[i]);
+            require_assignable(stmt.loc, loop.types[i], update->type);
+            updates.push_back(std::move(update));
+        }
+        std::vector<IrStmtPtr> cleanup;
+        if (has_auto_destroy_zone_cleanup(loop.scope_depth)) {
+            for (auto& update : updates) {
+                require_zone_pointer_not_escape_temporary_scope(
+                    stmt.loc,
+                    *update,
+                    loop.scope_depth,
+                    "continue value"
+                );
+                IrType saved_type = update->type;
+                std::string saved_name = make_hidden_local("$continue");
+                cleanup.push_back(make_ir_var_decl(stmt.loc, saved_name, saved_type, std::move(update), false));
+                update = make_local_lvalue_expr(stmt.loc, saved_name, saved_type);
+            }
+            append_auto_destroy_zone_cleanup(stmt.loc, cleanup, loop.scope_depth);
+        }
+        if (!cleanup.empty()) {
+            auto continue_stmt = std::make_unique<IrStmt>();
+            continue_stmt->kind = IrStmtKind::Continue;
+            continue_stmt->loc = stmt.loc;
+            continue_stmt->updates = std::move(updates);
+            cleanup.push_back(std::move(continue_stmt));
+            lowered.kind = IrStmtKind::Block;
+            lowered.statements = std::move(cleanup);
+            return;
+        }
+        lowered.updates = std::move(updates);
+    }
+
+    static bool is_empty_vector_literal_expr(const Expr& expr) {
+        return expr.kind == ExprKind::Vector && expr.args.empty();
+    }
+
+    IrExprPtr make_typed_empty_vector_expr(SourceLocation loc, const IrType& expected) const {
+        if (expected.qualifier != TypeQualifier::Value ||
+            expected.primitive != IrPrimitiveKind::Vector ||
+            expected.args.size() != 1) {
+            fail(loc, "empty [] literals need an explicit Vec[T] type or non-empty array elements");
+        }
+        require_plain_prelude_aggregate_element(loc, expected.args[0], "vector");
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::Vector;
+        lowered->loc = loc;
+        lowered->type = vector_storage_type(loc, expected.args[0], 0);
+        return lowered;
+    }
+
+    IrExprPtr check_expr_with_expected(const Expr& expr, const IrType& expected) {
+        if (is_empty_vector_literal_expr(expr)) {
+            return make_typed_empty_vector_expr(expr.loc, expected);
+        }
+        if (expr.kind == ExprKind::Name) {
+            std::string generic_name;
+            if (const FunctionDecl* generic = find_generic_function(expr, generic_name)) {
+                if (IrExprPtr ref = check_generic_function_ref_with_expected(expr, *generic, generic_name, expected)) {
+                    return ref;
+                }
+            }
+        }
+        if (expr.kind == ExprKind::Call && is_prelude_range_function_name(expr.name) && is_prelude_range_type(expected)) {
+            return check_range_call(expr, std::make_unique<IrExpr>(), &expected);
+        }
+        return check_expr(expr);
+    }
+
+    IrExprPtr check_expr(const Expr& expr) {
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->loc = expr.loc;
+        switch (expr.kind) {
+            case ExprKind::Integer:
+                lowered->kind = IrExprKind::Integer;
+                lowered->int_value = expr.int_value;
+                lowered->int_negative = expr.int_negative;
+                lowered->type = expr.literal_suffix.empty()
+                    ? i64_type(expr.loc)
+                    : integer_literal_suffix_type(expr.literal_suffix, expr.loc);
+                if (!expr.literal_suffix.empty() && !integer_literal_fits(*lowered, lowered->type)) {
+                    fail(expr.loc, "integer literal " + integer_literal_name(*lowered) +
+                                   " is out of range for " + type_name(lowered->type));
+                }
+                return lowered;
+            case ExprKind::Float:
+                lowered->kind = IrExprKind::Float;
+                lowered->float_value = expr.float_value;
+                lowered->type = expr.literal_suffix.empty()
+                    ? primitive_type(IrPrimitiveKind::F64, "f64", expr.loc)
+                    : float_literal_suffix_type(expr.literal_suffix, expr.loc);
+                return lowered;
+            case ExprKind::String:
+                lowered->kind = IrExprKind::String;
+                lowered->string_value = expr.string_value;
+                lowered->type = primitive_type(IrPrimitiveKind::String, "string", expr.loc);
+                return lowered;
+            case ExprKind::Bool:
+                lowered->kind = IrExprKind::Bool;
+                lowered->bool_value = expr.bool_value;
+                lowered->type = bool_type(expr.loc);
+                return lowered;
+            case ExprKind::Null:
+                lowered->kind = IrExprKind::Null;
+                lowered->type = null_pointer_type(expr.loc);
+                return lowered;
+            case ExprKind::Name: {
+                LocalInfo* local_slot = find_local_slot(expr.name);
+                if (!local_slot) {
+                    ConstantValue constant_value;
+                    if (resolve_constant_value(expr.loc, expr.name, constant_value)) {
+                        return make_constant_expr(expr.loc, constant_value);
+                    }
+                    std::string case_name = resolve_enum_case_name(expr.name);
+                    auto case_found = enum_cases_.find(case_name);
+                    if (case_found != enum_cases_.end()) {
+                        const EnumCaseInfo& info = case_found->second;
+                        require_enum_case_access(expr.loc, info);
+                        if (info.is_generic) {
+                            fail(expr.loc,
+                                 "generic enum case '" + expr.name +
+                                     "' requires call syntax with type arguments");
+                        }
+                        if (!info.payloads.empty()) fail(expr.loc, "enum case '" + expr.name + "' requires a payload");
+                        return make_enum_construct(expr.loc, info, {});
+                    }
+                    std::string function_name = resolve_function_name(expr.name);
+                    auto function_found = functions_.find(function_name);
+                    if (function_found != functions_.end()) {
+                        const FunctionSig& sig = function_found->second;
+                        if (sig.is_variadic) {
+                            fail(expr.loc, "variadic function '" + expr.name + "' cannot be used as a function pointer yet");
+                        }
+                        require_function_access(expr.loc, sig, function_name);
+                        if (sig.deprecated) {
+                            warn_deprecated_use(expr.loc, "function", function_name, sig.deprecated_message);
+                        }
+                        lowered->kind = IrExprKind::FunctionRef;
+                        lowered->name = function_name;
+                        lowered->type = function_pointer_type(sig, expr.loc);
+                        return lowered;
+                    }
+                    std::string generic_function_name = resolve_generic_function_name(expr.name);
+                    if (generic_functions_.count(generic_function_name)) {
+                        fail(expr.loc, "generic function '" + expr.name + "' cannot be used as a function pointer yet");
+                    }
+                    fail(expr.loc, "unknown name '" + expr.name + "'");
+                }
+                LocalInfo& local = *local_slot;
+                if (local.state != LocalState::Alive) {
+                    fail(expr.loc, "cannot use " + state_name(local.state) + " binding '" + expr.name + "'");
+                }
+                require_can_read_borrow_path(expr.loc, expr.name, local, "");
+                require_zone_pointer_valid(expr.loc, expr.name, local);
+                lowered->kind = IrExprKind::Local;
+                lowered->name = expr.name;
+                lowered->type = local.type;
+                if (is_owner_type(local.type)) {
+                    if (is_auto_destroy_zone(local)) {
+                        fail(expr.loc,
+                             "temporary zone '" + expr.name +
+                                 "' cannot be moved; it is destroyed automatically at function exit");
+                    }
+                    require_not_borrowed(expr.loc, expr.name, local, "move");
+                    if (has_moved_or_dropped_owned_fields(local)) {
+                        fail(expr.loc, "cannot move partially moved owning binding '" + expr.name + "'");
+                    }
+                    local.state = LocalState::Moved;
+                }
+                return lowered;
+            }
+            case ExprKind::Borrow:
+                return check_borrow(expr, std::move(lowered));
+            case ExprKind::Unary:
+                return check_unary(expr, std::move(lowered));
+            case ExprKind::Cast:
+                return check_cast(expr, std::move(lowered));
+            case ExprKind::Try:
+                return check_try(expr, std::move(lowered));
+            case ExprKind::NullCoalesce:
+                return check_null_coalesce(expr, std::move(lowered));
+            case ExprKind::Tuple:
+                return check_tuple(expr, std::move(lowered));
+            case ExprKind::TupleIndex:
+                return check_tuple_index(expr, std::move(lowered));
+            case ExprKind::Index:
+                return check_index(expr, std::move(lowered));
+            case ExprKind::FieldAccess:
+                return check_field_access(expr, std::move(lowered));
+            case ExprKind::StructLiteral:
+                return check_struct_literal(expr, std::move(lowered));
+            case ExprKind::Vector:
+                return check_vector(expr, std::move(lowered));
+            case ExprKind::MacroCall:
+                return check_macro_call(expr);
+            case ExprKind::MethodCall:
+                return check_method_call(expr, std::move(lowered));
+            case ExprKind::Match:
+                return check_match_expr(expr, std::move(lowered));
+            case ExprKind::If:
+                return check_if_expr(expr, std::move(lowered));
+            case ExprKind::Block:
+                return check_block_expr(expr, std::move(lowered));
+            case ExprKind::Call:
+                return check_call(expr, std::move(lowered));
+            case ExprKind::Binary:
+                return check_binary(expr, std::move(lowered));
+        }
+        lowered->type.primitive = IrPrimitiveKind::Unknown;
+        return lowered;
+    }
+
+    const std::vector<IrType>& aggregate_field_types(const IrType& type) const {
+        if (type.primitive == IrPrimitiveKind::Struct ||
+            type.primitive == IrPrimitiveKind::Array) return type.field_types;
+        return type.args;
+    }
+
+    std::size_t struct_field_index(SourceLocation loc, const IrType& type, const std::string& field_name) const {
+        for (std::size_t i = 0; i < type.field_names.size(); ++i) {
+            if (type.field_names[i] == field_name) return i;
+        }
+        fail(loc, "struct '" + type.name + "' has no field '" + field_name + "'");
+    }
+
+    bool is_struct_generic_name(const StructInfo& info, const std::string& name) const {
+        return std::find(info.generic_names.begin(), info.generic_names.end(), name) != info.generic_names.end();
+    }
+
+    void record_inferred_struct_type_arg(
+        SourceLocation loc,
+        const StructInfo& info,
+        const std::string& generic_name,
+        const IrType& actual,
+        std::map<std::string, IrType>& inferred
+    ) const {
+        if (!is_struct_generic_name(info, generic_name)) return;
+        auto found = inferred.find(generic_name);
+        if (found != inferred.end()) {
+            if (!same_type(found->second, actual)) {
+                fail(loc,
+                     "conflicting inferred type for generic parameter '" + generic_name +
+                         "': " + type_name(found->second) + " and " + type_name(actual));
+            }
+            return;
+        }
+        inferred.emplace(generic_name, actual);
+    }
+
+    bool infer_struct_type_arg_from_value_type(
+        const TypeRef& pattern,
+        const IrType& actual,
+        const StructInfo& info,
+        std::map<std::string, IrType>& inferred
+    ) {
+        if (pattern.args.empty() && is_struct_generic_name(info, pattern.name)) {
+            IrType inferred_type = actual;
+            if (pattern.qualifier != TypeQualifier::Value) {
+                if (actual.qualifier != pattern.qualifier) return false;
+                inferred_type.qualifier = TypeQualifier::Value;
+            }
+            record_inferred_struct_type_arg(pattern.loc, info, pattern.name, inferred_type, inferred);
+            return true;
+        }
+
+        if (pattern.qualifier != actual.qualifier) return false;
+
+        if (pattern.name == "Array") {
+            if (actual.primitive != IrPrimitiveKind::Array ||
+                pattern.array_size != actual.array_size ||
+                pattern.args.size() != 1 ||
+                actual.args.size() != 1) {
+                return false;
+            }
+            return infer_struct_type_arg_from_value_type(pattern.args[0], actual.args[0], info, inferred);
+        }
+
+        if (pattern.name == "Tuple") {
+            if (actual.primitive != IrPrimitiveKind::Tuple || pattern.args.size() != actual.args.size()) return false;
+            for (std::size_t i = 0; i < pattern.args.size(); ++i) {
+                if (!infer_struct_type_arg_from_value_type(pattern.args[i], actual.args[i], info, inferred)) return false;
+            }
+            return true;
+        }
+
+        if (pattern.name == "Vec" || pattern.name == "prelude::Vec") {
+            if (actual.primitive != IrPrimitiveKind::Vector || pattern.args.size() != 1 || actual.args.size() != 1) {
+                return false;
+            }
+            return infer_struct_type_arg_from_value_type(pattern.args[0], actual.args[0], info, inferred);
+        }
+
+        if (pattern.name == "fn") {
+            if (actual.primitive != IrPrimitiveKind::Function ||
+                pattern.array_size != actual.array_size ||
+                pattern.args.size() != actual.args.size()) {
+                return false;
+            }
+            for (std::size_t i = 0; i < pattern.args.size(); ++i) {
+                if (!infer_struct_type_arg_from_value_type(pattern.args[i], actual.args[i], info, inferred)) return false;
+            }
+            return true;
+        }
+
+        std::string resolved_struct_name = resolve_struct_type_name(pattern.name);
+        if (actual.primitive == IrPrimitiveKind::Struct && structs_.count(resolved_struct_name)) {
+            if (actual.name != resolved_struct_name || pattern.args.size() != actual.args.size()) return false;
+            for (std::size_t i = 0; i < pattern.args.size(); ++i) {
+                if (!infer_struct_type_arg_from_value_type(pattern.args[i], actual.args[i], info, inferred)) return false;
+            }
+            return true;
+        }
+
+        std::string resolved_enum_name = resolve_enum_type_name(pattern.name);
+        if (actual.primitive == IrPrimitiveKind::Enum && enums_.count(resolved_enum_name)) {
+            if (actual.name != resolved_enum_name || pattern.args.size() != actual.args.size()) return false;
+            for (std::size_t i = 0; i < pattern.args.size(); ++i) {
+                if (!infer_struct_type_arg_from_value_type(pattern.args[i], actual.args[i], info, inferred)) return false;
+            }
+            return true;
+        }
+
+        IrPrimitiveKind primitive = IrPrimitiveKind::Unknown;
+        std::string canonical;
+        if (c_abi_type_alias(pattern.name, primitive, canonical)) {
+            return pattern.args.empty() && actual.primitive == primitive && actual.name == canonical;
+        }
+
+        if (!pattern.args.empty()) return false;
+        TypeRef concrete = pattern;
+        concrete.args.clear();
+        IrType expected = resolve_executable_type(concrete);
+        return same_type(expected, actual);
+    }
+
+    std::vector<IrType> infer_struct_type_args_from_values(
+        SourceLocation loc,
+        const StructInfo& info,
+        const std::vector<IrExprPtr>& values
+    ) {
+        std::map<std::string, IrType> inferred;
+        for (std::size_t i = 0; i < info.fields.size(); ++i) {
+            if (i >= values.size()) break;
+            infer_struct_type_arg_from_value_type(info.fields[i].type, values[i]->type, info, inferred);
+        }
+
+        std::vector<IrType> args;
+        args.reserve(info.generic_names.size());
+        for (const auto& generic_name : info.generic_names) {
+            auto found = inferred.find(generic_name);
+            if (found == inferred.end()) {
+                fail(loc,
+                     "cannot infer type argument '" + generic_name +
+                         "' for struct '" + info.name + "'");
+            }
+            args.push_back(found->second);
+        }
+        return args;
+    }
+
+    IrType resolve_struct_literal_type(SourceLocation loc,
+                                       const std::string& name,
+                                       const std::vector<IrType>& explicit_type_args) {
+        std::string struct_name = resolve_struct_type_name(name);
+        auto struct_found = structs_.find(struct_name);
+        if (struct_found == structs_.end()) {
+            fail(loc, "unknown struct '" + name + "'");
+        }
+        const StructInfo& info = struct_found->second;
+        require_struct_access(loc, info);
+        if (info.deprecated) {
+            warn_deprecated_use(loc, "struct", info.name, info.deprecated_message);
+        }
+        if (explicit_type_args.size() != info.generic_arity) {
+            fail(loc,
+                 "struct '" + info.name + "' expects " + std::to_string(info.generic_arity) +
+                     " type argument" + (info.generic_arity == 1 ? "" : "s"));
+        }
+
+        IrType type;
+        type.qualifier = TypeQualifier::Value;
+        type.primitive = IrPrimitiveKind::Struct;
+        type.name = info.name;
+        type.loc = loc;
+
+        std::map<std::string, IrType> substitutions;
+        for (std::size_t i = 0; i < explicit_type_args.size(); ++i) {
+            type.args.push_back(explicit_type_args[i]);
+            substitutions.emplace(info.generic_names[i], explicit_type_args[i]);
+        }
+
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        for (const auto& item : substitutions) current_type_substitutions_.emplace(item.first, item.second);
+        for (const auto& field : info.fields) {
+            type.field_names.push_back(field.name);
+            type.field_types.push_back(resolve_executable_type(field.type));
+            type.field_mutable.push_back(field.mutable_field);
+        }
+        current_type_substitutions_ = std::move(previous_substitutions);
+        return type;
+    }
+
+    IrExprPtr check_aggregate_access_operand(const Expr& expr) {
+        if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
+            return check_pointer_deref_access_operand(expr);
+        }
+        if (expr.kind == ExprKind::Name) {
+            LocalInfo* local_slot = find_local_slot(expr.name);
+            if (local_slot && is_owner_type(local_slot->type)) {
+                LocalInfo& local = *local_slot;
+                if (local.state != LocalState::Alive) {
+                    fail(expr.loc, "cannot use " + state_name(local.state) + " binding '" + expr.name + "'");
+                }
+                require_can_read_borrow_path(expr.loc, expr.name, local, "");
+                return make_local_lvalue_expr(expr.loc, expr.name, local.type);
+            }
+        }
+        return check_expr(expr);
+    }
+
+    IrExprPtr check_tuple_index(const Expr& expr, IrExprPtr lowered) {
+        TrackedAggregateAccess access;
+        if (try_build_tracked_aggregate_access(expr, access)) {
+            LocalInfo& local = local_slot_by_name(access.base_name);
+            require_can_read_borrow_path(expr.loc, access.base_name, local, access.path);
+            if (is_owner_type(access.type)) {
+                mark_owned_field_moved(expr.loc, access.base_name, access.path);
+            }
+            return std::move(access.expr);
+        }
+
+        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        if (operand->type.primitive != IrPrimitiveKind::Tuple &&
+            operand->type.primitive != IrPrimitiveKind::Struct) {
+            fail(expr.loc, "tuple index access requires tuple or tuple struct value, got " + type_name(operand->type));
+        }
+        const std::vector<IrType>& fields = aggregate_field_types(operand->type);
+        if (expr.tuple_index >= fields.size()) {
+            fail(expr.loc,
+                 "tuple index " + std::to_string(expr.tuple_index) +
+                 " is out of range for " + type_name(operand->type));
+        }
+        if (is_owner_type(operand->type) && is_owner_type(fields[static_cast<std::size_t>(expr.tuple_index)])) {
+            if (!operand || operand->kind != IrExprKind::Local) {
+                fail(expr.loc, "moving owned fields out of temporary aggregate values is planned but not supported yet");
+            }
+            mark_owned_field_moved(expr.loc, operand->name, std::to_string(expr.tuple_index));
+        }
+        lowered->kind = IrExprKind::TupleIndex;
+        lowered->loc = expr.loc;
+        lowered->tuple_index = expr.tuple_index;
+        lowered->type = fields[static_cast<std::size_t>(expr.tuple_index)];
+        lowered->operand = std::move(operand);
+        return lowered;
+    }
+
+    IrExprPtr check_index(const Expr& expr, IrExprPtr lowered) {
+        TrackedAggregateAccess access;
+        if (try_build_tracked_aggregate_access(expr, access)) {
+            LocalInfo& local = local_slot_by_name(access.base_name);
+            require_can_read_borrow_path(expr.loc, access.base_name, local, access.path);
+            if (is_owner_type(access.type)) {
+                mark_owned_field_moved(expr.loc, access.base_name, access.path);
+            }
+            return std::move(access.expr);
+        }
+
+        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        IrExprPtr index = check_expr(*expr.right);
+        if (!is_value_integer_type(index->type)) {
+            fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
+        }
+        if (operand->type.primitive != IrPrimitiveKind::Vector || operand->type.args.size() != 1) {
+            if (operand->type.primitive != IrPrimitiveKind::Array || operand->type.args.size() != 1) {
+                fail(expr.loc, "index access requires an array or vector value, got " + type_name(operand->type));
+            }
+        }
+        if (is_owner_type(operand->type)) {
+            fail(expr.loc, "moving elements out of owning aggregate values is planned but not supported yet");
+        }
+
+        if (operand->kind == IrExprKind::Vector) {
+            std::string label = operand->type.primitive == IrPrimitiveKind::Array ? "array" : "vector";
+            if (index->kind != IrExprKind::Integer || index->int_negative) {
+                fail(expr.loc,
+                     label + " literal index must be a non-negative integer literal; bind the " +
+                         label + " before dynamic indexing");
+            }
+            if (index->int_value >= operand->args.size()) {
+                fail(expr.loc,
+                     label + " literal index " + std::to_string(index->int_value) +
+                     " is out of range for " + std::to_string(operand->args.size()) + " elements");
+            }
+            return std::move(operand->args[static_cast<std::size_t>(index->int_value)]);
+        }
+
+        if (operand->type.primitive == IrPrimitiveKind::Vector) {
+            if (index->kind == IrExprKind::Integer) {
+                if (index->int_negative) {
+                    fail(expr.loc, "vector index must be non-negative");
+                }
+                if (index->int_value >= operand->type.array_size) {
+                    fail(expr.loc,
+                         "vector index " + std::to_string(index->int_value) +
+                         " is out of range for " + std::to_string(operand->type.array_size) + " elements");
+                }
+            }
+        }
+
+        if (operand->type.primitive == IrPrimitiveKind::Array) {
+            if (index->kind == IrExprKind::Integer) {
+                if (index->int_negative) {
+                    fail(expr.loc, "array index must be non-negative");
+                }
+                if (index->int_value >= operand->type.array_size) {
+                    fail(expr.loc,
+                         "array index " + std::to_string(index->int_value) +
+                         " is out of range for " + std::to_string(operand->type.array_size) + " elements");
+                }
+                lowered->kind = IrExprKind::TupleIndex;
+                lowered->loc = expr.loc;
+                lowered->tuple_index = index->int_value;
+                lowered->type = operand->type.args[0];
+                lowered->operand = std::move(operand);
+                return lowered;
+            }
+
+            lowered->kind = IrExprKind::Index;
+            lowered->loc = expr.loc;
+            lowered->type = operand->type.args[0];
+            lowered->operand = std::move(operand);
+            lowered->right = std::move(index);
+            return lowered;
+        }
+
+        lowered->kind = IrExprKind::Index;
+        lowered->loc = expr.loc;
+        lowered->type = operand->type.args[0];
+        lowered->operand = std::move(operand);
+        lowered->right = std::move(index);
+        return lowered;
+    }
+
+    IrExprPtr check_field_access(const Expr& expr, IrExprPtr lowered) {
+        TrackedAggregateAccess access;
+        if (try_build_tracked_aggregate_access(expr, access)) {
+            LocalInfo& local = local_slot_by_name(access.base_name);
+            require_can_read_borrow_path(expr.loc, access.base_name, local, access.path);
+            if (is_owner_type(access.type)) {
+                mark_owned_field_moved(expr.loc, access.base_name, access.path);
+            }
+            return std::move(access.expr);
+        }
+
+        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        if (operand->type.primitive != IrPrimitiveKind::Struct) {
+            fail(expr.loc, "field access requires a struct value, got " + type_name(operand->type));
+        }
+        std::size_t index = struct_field_index(expr.loc, operand->type, expr.name);
+        if (is_owner_type(operand->type) && is_owner_type(operand->type.field_types[index])) {
+            if (!operand || operand->kind != IrExprKind::Local) {
+                fail(expr.loc, "moving owned fields out of temporary aggregate values is planned but not supported yet");
+            }
+            mark_owned_field_moved(expr.loc, operand->name, std::to_string(index));
+        }
+        lowered->kind = IrExprKind::TupleIndex;
+        lowered->loc = expr.loc;
+        lowered->tuple_index = index;
+        lowered->type = operand->type.field_types[index];
+        lowered->operand = std::move(operand);
+        return lowered;
+    }
+
+    IrExprPtr check_tuple(const Expr& expr, IrExprPtr lowered) {
+        if (expr.args.size() == 1) fail(expr.loc, "single-element tuple literals are not supported");
+        lowered->kind = IrExprKind::Tuple;
+        lowered->type = primitive_type(IrPrimitiveKind::Tuple, "Tuple", expr.loc);
+        lowered->args.reserve(expr.args.size());
+        for (const auto& item : expr.args) {
+            IrExprPtr value = check_expr(*item);
+            require_plain_prelude_aggregate_element(expr.loc, value->type, "tuple");
+            require_no_zone_pointer_escape(item->loc, *value, "tuple literal");
+            lowered->type.args.push_back(value->type);
+            lowered->args.push_back(std::move(value));
+        }
+        return lowered;
+    }
+
+    IrExprPtr check_struct_literal(const Expr& expr, IrExprPtr lowered) {
+        std::string struct_name = resolve_struct_type_name(expr.name);
+        auto struct_found = structs_.find(struct_name);
+        if (struct_found == structs_.end()) {
+            fail(expr.loc, "unknown struct '" + expr.name + "'");
+        }
+        const StructInfo& info = struct_found->second;
+        require_struct_access(expr.loc, info);
+        if (info.deprecated) {
+            warn_deprecated_use(expr.loc, "struct", info.name, info.deprecated_message);
+        }
+        if (info.fields.size() != expr.field_names.size()) {
+            fail(expr.loc,
+                 "struct literal for '" + info.name + "' expects " +
+                     std::to_string(info.fields.size()) + " field" +
+                     (info.fields.size() == 1 ? "" : "s"));
+        }
+
+        std::map<std::string, const Expr*> values;
+        for (std::size_t i = 0; i < expr.field_names.size(); ++i) {
+            const std::string& field_name = expr.field_names[i];
+            if (!values.emplace(field_name, expr.args[i].get()).second) {
+                fail(expr.loc, "duplicate field '" + field_name + "' in struct literal");
+            }
+        }
+
+        std::vector<IrExprPtr> lowered_values;
+        lowered_values.reserve(info.fields.size());
+        for (const auto& field : info.fields) {
+            auto found = values.find(field.name);
+            if (found == values.end()) {
+                fail(expr.loc, "missing field '" + field.name + "' in struct literal for '" + info.name + "'");
+            }
+            lowered_values.push_back(check_expr(*found->second));
+        }
+
+        std::vector<IrType> explicit_type_args;
+        explicit_type_args.reserve(expr.type_args.size());
+        for (const auto& type_arg : expr.type_args) {
+            explicit_type_args.push_back(resolve_executable_type(type_arg));
+        }
+        if (explicit_type_args.empty() && info.generic_arity > 0) {
+            explicit_type_args = infer_struct_type_args_from_values(expr.loc, info, lowered_values);
+        }
+
+        IrType struct_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
+        lowered->kind = IrExprKind::Tuple;
+        lowered->type = struct_type;
+        lowered->args.reserve(struct_type.field_names.size());
+        for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
+            IrExprPtr value = std::move(lowered_values[i]);
+            coerce_expr_to_expected(*value, struct_type.field_types[i]);
+            require_assignable(expr.loc, struct_type.field_types[i], value->type);
+            require_plain_prelude_aggregate_element(expr.loc, value->type, "struct");
+            require_no_zone_pointer_escape(value->loc, *value, "struct literal");
+            lowered->args.push_back(std::move(value));
+        }
+        return lowered;
+    }
+
+    IrExprPtr check_struct_constructor_call(const Expr& expr, const StructInfo& info, IrExprPtr lowered) {
+        if (!info.tuple_struct) {
+            fail(expr.loc, "named struct '" + info.name + "' must be constructed with field literal syntax");
+        }
+        if (expr.args.size() != info.fields.size()) {
+            fail(expr.loc,
+                 "tuple struct '" + info.name + "' expects " + std::to_string(info.fields.size()) +
+                     " value" + (info.fields.size() == 1 ? "" : "s"));
+        }
+        std::vector<IrType> explicit_type_args;
+        explicit_type_args.reserve(expr.type_args.size());
+        for (const auto& type_arg : expr.type_args) {
+            explicit_type_args.push_back(resolve_executable_type(type_arg));
+        }
+
+        std::vector<IrExprPtr> lowered_values;
+        lowered_values.reserve(expr.args.size());
+        for (const auto& arg : expr.args) {
+            lowered_values.push_back(check_expr(*arg));
+        }
+        if (explicit_type_args.empty() && info.generic_arity > 0) {
+            explicit_type_args = infer_struct_type_args_from_values(expr.loc, info, lowered_values);
+        }
+
+        IrType struct_type = resolve_struct_literal_type(expr.loc, info.name, explicit_type_args);
+        lowered->kind = IrExprKind::Tuple;
+        lowered->type = struct_type;
+        lowered->args.reserve(expr.args.size());
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            IrExprPtr value = std::move(lowered_values[i]);
+            coerce_expr_to_expected(*value, struct_type.field_types[i]);
+            require_assignable(expr.loc, struct_type.field_types[i], value->type);
+            require_plain_prelude_aggregate_element(expr.loc, value->type, "tuple struct");
+            require_no_zone_pointer_escape(value->loc, *value, "tuple struct literal");
+            lowered->args.push_back(std::move(value));
+        }
+        return lowered;
+    }
+
+    IrExprPtr check_vector(const Expr& expr, IrExprPtr lowered) {
+        if (expr.args.empty()) {
+            fail(expr.loc, "empty [] literals need an explicit Vec[T] type or non-empty array elements");
+        }
+        lowered->kind = IrExprKind::Vector;
+        lowered->type = primitive_type(IrPrimitiveKind::Array, "Array", expr.loc);
+        lowered->args.reserve(expr.args.size());
+        IrType element_type;
+        bool has_element_type = false;
+        for (const auto& item : expr.args) {
+            IrExprPtr value = check_expr(*item);
+            require_plain_prelude_aggregate_element(expr.loc, value->type, "array");
+            require_no_zone_pointer_escape(item->loc, *value, "array literal");
+            if (!has_element_type) {
+                element_type = value->type;
+                has_element_type = true;
+            } else {
+                coerce_expr_to_expected(*value, element_type);
+                require_assignable(expr.loc, element_type, value->type);
+            }
+            lowered->args.push_back(std::move(value));
+        }
+        lowered->type = array_storage_type(expr.loc, element_type, expr.args.size());
+        return lowered;
+    }
+
+    IrExprPtr check_tuple_match_expr(const Expr& expr, IrExprPtr lowered) {
+        IrExprPtr subject = std::move(lowered->match_value);
+        IrType subject_type = subject->type;
+        if (!is_aggregate_type(subject_type)) {
+            fail(expr.loc, "aggregate match requires a tuple, array, or struct value, got " + type_name(subject_type));
+        }
+
+        lowered->kind = IrExprKind::Block;
+        lowered->match_arms.clear();
+
+        std::string subject_name = make_hidden_local(
+            subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple");
+        declare_local(expr.loc, subject_name, subject_type, false);
+        lowered->block_body.push_back(make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));
+
+        StateSnapshot branch_input = snapshot_states();
+        StateSnapshot continuing_state;
+        bool has_continuing_state = false;
+        bool has_result = false;
+        IrType result_type;
+        TupleMatchCoverage coverage;
+        std::vector<TupleCheckedExprArm> checked_arms;
+
+        for (const auto& arm : expr.match_arms) {
+            if (coverage.has_irrefutable_arm) {
+                fail(arm.pattern.loc, "unreachable match arm after irrefutable pattern");
+            }
+
+            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+            std::set<std::string> reusable_names;
+            if (pattern_contains_or(arm.pattern)) {
+                reusable_names = require_same_or_pattern_bindings(arm.pattern.loc, alternatives, subject_type);
+            }
+
+            std::size_t alternative_index = 0;
+            for (const auto& pattern : alternatives) {
+                TupleCheckedExprArm lowered_arm;
+                lowered_arm.loc = arm.loc;
+                std::vector<IrStmtPtr> condition_prelude;
+                lowered_arm.condition = lower_product_match_pattern_condition(
+                    pattern,
+                    subject_name,
+                    subject_type,
+                    condition_prelude
+                );
+                for (auto& statement : condition_prelude) {
+                    lowered->block_body.push_back(std::move(statement));
+                }
+                note_product_match_coverage(pattern, subject_type, coverage);
+                if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
+
+                restore_states(branch_input);
+                push_scope();
+                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
+                reusable_pattern_binding_names_.clear();
+                IrExprPtr value = check_expr(*arm.value);
+                if (is_borrow_type(value->type)) {
+                    pop_scope();
+                    fail(arm.loc, "match expression arms cannot produce borrow values yet");
+                }
+                if (is_void_value_type(value->type)) {
+                    pop_scope();
+                    fail(arm.loc, "match expression arms must produce a value");
+                }
+                if (!has_result) {
+                    result_type = value->type;
+                    has_result = true;
+                } else {
+                    coerce_expr_to_expected(*value, result_type);
+                    require_assignable(arm.loc, result_type, value->type);
+                }
+                value = materialize_value_before_auto_destroy_cleanup(
+                    arm.loc,
+                    std::move(value),
+                    lowered_arm.body,
+                    scopes_.size() - 1,
+                    "$match",
+                    "match expression result"
+                );
+                lowered_arm.value = std::move(value);
+                pop_scope();
+
+                StateSnapshot branch_state = snapshot_states();
+                if (!has_continuing_state) {
+                    continuing_state = branch_state;
+                    has_continuing_state = true;
+                } else {
+                    require_same_states(arm.loc, continuing_state, branch_state,
+                                        "has incompatible ownership states after match expression arms");
+                    merge_zone_generations_into(continuing_state, branch_state);
+                }
+
+                checked_arms.push_back(std::move(lowered_arm));
+                ++alternative_index;
+            }
+        }
+
+        require_tuple_match_exhaustive(expr.loc, subject_type, coverage);
+        restore_states(continuing_state);
+        lowered->type = result_type;
+        lowered->block_value = build_tuple_match_if_expr_chain(checked_arms, result_type);
+        return lowered;
+    }
+
+    IrExprPtr check_match_expr(const Expr& expr, IrExprPtr lowered) {
+        if (expr.match_arms.empty()) fail(expr.loc, "match must have at least one arm");
+
+        lowered->kind = IrExprKind::Match;
+        lowered->match_value = check_expr(*expr.match_value);
+        if (is_borrow_type(lowered->match_value->type)) {
+            fail(expr.loc, "borrow expression result must be passed directly to a call");
+        }
+        if (!is_value_enum_type(lowered->match_value->type)) {
+            if (is_value_integer_type(lowered->match_value->type) ||
+                (lowered->match_value->type.qualifier == TypeQualifier::Value &&
+                 lowered->match_value->type.primitive == IrPrimitiveKind::Bool)) {
+                return check_scalar_match_expr(expr, std::move(lowered));
+            }
+            if (is_aggregate_type(lowered->match_value->type)) {
+                return check_tuple_match_expr(expr, std::move(lowered));
+            }
+            fail(expr.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(lowered->match_value->type));
+        }
+
+        auto enum_found = enums_.find(lowered->match_value->type.name);
+        if (enum_found == enums_.end()) {
+            fail(expr.loc, "unknown enum type '" + lowered->match_value->type.name + "'");
+        }
+        const EnumInfo& enum_info = enum_found->second;
+        IrType enum_value_type = lowered->match_value->type;
+
+        StateSnapshot branch_input = snapshot_states();
+        StateSnapshot continuing_state;
+        bool has_continuing_state = false;
+        EnumMatchCoverage coverage;
+        bool has_result = false;
+        IrType result_type;
+
+        for (const auto& arm : expr.match_arms) {
+            std::set<std::string> reusable_names;
+            if (pattern_contains_or(arm.pattern)) {
+                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+                reusable_names = require_same_or_pattern_bindings(
+                    arm.pattern.loc,
+                    alternatives,
+                    enum_match_value_type(arm.pattern.loc, enum_value_type)
+                );
+            }
+            std::vector<IrMatchArm> lowered_patterns = lower_match_arm_patterns(
+                arm.pattern,
+                enum_info,
+                enum_value_type,
+                coverage);
+            std::size_t alternative_index = 0;
+            for (auto& pattern : lowered_patterns) {
+                IrMatchExprArm lowered_arm = make_match_expr_arm(std::move(pattern));
+
+                restore_states(branch_input);
+                push_scope();
+                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                declare_match_arm_bindings(lowered_arm);
+                reusable_pattern_binding_names_.clear();
+
+                IrExprPtr value = check_expr(*arm.value);
+                if (is_borrow_type(value->type)) {
+                    fail(arm.loc, "match expression arms cannot produce borrow values yet");
+                }
+                if (!has_result) {
+                    result_type = value->type;
+                    has_result = true;
+                } else {
+                    coerce_expr_to_expected(*value, result_type);
+                    require_assignable(arm.loc, result_type, value->type);
+                }
+                value = materialize_value_before_auto_destroy_cleanup(
+                    arm.loc,
+                    std::move(value),
+                    lowered_arm.body,
+                    scopes_.size() - 1,
+                    "$match",
+                    "match expression result"
+                );
+                lowered_arm.value = std::move(value);
+                pop_scope();
+
+                StateSnapshot branch_state = snapshot_states();
+                if (!has_continuing_state) {
+                    continuing_state = branch_state;
+                    has_continuing_state = true;
+                } else {
+                    require_same_states(arm.loc, continuing_state, branch_state,
+                                        "has incompatible ownership states after match expression arms");
+                    merge_zone_generations_into(continuing_state, branch_state);
+                }
+
+                lowered->match_arms.push_back(std::move(lowered_arm));
+                ++alternative_index;
+            }
+        }
+
+        require_match_exhaustive(expr.loc, enum_info, coverage);
+        restore_states(continuing_state);
+        lowered->type = result_type;
+        return lowered;
+    }
+
+    IrExprPtr check_scalar_match_expr(const Expr& expr, IrExprPtr lowered) {
+        StateSnapshot branch_input = snapshot_states();
+        StateSnapshot continuing_state;
+        bool has_continuing_state = false;
+        ScalarMatchCoverage coverage;
+        bool has_result = false;
+        IrType result_type;
+
+        for (const auto& arm : expr.match_arms) {
+            std::set<std::string> reusable_names;
+            if (pattern_contains_or(arm.pattern)) {
+                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+                reusable_names = require_same_or_pattern_bindings(
+                    arm.pattern.loc,
+                    alternatives,
+                    lowered->match_value->type
+                );
+            }
+            std::vector<IrMatchArm> lowered_patterns = lower_scalar_match_arm_patterns(
+                arm.pattern, lowered->match_value->type, coverage);
+            std::size_t alternative_index = 0;
+            for (auto& pattern : lowered_patterns) {
+                IrMatchExprArm lowered_arm = make_match_expr_arm(std::move(pattern));
+
+                restore_states(branch_input);
+                push_scope();
+                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                declare_match_arm_bindings(lowered_arm);
+                reusable_pattern_binding_names_.clear();
+                IrExprPtr value = check_expr(*arm.value);
+                if (is_borrow_type(value->type)) {
+                    fail(arm.loc, "match expression arms cannot produce borrow values yet");
+                }
+                if (!has_result) {
+                    result_type = value->type;
+                    has_result = true;
+                } else {
+                    coerce_expr_to_expected(*value, result_type);
+                    require_assignable(arm.loc, result_type, value->type);
+                }
+                value = materialize_value_before_auto_destroy_cleanup(
+                    arm.loc,
+                    std::move(value),
+                    lowered_arm.body,
+                    scopes_.size() - 1,
+                    "$match",
+                    "match expression result"
+                );
+                lowered_arm.value = std::move(value);
+                pop_scope();
+
+                StateSnapshot branch_state = snapshot_states();
+                if (!has_continuing_state) {
+                    continuing_state = branch_state;
+                    has_continuing_state = true;
+                } else {
+                    require_same_states(arm.loc, continuing_state, branch_state,
+                                        "has incompatible ownership states after match expression arms");
+                    merge_zone_generations_into(continuing_state, branch_state);
+                }
+
+                lowered->match_arms.push_back(std::move(lowered_arm));
+                ++alternative_index;
+            }
+        }
+
+        require_scalar_match_exhaustive(expr.loc, lowered->match_value->type, coverage);
+        restore_states(continuing_state);
+        lowered->type = result_type;
+        return lowered;
+    }
+
+    IrExprPtr check_if_expr(const Expr& expr, IrExprPtr lowered) {
+        if (expr.has_condition_pattern) return check_if_let_expr(expr, std::move(lowered));
+
+        lowered->kind = IrExprKind::If;
+        lowered->condition = check_expr(*expr.condition);
+        coerce_condition_to_bool(expr.loc, lowered->condition);
+
+        StateSnapshot branch_input = snapshot_states();
+        CheckedExprBlock then_arm = check_value_block(expr.loc, "if expression arm", expr.then_body, *expr.then_value);
+        IrType result_type = then_arm.value->type;
+
+        restore_states(branch_input);
+        CheckedExprBlock else_arm = check_value_block(expr.loc, "if expression arm", expr.else_body, *expr.else_value);
+        coerce_expr_to_expected(*else_arm.value, result_type);
+        require_assignable(expr.loc, result_type, else_arm.value->type);
+
+        require_same_states(expr.loc, then_arm.state, else_arm.state,
+                            "has incompatible ownership states after if expression branches");
+        restore_states(merge_zone_generations(then_arm.state, else_arm.state));
+
+        lowered->type = result_type;
+        lowered->then_body = std::move(then_arm.statements);
+        lowered->then_value = std::move(then_arm.value);
+        lowered->else_body = std::move(else_arm.statements);
+        lowered->else_value = std::move(else_arm.value);
+        return lowered;
+    }
+
+    IrExprPtr check_if_let_expr(const Expr& expr, IrExprPtr lowered) {
+        IrExprPtr match_value = check_expr(*expr.condition);
+        if (is_aggregate_type(match_value->type)) {
+            return check_aggregate_if_let_expr(expr, std::move(lowered), std::move(match_value));
+        }
+
+        lowered->kind = IrExprKind::Match;
+        lowered->match_value = std::move(match_value);
+        const EnumInfo& enum_info = require_enum_match_value(expr.loc, *lowered->match_value);
+        IrType enum_value_type = lowered->match_value->type;
+
+        IrMatchArm then_pattern = lower_enum_case_pattern(expr.condition_pattern, enum_info, enum_value_type);
+        IrMatchExprArm then_arm = make_match_expr_arm(std::move(then_pattern));
+        IrMatchExprArm else_arm;
+        else_arm.loc = expr.loc;
+        else_arm.wildcard = true;
+
+        StateSnapshot branch_input = snapshot_states();
+        CheckedExprBlock then_checked = check_value_block_with_match_payload(
+            expr.loc,
+            "if-let expression arm",
+            then_arm,
+            expr.then_body,
+            *expr.then_value);
+        IrType result_type = then_checked.value->type;
+
+        restore_states(branch_input);
+        CheckedExprBlock else_checked = check_value_block(
+            expr.loc,
+            "if-let expression arm",
+            expr.else_body,
+            *expr.else_value);
+        coerce_expr_to_expected(*else_checked.value, result_type);
+        require_assignable(expr.loc, result_type, else_checked.value->type);
+
+        require_same_states(expr.loc, then_checked.state, else_checked.state,
+                            "has incompatible ownership states after if-let expression branches");
+        restore_states(merge_zone_generations(then_checked.state, else_checked.state));
+
+        then_arm.body = std::move(then_checked.statements);
+        then_arm.value = std::move(then_checked.value);
+        else_arm.body = std::move(else_checked.statements);
+        else_arm.value = std::move(else_checked.value);
+
+        lowered->type = result_type;
+        lowered->match_arms.push_back(std::move(then_arm));
+        lowered->match_arms.push_back(std::move(else_arm));
+        return lowered;
+    }
+
+    IrExprPtr check_aggregate_if_let_expr(const Expr& expr, IrExprPtr lowered, IrExprPtr subject) {
+        IrType subject_type = subject->type;
+        lowered->kind = IrExprKind::Block;
+        lowered->match_arms.clear();
+
+        std::string subject_name = make_hidden_local(
+            subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple");
+        declare_local(expr.loc, subject_name, subject_type, false);
+        lowered->block_body.push_back(make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));
+
+        std::vector<IrStmtPtr> condition_prelude;
+        IrExprPtr condition = lower_product_match_pattern_condition(
+            expr.condition_pattern,
+            subject_name,
+            subject_type,
+            condition_prelude
+        );
+        for (auto& statement : condition_prelude) {
+            lowered->block_body.push_back(std::move(statement));
+        }
+        if (!condition) {
+            fail(expr.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
+        }
+
+        StateSnapshot branch_input = snapshot_states();
+        std::vector<IrStmtPtr> then_body;
+        push_scope();
+        lower_product_match_pattern_bindings_from_local(expr.condition_pattern, subject_name, subject_type, then_body);
+        CheckedStatements then_checked = check_statements(expr.then_body, false);
+        if (then_checked.flow == Flow::Returns) {
+            discard_scope();
+            fail(expr.loc, "if-let expression arm must reach its final value");
+        }
+        for (auto& statement : then_checked.statements) {
+            then_body.push_back(std::move(statement));
+        }
+
+        IrExprPtr then_value = check_expr(*expr.then_value);
+        if (is_borrow_type(then_value->type)) {
+            pop_scope();
+            fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
+        }
+        if (is_void_value_type(then_value->type)) {
+            pop_scope();
+            fail(expr.loc, "if-let expression arm must produce a value");
+        }
+        then_value = materialize_value_before_auto_destroy_cleanup(
+            expr.loc,
+            std::move(then_value),
+            then_body,
+            scopes_.size() - 1,
+            "$iflet",
+            "if-let expression result"
+        );
+        pop_scope();
+        StateSnapshot then_state = snapshot_states();
+        IrType result_type = then_value->type;
+
+        restore_states(branch_input);
+        CheckedExprBlock else_checked = check_value_block(
+            expr.loc,
+            "if-let expression arm",
+            expr.else_body,
+            *expr.else_value);
+        coerce_expr_to_expected(*else_checked.value, result_type);
+        require_assignable(expr.loc, result_type, else_checked.value->type);
+
+        require_same_states(expr.loc, then_state, else_checked.state,
+                            "has incompatible ownership states after if-let expression branches");
+        restore_states(merge_zone_generations(then_state, else_checked.state));
+
+        auto if_expr = std::make_unique<IrExpr>();
+        if_expr->kind = IrExprKind::If;
+        if_expr->loc = expr.loc;
+        if_expr->type = result_type;
+        if_expr->condition = std::move(condition);
+        if_expr->then_body = std::move(then_body);
+        if_expr->then_value = std::move(then_value);
+        if_expr->else_body = std::move(else_checked.statements);
+        if_expr->else_value = std::move(else_checked.value);
+
+        lowered->type = result_type;
+        lowered->block_value = std::move(if_expr);
+        return lowered;
+    }
+
+    IrExprPtr check_block_expr(const Expr& expr, IrExprPtr lowered) {
+        lowered->kind = IrExprKind::Block;
+        lowered->label = expr.label;
+        if (!expr.label.empty()) {
+            CheckedExprBlock block = check_labeled_value_block(expr);
+            lowered->type = block.value->type;
+            lowered->block_body = std::move(block.statements);
+            lowered->block_value = std::move(block.value);
+            return lowered;
+        }
+
+        CheckedExprBlock block = check_value_block(expr.loc, "block expression", expr.block_body, *expr.block_value);
+        lowered->type = block.value->type;
+        lowered->block_body = std::move(block.statements);
+        lowered->block_value = std::move(block.value);
+        return lowered;
+    }
+
+    CheckedExprBlock check_labeled_value_block(const Expr& expr) {
+        for (const auto& active : loops_) {
+            if (active.label == expr.label) {
+                fail(expr.loc, "duplicate active label '" + expr.label + "'");
+            }
+        }
+
+        push_scope();
+        LoopInfo block;
+        block.label = expr.label;
+        block.is_loop = false;
+        block.supports_break_values = true;
+        block.scope_depth = scopes_.size() - 1;
+        loops_.push_back(block);
+
+        CheckedStatements checked = check_statements(expr.block_body, false);
+        if (checked.flow == Flow::Returns) {
+            loops_.pop_back();
+            discard_scope();
+            fail(expr.loc, "block expression must reach its final value or a typed break");
+        }
+
+        IrExprPtr value = check_expr(*expr.block_value);
+        if (is_borrow_type(value->type)) {
+            loops_.pop_back();
+            pop_scope();
+            fail(expr.loc, "block expression cannot produce borrow values yet");
+        }
+        if (is_void_value_type(value->type)) {
+            loops_.pop_back();
+            pop_scope();
+            fail(expr.loc, "block expression must produce a value");
+        }
+
+        LoopInfo block_state = loops_.back();
+        loops_.pop_back();
+        if (block_state.has_break_result_type) {
+            coerce_expr_to_expected(*value, block_state.break_result_type);
+            require_assignable(expr.loc, block_state.break_result_type, value->type);
+        }
+        value = materialize_value_before_auto_destroy_cleanup(
+            expr.loc,
+            std::move(value),
+            checked.statements,
+            scopes_.size() - 1,
+            "$block",
+            "block expression result"
+        );
+        pop_scope();
+        StateSnapshot state = snapshot_states();
+        for (const auto& break_state : block_state.break_state_snapshots) {
+            require_same_states(
+                expr.loc,
+                state,
+                break_state,
+                "has incompatible ownership states after labeled block exits"
+            );
+            merge_existing_zone_generations_into(state, break_state);
+        }
+        return CheckedExprBlock{std::move(checked.statements), std::move(value), std::move(state)};
+    }
+
+    CheckedExprBlock check_value_block_with_match_payload(
+        SourceLocation loc,
+        const std::string& context,
+        const IrMatchExprArm& arm,
+        const std::vector<StmtPtr>& body,
+        const Expr& value_expr
+    ) {
+        push_scope();
+        declare_match_arm_bindings(arm);
+        CheckedStatements checked = check_statements(body, false);
+        if (checked.flow == Flow::Returns) {
+            discard_scope();
+            fail(loc, context + " must reach its final value");
+        }
+
+        IrExprPtr value = check_expr(value_expr);
+        if (contains_borrow_type(value->type)) {
+            pop_scope();
+            fail(loc, context + " cannot produce borrow values yet");
+        }
+        if (is_void_value_type(value->type)) {
+            pop_scope();
+            fail(loc, context + " must produce a value");
+        }
+        value = materialize_value_before_auto_destroy_cleanup(
+            loc,
+            std::move(value),
+            checked.statements,
+            scopes_.size() - 1,
+            "$block",
+            context + " result"
+        );
+        pop_scope();
+        StateSnapshot state = snapshot_states();
+        return CheckedExprBlock{std::move(checked.statements), std::move(value), std::move(state)};
+    }
+
+    CheckedExprBlock check_value_block(
+        SourceLocation loc,
+        const std::string& context,
+        const std::vector<StmtPtr>& body,
+        const Expr& value_expr
+    ) {
+        push_scope();
+        CheckedStatements checked = check_statements(body, false);
+        if (checked.flow == Flow::Returns) {
+            discard_scope();
+            fail(loc, context + " must reach its final value");
+        }
+
+        IrExprPtr value = check_expr(value_expr);
+        if (is_borrow_type(value->type)) {
+            pop_scope();
+            fail(loc, context + " cannot produce borrow values yet");
+        }
+        if (is_void_value_type(value->type)) {
+            pop_scope();
+            fail(loc, context + " must produce a value");
+        }
+        value = materialize_value_before_auto_destroy_cleanup(
+            loc,
+            std::move(value),
+            checked.statements,
+            scopes_.size() - 1,
+            "$block",
+            context + " result"
+        );
+        pop_scope();
+        StateSnapshot state = snapshot_states();
+        return CheckedExprBlock{std::move(checked.statements), std::move(value), std::move(state)};
+    }
+
+    static void require_plain_prelude_aggregate_element(SourceLocation loc, const IrType& type, const std::string& aggregate) {
+        if (is_void_value_type(type)) fail(loc, aggregate + " literals cannot store void values");
+    }
+
+    IrExprPtr make_enum_construct(SourceLocation loc, const EnumCaseInfo& info, std::vector<IrExprPtr> args) {
+        if (args.size() != info.payloads.size()) {
+            fail(loc, "wrong payload count for enum case '" + info.name + "'");
+        }
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->loc = loc;
+        lowered->kind = IrExprKind::EnumConstruct;
+        lowered->type = info.enum_type;
+        lowered->enum_name = info.enum_name;
+        lowered->case_name = info.name;
+        lowered->enum_tag = info.tag;
+        lowered->has_payload = !info.payloads.empty();
+
+        if (has_aggregate_enum_layout(info.enum_type)) {
+            for (std::size_t i = 0; i < args.size(); ++i) {
+                IrExprPtr payload = std::move(args[i]);
+                require_no_zone_pointer_escape(payload->loc, *payload, "enum payload");
+                coerce_expr_to_expected(*payload, info.payloads[i]);
+                require_assignable(loc, info.payloads[i], payload->type);
+                lowered->args.push_back(std::move(payload));
+            }
+            return lowered;
+        }
+
+        if (!args.empty()) {
+            IrExprPtr payload = std::move(args[0]);
+            require_no_zone_pointer_escape(payload->loc, *payload, "enum payload");
+            coerce_expr_to_expected(*payload, info.payloads[0]);
+            require_assignable(loc, info.payloads[0], payload->type);
+            lowered->payload_type = info.payloads[0];
+            lowered->payload = std::move(payload);
+        }
+        return lowered;
+    }
+
+    IrExprPtr check_unary(const Expr& expr, IrExprPtr lowered) {
+        if (expr.op == TokenKind::Star) {
+            std::size_t borrow_mark = temporary_borrow_mark();
+            IrExprPtr pointer = check_expr(*expr.operand);
+            release_temporary_borrows(borrow_mark);
+
+            IrType element_type = require_raw_pointer_materializable_type(expr.loc, pointer->type, "pointer dereference");
+            lowered->kind = IrExprKind::PointerLoad;
+            lowered->loc = expr.loc;
+            lowered->type = element_type;
+            lowered->operand = std::move(pointer);
+            return lowered;
+        }
+
+        IrExprPtr operand = check_expr(*expr.operand);
+        if (is_borrow_type(operand->type)) {
+            fail(expr.loc, "borrow expression result must be passed directly to a call");
+        }
+        switch (expr.op) {
+            case TokenKind::Bang:
+                require_logical_operand(expr.loc, operand->type);
+                lowered->kind = IrExprKind::Unary;
+                lowered->unary_op = IrUnaryOp::Not;
+                lowered->type = bool_type(expr.loc);
+                lowered->operand = std::move(operand);
+                return lowered;
+            case TokenKind::Tilde:
+                require_bitwise_not_operand(expr.loc, operand->type);
+                lowered->kind = IrExprKind::Unary;
+                lowered->unary_op = IrUnaryOp::BitNot;
+                lowered->type = operand->type;
+                lowered->operand = std::move(operand);
+                return lowered;
+            default:
+                fail(expr.loc, "unsupported unary operator");
+        }
+    }
+
+    IrExprPtr check_cast(const Expr& expr, IrExprPtr lowered) {
+        IrExprPtr operand = check_expr(*expr.operand);
+        IrType target = resolve_executable_type(expr.cast_type);
+        if (is_borrow_type(operand->type) && !is_raw_pointer_type(target)) {
+            fail(expr.loc, "borrow expression result must be passed directly to a call");
+        }
+
+        if (is_value_trait_object_type(target)) {
+            lowered->name = require_trait_object_conversion(expr.loc, operand->type, target);
+            lowered->kind = IrExprKind::Cast;
+            lowered->type = target;
+            lowered->operand = std::move(operand);
+            return lowered;
+        }
+
+        bool integer_cast = is_value_integer_type(operand->type) && is_value_integer_type(target);
+        bool raw_pointer_cast = is_raw_pointer_cast(operand->type, target);
+        if (!integer_cast && !raw_pointer_cast) {
+            fail(expr.loc, "explicit casts currently require integer types or raw pointer casts, got " +
+                           type_name(operand->type) + " as " + type_name(target));
+        }
+
+        lowered->kind = IrExprKind::Cast;
+        lowered->type = target;
+        lowered->operand = std::move(operand);
+        return lowered;
+    }
+
+    std::string require_trait_object_conversion(SourceLocation loc, const IrType& source, const IrType& target) {
+        if (source.qualifier != TypeQualifier::Value) {
+            fail(loc, "trait object conversions currently require value operands, got " + type_name(source));
+        }
+        if (source.primitive == IrPrimitiveKind::TraitObject) {
+            fail(loc, "trait object upcasts are planned but are not supported yet");
+        }
+        if (is_owner_type(source) || contains_borrow_type(source)) {
+            fail(loc, "trait object conversions currently require copyable non-borrow values, got " + type_name(source));
+        }
+        if (!type_implements_trait(target.name, target.args, source)) {
+            fail(loc, "type " + type_name(source) + " does not implement trait '" +
+                           trait_application_display(target.name, target.args) + "' for dyn conversion");
+        }
+        return register_trait_object_vtable(loc, source, target);
+    }
+
+    const ImplMethodInfo* find_concrete_trait_method_impl(
+        SourceLocation loc,
+        const IrType& source,
+        const IrType& target,
+        const std::string& method_name
+    ) const {
+        auto found = method_impls_.find(method_lookup_key(source, method_name));
+        if (found == method_impls_.end()) return nullptr;
+
+        const ImplMethodInfo* selected = nullptr;
+        for (const auto& candidate : found->second) {
+            if (candidate.trait_name != target.name) continue;
+            if (!same_type_list(candidate.trait_args, target.args)) continue;
+            if (selected) {
+                fail(loc, "trait object method '" + method_name + "' for " + type_name(source) + " is ambiguous");
+            }
+            selected = &candidate;
+        }
+        return selected;
+    }
+
+    std::string register_trait_object_vtable(SourceLocation loc, const IrType& source, const IrType& target) {
+        std::string key = type_name(source) + " as " + type_name(target);
+        auto existing = trait_object_vtable_names_.find(key);
+        if (existing != trait_object_vtable_names_.end()) return existing->second;
+
+        auto trait_found = traits_.find(target.name);
+        if (trait_found == traits_.end()) fail(loc, "unknown trait '" + target.name + "' in trait object type");
+        const TraitInfo& trait = trait_found->second;
+
+        IrTraitObjectVTable table;
+        table.name = trait_object_vtable_name(source, target);
+        table.object_type = target;
+        table.concrete_type = source;
+        table.loc = loc;
+
+        for (const auto& item : trait.methods) {
+            const TraitInfo::Method& trait_method = item.second;
+            if (!trait_method.generics.empty()) {
+                fail(trait_method.loc,
+                     "trait object method '" + trait_method.name + "' cannot be generic yet");
+            }
+            if (trait_method.params.empty() ||
+                trait_method.params[0].name != "Self" ||
+                trait_method.params[0].qualifier != TypeQualifier::Value) {
+                fail(trait_method.loc,
+                     "trait object method '" + trait_method.name + "' must take value self as its first parameter");
+            }
+            for (std::size_t i = 1; i < trait_method.params.size(); ++i) {
+                if (type_ref_mentions_name(trait_method.params[i], "Self")) {
+                    fail(trait_method.params[i].loc,
+                         "trait object method '" + trait_method.name + "' cannot mention Self outside the receiver yet");
+                }
+            }
+            if (trait_method.has_result && type_ref_mentions_name(trait_method.result, "Self")) {
+                fail(trait_method.result.loc,
+                     "trait object method '" + trait_method.name + "' cannot return Self yet");
+            }
+
+            const ImplMethodInfo* impl = find_concrete_trait_method_impl(loc, source, target, trait_method.name);
+            if (!impl) {
+                fail(loc,
+                     "trait object conversions through generic impls are planned but are not supported yet for " +
+                         trait_application_display(target.name, target.args) + " for " + type_name(source));
+            }
+            queue_impl_method_for_lowering(*impl);
+
+            IrTraitObjectVTableMethod method;
+            method.impl_name = impl->lowered_name;
+            method.thunk_name = table.name + "::" + trait_method.name;
+            method.concrete_receiver_type = source;
+            method.result_type = impl->sig.result;
+            method.impl_params = impl->sig.params;
+            method.erased_params.reserve(impl->sig.params.size());
+            IrType data_pointer = void_type(loc);
+            data_pointer.qualifier = TypeQualifier::Ptr;
+            method.erased_params.push_back(data_pointer);
+            for (std::size_t i = 1; i < impl->sig.params.size(); ++i) {
+                method.erased_params.push_back(impl->sig.params[i]);
+            }
+            table.methods.push_back(std::move(method));
+        }
+
+        std::string name = table.name;
+        trait_object_vtable_names_[key] = name;
+        trait_object_vtables_.push_back(std::move(table));
+        return name;
+    }
+
+    IrExprPtr check_try(const Expr& expr, IrExprPtr lowered) {
+        IrExprPtr operand = check_expr(*expr.operand);
+        if (is_borrow_type(operand->type)) {
+            fail(expr.loc, "borrow expression result must be passed directly to a call");
+        }
+        if (!is_value_enum_type(operand->type)) {
+            fail(expr.loc, "postfix ? requires an enum value, got " + type_name(operand->type));
+        }
+        if (!same_type(current_return_, operand->type) && !is_value_enum_type(current_return_)) {
+            fail(expr.loc, "postfix ? can only early-return from functions returning " +
+                           type_name(operand->type) + ", got " + type_name(current_return_));
+        }
+
+        auto enum_found = enums_.find(operand->type.name);
+        if (enum_found == enums_.end()) {
+            fail(expr.loc, "unknown enum type '" + operand->type.name + "'");
+        }
+
+        TryEnumShape shape = analyze_try_enum_shape(
+            enum_found->second.name,
+            try_cases_for_enum(expr.loc, enum_found->second, operand->type.args));
+        if (!shape.supported) fail(expr.loc, shape.diagnostic);
+
+        TryEnumShape return_shape = shape;
+        bool converts_residual = !same_type(current_return_, operand->type);
+        if (converts_residual) {
+            if (has_aggregate_enum_layout(operand->type) || has_aggregate_enum_layout(current_return_)) {
+                fail(expr.loc, "postfix ? residual conversion for aggregate enum layouts is planned but is not supported yet");
+            }
+            auto return_enum = enums_.find(current_return_.name);
+            if (return_enum == enums_.end()) {
+                fail(expr.loc, "unknown enum type '" + current_return_.name + "'");
+            }
+            return_shape = analyze_try_enum_shape(
+                return_enum->second.name,
+                try_cases_for_enum(expr.loc, return_enum->second, current_return_.args),
+                "postfix ? return type"
+            );
+            if (!return_shape.supported) fail(expr.loc, return_shape.diagnostic);
+            require_try_residual_compatible(expr.loc, operand->type, current_return_, shape, return_shape);
+        }
+
+        lowered->kind = IrExprKind::Try;
+        lowered->type = shape.success_payload_type;
+        lowered->payload_type = shape.success_payload_type;
+        lowered->enum_tag = shape.success_tag;
+        lowered->try_converts_residual = converts_residual;
+        lowered->try_return_residual_tag = return_shape.residual_tag;
+        lowered->try_residual_has_payload = !return_shape.residual_payloads.empty();
+        if (lowered->try_residual_has_payload) {
+            lowered->try_return_residual_payload_type = return_shape.residual_payloads[0];
+        }
+        lowered->operand = std::move(operand);
+        return lowered;
+    }
+
+    void require_try_residual_compatible(SourceLocation loc,
+                                         const IrType& operand_type,
+                                         const IrType& return_type,
+                                         const TryEnumShape& operand_shape,
+                                         const TryEnumShape& return_shape) const {
+        if (operand_shape.residual_payloads.size() != return_shape.residual_payloads.size()) {
+            fail(loc,
+                 "postfix ? cannot convert residual from " + type_name(operand_type) +
+                     " to " + type_name(return_type));
+        }
+        if (operand_shape.residual_payloads.empty()) return;
+        require_assignable(loc, return_shape.residual_payloads[0], operand_shape.residual_payloads[0]);
+    }
+
+    IrExprPtr check_null_coalesce(const Expr& expr, IrExprPtr lowered) {
+        IrExprPtr lhs = check_expr(*expr.left);
+        if (is_borrow_type(lhs->type)) {
+            fail(expr.loc, "borrow expression result must be passed directly to a call");
+        }
+        if (!is_value_enum_type(lhs->type)) {
+            fail(expr.loc, "operator ?? requires a Maybe/Result-style enum value, got " + type_name(lhs->type));
+        }
+
+        auto enum_found = enums_.find(lhs->type.name);
+        if (enum_found == enums_.end()) {
+            fail(expr.loc, "unknown enum type '" + lhs->type.name + "'");
+        }
+
+        TryEnumShape shape = analyze_try_enum_shape(
+            enum_found->second.name,
+            try_cases_for_enum(expr.loc, enum_found->second, lhs->type.args),
+            "operator ??");
+        if (!shape.supported) fail(expr.loc, shape.diagnostic);
+
+        StateSnapshot after_lhs = snapshot_states();
+        IrExprPtr rhs = check_expr(*expr.right);
+        if (is_borrow_type(rhs->type)) {
+            fail(expr.loc, "borrow expression result must be passed directly to a call");
+        }
+        coerce_expr_to_expected(*rhs, shape.success_payload_type);
+        require_assignable(expr.loc, shape.success_payload_type, rhs->type);
+        StateSnapshot after_rhs = snapshot_states();
+        require_same_states(expr.loc, after_lhs, after_rhs, "changes ownership state in ?? fallback");
+        restore_states(merge_zone_generations(after_lhs, after_rhs));
+
+        lowered->kind = IrExprKind::NullCoalesce;
+        lowered->type = shape.success_payload_type;
+        lowered->payload_type = shape.success_payload_type;
+        lowered->enum_tag = shape.success_tag;
+        lowered->left = std::move(lhs);
+        lowered->right = std::move(rhs);
+        return lowered;
+    }
+
+    std::vector<TryEnumCaseShape> try_cases_for_enum(
+        SourceLocation loc,
+        const EnumInfo& enum_info,
+        const std::vector<IrType>& type_args
+    ) {
+        std::vector<TryEnumCaseShape> cases;
+        cases.reserve(enum_info.case_names.size());
+        for (const auto& name : enum_info.case_names) {
+            std::string case_key = qualify_in_module(enum_info.module_name, name);
+            auto found = enum_cases_.find(case_key);
+            if (found == enum_cases_.end()) continue;
+            EnumCaseInfo info = found->second;
+            if (info.is_generic) {
+                info = specialize_enum_case_info(loc, info, type_args);
+            }
+            cases.push_back(TryEnumCaseShape{
+                info.name,
+                info.tag,
+                info.payloads,
+                info.loc
+            });
+        }
+        return cases;
+    }
+
+    IrExprPtr check_borrow(const Expr& expr, IrExprPtr lowered) {
+        TrackedAggregateAccess access;
+        if (expr.operand) {
+            if (!try_build_tracked_aggregate_access(*expr.operand, access)) {
+                fail(expr.loc, "borrow expression requires a local binding, field access, tuple index, or constant aggregate index");
+            }
+        } else {
+            LocalInfo& source = require_live_local(expr.loc, expr.name);
+            access.base_name = expr.name;
+            access.base_type = source.type;
+            access.type = source.type;
+            access.path.clear();
+            access.expr = make_local_lvalue_expr(expr.loc, expr.name, source.type);
+        }
+
+        LocalInfo& source = require_live_local(expr.loc, access.base_name);
+        if (is_borrow_type(access.type) || access.type.qualifier == TypeQualifier::Ptr) {
+            fail(expr.loc, "cannot borrow reference-like value '" + borrow_path_display(access.base_name, access.path) + "'");
+        }
+        if (is_void_value_type(access.type)) {
+            fail(expr.loc, "cannot borrow void value '" + borrow_path_display(access.base_name, access.path) + "'");
+        }
+
+        if (expr.mutable_borrow) {
+            if (!source.mutable_binding) {
+                fail(expr.loc, "cannot mutably borrow immutable binding '" + access.base_name + "'");
+            }
+            if (access.has_final_field_mutability && !access.final_field_mutable) {
+                fail(expr.loc,
+                     "cannot mutably borrow immutable field '" + access.final_field_label +
+                         "' of struct '" + access.final_container_name + "'");
+            }
+        }
+        if (is_owner_type(access.type)) {
+            if (access.path.empty()) {
+                if (has_moved_or_dropped_owned_fields(source)) {
+                    fail(expr.loc, "cannot borrow partially moved owning binding '" + access.base_name + "'");
+                }
+            } else {
+                require_owned_field_alive(expr.loc, access.base_name, source, access.path);
+            }
+        }
+
+        require_can_borrow_path(expr.loc, access.base_name, source, access.path, expr.mutable_borrow);
+        add_borrow_source(source, access.path, expr.mutable_borrow);
+
+        temporary_borrows_.push_back(TemporaryBorrow{access.base_name, access.path, expr.mutable_borrow});
+        lowered->kind = IrExprKind::Borrow;
+        lowered->name = access.base_name;
+        lowered->label = access.path;
+        lowered->operand = std::move(access.expr);
+        lowered->mutable_borrow = expr.mutable_borrow;
+        lowered->type = access.type;
+        lowered->type.qualifier = expr.mutable_borrow ? TypeQualifier::MutRef : TypeQualifier::Ref;
+        return lowered;
+    }
+
+    static std::vector<std::string> parse_format_string(SourceLocation loc, const std::string& text, std::size_t arg_count) {
+        std::vector<std::string> parts;
+        std::string current;
+        std::size_t placeholders = 0;
+        for (std::size_t i = 0; i < text.size(); ++i) {
+            char c = text[i];
+            if (c == '{') {
+                if (i + 1 < text.size() && text[i + 1] == '{') {
+                    current.push_back('{');
+                    ++i;
+                    continue;
+                }
+                if (i + 1 < text.size() && text[i + 1] == '}') {
+                    parts.push_back(current);
+                    current.clear();
+                    ++placeholders;
+                    ++i;
+                    continue;
+                }
+                fail(loc, "format string only supports {} placeholders; escape literal { as {{");
+            }
+            if (c == '}') {
+                if (i + 1 < text.size() && text[i + 1] == '}') {
+                    current.push_back('}');
+                    ++i;
+                    continue;
+                }
+                fail(loc, "unmatched } in format string; escape literal } as }}");
+            }
+            current.push_back(c);
+        }
+        parts.push_back(current);
+        if (placeholders != arg_count) {
+            fail(loc, "format string has " + std::to_string(placeholders) +
+                      " placeholders but " + std::to_string(arg_count) + " values were provided");
+        }
+        return parts;
+    }
+
+    IrExprPtr check_format_print(const Expr& expr, IrExprPtr lowered) {
+        if (expr.args.empty()) fail(expr.loc, "'" + expr.name + "' expects a string literal format argument");
+        const Expr& format = *expr.args[0];
+        if (format.kind != ExprKind::String) {
+            fail(format.loc, "'" + expr.name + "' expects a string literal format argument");
+        }
+
+        lowered->kind = IrExprKind::FormatPrint;
+        lowered->type = i64_type(expr.loc);
+        lowered->print_newline = is_println_name(expr.name);
+        lowered->format_parts = parse_format_string(format.loc, format.string_value, expr.args.size() - 1);
+        lowered->args.reserve(expr.args.size() - 1);
+
+        for (std::size_t i = 1; i < expr.args.size(); ++i) {
+            IrExprPtr arg = check_expr(*expr.args[i]);
+            if (is_borrow_type(arg->type)) {
+                fail(expr.args[i]->loc, "format arguments cannot be borrow values");
+            }
+            if (is_owner_type(arg->type)) {
+                fail(expr.args[i]->loc, "format arguments cannot move owning values yet");
+            }
+            if (arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::U64) {
+                fail(expr.args[i]->loc, "format arguments do not support u64 yet");
+            }
+            if (!is_value_integer_type(arg->type) &&
+                !(arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool)) {
+                fail(expr.args[i]->loc, "format arguments currently support integer and bool values, got " + type_name(arg->type));
+            }
+            lowered->args.push_back(std::move(arg));
+        }
+        return lowered;
+    }
+
+    static bool is_generic_type_name(const std::vector<GenericParam>& generics, const std::string& name) {
+        for (const auto& generic : generics) {
+            if (generic.name == name) return true;
+        }
+        return false;
+    }
+
+    static std::string mangle_text_key(const std::string& text) {
+        std::string out;
+        out.reserve(text.size());
+        for (unsigned char c : text) {
+            if (std::isalnum(c)) out.push_back(static_cast<char>(c));
+            else out.push_back('_');
+        }
+        return out;
+    }
+
+    static std::string mangle_type_key(const IrType& type) {
+        return mangle_text_key(type_name(type));
+    }
+
+    static bool type_ref_mentions_name(const TypeRef& type, const std::string& name) {
+        if (type.name == name) return true;
+        for (const auto& arg : type.args) {
+            if (type_ref_mentions_name(arg, name)) return true;
+        }
+        return false;
+    }
+
+    static std::string trait_object_vtable_name(const IrType& source, const IrType& target) {
+        return "dyn::vtable::" + mangle_type_key(source) + "::" + mangle_type_key(target);
+    }
+
+    static std::string method_lookup_key(const IrType& receiver_type, const std::string& method_name) {
+        return type_name(receiver_type) + "::" + method_name;
+    }
+
+    static std::string drop_impl_key(const IrType& type) {
+        return type_name(type);
+    }
+
+    static bool split_associated_call_name(const std::string& name, std::string& receiver_name, std::string& method_name) {
+        std::size_t split = name.rfind("::");
+        if (split == std::string::npos || split == 0 || split + 2 >= name.size()) return false;
+        receiver_name = name.substr(0, split);
+        method_name = name.substr(split + 2);
+        return true;
+    }
+
+    static std::string impl_method_lowered_name(
+        const IrType& self_type,
+        const std::string& trait_name,
+        const std::string& method_name
+    ) {
+        std::string trait_key = trait_name.empty() ? "inherent" : mangle_text_key(trait_name);
+        return "impl::" + mangle_type_key(self_type) + "::" + trait_key + "::" + method_name;
+    }
+
+    static std::string specialized_impl_method_lowered_name(
+        const ImplMethodInfo& method,
+        const IrType& self_type,
+        const std::string& method_name,
+        const std::map<std::string, IrType>& substitutions
+    ) {
+        std::string name = impl_method_lowered_name(self_type, method.trait_name, method_name);
+        if (!method.method_generic_names.empty()) {
+            name += "__G";
+            for (const auto& generic_name : method.method_generic_names) {
+                auto found = substitutions.find(generic_name);
+                if (found == substitutions.end()) name += "_unused";
+                else name += "_" + mangle_type_key(found->second);
+            }
+        }
+        return name;
+    }
+
+    std::string generic_specialization_name(const FunctionDecl& fn, const std::map<std::string, IrType>& substitutions) const {
+        std::string name = fn.name + "__G";
+        for (const auto& generic : fn.generics) {
+            auto found = substitutions.find(generic.name);
+            if (found == substitutions.end()) name += "_unused";
+            else name += "_" + mangle_type_key(found->second);
+        }
+        return name;
+    }
+
+    IrType resolve_type_with_substitutions(const TypeRef& type, const std::map<std::string, IrType>& substitutions) {
+        std::map<std::string, IrType> previous = std::move(current_type_substitutions_);
+        current_type_substitutions_ = substitutions;
+        IrType resolved = resolve_executable_type(type);
+        current_type_substitutions_ = std::move(previous);
+        return resolved;
+    }
+
+    void bind_generic_type(SourceLocation loc,
+                           const std::string& name,
+                           const IrType& binding,
+                           std::map<std::string, IrType>& substitutions) const {
+        auto found = substitutions.find(name);
+        if (found == substitutions.end()) {
+            substitutions.emplace(name, binding);
+            return;
+        }
+        if (!same_type(found->second, binding)) {
+            fail(loc, "generic type '" + name + "' inferred as both " + type_name(found->second) + " and " + type_name(binding));
+        }
+    }
+
+    static bool is_generic_impl_type_name(const std::vector<std::string>& generic_names, const std::string& name) {
+        return std::find(generic_names.begin(), generic_names.end(), name) != generic_names.end();
+    }
+
+    bool try_bind_impl_generic_type(
+        const std::string& name,
+        const IrType& binding,
+        std::map<std::string, IrType>& substitutions
+    ) const {
+        auto found = substitutions.find(name);
+        if (found == substitutions.end()) {
+            substitutions.emplace(name, binding);
+            return true;
+        }
+        return same_type(found->second, binding);
+    }
+
+    bool infer_generic_impl_pattern_type(
+        const IrType& pattern,
+        const IrType& actual,
+        const std::vector<std::string>& generic_names,
+        std::map<std::string, IrType>& substitutions
+    ) const {
+        if (pattern.primitive == IrPrimitiveKind::Unknown &&
+            pattern.args.empty() &&
+            is_generic_impl_type_name(generic_names, pattern.name)) {
+            IrType binding = actual;
+            binding.qualifier = TypeQualifier::Value;
+            return try_bind_impl_generic_type(pattern.name, binding, substitutions);
+        }
+
+        if (pattern.qualifier != actual.qualifier ||
+            pattern.primitive != actual.primitive ||
+            pattern.name != actual.name ||
+            pattern.array_size != actual.array_size ||
+            pattern.args.size() != actual.args.size()) {
+            return false;
+        }
+
+        for (std::size_t i = 0; i < pattern.args.size(); ++i) {
+            if (!infer_generic_impl_pattern_type(pattern.args[i], actual.args[i], generic_names, substitutions)) return false;
+        }
+        return true;
+    }
+
+    bool infer_generic_impl_receiver_type(
+        const IrType& pattern,
+        const IrType& actual,
+        const ImplMethodInfo& method,
+        std::map<std::string, IrType>& substitutions
+    ) const {
+        return infer_generic_impl_pattern_type(pattern, actual, method.generic_names, substitutions);
+    }
+
+    bool infer_generic_impl_method_substitutions(
+        const ImplMethodInfo& method,
+        const IrType& receiver_type,
+        std::map<std::string, IrType>& substitutions
+    ) const {
+        substitutions.clear();
+        if (!infer_generic_impl_receiver_type(method.receiver_type, receiver_type, method, substitutions)) return false;
+        for (const auto& generic_name : method.generic_names) {
+            if (!substitutions.count(generic_name)) return false;
+        }
+        substitutions.emplace("Self", receiver_type);
+        return true;
+    }
+
+    bool infer_generic_trait_impl_substitutions(
+        const GenericTraitImplInfo& impl,
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const IrType& self_type,
+        std::map<std::string, IrType>& substitutions
+    ) const {
+        substitutions.clear();
+        if (impl.trait_name != trait_name) return false;
+        if (impl.trait_args.size() != trait_args.size()) return false;
+        if (!infer_generic_impl_pattern_type(impl.self_type, self_type, impl.generic_names, substitutions)) return false;
+        for (std::size_t i = 0; i < trait_args.size(); ++i) {
+            if (!infer_generic_impl_pattern_type(impl.trait_args[i], trait_args[i], impl.generic_names, substitutions)) {
+                return false;
+            }
+        }
+        for (const auto& generic_name : impl.generic_names) {
+            if (!substitutions.count(generic_name)) return false;
+        }
+        substitutions.emplace("Self", self_type);
+        return true;
+    }
+
+    IrType substitute_impl_generic_type(
+        const IrType& type,
+        const std::map<std::string, IrType>& substitutions
+    ) const {
+        if (type.primitive == IrPrimitiveKind::Unknown && type.args.empty()) {
+            auto found = substitutions.find(type.name);
+            if (found != substitutions.end()) {
+                IrType resolved = found->second;
+                resolved.qualifier = type.qualifier;
+                resolved.loc = type.loc;
+                return resolved;
+            }
+        }
+
+        IrType resolved = type;
+        for (auto& arg : resolved.args) arg = substitute_impl_generic_type(arg, substitutions);
+        for (auto& field_type : resolved.field_types) field_type = substitute_impl_generic_type(field_type, substitutions);
+        return resolved;
+    }
+
+    bool impl_generic_bounds_satisfied(
+        const std::vector<GenericTraitBound>& bounds,
+        const std::map<std::string, IrType>& substitutions,
+        std::set<std::string>& visiting,
+        std::string* failure
+    ) const {
+        for (const auto& bound : bounds) {
+            auto self_found = substitutions.find(bound.generic_name);
+            if (self_found == substitutions.end()) continue;
+
+            IrType self_type = self_found->second;
+            self_type.qualifier = TypeQualifier::Value;
+            std::vector<IrType> trait_args;
+            trait_args.reserve(bound.trait_args.size());
+            for (const auto& arg : bound.trait_args) {
+                trait_args.push_back(substitute_impl_generic_type(arg, substitutions));
+            }
+            if (!type_implements_trait(bound.trait_name, trait_args, self_type, visiting)) {
+                if (failure) {
+                    *failure = "type " + type_name(self_type) + " does not implement trait '" +
+                        trait_application_display(bound.trait_name, trait_args) +
+                        "' required by impl generic parameter '" + bound.generic_name + "'";
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool type_implements_trait(
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const IrType& self_type
+    ) const {
+        std::set<std::string> visiting;
+        return type_implements_trait(trait_name, trait_args, self_type, visiting);
+    }
+
+    bool type_implements_trait(
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const IrType& self_type,
+        std::set<std::string>& visiting
+    ) const {
+        std::string key = trait_impl_key(trait_name, trait_args, self_type);
+        if (impl_keys_.count(key)) return true;
+        if (!visiting.insert(key).second) return false;
+        for (const auto& impl : generic_trait_impls_) {
+            std::map<std::string, IrType> substitutions;
+            if (!infer_generic_trait_impl_substitutions(impl, trait_name, trait_args, self_type, substitutions)) continue;
+            if (impl_generic_bounds_satisfied(impl.generic_bounds, substitutions, visiting, nullptr)) {
+                visiting.erase(key);
+                return true;
+            }
+        }
+        visiting.erase(key);
+        return false;
+    }
+
+    ImplMethodInfo specialize_generic_impl_method(
+        SourceLocation loc,
+        const ImplMethodInfo& method,
+        const IrType& receiver_type,
+        const std::string& method_name
+    ) {
+        std::map<std::string, IrType> substitutions;
+        if (!infer_generic_impl_method_substitutions(method, receiver_type, substitutions)) {
+            fail(loc, "generic impl method '" + method_name + "' cannot be specialized for " + type_name(receiver_type));
+        }
+
+        std::string previous_module = current_module_name_;
+        current_module_name_ = method.module_name;
+
+        FunctionSig sig;
+        sig.loc = method.fn->loc;
+        sig.module_name = method.module_name;
+        sig.is_public = method.is_public;
+        for (const auto& param : method.fn->params) {
+            sig.params.push_back(resolve_type_with_substitutions(param.type, substitutions));
+        }
+        sig.result = method.fn->has_return_type
+            ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
+            : void_type(method.fn->loc);
+
+        current_module_name_ = previous_module;
+
+        ImplMethodInfo specialized = method;
+        specialized.receiver_type = receiver_type;
+        specialized.substitutions = std::move(substitutions);
+        specialized.sig = std::move(sig);
+        specialized.lowered_name = specialized_impl_method_lowered_name(
+            specialized,
+            receiver_type,
+            method_name,
+            specialized.substitutions);
+        functions_.emplace(specialized.lowered_name, specialized.sig);
+        return specialized;
+    }
+
+    ImplMethodInfo specialize_generic_impl_method_with_substitutions(
+        const ImplMethodInfo& method,
+        const IrType& receiver_type,
+        const std::string& method_name,
+        std::map<std::string, IrType> substitutions
+    ) {
+        substitutions["Self"] = receiver_type;
+
+        std::string previous_module = current_module_name_;
+        current_module_name_ = method.module_name;
+
+        FunctionSig sig;
+        sig.loc = method.fn->loc;
+        sig.module_name = method.module_name;
+        sig.is_public = method.is_public;
+        for (const auto& param : method.fn->params) {
+            sig.params.push_back(resolve_type_with_substitutions(param.type, substitutions));
+        }
+        sig.result = method.fn->has_return_type
+            ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
+            : void_type(method.fn->loc);
+
+        current_module_name_ = previous_module;
+
+        ImplMethodInfo specialized = method;
+        specialized.receiver_type = receiver_type;
+        specialized.substitutions = std::move(substitutions);
+        specialized.sig = std::move(sig);
+        specialized.lowered_name = specialized_impl_method_lowered_name(
+            specialized,
+            receiver_type,
+            method_name,
+            specialized.substitutions);
+        functions_.emplace(specialized.lowered_name, specialized.sig);
+        return specialized;
+    }
+
+    bool try_select_generic_method_impl(
+        const Expr& expr,
+        const IrType& receiver_type,
+        const std::string& generic_origin,
+        const std::vector<IrType>& arg_types,
+        ImplMethodInfo& selected
+    ) {
+        std::vector<const ImplMethodInfo*> matches;
+        std::string first_bound_failure;
+        std::string first_inference_failure;
+        bool saw_wrong_arg_count = false;
+        for (const auto& candidate : generic_method_impls_) {
+            const std::string method_name = expr.name;
+            if (basename_of_qualified_name(candidate.fn->name) != method_name) continue;
+            std::map<std::string, IrType> substitutions;
+            if (!infer_generic_impl_method_substitutions(candidate, receiver_type, substitutions)) continue;
+            if (candidate.sig.params.size() != arg_types.size() + 1) {
+                saw_wrong_arg_count = true;
+                continue;
+            }
+            if (!bind_or_infer_method_generic_type_args(expr, candidate, arg_types, substitutions, &first_inference_failure)) {
+                continue;
+            }
+            std::set<std::string> visiting;
+            std::string bound_failure;
+            if (!impl_generic_bounds_satisfied(candidate.generic_bounds, substitutions, visiting, &bound_failure)) {
+                if (first_bound_failure.empty()) first_bound_failure = bound_failure;
+                continue;
+            }
+            if (!impl_generic_bounds_satisfied(candidate.method_generic_bounds, substitutions, visiting, &bound_failure)) {
+                if (first_bound_failure.empty()) first_bound_failure = bound_failure;
+                continue;
+            }
+            if (!generic_origin.empty()) {
+                bool has_applicable_bound = false;
+                bool matches_bound = false;
+                for (const auto& bound : current_generic_bounds_) {
+                    if (bound.generic_name != generic_origin) continue;
+                    auto trait_found = traits_.find(bound.trait_name);
+                    if (trait_found == traits_.end()) continue;
+                    if (!trait_found->second.methods.count(method_name)) continue;
+                    has_applicable_bound = true;
+                    if (candidate.trait_name != bound.trait_name) continue;
+                    if (candidate.trait_args.size() != bound.trait_args.size()) continue;
+                    std::map<std::string, IrType> trait_substitutions = substitutions;
+                    bool trait_args_match = true;
+                    for (std::size_t i = 0; i < bound.trait_args.size(); ++i) {
+                        if (!infer_generic_impl_pattern_type(
+                                candidate.trait_args[i],
+                                bound.trait_args[i],
+                                candidate.generic_names,
+                                trait_substitutions)) {
+                            trait_args_match = false;
+                            break;
+                        }
+                    }
+                    if (trait_args_match) {
+                        matches_bound = true;
+                        break;
+                    }
+                }
+                if (has_applicable_bound && !matches_bound) continue;
+            }
+            matches.push_back(&candidate);
+        }
+
+        if (matches.empty()) {
+            if (!first_bound_failure.empty()) fail(expr.loc, first_bound_failure);
+            if (!first_inference_failure.empty()) fail(expr.loc, first_inference_failure);
+            if (saw_wrong_arg_count) fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
+            return false;
+        }
+        if (matches.size() > 1) {
+            fail(expr.loc, "method call '" + expr.name + "' for type " + type_name(receiver_type) + " is ambiguous");
+        }
+        std::map<std::string, IrType> substitutions;
+        if (!infer_generic_impl_method_substitutions(*matches.front(), receiver_type, substitutions)) {
+            fail(expr.loc, "generic impl method '" + expr.name + "' cannot be specialized for " + type_name(receiver_type));
+        }
+        if (!bind_or_infer_method_generic_type_args(expr, *matches.front(), arg_types, substitutions, nullptr)) {
+            fail(expr.loc, "generic method '" + expr.name + "' could not be specialized");
+        }
+        selected = specialize_generic_impl_method_with_substitutions(
+            *matches.front(),
+            receiver_type,
+            expr.name,
+            std::move(substitutions));
+        return true;
+    }
+
+    bool associated_receiver_name_matches_type(SourceLocation loc, const std::string& receiver_name, const IrType& type) {
+        if (type.primitive == IrPrimitiveKind::Struct) {
+            return resolve_struct_type_name(receiver_name) == type.name;
+        }
+        if (type.primitive == IrPrimitiveKind::Vector) {
+            std::string base = unqualified_name(receiver_name);
+            return base == "Vec";
+        }
+        if (type.primitive == IrPrimitiveKind::Enum) {
+            return resolve_enum_type_name(receiver_name) == type.name;
+        }
+
+        IrType resolved;
+        if (!try_resolve_associated_receiver_type(loc, receiver_name, resolved)) return false;
+        IrType pattern = type;
+        pattern.args.clear();
+        pattern.field_names.clear();
+        pattern.field_types.clear();
+        pattern.field_mutable.clear();
+        return same_type(resolved, pattern);
+    }
+
+    void bind_method_generic_type_args(
+        SourceLocation loc,
+        const ImplMethodInfo& method,
+        const std::vector<TypeRef>& type_args,
+        std::map<std::string, IrType>& substitutions
+    ) {
+        if (type_args.size() != method.method_generic_names.size()) {
+            fail(loc,
+                 "generic method '" + basename_of_qualified_name(method.fn->name) +
+                     "' expects " + std::to_string(method.method_generic_names.size()) +
+                     " type argument" + (method.method_generic_names.size() == 1 ? "" : "s"));
+        }
+        for (std::size_t i = 0; i < type_args.size(); ++i) {
+            bind_generic_type(
+                type_args[i].loc,
+                method.method_generic_names[i],
+                resolve_executable_type(type_args[i]),
+                substitutions);
+        }
+    }
+
+    void infer_method_generic_type(
+        SourceLocation loc,
+        const TypeRef& expected,
+        const IrType& actual,
+        const ImplMethodInfo& method,
+        std::map<std::string, IrType>& substitutions
+    ) const {
+        if (expected.args.empty() && is_generic_impl_type_name(method.method_generic_names, expected.name)) {
+            if (expected.qualifier != TypeQualifier::Value && expected.qualifier != actual.qualifier) {
+                fail(loc, "type mismatch: expected " + type_ref_key(expected) + ", got " + type_name(actual));
+            }
+            IrType binding = actual;
+            binding.qualifier = TypeQualifier::Value;
+            bind_generic_type(loc, expected.name, binding, substitutions);
+            return;
+        }
+        if (expected.args.size() != actual.args.size()) return;
+        for (std::size_t i = 0; i < expected.args.size(); ++i) {
+            infer_method_generic_type(loc, expected.args[i], actual.args[i], method, substitutions);
+        }
+    }
+
+    void infer_named_generic_type(
+        SourceLocation loc,
+        const TypeRef& expected,
+        const IrType& actual,
+        const std::vector<std::string>& generic_names,
+        std::map<std::string, IrType>& substitutions
+    ) const {
+        if (expected.args.empty() && is_generic_impl_type_name(generic_names, expected.name)) {
+            if (expected.qualifier != TypeQualifier::Value && expected.qualifier != actual.qualifier) {
+                fail(loc, "type mismatch: expected " + type_ref_key(expected) + ", got " + type_name(actual));
+            }
+            IrType binding = actual;
+            binding.qualifier = TypeQualifier::Value;
+            bind_generic_type(loc, expected.name, binding, substitutions);
+            return;
+        }
+        if (expected.args.size() != actual.args.size()) return;
+        for (std::size_t i = 0; i < expected.args.size(); ++i) {
+            infer_named_generic_type(loc, expected.args[i], actual.args[i], generic_names, substitutions);
+        }
+    }
+
+    bool bind_or_infer_method_generic_type_args(
+        const Expr& expr,
+        const ImplMethodInfo& method,
+        const std::vector<IrType>& arg_types,
+        std::map<std::string, IrType>& substitutions,
+        std::string* failure
+    ) {
+        if (method.method_generic_names.empty()) {
+            if (!expr.type_args.empty()) {
+                fail(expr.loc, "method '" + expr.name + "' does not take type arguments");
+            }
+            return true;
+        }
+
+        if (!expr.type_args.empty()) {
+            bind_method_generic_type_args(expr.loc, method, expr.type_args, substitutions);
+        } else {
+            for (std::size_t i = 0; i < arg_types.size(); ++i) {
+                infer_method_generic_type(
+                    expr.loc,
+                    method.fn->params[i + 1].type,
+                    arg_types[i],
+                    method,
+                    substitutions);
+            }
+        }
+
+        for (const auto& generic_name : method.method_generic_names) {
+            if (!substitutions.count(generic_name)) {
+                if (failure) {
+                    *failure = "generic type '" + generic_name +
+                        "' could not be inferred for method '" + expr.name + "'";
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool bind_or_infer_associated_generic_type_args(
+        const Expr& expr,
+        const ImplMethodInfo& method,
+        const std::vector<IrType>& arg_types,
+        std::map<std::string, IrType>& substitutions,
+        std::string* failure
+    ) {
+        substitutions.clear();
+        const std::size_t impl_count = method.generic_names.size();
+        const std::size_t method_count = method.method_generic_names.size();
+        const std::size_t total_count = impl_count + method_count;
+        if (expr.type_args.size() > total_count) {
+            fail(expr.loc,
+                 "generic associated function expects " + std::to_string(total_count) +
+                     " type argument" + (total_count == 1 ? "" : "s"));
+        }
+
+        std::size_t type_arg_index = 0;
+        for (; type_arg_index < expr.type_args.size() && type_arg_index < impl_count; ++type_arg_index) {
+            bind_generic_type(
+                expr.type_args[type_arg_index].loc,
+                method.generic_names[type_arg_index],
+                resolve_executable_type(expr.type_args[type_arg_index]),
+                substitutions);
+        }
+        for (; type_arg_index < expr.type_args.size(); ++type_arg_index) {
+            std::size_t method_index = type_arg_index - impl_count;
+            bind_generic_type(
+                expr.type_args[type_arg_index].loc,
+                method.method_generic_names[method_index],
+                resolve_executable_type(expr.type_args[type_arg_index]),
+                substitutions);
+        }
+
+        std::vector<std::string> all_generic_names = method.generic_names;
+        all_generic_names.insert(
+            all_generic_names.end(),
+            method.method_generic_names.begin(),
+            method.method_generic_names.end());
+        for (std::size_t i = 0; i < arg_types.size(); ++i) {
+            infer_named_generic_type(
+                expr.loc,
+                method.fn->params[i].type,
+                arg_types[i],
+                all_generic_names,
+                substitutions);
+        }
+
+        for (const auto& generic_name : all_generic_names) {
+            if (!substitutions.count(generic_name)) {
+                if (failure) {
+                    *failure = "generic type '" + generic_name +
+                        "' could not be inferred for associated function '" +
+                        basename_of_qualified_name(method.fn->name) + "'";
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool try_select_generic_associated_impl(
+        const Expr& expr,
+        const std::string& receiver_name,
+        const std::string& method_name,
+        const std::vector<IrType>& arg_types,
+        ImplMethodInfo& selected
+    ) {
+        std::vector<ImplMethodInfo> matches;
+        std::string first_bound_failure;
+        std::string first_inference_failure;
+        bool saw_wrong_arg_count = false;
+        for (const auto& candidate : generic_associated_impls_) {
+            if (basename_of_qualified_name(candidate.fn->name) != method_name) continue;
+            if (!associated_receiver_name_matches_type(expr.loc, receiver_name, candidate.receiver_type)) continue;
+            if (candidate.sig.params.size() != arg_types.size()) {
+                saw_wrong_arg_count = true;
+                continue;
+            }
+
+            std::map<std::string, IrType> substitutions;
+            if (!bind_or_infer_associated_generic_type_args(expr, candidate, arg_types, substitutions, &first_inference_failure)) {
+                continue;
+            }
+            IrType receiver_type = substitute_impl_generic_type(candidate.receiver_type, substitutions);
+            substitutions["Self"] = receiver_type;
+
+            std::set<std::string> visiting;
+            std::string bound_failure;
+            if (!impl_generic_bounds_satisfied(candidate.generic_bounds, substitutions, visiting, &bound_failure)) {
+                if (first_bound_failure.empty()) first_bound_failure = bound_failure;
+                continue;
+            }
+            if (!impl_generic_bounds_satisfied(candidate.method_generic_bounds, substitutions, visiting, &bound_failure)) {
+                if (first_bound_failure.empty()) first_bound_failure = bound_failure;
+                continue;
+            }
+            matches.push_back(specialize_generic_impl_method_with_substitutions(
+                candidate,
+                receiver_type,
+                method_name,
+                std::move(substitutions)
+            ));
+        }
+
+        if (matches.empty()) {
+            if (!first_bound_failure.empty()) fail(expr.loc, first_bound_failure);
+            if (!first_inference_failure.empty()) fail(expr.loc, first_inference_failure);
+            if (saw_wrong_arg_count) fail(expr.loc, "wrong argument count for associated function '" + method_name + "'");
+            return false;
+        }
+        if (matches.size() > 1) {
+            fail(expr.loc, "associated function '" + method_name + "' for type '" + receiver_name + "' is ambiguous");
+        }
+        selected = std::move(matches.front());
+        return true;
+    }
+
+    void infer_generic_type(SourceLocation loc,
+                            const TypeRef& expected,
+                            const IrType& actual,
+                            const std::vector<GenericParam>& generics,
+                            std::map<std::string, IrType>& substitutions) const {
+        if (expected.args.empty() && is_generic_type_name(generics, expected.name)) {
+            if (expected.qualifier != TypeQualifier::Value && expected.qualifier != actual.qualifier) {
+                fail(loc, "type mismatch: expected " + type_ref_key(expected) + ", got " + type_name(actual));
+            }
+            IrType binding = actual;
+            binding.qualifier = TypeQualifier::Value;
+            bind_generic_type(loc, expected.name, binding, substitutions);
+            return;
+        }
+        if (expected.args.size() != actual.args.size()) return;
+        for (std::size_t i = 0; i < expected.args.size(); ++i) {
+            infer_generic_type(loc, expected.args[i], actual.args[i], generics, substitutions);
+        }
+    }
+
+    void require_generic_bounds(
+        SourceLocation loc,
+        const FunctionDecl& fn,
+        const std::map<std::string, IrType>& substitutions
+    ) {
+        bool has_constraint = false;
+        for (const auto& generic : fn.generics) {
+            if (generic.has_constraint) {
+                has_constraint = true;
+                break;
+            }
+        }
+        if (!has_constraint) return;
+
+        std::string previous_module = current_module_name_;
+        std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+        current_module_name_ = fn.module_name;
+        current_type_substitutions_ = substitutions;
+        for (const auto& generic : fn.generics) {
+            if (!generic.has_constraint) continue;
+            auto self_found = substitutions.find(generic.name);
+            if (self_found == substitutions.end()) continue;
+            GenericTraitBound bound = resolve_generic_trait_bound(generic);
+            if (!type_implements_trait(bound.trait_name, bound.trait_args, self_found->second)) {
+                fail(loc,
+                     "type " + type_name(self_found->second) + " does not implement trait '" +
+                         trait_application_display(bound.trait_name, bound.trait_args) +
+                         "' required by generic parameter '" + generic.name + "'");
+            }
+        }
+        current_type_substitutions_ = std::move(previous_substitutions);
+        current_module_name_ = previous_module;
+    }
+
+    const FunctionDecl* find_generic_function(const Expr& expr, std::string& resolved_name) const {
+        resolved_name = resolve_generic_function_name(expr.name);
+        auto found = generic_functions_.find(resolved_name);
+        if (found != generic_functions_.end()) return found->second;
+        return nullptr;
+    }
+
+    static IrExprPtr make_cast_expr(SourceLocation loc, IrExprPtr value, const IrType& target) {
+        if (same_type(value->type, target)) return value;
+        auto cast = std::make_unique<IrExpr>();
+        cast->kind = IrExprKind::Cast;
+        cast->loc = loc;
+        cast->type = target;
+        cast->operand = std::move(value);
+        return cast;
+    }
+
+    IrExprPtr make_builtin_call(SourceLocation loc,
+                                const std::string& name,
+                                std::vector<IrExprPtr> args,
+                                const IrType& result) const {
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::Call;
+        lowered->loc = loc;
+        lowered->name = name;
+        lowered->type = result;
+        lowered->args = std::move(args);
+        return lowered;
+    }
+
+    IrExprPtr check_assert_compare_macro(const Expr& expr, PreludeMacroKind kind, std::vector<ExprPtr> args) {
+        if (args.size() != 2) fail(expr.loc, "wrong argument count for '" + expr.name + "!'");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr left = check_expr(*args[0]);
+        IrExprPtr right = check_expr(*args[1]);
+        release_temporary_borrows(borrow_mark);
+
+        std::string function_name;
+        std::vector<IrExprPtr> lowered_args;
+        lowered_args.reserve(2);
+        if (left->type.primitive == IrPrimitiveKind::Bool && right->type.primitive == IrPrimitiveKind::Bool &&
+            left->type.qualifier == TypeQualifier::Value && right->type.qualifier == TypeQualifier::Value) {
+            function_name = kind == PreludeMacroKind::AssertEq ? "assert_eq_bool" : "assert_ne_bool";
+            lowered_args.push_back(std::move(left));
+            lowered_args.push_back(std::move(right));
+        } else if (is_value_integer_type(left->type) && is_value_integer_type(right->type)) {
+            IrType wide = i64_type(expr.loc);
+            function_name = kind == PreludeMacroKind::AssertEq ? "assert_eq_i64" : "assert_ne_i64";
+            lowered_args.push_back(make_cast_expr(expr.loc, std::move(left), wide));
+            lowered_args.push_back(make_cast_expr(expr.loc, std::move(right), wide));
+        } else {
+            fail(expr.loc, expr.name + "! arguments must both be integer values or both be bool values");
+        }
+
+        return make_builtin_call(expr.loc, function_name, std::move(lowered_args), i64_type(expr.loc));
+    }
+
+    IrExprPtr check_prelude_macro_call(const Expr& expr, PreludeMacroKind kind) {
+        if (kind == PreludeMacroKind::Format) {
+            fail(expr.loc, "prelude macro 'format!' needs owned runtime strings before it can return a formatted value");
+        }
+        if (kind == PreludeMacroKind::Matches) {
+            fail(expr.loc, "prelude macro 'matches!' needs pattern-position macro expansion before it can be lowered");
+        }
+        if (!is_supported_prelude_macro(kind)) {
+            fail(expr.loc, "prelude macro '" + expr.name + "!' is reserved but macro expansion is not supported yet");
+        }
+
+        std::vector<ExprPtr> args = parse_macro_argument_expressions(expr.macro_tokens, expr.loc);
+        if (kind == PreludeMacroKind::AssertEq || kind == PreludeMacroKind::AssertNe) {
+            return check_assert_compare_macro(expr, kind, std::move(args));
+        }
+
+        Expr call;
+        call.kind = ExprKind::Call;
+        call.loc = expr.loc;
+        call.name = prelude_macro_function_name(kind);
+        call.args = std::move(args);
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->loc = expr.loc;
+        return check_call(call, std::move(lowered));
+    }
+
+    IrExprPtr check_macro_call(const Expr& expr) {
+        PreludeMacroKind prelude = prelude_macro_kind(unqualified_name(expr.name));
+        if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
+
+        std::string meta_name = resolve_meta_function_name(expr.name);
+        if (!meta_functions_.count(meta_name)) {
+            fail(expr.loc, "unknown macro '" + expr.name + "!'");
+        }
+        fail(expr.loc,
+             "macro invocation '" + expr.name +
+                 "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet");
+    }
+
+    IrExprPtr check_generic_call(const Expr& expr, const FunctionDecl& fn, const std::string& resolved_name, IrExprPtr lowered) {
+        require_function_decl_access(expr.loc, fn, resolved_name);
+        if (const Attribute* deprecated = deprecated_attribute(fn.attributes)) {
+            warn_deprecated_use(expr.loc, "function", resolved_name, deprecated_message(fn.attributes));
+            (void)deprecated;
+        }
+        if (fn.params.size() != expr.args.size()) fail(expr.loc, "wrong argument count for '" + expr.name + "'");
+        if (expr.args.size() > std::numeric_limits<std::uint16_t>::max()) {
+            fail(expr.loc, "function calls support up to 65535 arguments");
+        }
+
+        lowered->kind = IrExprKind::Call;
+        lowered->args.reserve(expr.args.size());
+        std::size_t borrow_mark = temporary_borrow_mark();
+        for (const auto& arg_expr : expr.args) lowered->args.push_back(check_expr(*arg_expr));
+
+        std::map<std::string, IrType> substitutions;
+        if (!expr.type_args.empty()) {
+            if (expr.type_args.size() != fn.generics.size()) {
+                fail(expr.loc,
+                     "generic function '" + expr.name + "' expects " + std::to_string(fn.generics.size()) +
+                         " type argument" + (fn.generics.size() == 1 ? "" : "s"));
+            }
+            for (std::size_t i = 0; i < expr.type_args.size(); ++i) {
+                bind_generic_type(
+                    expr.type_args[i].loc,
+                    fn.generics[i].name,
+                    resolve_executable_type(expr.type_args[i]),
+                    substitutions
+                );
+            }
+        }
+        for (std::size_t i = 0; i < fn.params.size(); ++i) {
+            infer_generic_type(expr.loc, fn.params[i].type, lowered->args[i]->type, fn.generics, substitutions);
+        }
+        for (const auto& generic : fn.generics) {
+            if (!substitutions.count(generic.name)) {
+                fail(expr.loc, "generic type '" + generic.name + "' could not be inferred for '" + expr.name + "'");
+            }
+        }
+        require_generic_bounds(expr.loc, fn, substitutions);
+
+        std::vector<IrType> param_types;
+        param_types.reserve(fn.params.size());
+        for (std::size_t i = 0; i < fn.params.size(); ++i) {
+            IrType param_type = resolve_type_with_substitutions(fn.params[i].type, substitutions);
+            coerce_expr_to_expected(*lowered->args[i], param_type);
+            require_assignable(expr.loc, param_type, lowered->args[i]->type);
+            param_types.push_back(param_type);
+        }
+        IrType result = fn.has_return_type ? resolve_type_with_substitutions(fn.return_type, substitutions) : void_type(fn.loc);
+        release_temporary_borrows(borrow_mark);
+
+        std::string specialized_name = generic_specialization_name(fn, substitutions);
+        lowered->name = specialized_name;
+        lowered->type = result;
+
+        if (!queued_specializations_.count(specialized_name)) {
+            FunctionSig sig;
+            sig.params = param_types;
+            sig.result = result;
+            sig.module_name = fn.module_name;
+            sig.is_public = fn.is_public;
+            sig.loc = fn.loc;
+            functions_.emplace(specialized_name, std::move(sig));
+            pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
+            queued_specializations_.insert(specialized_name);
+        }
+        return lowered;
+    }
+
+    void queue_generic_function_specialization(
+        const FunctionDecl& fn,
+        const std::string& specialized_name,
+        std::vector<IrType> param_types,
+        const IrType& result,
+        const std::map<std::string, IrType>& substitutions
+    ) {
+        if (queued_specializations_.count(specialized_name)) return;
+
+        FunctionSig sig;
+        sig.params = std::move(param_types);
+        sig.result = result;
+        sig.module_name = fn.module_name;
+        sig.is_public = fn.is_public;
+        sig.loc = fn.loc;
+        functions_.emplace(specialized_name, std::move(sig));
+        pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
+        queued_specializations_.insert(specialized_name);
+    }
+
+    IrExprPtr check_generic_function_ref_with_expected(
+        const Expr& expr,
+        const FunctionDecl& fn,
+        const std::string& resolved_name,
+        const IrType& expected
+    ) {
+        if (expected.qualifier != TypeQualifier::Value ||
+            expected.primitive != IrPrimitiveKind::Function ||
+            expected.args.empty() ||
+            expected.array_size + 1 != expected.args.size()) {
+            return nullptr;
+        }
+
+        require_function_decl_access(expr.loc, fn, resolved_name);
+        if (const Attribute* deprecated = deprecated_attribute(fn.attributes)) {
+            warn_deprecated_use(expr.loc, "function", resolved_name, deprecated_message(fn.attributes));
+            (void)deprecated;
+        }
+
+        std::size_t param_count = static_cast<std::size_t>(expected.array_size);
+        if (fn.params.size() != param_count) {
+            fail(expr.loc,
+                 "generic function '" + expr.name + "' cannot be used as " + type_name(expected) +
+                     ": parameter count mismatch");
+        }
+
+        std::map<std::string, IrType> substitutions;
+        for (std::size_t i = 0; i < fn.params.size(); ++i) {
+            infer_generic_type(expr.loc, fn.params[i].type, expected.args[i], fn.generics, substitutions);
+        }
+
+        IrType expected_result = function_pointer_result_type(expected);
+        if (fn.has_return_type) {
+            infer_generic_type(expr.loc, fn.return_type, expected_result, fn.generics, substitutions);
+        }
+        for (const auto& generic : fn.generics) {
+            if (!substitutions.count(generic.name)) {
+                fail(expr.loc,
+                     "generic type '" + generic.name +
+                         "' could not be inferred for function pointer '" + expr.name + "'");
+            }
+        }
+        require_generic_bounds(expr.loc, fn, substitutions);
+
+        std::vector<IrType> param_types;
+        param_types.reserve(fn.params.size());
+        for (const auto& param : fn.params) {
+            param_types.push_back(resolve_type_with_substitutions(param.type, substitutions));
+        }
+        IrType result = fn.has_return_type
+            ? resolve_type_with_substitutions(fn.return_type, substitutions)
+            : void_type(fn.loc);
+
+        FunctionSig selected_sig;
+        selected_sig.params = param_types;
+        selected_sig.result = result;
+        IrType selected_type = function_pointer_type(selected_sig, expr.loc);
+        if (!same_type(selected_type, expected)) {
+            fail(expr.loc,
+                 "generic function '" + expr.name + "' specializes to " +
+                     type_name(selected_type) + ", expected " + type_name(expected));
+        }
+
+        std::string specialized_name = generic_specialization_name(fn, substitutions);
+        queue_generic_function_specialization(fn, specialized_name, std::move(param_types), result, substitutions);
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::FunctionRef;
+        lowered->loc = expr.loc;
+        lowered->name = specialized_name;
+        lowered->type = selected_type;
+        return lowered;
+    }
+
+    void queue_impl_method_for_lowering(const ImplMethodInfo& method) {
+        if (!queued_impl_methods_.count(method.lowered_name)) {
+            impl_methods_to_lower_.push_back(method);
+            queued_impl_methods_.insert(method.lowered_name);
+        }
+    }
+
+    IrExprPtr check_range_call(const Expr& expr, IrExprPtr lowered, const IrType* expected_range = nullptr) {
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "range constructors do not take type arguments");
+        }
+        if (expr.args.size() != 2) fail(expr.loc, "range expects start and end values");
+
+        IrType bound = i64_type(expr.loc);
+        bool has_bound = expected_range &&
+                         is_prelude_range_type(*expected_range) &&
+                         !expected_range->args.empty();
+        if (has_bound) {
+            bound = expected_range->args[0];
+        } else if (expr.args[0]->kind == ExprKind::Integer && !expr.args[0]->literal_suffix.empty()) {
+            bound = integer_literal_suffix_type(expr.args[0]->literal_suffix, expr.args[0]->loc);
+            has_bound = true;
+        } else if (expr.args[1]->kind == ExprKind::Integer && !expr.args[1]->literal_suffix.empty()) {
+            bound = integer_literal_suffix_type(expr.args[1]->literal_suffix, expr.args[1]->loc);
+            has_bound = true;
+        }
+
+        lowered->kind = IrExprKind::Tuple;
+        lowered->loc = expr.loc;
+        lowered->type = prelude_range_type(
+            expr.loc,
+            is_prelude_inclusive_range_function_name(expr.name),
+            bound
+        );
+        lowered->args.reserve(2);
+        IrExprPtr start = has_bound
+            ? check_expr_with_expected(*expr.args[0], bound)
+            : check_expr(*expr.args[0]);
+        if (!has_bound) {
+            if (!is_value_integer_type(start->type)) {
+                fail(expr.args[0]->loc, "range bounds must be integers");
+            }
+            bound = start->type;
+            lowered->type = prelude_range_type(
+                expr.loc,
+                is_prelude_inclusive_range_function_name(expr.name),
+                bound
+            );
+        }
+        coerce_expr_to_expected(*start, bound);
+        require_assignable(expr.args[0]->loc, bound, start->type);
+
+        IrExprPtr end = check_expr_with_expected(*expr.args[1], bound);
+        coerce_expr_to_expected(*end, bound);
+        require_assignable(expr.args[1]->loc, bound, end->type);
+
+        lowered->args.push_back(std::move(start));
+        lowered->args.push_back(std::move(end));
+        return lowered;
+    }
+
+    IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value) {
+        if ((value->type.primitive != IrPrimitiveKind::Vector &&
+             value->type.primitive != IrPrimitiveKind::Array) ||
+            value->type.args.size() != 1) {
+            fail(loc, "len expects an array or Vec value, got " + type_name(value->type));
+        }
+        if (value->type.primitive == IrPrimitiveKind::Array) {
+            if (value->kind == IrExprKind::Vector && is_owner_type(value->type)) {
+                fail(loc, "len of owning array literals would discard owning values; bind the array first");
+            }
+            return make_integer_literal(loc, i64_type(loc), value->type.array_size);
+        }
+        if (value->kind == IrExprKind::Vector) {
+            if (is_owner_type(value->type)) {
+                fail(loc, "len of owning vector literals would discard owning values; bind the vector first");
+            }
+            return make_integer_literal(loc, i64_type(loc), value->args.size());
+        }
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::TupleIndex;
+        lowered->loc = loc;
+        lowered->tuple_index = 0;
+        lowered->type = i64_type(loc);
+        lowered->operand = std::move(value);
+        return lowered;
+    }
+
+    IrExprPtr check_vec_len_call(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "len does not take type arguments");
+        }
+        if (expr.args.size() != 1) fail(expr.loc, "len expects one array or Vec value");
+        return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.args[0]));
+    }
+
+    IrExprPtr check_pointer_offset_call(const Expr& expr, IrExprPtr lowered) {
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "ptr_offset does not take type arguments");
+        }
+        if (expr.args.size() != 2) fail(expr.loc, "ptr_offset expects a pointer and a byte offset");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr pointer = check_expr(*expr.args[0]);
+        IrExprPtr offset = check_expr(*expr.args[1]);
+        release_temporary_borrows(borrow_mark);
+
+        if (!is_raw_pointer_type(pointer->type)) {
+            fail(expr.args[0]->loc, "ptr_offset first argument must be a raw pointer, got " + type_name(pointer->type));
+        }
+        if (!is_value_integer_type(offset->type)) {
+            fail(expr.args[1]->loc, "ptr_offset byte offset must be an integer, got " + type_name(offset->type));
+        }
+
+        lowered->kind = IrExprKind::PointerOffset;
+        lowered->loc = expr.loc;
+        lowered->type = pointer->type;
+        lowered->operand = std::move(pointer);
+        lowered->right = std::move(offset);
+        return lowered;
+    }
+
+    IrExprPtr check_pointer_add_call(const Expr& expr, IrExprPtr lowered) {
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "ptr_add does not take type arguments");
+        }
+        if (expr.args.size() != 2) fail(expr.loc, "ptr_add expects a pointer and an element offset");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr pointer = check_expr(*expr.args[0]);
+        IrExprPtr offset = check_expr(*expr.args[1]);
+        release_temporary_borrows(borrow_mark);
+
+        (void)require_raw_pointer_add_type(expr.args[0]->loc, pointer->type, "ptr_add");
+        if (!is_value_integer_type(offset->type)) {
+            fail(expr.args[1]->loc, "ptr_add element offset must be an integer, got " + type_name(offset->type));
+        }
+
+        lowered->kind = IrExprKind::PointerAdd;
+        lowered->loc = expr.loc;
+        lowered->type = pointer->type;
+        lowered->operand = std::move(pointer);
+        lowered->right = std::move(offset);
+        return lowered;
+    }
+
+    IrType require_raw_pointer_memory_type(SourceLocation loc, const IrType& pointer_type, const std::string& operation) {
+        if (!is_raw_pointer_type(pointer_type)) {
+            fail(loc, operation + " expects a raw pointer, got " + type_name(pointer_type));
+        }
+        IrType element_type = raw_pointer_pointee_type(pointer_type);
+        if (is_void_value_type(element_type)) {
+            fail(loc, operation + " cannot access ptr void; cast to ptr T first");
+        }
+        if (!is_raw_memory_value_type(element_type)) {
+            fail(loc, operation + " currently supports scalar pointer element types, got " + type_name(pointer_type));
+        }
+        return element_type;
+    }
+
+    IrType require_raw_pointer_deref_type(SourceLocation loc, const IrType& pointer_type, const std::string& operation) {
+        if (!is_raw_pointer_type(pointer_type)) {
+            fail(loc, operation + " expects a raw pointer, got " + type_name(pointer_type));
+        }
+        IrType element_type = raw_pointer_pointee_type(pointer_type);
+        if (is_void_value_type(element_type)) {
+            fail(loc, operation + " cannot access ptr void; cast to ptr T first");
+        }
+        if (!is_raw_pointer_deref_value_type(element_type)) {
+            fail(loc, operation + " currently supports scalar or aggregate pointer element types, got " + type_name(pointer_type));
+        }
+        return element_type;
+    }
+
+    IrType require_raw_pointer_add_type(SourceLocation loc, const IrType& pointer_type, const std::string& operation) {
+        if (!is_raw_pointer_type(pointer_type)) {
+            fail(loc, operation + " expects a raw pointer, got " + type_name(pointer_type));
+        }
+        IrType element_type = raw_pointer_pointee_type(pointer_type);
+        if (is_void_value_type(element_type)) {
+            fail(loc, operation + " cannot scale ptr void; cast to ptr T first");
+        }
+        if (!is_raw_pointer_deref_value_type(element_type)) {
+            fail(loc, operation + " currently supports scalar or aggregate pointer element types, got " + type_name(pointer_type));
+        }
+        return element_type;
+    }
+
+    IrType require_raw_pointer_materializable_type(SourceLocation loc, const IrType& pointer_type, const std::string& operation) {
+        IrType element_type = require_raw_pointer_deref_type(loc, pointer_type, operation);
+        if (is_aggregate_type(element_type) &&
+            (is_owner_type(element_type) || contains_borrow_type(element_type))) {
+            fail(loc, operation + " cannot copy ownership- or borrow-valued aggregates through raw pointers yet");
+        }
+        return element_type;
+    }
+
+    IrExprPtr check_pointer_load_call(const Expr& expr, IrExprPtr lowered) {
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "ptr_load does not take type arguments");
+        }
+        if (expr.args.size() != 1) fail(expr.loc, "ptr_load expects one pointer");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr pointer = check_expr(*expr.args[0]);
+        release_temporary_borrows(borrow_mark);
+
+        IrType element_type = require_raw_pointer_materializable_type(expr.args[0]->loc, pointer->type, "ptr_load");
+        lowered->kind = IrExprKind::PointerLoad;
+        lowered->loc = expr.loc;
+        lowered->type = element_type;
+        lowered->operand = std::move(pointer);
+        return lowered;
+    }
+
+    IrExprPtr check_pointer_store_call(const Expr& expr, IrExprPtr lowered) {
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "ptr_store does not take type arguments");
+        }
+        if (expr.args.size() != 2) fail(expr.loc, "ptr_store expects a pointer and a value");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr pointer = check_expr(*expr.args[0]);
+        IrType element_type = require_raw_pointer_materializable_type(expr.args[0]->loc, pointer->type, "ptr_store");
+        IrExprPtr value = check_expr(*expr.args[1]);
+        coerce_expr_to_expected(*value, element_type);
+        require_assignable(expr.args[1]->loc, element_type, value->type);
+        release_temporary_borrows(borrow_mark);
+
+        lowered->kind = IrExprKind::PointerStore;
+        lowered->loc = expr.loc;
+        lowered->type = void_type(expr.loc);
+        lowered->operand = std::move(pointer);
+        lowered->right = std::move(value);
+        return lowered;
+    }
+
+    IrExprPtr check_layout_query_call(const Expr& expr, IrExprPtr lowered, bool align_query) {
+        (void)lowered;
+        const std::string operation = align_query ? "align_of" : "size_of";
+        if (expr.type_args.size() != 1) {
+            fail(expr.loc, operation + " expects exactly one type argument");
+        }
+        if (!expr.args.empty()) {
+            fail(expr.loc, operation + " does not take value arguments");
+        }
+
+        IrType queried = resolve_executable_type(expr.type_args[0]);
+        std::uint64_t bytes = 0;
+        bool supported = align_query
+            ? ari_layout_align_bytes(queried, bytes)
+            : ari_layout_size_bytes(queried, bytes);
+        if (!supported) {
+            fail(expr.type_args[0].loc, operation + " does not support " + type_name(queried));
+        }
+        if (bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+            fail(expr.type_args[0].loc, operation + " result is too large for i64");
+        }
+        return make_integer_literal(expr.loc, i64_type(expr.loc), bytes);
+    }
+
+    IrExprPtr check_typed_zone_alloc_call(const Expr& expr, IrExprPtr lowered) {
+        if (expr.type_args.empty()) return nullptr;
+        if (expr.type_args.size() != 1) {
+            fail(expr.loc, "zone::alloc<T> expects exactly one type argument");
+        }
+        if (expr.args.size() != 1) {
+            fail(expr.loc, "zone::alloc<T> expects exactly one zone argument");
+        }
+
+        IrType allocated = resolve_executable_type(expr.type_args[0]);
+        if (allocated.qualifier != TypeQualifier::Value) {
+            fail(expr.type_args[0].loc, "zone::alloc<T> expects a value type, got " + type_name(allocated));
+        }
+
+        std::uint64_t size_bytes = 0;
+        std::uint64_t align_bytes = 0;
+        if (!ari_layout_size_bytes(allocated, size_bytes) ||
+            !ari_layout_align_bytes(allocated, align_bytes)) {
+            fail(expr.type_args[0].loc, "zone::alloc<T> does not support " + type_name(allocated));
+        }
+        if (size_bytes == 0) {
+            fail(expr.type_args[0].loc, "zone::alloc<T> requires a non-zero-sized type");
+        }
+        if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
+            align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+            fail(expr.type_args[0].loc, "zone::alloc<T> layout is too large for i64");
+        }
+
+        SourceLocation loc{1, 1};
+        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", loc);
+        zone.qualifier = TypeQualifier::MutRef;
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr zone_arg = check_expr(*expr.args[0]);
+        coerce_expr_to_expected(*zone_arg, zone);
+        require_assignable(expr.args[0]->loc, zone, zone_arg->type);
+
+        lowered->kind = IrExprKind::Call;
+        lowered->name = "zone::alloc";
+        lowered->type = allocated;
+        lowered->type.qualifier = TypeQualifier::Ptr;
+        lowered->args.reserve(3);
+        lowered->args.push_back(std::move(zone_arg));
+        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
+        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
+        release_temporary_borrows(borrow_mark);
+        return lowered;
+    }
+
+    IrExprPtr check_zone_new_call(const Expr& expr, IrExprPtr lowered) {
+        if (expr.type_args.size() != 1) {
+            fail(expr.loc, "zone::new<T> expects exactly one type argument");
+        }
+        if (expr.args.size() != 2) {
+            fail(expr.loc, "zone::new<T> expects a zone and a value");
+        }
+
+        IrType allocated = resolve_executable_type(expr.type_args[0]);
+        if (allocated.qualifier != TypeQualifier::Value) {
+            fail(expr.type_args[0].loc, "zone::new<T> expects a value type, got " + type_name(allocated));
+        }
+        if (is_owner_type(allocated) || contains_borrow_type(allocated)) {
+            fail(expr.type_args[0].loc, "zone::new<T> cannot place ownership- or borrow-valued types yet");
+        }
+
+        std::uint64_t size_bytes = 0;
+        std::uint64_t align_bytes = 0;
+        if (!ari_layout_size_bytes(allocated, size_bytes) ||
+            !ari_layout_align_bytes(allocated, align_bytes)) {
+            fail(expr.type_args[0].loc, "zone::new<T> does not support " + type_name(allocated));
+        }
+        if (size_bytes == 0) {
+            fail(expr.type_args[0].loc, "zone::new<T> requires a non-zero-sized type");
+        }
+        if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
+            align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+            fail(expr.type_args[0].loc, "zone::new<T> layout is too large for i64");
+        }
+
+        SourceLocation loc{1, 1};
+        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", loc);
+        zone.qualifier = TypeQualifier::MutRef;
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr zone_arg = check_expr(*expr.args[0]);
+        coerce_expr_to_expected(*zone_arg, zone);
+        require_assignable(expr.args[0]->loc, zone, zone_arg->type);
+
+        IrExprPtr value = check_expr(*expr.args[1]);
+        coerce_expr_to_expected(*value, allocated);
+        require_assignable(expr.args[1]->loc, allocated, value->type);
+
+        lowered->kind = IrExprKind::Call;
+        lowered->name = "zone::new";
+        lowered->type = allocated;
+        lowered->type.qualifier = TypeQualifier::Ptr;
+        lowered->args.reserve(4);
+        lowered->args.push_back(std::move(zone_arg));
+        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
+        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
+        lowered->args.push_back(std::move(value));
+        release_temporary_borrows(borrow_mark);
+        return lowered;
+    }
+
+    IrExprPtr check_zone_promote_call(const Expr& expr, IrExprPtr lowered) {
+        if (expr.type_args.size() != 1) {
+            fail(expr.loc, "zone::promote<T> expects exactly one type argument");
+        }
+        if (expr.args.size() != 2) {
+            fail(expr.loc, "zone::promote<T> expects a target zone and source pointer");
+        }
+
+        IrType allocated = resolve_executable_type(expr.type_args[0]);
+        if (allocated.qualifier != TypeQualifier::Value) {
+            fail(expr.type_args[0].loc, "zone::promote<T> expects a value type, got " + type_name(allocated));
+        }
+        if (is_owner_type(allocated) || contains_borrow_type(allocated)) {
+            fail(expr.type_args[0].loc, "zone::promote<T> cannot copy ownership- or borrow-valued types yet");
+        }
+
+        std::uint64_t size_bytes = 0;
+        std::uint64_t align_bytes = 0;
+        if (!ari_layout_size_bytes(allocated, size_bytes) ||
+            !ari_layout_align_bytes(allocated, align_bytes)) {
+            fail(expr.type_args[0].loc, "zone::promote<T> does not support " + type_name(allocated));
+        }
+        if (size_bytes == 0) {
+            fail(expr.type_args[0].loc, "zone::promote<T> requires a non-zero-sized type");
+        }
+        if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
+            align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+            fail(expr.type_args[0].loc, "zone::promote<T> layout is too large for i64");
+        }
+
+        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", expr.loc);
+        zone.qualifier = TypeQualifier::MutRef;
+        IrType source_pointer_type = allocated;
+        source_pointer_type.qualifier = TypeQualifier::Ptr;
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr zone_arg = check_expr(*expr.args[0]);
+        coerce_expr_to_expected(*zone_arg, zone);
+        require_assignable(expr.args[0]->loc, zone, zone_arg->type);
+
+        IrExprPtr source = check_expr(*expr.args[1]);
+        coerce_expr_to_expected(*source, source_pointer_type);
+        require_assignable(expr.args[1]->loc, source_pointer_type, source->type);
+
+        auto value = std::make_unique<IrExpr>();
+        value->kind = IrExprKind::PointerLoad;
+        value->loc = expr.args[1]->loc;
+        value->type = allocated;
+        value->operand = std::move(source);
+
+        lowered->kind = IrExprKind::Call;
+        lowered->name = "zone::new";
+        lowered->type = source_pointer_type;
+        lowered->args.reserve(4);
+        lowered->args.push_back(std::move(zone_arg));
+        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
+        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
+        lowered->args.push_back(std::move(value));
+        release_temporary_borrows(borrow_mark);
+        return lowered;
+    }
+
+    bool is_collection_len_method_receiver(const Expr& expr) {
+        if (expr.kind == ExprKind::Vector) return true;
+        if (expr.kind != ExprKind::Name) return false;
+        const LocalInfo* local = find_local_slot(expr.name);
+        return local && (local->type.primitive == IrPrimitiveKind::Vector ||
+                         local->type.primitive == IrPrimitiveKind::Array);
+    }
+
+    const ImplMethodInfo* select_constrained_method_impl(
+        const Expr& method_expr,
+        const IrType& receiver_type,
+        const std::vector<ImplMethodInfo>& candidates
+    ) {
+        std::string generic_name = generic_origin_from_expr(*method_expr.operand);
+        if (generic_name.empty()) return nullptr;
+
+        const ImplMethodInfo* selected = nullptr;
+        for (const auto& bound : current_generic_bounds_) {
+            if (bound.generic_name != generic_name) continue;
+            auto trait_found = traits_.find(bound.trait_name);
+            if (trait_found == traits_.end()) continue;
+            if (!trait_found->second.methods.count(method_expr.name)) continue;
+
+            for (const auto& candidate : candidates) {
+                if (candidate.trait_name != bound.trait_name) continue;
+                if (!same_type(candidate.receiver_type, receiver_type)) continue;
+                if (!same_type_list(candidate.trait_args, bound.trait_args)) continue;
+                if (selected) {
+                    fail(method_expr.loc,
+                         "method call '" + method_expr.name + "' for generic parameter '" +
+                             generic_name + "' is ambiguous across trait bounds");
+                }
+                selected = &candidate;
+            }
+        }
+        return selected;
+    }
+
+    IrExprPtr check_indirect_call(SourceLocation loc, IrExprPtr callee, const std::vector<ExprPtr>& arg_exprs, IrExprPtr lowered) {
+        if (callee->type.qualifier != TypeQualifier::Value ||
+            callee->type.primitive != IrPrimitiveKind::Function ||
+            callee->type.args.empty() ||
+            callee->type.array_size + 1 != callee->type.args.size()) {
+            fail(loc, "called value must be a function pointer, got " + type_name(callee->type));
+        }
+        std::size_t param_count = static_cast<std::size_t>(callee->type.array_size);
+        if (param_count != arg_exprs.size()) {
+            fail(loc, "wrong argument count for function pointer call");
+        }
+
+        lowered->kind = IrExprKind::IndirectCall;
+        lowered->loc = loc;
+        lowered->type = function_pointer_result_type(callee->type);
+        lowered->operand = std::move(callee);
+        lowered->args.reserve(arg_exprs.size());
+        std::size_t borrow_mark = temporary_borrow_mark();
+        for (std::size_t i = 0; i < arg_exprs.size(); ++i) {
+            IrExprPtr arg = check_expr(*arg_exprs[i]);
+            coerce_expr_to_expected(*arg, lowered->operand->type.args[i]);
+            require_assignable(arg_exprs[i]->loc, lowered->operand->type.args[i], arg->type);
+            require_no_zone_pointer_escape(arg_exprs[i]->loc, *arg, "function pointer call argument");
+            lowered->args.push_back(std::move(arg));
+        }
+        release_temporary_borrows(borrow_mark);
+        return lowered;
+    }
+
+    std::vector<IrType> enum_constructor_type_args(
+        const Expr& expr,
+        const EnumCaseInfo& info,
+        const std::vector<IrType>& arg_types
+    ) {
+        auto enum_found = enums_.find(info.enum_name);
+        if (enum_found == enums_.end()) fail(expr.loc, "unknown enum '" + info.enum_name + "'");
+        const EnumInfo& enum_info = enum_found->second;
+        if (!info.is_generic) {
+            if (!expr.type_args.empty()) {
+                fail(expr.loc, "enum case constructor '" + expr.name + "' does not take type arguments");
+            }
+            return {};
+        }
+
+        if (arg_types.size() != info.payload_refs.size()) {
+            fail(expr.loc, "wrong payload count for enum case '" + info.name + "'");
+        }
+
+        std::vector<IrType> type_args;
+        type_args.reserve(enum_info.generic_arity);
+        if (!expr.type_args.empty()) {
+            if (expr.type_args.size() != enum_info.generic_arity) {
+                fail(expr.loc,
+                     "enum '" + enum_info.name + "' expects " + std::to_string(enum_info.generic_arity) +
+                         " type argument" + (enum_info.generic_arity == 1 ? "" : "s"));
+            }
+            for (const auto& arg : expr.type_args) {
+                type_args.push_back(resolve_executable_type(arg));
+            }
+            return type_args;
+        }
+
+        std::map<std::string, IrType> inferred;
+        for (std::size_t i = 0; i < info.payload_refs.size(); ++i) {
+            infer_named_generic_type(expr.loc, info.payload_refs[i], arg_types[i], info.generic_names, inferred);
+        }
+
+        for (const auto& generic_name : info.generic_names) {
+            auto found = inferred.find(generic_name);
+            if (found == inferred.end()) {
+                fail(expr.loc,
+                     "cannot infer type argument '" + generic_name +
+                         "' for enum case '" + info.name + "'");
+            }
+            type_args.push_back(found->second);
+        }
+        return type_args;
+    }
+
+    IrExprPtr check_enum_constructor_call(const Expr& expr, const EnumCaseInfo& base_info) {
+        require_enum_case_access(expr.loc, base_info);
+        auto enum_found = enums_.find(base_info.enum_name);
+        if (enum_found != enums_.end() && enum_found->second.deprecated) {
+            warn_deprecated_use(expr.loc, "enum", enum_found->second.name, enum_found->second.deprecated_message);
+        }
+
+        std::vector<IrExprPtr> args;
+        std::vector<IrType> arg_types;
+        args.reserve(expr.args.size());
+        arg_types.reserve(expr.args.size());
+        std::size_t borrow_mark = temporary_borrow_mark();
+        for (const auto& arg_expr : expr.args) {
+            IrExprPtr arg = check_expr(*arg_expr);
+            arg_types.push_back(arg->type);
+            args.push_back(std::move(arg));
+        }
+        release_temporary_borrows(borrow_mark);
+
+        EnumCaseInfo info = base_info;
+        std::vector<IrType> type_args = enum_constructor_type_args(expr, base_info, arg_types);
+        if (base_info.is_generic) {
+            info = specialize_enum_case_info(expr.loc, base_info, type_args);
+        }
+        return make_enum_construct(expr.loc, info, std::move(args));
+    }
+
+    IrExprPtr check_call(const Expr& expr, IrExprPtr lowered) {
+        if (expr.operand) {
+            return check_indirect_call(expr.loc, check_expr(*expr.operand), expr.args, std::move(lowered));
+        }
+        if (LocalInfo* local = find_local_slot(expr.name)) {
+            if (local->type.primitive != IrPrimitiveKind::Function || local->type.qualifier != TypeQualifier::Value) {
+                fail(expr.loc, "called value must be a function pointer, got " + type_name(local->type));
+            }
+            Expr local_expr;
+            local_expr.kind = ExprKind::Name;
+            local_expr.loc = expr.loc;
+            local_expr.name = expr.name;
+            return check_indirect_call(expr.loc, check_expr(local_expr), expr.args, std::move(lowered));
+        }
+        if (is_format_print_name(expr.name)) {
+            if (!expr.type_args.empty()) {
+                fail(expr.loc, "function '" + expr.name + "' does not take type arguments");
+            }
+            return check_format_print(expr, std::move(lowered));
+        }
+        if (is_prelude_vec_len_function_name(expr.name)) {
+            return check_vec_len_call(expr, std::move(lowered));
+        }
+        if (is_prelude_pointer_offset_function_name(expr.name)) {
+            return check_pointer_offset_call(expr, std::move(lowered));
+        }
+        if (is_prelude_pointer_add_function_name(expr.name)) {
+            return check_pointer_add_call(expr, std::move(lowered));
+        }
+        if (is_prelude_pointer_load_function_name(expr.name)) {
+            return check_pointer_load_call(expr, std::move(lowered));
+        }
+        if (is_prelude_pointer_store_function_name(expr.name)) {
+            return check_pointer_store_call(expr, std::move(lowered));
+        }
+        if (is_prelude_size_of_function_name(expr.name)) {
+            return check_layout_query_call(expr, std::move(lowered), false);
+        }
+        if (is_prelude_align_of_function_name(expr.name)) {
+            return check_layout_query_call(expr, std::move(lowered), true);
+        }
+        if (is_zone_alloc_function_name(expr.name) && !expr.type_args.empty()) {
+            return check_typed_zone_alloc_call(expr, std::move(lowered));
+        }
+        if (is_zone_new_function_name(expr.name)) {
+            return check_zone_new_call(expr, std::move(lowered));
+        }
+        if (is_zone_promote_function_name(expr.name)) {
+            return check_zone_promote_call(expr, std::move(lowered));
+        }
+        if (is_zone_scratch_function_name(expr.name)) {
+            fail(expr.loc, "zone::scratch<T> can only initialize a local pointer binding");
+        }
+        if (is_zone_temp_function_name(expr.name)) {
+            if (!allow_zone_temp_init_) {
+                fail(expr.loc, "zone::temp can only initialize a local temporary zone binding");
+            }
+        }
+        if (is_prelude_range_function_name(expr.name)) {
+            return check_range_call(expr, std::move(lowered));
+        }
+
+        std::string function_name = resolve_function_name(expr.name);
+        auto found = functions_.find(function_name);
+        if (found == functions_.end()) {
+            std::string generic_name;
+            if (const FunctionDecl* generic = find_generic_function(expr, generic_name)) {
+                return check_generic_call(expr, *generic, generic_name, std::move(lowered));
+            }
+            std::string case_name = resolve_enum_case_name(expr.name);
+            auto case_found = enum_cases_.find(case_name);
+            if (case_found != enum_cases_.end()) {
+                return check_enum_constructor_call(expr, case_found->second);
+            }
+            std::string struct_name = resolve_struct_type_name(expr.name);
+            auto struct_found = structs_.find(struct_name);
+            if (struct_found != structs_.end()) {
+                require_struct_access(expr.loc, struct_found->second);
+                return check_struct_constructor_call(expr, struct_found->second, std::move(lowered));
+            }
+            if (is_planned_prelude_function_name(expr.name)) {
+                fail(expr.loc, planned_prelude_function_message(expr.name));
+            }
+            std::string receiver_name;
+            std::string method_name;
+            if (split_associated_call_name(expr.name, receiver_name, method_name)) {
+                if (IrExprPtr associated = check_associated_call(expr, receiver_name, method_name, std::move(lowered))) {
+                    return associated;
+                }
+            }
+            fail(expr.loc, "unknown function or enum case '" + expr.name + "'");
+        }
+        const FunctionSig& sig = found->second;
+        require_function_access(expr.loc, sig, function_name);
+        if (sig.deprecated) {
+            warn_deprecated_use(expr.loc, "function", function_name, sig.deprecated_message);
+        }
+        if (!expr.type_args.empty()) {
+            fail(expr.loc, "function '" + expr.name + "' does not take type arguments");
+        }
+        if (sig.is_variadic) {
+            if (expr.args.size() < sig.params.size()) {
+                fail(expr.loc,
+                     "wrong argument count for variadic function '" + expr.name +
+                         "': expected at least " + std::to_string(sig.params.size()));
+            }
+        } else if (sig.params.size() != expr.args.size()) {
+            fail(expr.loc, "wrong argument count for '" + expr.name + "'");
+        }
+        if (expr.args.size() > std::numeric_limits<std::uint16_t>::max()) {
+            fail(expr.loc, "function calls support up to 65535 arguments");
+        }
+
+        lowered->kind = IrExprKind::Call;
+        lowered->name = function_name;
+        lowered->type = sig.result;
+        lowered->args.reserve(expr.args.size());
+        std::size_t borrow_mark = temporary_borrow_mark();
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            IrExprPtr arg = i < sig.params.size()
+                ? check_expr_with_expected(*expr.args[i], sig.params[i])
+                : check_expr(*expr.args[i]);
+            if (i < sig.params.size()) {
+                coerce_expr_to_expected(*arg, sig.params[i]);
+                require_assignable(expr.loc, sig.params[i], arg->type);
+            } else if (!is_c_vararg_value_type(arg->type)) {
+                fail(expr.args[i]->loc, "C variadic argument type is not supported: " + type_name(arg->type));
+            }
+            if (sig.is_extern) {
+                require_no_zone_pointer_escape(expr.args[i]->loc, *arg, "extern C call argument");
+            }
+            lowered->args.push_back(std::move(arg));
+        }
+        release_temporary_borrows(borrow_mark);
+        mark_zone_reset_call(*lowered);
+        return lowered;
+    }
+
+    IrExprPtr check_associated_call(
+        const Expr& expr,
+        const std::string& receiver_name,
+        const std::string& method_name,
+        IrExprPtr lowered
+    ) {
+        std::size_t borrow_mark = temporary_borrow_mark();
+        std::vector<IrExprPtr> checked_args;
+        std::vector<IrType> arg_types;
+        checked_args.reserve(expr.args.size());
+        arg_types.reserve(expr.args.size());
+        for (const auto& arg_expr : expr.args) {
+            IrExprPtr arg = check_expr(*arg_expr);
+            arg_types.push_back(arg->type);
+            checked_args.push_back(std::move(arg));
+        }
+
+        ImplMethodInfo generic_selected;
+        bool has_generic_selected = try_select_generic_associated_impl(
+            expr,
+            receiver_name,
+            method_name,
+            arg_types,
+            generic_selected);
+
+        IrType receiver_type;
+        const std::vector<ImplMethodInfo>* concrete_methods = nullptr;
+        if (!has_generic_selected) {
+            if (!try_resolve_associated_receiver_type(expr.loc, receiver_name, receiver_type)) {
+                release_temporary_borrows(borrow_mark);
+                return nullptr;
+            }
+
+            auto found = associated_impls_.find(method_lookup_key(receiver_type, method_name));
+            if (found == associated_impls_.end()) {
+                fail(expr.loc, "unknown associated function '" + method_name + "' for type " + type_name(receiver_type));
+            }
+            if (!expr.type_args.empty()) {
+                fail(expr.loc, "associated function '" + expr.name + "' does not take type arguments");
+            }
+            if (found->second.size() > 1) {
+                fail(expr.loc, "associated function '" + method_name + "' for type " + type_name(receiver_type) + " is ambiguous");
+            }
+            concrete_methods = &found->second;
+        }
+
+        const ImplMethodInfo& method = has_generic_selected ? generic_selected : concrete_methods->front();
+        require_impl_method_access(expr.loc, method, method_name);
+        const FunctionSig& sig = method.sig;
+        if (sig.params.size() != expr.args.size()) {
+            fail(expr.loc, "wrong argument count for associated function '" + method_name + "'");
+        }
+
+        lowered->kind = IrExprKind::Call;
+        lowered->name = method.lowered_name;
+        lowered->type = sig.result;
+        queue_impl_method_for_lowering(method);
+        lowered->args.reserve(expr.args.size());
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            IrExprPtr arg = std::move(checked_args[i]);
+            coerce_expr_to_expected(*arg, sig.params[i]);
+            require_assignable(expr.loc, sig.params[i], arg->type);
+            lowered->args.push_back(std::move(arg));
+        }
+        release_temporary_borrows(borrow_mark);
+        return lowered;
+    }
+
+    IrExprPtr check_trait_object_method_call(const Expr& expr, IrExprPtr receiver, IrExprPtr lowered) {
+        auto trait_found = traits_.find(receiver->type.name);
+        if (trait_found == traits_.end()) {
+            fail(expr.loc, "unknown trait '" + receiver->type.name + "' in trait object method call");
+        }
+        const TraitInfo& trait = trait_found->second;
+        auto method_found = trait.methods.find(expr.name);
+        if (method_found == trait.methods.end()) {
+            fail(expr.loc, "unknown method '" + expr.name + "' for type " + type_name(receiver->type));
+        }
+        const TraitInfo::Method& method = method_found->second;
+        if (!expr.type_args.empty() || !method.generics.empty()) {
+            fail(expr.loc, "trait object method '" + expr.name + "' cannot be generic yet");
+        }
+        if (method.params.empty() ||
+            method.params[0].name != "Self" ||
+            method.params[0].qualifier != TypeQualifier::Value) {
+            fail(method.loc, "trait object method '" + expr.name + "' must take value self as its first parameter");
+        }
+        for (std::size_t i = 1; i < method.params.size(); ++i) {
+            if (type_ref_mentions_name(method.params[i], "Self")) {
+                fail(method.params[i].loc,
+                     "trait object method '" + expr.name + "' cannot mention Self outside the receiver yet");
+            }
+        }
+        if (method.has_result && type_ref_mentions_name(method.result, "Self")) {
+            fail(method.result.loc, "trait object method '" + expr.name + "' cannot return Self yet");
+        }
+        if (method.params.size() != expr.args.size() + 1) {
+            fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
+        }
+
+        std::uint64_t slot = 0;
+        for (const auto& item : trait.methods) {
+            if (item.first == expr.name) break;
+            ++slot;
+        }
+
+        std::map<std::string, IrType> substitutions;
+        substitutions.emplace("Self", receiver->type);
+        for (std::size_t i = 0; i < trait.generic_names.size(); ++i) {
+            substitutions.emplace(trait.generic_names[i], receiver->type.args[i]);
+        }
+
+        std::string previous_module = current_module_name_;
+        current_module_name_ = trait.module_name;
+        std::vector<IrType> erased_params;
+        IrType data_pointer = void_type(expr.loc);
+        data_pointer.qualifier = TypeQualifier::Ptr;
+        erased_params.push_back(data_pointer);
+        std::vector<IrType> expected_args;
+        expected_args.reserve(expr.args.size());
+        for (std::size_t i = 1; i < method.params.size(); ++i) {
+            IrType param = resolve_type_with_substitutions(method.params[i], substitutions);
+            erased_params.push_back(param);
+            expected_args.push_back(std::move(param));
+        }
+        IrType result = method.has_result
+            ? resolve_type_with_substitutions(method.result, substitutions)
+            : void_type(method.loc);
+        current_module_name_ = previous_module;
+
+        lowered->kind = IrExprKind::TraitObjectCall;
+        lowered->loc = expr.loc;
+        lowered->name = expr.name;
+        lowered->tuple_index = slot;
+        lowered->type = result;
+        lowered->operand = std::move(receiver);
+        lowered->call_param_types = std::move(erased_params);
+        lowered->args.reserve(expr.args.size());
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            IrExprPtr arg = check_expr_with_expected(*expr.args[i], expected_args[i]);
+            coerce_expr_to_expected(*arg, expected_args[i]);
+            require_assignable(expr.args[i]->loc, expected_args[i], arg->type);
+            lowered->args.push_back(std::move(arg));
+        }
+        return lowered;
+    }
+
+    IrExprPtr check_method_call(const Expr& expr, IrExprPtr lowered) {
+        if (expr.name == "len" && is_collection_len_method_receiver(*expr.operand)) {
+            if (!expr.args.empty()) fail(expr.loc, "len expects no method arguments");
+            return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.operand));
+        }
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr receiver = check_expr(*expr.operand);
+        if (is_value_trait_object_type(receiver->type)) {
+            IrExprPtr out = check_trait_object_method_call(expr, std::move(receiver), std::move(lowered));
+            release_temporary_borrows(borrow_mark);
+            return out;
+        }
+
+        auto found = method_impls_.find(method_lookup_key(receiver->type, expr.name));
+        const ImplMethodInfo* selected = nullptr;
+        ImplMethodInfo generic_selected;
+        bool has_generic_selected = false;
+        std::string generic_origin = generic_origin_from_expr(*expr.operand);
+        std::vector<IrExprPtr> generic_args;
+        std::vector<IrType> generic_arg_types;
+        if (found != method_impls_.end()) {
+            selected = select_constrained_method_impl(expr, receiver->type, found->second);
+        }
+        if (found == method_impls_.end()) {
+            generic_args.reserve(expr.args.size());
+            generic_arg_types.reserve(expr.args.size());
+            for (const auto& arg_expr : expr.args) {
+                IrExprPtr arg = check_expr(*arg_expr);
+                generic_arg_types.push_back(arg->type);
+                generic_args.push_back(std::move(arg));
+            }
+            has_generic_selected = try_select_generic_method_impl(
+                expr,
+                receiver->type,
+                generic_origin,
+                generic_arg_types,
+                generic_selected);
+            if (!has_generic_selected) {
+                fail(expr.loc, "unknown method '" + expr.name + "' for type " + type_name(receiver->type));
+            }
+        }
+        if (found != method_impls_.end() && !expr.type_args.empty()) {
+            fail(expr.loc, "method '" + expr.name + "' does not take type arguments");
+        }
+        if (found != method_impls_.end() && !selected && found->second.size() > 1) {
+            fail(expr.loc, "method call '" + expr.name + "' for type " + type_name(receiver->type) + " is ambiguous");
+        }
+
+        const ImplMethodInfo& method = has_generic_selected
+            ? generic_selected
+            : (selected ? *selected : found->second.front());
+        const FunctionSig& sig = method.sig;
+        if (sig.params.empty()) {
+            fail(expr.loc, "method '" + expr.name + "' for type " + type_name(receiver->type) + " has no receiver parameter");
+        }
+        if (sig.params.size() != expr.args.size() + 1) {
+            fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
+        }
+
+        coerce_expr_to_expected(*receiver, sig.params[0]);
+        require_assignable(expr.loc, sig.params[0], receiver->type);
+
+        lowered->kind = IrExprKind::Call;
+        lowered->name = method.lowered_name;
+        lowered->type = sig.result;
+        require_impl_method_access(expr.loc, method, expr.name);
+        queue_impl_method_for_lowering(method);
+        lowered->args.reserve(expr.args.size() + 1);
+        lowered->args.push_back(std::move(receiver));
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            IrExprPtr arg = has_generic_selected ? std::move(generic_args[i]) : check_expr(*expr.args[i]);
+            coerce_expr_to_expected(*arg, sig.params[i + 1]);
+            require_assignable(expr.loc, sig.params[i + 1], arg->type);
+            lowered->args.push_back(std::move(arg));
+        }
+        release_temporary_borrows(borrow_mark);
+        return lowered;
+    }
+
+    IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {
+        IrExprPtr lhs = check_expr(*expr.left);
+        IrExprPtr rhs = check_expr(*expr.right);
+        if (is_borrow_type(lhs->type) || is_borrow_type(rhs->type)) {
+            fail(expr.loc, "borrow expression result must be passed directly to a call");
+        }
+        coerce_integer_binary_operands(*lhs, *rhs);
+        coerce_float_binary_operands(*lhs, *rhs);
+        lowered->kind = IrExprKind::Binary;
+        lowered->op = lower_binary_op(expr.op, expr.loc);
+
+        switch (lowered->op) {
+            case IrBinaryOp::LogicalOr:
+            case IrBinaryOp::LogicalAnd:
+                require_logical_operand(expr.loc, lhs->type);
+                require_logical_operand(expr.loc, rhs->type);
+                lowered->type = bool_type(expr.loc);
+                break;
+            case IrBinaryOp::Add:
+            case IrBinaryOp::Sub:
+            case IrBinaryOp::Mul:
+            case IrBinaryOp::Div:
+                require_numeric_operands(expr.loc, lhs->type, rhs->type);
+                lowered->type = lhs->type;
+                break;
+            case IrBinaryOp::Mod:
+            case IrBinaryOp::BitAnd:
+            case IrBinaryOp::BitOr:
+            case IrBinaryOp::BitXor:
+                require_numeric_operands(expr.loc, lhs->type, rhs->type);
+                require_integer_operands(expr.loc, lhs->type, rhs->type);
+                lowered->type = lhs->type;
+                break;
+            case IrBinaryOp::Shl:
+            case IrBinaryOp::Shr:
+                require_integer_shift_operands(expr.loc, lhs->type, rhs->type);
+                lowered->type = lhs->type;
+                break;
+            case IrBinaryOp::Eq:
+            case IrBinaryOp::Ne:
+                require_comparable_operands(expr.loc, lhs->type, rhs->type);
+                lowered->type = bool_type(expr.loc);
+                break;
+            case IrBinaryOp::Lt:
+            case IrBinaryOp::Le:
+            case IrBinaryOp::Gt:
+            case IrBinaryOp::Ge:
+                require_numeric_operands(expr.loc, lhs->type, rhs->type);
+                lowered->type = bool_type(expr.loc);
+                break;
+        }
+
+        lowered->left = std::move(lhs);
+        lowered->right = std::move(rhs);
+        return lowered;
+    }
+
+    static IrStmtKind lower_stmt_kind(StmtKind kind, SourceLocation loc) {
+        switch (kind) {
+            case StmtKind::Block: return IrStmtKind::Block;
+            case StmtKind::VarDecl: return IrStmtKind::VarDecl;
+            case StmtKind::Assign: return IrStmtKind::Assign;
+            case StmtKind::ExprStmt: return IrStmtKind::ExprStmt;
+            case StmtKind::Return: return IrStmtKind::Return;
+            case StmtKind::If: return IrStmtKind::If;
+            case StmtKind::While: return IrStmtKind::While;
+            case StmtKind::WhileLet: return IrStmtKind::WhileLet;
+            case StmtKind::For: return IrStmtKind::ForRange;
+            case StmtKind::InitWhile: return IrStmtKind::InitWhile;
+            case StmtKind::Continue: return IrStmtKind::Continue;
+            case StmtKind::Break: return IrStmtKind::Break;
+            case StmtKind::Match: return IrStmtKind::Match;
+            case StmtKind::Drop: return IrStmtKind::Drop;
+        }
+        fail(loc, "unsupported statement kind");
+    }
+
+    static IrBinaryOp lower_binary_op(TokenKind op, SourceLocation loc) {
+        switch (op) {
+            case TokenKind::PipePipe: return IrBinaryOp::LogicalOr;
+            case TokenKind::AmpAmp: return IrBinaryOp::LogicalAnd;
+            case TokenKind::Plus: return IrBinaryOp::Add;
+            case TokenKind::Minus: return IrBinaryOp::Sub;
+            case TokenKind::Star: return IrBinaryOp::Mul;
+            case TokenKind::Slash: return IrBinaryOp::Div;
+            case TokenKind::Percent: return IrBinaryOp::Mod;
+            case TokenKind::Amp: return IrBinaryOp::BitAnd;
+            case TokenKind::Pipe: return IrBinaryOp::BitOr;
+            case TokenKind::Caret: return IrBinaryOp::BitXor;
+            case TokenKind::LessLess: return IrBinaryOp::Shl;
+            case TokenKind::GreaterGreater: return IrBinaryOp::Shr;
+            case TokenKind::EqEq: return IrBinaryOp::Eq;
+            case TokenKind::BangEq: return IrBinaryOp::Ne;
+            case TokenKind::Less: return IrBinaryOp::Lt;
+            case TokenKind::LessEq: return IrBinaryOp::Le;
+            case TokenKind::Greater: return IrBinaryOp::Gt;
+            case TokenKind::GreaterEq: return IrBinaryOp::Ge;
+            default:
+                fail(loc, "unsupported binary operator");
+        }
+    }
+
+    static bool same_type(const IrType& left, const IrType& right) {
+        if (left.qualifier != right.qualifier) return false;
+        if (left.primitive != right.primitive) return false;
+        if (left.name != right.name) return false;
+        if (left.array_size != right.array_size) return false;
+        if (left.args.size() != right.args.size()) return false;
+        for (std::size_t i = 0; i < left.args.size(); ++i) {
+            if (!same_type(left.args[i], right.args[i])) return false;
+        }
+        return true;
+    }
+
+    static bool is_copy_type(const IrType& type) {
+        if (type.qualifier == TypeQualifier::Ref || type.qualifier == TypeQualifier::MutRef) return true;
+        if (type.qualifier != TypeQualifier::Value) return false;
+        return is_integer_primitive(type.primitive) ||
+               is_float_primitive(type.primitive) ||
+               type.primitive == IrPrimitiveKind::Bool ||
+               type.primitive == IrPrimitiveKind::String ||
+               type.primitive == IrPrimitiveKind::Enum ||
+               type.primitive == IrPrimitiveKind::Function;
+    }
+
+    static bool is_c_vararg_value_type(const IrType& type) {
+        if (type.qualifier == TypeQualifier::Ptr ||
+            type.qualifier == TypeQualifier::Ref ||
+            type.qualifier == TypeQualifier::MutRef) {
+            return true;
+        }
+        if (type.qualifier != TypeQualifier::Value) return false;
+        if (is_integer_primitive(type.primitive) ||
+            is_float_primitive(type.primitive) ||
+            type.primitive == IrPrimitiveKind::Bool ||
+            type.primitive == IrPrimitiveKind::String ||
+            type.primitive == IrPrimitiveKind::Function) {
+            return true;
+        }
+        return type.primitive == IrPrimitiveKind::Enum && type.field_types.empty();
+    }
+
+    static bool is_owner_type(const IrType& type) {
+        if (type.qualifier == TypeQualifier::Own) return true;
+        if (type.qualifier != TypeQualifier::Value) return false;
+        for (const auto& arg : type.args) {
+            if (is_owner_type(arg)) return true;
+        }
+        for (const auto& field : type.field_types) {
+            if (is_owner_type(field)) return true;
+        }
+        return false;
+    }
+
+    static bool is_borrow_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Ref || type.qualifier == TypeQualifier::MutRef;
+    }
+
+    static bool contains_borrow_type(const IrType& type) {
+        if (is_borrow_type(type)) return true;
+        if (type.qualifier == TypeQualifier::Ptr) return false;
+        for (const auto& arg : type.args) {
+            if (contains_borrow_type(arg)) return true;
+        }
+        for (const auto& field : type.field_types) {
+            if (contains_borrow_type(field)) return true;
+        }
+        return false;
+    }
+
+    static bool is_value_integer_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value && is_integer_primitive(type.primitive);
+    }
+
+    static bool is_value_enum_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Enum;
+    }
+
+    static bool is_value_float_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value && is_float_primitive(type.primitive);
+    }
+
+    static bool is_value_trait_object_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::TraitObject;
+    }
+
+    static bool is_void_value_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Void;
+    }
+
+    static bool is_raw_pointer_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Ptr;
+    }
+
+    static bool is_raw_pointer_cast(const IrType& from, const IrType& to) {
+        return (is_raw_pointer_type(from) && is_raw_pointer_type(to)) ||
+               (is_raw_pointer_type(from) && is_value_integer_type(to)) ||
+               (is_value_integer_type(from) && is_raw_pointer_type(to)) ||
+               (is_borrow_type(from) && is_raw_pointer_type(to));
+    }
+
+    static IrType raw_pointer_pointee_type(IrType type) {
+        type.qualifier = TypeQualifier::Value;
+        return type;
+    }
+
+    static bool is_raw_memory_value_type(const IrType& type) {
+        if (type.qualifier != TypeQualifier::Value) return false;
+        if (is_integer_primitive(type.primitive) ||
+            is_float_primitive(type.primitive) ||
+            type.primitive == IrPrimitiveKind::Bool ||
+            type.primitive == IrPrimitiveKind::String ||
+            type.primitive == IrPrimitiveKind::Function) {
+            return true;
+        }
+        return type.primitive == IrPrimitiveKind::Enum && type.field_types.empty();
+    }
+
+    static bool is_raw_pointer_deref_value_type(const IrType& type) {
+        if (type.qualifier != TypeQualifier::Value) return false;
+        return is_raw_memory_value_type(type) || is_aggregate_type(type);
+    }
+
+    static bool is_integer_literal(const IrExpr& expr) {
+        return expr.kind == IrExprKind::Integer;
+    }
+
+    static bool is_float_literal(const IrExpr& expr) {
+        return expr.kind == IrExprKind::Float;
+    }
+
+    static bool is_null_literal(const IrExpr& expr) {
+        return expr.kind == IrExprKind::Null;
+    }
+
+    static bool is_integer_primitive(IrPrimitiveKind primitive) {
+        switch (primitive) {
+            case IrPrimitiveKind::I8:
+            case IrPrimitiveKind::I16:
+            case IrPrimitiveKind::I32:
+            case IrPrimitiveKind::I64:
+            case IrPrimitiveKind::U8:
+            case IrPrimitiveKind::U16:
+            case IrPrimitiveKind::U32:
+            case IrPrimitiveKind::U64:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    static bool is_owned_executable_primitive(IrPrimitiveKind primitive) {
+        return is_integer_primitive(primitive) ||
+               is_float_primitive(primitive) ||
+               primitive == IrPrimitiveKind::Bool ||
+               primitive == IrPrimitiveKind::String ||
+               primitive == IrPrimitiveKind::Zone;
+    }
+
+    static bool is_legacy_enum_payload_type(const IrType& type) {
+        if (type.qualifier != TypeQualifier::Value) return false;
+        if (type.primitive == IrPrimitiveKind::Bool) return true;
+        switch (type.primitive) {
+            case IrPrimitiveKind::I8:
+            case IrPrimitiveKind::I16:
+            case IrPrimitiveKind::I32:
+            case IrPrimitiveKind::U8:
+            case IrPrimitiveKind::U16:
+            case IrPrimitiveKind::U32:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    static bool is_aggregate_enum_payload_type(const IrType& type) {
+        if (type.qualifier != TypeQualifier::Value) return false;
+        if (type.primitive == IrPrimitiveKind::Bool) return true;
+        if (is_integer_primitive(type.primitive)) return true;
+        return type.primitive == IrPrimitiveKind::Enum && type.field_types.empty();
+    }
+
+    static bool has_aggregate_enum_layout(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Enum &&
+               !type.field_types.empty();
+    }
+
+    static IrType enum_tag_storage_type(SourceLocation loc) {
+        return integer_type(IrPrimitiveKind::I32, loc);
+    }
+
+    static IrType enum_payload_storage_type(SourceLocation loc) {
+        return integer_type(IrPrimitiveKind::U64, loc);
+    }
+
+    static bool is_float_primitive(IrPrimitiveKind primitive) {
+        return primitive == IrPrimitiveKind::F32 ||
+               primitive == IrPrimitiveKind::F64 ||
+               primitive == IrPrimitiveKind::F128;
+    }
+
+    static const char* primitive_name(IrPrimitiveKind primitive) {
+        switch (primitive) {
+            case IrPrimitiveKind::I8: return "i8";
+            case IrPrimitiveKind::I16: return "i16";
+            case IrPrimitiveKind::I32: return "i32";
+            case IrPrimitiveKind::I64: return "i64";
+            case IrPrimitiveKind::U8: return "u8";
+            case IrPrimitiveKind::U16: return "u16";
+            case IrPrimitiveKind::U32: return "u32";
+            case IrPrimitiveKind::U64: return "u64";
+            case IrPrimitiveKind::F32: return "f32";
+            case IrPrimitiveKind::F64: return "f64";
+            case IrPrimitiveKind::F128: return "f128";
+            default: return "";
+        }
+    }
+
+    static IrType integer_literal_suffix_type(const std::string& suffix, SourceLocation loc) {
+        if (suffix == "i8") return integer_type(IrPrimitiveKind::I8, loc);
+        if (suffix == "i16") return integer_type(IrPrimitiveKind::I16, loc);
+        if (suffix == "i32") return integer_type(IrPrimitiveKind::I32, loc);
+        if (suffix == "i64") return integer_type(IrPrimitiveKind::I64, loc);
+        if (suffix == "u8") return integer_type(IrPrimitiveKind::U8, loc);
+        if (suffix == "u16") return integer_type(IrPrimitiveKind::U16, loc);
+        if (suffix == "u32") return integer_type(IrPrimitiveKind::U32, loc);
+        if (suffix == "u64") return integer_type(IrPrimitiveKind::U64, loc);
+        fail(loc, "unsupported integer literal suffix '" + suffix + "'");
+    }
+
+    static IrType float_literal_suffix_type(const std::string& suffix, SourceLocation loc) {
+        if (suffix == "f32") return primitive_type(IrPrimitiveKind::F32, "f32", loc);
+        if (suffix == "f64") return primitive_type(IrPrimitiveKind::F64, "f64", loc);
+        if (suffix == "f128") return primitive_type(IrPrimitiveKind::F128, "f128", loc);
+        fail(loc, "unsupported float literal suffix '" + suffix + "'");
+    }
+
+    static bool is_signed_integer_primitive(IrPrimitiveKind primitive) {
+        switch (primitive) {
+            case IrPrimitiveKind::I8:
+            case IrPrimitiveKind::I16:
+            case IrPrimitiveKind::I32:
+            case IrPrimitiveKind::I64:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    static bool is_unsigned_integer_primitive(IrPrimitiveKind primitive) {
+        switch (primitive) {
+            case IrPrimitiveKind::U8:
+            case IrPrimitiveKind::U16:
+            case IrPrimitiveKind::U32:
+            case IrPrimitiveKind::U64:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    static std::uint64_t signed_positive_max(IrPrimitiveKind primitive) {
+        switch (primitive) {
+            case IrPrimitiveKind::I8: return 127;
+            case IrPrimitiveKind::I16: return 32767;
+            case IrPrimitiveKind::I32: return 2147483647;
+            case IrPrimitiveKind::I64: return std::numeric_limits<std::int64_t>::max();
+            default: return 0;
+        }
+    }
+
+    static std::uint64_t signed_negative_limit(IrPrimitiveKind primitive) {
+        switch (primitive) {
+            case IrPrimitiveKind::I8: return 128;
+            case IrPrimitiveKind::I16: return 32768;
+            case IrPrimitiveKind::I32: return 2147483648ULL;
+            case IrPrimitiveKind::I64: return 9223372036854775808ULL;
+            default: return 0;
+        }
+    }
+
+    static std::uint64_t unsigned_max(IrPrimitiveKind primitive) {
+        switch (primitive) {
+            case IrPrimitiveKind::U8: return 255;
+            case IrPrimitiveKind::U16: return 65535;
+            case IrPrimitiveKind::U32: return 4294967295ULL;
+            case IrPrimitiveKind::U64: return std::numeric_limits<std::uint64_t>::max();
+            default: return 0;
+        }
+    }
+
+    static std::string integer_literal_name(const IrExpr& expr) {
+        return (expr.int_negative ? "-" : "") + std::to_string(expr.int_value);
+    }
+
+    static IrType literal_value_type_for_expected(const IrType& expected) {
+        IrType type = expected;
+        if (type.qualifier == TypeQualifier::Own) type.qualifier = TypeQualifier::Value;
+        return type;
+    }
+
+    static bool integer_literal_fits(const IrExpr& expr, const IrType& expected) {
+        if (!is_integer_literal(expr)) return false;
+        IrType target = literal_value_type_for_expected(expected);
+        if (!is_value_integer_type(target)) return false;
+        if (is_signed_integer_primitive(target.primitive)) {
+            if (expr.int_negative) return expr.int_value <= signed_negative_limit(target.primitive);
+            return expr.int_value <= signed_positive_max(target.primitive);
+        }
+        return !expr.int_negative && expr.int_value <= unsigned_max(target.primitive);
+    }
+
+    static IrExpr make_pattern_integer_literal(SourceLocation loc,
+                                               std::uint64_t value,
+                                               bool negative,
+                                               const std::string& suffix,
+                                               const IrType& default_type) {
+        IrExpr literal;
+        literal.kind = IrExprKind::Integer;
+        literal.loc = loc;
+        literal.int_value = value;
+        literal.int_negative = negative;
+        literal.type = suffix.empty()
+            ? default_type
+            : integer_literal_suffix_type(suffix, loc);
+        return literal;
+    }
+
+    static bool range_start_le_end(const Pattern& pattern, const IrType& match_type) {
+        if (is_unsigned_integer_primitive(match_type.primitive)) {
+            return pattern.int_value <= pattern.range_end_value;
+        }
+        if (pattern.int_negative != pattern.range_end_negative) {
+            return pattern.int_negative;
+        }
+        if (pattern.int_negative) return pattern.int_value >= pattern.range_end_value;
+        return pattern.int_value <= pattern.range_end_value;
+    }
+
+    static void note_integer_coverage(ScalarMatchCoverage& coverage,
+                                      const IrType& match_type,
+                                      std::uint64_t value,
+                                      bool negative) {
+        std::uint64_t point = integer_pattern_order_value(value, negative, match_type);
+        add_integer_coverage_interval(coverage, point, point);
+    }
+
+    static void note_integer_range_coverage(ScalarMatchCoverage& coverage,
+                                            const IrType& match_type,
+                                            const Pattern& pattern) {
+        std::uint64_t start = 0;
+        std::uint64_t end = 0;
+        if (!integer_range_coverage_interval(pattern, match_type, start, end)) return;
+        add_integer_coverage_interval(coverage, start, end);
+    }
+
+    static bool integer_range_coverage_interval(const Pattern& pattern,
+                                                const IrType& match_type,
+                                                std::uint64_t& start,
+                                                std::uint64_t& end) {
+        start = integer_pattern_order_value(pattern.int_value, pattern.int_negative, match_type);
+        end = integer_pattern_order_value(pattern.range_end_value, pattern.range_end_negative, match_type);
+        if (!pattern.range_inclusive) {
+            if (start >= end) return false;
+            --end;
+        }
+        return start <= end;
+    }
+
+    static bool integer_interval_is_fully_covered(const ScalarMatchCoverage& coverage,
+                                                  std::uint64_t start,
+                                                  std::uint64_t end) {
+        if (start > end) return false;
+        for (const auto& interval : coverage.integer_intervals) {
+            if (interval.first <= start && end <= interval.second) return true;
+            if (start < interval.first) return false;
+        }
+        return false;
+    }
+
+    static void add_integer_coverage_interval(ScalarMatchCoverage& coverage,
+                                              std::uint64_t start,
+                                              std::uint64_t end) {
+        if (start > end) return;
+        coverage.integer_intervals.push_back({start, end});
+        std::sort(coverage.integer_intervals.begin(), coverage.integer_intervals.end());
+
+        std::vector<std::pair<std::uint64_t, std::uint64_t>> merged;
+        for (const auto& interval : coverage.integer_intervals) {
+            if (merged.empty()) {
+                merged.push_back(interval);
+                continue;
+            }
+            auto& last = merged.back();
+            bool adjacent = last.second != std::numeric_limits<std::uint64_t>::max() &&
+                            interval.first == last.second + 1;
+            if (interval.first <= last.second || adjacent) {
+                if (interval.second > last.second) last.second = interval.second;
+            } else {
+                merged.push_back(interval);
+            }
+        }
+        coverage.integer_intervals = std::move(merged);
+    }
+
+    static bool integer_coverage_is_exhaustive(
+        const IrType& match_type,
+        const std::vector<std::pair<std::uint64_t, std::uint64_t>>& intervals
+    ) {
+        if (!is_value_integer_type(match_type) || intervals.empty()) return false;
+        return intervals.front().first == 0 &&
+               intervals.front().second == integer_pattern_max_order_value(match_type);
+    }
+
+    static std::uint64_t integer_pattern_order_value(std::uint64_t value,
+                                                     bool negative,
+                                                     const IrType& match_type) {
+        if (is_unsigned_integer_primitive(match_type.primitive)) return value;
+        std::uint64_t bias = signed_negative_limit(match_type.primitive);
+        return negative ? bias - value : bias + value;
+    }
+
+    static std::uint64_t integer_pattern_max_order_value(const IrType& match_type) {
+        if (is_unsigned_integer_primitive(match_type.primitive)) {
+            return unsigned_max(match_type.primitive);
+        }
+        return signed_negative_limit(match_type.primitive) + signed_positive_max(match_type.primitive);
+    }
+
+    static void coerce_labeled_break_values(const std::vector<IrStmtPtr>& statements, const std::string& label, const IrType& expected) {
+        for (const auto& stmt : statements) coerce_labeled_break_values(*stmt, label, expected);
+    }
+
+    static void coerce_labeled_break_values(const std::vector<IrMatchArm>& arms, const std::string& label, const IrType& expected) {
+        for (const auto& arm : arms) coerce_labeled_break_values(arm.body, label, expected);
+    }
+
+    static void coerce_labeled_break_values(IrStmt& stmt, const std::string& label, const IrType& expected) {
+        if (stmt.kind == IrStmtKind::Break && stmt.break_label == label && stmt.break_value) {
+            coerce_expr_to_expected(*stmt.break_value, expected);
+            require_assignable(stmt.loc, expected, stmt.break_value->type);
+            return;
+        }
+
+        switch (stmt.kind) {
+            case IrStmtKind::Block:
+                coerce_labeled_break_values(stmt.statements, label, expected);
+                break;
+            case IrStmtKind::If:
+                coerce_labeled_break_values(stmt.then_body, label, expected);
+                coerce_labeled_break_values(stmt.else_body, label, expected);
+                break;
+            case IrStmtKind::While:
+            case IrStmtKind::WhileLet:
+            case IrStmtKind::ForRange:
+            case IrStmtKind::ForVector:
+            case IrStmtKind::InitWhile:
+                coerce_labeled_break_values(stmt.loop_body, label, expected);
+                break;
+            case IrStmtKind::Match:
+                coerce_labeled_break_values(stmt.match_arms, label, expected);
+                break;
+            default:
+                break;
+        }
+    }
+
+    static void coerce_expr_to_expected(IrExpr& expr, const IrType& expected) {
+        if (is_null_literal(expr) && expected.qualifier == TypeQualifier::Ptr) {
+            expr.type = expected;
+            return;
+        }
+        if (expr.kind == IrExprKind::Tuple && expected.primitive == IrPrimitiveKind::Tuple &&
+            expr.args.size() == expected.args.size()) {
+            for (std::size_t i = 0; i < expr.args.size(); ++i) {
+                coerce_expr_to_expected(*expr.args[i], expected.args[i]);
+                require_assignable(expr.loc, expected.args[i], expr.args[i]->type);
+            }
+            expr.type = expected;
+            return;
+        }
+        if (expr.kind == IrExprKind::Tuple && expected.primitive == IrPrimitiveKind::Struct &&
+            expr.args.size() == expected.field_types.size()) {
+            for (std::size_t i = 0; i < expr.args.size(); ++i) {
+                coerce_expr_to_expected(*expr.args[i], expected.field_types[i]);
+                require_assignable(expr.loc, expected.field_types[i], expr.args[i]->type);
+            }
+            expr.type = expected;
+            return;
+        }
+        if (expr.kind == IrExprKind::Vector && expected.primitive == IrPrimitiveKind::Vector &&
+            expected.args.size() == 1) {
+            if (expected.array_size != 0 && expr.args.size() > expected.array_size) {
+                fail(expr.loc,
+                     "vector literal has " + std::to_string(expr.args.size()) +
+                     " elements but storage capacity is " + std::to_string(expected.array_size));
+            }
+            for (auto& item : expr.args) {
+                coerce_expr_to_expected(*item, expected.args[0]);
+                require_assignable(expr.loc, expected.args[0], item->type);
+            }
+            expr.type = vector_storage_type(
+                expr.loc,
+                expected.args[0],
+                expected.array_size == 0 ? expr.args.size() : expected.array_size
+            );
+            return;
+        }
+        if (expr.kind == IrExprKind::Vector && expected.primitive == IrPrimitiveKind::Array &&
+            expected.args.size() == 1) {
+            if (expr.args.size() != expected.array_size) {
+                fail(expr.loc,
+                     "array literal has " + std::to_string(expr.args.size()) +
+                     " elements but type expects " + std::to_string(expected.array_size));
+            }
+            for (auto& item : expr.args) {
+                coerce_expr_to_expected(*item, expected.args[0]);
+                require_assignable(expr.loc, expected.args[0], item->type);
+            }
+            expr.type = expected;
+            return;
+        }
+        if (expr.kind == IrExprKind::Match) {
+            for (auto& arm : expr.match_arms) {
+                coerce_expr_to_expected(*arm.value, expected);
+                require_assignable(arm.loc, expected, arm.value->type);
+            }
+            expr.type = expected;
+            return;
+        }
+        if (expr.kind == IrExprKind::If) {
+            coerce_expr_to_expected(*expr.then_value, expected);
+            require_assignable(expr.loc, expected, expr.then_value->type);
+            coerce_expr_to_expected(*expr.else_value, expected);
+            require_assignable(expr.loc, expected, expr.else_value->type);
+            expr.type = expected;
+            return;
+        }
+        if (expr.kind == IrExprKind::Block) {
+            coerce_expr_to_expected(*expr.block_value, expected);
+            require_assignable(expr.loc, expected, expr.block_value->type);
+            if (!expr.label.empty()) coerce_labeled_break_values(expr.block_body, expr.label, expected);
+            expr.type = expected;
+            return;
+        }
+        if (is_float_literal(expr)) {
+            coerce_float_expr_to_expected(expr, expected);
+            return;
+        }
+        if (!is_integer_literal(expr)) return;
+        IrType target = literal_value_type_for_expected(expected);
+        if (!is_value_integer_type(target)) return;
+        if (!integer_literal_fits(expr, expected)) {
+            fail(expr.loc, "integer literal " + integer_literal_name(expr) + " is out of range for " + type_name(target));
+        }
+        expr.type = target;
+    }
+
+    static void coerce_float_expr_to_expected(IrExpr& expr, const IrType& expected) {
+        if (!is_float_literal(expr)) return;
+        IrType target = literal_value_type_for_expected(expected);
+        if (!is_value_float_type(target)) return;
+        expr.type = target;
+    }
+
+    static void coerce_integer_binary_operands(IrExpr& lhs, IrExpr& rhs) {
+        if (!is_value_integer_type(lhs.type) || !is_value_integer_type(rhs.type)) return;
+        if (same_type(lhs.type, rhs.type)) {
+            if (is_integer_literal(lhs)) coerce_expr_to_expected(lhs, lhs.type);
+            if (is_integer_literal(rhs)) coerce_expr_to_expected(rhs, rhs.type);
+            return;
+        }
+        if (is_integer_literal(lhs) && !is_integer_literal(rhs)) {
+            coerce_expr_to_expected(lhs, rhs.type);
+        } else if (!is_integer_literal(lhs) && is_integer_literal(rhs)) {
+            coerce_expr_to_expected(rhs, lhs.type);
+        }
+    }
+
+    static void coerce_float_binary_operands(IrExpr& lhs, IrExpr& rhs) {
+        if (!is_value_float_type(lhs.type) || !is_value_float_type(rhs.type)) return;
+        if (same_type(lhs.type, rhs.type)) return;
+        if (is_float_literal(lhs) && !is_float_literal(rhs)) {
+            coerce_float_expr_to_expected(lhs, rhs.type);
+        } else if (!is_float_literal(lhs) && is_float_literal(rhs)) {
+            coerce_float_expr_to_expected(rhs, lhs.type);
+        }
+    }
+
+    static void require_numeric_operands(SourceLocation loc, const IrType& left, const IrType& right) {
+        if ((is_value_integer_type(left) || is_value_float_type(left)) && same_type(left, right)) return;
+        fail(loc, "numeric operands must have the same numeric type, got " + type_name(left) + " and " + type_name(right));
+    }
+
+    static void require_integer_operands(SourceLocation loc, const IrType& left, const IrType& right) {
+        if (is_value_integer_type(left) && is_value_integer_type(right)) return;
+        fail(loc, "bitwise and modulo operands must be integers, got " + type_name(left) + " and " + type_name(right));
+    }
+
+    static void require_integer_shift_operands(SourceLocation loc, const IrType& left, const IrType& right) {
+        if (is_value_integer_type(left) && is_value_integer_type(right)) return;
+        fail(loc, "shift operands must be integers, got " + type_name(left) + " and " + type_name(right));
+    }
+
+    static void require_comparable_operands(SourceLocation loc, const IrType& left, const IrType& right) {
+        if ((has_aggregate_enum_layout(left) || has_aggregate_enum_layout(right)) && same_type(left, right)) {
+            fail(loc, "comparison for aggregate enum layouts is planned but is not supported yet");
+        }
+        if (same_type(left, right) &&
+            (is_value_integer_type(left) ||
+             is_value_float_type(left) ||
+             is_value_enum_type(left) ||
+             (left.qualifier == TypeQualifier::Value && left.primitive == IrPrimitiveKind::Bool))) {
+            return;
+        }
+        fail(loc, "comparison operands must have the same comparable type, got " + type_name(left) + " and " + type_name(right));
+    }
+
+    static void require_logical_operand(SourceLocation loc, const IrType& type) {
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) return;
+        fail(loc, "logical operand must be bool, got " + type_name(type));
+    }
+
+    static void require_bitwise_not_operand(SourceLocation loc, const IrType& type) {
+        if (is_value_integer_type(type)) return;
+        fail(loc, "bitwise-not operand must be integer, got " + type_name(type));
+    }
+
+    static std::string state_name(LocalState state) {
+        switch (state) {
+            case LocalState::Alive: return "live";
+            case LocalState::Moved: return "moved";
+            case LocalState::Dropped: return "dropped";
+        }
+        return "unavailable";
+    }
+
+    static void require_boolish(SourceLocation loc, const IrType& type) {
+        if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Bool) {
+            fail(loc, "condition must be bool or integer-convertible, got " + type_name(type));
+        }
+    }
+
+    static IrExprPtr make_integer_literal(SourceLocation loc, const IrType& type, std::uint64_t value) {
+        auto zero = std::make_unique<IrExpr>();
+        zero->kind = IrExprKind::Integer;
+        zero->loc = loc;
+        zero->type = type;
+        zero->int_value = value;
+        return zero;
+    }
+
+    static IrExprPtr make_integer_zero(SourceLocation loc, const IrType& type) {
+        return make_integer_literal(loc, type, 0);
+    }
+
+    static void coerce_condition_to_bool(SourceLocation loc, IrExprPtr& expr) {
+        if (expr->type.qualifier == TypeQualifier::Value && expr->type.primitive == IrPrimitiveKind::Bool) return;
+        if (!is_value_integer_type(expr->type)) {
+            require_boolish(loc, expr->type);
+        }
+
+        auto condition = std::make_unique<IrExpr>();
+        condition->kind = IrExprKind::Binary;
+        condition->loc = loc;
+        condition->op = IrBinaryOp::Ne;
+        condition->type = bool_type(loc);
+        condition->right = make_integer_zero(loc, expr->type);
+        condition->left = std::move(expr);
+        expr = std::move(condition);
+    }
+
+    static void require_assignable(SourceLocation loc, const IrType& expected, const IrType& actual) {
+        if (same_type(expected, actual)) return;
+        if (expected.qualifier == TypeQualifier::Ptr &&
+            actual.qualifier == TypeQualifier::Value &&
+            actual.primitive == IrPrimitiveKind::String &&
+            (expected.primitive == IrPrimitiveKind::I8 ||
+             expected.primitive == IrPrimitiveKind::U8 ||
+             expected.primitive == IrPrimitiveKind::Void)) {
+            return;
+        }
+        if (expected.qualifier == TypeQualifier::Own &&
+            actual.qualifier == TypeQualifier::Value &&
+            expected.primitive == actual.primitive &&
+            expected.name == actual.name &&
+            expected.args.empty() &&
+            actual.args.empty()) {
+            return;
+        }
+        fail(loc, "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+    }
+
+    [[noreturn]] static void fail(SourceLocation loc, const std::string& message) {
+        throw CompileError(where(loc) + ": " + message);
+    }
+};
+
+IrProgram check_program(const Program& program, SemaOptions options) {
+    SemanticChecker checker(program, options);
+    return checker.check();
+}
+
+} // namespace ari

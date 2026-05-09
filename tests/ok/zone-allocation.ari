@@ -1,0 +1,19 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+
+  let first: ptr i64 = zone::alloc(ref mut zone, size_of<i64>(), align_of<i64>()) as ptr i64;
+  ptr_store(first, 21);
+
+  let second: ptr i64 = zone::alloc(ref mut zone, size_of<i64>(), align_of<i64>()) as ptr i64;
+  *second = ptr_load(first) + 7;
+
+  let before_reset = ptr_load(first) + ptr_load(second);
+  zone::reset(ref mut zone);
+
+  let again: ptr i64 = zone::alloc(ref mut zone, size_of<i64>(), align_of<i64>()) as ptr i64;
+  *again = before_reset + 5;
+  let result = *again;
+
+  zone::destroy(zone);
+  return result;
+}

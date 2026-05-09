@@ -1,0 +1,23 @@
+trait Score {
+}
+
+trait Compare[T] {
+}
+
+struct Holder {
+  value: dyn Score,
+  compare: dyn Compare[i64],
+}
+
+mod Local {
+  trait Hidden {
+  }
+
+  pub struct SecretHolder {
+    value: dyn Hidden,
+  }
+}
+
+fn main() -> i64 {
+  0
+}

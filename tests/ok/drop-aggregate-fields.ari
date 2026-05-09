@@ -1,0 +1,24 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+struct Holder {
+  token: own i64,
+  count: i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let pair = (make_owned(3), 4);
+  drop pair;
+
+  let holder = Holder { token: make_owned(5), count: 6 };
+  drop holder;
+
+  return 0;
+}

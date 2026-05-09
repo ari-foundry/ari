@@ -1,0 +1,27 @@
+mod Bits {
+  pub enum Flag {
+    Off,
+    On(i32),
+  }
+
+  pub fn current() -> Flag {
+    return On(4);
+  }
+
+  pub fn bias() -> i64 {
+    return 3;
+  }
+}
+
+use Bits::*
+
+fn main() -> i64 {
+  match current() {
+    On(value) => {
+      return value as i64 + bias();
+    }
+    Off => {
+      return 0;
+    }
+  }
+}

@@ -1,0 +1,17 @@
+mod Core {
+  pub fn left() -> i64 {
+    return 2;
+  }
+
+  pub fn right() -> i64 {
+    return 3;
+  }
+}
+
+mod Api {
+  pub use Core::*
+}
+
+fn main() -> i64 {
+  return Api::left() + Api::right();
+}

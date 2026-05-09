@@ -1,0 +1,28 @@
+trait First {
+  fn pick(value: i64) -> Self
+}
+
+trait Second {
+  fn pick(value: i64) -> Self
+}
+
+struct Box {
+  value: i64,
+}
+
+impl First for Box {
+  fn pick(value: i64) -> Box {
+    Box { value: value }
+  }
+}
+
+impl Second for Box {
+  fn pick(value: i64) -> Box {
+    Box { value: value + 1 }
+  }
+}
+
+fn main() -> i64 {
+  let box = Box::pick(1);
+  box.value
+}

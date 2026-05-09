@@ -1,0 +1,13 @@
+trait Convert[From, To] {
+  fn convert(self: From) -> To
+}
+
+impl Convert[i32, i64] for i32 {
+  fn convert(self: i32) -> i64 {
+    return self as i64;
+  }
+}
+
+fn main() -> i64 {
+  return 0;
+}

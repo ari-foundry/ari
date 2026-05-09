@@ -1,0 +1,19 @@
+fn main() -> i64 {
+  let value = (true, false);
+  var total = 0;
+  match value {
+    (true, _) => {
+      total = 1;
+    },
+    (true, false) => {
+      total = 99;
+    },
+    (false, true) => {
+      total = 2;
+    },
+    (false, false) => {
+      total = 3;
+    },
+  }
+  return total;
+}

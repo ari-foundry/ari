@@ -1,0 +1,8 @@
+fn needs_both(left: ref mut i64, right: ref i64) -> i64 {
+  return 0;
+}
+
+fn main() -> i64 {
+  var number = 7;
+  return needs_both(ref mut number, ref number);
+}

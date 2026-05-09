@@ -1,0 +1,9 @@
+fn make_number() -> ptr i64 {
+  let item = zone::scratch<i64>(64, 5);
+  return item;
+}
+
+fn main() -> i64 {
+  let item = make_number();
+  return *item;
+}

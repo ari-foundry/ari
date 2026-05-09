@@ -1,0 +1,22 @@
+fn main() -> i64 {
+  let base = if true {
+    let first = 1;
+    var second = 2;
+    second += first;
+    let third = second + 3;
+    third
+  } else {
+    let other = 9;
+    other
+  };
+  let nested = if false {
+    let nope = 1;
+    nope
+  } else if base == 6 {
+    let bonus = 7;
+    bonus
+  } else {
+    3
+  };
+  return base + nested;
+}

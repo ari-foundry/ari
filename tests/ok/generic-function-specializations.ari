@@ -1,0 +1,19 @@
+fn identity[T](value: T) -> T {
+  return value;
+}
+
+fn choose[T](left: T, right: T, flag: bool) -> T {
+  if flag {
+    return left;
+  }
+  return right;
+}
+
+fn main() -> i64 {
+  let number = identity(20);
+  let flag = identity(true);
+  if flag {
+    return number + choose(1, 2, true);
+  }
+  return 0;
+}

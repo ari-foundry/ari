@@ -1,0 +1,7 @@
+struct Holder {
+  value: dyn Missing,
+}
+
+fn main() -> i64 {
+  0
+}

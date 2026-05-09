@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  let wrapped: u8 = 300 as u8;
+  let signed: i8 = 255 as i8;
+  let narrowed: i16 = 65535 as i16;
+  return (wrapped as i64) + (signed as i64) + (narrowed as i64);
+}

@@ -1,0 +1,12 @@
+fn add_four(value: i64) -> i64 {
+  return value + 4;
+}
+
+fn apply_local(op: fn(i64) -> i64, value: i64) -> i64 {
+  return op(value);
+}
+
+fn main() -> i64 {
+  let op: fn(i64) -> i64 = add_four;
+  return apply_local(op, 3);
+}

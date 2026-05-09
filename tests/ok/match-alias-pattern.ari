@@ -1,0 +1,59 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+fn score_enum(value: MaybeI32) -> i64 {
+  match value {
+    whole @ Some(inner) => {
+      let again = match whole {
+        Some(_) => 1,
+        None => 0,
+      };
+      (inner as i64) + again
+    },
+    None => 0,
+  }
+}
+
+fn score_payload_alias(value: MaybeI32) -> i64 {
+  match value {
+    Some(inner @ 5) => inner as i64,
+    _ => 0,
+  }
+}
+
+fn score_scalar(value: u8) -> i64 {
+  match value {
+    captured @ 0..=10 => captured as i64,
+    _ => 0,
+  }
+}
+
+fn score_statement(value: i64) -> i64 {
+  var total = 0;
+  match value {
+    captured @ 3 => {
+      total = captured;
+    },
+    _ => {
+      total = 0;
+    },
+  }
+  total
+}
+
+fn score_if_let(value: MaybeI32) -> i64 {
+  if let whole @ Some(inner) = value {
+    let again = match whole {
+      Some(_) => 2,
+      None => 0,
+    };
+    return (inner as i64) + again;
+  }
+  0
+}
+
+fn main() -> i64 {
+  score_enum(Some(4i32)) + score_payload_alias(Some(5i32)) + score_scalar(7u8) + score_statement(3) + score_if_let(Some(6i32))
+}

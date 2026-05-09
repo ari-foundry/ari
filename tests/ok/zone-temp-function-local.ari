@@ -1,0 +1,16 @@
+fn touch() {
+  var scratch = zone::temp(32);
+  let item = zone::new<i64>(ref mut scratch, 7);
+}
+
+fn scratch_value() -> i64 {
+  var scratch = zone::temp(64);
+  let item = zone::new<i64>(ref mut scratch, 41);
+  *item = *item + 1;
+  return *item;
+}
+
+fn main() -> i64 {
+  touch();
+  return scratch_value();
+}

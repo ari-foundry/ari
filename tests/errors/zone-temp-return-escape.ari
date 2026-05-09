@@ -1,0 +1,9 @@
+fn leak() -> ptr i64 {
+  var scratch = zone::temp(64);
+  let item = zone::new<i64>(ref mut scratch, 5);
+  return item;
+}
+
+fn main() -> i64 {
+  return 0;
+}

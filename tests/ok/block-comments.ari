@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  /* outer
+     /* nested */
+     still comment
+  */
+  return 0;
+}

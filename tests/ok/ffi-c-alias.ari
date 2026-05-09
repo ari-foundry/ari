@@ -1,0 +1,7 @@
+extern "C" fn c_puts(text: string) -> i32 = "puts";
+
+fn main() -> i64 {
+  c_puts("ffi-c-alias-ok");
+  return 0;
+}
+

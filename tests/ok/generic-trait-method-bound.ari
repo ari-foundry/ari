@@ -1,0 +1,31 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+impl Score for i64 {
+  fn score(self) -> i64 {
+    self + 1
+  }
+}
+
+trait Convert {
+  fn keep[Value: Score](self, value: Value) -> i64
+}
+
+struct Box {
+  value: i64,
+}
+
+impl Convert for Box {
+  fn keep[Out: Score](self, value: Out) -> i64 {
+    self.value + value.score()
+  }
+}
+
+fn use_convert[Item: Convert](value: Item) -> i64 {
+  value.keep(20)
+}
+
+fn main() -> i64 {
+  Box { value: 1 }.keep<i64>(20) + use_convert(Box { value: 2 })
+}

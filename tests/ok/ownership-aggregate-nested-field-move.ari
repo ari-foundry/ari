@@ -1,0 +1,35 @@
+struct Inner {
+  mut token: own i64,
+  mut count: i64,
+}
+
+struct Holder {
+  mut inner: Inner,
+  mut spare: own i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume(value: own i64) -> i64 {
+  drop value;
+  return 4;
+}
+
+fn main() -> i64 {
+  var holder = Holder {
+    inner: Inner { token: make_owned(1), count: 2 },
+    spare: make_owned(3),
+  };
+
+  let token = holder.inner.token;
+  holder.inner.count = holder.inner.count + 7;
+  let score = consume(token) + holder.inner.count;
+  holder.inner.token = make_owned(8);
+
+  let spare = holder.spare;
+  drop spare;
+  drop holder;
+  return score;
+}

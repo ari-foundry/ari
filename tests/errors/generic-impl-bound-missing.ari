@@ -1,0 +1,17 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl[T: Score] Box[T] {
+  fn get(self) -> T {
+    self.value
+  }
+}
+
+fn main() -> i64 {
+  Box { value: 1 }.get()
+}

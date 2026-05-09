@@ -1,0 +1,12 @@
+struct Pair[T] {
+  left: T,
+  right: T,
+}
+
+struct UsesPair {
+  pair: Pair[i64, bool],
+}
+
+fn main() -> i64 {
+  return 0;
+}

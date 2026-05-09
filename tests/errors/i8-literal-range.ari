@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let tiny: i8 = -129;
+  return 0;
+}

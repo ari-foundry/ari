@@ -1,0 +1,10 @@
+trait Score {
+}
+
+struct Holder {
+  value: ref dyn Score,
+}
+
+fn main() -> i64 {
+  0
+}

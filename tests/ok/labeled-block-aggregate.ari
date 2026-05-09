@@ -1,0 +1,18 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+fn main() -> i64 {
+  let pair = choose_pair: {
+    break choose_pair (4, 5);
+    (1, 2)
+  };
+
+  let point = choose_point: {
+    break choose_point Point { x: pair.0, y: pair.1 };
+    Point { x: 100, y: 100 }
+  };
+
+  point.x + point.y
+}

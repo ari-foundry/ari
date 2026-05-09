@@ -1,0 +1,10 @@
+fn fact(value: i64) -> i64 {
+  if value <= 1 {
+    return 1;
+  }
+  return value * fact(value - 1);
+}
+
+fn main() -> i64 {
+  return fact(5);
+}

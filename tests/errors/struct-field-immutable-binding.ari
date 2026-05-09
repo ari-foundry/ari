@@ -1,0 +1,9 @@
+struct Meter {
+  mut value: i64,
+}
+
+fn main() -> i64 {
+  let meter = Meter { value: 1 };
+  meter.value = 2;
+  0
+}

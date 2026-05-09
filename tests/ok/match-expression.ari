@@ -1,0 +1,16 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+fn score(value: OptionI32) -> i64 {
+  let amount: i64 = match value {
+    Some(inner) => inner as i64,
+    None => 5;
+  };
+  return amount;
+}
+
+fn main() -> i64 {
+  return score(Some(7)) + score(None);
+}

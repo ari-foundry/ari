@@ -1,0 +1,10 @@
+fn main() -> i64 {
+  let condition = true;
+  let token: own i64 = 5;
+  if condition {
+    drop token;
+  } else {
+    let value = 0;
+  }
+  return 0;
+}

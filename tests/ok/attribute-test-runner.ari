@@ -1,0 +1,10 @@
+@test
+fn smoke() {
+  assert(true);
+}
+
+@test
+fn returns_zero() -> i64 {
+  assert_eq_i64(2, 2);
+  return 0;
+}

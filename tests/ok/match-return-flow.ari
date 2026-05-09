@@ -1,0 +1,21 @@
+enum Step {
+  Stop,
+  Move(i32),
+}
+
+fn run(value: Step) -> i64 {
+  var total = 5;
+  match value {
+    Stop => {
+      return 9;
+    }
+    Move(delta) => {
+      total = total + delta as i64;
+    }
+  }
+  return total;
+}
+
+fn main() -> i64 {
+  return run(Move(4)) + run(Stop);
+}

@@ -1,0 +1,5 @@
+mod package_math;
+
+fn main() -> i64 {
+  package_math::value()
+}

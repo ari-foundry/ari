@@ -1,0 +1,14 @@
+trait AddTo[T] {
+  fn add_to(self, other: T) -> i64
+}
+
+impl AddTo[i64] for i64 {
+  fn add_to(self, other: i64) -> i64 {
+    self + other
+  }
+}
+
+fn main() -> i64 {
+  let value: dyn AddTo[i64] = 7 as dyn AddTo[i64];
+  value.add_to(4)
+}

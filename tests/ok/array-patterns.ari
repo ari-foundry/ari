@@ -1,0 +1,28 @@
+const MARK: i64 = 3;
+
+fn bind_array() -> i64 {
+  let values: [i64, 4] = [1, 2, 3, 4];
+  let [first, .., last] = values;
+  let [_, second, third, _]: [i64, 4] = values;
+  first + second + third + last
+}
+
+fn match_array() -> i64 {
+  let values: [i64, 4] = [1, 2, 3, 4];
+  match values {
+    [1, _, MARK, 4] => 10,
+    [..] => 20,
+  }
+}
+
+fn nested_array() -> i64 {
+  let pair: ([i64, 2], bool) = ([1, 2], true);
+  match pair {
+    ([1, 2], true) => 5,
+    _ => 0,
+  }
+}
+
+fn main() -> i64 {
+  bind_array() + match_array() + nested_array()
+}

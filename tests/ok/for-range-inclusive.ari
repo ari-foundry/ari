@@ -1,0 +1,25 @@
+fn main() -> i64 {
+  var total = 0;
+
+  for first in 0..=4 {
+    total = total + first;
+  }
+
+  for single in 3..=3 {
+    total = total + single;
+  }
+
+  for skipped in 5..=3 {
+    total = total + 100;
+  }
+
+  for named in range_inclusive(2, 4) {
+    total = total + named;
+  }
+
+  for qualified in iter::range_inclusive(1, 1) {
+    total = total + qualified;
+  }
+
+  return total;
+}

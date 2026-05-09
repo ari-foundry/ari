@@ -1,0 +1,17 @@
+trait Convert {
+  fn keep[Value](self, value: Value) -> Value
+}
+
+struct Box {
+  value: i64,
+}
+
+impl Convert for Box {
+  fn keep(self, value: i64) -> i64 {
+    value
+  }
+}
+
+fn main() -> i64 {
+  0
+}

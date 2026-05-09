@@ -1,0 +1,18 @@
+fn main() -> i64 {
+  let half_open: Range[i64] = range(1, 4);
+  var total = half_open.start + half_open.end + half_open.0 + half_open.1;
+
+  for first in half_open {
+    total = total + first;
+  }
+
+  let inclusive = 2..=3;
+  for second in inclusive {
+    total = total + second;
+  }
+
+  let operator_range = 0..2;
+  total = total + operator_range.end;
+
+  return total;
+}

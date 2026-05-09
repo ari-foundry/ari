@@ -1,0 +1,8 @@
+extern "C" fn ari_test_inc_i64(value: ref mut i64);
+
+fn main() -> i64 {
+  var value = 40;
+  ari_test_inc_i64(ref mut value);
+  return value;
+}
+

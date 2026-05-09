@@ -1,0 +1,17 @@
+fn main() -> i64 {
+  let inferred_text = "ari";
+  var text: string = "hello";
+  text = inferred_text;
+
+  let inferred_float = 1.0e+1;
+  var precise: f64 = 2.5;
+  precise = inferred_float;
+
+  let flag = true;
+  var mirror: bool = false;
+  mirror = flag;
+  if mirror {
+    return 0;
+  }
+  return 1;
+}

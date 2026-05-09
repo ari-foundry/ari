@@ -1,0 +1,44 @@
+@derive(Debug)
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Pair[T] {
+  left: T,
+  right: T,
+}
+
+enum Option[T] {
+  None,
+  Some(T),
+}
+
+enum Result[T, E] {
+  Ok(T),
+  Err(E),
+}
+
+trait Eq[T] {
+  fn eq(self: T, other: T) -> bool
+}
+
+impl Eq[i64] for i64 {
+  fn eq(self: i64, other: i64) -> bool {
+    return self == other;
+  }
+}
+
+meta fn identity_type(T: type) -> type {
+  return T;
+}
+
+fn main() -> i64 {
+  var value = 0;
+
+  init a = 1, b = 4 while a < b {
+    value = value + a;
+  } next a + 1, b
+
+  return value;
+}

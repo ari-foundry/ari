@@ -1,0 +1,20 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+fn point_stride() -> i64 {
+  let base: ptr Point = 1000u64 as ptr Point;
+  let shifted: ptr Point = ptr_add(base, 2);
+  ((shifted as u64) - (base as u64)) as i64
+}
+
+fn array_stride() -> i64 {
+  let base: ptr [i64, 3] = 2000u64 as ptr [i64, 3];
+  let shifted: ptr [i64, 3] = mem::ptr_add(base, 1);
+  ((shifted as u64) - (base as u64)) as i64
+}
+
+fn main() -> i64 {
+  point_stride() + array_stride()
+}

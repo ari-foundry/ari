@@ -1,0 +1,11 @@
+enum Option[T] {
+  None,
+  Some(T),
+}
+
+fn main() -> i64 {
+  return match Some<i32>(1i32) {
+    Some(true) => 1,
+    None => 0,
+  };
+}

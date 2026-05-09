@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  let i = 0, total = 0 while i < 6 {
+    if i == 3 {
+      continue i + 1, total;
+    }
+    total = total + i;
+  } next i + 1, total
+  return total;
+}

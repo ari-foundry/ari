@@ -1,0 +1,17 @@
+fn inspect(value: ref i64) -> i64 {
+  return 0;
+}
+
+fn touch(value: ref mut i64) -> i64 {
+  return 0;
+}
+
+fn main() -> i64 {
+  var number = 7;
+  let token: own i64 = 9;
+  inspect(ref number);
+  inspect(ref token);
+  touch(ref mut number);
+  drop token;
+  return 0;
+}

@@ -1,0 +1,18 @@
+fn main() -> i64 {
+  let hex: u8 = 0xffu8;
+  if hex as i64 != 255 {
+    return 1;
+  }
+
+  let oct: i16 = 0o10i16;
+  if oct as i64 != 8 {
+    return 2;
+  }
+
+  let bin = 0b1010;
+  if bin != 10 {
+    return 3;
+  }
+
+  return 0x10 + 0o7 + 0b1010;
+}

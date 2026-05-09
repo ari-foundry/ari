@@ -1,0 +1,28 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl Score for i64 {
+  fn score(self) -> i64 {
+    self + 1
+  }
+}
+
+impl[T] Box[T] {
+  fn replace[U](self, value: U) -> Box[U] {
+    Box { value: value }
+  }
+
+  fn score_with[U: Score](self, value: U) -> i64 {
+    value.score()
+  }
+}
+
+fn main() -> i64 {
+  let number = Box { value: true }.replace(20);
+  number.value + Box { value: false }.score_with(1)
+}

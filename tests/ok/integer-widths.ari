@@ -1,0 +1,40 @@
+fn add_i32(left: i32, right: i32) -> i32 {
+  return left + right;
+}
+
+fn id_u8(value: u8) -> u8 {
+  return value;
+}
+
+fn inspect_u32(value: ref u32) -> i32 {
+  return 0;
+}
+
+fn touch_i16(value: ref mut i16) -> i32 {
+  return 0;
+}
+
+fn main() -> i64 {
+  let tiny_signed: i8 = -12;
+  let medium_signed: i16 = -1234;
+  var small_unsigned: u8 = 255;
+  var count: u32 = 4000000000;
+  var slot: i16 = 9;
+  let wide_unsigned: u64 = 18446744073709551615;
+  let owned: own u32 = 3;
+
+  inspect_u32(ref count);
+  touch_i16(ref mut slot);
+
+  if wide_unsigned == 18446744073709551615 {
+    if id_u8(small_unsigned) == 255 {
+      if add_i32(20, 22) == 42 {
+        drop owned;
+        return 0;
+      }
+    }
+  }
+
+  drop owned;
+  return 1;
+}

@@ -1,0 +1,40 @@
+mod Net {
+  pub enum Event {
+    Ping,
+    Data(i32),
+    Error(i32),
+  }
+}
+
+use Net::Data
+
+fn classify(value: Net::Event) -> i64 {
+  var score = 0;
+  match value {
+    Net::Ping => {
+      score = 1;
+    }
+    Data(code) => {
+      score = code as i64;
+    }
+    Net::Error(_) => {
+      score = 5;
+    }
+  }
+  return score;
+}
+
+fn fallback(value: Net::Event) -> i64 {
+  match value {
+    Data(code) => {
+      return code as i64;
+    }
+    Net::Ping | Net::Error(_) => {
+      return 9;
+    }
+  }
+}
+
+fn main() -> i64 {
+  return classify(Net::Ping) + classify(Data(7)) + classify(Net::Error(4)) + fallback(Net::Ping) + fallback(Data(3)) + fallback(Net::Error(2));
+}

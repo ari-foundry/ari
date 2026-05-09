@@ -1,0 +1,7 @@
+fn add(left: i64, right: i64) -> i64 {
+  return left + right;
+}
+
+fn main() -> i64 {
+  return add<i64>(1, 2);
+}

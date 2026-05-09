@@ -1,0 +1,45 @@
+const ZERO: i64 = 0;
+const ANSWER: i64 = 42;
+const FLAG: bool = true;
+
+mod Limits {
+  pub const LOW: i64 = 2;
+  pub const HIGH: i64 = 7;
+  pub const PAYLOAD_HIGH: i32 = 7;
+  pub const YES: bool = true;
+}
+
+use Limits::{LOW as L, HIGH};
+
+enum MaybeI32 {
+  Some(i32),
+  None,
+}
+
+fn classify(value: i64) -> i64 {
+  match value {
+    ZERO => 1,
+    L => 2,
+    Limits::HIGH => 3,
+    _ => 4,
+  }
+}
+
+fn payload(value: MaybeI32) -> i64 {
+  match value {
+    Some(Limits::PAYLOAD_HIGH) => 10,
+    Some(_) => 20,
+    None => 30,
+  }
+}
+
+fn bool_score(flag: bool) -> i64 {
+  match flag {
+    Limits::YES => 5,
+    false => 6,
+  }
+}
+
+fn main() -> i64 {
+  classify(ZERO) + classify(HIGH) + payload(Some(7i32)) + bool_score(FLAG) + ANSWER
+}

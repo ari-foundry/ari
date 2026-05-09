@@ -1,0 +1,45 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+enum ResultI32 {
+  Err(i32),
+  Ok(i32),
+}
+
+fn bump(value: MaybeI32) -> MaybeI32 {
+  let inner = value?;
+  return Some(inner + 1i32);
+}
+
+fn add_two(value: ResultI32) -> ResultI32 {
+  let inner = value?;
+  return Ok(inner + 2i32);
+}
+
+fn score_maybe(value: MaybeI32) -> i64 {
+  match bump(value) {
+    Some(inner) => {
+      return inner as i64;
+    }
+    None => {
+      return 0;
+    }
+  }
+}
+
+fn score_result(value: ResultI32) -> i64 {
+  match add_two(value) {
+    Ok(inner) => {
+      return inner as i64;
+    }
+    Err(code) => {
+      return code as i64;
+    }
+  }
+}
+
+fn main() -> i64 {
+  return score_maybe(Some(4i32)) + score_maybe(None) + score_result(Ok(5i32)) + score_result(Err(40i32));
+}

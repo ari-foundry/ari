@@ -1,0 +1,11 @@
+trait NeedsScore {
+  fn score(self) -> i64
+}
+
+fn use_score[T: NeedsScore](value: T) -> i64 {
+  return value.score();
+}
+
+fn main() -> i64 {
+  return use_score<i64>(4);
+}

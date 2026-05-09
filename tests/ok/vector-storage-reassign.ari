@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [1, 2];
+  values = [3, 4, 5];
+  let expanded = values[2];
+  values = [9];
+  return expanded + values[0];
+}

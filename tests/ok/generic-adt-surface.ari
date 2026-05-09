@@ -1,0 +1,8 @@
+enum Option[T] {
+  None,
+  Some(T),
+}
+
+fn main() -> i64 {
+  return 0;
+}

@@ -1,0 +1,7 @@
+trait Score {
+}
+
+fn main() -> i64 {
+  let value: dyn Score = 0;
+  0
+}

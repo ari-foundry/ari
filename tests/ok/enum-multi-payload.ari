@@ -1,0 +1,26 @@
+enum Color {
+  Rgb(u8, u8, u8),
+  Gray(i64),
+  Off,
+}
+
+fn score(value: Color) -> i64 {
+  return match value {
+    Rgb(red, green, blue) => (red as i64) + (green as i64) * 2 + (blue as i64) * 3,
+    Gray(level) => level,
+    Off => 5;
+  };
+}
+
+fn edge(value: Color) -> i64 {
+  return match value {
+    Rgb(first, ..) => first as i64,
+    Gray(..) => 7,
+    Off => 11;
+  };
+}
+
+fn main() -> i64 {
+  let Gray(amount) = Gray(3);
+  return score(Rgb(2u8, 3u8, 4u8)) + edge(Rgb(5u8, 6u8, 7u8)) + score(Off) + amount;
+}

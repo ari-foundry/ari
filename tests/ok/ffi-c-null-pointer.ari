@@ -1,0 +1,8 @@
+extern "C" fn ari_test_is_null(value: ptr c_void) -> i64;
+
+fn main() -> i64 {
+  let direct: ptr c_void = null;
+  let text: ptr c_char = null;
+  let inferred = null;
+  return ari_test_is_null(direct) + ari_test_is_null(null) + ari_test_is_null(inferred);
+}

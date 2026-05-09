@@ -1,0 +1,28 @@
+mod Data {
+  pub enum Signal {
+    Low,
+    High(i32),
+  }
+
+  pub fn make(value: i32) -> Signal {
+    return High(value);
+  }
+}
+
+use Data::Signal as Signal
+use Data::High as High
+
+fn score(value: Signal) -> i64 {
+  match value {
+    High(inner) => {
+      return inner as i64;
+    }
+    Data::Low => {
+      return 1;
+    }
+  }
+}
+
+fn main() -> i64 {
+  return score(Data::Low) + score(Data::make(8)) + score(High(3));
+}

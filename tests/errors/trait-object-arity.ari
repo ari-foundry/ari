@@ -1,0 +1,10 @@
+trait Compare[T] {
+}
+
+struct Holder {
+  value: dyn Compare,
+}
+
+fn main() -> i64 {
+  0
+}

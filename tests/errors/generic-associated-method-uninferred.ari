@@ -1,0 +1,17 @@
+struct Factory {
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl Factory {
+  fn make[U]() -> Box[U] {
+    Box { value: 0 }
+  }
+}
+
+fn main() -> i64 {
+  let value = Factory::make();
+  0
+}

@@ -1,0 +1,26 @@
+enum OptionI32 {
+  None,
+  Some(i32),
+}
+
+fn advance(value: i32) -> OptionI32 {
+  if value < 3 {
+    return Some(value);
+  }
+  return None();
+}
+
+fn main() -> i64 {
+  var index: i32 = 0;
+  var total = 0;
+  while let Some(value) = advance(index) {
+    total = total + (value as i64);
+    index = index + 1;
+  }
+  if let Some(last) = advance(2) {
+    total = total + (last as i64);
+  } else {
+    total = 100;
+  }
+  return total;
+}

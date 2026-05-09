@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  assert(true);
+  debug_assert(1 < 2);
+  assert_eq_i64(3, 3);
+  assert_ne_i64(3, 4);
+  assert_eq_bool(true, true);
+  assert_ne_bool(true, false);
+  return 7;
+}

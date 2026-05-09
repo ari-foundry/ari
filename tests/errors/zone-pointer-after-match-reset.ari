@@ -1,0 +1,14 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let item = zone::new<i64>(ref mut zone, 5);
+  let tag = 0;
+  match tag {
+    0 => {
+      zone::reset(ref mut zone);
+    },
+    _ => {},
+  }
+  let value = *item;
+  zone::destroy(zone);
+  value
+}

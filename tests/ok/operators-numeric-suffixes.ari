@@ -1,0 +1,20 @@
+fn main() -> i64 {
+  let tiny = -8i8;
+  let short = 2i16;
+  let medium = 3i32;
+  let wide = 4i64;
+  let byte = 250u8;
+  let word = 1000u16;
+  let count = 42u32;
+  let large = 9u64;
+
+  let total = (tiny as i64) +
+    (short as i64) +
+    (medium as i64) +
+    wide +
+    (byte as i64) +
+    (word as i64) +
+    (count as i64) +
+    (large as i64);
+  return total % 97;
+}

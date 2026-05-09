@@ -1,0 +1,14 @@
+fn main() -> i64 {
+  var value = 4;
+  value += 6;
+  value -= 3;
+  value *= 5;
+  value /= 2;
+  value %= 6;
+  value <<= 2;
+  value >>= 1;
+  value &= 14;
+  value |= 1;
+  value ^= 3;
+  return value;
+}

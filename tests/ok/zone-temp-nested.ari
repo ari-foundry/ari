@@ -1,0 +1,13 @@
+fn nested_value() -> i64 {
+  var total = 1;
+  {
+    var scratch = zone::temp(64);
+    let item = zone::new<i64>(ref mut scratch, 21);
+    total = total + *item;
+  }
+  return total;
+}
+
+fn main() -> i64 {
+  return nested_value();
+}
