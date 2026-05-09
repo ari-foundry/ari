@@ -215,13 +215,17 @@ pub fn increment(value: i64) -> i64 {
 ```
 
 `@export` and `@no_mangle` without arguments use the final source path segment.
-Explicit symbols must be C identifiers. See
+Explicit symbols must be C identifiers and cannot collide with any other
+emitted Ari function symbol. See
 [Symbol Mangling](../dev/symbol-mangling.md) for the default encoding.
 
 In `--shared` builds, `pub` Ari functions and explicit export/no-mangle
 functions remain default-visible. Private helper functions are emitted with
 hidden LLVM visibility, and Ari-owned runtime helpers are hidden as internal
 implementation details.
+Raw `--freestanding` ELF output records explicit export/no-mangle names in the
+static symbol table, but imported `extern "C"` calls still require the LLVM host
+backend until the raw backend has a native C ABI and link path.
 
 ## Type Mapping
 

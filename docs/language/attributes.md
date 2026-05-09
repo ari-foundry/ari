@@ -80,11 +80,15 @@ pub fn increment(value: i64) -> i64 {
 }
 ```
 
-Exported symbols must be C identifiers. In executable builds, exporting the
-symbol `main` is rejected because Ari generates the C entry point itself.
+Exported symbols must be C identifiers and cannot collide with another emitted
+Ari function symbol. In executable builds, exporting the symbol `main` is
+rejected because Ari generates the C entry point itself.
 When building with `--shared`, `pub` functions and explicit export/no-mangle
 functions are ABI-visible; private Ari helpers are emitted with hidden LLVM
 visibility, as are Ari-owned runtime helpers.
+Raw `--freestanding` ELF output records explicit export/no-mangle names in the
+static symbol table too. Imported `extern "C"` calls still require the LLVM host
+backend until the raw backend grows a native C link path.
 
 `@derive(...)` is validated on structs and enums and retained as metadata.
 Actual derive expansion is planned as part of compile-time meta expansion.

@@ -11,6 +11,7 @@
 #include "prelude_macros.hpp"
 #include "prelude_resolver.hpp"
 #include "product_coverage.hpp"
+#include "symbol_mangle.hpp"
 #include "try_model.hpp"
 #include "type_semantics.hpp"
 #include "vector_semantics.hpp"
@@ -454,6 +455,7 @@ private:
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
     std::map<std::string, std::string> exported_symbols_;
+    std::map<std::string, std::string> emitted_function_symbols_;
     std::vector<std::string> constant_eval_stack_;
     std::vector<std::string> warnings_;
     IrType current_return_;
@@ -1263,6 +1265,16 @@ private:
             fail(loc, "exported symbol 'main' conflicts with the generated C entry point");
         }
         return symbol;
+    }
+
+    void register_emitted_function_symbol(SourceLocation loc,
+                                          const std::string& symbol,
+                                          const std::string& function_name) {
+        auto inserted = emitted_function_symbols_.emplace(symbol, function_name);
+        if (inserted.second) return;
+        fail(loc,
+             "emitted symbol '" + symbol + "' for function '" + function_name +
+                 "' conflicts with function '" + inserted.first->second + "'");
     }
 
     void warn_deprecated_use(SourceLocation loc,
@@ -2416,6 +2428,9 @@ private:
                              exported.first->second + "'");
                 }
             }
+            register_emitted_function_symbol(fn.loc,
+                                             sig.link_name.empty() ? mangle_function_name(fn.name) : sig.link_name,
+                                             fn.name);
             std::string previous_module = current_module_name_;
             current_module_name_ = fn.module_name;
             for (const auto& param : fn.params) sig.params.push_back(resolve_executable_type(param.type));

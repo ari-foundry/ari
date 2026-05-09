@@ -59,7 +59,9 @@ keep the previous default visibility.
 The freestanding backend still uses the small internal integer/bool calling
 convention: the first six scalar arguments use registers and later arguments use
 caller-provided stack slots. Sema caps functions and calls at 65,535
-parameters/arguments.
+parameters/arguments. Raw ELF output records `@export`/`@no_mangle` function
+names in `.symtab`, but imported `extern "C"` calls remain rejected until the
+native backend has a real platform C ABI and link path.
 
 ## Prelude IO, Input, And Stops
 

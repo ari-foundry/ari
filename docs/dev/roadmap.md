@@ -56,30 +56,6 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
-3. Finish exact integer-width stack and ABI layout in `--freestanding`.
-   Width-aware scalar local loads/stores and byte-packed standalone scalar
-   local offsets are implemented for local bindings, parameter spills, loop
-   temps, match bindings, tuple/array scalar field reads, and raw-pointer-
-   mutated narrow integer reloads. Shared layout queries now compute natural
-   byte sizes, alignments, and field-offset tables for tuple, struct,
-   fixed-array, and aggregate-enum values. The raw backend consumes those byte
-   offsets for tuple, struct, fixed-array, and local aggregate-enum storage,
-   whole plain aggregate copies, raw-pointer scalar field/index access,
-   pointer-backed aggregate-enum copies, and local aggregate-enum
-   tag/payload-binding/literal/range/nested-compact-enum matches. Narrow scalar
-   returns are normalized at the freestanding function boundary, including
-   unsigned wraparound results from `u8`/`u16`/`u32` functions. Freestanding
-   direct and function-pointer calls can pass and return tuple,
-   struct, fixed-array, and aggregate enum values through explicit hidden
-   pointer slots, copying parameters into callee-local storage and returning
-   into caller-provided result storage or hidden discard temporaries.
-   Aggregate-valued `if`, `match`, and block expressions materialize into
-   target storage or hidden temporaries on raw targets. The remaining ABI gap is
-   explicit aggregate and external ABI classification.
-   - [abi-extern-exports] define platform ABI lowering for `@export`,
-     `@no_mangle`, and future imported symbols on raw/freestanding targets;
-     direct `extern "C"` calls are rejected there until a real C ABI/link path
-     exists
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -212,15 +188,21 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 ## Backend Work
 
 1. Emit relocatable object files for the native backend.
-2. Define non-local aggregate ABI layouts for expression results, external ABI
-   surfaces, and vectors. Fixed-size local tuple/array/vector stack layout,
+2. Define non-local aggregate ABI layouts for external ABI surfaces and
+   vectors. Fixed-size local tuple/array/vector stack layout,
    direct raw aggregate parameters/returns through hidden pointers, LLVM
-   aggregate enum layout, and tuple/array/vector index access are implemented.
+   aggregate enum layout, tuple/array/vector index access, raw aggregate
+   expression results, and raw `@export`/`@no_mangle` ELF symbols are
+   implemented.
    - [structs] finish sharing all field-layout decisions between sema and
      backends
    - [arrays] pass fixed-size arrays across FFI boundaries
+   - [raw-c-imports] define a real C ABI/link path for imported `extern "C"`
+     symbols on raw/freestanding targets; direct C extern calls remain rejected
+     there until this exists
    - [vectors] define non-local and growable vector ABI after allocator-backed `Vec[T]` storage exists
-   - [enums] lower multi-payload aggregate enum layout in the freestanding backend and define its FFI ABI
+   - [enums] finish direct value materialization for multi-payload aggregate
+     enums in the freestanding backend and define their external FFI ABI
 3. Add freestanding runtime string storage so raw ELF output can lower string
    values and line input helpers without relying on the host C runtime.
 4. Lower floating-point scalar values and calls in the freestanding backend.

@@ -1,0 +1,12 @@
+fn helper() -> i64 {
+  return 1;
+}
+
+@export("_ARNv6helper")
+fn collides() -> i64 {
+  return 2;
+}
+
+fn main() -> i64 {
+  return helper() + collides();
+}

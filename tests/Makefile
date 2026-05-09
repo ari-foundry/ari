@@ -408,8 +408,8 @@ check-match: $(TARGET)
 	grep -q "inttoptr i64" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "call i64 %" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-pointer-shaped-payloads.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-pointer-shaped-payloads.elf; $(BUILD_DIR)/match/enum-pointer-shaped-payloads.elf; code=$$?; test $$code -eq 25; fi
-	if $(TARGET) --freestanding tests/ok/enum-multi-payload.ari -o $(BUILD_DIR)/match/enum-multi-payload.raw >$(BUILD_DIR)/match/enum-multi-payload-freestanding.err 2>&1; then exit 1; fi
-	grep -q "backend does not lower aggregate parameters yet" $(BUILD_DIR)/match/enum-multi-payload-freestanding.err
+	$(TARGET) --freestanding tests/ok/enum-multi-payload.ari -o $(BUILD_DIR)/match/enum-multi-payload.raw
+	$(BUILD_DIR)/match/enum-multi-payload.raw; code=$$?; test $$code -eq 33
 	$(TARGET) tests/ok/constant-patterns.ari --emit-llvm $(BUILD_DIR)/match/constant-patterns.ll
 	grep -q "30064771072" $(BUILD_DIR)/match/constant-patterns.ll
 	grep -q "icmp eq i1" $(BUILD_DIR)/match/constant-patterns.ll
@@ -808,6 +808,13 @@ check-meta: $(TARGET)
 	grep -q 'define i64 @"increment"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"reset"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'call i64 @"ari_public_add"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
+	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw
+	$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw; code=$$?; test $$code -eq 10
+	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
+	grep -q 'ari_public_add' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
+	grep -q 'increment' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
+	grep -q 'zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
+	if grep -Eq '_ARNv3add|_ARNv9increment|_ARNv4zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym; then exit 1; fi
 	$(TARGET) tests/ok/shared-visibility.ari --shared --emit-llvm $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define hidden i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define i64 @"_ARNv10public_api"' $(BUILD_DIR)/meta/shared-visibility.ll
@@ -838,6 +845,8 @@ check-meta: $(TARGET)
 	grep -q "attribute '@deprecated' expects no arguments or one string message" $(BUILD_DIR)/meta/attribute-deprecated-argument.err
 	if $(TARGET) tests/errors/attribute-export-symbol-invalid.ari -o $(BUILD_DIR)/meta/attribute-export-symbol-invalid.elf >$(BUILD_DIR)/meta/attribute-export-symbol-invalid.err 2>&1; then exit 1; fi
 	grep -q "invalid exported symbol 'bad-symbol'" $(BUILD_DIR)/meta/attribute-export-symbol-invalid.err
+	if $(TARGET) tests/errors/attribute-export-mangle-collision.ari -o $(BUILD_DIR)/meta/attribute-export-mangle-collision.elf >$(BUILD_DIR)/meta/attribute-export-mangle-collision.err 2>&1; then exit 1; fi
+	grep -q "emitted symbol '_ARNv6helper' for function 'collides' conflicts with function 'helper'" $(BUILD_DIR)/meta/attribute-export-mangle-collision.err
 	if $(TARGET) tests/errors/attribute-no-mangle-argument.ari -o $(BUILD_DIR)/meta/attribute-no-mangle-argument.elf >$(BUILD_DIR)/meta/attribute-no-mangle-argument.err 2>&1; then exit 1; fi
 	grep -q "attribute '@no_mangle' does not take arguments" $(BUILD_DIR)/meta/attribute-no-mangle-argument.err
 	if $(TARGET) --test tests/errors/attribute-test-param.ari -o $(BUILD_DIR)/meta/attribute-test-param.elf >$(BUILD_DIR)/meta/attribute-test-param.err 2>&1; then exit 1; fi
