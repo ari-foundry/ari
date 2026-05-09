@@ -6441,12 +6441,13 @@ private:
                 return payload.alias_pattern && payload.alias_pattern->kind == PatternKind::Wildcard;
             case PatternKind::Range:
                 if (aggregate_layout) {
-                    lower_aggregate_enum_payload_range_pattern(payload, payload_type, lowered_arm, payload_index);
+                    lower_enum_payload_range_pattern(payload, payload_type, lowered_arm, payload_index, false);
                     return false;
                 }
-                fail(payload.loc, "range payload patterns for compact enum payloads are planned but are not supported yet");
+                lower_enum_payload_range_pattern(payload, payload_type, lowered_arm, payload_index, true);
+                return false;
             case PatternKind::Or:
-                fail(payload.loc, "or-patterns for compact enum payloads are planned but are not supported yet");
+                fail(payload.loc, "or-pattern enum payloads outside match arms are planned but are not supported yet");
             case PatternKind::EnumCase: {
                 ConstantValue constant_pattern;
                 if (try_constant_pattern_value(payload, constant_pattern)) {
@@ -6510,12 +6511,13 @@ private:
                 return;
             case PatternKind::Range:
                 if (aggregate_layout) {
-                    lower_aggregate_enum_payload_range_pattern(aliased, payload_type, lowered_arm, payload_index);
+                    lower_enum_payload_range_pattern(aliased, payload_type, lowered_arm, payload_index, false);
                     return;
                 }
-                fail(aliased.loc, "range payload patterns for compact enum payloads are planned but are not supported yet");
+                lower_enum_payload_range_pattern(aliased, payload_type, lowered_arm, payload_index, true);
+                return;
             case PatternKind::Or:
-                fail(aliased.loc, "or-patterns for compact enum payloads are planned but are not supported yet");
+                fail(aliased.loc, "or-pattern enum payloads outside match arms are planned but are not supported yet");
             case PatternKind::EnumCase: {
                 ConstantValue constant_pattern;
                 if (try_constant_pattern_value(aliased, constant_pattern)) {
@@ -6617,12 +6619,16 @@ private:
         return literal;
     }
 
-    static void lower_aggregate_enum_payload_range_pattern(const Pattern& pattern,
-                                                           const IrType& payload_type,
-                                                           IrMatchArm& lowered_arm,
-                                                           std::uint32_t payload_index) {
+    static void lower_enum_payload_range_pattern(const Pattern& pattern,
+                                                 const IrType& payload_type,
+                                                 IrMatchArm& lowered_arm,
+                                                 std::uint32_t payload_index,
+                                                 bool compact_enum_payload) {
         if (!is_value_integer_type(payload_type)) {
             fail(pattern.loc, "range payload patterns require an integer enum payload");
+        }
+        if (compact_enum_payload && payload_index != 0) {
+            fail(pattern.loc, "compact enum payload ranges require a single payload slot");
         }
         make_payload_range_endpoint_literal(
             pattern.loc,
@@ -6650,7 +6656,8 @@ private:
             pattern.range_end_negative,
             pattern.range_inclusive,
             is_unsigned_integer_primitive(payload_type.primitive),
-            payload_type
+            payload_type,
+            compact_enum_payload
         });
     }
 

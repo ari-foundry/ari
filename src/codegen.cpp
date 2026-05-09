@@ -1497,12 +1497,42 @@ private:
 
     template <typename Arm>
     std::vector<std::size_t> emit_match_arm_fail_jumps(const Arm& arm) {
-        if (!arm.payload_literal_conditions.empty() || !arm.payload_range_conditions.empty()) {
+        if (!arm.payload_literal_conditions.empty()) {
             throw CompileError(where(arm.loc) + ": freestanding backend does not lower aggregate enum payload test patterns yet");
         }
+        if (!arm.payload_range_conditions.empty()) return emit_compact_payload_range_fail_jumps(arm);
         if (arm.has_range) return emit_match_range_fail_jumps(arm);
         emit_match_arm_test(arm);
         return {emit_jcc_placeholder(0x85)};
+    }
+
+    template <typename Arm>
+    std::vector<std::size_t> emit_compact_payload_range_fail_jumps(const Arm& arm) {
+        std::vector<std::size_t> patches;
+        emit_match_arm_test(arm);
+        patches.push_back(emit_jcc_placeholder(0x85));
+
+        for (const auto& condition : arm.payload_range_conditions) {
+            if (!condition.compact_enum_payload || condition.index != 0) {
+                throw CompileError(where(arm.loc) + ": freestanding backend does not lower aggregate enum payload test patterns yet");
+            }
+
+            emit_mov_reg_rsp(Reg::RAX);
+            emit_shr_rax_imm8(32);
+            emit_cast_payload_to_type(arm.loc, condition.type);
+            emit_mov_reg_imm64(Reg::RCX, payload_range_start_bits(condition));
+            emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+            patches.push_back(emit_jcc_placeholder(condition.is_unsigned ? 0x82 : 0x8C));
+
+            emit_mov_reg_rsp(Reg::RAX);
+            emit_shr_rax_imm8(32);
+            emit_cast_payload_to_type(arm.loc, condition.type);
+            emit_mov_reg_imm64(Reg::RCX, payload_range_end_bits(condition));
+            emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+            patches.push_back(emit_jcc_placeholder(payload_range_past_end_cc(condition)));
+        }
+
+        return patches;
     }
 
     template <typename Arm>
@@ -1552,6 +1582,19 @@ private:
     static std::uint8_t range_past_end_cc(const Arm& arm) {
         if (arm.range_inclusive) return arm.range_is_unsigned ? 0x87 : 0x8F;
         return arm.range_is_unsigned ? 0x83 : 0x8D;
+    }
+
+    static std::uint64_t payload_range_start_bits(const IrPayloadRangeCondition& condition) {
+        return condition.start_negative ? 0 - condition.start_int : condition.start_int;
+    }
+
+    static std::uint64_t payload_range_end_bits(const IrPayloadRangeCondition& condition) {
+        return condition.end_negative ? 0 - condition.end_int : condition.end_int;
+    }
+
+    static std::uint8_t payload_range_past_end_cc(const IrPayloadRangeCondition& condition) {
+        if (condition.inclusive) return condition.is_unsigned ? 0x87 : 0x8F;
+        return condition.is_unsigned ? 0x83 : 0x8D;
     }
 
     void emit_if_expr(const IrExpr& expr) {

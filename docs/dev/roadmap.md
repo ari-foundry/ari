@@ -50,12 +50,11 @@
    Symbolic rectangle coverage now proves high-cardinality integer/bool product
    exhaustiveness without enumerating every value, and non-exhaustive product
    matches now suggest a missing product shape when Ari can express the gap.
-   Aggregate enum payload slots now support scalar literal, constant, alias, and
+   Compact one-word enum payload slots now support literal, range, alias, and
+   or-pattern alternatives over literal/range payloads in match patterns.
+   Aggregate enum payload slots support scalar literal, constant, alias, and
    or-pattern alternatives over literal/range payloads on the LLVM backend.
    - [enum-nested] support nested enum-case subpatterns inside aggregate enum payload slots
-   - [compact-ranges] support range and or-pattern alternatives for compact
-     one-word enum payload slots, or retire that packed payload matching path in
-     favor of aggregate enum matching
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

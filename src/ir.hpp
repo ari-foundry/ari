@@ -104,6 +104,7 @@ struct IrPayloadRangeCondition {
     bool inclusive = false;
     bool is_unsigned = false;
     IrType type;
+    bool compact_enum_payload = false;
 };
 
 struct IrMatchExprArm {

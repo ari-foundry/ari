@@ -315,7 +315,7 @@ check-match: $(TARGET)
 	$(TARGET) --freestanding tests/ok/match-alias-pattern.ari -o $(BUILD_DIR)/match/match-alias-pattern.raw
 	$(BUILD_DIR)/match/match-alias-pattern.raw; code=$$?; test $$code -eq 28
 	$(TARGET) --freestanding tests/ok/match-enum-payload-literals.ari -o $(BUILD_DIR)/match/match-enum-payload-literals.raw
-	$(BUILD_DIR)/match/match-enum-payload-literals.raw; code=$$?; test $$code -eq 39
+	$(BUILD_DIR)/match/match-enum-payload-literals.raw; code=$$?; test $$code -eq 66
 	$(TARGET) --freestanding tests/ok/constant-patterns.ari -o $(BUILD_DIR)/match/constant-patterns.raw
 	$(BUILD_DIR)/match/constant-patterns.raw; code=$$?; test $$code -eq 61
 	$(TARGET) --freestanding tests/ok/constant-folding.ari -o $(BUILD_DIR)/match/constant-folding.raw
@@ -341,6 +341,7 @@ check-match: $(TARGET)
 	$(TARGET) tests/ok/match-enum-payload-literals.ari --emit-llvm $(BUILD_DIR)/match/match-enum-payload-literals.ll
 	grep -q "4294967297" $(BUILD_DIR)/match/match-enum-payload-literals.ll
 	grep -q "icmp eq i64" $(BUILD_DIR)/match/match-enum-payload-literals.ll
+	grep -q "icmp sle i32" $(BUILD_DIR)/match/match-enum-payload-literals.ll
 	$(TARGET) tests/ok/enum-multi-payload.ari --emit-llvm $(BUILD_DIR)/match/enum-multi-payload.ll
 	grep -q "insertvalue { i32, i64, i64, i64 }" $(BUILD_DIR)/match/enum-multi-payload.ll
 	grep -q "extractvalue { i32, i64, i64, i64 }" $(BUILD_DIR)/match/enum-multi-payload.ll
