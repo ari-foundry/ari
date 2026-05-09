@@ -119,6 +119,10 @@ aggregate size/alignment model for explicit pointer code. The raw
 `--freestanding` backend uses those same Ari byte offsets for tuple, struct,
 tuple-struct, and fixed-array pointer field/element access; aggregate enum
 payload storage there is still planned.
+The raw `--freestanding` backend does not link or call external C symbols yet;
+calling an `extern "C"` function there is rejected with a backend diagnostic.
+Use the LLVM host backend for C interop, or expose the operation through a
+future Ari runtime shim for raw targets.
 Host LLVM builds can allocate raw memory from explicit zones with
 `zone::create`, `zone::alloc`, `zone::reset`, and `zone::destroy`; the result of
 raw byte allocation is a `ptr u8` that can be cast and used with the same raw

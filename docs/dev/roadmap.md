@@ -74,8 +74,10 @@
    - [abi-aggregate-calls] pass and return tuple, struct, fixed-array, and
      aggregate enum values with explicit platform ABI rules instead of relying
      on local-stack materialization
-   - [abi-extern] document and enforce the split between Ari-internal scalar
-     call lowering and platform C ABI lowering for exported/imported symbols
+   - [abi-extern-exports] define platform ABI lowering for `@export`,
+     `@no_mangle`, and future imported symbols on raw/freestanding targets;
+     direct `extern "C"` calls are rejected there until a real C ABI/link path
+     exists
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

@@ -1425,6 +1425,8 @@ check-ffi: $(TARGET)
 	grep -q "variadic extern function 'printf' cannot be used as a function pointer value" $(BUILD_DIR)/ffi/extern-varargs-function-pointer.err
 	if $(TARGET) tests/errors/extern-generic.ari -o $(BUILD_DIR)/ffi/extern-generic.elf >$(BUILD_DIR)/ffi/extern-generic.err 2>&1; then exit 1; fi
 	grep -q "extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C" $(BUILD_DIR)/ffi/extern-generic.err
+	if $(TARGET) --freestanding tests/errors/freestanding-extern-c-call.ari -o $(BUILD_DIR)/ffi/freestanding-extern-c-call.raw >$(BUILD_DIR)/ffi/freestanding-extern-c-call.err 2>&1; then exit 1; fi
+	grep -q 'freestanding backend cannot call extern "C" function' $(BUILD_DIR)/ffi/freestanding-extern-c-call.err
 	if $(TARGET) tests/errors/null-non-pointer.ari -o $(BUILD_DIR)/ffi/null-non-pointer.elf >$(BUILD_DIR)/ffi/null-non-pointer.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got ptr void" $(BUILD_DIR)/ffi/null-non-pointer.err
 	if $(TARGET) tests/errors/nullable-qualified.ari -o $(BUILD_DIR)/ffi/nullable-qualified.elf >$(BUILD_DIR)/ffi/nullable-qualified.err 2>&1; then exit 1; fi

@@ -67,7 +67,8 @@ struct CompiledFunction {
 
 class FunctionEmitter {
 public:
-    explicit FunctionEmitter(const IrFunction& fn) : fn_(fn) {}
+    FunctionEmitter(const IrFunction& fn, const std::map<std::string, IrExternAbi>& extern_abis)
+        : fn_(fn), extern_abis_(extern_abis) {}
 
     CompiledFunction emit() {
         for (const auto& param : fn_.params) add_local(param.name, param.type);
@@ -110,6 +111,7 @@ private:
     };
 
     const IrFunction& fn_;
+    const std::map<std::string, IrExternAbi>& extern_abis_;
     CodeBuffer out_;
     std::map<std::string, int> locals_;
     std::map<std::string, IrType> local_types_;
@@ -1789,6 +1791,7 @@ private:
 
     void emit_call(const IrExpr& expr) {
         static const Reg arg_regs[] = {Reg::RDI, Reg::RSI, Reg::RDX, Reg::RCX, Reg::R8, Reg::R9};
+        reject_c_extern_use(expr.loc, expr.name, "call");
         if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(expr.name)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
                                *blocked + " yet; use the LLVM host backend");
@@ -1816,12 +1819,21 @@ private:
     }
 
     void emit_function_ref(const IrExpr& expr) {
+        reject_c_extern_use(expr.loc, expr.name, "take the address of");
         out_.u8(0x48);
         out_.u8(0x8D);
         out_.u8(0x05);
         std::size_t pos = out_.size();
         out_.u32(0);
         addresses_.push_back(CallPatch{pos, expr.name});
+    }
+
+    void reject_c_extern_use(SourceLocation loc, const std::string& name, const std::string& operation) const {
+        auto found = extern_abis_.find(name);
+        if (found == extern_abis_.end() || found->second != IrExternAbi::C) return;
+        throw CompileError(where(loc) + ": freestanding backend cannot " + operation +
+                           " extern \"C\" function '" + name +
+                           "'; use the LLVM host backend or provide an Ari runtime shim");
     }
 
     void emit_indirect_call(const IrExpr& expr) {
@@ -2317,10 +2329,11 @@ public:
     explicit ProgramEmitter(const IrProgram& program) : program_(program) {}
 
     EmittedProgram emit() {
+        collect_extern_abis();
         emit_entry();
         std::vector<CompiledFunction> functions;
         for (const auto& fn : program_.functions) {
-            FunctionEmitter emitter(fn);
+            FunctionEmitter emitter(fn, extern_abis_);
             functions.push_back(emitter.emit());
         }
         for (std::size_t i = 0; i < functions.size(); ++i) {
@@ -2350,9 +2363,16 @@ private:
     const IrProgram& program_;
     CodeBuffer code_;
     std::map<std::string, std::size_t> function_offsets_;
+    std::map<std::string, IrExternAbi> extern_abis_;
     std::vector<CallPatch> global_calls_;
     std::vector<CallPatch> global_addresses_;
     std::vector<CodeSymbol> symbols_;
+
+    void collect_extern_abis() {
+        for (const auto& fn : program_.extern_functions) {
+            extern_abis_[fn.name] = fn.abi;
+        }
+    }
 
     std::size_t emit_jmp_placeholder() {
         code_.u8(0xE9);
