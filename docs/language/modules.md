@@ -275,6 +275,8 @@ module cache when you want to reuse a validated package source snapshot.
 Current metadata is written as `ari-module-metadata-v2`; older v1 summaries can
 be parsed for diagnostics, but `--check-module-metadata` asks you to regenerate
 them because v1 lacks source content hashes.
+Malformed summaries that repeat an exact source, import, or item record are
+rejected when read.
 
 Use `--check-module-metadata` to read an existing summary and verify that the
 current source graph still matches it:
@@ -313,7 +315,8 @@ features, implicit `std` mode, current source content hashes, and whether each
 cached `mod` import still resolves to the same file. If any input changed, Ari
 rejects the cache and asks you to regenerate it with `--emit-module-cache`.
 Malformed caches that repeat a source snapshot for the same module/path/root
-record are rejected before validation.
+record are rejected before validation. The embedded metadata summary is parsed
+with the same duplicate-record checks as a standalone `.arimeta` file.
 After validation succeeds, file-backed module imports are resolved from the
 validated cache import table instead of searching candidate paths again.
 After reading from the cached source snapshot, Ari also rebuilds the module

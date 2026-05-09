@@ -36,7 +36,8 @@
    stale diagnostics today. Source records carry stable content hashes, cache
    validation catches body changes even when declaration summaries stay the
    same, import resolution is rechecked against the current package layout, and
-   old metadata summaries without source hashes are rejected, and malformed
+   old metadata summaries without source hashes are rejected, malformed
+   metadata with duplicate source/import/item records is rejected, and malformed
    caches with duplicate source records are rejected before validation. The
    current cache resolves file-backed imports from the validated cache table
    after validation, rebuilds metadata from the cached source to catch

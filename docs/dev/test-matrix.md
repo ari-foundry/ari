@@ -291,6 +291,7 @@ Checklist:
 - [x] compact module metadata can be emitted and read back for source-graph validation
 - [x] metadata records stable source content hashes for cache invalidation
 - [x] metadata check rejects old v1 summaries that cannot validate source hashes
+- [x] metadata/cache parsing rejects duplicate source, import, and item summary records
 - [x] stale module metadata reports changed cfg, source, import, and item records
 - [x] source-snapshot module caches can be emitted and reused after validating
       search paths, cfg features, implicit `std`, source hashes, and import
@@ -299,7 +300,7 @@ Checklist:
       the cached import table instead of rediscovering candidate files
 - [x] source-snapshot module cache use rechecks the parsed cached source graph
       against the cache's embedded metadata
-- [x] source-snapshot module cache parsing rejects duplicate source records
+- [x] source-snapshot module cache parsing rejects duplicate source snapshot records
 - [ ] AST/IR package cache summaries skip dependency parsing after validation
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports

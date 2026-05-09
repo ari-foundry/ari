@@ -103,10 +103,10 @@ file-backed modules, selected imports, glob imports, module aliases, public
 re-exports, public glob re-exports, duplicate glob aliases, and private alias
 visibility. It also checks package module search paths through `--module-path`
 and `-I`, plus module metadata emission, source content hashes, and metadata
-read-back validation, including old metadata-version rejection. Source-snapshot
-module cache emission/use is covered here too, with stale cfg, source-hash, and
-import-resolution rejection checks plus malformed duplicate source-record
-rejection.
+read-back validation, including old metadata-version and duplicate-record
+rejection. Source-snapshot module cache emission/use is covered here too, with
+stale cfg, source-hash, and import-resolution rejection checks plus malformed
+duplicate source-record rejection.
 
 `make check-structs` runs struct and ADT-focused tests for struct declarations,
 generic struct field resolution, named struct literals, tuple-struct

@@ -400,6 +400,9 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
     std::size_t line_number = 0;
     ModuleMetadata metadata;
     bool saw_header = false;
+    std::set<std::string> seen_sources;
+    std::set<std::string> seen_imports;
+    std::set<std::string> seen_items;
 
     while (std::getline(in, line)) {
         ++line_number;
@@ -446,35 +449,53 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
                 throw CompileError("invalid module metadata '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed source record");
             }
-            metadata.sources.push_back(ModuleMetadataSource{
+            ModuleMetadataSource source{
                 fields[1],
                 fields[2],
                 fields.size() == 5 ? fields[4] : "",
                 parse_bool_field(fields[3], display_path, line_number),
-            });
+            };
+            if (!seen_sources.insert(source_key(source)).second) {
+                throw CompileError("invalid module metadata '" + display_path + "' at line " +
+                                   std::to_string(line_number) +
+                                   ": duplicate source record for " + source_display(source));
+            }
+            metadata.sources.push_back(std::move(source));
         } else if (tag == "import") {
             if (fields.size() != 6) {
                 throw CompileError("invalid module metadata '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed import record");
             }
-            metadata.imports.push_back(ModuleMetadataImport{
+            ModuleMetadataImport import{
                 fields[1],
                 fields[2],
                 fields[3],
                 fields[4],
                 parse_bool_field(fields[5], display_path, line_number),
-            });
+            };
+            if (!seen_imports.insert(import_key(import)).second) {
+                throw CompileError("invalid module metadata '" + display_path + "' at line " +
+                                   std::to_string(line_number) +
+                                   ": duplicate import record for " + import_display(import));
+            }
+            metadata.imports.push_back(std::move(import));
         } else if (tag == "item") {
             if (fields.size() != 5) {
                 throw CompileError("invalid module metadata '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed item record");
             }
-            metadata.items.push_back(ModuleMetadataItem{
+            ModuleMetadataItem item{
                 fields[1],
                 fields[2],
                 fields[3],
                 parse_bool_field(fields[4], display_path, line_number),
-            });
+            };
+            if (!seen_items.insert(item_key(item)).second) {
+                throw CompileError("invalid module metadata '" + display_path + "' at line " +
+                                   std::to_string(line_number) +
+                                   ": duplicate item record for " + item_display(item));
+            }
+            metadata.items.push_back(std::move(item));
         } else {
             throw CompileError("invalid module metadata '" + display_path + "' at line " +
                                std::to_string(line_number) + ": unknown record");
