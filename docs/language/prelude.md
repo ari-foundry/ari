@@ -394,6 +394,8 @@ let span: Range[i64] = 1..4
 let byte_span: Range[u8] = range(1, 4)
 var first = 1
 let view: Slice[i64] = slice((ref mut first) as ptr i64, 1)
+var data = [1, 2, 3]
+let data_view: Slice[i64] = data.as_slice()
 ```
 
 These names are available without `std::` when implicit `std` loading is on.
@@ -426,9 +428,12 @@ It is non-owning and carries no hidden borrow lifetime yet. The helper
 through a `std` alias. Passing its `data` is the same explicit raw-pointer
 promise as other `ptr T` uses. `view[index]` traps on negative or out-of-range
 indexes; assigning to `view[index]` writes through the stored raw pointer and
-does not mutate the `Slice[T]` metadata. Slicing expressions, array/vector
-borrowed slice helpers, and slice patterns are still planned after the layout
-and borrowing policy are nailed down.
+does not mutate the `Slice[T]` metadata. Mutable local fixed arrays and mutable
+local `Vec[T]` storage can build the same non-owning writable view with
+`values.as_slice()`. The helper captures the array size or current vector
+runtime length, so later vector length changes do not update an existing view.
+Slicing expressions and slice patterns are still planned after the layout and
+binding policy are nailed down.
 `len(view)`, `view.len()`, and `view.is_empty()` read the stored length.
 
 Ranges are compiler-known two-field values:

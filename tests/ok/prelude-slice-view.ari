@@ -20,6 +20,20 @@ fn aliased(slice: core::Slice[i64]) -> i64 {
   return slice[zero] + len(slice) + slice.len();
 }
 
+fn array_view_score() -> i64 {
+  var values = [3, 4, 5];
+  let view = values.as_slice();
+  view[1] = 6;
+  return view[0] + view[1] + view.len() + values[1];
+}
+
+fn vector_view_score() -> i64 {
+  var values: Vec[i64] = [2, 4, 6];
+  let view = values.as_slice();
+  view[2] = 7;
+  return view[0] + view[2] + view.len() + values[2];
+}
+
 fn main() -> i64 {
   var first = 5;
   var second = 7;
@@ -32,5 +46,5 @@ fn main() -> i64 {
   two[0] = 8;
   three[0] = 12;
   let empty_score = if empty.is_empty() { 1 } else { 0 };
-  return score(one) + qualified(two) + aliased(three) + empty_score;
+  return score(one) + qualified(two) + aliased(three) + empty_score + array_view_score() + vector_view_score();
 }

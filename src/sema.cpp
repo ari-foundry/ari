@@ -2648,6 +2648,20 @@ private:
         return prelude_range_type(loc, inclusive, i64_type(loc));
     }
 
+    static IrType prelude_slice_type(SourceLocation loc, const IrType& element) {
+        IrType type = primitive_type(IrPrimitiveKind::Struct, "std::Slice", loc);
+        IrType data = element;
+        data.qualifier = TypeQualifier::Ptr;
+        type.args.push_back(element);
+        type.field_names.push_back("data");
+        type.field_types.push_back(data);
+        type.field_mutable.push_back(false);
+        type.field_names.push_back("len");
+        type.field_types.push_back(i64_type(loc));
+        type.field_mutable.push_back(false);
+        return type;
+    }
+
     static IrType vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
         IrType type = primitive_type(IrPrimitiveKind::Vector, "Vec", loc);
         type.args.push_back(element);
@@ -12996,6 +13010,95 @@ private:
         return lowered;
     }
 
+    static IrExprPtr make_raw_pointer_to_lvalue(SourceLocation loc, IrExprPtr lvalue, const IrType& element) {
+        IrType pointer = element;
+        pointer.qualifier = TypeQualifier::Ptr;
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::Borrow;
+        lowered->loc = loc;
+        lowered->type = std::move(pointer);
+        lowered->operand = std::move(lvalue);
+        return lowered;
+    }
+
+    IrExprPtr make_slice_view_expr(SourceLocation loc,
+                                   IrExprPtr data,
+                                   IrExprPtr length,
+                                   const IrType& element) {
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->kind = IrExprKind::Tuple;
+        lowered->loc = loc;
+        lowered->type = prelude_slice_type(loc, element);
+        lowered->args.reserve(2);
+        lowered->args.push_back(std::move(data));
+        lowered->args.push_back(std::move(length));
+        return lowered;
+    }
+
+    LocalInfo* slice_view_local_method_receiver(const Expr& method_expr) {
+        if (!method_expr.operand || method_expr.operand->kind != ExprKind::Name) return nullptr;
+        LocalInfo* local = find_local_slot(method_expr.operand->name);
+        if (!local) return nullptr;
+        if (local->type.primitive != IrPrimitiveKind::Array &&
+            local->type.primitive != IrPrimitiveKind::Vector) {
+            return nullptr;
+        }
+        if (local->type.args.size() != 1) return nullptr;
+        return local;
+    }
+
+    void require_slice_view_receiver(SourceLocation loc,
+                                     const std::string& name,
+                                     const LocalInfo& local) const {
+        if (local.state != LocalState::Alive) {
+            fail(loc, "cannot use " + state_name(local.state) + " binding '" + name + "'");
+        }
+        if (!local.mutable_binding) {
+            fail(loc, "cannot call as_slice on immutable binding '" + name + "'");
+        }
+        if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
+            fail(loc, "as_slice currently supports copyable element arrays and vectors only");
+        }
+        require_slice_element_materializable(loc, local.type.args[0], "Slice.as_slice");
+        require_not_borrowed(loc, name, local, "create Slice from");
+    }
+
+    IrExprPtr check_slice_view_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_slice_view_receiver(expr.loc, name, local);
+        if (!expr.type_args.empty()) fail(expr.loc, "as_slice does not take type arguments");
+        if (!expr.args.empty()) fail(expr.loc, "as_slice expects no arguments");
+
+        const IrType& element = local.type.args[0];
+        IrExprPtr data;
+        IrExprPtr length;
+        if (local.type.primitive == IrPrimitiveKind::Array) {
+            data = make_raw_pointer_to_lvalue(
+                expr.loc,
+                make_local_lvalue_expr(expr.operand->loc, name, local.type),
+                element
+            );
+            length = make_integer_literal(expr.loc, i64_type(expr.loc), local.type.array_size);
+        } else {
+            IrType storage = array_storage_type(expr.operand->loc, element, local.type.array_size);
+            auto storage_lvalue = std::make_unique<IrExpr>();
+            storage_lvalue->kind = IrExprKind::TupleIndex;
+            storage_lvalue->loc = expr.operand->loc;
+            storage_lvalue->tuple_index = 1;
+            storage_lvalue->type = std::move(storage);
+            storage_lvalue->operand = make_vec_local_lvalue(expr.operand->loc, name, local.type);
+
+            data = make_raw_pointer_to_lvalue(expr.loc, std::move(storage_lvalue), element);
+            length = make_collection_len_expr(
+                expr.loc,
+                make_vec_local_lvalue(expr.operand->loc, name, local.type)
+            );
+        }
+        return make_slice_view_expr(expr.loc, std::move(data), std::move(length), element);
+    }
+
     IrExprPtr check_vec_len_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
         if (!expr.type_args.empty()) {
@@ -14119,6 +14222,11 @@ private:
         }
         if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr.operand)) {
             return check_collection_is_empty_method_call(expr);
+        }
+        if (expr.name == "as_slice") {
+            if (LocalInfo* local = slice_view_local_method_receiver(expr)) {
+                return check_slice_view_method_call(expr, std::move(lowered), *local);
+            }
         }
         if (expr.name == "first") {
             if (LocalInfo* local = vec_local_method_receiver(expr, "first")) {

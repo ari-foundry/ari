@@ -55,8 +55,6 @@
    nearer dependency than allocator-backed collection APIs because it gives
    arrays, vectors, and FFI buffers one shared view shape before `Vec[T]`
    moves to heap storage.
-   - [array-view] add borrowed fixed-array and stored-vector helper functions
-     that build `Slice[T]` without exposing pointer arithmetic at every callsite
    - [slice-expr] add `view[start..end]` and `view[start..=end]` expressions
      once range-to-length bounds rules are explicit
    - [patterns] add slice patterns after the shared pattern binding-mode engine
