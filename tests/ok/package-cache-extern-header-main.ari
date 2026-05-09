@@ -1,0 +1,6 @@
+mod extern_header;
+
+fn main() -> i64 {
+  extern_header::puts("cache extern header");
+  0
+}

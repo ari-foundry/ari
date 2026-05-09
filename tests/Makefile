@@ -505,6 +505,10 @@ check-modules: $(TARGET)
 	grep -Eq "ast-summary.*cache_decls.*tests/packages/cache_decls.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-decls.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-decls-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-decls.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-decls-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-decls-cache.ll $(BUILD_DIR)/modules/package-cache-decls-cache-use.ll
+	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache.ll
+	grep -Eq "ast-summary.*extern_header.*tests/packages/extern_header.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-extern-header.aricache
+	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache-use.ll
+	cmp -s $(BUILD_DIR)/modules/package-cache-extern-header-cache.ll $(BUILD_DIR)/modules/package-cache-extern-header-cache-use.ll
 	awk 'NR == 1 { print "ari-module-cache-v1"; next } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-v1.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-v1.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-v1.ll >$(BUILD_DIR)/modules/package-module-main-cache-v1.err 2>&1; then exit 1; fi
 	grep -q "old module cache format" $(BUILD_DIR)/modules/package-module-main-cache-v1.err

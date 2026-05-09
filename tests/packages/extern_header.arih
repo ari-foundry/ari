@@ -1,0 +1,1 @@
+pub extern "C" fn puts(text: string) -> i32 = "puts";

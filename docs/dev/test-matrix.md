@@ -311,6 +311,8 @@ Checklist:
       disagreement
 - [x] AST summary declaration payloads materialize back into declaration-only
       `Program` records and round-trip before cache use
+- [x] cached header-like dependencies can load declaration-safe materialized
+      summaries instead of reparsing cached source text
 - [ ] AST/IR package cache summaries skip dependency parsing after validation
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports

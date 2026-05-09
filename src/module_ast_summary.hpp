@@ -13,5 +13,6 @@ void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary&
                                                     const std::string& display_path);
 Program materialize_module_cache_ast_summary_declarations(const ModuleCacheAstSummary& summary,
                                                           const std::string& display_path);
+bool can_load_module_cache_ast_summary_declarations(const Program& program);
 
 } // namespace ari

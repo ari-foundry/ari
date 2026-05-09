@@ -138,11 +138,25 @@ void append_program(Program& dst, Program&& src) {
 ParsedModuleFile parse_file_in_module(const std::string& path,
                                       const std::vector<std::string>& module_path,
                                       const std::set<std::string>& cfg_features,
-                                      const ModuleCache* input_cache) {
+                                      const ModuleCache* input_cache,
+                                      bool allow_summary_materialize) {
     std::string source;
     if (input_cache) {
         const ModuleCacheSource* cached = find_module_cache_source(*input_cache, path);
         if (!cached) throw CompileError("module cache is missing source '" + path + "'");
+        if (allow_summary_materialize) {
+            const ModuleCacheAstSummary* summary = find_module_cache_ast_summary(*input_cache, path);
+            if (summary) {
+                Program declarations = materialize_module_cache_ast_summary_declarations(*summary, path);
+                if (can_load_module_cache_ast_summary_declarations(declarations)) {
+                    return ParsedModuleFile{
+                        std::move(declarations),
+                        summary->content_hash,
+                        cached->source,
+                    };
+                }
+            }
+        }
         source = cached->source;
     } else {
         source = read_file(path);
@@ -165,7 +179,7 @@ public:
         metadata_.module_search_paths = options_.module_search_paths;
         metadata_.cfg_features = options_.cfg_features;
         metadata_.implicit_std = options_.implicit_std;
-        ParsedModuleFile root = parse_file_in_module(input, {}, options_.cfg_features, options_.input_cache);
+        ParsedModuleFile root = parse_file_in_module(input, {}, options_.cfg_features, options_.input_cache, false);
         Program program = std::move(root.program);
         collect_source(input, root, {}, program, true);
         if (options_.implicit_std) load_standard_module(program);
@@ -226,7 +240,7 @@ private:
         program.modules.push_back(std::move(decl));
 
         std::vector<std::string> module_path{name};
-        ParsedModuleFile standard_file = parse_file_in_module(*path, module_path, options_.cfg_features, options_.input_cache);
+        ParsedModuleFile standard_file = parse_file_in_module(*path, module_path, options_.cfg_features, options_.input_cache, true);
         Program standard = std::move(standard_file.program);
         collect_source(*path, standard_file, module_path, standard, false);
         loaded_modules_.emplace(name, *path);
@@ -267,7 +281,7 @@ private:
 
             loading_modules_.insert(import.name);
             std::vector<std::string> module_path = split_qualified_path(import.name);
-            ParsedModuleFile child_file = parse_file_in_module(source_path, module_path, options_.cfg_features, options_.input_cache);
+            ParsedModuleFile child_file = parse_file_in_module(source_path, module_path, options_.cfg_features, options_.input_cache, true);
             Program child = std::move(child_file.program);
             collect_source(source_path, child_file, module_path, child, false);
             resolve_imports(child, dirname(source_path));

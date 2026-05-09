@@ -44,12 +44,14 @@
    payloads, parse those payloads during cache loading, and validate their
    internal hashes, top-level counts, and declaration materialization
    round-trips before rechecking them against the parsed cached source
-   snapshot. The remaining package-cache work is to wire those trusted
-   materialized declarations into dependency loading and then skip dependency
-   source parsing once validation succeeds.
-   - [loader-materialize] feed materialized AST-summary declarations or future
-     IR-summary declarations into the module loader instead of reparsing cached
-     dependency source text
+   snapshot. Header-like cached dependencies whose summaries contain only
+   declaration-safe items can now feed materialized declarations directly into
+   the loader without reparsing the cached source snapshot. The remaining
+   package-cache work is to extend that path to future IR summaries for
+   dependencies with executable bodies, then skip dependency source parsing
+   whenever validation succeeds.
+   - [ir-materialize] feed future IR-summary declarations/bodies into the
+     module loader for dependencies with executable function or impl bodies
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs

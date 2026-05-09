@@ -732,4 +732,17 @@ Program materialize_module_cache_ast_summary_declarations(const ModuleCacheAstSu
     }
 }
 
+bool can_load_module_cache_ast_summary_declarations(const Program& program) {
+    if (!program.constants.empty()) return false;
+    for (const auto& fn : program.functions) {
+        if (fn.has_body && !fn.is_extern) return false;
+    }
+    for (const auto& impl : program.impls) {
+        for (const auto& method : impl.methods) {
+            if (method.has_body) return false;
+        }
+    }
+    return true;
+}
+
 } // namespace ari
