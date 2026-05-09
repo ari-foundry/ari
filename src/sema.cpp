@@ -2968,7 +2968,9 @@ private:
                 std::string resolved_name = resolve_enum_type_name(type.name);
                 auto enum_found = enums_.find(resolved_name);
                 if (enum_found != enums_.end()) {
-                    if (type.qualifier != TypeQualifier::Value) {
+                    TypeQualifier requested_qualifier = type.qualifier;
+                    if (requested_qualifier != TypeQualifier::Value &&
+                        requested_qualifier != TypeQualifier::Ptr) {
                         fail(type.loc, "enum ownership qualifiers are not supported in the executable subset yet");
                     }
                     require_module_path_access(type.loc, enum_found->second.module_name);
@@ -2984,7 +2986,7 @@ private:
                         type_args.push_back(resolve_executable_type(arg));
                     }
                     type = resolve_enum_type_application(ast_type.loc, enum_found->second, type_args);
-                    type.qualifier = TypeQualifier::Value;
+                    type.qualifier = requested_qualifier;
                     type.loc = ast_type.loc;
                 } else {
                     std::size_t planned_arity = 0;

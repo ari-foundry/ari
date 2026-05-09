@@ -1,0 +1,48 @@
+enum Inner {
+  Empty,
+  Small(i32),
+}
+
+enum Outer {
+  Wrap(Inner),
+  Other(i64),
+  None,
+}
+
+fn main() -> i64 {
+  var first: Outer = Wrap(Small(4));
+  var second: Outer = None;
+
+  let first_raw: ptr Outer = (ref mut first) as ptr Outer;
+  let second_raw: ptr Outer = (ref mut second) as ptr Outer;
+
+  let loaded: Outer = *first_raw;
+  let a: i64 = match loaded {
+    Wrap(Small(inner @ 4)) => inner as i64,
+    _ => 0;
+  };
+
+  *second_raw = loaded;
+  let copied: Outer = ptr_load(second_raw);
+  let b: i64 = match copied {
+    Wrap(Small(copy_inner @ 2..=5)) => copy_inner as i64,
+    _ => 0;
+  };
+
+  first = Other(9i64);
+  *second_raw = *first_raw;
+  let pointer_copy: Outer = *second_raw;
+  let c: i64 = match pointer_copy {
+    Other(value) => value,
+    _ => 0;
+  };
+
+  *first_raw = copied;
+  let restored: Outer = ptr_load(first_raw);
+  let d: i64 = match restored {
+    Wrap(Small(restored_inner @ 4)) => restored_inner as i64,
+    _ => 0;
+  };
+
+  return a + b + c + d;
+}

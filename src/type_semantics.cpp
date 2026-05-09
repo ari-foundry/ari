@@ -135,7 +135,9 @@ bool is_raw_memory_value_type(const IrType& type) {
 
 bool is_raw_pointer_deref_value_type(const IrType& type) {
     if (type.qualifier != TypeQualifier::Value) return false;
-    return is_raw_memory_value_type(type) || is_aggregate_type(type);
+    return is_raw_memory_value_type(type) ||
+           is_aggregate_type(type) ||
+           has_aggregate_enum_layout(type);
 }
 
 bool is_integer_literal(const IrExpr& expr) {

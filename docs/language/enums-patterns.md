@@ -103,7 +103,8 @@ values. Tuples, structs, vectors, owned values, and nested aggregate-enum
 payloads remain planned. The freestanding backend can store and copy local
 aggregate enum values, then match local values by tag with positional payload
 bindings, scalar payload literal/range tests, and one-level compact enum-case
-payload tests. Pointer-backed aggregate enum copies and aggregate enum
+payload tests. Pointer-backed aggregate enum copies work through `ptr_load`,
+`ptr_store`, and `*pointer` when the pointer is a `ptr EnumType`. Aggregate enum
 parameters/returns remain planned there.
 
 ## Passing And Returning

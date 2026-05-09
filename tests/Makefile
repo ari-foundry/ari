@@ -397,6 +397,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-payload-tests.raw; code=$$?; test $$code -eq 73
 	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-nested-payload.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-nested-payload.raw
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-nested-payload.raw; code=$$?; test $$code -eq 99
+	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-pointer-copy.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw
+	$(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw; code=$$?; test $$code -eq 21
 	$(TARGET) tests/ok/enum-pointer-shaped-payloads.ari --emit-llvm $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "ptrtoint ptr" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "inttoptr i64" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll

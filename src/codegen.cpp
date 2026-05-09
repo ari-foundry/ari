@@ -411,9 +411,6 @@ private:
     }
 
     void copy_pointer_bytes_to_offset(const IrExpr& source, const IrType& target_type, int target_offset) {
-        if (has_aggregate_enum_layout(target_type)) {
-            throw CompileError(where(source.loc) + ": freestanding backend does not lower multi-payload enum values yet");
-        }
         int size = layout_size_bytes(source.loc, target_type);
         IrType byte_type = u8_type(source.loc);
         emit_pointer_lvalue_address(source);
@@ -438,9 +435,6 @@ private:
     }
 
     void copy_pointer_bytes_to_pointer_base(const IrExpr& source, const IrType& target_type, int byte_offset) {
-        if (has_aggregate_enum_layout(target_type)) {
-            throw CompileError(where(source.loc) + ": freestanding backend does not lower multi-payload enum values yet");
-        }
         int size = layout_size_bytes(source.loc, target_type);
         IrType byte_type = u8_type(source.loc);
         emit_push(Reg::RBX);
@@ -546,6 +540,10 @@ private:
             copy_local_bytes_to_offset(value.loc, lvalue_offset(value), target_offset, target_type);
             return;
         }
+        if (is_pointer_backed_lvalue(value) && is_aggregate_type(value.type)) {
+            copy_pointer_bytes_to_offset(value, target_type, target_offset);
+            return;
+        }
         throw CompileError(where(value.loc) +
                            ": freestanding backend can only store local multi-payload enum values or constructors yet");
     }
@@ -563,10 +561,6 @@ private:
             emit_add_pointer_offset_reg(Reg::RCX, byte_offset);
             emit_store_rax_to_ptr(Reg::RCX, target_type);
             return;
-        }
-
-        if (has_aggregate_enum_layout(target_type)) {
-            throw CompileError(where(value.loc) + ": freestanding backend does not lower multi-payload enum values yet");
         }
 
         if (value.kind == IrExprKind::Tuple ||
