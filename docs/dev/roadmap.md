@@ -4,8 +4,9 @@
 
 1. Start allocator-backed growable `Vec[T]`.
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
-   `Vec.capacity()` / `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` /
-   `Vec.set(index, value)` lower today on the LLVM backend as stack-backed
+   `Vec.pop()` / `Vec.capacity()` / `Vec.is_empty()` / `Vec.clear()` /
+   `Vec.truncate(n)` / `Vec.set(index, value)` lower today on the LLVM backend
+   as stack-backed
    values with compile-time capacity and runtime length checks. Local `push`
    now auto-widens stack storage when sema can track the current length, so
    empty `Vec[T]` locals can grow through straight-line pushes without an
@@ -17,8 +18,8 @@
    - [allocator] thread explicit allocator/capability values through creation
    - [capacity] replace local literal/reserve capacity with runtime heap
      capacity growth
-   - [ops-runtime] connect `push` and `reserve` to allocator-backed growth
-     instead of fixed local-capacity traps
+   - [ops-runtime] connect `push`, `pop`, and `reserve` to allocator-backed
+     storage instead of fixed local-capacity traps
 2. Finish package caching for file-backed modules.
    Compact module metadata and source-snapshot module caches can be emitted,
    checked, and invalidated with cfg/search-path/source/import/item-specific

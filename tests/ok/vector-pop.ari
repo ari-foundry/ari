@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [3, 4, 5];
+  let last: i64 = values.pop();
+  let middle: i64 = values.pop();
+  values.push(9);
+  return values.capacity() + len(values) + last + middle + values[0] + values[1];
+}

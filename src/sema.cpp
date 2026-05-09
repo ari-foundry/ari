@@ -12200,6 +12200,25 @@ private:
         return make_vec_capacity_expr(expr.loc, local.type);
     }
 
+    IrExprPtr check_vec_pop_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_mutable_vec_method_receiver(expr.loc, name, local, "pop");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.pop does not take type arguments");
+        if (!expr.args.empty()) fail(expr.loc, "Vec.pop expects no arguments");
+        if (local.vector_length_known) {
+            if (local.vector_known_length > 0) {
+                --local.vector_known_length;
+            } else {
+                invalidate_vector_known_length(local);
+            }
+        }
+        return make_vec_pop_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type)
+        );
+    }
+
     IrExprPtr check_vec_clear_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
         const std::string& name = expr.operand->name;
@@ -13090,6 +13109,11 @@ private:
         if (expr.name == "capacity") {
             if (LocalInfo* local = vec_local_method_receiver(expr, "capacity")) {
                 return check_vec_capacity_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "pop") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "pop")) {
+                return check_vec_pop_method_call(expr, std::move(lowered), *local);
             }
         }
         if (expr.name == "clear") {

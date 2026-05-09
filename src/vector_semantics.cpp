@@ -93,6 +93,21 @@ IrExprPtr make_vec_capacity_expr(SourceLocation loc, const IrType& type) {
     return make_i64_literal(loc, type.array_size);
 }
 
+IrExprPtr make_vec_pop_expr(SourceLocation loc, IrExprPtr vector) {
+    if (!vector || !is_vector_storage_type(vector->type)) {
+        fail(loc, "Vec.pop requires local Vec storage");
+    }
+    if (vector->type.args.empty()) {
+        fail(loc, "Vec.pop requires an element type");
+    }
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::VectorPop;
+    lowered->loc = loc;
+    lowered->type = vector->type.args[0];
+    lowered->operand = std::move(vector);
+    return lowered;
+}
+
 IrExprPtr make_vec_clear_expr(SourceLocation loc, IrExprPtr vector) {
     if (!vector || !is_vector_storage_type(vector->type)) {
         fail(loc, "Vec.clear requires local Vec storage");

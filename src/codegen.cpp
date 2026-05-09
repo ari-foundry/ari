@@ -1308,6 +1308,8 @@ private:
                 throw CompileError(where(expr.loc) + ": backend does not lower vector values yet");
             case IrExprKind::VectorPush:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.push yet");
+            case IrExprKind::VectorPop:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.pop yet");
             case IrExprKind::VectorClear:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.clear yet");
             case IrExprKind::VectorTruncate:

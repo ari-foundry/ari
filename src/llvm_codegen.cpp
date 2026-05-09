@@ -1373,6 +1373,8 @@ private:
                 throw CompileError(where(expr.loc) + ": LLVM backend cannot lower vector value type " + type_name(expr.type));
             case IrExprKind::VectorPush:
                 return emit_vector_push(expr);
+            case IrExprKind::VectorPop:
+                return emit_vector_pop(expr);
             case IrExprKind::VectorClear:
                 return emit_vector_clear(expr);
             case IrExprKind::VectorTruncate:
@@ -1570,6 +1572,41 @@ private:
         line("  " + next_len + " = add i64 " + len + ", 1");
         line("  store i64 " + next_len + ", ptr " + len_ptr);
         return Value{"void", "", expr.type};
+    }
+
+    Value emit_vector_pop(const IrExpr& expr) {
+        if (!expr.operand || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.pop lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        const IrType& element_type = vector_type.args[0];
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string len_ptr = temp();
+        std::string len = temp();
+        std::string empty = temp();
+        std::string fail_label = label("vector.pop.empty");
+        std::string ok_label = label("vector.pop.ok");
+
+        line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 0");
+        line("  " + len + " = load i64, ptr " + len_ptr);
+        line("  " + empty + " = icmp sle i64 " + len + ", 0");
+        line("  br i1 " + empty + ", label %" + fail_label + ", label %" + ok_label);
+        emit_label(fail_label);
+        line("  call void @ari_builtin_panic()");
+        line("  unreachable");
+        emit_label(ok_label);
+
+        std::string next_len = temp();
+        std::string item_ptr = temp();
+        std::string out = temp();
+        line("  " + next_len + " = add i64 " + len + ", -1");
+        line("  store i64 " + next_len + ", ptr " + len_ptr);
+        line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + next_len);
+        line("  " + out + " = load " + llvm_type(element_type) + ", ptr " + item_ptr);
+        return Value{llvm_type(element_type), out, element_type};
     }
 
     Value emit_vector_clear(const IrExpr& expr) {
