@@ -145,6 +145,7 @@ enum class IrExprKind {
     VectorTruncate,
     VectorSet,
     VectorSwap,
+    VectorRemove,
     Noop,
     FormatPrint,
     Match,

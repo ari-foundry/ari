@@ -202,6 +202,25 @@ IrExprPtr make_vec_swap_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr fir
     return lowered;
 }
 
+IrExprPtr make_vec_remove_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr index) {
+    if (!vector || !is_vector_storage_type(vector->type)) {
+        fail(loc, "Vec.remove requires local Vec storage");
+    }
+    if (vector->type.args.empty()) {
+        fail(loc, "Vec.remove requires an element type");
+    }
+    if (!index) {
+        fail(loc, "Vec.remove expects an index");
+    }
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::VectorRemove;
+    lowered->loc = loc;
+    lowered->type = vector->type.args[0];
+    lowered->operand = std::move(vector);
+    lowered->right = std::move(index);
+    return lowered;
+}
+
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length) {
     auto empty = std::make_unique<IrExpr>();
     empty->kind = IrExprKind::Binary;

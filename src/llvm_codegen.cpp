@@ -1383,6 +1383,8 @@ private:
                 return emit_vector_set(expr);
             case IrExprKind::VectorSwap:
                 return emit_vector_swap(expr);
+            case IrExprKind::VectorRemove:
+                return emit_vector_remove(expr);
             case IrExprKind::Noop:
                 return Value{"void", "", expr.type};
             case IrExprKind::FormatPrint:
@@ -1709,6 +1711,68 @@ private:
         line("  store " + element_llvm + " " + second_value + ", ptr " + first_ptr);
         line("  store " + element_llvm + " " + first_value + ", ptr " + second_ptr);
         return Value{"void", "", expr.type};
+    }
+
+    Value emit_vector_remove(const IrExpr& expr) {
+        if (!expr.operand || !expr.right ||
+            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.remove lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        const IrType& element_type = vector_type.args[0];
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
+        Value index = cast_value(emit_expr(*expr.right), index_type);
+        emit_vector_bounds_check(index, vector_type, base);
+
+        std::string element_llvm = llvm_type(element_type);
+        std::string len_ptr = temp();
+        std::string len = temp();
+        std::string next_len = temp();
+        std::string removed_ptr = temp();
+        std::string removed = temp();
+        line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 0");
+        line("  " + len + " = load i64, ptr " + len_ptr);
+        line("  " + next_len + " = add i64 " + len + ", -1");
+        line("  " + removed_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + index.name);
+        line("  " + removed + " = load " + element_llvm + ", ptr " + removed_ptr);
+
+        std::string entry_label = current_label_;
+        std::string cond_label = label("vector.remove.cond");
+        std::string body_label = label("vector.remove.body");
+        std::string end_label = label("vector.remove.end");
+        std::string cursor = temp();
+        std::string should_shift = temp();
+        std::string src_index = temp();
+        std::string dst_ptr = temp();
+        std::string src_ptr = temp();
+        std::string moved = temp();
+        std::string next_cursor = temp();
+
+        line("  br label %" + cond_label);
+        emit_label(cond_label);
+        line("  " + cursor + " = phi i64 [ " + index.name + ", %" + entry_label +
+             " ], [ " + next_cursor + ", %" + body_label + " ]");
+        line("  " + should_shift + " = icmp slt i64 " + cursor + ", " + next_len);
+        line("  br i1 " + should_shift + ", label %" + body_label + ", label %" + end_label);
+
+        emit_label(body_label);
+        line("  " + src_index + " = add i64 " + cursor + ", 1");
+        line("  " + dst_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + cursor);
+        line("  " + src_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + src_index);
+        line("  " + moved + " = load " + element_llvm + ", ptr " + src_ptr);
+        line("  store " + element_llvm + " " + moved + ", ptr " + dst_ptr);
+        line("  " + next_cursor + " = add i64 " + cursor + ", 1");
+        line("  br label %" + cond_label);
+
+        emit_label(end_label);
+        line("  store i64 " + next_len + ", ptr " + len_ptr);
+        return Value{element_llvm, removed, element_type};
     }
 
     void emit_vector_bounds_check(const Value& index, const IrType& vector_type, const std::string& vector_ptr) {

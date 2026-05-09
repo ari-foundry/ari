@@ -1,0 +1,14 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [];
+  values.push(2);
+  values.push(4);
+  values.push(6);
+  values.push(8);
+
+  let removed_middle: i64 = values.remove(1);
+  let shifted: i64 = values.get(1);
+  let last_after_shift: i64 = values.last();
+  let removed_tail: i64 = values.remove(2);
+
+  return removed_middle + shifted + last_after_shift + removed_tail + len(values) + values.capacity();
+}
