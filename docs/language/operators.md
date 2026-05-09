@@ -122,11 +122,13 @@ unwrapped, or another non-generic Maybe/Result-style enum with a compatible
 residual case. This lets `ResultI32` convert into another result enum with a
 different success payload as long as both residual cases carry the same payload
 type, and lets no-payload `None`/`Failure` residuals convert across compatible
-Maybe-style enums. Generic prelude `Maybe[T]`/`Result[T, E]` values are still
-reserved until generic ADT lowering is implemented. Aggregate-layout enums such
-as `MaybeI64` can use `?` when the current function returns that same enum
-type; cross-enum residual conversion for aggregate enum layouts is still
-planned.
+Maybe-style enums. Generic prelude `Option[T]` and `Result[T, E]` are source
+`std` enums using `None`/`Some(T)` and `Err(E)`/`Ok(T)` and can use `?` on
+the LLVM backend path.
+Prelude `Maybe[T]` remains planned; define a user enum or use `Option[T]` for
+the current executable subset. Aggregate-layout enums such as `MaybeI64` can
+use `?` when the current function returns that same enum type; cross-enum
+residual conversion for aggregate enum layouts is still planned.
 
 ## Range Operators
 
@@ -147,8 +149,10 @@ success payload. If it is `None`, `Err`, `Error`, or `Failure`, Ari evaluates
 the right side and uses that fallback value. The fallback must have the same
 type as the success payload.
 
-Generic prelude `Maybe[T]`/`Result[T, E]` values are still reserved until
-generic ADT lowering is implemented.
+Generic prelude `Option[T]` and `Result[T, E]` values use the same rule on the
+LLVM backend path.
+Prelude `Maybe[T]` remains planned until the standard naming policy for
+`Some`/`None` aliases is settled.
 
 Ari's current operator-sugar set is intentionally closed around compound
 assignment, range syntax, postfix `?`, and `??`. Additional null/result

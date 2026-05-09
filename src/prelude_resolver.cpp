@@ -232,12 +232,8 @@ bool is_source_declared_prelude_special_name(const std::string& name) {
 
 bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
     std::string base = unqualified_name(name);
-    if (base == "Option" || base == "Maybe" || base == "Box" || base == "Slice") {
+    if (base == "Maybe" || base == "Box" || base == "Slice") {
         arity = 1;
-        return true;
-    }
-    if (base == "Result") {
-        arity = 2;
         return true;
     }
     return false;
@@ -245,8 +241,8 @@ bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
 
 std::string planned_prelude_type_message(const std::string& name) {
     std::string base = unqualified_name(name);
-    if (base == "Option" || base == "Maybe" || base == "Result") {
-        return "prelude type '" + base + "' is reserved for Maybe/Result values but generic ADT lowering is not implemented yet";
+    if (base == "Maybe") {
+        return "prelude type 'Maybe' is planned; use Option[T] or a user-defined enum until the Maybe alias policy is defined";
     }
     if (base == "Box") {
         return "prelude type 'Box' is planned but needs explicit allocator capabilities first";

@@ -376,11 +376,14 @@ The source header `lib/std.arih` exposes the declaration-shaped zone API:
 `destroy`. `zone::temp` and `zone::scratch` remain compiler-known lexical
 helpers until source declarations can express their hidden lifetime cleanup.
 
-## Reserved Aggregate Surfaces
+## Aggregate Surfaces
 
-The prelude also reserves language-known aggregate surfaces:
+The prelude also exposes language-known aggregate surfaces:
 
 ```ari
+let maybe: Option[i64] = Some(7)
+let missing: Option[i64] = None<i64>()
+let result: Result[i64, i32] = Ok<i64, i32>(9)
 let pair: (i64, bool) = (7, true)
 let values: Vec[i64] = [1, 2, 3]
 let empty: Vec[i64] = []
@@ -421,12 +424,31 @@ for value in half_open {
 The executable subset supports integer range bounds. Half-open ranges iterate
 `start` through `end - 1`; inclusive ranges include `end`.
 
+`Option[T]` and `Result[T, E]` are ordinary source `std` generic enums:
+
+```ari
+enum Option[T] {
+  None,
+  Some(T),
+}
+
+enum Result[T, E] {
+  Err(E),
+  Ok(T),
+}
+```
+
+They are available without `std::` through the implicit prelude. Use explicit
+paths such as `std::Option[i64]`, `std::Some(1)`, or
+`std::Ok<i64, i32>(1)` when you want to spell the source module. Postfix `?`
+and `??` recognize the same Maybe/Result-style enum shapes on the LLVM backend
+path; the freestanding backend still needs the broader aggregate enum
+return/value ABI work.
+
 Additional Rust-like standard surfaces are reserved with clear diagnostics:
 
 ```ari
-Option[T]
 Maybe[T]
-Result[T, E]
 Box[T]
 Slice[T]
 ```

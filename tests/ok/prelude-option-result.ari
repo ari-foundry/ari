@@ -1,0 +1,34 @@
+fn maybe(flag: bool) -> Option[i64] {
+  if flag {
+    return Some(40);
+  }
+  return None<i64>();
+}
+
+fn bump(value: Option[i64]) -> Option[i64] {
+  let inner = value?;
+  return Some(inner + 2);
+}
+
+fn result(flag: bool) -> Result[i64, i32] {
+  if flag {
+    return Ok<i64, i32>(5);
+  }
+  return Err<i64, i32>(7i32);
+}
+
+fn bump_result(value: Result[i64, i32]) -> Result[i64, i32] {
+  let inner = value?;
+  return Ok<i64, i32>(inner + 3);
+}
+
+fn main() -> i64 {
+  let direct: std::Option[i64] = std::Some(2);
+  let qualified_none: std::Option[i64] = std::None<i64>();
+  return (bump(maybe(true)) ?? 0) +
+         (maybe(false) ?? 3) +
+         (bump_result(result(true)) ?? 0) +
+         (result(false) ?? 11) +
+         (direct ?? 0) +
+         (qualified_none ?? 1);
+}

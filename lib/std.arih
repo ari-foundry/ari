@@ -17,6 +17,16 @@ pub mod context {
   pub extern "ari" fn arg(index: i64) -> string = "ari_builtin_context_arg";
 }
 
+pub enum Option[T] {
+  None,
+  Some(T),
+}
+
+pub enum Result[T, E] {
+  Err(E),
+  Ok(T),
+}
+
 pub extern "ari" fn assert(condition: bool) -> i64 = "ari_builtin_assert";
 pub extern "ari" fn debug_assert(condition: bool) -> i64 = "ari_builtin_assert";
 pub extern "ari" fn assert_eq_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_eq_i64";

@@ -139,6 +139,10 @@ check-prelude: $(TARGET)
 	grep -F -q 'getelementptr inbounds { i64, [3 x i64] }' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
 	$(TARGET) tests/ok/std-prelude-local-shadow.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-local-shadow.ll
 	grep -q 'call i64 @"_ARNv5Debug"' $(BUILD_DIR)/prelude/std-prelude-local-shadow.ll
+	$(TARGET) tests/ok/prelude-option-result.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result.ll
+	grep -q "try.ok" $(BUILD_DIR)/prelude/prelude-option-result.ll
+	grep -q "coalesce.ok" $(BUILD_DIR)/prelude/prelude-option-result.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
 		$(BUILD_DIR)/prelude/prelude-header-main.elf >$(BUILD_DIR)/prelude/prelude-header-main.out; \
@@ -168,10 +172,8 @@ check-prelude: $(TARGET)
 	grep -q "unknown Ari builtin symbol 'puts'" $(BUILD_DIR)/prelude/ari-builtin-unknown.err
 	if $(TARGET) tests/errors/ari-builtin-missing-link.ari -o $(BUILD_DIR)/prelude/ari-builtin-missing-link.elf >$(BUILD_DIR)/prelude/ari-builtin-missing-link.err 2>&1; then exit 1; fi
 	grep -q 'extern "ari" builtin declarations require an explicit builtin symbol' $(BUILD_DIR)/prelude/ari-builtin-missing-link.err
-	if $(TARGET) tests/errors/prelude-option-planned.ari -o $(BUILD_DIR)/prelude/prelude-option-planned.elf >$(BUILD_DIR)/prelude/prelude-option-planned.err 2>&1; then exit 1; fi
-	grep -q "prelude type 'Option' is reserved for Maybe/Result values but generic ADT lowering is not implemented yet" $(BUILD_DIR)/prelude/prelude-option-planned.err
 	if $(TARGET) tests/errors/prelude-result-arity.ari -o $(BUILD_DIR)/prelude/prelude-result-arity.elf >$(BUILD_DIR)/prelude/prelude-result-arity.err 2>&1; then exit 1; fi
-	grep -q "prelude type 'Result' expects 2 type arguments" $(BUILD_DIR)/prelude/prelude-result-arity.err
+	grep -q "enum 'std::Result' expects 2 type arguments" $(BUILD_DIR)/prelude/prelude-result-arity.err
 	if $(TARGET) --freestanding tests/errors/prelude-read-line-freestanding.ari -o $(BUILD_DIR)/prelude/prelude-read-line-freestanding.elf >$(BUILD_DIR)/prelude/prelude-read-line-freestanding.err 2>&1; then exit 1; fi
 	grep -q "freestanding backend does not lower line input helpers yet" $(BUILD_DIR)/prelude/prelude-read-line-freestanding.err
 	if $(TARGET) tests/errors/prelude-macro-format-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-planned.err 2>&1; then exit 1; fi

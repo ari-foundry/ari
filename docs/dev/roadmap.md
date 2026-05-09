@@ -99,10 +99,14 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      values after their non-local ABI/storage rules are defined
    - [freestanding] lower aggregate enum payload storage and tests in the raw backend
 6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
-    `RangeInclusive[T]` local values are implemented today.
+    `RangeInclusive[T]` local values are implemented today. `Option[T]` and
+    `Result[T, E]` are source `std` generic enums exposed through the implicit
+    prelude and connected to `?`/`??` on the LLVM aggregate-enum path.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]`/`Maybe[T]` ADT path.
-    - [sum] `Option[T]`, `Maybe[T]`, and `Result[T, E]`, connected to the existing `?`/`??` propagation model
+    - [maybe-alias] decide whether prelude `Maybe[T]` should alias
+      `Option[T]` or live under a child module, since root `Some`/`None`
+      constructors are already owned by `Option[T]`
     - [owned] `Box[T]`
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host
@@ -142,7 +146,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 9. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
     loops, and stored local vector loops lower today without trait dispatch; the
     general iterator model needs trait-bound resolution plus generic
-    `Option[T]`/`Maybe[T]` result lowering for `next`.
+    `Option[T]` result lowering for `next` on every backend.
     - [trait] resolve `IntoIterator[T]`/`Iterator[T]`
     - [loop] lower `next`-style iteration state
     - [pattern] bind refutable enum-case loop-head patterns after the iterator failure/skip semantics are designed
