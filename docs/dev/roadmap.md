@@ -72,13 +72,10 @@
    direct and function-pointer calls can pass and return tuple,
    struct, fixed-array, and aggregate enum values through explicit hidden
    pointer slots, copying parameters into callee-local storage and returning
-   into caller-provided result storage or hidden discard temporaries. The
-   remaining aggregate lowering gap is control-flow expression-result coverage
-   for aggregate values, then explicit aggregate and external ABI
-   classification.
-   - [abi-aggregate-control-results] materialize aggregate-valued `if`/`match`
-     expressions and expression-only block results on raw targets outside
-     scalar/store contexts
+   into caller-provided result storage or hidden discard temporaries.
+   Aggregate-valued `if`, `match`, and block expressions materialize into
+   target storage or hidden temporaries on raw targets. The remaining ABI gap is
+   explicit aggregate and external ABI classification.
    - [abi-extern-exports] define platform ABI lowering for `@export`,
      `@no_mangle`, and future imported symbols on raw/freestanding targets;
      direct `extern "C"` calls are rejected there until a real C ABI/link path
@@ -222,8 +219,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [structs] finish sharing all field-layout decisions between sema and
      backends
    - [arrays] pass fixed-size arrays across FFI boundaries
-   - [expr-results] materialize aggregate-valued `if`, `match`, and block
-     expressions in the freestanding backend
    - [vectors] define non-local and growable vector ABI after allocator-backed `Vec[T]` storage exists
    - [enums] lower multi-payload aggregate enum layout in the freestanding backend and define its FFI ABI
 3. Add freestanding runtime string storage so raw ELF output can lower string

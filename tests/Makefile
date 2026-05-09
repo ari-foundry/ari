@@ -215,6 +215,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/labeled-block-expression.raw; code=$$?; test $$code -eq 17
 	$(TARGET) --freestanding tests/ok/labeled-block-aggregate.ari -o $(BUILD_DIR)/control-flow/labeled-block-aggregate.raw
 	$(BUILD_DIR)/control-flow/labeled-block-aggregate.raw; code=$$?; test $$code -eq 9
+	$(TARGET) --freestanding tests/ok/control-flow-aggregate-expr-freestanding.ari -o $(BUILD_DIR)/control-flow/control-flow-aggregate-expr-freestanding.raw
+	$(BUILD_DIR)/control-flow/control-flow-aggregate-expr-freestanding.raw; code=$$?; test $$code -eq 82
 	$(TARGET) --freestanding tests/ok/for-range-operator.ari -o $(BUILD_DIR)/control-flow/for-range-operator.raw
 	$(BUILD_DIR)/control-flow/for-range-operator.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --freestanding tests/ok/for-range-inclusive.ari -o $(BUILD_DIR)/control-flow/for-range-inclusive.raw

@@ -588,8 +588,8 @@ Payload bindings are immutable branch-local values.
 Expression-valued `match` currently supports enum patterns and copyable
 payloads. Borrow-valued arm results are rejected until the borrow checker grows
 richer expression lifetime tracking. Tuple-valued and aggregate-enum match arm
-results are lowered by the LLVM backend, but the freestanding backend only
-materializes scalar and compact-enum arm results for now. Freestanding scalar
+results lower on the LLVM backend and on the freestanding backend when the raw
+backend already supports the matched value and arm-result storage. Freestanding
 arm results work for local aggregate enum matches that use tag checks and
 payload bindings, scalar payload literal/range checks, or one-level compact
 enum-case payload checks.

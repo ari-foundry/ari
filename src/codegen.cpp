@@ -342,8 +342,14 @@ private:
         collect_expr_locals(expr.block_value);
         collect_expr_locals(expr.match_value);
         for (const auto& arg : expr.args) collect_expr_locals(arg);
-        if (expr.kind == IrExprKind::Call || expr.kind == IrExprKind::IndirectCall) {
+        if (expr.kind == IrExprKind::Call ||
+            expr.kind == IrExprKind::IndirectCall ||
+            expr.kind == IrExprKind::If ||
+            expr.kind == IrExprKind::Match ||
+            expr.kind == IrExprKind::Block) {
             if (is_aggregate_type(expr.type)) add_aggregate_result_temp(expr);
+        }
+        if (expr.kind == IrExprKind::Call || expr.kind == IrExprKind::IndirectCall) {
             for (const auto& arg : expr.args) {
                 if (is_aggregate_type(arg->type)) add_aggregate_argument_temp(*arg);
             }
@@ -647,6 +653,14 @@ private:
             emit_block_expr_to_offset(value, target_type, target_offset);
             return;
         }
+        if (value.kind == IrExprKind::If) {
+            emit_if_expr_to_offset(value, target_type, target_offset);
+            return;
+        }
+        if (value.kind == IrExprKind::Match) {
+            emit_match_expr_to_offset(value, target_type, target_offset);
+            return;
+        }
         if (value.kind == IrExprKind::Local && is_aggregate_type(value.type)) {
             copy_local_bytes_to_offset(value.loc, local_offset(value.loc, value.name), target_offset, target_type);
             return;
@@ -686,6 +700,16 @@ private:
 
         if (value.kind == IrExprKind::IndirectCall && is_aggregate_type(value.type)) {
             emit_indirect_call_with_sret_to_pointer_base(value, byte_offset);
+            return;
+        }
+
+        if ((value.kind == IrExprKind::Block ||
+             value.kind == IrExprKind::If ||
+             value.kind == IrExprKind::Match) &&
+            is_aggregate_type(value.type)) {
+            int temp_offset = aggregate_result_temp_offset(value.loc, value);
+            emit_store_value_to_offset(target_type, value, temp_offset);
+            copy_local_bytes_to_pointer_base(value.loc, temp_offset, target_type, byte_offset);
             return;
         }
 
@@ -747,6 +771,16 @@ private:
 
         if (value.kind == IrExprKind::Block) {
             emit_block_expr_to_offset(value, target_type, target_offset);
+            return;
+        }
+
+        if (value.kind == IrExprKind::If) {
+            emit_if_expr_to_offset(value, target_type, target_offset);
+            return;
+        }
+
+        if (value.kind == IrExprKind::Match) {
+            emit_match_expr_to_offset(value, target_type, target_offset);
             return;
         }
 
@@ -2111,8 +2145,11 @@ private:
     }
 
     void emit_match_expr(const IrExpr& expr) {
-        if (expr.type.primitive == IrPrimitiveKind::Tuple) {
-            throw CompileError(where(expr.loc) + ": backend cannot materialize tuple-valued match expressions yet");
+        if (is_aggregate_type(expr.type)) {
+            int temp_offset = aggregate_result_temp_offset(expr.loc, expr);
+            emit_match_expr_to_offset(expr, expr.type, temp_offset);
+            emit_lea_reg_local(Reg::RAX, temp_offset);
+            return;
         }
         if (expr.match_arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during codegen");
 
@@ -2159,6 +2196,43 @@ private:
         for (std::size_t patch : end_patches) patch_rel32(patch, end);
     }
 
+    void emit_match_expr_to_offset(const IrExpr& expr, const IrType& target_type, int target_offset) {
+        if (expr.match_arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during codegen");
+
+        if (expr.match_value && has_aggregate_enum_layout(expr.match_value->type)) {
+            emit_aggregate_enum_match_expr_to_offset(expr, target_type, target_offset);
+            return;
+        }
+
+        emit_expr(*expr.match_value);
+        emit_push(Reg::RAX);
+
+        std::vector<std::size_t> end_patches;
+        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
+            const IrMatchExprArm& arm = expr.match_arms[i];
+            bool has_next_patch = false;
+            std::vector<std::size_t> next_patches;
+
+            if (!arm.wildcard && i + 1 != expr.match_arms.size()) {
+                next_patches = emit_match_arm_fail_jumps(arm);
+                has_next_patch = true;
+            }
+
+            emit_match_arm_bindings(arm);
+            emit_statements(arm.body);
+            emit_store_value_to_offset(target_type, *arm.value, target_offset);
+            emit_pop(Reg::RCX);
+            end_patches.push_back(emit_jmp_placeholder());
+
+            if (has_next_patch) {
+                for (std::size_t patch : next_patches) patch_rel32(patch, out_.size());
+            }
+        }
+
+        std::size_t end = out_.size();
+        for (std::size_t patch : end_patches) patch_rel32(patch, end);
+    }
+
     void emit_aggregate_enum_match_expr(const IrExpr& expr) {
         if (!expr.match_value) throw CompileError(where(expr.loc) + ": match value missing during codegen");
         int match_base_offset = aggregate_enum_match_base_offset(*expr.match_value);
@@ -2178,6 +2252,38 @@ private:
             emit_aggregate_enum_match_arm_bindings(arm, match_base_offset, enum_type);
             emit_statements(arm.body);
             emit_expr(*arm.value);
+            end_patches.push_back(emit_jmp_placeholder());
+
+            if (has_next_patch) {
+                for (std::size_t patch : next_patches) patch_rel32(patch, out_.size());
+            }
+        }
+
+        std::size_t end = out_.size();
+        for (std::size_t patch : end_patches) patch_rel32(patch, end);
+    }
+
+    void emit_aggregate_enum_match_expr_to_offset(const IrExpr& expr,
+                                                  const IrType& target_type,
+                                                  int target_offset) {
+        if (!expr.match_value) throw CompileError(where(expr.loc) + ": match value missing during codegen");
+        int match_base_offset = aggregate_enum_match_base_offset(*expr.match_value);
+        const IrType& enum_type = expr.match_value->type;
+
+        std::vector<std::size_t> end_patches;
+        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
+            const IrMatchExprArm& arm = expr.match_arms[i];
+            bool has_next_patch = false;
+            std::vector<std::size_t> next_patches;
+
+            if (!arm.wildcard && i + 1 != expr.match_arms.size()) {
+                next_patches = emit_aggregate_enum_match_arm_fail_jumps(arm, match_base_offset, enum_type);
+                has_next_patch = true;
+            }
+
+            emit_aggregate_enum_match_arm_bindings(arm, match_base_offset, enum_type);
+            emit_statements(arm.body);
+            emit_store_value_to_offset(target_type, *arm.value, target_offset);
             end_patches.push_back(emit_jmp_placeholder());
 
             if (has_next_patch) {
@@ -2292,8 +2398,11 @@ private:
     }
 
     void emit_if_expr(const IrExpr& expr) {
-        if (expr.type.primitive == IrPrimitiveKind::Tuple) {
-            throw CompileError(where(expr.loc) + ": backend cannot materialize tuple-valued if expressions yet");
+        if (is_aggregate_type(expr.type)) {
+            int temp_offset = aggregate_result_temp_offset(expr.loc, expr);
+            emit_if_expr_to_offset(expr, expr.type, temp_offset);
+            emit_lea_reg_local(Reg::RAX, temp_offset);
+            return;
         }
         emit_expr(*expr.condition);
         emit_cmp_rax_zero();
@@ -2307,9 +2416,25 @@ private:
         patch_rel32(jump_end, out_.size());
     }
 
+    void emit_if_expr_to_offset(const IrExpr& expr, const IrType& target_type, int target_offset) {
+        emit_expr(*expr.condition);
+        emit_cmp_rax_zero();
+        std::size_t jump_else = emit_jcc_placeholder(0x84);
+        emit_statements(expr.then_body);
+        emit_store_value_to_offset(target_type, *expr.then_value, target_offset);
+        std::size_t jump_end = emit_jmp_placeholder();
+        patch_rel32(jump_else, out_.size());
+        emit_statements(expr.else_body);
+        emit_store_value_to_offset(target_type, *expr.else_value, target_offset);
+        patch_rel32(jump_end, out_.size());
+    }
+
     void emit_block_expr(const IrExpr& expr) {
         if (is_aggregate_type(expr.type)) {
-            throw CompileError(where(expr.loc) + ": backend cannot materialize aggregate-valued block expressions here; bind the block result first");
+            int temp_offset = aggregate_result_temp_offset(expr.loc, expr);
+            emit_block_expr_to_offset(expr, expr.type, temp_offset);
+            emit_lea_reg_local(Reg::RAX, temp_offset);
+            return;
         }
         if (!expr.label.empty()) {
             LoopLabels labels;

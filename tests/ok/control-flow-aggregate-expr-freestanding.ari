@@ -1,0 +1,95 @@
+struct Pair {
+  x: i64,
+  y: i64,
+}
+
+enum Choice {
+  Both(i64, i64),
+  None,
+}
+
+fn pick(flag: bool) -> Pair {
+  return if flag {
+    Pair { x: 3, y: 4 }
+  } else {
+    Pair { x: 1, y: 2 }
+  };
+}
+
+fn pick_match(value: i64) -> Pair {
+  return match value {
+    0 => Pair { x: 1, y: 1 },
+    _ => Pair { x: 6, y: 7 },
+  };
+}
+
+fn choose(flag: bool) -> Choice {
+  return if flag {
+    Both(6i64, 1i64)
+  } else {
+    None
+  };
+}
+
+fn score(choice: Choice) -> i64 {
+  return match choice {
+    Both(left, right) => left + right,
+    None => 0,
+  };
+}
+
+fn main() -> i64 {
+  let pair = if false {
+    Pair { x: 10, y: 20 }
+  } else {
+    let base = 3;
+    Pair { x: base, y: base + 4 }
+  };
+
+  let from_match = match 2 {
+    0 => Pair { x: 1, y: 1 },
+    1 => Pair { x: 2, y: 2 },
+    _ => Pair { x: 5, y: 6 },
+  };
+
+  let input = Both(7i64, 8i64);
+  let from_enum = match input {
+    Both(left, right) => Pair { x: left, y: right },
+    None => Pair { x: 0, y: 0 },
+  };
+
+  let selected = if true {
+    Both(9i64, 1i64)
+  } else {
+    None
+  };
+
+  let matched_choice = match 1 {
+    0 => None,
+    1 => Both(4i64, 5i64),
+    _ => None,
+  };
+
+  if true {
+    Pair { x: 100, y: 200 }
+  } else {
+    Pair { x: 1, y: 2 }
+  };
+
+  match 0 {
+    0 => Pair { x: 9, y: 9 },
+    _ => Pair { x: 1, y: 1 },
+  };
+
+  {
+    let temp = 1;
+    Pair { x: temp, y: temp + 1 }
+  };
+
+  let picked = pick(true);
+  let matched_pair = pick_match(3);
+  return pair.x + pair.y + from_match.x + from_match.y + from_enum.x +
+         from_enum.y + picked.x + picked.y + matched_pair.x +
+         matched_pair.y + score(selected) + score(matched_choice) +
+         score(choose(true));
+}

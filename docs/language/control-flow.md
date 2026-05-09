@@ -131,6 +131,10 @@ Ordinary statement blocks use the same `;` rule for expression statements.
 The result type is the type of the final expression. Borrow-valued block
 results are not supported yet.
 
+The freestanding backend materializes aggregate-valued `if`, `match`, and
+block expression results directly into their target storage, or into hidden
+temporaries when the expression result is discarded.
+
 ## While
 
 ```ari

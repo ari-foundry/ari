@@ -53,9 +53,7 @@ their declared width before callers observe them. Freestanding direct and
 function-pointer calls can pass and return tuple, struct, fixed-array, and
 currently supported aggregate enum values through hidden pointer slots.
 Aggregate parameters are copied into callee-local storage at function entry, so
-mutating a parameter copy does not mutate the caller's value. Aggregate-valued
-control-flow expressions on the freestanding backend remain planned outside
-scalar and aggregate-store contexts.
+mutating a parameter copy does not mutate the caller's value.
 
 ## Return
 
