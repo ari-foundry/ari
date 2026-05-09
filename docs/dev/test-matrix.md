@@ -199,6 +199,7 @@ Checklist:
 - [x] fixed-capacity local `Vec.truncate(n)` on the LLVM backend
 - [x] checked local `Vec.set(index, value)` on the LLVM backend
 - [x] checked local `Vec.swap(a, b)` on the LLVM backend
+- [x] frozen local `Vec[T]` API rejects unsupported compiler-known methods with allocator-backed std guidance
 - [x] keep stored local `Vec[T]` rejected on the raw freestanding backend
 - [x] `init ... while ... next ...` normal update path
 - [x] `let ... while ... next ...` loop-state spelling

@@ -414,6 +414,10 @@ let removed = values.remove(0)
 values.clear()
 ```
 
+That local method list is intentionally frozen while `Vec[T]` is still a
+stack-backed executable subset. Other compiler-known collection conveniences
+are reserved for the future allocator-backed std library design.
+
 `reserve(n)` currently expects a non-negative integer literal. It widens the
 compiler-known local storage capacity for that binding; it does not allocate
 heap storage yet. `push(value)` appends a copyable element, increments the

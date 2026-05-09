@@ -16,16 +16,16 @@
    straight-line appends/inserts without an explicit `reserve`.
    This local API is now frozen as a temporary executable subset: do not add
    more compiler-known `Vec` convenience methods before the allocator-backed
-   library design lands. Vec storage helper logic is split out of `sema.cpp`
-   into `vector_semantics` so the allocator-backed work can grow outside the
-   main semantic checker. Introduce the explicit allocation/capability path
-   before broadening vector patterns or std collection APIs.
+   library design lands. Unsupported local `Vec` method calls now get a
+   dedicated diagnostic that points users at the future allocator-backed std
+   collection APIs instead of falling through to the generic unknown-method
+   error. Vec storage helper logic is split out of `sema.cpp` into
+   `vector_semantics` so the allocator-backed work can grow outside the main
+   semantic checker. Introduce the explicit allocation/capability path before
+   broadening vector patterns or std collection APIs.
    - [allocator] thread explicit allocator/capability values through creation
    - [capacity] replace local literal/reserve capacity with runtime heap
      capacity growth
-   - [api-freeze] keep the current compiler-known local methods only as
-     compatibility coverage; future Vec methods belong in the std collection
-     library after generic impls and allocator capabilities are real
    - [ops-runtime] port the existing `push`, `insert`, `pop`, `remove`,
      `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
      `reserve` operations to allocator-backed storage instead of fixed

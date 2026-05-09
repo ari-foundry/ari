@@ -69,6 +69,16 @@ void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity) {
     }
 }
 
+std::string local_vec_api_freeze_message(const std::string& method_name) {
+    const std::string supported =
+        "as_slice, capacity, clear, contains, count, first, get, index_of, "
+        "insert, is_empty, last, len, pop, push, remove, reserve, set, swap, "
+        "truncate";
+    return "local Vec method '" + method_name +
+           "' is reserved for allocator-backed std collection APIs; supported temporary local Vec methods are: "
+           + supported;
+}
+
 IrExprPtr make_void_noop_expr(SourceLocation loc) {
     auto lowered = std::make_unique<IrExpr>();
     lowered->kind = IrExprKind::Noop;

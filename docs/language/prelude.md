@@ -411,8 +411,10 @@ the largest vector literal assigned to the binding. A typed `Vec[T]` context
 supplies the element type for empty `[]`. `len(values)` and `values.len()` read
 vector runtime length, fixed array length, or `Slice[T].len`. `view[index]`
 loads or stores a `Slice[T]` element through its raw `data` pointer after
-checking the stored length. Growable heap vectors remain an explicit-allocator
-feature for later.
+checking the stored length. The temporary compiler-known local `Vec[T]` method
+set is intentionally frozen; methods outside the documented local subset are
+reserved for allocator-backed std collection APIs. Growable heap vectors remain
+an explicit-allocator feature for later.
 
 `Slice[T]` is a source `std` view struct:
 

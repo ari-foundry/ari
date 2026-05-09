@@ -13151,6 +13151,12 @@ private:
         return local;
     }
 
+    bool is_local_vec_method_receiver(const Expr& method_expr) {
+        if (!method_expr.operand || method_expr.operand->kind != ExprKind::Name) return false;
+        LocalInfo* local = find_local_slot(method_expr.operand->name);
+        return local && is_vector_storage_type(local->type);
+    }
+
     void require_mutable_vec_method_receiver(SourceLocation loc,
                                              const std::string& name,
                                              LocalInfo& local,
@@ -14368,6 +14374,9 @@ private:
                 generic_arg_types,
                 generic_selected);
             if (!has_generic_selected) {
+                if (is_local_vec_method_receiver(expr)) {
+                    fail(expr.loc, local_vec_api_freeze_message(expr.name));
+                }
                 fail(expr.loc, "unknown method '" + expr.name + "' for type " + type_name(receiver->type));
             }
         }
