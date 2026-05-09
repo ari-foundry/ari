@@ -232,7 +232,7 @@ bool is_source_declared_prelude_special_name(const std::string& name) {
 
 bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
     std::string base = unqualified_name(name);
-    if (base == "Maybe" || base == "Box" || base == "Slice") {
+    if (base == "Box" || base == "Slice") {
         arity = 1;
         return true;
     }
@@ -241,9 +241,6 @@ bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
 
 std::string planned_prelude_type_message(const std::string& name) {
     std::string base = unqualified_name(name);
-    if (base == "Maybe") {
-        return "prelude type 'Maybe' is planned; use Option[T] or a user-defined enum until the Maybe alias policy is defined";
-    }
     if (base == "Box") {
         return "prelude type 'Box' is planned but needs explicit allocator capabilities first";
     }

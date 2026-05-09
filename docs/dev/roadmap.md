@@ -106,14 +106,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      after their non-local ABI/storage rules are defined
    - [freestanding] lower aggregate enum payload storage and tests in the raw backend
 6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
-    `RangeInclusive[T]` local values are implemented today. `Option[T]` and
-    `Result[T, E]` are source `std` generic enums exposed through the implicit
-    prelude and connected to `?`/`??` on the LLVM aggregate-enum path.
+    `RangeInclusive[T]` local values are implemented today. `Option[T]`,
+    `Maybe[T]` as a public alias of `Option[T]`, and `Result[T, E]` are source
+    `std` generic enums exposed through the implicit prelude and connected to
+    `?`/`??` on the LLVM aggregate-enum path.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]`/`Maybe[T]` ADT path.
-    - [maybe-alias] decide whether prelude `Maybe[T]` should alias
-      `Option[T]` or live under a child module, since root `Some`/`None`
-      constructors are already owned by `Option[T]`
     - [owned] `Box[T]`
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host
