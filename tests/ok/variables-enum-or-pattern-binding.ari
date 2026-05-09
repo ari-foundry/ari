@@ -1,0 +1,21 @@
+enum Choice {
+  Left(i32),
+  Right(i32),
+  Empty,
+}
+
+fn tag(value: Choice) -> i64 {
+  return match value {
+    Left(_) => 10,
+    Right(_) => 20,
+    Empty => 0,
+  };
+}
+
+fn main() -> i64 {
+  let (Left(first) | Right(first)) = Right(5i32);
+  var (Left(total) | Right(total)) = Left(3i32);
+  total = total + first;
+  let picked @ (Left(1i32) | Right(2i32)) = Right(2i32);
+  return (first as i64) + (total as i64) + tag(picked);
+}

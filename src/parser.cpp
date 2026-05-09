@@ -987,13 +987,14 @@ private:
             look += 2;
         }
         return look < tokens_.size() &&
-               (tokens_[look].kind == TokenKind::LBrace ||
+               (tokens_[look].kind == TokenKind::At ||
+                tokens_[look].kind == TokenKind::LBrace ||
                 tokens_[look].kind == TokenKind::LParen);
     }
 
     StmtPtr parse_pattern_variable(bool mutable_binding) {
         Binding binding;
-        binding.pattern = parse_binding_pattern();
+        binding.pattern = parse_pattern(true);
         binding.has_pattern = true;
         binding.mutable_binding = mutable_binding;
         binding.loc = binding.pattern.loc;

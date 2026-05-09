@@ -4313,6 +4313,7 @@ private:
                 return;
             case PatternKind::EnumCase:
             case PatternKind::Alias:
+            case PatternKind::Or:
                 lower_refutable_enum_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
             default:
@@ -4329,8 +4330,12 @@ private:
     ) {
         IrExprPtr source = make_local_lvalue_expr(pattern.loc, source_name, source_type);
         const EnumInfo& enum_info = require_enum_match_value(pattern.loc, *source);
-        IrMatchArm success = lower_enum_case_pattern(pattern, enum_info, source_type);
-        declare_refutable_binding_locals(success, mutable_binding);
+        EnumMatchCoverage coverage;
+        std::vector<IrMatchArm> success_arms = lower_match_arm_patterns(pattern, enum_info, source_type, coverage);
+        if (success_arms.empty()) {
+            fail(pattern.loc, "refutable enum binding pattern did not lower to a match arm");
+        }
+        declare_refutable_binding_locals(success_arms.front(), mutable_binding);
 
         IrMatchArm failure;
         failure.loc = pattern.loc;
@@ -4341,7 +4346,9 @@ private:
         match->kind = IrStmtKind::Match;
         match->loc = pattern.loc;
         match->match_value = std::move(source);
-        match->match_arms.push_back(std::move(success));
+        for (auto& success : success_arms) {
+            match->match_arms.push_back(std::move(success));
+        }
         match->match_arms.push_back(std::move(failure));
         statements.push_back(std::move(match));
     }

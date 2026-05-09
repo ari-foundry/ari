@@ -64,13 +64,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 2. Extend pattern binding modes beyond value bindings.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
-   - [refutable-let] lower refutable enum-case `let`/`var` patterns after the
-     failure behavior is designed
    - [or-bindings] support binding unification for or-patterns in all aggregate
      pattern positions
    - [control-flow-or] expand or-patterns, including alias-wrapped
-     alternatives, in `if let`, `while let`, and refutable `let`/`var`
-     patterns without duplicating user body declarations
+     alternatives, in `if let` and `while let` without duplicating user body
+     declarations
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and function-parameter patterns on one shared binding-mode engine
 3. Implement user-defined compile-time meta expansion for `meta fn`.

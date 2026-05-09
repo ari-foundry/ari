@@ -115,12 +115,16 @@ Single-payload enum cases can also be used in local bindings:
 ```ari
 let Some(value) = item
 var Some(total) = next_item
+let (Left(value) | Right(value)) = choice
+let picked @ (Left(1) | Right(2)) = choice
 ```
 
 These enum bindings are refutable. If the value is not the requested case, Ari
 takes the normal panic path. Use `if let` or `match` when the mismatch needs an
 explicit else arm. The payload binding follows the declaration mutability:
 `let Some(x)` makes `x` immutable, while `var Some(x)` makes `x` mutable.
+Or-pattern alternatives must bind the same names with the same types, just like
+match arms.
 
 ## Assignment
 

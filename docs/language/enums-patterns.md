@@ -271,6 +271,8 @@ The same single-payload enum-case binding form can be used in local `let` and
 ```ari
 let Some(value) = maybe_value
 var Some(total) = next_value
+let (Left(value) | Right(value)) = choice
+let picked @ (Left(1) | Right(2)) = choice
 ```
 
 Multi-payload enum binding patterns use the same positional form:
@@ -284,7 +286,9 @@ These declaration patterns are refutable. If the value is a different enum
 case, Ari takes the panic path. Use `if let` or `match` when the failure path
 needs its own program logic. The payload binding follows the declaration
 mutability: `let Some(x)` creates an immutable `x`, while `var Some(x)` creates
-a mutable `x`.
+a mutable `x`. Or-pattern alternatives in declarations must bind the same names
+with the same types. Alias-wrapped or-pattern declarations bind the whole enum
+value on each successful alternative.
 
 Parentheses can group a pattern without changing what it matches. This is
 mainly useful for readability and for lower-precedence `|` alternatives:

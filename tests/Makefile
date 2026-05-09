@@ -949,6 +949,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/variables-struct-pattern.raw; code=$$?; test $$code -eq 25
 	$(TARGET) --freestanding tests/ok/variables-enum-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-enum-pattern-binding.raw
 	$(BUILD_DIR)/variables/variables-enum-pattern-binding.raw; code=$$?; test $$code -eq 13
+	$(TARGET) --freestanding tests/ok/variables-enum-or-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.raw
+	$(BUILD_DIR)/variables/variables-enum-or-pattern-binding.raw; code=$$?; test $$code -eq 33
 	$(TARGET) --freestanding tests/ok/ownership-aggregate-field-access.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-access.raw
 	$(BUILD_DIR)/variables/ownership-aggregate-field-access.raw; code=$$?; test $$code -eq 7
 	$(TARGET) --freestanding tests/ok/ownership-aggregate-field-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-move.raw
@@ -987,6 +989,9 @@ check-variables: $(TARGET)
 	grep -q "extractvalue { { i64, i64 }, { i64, i64 } }" $(BUILD_DIR)/variables/variables-struct-pattern.ll
 	$(TARGET) tests/ok/variables-enum-pattern-binding.ari --emit-llvm $(BUILD_DIR)/variables/variables-enum-pattern-binding.ll
 	grep -q "match.arm" $(BUILD_DIR)/variables/variables-enum-pattern-binding.ll
+	$(TARGET) tests/ok/variables-enum-or-pattern-binding.ari --emit-llvm $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.ll
+	grep -q "match.arm" $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.ll
+	grep -q "store i64" $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.ll
 	$(TARGET) tests/ok/variables-enum-pattern-binding-trap.ari --emit-llvm $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.ll
 	grep -q "@ari_builtin_panic" $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.ll
 	$(TARGET) tests/ok/variables-host-scalars.ari --emit-llvm $(BUILD_DIR)/variables/variables-host-scalars.ll
@@ -1099,6 +1104,7 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/array-dynamic-index-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; if $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-storage-shrink-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; if $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-enum-pattern-binding.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-enum-pattern-binding.elf; $(BUILD_DIR)/variables/variables-enum-pattern-binding.elf; code=$$?; test $$code -eq 13; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-enum-or-pattern-binding.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.elf; $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.elf; code=$$?; test $$code -eq 33; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-enum-pattern-binding-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.elf; if $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.elf; then exit 1; fi; fi
 	if $(TARGET) tests/errors/variables-assign-immutable.ari -o $(BUILD_DIR)/variables/variables-assign-immutable.elf >$(BUILD_DIR)/variables/variables-assign-immutable.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to immutable binding 'value'" $(BUILD_DIR)/variables/variables-assign-immutable.err
