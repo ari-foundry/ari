@@ -100,8 +100,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [freestanding] lower aggregate enum payload storage and tests in the raw backend
 6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today.
+    Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
+    absence stays on the explicit `Option[T]`/`Maybe[T]` ADT path.
     - [sum] `Option[T]`, `Maybe[T]`, and `Result[T, E]`, connected to the existing `?`/`??` propagation model
-    - [nullable-values] decide whether value-level `T?` should remain raw-pointer-only syntax or grow an `Option[T]`/`Maybe[T]` lowering for non-pointer values
     - [owned] `Box[T]`
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host

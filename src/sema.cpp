@@ -4152,6 +4152,24 @@ private:
         invalidate_vector_known_length(local);
     }
 
+    void require_nullable_pointer_initializer(SourceLocation loc,
+                                              const Binding& binding,
+                                              const IrType& declared,
+                                              const IrExpr& init) const {
+        if (!binding.has_type || !binding.type.nullable) return;
+        if (init.type.qualifier == TypeQualifier::Ptr) return;
+        if (init.type.qualifier == TypeQualifier::Value &&
+            init.type.primitive == IrPrimitiveKind::String &&
+            (declared.primitive == IrPrimitiveKind::I8 ||
+             declared.primitive == IrPrimitiveKind::U8 ||
+             declared.primitive == IrPrimitiveKind::Void)) {
+            return;
+        }
+        fail(loc,
+             "nullable type '" + type_ref_key(binding.type) +
+             "' is a raw pointer spelling; initialize it with null, a raw pointer, or a compatible string pointer value");
+    }
+
     void check_var_decl(const Stmt& stmt, IrStmt& lowered) {
         if (stmt.binding.has_pattern) {
             check_pattern_var_decl(stmt, lowered);
@@ -4180,6 +4198,7 @@ private:
         }
         coerce_expr_to_expected(*init, declared);
         specialize_vector_storage_from_init(declared, *init);
+        require_nullable_pointer_initializer(stmt.loc, stmt.binding, declared, *init);
         require_assignable(stmt.loc, declared, init->type);
         bool borrow_binding = is_borrow_type(declared);
         if (borrow_binding && init->kind != IrExprKind::Borrow) {
@@ -4224,6 +4243,7 @@ private:
         }
         coerce_expr_to_expected(*init, declared);
         specialize_vector_storage_from_init(declared, *init);
+        require_nullable_pointer_initializer(stmt.loc, stmt.binding, declared, *init);
         require_assignable(stmt.loc, declared, init->type);
         if (is_borrow_type(declared)) {
             fail(stmt.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");

@@ -1328,6 +1328,8 @@ check-ffi: $(TARGET)
 	grep -q "type mismatch: expected i64, got ptr void" $(BUILD_DIR)/ffi/null-non-pointer.err
 	if $(TARGET) tests/errors/nullable-qualified.ari -o $(BUILD_DIR)/ffi/nullable-qualified.elf >$(BUILD_DIR)/ffi/nullable-qualified.err 2>&1; then exit 1; fi
 	grep -q "nullable type suffix ? cannot be combined with own, ref, or ptr qualifiers" $(BUILD_DIR)/ffi/nullable-qualified.err
+	if $(TARGET) tests/errors/nullable-value-initializer.ari -o $(BUILD_DIR)/ffi/nullable-value-initializer.elf >$(BUILD_DIR)/ffi/nullable-value-initializer.err 2>&1; then exit 1; fi
+	grep -q "nullable type 'i64?' is a raw pointer spelling; initialize it with null, a raw pointer, or a compatible string pointer value" $(BUILD_DIR)/ffi/nullable-value-initializer.err
 	if $(TARGET) tests/errors/pointer-deref-non-pointer.ari -o $(BUILD_DIR)/ffi/pointer-deref-non-pointer.elf >$(BUILD_DIR)/ffi/pointer-deref-non-pointer.err 2>&1; then exit 1; fi
 	grep -q "pointer dereference expects a raw pointer, got i64" $(BUILD_DIR)/ffi/pointer-deref-non-pointer.err
 	if $(TARGET) tests/errors/layout-query-type-args.ari -o $(BUILD_DIR)/ffi/layout-query-type-args.elf >$(BUILD_DIR)/ffi/layout-query-type-args.err 2>&1; then exit 1; fi
