@@ -1,8 +1,43 @@
 fn main() -> i64 {
-  let f32_sum = 1.0f32 + 2.0f32;
-  let f64_sum = 1.0f64 + 2.5f64;
-  if f64_sum > 3.0f64 {
-    return 0;
+  var score: i64 = 0;
+  let f32_add = 1.0f32 + 2.0f32;
+  let f32_sub = 5.0f32 - 1.5f32;
+  let f32_mul = 2.0f32 * 3.0f32;
+  let f32_div = 7.5f32 / 2.5f32;
+  if f32_add == 3.0f32 {
+    score = score + 1;
   }
-  return 1;
+  if f32_sub > 3.0f32 {
+    score = score + 1;
+  }
+  if f32_mul >= 6.0f32 {
+    score = score + 1;
+  }
+  if f32_div <= 3.0f32 {
+    score = score + 1;
+  }
+  if f32_add != 4.0f32 {
+    score = score + 1;
+  }
+
+  let f64_add = 1.0f64 + 2.5f64;
+  let f64_sub = 9.0f64 - 2.0f64;
+  let f64_mul = 1.5f64 * 4.0f64;
+  let f64_div = 8.0f64 / 2.0f64;
+  if f64_add > 3.0f64 {
+    score = score + 1;
+  }
+  if f64_sub == 7.0f64 {
+    score = score + 1;
+  }
+  if f64_mul >= 6.0f64 {
+    score = score + 1;
+  }
+  if f64_div < 5.0f64 {
+    score = score + 1;
+  }
+  if f64_div != 5.0f64 {
+    score = score + 1;
+  }
+  return score;
 }

@@ -36,8 +36,9 @@ let normal = 1.0e+1f64
 
 `f32`, `f64`, and `f128` lower on the LLVM host backend as `float`, `double`,
 and `fp128`. The freestanding backend can materialize local `f32`/`f64` literal
-values and move them through raw `ptr f32`/`ptr f64` loads and stores, but
-still rejects float arithmetic, comparisons, casts, calls, and `f128`.
+values, move them through raw `ptr f32`/`ptr f64` loads and stores, and lower
+`f32`/`f64` arithmetic plus ordered comparisons. It still rejects float casts,
+calls, and `f128`.
 
 ## Bit Operations
 

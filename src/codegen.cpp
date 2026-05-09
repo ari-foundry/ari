@@ -178,6 +178,12 @@ private:
                 type.primitive == IrPrimitiveKind::F128);
     }
 
+    static bool is_raw_f32_or_f64_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               (type.primitive == IrPrimitiveKind::F32 ||
+                type.primitive == IrPrimitiveKind::F64);
+    }
+
     void reject_float_function_abi() const {
         for (const auto& param : fn_.params) {
             if (is_raw_float_type(param.type)) {
@@ -909,6 +915,56 @@ private:
         emit_rex(true, s, d);
         out_.u8(0x89);
         emit_modrm(3, s, d);
+    }
+
+    void emit_mov_gp_to_xmm(int xmm, Reg src) {
+        out_.u8(0x66);
+        emit_rex(true, xmm, reg_code(src));
+        out_.u8(0x0F);
+        out_.u8(0x6E);
+        emit_modrm(3, xmm, reg_code(src));
+    }
+
+    void emit_mov_xmm_to_gp(Reg dst, int xmm) {
+        out_.u8(0x66);
+        emit_rex(true, xmm, reg_code(dst));
+        out_.u8(0x0F);
+        out_.u8(0x7E);
+        emit_modrm(3, xmm, reg_code(dst));
+    }
+
+    void emit_sse_scalar_binary(const IrType& type, std::uint8_t opcode) {
+        out_.u8(type.primitive == IrPrimitiveKind::F32 ? 0xF3 : 0xF2);
+        out_.u8(0x0F);
+        out_.u8(opcode);
+        emit_modrm(3, 0, 1);
+    }
+
+    void emit_sse_scalar_compare(const IrType& type) {
+        if (type.primitive == IrPrimitiveKind::F64) out_.u8(0x66);
+        out_.u8(0x0F);
+        out_.u8(0x2E);
+        emit_modrm(3, 0, 1);
+    }
+
+    void emit_setcc_raw(std::uint8_t cc, int rm) {
+        out_.u8(0x0F);
+        out_.u8(cc);
+        emit_modrm(3, 0, rm);
+    }
+
+    void emit_movzx_eax_al() {
+        out_.u8(0x0F);
+        out_.u8(0xB6);
+        out_.u8(0xC0);
+    }
+
+    void emit_ordered_float_setcc(std::uint8_t cc) {
+        emit_setcc_raw(cc, 0);
+        emit_setcc_raw(0x9B, 2);
+        out_.u8(0x20);
+        out_.u8(0xD0);
+        emit_movzx_eax_al();
     }
 
     void emit_mov_mem_reg(int offset, Reg src) {
@@ -2995,9 +3051,84 @@ private:
         patch_rel32(jump_end, out_.size());
     }
 
+    void emit_float_binary(const IrExpr& expr) {
+        if (!expr.left || !expr.right || !is_raw_f32_or_f64_type(expr.left->type)) {
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend does not lower this float operator yet");
+        }
+
+        emit_expr(*expr.left);
+        emit_push(Reg::RAX);
+        emit_expr(*expr.right);
+        emit_mov_gp_to_xmm(1, Reg::RAX);
+        emit_pop(Reg::RCX);
+        emit_mov_gp_to_xmm(0, Reg::RCX);
+
+        switch (expr.op) {
+            case IrBinaryOp::Add:
+                emit_sse_scalar_binary(expr.left->type, 0x58);
+                emit_mov_xmm_to_gp(Reg::RAX, 0);
+                return;
+            case IrBinaryOp::Sub:
+                emit_sse_scalar_binary(expr.left->type, 0x5C);
+                emit_mov_xmm_to_gp(Reg::RAX, 0);
+                return;
+            case IrBinaryOp::Mul:
+                emit_sse_scalar_binary(expr.left->type, 0x59);
+                emit_mov_xmm_to_gp(Reg::RAX, 0);
+                return;
+            case IrBinaryOp::Div:
+                emit_sse_scalar_binary(expr.left->type, 0x5E);
+                emit_mov_xmm_to_gp(Reg::RAX, 0);
+                return;
+            case IrBinaryOp::Eq:
+                emit_sse_scalar_compare(expr.left->type);
+                emit_ordered_float_setcc(0x94);
+                return;
+            case IrBinaryOp::Ne:
+                emit_sse_scalar_compare(expr.left->type);
+                emit_ordered_float_setcc(0x95);
+                return;
+            case IrBinaryOp::Lt:
+                emit_sse_scalar_compare(expr.left->type);
+                emit_ordered_float_setcc(0x92);
+                return;
+            case IrBinaryOp::Le:
+                emit_sse_scalar_compare(expr.left->type);
+                emit_ordered_float_setcc(0x96);
+                return;
+            case IrBinaryOp::Gt:
+                emit_sse_scalar_compare(expr.left->type);
+                emit_ordered_float_setcc(0x97);
+                return;
+            case IrBinaryOp::Ge:
+                emit_sse_scalar_compare(expr.left->type);
+                emit_ordered_float_setcc(0x93);
+                return;
+            case IrBinaryOp::Mod:
+            case IrBinaryOp::BitAnd:
+            case IrBinaryOp::BitOr:
+            case IrBinaryOp::BitXor:
+            case IrBinaryOp::Shl:
+            case IrBinaryOp::Shr:
+            case IrBinaryOp::LogicalOr:
+            case IrBinaryOp::LogicalAnd:
+                break;
+        }
+
+        throw CompileError(where(expr.loc) +
+                           ": freestanding backend does not lower this float operator yet");
+    }
+
     void emit_binary(const IrExpr& expr) {
         if (expr.op == IrBinaryOp::LogicalAnd || expr.op == IrBinaryOp::LogicalOr) {
             emit_logical(expr);
+            return;
+        }
+
+        if ((expr.left && is_raw_f32_or_f64_type(expr.left->type)) ||
+            (expr.right && is_raw_f32_or_f64_type(expr.right->type))) {
+            emit_float_binary(expr);
             return;
         }
 
@@ -3005,7 +3136,7 @@ private:
             (expr.right && is_raw_float_type(expr.right->type)) ||
             is_raw_float_type(expr.type)) {
             throw CompileError(where(expr.loc) +
-                               ": freestanding backend does not lower float operators yet");
+                               ": freestanding backend does not lower f128 float operators yet");
         }
 
         emit_expr(*expr.left);

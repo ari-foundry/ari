@@ -652,8 +652,16 @@ check-operators: $(TARGET)
 	grep -q "store double 10.000000" $(BUILD_DIR)/operators/operators-float-suffixes.ll
 	$(TARGET) tests/ok/operators-float-llvm.ari --emit-llvm $(BUILD_DIR)/operators/operators-float-llvm.ll
 	grep -q "fadd float" $(BUILD_DIR)/operators/operators-float-llvm.ll
+	grep -q "fsub float" $(BUILD_DIR)/operators/operators-float-llvm.ll
+	grep -q "fmul float" $(BUILD_DIR)/operators/operators-float-llvm.ll
+	grep -q "fdiv float" $(BUILD_DIR)/operators/operators-float-llvm.ll
 	grep -q "fadd double" $(BUILD_DIR)/operators/operators-float-llvm.ll
+	grep -q "fsub double" $(BUILD_DIR)/operators/operators-float-llvm.ll
+	grep -q "fmul double" $(BUILD_DIR)/operators/operators-float-llvm.ll
+	grep -q "fdiv double" $(BUILD_DIR)/operators/operators-float-llvm.ll
 	grep -q "fcmp ogt double" $(BUILD_DIR)/operators/operators-float-llvm.ll
+	$(TARGET) --freestanding tests/ok/operators-float-llvm.ari -o $(BUILD_DIR)/operators/operators-float-llvm.raw
+	$(BUILD_DIR)/operators/operators-float-llvm.raw; code=$$?; test $$code -eq 10
 	$(TARGET) tests/ok/operators-f128-llvm.ari --emit-llvm $(BUILD_DIR)/operators/operators-f128-llvm.ll
 	grep -q "alloca fp128" $(BUILD_DIR)/operators/operators-f128-llvm.ll
 	grep -q "fadd fp128" $(BUILD_DIR)/operators/operators-f128-llvm.ll
@@ -1669,7 +1677,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/integer-literal-too-large.ari -o $(BUILD_DIR)/errors/integer-literal-too-large.elf >$(BUILD_DIR)/errors/integer-literal-too-large.err 2>&1; then exit 1; fi
 	grep -q "integer literal is too large" $(BUILD_DIR)/errors/integer-literal-too-large.err
 	if $(TARGET) --freestanding tests/errors/float-backend.ari -o $(BUILD_DIR)/errors/float-backend.elf >$(BUILD_DIR)/errors/float-backend.err 2>&1; then exit 1; fi
-	grep -q "freestanding backend does not lower float operators yet" $(BUILD_DIR)/errors/float-backend.err
+	grep -q "freestanding backend does not lower f128 float operators yet" $(BUILD_DIR)/errors/float-backend.err
 	if $(TARGET) --freestanding tests/errors/string-backend.ari -o $(BUILD_DIR)/errors/string-backend.elf >$(BUILD_DIR)/errors/string-backend.err 2>&1; then exit 1; fi
 	grep -q "backend does not lower string values yet" $(BUILD_DIR)/errors/string-backend.err
 	if $(TARGET) tests/errors/class-removed.ari -o $(BUILD_DIR)/errors/class-removed.elf >$(BUILD_DIR)/errors/class-removed.err 2>&1; then exit 1; fi
