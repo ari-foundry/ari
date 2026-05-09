@@ -302,9 +302,11 @@ Ari can also write a source-snapshot module cache:
 ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build/app.ll
 ```
 
-The cache embeds the same metadata summary plus the source text for every file
-in the resolved graph. A later build can validate the cache and parse from that
-snapshot:
+The cache embeds the same metadata summary, the source text for every file in
+the resolved graph, and a compact AST summary for each cached source. Current
+caches are written as `ari-module-cache-v2`; older v1 caches are treated as
+stale because they do not carry AST-summary records. A later build can validate
+the cache and parse from that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll
@@ -314,19 +316,21 @@ Cache validation checks the root input, module search paths, active cfg
 features, implicit `std` mode, current source content hashes, and whether each
 cached `mod` import still resolves to the same file. If any input changed, Ari
 rejects the cache and asks you to regenerate it with `--emit-module-cache`.
-Malformed caches that repeat a source snapshot for the same module/path/root
-record are rejected before validation. The embedded metadata summary is parsed
-with the same duplicate-record checks as a standalone `.arimeta` file.
+Malformed caches that repeat a source snapshot or AST summary for the same
+module/path/root record are rejected before validation. The embedded metadata
+summary is parsed with the same duplicate-record checks as a standalone
+`.arimeta` file.
 After validation succeeds, file-backed module imports are resolved from the
 validated cache import table instead of searching candidate paths again.
 After reading from the cached source snapshot, Ari also rebuilds the module
-metadata and compares it with the metadata embedded in the cache. That catches
-edited or corrupted cache summaries before semantic checking relies on them.
+metadata and per-source AST summaries, then compares them with the data embedded
+in the cache. That catches edited or corrupted cache summaries before semantic
+checking relies on them.
 
 This first cache format skips dependency source discovery after validation and
 reads module source text from the cached snapshot. It still parses the cached
-source snapshot; a future AST or IR summary cache will skip dependency parsing
-as well.
+source snapshot; the AST summary records are the stable bridge toward a future
+cache that can skip dependency parsing after validation.
 
 ## Nested Modules
 

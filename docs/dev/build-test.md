@@ -106,7 +106,7 @@ and `-I`, plus module metadata emission, source content hashes, and metadata
 read-back validation, including old metadata-version and duplicate-record
 rejection. Source-snapshot module cache emission/use is covered here too, with
 stale cfg, source-hash, and import-resolution rejection checks plus malformed
-duplicate source-record rejection.
+duplicate source-record and AST-summary rejection.
 
 `make check-structs` runs struct and ADT-focused tests for struct declarations,
 generic struct field resolution, named struct literals, tuple-struct

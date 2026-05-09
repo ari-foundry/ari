@@ -172,6 +172,7 @@ public:
         ModuleCache cache;
         cache.metadata = metadata_;
         cache.sources = std::move(cache_sources_);
+        cache.ast_summaries = std::move(cache_ast_summaries_);
         return ModuleLoadResult{std::move(program), std::move(metadata_), std::move(cache)};
     }
 
@@ -179,6 +180,7 @@ private:
     ModuleLoadOptions options_;
     ModuleMetadata metadata_;
     std::vector<ModuleCacheSource> cache_sources_;
+    std::vector<ModuleCacheAstSummary> cache_ast_summaries_;
     std::map<std::string, std::string> loaded_modules_;
     std::set<std::string> loading_modules_;
 
@@ -195,6 +197,18 @@ private:
             parsed.source,
             is_root,
         });
+        cache_ast_summaries_.push_back(make_module_cache_ast_summary(
+            path,
+            parsed.content_hash,
+            module_path,
+            program,
+            is_root
+        ));
+        if (options_.input_cache) {
+            const ModuleCacheAstSummary* cached = find_module_cache_ast_summary(*options_.input_cache, path);
+            if (!cached) throw CompileError("module cache is missing AST summary for source '" + path + "'");
+            require_matching_module_cache_ast_summary(*cached, cache_ast_summaries_.back());
+        }
     }
 
     void load_standard_module(Program& program) {

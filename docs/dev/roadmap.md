@@ -30,7 +30,7 @@
      `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
      `reserve` operations to allocator-backed storage instead of fixed
      local-capacity traps
-2. Add AST/IR summary package caches for file-backed modules.
+2. Reuse AST/IR summary package caches for file-backed modules.
    The source-snapshot cache goal is complete: compact module metadata and
    source-snapshot module caches can be emitted, checked, and invalidated with
    cfg/search-path/source/import/item-specific stale diagnostics. Source records
@@ -38,11 +38,13 @@
    declaration summaries stay the same, import resolution is rechecked against
    the current package layout, old metadata summaries without source hashes are
    rejected, malformed metadata with duplicate source/import/item records is
-   rejected, and malformed caches with duplicate source records are rejected
-   before validation. The remaining package-cache work is to replace dependency
-   source parsing with a cached AST or IR summary once validation succeeds.
-   - [ast-summary] define a cached AST or IR summary format that can be loaded
-     after metadata validation succeeds
+   rejected, and malformed caches with duplicate source or AST-summary records
+   are rejected before validation. Module caches now carry v2 per-source AST
+   summary records and recheck them against the parsed cached source snapshot.
+   The remaining package-cache work is to replace dependency source parsing
+   with a trusted cached AST or IR summary once validation succeeds.
+   - [summary-reuse] materialize dependency declarations from validated
+     AST-summary or IR-summary records instead of reparsing cached source text
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs

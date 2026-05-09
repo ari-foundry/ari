@@ -2,9 +2,11 @@
 
 #include "common.hpp"
 #include "module_loader.hpp"
+#include "module_path.hpp"
 
 #include <algorithm>
 #include <fstream>
+#include <limits>
 #include <map>
 #include <set>
 #include <sstream>
@@ -15,7 +17,7 @@ namespace ari {
 
 namespace {
 
-constexpr int kModuleCacheVersion = 1;
+constexpr int kModuleCacheVersion = 2;
 
 std::string read_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -188,6 +190,10 @@ std::string source_key(const std::string& module_name, const std::string& path, 
     return module_name + "\t" + path + "\t" + bool_key(is_root);
 }
 
+std::string source_display(const std::string& module_name, const std::string& path) {
+    return "'" + display_module_name(module_name) + "' at '" + path + "'";
+}
+
 std::map<std::string, const ModuleCacheSource*> cache_sources_by_key(const ModuleCache& cache) {
     std::map<std::string, const ModuleCacheSource*> by_key;
     for (const auto& source : cache.sources) {
@@ -196,7 +202,64 @@ std::map<std::string, const ModuleCacheSource*> cache_sources_by_key(const Modul
     return by_key;
 }
 
+std::map<std::string, const ModuleCacheAstSummary*> cache_ast_summaries_by_key(const ModuleCache& cache) {
+    std::map<std::string, const ModuleCacheAstSummary*> by_key;
+    for (const auto& summary : cache.ast_summaries) {
+        by_key.emplace(source_key(summary.module_name, summary.path, summary.is_root), &summary);
+    }
+    return by_key;
+}
+
+std::string count_key(std::uint64_t value) {
+    return std::to_string(value);
+}
+
+std::uint64_t parse_count_field(const std::string& value,
+                                const std::string& display_path,
+                                std::size_t line) {
+    if (value.empty()) {
+        throw CompileError("invalid module cache '" + display_path + "' at line " +
+                           std::to_string(line) + ": expected non-negative count");
+    }
+    std::uint64_t result = 0;
+    for (char c : value) {
+        if (c < '0' || c > '9') {
+            throw CompileError("invalid module cache '" + display_path + "' at line " +
+                               std::to_string(line) + ": expected non-negative count");
+        }
+        std::uint64_t digit = static_cast<std::uint64_t>(c - '0');
+        if (result > (std::numeric_limits<std::uint64_t>::max() - digit) / 10) {
+            throw CompileError("invalid module cache '" + display_path + "' at line " +
+                               std::to_string(line) + ": count is too large");
+        }
+        result = result * 10 + digit;
+    }
+    return result;
+}
+
 } // namespace
+
+ModuleCacheAstSummary make_module_cache_ast_summary(const std::string& path,
+                                                    const std::string& content_hash,
+                                                    const std::vector<std::string>& module_path,
+                                                    const Program& program,
+                                                    bool is_root) {
+    ModuleCacheAstSummary summary;
+    summary.module_name = join_qualified_path(module_path);
+    summary.path = path;
+    summary.content_hash = content_hash;
+    summary.is_root = is_root;
+    summary.use_count = program.uses.size();
+    summary.module_import_count = program.module_imports.size();
+    summary.module_decl_count = program.modules.size();
+    summary.constant_count = program.constants.size();
+    summary.function_count = program.functions.size();
+    summary.struct_count = program.structs.size();
+    summary.enum_count = program.enums.size();
+    summary.trait_count = program.traits.size();
+    summary.impl_count = program.impls.size();
+    return summary;
+}
 
 std::string serialize_module_cache(const ModuleCache& cache) {
     std::ostringstream out;
@@ -212,6 +275,24 @@ std::string serialize_module_cache(const ModuleCache& cache) {
             source.source,
         });
     }
+    for (const auto& summary : cache.ast_summaries) {
+        write_line(out, {
+            "ast-summary",
+            summary.module_name,
+            summary.path,
+            summary.is_root ? "1" : "0",
+            summary.content_hash,
+            count_key(summary.use_count),
+            count_key(summary.module_import_count),
+            count_key(summary.module_decl_count),
+            count_key(summary.constant_count),
+            count_key(summary.function_count),
+            count_key(summary.struct_count),
+            count_key(summary.enum_count),
+            count_key(summary.trait_count),
+            count_key(summary.impl_count),
+        });
+    }
     return out.str();
 }
 
@@ -223,15 +304,18 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
     bool saw_header = false;
     bool saw_metadata = false;
     std::set<std::string> seen_sources;
+    std::set<std::string> seen_ast_summaries;
 
     while (std::getline(in, line)) {
         ++line_number;
         if (!saw_header) {
             if (line == "ari-module-cache-v1") {
                 cache.format_version = 1;
+            } else if (line == "ari-module-cache-v2") {
+                cache.format_version = 2;
             } else {
                 throw CompileError("invalid module cache '" + display_path +
-                                   "': expected ari-module-cache-v1 header");
+                                   "': expected ari-module-cache-v1 or ari-module-cache-v2 header");
             }
             saw_header = true;
             continue;
@@ -270,6 +354,34 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 fields[5],
                 is_root,
             });
+        } else if (tag == "ast-summary") {
+            if (fields.size() != 14) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) + ": malformed ast-summary record");
+            }
+            bool is_root = parse_bool_field(fields[3], display_path, line_number);
+            std::string key = source_key(fields[1], fields[2], is_root);
+            if (!seen_ast_summaries.insert(key).second) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) +
+                                   ": duplicate ast-summary record for module '" +
+                                   display_module_name(fields[1]) + "' at '" + fields[2] + "'");
+            }
+            cache.ast_summaries.push_back(ModuleCacheAstSummary{
+                fields[1],
+                fields[2],
+                fields[4],
+                is_root,
+                parse_count_field(fields[5], display_path, line_number),
+                parse_count_field(fields[6], display_path, line_number),
+                parse_count_field(fields[7], display_path, line_number),
+                parse_count_field(fields[8], display_path, line_number),
+                parse_count_field(fields[9], display_path, line_number),
+                parse_count_field(fields[10], display_path, line_number),
+                parse_count_field(fields[11], display_path, line_number),
+                parse_count_field(fields[12], display_path, line_number),
+                parse_count_field(fields[13], display_path, line_number),
+            });
         } else {
             throw CompileError("invalid module cache '" + display_path + "' at line " +
                                std::to_string(line_number) + ": unknown record");
@@ -278,7 +390,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
 
     if (!saw_header) {
         throw CompileError("invalid module cache '" + display_path +
-                           "': expected ari-module-cache-v1 header");
+                           "': expected ari-module-cache-v1 or ari-module-cache-v2 header");
     }
     if (!saw_metadata) {
         throw CompileError("invalid module cache '" + display_path + "': missing metadata record");
@@ -299,6 +411,43 @@ const ModuleCacheSource* find_module_cache_source(const ModuleCache& cache, cons
         if (source.path == path) return &source;
     }
     return nullptr;
+}
+
+const ModuleCacheAstSummary* find_module_cache_ast_summary(const ModuleCache& cache,
+                                                           const std::string& path) {
+    for (const auto& summary : cache.ast_summaries) {
+        if (summary.path == path) return &summary;
+    }
+    return nullptr;
+}
+
+void require_matching_module_cache_ast_summary(const ModuleCacheAstSummary& expected,
+                                               const ModuleCacheAstSummary& actual) {
+    auto fail = [&](const std::string& detail) {
+        throw CompileError("module cache AST summary for " +
+                           source_display(actual.module_name, actual.path) +
+                           " does not match parsed source: " + detail +
+                           "; regenerate it with --emit-module-cache");
+    };
+    if (expected.module_name != actual.module_name) fail("module name changed");
+    if (expected.path != actual.path) fail("source path changed");
+    if (expected.is_root != actual.is_root) fail("root-source flag changed");
+    if (expected.content_hash != actual.content_hash) fail("content hash changed");
+#define ARI_CHECK_SUMMARY_COUNT(field, label) \
+    if (expected.field != actual.field) { \
+        fail(std::string(label) + " count changed from " + \
+             std::to_string(expected.field) + " to " + std::to_string(actual.field)); \
+    }
+    ARI_CHECK_SUMMARY_COUNT(use_count, "use");
+    ARI_CHECK_SUMMARY_COUNT(module_import_count, "module import");
+    ARI_CHECK_SUMMARY_COUNT(module_decl_count, "module declaration");
+    ARI_CHECK_SUMMARY_COUNT(constant_count, "constant");
+    ARI_CHECK_SUMMARY_COUNT(function_count, "function");
+    ARI_CHECK_SUMMARY_COUNT(struct_count, "struct");
+    ARI_CHECK_SUMMARY_COUNT(enum_count, "enum");
+    ARI_CHECK_SUMMARY_COUNT(trait_count, "trait");
+    ARI_CHECK_SUMMARY_COUNT(impl_count, "impl");
+#undef ARI_CHECK_SUMMARY_COUNT
 }
 
 const ModuleMetadataImport* find_module_cache_import(const ModuleCache& cache, const ModuleImport& import) {
@@ -332,6 +481,7 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
     }
 
     const auto by_key = cache_sources_by_key(cache);
+    const auto summaries_by_key = cache_ast_summaries_by_key(cache);
     std::set<std::string> metadata_source_keys;
     std::map<std::string, std::string> source_path_by_module;
     bool matched_root = false;
@@ -358,6 +508,17 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
                        display_module_name(source.module_name) + "' hashes to '" +
                        cached_hash + "' instead of recorded '" + cached.content_hash + "'");
         }
+        auto summary_it = summaries_by_key.find(source_key(source.module_name, source.path, source.is_root));
+        if (summary_it == summaries_by_key.end()) {
+            fail_stale(display_path, "missing AST summary for cached source " +
+                       source_display(source.module_name, source.path));
+        }
+        const ModuleCacheAstSummary& summary = *summary_it->second;
+        if (summary.content_hash != source.content_hash) {
+            fail_stale(display_path, "AST summary for cached source " +
+                       source_display(source.module_name, source.path) +
+                       " hash does not match embedded metadata");
+        }
 
         std::string current = read_file(source.path);
         std::string current_hash = module_metadata_source_hash(current);
@@ -375,6 +536,14 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
         if (!metadata_source_keys.count(source_key(source.module_name, source.path, source.is_root))) {
             fail_stale(display_path, "cached source '" + display_module_name(source.module_name) +
                        "' at '" + source.path + "' is not listed by embedded metadata");
+        }
+    }
+
+    for (const auto& summary : cache.ast_summaries) {
+        if (!metadata_source_keys.count(source_key(summary.module_name, summary.path, summary.is_root))) {
+            fail_stale(display_path, "cached AST summary for " +
+                       source_display(summary.module_name, summary.path) +
+                       " is not listed by embedded metadata");
         }
     }
 

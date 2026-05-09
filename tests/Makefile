@@ -463,14 +463,27 @@ check-modules: $(TARGET)
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --check-module-metadata $(BUILD_DIR)/modules/package-module-main-duplicate-import.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-duplicate-import.ll >$(BUILD_DIR)/modules/package-module-main-duplicate-import.err 2>&1; then exit 1; fi
 	grep -q "duplicate import record" $(BUILD_DIR)/modules/package-module-main-duplicate-import.err
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache.ll
-	grep -q "ari-module-cache-v1" $(BUILD_DIR)/modules/package-module-main.aricache
+	grep -q "ari-module-cache-v2" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -q "metadata.*ari-module-metadata-v2" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -q "source.*package_math.*tests/packages/package_math.ari" $(BUILD_DIR)/modules/package-module-main.aricache
+	grep -q "ast-summary.*package_math.*tests/packages/package_math.ari" $(BUILD_DIR)/modules/package-module-main.aricache
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-module-main-cache.ll $(BUILD_DIR)/modules/package-module-main-cache-use.ll
+	awk 'NR == 1 { print "ari-module-cache-v1"; next } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-v1.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-v1.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-v1.ll >$(BUILD_DIR)/modules/package-module-main-cache-v1.err 2>&1; then exit 1; fi
+	grep -q "old module cache format" $(BUILD_DIR)/modules/package-module-main-cache-v1.err
 	awk 'BEGIN { done = 0 } { print; if (!done && $$1 == "source") { print; done = 1 } }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-duplicate-source.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-duplicate-source.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-duplicate-source.ll >$(BUILD_DIR)/modules/package-module-main-cache-duplicate-source.err 2>&1; then exit 1; fi
 	grep -q "duplicate source record" $(BUILD_DIR)/modules/package-module-main-cache-duplicate-source.err
+	awk 'BEGIN { done = 0 } { print; if (!done && $$1 == "ast-summary") { print; done = 1 } }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-duplicate-summary.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-duplicate-summary.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-duplicate-summary.ll >$(BUILD_DIR)/modules/package-module-main-cache-duplicate-summary.err 2>&1; then exit 1; fi
+	grep -q "duplicate ast-summary record" $(BUILD_DIR)/modules/package-module-main-cache-duplicate-summary.err
+	sed '/ast-summary.*package_math.*tests\/packages\/package_math.ari/d' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-missing-summary.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-missing-summary.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-missing-summary.ll >$(BUILD_DIR)/modules/package-module-main-cache-missing-summary.err 2>&1; then exit 1; fi
+	grep -q "missing AST summary" $(BUILD_DIR)/modules/package-module-main-cache-missing-summary.err
+	awk 'BEGIN { FS=OFS="\t" } $$1 == "ast-summary" && $$2 == "package_math" { $$10 = "99" } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.err 2>&1; then exit 1; fi
+	grep -q "function count changed" $(BUILD_DIR)/modules/package-module-main-cache-summary-tampered.err
 	sed '0,/package_math::value/s/package_math::value/package_math::wrong/' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-tampered.err 2>&1; then exit 1; fi
 	grep -q "does not match the current source graph" $(BUILD_DIR)/modules/package-module-main-cache-tampered.err
