@@ -24,6 +24,13 @@ let delta: i32 = -10
 
 `256` is rejected for `u8`, and `-129` is rejected for `i8`.
 
+Both executable backends preserve the declared integer width when scalar locals
+are read or written. On the raw `--freestanding` backend this includes narrow
+local reloads after explicit raw-pointer writes, so an `i8`, `i16`, or `i32`
+slot is sign-extended when read back through the local binding. The raw backend
+still reserves one 8-byte local stack slot per scalar until packed stack layout
+and full ABI classification are implemented.
+
 ## Bool
 
 ```ari

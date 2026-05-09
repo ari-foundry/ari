@@ -1052,6 +1052,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/variables-basic.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/variables-widths.ari -o $(BUILD_DIR)/variables/variables-widths.raw
 	$(BUILD_DIR)/variables/variables-widths.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/freestanding-scalar-width-local.ari -o $(BUILD_DIR)/variables/freestanding-scalar-width-local.raw
+	$(BUILD_DIR)/variables/freestanding-scalar-width-local.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/variables-match-binding.ari -o $(BUILD_DIR)/variables/variables-match-binding.raw
 	$(BUILD_DIR)/variables/variables-match-binding.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/variables-tuple-pattern.ari -o $(BUILD_DIR)/variables/variables-tuple-pattern.raw

@@ -1,0 +1,26 @@
+fn main() -> i64 {
+  var tiny: i8 = 0i8;
+  var small: i16 = 0i16;
+  var medium: i32 = 0i32;
+
+  let tiny_ptr: ptr i8 = (ref mut tiny) as ptr i8;
+  let small_ptr: ptr i16 = (ref mut small) as ptr i16;
+  let medium_ptr: ptr i32 = (ref mut medium) as ptr i32;
+
+  ptr_store(tiny_ptr, -5i8);
+  ptr_store(small_ptr, -7i16);
+  ptr_store(medium_ptr, -11i32);
+
+  var score: i64 = 0;
+  if tiny < 0i8 {
+    score = score + 5;
+  }
+  if small < 0i16 {
+    score = score + 7;
+  }
+  if medium < 0i32 {
+    score = score + 11;
+  }
+
+  score
+}

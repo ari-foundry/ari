@@ -452,7 +452,8 @@ private:
     void emit_store_value_to_offset(const IrType& target_type, const IrExpr& value, int target_offset) {
         if (!is_aggregate_type(target_type)) {
             emit_expr(value);
-            emit_mov_mem_reg(target_offset, Reg::RAX);
+            if (is_integer_primitive(target_type.primitive)) emit_cast_to_type(value.loc, target_type);
+            emit_store_rax_to_local(target_offset, target_type);
             return;
         }
         if (has_aggregate_enum_layout(target_type)) {
@@ -556,6 +557,84 @@ private:
         out_.u8(0x8B);
         emit_modrm(2, d, reg_code(Reg::RBP));
         out_.u32(static_cast<std::uint32_t>(-offset));
+    }
+
+    void emit_load_rax_from_local(int offset, const IrType& type) {
+        int b = reg_code(Reg::RBP);
+        bool is_signed = type.qualifier == TypeQualifier::Value && is_signed_integer_primitive(type.primitive);
+        switch (raw_memory_bits(type)) {
+            case 8:
+                if (is_signed) {
+                    emit_rex(true, reg_code(Reg::RAX), b);
+                    out_.u8(0x0F);
+                    out_.u8(0xBE);
+                    emit_modrm(2, reg_code(Reg::RAX), b);
+                } else {
+                    emit_rex(false, reg_code(Reg::RAX), b);
+                    out_.u8(0x0F);
+                    out_.u8(0xB6);
+                    emit_modrm(2, reg_code(Reg::RAX), b);
+                }
+                out_.u32(static_cast<std::uint32_t>(-offset));
+                break;
+            case 16:
+                if (is_signed) {
+                    emit_rex(true, reg_code(Reg::RAX), b);
+                    out_.u8(0x0F);
+                    out_.u8(0xBF);
+                    emit_modrm(2, reg_code(Reg::RAX), b);
+                } else {
+                    emit_rex(false, reg_code(Reg::RAX), b);
+                    out_.u8(0x0F);
+                    out_.u8(0xB7);
+                    emit_modrm(2, reg_code(Reg::RAX), b);
+                }
+                out_.u32(static_cast<std::uint32_t>(-offset));
+                break;
+            case 32:
+                if (is_signed) {
+                    emit_rex(true, reg_code(Reg::RAX), b);
+                    out_.u8(0x63);
+                    emit_modrm(2, reg_code(Reg::RAX), b);
+                } else {
+                    emit_rex(false, reg_code(Reg::RAX), b);
+                    out_.u8(0x8B);
+                    emit_modrm(2, reg_code(Reg::RAX), b);
+                }
+                out_.u32(static_cast<std::uint32_t>(-offset));
+                break;
+            default:
+                emit_mov_reg_mem(Reg::RAX, offset);
+                break;
+        }
+    }
+
+    void emit_store_rax_to_local(int offset, const IrType& type) {
+        int b = reg_code(Reg::RBP);
+        switch (raw_memory_bits(type)) {
+            case 8:
+                emit_rex(false, reg_code(Reg::RAX), b);
+                out_.u8(0x88);
+                emit_modrm(2, reg_code(Reg::RAX), b);
+                out_.u32(static_cast<std::uint32_t>(-offset));
+                break;
+            case 16:
+                out_.u8(0x66);
+                emit_rex(false, reg_code(Reg::RAX), b);
+                out_.u8(0x89);
+                emit_modrm(2, reg_code(Reg::RAX), b);
+                out_.u32(static_cast<std::uint32_t>(-offset));
+                break;
+            case 32:
+                emit_rex(false, reg_code(Reg::RAX), b);
+                out_.u8(0x89);
+                emit_modrm(2, reg_code(Reg::RAX), b);
+                out_.u32(static_cast<std::uint32_t>(-offset));
+                break;
+            default:
+                emit_mov_mem_reg(offset, Reg::RAX);
+                break;
+        }
     }
 
     void emit_mov_reg_ptr(Reg dst, Reg base) {
@@ -851,10 +930,11 @@ private:
             }
             int offset = local_offset(fn_.loc, fn_.params[i].name);
             if (i < 6) {
-                emit_mov_mem_reg(offset, arg_regs[i]);
+                emit_mov_reg_reg(Reg::RAX, arg_regs[i]);
+                emit_store_rax_to_local(offset, fn_.params[i].type);
             } else {
                 emit_mov_reg_stack_arg(Reg::RAX, 16 + static_cast<int>((i - 6) * 8));
-                emit_mov_mem_reg(offset, Reg::RAX);
+                emit_store_rax_to_local(offset, fn_.params[i].type);
             }
         }
     }
@@ -1021,14 +1101,18 @@ private:
 
     void emit_for_range(const IrStmt& stmt) {
         emit_expr(*stmt.for_start);
-        emit_mov_mem_reg(local_offset(stmt.loc, stmt.for_index_name), Reg::RAX);
+        emit_store_rax_to_local(local_offset(stmt.loc, stmt.for_index_name),
+                                local_type(stmt.loc, stmt.for_index_name));
         emit_expr(*stmt.for_end);
-        emit_mov_mem_reg(local_offset(stmt.loc, stmt.for_end_name), Reg::RAX);
+        emit_store_rax_to_local(local_offset(stmt.loc, stmt.for_end_name),
+                                local_type(stmt.loc, stmt.for_end_name));
 
         std::size_t cond = out_.size();
-        emit_mov_reg_mem(Reg::RAX, local_offset(stmt.loc, stmt.for_index_name));
+        emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_index_name),
+                                 local_type(stmt.loc, stmt.for_index_name));
         emit_push(Reg::RAX);
-        emit_mov_reg_mem(Reg::RAX, local_offset(stmt.loc, stmt.for_end_name));
+        emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_end_name),
+                                 local_type(stmt.loc, stmt.for_end_name));
         emit_pop(Reg::RCX);
         emit_cmp_reg_reg(Reg::RCX, Reg::RAX);
         bool unsigned_range = is_unsigned_integer_type(stmt.for_start->type);
@@ -1037,8 +1121,10 @@ private:
             : (unsigned_range ? 0x83 : 0x8D));
 
         if (!stmt.for_binding_name.empty()) {
-            emit_mov_reg_mem(Reg::RAX, local_offset(stmt.loc, stmt.for_index_name));
-            emit_mov_mem_reg(local_offset(stmt.loc, stmt.for_binding_name), Reg::RAX);
+            emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_index_name),
+                                     local_type(stmt.loc, stmt.for_index_name));
+            emit_store_rax_to_local(local_offset(stmt.loc, stmt.for_binding_name),
+                                    local_type(stmt.loc, stmt.for_binding_name));
         }
 
         LoopLabels labels;
@@ -1054,17 +1140,21 @@ private:
         for (std::size_t patch : loops_.back().plain_continue_patches) patch_rel32(patch, update);
         std::size_t inclusive_done = 0;
         if (stmt.for_inclusive) {
-            emit_mov_reg_mem(Reg::RAX, local_offset(stmt.loc, stmt.for_index_name));
+            emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_index_name),
+                                     local_type(stmt.loc, stmt.for_index_name));
             emit_push(Reg::RAX);
-            emit_mov_reg_mem(Reg::RAX, local_offset(stmt.loc, stmt.for_end_name));
+            emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_end_name),
+                                     local_type(stmt.loc, stmt.for_end_name));
             emit_pop(Reg::RCX);
             emit_cmp_reg_reg(Reg::RCX, Reg::RAX);
             inclusive_done = emit_jcc_placeholder(0x84);
         }
-        emit_mov_reg_mem(Reg::RAX, local_offset(stmt.loc, stmt.for_index_name));
+        emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_index_name),
+                                 local_type(stmt.loc, stmt.for_index_name));
         emit_mov_reg_imm64(Reg::RCX, 1);
         emit_add_reg_reg(Reg::RAX, Reg::RCX);
-        emit_mov_mem_reg(local_offset(stmt.loc, stmt.for_index_name), Reg::RAX);
+        emit_store_rax_to_local(local_offset(stmt.loc, stmt.for_index_name),
+                                local_type(stmt.loc, stmt.for_index_name));
         patch_rel32(emit_jmp_placeholder(), cond);
 
         std::size_t end = out_.size();
@@ -1110,7 +1200,7 @@ private:
         for (const auto& binding : stmt.init_bindings) {
             names.push_back(binding.name);
             emit_expr(*binding.init);
-            emit_mov_mem_reg(local_offset(binding.loc, binding.name), Reg::RAX);
+            emit_store_rax_to_local(local_offset(binding.loc, binding.name), binding.type);
         }
 
         std::size_t cond = out_.size();
@@ -1149,7 +1239,7 @@ private:
         }
         for (std::size_t i = values.size(); i > 0; --i) {
             emit_pop(Reg::RAX);
-            emit_mov_mem_reg(local_offset(loc, names[i - 1]), Reg::RAX);
+            emit_store_rax_to_local(local_offset(loc, names[i - 1]), local_type(loc, names[i - 1]));
         }
     }
 
@@ -1226,13 +1316,13 @@ private:
     void emit_match_arm_bindings(const Arm& arm) {
         if (arm.has_value_binding) {
             emit_mov_reg_rsp(Reg::RAX);
-            emit_mov_mem_reg(local_offset(arm.loc, arm.value_name), Reg::RAX);
+            emit_store_rax_to_local(local_offset(arm.loc, arm.value_name), arm.value_type);
         }
         if (arm.has_payload_binding) {
             emit_mov_reg_rsp(Reg::RAX);
             emit_shr_rax_imm8(32);
             emit_cast_payload_to_type(arm.loc, arm.payload_type);
-            emit_mov_mem_reg(local_offset(arm.loc, arm.payload_name), Reg::RAX);
+            emit_store_rax_to_local(local_offset(arm.loc, arm.payload_name), arm.payload_type);
         }
     }
 
@@ -1258,7 +1348,7 @@ private:
                 if (is_aggregate_type(expr.type)) {
                     throw CompileError(where(expr.loc) + ": backend cannot materialize aggregate values; use field or index access");
                 }
-                emit_mov_reg_mem(Reg::RAX, local_offset(expr.loc, expr.name));
+                emit_load_rax_from_local(local_offset(expr.loc, expr.name), expr.type);
                 break;
             case IrExprKind::Borrow:
                 emit_lea_reg_local(Reg::RAX, expr.operand ? lvalue_offset(*expr.operand) : local_offset(expr.loc, expr.name));
@@ -1383,7 +1473,7 @@ private:
                 expr.type.primitive == IrPrimitiveKind::Struct) {
                 throw CompileError(where(expr.loc) + ": backend cannot materialize nested aggregate values; index a scalar field");
             }
-            emit_mov_reg_mem(Reg::RAX, offset);
+            emit_load_rax_from_local(offset, expr.type);
             return;
         }
 
@@ -1426,7 +1516,7 @@ private:
         emit_imul_reg_reg(Reg::RAX, Reg::RCX);
         emit_lea_reg_local(Reg::RCX, base);
         emit_sub_reg_reg(Reg::RCX, Reg::RAX);
-        emit_mov_reg_ptr(Reg::RAX, Reg::RCX);
+        emit_load_rax_from_ptr(Reg::RCX, expr.type);
     }
 
     void emit_array_bounds_check(std::uint64_t array_size) {
@@ -1479,13 +1569,13 @@ private:
 
             if (arm.has_value_binding) {
                 emit_mov_reg_rsp(Reg::RAX);
-                emit_mov_mem_reg(local_offset(arm.loc, arm.value_name), Reg::RAX);
+                emit_store_rax_to_local(local_offset(arm.loc, arm.value_name), arm.value_type);
             }
             if (arm.has_payload_binding) {
                 emit_mov_reg_rsp(Reg::RAX);
                 emit_shr_rax_imm8(32);
                 emit_cast_payload_to_type(arm.loc, arm.payload_type);
-                emit_mov_mem_reg(local_offset(arm.loc, arm.payload_name), Reg::RAX);
+                emit_store_rax_to_local(local_offset(arm.loc, arm.payload_name), arm.payload_type);
             }
             emit_statements(arm.body);
             emit_expr(*arm.value);

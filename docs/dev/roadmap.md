@@ -56,6 +56,19 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
+3. Finish exact integer-width stack and ABI layout in `--freestanding`.
+   Width-aware scalar local loads/stores are implemented for local bindings,
+   parameter spills, loop temps, match bindings, tuple/array scalar field reads,
+   and raw-pointer-mutated narrow integer reloads. The raw backend still uses
+   one 8-byte stack slot per scalar local, so the remaining work is stack
+   packing and ABI classification rather than value-width correctness for
+   normal scalar locals.
+   - [stack-pack] assign byte-accurate local offsets and alignment instead of
+     reserving one 8-byte slot for every scalar
+   - [aggregate-offsets] share byte-accurate tuple, struct, fixed-array, and
+     enum field offsets with the LLVM/layout code
+   - [abi] pass and return narrow scalars and aggregates with explicit
+     platform ABI rules instead of relying on the current local-slot model
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -186,9 +199,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Backend Work
 
-1. Add exact integer-width stack and ABI layout in `--freestanding`.
-2. Emit relocatable object files for the native backend.
-3. Define non-local aggregate ABI layouts for tuple parameters/returns,
+1. Emit relocatable object files for the native backend.
+2. Define non-local aggregate ABI layouts for tuple parameters/returns,
    structs, fixed arrays, and vectors. Fixed-size local tuple/array/vector
    stack layout, LLVM aggregate enum layout, and tuple/array/vector index access
    are implemented on the LLVM backend.
@@ -199,15 +211,15 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      expressions in the freestanding backend
    - [vectors] define non-local and growable vector ABI after allocator-backed `Vec[T]` storage exists
    - [enums] lower multi-payload aggregate enum layout in the freestanding backend and define its FFI ABI
-4. Add freestanding runtime string storage so raw ELF output can lower string
+3. Add freestanding runtime string storage so raw ELF output can lower string
    values and line input helpers without relying on the host C runtime.
-5. Lower floating-point scalar values and calls in the freestanding backend.
+4. Lower floating-point scalar values and calls in the freestanding backend.
    - [values] materialize `f32`, `f64`, and eventual `f128` scalar expressions
    - [abi] pass and return supported floats with the platform calling convention
    - [ops] lower arithmetic, comparisons, casts, and raw pointer load/store for
      float pointee types
-6. Expand FFI type coverage beyond the x86-64 Linux C aliases.
-7. Decide whether source-level function overloading belongs in Ari. The current
+5. Expand FFI type coverage beyond the x86-64 Linux C aliases.
+6. Decide whether source-level function overloading belongs in Ari. The current
    v0 mangling intentionally omits parameter types because overloading is not
    supported.
 
