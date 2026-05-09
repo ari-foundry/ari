@@ -181,6 +181,7 @@ enum class IrExprKind {
     Tuple,
     TupleIndex,
     Index,
+    SliceRange,
     Vector,
     VectorPush,
     VectorPop,

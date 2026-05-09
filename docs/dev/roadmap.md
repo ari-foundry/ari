@@ -48,17 +48,6 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
-3. Finish non-owning `Slice[T]` view conveniences.
-   The source `std::Slice[T]` layout, `slice(data, len)` construction,
-   `len(view)` / `view.len()` / `view.is_empty()`, and checked
-   `view[index]` read/write access lower on the LLVM backend today. This is a
-   nearer dependency than allocator-backed collection APIs because it gives
-   arrays, vectors, and FFI buffers one shared view shape before `Vec[T]`
-   moves to heap storage.
-   - [slice-expr] add `view[start..end]` and `view[start..=end]` expressions
-     once range-to-length bounds rules are explicit
-   - [patterns] add slice patterns after the shared pattern binding-mode engine
-     decides reference/ownership binding behavior
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -79,6 +68,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    - [or-bindings] support binding unification for or-patterns in all aggregate
      pattern positions
+   - [slice-patterns] lower `Slice[T]` and `Vec[T]` length-checked patterns
+     after the shared binding-mode engine decides reference/ownership behavior
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and
      function-parameter patterns on one shared binding-mode engine; value alias
@@ -132,8 +123,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host
       reusable line buffer
-    Slice view follow-ups that do not require allocator-backed ownership have
-    moved to Near-Term Compiler Work.
+    Slice pattern follow-ups live with the shared pattern binding-mode work
+    because they depend on reference/ownership binding policy, not allocator
+    ownership.
 7. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers

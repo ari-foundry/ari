@@ -132,7 +132,9 @@ still planned.
 ## Range Operators
 
 Exclusive range syntax (`start..end`) and inclusive range syntax
-(`start..=end`) are supported directly in `for` loops.
+(`start..=end`) produce prelude range values. They are supported directly in
+`for` loops and inside `Slice[T]` indexing expressions such as
+`view[start..end]`.
 
 ## Null Coalescing
 

@@ -1305,6 +1305,8 @@ private:
                     break;
                 }
                 throw CompileError(where(expr.loc) + ": backend does not lower vector indexing yet");
+            case IrExprKind::SliceRange:
+                throw CompileError(where(expr.loc) + ": freestanding backend does not lower Slice range expressions yet");
             case IrExprKind::Vector:
                 if (expr.type.primitive == IrPrimitiveKind::Array) {
                     throw CompileError(where(expr.loc) + ": backend cannot materialize array values; bind the array or index it");

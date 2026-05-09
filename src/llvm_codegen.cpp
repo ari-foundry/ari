@@ -1398,6 +1398,8 @@ private:
                     return emit_slice_index(expr);
                 }
                 throw CompileError(where(expr.loc) + ": LLVM backend can only lower array, vector, and Slice indexing yet");
+            case IrExprKind::SliceRange:
+                return emit_slice_range(expr);
             case IrExprKind::Vector:
                 if (expr.type.primitive == IrPrimitiveKind::Array) return emit_tuple(expr);
                 if (expr.type.primitive == IrPrimitiveKind::Vector) return emit_vector(expr);
@@ -1590,6 +1592,48 @@ private:
         std::string out = temp();
         line("  " + out + " = load " + llvm_type(expr.type) + ", ptr " + ptr);
         return Value{llvm_type(expr.type), out, expr.type};
+    }
+
+    Value emit_slice_range(const IrExpr& expr) {
+        if (!expr.operand || !expr.left || !expr.right || !is_prelude_slice_type(expr.operand->type)) {
+            throw CompileError(where(expr.loc) + ": malformed Slice range during LLVM lowering");
+        }
+        if (expr.type.args.empty()) {
+            throw CompileError(where(expr.loc) + ": malformed Slice range result type");
+        }
+
+        Value slice = emit_expr(*expr.operand);
+        IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
+        Value start = cast_value(emit_expr(*expr.left), index_type);
+        Value end = cast_value(emit_expr(*expr.right), index_type);
+
+        std::string data = temp();
+        std::string len = temp();
+        line("  " + data + " = extractvalue " + slice.type + " " + slice.name + ", 0");
+        line("  " + len + " = extractvalue " + slice.type + " " + slice.name + ", 1");
+        emit_slice_range_bounds_check(start, end, len, expr.bool_value);
+
+        std::string range_len = temp();
+        if (expr.bool_value) {
+            std::string delta = temp();
+            line("  " + delta + " = sub i64 " + end.name + ", " + start.name);
+            line("  " + range_len + " = add i64 " + delta + ", 1");
+        } else {
+            line("  " + range_len + " = sub i64 " + end.name + ", " + start.name);
+        }
+
+        std::string range_data = temp();
+        IrType element = expr.type.args[0];
+        line("  " + range_data + " = getelementptr " + llvm_type(element) +
+             ", ptr " + data + ", i64 " + start.name);
+
+        std::string tuple_type = llvm_type(expr.type);
+        std::string with_data = temp();
+        line("  " + with_data + " = insertvalue " + tuple_type + " undef, ptr " + range_data + ", 0");
+        std::string out = temp();
+        line("  " + out + " = insertvalue " + tuple_type + " " + with_data +
+             ", i64 " + range_len + ", 1");
+        return Value{tuple_type, out, expr.type};
     }
 
     std::string emit_slice_element_ptr(const IrExpr& expr) {
@@ -2085,6 +2129,38 @@ private:
         line("  " + low + " = icmp slt i64 " + index.name + ", 0");
         line("  " + high + " = icmp sge i64 " + index.name + ", " + len);
         line("  " + bad + " = or i1 " + low + ", " + high);
+        line("  br i1 " + bad + ", label %" + fail_label + ", label %" + ok_label);
+        emit_label(fail_label);
+        line("  call void @ari_builtin_panic()");
+        line("  unreachable");
+        emit_label(ok_label);
+    }
+
+    void emit_slice_range_bounds_check(const Value& start,
+                                       const Value& end,
+                                       const std::string& len,
+                                       bool inclusive) {
+        std::string fail_label = label("slice.range.bounds.fail");
+        std::string ok_label = label("slice.range.bounds.ok");
+        std::string start_low = temp();
+        std::string end_low = temp();
+        std::string order_bad = temp();
+        std::string high_bad = temp();
+        std::string low_bad = temp();
+        std::string range_bad = temp();
+        std::string bad = temp();
+
+        line("  " + start_low + " = icmp slt i64 " + start.name + ", 0");
+        line("  " + end_low + " = icmp slt i64 " + end.name + ", 0");
+        line("  " + order_bad + " = icmp sgt i64 " + start.name + ", " + end.name);
+        if (inclusive) {
+            line("  " + high_bad + " = icmp sge i64 " + end.name + ", " + len);
+        } else {
+            line("  " + high_bad + " = icmp sgt i64 " + end.name + ", " + len);
+        }
+        line("  " + low_bad + " = or i1 " + start_low + ", " + end_low);
+        line("  " + range_bad + " = or i1 " + order_bad + ", " + high_bad);
+        line("  " + bad + " = or i1 " + low_bad + ", " + range_bad);
         line("  br i1 " + bad + ", label %" + fail_label + ", label %" + ok_label);
         emit_label(fail_label);
         line("  call void @ari_builtin_panic()");

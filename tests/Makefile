@@ -148,11 +148,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/prelude-slice-view.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q '_ARNv3std12slice__G_i64' $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "slice.bounds.fail" $(BUILD_DIR)/prelude/prelude-slice-view.ll
+	grep -q "slice.range.bounds.fail" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 8" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 7" $(BUILD_DIR)/prelude/prelude-slice-view.ll
+	grep -q "store i64 5" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-maybe-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; code=$$?; test $$code -eq 25; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 76; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
 		$(BUILD_DIR)/prelude/prelude-header-main.elf >$(BUILD_DIR)/prelude/prelude-header-main.out; \

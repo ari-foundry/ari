@@ -10474,10 +10474,13 @@ private:
 
         IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
         IrExprPtr index = check_expr(*expr.right);
+        const bool slice_index = is_prelude_slice_type(operand->type);
+        if (slice_index && is_prelude_range_type(index->type)) {
+            return check_slice_range_index(expr, std::move(lowered), std::move(operand), std::move(index));
+        }
         if (!is_value_integer_type(index->type)) {
             fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
         }
-        const bool slice_index = is_prelude_slice_type(operand->type);
         if (!slice_index &&
             (operand->type.primitive != IrPrimitiveKind::Vector || operand->type.args.size() != 1) &&
             (operand->type.primitive != IrPrimitiveKind::Array || operand->type.args.size() != 1)) {
@@ -10560,6 +10563,29 @@ private:
         lowered->type = operand->type.args[0];
         lowered->operand = std::move(operand);
         lowered->right = std::move(index);
+        return lowered;
+    }
+
+    IrExprPtr check_slice_range_index(const Expr& expr,
+                                      IrExprPtr lowered,
+                                      IrExprPtr operand,
+                                      IrExprPtr range) {
+        if (range->kind != IrExprKind::Tuple || range->args.size() != 2) {
+            fail(expr.loc, "Slice range indexing currently expects direct range syntax like view[start..end]");
+        }
+        if (range->type.args.empty() || !is_value_integer_type(range->type.args[0])) {
+            fail(expr.loc, "Slice range bounds must be integers");
+        }
+        const IrType element_type = operand->type.args[0];
+        require_slice_element_materializable(expr.loc, element_type, "Slice range indexing");
+
+        lowered->kind = IrExprKind::SliceRange;
+        lowered->loc = expr.loc;
+        lowered->type = operand->type;
+        lowered->bool_value = range->type.name == "RangeInclusive";
+        lowered->operand = std::move(operand);
+        lowered->left = std::move(range->args[0]);
+        lowered->right = std::move(range->args[1]);
         return lowered;
     }
 

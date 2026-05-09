@@ -432,8 +432,11 @@ does not mutate the `Slice[T]` metadata. Mutable local fixed arrays and mutable
 local `Vec[T]` storage can build the same non-owning writable view with
 `values.as_slice()`. The helper captures the array size or current vector
 runtime length, so later vector length changes do not update an existing view.
-Slicing expressions and slice patterns are still planned after the layout and
-binding policy are nailed down.
+`view[start..end]` and `view[start..=end]` produce another `Slice[T]` with
+bounds checks against the source view; exclusive ranges allow empty slices when
+`start == end`, while inclusive ranges require the end index to name an
+existing element. Slice patterns are still planned after the binding policy is
+nailed down.
 `len(view)`, `view.len()`, and `view.is_empty()` read the stored length.
 
 Ranges are compiler-known two-field values:
