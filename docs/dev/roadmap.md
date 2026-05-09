@@ -72,13 +72,13 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and function-parameter patterns on one shared binding-mode engine
 3. Implement user-defined compile-time meta expansion for `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
+   Meta functions are intentionally non-generic; define concrete meta entry
+   points over `token_stream`, `ast`, or `type` instead of instantiating them.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [calls] expand user-defined Rust-style `name!(...)` expression calls
    - [items] expand item-position macro invocations
    - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [generics] decide whether `meta fn` can be generic and how generic meta
-     signatures are represented
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
 4. Expand the FFI surface.

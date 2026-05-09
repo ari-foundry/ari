@@ -95,5 +95,7 @@ fn value() -> i64 {
 ```
 
 User attributes are currently parsed, validated by name, and retained as
-front-end metadata. Attribute macros that rewrite or insert AST nodes are
-planned.
+front-end metadata. The reserving `meta fn` must be concrete and non-generic;
+generic meta functions are rejected so future expansion can bind each
+attribute/macro entry point to one explicit `token_stream`, `ast`, or `type`
+transform. Attribute macros that rewrite or insert AST nodes are planned.

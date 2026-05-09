@@ -1099,7 +1099,10 @@ private:
 
     void validate_meta_function_signature(const FunctionDecl& fn) const {
         require_unique_generic_params(fn.generics, "meta function", fn.name);
-        if (!fn.generics.empty()) fail(fn.loc, "meta functions cannot be generic yet");
+        if (!fn.generics.empty()) {
+            fail(fn.loc,
+                 "meta functions cannot be generic; define one concrete meta entry point per token_stream, ast, or type transform");
+        }
         if (!fn.has_body) fail(fn.loc, "meta functions must have a body");
         if (!fn.has_return_type) fail(fn.loc, "meta functions must declare a meta return type");
         for (const auto& param : fn.params) {

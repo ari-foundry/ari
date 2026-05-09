@@ -751,6 +751,8 @@ check-meta: $(TARGET)
 	grep -q "@test functions cannot take parameters" $(BUILD_DIR)/meta/attribute-test-param.err
 	if $(TARGET) tests/errors/meta-function-bad-param.ari -o $(BUILD_DIR)/meta/meta-function-bad-param.elf >$(BUILD_DIR)/meta/meta-function-bad-param.err 2>&1; then exit 1; fi
 	grep -q "meta function parameters must use token_stream, ast, or type, got i64" $(BUILD_DIR)/meta/meta-function-bad-param.err
+	if $(TARGET) tests/errors/meta-function-generic.ari -o $(BUILD_DIR)/meta/meta-function-generic.elf >$(BUILD_DIR)/meta/meta-function-generic.err 2>&1; then exit 1; fi
+	grep -q "meta functions cannot be generic; define one concrete meta entry point per token_stream, ast, or type transform" $(BUILD_DIR)/meta/meta-function-generic.err
 	if $(TARGET) tests/errors/matches-macro-arity.ari -o $(BUILD_DIR)/meta/matches-macro-arity.elf >$(BUILD_DIR)/meta/matches-macro-arity.err 2>&1; then exit 1; fi
 	grep -q "expected , after matches! value" $(BUILD_DIR)/meta/matches-macro-arity.err
 	if $(TARGET) tests/errors/matches-macro-pattern-type.ari -o $(BUILD_DIR)/meta/matches-macro-pattern-type.elf >$(BUILD_DIR)/meta/matches-macro-pattern-type.err 2>&1; then exit 1; fi

@@ -162,9 +162,11 @@ fn main() -> i64 {
 }
 ```
 
-`meta fn` signatures may use `token_stream`, `ast`, or `type`. The compiler
-parses and validates these functions as compile-time declarations, but it does
-not execute them yet.
+`meta fn` signatures may use `token_stream`, `ast`, or `type`. They are
+intentionally non-generic; define one concrete meta entry point for each
+transform shape instead of a `[T]`-generic meta function. The compiler parses
+and validates these functions as compile-time declarations, but it does not
+execute them yet.
 
 Expression and item macro invocation use Rust-style `!` syntax. The built-in
 prelude assertion, stop, `print!`, `println!`, and `matches!` macros lower
