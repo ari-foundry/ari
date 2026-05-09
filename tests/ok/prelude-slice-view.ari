@@ -1,15 +1,18 @@
 use std as core;
 
 fn score(slice: Slice[i64]) -> i64 {
-  return ptr_load(slice.data) + len(slice) + slice.len();
+  let zero = 0;
+  return slice[zero] + len(slice) + slice.len();
 }
 
 fn qualified(slice: std::Slice[i64]) -> i64 {
-  return std::mem::ptr_load(slice.data) + len(slice) + slice.len();
+  let zero = 0;
+  return slice[zero] + len(slice) + slice.len();
 }
 
 fn aliased(slice: core::Slice[i64]) -> i64 {
-  return core::mem::ptr_load(slice.data) + len(slice) + slice.len();
+  let zero = 0;
+  return slice[zero] + len(slice) + slice.len();
 }
 
 fn main() -> i64 {

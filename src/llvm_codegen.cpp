@@ -130,6 +130,16 @@ static bool has_aggregate_enum_layout(const IrType& type) {
            !type.field_types.empty();
 }
 
+static bool is_prelude_slice_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::Slice" &&
+           type.args.size() == 1 &&
+           type.field_names.size() == 2 &&
+           type.field_names[0] == "data" &&
+           type.field_names[1] == "len";
+}
+
 class LlvmEmitter {
 public:
     explicit LlvmEmitter(const IrProgram& program) : program_(program) {}
@@ -1384,7 +1394,10 @@ private:
                 if (expr.operand && expr.operand->type.primitive == IrPrimitiveKind::Vector) {
                     return emit_vector_index(expr);
                 }
-                throw CompileError(where(expr.loc) + ": LLVM backend can only lower array and vector indexing yet");
+                if (expr.operand && is_prelude_slice_type(expr.operand->type)) {
+                    return emit_slice_index(expr);
+                }
+                throw CompileError(where(expr.loc) + ": LLVM backend can only lower array, vector, and Slice indexing yet");
             case IrExprKind::Vector:
                 if (expr.type.primitive == IrPrimitiveKind::Array) return emit_tuple(expr);
                 if (expr.type.primitive == IrPrimitiveKind::Vector) return emit_vector(expr);
@@ -1564,6 +1577,26 @@ private:
         line("  " + ptr + " = getelementptr inbounds " + llvm_type(expr.operand->type) +
              ", ptr " + base +
              ", i64 0, i32 1, i64 " + index.name);
+        std::string out = temp();
+        line("  " + out + " = load " + llvm_type(expr.type) + ", ptr " + ptr);
+        return Value{llvm_type(expr.type), out, expr.type};
+    }
+
+    Value emit_slice_index(const IrExpr& expr) {
+        if (!expr.operand || !expr.right || !is_prelude_slice_type(expr.operand->type)) {
+            throw CompileError(where(expr.loc) + ": malformed Slice index during LLVM lowering");
+        }
+        Value slice = emit_expr(*expr.operand);
+        IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
+        Value index = cast_value(emit_expr(*expr.right), index_type);
+        std::string data = temp();
+        std::string len = temp();
+        line("  " + data + " = extractvalue " + slice.type + " " + slice.name + ", 0");
+        line("  " + len + " = extractvalue " + slice.type + " " + slice.name + ", 1");
+        emit_slice_bounds_check(index, len);
+        std::string ptr = temp();
+        line("  " + ptr + " = getelementptr inbounds " + llvm_type(expr.type) +
+             ", ptr " + data + ", i64 " + index.name);
         std::string out = temp();
         line("  " + out + " = load " + llvm_type(expr.type) + ", ptr " + ptr);
         return Value{llvm_type(expr.type), out, expr.type};
@@ -2025,6 +2058,22 @@ private:
         line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
              ", ptr " + vector_ptr + ", i32 0, i32 0");
         line("  " + len + " = load i64, ptr " + len_ptr);
+        line("  " + low + " = icmp slt i64 " + index.name + ", 0");
+        line("  " + high + " = icmp sge i64 " + index.name + ", " + len);
+        line("  " + bad + " = or i1 " + low + ", " + high);
+        line("  br i1 " + bad + ", label %" + fail_label + ", label %" + ok_label);
+        emit_label(fail_label);
+        line("  call void @ari_builtin_panic()");
+        line("  unreachable");
+        emit_label(ok_label);
+    }
+
+    void emit_slice_bounds_check(const Value& index, const std::string& len) {
+        std::string fail_label = label("slice.bounds.fail");
+        std::string ok_label = label("slice.bounds.ok");
+        std::string low = temp();
+        std::string high = temp();
+        std::string bad = temp();
         line("  " + low + " = icmp slt i64 " + index.name + ", 0");
         line("  " + high + " = icmp sge i64 " + index.name + ", " + len);
         line("  " + bad + " = or i1 " + low + ", " + high);

@@ -4873,6 +4873,7 @@ private:
         if (expr.kind == ExprKind::Index) {
             TrackedAggregateAccess base;
             if (!try_build_tracked_aggregate_access(*expr.operand, base)) return false;
+            if (is_prelude_slice_type(base.type)) return false;
             if (base.type.primitive != IrPrimitiveKind::Array &&
                 base.type.primitive != IrPrimitiveKind::Vector) {
                 fail(expr.loc, "index access requires an array or vector value, got " + type_name(base.type));
@@ -10423,13 +10424,26 @@ private:
         if (!is_value_integer_type(index->type)) {
             fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
         }
-        if (operand->type.primitive != IrPrimitiveKind::Vector || operand->type.args.size() != 1) {
-            if (operand->type.primitive != IrPrimitiveKind::Array || operand->type.args.size() != 1) {
-                fail(expr.loc, "index access requires an array or vector value, got " + type_name(operand->type));
-            }
+        const bool slice_index = is_prelude_slice_type(operand->type);
+        if (!slice_index &&
+            (operand->type.primitive != IrPrimitiveKind::Vector || operand->type.args.size() != 1) &&
+            (operand->type.primitive != IrPrimitiveKind::Array || operand->type.args.size() != 1)) {
+            fail(expr.loc, "index access requires an array, vector, or Slice value, got " + type_name(operand->type));
         }
         if (is_owner_type(operand->type)) {
             fail(expr.loc, "moving owning aggregate elements out of temporary values is not supported; bind the aggregate first");
+        }
+
+        if (slice_index) {
+            if (index->kind == IrExprKind::Integer && index->int_negative) {
+                fail(expr.loc, "Slice index must be non-negative");
+            }
+            lowered->kind = IrExprKind::Index;
+            lowered->loc = expr.loc;
+            lowered->type = operand->type.args[0];
+            lowered->operand = std::move(operand);
+            lowered->right = std::move(index);
+            return lowered;
         }
 
         if (operand->kind == IrExprKind::Vector) {
