@@ -398,6 +398,7 @@ let capacity = values.capacity()
 let empty = values.is_empty()
 values.truncate(1)
 values.set(0, 9)
+values.swap(0, 1)
 values.clear()
 ```
 
@@ -423,8 +424,10 @@ runtime length, and uses the same bounds checks as `values[index]`.
 than the current length, leaves it unchanged when `n` is larger, and panics for
 negative runtime lengths. `set(index, value)` overwrites an existing element
 inside the current runtime length and uses the same bounds checks as indexing.
+`swap(a, b)` exchanges two elements inside the current runtime length, with the
+same bounds checks on both indexes.
 Mutating methods such as `reserve`, `push`, `pop`, `clear`, `truncate`, and
-`set` require a `var` binding. Read-only methods such as `capacity`,
+`set`/`swap` require a `var` binding. Read-only methods such as `capacity`,
 `is_empty`, `first`, `last`, and `get` work on immutable local vectors too.
 
 The compiler reserves enough local storage for the largest vector literal,

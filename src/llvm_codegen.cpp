@@ -1381,6 +1381,8 @@ private:
                 return emit_vector_truncate(expr);
             case IrExprKind::VectorSet:
                 return emit_vector_set(expr);
+            case IrExprKind::VectorSwap:
+                return emit_vector_swap(expr);
             case IrExprKind::Noop:
                 return Value{"void", "", expr.type};
             case IrExprKind::FormatPrint:
@@ -1675,6 +1677,37 @@ private:
         line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
              ", ptr " + base + ", i32 0, i32 1, i64 " + index.name);
         line("  store " + value.type + " " + value.name + ", ptr " + item_ptr);
+        return Value{"void", "", expr.type};
+    }
+
+    Value emit_vector_swap(const IrExpr& expr) {
+        if (!expr.operand || !expr.right || !expr.payload ||
+            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.swap lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        const IrType& element_type = vector_type.args[0];
+        std::string base = emit_lvalue_ptr(*expr.operand);
+        IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
+        Value first_index = cast_value(emit_expr(*expr.right), index_type);
+        emit_vector_bounds_check(first_index, vector_type, base);
+        Value second_index = cast_value(emit_expr(*expr.payload), index_type);
+        emit_vector_bounds_check(second_index, vector_type, base);
+
+        std::string first_ptr = temp();
+        std::string second_ptr = temp();
+        std::string first_value = temp();
+        std::string second_value = temp();
+        std::string element_llvm = llvm_type(element_type);
+        line("  " + first_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + first_index.name);
+        line("  " + second_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
+             ", ptr " + base + ", i32 0, i32 1, i64 " + second_index.name);
+        line("  " + first_value + " = load " + element_llvm + ", ptr " + first_ptr);
+        line("  " + second_value + " = load " + element_llvm + ", ptr " + second_ptr);
+        line("  store " + element_llvm + " " + second_value + ", ptr " + first_ptr);
+        line("  store " + element_llvm + " " + first_value + ", ptr " + second_ptr);
         return Value{"void", "", expr.type};
     }
 

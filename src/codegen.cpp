@@ -1316,6 +1316,8 @@ private:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.truncate yet");
             case IrExprKind::VectorSet:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.set yet");
+            case IrExprKind::VectorSwap:
+                throw CompileError(where(expr.loc) + ": backend does not lower Vec.swap yet");
             case IrExprKind::Noop:
                 emit_mov_reg_imm64(Reg::RAX, 0);
                 break;

@@ -185,6 +185,23 @@ IrExprPtr make_vec_set_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr inde
     return lowered;
 }
 
+IrExprPtr make_vec_swap_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr first_index, IrExprPtr second_index) {
+    if (!vector || !is_vector_storage_type(vector->type)) {
+        fail(loc, "Vec.swap requires local Vec storage");
+    }
+    if (!first_index || !second_index) {
+        fail(loc, "Vec.swap expects two indexes");
+    }
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::VectorSwap;
+    lowered->loc = loc;
+    lowered->type = void_type(loc);
+    lowered->operand = std::move(vector);
+    lowered->right = std::move(first_index);
+    lowered->payload = std::move(second_index);
+    return lowered;
+}
+
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length) {
     auto empty = std::make_unique<IrExpr>();
     empty->kind = IrExprKind::Binary;

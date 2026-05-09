@@ -1,0 +1,15 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [];
+  values.push(3);
+  values.push(7);
+  values.push(11);
+
+  values.swap(0, 2);
+  let first: i64 = values.get(0);
+  let middle: i64 = values.get(1);
+  let last: i64 = values.get(2);
+
+  values.swap(1, 1);
+
+  return first + middle + last + values.capacity();
+}

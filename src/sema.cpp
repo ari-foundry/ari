@@ -12356,6 +12356,32 @@ private:
         );
     }
 
+    IrExprPtr check_vec_swap_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        (void)lowered;
+        const std::string& name = expr.operand->name;
+        require_mutable_vec_method_receiver(expr.loc, name, local, "swap");
+        if (!expr.type_args.empty()) fail(expr.loc, "Vec.swap does not take type arguments");
+        if (expr.args.size() != 2) fail(expr.loc, "Vec.swap expects two indexes");
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr first_index = check_expr(*expr.args[0]);
+        if (!is_value_integer_type(first_index->type)) {
+            fail(expr.args[0]->loc, "Vec.swap first index must be an integer, got " + type_name(first_index->type));
+        }
+        IrExprPtr second_index = check_expr(*expr.args[1]);
+        if (!is_value_integer_type(second_index->type)) {
+            fail(expr.args[1]->loc, "Vec.swap second index must be an integer, got " + type_name(second_index->type));
+        }
+        release_temporary_borrows(borrow_mark);
+
+        return make_vec_swap_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(first_index),
+            std::move(second_index)
+        );
+    }
+
     IrExprPtr check_vec_push_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "push");
@@ -13217,6 +13243,11 @@ private:
         if (expr.name == "set") {
             if (LocalInfo* local = vec_local_method_receiver(expr, "set")) {
                 return check_vec_set_method_call(expr, std::move(lowered), *local);
+            }
+        }
+        if (expr.name == "swap") {
+            if (LocalInfo* local = vec_local_method_receiver(expr, "swap")) {
+                return check_vec_swap_method_call(expr, std::move(lowered), *local);
             }
         }
         if (expr.name == "push") {

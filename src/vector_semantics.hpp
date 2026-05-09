@@ -20,6 +20,7 @@ IrExprPtr make_vec_pop_expr(SourceLocation loc, IrExprPtr vector);
 IrExprPtr make_vec_clear_expr(SourceLocation loc, IrExprPtr vector);
 IrExprPtr make_vec_truncate_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr new_length);
 IrExprPtr make_vec_set_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr index, IrExprPtr value);
+IrExprPtr make_vec_swap_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr first_index, IrExprPtr second_index);
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length);
 
 } // namespace ari
