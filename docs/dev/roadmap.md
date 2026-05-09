@@ -68,12 +68,18 @@
    pointer-backed aggregate-enum copies, and local aggregate-enum
    tag/payload-binding/literal/range/nested-compact-enum matches. Narrow scalar
    returns are normalized at the freestanding function boundary, including
-   unsigned wraparound results from `u8`/`u16`/`u32` functions. The remaining
-   aggregate lowering gap is ABI coverage for aggregate values, then explicit
-   aggregate and external ABI classification.
-   - [abi-aggregate-calls] pass and return tuple, struct, fixed-array, and
-     aggregate enum values with explicit platform ABI rules instead of relying
-     on local-stack materialization
+   unsigned wraparound results from `u8`/`u16`/`u32` functions. Direct
+   freestanding calls can return tuple, struct, fixed-array, and aggregate enum
+   values into caller-provided result storage with an explicit hidden return
+   pointer. The remaining aggregate lowering gap is parameter/expression ABI
+   coverage for aggregate values, then explicit aggregate and external ABI
+   classification.
+   - [abi-aggregate-params] pass tuple, struct, fixed-array, and aggregate enum
+     parameters with explicit platform ABI rules instead of relying on
+     local-stack materialization
+   - [abi-aggregate-expr-results] materialize aggregate-returning calls in
+     expression-only positions, function-pointer calls, and aggregate-valued
+     `if`/`match`/block expressions on raw targets
    - [abi-extern-exports] define platform ABI lowering for `@export`,
      `@no_mangle`, and future imported symbols on raw/freestanding targets;
      direct `extern "C"` calls are rejected there until a real C ABI/link path
@@ -210,13 +216,14 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 ## Backend Work
 
 1. Emit relocatable object files for the native backend.
-2. Define non-local aggregate ABI layouts for tuple parameters/returns,
+2. Define non-local aggregate ABI layouts for tuple parameters,
    structs, fixed arrays, and vectors. Fixed-size local tuple/array/vector
-   stack layout, LLVM aggregate enum layout, and tuple/array/vector index access
-   are implemented on the LLVM backend.
-   - [tuples] pass and return tuple values across function boundaries
+   stack layout, direct raw aggregate returns through hidden result pointers,
+   LLVM aggregate enum layout, and tuple/array/vector index access are
+   implemented on the LLVM backend.
+   - [tuples] pass tuple values across function boundaries
    - [structs] share field layout between sema and backends
-   - [arrays] pass and return fixed-size arrays across function and FFI boundaries
+   - [arrays] pass fixed-size arrays across function and FFI boundaries
    - [expr-results] materialize aggregate-valued `if`, `match`, and block
      expressions in the freestanding backend
    - [vectors] define non-local and growable vector ABI after allocator-backed `Vec[T]` storage exists

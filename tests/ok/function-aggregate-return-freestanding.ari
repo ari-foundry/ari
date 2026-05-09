@@ -1,0 +1,47 @@
+struct Pair {
+  x: i64,
+  y: i64,
+}
+
+enum Choice {
+  Both(i64, i64),
+  None,
+}
+
+fn make_pair(seed: i64) -> Pair {
+  return Pair { x: seed + 1, y: seed + 2 };
+}
+
+fn make_tuple(seed: i64) -> (i64, i64) {
+  return (seed, seed + 1);
+}
+
+fn make_array(seed: i64) -> [i64, 2] {
+  return [seed + 3, seed + 4];
+}
+
+fn make_choice(left: i64, right: i64) -> Choice {
+  return Both(left, right);
+}
+
+fn forward_pair(seed: i64) -> Pair {
+  return make_pair(seed);
+}
+
+fn make_shifted(a: i64, b: i64, c: i64, d: i64, e: i64, f: i64) -> Pair {
+  return Pair { x: a + f, y: b + c + d + e };
+}
+
+fn main() -> i64 {
+  let pair = forward_pair(3);
+  let tuple = make_tuple(pair.x);
+  let array = make_array(pair.y);
+  let choice = make_choice(tuple.0, array[1]);
+  let shifted = make_shifted(1, 2, 3, 4, 5, 6);
+  let matched = match choice {
+    Both(left, right) => left + right,
+    None => 0,
+  };
+
+  return pair.x + pair.y + tuple.0 + tuple.1 + array[0] + array[1] + matched + shifted.x + shifted.y;
+}

@@ -49,7 +49,10 @@ checking layer. The LLVM/glibc backend lowers calls as LLVM calls. The
 freestanding backend uses registers for the first six scalar arguments and stack
 slots for the rest. Narrow integer returns from freestanding functions are
 normalized at the return boundary, so `u8`, `u16`, and `u32` results wrap to
-their declared width before callers observe them.
+their declared width before callers observe them. Direct freestanding calls can
+return tuple, struct, fixed-array, and currently supported aggregate enum values
+into caller-owned result storage. Aggregate parameters and aggregate-returning
+function pointer calls remain planned on that backend.
 
 ## Return
 

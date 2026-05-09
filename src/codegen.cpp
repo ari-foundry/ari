@@ -71,6 +71,7 @@ public:
         : fn_(fn), extern_abis_(extern_abis) {}
 
     CompiledFunction emit() {
+        if (has_aggregate_return()) add_aggregate_return_pointer_local();
         for (const auto& param : fn_.params) add_local(param.name, param.type);
         collect_locals(fn_.body);
         stack_size_ = align_to(stack_offset_, 16);
@@ -117,6 +118,7 @@ private:
     std::map<std::string, IrType> local_types_;
     int stack_offset_ = 0;
     int stack_size_ = 0;
+    int aggregate_return_pointer_offset_ = 0;
     std::vector<std::size_t> return_jumps_;
     std::vector<CallPatch> calls_;
     std::vector<CallPatch> addresses_;
@@ -159,6 +161,17 @@ private:
                 type.primitive == IrPrimitiveKind::Array ||
                 type.primitive == IrPrimitiveKind::Struct ||
                 has_aggregate_enum_layout(type));
+    }
+
+    bool has_aggregate_return() const {
+        return is_aggregate_type(fn_.return_type);
+    }
+
+    IrType aggregate_return_pointer_type(SourceLocation loc) const {
+        IrType type = fn_.return_type;
+        type.qualifier = TypeQualifier::Ptr;
+        type.loc = loc;
+        return type;
     }
 
     static const std::vector<IrType>& aggregate_field_types(const IrType& type) {
@@ -274,6 +287,15 @@ private:
         stack_offset_ = align_to(stack_offset_, align);
         locals_[name] = stack_offset_ + size;
         local_types_[name] = type;
+        stack_offset_ += size;
+    }
+
+    void add_aggregate_return_pointer_local() {
+        IrType pointer_type = aggregate_return_pointer_type(fn_.loc);
+        int size = local_size_bytes(pointer_type);
+        int align = local_align_bytes(pointer_type);
+        stack_offset_ = align_to(stack_offset_, align);
+        aggregate_return_pointer_offset_ = stack_offset_ + size;
         stack_offset_ += size;
     }
 
@@ -560,6 +582,10 @@ private:
     void emit_store_aggregate_enum_value_to_offset(const IrType& target_type,
                                                    const IrExpr& value,
                                                    int target_offset) {
+        if (value.kind == IrExprKind::Call && is_aggregate_type(value.type)) {
+            emit_call_with_sret_to_offset(value, target_offset);
+            return;
+        }
         if (value.kind == IrExprKind::EnumConstruct) {
             emit_store_aggregate_enum_construct_to_offset(target_type, value, target_offset);
             return;
@@ -597,6 +623,11 @@ private:
             emit_mov_reg_reg(Reg::RBX, Reg::RCX);
             emit_add_pointer_offset_reg(Reg::RCX, byte_offset);
             emit_store_rax_to_ptr(Reg::RCX, target_type);
+            return;
+        }
+
+        if (value.kind == IrExprKind::Call && is_aggregate_type(value.type)) {
+            emit_call_with_sret_to_pointer_base(value, byte_offset);
             return;
         }
 
@@ -643,6 +674,11 @@ private:
         }
         if (has_aggregate_enum_layout(target_type)) {
             emit_store_aggregate_enum_value_to_offset(target_type, value, target_offset);
+            return;
+        }
+
+        if (value.kind == IrExprKind::Call && is_aggregate_type(value.type)) {
+            emit_call_with_sret_to_offset(value, target_offset);
             return;
         }
 
@@ -1107,19 +1143,64 @@ private:
         out_.patch32(imm_pos, static_cast<std::int32_t>(rel));
     }
 
-    void store_params() {
+    static Reg call_arg_reg(std::size_t index) {
         static const Reg arg_regs[] = {Reg::RDI, Reg::RSI, Reg::RDX, Reg::RCX, Reg::R8, Reg::R9};
+        return arg_regs[index];
+    }
+
+    static std::size_t call_reg_count(std::size_t total_args) {
+        return total_args < 6 ? total_args : 6;
+    }
+
+    void require_scalar_call_arguments(const IrExpr& expr) const {
+        for (const auto& arg : expr.args) {
+            if (is_aggregate_type(arg->type)) {
+                throw CompileError(where(arg->loc) +
+                                   ": freestanding backend does not lower aggregate function arguments yet");
+            }
+        }
+    }
+
+    void emit_call_arguments_to_stack(const IrExpr& expr, std::size_t abi_shift) {
+        require_scalar_call_arguments(expr);
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            emit_expr(*expr.args[i]);
+            emit_mov_mem_rsp_reg(static_cast<int>((i + abi_shift) * 8), Reg::RAX);
+        }
+    }
+
+    void emit_prepare_call_from_stack(std::size_t total_args) {
+        std::size_t reg_count = call_reg_count(total_args);
+        for (std::size_t i = 0; i < reg_count; ++i) {
+            emit_mov_reg_mem_rsp(call_arg_reg(i), static_cast<int>(i * 8));
+        }
+        emit_add_rsp(static_cast<int>(reg_count * 8));
+    }
+
+    void emit_cleanup_call_stack(std::size_t total_args) {
+        std::size_t reg_count = call_reg_count(total_args);
+        if (total_args > reg_count) emit_add_rsp(static_cast<int>((total_args - reg_count) * 8));
+    }
+
+    void store_params() {
+        std::size_t abi_shift = has_aggregate_return() ? 1 : 0;
+        if (has_aggregate_return()) {
+            emit_mov_reg_reg(Reg::RAX, Reg::RDI);
+            emit_store_rax_to_local(aggregate_return_pointer_offset_,
+                                    aggregate_return_pointer_type(fn_.loc));
+        }
         for (std::size_t i = 0; i < fn_.params.size(); ++i) {
             if (local_slot_count(fn_.params[i].type) == 0) continue;
             if (is_aggregate_type(fn_.params[i].type)) {
                 throw CompileError(where(fn_.loc) + ": backend does not lower aggregate parameters yet");
             }
             int offset = local_offset(fn_.loc, fn_.params[i].name);
-            if (i < 6) {
-                emit_mov_reg_reg(Reg::RAX, arg_regs[i]);
+            std::size_t abi_index = i + abi_shift;
+            if (abi_index < 6) {
+                emit_mov_reg_reg(Reg::RAX, call_arg_reg(abi_index));
                 emit_store_rax_to_local(offset, fn_.params[i].type);
             } else {
-                emit_mov_reg_stack_arg(Reg::RAX, 16 + static_cast<int>((i - 6) * 8));
+                emit_mov_reg_stack_arg(Reg::RAX, 16 + static_cast<int>((abi_index - 6) * 8));
                 emit_store_rax_to_local(offset, fn_.params[i].type);
             }
         }
@@ -1155,8 +1236,17 @@ private:
                 break;
             case IrStmtKind::Return:
                 if (stmt.expr) {
-                    emit_expr(*stmt.expr);
-                    emit_normalize_return_value(stmt.loc);
+                    if (has_aggregate_return()) {
+                        emit_load_rax_from_local(aggregate_return_pointer_offset_,
+                                                 aggregate_return_pointer_type(stmt.loc));
+                        emit_mov_reg_reg(Reg::RBX, Reg::RAX);
+                        emit_store_value_to_pointer_base(stmt.loc, *stmt.expr, fn_.return_type, 0);
+                        emit_load_rax_from_local(aggregate_return_pointer_offset_,
+                                                 aggregate_return_pointer_type(stmt.loc));
+                    } else {
+                        emit_expr(*stmt.expr);
+                        emit_normalize_return_value(stmt.loc);
+                    }
                 } else {
                     emit_mov_reg_imm64(Reg::RAX, 0);
                 }
@@ -2176,12 +2266,63 @@ private:
         emit_expr(*expr.block_value);
     }
 
-    void emit_call(const IrExpr& expr) {
-        static const Reg arg_regs[] = {Reg::RDI, Reg::RSI, Reg::RDX, Reg::RCX, Reg::R8, Reg::R9};
+    void emit_direct_call_from_prepared_stack(const std::string& name, std::size_t total_args) {
+        emit_prepare_call_from_stack(total_args);
+        out_.u8(0xE8);
+        std::size_t pos = out_.size();
+        out_.u32(0);
+        calls_.push_back(CallPatch{pos, name});
+        emit_cleanup_call_stack(total_args);
+    }
+
+    void emit_call_with_sret_to_offset(const IrExpr& expr, int target_offset) {
         reject_c_extern_use(expr.loc, expr.name, "call");
         if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(expr.name)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
                                *blocked + " yet; use the LLVM host backend");
+        }
+        std::size_t total_args = expr.args.size() + 1;
+        if (total_args > static_cast<std::size_t>(0xffff)) {
+            throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
+        }
+
+        emit_sub_rsp(static_cast<int>(total_args * 8));
+        emit_lea_reg_local(Reg::RAX, target_offset);
+        emit_mov_mem_rsp_reg(0, Reg::RAX);
+        emit_call_arguments_to_stack(expr, 1);
+        emit_direct_call_from_prepared_stack(expr.name, total_args);
+    }
+
+    void emit_call_with_sret_to_pointer_base(const IrExpr& expr, int byte_offset) {
+        reject_c_extern_use(expr.loc, expr.name, "call");
+        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(expr.name)) {
+            throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
+                               *blocked + " yet; use the LLVM host backend");
+        }
+        std::size_t total_args = expr.args.size() + 1;
+        if (total_args > static_cast<std::size_t>(0xffff)) {
+            throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
+        }
+
+        emit_push(Reg::RBX);
+        emit_sub_rsp(static_cast<int>(total_args * 8));
+        emit_mov_reg_reg(Reg::RAX, Reg::RBX);
+        emit_add_pointer_offset_reg(Reg::RAX, byte_offset);
+        emit_mov_mem_rsp_reg(0, Reg::RAX);
+        emit_call_arguments_to_stack(expr, 1);
+        emit_direct_call_from_prepared_stack(expr.name, total_args);
+        emit_pop(Reg::RBX);
+    }
+
+    void emit_call(const IrExpr& expr) {
+        reject_c_extern_use(expr.loc, expr.name, "call");
+        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(expr.name)) {
+            throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
+                               *blocked + " yet; use the LLVM host backend");
+        }
+        if (is_aggregate_type(expr.type)) {
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend can only lower aggregate-returning calls when storing into an aggregate target");
         }
         if (expr.args.size() > static_cast<std::size_t>(0xffff)) {
             throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
@@ -2189,20 +2330,8 @@ private:
 
         int arg_area = static_cast<int>(expr.args.size() * 8);
         if (arg_area > 0) emit_sub_rsp(arg_area);
-        for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            emit_expr(*expr.args[i]);
-            emit_mov_mem_rsp_reg(static_cast<int>(i * 8), Reg::RAX);
-        }
-        std::size_t reg_count = expr.args.size() < 6 ? expr.args.size() : 6;
-        for (std::size_t i = 0; i < reg_count; ++i) {
-            emit_mov_reg_mem_rsp(arg_regs[i], static_cast<int>(i * 8));
-        }
-        emit_add_rsp(static_cast<int>(reg_count * 8));
-        out_.u8(0xE8);
-        std::size_t pos = out_.size();
-        out_.u32(0);
-        calls_.push_back(CallPatch{pos, expr.name});
-        if (expr.args.size() > reg_count) emit_add_rsp(static_cast<int>((expr.args.size() - reg_count) * 8));
+        emit_call_arguments_to_stack(expr, 0);
+        emit_direct_call_from_prepared_stack(expr.name, expr.args.size());
     }
 
     void emit_function_ref(const IrExpr& expr) {
@@ -2224,9 +2353,12 @@ private:
     }
 
     void emit_indirect_call(const IrExpr& expr) {
-        static const Reg arg_regs[] = {Reg::RDI, Reg::RSI, Reg::RDX, Reg::RCX, Reg::R8, Reg::R9};
         if (expr.operand->kind != IrExprKind::Local && expr.operand->kind != IrExprKind::FunctionRef) {
             throw CompileError(where(expr.loc) + ": freestanding backend only lowers direct function pointer calls yet");
+        }
+        if (is_aggregate_type(expr.type)) {
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend does not lower aggregate-returning function pointer calls yet");
         }
         if (expr.args.size() > static_cast<std::size_t>(0xffff)) {
             throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
@@ -2234,19 +2366,12 @@ private:
 
         int arg_area = static_cast<int>(expr.args.size() * 8);
         if (arg_area > 0) emit_sub_rsp(arg_area);
-        for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            emit_expr(*expr.args[i]);
-            emit_mov_mem_rsp_reg(static_cast<int>(i * 8), Reg::RAX);
-        }
-        std::size_t reg_count = expr.args.size() < 6 ? expr.args.size() : 6;
-        for (std::size_t i = 0; i < reg_count; ++i) {
-            emit_mov_reg_mem_rsp(arg_regs[i], static_cast<int>(i * 8));
-        }
-        emit_add_rsp(static_cast<int>(reg_count * 8));
+        emit_call_arguments_to_stack(expr, 0);
+        emit_prepare_call_from_stack(expr.args.size());
         emit_expr(*expr.operand);
         out_.u8(0xFF);
         out_.u8(0xD0);
-        if (expr.args.size() > reg_count) emit_add_rsp(static_cast<int>((expr.args.size() - reg_count) * 8));
+        emit_cleanup_call_stack(expr.args.size());
     }
 
     void emit_direct_call(const std::string& name) {

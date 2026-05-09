@@ -30,8 +30,9 @@ local reloads after explicit raw-pointer writes, so an `i8`, `i16`, or `i32`
 slot is sign-extended when read back through the local binding. Standalone
 scalar locals are placed with byte-sized offsets and their natural alignment on
 the raw backend. Local tuple, struct, tuple-struct, and fixed-array storage also
-uses the shared Ari byte layout for field and element addressing. Full function
-ABI classification is still planned.
+uses the shared Ari byte layout for field and element addressing. Direct raw
+calls can return Ari-layout aggregate values into caller-provided result
+storage; aggregate parameters and foreign ABI classification are still planned.
 
 ## Bool
 
@@ -111,8 +112,9 @@ normal expression, binding, and match syntax. Single-element tuple types and
 literals remain unsupported, so `(T)` and `(value)` are grouping forms rather
 than tuples.
 
-This first layout is intentionally local: tuple function ABI, tuple FFI layout,
-and broader aggregate pattern matching remain planned.
+Direct freestanding calls can return tuple values into caller-provided result
+storage. Tuple parameters, tuple FFI layout, and broader aggregate pattern
+matching remain planned.
 
 ## Structs
 
@@ -310,9 +312,10 @@ let inferred = Box::make(true)
 Generic trait methods with method-level bounds are supported too. Generic
 inherent and trait impl associated functions are supported.
 
-Struct function ABI on the freestanding backend, struct FFI layout, and broader
-non-local aggregate materialization remain planned. Local struct values can be
-destructured in `let`/`var` bindings:
+Direct freestanding calls can return struct and tuple-struct values into
+caller-provided result storage. Struct parameters, struct FFI layout, and
+broader non-local aggregate materialization remain planned. Local struct values
+can be destructured in `let`/`var` bindings:
 
 ```ari
 let Point { x, y: renamed } = point
@@ -643,7 +646,9 @@ surfaces for foreign layout once that ABI is fully specified. The raw
 tuple-struct, and fixed-array storage, whole plain aggregate copies, and scalar
 field or element access through raw aggregate pointers. Local and
 pointer-backed aggregate enum storage works for the currently supported payload
-slot types; aggregate enum function ABI classification remains planned there.
+slot types. Direct raw calls can return aggregate enum values into
+caller-provided result storage; aggregate enum parameter and external ABI
+classification remains planned there.
 `ptr_load(pointer)` and
 `ptr_store(pointer, value)` provide explicit unchecked scalar, plain
 Ari-layout aggregate, or supported aggregate enum memory access through raw
