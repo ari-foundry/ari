@@ -64,9 +64,11 @@
    surface is implemented for nullable pointers, casts, byte/typed offsets,
    layout queries, scalar/plain-aggregate loads and stores, dereference syntax,
    and scalar aggregate field/element access on the supported backends.
+   Public non-generic `@repr(C)` structs can also appear by value in exported
+   C header prototypes on the LLVM/shared path.
    - [repr] finish `repr(C)` aggregate ABI layout policy for
-     ownership-qualified fields, by-value aggregate function ABI, and concrete
-     generic struct header definitions; public non-generic `@repr(C)` struct
+     ownership-qualified fields and concrete generic struct header definitions;
+     public non-generic `@repr(C)` struct
      declarations with scalar/raw-pointer/borrow fields are emitted in C
      headers with immutable `ref` slots spelled as `const` C pointers, public
      generic `@repr(C)` structs are emitted as opaque C typedefs for

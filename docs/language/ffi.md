@@ -346,10 +346,11 @@ null, bounds, alignment, aliasing, or lifetime validation. Whole raw-pointer
 copies of aggregates that contain `own`, `ref`, or `ref mut` fields are
 rejected until the ownership diagnostics for zone-backed memory are broadened.
 
-Tuple parameters/returns, fixed arrays, vectors, structs, and generic types are not
-ABI-lowered yet. Local stack tuples are an executable-language feature, not a C
-FFI layout promise. Aggregate raw-pointer field/element access follows Ari's
-current executable aggregate layout; it is not yet a `repr(C)` guarantee.
+Tuple parameters/returns, fixed arrays, vectors, generic types, and non-`repr(C)`
+structs are not ABI-lowered yet. Local stack tuples are an executable-language
+feature, not a C FFI layout promise. Aggregate raw-pointer field/element access
+follows Ari's current executable aggregate layout; it is not yet a `repr(C)`
+guarantee.
 
 ## C Header Emission
 
@@ -357,8 +358,9 @@ current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 from the LLVM/shared-library ABI surface. The first supported slice covers
 exported scalar/raw-pointer functions, public non-generic `@repr(C)` structs
 whose fields are scalar, raw pointer, `ref`, or `ref mut` slots, and public
-fieldless `@repr(C)` enums. Public generic `@repr(C)` structs are exposed as
-opaque typedefs for pointer-only APIs:
+fieldless `@repr(C)` enums. Exported functions may take or return public
+non-generic `@repr(C)` structs by value in the header. Public generic
+`@repr(C)` structs are exposed as opaque typedefs for pointer-only APIs:
 
 ```sh
 ari api.ari --shared --emit-c-header api.h --emit-llvm api.ll
@@ -377,9 +379,10 @@ typedef named `WireStatus`. Private helpers and private `@repr(C)` aggregates
 are not emitted. Generic `@repr(C)` structs are only emitted as opaque
 `typedef struct Name Name;` declarations today; concrete field definitions for
 their instantiated layouts remain planned. Header generation currently rejects
-Ari-only values such as `string`, ownership-qualified values, and aggregate
-parameters or returns; expose a `ptr c_char`, `ptr c_void`, or other scalar/raw
-pointer C ABI type until those layouts are defined.
+Ari-only values such as `string`, ownership-qualified values, generic structs
+passed by value, and non-`repr(C)` aggregate parameters or returns; expose a
+`ptr c_char`, `ptr c_void`, or other scalar/raw pointer C ABI type until those
+layouts are defined.
 
 ## Runtime Entry
 
@@ -396,5 +399,5 @@ shuts the context down afterward.
 ## Planned FFI Surface
 
 The next FFI pieces are concrete `repr(C)` generic struct header definitions,
-payload-bearing enum layouts, by-value aggregate function ABI, and non-C ABI
+payload-bearing enum layouts, target-hardened aggregate ABI rules, and non-C ABI
 adapters via explicit C-compatible shims.

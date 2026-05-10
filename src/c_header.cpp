@@ -18,7 +18,12 @@ std::string unqualified_name(const std::string& name) {
     return name.substr(split + 2);
 }
 
-using CRecordNames = std::map<std::string, std::string>;
+struct CRecordInfo {
+    std::string c_name;
+    bool opaque = false;
+};
+
+using CRecordNames = std::map<std::string, CRecordInfo>;
 using CEnumNames = std::map<std::string, std::string>;
 
 std::string c_type_name(const IrType& type,
@@ -47,11 +52,15 @@ std::string c_scalar_type_name(const IrType& type) {
                        "; use scalar C ABI aliases or raw pointers");
 }
 
-std::string c_record_type_name(const IrType& type, const CRecordNames& c_record_names) {
+const CRecordInfo& c_record_info(const IrType& type, const CRecordNames& c_record_names) {
     auto found = c_record_names.find(type.name);
     if (found != c_record_names.end()) return found->second;
     throw CompileError("C header emission does not support aggregate type " + type_name(type) +
                        "; expose a public non-generic @repr(C) struct or an explicit raw pointer ABI");
+}
+
+std::string c_record_type_name(const IrType& type, const CRecordNames& c_record_names) {
+    return c_record_info(type, c_record_names).c_name;
 }
 
 std::string c_pointer_type_name(const std::string& pointee, bool const_pointee) {
@@ -98,7 +107,14 @@ std::string c_type_name(const IrType& type,
         throw CompileError("C header emission does not support Ari string values; use ptr c_char");
     }
     if (type.primitive == IrPrimitiveKind::Struct) {
-        if (allow_record_values) return c_record_type_name(type, c_record_names);
+        if (allow_record_values) {
+            const CRecordInfo& record = c_record_info(type, c_record_names);
+            if (record.opaque) {
+                throw CompileError("C header emission does not support by-value generic aggregate type " +
+                                   type_name(type) + "; use a raw pointer ABI until concrete generic C layouts are emitted");
+            }
+            return record.c_name;
+        }
         throw CompileError("C header emission does not support aggregate parameter or return type " +
                            type_name(type) + "; expose an explicit raw pointer ABI instead");
     }
@@ -116,10 +132,10 @@ std::string function_prototype(const IrFunction& fn,
                                const CRecordNames& c_record_names,
                                const CEnumNames& c_enum_names) {
     std::ostringstream out;
-    out << c_type_name(fn.return_type, c_record_names, c_enum_names, false) << " " << emitted_function_symbol(fn) << "(";
+    out << c_type_name(fn.return_type, c_record_names, c_enum_names, true) << " " << emitted_function_symbol(fn) << "(";
     for (std::size_t i = 0; i < fn.params.size(); ++i) {
         if (i > 0) out << ", ";
-        out << c_type_name(fn.params[i].type, c_record_names, c_enum_names, false) << " arg" << i;
+        out << c_type_name(fn.params[i].type, c_record_names, c_enum_names, true) << " arg" << i;
     }
     if (fn.params.empty()) out << "void";
     out << ");";
@@ -134,7 +150,7 @@ CRecordNames collect_c_record_names(const IrProgram& program) {
         if (!used_c_names.insert(c_name).second) {
             throw CompileError("C header emission found duplicate C record name '" + c_name + "'");
         }
-        names.emplace(record.name, c_name);
+        names.emplace(record.name, CRecordInfo{c_name, record.opaque});
     }
     return names;
 }

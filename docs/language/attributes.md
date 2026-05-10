@@ -91,17 +91,18 @@ visibility, as are Ari-owned runtime helpers.
 Use `--emit-c-header path` with the LLVM/shared path to write a small C header
 for exported scalar/raw-pointer functions, public non-generic `@repr(C)` struct
 declarations whose fields are scalar, raw pointer, `ref`, or `ref mut` slots,
-and public fieldless `@repr(C)` enums. Immutable `ref` fields and exported
-parameters are written as `const` C pointers in the header. Fieldless generic
-enum type parameters do not affect layout, so the C header emits one erased tag
-typedef for the source enum name. Enum headers use Ari's current fixed tag ABI
-by emitting `typedef int64_t Name;` plus prefixed integer constants such as
+public non-generic `@repr(C)` structs passed or returned by value, and public
+fieldless `@repr(C)` enums. Immutable `ref` fields and exported parameters are
+written as `const` C pointers in the header. Fieldless generic enum type
+parameters do not affect layout, so the C header emits one erased tag typedef
+for the source enum name. Enum headers use Ari's current fixed tag ABI by
+emitting `typedef int64_t Name;` plus prefixed integer constants such as
 `Name_Case = 0`. The current header emitter skips private helpers, private
 structs, and private enums. Generic `@repr(C)` structs are emitted as opaque
 typedefs so pointer-only C APIs can name them, but their concrete field
 definitions are still planned. Header generation rejects Ari-only values such
-as `string`, owned values, and aggregate parameters until their C ABI policy is
-explicit.
+as `string`, owned values, generic structs passed by value, and aggregate values
+whose C ABI policy is not explicit.
 Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.

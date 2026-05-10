@@ -856,6 +856,7 @@ check-meta: $(TARGET)
 	grep -q 'WireStatus_Offline = 0,' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'WireStatus_Online = 1,' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'typedef struct ApiSlots ApiSlots;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'typedef struct ApiPair ApiPair;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'typedef struct GenericHandle GenericHandle;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'struct ApiSlots {' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t value;' $(BUILD_DIR)/meta/c-header-repr-struct.h
@@ -864,12 +865,19 @@ check-meta: $(TARGET)
 	grep -q 'void\* raw;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'const int64_t\* shared;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t\* unique;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'struct ApiPair {' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t left;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t right;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_ping(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_observe(ApiSlots\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_observe_ref(const int64_t\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_observe_generic(GenericHandle\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t ari_sum_pair(ApiPair arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'ApiPair ari_make_pair(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_status_code(ApiStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_wire_status_code(WireStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'define i64 @"ari_sum_pair"({ i64, i64 } %arg0)' $(BUILD_DIR)/meta/c-header-repr-struct.ll
+	grep -q 'define { i64, i64 } @"ari_make_pair"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-repr-struct.ll
 	if grep -q 'HiddenSlots' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	if grep -q 'HiddenStatus' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	if grep -q 'struct GenericHandle {' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
@@ -912,6 +920,8 @@ check-meta: $(TARGET)
 	grep -q "emitted symbol '_ARNv6helper' for function 'collides' conflicts with function 'helper'" $(BUILD_DIR)/meta/attribute-export-mangle-collision.err
 	if $(TARGET) tests/errors/attribute-no-mangle-argument.ari -o $(BUILD_DIR)/meta/attribute-no-mangle-argument.elf >$(BUILD_DIR)/meta/attribute-no-mangle-argument.err 2>&1; then exit 1; fi
 	grep -q "attribute '@no_mangle' does not take arguments" $(BUILD_DIR)/meta/attribute-no-mangle-argument.err
+	if $(TARGET) tests/errors/c-header-generic-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-generic-by-value.h -o $(BUILD_DIR)/meta/c-header-generic-by-value.so >$(BUILD_DIR)/meta/c-header-generic-by-value.err 2>&1; then exit 1; fi
+	grep -q "C header emission does not support by-value generic aggregate type GenericHandle\\[i64\\]" $(BUILD_DIR)/meta/c-header-generic-by-value.err
 	if $(TARGET) --test tests/errors/attribute-test-param.ari -o $(BUILD_DIR)/meta/attribute-test-param.elf >$(BUILD_DIR)/meta/attribute-test-param.err 2>&1; then exit 1; fi
 	grep -q "@test functions cannot take parameters" $(BUILD_DIR)/meta/attribute-test-param.err
 	if $(TARGET) tests/errors/meta-function-bad-param.ari -o $(BUILD_DIR)/meta/meta-function-bad-param.elf >$(BUILD_DIR)/meta/meta-function-bad-param.err 2>&1; then exit 1; fi
