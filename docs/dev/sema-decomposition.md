@@ -72,9 +72,11 @@ IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
 literal payload in a tagged union, `Expr`/`IrExpr` scalar literal and
 tuple-index payloads now share anonymous unions, and AST `Pattern` integer/bool
-literal payloads share a union-backed slot. Broader `Stmt` and expression
-child/vector payload packing remains a separate refactor because those nodes
-are mutated across parser cloning, semantic lowering, and IR builder paths.
+literal payloads share a union-backed slot. IR match arms and nested
+enum-payload literal conditions also use one active integer-or-bool payload
+slot. Broader `Stmt` and expression child/vector payload packing remains a
+separate refactor because those nodes are mutated across parser cloning,
+semantic lowering, and IR builder paths.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

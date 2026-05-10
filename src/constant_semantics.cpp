@@ -574,10 +574,9 @@ void set_nested_enum_payload_constant_literal(SourceLocation loc,
         nested_payload_type.primitive == IrPrimitiveKind::Bool) {
         if (!value.is_bool) fail(loc, "bool nested enum payload constant pattern must have type bool");
         condition.has_payload_literal = true;
-        condition.payload_literal_int = value.bool_value ? 1ULL : 0ULL;
+        condition.payload_literal.boolean = value.bool_value;
         condition.payload_literal_negative = false;
         condition.payload_literal_is_bool = true;
-        condition.payload_literal_bool = value.bool_value;
         condition.payload_type = nested_payload_type;
         return;
     }
@@ -590,7 +589,7 @@ void set_nested_enum_payload_constant_literal(SourceLocation loc,
     }
     require_assignable(loc, nested_payload_type, value.type);
     condition.has_payload_literal = true;
-    condition.payload_literal_int = value.int_value;
+    condition.payload_literal.integer = value.int_value;
     condition.payload_literal_negative = value.int_negative;
     condition.payload_literal_is_bool = false;
     condition.payload_type = nested_payload_type;

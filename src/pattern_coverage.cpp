@@ -175,9 +175,11 @@ std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
             if (condition.has_payload_literal) {
                 key += std::string(":L") + std::to_string(condition.nested_payload_index) + ":" +
                        (condition.payload_literal_negative ? "-" : "") +
-                       std::to_string(condition.payload_literal_int) + ":" +
+                       std::to_string(condition.payload_literal_is_bool
+                                          ? (condition.payload_literal.boolean ? 1ULL : 0ULL)
+                                          : condition.payload_literal.integer) + ":" +
                        (condition.payload_literal_is_bool ? "B" : "I") + ":" +
-                       (condition.payload_literal_bool ? "1" : "0");
+                       (condition.payload_literal_is_bool && condition.payload_literal.boolean ? "1" : "0");
             }
             if (condition.has_payload_range) {
                 key += std::string(":R") + std::to_string(condition.nested_payload_index) + ":" +
@@ -190,6 +192,7 @@ std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
         }
         return key;
     }
+    if (arm.literal_is_bool) return arm.literal_bool ? "1" : "0";
     return std::to_string(arm.literal_int);
 }
 

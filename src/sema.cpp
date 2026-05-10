@@ -7516,7 +7516,7 @@ private:
             nested_payload_type
         );
         condition.has_payload_literal = true;
-        condition.payload_literal_int = pattern.int_value;
+        condition.payload_literal.integer = pattern.int_value;
         condition.payload_literal_negative = pattern.int_negative;
         condition.payload_literal_is_bool = false;
         condition.payload_type = nested_payload_type;
@@ -7531,10 +7531,9 @@ private:
             fail(loc, "bool nested enum payload patterns require a bool enum payload");
         }
         condition.has_payload_literal = true;
-        condition.payload_literal_int = value ? 1ULL : 0ULL;
+        condition.payload_literal.boolean = value;
         condition.payload_literal_negative = false;
         condition.payload_literal_is_bool = true;
-        condition.payload_literal_bool = value;
         condition.payload_type = nested_payload_type;
     }
 

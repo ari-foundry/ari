@@ -201,9 +201,12 @@ IrMatchExprArm make_match_expr_arm(IrMatchArm arm) {
     expr_arm.wildcard = arm.wildcard;
     expr_arm.has_literal = arm.has_literal;
     expr_arm.literal_is_bool = arm.literal_is_bool;
-    expr_arm.literal_int = arm.literal_int;
     expr_arm.literal_negative = arm.literal_negative;
-    expr_arm.literal_bool = arm.literal_bool;
+    if (arm.literal_is_bool) {
+        expr_arm.literal_bool = arm.literal_bool;
+    } else {
+        expr_arm.literal_int = arm.literal_int;
+    }
     expr_arm.has_range = arm.has_range;
     expr_arm.range_start_int = arm.range_start_int;
     expr_arm.range_start_negative = arm.range_start_negative;

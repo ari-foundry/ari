@@ -2038,9 +2038,9 @@ private:
     }
 
     static std::uint64_t nested_payload_literal_bits(const IrPayloadEnumCondition& condition) {
-        if (condition.payload_literal_is_bool) return condition.payload_literal_bool ? 1 : 0;
-        return condition.payload_literal_negative ? 0 - condition.payload_literal_int
-                                                  : condition.payload_literal_int;
+        if (condition.payload_literal_is_bool) return condition.payload_literal.boolean ? 1 : 0;
+        return condition.payload_literal_negative ? 0 - condition.payload_literal.integer
+                                                  : condition.payload_literal.integer;
     }
 
     static std::uint64_t nested_payload_range_start_bits(const IrPayloadEnumCondition& condition) {

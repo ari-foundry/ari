@@ -402,6 +402,8 @@ Checklist:
       or-pattern, alias, and product-pattern match lowering paths
 - [x] sema iterator filter rewrites reuse the shared union-safe pattern clone
       helper
+- [x] IR match-arm and nested enum-payload literal packing preserves scalar
+      match lowering, aggregate enum nested-payload tests, and raw/LLVM backends
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

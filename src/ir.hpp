@@ -148,10 +148,9 @@ struct IrPayloadEnumCondition {
     std::uint32_t tag = 0;
     std::uint32_t nested_payload_index = 0;
     bool has_payload_literal = false;
-    std::uint64_t payload_literal_int = 0;
+    IrPayloadLiteralValue payload_literal;
     bool payload_literal_negative = false;
     bool payload_literal_is_bool = false;
-    bool payload_literal_bool = false;
     bool has_payload_range = false;
     std::uint64_t range_start_int = 0;
     bool range_start_negative = false;
@@ -163,12 +162,16 @@ struct IrPayloadEnumCondition {
 };
 
 struct IrMatchExprArm {
+    IrMatchExprArm() : literal_int(0) {}
+
     bool wildcard = false;
     bool has_literal = false;
     bool literal_is_bool = false;
-    std::uint64_t literal_int = 0;
+    union {
+        std::uint64_t literal_int;
+        bool literal_bool;
+    };
     bool literal_negative = false;
-    bool literal_bool = false;
     bool has_range = false;
     std::uint64_t range_start_int = 0;
     bool range_start_negative = false;
@@ -289,12 +292,16 @@ struct IrExpr {
 };
 
 struct IrMatchArm {
+    IrMatchArm() : literal_int(0) {}
+
     bool wildcard = false;
     bool has_literal = false;
     bool literal_is_bool = false;
-    std::uint64_t literal_int = 0;
+    union {
+        std::uint64_t literal_int;
+        bool literal_bool;
+    };
     bool literal_negative = false;
-    bool literal_bool = false;
     bool has_range = false;
     std::uint64_t range_start_int = 0;
     bool range_start_negative = false;

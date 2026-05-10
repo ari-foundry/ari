@@ -125,10 +125,12 @@
    lowering and sema borrow-receiver synthesis. AST `Pattern` nodes now also
    share their integer and bool literal payload slots, and union-safe pattern
    cloning is centralized in `pattern_semantics` for match/or-pattern and sema
-   iterator-filter rewrites. Broader AST/IR node packing should stay
-   incremental: `Stmt` and the large expression child/vector payloads are still
-   widely mutated while parsing and lowering, so their payload split needs more
-   constructor/builder coverage first.
+   iterator-filter rewrites. IR match arms and nested enum-payload literal
+   conditions share their integer and bool literal slots too, keeping match
+   lowering and both backends on one active literal payload. Broader AST/IR node
+   packing should stay incremental: `Stmt` and the large expression
+   child/vector payloads are still widely mutated while parsing and lowering,
+   so their payload split needs more constructor/builder coverage first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions once their builders and cloning paths
      can preserve today's mutation flow

@@ -2500,8 +2500,8 @@ private:
     }
 
     static std::string nested_payload_literal_constant(const IrPayloadEnumCondition& condition) {
-        if (condition.payload_literal_is_bool) return condition.payload_literal_bool ? "1" : "0";
-        return (condition.payload_literal_negative ? "-" : "") + std::to_string(condition.payload_literal_int);
+        if (condition.payload_literal_is_bool) return condition.payload_literal.boolean ? "1" : "0";
+        return (condition.payload_literal_negative ? "-" : "") + std::to_string(condition.payload_literal.integer);
     }
 
     static std::string nested_payload_range_start_constant(const IrPayloadEnumCondition& condition) {
