@@ -1575,6 +1575,10 @@ check-variables: $(TARGET)
 	grep -q "Vec.get index must be non-negative" $(BUILD_DIR)/variables/vector-method-static-negative-index.err
 	if $(TARGET) tests/errors/vector-method-static-index-out-of-range.ari -o $(BUILD_DIR)/variables/vector-method-static-index-out-of-range.elf >$(BUILD_DIR)/variables/vector-method-static-index-out-of-range.err 2>&1; then exit 1; fi
 	grep -q "Vec.get index 2 is out of range for 2 elements" $(BUILD_DIR)/variables/vector-method-static-index-out-of-range.err
+	if $(TARGET) tests/errors/vector-index-known-length-out-of-range.ari -o $(BUILD_DIR)/variables/vector-index-known-length-out-of-range.elf >$(BUILD_DIR)/variables/vector-index-known-length-out-of-range.err 2>&1; then exit 1; fi
+	grep -q "vector index 1 is out of range for 1 elements" $(BUILD_DIR)/variables/vector-index-known-length-out-of-range.err
+	if $(TARGET) tests/errors/vector-index-known-empty-dynamic.ari -o $(BUILD_DIR)/variables/vector-index-known-empty-dynamic.elf >$(BUILD_DIR)/variables/vector-index-known-empty-dynamic.err 2>&1; then exit 1; fi
+	grep -q "vector index requires a non-empty Vec" $(BUILD_DIR)/variables/vector-index-known-empty-dynamic.err
 	if $(TARGET) tests/errors/vector-method-known-empty-first.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-first.elf >$(BUILD_DIR)/variables/vector-method-known-empty-first.err 2>&1; then exit 1; fi
 	grep -q "Vec.first requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-first.err
 	if $(TARGET) tests/errors/vector-method-known-empty-last-after-clear.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-last-after-clear.elf >$(BUILD_DIR)/variables/vector-method-known-empty-last-after-clear.err 2>&1; then exit 1; fi

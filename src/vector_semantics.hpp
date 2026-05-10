@@ -76,6 +76,10 @@ void require_local_vec_static_index_in_known_bounds(SourceLocation loc,
                                                     const StaticIntegerValue& value,
                                                     VectorKnownLength length,
                                                     bool allow_end);
+void require_vector_index_in_known_bounds(SourceLocation loc,
+                                          const StaticIntegerValue& value,
+                                          VectorKnownLength length);
+void require_vector_index_known_non_empty(SourceLocation loc, VectorKnownLength length);
 void require_local_vec_known_non_empty(SourceLocation loc,
                                        LocalVecMethod method,
                                        VectorKnownLength length);

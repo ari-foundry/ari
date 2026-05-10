@@ -202,7 +202,9 @@ Checklist:
 - [x] list literal `for` with `break` and `continue`
 - [x] stack-backed local `Vec[T]` literals on the LLVM backend
 - [x] typed empty local `Vec[T]` literals through annotations and assignments
-- [x] checked dynamic indexing of stored local `Vec[T]`
+- [x] checked dynamic indexing of stored local `Vec[T]`, including
+      compiler-known current-length static index diagnostics and known-empty
+      dynamic index rejection
 - [x] local `Vec[T]` literal reassignment with changing runtime length
 - [x] `len(value)` and `value.len()` for local vectors, fixed arrays,
       constant-folded literal length, and compiler-known local Vec length,

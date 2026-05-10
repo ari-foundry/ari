@@ -5662,12 +5662,17 @@ private:
                 }
                 return false;
             }
-            if (base.type.array_size == 0) {
-                fail(expr.loc, "indexing Vec values requires local vector storage with a known length");
-            }
             std::uint64_t index_value = index->int_value;
+            const bool vector_index = base.type.primitive == IrPrimitiveKind::Vector;
+            if (vector_index) {
+                require_vector_index_in_known_bounds(
+                    expr.loc,
+                    StaticIntegerValue{index_value, false},
+                    known_local_vec_length_for_access(base)
+                );
+            }
             if (index_value >= base.type.array_size) {
-                std::string label = base.type.primitive == IrPrimitiveKind::Array ? "array" : "vector";
+                std::string label = vector_index ? "vector" : "array";
                 fail(expr.loc,
                      label + " index " + std::to_string(index_value) +
                      " is out of range for " + std::to_string(base.type.array_size) + " elements");
@@ -10945,15 +10950,20 @@ private:
         }
 
         if (operand->type.primitive == IrPrimitiveKind::Vector) {
+            VectorKnownLength current_length = known_local_vec_length_for_expr(*expr.operand);
             if (index->kind == IrExprKind::Integer) {
-                if (index->int_negative) {
-                    fail(expr.loc, "vector index must be non-negative");
-                }
+                require_vector_index_in_known_bounds(
+                    expr.loc,
+                    StaticIntegerValue{index->int_value, index->int_negative},
+                    current_length
+                );
                 if (index->int_value >= operand->type.array_size) {
                     fail(expr.loc,
                          "vector index " + std::to_string(index->int_value) +
                          " is out of range for " + std::to_string(operand->type.array_size) + " elements");
                 }
+            } else {
+                require_vector_index_known_non_empty(expr.loc, current_length);
             }
         }
 
@@ -13752,6 +13762,13 @@ private:
     VectorKnownLength known_local_vec_length_for_expr(const Expr& expr) {
         if (expr.kind != ExprKind::Name) return {};
         const LocalInfo* local = find_local_slot(expr.name);
+        if (!local || !is_vector_storage_type(local->type)) return {};
+        return vector_known_length_state(*local);
+    }
+
+    VectorKnownLength known_local_vec_length_for_access(const TrackedAggregateAccess& access) {
+        if (!access.path.empty()) return {};
+        const LocalInfo* local = find_local_slot(access.base_name);
         if (!local || !is_vector_storage_type(local->type)) return {};
         return vector_known_length_state(*local);
     }

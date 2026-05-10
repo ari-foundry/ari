@@ -292,6 +292,21 @@ void require_local_vec_static_index_in_known_bounds(SourceLocation loc,
              " is out of range for " + std::to_string(length.length) + " elements");
 }
 
+void require_vector_index_in_known_bounds(SourceLocation loc,
+                                          const StaticIntegerValue& value,
+                                          VectorKnownLength length) {
+    if (value.negative) fail(loc, "vector index must be non-negative");
+    if (!length.known || value.value < length.length) return;
+    fail(loc,
+         "vector index " + std::to_string(value.value) +
+             " is out of range for " + std::to_string(length.length) + " elements");
+}
+
+void require_vector_index_known_non_empty(SourceLocation loc, VectorKnownLength length) {
+    if (!length.known || length.length != 0) return;
+    fail(loc, "vector index requires a non-empty Vec");
+}
+
 void require_local_vec_known_non_empty(SourceLocation loc,
                                        LocalVecMethod method,
                                        VectorKnownLength length) {

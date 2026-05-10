@@ -528,9 +528,12 @@ aggregate:
 let second = [10, 20, 30][1]
 ```
 
-Stored local vectors support checked dynamic indexing. A direct array literal
-index still requires a constant index so the compiler can read the element
-without materializing a temporary aggregate:
+Stored local vectors support checked dynamic indexing. Static local vector
+indexes are rejected at compile time when they fall outside the compiler-known
+current length, and dynamic local vector indexing is rejected before lowering
+when the compiler knows the current length is zero. A direct array literal index
+still requires a constant index so the compiler can read the element without
+materializing a temporary aggregate:
 
 ```ari
 var index = 1
