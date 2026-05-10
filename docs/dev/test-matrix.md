@@ -236,6 +236,8 @@ Checklist:
 - [x] lower direct copyable `Iterator[T]` for-loop values through `next`
 - [x] lower direct copyable `Iterator[T]` for-loop values whose `next` receiver
       is `self: ref mut Self`
+- [x] lower explicit `ref mut` `Iterator[T]` for-loop values by advancing the
+      original iterator binding and releasing the hidden borrow after the loop
 - [x] lower self-returning copyable `IntoIterator[T]` for-loop values through
       `into_iter` and `next`
 - [x] lower distinct-result copyable `IntoIterator[T]` for-loop values when
@@ -395,6 +397,7 @@ Checklist:
 - [x] keep value-self `next(self) -> Option[T]` impls accepted as a copyable
       compatibility subset
 - [x] lower direct copyable `Iterator[T]` `for` loops through `next`
+- [x] lower direct `ref mut` `Iterator[T]` `for` loops through `next`
 - [x] reserve `IntoIterator[T]` with
       `into_iter(self: ref mut Self) -> Self`
 - [x] keep value-self `into_iter(self)` impls accepted as a copyable

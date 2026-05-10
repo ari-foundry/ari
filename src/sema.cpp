@@ -10260,10 +10260,17 @@ private:
         IrExprPtr iterator,
         const IrType& item_type
     ) {
-        if (is_owner_type(iterator->type) || contains_borrow_type(iterator->type)) {
+        IrType iterator_type = iterator->type;
+        const bool borrowed_iterator = is_borrow_type(iterator_type);
+        if (is_owner_type(iterator_type) || (contains_borrow_type(iterator_type) && !borrowed_iterator)) {
             fail(stmt.loc,
-                 "Iterator[T] for-loop lowering currently requires a copyable non-borrow iterator value, got " +
-                     type_name(iterator->type));
+                 "Iterator[T] for-loop lowering currently requires a copyable iterator value or ref mut iterator value, got " +
+                     type_name(iterator_type));
+        }
+        if (borrowed_iterator && iterator_type.qualifier != TypeQualifier::MutRef) {
+            fail(stmt.loc,
+                 "borrowed Iterator[T] for-loop values require ref mut, got " +
+                     type_name(iterator_type));
         }
         if (is_owner_type(item_type) || contains_borrow_type(item_type)) {
             fail(stmt.for_pattern.loc,
@@ -10279,9 +10286,12 @@ private:
             require_supported_for_iterator_pattern(item_pattern, item_type);
         }
 
+        push_scope();
         std::string iterator_name = make_hidden_local("$for_iter");
-        IrType iterator_type = iterator->type;
         declare_local(stmt.loc, iterator_name, iterator_type, true);
+        if (borrowed_iterator && iterator->kind == IrExprKind::Borrow) {
+            promote_temporary_borrow_to_named(stmt.loc, *iterator, iterator_name);
+        }
         lowered.statements.push_back(make_ir_var_decl(stmt.loc, iterator_name, iterator_type, std::move(iterator), true));
 
         auto loop = std::make_unique<IrStmt>();
@@ -10345,6 +10355,7 @@ private:
             loop->match_arms.push_back(std::move(arm));
         }
         lowered.statements.push_back(std::move(loop));
+        pop_scope();
     }
 
     void check_for_iterator(
@@ -15294,7 +15305,12 @@ private:
             return out;
         }
 
-        auto found = method_impls_.find(method_lookup_key(receiver->type, expr.name));
+        IrType method_receiver_type = receiver->type;
+        auto found = method_impls_.find(method_lookup_key(method_receiver_type, expr.name));
+        if (found == method_impls_.end() && is_receiver_borrow_type(receiver->type)) {
+            method_receiver_type = value_qualified_type(receiver->type);
+            found = method_impls_.find(method_lookup_key(method_receiver_type, expr.name));
+        }
         const ImplMethodInfo* selected = nullptr;
         ImplMethodInfo generic_selected;
         bool has_generic_selected = false;
@@ -15302,7 +15318,7 @@ private:
         std::vector<IrExprPtr> generic_args;
         std::vector<IrType> generic_arg_types;
         if (found != method_impls_.end()) {
-            selected = select_constrained_method_impl(expr, receiver->type, found->second);
+            selected = select_constrained_method_impl(expr, method_receiver_type, found->second);
         }
         if (found == method_impls_.end()) {
             generic_args.reserve(expr.args.size());
@@ -15314,7 +15330,7 @@ private:
             }
             has_generic_selected = try_select_generic_method_impl(
                 expr,
-                receiver->type,
+                method_receiver_type,
                 generic_origin,
                 generic_arg_types,
                 generic_selected);
@@ -15329,7 +15345,7 @@ private:
             fail(expr.loc, "method '" + expr.name + "' does not take type arguments");
         }
         if (found != method_impls_.end() && !selected && found->second.size() > 1) {
-            fail(expr.loc, "method call '" + expr.name + "' for type " + type_name(receiver->type) + " is ambiguous");
+            fail(expr.loc, "method call '" + expr.name + "' for type " + type_name(method_receiver_type) + " is ambiguous");
         }
 
         const ImplMethodInfo& method = has_generic_selected
@@ -15344,7 +15360,8 @@ private:
         }
 
         bool mutable_receiver_borrow = false;
-        if (borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
+        if (!is_borrow_type(receiver->type) &&
+            borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
             ExprPtr borrow_expr = make_ast_borrow_expr(expr.operand->loc, *expr.operand, mutable_receiver_borrow);
             if (!borrow_expr->operand) {
                 fail(expr.loc,

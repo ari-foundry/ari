@@ -1,0 +1,24 @@
+struct Counter {
+  mut current: i64,
+  end: i64,
+}
+
+impl Iterator[i64] for Counter {
+  fn next(self: ref mut Self) -> Option[i64] {
+    if self.current < self.end {
+      let value = self.current;
+      self.current = self.current + 1;
+      return Some(value);
+    }
+    return None<i64>();
+  }
+}
+
+fn main() -> i64 {
+  var cursor = Counter { current: 1, end: 4 };
+  var total = 0;
+  for value in ref mut cursor {
+    total = total + value;
+  }
+  total * 10 + cursor.current
+}

@@ -70,7 +70,10 @@
    non-borrow values whose `into_iter(self: ref mut Self)` result implements
    `Iterator[T]`, including concrete and generic impls that return a distinct
    iterator type; legacy value-self `into_iter(self)` impls remain accepted for
-   copyable snapshot-style containers. Iterator trait-name/receiver contract
+   copyable snapshot-style containers. Direct `ref mut` `Iterator[T]` values
+   now lower through the same hidden `while let Some(pattern) = next()` loop,
+   advance the original iterator binding, and release the hidden borrow at the
+   loop boundary. Iterator trait-name/receiver contract
    helpers are split into `iterator_semantics` so the remaining lowering work
    can grow outside the main semantic checker. Because Ari does not have
    associated types yet,
@@ -89,9 +92,8 @@
    non-matching item ends the loop. `for let pattern in iterator` is the
    filter-style form; non-matching `Some(_)` items continue to the next
    iterator step.
-   - [state] extend the new mutable iterator receiver support beyond copyable
-     non-borrow values to owner/borrow iterator values and explicit iterator
-     lifetime rules
+   - [state] add owner iterator inputs and finish the explicit iterator
+     lifetime rules for nested/break-heavy control-flow cases
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
