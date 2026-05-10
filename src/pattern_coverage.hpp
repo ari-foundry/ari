@@ -72,6 +72,9 @@ EnumCoverageResult note_enum_match_coverage(EnumMatchCoverage& coverage,
                                             bool covers_case,
                                             bool bool_payload_literal,
                                             bool bool_payload_value);
+bool enum_bool_payload_literal_value(const Pattern& pattern,
+                                     const std::vector<IrType>& payloads,
+                                     bool& out);
 std::string enum_match_exhaustiveness_error(const std::string& enum_name,
                                             std::size_t case_count,
                                             const EnumMatchCoverage& coverage);

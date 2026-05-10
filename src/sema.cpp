@@ -6649,8 +6649,12 @@ private:
                                   const IrMatchArm& lowered_arm,
                                   bool covers_case,
                                   EnumMatchCoverage& coverage) const {
-        bool bool_payload_literal = is_bool_payload_literal_pattern(pattern, case_info);
-        bool bool_payload_value = bool_payload_literal && pattern.payload_pattern->bool_value;
+        bool bool_payload_value = false;
+        bool bool_payload_literal = enum_bool_payload_literal_value(
+            pattern,
+            case_info.payloads,
+            bool_payload_value
+        );
         EnumCoverageResult result = ari::note_enum_match_coverage(
             coverage,
             lowered_arm,
@@ -6664,14 +6668,6 @@ private:
         if (result == EnumCoverageResult::DuplicatePayloadPattern) {
             fail(pattern.loc, "duplicate match arm for enum payload pattern '" + pattern.case_name + "'");
         }
-    }
-
-    static bool is_bool_payload_literal_pattern(const Pattern& pattern, const EnumCaseInfo& case_info) {
-        if (!pattern.payload_pattern || pattern.payload_pattern->kind != PatternKind::BoolLiteral) return false;
-        if (case_info.payloads.empty()) return false;
-        const IrType& payload_type = case_info.payloads[0];
-        return payload_type.qualifier == TypeQualifier::Value &&
-               payload_type.primitive == IrPrimitiveKind::Bool;
     }
 
     using PatternBindingSignature = std::map<std::string, IrType>;

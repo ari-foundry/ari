@@ -359,6 +359,20 @@ EnumCoverageResult note_enum_match_coverage(EnumMatchCoverage& coverage,
     return EnumCoverageResult::Added;
 }
 
+bool enum_bool_payload_literal_value(const Pattern& pattern,
+                                     const std::vector<IrType>& payloads,
+                                     bool& out) {
+    if (!pattern.payload_pattern || pattern.payload_pattern->kind != PatternKind::BoolLiteral) return false;
+    if (payloads.empty()) return false;
+    const IrType& payload_type = payloads[0];
+    if (payload_type.qualifier != TypeQualifier::Value ||
+        payload_type.primitive != IrPrimitiveKind::Bool) {
+        return false;
+    }
+    out = pattern.payload_pattern->bool_value;
+    return true;
+}
+
 std::string enum_match_exhaustiveness_error(const std::string& enum_name,
                                             std::size_t case_count,
                                             const EnumMatchCoverage& coverage) {

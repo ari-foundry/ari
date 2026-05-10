@@ -95,10 +95,11 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      user-facing struct-pattern spelling.
    - Product duplicate/shadow detection and final product coverage
      exhaustiveness checks now live in `pattern_coverage`.
-   - Enum match coverage state, duplicate case/payload detection, bool-payload
-     coverage promotion, and enum exhaustiveness diagnostics now live in
-     `pattern_coverage`; `sema.cpp` still performs enum case resolution and
-     payload type validation.
+   - Enum match coverage state, duplicate case/payload detection,
+     bool-payload literal classification, bool-payload coverage promotion, and
+     enum exhaustiveness diagnostics now live in `pattern_coverage`;
+     `sema.cpp` still performs enum case resolution and payload type
+     validation.
    - Move the remaining sema-bound finite product aggregate recursion,
      plus payload-shape checks that still depend on semantic tables.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
