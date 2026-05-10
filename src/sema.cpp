@@ -4880,9 +4880,20 @@ private:
         }
         if (expr.kind != ExprKind::Name) return false;
         const LocalInfo* local = find_local_slot(expr.name);
-        if (!local || !local->integer_value_known) return false;
-        value = local->integer_known_value;
-        negative = local->integer_known_negative;
+        if (local) {
+            if (!local->integer_value_known) return false;
+            value = local->integer_known_value;
+            negative = local->integer_known_negative;
+            return true;
+        }
+        ConstantValue constant;
+        if (!resolve_constant_value(expr.loc, expr.name, constant) ||
+            constant.kind != ConstantValueKind::Integer ||
+            !is_value_integer_type(constant.type)) {
+            return false;
+        }
+        value = constant.int_value;
+        negative = constant.int_negative;
         return true;
     }
 

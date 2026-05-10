@@ -16,8 +16,9 @@
    straight-line appends/inserts without an explicit `reserve`.
    Runtime `reserve(n)` values now lower to a local-capacity guard, so the
    call no longer requires a literal. Immutable local integer bindings
-   initialized from literals are also folded into the local capacity decision.
-   This still does not allocate or grow beyond the fixed local stack storage.
+   initialized from literals and integer constants are also folded into the
+   local capacity decision. This still does not allocate or grow beyond the
+   fixed local stack storage.
    This local API is now frozen as a temporary executable subset: do not add
    more compiler-known `Vec` convenience methods before the allocator-backed
    library design lands. Unsupported local `Vec` method calls now get a
@@ -28,8 +29,8 @@
    semantic checker. Introduce the explicit allocation/capability path before
    broadening vector patterns or std collection APIs.
    - [allocator] thread explicit allocator/capability values through creation
-   - [capacity] replace local literal/known-local/runtime-checked reserve
-     capacity with runtime heap capacity growth
+   - [capacity] replace local literal/const/known-local/runtime-checked
+     reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing `push`, `insert`, `pop`, `remove`,
      `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
      `reserve` operations to allocator-backed storage instead of fixed

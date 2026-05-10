@@ -441,12 +441,13 @@ That local method list is intentionally frozen while `Vec[T]` is still a
 stack-backed executable subset. Other compiler-known collection conveniences
 are reserved for the future allocator-backed std library design.
 
-`reserve(n)` accepts any integer capacity. A non-negative integer literal, or
-an immutable local integer binding initialized from one, widens the
-compiler-known local storage capacity for that binding. Other runtime integer
-values lower to a bounds check against the current reserved local capacity and
-panic through `panic` when the requested capacity is negative or larger than
-that fixed local storage. It does not allocate heap storage yet.
+`reserve(n)` accepts any integer capacity. A non-negative integer literal,
+integer constant, or immutable local integer binding initialized from a literal
+widens the compiler-known local storage capacity for that binding. Other
+runtime integer values lower to a bounds check against the current reserved
+local capacity and panic through `panic` when the requested capacity is
+negative or larger than that fixed local storage. It does not allocate heap
+storage yet.
 `push(value)` appends a copyable element, increments the runtime length, and
 auto-widens the stack-backed local capacity when the compiler can track the
 binding's current length. If the length is not precise, `push` reserves one

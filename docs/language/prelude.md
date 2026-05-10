@@ -433,11 +433,12 @@ stack aggregate values. Non-empty `[...]` defaults to a fixed array when no
 expected type is present, and the same syntax initializes `Vec[T]` when a
 `Vec[T]` annotation or assignment target supplies that expected type. `Vec[T]`
 local storage keeps a runtime length plus a local stack capacity chosen from
-the largest vector literal assigned to the binding. Literal `reserve(n)`, and
-immutable local integer capacities initialized from literals, can raise that
-local capacity, while runtime `reserve(n)` checks that the requested capacity
-already fits the fixed local storage. A typed `Vec[T]` context supplies the
-element type for empty `[]`. `len(values)` and `values.len()` read
+the largest vector literal assigned to the binding. Literal `reserve(n)`,
+integer constants, and immutable local integer capacities initialized from
+literals can raise that local capacity, while runtime `reserve(n)` checks that
+the requested capacity already fits the fixed local storage. A typed `Vec[T]`
+context supplies the element type for empty `[]`. `len(values)` and
+`values.len()` read
 vector runtime length, fixed array length, or `Slice[T].len`. `view[index]`
 loads or stores a `Slice[T]` element through its raw `data` pointer after
 checking the stored length. The temporary compiler-known local `Vec[T]` method
