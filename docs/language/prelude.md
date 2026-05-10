@@ -317,9 +317,10 @@ Direct `for` lowering works for copyable non-borrow iterator values by calling
 fn into_iter(self) -> Self
 ```
 
-The executable subset supports copyable non-borrow values whose
-`into_iter(self) -> Self` result also implements `Iterator[T]`. Returning a
-distinct iterator type remains planned for the fuller collection model.
+`Self` is the default return shape in the source header. Trait impls may return
+a distinct iterator type while the associated-iterator contract is still
+compiler-known; `for` lowering validates that the actual `into_iter` result
+implements `Iterator[T]`.
 
 ## Context
 

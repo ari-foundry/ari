@@ -268,11 +268,14 @@ or-pattern, and enum-case loop heads are still rejected until the general
 Direct copyable non-borrow `Iterator[T]` values lower through the standard
 `next(self) -> Option[T]` step operation. The iterator expression is evaluated
 once, then Ari repeats `iterator.next()` while it returns `std::Some(item)`.
-Copyable non-borrow `IntoIterator[T]` values also lower when `into_iter(self) ->
-Self` returns a value that implements `Iterator[T]`; this is the current
-self-iterator subset. Distinct iterator result types, mutable/stateful iterator
-receivers, and refutable enum-case item patterns such as `for Some(value) in
-items` are still planned.
+Copyable non-borrow `IntoIterator[T]` values also lower when `into_iter(self)`
+returns either `Self` or another copyable non-borrow value that implements
+`Iterator[T]`.
+
+The current source trait still uses a compiler-known return contract for
+`into_iter` instead of a first-class associated iterator type. Mutable/stateful
+iterator receivers and refutable enum-case item patterns such as `for
+Some(value) in items` are still planned.
 
 ## Break
 

@@ -236,6 +236,8 @@ Checklist:
 - [x] lower direct copyable `Iterator[T]` for-loop values through `next`
 - [x] lower self-returning copyable `IntoIterator[T]` for-loop values through
       `into_iter` and `next`
+- [x] lower distinct-result copyable `IntoIterator[T]` for-loop values when
+      `into_iter` returns another `Iterator[T]`
 - [x] reject unsupported iterator for-loop shapes with trait-aware planned
       diagnostics
 - [x] reject enum-case `for` patterns with a planned diagnostic
@@ -381,6 +383,8 @@ Checklist:
 - [x] reserve `IntoIterator[T]` with `into_iter(self) -> Self`
 - [x] lower self-returning copyable `IntoIterator[T]` `for` loops through
       `into_iter` and `next`
+- [x] allow `IntoIterator[T].into_iter` impls to return a distinct iterator
+      type and validate that result at `for` lowering sites
 - [x] reserve `iter::Iterable[T]`
 - [x] reserve `iter::Iterator[T]`
 - [x] reserve `iter::IntoIterator[T]`

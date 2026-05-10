@@ -1868,6 +1868,14 @@ private:
         }
     }
 
+    static bool is_std_into_iterator_trait_name(const std::string& name) {
+        return name == "std::IntoIterator" || name == "std::iter::IntoIterator";
+    }
+
+    static bool is_into_iterator_result_contract(const TraitInfo& trait, const std::string& method_name) {
+        return method_name == "into_iter" && is_std_into_iterator_trait_name(trait.name);
+    }
+
     void validate_trait_impl_methods(
         const ImplDecl& impl,
         const TraitInfo& trait,
@@ -1956,6 +1964,12 @@ private:
                 ? resolve_impl_method_type(actual_method.return_type, actual_method_substitutions)
                 : void_type(actual_method.loc);
             if (!same_type(expected_result, actual_result)) {
+                if (is_into_iterator_result_contract(trait, item.first)) {
+                    if (actual_result.primitive == IrPrimitiveKind::Void) {
+                        fail(actual_method.loc, "method 'into_iter' must return an iterator value");
+                    }
+                    continue;
+                }
                 fail(actual_method.loc,
                      "method '" + item.first + "' return type mismatch: expected " +
                          type_name(expected_result) + ", got " + type_name(actual_result));
@@ -9852,7 +9866,7 @@ private:
             return;
         }
         fail(stmt.loc,
-             "for currently supports range values, range(start, end), range_inclusive(start, end), 0..end, 0..=end, list literals, stored local vector values, direct Iterator[T] values, or self-returning IntoIterator[T] values");
+             "for currently supports range values, range(start, end), range_inclusive(start, end), 0..end, 0..=end, list literals, stored local vector values, direct Iterator[T] values, or copyable IntoIterator[T] values");
     }
 
     void check_for_range(const Stmt& stmt, IrStmt& lowered, const std::string& call_name = "") {

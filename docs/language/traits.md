@@ -286,10 +286,11 @@ ToOwned
 `Iterator[T]` requires `fn next(self) -> Option[T]`. Direct `for` lowering works
 for copyable non-borrow iterator values.
 
-`IntoIterator[T]` currently requires `fn into_iter(self) -> Self`. A `for` loop
-can use this subset when the returned `Self` value also implements
-`Iterator[T]`. Returning a distinct iterator type and stateful iterator receiver
-policy remain planned.
+`IntoIterator[T]` currently declares `fn into_iter(self) -> Self` as the default
+source shape. Impl methods may return a distinct iterator type; `for` lowering
+validates that the concrete `into_iter` result implements `Iterator[T]`.
+Stateful iterator receiver policy and a first-class associated iterator result
+spelling remain planned.
 
 `Drop` is the prelude trait connected to explicit ownership destruction:
 

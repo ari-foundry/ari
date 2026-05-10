@@ -65,14 +65,16 @@
    `Iterator[T]` values now lower by storing the iterator expression once and
    looping with `while let std::Some(pattern) = iterator.next()`. The first
    `IntoIterator[T]` executable subset is also implemented for copyable
-   non-borrow values whose `into_iter(self) -> Self` result implements
-   `Iterator[T]`; this keeps the source trait usable while the richer
-   associated-iterator design is still open. The remaining iterator model needs
-   non-`Self` iterator conversion results, stateful/mutable iterator receiver
+   non-borrow values whose `into_iter(self)` result implements `Iterator[T]`,
+   including impls that return a distinct iterator type. Because Ari does not
+   have associated types yet, sema treats the `IntoIterator[T].into_iter`
+   return type as an impl-specific contract and validates the concrete result at
+   `for` lowering sites. The remaining iterator model needs a first-class
+   source spelling for that iterator result, stateful/mutable iterator receiver
    policy, and refutable loop-head semantics.
-   - [into-result] define and lower `IntoIterator[T]` conversions whose
-     `into_iter` result is a distinct iterator type instead of the current
-     `Self`-returning MVP
+   - [contract] replace the compiler-known `into_iter` result relaxation with
+     a first-class associated iterator type or equivalent Ari-specific trait
+     contract
    - [state] define mutable/stateful iterator receiver policy instead of the
      current copyable value-self subset
    - [pattern] bind refutable enum-case loop-head patterns after the iterator

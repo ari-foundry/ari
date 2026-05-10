@@ -1,0 +1,29 @@
+struct Bag {
+  value: i64,
+}
+
+struct BagIter {
+  value: i64,
+}
+
+impl IntoIterator[i64] for Bag {
+  fn into_iter(self) -> BagIter {
+    BagIter { value: self.value }
+  }
+}
+
+impl Iterator[i64] for BagIter {
+  fn next(self) -> Option[i64] {
+    Some(self.value)
+  }
+}
+
+fn main() -> i64 {
+  let bag = Bag { value: 29 };
+  var total = 0;
+  for value in bag {
+    total = value + 13;
+    break;
+  }
+  return total;
+}
