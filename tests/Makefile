@@ -149,6 +149,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/prelude-maybe-alias.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
 	grep -q "try.ok" $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
 	grep -q "coalesce.ok" $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
+	$(TARGET) tests/ok/prelude-optional-alias.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-optional-alias.ll
+	grep -q "try.ok" $(BUILD_DIR)/prelude/prelude-optional-alias.ll
+	grep -q "coalesce.ok" $(BUILD_DIR)/prelude/prelude-optional-alias.ll
 	$(TARGET) tests/ok/prelude-slice-view.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q '_ARNv3std12slice__G_i64' $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "slice.bounds.fail" $(BUILD_DIR)/prelude/prelude-slice-view.ll
@@ -158,6 +161,7 @@ check-prelude: $(TARGET)
 	grep -q "store i64 5" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-maybe-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; code=$$?; test $$code -eq 25; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-optional-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-optional-alias.elf; $(BUILD_DIR)/prelude/prelude-optional-alias.elf; code=$$?; test $$code -eq 27; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
@@ -785,17 +789,17 @@ check-generics: $(TARGET)
 	if $(TARGET) tests/errors/generic-uninferred.ari -o $(BUILD_DIR)/generics/generic-uninferred.elf >$(BUILD_DIR)/generics/generic-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for 'make'" $(BUILD_DIR)/generics/generic-uninferred.err
 	if $(TARGET) tests/errors/generic-enum-constructor-uninferred.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.elf >$(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err 2>&1; then exit 1; fi
-	grep -q "cannot infer type argument 'T' for enum case 'None'" $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err
+	grep -q "cannot infer type argument 'T' for enum case 'std::None'" $(BUILD_DIR)/generics/generic-enum-constructor-uninferred.err
 	if $(TARGET) tests/errors/generic-enum-constructor-arity.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-arity.elf >$(BUILD_DIR)/generics/generic-enum-constructor-arity.err 2>&1; then exit 1; fi
-	grep -q "enum 'Option' expects 1 type argument" $(BUILD_DIR)/generics/generic-enum-constructor-arity.err
+	grep -q "enum 'std::Option' expects 1 type argument" $(BUILD_DIR)/generics/generic-enum-constructor-arity.err
 	if $(TARGET) tests/errors/generic-enum-constructor-mismatch.ari -o $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.elf >$(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err 2>&1; then exit 1; fi
-	grep -q "type mismatch: expected Option\\[i64\\], got Option\\[bool\\]" $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err
+	grep -q "type mismatch: expected std::Option\\[i64\\], got std::Option\\[bool\\]" $(BUILD_DIR)/generics/generic-enum-constructor-mismatch.err
 	if $(TARGET) tests/errors/generic-enum-null-coalescing-type.ari -o $(BUILD_DIR)/generics/generic-enum-null-coalescing-type.elf >$(BUILD_DIR)/generics/generic-enum-null-coalescing-type.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/generics/generic-enum-null-coalescing-type.err
 	if $(TARGET) tests/errors/generic-enum-pattern-type.ari -o $(BUILD_DIR)/generics/generic-enum-pattern-type.elf >$(BUILD_DIR)/generics/generic-enum-pattern-type.err 2>&1; then exit 1; fi
 	grep -q "bool payload patterns require a bool enum payload" $(BUILD_DIR)/generics/generic-enum-pattern-type.err
 	if $(TARGET) tests/errors/generic-enum-constant-mismatch.ari -o $(BUILD_DIR)/generics/generic-enum-constant-mismatch.elf >$(BUILD_DIR)/generics/generic-enum-constant-mismatch.err 2>&1; then exit 1; fi
-	grep -q "type mismatch: expected Option\\[i32\\], got Option\\[bool\\]" $(BUILD_DIR)/generics/generic-enum-constant-mismatch.err
+	grep -q "type mismatch: expected std::Option\\[i32\\], got std::Option\\[bool\\]" $(BUILD_DIR)/generics/generic-enum-constant-mismatch.err
 	if $(TARGET) tests/errors/generic-function-pointer-uninferred.ari -o $(BUILD_DIR)/generics/generic-function-pointer-uninferred.elf >$(BUILD_DIR)/generics/generic-function-pointer-uninferred.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' could not be inferred for function pointer 'keep'" $(BUILD_DIR)/generics/generic-function-pointer-uninferred.err
 	if $(TARGET) tests/errors/generic-duplicate-param.ari -o $(BUILD_DIR)/generics/generic-duplicate-param.elf >$(BUILD_DIR)/generics/generic-duplicate-param.err 2>&1; then exit 1; fi

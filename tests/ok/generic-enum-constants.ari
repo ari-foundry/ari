@@ -1,8 +1,3 @@
-enum Option[T] {
-  None,
-  Some(T),
-}
-
 const ZERO: Option[i32] = None;
 const ONE: Option[i32] = Some(1i32);
 const TWO: Option[i32] = Some<i32>(2i32);

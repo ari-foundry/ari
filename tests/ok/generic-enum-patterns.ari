@@ -1,8 +1,3 @@
-enum Option[T] {
-  None,
-  Some(T),
-}
-
 fn score(value: Option[i32]) -> i64 {
   return match value {
     Some(inner) => inner as i64,

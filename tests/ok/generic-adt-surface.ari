@@ -1,6 +1,6 @@
-enum Option[T] {
-  None,
-  Some(T),
+enum Boxed[T] {
+  Empty,
+  Full(T),
 }
 
 fn main() -> i64 {

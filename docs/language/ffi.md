@@ -278,9 +278,9 @@ LLP64 Windows targets.
 
 The `null` literal can initialize or be passed to any `ptr T` type. `T?` is a
 nullable raw-pointer spelling for the same type, so `c_void?` and `ptr c_void`
-are equivalent in checked executable code. It does not create an `Option[T]` or
-`Maybe[T]`; use those enum-like ADTs explicitly for nullable values that are
-not raw pointers:
+are equivalent in checked executable code. It does not create an `Option[T]`,
+`Maybe[T]`, or `Optional[T]`; use those enum-like ADTs explicitly for nullable
+values that are not raw pointers:
 
 ```ari
 extern "C" fn takes_buffer(data: ptr c_void) -> i64;

@@ -1,8 +1,3 @@
-enum Option[T] {
-  None,
-  Some(T),
-}
-
 fn keep(value: Option[i64]) -> Option[i64] {
   return value;
 }
