@@ -321,9 +321,9 @@ for let 10..=20 in scores {
 `for let` filters currently require an `Iterator[T]` or `IntoIterator[T]`
 value. Range, list-literal, and stored-vector loops still use irrefutable
 binding/destructuring loop heads. Or-pattern alternatives must bind the same
-names. Enum-case item patterns are currently limited to fieldless cases and
-compact enum payload cases. Aggregate-layout enum items inside `Option[T]`
-still depend on broader aggregate enum payload storage.
+names. Enum-case item patterns are currently limited to fieldless cases,
+compact enum payload cases, and LLVM nested aggregate-enum item cases whose
+`Option[T]` payload slot stores a single nested aggregate enum type.
 
 The current source trait still uses an Ari-specific return contract for
 `into_iter` instead of a first-class associated iterator type. Impl validation

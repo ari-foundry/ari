@@ -2722,8 +2722,8 @@ private:
             line("  " + with_tag + " = insertvalue " + enum_type + " " + value +
                  ", i32 " + std::to_string(expr.enum_tag) + ", 0");
             value = with_tag;
-            IrType slot_type = enum_payload_storage_type(expr.loc);
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
+                IrType slot_type = expr.type.field_types.at(i + 1);
                 Value payload = cast_value(emit_expr(*expr.args[i]), slot_type);
                 std::string next = temp();
                 line("  " + next + " = insertvalue " + enum_type + " " + value +

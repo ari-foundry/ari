@@ -1,0 +1,50 @@
+enum Item {
+  Empty,
+  Big(i64),
+}
+
+struct Cursor {
+  mut step: i64,
+}
+
+impl Iterator[Item] for Cursor {
+  fn next(self: ref mut Self) -> Option[Item] {
+    if self.step == 0 {
+      self.step = 1;
+      return Some(Big(9));
+    }
+    return None<Item>();
+  }
+}
+
+struct FilterCursor {
+  mut step: i64,
+}
+
+impl Iterator[Item] for FilterCursor {
+  fn next(self: ref mut Self) -> Option[Item] {
+    if self.step == 0 {
+      self.step = 1;
+      return Some(Empty);
+    }
+    if self.step == 1 {
+      self.step = 2;
+      return Some(Big(12));
+    }
+    return None<Item>();
+  }
+}
+
+fn main() -> i64 {
+  let cursor = Cursor { step: 0 };
+  var total = 0;
+  for Big(x) in cursor {
+    total = total + x;
+  }
+
+  let filter = FilterCursor { step: 0 };
+  for let Big(y) in filter {
+    total = total + y;
+  }
+  return total;
+}

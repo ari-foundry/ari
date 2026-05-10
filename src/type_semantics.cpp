@@ -130,7 +130,7 @@ bool is_raw_memory_value_type(const IrType& type) {
         type.primitive == IrPrimitiveKind::Function) {
         return true;
     }
-    return type.primitive == IrPrimitiveKind::Enum && type.field_types.empty();
+    return type.primitive == IrPrimitiveKind::Enum;
 }
 
 bool is_raw_pointer_deref_value_type(const IrType& type) {
@@ -201,7 +201,7 @@ bool is_aggregate_enum_payload_type(const IrType& type) {
         type.primitive == IrPrimitiveKind::Function) {
         return true;
     }
-    return type.primitive == IrPrimitiveKind::Enum && type.field_types.empty();
+    return type.primitive == IrPrimitiveKind::Enum;
 }
 
 bool has_aggregate_enum_layout(const IrType& type) {

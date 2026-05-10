@@ -2338,7 +2338,7 @@ private:
             !unresolved_generic_payload &&
             !is_aggregate_enum_payload_type(payload_type)) {
             fail(loc,
-                 "enum aggregate payloads currently support integer, bool, pointer-shaped, or one-word enum values, got " +
+                 "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, or homogeneous nested aggregate enum values, got " +
                      type_name(payload_type));
         }
         if (!payload_needs_aggregate && !is_legacy_enum_payload_type(payload_type)) {
@@ -2363,12 +2363,29 @@ private:
 
         bool aggregate_layout = false;
         std::size_t max_payloads = 0;
+        std::vector<IrType> payload_slot_types;
+        std::vector<bool> payload_slot_set;
         for (const auto& item : info.cases) {
             if (item.payloads.size() > 1) aggregate_layout = true;
             max_payloads = std::max(max_payloads, item.payloads.size());
+            if (payload_slot_types.size() < item.payloads.size()) {
+                payload_slot_types.resize(item.payloads.size());
+                payload_slot_set.resize(item.payloads.size(), false);
+            }
             std::vector<IrType> payloads = resolve_enum_payload_refs(info, item.payloads, substitutions);
             for (std::size_t i = 0; i < payloads.size(); ++i) {
                 note_enum_payload_layout_requirement(item.payloads[i].loc, payloads[i], item.payloads.size(), aggregate_layout);
+                IrType slot_type = enum_payload_slot_storage_type(item.payloads[i].loc, payloads[i]);
+                if (!payload_slot_set[i]) {
+                    payload_slot_types[i] = std::move(slot_type);
+                    payload_slot_set[i] = true;
+                } else if (!same_type(payload_slot_types[i], slot_type)) {
+                    fail(item.payloads[i].loc,
+                         "enum aggregate payload slot " + std::to_string(i) +
+                             " mixes storage types " + type_name(payload_slot_types[i]) +
+                             " and " + type_name(slot_type) +
+                             "; mixed nested aggregate enum payload slots need an explicit ABI rule");
+                }
             }
         }
 
@@ -2377,7 +2394,7 @@ private:
             type.field_names.push_back("$tag");
             type.field_mutable.push_back(false);
             for (std::size_t i = 0; i < max_payloads; ++i) {
-                type.field_types.push_back(enum_payload_storage_type(loc));
+                type.field_types.push_back(payload_slot_set[i] ? payload_slot_types[i] : enum_payload_storage_type(loc));
                 type.field_names.push_back("$payload" + std::to_string(i));
                 type.field_mutable.push_back(false);
             }
@@ -6525,7 +6542,7 @@ private:
                                          bool aggregate_layout) {
         switch (payload.kind) {
             case PatternKind::Binding:
-                if (aggregate_layout && is_value_enum_type(payload_type) && !has_aggregate_enum_layout(payload_type) &&
+                if (aggregate_layout && is_value_enum_type(payload_type) &&
                     try_lower_nested_zero_payload_case(payload.loc, payload.payload_name, payload_type, lowered_arm, payload_index)) {
                     return false;
                 }
@@ -6568,7 +6585,7 @@ private:
             case PatternKind::Or:
                 fail(payload.loc, "or-pattern enum payloads outside match arms are planned but are not supported yet");
             case PatternKind::EnumCase: {
-                if (aggregate_layout && is_value_enum_type(payload_type) && !has_aggregate_enum_layout(payload_type)) {
+                if (aggregate_layout && is_value_enum_type(payload_type)) {
                     lower_nested_enum_payload_pattern(payload, payload_type, lowered_arm, payload_index);
                     return false;
                 }
@@ -6642,7 +6659,7 @@ private:
             case PatternKind::Or:
                 fail(aliased.loc, "or-pattern enum payloads outside match arms are planned but are not supported yet");
             case PatternKind::EnumCase: {
-                if (aggregate_layout && is_value_enum_type(payload_type) && !has_aggregate_enum_layout(payload_type)) {
+                if (aggregate_layout && is_value_enum_type(payload_type)) {
                     lower_nested_enum_payload_pattern(aliased, payload_type, lowered_arm, payload_index);
                     return;
                 }
@@ -6802,9 +6819,6 @@ private:
         if (case_info.enum_name != payload_type.name) {
             fail(pattern.loc,
                  "enum case '" + pattern.case_name + "' does not belong to payload enum " + payload_type.name);
-        }
-        if (has_aggregate_enum_layout(case_info.enum_type)) {
-            fail(pattern.loc, "nested aggregate enum payload patterns are planned but are not supported yet");
         }
         if (case_info.payloads.empty() && pattern.has_payload_pattern) {
             fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
@@ -15124,6 +15138,11 @@ private:
 
     static IrType enum_payload_storage_type(SourceLocation loc) {
         return integer_type(IrPrimitiveKind::U64, loc);
+    }
+
+    static IrType enum_payload_slot_storage_type(SourceLocation loc, const IrType& payload_type) {
+        if (has_aggregate_enum_layout(payload_type)) return payload_type;
+        return enum_payload_storage_type(loc);
     }
 
     static IrExpr make_pattern_integer_literal(SourceLocation loc,

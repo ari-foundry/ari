@@ -1,0 +1,33 @@
+enum Inner {
+  Empty,
+  Big(i64),
+}
+
+fn score(value: Option[Inner]) -> i64 {
+  return match value {
+    Some(Big(40)) => 1,
+    Some(Big(x)) => x + 2,
+    Some(Empty) => 3,
+    Some(_) => 5,
+    None => 4,
+  };
+}
+
+fn bind(value: Option[Inner]) -> i64 {
+  return match value {
+    Some(inner) => match inner {
+      Big(x) => x,
+      Empty => 5,
+    },
+    None => 6,
+  };
+}
+
+fn main() -> i64 {
+  return score(Some(Big(7))) +
+         score(Some(Big(40))) +
+         score(Some(Empty)) +
+         score(None<Inner>()) +
+         bind(Some(Big(8))) +
+         bind(None<Inner>());
+}

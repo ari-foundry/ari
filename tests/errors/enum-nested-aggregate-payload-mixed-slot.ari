@@ -1,0 +1,13 @@
+enum Inner {
+  Empty,
+  Big(i64),
+}
+
+enum Mixed {
+  Number(i64),
+  Wrapped(Inner),
+}
+
+fn main() -> i64 {
+  return 0;
+}

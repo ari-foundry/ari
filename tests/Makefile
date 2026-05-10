@@ -307,6 +307,9 @@ check-control-flow: $(TARGET)
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-filter-pattern.ll
 	$(TARGET) tests/ok/for-iterator-payload-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-payload-pattern.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-payload-pattern.ll
+	$(TARGET) tests/ok/for-iterator-aggregate-payload-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.ll
+	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.ll
+	grep -F -q "extractvalue { i32, { i32, i64 } }" $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.ll
 	$(TARGET) tests/ok/for-iterator-mut-self.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-mut-self.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-mut-self.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-direct.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-direct.elf; $(BUILD_DIR)/control-flow/for-iterator-direct.elf; code=$$?; test $$code -eq 42; fi
@@ -318,6 +321,7 @@ check-control-flow: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-refutable-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-refutable-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-refutable-pattern.elf; code=$$?; test $$code -eq 52; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-filter-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-filter-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-filter-pattern.elf; code=$$?; test $$code -eq 20; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-payload-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-payload-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-payload-pattern.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-aggregate-payload-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.elf; code=$$?; test $$code -eq 21; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-mut-self.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-mut-self.elf; $(BUILD_DIR)/control-flow/for-iterator-mut-self.elf; code=$$?; test $$code -eq 15; fi
 	if $(TARGET) tests/errors/for-iterator-planned.ari -o $(BUILD_DIR)/control-flow/for-iterator-planned.elf >$(BUILD_DIR)/control-flow/for-iterator-planned.err 2>&1; then exit 1; fi
 	grep -q "copyable IntoIterator\\[T\\] values" $(BUILD_DIR)/control-flow/for-iterator-planned.err
@@ -468,6 +472,10 @@ check-match: $(TARGET)
 	grep -q "extractvalue { i32, i64 }" $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.ll
 	grep -q "lshr i64" $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.ll
 	grep -q "icmp sle i32" $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.ll
+	$(TARGET) tests/ok/match-aggregate-enum-nested-aggregate-payload.ari --emit-llvm $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.ll
+	grep -F -q "insertvalue { i32, { i32, i64 } }" $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.ll
+	grep -F -q "extractvalue { i32, { i32, i64 } }" $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-nested-aggregate-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.elf; $(BUILD_DIR)/match/match-aggregate-enum-nested-aggregate-payload.elf; code=$$?; test $$code -eq 31; fi
 	if $(TARGET) tests/errors/match-expression-type-mismatch.ari -o $(BUILD_DIR)/match/match-expression-type-mismatch.elf >$(BUILD_DIR)/match/match-expression-type-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/match/match-expression-type-mismatch.err
 	if $(TARGET) tests/errors/match-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-literal-nonexhaustive.err 2>&1; then exit 1; fi
@@ -508,6 +516,8 @@ check-match: $(TARGET)
 	grep -q "array constant has 1 element but type expects 2" $(BUILD_DIR)/match/constant-aggregate-array-arity.err
 	if $(TARGET) tests/errors/array-pattern-arity.ari -o $(BUILD_DIR)/match/array-pattern-arity.elf >$(BUILD_DIR)/match/array-pattern-arity.err 2>&1; then exit 1; fi
 	grep -q "array match pattern has 2 elements but value has 3" $(BUILD_DIR)/match/array-pattern-arity.err
+	if $(TARGET) tests/errors/enum-nested-aggregate-payload-mixed-slot.ari -o $(BUILD_DIR)/match/enum-nested-aggregate-payload-mixed-slot.elf >$(BUILD_DIR)/match/enum-nested-aggregate-payload-mixed-slot.err 2>&1; then exit 1; fi
+	grep -q "mixed nested aggregate enum payload slots need an explicit ABI rule" $(BUILD_DIR)/match/enum-nested-aggregate-payload-mixed-slot.err
 
 check-modules: $(TARGET)
 	mkdir -p $(BUILD_DIR)/modules
