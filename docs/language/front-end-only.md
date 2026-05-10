@@ -113,12 +113,13 @@ The compiler accepts a small built-in attribute surface:
 - `@cfg(...)` on top-level declarations
 
 `@repr(C)` is constrained to the supported C-layout surface. Struct fields may
-use value, raw pointer, `ref`, or `ref mut` types. Generic structs are accepted
-when generic parameters appear only in pointer-sized slots such as `ptr T`,
-`ref T`, or `ref mut T`; value-stored generic fields are rejected until generic
-aggregate layout is explicit. `own` fields are rejected until the ownership ABI
-policy is explicit. `@repr(C)` enums currently must be fieldless, including
-generic enums; C tagged-union payload layout is not implemented yet.
+use value, raw pointer, `ref`, or `ref mut` types. Generic structs may store
+generic fields by value, and concrete instantiations resolve those fields to
+concrete layout slots before IR emission. Generic `ptr T`, `ref T`, and
+`ref mut T` fields remain pointer-sized slots. `own` fields are rejected until
+the ownership ABI policy is explicit. `@repr(C)` enums currently must be
+fieldless, including generic enums; C tagged-union payload layout is not
+implemented yet.
 
 `@cfg(false)` prunes a declaration before name collection and type checking.
 The disabled declaration must still parse, but its names, types, and body are

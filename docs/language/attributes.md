@@ -20,10 +20,10 @@ struct Point {
 `@repr(C)` may be used on structs and enums. The compiler validates that the
 current aggregate surface can use C layout. `@repr(C)` struct fields may use
 value, raw pointer, `ref`, or `ref mut` types.
-Generic structs are accepted when generic parameters appear only in pointer-sized
-slots such as `ptr T`, `ref T`, or `ref mut T`; value-stored generic fields are
-rejected until generic aggregate layout is explicit. `own` fields are rejected
-until the ownership ABI policy is explicit.
+Generic structs may store generic fields by value; each concrete instantiation
+resolves those fields to concrete layout slots before IR emission. Generic
+`ptr T`, `ref T`, and `ref mut T` fields remain pointer-sized slots. `own`
+fields are rejected until the ownership ABI policy is explicit.
 `@repr(C)` enums currently must be fieldless, including generic enums; generic
 parameters are accepted only when they do not appear in payload storage.
 

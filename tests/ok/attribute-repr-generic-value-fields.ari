@@ -1,0 +1,17 @@
+@repr(C)
+struct ValueSlot[T] {
+  value: T,
+  tag: u8,
+}
+
+fn read_slot(slot: ValueSlot[i64]) -> i64 {
+  return slot.value + (slot.tag as i64);
+}
+
+fn main() -> i64 {
+  let slot = ValueSlot<i64> {
+    value: 40,
+    tag: 2u8,
+  };
+  return read_slot(slot);
+}

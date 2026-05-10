@@ -1,8 +1,0 @@
-@repr(C)
-struct ValueSlot[T] {
-  value: T,
-}
-
-fn main() -> i64 {
-  return 0;
-}

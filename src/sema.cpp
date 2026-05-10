@@ -1341,39 +1341,15 @@ private:
         }
     }
 
-    static bool type_ref_mentions_generic_value_slot(
-        const TypeRef& type,
-        const std::set<std::string>& generic_names
-    ) {
-        if (type.qualifier == TypeQualifier::Ptr ||
-            type.qualifier == TypeQualifier::Ref ||
-            type.qualifier == TypeQualifier::MutRef ||
-            type.nullable) {
-            return false;
-        }
-        if (generic_names.count(type.name)) return true;
-        for (const auto& arg : type.args) {
-            if (type_ref_mentions_generic_value_slot(arg, generic_names)) return true;
-        }
-        return false;
-    }
-
     void validate_repr_c_struct(const StructDecl& decl) const {
         const Attribute* repr = find_attribute(decl.attributes, "repr");
         if (!repr) return;
-        std::set<std::string> generic_names;
-        for (const auto& generic : decl.generics) generic_names.insert(generic.name);
         for (const auto& field : decl.fields) {
             if (field.type.qualifier != TypeQualifier::Value &&
                 field.type.qualifier != TypeQualifier::Ref &&
                 field.type.qualifier != TypeQualifier::MutRef &&
                 field.type.qualifier != TypeQualifier::Ptr) {
                 fail(field.loc, "attribute '@repr(C)' fields cannot use ownership qualifiers yet");
-            }
-            if (!generic_names.empty() &&
-                type_ref_mentions_generic_value_slot(field.type, generic_names)) {
-                fail(field.loc,
-                     "attribute '@repr(C)' generic value fields must be concrete or pointer/borrow-qualified until generic aggregate layout is explicit");
             }
         }
     }

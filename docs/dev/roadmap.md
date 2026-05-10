@@ -61,8 +61,9 @@
    non-C ABI shims in IR, and scalar C aliases now follow target triples.
    The next FFI priority is to make foreign aggregate layout and pointer
    interop explicit enough for stable C headers.
-   - [repr] finish `repr(C)` aggregate ABI layout, including value-stored
-     generic fields and the policy for ownership-qualified fields; generic
+   - [repr] finish `repr(C)` aggregate ABI layout policy for
+     ownership-qualified fields and stable foreign header emission; generic
+     value fields are accepted after concrete instantiation, generic
      `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
      and generic fieldless enums are accepted because their layout is payload-free
    - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable

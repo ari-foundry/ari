@@ -822,6 +822,9 @@ check-meta: $(TARGET)
 	$(TARGET) tests/ok/attribute-repr-generic-pointer-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-generic-pointer-fields.ll
 	grep -q "{ ptr, ptr, ptr, i64 }" $(BUILD_DIR)/meta/attribute-repr-generic-pointer-fields.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/attribute-repr-generic-pointer-fields.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/meta/attribute-repr-generic-pointer-fields.elf; $(BUILD_DIR)/meta/attribute-repr-generic-pointer-fields.elf; code=$$?; test $$code -eq 26; fi
+	$(TARGET) tests/ok/attribute-repr-generic-value-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-generic-value-fields.ll
+	grep -q "{ i64, i8 }" $(BUILD_DIR)/meta/attribute-repr-generic-value-fields.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/attribute-repr-generic-value-fields.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/meta/attribute-repr-generic-value-fields.elf; $(BUILD_DIR)/meta/attribute-repr-generic-value-fields.elf; code=$$?; test $$code -eq 42; fi
 	$(TARGET) --freestanding tests/ok/attribute-repr-generic-fieldless-enum.ari -o $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.raw
 	$(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.raw; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/attribute-repr-generic-fieldless-enum.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.ll
@@ -870,8 +873,6 @@ check-meta: $(TARGET)
 	grep -q "attribute '@repr(C)' currently supports only fieldless enums" $(BUILD_DIR)/meta/attribute-repr-enum-payload.err
 	if $(TARGET) tests/errors/attribute-repr-own-field.ari -o $(BUILD_DIR)/meta/attribute-repr-own-field.elf >$(BUILD_DIR)/meta/attribute-repr-own-field.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr(C)' fields cannot use ownership qualifiers yet" $(BUILD_DIR)/meta/attribute-repr-own-field.err
-	if $(TARGET) tests/errors/attribute-repr-generic-value-field.ari -o $(BUILD_DIR)/meta/attribute-repr-generic-value-field.elf >$(BUILD_DIR)/meta/attribute-repr-generic-value-field.err 2>&1; then exit 1; fi
-	grep -q "attribute '@repr(C)' generic value fields must be concrete or pointer/borrow-qualified" $(BUILD_DIR)/meta/attribute-repr-generic-value-field.err
 	if $(TARGET) tests/errors/attribute-cfg-argument.ari -o $(BUILD_DIR)/meta/attribute-cfg-argument.elf >$(BUILD_DIR)/meta/attribute-cfg-argument.err 2>&1; then exit 1; fi
 	grep -q "unknown cfg predicate 'enabled'" $(BUILD_DIR)/meta/attribute-cfg-argument.err
 	if $(TARGET) tests/errors/attribute-deprecated-argument.ari -o $(BUILD_DIR)/meta/attribute-deprecated-argument.elf >$(BUILD_DIR)/meta/attribute-deprecated-argument.err 2>&1; then exit 1; fi
