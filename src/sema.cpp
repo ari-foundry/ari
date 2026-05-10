@@ -418,6 +418,12 @@ private:
         SourceLocation loc;
     };
 
+    struct TraitObjectMethodEntry {
+        const TraitInfo* trait = nullptr;
+        std::vector<IrType> trait_args;
+        const TraitInfo::Method* method = nullptr;
+    };
+
     const Program& program_;
     SemaOptions options_;
     TargetInfo target_ = resolve_target_info(options_.target_triple);
@@ -1957,6 +1963,59 @@ private:
     ) const {
         std::set<std::string> visiting;
         return trait_application_has_method(trait_name, trait_args, method_name, visiting);
+    }
+
+    void collect_trait_object_methods_from_trait(
+        const TraitInfo& trait,
+        const std::vector<IrType>& trait_args,
+        std::vector<TraitObjectMethodEntry>& methods,
+        std::set<std::string>& seen
+    ) const {
+        for (const auto& item : trait.methods) {
+            std::string key =
+                trait_method_display(trait.name, trait_args, item.second.name);
+            if (!seen.insert(key).second) continue;
+            methods.push_back(TraitObjectMethodEntry{&trait, trait_args, &item.second});
+        }
+
+        for (const auto& supertrait : instantiated_supertrait_bounds(trait, trait_args)) {
+            auto super_found = traits_.find(supertrait.trait_name);
+            if (super_found == traits_.end()) continue;
+            collect_trait_object_methods_from_trait(
+                super_found->second,
+                supertrait.trait_args,
+                methods,
+                seen);
+        }
+    }
+
+    std::vector<TraitObjectMethodEntry> collect_trait_object_methods(
+        const TraitInfo& trait,
+        const std::vector<IrType>& trait_args
+    ) const {
+        std::vector<TraitObjectMethodEntry> methods;
+        std::set<std::string> seen;
+        collect_trait_object_methods_from_trait(trait, trait_args, methods, seen);
+        return methods;
+    }
+
+    const TraitObjectMethodEntry* find_trait_object_method_entry(
+        SourceLocation loc,
+        const std::vector<TraitObjectMethodEntry>& methods,
+        const std::string& method_name,
+        const IrType& object_type
+    ) const {
+        const TraitObjectMethodEntry* selected = nullptr;
+        for (const auto& entry : methods) {
+            if (!entry.method || entry.method->name != method_name) continue;
+            if (selected) {
+                fail(loc,
+                     "trait object method '" + method_name + "' for " +
+                         type_name(object_type) + " is ambiguous across supertraits");
+            }
+            selected = &entry;
+        }
+        return selected;
     }
 
     bool try_resolve_trait_qualified_call_target(
@@ -12890,24 +12949,35 @@ private:
         table.concrete_type = source;
         table.loc = loc;
 
-        for (const auto& item : trait.methods) {
-            const TraitInfo::Method& trait_method = item.second;
+        std::vector<TraitObjectMethodEntry> object_methods = collect_trait_object_methods(trait, target.args);
+        for (const auto& entry : object_methods) {
+            const TraitInfo::Method& trait_method = *entry.method;
             require_trait_object_method_object_safe(loc, trait_method);
 
+            IrType method_target = target;
+            method_target.name = entry.trait->name;
+            method_target.args = entry.trait_args;
+
             ImplMethodInfo method_impl;
-            const ImplMethodInfo* concrete_impl = find_concrete_trait_method_impl(loc, source, target, trait_method.name);
+            const ImplMethodInfo* concrete_impl =
+                find_concrete_trait_method_impl(loc, source, method_target, trait_method.name);
             if (concrete_impl) {
                 method_impl = *concrete_impl;
-            } else if (!try_specialize_generic_trait_method_impl(loc, source, target, trait_method.name, method_impl)) {
+            } else if (!try_specialize_generic_trait_method_impl(
+                           loc,
+                           source,
+                           method_target,
+                           trait_method.name,
+                           method_impl)) {
                 fail(loc,
                      "trait object conversion could not find impl method '" + trait_method.name + "' for " +
-                         trait_application_display(target.name, target.args) + " for " + type_name(source));
+                         trait_application_display(method_target.name, method_target.args) + " for " + type_name(source));
             }
             queue_impl_method_for_lowering(method_impl);
 
             IrTraitObjectVTableMethod method;
             method.impl_name = method_impl.lowered_name;
-            method.thunk_name = table.name + "::" + trait_method.name;
+            method.thunk_name = table.name + "::" + mangle_text_key(entry.trait->name) + "::" + trait_method.name;
             method.concrete_receiver_type = source;
             method.result_type = method_impl.sig.result;
             method.impl_params = method_impl.sig.params;
@@ -15679,11 +15749,14 @@ private:
             fail(expr.loc, "unknown trait '" + receiver->type.name + "' in trait object method call");
         }
         const TraitInfo& trait = trait_found->second;
-        auto method_found = trait.methods.find(expr.name);
-        if (method_found == trait.methods.end()) {
+        std::vector<TraitObjectMethodEntry> object_methods =
+            collect_trait_object_methods(trait, receiver->type.args);
+        const TraitObjectMethodEntry* method_entry =
+            find_trait_object_method_entry(expr.loc, object_methods, expr.name, receiver->type);
+        if (!method_entry) {
             fail(expr.loc, "unknown method '" + expr.name + "' for type " + type_name(receiver->type));
         }
-        const TraitInfo::Method& method = method_found->second;
+        const TraitInfo::Method& method = *method_entry->method;
         if (!expr.type_args.empty()) {
             fail(expr.loc, "trait object method '" + expr.name + "' does not accept type arguments under dyn dispatch");
         }
@@ -15693,19 +15766,19 @@ private:
         }
 
         std::uint64_t slot = 0;
-        for (const auto& item : trait.methods) {
-            if (item.first == expr.name) break;
+        for (const auto& entry : object_methods) {
+            if (&entry == method_entry) break;
             ++slot;
         }
 
         std::map<std::string, IrType> substitutions;
         substitutions.emplace("Self", receiver->type);
-        for (std::size_t i = 0; i < trait.generic_names.size(); ++i) {
-            substitutions.emplace(trait.generic_names[i], receiver->type.args[i]);
+        for (std::size_t i = 0; i < method_entry->trait->generic_names.size(); ++i) {
+            substitutions.emplace(method_entry->trait->generic_names[i], method_entry->trait_args[i]);
         }
 
         std::string previous_module = current_module_name_;
-        current_module_name_ = trait.module_name;
+        current_module_name_ = method_entry->trait->module_name;
         std::vector<IrType> erased_params;
         IrType data_pointer = void_type(expr.loc);
         data_pointer.qualifier = TypeQualifier::Ptr;

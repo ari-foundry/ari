@@ -431,11 +431,15 @@ loads the concrete receiver and calls the original impl method. Generic impls
 such as `impl[T] Score[T] for Box[T]` can also be specialized into vtables for
 concrete object types such as `Box[i64] as dyn Score[i64]`. Generic trait
 methods are not object-safe: they remain available through static dispatch and
-are rejected at `as dyn` conversion or dyn method-call sites. Trait-object
-upcasts are rejected: Ari does not reinterpret one dyn object as another dyn
-trait object, so create the target dyn value from a concrete source with
-`as dyn Trait[...]`. `own`/borrow-valued dyn data pointers and raw
-`--freestanding` lowering are still planned.
+are rejected at `as dyn` conversion or dyn method-call sites. A `dyn Child`
+value includes object-safe methods declared by `Child` and its supertraits, so
+`value.base()` can dispatch through a `dyn Child` vtable when `Child: Base`.
+If more than one supertrait exposes the same dyn method name, the method call is
+ambiguous; use static trait-qualified dispatch on the concrete value before
+erasing it. Trait-object upcasts are rejected: Ari does not reinterpret one dyn
+object as another dyn trait object, so create the target dyn value from a
+concrete source with `as dyn Trait[...]`. `own`/borrow-valued dyn data pointers
+and raw `--freestanding` lowering are still planned.
 
 ## Current Status
 
@@ -449,6 +453,7 @@ functions such as `Box::make<i64>(...)` are executable. Generic trait methods
 with method-level bounds are executable. `dyn Trait[...]` type syntax resolves,
 and explicit concrete-to-`dyn` conversions plus LLVM vtable dispatch are
 executable for concrete copyable source values, including vtables built from
-generic impl specializations. Generic trait methods are deliberately static-only
-for dyn objects. Associated types, non-copy dyn data ownership, and raw backend
-dyn dispatch are still planned. Dyn-to-dyn upcasts are explicitly rejected.
+generic impl specializations and inherited object-safe supertrait methods.
+Generic trait methods are deliberately static-only for dyn objects. Associated
+types, non-copy dyn data ownership, and raw backend dyn dispatch are still
+planned. Dyn-to-dyn upcasts are explicitly rejected.

@@ -432,6 +432,8 @@ Checklist:
       declared by its supertraits
 - [x] lower trait-qualified calls such as `Trait::method(receiver, ...)` and
       `Trait<T>::method(receiver, ...)` for explicit static dispatch
+- [x] include object-safe supertrait methods in LLVM `dyn Child` vtables and
+      reject ambiguous inherited dyn method names
 - [x] accept bare `self` in trait/impl method signatures as `Self`
 - [x] lower concrete `value.method(...)` calls through matching impl methods
 - [x] reject unknown and ambiguous method calls
