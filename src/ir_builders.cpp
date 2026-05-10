@@ -196,4 +196,83 @@ IrExprPtr make_builtin_call(SourceLocation loc,
     return lowered;
 }
 
+IrMatchExprArm make_match_expr_arm(IrMatchArm arm) {
+    IrMatchExprArm expr_arm;
+    expr_arm.wildcard = arm.wildcard;
+    expr_arm.has_literal = arm.has_literal;
+    expr_arm.literal_is_bool = arm.literal_is_bool;
+    expr_arm.literal_int = arm.literal_int;
+    expr_arm.literal_negative = arm.literal_negative;
+    expr_arm.literal_bool = arm.literal_bool;
+    expr_arm.has_range = arm.has_range;
+    expr_arm.range_start_int = arm.range_start_int;
+    expr_arm.range_start_negative = arm.range_start_negative;
+    expr_arm.range_end_int = arm.range_end_int;
+    expr_arm.range_end_negative = arm.range_end_negative;
+    expr_arm.range_inclusive = arm.range_inclusive;
+    expr_arm.range_is_unsigned = arm.range_is_unsigned;
+    expr_arm.payload_literal_conditions = std::move(arm.payload_literal_conditions);
+    expr_arm.payload_range_conditions = std::move(arm.payload_range_conditions);
+    expr_arm.payload_enum_conditions = std::move(arm.payload_enum_conditions);
+    expr_arm.case_name = std::move(arm.case_name);
+    expr_arm.enum_tag = arm.enum_tag;
+    expr_arm.has_value_binding = arm.has_value_binding;
+    expr_arm.value_name = std::move(arm.value_name);
+    expr_arm.value_type = std::move(arm.value_type);
+    expr_arm.has_payload_binding = arm.has_payload_binding;
+    expr_arm.payload_name = std::move(arm.payload_name);
+    expr_arm.payload_type = std::move(arm.payload_type);
+    expr_arm.payload_index = arm.payload_index;
+    expr_arm.payload_bindings = std::move(arm.payload_bindings);
+    expr_arm.loc = arm.loc;
+    return expr_arm;
+}
+
+IrExprPtr make_ir_match_expr(SourceLocation loc, IrExprPtr value) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::Match;
+    expr->loc = loc;
+    expr->match_value = std::move(value);
+    return expr;
+}
+
+IrExprPtr make_ir_block_expr(SourceLocation loc, std::string label) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::Block;
+    expr->loc = loc;
+    expr->label = std::move(label);
+    return expr;
+}
+
+IrExprPtr make_ir_block_expr(SourceLocation loc,
+                             std::string label,
+                             IrType type,
+                             std::vector<IrStmtPtr> body,
+                             IrExprPtr value) {
+    auto expr = make_ir_block_expr(loc, std::move(label));
+    expr->type = std::move(type);
+    expr->block_body = std::move(body);
+    expr->block_value = std::move(value);
+    return expr;
+}
+
+IrExprPtr make_ir_if_expr(SourceLocation loc,
+                          IrType type,
+                          IrExprPtr condition,
+                          std::vector<IrStmtPtr> then_body,
+                          IrExprPtr then_value,
+                          std::vector<IrStmtPtr> else_body,
+                          IrExprPtr else_value) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::If;
+    expr->loc = loc;
+    expr->type = std::move(type);
+    expr->condition = std::move(condition);
+    expr->then_body = std::move(then_body);
+    expr->then_value = std::move(then_value);
+    expr->else_body = std::move(else_body);
+    expr->else_value = std::move(else_value);
+    return expr;
+}
+
 } // namespace ari

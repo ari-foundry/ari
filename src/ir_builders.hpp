@@ -39,5 +39,20 @@ IrExprPtr make_builtin_call(SourceLocation loc,
                             const std::string& name,
                             std::vector<IrExprPtr> args,
                             const IrType& result);
+IrMatchExprArm make_match_expr_arm(IrMatchArm arm);
+IrExprPtr make_ir_match_expr(SourceLocation loc, IrExprPtr value);
+IrExprPtr make_ir_block_expr(SourceLocation loc, std::string label = {});
+IrExprPtr make_ir_block_expr(SourceLocation loc,
+                             std::string label,
+                             IrType type,
+                             std::vector<IrStmtPtr> body,
+                             IrExprPtr value);
+IrExprPtr make_ir_if_expr(SourceLocation loc,
+                          IrType type,
+                          IrExprPtr condition,
+                          std::vector<IrStmtPtr> then_body,
+                          IrExprPtr then_value,
+                          std::vector<IrStmtPtr> else_body,
+                          IrExprPtr else_value);
 
 } // namespace ari

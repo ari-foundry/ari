@@ -7608,38 +7608,6 @@ private:
         }
     }
 
-    static IrMatchExprArm make_match_expr_arm(IrMatchArm arm) {
-        IrMatchExprArm expr_arm;
-        expr_arm.wildcard = arm.wildcard;
-        expr_arm.has_literal = arm.has_literal;
-        expr_arm.literal_is_bool = arm.literal_is_bool;
-        expr_arm.literal_int = arm.literal_int;
-        expr_arm.literal_negative = arm.literal_negative;
-        expr_arm.literal_bool = arm.literal_bool;
-        expr_arm.has_range = arm.has_range;
-        expr_arm.range_start_int = arm.range_start_int;
-        expr_arm.range_start_negative = arm.range_start_negative;
-        expr_arm.range_end_int = arm.range_end_int;
-        expr_arm.range_end_negative = arm.range_end_negative;
-        expr_arm.range_inclusive = arm.range_inclusive;
-        expr_arm.range_is_unsigned = arm.range_is_unsigned;
-        expr_arm.payload_literal_conditions = std::move(arm.payload_literal_conditions);
-        expr_arm.payload_range_conditions = std::move(arm.payload_range_conditions);
-        expr_arm.payload_enum_conditions = std::move(arm.payload_enum_conditions);
-        expr_arm.case_name = std::move(arm.case_name);
-        expr_arm.enum_tag = arm.enum_tag;
-        expr_arm.has_value_binding = arm.has_value_binding;
-        expr_arm.value_name = std::move(arm.value_name);
-        expr_arm.value_type = std::move(arm.value_type);
-        expr_arm.has_payload_binding = arm.has_payload_binding;
-        expr_arm.payload_name = std::move(arm.payload_name);
-        expr_arm.payload_type = std::move(arm.payload_type);
-        expr_arm.payload_index = arm.payload_index;
-        expr_arm.payload_bindings = std::move(arm.payload_bindings);
-        expr_arm.loc = arm.loc;
-        return expr_arm;
-    }
-
     static void require_match_exhaustive(SourceLocation loc,
                                          const EnumInfo& enum_info,
                                          const EnumMatchCoverage& coverage) {
@@ -12076,8 +12044,7 @@ private:
             fail(expr.loc, "aggregate match requires a tuple, array, or struct value, got " + type_name(subject_type));
         }
 
-        lowered->kind = IrExprKind::Block;
-        lowered->match_arms.clear();
+        lowered = make_ir_block_expr(expr.loc);
 
         std::string subject_name = make_hidden_local(
             subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple");
@@ -12189,29 +12156,31 @@ private:
     IrExprPtr check_match_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         if (expr.match_arms.empty()) fail(expr.loc, "match must have at least one arm");
 
-        lowered->kind = IrExprKind::Match;
-        lowered->match_value = check_expr(*expr.match_value);
-        if (is_borrow_type(lowered->match_value->type)) {
+        IrExprPtr match_value = check_expr(*expr.match_value);
+        if (is_borrow_type(match_value->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
-        if (!is_value_enum_type(lowered->match_value->type)) {
-            if (is_value_integer_type(lowered->match_value->type) ||
-                (lowered->match_value->type.qualifier == TypeQualifier::Value &&
-                 lowered->match_value->type.primitive == IrPrimitiveKind::Bool)) {
+        if (!is_value_enum_type(match_value->type)) {
+            if (is_value_integer_type(match_value->type) ||
+                (match_value->type.qualifier == TypeQualifier::Value &&
+                 match_value->type.primitive == IrPrimitiveKind::Bool)) {
+                lowered = make_ir_match_expr(expr.loc, std::move(match_value));
                 return check_scalar_match_expr(expr, std::move(lowered), expected);
             }
-            if (is_aggregate_type(lowered->match_value->type)) {
+            if (is_aggregate_type(match_value->type)) {
+                lowered = make_ir_match_expr(expr.loc, std::move(match_value));
                 return check_tuple_match_expr(expr, std::move(lowered), expected);
             }
-            fail(expr.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(lowered->match_value->type));
+            fail(expr.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(match_value->type));
         }
 
-        auto enum_found = enums_.find(lowered->match_value->type.name);
+        auto enum_found = enums_.find(match_value->type.name);
         if (enum_found == enums_.end()) {
-            fail(expr.loc, "unknown enum type '" + lowered->match_value->type.name + "'");
+            fail(expr.loc, "unknown enum type '" + match_value->type.name + "'");
         }
         const EnumInfo& enum_info = enum_found->second;
-        IrType enum_value_type = lowered->match_value->type;
+        IrType enum_value_type = match_value->type;
+        lowered = make_ir_match_expr(expr.loc, std::move(match_value));
 
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
@@ -12374,10 +12343,10 @@ private:
 
     IrExprPtr check_if_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         if (expr.has_condition_pattern) return check_if_let_expr(expr, std::move(lowered), expected);
+        (void)lowered;
 
-        lowered->kind = IrExprKind::If;
-        lowered->condition = check_expr(*expr.condition);
-        coerce_condition_to_bool(expr.loc, lowered->condition);
+        IrExprPtr condition = check_expr(*expr.condition);
+        coerce_condition_to_bool(expr.loc, condition);
 
         StateSnapshot branch_input = snapshot_states();
         CheckedExprBlock then_arm = check_value_block(expr.loc, "if expression arm", expr.then_body, *expr.then_value, expected);
@@ -12396,12 +12365,15 @@ private:
                             "has incompatible ownership states after if expression branches");
         restore_states(merge_zone_generations(then_arm.state, else_arm.state));
 
-        lowered->type = result_type;
-        lowered->then_body = std::move(then_arm.statements);
-        lowered->then_value = std::move(then_arm.value);
-        lowered->else_body = std::move(else_arm.statements);
-        lowered->else_value = std::move(else_arm.value);
-        return lowered;
+        return make_ir_if_expr(
+            expr.loc,
+            result_type,
+            std::move(condition),
+            std::move(then_arm.statements),
+            std::move(then_arm.value),
+            std::move(else_arm.statements),
+            std::move(else_arm.value)
+        );
     }
 
     IrExprPtr check_if_let_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
@@ -12410,8 +12382,7 @@ private:
             return check_aggregate_if_let_expr(expr, std::move(lowered), std::move(match_value), expected);
         }
 
-        lowered->kind = IrExprKind::Block;
-        lowered->match_arms.clear();
+        lowered = make_ir_block_expr(expr.loc);
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(expr.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
@@ -12502,15 +12473,15 @@ private:
         pattern_match->match_arms.push_back(std::move(no_match));
         lowered->block_body.push_back(std::move(pattern_match));
 
-        auto if_expr = std::make_unique<IrExpr>();
-        if_expr->kind = IrExprKind::If;
-        if_expr->loc = expr.loc;
-        if_expr->type = result_type;
-        if_expr->condition = make_local_lvalue_expr(expr.loc, matched_name, matched_type);
-        if_expr->then_body = std::move(then_statements.statements);
-        if_expr->then_value = std::move(then_value);
-        if_expr->else_body = std::move(else_checked.statements);
-        if_expr->else_value = std::move(else_checked.value);
+        IrExprPtr if_expr = make_ir_if_expr(
+            expr.loc,
+            result_type,
+            make_local_lvalue_expr(expr.loc, matched_name, matched_type),
+            std::move(then_statements.statements),
+            std::move(then_value),
+            std::move(else_checked.statements),
+            std::move(else_checked.value)
+        );
 
         lowered->type = result_type;
         lowered->block_value = std::move(if_expr);
@@ -12524,8 +12495,7 @@ private:
         const IrType* expected = nullptr
     ) {
         IrType subject_type = subject->type;
-        lowered->kind = IrExprKind::Block;
-        lowered->match_arms.clear();
+        lowered = make_ir_block_expr(expr.loc);
 
         std::string subject_name = make_hidden_local(
             subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple");
@@ -12667,21 +12637,28 @@ private:
     }
 
     IrExprPtr check_block_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
-        lowered->kind = IrExprKind::Block;
-        lowered->label = expr.label;
+        (void)lowered;
         if (!expr.label.empty()) {
             CheckedExprBlock block = check_labeled_value_block(expr, expected);
-            lowered->type = block.value->type;
-            lowered->block_body = std::move(block.statements);
-            lowered->block_value = std::move(block.value);
-            return lowered;
+            IrType result_type = block.value->type;
+            return make_ir_block_expr(
+                expr.loc,
+                expr.label,
+                std::move(result_type),
+                std::move(block.statements),
+                std::move(block.value)
+            );
         }
 
         CheckedExprBlock block = check_value_block(expr.loc, "block expression", expr.block_body, *expr.block_value, expected);
-        lowered->type = block.value->type;
-        lowered->block_body = std::move(block.statements);
-        lowered->block_value = std::move(block.value);
-        return lowered;
+        IrType result_type = block.value->type;
+        return make_ir_block_expr(
+            expr.loc,
+            {},
+            std::move(result_type),
+            std::move(block.statements),
+            std::move(block.value)
+        );
     }
 
     CheckedExprBlock check_labeled_value_block(const Expr& expr, const IrType* expected = nullptr) {
@@ -12833,35 +12810,23 @@ private:
             fail(loc, "wrong payload count for enum case '" + info.name + "'");
         }
 
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->loc = loc;
-        lowered->kind = IrExprKind::EnumConstruct;
-        lowered->type = info.enum_type;
-        lowered->enum_name = info.enum_name;
-        lowered->case_name = info.name;
-        lowered->enum_tag = info.tag;
-        lowered->has_payload = !info.payloads.empty();
-
-        if (has_aggregate_enum_layout(info.enum_type)) {
-            for (std::size_t i = 0; i < args.size(); ++i) {
-                IrExprPtr payload = std::move(args[i]);
-                require_no_zone_pointer_escape(payload->loc, *payload, "enum payload");
-                coerce_expr_to_expected(*payload, info.payloads[i]);
-                require_assignable(loc, info.payloads[i], payload->type);
-                lowered->args.push_back(std::move(payload));
-            }
-            return lowered;
-        }
-
-        if (!args.empty()) {
-            IrExprPtr payload = std::move(args[0]);
+        std::vector<IrExprPtr> payloads;
+        payloads.reserve(args.size());
+        for (std::size_t i = 0; i < args.size(); ++i) {
+            IrExprPtr payload = std::move(args[i]);
             require_no_zone_pointer_escape(payload->loc, *payload, "enum payload");
-            coerce_expr_to_expected(*payload, info.payloads[0]);
-            require_assignable(loc, info.payloads[0], payload->type);
-            lowered->payload_type = info.payloads[0];
-            lowered->payload = std::move(payload);
+            coerce_expr_to_expected(*payload, info.payloads[i]);
+            require_assignable(loc, info.payloads[i], payload->type);
+            payloads.push_back(std::move(payload));
         }
-        return lowered;
+
+        EnumConstructorIrInfo ir_info;
+        ir_info.enum_name = info.enum_name;
+        ir_info.case_name = info.name;
+        ir_info.tag = info.tag;
+        ir_info.enum_type = info.enum_type;
+        ir_info.payload_types = info.payloads;
+        return make_enum_constructor_ir(loc, ir_info, std::move(payloads));
     }
 
     IrExprPtr check_unary(const Expr& expr, IrExprPtr lowered) {

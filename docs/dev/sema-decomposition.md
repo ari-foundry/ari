@@ -17,7 +17,8 @@ construction. Some helpers have already moved out to focused files:
   state transitions
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions,
-  pointer operations, and direct builtin calls
+  pointer operations, direct builtin calls, match expression arms, and
+  block/match/if expression nodes
 - `control_flow_semantics` for product-pattern if-chain assembly shared by
   aggregate match, declaration, `if let`, and `while let` lowering
 - `module_metadata` and `module_cache` for package graph summaries and caches
@@ -33,8 +34,8 @@ construction. Some helpers have already moved out to focused files:
   trait-resolution extraction
 - `aggregate_literal_semantics` for pure expected-element selection shared by
   tuple, struct, fixed-array, and local `Vec[T]` literal lowering
-- `enum_constructor_semantics` for pure expected-enum matching used before
-  lowering generic enum constructor payloads
+- `enum_constructor_semantics` for expected-enum matching and final enum
+  constructor IR node assembly after payload semantic checks
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or
@@ -45,12 +46,15 @@ reuse the existing feature check target for the moved responsibility.
 These areas can move first because they mostly depend on `IrType`, `Pattern`,
 or `SourceLocation`, not on the whole `SemanticChecker` state.
 
-1. Continue extracting basic IR construction into `ir_builders`.
+1. Keep basic IR construction centralized in `ir_builders`.
    - Local lvalues, IR var declarations, tuple/vector index helpers, scalar
      literals, casts, bool binary conditions, pointer operation nodes, and
-     direct builtin call nodes are already outside `sema.cpp`.
-   - Next small targets are enum constructor IR assembly and block/match/if
-     expression assembly once their semantic checks have narrow inputs.
+     direct builtin call nodes are already outside `sema.cpp`; enum constructor
+     IR assembly now lives with `enum_constructor_semantics` because it shares
+     enum-specific layout decisions.
+   - Block, match, and if expression node assembly now also goes through
+     `ir_builders`. Future builder moves should be opportunistic and tied to a
+     nearby semantic extraction, rather than treated as a standalone phase.
 2. Extract constant evaluation into `constant_semantics`.
    - Static integer arithmetic/bitwise/shift folding, `ConstantValue`, scalar
      constant construction/range helpers, scalar literal folding, constant
@@ -142,15 +146,14 @@ surface.
 
 ## Suggested Order
 
-1. `ir_builders` continuation
-2. `constant_semantics`
-3. `pattern_coverage`
-4. `local_state`
-5. `borrow_semantics`
-6. `zone_semantics`
-7. `name_resolution`
-8. `trait_semantics`
-9. `expr_lowering` / `stmt_lowering`
+1. `constant_semantics`
+2. `pattern_coverage`
+3. `local_state`
+4. `borrow_semantics`
+5. `zone_semantics`
+6. `name_resolution`
+7. `trait_semantics`
+8. `expr_lowering` / `stmt_lowering`
 
 This order keeps early patches mostly pure, then moves stateful pieces only
 after their dependencies have a stable API. The end state should make

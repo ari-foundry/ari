@@ -25,15 +25,15 @@ sanitize: $(SANITIZE_TARGET)
 
 $(TARGET): $(SRC) $(HEADERS)
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) $(SRC) -o $@
 
 $(DEBUG_TARGET): $(SRC) $(HEADERS)
 	mkdir -p $(BUILD_DIR)/debug
-	$(CXX) $(DEBUG_CXXFLAGS) $(SRC) -o $(DEBUG_TARGET)
+	$(CXX) $(DEBUG_CXXFLAGS) $(SRC) -o $@
 
 $(SANITIZE_TARGET): $(SRC) $(HEADERS)
 	mkdir -p $(BUILD_DIR)/sanitize
-	$(CXX) $(SANITIZE_CXXFLAGS) $(SRC) -o $(SANITIZE_TARGET)
+	$(CXX) $(SANITIZE_CXXFLAGS) $(SRC) -o $@
 
 sample: $(TARGET)
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/count.ll
