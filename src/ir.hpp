@@ -284,6 +284,19 @@ struct IrParam {
     IrType type;
 };
 
+struct IrCRecordField {
+    std::string name;
+    IrType type;
+    SourceLocation loc;
+};
+
+struct IrCRecord {
+    std::string name;
+    std::string c_name;
+    std::vector<IrCRecordField> fields;
+    SourceLocation loc;
+};
+
 enum class IrExternAbi {
     C,
     AriBuiltin,
@@ -385,6 +398,7 @@ struct IrFunction {
 
 struct IrProgram {
     std::vector<IrExternFunction> extern_functions;
+    std::vector<IrCRecord> c_records;
     std::vector<IrTraitObjectVTable> trait_object_vtables;
     std::vector<IrFunction> functions;
     std::vector<std::string> warnings;

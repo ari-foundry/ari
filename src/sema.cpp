@@ -296,6 +296,7 @@ public:
         IrProgram ir;
         ir.require_main = options_.require_main || options_.test_mode;
         collect_ir_extern_functions(ir);
+        collect_ir_c_records(ir);
         for (const auto& fn : program_.functions) {
             if (!is_executable_function(fn)) continue;
             if (options_.test_mode && fn.name == "main") continue;
@@ -2503,6 +2504,27 @@ private:
                 fn.params.push_back(IrParam{"arg" + std::to_string(i), sig.params[i]});
             }
             ir.extern_functions.push_back(std::move(fn));
+        }
+    }
+
+    void collect_ir_c_records(IrProgram& ir) {
+        for (const auto& decl : program_.structs) {
+            if (!decl.is_public) continue;
+            if (!find_attribute(decl.attributes, "repr")) continue;
+            if (!decl.generics.empty()) continue;
+
+            IrCRecord record;
+            record.name = decl.name;
+            record.c_name = unqualified_name(decl.name);
+            record.loc = decl.loc;
+            for (const auto& field : decl.fields) {
+                record.fields.push_back(IrCRecordField{
+                    field.name,
+                    resolve_executable_type(field.type),
+                    field.loc
+                });
+            }
+            ir.c_records.push_back(std::move(record));
         }
     }
 

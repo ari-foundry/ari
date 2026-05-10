@@ -847,6 +847,17 @@ check-meta: $(TARGET)
 	grep -q 'int64_t ari_add_i64(int64_t arg0, int64_t arg1);' $(BUILD_DIR)/meta/c-header-export.h
 	grep -q 'void ari_touch(void\* arg0, bool arg1);' $(BUILD_DIR)/meta/c-header-export.h
 	if grep -q 'hidden' $(BUILD_DIR)/meta/c-header-export.h; then exit 1; fi
+	$(TARGET) tests/ok/c-header-repr-struct.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-repr-struct.h --emit-llvm $(BUILD_DIR)/meta/c-header-repr-struct.ll
+	grep -q 'typedef struct ApiSlots ApiSlots;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'struct ApiSlots {' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t value;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'bool flag;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'void\* raw;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t\* shared;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t\* unique;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t ari_ping(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t ari_observe(ApiSlots\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	if grep -q 'HiddenSlots' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw
 	$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw; code=$$?; test $$code -eq 10
 	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym

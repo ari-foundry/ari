@@ -77,8 +77,10 @@ generic trait methods, and trait impl coherence diagnostics.
 `@repr(C)` layout guard diagnostics, `@cfg(true/false)` declaration pruning,
 boolean/target/feature cfg predicate parsing, command-line cfg feature flags,
 deprecated use warnings, `@test` runner generation, user-defined attribute
-names reserved by `meta fn`, meta signatures over `token_stream`/`ast`, and
-planned Rust-style `name!(...)` macro invocation diagnostics.
+names reserved by `meta fn`, exported C header prototypes and public
+non-generic `@repr(C)` struct declarations, meta signatures over
+`token_stream`/`ast`, and planned Rust-style `name!(...)` macro invocation
+diagnostics.
 
 `make check-prelude` runs prelude IO, formatting, input, assertion, source
 header, and builtin macro tests. It covers function and macro assertion forms,

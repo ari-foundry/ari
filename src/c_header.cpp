@@ -4,13 +4,25 @@
 #include "symbol_mangle.hpp"
 
 #include <cstddef>
+#include <map>
+#include <set>
 #include <sstream>
 #include <string>
 
 namespace ari {
 namespace {
 
-std::string c_type_name(const IrType& type);
+std::string unqualified_name(const std::string& name) {
+    std::size_t split = name.rfind("::");
+    if (split == std::string::npos) return name;
+    return name.substr(split + 2);
+}
+
+using CRecordNames = std::map<std::string, std::string>;
+
+std::string c_type_name(const IrType& type,
+                        const CRecordNames& c_record_names,
+                        bool allow_record_values);
 
 std::string c_scalar_type_name(const IrType& type) {
     switch (type.primitive) {
@@ -33,7 +45,16 @@ std::string c_scalar_type_name(const IrType& type) {
                        "; use scalar C ABI aliases or raw pointers");
 }
 
-std::string c_type_name(const IrType& type) {
+std::string c_record_type_name(const IrType& type, const CRecordNames& c_record_names) {
+    auto found = c_record_names.find(type.name);
+    if (found != c_record_names.end()) return found->second;
+    throw CompileError("C header emission does not support aggregate type " + type_name(type) +
+                       "; expose a public non-generic @repr(C) struct or an explicit raw pointer ABI");
+}
+
+std::string c_type_name(const IrType& type,
+                        const CRecordNames& c_record_names,
+                        bool allow_record_values) {
     if (type.qualifier == TypeQualifier::Own) {
         throw CompileError("C header emission does not support owning type " + type_name(type) +
                            "; expose an explicit raw pointer or scalar ABI instead");
@@ -45,11 +66,19 @@ std::string c_type_name(const IrType& type) {
         IrType pointee = type;
         pointee.qualifier = TypeQualifier::Value;
         if (pointee.primitive == IrPrimitiveKind::Void) return "void*";
+        if (pointee.primitive == IrPrimitiveKind::Struct) {
+            return c_record_type_name(pointee, c_record_names) + "*";
+        }
         return c_scalar_type_name(pointee) + "*";
     }
 
     if (type.primitive == IrPrimitiveKind::String) {
         throw CompileError("C header emission does not support Ari string values; use ptr c_char");
+    }
+    if (type.primitive == IrPrimitiveKind::Struct) {
+        if (allow_record_values) return c_record_type_name(type, c_record_names);
+        throw CompileError("C header emission does not support aggregate parameter or return type " +
+                           type_name(type) + "; expose an explicit raw pointer ABI instead");
     }
     return c_scalar_type_name(type);
 }
@@ -58,33 +87,75 @@ std::string emitted_function_symbol(const IrFunction& fn) {
     return fn.link_name.empty() ? mangle_function_name(fn.name) : fn.link_name;
 }
 
-std::string function_prototype(const IrFunction& fn) {
+std::string function_prototype(const IrFunction& fn, const CRecordNames& c_record_names) {
     std::ostringstream out;
-    out << c_type_name(fn.return_type) << " " << emitted_function_symbol(fn) << "(";
+    out << c_type_name(fn.return_type, c_record_names, false) << " " << emitted_function_symbol(fn) << "(";
     for (std::size_t i = 0; i < fn.params.size(); ++i) {
         if (i > 0) out << ", ";
-        out << c_type_name(fn.params[i].type) << " arg" << i;
+        out << c_type_name(fn.params[i].type, c_record_names, false) << " arg" << i;
     }
     if (fn.params.empty()) out << "void";
     out << ");";
     return out.str();
 }
 
+CRecordNames collect_c_record_names(const IrProgram& program) {
+    CRecordNames names;
+    std::set<std::string> used_c_names;
+    for (const auto& record : program.c_records) {
+        std::string c_name = record.c_name.empty() ? unqualified_name(record.name) : record.c_name;
+        if (!used_c_names.insert(c_name).second) {
+            throw CompileError("C header emission found duplicate C record name '" + c_name + "'");
+        }
+        names.emplace(record.name, c_name);
+    }
+    return names;
+}
+
+std::string record_forward_declaration(const IrCRecord& record) {
+    std::string c_name = record.c_name.empty() ? unqualified_name(record.name) : record.c_name;
+    return "typedef struct " + c_name + " " + c_name + ";";
+}
+
+std::string record_definition(const IrCRecord& record, const CRecordNames& c_record_names) {
+    std::string c_name = record.c_name.empty() ? unqualified_name(record.name) : record.c_name;
+    std::ostringstream out;
+    out << "struct " << c_name << " {\n";
+    for (const auto& field : record.fields) {
+        out << "    " << c_type_name(field.type, c_record_names, false) << " " << field.name << ";\n";
+    }
+    out << "};";
+    return out.str();
+}
+
 } // namespace
 
 std::string emit_c_header(const IrProgram& program) {
+    CRecordNames c_record_names = collect_c_record_names(program);
+
     std::ostringstream out;
     out << "#pragma once\n\n";
     out << "#include <stdbool.h>\n";
     out << "#include <stddef.h>\n";
     out << "#include <stdint.h>\n\n";
+
+    if (!program.c_records.empty()) {
+        for (const auto& record : program.c_records) {
+            out << record_forward_declaration(record) << "\n";
+        }
+        out << "\n";
+        for (const auto& record : program.c_records) {
+            out << record_definition(record, c_record_names) << "\n\n";
+        }
+    }
+
     out << "#ifdef __cplusplus\n";
     out << "extern \"C\" {\n";
     out << "#endif\n\n";
 
     for (const auto& fn : program.functions) {
         if (!fn.shared_export) continue;
-        out << function_prototype(fn) << "\n";
+        out << function_prototype(fn, c_record_names) << "\n";
     }
 
     out << "\n#ifdef __cplusplus\n";

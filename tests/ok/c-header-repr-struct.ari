@@ -1,0 +1,23 @@
+@repr(C)
+pub struct ApiSlots {
+  value: i64,
+  flag: bool,
+  raw: ptr c_void,
+  shared: ref i64,
+  unique: ref mut i64,
+}
+
+@repr(C)
+struct HiddenSlots {
+  value: i64,
+}
+
+@export("ari_ping")
+pub fn ping(value: i64) -> i64 {
+  return value;
+}
+
+@export("ari_observe")
+pub fn observe(slots: ptr ApiSlots) -> i64 {
+  return 0;
+}

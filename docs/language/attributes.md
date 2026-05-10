@@ -87,9 +87,12 @@ When building with `--shared`, `pub` functions and explicit export/no-mangle
 functions are ABI-visible; private Ari helpers are emitted with hidden LLVM
 visibility, as are Ari-owned runtime helpers.
 Use `--emit-c-header path` with the LLVM/shared path to write a small C header
-for exported scalar/raw-pointer functions. The current header emitter skips
-private helpers and rejects Ari-only values such as `string`, owned values, and
-aggregate parameters until their C ABI policy is explicit.
+for exported scalar/raw-pointer functions and public non-generic `@repr(C)`
+struct declarations whose fields are scalar, raw pointer, `ref`, or `ref mut`
+slots. The current header emitter skips private helpers and private structs,
+does not emit generic struct declarations yet, and rejects Ari-only values such
+as `string`, owned values, and aggregate parameters until their C ABI policy is
+explicit.
 Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.

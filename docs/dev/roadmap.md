@@ -62,8 +62,10 @@
    The next FFI priority is to make foreign aggregate layout and pointer
    interop explicit enough for stable C headers.
    - [repr] finish `repr(C)` aggregate ABI layout policy for
-     ownership-qualified fields and aggregate declarations in emitted C
-     headers; scalar/raw-pointer exported function C headers are implemented,
+     ownership-qualified fields, by-value aggregate function ABI, and generic
+     concrete header instantiations; public non-generic `@repr(C)` struct
+     declarations with scalar/raw-pointer/borrow fields are emitted in C
+     headers, scalar/raw-pointer exported function C headers are implemented,
      generic value fields are accepted after concrete instantiation, generic
      `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
      and generic fieldless enums are accepted because their layout is payload-free
