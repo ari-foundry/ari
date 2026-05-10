@@ -208,16 +208,20 @@ Checklist:
 - [x] fixed-capacity local literal/const/static-signed-expr/known-local/runtime-checked `Vec.reserve(n)`, plus auto-widening local `Vec.push(value)` on the LLVM backend
 - [x] checked local `Vec.insert(index, value)` on the LLVM backend
 - [x] checked local `Vec.pop()` on the LLVM backend
-- [x] checked local `Vec.remove(index)` on the LLVM backend
+- [x] checked local `Vec.remove(index)` on the LLVM backend, including
+      known-empty runtime-index rejection
 - [x] checked local `Vec.first()` and `Vec.last()` on the LLVM backend
-- [x] checked local `Vec.get(index)` on the LLVM backend
+- [x] checked local `Vec.get(index)` on the LLVM backend, including known-empty
+      runtime-index rejection
 - [x] checked local `Vec.contains(value)`, `Vec.index_of(value)`, and `Vec.count(value)` on the LLVM backend
 - [x] fixed-capacity local `Vec.capacity()` on the LLVM backend
 - [x] `value.is_empty()` for local vectors, fixed arrays, and constant-folded literals
 - [x] fixed-capacity local `Vec.clear()` on the LLVM backend
 - [x] fixed-capacity local `Vec.truncate(n)` on the LLVM backend, including static/known-local length tracking for later local growth
-- [x] checked local `Vec.set(index, value)` on the LLVM backend
-- [x] checked local `Vec.swap(a, b)` on the LLVM backend
+- [x] checked local `Vec.set(index, value)` on the LLVM backend, including
+      known-empty runtime-index rejection
+- [x] checked local `Vec.swap(a, b)` on the LLVM backend, including known-empty
+      runtime-index rejection
 - [x] frozen local `Vec[T]` API rejects unsupported compiler-known methods with allocator-backed std guidance
 - [x] keep stored local `Vec[T]` rejected on the raw freestanding backend
 - [x] `init ... while ... next ...` normal update path

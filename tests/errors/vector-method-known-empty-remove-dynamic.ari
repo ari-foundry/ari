@@ -1,0 +1,8 @@
+fn remove_empty(index: i64) -> i64 {
+    var values: Vec[i64] = [];
+    return values.remove(index);
+}
+
+fn main() -> i64 {
+    return remove_empty(0);
+}

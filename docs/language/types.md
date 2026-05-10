@@ -483,7 +483,9 @@ runtime length, and uses the same bounds checks as `values[index]`. Literal,
 constant, static-expression, and immutable local indexes are rejected at compile
 time when negative, and when outside the compiler-known current length, for
 `get`, `set`, `swap`, `remove`, and `insert`; other runtime indexes still use
-the vector bounds checks.
+the vector bounds checks. Runtime-indexed `get`, `set`, `swap`, and `remove`
+calls are rejected before lowering when the compiler knows the current local
+vector length is zero.
 `contains(value)` returns `true` when a copyable comparable element equal to
 `value` appears inside the current runtime length. `index_of(value)` returns
 the first matching runtime index as `i64`, or `-1` when no element matches.

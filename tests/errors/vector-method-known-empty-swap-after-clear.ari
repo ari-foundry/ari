@@ -1,0 +1,10 @@
+fn swap_empty(first: i64, second: i64) -> i64 {
+    var values: Vec[i64] = [1];
+    values.clear();
+    values.swap(first, second);
+    return 0;
+}
+
+fn main() -> i64 {
+    return swap_empty(0, 0);
+}

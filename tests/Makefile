@@ -1573,6 +1573,14 @@ check-variables: $(TARGET)
 	grep -q "Vec.last requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-last-after-clear.err
 	if $(TARGET) tests/errors/vector-method-known-empty-pop.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-pop.elf >$(BUILD_DIR)/variables/vector-method-known-empty-pop.err 2>&1; then exit 1; fi
 	grep -q "Vec.pop requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-pop.err
+	if $(TARGET) tests/errors/vector-method-known-empty-get-dynamic.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-get-dynamic.elf >$(BUILD_DIR)/variables/vector-method-known-empty-get-dynamic.err 2>&1; then exit 1; fi
+	grep -q "Vec.get requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-get-dynamic.err
+	if $(TARGET) tests/errors/vector-method-known-empty-remove-dynamic.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-remove-dynamic.elf >$(BUILD_DIR)/variables/vector-method-known-empty-remove-dynamic.err 2>&1; then exit 1; fi
+	grep -q "Vec.remove requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-remove-dynamic.err
+	if $(TARGET) tests/errors/vector-method-known-empty-set-dynamic.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-set-dynamic.elf >$(BUILD_DIR)/variables/vector-method-known-empty-set-dynamic.err 2>&1; then exit 1; fi
+	grep -q "Vec.set requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-set-dynamic.err
+	if $(TARGET) tests/errors/vector-method-known-empty-swap-after-clear.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-swap-after-clear.elf >$(BUILD_DIR)/variables/vector-method-known-empty-swap-after-clear.err 2>&1; then exit 1; fi
+	grep -q "Vec.swap requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-swap-after-clear.err
 	if $(TARGET) tests/errors/slice-view-method-shape.ari -o $(BUILD_DIR)/variables/slice-view-method-shape.elf >$(BUILD_DIR)/variables/slice-view-method-shape.err 2>&1; then exit 1; fi
 	grep -q "as_slice expects no arguments" $(BUILD_DIR)/variables/slice-view-method-shape.err
 	if $(TARGET) tests/errors/vector-reserve-known-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-known-negative.elf >$(BUILD_DIR)/variables/vector-reserve-known-negative.err 2>&1; then exit 1; fi

@@ -13832,6 +13832,7 @@ private:
             "index",
             vector_known_length_state(local)
         );
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Get, vector_known_length_state(local));
         release_temporary_borrows(borrow_mark);
 
         return make_vec_index_expr(
@@ -13974,6 +13975,7 @@ private:
         IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);
         coerce_expr_to_expected(*value, local.type.args[0]);
         require_assignable(expr.args[1]->loc, local.type.args[0], value->type);
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Set, vector_known_length_state(local));
         release_temporary_borrows(borrow_mark);
 
         return make_vec_set_expr(
@@ -14019,6 +14021,7 @@ private:
             "second index",
             vector_known_length_state(local)
         );
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Swap, vector_known_length_state(local));
         release_temporary_borrows(borrow_mark);
 
         return make_vec_swap_expr(
@@ -14045,6 +14048,7 @@ private:
             "index",
             vector_known_length_state(local)
         );
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Remove, vector_known_length_state(local));
         release_temporary_borrows(borrow_mark);
 
         set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));

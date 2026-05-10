@@ -1,0 +1,9 @@
+fn set_empty(index: i64) -> i64 {
+    var values: Vec[i64] = [];
+    values.set(index, 7);
+    return 0;
+}
+
+fn main() -> i64 {
+    return set_empty(0);
+}

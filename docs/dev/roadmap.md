@@ -40,8 +40,9 @@
    diagnostics for index/capacity/length arguments are also centralized there;
    static negative and known-out-of-range method indexes now use those shared
    diagnostics before lowering to runtime bounds checks. Known-empty
-   `first`, `last`, and `pop` calls are rejected before lowering instead of
-   deferring to guaranteed runtime empty-vector checks.
+   `first`, `last`, `pop`, and runtime-indexed `get`, `set`, `swap`, and
+   `remove` calls are rejected before lowering instead of deferring to
+   guaranteed runtime empty-vector checks.
    Local Vec IR construction helpers include `first`, `last`, and `push`
    alongside the other method lowerings. Known-length updates for local `push`,
    `insert`, `pop`, `remove`, `clear`, and `truncate` now use small
