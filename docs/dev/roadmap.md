@@ -92,20 +92,6 @@
    - [state] extend the new mutable iterator receiver support beyond copyable
      non-borrow values to owner/borrow iterator values and explicit iterator
      lifetime rules
-4. Unify aggregate control-flow pattern bindings.
-   Product-pattern control-flow is being pulled forward from the broader
-   pattern binding-mode roadmap because it shares the same lowering helpers as
-   match arms and declaration patterns. Aggregate `if let` statements and
-   expressions now expand tuple, fixed-array, named-struct, and tuple-struct
-   or-pattern alternatives, require same-name/same-type bindings, and bind
-   values from the alternative that actually matched.
-   Aggregate `while let` now re-evaluates the aggregate expression each
-   iteration, dispatches through the product pattern if-chain, and exits the
-   loop on the first non-match instead of using enum-only `WhileLet` IR.
-   - [for-control] keep `for let` iterator filters and future vector/slice
-     filters on the same product binding path
-   - [param-coverage] add function-parameter regression coverage once
-     parameter patterns share declaration-lifetime locals
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -130,9 +116,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    Refutable aggregate `let`/`var` declarations now reuse that engine for
    tuple, fixed-array, named-struct, and tuple-struct literal/range/alias/or
    tests, and preserve `var` mutability for every introduced binding.
-   Aggregate `if let` statement/expression or-pattern binding is tracked in
-   Near-Term Compiler Work because it shares the existing product match
-   lowering path.
+   Aggregate `if let` statement/expression and aggregate `while let`
+   statement bindings also share the same product match lowering path.
    - [slice-patterns] lower `Slice[T]` and `Vec[T]` length-checked patterns
      after the shared binding-mode engine decides reference/ownership behavior
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
@@ -140,7 +125,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      function-parameter patterns on one shared binding-mode engine; value alias
      patterns now work in list-literal and stored-vector loop heads when the
      wrapped pattern is irrefutable, but reference/ownership binding modes
-     still need shared lowering
+     still need shared lowering. Future `for let` filters over vector and slice
+     values should reuse the same product-pattern binding path once vector/slice
+     patterns have length-checked lowering.
 3. Implement user-defined compile-time meta expansion for `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
    Meta functions are intentionally non-generic; define concrete meta entry

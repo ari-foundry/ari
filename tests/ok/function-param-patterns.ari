@@ -3,6 +3,8 @@ struct Point {
   y: i64,
 }
 
+struct Pair(i64, i64)
+
 enum OptionI64 {
   Some(i64),
   None,
@@ -16,6 +18,18 @@ fn sum_point(Point { x, y }: Point) -> i64 {
   return x + y;
 }
 
+fn sum_point_alias(point @ Point { x, y }: Point) -> i64 {
+  return point.x + x + y;
+}
+
+fn sum_array([first, .., last]: [i64, 4]) -> i64 {
+  return first * 10 + last;
+}
+
+fn sum_tuple_struct(Pair(left, right): Pair) -> i64 {
+  return left + right;
+}
+
 fn take_some(Some(value): OptionI64) -> i64 {
   return value;
 }
@@ -27,6 +41,9 @@ fn ignore_first(_: i64, value: i64) -> i64 {
 fn main() -> i64 {
   return sum_pair((3, 4)) +
          sum_point(Point { x: 5, y: 6 }) +
+         sum_point_alias(Point { x: 2, y: 3 }) +
+         sum_array([1, 2, 3, 4]) +
+         sum_tuple_struct(Pair(9, 10)) +
          take_some(Some(7)) +
          ignore_first(99, 8);
 }

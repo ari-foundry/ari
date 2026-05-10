@@ -275,6 +275,14 @@ fn sum_point(Point { x, y }: Point) -> i64 {
   x + y
 }
 
+fn sum_array([first, .., last]: [i64, 4]) -> i64 {
+  first + last
+}
+
+fn sum_alias(point @ Point { x, y }: Point) -> i64 {
+  point.x + x + y
+}
+
 fn take_some(Some(value): OptionI64) -> i64 {
   value
 }
