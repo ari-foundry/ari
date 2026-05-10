@@ -31,6 +31,10 @@ IrExprPtr make_integer_zero(SourceLocation loc, const IrType& type);
 IrExprPtr make_bool_literal_expr(SourceLocation loc, bool value);
 IrExprPtr make_bool_binary_expr(SourceLocation loc, IrBinaryOp op, IrExprPtr left, IrExprPtr right);
 IrExprPtr make_cast_expr(SourceLocation loc, IrExprPtr value, const IrType& target);
+IrExprPtr make_pointer_offset_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset);
+IrExprPtr make_pointer_add_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset);
+IrExprPtr make_pointer_load_expr(SourceLocation loc, IrExprPtr pointer, const IrType& result);
+IrExprPtr make_pointer_store_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr value);
 IrExprPtr make_builtin_call(SourceLocation loc,
                             const std::string& name,
                             std::vector<IrExprPtr> args,

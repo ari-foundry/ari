@@ -58,6 +58,8 @@ code only. In that mode `use std::...` does not load anything by itself; import
 the header through the normal module system instead. Compiler-known helper
 lowering such as unqualified `size_of<T>()`, `range(...)`, `ptr_load<T>()`,
 and `zone::new<T>(...)` is also disabled until the `std` module is present.
+Raw pointer helpers can infer `T` from their pointer argument or take an
+explicit `<T>` argument.
 Source function signatures such as `write_i64(...)`, `io::write_i64(...)`,
 `arg_count()`, and `zone::create(...)` follow the same rule; without implicit
 `std` or an explicit `mod std;`, they are ordinary unknown calls. Prelude trait

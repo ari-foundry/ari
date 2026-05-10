@@ -155,13 +155,16 @@ ptr T`, or the nullable spelling `(ref mut value) as T?`.
 `ptr_offset(pointer, bytes)` performs an explicit byte-wise address offset and
 returns the same raw pointer type as `pointer`. `mem::ptr_offset` is the same
 compiler-known operation. It does not dereference the pointer, check bounds, or
-scale by `T`.
+scale by `T`. `ptr_offset<T>(pointer, bytes)` is the same operation with an
+explicit `ptr T` check on the pointer argument.
 
 `ptr_add(pointer, count)` performs an explicit typed address offset. For a
 `ptr T`, it moves by `count * sizeof(T)` bytes and returns the same `ptr T`
 type. The executable subset supports scalar types and Ari-layout aggregate
 types such as structs, tuple structs, tuples, and fixed arrays. `ptr_add` is
 still unchecked and does not prove the resulting address is in-bounds.
+`ptr_add<T>(pointer, count)` forces the pointer argument to be checked as
+`ptr T` before lowering.
 
 `size_of<T>()` and `align_of<T>()` are compiler-known layout queries that
 return `i64` byte counts. They support scalar types, raw/borrow pointer-shaped
@@ -179,7 +182,9 @@ null, bounds, alignment, aliasing, or lifetime. On the freestanding backend,
 `ptr f32` and `ptr f64` load/store values as raw IEEE bit patterns; `f128`
 pointer access still waits for native float storage policy. Aggregates that
 contain `own`, `ref`, or `ref mut` fields are rejected for whole raw-pointer
-copies for now.
+copies for now. `ptr_load<T>(pointer)` and `ptr_store<T>(pointer, value)` are
+accepted when the call should validate the pointee type explicitly instead of
+only inferring it from the pointer value.
 
 The same scalar operation can be written with dereference syntax:
 

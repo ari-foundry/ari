@@ -1,0 +1,31 @@
+struct Pair {
+  x: i64,
+  y: i64,
+}
+
+fn scalar() -> i64 {
+  var value: i64 = 4;
+  let raw: ptr i64 = (ref mut value) as ptr i64;
+  ptr_store<i64>(raw, ptr_load<i64>(raw) + 6);
+  return value;
+}
+
+fn offsets() -> i64 {
+  let base: ptr i64 = 100u64 as ptr i64;
+  let shifted: ptr i64 = ptr_add<i64>(base, 2);
+  let byte_base: ptr c_void = 0u64 as ptr c_void;
+  let bytes: ptr c_void = ptr_offset<c_void>(byte_base, 5);
+  return (((shifted as u64) - (base as u64)) as i64) + ((bytes as u64) as i64);
+}
+
+fn aggregate() -> i64 {
+  var pair = Pair { x: 1, y: 2 };
+  let raw: ptr Pair = (ref mut pair) as ptr Pair;
+  let copy = ptr_load<Pair>(raw);
+  ptr_store<Pair>(raw, Pair { x: copy.x + 3, y: copy.y + 4 });
+  return pair.x + pair.y;
+}
+
+fn main() -> i64 {
+  return scalar() + offsets() + aggregate();
+}

@@ -304,7 +304,8 @@ let addr: u64 = bytes as u64;
 Use `ptr_offset(pointer, bytes)` for explicit byte-wise pointer arithmetic, or
 `ptr_add(pointer, count)` for typed pointer arithmetic. `ptr_add` scales by the
 current Ari layout size of scalar and aggregate `T`. Both keep the pointer type
-of the first argument:
+of the first argument and may also take an explicit `<T>` type argument when
+the call should validate the pointee type:
 
 ```ari
 let raw: ptr c_void = 0u64 as ptr c_void;
@@ -312,6 +313,7 @@ let shifted: ptr c_void = ptr_offset(raw, 16);
 let byte_ptr: ptr c_char = mem::ptr_offset(shifted as ptr c_char, 1);
 let next_i64: ptr i64 = ptr_add(0u64 as ptr i64, 1);
 let next_point: ptr Point = ptr_add(0u64 as ptr Point, 1);
+let explicit_next: ptr i64 = ptr_add<i64>(next_i64, 1);
 let point_bytes = size_of<Point>();
 let point_align = mem::align_of<Point>();
 ```
@@ -320,7 +322,9 @@ Enums with multi-payload or 64-bit payload aggregate layouts are not part of the
 C ABI surface yet. Use fieldless or compact one-word enums for FFI-facing
 values.
 
-`*pointer` is available for raw-pointer load/store syntax:
+`*pointer` is available for raw-pointer load/store syntax.
+`ptr_load<T>(pointer)` and `ptr_store<T>(pointer, value)` are also accepted
+when the pointer element type should be checked explicitly at the call site.
 
 ```ari
 var number: i64 = 3;

@@ -13,8 +13,8 @@ construction. Some helpers have already moved out to focused files:
 - `vector_semantics` for local `Vec[T]` storage helpers and static capacity
   folding
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
-  var declarations, tuple/vector indexes, literals, casts, bool conditions, and
-  direct builtin calls
+  var declarations, tuple/vector indexes, literals, casts, bool conditions,
+  pointer operations, and direct builtin calls
 - `control_flow_semantics` for product-pattern if-chain assembly shared by
   aggregate match, declaration, `if let`, and `while let` lowering
 - `module_metadata` and `module_cache` for package graph summaries and caches
@@ -37,11 +37,10 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
 
 1. Continue extracting basic IR construction into `ir_builders`.
    - Local lvalues, IR var declarations, tuple/vector index helpers, scalar
-     literals, casts, bool binary conditions, and direct builtin call nodes are
-     already outside `sema.cpp`.
-   - Next small targets are enum constructors, pointer operation nodes, and
-     block/match/if expression assembly once their semantic checks have narrow
-     inputs.
+     literals, casts, bool binary conditions, pointer operation nodes, and
+     direct builtin call nodes are already outside `sema.cpp`.
+   - Next small targets are enum constructors and block/match/if expression
+     assembly once their semantic checks have narrow inputs.
 2. Extract constant evaluation into `constant_semantics`.
    - Move `ConstantValue`, literal folding, constant binary evaluation,
      constant pattern conversion, cycle diagnostics, and constant-to-IR literal

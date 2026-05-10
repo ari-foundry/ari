@@ -1599,6 +1599,12 @@ check-ffi: $(TARGET)
 	grep -q 'getelementptr \[3 x i64\], ptr' $(BUILD_DIR)/ffi/pointer-add-aggregate.ll
 	$(TARGET) --freestanding tests/ok/pointer-add-aggregate.ari -o $(BUILD_DIR)/ffi/pointer-add-aggregate.raw
 	$(BUILD_DIR)/ffi/pointer-add-aggregate.raw; code=$$?; test $$code -eq 56
+	$(TARGET) tests/ok/pointer-explicit-type-args.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-explicit-type-args.ll
+	grep -q 'getelementptr i64, ptr' $(BUILD_DIR)/ffi/pointer-explicit-type-args.ll
+	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/ffi/pointer-explicit-type-args.ll
+	grep -q 'store { i64, i64 }' $(BUILD_DIR)/ffi/pointer-explicit-type-args.ll
+	$(TARGET) --freestanding tests/ok/pointer-explicit-type-args.ari -o $(BUILD_DIR)/ffi/pointer-explicit-type-args.raw
+	$(BUILD_DIR)/ffi/pointer-explicit-type-args.raw; code=$$?; test $$code -eq 41
 	$(TARGET) tests/ok/pointer-load-store.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-load-store.ll
 	grep -q 'load i64, ptr' $(BUILD_DIR)/ffi/pointer-load-store.ll
 	grep -q 'store i64' $(BUILD_DIR)/ffi/pointer-load-store.ll

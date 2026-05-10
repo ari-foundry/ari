@@ -19,6 +19,10 @@ IrType bool_type(SourceLocation loc) {
     return primitive_type(IrPrimitiveKind::Bool, "bool", loc);
 }
 
+IrType void_type(SourceLocation loc) {
+    return primitive_type(IrPrimitiveKind::Void, "void", loc);
+}
+
 bool same_ir_type(const IrType& left, const IrType& right) {
     if (left.qualifier != right.qualifier) return false;
     if (left.primitive != right.primitive) return false;
@@ -138,6 +142,45 @@ IrExprPtr make_cast_expr(SourceLocation loc, IrExprPtr value, const IrType& targ
     cast->type = target;
     cast->operand = std::move(value);
     return cast;
+}
+
+IrExprPtr make_pointer_offset_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::PointerOffset;
+    expr->loc = loc;
+    expr->type = pointer->type;
+    expr->operand = std::move(pointer);
+    expr->right = std::move(offset);
+    return expr;
+}
+
+IrExprPtr make_pointer_add_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::PointerAdd;
+    expr->loc = loc;
+    expr->type = pointer->type;
+    expr->operand = std::move(pointer);
+    expr->right = std::move(offset);
+    return expr;
+}
+
+IrExprPtr make_pointer_load_expr(SourceLocation loc, IrExprPtr pointer, const IrType& result) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::PointerLoad;
+    expr->loc = loc;
+    expr->type = result;
+    expr->operand = std::move(pointer);
+    return expr;
+}
+
+IrExprPtr make_pointer_store_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr value) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::PointerStore;
+    expr->loc = loc;
+    expr->type = void_type(loc);
+    expr->operand = std::move(pointer);
+    expr->right = std::move(value);
+    return expr;
 }
 
 IrExprPtr make_builtin_call(SourceLocation loc,

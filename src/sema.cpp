@@ -28,6 +28,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
@@ -5812,12 +5813,7 @@ private:
         release_temporary_borrows(borrow_mark);
 
         IrType element_type = require_raw_pointer_materializable_type(expr.loc, pointer->type, "pointer dereference");
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::PointerLoad;
-        lowered->loc = expr.loc;
-        lowered->type = element_type;
-        lowered->operand = std::move(pointer);
-        return lowered;
+        return make_pointer_load_expr(expr.loc, std::move(pointer), element_type);
     }
 
     IrExprPtr check_pointer_deref_access_operand(const Expr& expr) {
@@ -5826,12 +5822,7 @@ private:
         release_temporary_borrows(borrow_mark);
 
         IrType element_type = require_raw_pointer_deref_type(expr.loc, pointer->type, "pointer dereference");
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::PointerLoad;
-        lowered->loc = expr.loc;
-        lowered->type = element_type;
-        lowered->operand = std::move(pointer);
-        return lowered;
+        return make_pointer_load_expr(expr.loc, std::move(pointer), element_type);
     }
 
     using DropValueFactory = std::function<IrExprPtr()>;
@@ -12903,11 +12894,7 @@ private:
             release_temporary_borrows(borrow_mark);
 
             IrType element_type = require_raw_pointer_materializable_type(expr.loc, pointer->type, "pointer dereference");
-            lowered->kind = IrExprKind::PointerLoad;
-            lowered->loc = expr.loc;
-            lowered->type = element_type;
-            lowered->operand = std::move(pointer);
-            return lowered;
+            return make_pointer_load_expr(expr.loc, std::move(pointer), element_type);
         }
 
         IrExprPtr operand = check_expr(*expr.operand);
@@ -15014,14 +15001,37 @@ private:
         return lowered;
     }
 
-    IrExprPtr check_pointer_offset_call(const Expr& expr, IrExprPtr lowered) {
-        if (!expr.type_args.empty()) {
-            fail(expr.loc, "ptr_offset does not take type arguments");
+    std::optional<IrType> resolve_optional_pointer_helper_type_arg(const Expr& expr,
+                                                                   const std::string& operation) {
+        if (expr.type_args.empty()) return std::nullopt;
+        if (expr.type_args.size() != 1) {
+            fail(expr.loc, operation + " expects at most one type argument");
         }
+        IrType element_type = resolve_executable_type(expr.type_args[0]);
+        if (element_type.qualifier != TypeQualifier::Value) {
+            fail(expr.type_args[0].loc, operation + "<T> expects a value type, got " + type_name(element_type));
+        }
+        element_type.qualifier = TypeQualifier::Ptr;
+        return element_type;
+    }
+
+    IrExprPtr check_pointer_helper_pointer_arg(const Expr& arg,
+                                               const std::optional<IrType>& expected_pointer) {
+        IrExprPtr pointer = check_expr(arg);
+        if (expected_pointer) {
+            coerce_expr_to_expected(*pointer, *expected_pointer);
+            require_assignable(arg.loc, *expected_pointer, pointer->type);
+        }
+        return pointer;
+    }
+
+    IrExprPtr check_pointer_offset_call(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
+        std::optional<IrType> expected_pointer = resolve_optional_pointer_helper_type_arg(expr, "ptr_offset");
         if (expr.args.size() != 2) fail(expr.loc, "ptr_offset expects a pointer and a byte offset");
 
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_expr(*expr.args[0]);
+        IrExprPtr pointer = check_pointer_helper_pointer_arg(*expr.args[0], expected_pointer);
         IrExprPtr offset = check_expr(*expr.args[1]);
         release_temporary_borrows(borrow_mark);
 
@@ -15032,22 +15042,16 @@ private:
             fail(expr.args[1]->loc, "ptr_offset byte offset must be an integer, got " + type_name(offset->type));
         }
 
-        lowered->kind = IrExprKind::PointerOffset;
-        lowered->loc = expr.loc;
-        lowered->type = pointer->type;
-        lowered->operand = std::move(pointer);
-        lowered->right = std::move(offset);
-        return lowered;
+        return make_pointer_offset_expr(expr.loc, std::move(pointer), std::move(offset));
     }
 
     IrExprPtr check_pointer_add_call(const Expr& expr, IrExprPtr lowered) {
-        if (!expr.type_args.empty()) {
-            fail(expr.loc, "ptr_add does not take type arguments");
-        }
+        (void)lowered;
+        std::optional<IrType> expected_pointer = resolve_optional_pointer_helper_type_arg(expr, "ptr_add");
         if (expr.args.size() != 2) fail(expr.loc, "ptr_add expects a pointer and an element offset");
 
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_expr(*expr.args[0]);
+        IrExprPtr pointer = check_pointer_helper_pointer_arg(*expr.args[0], expected_pointer);
         IrExprPtr offset = check_expr(*expr.args[1]);
         release_temporary_borrows(borrow_mark);
 
@@ -15056,52 +15060,36 @@ private:
             fail(expr.args[1]->loc, "ptr_add element offset must be an integer, got " + type_name(offset->type));
         }
 
-        lowered->kind = IrExprKind::PointerAdd;
-        lowered->loc = expr.loc;
-        lowered->type = pointer->type;
-        lowered->operand = std::move(pointer);
-        lowered->right = std::move(offset);
-        return lowered;
+        return make_pointer_add_expr(expr.loc, std::move(pointer), std::move(offset));
     }
 
     IrExprPtr check_pointer_load_call(const Expr& expr, IrExprPtr lowered) {
-        if (!expr.type_args.empty()) {
-            fail(expr.loc, "ptr_load does not take type arguments");
-        }
+        (void)lowered;
+        std::optional<IrType> expected_pointer = resolve_optional_pointer_helper_type_arg(expr, "ptr_load");
         if (expr.args.size() != 1) fail(expr.loc, "ptr_load expects one pointer");
 
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_expr(*expr.args[0]);
+        IrExprPtr pointer = check_pointer_helper_pointer_arg(*expr.args[0], expected_pointer);
         release_temporary_borrows(borrow_mark);
 
         IrType element_type = require_raw_pointer_materializable_type(expr.args[0]->loc, pointer->type, "ptr_load");
-        lowered->kind = IrExprKind::PointerLoad;
-        lowered->loc = expr.loc;
-        lowered->type = element_type;
-        lowered->operand = std::move(pointer);
-        return lowered;
+        return make_pointer_load_expr(expr.loc, std::move(pointer), element_type);
     }
 
     IrExprPtr check_pointer_store_call(const Expr& expr, IrExprPtr lowered) {
-        if (!expr.type_args.empty()) {
-            fail(expr.loc, "ptr_store does not take type arguments");
-        }
+        (void)lowered;
+        std::optional<IrType> expected_pointer = resolve_optional_pointer_helper_type_arg(expr, "ptr_store");
         if (expr.args.size() != 2) fail(expr.loc, "ptr_store expects a pointer and a value");
 
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_expr(*expr.args[0]);
+        IrExprPtr pointer = check_pointer_helper_pointer_arg(*expr.args[0], expected_pointer);
         IrType element_type = require_raw_pointer_materializable_type(expr.args[0]->loc, pointer->type, "ptr_store");
         IrExprPtr value = check_expr(*expr.args[1]);
         coerce_expr_to_expected(*value, element_type);
         require_assignable(expr.args[1]->loc, element_type, value->type);
         release_temporary_borrows(borrow_mark);
 
-        lowered->kind = IrExprKind::PointerStore;
-        lowered->loc = expr.loc;
-        lowered->type = void_type(expr.loc);
-        lowered->operand = std::move(pointer);
-        lowered->right = std::move(value);
-        return lowered;
+        return make_pointer_store_expr(expr.loc, std::move(pointer), std::move(value));
     }
 
     IrExprPtr check_layout_query_call(const Expr& expr, IrExprPtr lowered, bool align_query) {
