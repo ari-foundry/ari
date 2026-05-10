@@ -1,0 +1,13 @@
+fn main() -> i64 {
+  let truth: c_bool = true;
+  let byte: c_uchar = 255u8;
+  let word: c_ushort = 65535u16;
+  let wide: c_uint = 4000000000u32;
+  let count: size_t = 1u64;
+  let address: uintptr_t = 2u64;
+  let max_value: uintmax_t = 3u64;
+  if truth {
+    return byte as i64 + word as i64 + wide as i64 + count as i64 + address as i64 + max_value as i64;
+  }
+  return 0;
+}

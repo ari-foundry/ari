@@ -56,6 +56,20 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
+3. Refine target-specific C ABI aliases and FFI layout.
+   C ABI scalar alias lowering is split out of `sema.cpp` into
+   `c_abi_types`, and the current LLVM host table now preserves Ari signedness
+   for unsigned C aliases, including `c_uchar`, `c_ushort`, `c_uint`,
+   `c_ulong`, `c_ulonglong`, `size_t`, `uintptr_t`, and `uintmax_t`.
+   `c_bool` and signed/unsigned max-width aliases are covered by the same
+   table. The remaining work is target-layout awareness instead of more
+   ad-hoc aliases in the semantic checker.
+   - [target-triples] derive `c_long`, `c_ulong`, `size_t`, `ptrdiff_t`, and
+     pointer-width aliases from the selected target triple instead of assuming
+     the current x86-64 Linux/glibc layout
+   - [char-policy] decide how plain `c_char` follows target signedness while
+     keeping `c_schar`/`c_uchar` explicit
+   - [ffi-tests] add cross-target ABI fixtures once target triples exist
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -217,8 +231,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    C-import path.
    - [values] materialize eventual `f128` scalar expressions
    - [abi-c] define foreign/platform C float ABI once raw C extern calls exist
-5. Expand FFI type coverage beyond the x86-64 Linux C aliases.
-
 ## Bootstrap Direction
 
 1. Keep C++ implementation compact while the language design stabilizes.

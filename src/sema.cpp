@@ -2,6 +2,7 @@
 
 #include "attribute_semantics.hpp"
 #include "ari_builtin.hpp"
+#include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
 #include "ir_builders.hpp"
 #include "layout.hpp"
@@ -2697,69 +2698,6 @@ private:
             type.field_mutable.push_back(false);
         }
         return type;
-    }
-
-    static bool c_abi_type_alias(const std::string& name, IrPrimitiveKind& primitive, std::string& canonical) {
-        std::string base = unqualified_name(name);
-        if (base == "c_char" || base == "c_schar") {
-            primitive = IrPrimitiveKind::I8;
-            canonical = "i8";
-            return true;
-        }
-        if (base == "c_uchar") {
-            primitive = IrPrimitiveKind::U8;
-            canonical = "u8";
-            return true;
-        }
-        if (base == "c_short") {
-            primitive = IrPrimitiveKind::I16;
-            canonical = "i16";
-            return true;
-        }
-        if (base == "c_ushort") {
-            primitive = IrPrimitiveKind::U16;
-            canonical = "u16";
-            return true;
-        }
-        if (base == "c_int") {
-            primitive = IrPrimitiveKind::I32;
-            canonical = "i32";
-            return true;
-        }
-        if (base == "c_uint") {
-            primitive = IrPrimitiveKind::U32;
-            canonical = "u32";
-            return true;
-        }
-        if (base == "c_long" || base == "c_longlong" || base == "isize" ||
-            base == "ssize_t" || base == "c_ssize_t" || base == "intptr_t" ||
-            base == "ptrdiff_t") {
-            primitive = IrPrimitiveKind::I64;
-            canonical = "i64";
-            return true;
-        }
-        if (base == "c_ulong" || base == "c_ulonglong" || base == "usize" ||
-            base == "size_t" || base == "c_size_t" || base == "uintptr_t") {
-            primitive = IrPrimitiveKind::U64;
-            canonical = "u64";
-            return true;
-        }
-        if (base == "c_float") {
-            primitive = IrPrimitiveKind::F32;
-            canonical = "f32";
-            return true;
-        }
-        if (base == "c_double") {
-            primitive = IrPrimitiveKind::F64;
-            canonical = "f64";
-            return true;
-        }
-        if (base == "c_void") {
-            primitive = IrPrimitiveKind::Void;
-            canonical = "void";
-            return true;
-        }
-        return false;
     }
 
     static void reject_type_args(const TypeRef& ast_type) {

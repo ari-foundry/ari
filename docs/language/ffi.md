@@ -235,18 +235,23 @@ backend:
 ```text
 i8/i16/i32/i64    -> i8/i16/i32/i64
 u8/u16/u32/u64    -> i8/i16/i32/i64
-isize/usize       -> i64/i64
+isize/usize       -> i64/u64
+c_bool            -> i1
 c_char/c_schar    -> i8
-c_uchar           -> i8
-c_short/c_ushort  -> i16/i16
-c_int/c_uint      -> i32/i32
-c_long/c_ulong    -> i64/i64
+c_uchar           -> u8
+c_short/c_ushort  -> i16/u16
+c_int/c_uint      -> i32/u32
+c_long/c_ulong    -> i64/u64
 c_longlong/
-  c_ulonglong     -> i64/i64
-size_t/c_size_t   -> i64
+  c_ulonglong     -> i64/u64
+intmax_t/
+  uintmax_t       -> i64/u64
+c_intmax_t/
+  c_uintmax_t     -> i64/u64
+size_t/c_size_t   -> u64
 ssize_t/c_ssize_t -> i64
 intptr_t/
-  uintptr_t       -> i64/i64
+  uintptr_t       -> i64/u64
 ptrdiff_t         -> i64
 c_float/c_double  -> float/double
 c_void            -> void

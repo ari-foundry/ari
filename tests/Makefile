@@ -1341,6 +1341,12 @@ check-ffi: $(TARGET)
 	grep -q 'declare i64 @"ari_test_add_i64"(i64, i64)' $(BUILD_DIR)/ffi/ffi-c-types.ll
 	grep -q 'declare i64 @"ari_test_strlen"(ptr)' $(BUILD_DIR)/ffi/ffi-c-types.ll
 	grep -q 'declare void @"ari_test_inc_i64"(ptr)' $(BUILD_DIR)/ffi/ffi-c-types.ll
+	$(TARGET) tests/ok/ffi-c-unsigned-aliases.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
+	grep -q 'alloca i1' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
+	grep -q 'alloca i8' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
+	grep -q 'alloca i16' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
+	grep -q 'alloca i32' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
+	grep -q 'alloca i64' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
 	$(TARGET) tests/ok/ffi-c-null-pointer.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
 	grep -q 'declare i64 @"ari_test_is_null"(ptr)' $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
 	grep -q 'store ptr null' $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
