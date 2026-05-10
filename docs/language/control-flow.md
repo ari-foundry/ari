@@ -249,15 +249,24 @@ vectors with the same compiler-known current length use that known length as
 the stored-vector loop bound too.
 
 `for _ in [1, 2, 3]` runs once per element while ignoring the element value.
+Range, list-literal, and stored-vector loops also support alias patterns when
+the wrapped pattern is irrefutable, so the loop body can use both the whole
+item and the inner binding:
+
+```ari
+for item @ value in range(1, 4) {
+  total = total + item + value;
+}
+```
+
 Bare empty `[]` cannot be iterated directly because it has no element type by
 itself. Give the value a typed local binding first, such as
 `let values: Vec[i64] = []`, when an empty vector should participate in normal
 stored-vector control flow. Stored local vector loops currently lower on the
 LLVM backend; the raw freestanding backend still rejects stored vector values.
 
-List-literal and stored-vector loops can destructure irrefutable aggregate
-element patterns. They also support alias patterns when the wrapped pattern is
-irrefutable, so the loop body can use both the whole element and its parts:
+List-literal and stored-vector loops can additionally destructure irrefutable
+aggregate element patterns:
 
 ```ari
 for (x, (y, z)) in [(1, (2, 3)), (4, (5, 6))] {
@@ -278,8 +287,9 @@ for whole @ (left, right) in [(1, 2), (3, 4)] {
 ```
 
 These loop heads are destructuring bindings, not filters. Literal, range,
-or-pattern, and enum-case loop heads are still rejected for list/vector loops
-because those loops bind every element instead of calling `Iterator[T].next()`.
+or-pattern, and enum-case loop heads are still rejected for range/list/vector
+loops because those loops bind every element instead of calling
+`Iterator[T].next()`.
 
 Direct copyable non-borrow `Iterator[T]` values lower through the standard
 `next(self: ref mut Self) -> Option[T]` step operation. Owning iterator values

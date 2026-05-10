@@ -9395,7 +9395,7 @@ private:
 
     void fail_refutable_for_pattern(SourceLocation loc) const {
         fail(loc,
-             "refutable for-loop patterns require for-let filters on Iterator[T]; vector loop heads currently support irrefutable binding, alias, tuple, struct, and tuple-struct patterns");
+             "refutable for-loop patterns require for-let filters on Iterator[T]; non-iterator loop heads currently support irrefutable binding and alias patterns, with aggregate destructuring for list and vector items");
     }
 
     void require_irrefutable_tuple_struct_for_pattern(const Pattern& pattern, const IrType& value_type) {
@@ -9993,10 +9993,6 @@ private:
             if (stmt.for_pattern_filter) {
                 fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
             }
-            if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
-                fail(stmt.for_pattern.loc,
-                     "range for-loop patterns must be a binding or _; richer loop-head patterns are implemented for list literals and planned for Iterator[T]");
-            }
             check_for_range(stmt, lowered, range_call_name);
             return;
         }
@@ -10011,10 +10007,6 @@ private:
         if (is_prelude_range_type(iterable->type)) {
             if (stmt.for_pattern_filter) {
                 fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
-            }
-            if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
-                fail(stmt.for_pattern.loc,
-                     "range for-loop patterns must be a binding or _; richer loop-head patterns are implemented for list literals and planned for Iterator[T]");
             }
             check_for_range_value(stmt, lowered, std::move(iterable));
             return;
@@ -10084,12 +10076,26 @@ private:
         loop.label = stmt.label;
         push_loop(stmt.loc, loop);
         push_scope();
+        std::vector<IrStmtPtr> pattern_prelude;
         if (stmt.for_pattern.kind == PatternKind::Binding) {
             lowered.for_binding_name = stmt.for_pattern.payload_name;
             declare_local(stmt.for_pattern.loc, lowered.for_binding_name, bound_type, false);
+        } else if (stmt.for_pattern.kind != PatternKind::Wildcard) {
+            require_irrefutable_for_vector_pattern(stmt.for_pattern, bound_type);
+            lowered.for_binding_name = make_hidden_local("$for_item");
+            declare_local(stmt.for_pattern.loc, lowered.for_binding_name, bound_type, false);
+            lower_product_match_pattern_bindings_from_local(
+                stmt.for_pattern,
+                lowered.for_binding_name,
+                bound_type,
+                pattern_prelude
+            );
         }
         CheckedStatements body = check_statements(stmt.loop_body, false);
-        lowered.loop_body = std::move(body.statements);
+        lowered.loop_body = std::move(pattern_prelude);
+        for (auto& body_stmt : body.statements) {
+            lowered.loop_body.push_back(std::move(body_stmt));
+        }
         if (body.flow == Flow::Returns) discard_scope();
         else if (body.flow == Flow::Stops) discard_scope();
         else {

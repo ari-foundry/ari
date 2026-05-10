@@ -233,6 +233,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/for-range-inclusive.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/range-values.ari -o $(BUILD_DIR)/control-flow/range-values.raw
 	$(BUILD_DIR)/control-flow/range-values.raw; code=$$?; test $$code -eq 23
+	$(TARGET) --freestanding tests/ok/for-range-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-range-alias-pattern.raw
+	$(BUILD_DIR)/control-flow/for-range-alias-pattern.raw; code=$$?; test $$code -eq 28
 	$(TARGET) --freestanding tests/ok/range-generic-bounds.ari -o $(BUILD_DIR)/control-flow/range-generic-bounds.raw
 	$(BUILD_DIR)/control-flow/range-generic-bounds.raw; code=$$?; test $$code -eq 32
 	$(TARGET) --freestanding tests/ok/for-vector-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-pattern.raw
@@ -264,6 +266,9 @@ check-control-flow: $(TARGET)
 	grep -q "icmp sle" $(BUILD_DIR)/control-flow/for-range-inclusive.ll
 	$(TARGET) tests/ok/range-values.ari --emit-llvm $(BUILD_DIR)/control-flow/range-values.ll
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/range-values.ll
+	$(TARGET) tests/ok/for-range-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-alias-pattern.ll
+	grep -q "store i64 .* ptr %item" $(BUILD_DIR)/control-flow/for-range-alias-pattern.ll
+	grep -q "store i64 .* ptr %value" $(BUILD_DIR)/control-flow/for-range-alias-pattern.ll
 	$(TARGET) tests/ok/range-generic-bounds.ari --emit-llvm $(BUILD_DIR)/control-flow/range-generic-bounds.ll
 	grep -q "icmp ult i8" $(BUILD_DIR)/control-flow/range-generic-bounds.ll
 	grep -q "icmp ule i8" $(BUILD_DIR)/control-flow/range-generic-bounds.ll
