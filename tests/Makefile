@@ -1407,6 +1407,9 @@ check-variables: $(TARGET)
 	grep -q "store i64 2, ptr %before" $(BUILD_DIR)/variables/vector-len.ll
 	grep -q "store i64 3, ptr %after" $(BUILD_DIR)/variables/vector-len.ll
 	if grep -q "extractvalue { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-len.ll; then exit 1; fi
+	$(TARGET) tests/ok/vector-known-length-copy.ari --emit-llvm $(BUILD_DIR)/variables/vector-known-length-copy.ll
+	grep -q "store i64 1, ptr %copied_len" $(BUILD_DIR)/variables/vector-known-length-copy.ll
+	grep -q "store i64 1, ptr %assigned_len" $(BUILD_DIR)/variables/vector-known-length-copy.ll
 	$(TARGET) tests/ok/vector-as-slice-known-len.ari --emit-llvm $(BUILD_DIR)/variables/vector-as-slice-known-len.ll
 	grep -Eq "insertvalue \\{ ptr, i64 \\} .* i64 2, 1" $(BUILD_DIR)/variables/vector-as-slice-known-len.ll
 	if grep -q "extractvalue { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-as-slice-known-len.ll; then exit 1; fi
@@ -1580,6 +1583,8 @@ check-variables: $(TARGET)
 	grep -q "Vec.get index 2 is out of range for 2 elements" $(BUILD_DIR)/variables/vector-method-static-index-out-of-range.err
 	if $(TARGET) tests/errors/vector-index-known-length-out-of-range.ari -o $(BUILD_DIR)/variables/vector-index-known-length-out-of-range.elf >$(BUILD_DIR)/variables/vector-index-known-length-out-of-range.err 2>&1; then exit 1; fi
 	grep -q "vector index 1 is out of range for 1 elements" $(BUILD_DIR)/variables/vector-index-known-length-out-of-range.err
+	if $(TARGET) tests/errors/vector-index-known-length-copy-out-of-range.ari -o $(BUILD_DIR)/variables/vector-index-known-length-copy-out-of-range.elf >$(BUILD_DIR)/variables/vector-index-known-length-copy-out-of-range.err 2>&1; then exit 1; fi
+	grep -q "vector index 1 is out of range for 1 elements" $(BUILD_DIR)/variables/vector-index-known-length-copy-out-of-range.err
 	if $(TARGET) tests/errors/vector-index-known-empty-dynamic.ari -o $(BUILD_DIR)/variables/vector-index-known-empty-dynamic.elf >$(BUILD_DIR)/variables/vector-index-known-empty-dynamic.err 2>&1; then exit 1; fi
 	grep -q "vector index requires a non-empty Vec" $(BUILD_DIR)/variables/vector-index-known-empty-dynamic.err
 	if $(TARGET) tests/errors/vector-method-known-empty-first.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-first.elf >$(BUILD_DIR)/variables/vector-method-known-empty-first.err 2>&1; then exit 1; fi

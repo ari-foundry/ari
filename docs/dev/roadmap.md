@@ -51,7 +51,10 @@
    `insert`, `pop`, `remove`, `clear`, and `truncate` now use small
    `vector_semantics` transition helpers, and local `Vec` `len`/`is_empty`
    calls plus `as_slice` view lengths and stored-vector `for` loop bounds fold
-   to constants when the current length is compiler-known. The shared constant
+   to constants when the current length is compiler-known. Local `Vec`
+   initialization and assignment from another local `Vec` also preserve that
+   compiler-known current length when the source binding is still precise. The
+   shared constant
    value model,
    constant-to-IR literal
    construction, scalar literal folding, constant binary result evaluation, and

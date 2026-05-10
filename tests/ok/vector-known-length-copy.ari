@@ -1,0 +1,13 @@
+fn main() -> i64 {
+  var source: Vec[i64] = [3, 4, 5];
+  source.truncate(1);
+
+  let copied: Vec[i64] = source;
+  let copied_len = copied.len();
+
+  var assigned: Vec[i64] = [9, 9, 9];
+  assigned = source;
+  let assigned_len = assigned.len();
+
+  return copied_len + assigned_len + copied[0] + assigned[0];
+}

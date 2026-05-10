@@ -4684,8 +4684,15 @@ private:
         local.vector_known_length = state.known ? state.length : 0;
     }
 
-    static void set_vector_known_length_from_expr(LocalInfo& local, const IrExpr& expr) {
-        set_vector_known_length(local, vector_known_length_from_expr(local.type, expr));
+    VectorKnownLength vector_known_length_from_source_expr(const IrType& storage_type,
+                                                           const Expr& source,
+                                                           const IrExpr& lowered) {
+        VectorKnownLength direct = vector_known_length_from_expr(storage_type, lowered);
+        if (direct.known) return direct;
+        if (source.kind != ExprKind::Name) return {};
+        const LocalInfo* source_local = find_local_slot(source.name);
+        if (!source_local || !is_vector_storage_type(source_local->type)) return {};
+        return vector_known_length_state(*source_local);
     }
 
     void set_known_integer_value_from_expr(LocalInfo& local, const Expr& source, const IrExpr& expr) {
@@ -4750,6 +4757,8 @@ private:
         specialize_vector_storage_from_init(declared, *init);
         require_nullable_pointer_initializer(stmt.loc, stmt.binding, declared, *init);
         require_assignable(stmt.loc, declared, init->type);
+        VectorKnownLength init_vector_length =
+            vector_known_length_from_source_expr(declared, *stmt.binding.init, *init);
         bool borrow_binding = is_borrow_type(declared);
         if (borrow_binding && init->kind != IrExprKind::Borrow) {
             fail(stmt.loc, "borrow bindings must be initialized directly with ref or ref mut");
@@ -4776,7 +4785,7 @@ private:
         local.ir_init_expr = lowered.binding.init.get();
         local.generic_origin = std::move(generic_origin);
         local.auto_destroy_zone = is_zone_temp_call(*local.ir_init_expr);
-        set_vector_known_length_from_expr(local, *local.ir_init_expr);
+        set_vector_known_length(local, init_vector_length);
         set_known_integer_value_from_expr(local, *stmt.binding.init, *local.ir_init_expr);
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
@@ -5473,10 +5482,12 @@ private:
         }
         coerce_expr_to_expected(*value, target.type);
         require_assignable(stmt.loc, target.type, value->type);
+        VectorKnownLength assigned_vector_length =
+            vector_known_length_from_source_expr(target.type, *stmt.rhs, *value);
         release_temporary_borrows(borrow_mark);
         target.state = LocalState::Alive;
         initialize_owned_field_states(target);
-        set_vector_known_length_from_expr(target, *value);
+        set_vector_known_length(target, assigned_vector_length);
         set_zone_pointer_source_from_expr(target, *value);
         lowered.assign_name = stmt.assign_name;
         lowered.rhs = std::move(value);

@@ -409,6 +409,9 @@ values = [9]
 
 Use `len(values)` or method syntax `values.len()` to read the current runtime
 length. Use `values.is_empty()` to compare that runtime length with zero.
+When a local vector is initialized or assigned from another local vector whose
+current length is still compiler-known, the compiler preserves that known
+length for later `len`, `is_empty`, `as_slice`, `for`, and static-index checks.
 The same `len(view)`, `view.len()`, and `view.is_empty()` forms read the stored
 length from a `Slice[T]` view. `view[index]` reads or writes through the view's
 stored raw pointer with bounds checks against that stored length. Mutable local

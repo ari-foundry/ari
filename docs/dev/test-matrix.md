@@ -207,6 +207,8 @@ Checklist:
       compiler-known current-length static index diagnostics and known-empty
       dynamic index rejection
 - [x] local `Vec[T]` literal reassignment with changing runtime length
+- [x] local `Vec[T]` initialization and assignment from another local vector
+      preserve compiler-known current length when the source length is precise
 - [x] `len(value)` and `value.len()` for local vectors, fixed arrays,
       constant-folded literal length, and compiler-known local Vec length,
       including local Vec `as_slice()` view length construction
