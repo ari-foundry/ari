@@ -532,6 +532,8 @@ check-match: $(TARGET)
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/match/match-expression-type-mismatch.err
 	if $(TARGET) tests/errors/match-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-literal-nonexhaustive.err 2>&1; then exit 1; fi
 	grep -q "integer match must include a wildcard arm" $(BUILD_DIR)/match/match-literal-nonexhaustive.err
+	if $(TARGET) tests/errors/match-bool-nonexhaustive.ari -o $(BUILD_DIR)/match/match-bool-nonexhaustive.elf >$(BUILD_DIR)/match/match-bool-nonexhaustive.err 2>&1; then exit 1; fi
+	grep -q "bool match must cover true and false or include a wildcard arm" $(BUILD_DIR)/match/match-bool-nonexhaustive.err
 	if $(TARGET) tests/errors/match-literal-type.ari -o $(BUILD_DIR)/match/match-literal-type.elf >$(BUILD_DIR)/match/match-literal-type.err 2>&1; then exit 1; fi
 	grep -q "integer match patterns must be integer literals or _" $(BUILD_DIR)/match/match-literal-type.err
 	if $(TARGET) tests/errors/match-range-pattern-order.ari -o $(BUILD_DIR)/match/match-range-pattern-order.elf >$(BUILD_DIR)/match/match-range-pattern-order.err 2>&1; then exit 1; fi

@@ -51,6 +51,8 @@ bool integer_coverage_is_exhaustive(
     const IrType& match_type,
     const std::vector<std::pair<std::uint64_t, std::uint64_t>>& intervals
 );
+std::string scalar_match_exhaustiveness_error(const IrType& match_type,
+                                              const ScalarMatchCoverage& coverage);
 std::uint64_t integer_pattern_order_value(std::uint64_t value,
                                           bool negative,
                                           const IrType& match_type);

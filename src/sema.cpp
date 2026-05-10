@@ -7713,13 +7713,8 @@ private:
     static void require_scalar_match_exhaustive(SourceLocation loc,
                                                 const IrType& match_type,
                                                 const ScalarMatchCoverage& coverage) {
-        if (coverage.has_wildcard) return;
-        if (match_type.qualifier == TypeQualifier::Value && match_type.primitive == IrPrimitiveKind::Bool) {
-            if (coverage.covered_patterns.count("true") && coverage.covered_patterns.count("false")) return;
-            fail(loc, "bool match must cover true and false or include a wildcard arm");
-        }
-        if (integer_coverage_is_exhaustive(match_type, coverage.integer_intervals)) return;
-        fail(loc, "integer match must include a wildcard arm");
+        std::string message = scalar_match_exhaustiveness_error(match_type, coverage);
+        if (!message.empty()) fail(loc, message);
     }
 
     std::vector<IrMatchArm> lower_scalar_match_arm_patterns(const Pattern& pattern,

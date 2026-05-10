@@ -28,10 +28,11 @@ construction. Some helpers have already moved out to focused files:
   aggregate pattern exhaustiveness diagnostics
 - `pattern_coverage` for scalar integer match interval coverage, including
   signed-pattern ordering, range interval merging, scalar exhaustiveness, and
-  fully-shadowed scalar range/literal detection, plus finite product coverage
-  value encoding, finite scalar domain enumeration, product match coverage
-  state, product duplicate/shadow detection, product exhaustiveness checks, and
-  product missing-case hint formatting
+  fully-shadowed scalar range/literal detection, scalar match exhaustiveness
+  diagnostics, plus finite product coverage value encoding, finite scalar
+  domain enumeration, product match coverage state, product duplicate/shadow
+  detection, product exhaustiveness checks, and product missing-case hint
+  formatting
 - `pattern_semantics` for pure pattern binding/or-pattern detection and
   expansion helpers
 - `move_semantics` for pure helpers around explicit ownership-consumption
@@ -84,6 +85,8 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Scalar integer range interval math now lives in `pattern_coverage`,
      including signed ordering, interval merging, scalar exhaustiveness, and
      scalar fully-shadowed checks.
+   - Scalar bool/integer match exhaustiveness diagnostics now also live in
+     `pattern_coverage`; `sema.cpp` only raises the returned message.
    - Finite product coverage value encoding, finite scalar product domains,
      and finite product domain combination now also live in `pattern_coverage`.
    - Product match coverage state and product missing-case hint formatting now
@@ -92,7 +95,7 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Product duplicate/shadow detection and final product coverage
      exhaustiveness checks now live in `pattern_coverage`.
    - Move the remaining sema-bound finite product aggregate recursion,
-     duplicate/shadow detection helpers for enum matches, and enum or scalar
+     duplicate/shadow detection helpers for enum matches, and enum
      exhaustiveness formatting that still depends on semantic tables.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
      abstracted.
