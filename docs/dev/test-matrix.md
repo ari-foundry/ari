@@ -233,8 +233,11 @@ Checklist:
 - [x] reject `continue` outside loops
 - [x] reject value `continue` outside init-while
 - [x] reject non-`range` for iterables
-- [x] reject general `Iterator[T]`/`IntoIterator[T]` for-loop lowering with
-      trait-aware item-type planned diagnostics
+- [x] lower direct copyable `Iterator[T]` for-loop values through `next`
+- [x] lower self-returning copyable `IntoIterator[T]` for-loop values through
+      `into_iter` and `next`
+- [x] reject unsupported iterator for-loop shapes with trait-aware planned
+      diagnostics
 - [x] reject enum-case `for` patterns with a planned diagnostic
 - [x] reject wrong `range` arity
 - [x] reject direct untyped empty `[]` iteration
@@ -375,7 +378,9 @@ Checklist:
 - [x] reserve `Iterable[T]`
 - [x] reserve `Iterator[T]` with `next(self) -> Option[T]`
 - [x] lower direct copyable `Iterator[T]` `for` loops through `next`
-- [x] reserve `IntoIterator[T]`
+- [x] reserve `IntoIterator[T]` with `into_iter(self) -> Self`
+- [x] lower self-returning copyable `IntoIterator[T]` `for` loops through
+      `into_iter` and `next`
 - [x] reserve `iter::Iterable[T]`
 - [x] reserve `iter::Iterator[T]`
 - [x] reserve `iter::IntoIterator[T]`

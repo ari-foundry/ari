@@ -63,10 +63,16 @@
    source `std::Iterator[T]` now reserves the required
    `next(self) -> Option[T]` method shape. Direct copyable non-borrow
    `Iterator[T]` values now lower by storing the iterator expression once and
-   looping with `while let std::Some(pattern) = iterator.next()`. The remaining
-   iterator model needs `IntoIterator[T]` conversion, stateful/mutable iterator
-   receiver policy, and refutable loop-head semantics.
-   - [into] lower `IntoIterator[T]` conversion into an iterator value
+   looping with `while let std::Some(pattern) = iterator.next()`. The first
+   `IntoIterator[T]` executable subset is also implemented for copyable
+   non-borrow values whose `into_iter(self) -> Self` result implements
+   `Iterator[T]`; this keeps the source trait usable while the richer
+   associated-iterator design is still open. The remaining iterator model needs
+   non-`Self` iterator conversion results, stateful/mutable iterator receiver
+   policy, and refutable loop-head semantics.
+   - [into-result] define and lower `IntoIterator[T]` conversions whose
+     `into_iter` result is a distinct iterator type instead of the current
+     `Self`-returning MVP
    - [state] define mutable/stateful iterator receiver policy instead of the
      current copyable value-self subset
    - [pattern] bind refutable enum-case loop-head patterns after the iterator

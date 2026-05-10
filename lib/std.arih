@@ -87,6 +87,7 @@ pub mod iter {
   }
 
   pub trait IntoIterator[T] {
+    fn into_iter(self) -> Self;
   }
 }
 
@@ -204,6 +205,7 @@ pub trait Iterator[T] {
 }
 
 pub trait IntoIterator[T] {
+  fn into_iter(self) -> Self;
 }
 
 pub trait ToString {

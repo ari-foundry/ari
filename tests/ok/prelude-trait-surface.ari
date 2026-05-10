@@ -68,6 +68,9 @@ impl TryInto[i64] for i64 {
 }
 
 impl IntoIterator[i64] for Vec[i64] {
+  fn into_iter(self) -> Vec[i64] {
+    self
+  }
 }
 
 impl ToString for i64 {
