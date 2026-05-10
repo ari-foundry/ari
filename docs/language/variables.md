@@ -60,7 +60,8 @@ constants, integer arithmetic (`+`, `-`, `*`, `/`, `%`), bit operations
 (`&`, `|`, `^`, `~`, `<<`, `>>`), unary `-`, bool `!`, `&&`, `||`, scalar
 comparisons, explicit integer casts with `as`, tuple literals, fixed-array
 literals, named struct literals, tuple-struct constructors, and enum case
-constructors.
+constructors. Constant initializers can also read fields, tuple indexes, and
+fixed-array indexes from materialized aggregate constants.
 Integer literal suffixes such as `7u8` are checked before the value is assigned
 to the constant's declared type; unsuffixed integer literals are checked
 directly against that declared type.

@@ -5,7 +5,8 @@ fn main() -> i64 {
   let flags = cache_const_aggregates::FLAGS;
   let pair = cache_const_aggregates::PAIR;
   let nums = cache_const_aggregates::NUMS;
-  let direct = cache_const_aggregates::POINT.y + cache_const_aggregates::NUMS[2];
+  let direct = cache_const_aggregates::DIRECT;
+  let tuple_head = cache_const_aggregates::TUPLE_HEAD;
   let choice = match cache_const_aggregates::CHOSEN {
     cache_const_aggregates::Score(value) => value as i64,
     cache_const_aggregates::Zero => 0,
@@ -22,7 +23,7 @@ fn main() -> i64 {
   let bits = cache_const_aggregates::BITS;
   let inverted = cache_const_aggregates::INVERTED;
   if flags.0 && pair.1 {
-    p.x + nums[1] + pair.0 + choice + empty + direct + slot + wide + bits + inverted
+    p.x + nums[1] + tuple_head + choice + empty + direct + slot + wide + bits + inverted
   } else {
     0
   }

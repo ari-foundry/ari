@@ -650,6 +650,9 @@ check-modules: $(TARGET)
 	grep -q "4:cast" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	grep -q "6:binary" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	grep -q "5:unary" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "5:field" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "11:tuple-index" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "5:index" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache.ll $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache-use.ll
 	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari -o $(BUILD_DIR)/modules/package-cache-const-aggregate-header.raw

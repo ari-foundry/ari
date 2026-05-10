@@ -338,8 +338,9 @@ name references, tuple literals, fixed-array literals, named struct literals,
 tuple-struct constructors, enum cases, enum payload constructors, and explicit
 generic constructor type arguments. Explicit integer casts plus arithmetic,
 bitwise, unary bitwise-not, and shift expressions over supported constant
-payloads are preserved too. Constants whose initializers use unsupported summary
-forms fall back to parsing the cached source snapshot.
+payloads are preserved too, as are field, tuple-index, and fixed-array index
+accesses over materialized aggregate constants. Constants whose initializers use
+unsupported summary forms fall back to parsing the cached source snapshot.
 
 This cache format skips dependency source discovery after validation and reads
 module source text from the cached snapshot. Header-like dependencies can skip

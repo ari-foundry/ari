@@ -389,6 +389,8 @@ Checklist:
 - [x] AST summary declaration payloads preserve explicit casts plus arithmetic,
       bitwise, unary bitwise-not, and shift constant expressions for
       header-like cached modules
+- [x] AST summary declaration payloads preserve field, tuple-index, and
+      fixed-array index access over materialized aggregate constants
 - [x] cached header-like dependencies can load declaration-safe materialized
       summaries instead of reparsing cached source text
 - [ ] AST/IR package cache summaries skip dependency parsing after validation

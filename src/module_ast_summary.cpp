@@ -173,6 +173,35 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             out << operand.str();
             return true;
         }
+        case ExprKind::FieldAccess: {
+            if (!expr.operand) return false;
+            std::ostringstream operand;
+            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            append_field(out, "field");
+            out << operand.str();
+            append_field(out, expr.name);
+            return true;
+        }
+        case ExprKind::TupleIndex: {
+            if (!expr.operand) return false;
+            std::ostringstream operand;
+            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            append_field(out, "tuple-index");
+            out << operand.str();
+            append_count(out, expr.tuple_index);
+            return true;
+        }
+        case ExprKind::Index: {
+            if (!expr.operand || !expr.right) return false;
+            std::ostringstream operand;
+            std::ostringstream index;
+            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            if (!append_const_expr_payload(index, *expr.right)) return false;
+            append_field(out, "index");
+            out << operand.str();
+            out << index.str();
+            return true;
+        }
         case ExprKind::Tuple: {
             std::ostringstream args;
             if (!append_const_expr_list(args, expr.args)) return false;
@@ -770,6 +799,24 @@ private:
             expr->kind = ExprKind::Cast;
             expr->cast_type = read_type(label + " cast type");
             expr->operand = read_const_expr(label + " cast operand");
+            return expr;
+        }
+        if (kind == "field") {
+            expr->kind = ExprKind::FieldAccess;
+            expr->operand = read_const_expr(label + " field operand");
+            expr->name = read_field(label + " field name");
+            return expr;
+        }
+        if (kind == "tuple-index") {
+            expr->kind = ExprKind::TupleIndex;
+            expr->operand = read_const_expr(label + " tuple-index operand");
+            expr->tuple_index = read_count(label + " tuple index");
+            return expr;
+        }
+        if (kind == "index") {
+            expr->kind = ExprKind::Index;
+            expr->operand = read_const_expr(label + " index operand");
+            expr->right = read_const_expr(label + " index value");
             return expr;
         }
         if (kind == "tuple") {

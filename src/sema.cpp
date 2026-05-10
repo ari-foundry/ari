@@ -6166,6 +6166,38 @@ private:
             }
             return infer_constant_binary_integer_type(expr.loc, *expr.left, *expr.right, fallback);
         }
+        if (expr.kind == ExprKind::FieldAccess) {
+            if (!expr.operand) fail(expr.loc, "missing constant field operand");
+            IrType operand_type = infer_constant_expr_type(*expr.operand, fallback);
+            if (operand_type.primitive != IrPrimitiveKind::Struct) {
+                fail(expr.loc, "constant field access requires a struct value, got " + type_name(operand_type));
+            }
+            return operand_type.field_types[struct_field_index(expr.loc, operand_type, expr.name)];
+        }
+        if (expr.kind == ExprKind::TupleIndex) {
+            if (!expr.operand) fail(expr.loc, "missing constant tuple index operand");
+            IrType operand_type = infer_constant_expr_type(*expr.operand, fallback);
+            if (operand_type.primitive != IrPrimitiveKind::Tuple &&
+                operand_type.primitive != IrPrimitiveKind::Struct) {
+                fail(expr.loc, "constant tuple index access requires tuple or tuple struct value, got " +
+                               type_name(operand_type));
+            }
+            const std::vector<IrType>& fields = aggregate_field_types(operand_type);
+            if (expr.tuple_index >= fields.size()) {
+                fail(expr.loc,
+                     "tuple index " + std::to_string(expr.tuple_index) +
+                         " is out of range for " + type_name(operand_type));
+            }
+            return fields[static_cast<std::size_t>(expr.tuple_index)];
+        }
+        if (expr.kind == ExprKind::Index) {
+            if (!expr.operand) fail(expr.loc, "missing constant index operand");
+            IrType operand_type = infer_constant_expr_type(*expr.operand, fallback);
+            if (operand_type.primitive != IrPrimitiveKind::Array || operand_type.args.size() != 1) {
+                fail(expr.loc, "constant index access requires a fixed-array value, got " + type_name(operand_type));
+            }
+            return operand_type.args[0];
+        }
         fail(expr.loc, "constant initializers currently support scalar and aggregate constant expressions");
     }
 
@@ -6288,6 +6320,83 @@ private:
         IrType source_type = infer_constant_expr_type(*expr.operand, target);
         ConstantValue value = evaluate_constant_expr(*expr.operand, source_type);
         return cast_integer_constant(expr.loc, value, target);
+    }
+
+    ConstantValue coerce_constant_selection(SourceLocation loc, ConstantValue value, const IrType& expected) {
+        require_assignable(loc, expected, value.type);
+        value.type = expected;
+        return value;
+    }
+
+    ConstantValue evaluate_constant_field_access_expr(const Expr& expr, const IrType& expected) {
+        if (!expr.operand) fail(expr.loc, "missing constant field operand");
+        IrType operand_type = infer_constant_expr_type(*expr.operand, expected);
+        if (operand_type.primitive != IrPrimitiveKind::Struct) {
+            fail(expr.loc, "constant field access requires a struct value, got " + type_name(operand_type));
+        }
+        ConstantValue value = evaluate_constant_expr(*expr.operand, operand_type);
+        if (value.kind != ConstantValueKind::Struct) {
+            fail(expr.loc, "constant field access requires a struct value");
+        }
+        std::size_t field_index = struct_field_index(expr.loc, operand_type, expr.name);
+        if (field_index >= value.elements.size()) {
+            throw CompileError("internal error: constant struct field index out of range");
+        }
+        return coerce_constant_selection(expr.loc, value.elements[field_index], expected);
+    }
+
+    ConstantValue evaluate_constant_tuple_index_expr(const Expr& expr, const IrType& expected) {
+        if (!expr.operand) fail(expr.loc, "missing constant tuple index operand");
+        IrType operand_type = infer_constant_expr_type(*expr.operand, expected);
+        if (operand_type.primitive != IrPrimitiveKind::Tuple &&
+            operand_type.primitive != IrPrimitiveKind::Struct) {
+            fail(expr.loc, "constant tuple index access requires tuple or tuple struct value, got " +
+                           type_name(operand_type));
+        }
+        ConstantValue value = evaluate_constant_expr(*expr.operand, operand_type);
+        if (value.kind != ConstantValueKind::Tuple && value.kind != ConstantValueKind::Struct) {
+            fail(expr.loc, "constant tuple index access requires tuple or tuple struct value");
+        }
+        const std::vector<IrType>& fields = aggregate_field_types(operand_type);
+        if (expr.tuple_index >= fields.size()) {
+            fail(expr.loc,
+                 "tuple index " + std::to_string(expr.tuple_index) +
+                     " is out of range for " + type_name(operand_type));
+        }
+        std::size_t index = static_cast<std::size_t>(expr.tuple_index);
+        if (index >= value.elements.size()) {
+            throw CompileError("internal error: constant tuple index out of range");
+        }
+        return coerce_constant_selection(expr.loc, value.elements[index], expected);
+    }
+
+    ConstantValue evaluate_constant_index_expr(const Expr& expr, const IrType& expected) {
+        if (!expr.operand || !expr.right) fail(expr.loc, "missing constant index operand");
+        IrType operand_type = infer_constant_expr_type(*expr.operand, expected);
+        if (operand_type.primitive != IrPrimitiveKind::Array || operand_type.args.size() != 1) {
+            fail(expr.loc, "constant index access requires a fixed-array value, got " + type_name(operand_type));
+        }
+        ConstantValue value = evaluate_constant_expr(*expr.operand, operand_type);
+        if (value.kind != ConstantValueKind::Array) {
+            fail(expr.loc, "constant index access requires a fixed-array value");
+        }
+        IrType index_type = infer_constant_expr_type(*expr.right, i64_type(expr.loc));
+        ConstantValue index_value = evaluate_constant_expr(*expr.right, index_type);
+        if (index_value.kind != ConstantValueKind::Integer) {
+            fail(expr.right->loc, "array index must be an integer");
+        }
+        if (index_value.int_negative) fail(expr.right->loc, "array index must be non-negative");
+        std::uint64_t index = constant_integer_to_u64(expr.right->loc, index_value);
+        if (index >= value.elements.size()) {
+            fail(expr.loc,
+                 "array index " + std::to_string(index) +
+                     " is out of range for " + std::to_string(value.elements.size()) + " elements");
+        }
+        return coerce_constant_selection(
+            expr.loc,
+            value.elements[static_cast<std::size_t>(index)],
+            expected
+        );
     }
 
     std::vector<ConstantValue> evaluate_constant_expr_list(
@@ -6570,6 +6679,18 @@ private:
 
         if (expr.kind == ExprKind::Binary) {
             return evaluate_constant_binary_expr(expr, expected);
+        }
+
+        if (expr.kind == ExprKind::FieldAccess) {
+            return evaluate_constant_field_access_expr(expr, expected);
+        }
+
+        if (expr.kind == ExprKind::TupleIndex) {
+            return evaluate_constant_tuple_index_expr(expr, expected);
+        }
+
+        if (expr.kind == ExprKind::Index) {
+            return evaluate_constant_index_expr(expr, expected);
         }
 
         fail(expr.loc, "constant initializers currently support scalar and aggregate constant expressions");
