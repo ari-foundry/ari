@@ -20,11 +20,13 @@ IrExprPtr make_tuple_index_expr(SourceLocation loc,
                                 const std::string& source_name,
                                 const IrType& source_type,
                                 std::size_t index);
+IrExprPtr make_tuple_index_expr(SourceLocation loc, IrExprPtr source, std::size_t index);
 IrExprPtr make_vector_index_expr(SourceLocation loc,
                                  const std::string& source_name,
                                  const IrType& source_type,
                                  const std::string& index_name,
                                  const IrType& index_type);
+IrExprPtr make_ir_index_expr(SourceLocation loc, IrExprPtr source, IrExprPtr index);
 
 IrExprPtr make_integer_literal(SourceLocation loc, const IrType& type, std::uint64_t value, bool negative = false);
 IrExprPtr make_integer_zero(SourceLocation loc, const IrType& type);

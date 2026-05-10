@@ -5632,18 +5632,11 @@ private:
             std::size_t index = struct_field_index(expr.loc, base.type, expr.name);
             const IrType field_type = base.type.field_types[index];
 
-            auto lowered = std::make_unique<IrExpr>();
-            lowered->kind = IrExprKind::TupleIndex;
-            lowered->loc = expr.loc;
-            lowered->tuple_index = index;
-            lowered->type = field_type;
-            lowered->operand = std::move(base.expr);
-
             out.base_name = std::move(base.base_name);
             out.base_type = std::move(base.base_type);
             out.type = field_type;
             out.path = child_field_path(base.path, index);
-            out.expr = std::move(lowered);
+            out.expr = make_tuple_index_expr(expr.loc, std::move(base.expr), index);
             out.has_final_field_mutability = true;
             out.final_field_mutable = base.type.field_mutable[index];
             out.final_field_label = expr.name;
@@ -5664,23 +5657,17 @@ private:
                      "tuple index " + std::to_string(expr.tuple_index) +
                      " is out of range for " + type_name(base.type));
             }
-            const IrType field_type = fields[static_cast<std::size_t>(expr.tuple_index)];
-
-            auto lowered = std::make_unique<IrExpr>();
-            lowered->kind = IrExprKind::TupleIndex;
-            lowered->loc = expr.loc;
-            lowered->tuple_index = expr.tuple_index;
-            lowered->type = field_type;
-            lowered->operand = std::move(base.expr);
+            std::size_t field_index = static_cast<std::size_t>(expr.tuple_index);
+            const IrType field_type = fields[field_index];
 
             out.base_name = std::move(base.base_name);
             out.base_type = std::move(base.base_type);
             out.type = field_type;
-            out.path = child_field_path(base.path, static_cast<std::size_t>(expr.tuple_index));
-            out.expr = std::move(lowered);
+            out.path = child_field_path(base.path, field_index);
+            out.expr = make_tuple_index_expr(expr.loc, std::move(base.expr), field_index);
             out.has_final_field_mutability = base.type.primitive == IrPrimitiveKind::Struct;
             out.final_field_mutable = !out.has_final_field_mutability ||
-                base.type.field_mutable[static_cast<std::size_t>(expr.tuple_index)];
+                base.type.field_mutable[field_index];
             out.final_field_label = std::to_string(expr.tuple_index);
             out.final_container_name = base.type.name;
             return true;
@@ -5726,18 +5713,9 @@ private:
             }
 
             const IrType element_type = base.type.args[0];
-            auto lowered = std::make_unique<IrExpr>();
-            lowered->loc = expr.loc;
-            lowered->type = element_type;
-            if (base.type.primitive == IrPrimitiveKind::Array) {
-                lowered->kind = IrExprKind::TupleIndex;
-                lowered->tuple_index = index_value;
-                lowered->operand = std::move(base.expr);
-            } else {
-                lowered->kind = IrExprKind::Index;
-                lowered->operand = std::move(base.expr);
-                lowered->right = std::move(index);
-            }
+            IrExprPtr lowered = base.type.primitive == IrPrimitiveKind::Array
+                ? make_tuple_index_expr(expr.loc, std::move(base.expr), static_cast<std::size_t>(index_value))
+                : make_ir_index_expr(expr.loc, std::move(base.expr), std::move(index));
 
             out.base_name = std::move(base.base_name);
             out.base_type = std::move(base.base_type);
@@ -5795,13 +5773,11 @@ private:
             fail(expr.loc, "cannot assign to immutable field '" + expr.name + "' of struct '" + local.type.name + "'");
         }
 
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::TupleIndex;
-        lowered->loc = expr.loc;
-        lowered->tuple_index = index;
-        lowered->type = field_type;
-        lowered->operand = make_local_lvalue_expr(expr.operand->loc, base_name, local.type);
-        return lowered;
+        return make_tuple_index_expr(
+            expr.loc,
+            make_local_lvalue_expr(expr.operand->loc, base_name, local.type),
+            index
+        );
     }
 
     IrExprPtr check_tuple_field_assignment_target(const Expr& expr) {
@@ -5828,13 +5804,11 @@ private:
                  "' of struct '" + local.type.name + "'");
         }
 
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::TupleIndex;
-        lowered->loc = expr.loc;
-        lowered->tuple_index = expr.tuple_index;
-        lowered->type = field_type;
-        lowered->operand = make_local_lvalue_expr(expr.operand->loc, base_name, local.type);
-        return lowered;
+        return make_tuple_index_expr(
+            expr.loc,
+            make_local_lvalue_expr(expr.operand->loc, base_name, local.type),
+            static_cast<std::size_t>(expr.tuple_index)
+        );
     }
 
     void require_slice_element_materializable(SourceLocation loc, const IrType& element_type, const std::string& operation) const {
@@ -5864,13 +5838,7 @@ private:
         const IrType element_type = operand->type.args[0];
         require_slice_element_materializable(expr.loc, element_type, "Slice element assignment");
 
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::Index;
-        lowered->loc = expr.loc;
-        lowered->type = element_type;
-        lowered->operand = std::move(operand);
-        lowered->right = std::move(index);
-        return lowered;
+        return make_ir_index_expr(expr.loc, std::move(operand), std::move(index));
     }
 
     IrExprPtr check_pointer_deref_assignment_target(const Expr& expr) {
@@ -5894,35 +5862,22 @@ private:
     using DropValueFactory = std::function<IrExprPtr()>;
 
     IrExprPtr make_field_value_expr(SourceLocation loc, DropValueFactory make_source, std::size_t index, const IrType& field_type) const {
-        auto expr = std::make_unique<IrExpr>();
-        expr->kind = IrExprKind::TupleIndex;
-        expr->loc = loc;
-        expr->tuple_index = index;
-        expr->type = field_type;
-        expr->operand = make_source();
-        return expr;
+        (void)field_type;
+        return make_tuple_index_expr(loc, make_source(), index);
     }
 
     IrExprPtr make_vector_element_expr(SourceLocation loc, DropValueFactory make_source, std::uint64_t index, const IrType& element_type) const {
-        auto expr = std::make_unique<IrExpr>();
-        expr->kind = IrExprKind::Index;
-        expr->loc = loc;
-        expr->type = element_type;
-        expr->operand = make_source();
-        expr->right = make_integer_literal(loc, i64_type(loc), index);
-        return expr;
+        (void)element_type;
+        return make_ir_index_expr(loc, make_source(), make_integer_literal(loc, i64_type(loc), index));
     }
 
     IrStmtPtr make_drop_call_stmt(SourceLocation loc, const ImplMethodInfo& method, DropValueFactory make_value) {
         if (method.sig.params.size() != 1 || method.sig.result.primitive != IrPrimitiveKind::Void) {
             throw CompileError("internal error: invalid Drop impl method for " + type_name(method.receiver_type));
         }
-        auto call = std::make_unique<IrExpr>();
-        call->kind = IrExprKind::Call;
-        call->loc = loc;
-        call->name = method.lowered_name;
-        call->type = method.sig.result;
-        call->args.push_back(make_value());
+        std::vector<IrExprPtr> args;
+        args.push_back(make_value());
+        auto call = make_ir_call_expr(loc, method.lowered_name, method.sig.result, std::move(args));
         queue_impl_method_for_lowering(method);
 
         auto stmt = std::make_unique<IrStmt>();
@@ -10889,6 +10844,7 @@ private:
     }
 
     IrExprPtr check_tuple_index(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
         TrackedAggregateAccess access;
         if (try_build_tracked_aggregate_access(expr, access)) {
             LocalInfo& local = local_slot_by_name(access.base_name);
@@ -10916,12 +10872,11 @@ private:
             }
             mark_owned_field_moved(expr.loc, operand->name, std::to_string(expr.tuple_index));
         }
-        lowered->kind = IrExprKind::TupleIndex;
-        lowered->loc = expr.loc;
-        lowered->tuple_index = expr.tuple_index;
-        lowered->type = fields[static_cast<std::size_t>(expr.tuple_index)];
-        lowered->operand = std::move(operand);
-        return lowered;
+        return make_tuple_index_expr(
+            expr.loc,
+            std::move(operand),
+            static_cast<std::size_t>(expr.tuple_index)
+        );
     }
 
     IrExprPtr check_index(const Expr& expr, IrExprPtr lowered) {
@@ -10959,12 +10914,7 @@ private:
             }
             const IrType element_type = operand->type.args[0];
             require_slice_element_materializable(expr.loc, element_type, "Slice indexing");
-            lowered->kind = IrExprKind::Index;
-            lowered->loc = expr.loc;
-            lowered->type = element_type;
-            lowered->operand = std::move(operand);
-            lowered->right = std::move(index);
-            return lowered;
+            return make_ir_index_expr(expr.loc, std::move(operand), std::move(index));
         }
 
         if (operand->kind == IrExprKind::Vector) {
@@ -11011,28 +10961,17 @@ private:
                          "array index " + std::to_string(index->int_value) +
                          " is out of range for " + std::to_string(operand->type.array_size) + " elements");
                 }
-                lowered->kind = IrExprKind::TupleIndex;
-                lowered->loc = expr.loc;
-                lowered->tuple_index = index->int_value;
-                lowered->type = operand->type.args[0];
-                lowered->operand = std::move(operand);
-                return lowered;
+                return make_tuple_index_expr(
+                    expr.loc,
+                    std::move(operand),
+                    static_cast<std::size_t>(index->int_value)
+                );
             }
 
-            lowered->kind = IrExprKind::Index;
-            lowered->loc = expr.loc;
-            lowered->type = operand->type.args[0];
-            lowered->operand = std::move(operand);
-            lowered->right = std::move(index);
-            return lowered;
+            return make_ir_index_expr(expr.loc, std::move(operand), std::move(index));
         }
 
-        lowered->kind = IrExprKind::Index;
-        lowered->loc = expr.loc;
-        lowered->type = operand->type.args[0];
-        lowered->operand = std::move(operand);
-        lowered->right = std::move(index);
-        return lowered;
+        return make_ir_index_expr(expr.loc, std::move(operand), std::move(index));
     }
 
     IrExprPtr check_slice_range_index(const Expr& expr,
@@ -11059,6 +10998,7 @@ private:
     }
 
     IrExprPtr check_field_access(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
         TrackedAggregateAccess access;
         if (try_build_tracked_aggregate_access(expr, access)) {
             LocalInfo& local = local_slot_by_name(access.base_name);
@@ -11080,12 +11020,7 @@ private:
             }
             mark_owned_field_moved(expr.loc, operand->name, std::to_string(index));
         }
-        lowered->kind = IrExprKind::TupleIndex;
-        lowered->loc = expr.loc;
-        lowered->tuple_index = index;
-        lowered->type = operand->type.field_types[index];
-        lowered->operand = std::move(operand);
-        return lowered;
+        return make_tuple_index_expr(expr.loc, std::move(operand), index);
     }
 
     IrExprPtr check_tuple(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {

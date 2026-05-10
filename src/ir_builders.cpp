@@ -74,13 +74,23 @@ IrExprPtr make_tuple_index_expr(SourceLocation loc,
                                 const std::string& source_name,
                                 const IrType& source_type,
                                 std::size_t index) {
-    const std::vector<IrType>& fields = aggregate_field_types(source_type);
+    return make_tuple_index_expr(loc, make_local_lvalue_expr(loc, source_name, source_type), index);
+}
+
+IrExprPtr make_tuple_index_expr(SourceLocation loc, IrExprPtr source, std::size_t index) {
+    if (!source) {
+        throw CompileError(where(loc) + ": internal error: tuple index expression requires a source");
+    }
+    const std::vector<IrType>& fields = aggregate_field_types(source->type);
+    if (index >= fields.size()) {
+        throw CompileError(where(loc) + ": internal error: tuple index expression out of range");
+    }
     auto expr = std::make_unique<IrExpr>();
     expr->kind = IrExprKind::TupleIndex;
     expr->loc = loc;
     expr->tuple_index = index;
     expr->type = fields[index];
-    expr->operand = make_local_lvalue_expr(loc, source_name, source_type);
+    expr->operand = std::move(source);
     return expr;
 }
 
@@ -92,12 +102,23 @@ IrExprPtr make_vector_index_expr(SourceLocation loc,
     if (source_type.primitive != IrPrimitiveKind::Vector || source_type.args.size() != 1) {
         throw CompileError(where(loc) + ": internal error: vector index expression requires a vector source");
     }
+    return make_ir_index_expr(
+        loc,
+        make_local_lvalue_expr(loc, source_name, source_type),
+        make_local_lvalue_expr(loc, index_name, index_type)
+    );
+}
+
+IrExprPtr make_ir_index_expr(SourceLocation loc, IrExprPtr source, IrExprPtr index) {
+    if (!source || !index || source->type.args.empty()) {
+        throw CompileError(where(loc) + ": internal error: index expression requires an indexable source");
+    }
     auto expr = std::make_unique<IrExpr>();
     expr->kind = IrExprKind::Index;
     expr->loc = loc;
-    expr->type = source_type.args[0];
-    expr->operand = make_local_lvalue_expr(loc, source_name, source_type);
-    expr->right = make_local_lvalue_expr(loc, index_name, index_type);
+    expr->type = source->type.args[0];
+    expr->operand = std::move(source);
+    expr->right = std::move(index);
     return expr;
 }
 

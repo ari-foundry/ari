@@ -1385,6 +1385,10 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/ir-builder-smoke.ari --emit-llvm $(BUILD_DIR)/variables/ir-builder-smoke.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/variables/ir-builder-smoke.ll
 	grep -q "getelementptr inbounds { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/ir-builder-smoke.ll
+	$(TARGET) tests/ok/ir-builder-access-paths.ari --emit-llvm $(BUILD_DIR)/variables/ir-builder-access-paths.ll
+	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/variables/ir-builder-access-paths.ll
+	grep -q "getelementptr inbounds \\[3 x i64\\]" $(BUILD_DIR)/variables/ir-builder-access-paths.ll
+	grep -q "getelementptr inbounds { i64, i64 }" $(BUILD_DIR)/variables/ir-builder-access-paths.ll
 	$(TARGET) tests/ok/ir-builder-literal-paths.ari --emit-llvm $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "double 1.250000" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "@.ari.str" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
