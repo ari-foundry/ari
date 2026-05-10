@@ -77,6 +77,15 @@ const char* local_vec_method_name(LocalVecMethod method) {
     return "<unknown>";
 }
 
+bool is_prelude_slice_type(const IrType& type) {
+    return type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::Slice" &&
+           type.args.size() == 1 &&
+           type.field_names.size() == 2 &&
+           type.field_names[0] == "data" &&
+           type.field_names[1] == "len";
+}
+
 } // namespace
 
 bool is_vector_storage_type(const IrType& type) {
@@ -537,6 +546,37 @@ IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr va
     lowered->type = i64_type(loc);
     lowered->operand = std::move(vector);
     lowered->payload = std::move(value);
+    return lowered;
+}
+
+IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value) {
+    if (!value ||
+        (value->type.primitive != IrPrimitiveKind::Vector &&
+         value->type.primitive != IrPrimitiveKind::Array &&
+         !is_prelude_slice_type(value->type)) ||
+        value->type.args.size() != 1) {
+        const std::string actual = value ? type_name(value->type) : "<missing>";
+        fail(loc, "len expects an array, Vec, or Slice value, got " + actual);
+    }
+    if (value->type.primitive == IrPrimitiveKind::Array) {
+        if (value->kind == IrExprKind::Vector && is_owner_type(value->type)) {
+            fail(loc, "len of owning array literals would discard owning values; bind the array first");
+        }
+        return make_i64_literal(loc, value->type.array_size);
+    }
+    if (value->kind == IrExprKind::Vector) {
+        if (is_owner_type(value->type)) {
+            fail(loc, "len of owning vector literals would discard owning values; bind the vector first");
+        }
+        return make_i64_literal(loc, static_cast<std::uint64_t>(value->args.size()));
+    }
+
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::TupleIndex;
+    lowered->loc = loc;
+    lowered->tuple_index = is_prelude_slice_type(value->type) ? 1 : 0;
+    lowered->type = i64_type(loc);
+    lowered->operand = std::move(value);
     return lowered;
 }
 

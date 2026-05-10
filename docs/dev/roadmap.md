@@ -31,15 +31,16 @@
    error. Vec storage helper logic is split out of `sema.cpp` into
    `vector_semantics`, including the frozen temporary local method list used
    by sema dispatch, local method shape diagnostics, and the shared `len`,
-   `is_empty`, and `as_slice` builtin/method shape checks. Local Vec integer
-   and non-negative operand diagnostics for index/capacity/length arguments are
-   also centralized there. Local Vec IR construction helpers include `push`
-   alongside the other method lowerings. Known-length updates for local `push`,
-   `insert`, `pop`, `remove`, `clear`, and `truncate` now use small
-   `vector_semantics` transition helpers. The shared constant value model,
-   constant-to-IR literal construction, scalar literal folding, constant binary
-   result evaluation, and static integer folding for local Vec capacity and
-   length decisions now live in
+   `is_empty`, and `as_slice` builtin/method shape checks. Shared collection
+   `len` lowering for arrays, local Vec storage, and Slice views is centralized
+   there as well. Local Vec integer and non-negative operand diagnostics for
+   index/capacity/length arguments are also centralized there. Local Vec IR
+   construction helpers include `push` alongside the other method lowerings.
+   Known-length updates for local `push`, `insert`, `pop`, `remove`, `clear`,
+   and `truncate` now use small `vector_semantics` transition helpers. The
+   shared constant value model, constant-to-IR literal construction, scalar
+   literal folding, constant binary result evaluation, and static integer
+   folding for local Vec capacity and length decisions now live in
    `constant_semantics`;
    this keeps
    allocator-backed work from growing the main semantic checker. Introduce the

@@ -13675,35 +13675,6 @@ private:
         return value;
     }
 
-    IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value) {
-        if ((value->type.primitive != IrPrimitiveKind::Vector &&
-             value->type.primitive != IrPrimitiveKind::Array &&
-             !is_prelude_slice_type(value->type)) ||
-            value->type.args.size() != 1) {
-            fail(loc, "len expects an array, Vec, or Slice value, got " + type_name(value->type));
-        }
-        if (value->type.primitive == IrPrimitiveKind::Array) {
-            if (value->kind == IrExprKind::Vector && is_owner_type(value->type)) {
-                fail(loc, "len of owning array literals would discard owning values; bind the array first");
-            }
-            return make_integer_literal(loc, i64_type(loc), value->type.array_size);
-        }
-        if (value->kind == IrExprKind::Vector) {
-            if (is_owner_type(value->type)) {
-                fail(loc, "len of owning vector literals would discard owning values; bind the vector first");
-            }
-            return make_integer_literal(loc, i64_type(loc), value->args.size());
-        }
-
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::TupleIndex;
-        lowered->loc = loc;
-        lowered->tuple_index = is_prelude_slice_type(value->type) ? 1 : 0;
-        lowered->type = i64_type(loc);
-        lowered->operand = std::move(value);
-        return lowered;
-    }
-
     static IrExprPtr make_raw_pointer_to_lvalue(SourceLocation loc, IrExprPtr lvalue, const IrType& element) {
         IrType pointer = element;
         pointer.qualifier = TypeQualifier::Ptr;

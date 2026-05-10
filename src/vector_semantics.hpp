@@ -97,6 +97,7 @@ IrExprPtr make_vec_push_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr val
 IrExprPtr make_vec_contains_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
 IrExprPtr make_vec_index_of_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
 IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
+IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value);
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length);
 
 } // namespace ari
