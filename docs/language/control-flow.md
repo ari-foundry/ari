@@ -326,7 +326,8 @@ still depend on broader aggregate enum payload storage.
 
 The current source trait still uses an Ari-specific return contract for
 `into_iter` instead of a first-class associated iterator type. Impl validation
-requires the concrete result to implement `Iterator[T]`, and `for` lowering
+requires the concrete result to implement `Iterator[T]`, including generic
+impl headers such as `impl[T] IntoIterator[T] for Bag[T]`, and `for` lowering
 rechecks the specialized result. Mutable `Iterator.next` and
 `IntoIterator.into_iter` receivers now work for copyable non-borrow values; the
 broader policy for owner/borrow iterator values and iterator lifetime rules

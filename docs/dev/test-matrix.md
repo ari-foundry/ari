@@ -403,6 +403,10 @@ Checklist:
       type and validate that result at `for` lowering sites
 - [x] reject `IntoIterator[T].into_iter` impls whose concrete result does not
       implement `Iterator[T]`
+- [x] keep generic direct `Iterator[T]` impls valid while the
+      `IntoIterator[T]` result contract pass scans generic impl headers
+- [x] reject generic `IntoIterator[T]` impls whose placeholder result type does
+      not implement `Iterator[T]`
 - [x] lower iterator item literal/range/or, fieldless enum-case, and compact
       enum payload patterns through the `while let Some(pattern) = next()` path
 - [x] reserve `iter::Iterable[T]`

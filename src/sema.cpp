@@ -2156,6 +2156,7 @@ private:
             std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
             current_module_name_ = impl.module_name;
             std::map<std::string, IrType> substitutions = generic_placeholder_substitutions(impl.generics);
+            current_type_substitutions_ = substitutions;
             IrType self_type = resolve_executable_type(impl.for_type);
             substitutions.emplace("Self", self_type);
             current_type_substitutions_ = substitutions;

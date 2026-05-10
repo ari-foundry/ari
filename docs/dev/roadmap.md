@@ -73,7 +73,8 @@
    snapshot-style containers. Because Ari does not have associated types yet,
    sema treats the `IntoIterator[T].into_iter` return type as an Ari-specific
    contract: impl validation requires the concrete result to implement
-   `Iterator[T]`, and `for` lowering rechecks the specialized result. The
+   `Iterator[T]`, generic impl placeholders are resolved before that contract
+   is checked, and `for` lowering rechecks the specialized result. The
    remaining iterator model needs owner/borrow iterator value and lifetime
    policy.
    Iterator item patterns can now

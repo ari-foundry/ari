@@ -292,13 +292,13 @@ snapshot-style iterators while older surface tests migrate.
 `IntoIterator[T]` currently declares `fn into_iter(self: ref mut Self) -> Self`
 as the default source shape. Impl methods may return a distinct iterator type;
 impl validation requires the concrete `into_iter` result to implement
-`Iterator[T]`, and `for` lowering rechecks the specialized result. The compiler
-still accepts value-self `into_iter(self)` impls for copyable snapshot-style
-containers. The first stateful `Iterator.next` and `IntoIterator.into_iter`
-receiver policies are implemented for copyable values. A first-class
-associated iterator result spelling can replace this Ari-specific contract
-later; owner/borrow iterator values and explicit iterator lifetime rules remain
-planned.
+`Iterator[T]`, including generic impl headers whose `T` is still a placeholder,
+and `for` lowering rechecks the specialized result. The compiler still accepts
+value-self `into_iter(self)` impls for copyable snapshot-style containers. The
+first stateful `Iterator.next` and `IntoIterator.into_iter` receiver policies
+are implemented for copyable values. A first-class associated iterator result
+spelling can replace this Ari-specific contract later; owner/borrow iterator
+values and explicit iterator lifetime rules remain planned.
 
 `Drop` is the prelude trait connected to explicit ownership destruction:
 
