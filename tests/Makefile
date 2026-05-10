@@ -1362,6 +1362,9 @@ check-variables: $(TARGET)
 	grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-runtime.ll
 	$(TARGET) tests/ok/vector-reserve-runtime-trap.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-runtime-trap.ll
 	grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-runtime-trap.ll
+	$(TARGET) tests/ok/vector-reserve-known-local.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-known-local.ll
+	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-reserve-known-local.ll
+	if grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-known-local.ll; then exit 1; fi
 	$(TARGET) tests/ok/vector-push-autogrow.ari --emit-llvm $(BUILD_DIR)/variables/vector-push-autogrow.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-push-autogrow.ll
 	grep -q "alloca { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-push-autogrow.ll
@@ -1417,6 +1420,7 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-reserve.elf; $(BUILD_DIR)/variables/vector-push-reserve.elf; code=$$?; test $$code -eq 24; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-runtime.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-runtime.elf; $(BUILD_DIR)/variables/vector-reserve-runtime.elf; code=$$?; test $$code -eq 6; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-runtime-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-runtime-trap.elf; if $(BUILD_DIR)/variables/vector-reserve-runtime-trap.elf; then exit 1; fi; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-known-local.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-known-local.elf; $(BUILD_DIR)/variables/vector-reserve-known-local.elf; code=$$?; test $$code -eq 18; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-autogrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-autogrow.elf; $(BUILD_DIR)/variables/vector-push-autogrow.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-pop.elf; $(BUILD_DIR)/variables/vector-pop.elf; code=$$?; test $$code -eq 26; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-first-last.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-first-last.elf; $(BUILD_DIR)/variables/vector-first-last.elf; code=$$?; test $$code -eq 20; fi
@@ -1473,6 +1477,8 @@ check-variables: $(TARGET)
 	grep -Fq "empty [] literals need an explicit Vec[T] type or non-empty array elements" $(BUILD_DIR)/variables/vector-empty-untyped.err
 	if $(TARGET) tests/errors/vector-api-freeze.ari -o $(BUILD_DIR)/variables/vector-api-freeze.elf >$(BUILD_DIR)/variables/vector-api-freeze.err 2>&1; then exit 1; fi
 	grep -Fq "local Vec method 'map' is reserved for allocator-backed std collection APIs" $(BUILD_DIR)/variables/vector-api-freeze.err
+	if $(TARGET) tests/errors/vector-reserve-known-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-known-negative.elf >$(BUILD_DIR)/variables/vector-reserve-known-negative.err 2>&1; then exit 1; fi
+	grep -q "Vec.reserve capacity must be non-negative" $(BUILD_DIR)/variables/vector-reserve-known-negative.err
 	if $(TARGET) tests/errors/variables-match-binding-immutable.ari -o $(BUILD_DIR)/variables/variables-match-binding-immutable.elf >$(BUILD_DIR)/variables/variables-match-binding-immutable.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to immutable binding 'inner'" $(BUILD_DIR)/variables/variables-match-binding-immutable.err
 	if $(TARGET) tests/errors/variables-let-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-let-pattern-binding.elf >$(BUILD_DIR)/variables/variables-let-pattern-binding.err 2>&1; then exit 1; fi

@@ -222,6 +222,9 @@ struct LocalInfo {
     bool auto_destroy_zone = false;
     bool vector_length_known = false;
     std::uint64_t vector_known_length = 0;
+    bool integer_value_known = false;
+    std::uint64_t integer_known_value = 0;
+    bool integer_known_negative = false;
     LocalState state = LocalState::Alive;
     std::map<std::string, LocalState> owned_field_states;
     int immutable_borrows = 0;
@@ -4704,6 +4707,18 @@ private:
         invalidate_vector_known_length(local);
     }
 
+    static void set_known_integer_value_from_expr(LocalInfo& local, const IrExpr& expr) {
+        local.integer_value_known = false;
+        local.integer_known_value = 0;
+        local.integer_known_negative = false;
+        if (local.mutable_binding || expr.kind != IrExprKind::Integer || !is_value_integer_type(local.type)) {
+            return;
+        }
+        local.integer_value_known = true;
+        local.integer_known_value = expr.int_value;
+        local.integer_known_negative = expr.int_negative;
+    }
+
     void require_nullable_pointer_initializer(SourceLocation loc,
                                               const Binding& binding,
                                               const IrType& declared,
@@ -4779,6 +4794,7 @@ private:
         local.generic_origin = std::move(generic_origin);
         local.auto_destroy_zone = is_zone_temp_call(*local.ir_init_expr);
         set_vector_known_length_from_expr(local, *local.ir_init_expr);
+        set_known_integer_value_from_expr(local, *local.ir_init_expr);
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
 
@@ -4854,6 +4870,20 @@ private:
             return;
         }
         widen_vector_storage(local, local.type.array_size + 1);
+    }
+
+    bool known_integer_capacity(const Expr& expr, std::uint64_t& value, bool& negative) {
+        if (expr.kind == ExprKind::Integer) {
+            value = expr.int_value;
+            negative = expr.int_negative;
+            return true;
+        }
+        if (expr.kind != ExprKind::Name) return false;
+        const LocalInfo* local = find_local_slot(expr.name);
+        if (!local || !local->integer_value_known) return false;
+        value = local->integer_known_value;
+        negative = local->integer_known_negative;
+        return true;
     }
 
     void lower_binding_pattern_from_local(
@@ -14685,11 +14715,13 @@ private:
         if (!expr.type_args.empty()) fail(expr.loc, "Vec.reserve does not take type arguments");
         if (expr.args.size() != 1) fail(expr.loc, "Vec.reserve expects one capacity argument");
         const Expr& capacity_expr = *expr.args[0];
-        if (capacity_expr.kind == ExprKind::Integer) {
-            if (capacity_expr.int_negative) {
+        std::uint64_t known_capacity = 0;
+        bool known_negative = false;
+        if (known_integer_capacity(capacity_expr, known_capacity, known_negative)) {
+            if (known_negative) {
                 fail(capacity_expr.loc, "Vec.reserve capacity must be non-negative");
             }
-            widen_vector_storage(local, capacity_expr.int_value);
+            widen_vector_storage(local, known_capacity);
             return make_void_noop_expr(expr.loc);
         }
 
