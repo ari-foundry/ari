@@ -433,9 +433,11 @@ Use explicit paths only when you want to show the source module, for example
 Tuples, fixed arrays, local vector values, and prelude ranges lower as local
 stack aggregate values. Non-empty `[...]` defaults to a fixed array when no
 expected type is present, and the same syntax initializes `Vec[T]` when a
-`Vec[T]` annotation or assignment target supplies that expected type. `Vec[T]`
-local storage keeps a runtime length plus a local stack capacity chosen from
-the largest vector literal assigned to the binding. Literal `reserve(n)`,
+`Vec[T]` annotation or assignment target supplies that expected type. That
+element type is propagated into each literal element before calls and coercions
+are checked. `Vec[T]` local storage keeps a runtime length plus a local stack
+capacity chosen from the largest vector literal assigned to the binding.
+Literal `reserve(n)`,
 integer constants, static integer arithmetic/bitwise/shift expressions over
 constants and literals, and immutable local integer capacities initialized from
 those static expressions can raise that local capacity, while runtime

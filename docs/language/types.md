@@ -361,6 +361,9 @@ let fixed: [i64, 3] = [1, 2, 3]
 let growable: Vec[i64] = [1, 2, 3]
 ```
 
+For typed arrays and vectors, the expected element type is also passed into each
+literal element expression.
+
 Bare `[]` has no element type or length by itself. Today it is accepted only
 where an explicit `Vec[T]` type supplies the element type.
 

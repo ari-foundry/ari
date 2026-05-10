@@ -442,8 +442,8 @@ Checklist:
 - [x] lower trait-qualified associated function calls such as
       `Trait::make<SelfType>(...)` and `Trait<T>::make<SelfType>(...)`, plus
       expected-result forms such as `let x: SelfType = Trait<T>::make(...)`
-      and control-flow result arms, to disambiguate same-named trait associated
-      functions
+      in control-flow result arms and aggregate literal elements, to
+      disambiguate same-named trait associated functions
 - [x] include object-safe supertrait methods in LLVM `dyn Child` vtables and
       reject ambiguous inherited dyn method names
 - [x] allow LLVM dyn-to-dyn upcasts from a child trait object to the same trait

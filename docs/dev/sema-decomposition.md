@@ -30,6 +30,8 @@ construction. Some helpers have already moved out to focused files:
 - `trait_semantics` for small trait display/key helpers and pure trait-method
   shape checks shared by trait impl validation, method dispatch diagnostics,
   and future trait-resolution extraction
+- `aggregate_literal_semantics` for pure expected-element selection shared by
+  tuple, struct, fixed-array, and local `Vec[T]` literal lowering
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

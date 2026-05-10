@@ -1,0 +1,39 @@
+trait Build {
+  fn build(value: i64) -> Self
+}
+
+struct Boxed {
+  value: i64,
+}
+
+struct Pair(Boxed, Boxed)
+
+struct Holder {
+  item: Boxed,
+  pair: Pair,
+}
+
+impl Build for Boxed {
+  fn build(value: i64) -> Boxed {
+    Boxed { value: value }
+  }
+}
+
+fn main() -> i64 {
+  let tuple: (Boxed, Boxed) = (Build::build(1), Build::build(2));
+  let fixed: [Boxed, 2] = [Build::build(3), Build::build(4)];
+  let growable: Vec[Boxed] = [Build::build(5), Build::build(6)];
+  let holder: Holder = Holder {
+    item: Build::build(7),
+    pair: Pair(Build::build(8), Build::build(9)),
+  };
+
+  tuple.0.value +
+    tuple.1.value +
+    fixed[0].value +
+    fixed[1].value +
+    len(growable) +
+    holder.item.value +
+    holder.pair.0.value +
+    holder.pair.1.value
+}

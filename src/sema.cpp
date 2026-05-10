@@ -1,6 +1,7 @@
 #include "sema.hpp"
 
 #include "attribute_semantics.hpp"
+#include "aggregate_literal_semantics.hpp"
 #include "ari_builtin.hpp"
 #include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
@@ -11284,6 +11285,17 @@ private:
             if (expr.kind == ExprKind::Match) return check_match_expr(expr, std::move(lowered), &expected);
             return check_block_expr(expr, std::move(lowered), &expected);
         }
+        if (expr.kind == ExprKind::Tuple ||
+            expr.kind == ExprKind::StructLiteral ||
+            expr.kind == ExprKind::Vector) {
+            auto lowered = std::make_unique<IrExpr>();
+            lowered->loc = expr.loc;
+            if (expr.kind == ExprKind::Tuple) return check_tuple(expr, std::move(lowered), &expected);
+            if (expr.kind == ExprKind::StructLiteral) {
+                return check_struct_literal(expr, std::move(lowered), &expected);
+            }
+            return check_vector(expr, std::move(lowered), &expected);
+        }
         return check_expr(expr);
     }
 
@@ -11836,22 +11848,35 @@ private:
         return lowered;
     }
 
-    IrExprPtr check_tuple(const Expr& expr, IrExprPtr lowered) {
+    IrExprPtr check_tuple(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         if (expr.args.size() == 1) fail(expr.loc, "single-element tuple literals are not supported");
         lowered->kind = IrExprKind::Tuple;
         lowered->type = primitive_type(IrPrimitiveKind::Tuple, "Tuple", expr.loc);
         lowered->args.reserve(expr.args.size());
-        for (const auto& item : expr.args) {
-            IrExprPtr value = check_expr(*item);
+        bool use_expected_type = expected &&
+            expected->qualifier == TypeQualifier::Value &&
+            expected->primitive == IrPrimitiveKind::Tuple &&
+            expected->args.size() == expr.args.size();
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            const auto& item = expr.args[i];
+            const IrType* item_expected = tuple_literal_expected_element_type(expected, expr.args.size(), i);
+            IrExprPtr value = check_expr_maybe_expected(*item, item_expected);
+            if (item_expected) {
+                coerce_expr_to_expected(*value, *item_expected);
+                require_assignable(item->loc, *item_expected, value->type);
+            }
             require_plain_prelude_aggregate_element(expr.loc, value->type, "tuple");
             require_no_zone_pointer_escape(item->loc, *value, "tuple literal");
             lowered->type.args.push_back(value->type);
             lowered->args.push_back(std::move(value));
         }
+        if (use_expected_type) {
+            lowered->type = *expected;
+        }
         return lowered;
     }
 
-    IrExprPtr check_struct_literal(const Expr& expr, IrExprPtr lowered) {
+    IrExprPtr check_struct_literal(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         std::string struct_name = resolve_struct_type_name(expr.name);
         auto struct_found = structs_.find(struct_name);
         if (struct_found == structs_.end()) {
@@ -11877,26 +11902,42 @@ private:
             }
         }
 
-        std::vector<IrExprPtr> lowered_values;
-        lowered_values.reserve(info.fields.size());
-        for (const auto& field : info.fields) {
-            auto found = values.find(field.name);
-            if (found == values.end()) {
-                fail(expr.loc, "missing field '" + field.name + "' in struct literal for '" + info.name + "'");
-            }
-            lowered_values.push_back(check_expr(*found->second));
-        }
-
         std::vector<IrType> explicit_type_args;
         explicit_type_args.reserve(expr.type_args.size());
         for (const auto& type_arg : expr.type_args) {
             explicit_type_args.push_back(resolve_executable_type(type_arg));
         }
-        if (explicit_type_args.empty() && info.generic_arity > 0) {
-            explicit_type_args = infer_struct_type_args_from_values(expr.loc, info, lowered_values);
+
+        bool has_struct_type = !explicit_type_args.empty() || info.generic_arity == 0;
+        IrType struct_type;
+        if (has_struct_type) {
+            struct_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
+        } else if (expected_type_matches_struct_literal(
+                       expected,
+                       info.name,
+                       info.generic_arity,
+                       info.fields.size())) {
+            struct_type = *expected;
+            has_struct_type = true;
         }
 
-        IrType struct_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
+        std::vector<IrExprPtr> lowered_values;
+        lowered_values.reserve(info.fields.size());
+        for (std::size_t i = 0; i < info.fields.size(); ++i) {
+            const auto& field = info.fields[i];
+            auto found = values.find(field.name);
+            if (found == values.end()) {
+                fail(expr.loc, "missing field '" + field.name + "' in struct literal for '" + info.name + "'");
+            }
+            const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;
+            lowered_values.push_back(check_expr_maybe_expected(*found->second, field_expected));
+        }
+
+        if (!has_struct_type) {
+            explicit_type_args = infer_struct_type_args_from_values(expr.loc, info, lowered_values);
+            struct_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
+        }
+
         lowered->kind = IrExprKind::Tuple;
         lowered->type = struct_type;
         lowered->args.reserve(struct_type.field_names.size());
@@ -11911,7 +11952,10 @@ private:
         return lowered;
     }
 
-    IrExprPtr check_struct_constructor_call(const Expr& expr, const StructInfo& info, IrExprPtr lowered) {
+    IrExprPtr check_struct_constructor_call(const Expr& expr,
+                                            const StructInfo& info,
+                                            IrExprPtr lowered,
+                                            const IrType* expected = nullptr) {
         if (!info.tuple_struct) {
             fail(expr.loc, "named struct '" + info.name + "' must be constructed with field literal syntax");
         }
@@ -11926,16 +11970,30 @@ private:
             explicit_type_args.push_back(resolve_executable_type(type_arg));
         }
 
-        std::vector<IrExprPtr> lowered_values;
-        lowered_values.reserve(expr.args.size());
-        for (const auto& arg : expr.args) {
-            lowered_values.push_back(check_expr(*arg));
-        }
-        if (explicit_type_args.empty() && info.generic_arity > 0) {
-            explicit_type_args = infer_struct_type_args_from_values(expr.loc, info, lowered_values);
+        bool has_struct_type = !explicit_type_args.empty() || info.generic_arity == 0;
+        IrType struct_type;
+        if (has_struct_type) {
+            struct_type = resolve_struct_literal_type(expr.loc, info.name, explicit_type_args);
+        } else if (expected_type_matches_struct_literal(
+                       expected,
+                       info.name,
+                       info.generic_arity,
+                       info.fields.size())) {
+            struct_type = *expected;
+            has_struct_type = true;
         }
 
-        IrType struct_type = resolve_struct_literal_type(expr.loc, info.name, explicit_type_args);
+        std::vector<IrExprPtr> lowered_values;
+        lowered_values.reserve(expr.args.size());
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;
+            lowered_values.push_back(check_expr_maybe_expected(*expr.args[i], field_expected));
+        }
+        if (!has_struct_type) {
+            explicit_type_args = infer_struct_type_args_from_values(expr.loc, info, lowered_values);
+            struct_type = resolve_struct_literal_type(expr.loc, info.name, explicit_type_args);
+        }
+
         lowered->kind = IrExprKind::Tuple;
         lowered->type = struct_type;
         lowered->args.reserve(expr.args.size());
@@ -11950,19 +12008,47 @@ private:
         return lowered;
     }
 
-    IrExprPtr check_vector(const Expr& expr, IrExprPtr lowered) {
+    IrExprPtr check_vector(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         if (expr.args.empty()) {
             fail(expr.loc, "empty [] literals need an explicit Vec[T] type or non-empty array elements");
+        }
+        if (expected &&
+            expected->qualifier == TypeQualifier::Value &&
+            expected->primitive == IrPrimitiveKind::Array &&
+            expected->args.size() == 1 &&
+            expr.args.size() != expected->array_size) {
+            fail(expr.loc,
+                 "array literal has " + std::to_string(expr.args.size()) +
+                     " elements but type expects " + std::to_string(expected->array_size));
         }
         lowered->kind = IrExprKind::Vector;
         lowered->type = primitive_type(IrPrimitiveKind::Array, "Array", expr.loc);
         lowered->args.reserve(expr.args.size());
+        const IrType* expected_element = vector_literal_expected_element_type(expected);
+        const bool expected_vector =
+            expected &&
+            expected->qualifier == TypeQualifier::Value &&
+            expected->primitive == IrPrimitiveKind::Vector &&
+            expected->args.size() == 1;
+        const bool expected_array =
+            expected &&
+            expected->qualifier == TypeQualifier::Value &&
+            expected->primitive == IrPrimitiveKind::Array &&
+            expected->args.size() == 1;
+        const char* aggregate_name = expected_vector ? "vector" : "array";
         IrType element_type;
-        bool has_element_type = false;
+        bool has_element_type = expected_element != nullptr;
+        if (expected_element) {
+            element_type = *expected_element;
+        }
         for (const auto& item : expr.args) {
-            IrExprPtr value = check_expr(*item);
-            require_plain_prelude_aggregate_element(expr.loc, value->type, "array");
-            require_no_zone_pointer_escape(item->loc, *value, "array literal");
+            IrExprPtr value = check_expr_maybe_expected(*item, expected_element);
+            if (expected_element) {
+                coerce_expr_to_expected(*value, *expected_element);
+                require_assignable(item->loc, *expected_element, value->type);
+            }
+            require_plain_prelude_aggregate_element(expr.loc, value->type, aggregate_name);
+            require_no_zone_pointer_escape(item->loc, *value, std::string(aggregate_name) + " literal");
             if (!has_element_type) {
                 element_type = value->type;
                 has_element_type = true;
@@ -11972,7 +12058,13 @@ private:
             }
             lowered->args.push_back(std::move(value));
         }
-        lowered->type = array_storage_type(expr.loc, element_type, expr.args.size());
+        if (expected_vector) {
+            lowered->type = vector_storage_type(expr.loc, element_type, expr.args.size());
+        } else if (expected_array) {
+            lowered->type = array_storage_type(expr.loc, element_type, expr.args.size());
+        } else {
+            lowered->type = array_storage_type(expr.loc, element_type, expr.args.size());
+        }
         return lowered;
     }
 
@@ -15796,7 +15888,7 @@ private:
             auto struct_found = structs_.find(struct_name);
             if (struct_found != structs_.end()) {
                 require_struct_access(expr.loc, struct_found->second);
-                return check_struct_constructor_call(expr, struct_found->second, std::move(lowered));
+                return check_struct_constructor_call(expr, struct_found->second, std::move(lowered), expected);
             }
             if (is_planned_prelude_function_name(expr.name)) {
                 fail(expr.loc, planned_prelude_function_message(expr.name));

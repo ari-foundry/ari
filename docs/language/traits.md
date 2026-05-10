@@ -317,6 +317,7 @@ let branched: Box[i64] = if ready {
 } else {
   Make<i64>::make(2)
 }
+let pair: (Box[i64], Box[i64]) = (Make<i64>::make(3), Make<i64>::make(4))
 ```
 
 If the associated function has method-level generics, put them after the
