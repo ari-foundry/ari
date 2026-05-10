@@ -1148,7 +1148,7 @@ private:
         stmt->loc = peek().loc;
         if (match(TokenKind::KwLet)) {
             stmt->has_condition_pattern = true;
-            stmt->condition_pattern = parse_pattern();
+            stmt->condition_pattern = std::make_unique<Pattern>(parse_pattern());
             expect(TokenKind::Equal, "expected = after if-let pattern");
             stmt->condition = parse_expression_without_struct_literals();
         } else {
@@ -1173,7 +1173,7 @@ private:
         if (match(TokenKind::KwLet)) {
             stmt->kind = StmtKind::WhileLet;
             stmt->has_condition_pattern = true;
-            stmt->condition_pattern = parse_pattern();
+            stmt->condition_pattern = std::make_unique<Pattern>(parse_pattern());
             expect(TokenKind::Equal, "expected = after while-let pattern");
             stmt->condition = parse_expression_without_struct_literals();
         } else {
@@ -2135,7 +2135,7 @@ private:
         expr->loc = loc;
         if (match(TokenKind::KwLet)) {
             expr->has_condition_pattern = true;
-            expr->condition_pattern = parse_pattern();
+            expr->condition_pattern = std::make_unique<Pattern>(parse_pattern());
             expect(TokenKind::Equal, "expected = after if-let pattern");
             expr->condition = parse_expression_without_struct_literals();
         } else {

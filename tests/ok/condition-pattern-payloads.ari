@@ -1,0 +1,72 @@
+enum Maybe {
+  None,
+  Some(i64),
+}
+
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+fn maybe(value: i64) -> Maybe {
+  if value < 3 {
+    return Some(value);
+  }
+  return None();
+}
+
+fn point(flag: bool) -> Point {
+  if flag {
+    return Point { x: 0, y: 5 };
+  }
+  return Point { x: 1, y: 2 };
+}
+
+fn pair_at(index: i64) -> (i64, i64) {
+  if index == 0 {
+    return (0, 3);
+  }
+  if index == 1 {
+    return (4, 0);
+  }
+  return (1, 2);
+}
+
+fn main() -> i64 {
+  var total = 0;
+  if let Some(value) = maybe(2) {
+    total = total + value;
+  } else {
+    total = 100;
+  }
+
+  let enum_expr = if let Some(other) = maybe(1) {
+    other + 10
+  } else {
+    0
+  };
+
+  var index = 0;
+  while let Some(looped) = maybe(index) {
+    total = total + looped;
+    index = index + 1;
+  }
+
+  if let (Point { x: axis, y: 0 } | Point { x: 0, y: axis }) = point(true) {
+    total = total + axis;
+  }
+
+  var pair_index = 0;
+  while let ((side, 0) | (0, side)) = pair_at(pair_index) {
+    total = total + side;
+    pair_index = pair_index + 1;
+  }
+
+  let aggregate_expr = if let ((left, 0) | (0, left)) = (0, 7) {
+    left
+  } else {
+    0
+  };
+
+  return total + enum_expr + aggregate_expr;
+}

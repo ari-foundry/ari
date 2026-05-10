@@ -181,7 +181,7 @@ struct Expr {
     std::unique_ptr<Expr> right;
     ExprPtr condition;
     bool has_condition_pattern = false;
-    Pattern condition_pattern;
+    std::unique_ptr<Pattern> condition_pattern;
     std::vector<StmtPtr> then_body;
     ExprPtr then_value;
     std::vector<StmtPtr> else_body;
@@ -242,7 +242,7 @@ struct Stmt {
     ExprPtr rhs;
     ExprPtr condition;
     bool has_condition_pattern = false;
-    Pattern condition_pattern;
+    std::unique_ptr<Pattern> condition_pattern;
     Pattern for_pattern;
     bool for_pattern_filter = false;
     ExprPtr for_iterable;

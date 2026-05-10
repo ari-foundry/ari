@@ -90,7 +90,9 @@ expression child/vector payload packing remains a separate refactor because
 those nodes are mutated across parser cloning, semantic lowering, and IR builder
 paths. AST macro-call token trees and IR format-print string parts are already
 lazy rare payloads, so ordinary expression nodes no longer carry those vector
-slots directly.
+slots directly. AST `if let`/`while let` condition patterns are lazy payloads
+too, leaving normal condition expressions and statements without an embedded
+`Pattern` object.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

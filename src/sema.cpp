@@ -8781,10 +8781,11 @@ private:
         }
 
         lowered.kind = IrStmtKind::Block;
+        const Pattern& condition_pattern = *stmt.condition_pattern;
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
-            stmt.condition_pattern,
+            condition_pattern,
             enum_info,
             enum_value_type
         );
@@ -8883,6 +8884,7 @@ private:
 
     Flow check_aggregate_if_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
+        const Pattern& condition_pattern = *stmt.condition_pattern;
         lowered.kind = IrStmtKind::Block;
 
         std::string subject_name = make_hidden_local(
@@ -8890,10 +8892,10 @@ private:
         declare_local(stmt.loc, subject_name, subject_type, false);
         lowered.statements.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(stmt.condition_pattern);
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(condition_pattern);
         std::set<std::string> reusable_names;
-        if (pattern_contains_or(stmt.condition_pattern)) {
-            reusable_names = require_same_or_pattern_bindings(stmt.condition_pattern.loc, alternatives, subject_type);
+        if (pattern_contains_or(condition_pattern)) {
+            reusable_names = require_same_or_pattern_bindings(condition_pattern.loc, alternatives, subject_type);
         }
 
         bool has_irrefutable_alternative = false;
@@ -8920,7 +8922,7 @@ private:
             if (!lowered_arm.condition) {
                 has_irrefutable_alternative = true;
                 if (!stmt.else_body.empty()) {
-                    fail(stmt.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
+                    fail(condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
                 }
             }
             for (auto& statement : condition_prelude) {
@@ -8967,7 +8969,7 @@ private:
         }
 
         if (has_irrefutable_alternative && !stmt.else_body.empty()) {
-            fail(stmt.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
+            fail(condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
         }
 
         if (!stmt.else_body.empty()) {
@@ -9328,21 +9330,22 @@ private:
         lowered.kind = IrStmtKind::WhileLet;
         lowered.label = stmt.label;
         lowered.match_value = std::move(match_value);
+        const Pattern& condition_pattern = *stmt.condition_pattern;
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
         IrType enum_value_type = lowered.match_value->type;
         EnumMatchCoverage coverage;
         std::vector<IrMatchArm> pattern_arms = lower_match_arm_patterns(
-            stmt.condition_pattern,
+            condition_pattern,
             enum_info,
             enum_value_type,
             coverage
         );
         if (pattern_arms.empty()) {
-            fail(stmt.condition_pattern.loc, "while-let pattern did not lower to a match arm");
+            fail(condition_pattern.loc, "while-let pattern did not lower to a match arm");
         }
         for (const auto& arm : pattern_arms) {
             if (arm.wildcard) {
-                fail(stmt.condition_pattern.loc, "while-let requires a refutable enum-case pattern");
+                fail(condition_pattern.loc, "while-let requires a refutable enum-case pattern");
             }
         }
         StateSnapshot loop_input = snapshot_states();
@@ -9383,6 +9386,7 @@ private:
 
     void check_aggregate_while_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
+        const Pattern& condition_pattern = *stmt.condition_pattern;
         lowered.kind = IrStmtKind::While;
         lowered.label = stmt.label;
         lowered.condition = make_bool_literal_expr(stmt.loc, true);
@@ -9392,10 +9396,10 @@ private:
         declare_local(stmt.loc, subject_name, subject_type, false);
         lowered.loop_body.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(stmt.condition_pattern);
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(condition_pattern);
         std::set<std::string> reusable_names;
-        if (pattern_contains_or(stmt.condition_pattern)) {
-            reusable_names = require_same_or_pattern_bindings(stmt.condition_pattern.loc, alternatives, subject_type);
+        if (pattern_contains_or(condition_pattern)) {
+            reusable_names = require_same_or_pattern_bindings(condition_pattern.loc, alternatives, subject_type);
         }
 
         bool has_irrefutable_alternative = false;
@@ -11614,10 +11618,11 @@ private:
         }
 
         lowered = make_ir_block_expr(expr.loc);
+        const Pattern& condition_pattern = *expr.condition_pattern;
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(expr.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
-            expr.condition_pattern,
+            condition_pattern,
             enum_info,
             enum_value_type
         );
@@ -11734,6 +11739,7 @@ private:
         const IrType* expected = nullptr
     ) {
         IrType subject_type = subject->type;
+        const Pattern& condition_pattern = *expr.condition_pattern;
         lowered = make_ir_block_expr(expr.loc);
 
         std::string subject_name = make_hidden_local(
@@ -11756,10 +11762,10 @@ private:
             result_expected = &explicit_result_expected;
         }
 
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(expr.condition_pattern);
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(condition_pattern);
         std::set<std::string> reusable_names;
-        if (pattern_contains_or(expr.condition_pattern)) {
-            reusable_names = require_same_or_pattern_bindings(expr.condition_pattern.loc, alternatives, subject_type);
+        if (pattern_contains_or(condition_pattern)) {
+            reusable_names = require_same_or_pattern_bindings(condition_pattern.loc, alternatives, subject_type);
         }
 
         for (std::size_t i = 0; i < alternatives.size(); ++i) {
@@ -11776,7 +11782,7 @@ private:
             );
             if (!lowered_arm.condition) {
                 has_irrefutable_alternative = true;
-                fail(expr.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
+                fail(condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
             }
             for (auto& statement : condition_prelude) {
                 lowered->block_body.push_back(std::move(statement));
@@ -11847,7 +11853,7 @@ private:
         }
 
         if (has_irrefutable_alternative) {
-            fail(expr.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
+            fail(condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
         }
 
         restore_states(branch_input);

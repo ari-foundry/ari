@@ -422,6 +422,8 @@ Checklist:
       expression chain lowering paths
 - [x] rare AST/IR vector payload packing preserves macro token parsing and
       format-print string-part lowering paths
+- [x] AST condition-pattern payload packing preserves enum and aggregate
+      if-let/while-let statement and expression lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

@@ -267,6 +267,11 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/while-let-aggregate-or-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.ll
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.ll
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.ll
+	$(TARGET) tests/ok/condition-pattern-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
+	grep -q "match.arm" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
+	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
+	grep -q "while.cond" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
+	grep -q "extractvalue" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	$(TARGET) tests/ok/for-range-inclusive.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-inclusive.ll
 	grep -q "icmp sle" $(BUILD_DIR)/control-flow/for-range-inclusive.ll
 	$(TARGET) tests/ok/range-values.ari --emit-llvm $(BUILD_DIR)/control-flow/range-values.ll
@@ -297,6 +302,7 @@ check-control-flow: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-stored-alias-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.elf; code=$$?; test $$code -eq 28; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/while-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; code=$$?; test $$code -eq 55; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/if-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/if-let-or-pattern.elf; $(BUILD_DIR)/control-flow/if-let-or-pattern.elf; code=$$?; test $$code -eq 44; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/condition-pattern-payloads.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/condition-pattern-payloads.elf; $(BUILD_DIR)/control-flow/condition-pattern-payloads.elf; code=$$?; test $$code -eq 35; fi
 	$(TARGET) tests/ok/labeled-block.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block.ll
 	grep -q "block.end" $(BUILD_DIR)/control-flow/labeled-block.ll
 	$(TARGET) tests/ok/if-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/if-expression.ll
