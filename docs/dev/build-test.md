@@ -78,7 +78,7 @@ generic trait methods, and trait impl coherence diagnostics.
 boolean/target/feature cfg predicate parsing, command-line cfg feature flags,
 deprecated use warnings, `@test` runner generation, user-defined attribute
 names reserved by `meta fn`, exported C header prototypes and public
-non-generic `@repr(C)` struct declarations, meta signatures over
+non-generic `@repr(C)` struct/fieldless-enum declarations, meta signatures over
 `token_stream`/`ast`, and planned Rust-style `name!(...)` macro invocation
 diagnostics.
 

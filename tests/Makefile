@@ -848,16 +848,23 @@ check-meta: $(TARGET)
 	grep -q 'void ari_touch(void\* arg0, bool arg1);' $(BUILD_DIR)/meta/c-header-export.h
 	if grep -q 'hidden' $(BUILD_DIR)/meta/c-header-export.h; then exit 1; fi
 	$(TARGET) tests/ok/c-header-repr-struct.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-repr-struct.h --emit-llvm $(BUILD_DIR)/meta/c-header-repr-struct.ll
+	grep -q 'typedef int64_t ApiStatus;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'ApiStatus_Ready = 0,' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'ApiStatus_Busy = 1,' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'ApiStatus_Done = 2,' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'typedef struct ApiSlots ApiSlots;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'struct ApiSlots {' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t value;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'bool flag;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'ApiStatus status;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'void\* raw;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t\* shared;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t\* unique;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_ping(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_observe(ApiSlots\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t ari_status_code(ApiStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	if grep -q 'HiddenSlots' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
+	if grep -q 'HiddenStatus' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw
 	$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw; code=$$?; test $$code -eq 10
 	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym

@@ -297,6 +297,20 @@ struct IrCRecord {
     SourceLocation loc;
 };
 
+struct IrCEnumCase {
+    std::string name;
+    std::string c_name;
+    std::uint32_t tag = 0;
+    SourceLocation loc;
+};
+
+struct IrCEnum {
+    std::string name;
+    std::string c_name;
+    std::vector<IrCEnumCase> cases;
+    SourceLocation loc;
+};
+
 enum class IrExternAbi {
     C,
     AriBuiltin,
@@ -399,6 +413,7 @@ struct IrFunction {
 struct IrProgram {
     std::vector<IrExternFunction> extern_functions;
     std::vector<IrCRecord> c_records;
+    std::vector<IrCEnum> c_enums;
     std::vector<IrTraitObjectVTable> trait_object_vtables;
     std::vector<IrFunction> functions;
     std::vector<std::string> warnings;

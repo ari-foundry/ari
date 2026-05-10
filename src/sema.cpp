@@ -296,6 +296,7 @@ public:
         IrProgram ir;
         ir.require_main = options_.require_main || options_.test_mode;
         collect_ir_extern_functions(ir);
+        collect_ir_c_enums(ir);
         collect_ir_c_records(ir);
         for (const auto& fn : program_.functions) {
             if (!is_executable_function(fn)) continue;
@@ -2525,6 +2526,29 @@ private:
                 });
             }
             ir.c_records.push_back(std::move(record));
+        }
+    }
+
+    void collect_ir_c_enums(IrProgram& ir) const {
+        for (const auto& decl : program_.enums) {
+            if (!decl.is_public) continue;
+            if (!find_attribute(decl.attributes, "repr")) continue;
+            if (!decl.generics.empty()) continue;
+
+            IrCEnum item;
+            item.name = decl.name;
+            item.c_name = unqualified_name(decl.name);
+            item.loc = decl.loc;
+            for (std::size_t i = 0; i < decl.cases.size(); ++i) {
+                const EnumCase& enum_case = decl.cases[i];
+                item.cases.push_back(IrCEnumCase{
+                    enum_case.name,
+                    item.c_name + "_" + enum_case.name,
+                    static_cast<std::uint32_t>(i),
+                    enum_case.loc
+                });
+            }
+            ir.c_enums.push_back(std::move(item));
         }
     }
 

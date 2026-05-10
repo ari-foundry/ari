@@ -1,7 +1,20 @@
 @repr(C)
+pub enum ApiStatus {
+  Ready,
+  Busy,
+  Done,
+}
+
+@repr(C)
+enum HiddenStatus {
+  Secret,
+}
+
+@repr(C)
 pub struct ApiSlots {
   value: i64,
   flag: bool,
+  status: ApiStatus,
   raw: ptr c_void,
   shared: ref i64,
   unique: ref mut i64,
@@ -20,4 +33,9 @@ pub fn ping(value: i64) -> i64 {
 @export("ari_observe")
 pub fn observe(slots: ptr ApiSlots) -> i64 {
   return 0;
+}
+
+@export("ari_status_code")
+pub fn status_code(status: ApiStatus) -> i64 {
+  return 1;
 }
