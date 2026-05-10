@@ -4753,8 +4753,8 @@ private:
         if (contains_zone_temp_call(*init) && !is_zone_temp_call(*init)) {
             fail(stmt.binding.init->loc, "zone::temp can only initialize a local temporary zone binding");
         }
-        coerce_expr_to_expected(*init, declared);
         specialize_vector_storage_from_init(declared, *init);
+        coerce_expr_to_expected(*init, declared);
         require_nullable_pointer_initializer(stmt.loc, stmt.binding, declared, *init);
         require_assignable(stmt.loc, declared, init->type);
         VectorKnownLength init_vector_length =
@@ -4801,8 +4801,8 @@ private:
             init = check_expr(*stmt.binding.init);
             declared = init->type;
         }
-        coerce_expr_to_expected(*init, declared);
         specialize_vector_storage_from_init(declared, *init);
+        coerce_expr_to_expected(*init, declared);
         require_nullable_pointer_initializer(stmt.loc, stmt.binding, declared, *init);
         require_assignable(stmt.loc, declared, init->type);
         if (is_borrow_type(declared)) {
@@ -4863,6 +4863,15 @@ private:
     void widen_vector_storage_for_assignment(LocalInfo& local, const IrExpr& value) const {
         if (!is_vector_storage_type(local.type)) return;
         widen_vector_storage(local, vector_storage_capacity_from_expr(value));
+    }
+
+    static bool is_unsized_vector_storage_type(const IrType* type) {
+        return type && is_vector_storage_type(*type) && type->array_size == 0;
+    }
+
+    static void widen_vector_result_storage(IrType& type, const IrExpr& value) {
+        if (!is_vector_storage_type(type)) return;
+        widen_vector_storage_type(type, vector_storage_capacity_from_expr(value));
     }
 
     bool known_integer_capacity(const Expr& expr, StaticIntegerValue& out) {
@@ -11605,13 +11614,22 @@ private:
         StateSnapshot branch_input = snapshot_states();
         CheckedExprBlock then_arm = check_value_block(expr.loc, "if expression arm", expr.then_body, *expr.then_value, expected);
         IrType result_type = expected ? *expected : then_arm.value->type;
-        if (expected) {
+        bool unsized_vector_expected = is_unsized_vector_storage_type(expected);
+        if (unsized_vector_expected) {
+            widen_vector_result_storage(result_type, *then_arm.value);
+        } else if (expected) {
             coerce_expr_to_expected(*then_arm.value, result_type);
             require_assignable(expr.loc, result_type, then_arm.value->type);
         }
 
         restore_states(branch_input);
-        CheckedExprBlock else_arm = check_value_block(expr.loc, "if expression arm", expr.else_body, *expr.else_value, &result_type);
+        const IrType* else_expected = unsized_vector_expected ? expected : &result_type;
+        CheckedExprBlock else_arm = check_value_block(expr.loc, "if expression arm", expr.else_body, *expr.else_value, else_expected);
+        if (unsized_vector_expected) {
+            widen_vector_result_storage(result_type, *else_arm.value);
+        }
+        coerce_expr_to_expected(*then_arm.value, result_type);
+        require_assignable(expr.loc, result_type, then_arm.value->type);
         coerce_expr_to_expected(*else_arm.value, result_type);
         require_assignable(expr.loc, result_type, else_arm.value->type);
 

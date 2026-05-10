@@ -55,7 +55,10 @@
    initialization and assignment from another local `Vec` also preserve that
    compiler-known current length when the source binding is still precise, and
    assignment from another local `Vec` widens the fixed local target storage to
-   the source storage capacity before the copy. The
+   the source storage capacity before the copy. Vec-valued `if` and block
+   expressions now feed their nested fixed local storage capacity and
+   same-length branch results into the same assignment/initialization tracking.
+   The
    shared constant
    value model,
    constant-to-IR literal
@@ -73,6 +76,9 @@
      `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
      `reserve` operations to allocator-backed storage instead of fixed
      local-capacity traps
+   - [control-flow-match] extend the same local Vec capacity/known-length
+     propagation to Vec-valued `match` and `if let` expression arms that need
+     branch result materialization
 2. Reuse AST/IR summary package caches for file-backed modules.
    The source-snapshot cache goal is complete: compact module metadata and
    source-snapshot module caches can be emitted, checked, and invalidated with

@@ -131,15 +131,14 @@ const IrType& require_typed_empty_vector_element_type(SourceLocation loc, const 
 }
 
 void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init) {
+    std::uint64_t capacity = vector_storage_capacity_from_expr(init);
     if (declared.primitive != IrPrimitiveKind::Vector ||
-        init.type.primitive != IrPrimitiveKind::Vector ||
         declared.args.size() != 1 ||
-        init.type.args.size() != 1 ||
         declared.array_size != 0 ||
-        init.type.array_size == 0) {
+        capacity == 0) {
         return;
     }
-    declared.array_size = init.type.array_size;
+    declared.array_size = capacity;
 }
 
 void widen_vector_storage_type(IrType& type, std::uint64_t capacity) {
@@ -162,13 +161,55 @@ bool vector_literal_length(const IrExpr& expr, std::uint64_t& out) {
 VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, const IrExpr& expr) {
     if (!is_vector_storage_type(storage_type)) return {};
     std::uint64_t length = 0;
-    if (!vector_literal_length(expr, length)) return {};
-    return VectorKnownLength{true, length};
+    if (vector_literal_length(expr, length)) return VectorKnownLength{true, length};
+    if (expr.kind == IrExprKind::Block && expr.block_value) {
+        return vector_known_length_from_expr(storage_type, *expr.block_value);
+    }
+    auto merge_length = [&](VectorKnownLength& merged, bool& has_merged, const IrExprPtr& value) {
+        if (!value) return false;
+        VectorKnownLength length = vector_known_length_from_expr(storage_type, *value);
+        if (!length.known) return false;
+        if (!has_merged) {
+            merged = length;
+            has_merged = true;
+            return true;
+        }
+        return merged.length == length.length;
+    };
+    if (expr.kind == IrExprKind::If) {
+        VectorKnownLength merged;
+        bool has_merged = false;
+        if (!merge_length(merged, has_merged, expr.then_value)) return {};
+        if (!merge_length(merged, has_merged, expr.else_value)) return {};
+        return has_merged ? merged : VectorKnownLength{};
+    }
+    if (expr.kind == IrExprKind::Match) {
+        VectorKnownLength merged;
+        bool has_merged = false;
+        for (const auto& arm : expr.match_arms) {
+            if (!merge_length(merged, has_merged, arm.value)) return {};
+        }
+        return has_merged ? merged : VectorKnownLength{};
+    }
+    return {};
 }
 
 std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr) {
-    if (!is_vector_storage_type(expr.type)) return 0;
-    return expr.type.array_size;
+    std::uint64_t capacity = is_vector_storage_type(expr.type) ? expr.type.array_size : 0;
+    auto merge_capacity = [&](const IrExprPtr& value) {
+        if (value) capacity = std::max(capacity, vector_storage_capacity_from_expr(*value));
+    };
+    if (expr.kind == IrExprKind::Vector && is_vector_storage_type(expr.type)) {
+        capacity = std::max(capacity, static_cast<std::uint64_t>(expr.args.size()));
+    } else if (expr.kind == IrExprKind::Block) {
+        merge_capacity(expr.block_value);
+    } else if (expr.kind == IrExprKind::If) {
+        merge_capacity(expr.then_value);
+        merge_capacity(expr.else_value);
+    } else if (expr.kind == IrExprKind::Match) {
+        for (const auto& arm : expr.match_arms) merge_capacity(arm.value);
+    }
+    return capacity;
 }
 
 LocalVecMethod classify_local_vec_method(const std::string& method_name) {
