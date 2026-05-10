@@ -514,6 +514,15 @@ private:
         }
     }
 
+    void zero_local_bytes(SourceLocation loc, int target_offset, const IrType& target_type) {
+        int size = layout_size_bytes(loc, target_type);
+        IrType byte_type = u8_type(loc);
+        for (int byte = 0; byte < size; ++byte) {
+            emit_mov_reg_imm64(Reg::RAX, 0);
+            emit_store_rax_to_local(target_offset - byte, byte_type);
+        }
+    }
+
     void copy_pointer_base_to_offset(SourceLocation loc,
                                      const IrType& target_type,
                                      int target_offset,
@@ -539,6 +548,17 @@ private:
         IrType byte_type = u8_type(loc);
         for (int byte = 0; byte < size; ++byte) {
             emit_load_rax_from_local(source_offset - byte, byte_type);
+            emit_mov_reg_reg(Reg::RCX, Reg::RBX);
+            emit_add_pointer_offset_reg(Reg::RCX, byte_offset + byte);
+            emit_store_rax_to_ptr(Reg::RCX, byte_type);
+        }
+    }
+
+    void zero_pointer_bytes(SourceLocation loc, const IrType& target_type, int byte_offset) {
+        int size = layout_size_bytes(loc, target_type);
+        IrType byte_type = u8_type(loc);
+        for (int byte = 0; byte < size; ++byte) {
+            emit_mov_reg_imm64(Reg::RAX, 0);
             emit_mov_reg_reg(Reg::RCX, Reg::RBX);
             emit_add_pointer_offset_reg(Reg::RCX, byte_offset + byte);
             emit_store_rax_to_ptr(Reg::RCX, byte_type);
@@ -615,8 +635,12 @@ private:
 
         for (std::size_t i = 1; i < target_type.field_types.size(); ++i) {
             int payload_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, i);
-            emit_mov_reg_imm64(Reg::RAX, 0);
-            emit_store_rax_to_local(payload_offset, target_type.field_types[i]);
+            if (is_aggregate_type(target_type.field_types[i])) {
+                zero_local_bytes(value.loc, payload_offset, target_type.field_types[i]);
+            } else {
+                emit_mov_reg_imm64(Reg::RAX, 0);
+                emit_store_rax_to_local(payload_offset, target_type.field_types[i]);
+            }
         }
 
         for (std::size_t i = 0; i < value.args.size(); ++i) {
@@ -625,6 +649,10 @@ private:
                 throw CompileError(where(value.loc) + ": aggregate enum payload slot is missing during codegen");
             }
             int payload_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, field_index);
+            if (is_aggregate_type(target_type.field_types[field_index])) {
+                emit_store_value_to_offset(target_type.field_types[field_index], *value.args[i], payload_offset);
+                continue;
+            }
             emit_expr(*value.args[i]);
             emit_normalize_aggregate_enum_payload_value(value.args[i]->loc, value.args[i]->type);
             emit_store_rax_to_local(payload_offset, target_type.field_types[field_index]);
@@ -646,10 +674,14 @@ private:
 
         for (std::size_t i = 1; i < target_type.field_types.size(); ++i) {
             int payload_offset = byte_offset + field_offset_bytes(value.loc, target_type, i);
-            emit_mov_reg_imm64(Reg::RAX, 0);
-            emit_mov_reg_reg(Reg::RCX, Reg::RBX);
-            emit_add_pointer_offset_reg(Reg::RCX, payload_offset);
-            emit_store_rax_to_ptr(Reg::RCX, target_type.field_types[i]);
+            if (is_aggregate_type(target_type.field_types[i])) {
+                zero_pointer_bytes(value.loc, target_type.field_types[i], payload_offset);
+            } else {
+                emit_mov_reg_imm64(Reg::RAX, 0);
+                emit_mov_reg_reg(Reg::RCX, Reg::RBX);
+                emit_add_pointer_offset_reg(Reg::RCX, payload_offset);
+                emit_store_rax_to_ptr(Reg::RCX, target_type.field_types[i]);
+            }
         }
 
         for (std::size_t i = 0; i < value.args.size(); ++i) {
@@ -658,6 +690,10 @@ private:
                 throw CompileError(where(value.loc) + ": aggregate enum payload slot is missing during codegen");
             }
             int payload_offset = byte_offset + field_offset_bytes(value.loc, target_type, field_index);
+            if (is_aggregate_type(target_type.field_types[field_index])) {
+                emit_store_value_to_pointer_base(value.args[i]->loc, *value.args[i], target_type.field_types[field_index], payload_offset);
+                continue;
+            }
             emit_push(Reg::RBX);
             emit_expr(*value.args[i]);
             emit_normalize_aggregate_enum_payload_value(value.args[i]->loc, value.args[i]->type);
@@ -1889,16 +1925,13 @@ private:
         }
 
         for (const auto& condition : arm.payload_enum_conditions) {
-            emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
-            emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
-            emit_and_reg_reg(Reg::RAX, Reg::RCX);
+            emit_load_nested_enum_payload_tag(condition, arm.loc, match_base_offset, enum_type);
             emit_mov_reg_imm64(Reg::RCX, condition.tag);
             emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
             patches.push_back(emit_jcc_placeholder(0x85));
 
             if (condition.has_payload_literal) {
-                emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
-                emit_shr_rax_imm8(32);
+                emit_load_nested_enum_payload_slot(condition, arm.loc, match_base_offset, enum_type, 0);
                 emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
                 emit_mov_reg_imm64(Reg::RCX, nested_payload_literal_bits(condition));
                 emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
@@ -1906,15 +1939,13 @@ private:
             }
 
             if (condition.has_payload_range) {
-                emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
-                emit_shr_rax_imm8(32);
+                emit_load_nested_enum_payload_slot(condition, arm.loc, match_base_offset, enum_type, 0);
                 emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
                 emit_mov_reg_imm64(Reg::RCX, nested_payload_range_start_bits(condition));
                 emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
                 patches.push_back(emit_jcc_placeholder(condition.range_is_unsigned ? 0x82 : 0x8C));
 
-                emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
-                emit_shr_rax_imm8(32);
+                emit_load_nested_enum_payload_slot(condition, arm.loc, match_base_offset, enum_type, 0);
                 emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
                 emit_mov_reg_imm64(Reg::RCX, nested_payload_range_end_bits(condition));
                 emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
@@ -1952,6 +1983,53 @@ private:
         emit_load_rax_from_local(payload_offset, enum_type.field_types[field_index]);
     }
 
+    int aggregate_enum_payload_offset(SourceLocation loc,
+                                      int match_base_offset,
+                                      const IrType& enum_type,
+                                      std::uint32_t payload_index) const {
+        std::size_t field_index = aggregate_enum_payload_field_index(loc, enum_type, payload_index);
+        return aggregate_lvalue_field_offset(loc, match_base_offset, enum_type, field_index);
+    }
+
+    void emit_load_nested_enum_payload_tag(const IrPayloadEnumCondition& condition,
+                                           SourceLocation loc,
+                                           int match_base_offset,
+                                           const IrType& enum_type) {
+        if (has_aggregate_enum_layout(condition.enum_type)) {
+            int payload_offset = aggregate_enum_payload_offset(loc, match_base_offset, enum_type, condition.index);
+            int tag_offset = aggregate_lvalue_field_offset(loc, payload_offset, condition.enum_type, 0);
+            emit_load_rax_from_local(tag_offset, condition.enum_type.field_types[0]);
+            return;
+        }
+
+        emit_load_aggregate_enum_payload_slot(condition.index, loc, match_base_offset, enum_type);
+        emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
+        emit_and_reg_reg(Reg::RAX, Reg::RCX);
+    }
+
+    void emit_load_nested_enum_payload_slot(const IrPayloadEnumCondition& condition,
+                                            SourceLocation loc,
+                                            int match_base_offset,
+                                            const IrType& enum_type,
+                                            std::uint32_t nested_payload_index) {
+        if (has_aggregate_enum_layout(condition.enum_type)) {
+            std::size_t nested_field_index = static_cast<std::size_t>(nested_payload_index) + 1;
+            if (nested_field_index >= condition.enum_type.field_types.size()) {
+                throw CompileError(where(loc) + ": nested aggregate enum payload slot is missing during codegen");
+            }
+            int payload_offset = aggregate_enum_payload_offset(loc, match_base_offset, enum_type, condition.index);
+            int nested_offset = aggregate_lvalue_field_offset(loc, payload_offset, condition.enum_type, nested_field_index);
+            emit_load_rax_from_local(nested_offset, condition.enum_type.field_types[nested_field_index]);
+            return;
+        }
+
+        if (nested_payload_index != 0) {
+            throw CompileError(where(loc) + ": compact nested enum payload slot is missing during codegen");
+        }
+        emit_load_aggregate_enum_payload_slot(condition.index, loc, match_base_offset, enum_type);
+        emit_shr_rax_imm8(32);
+    }
+
     static std::uint64_t aggregate_payload_literal_bits(const IrPayloadLiteralCondition& condition) {
         if (condition.is_bool) return condition.bool_value ? 1 : 0;
         return condition.value;
@@ -1982,6 +2060,11 @@ private:
                                              std::uint32_t payload_index,
                                              const std::string& name,
                                              const IrType& type) {
+        if (is_aggregate_type(type)) {
+            int payload_offset = aggregate_enum_payload_offset(loc, match_base_offset, enum_type, payload_index);
+            copy_local_bytes_to_offset(loc, payload_offset, local_offset(loc, name), type);
+            return;
+        }
         emit_load_aggregate_enum_payload_slot(payload_index, loc, match_base_offset, enum_type);
         emit_cast_aggregate_enum_payload_slot_to_type(loc, type);
         emit_store_rax_to_local(local_offset(loc, name), type);
@@ -2003,8 +2086,10 @@ private:
         if (!arm.payload_bindings.empty()) {
             for (const auto& binding : arm.payload_bindings) {
                 if (binding.compact_enum_payload) {
-                    emit_load_aggregate_enum_payload_slot(binding.index, arm.loc, match_base_offset, enum_type);
-                    emit_shr_rax_imm8(32);
+                    IrPayloadEnumCondition nested;
+                    nested.index = binding.index;
+                    nested.enum_type = binding.compact_enum_type;
+                    emit_load_nested_enum_payload_slot(nested, arm.loc, match_base_offset, enum_type, 0);
                     emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, binding.type);
                     emit_store_rax_to_local(local_offset(arm.loc, binding.name), binding.type);
                     continue;

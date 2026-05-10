@@ -94,17 +94,6 @@
    - [pattern-payload-multi] extend iterator item enum-case payload patterns
      beyond fieldless, compact, and homogeneous nested aggregate-enum
      single-scalar payload cases to nested multi-payload enum cases
-4. Promote nested aggregate-enum payload storage into the executable subset.
-   This is the direct prerequisite for iterator item patterns over
-   `Option[PayloadEnum]`, because `Iterator[T].next` returns `Option[T]` and
-   aggregate enum item payloads need to be stored inside another aggregate enum
-   payload slot. LLVM now supports homogeneous nested aggregate-enum payload
-   slots and nested tag/single-scalar-payload extraction when all cases that
-   use the same payload slot store the same nested enum type.
-   - [mixed-slots] define an explicit ABI rule for payload slots that mix
-     nested aggregate enums with scalar or pointer-shaped values
-   - [freestanding] lower nested aggregate-enum payload stores, copies, and
-     tag/payload extraction in the raw backend
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -151,10 +140,13 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    LLVM homogeneous nested aggregate-enum values today. Nested enum-case
    subpatterns can inspect one-word enum payload slots on the LLVM and
    freestanding local-value paths, and can inspect homogeneous nested
-   aggregate-enum payload slots on the LLVM path. The freestanding backend can
-   store/copy local and pointer-backed aggregate enum values, including direct
-   enum-constructor stores through raw pointers. The stored payload universe is
-   still intentionally narrow.
+   aggregate-enum payload slots on the LLVM and freestanding paths. The
+   freestanding backend can store/copy local and pointer-backed aggregate enum
+   values, including homogeneous nested aggregate-enum payload values and
+   direct enum-constructor stores through raw pointers. The stored payload
+   universe is still intentionally narrow.
+   - [mixed-slots] define an explicit ABI rule for payload slots that mix
+     nested aggregate enums with scalar or pointer-shaped values
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
    - [payload-pointers] lower direct payload field pointer access for

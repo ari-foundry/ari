@@ -441,6 +441,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-payload-tests.raw; code=$$?; test $$code -eq 73
 	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-nested-payload.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-nested-payload.raw
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-nested-payload.raw; code=$$?; test $$code -eq 99
+	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-nested-aggregate-payload.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-nested-aggregate-payload.raw
+	$(BUILD_DIR)/match/freestanding-aggregate-enum-nested-aggregate-payload.raw; code=$$?; test $$code -eq 49
 	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-pointer-copy.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-direct-store.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw
@@ -1841,7 +1843,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/invalid-cast.ari -o $(BUILD_DIR)/errors/invalid-cast.elf >$(BUILD_DIR)/errors/invalid-cast.err 2>&1; then exit 1; fi
 	grep -q "explicit casts currently require integer types, float types, integer/float casts, or raw pointer casts, got bool as i64" $(BUILD_DIR)/errors/invalid-cast.err
 	if $(TARGET) tests/errors/enum-payload-too-wide.ari -o $(BUILD_DIR)/errors/enum-payload-too-wide.elf >$(BUILD_DIR)/errors/enum-payload-too-wide.err 2>&1; then exit 1; fi
-	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, or one-word enum values" $(BUILD_DIR)/errors/enum-payload-too-wide.err
+	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, or homogeneous nested aggregate enum values" $(BUILD_DIR)/errors/enum-payload-too-wide.err
 	if $(TARGET) tests/errors/enum-payload-count.ari -o $(BUILD_DIR)/errors/enum-payload-count.elf >$(BUILD_DIR)/errors/enum-payload-count.err 2>&1; then exit 1; fi
 	grep -q "wrong payload count for enum case 'Some'" $(BUILD_DIR)/errors/enum-payload-count.err
 	if $(TARGET) tests/errors/match-nonexhaustive.ari -o $(BUILD_DIR)/errors/match-nonexhaustive.elf >$(BUILD_DIR)/errors/match-nonexhaustive.err 2>&1; then exit 1; fi

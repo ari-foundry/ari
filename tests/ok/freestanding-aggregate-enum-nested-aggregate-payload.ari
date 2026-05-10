@@ -1,0 +1,64 @@
+enum Inner {
+  Empty,
+  Big(i64),
+}
+
+enum Outer {
+  Wrap(Inner),
+  Other,
+  None,
+}
+
+fn score(value: Outer) -> i64 {
+  return match value {
+    Wrap(Big(7)) => 11,
+    Wrap(Big(amount)) => amount + 1,
+    Wrap(Empty) => 3,
+    Wrap(_) => 0,
+    Other => 4,
+    None => 5,
+  };
+}
+
+fn bind(value: Outer) -> i64 {
+  return match value {
+    Wrap(inner) => match inner {
+      Big(amount) => amount,
+      Empty => 2,
+    },
+    Other => 4,
+    None => 1,
+  };
+}
+
+fn pointer_score() -> i64 {
+  var slot: Outer = None;
+  let raw: ptr Outer = (ref mut slot) as ptr Outer;
+
+  ptr_store(raw, Wrap(Big(8)));
+  let loaded: Outer = ptr_load(raw);
+  let a: i64 = match loaded {
+    Wrap(Big(amount @ 8)) => amount,
+    _ => 0,
+  };
+
+  *raw = Wrap(Empty);
+  let empty: Outer = *raw;
+  let b: i64 = match empty {
+    Wrap(Empty) => 2,
+    _ => 0,
+  };
+
+  return a + b;
+}
+
+fn main() -> i64 {
+  let a: Outer = Wrap(Big(7));
+  let b: Outer = Wrap(Big(9));
+  let c: Outer = Wrap(Empty);
+  let d: Outer = Other;
+  let e: Outer = None;
+  let f: Outer = Wrap(Big(6));
+
+  return score(a) + score(b) + score(c) + score(d) + score(e) + bind(f) + pointer_score();
+}

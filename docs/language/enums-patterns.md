@@ -104,10 +104,11 @@ slot stores the same nested enum type. Tuples, structs, vectors, owned values,
 and mixed scalar/nested-enum payload slots remain planned. The freestanding
 backend can store and copy local aggregate enum values, then match local values
 by tag with positional payload bindings, scalar payload literal/range tests,
-and one-level compact enum-case payload tests. Pointer-backed aggregate enum
-copies work through `ptr_load`, `ptr_store`, and `*pointer` when the pointer is
-a `ptr EnumType`; storing a direct enum constructor through those pointer
-helpers is also supported.
+and one-level enum-case payload tests for compact or homogeneous nested
+aggregate enum payloads. Pointer-backed aggregate enum copies work through
+`ptr_load`, `ptr_store`, and `*pointer` when the pointer is a `ptr EnumType`;
+storing a direct enum constructor through those pointer helpers is also
+supported, including homogeneous nested aggregate-enum payload values.
 Direct freestanding calls can pass and return aggregate enum values through
 hidden pointer slots.
 
@@ -218,7 +219,7 @@ let flag_score = match maybe_flag {
 
 When an aggregate enum payload slot stores a one-word enum value or a nested
 aggregate enum value, a nested enum-case subpattern can inspect the inner tag
-and a single scalar payload on the LLVM backend:
+and a single scalar payload on the LLVM and freestanding backends:
 
 ```ari
 enum Inner {
