@@ -64,6 +64,10 @@ void require_local_vec_integer_argument(SourceLocation loc,
                                         LocalVecMethod method,
                                         const char* role,
                                         const IrType& type);
+void require_local_vec_non_negative_argument(SourceLocation loc,
+                                             LocalVecMethod method,
+                                             const char* role,
+                                             const StaticIntegerValue& value);
 std::string local_vec_api_freeze_message(const std::string& method_name);
 
 bool vector_known_length_after_truncate(std::uint64_t current_length,

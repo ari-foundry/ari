@@ -13906,9 +13906,12 @@ private:
         const Expr& capacity_expr = *expr.args[0];
         StaticIntegerValue known_capacity;
         if (known_integer_capacity(capacity_expr, known_capacity)) {
-            if (known_capacity.negative) {
-                fail(capacity_expr.loc, "Vec.reserve capacity must be non-negative");
-            }
+            require_local_vec_non_negative_argument(
+                capacity_expr.loc,
+                LocalVecMethod::Reserve,
+                "capacity",
+                known_capacity
+            );
             widen_vector_storage(local, known_capacity.value);
             return make_void_noop_expr(expr.loc);
         }
@@ -13925,9 +13928,12 @@ private:
 
         StaticIntegerValue folded_capacity;
         if (try_fold_static_integer_value(*requested_capacity, folded_capacity)) {
-            if (folded_capacity.negative) {
-                fail(capacity_expr.loc, "Vec.reserve capacity must be non-negative");
-            }
+            require_local_vec_non_negative_argument(
+                capacity_expr.loc,
+                LocalVecMethod::Reserve,
+                "capacity",
+                folded_capacity
+            );
             widen_vector_storage(local, folded_capacity.value);
             return make_void_noop_expr(expr.loc);
         }

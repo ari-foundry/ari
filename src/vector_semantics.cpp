@@ -218,6 +218,15 @@ void require_local_vec_integer_argument(SourceLocation loc,
     fail(loc, display + " " + role + " must be an integer, got " + type_name(type));
 }
 
+void require_local_vec_non_negative_argument(SourceLocation loc,
+                                             LocalVecMethod method,
+                                             const char* role,
+                                             const StaticIntegerValue& value) {
+    if (!value.negative) return;
+    std::string display = std::string("Vec.") + local_vec_method_name(method);
+    fail(loc, display + " " + role + " must be non-negative");
+}
+
 std::string local_vec_api_freeze_message(const std::string& method_name) {
     std::string supported;
     for (std::size_t i = 0; i < kLocalVecMethods.size(); ++i) {

@@ -32,12 +32,12 @@
    `vector_semantics`, including the frozen temporary local method list used
    by sema dispatch, local method shape diagnostics, and the shared `len`,
    `is_empty`, and `as_slice` builtin/method shape checks. Local Vec integer
-   operand diagnostics for index/capacity/length arguments are also centralized
-   there. Known-length updates for local `push`, `insert`, `pop`, `remove`,
-   `clear`, and `truncate` now use small `vector_semantics` transition helpers.
-   The shared constant value model, constant-to-IR literal construction, scalar
-   literal folding, constant binary result evaluation, and static integer
-   folding for local Vec capacity and length decisions now live in
+   and non-negative operand diagnostics for index/capacity/length arguments are
+   also centralized there. Known-length updates for local `push`, `insert`,
+   `pop`, `remove`, `clear`, and `truncate` now use small `vector_semantics`
+   transition helpers. The shared constant value model, constant-to-IR literal
+   construction, scalar literal folding, constant binary result evaluation, and
+   static integer folding for local Vec capacity and length decisions now live in
    `constant_semantics`;
    this keeps
    allocator-backed work from growing the main semantic checker. Introduce the
