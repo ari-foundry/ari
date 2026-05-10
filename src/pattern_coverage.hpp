@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <map>
 #include <set>
 #include <string>
 #include <utility>
@@ -19,6 +20,19 @@ struct ScalarMatchCoverage {
     bool has_wildcard = false;
     std::set<std::string> covered_patterns;
     std::vector<std::pair<std::uint64_t, std::uint64_t>> integer_intervals;
+};
+
+struct EnumMatchCoverage {
+    bool has_wildcard = false;
+    std::set<std::uint32_t> covered_tags;
+    std::set<std::string> covered_payload_literals;
+    std::map<std::uint32_t, unsigned> covered_bool_payloads;
+};
+
+enum class EnumCoverageResult {
+    Added,
+    DuplicateCase,
+    DuplicatePayloadPattern,
 };
 
 struct ProductMatchCoverage {
@@ -53,6 +67,14 @@ bool integer_coverage_is_exhaustive(
 );
 std::string scalar_match_exhaustiveness_error(const IrType& match_type,
                                               const ScalarMatchCoverage& coverage);
+EnumCoverageResult note_enum_match_coverage(EnumMatchCoverage& coverage,
+                                            const IrMatchArm& arm,
+                                            bool covers_case,
+                                            bool bool_payload_literal,
+                                            bool bool_payload_value);
+std::string enum_match_exhaustiveness_error(const std::string& enum_name,
+                                            std::size_t case_count,
+                                            const EnumMatchCoverage& coverage);
 std::uint64_t integer_pattern_order_value(std::uint64_t value,
                                           bool negative,
                                           const IrType& match_type);

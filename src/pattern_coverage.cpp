@@ -132,6 +132,44 @@ std::string format_product_missing_case(const IrType& type,
     return "_";
 }
 
+std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
+    if (!arm.payload_literal_conditions.empty() ||
+        !arm.payload_range_conditions.empty() ||
+        !arm.payload_enum_conditions.empty()) {
+        std::string key = std::to_string(arm.enum_tag);
+        for (const auto& condition : arm.payload_literal_conditions) {
+            key += ":L" + std::to_string(condition.index) + ":" + std::to_string(condition.value);
+        }
+        for (const auto& condition : arm.payload_range_conditions) {
+            key += ":R" + std::to_string(condition.index) + ":" +
+                   (condition.start_negative ? "-" : "") + std::to_string(condition.start_int) + ":" +
+                   (condition.end_negative ? "-" : "") + std::to_string(condition.end_int) + ":" +
+                   (condition.inclusive ? "1" : "0");
+        }
+        for (const auto& condition : arm.payload_enum_conditions) {
+            key += ":E" + std::to_string(condition.index) + ":" + condition.enum_type.name + ":" +
+                   std::to_string(condition.tag);
+            if (condition.has_payload_literal) {
+                key += std::string(":L") + std::to_string(condition.nested_payload_index) + ":" +
+                       (condition.payload_literal_negative ? "-" : "") +
+                       std::to_string(condition.payload_literal_int) + ":" +
+                       (condition.payload_literal_is_bool ? "B" : "I") + ":" +
+                       (condition.payload_literal_bool ? "1" : "0");
+            }
+            if (condition.has_payload_range) {
+                key += std::string(":R") + std::to_string(condition.nested_payload_index) + ":" +
+                       (condition.range_start_negative ? "-" : "") +
+                       std::to_string(condition.range_start_int) + ":" +
+                       (condition.range_end_negative ? "-" : "") +
+                       std::to_string(condition.range_end_int) + ":" +
+                       (condition.range_inclusive ? "1" : "0");
+            }
+        }
+        return key;
+    }
+    return std::to_string(arm.literal_int);
+}
+
 } // namespace
 
 std::string bool_product_value(bool value) {
@@ -289,6 +327,43 @@ std::string scalar_match_exhaustiveness_error(const IrType& match_type,
     }
     if (integer_coverage_is_exhaustive(match_type, coverage.integer_intervals)) return "";
     return "integer match must include a wildcard arm";
+}
+
+EnumCoverageResult note_enum_match_coverage(EnumMatchCoverage& coverage,
+                                            const IrMatchArm& arm,
+                                            bool covers_case,
+                                            bool bool_payload_literal,
+                                            bool bool_payload_value) {
+    if (!arm.payload_literal_conditions.empty() ||
+        !arm.payload_range_conditions.empty() ||
+        !arm.payload_enum_conditions.empty()) {
+        covers_case = false;
+    }
+    if (coverage.covered_tags.count(arm.enum_tag)) return EnumCoverageResult::DuplicateCase;
+    if (covers_case) {
+        coverage.covered_tags.insert(arm.enum_tag);
+        return EnumCoverageResult::Added;
+    }
+
+    if (!coverage.covered_payload_literals.insert(enum_payload_pattern_coverage_key(arm)).second) {
+        return EnumCoverageResult::DuplicatePayloadPattern;
+    }
+    if (bool_payload_literal) {
+        unsigned bit = bool_payload_value ? 0b10 : 0b01;
+        unsigned& mask = coverage.covered_bool_payloads[arm.enum_tag];
+        mask |= bit;
+        if ((mask & 0b11) == 0b11) {
+            coverage.covered_tags.insert(arm.enum_tag);
+        }
+    }
+    return EnumCoverageResult::Added;
+}
+
+std::string enum_match_exhaustiveness_error(const std::string& enum_name,
+                                            std::size_t case_count,
+                                            const EnumMatchCoverage& coverage) {
+    if (coverage.has_wildcard || coverage.covered_tags.size() == case_count) return "";
+    return "match must cover all cases of enum '" + enum_name + "'";
 }
 
 std::uint64_t integer_pattern_order_value(std::uint64_t value,

@@ -562,6 +562,8 @@ check-match: $(TARGET)
 	grep -q "bool payload patterns require a bool enum payload" $(BUILD_DIR)/match/match-enum-payload-literal-type.err
 	if $(TARGET) tests/errors/match-enum-payload-duplicate-literal.ari -o $(BUILD_DIR)/match/match-enum-payload-duplicate-literal.elf >$(BUILD_DIR)/match/match-enum-payload-duplicate-literal.err 2>&1; then exit 1; fi
 	grep -q "duplicate match arm for enum payload pattern 'Some'" $(BUILD_DIR)/match/match-enum-payload-duplicate-literal.err
+	if $(TARGET) tests/errors/match-duplicate-arm.ari -o $(BUILD_DIR)/match/match-duplicate-arm.elf >$(BUILD_DIR)/match/match-duplicate-arm.err 2>&1; then exit 1; fi
+	grep -q "duplicate match arm for enum case 'A'" $(BUILD_DIR)/match/match-duplicate-arm.err
 	if $(TARGET) tests/errors/constant-pattern-type.ari -o $(BUILD_DIR)/match/constant-pattern-type.elf >$(BUILD_DIR)/match/constant-pattern-type.err 2>&1; then exit 1; fi
 	grep -q "integer match constant pattern must have an integer type" $(BUILD_DIR)/match/constant-pattern-type.err
 	if $(TARGET) tests/errors/constant-folding-div-zero.ari -o $(BUILD_DIR)/match/constant-folding-div-zero.elf >$(BUILD_DIR)/match/constant-folding-div-zero.err 2>&1; then exit 1; fi

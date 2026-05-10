@@ -31,8 +31,9 @@ construction. Some helpers have already moved out to focused files:
   fully-shadowed scalar range/literal detection, scalar match exhaustiveness
   diagnostics, plus finite product coverage value encoding, finite scalar
   domain enumeration, product match coverage state, product duplicate/shadow
-  detection, product exhaustiveness checks, and product missing-case hint
-  formatting
+  detection, product exhaustiveness checks, product missing-case hint
+  formatting, enum match coverage state, enum duplicate detection, and enum
+  exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection and
   expansion helpers
 - `move_semantics` for pure helpers around explicit ownership-consumption
@@ -94,9 +95,12 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      user-facing struct-pattern spelling.
    - Product duplicate/shadow detection and final product coverage
      exhaustiveness checks now live in `pattern_coverage`.
+   - Enum match coverage state, duplicate case/payload detection, bool-payload
+     coverage promotion, and enum exhaustiveness diagnostics now live in
+     `pattern_coverage`; `sema.cpp` still performs enum case resolution and
+     payload type validation.
    - Move the remaining sema-bound finite product aggregate recursion,
-     duplicate/shadow detection helpers for enum matches, and enum
-     exhaustiveness formatting that still depends on semantic tables.
+     plus payload-shape checks that still depend on semantic tables.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
      abstracted.
 

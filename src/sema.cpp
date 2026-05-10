@@ -95,13 +95,6 @@ struct EnumInfo {
     std::string deprecated_message;
 };
 
-struct EnumMatchCoverage {
-    bool has_wildcard = false;
-    std::set<std::uint32_t> covered_tags;
-    std::set<std::string> covered_payload_literals;
-    std::map<std::uint32_t, unsigned> covered_bool_payloads;
-};
-
 struct StructInfo {
     struct Field {
         std::string name;
@@ -6656,68 +6649,21 @@ private:
                                   const IrMatchArm& lowered_arm,
                                   bool covers_case,
                                   EnumMatchCoverage& coverage) const {
-        if (!lowered_arm.payload_literal_conditions.empty() ||
-            !lowered_arm.payload_range_conditions.empty() ||
-            !lowered_arm.payload_enum_conditions.empty()) {
-            covers_case = false;
-        }
-        if (coverage.covered_tags.count(case_info.tag)) {
+        bool bool_payload_literal = is_bool_payload_literal_pattern(pattern, case_info);
+        bool bool_payload_value = bool_payload_literal && pattern.payload_pattern->bool_value;
+        EnumCoverageResult result = ari::note_enum_match_coverage(
+            coverage,
+            lowered_arm,
+            covers_case,
+            bool_payload_literal,
+            bool_payload_value
+        );
+        if (result == EnumCoverageResult::DuplicateCase) {
             fail(pattern.loc, "duplicate match arm for enum case '" + pattern.case_name + "'");
         }
-        if (covers_case) {
-            coverage.covered_tags.insert(case_info.tag);
-            return;
-        }
-
-        if (!coverage.covered_payload_literals.insert(enum_payload_pattern_coverage_key(lowered_arm)).second) {
+        if (result == EnumCoverageResult::DuplicatePayloadPattern) {
             fail(pattern.loc, "duplicate match arm for enum payload pattern '" + pattern.case_name + "'");
         }
-        if (is_bool_payload_literal_pattern(pattern, case_info)) {
-            unsigned bit = pattern.payload_pattern->bool_value ? 0b10 : 0b01;
-            unsigned& mask = coverage.covered_bool_payloads[case_info.tag];
-            mask |= bit;
-            if ((mask & 0b11) == 0b11) {
-                coverage.covered_tags.insert(case_info.tag);
-            }
-        }
-    }
-
-    static std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
-        if (!arm.payload_literal_conditions.empty() ||
-            !arm.payload_range_conditions.empty() ||
-            !arm.payload_enum_conditions.empty()) {
-            std::string key = std::to_string(arm.enum_tag);
-            for (const auto& condition : arm.payload_literal_conditions) {
-                key += ":L" + std::to_string(condition.index) + ":" + std::to_string(condition.value);
-            }
-            for (const auto& condition : arm.payload_range_conditions) {
-                key += ":R" + std::to_string(condition.index) + ":" +
-                       (condition.start_negative ? "-" : "") + std::to_string(condition.start_int) + ":" +
-                       (condition.end_negative ? "-" : "") + std::to_string(condition.end_int) + ":" +
-                       (condition.inclusive ? "1" : "0");
-            }
-            for (const auto& condition : arm.payload_enum_conditions) {
-                key += ":E" + std::to_string(condition.index) + ":" + condition.enum_type.name + ":" +
-                       std::to_string(condition.tag);
-                if (condition.has_payload_literal) {
-                    key += std::string(":L") + std::to_string(condition.nested_payload_index) + ":" +
-                           (condition.payload_literal_negative ? "-" : "") +
-                           std::to_string(condition.payload_literal_int) + ":" +
-                           (condition.payload_literal_is_bool ? "B" : "I") + ":" +
-                           (condition.payload_literal_bool ? "1" : "0");
-                }
-                if (condition.has_payload_range) {
-                    key += std::string(":R") + std::to_string(condition.nested_payload_index) + ":" +
-                           (condition.range_start_negative ? "-" : "") +
-                           std::to_string(condition.range_start_int) + ":" +
-                           (condition.range_end_negative ? "-" : "") +
-                           std::to_string(condition.range_end_int) + ":" +
-                           (condition.range_inclusive ? "1" : "0");
-                }
-            }
-            return key;
-        }
-        return std::to_string(arm.literal_int);
     }
 
     static bool is_bool_payload_literal_pattern(const Pattern& pattern, const EnumCaseInfo& case_info) {
@@ -7493,9 +7439,12 @@ private:
     static void require_match_exhaustive(SourceLocation loc,
                                          const EnumInfo& enum_info,
                                          const EnumMatchCoverage& coverage) {
-        if (!coverage.has_wildcard && coverage.covered_tags.size() != enum_info.case_names.size()) {
-            fail(loc, "match must cover all cases of enum '" + enum_info.name + "'");
-        }
+        std::string message = enum_match_exhaustiveness_error(
+            enum_info.name,
+            enum_info.case_names.size(),
+            coverage
+        );
+        if (!message.empty()) fail(loc, message);
     }
 
     static IrType enum_match_value_type(SourceLocation loc, const IrType& enum_value_type) {
