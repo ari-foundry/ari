@@ -415,6 +415,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-struct-pattern.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/match-product-exhaustive.ari -o $(BUILD_DIR)/match/match-product-exhaustive.raw
 	$(BUILD_DIR)/match/match-product-exhaustive.raw; code=$$?; test $$code -eq 17
+	$(TARGET) --freestanding tests/ok/match-finite-product-domain.ari -o $(BUILD_DIR)/match/match-finite-product-domain.raw
+	$(BUILD_DIR)/match/match-finite-product-domain.raw; code=$$?; test $$code -eq 6
 	$(TARGET) --freestanding tests/ok/match-symbolic-product.ari -o $(BUILD_DIR)/match/match-symbolic-product.raw
 	$(BUILD_DIR)/match/match-symbolic-product.raw; code=$$?; test $$code -eq 5
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-payload-literals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; code=$$?; test $$code -eq 64; fi

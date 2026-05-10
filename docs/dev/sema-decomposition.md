@@ -28,7 +28,8 @@ construction. Some helpers have already moved out to focused files:
   aggregate pattern exhaustiveness diagnostics
 - `pattern_coverage` for scalar integer match interval coverage, including
   signed-pattern ordering, range interval merging, scalar exhaustiveness, and
-  fully-shadowed scalar range/literal detection
+  fully-shadowed scalar range/literal detection, plus finite product coverage
+  value encoding and finite scalar domain enumeration
 - `pattern_semantics` for pure pattern binding/or-pattern detection and
   expansion helpers
 - `move_semantics` for pure helpers around explicit ownership-consumption
@@ -81,9 +82,11 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Scalar integer range interval math now lives in `pattern_coverage`,
      including signed ordering, interval merging, scalar exhaustiveness, and
      scalar fully-shadowed checks.
-   - Move finite product domain enumeration, duplicate/shadow detection helpers
-     for enum/product matches, and the remaining sema-bound exhaustiveness
-     formatting.
+   - Finite product coverage value encoding, finite scalar product domains,
+     and finite product domain combination now also live in `pattern_coverage`.
+   - Move the remaining sema-bound finite product aggregate recursion,
+     duplicate/shadow detection helpers for enum/product matches, and
+     exhaustiveness formatting.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
      abstracted.
 

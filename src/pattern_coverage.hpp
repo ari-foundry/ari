@@ -3,6 +3,7 @@
 #include "ast.hpp"
 #include "ir.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <set>
 #include <string>
@@ -10,6 +11,8 @@
 #include <vector>
 
 namespace ari {
+
+inline constexpr std::size_t kMaxFiniteProductCoverageValues = 4096;
 
 struct ScalarMatchCoverage {
     bool has_wildcard = false;
@@ -39,5 +42,10 @@ std::uint64_t integer_pattern_order_value(std::uint64_t value,
                                           bool negative,
                                           const IrType& match_type);
 std::uint64_t integer_pattern_max_order_value(const IrType& match_type);
+std::string bool_product_value(bool value);
+std::string integer_product_value(std::uint64_t ordered_value);
+bool finite_scalar_product_domain(const IrType& type, std::vector<std::string>& out);
+bool combine_finite_product_domains(const std::vector<std::vector<std::string>>& domains,
+                                    std::vector<std::string>& out);
 
 } // namespace ari

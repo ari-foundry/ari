@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 namespace ari {
 namespace {
@@ -34,6 +35,55 @@ void add_integer_coverage_interval(ScalarMatchCoverage& coverage,
 }
 
 } // namespace
+
+std::string bool_product_value(bool value) {
+    return value ? "b1" : "b0";
+}
+
+std::string integer_product_value(std::uint64_t ordered_value) {
+    return "i" + std::to_string(ordered_value);
+}
+
+bool finite_scalar_product_domain(const IrType& type, std::vector<std::string>& out) {
+    if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+        out = {bool_product_value(false), bool_product_value(true)};
+        return true;
+    }
+    if (!is_value_integer_type(type)) return false;
+
+    std::uint64_t max = integer_pattern_max_order_value(type);
+    if (max >= kMaxFiniteProductCoverageValues) return false;
+    out.clear();
+    out.reserve(static_cast<std::size_t>(max + 1));
+    for (std::uint64_t value = 0; value <= max; ++value) {
+        out.push_back(integer_product_value(value));
+    }
+    return true;
+}
+
+std::string product_coverage_join(const std::string& prefix, const std::string& suffix) {
+    if (prefix.empty()) return suffix;
+    return prefix + "\x1f" + suffix;
+}
+
+bool combine_finite_product_domains(const std::vector<std::vector<std::string>>& domains,
+                                    std::vector<std::string>& out) {
+    std::vector<std::string> result{""};
+    for (const auto& domain : domains) {
+        if (domain.empty()) return false;
+        if (result.size() > kMaxFiniteProductCoverageValues / domain.size()) return false;
+        std::vector<std::string> next;
+        next.reserve(result.size() * domain.size());
+        for (const auto& prefix : result) {
+            for (const auto& value : domain) {
+                next.push_back(product_coverage_join(prefix, value));
+            }
+        }
+        result = std::move(next);
+    }
+    out = std::move(result);
+    return true;
+}
 
 void note_integer_coverage(ScalarMatchCoverage& coverage,
                            const IrType& match_type,

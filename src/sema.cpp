@@ -8216,56 +8216,10 @@ private:
         fail(pattern.loc, "aggregate match pattern requires tuple, array, or struct value");
     }
 
-    static constexpr std::size_t kMaxFiniteProductCoverageValues = 4096;
     static constexpr std::size_t kMaxSymbolicProductRectangles = 1024;
 
-    static std::string product_coverage_join(const std::string& prefix, const std::string& suffix) {
-        if (prefix.empty()) return suffix;
-        return prefix + "\x1f" + suffix;
-    }
-
-    static std::string bool_product_value(bool value) {
-        return value ? "b1" : "b0";
-    }
-
-    static std::string integer_product_value(std::uint64_t ordered_value) {
-        return "i" + std::to_string(ordered_value);
-    }
-
-    static bool combine_product_domains(const std::vector<std::vector<std::string>>& domains,
-                                        std::vector<std::string>& out) {
-        std::vector<std::string> result{""};
-        for (const auto& domain : domains) {
-            if (domain.empty()) return false;
-            if (result.size() > kMaxFiniteProductCoverageValues / domain.size()) return false;
-            std::vector<std::string> next;
-            next.reserve(result.size() * domain.size());
-            for (const auto& prefix : result) {
-                for (const auto& value : domain) {
-                    next.push_back(product_coverage_join(prefix, value));
-                }
-            }
-            result = std::move(next);
-        }
-        out = std::move(result);
-        return true;
-    }
-
     bool finite_product_domain(const IrType& type, std::vector<std::string>& out) const {
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
-            out = {bool_product_value(false), bool_product_value(true)};
-            return true;
-        }
-        if (is_value_integer_type(type)) {
-            std::uint64_t max = integer_pattern_max_order_value(type);
-            if (max >= kMaxFiniteProductCoverageValues) return false;
-            out.clear();
-            out.reserve(static_cast<std::size_t>(max + 1));
-            for (std::uint64_t value = 0; value <= max; ++value) {
-                out.push_back(integer_product_value(value));
-            }
-            return true;
-        }
+        if (finite_scalar_product_domain(type, out)) return true;
         if (type.primitive != IrPrimitiveKind::Tuple &&
             type.primitive != IrPrimitiveKind::Array &&
             type.primitive != IrPrimitiveKind::Struct) {
@@ -8278,7 +8232,7 @@ private:
             if (!finite_product_domain(field_type, field_domain)) return false;
             domains.push_back(std::move(field_domain));
         }
-        return combine_product_domains(domains, out);
+        return combine_finite_product_domains(domains, out);
     }
 
     bool finite_integer_pattern_values(const Pattern& pattern,
@@ -8363,7 +8317,7 @@ private:
             if (!ok) return false;
             domains.push_back(std::move(field_values));
         }
-        return combine_product_domains(domains, out);
+        return combine_finite_product_domains(domains, out);
     }
 
     bool finite_tuple_struct_product_pattern_values(const Pattern& pattern,
@@ -8413,7 +8367,7 @@ private:
             if (!ok) return false;
             domains.push_back(std::move(field_values));
         }
-        return combine_product_domains(domains, out);
+        return combine_finite_product_domains(domains, out);
     }
 
     bool finite_product_pattern_values(const Pattern& pattern,

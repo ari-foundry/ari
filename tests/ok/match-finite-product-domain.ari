@@ -1,0 +1,13 @@
+fn score(value: (u8, bool)) -> i64 {
+  return match value {
+    (0u8..=127u8, true) => 1,
+    (128u8..=255u8, true) => 2,
+    (_, false) => 3,
+  };
+}
+
+fn main() -> i64 {
+  return score((3u8, true)) +
+         score((200u8, true)) +
+         score((9u8, false));
+}
