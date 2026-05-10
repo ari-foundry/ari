@@ -352,6 +352,23 @@ ABI-lowered yet. Local stack tuples are an executable-language feature, not a C
 FFI layout promise. Aggregate raw-pointer field/element access follows Ari's
 current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 
+## C Header Emission
+
+`--emit-c-header path` writes a C header for Ari functions that are visible from
+the LLVM/shared-library ABI surface. The first supported slice covers exported
+scalar and raw-pointer functions:
+
+```sh
+ari api.ari --shared --emit-c-header api.h --emit-llvm api.ll
+```
+
+Explicit `@export("symbol")` and `@no_mangle` functions use that C symbol.
+Public functions without an explicit export use Ari's mangled symbol, matching
+the shared-library output. Private helpers are not emitted. Header generation
+currently rejects Ari-only values such as `string`, ownership-qualified values,
+and aggregate parameters or returns; expose a `ptr c_char`, `ptr c_void`, or
+other scalar C ABI type until those layouts are defined.
+
 ## Runtime Entry
 
 The generated LLVM module keeps the host C entry point separate from Ari's
@@ -366,5 +383,6 @@ shuts the context down afterward.
 
 ## Planned FFI Surface
 
-The next FFI pieces are `repr(C)` struct layout, aggregate-aware pointer layout
-helpers, and non-C ABI adapters via explicit C-compatible shims.
+The next FFI pieces are `repr(C)` struct declarations in emitted C headers,
+payload-bearing C enum layouts, and non-C ABI adapters via explicit
+C-compatible shims.

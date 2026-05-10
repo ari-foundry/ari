@@ -1,0 +1,13 @@
+@export("ari_add_i64")
+pub fn add(left: i64, right: i64) -> i64 {
+  return left + right;
+}
+
+@export("ari_touch")
+pub fn touch(raw: ptr c_void, flag: bool) {
+  return;
+}
+
+fn hidden(value: i64) -> i64 {
+  return value;
+}

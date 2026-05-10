@@ -2,6 +2,7 @@
 
 #include "codegen.hpp"
 #include "common.hpp"
+#include "c_header.hpp"
 #include "elf.hpp"
 #include "llvm_codegen.hpp"
 #include "module_cache.hpp"
@@ -63,6 +64,7 @@ static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--emit-llvm path] [--freestanding]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
+                 "           [--emit-c-header path]\n"
                  "           [--emit-module-metadata path] [--check-module-metadata path]\n"
                  "           [--emit-module-cache path] [--use-module-cache path]\n"
                  "           [--no-implicit-std]\n"
@@ -79,6 +81,7 @@ int run(int argc, char** argv) {
     std::string input;
     std::string output = "a.out";
     std::string llvm_output;
+    std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
     std::string metadata_check;
@@ -119,6 +122,9 @@ int run(int argc, char** argv) {
             if (i + 1 >= argc) throw CompileError("--emit-llvm expects a path");
             llvm_output = argv[++i];
             emit_llvm_only = true;
+        } else if (arg == "--emit-c-header") {
+            if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
+            c_header_output = argv[++i];
         } else if (arg == "--module-path") {
             if (i + 1 >= argc) throw CompileError("--module-path expects a path");
             module_search_paths.push_back(argv[++i]);
@@ -170,6 +176,9 @@ int run(int argc, char** argv) {
     if (freestanding && (emit_llvm_only || shared_library)) {
         throw CompileError("--freestanding cannot be combined with --emit-llvm or --shared");
     }
+    if (freestanding && !c_header_output.empty()) {
+        throw CompileError("--emit-c-header cannot be combined with --freestanding yet");
+    }
     TargetInfo target = resolve_target_info(target_triple);
     if (freestanding && !target_triple.empty() && !(target.arch == "x86_64" && target.linux)) {
         throw CompileError("--freestanding currently supports only the x86_64 Linux target");
@@ -212,6 +221,11 @@ int run(int argc, char** argv) {
     IrProgram ir = check_program(program, std::move(sema_options));
     for (const auto& warning : ir.warnings) {
         std::cerr << warning << "\n";
+    }
+    if (!c_header_output.empty()) {
+        std::string header = emit_c_header(ir);
+        write_text_file(c_header_output, header);
+        std::cout << "wrote " << c_header_output << " (C header)\n";
     }
     if (freestanding) {
         EmittedProgram emitted = emit_program_with_symbols(ir);

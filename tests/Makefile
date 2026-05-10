@@ -844,6 +844,11 @@ check-meta: $(TARGET)
 	grep -q 'define i64 @"increment"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"reset"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'call i64 @"ari_public_add"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
+	$(TARGET) tests/ok/c-header-export.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-export.h --emit-llvm $(BUILD_DIR)/meta/c-header-export.ll
+	grep -q '#pragma once' $(BUILD_DIR)/meta/c-header-export.h
+	grep -q 'int64_t ari_add_i64(int64_t arg0, int64_t arg1);' $(BUILD_DIR)/meta/c-header-export.h
+	grep -q 'void ari_touch(void\* arg0, bool arg1);' $(BUILD_DIR)/meta/c-header-export.h
+	if grep -q 'hidden' $(BUILD_DIR)/meta/c-header-export.h; then exit 1; fi
 	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw
 	$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw; code=$$?; test $$code -eq 10
 	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
