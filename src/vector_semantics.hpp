@@ -13,6 +13,13 @@ void widen_vector_storage_type(IrType& type, std::uint64_t capacity);
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
 std::string local_vec_api_freeze_message(const std::string& method_name);
 
+struct StaticIntegerValue {
+    std::uint64_t value = 0;
+    bool negative = false;
+};
+
+bool try_fold_static_integer_value(const IrExpr& expr, StaticIntegerValue& out);
+
 IrExprPtr make_void_noop_expr(SourceLocation loc);
 IrExprPtr make_vec_local_lvalue(SourceLocation loc, std::string name, IrType type);
 IrExprPtr make_vec_capacity_expr(SourceLocation loc, const IrType& type);

@@ -4872,18 +4872,18 @@ private:
         widen_vector_storage(local, local.type.array_size + 1);
     }
 
-    bool known_integer_capacity(const Expr& expr, std::uint64_t& value, bool& negative) {
+    bool known_integer_capacity(const Expr& expr, StaticIntegerValue& out) {
         if (expr.kind == ExprKind::Integer) {
-            value = expr.int_value;
-            negative = expr.int_negative;
+            out.value = expr.int_value;
+            out.negative = expr.int_negative;
             return true;
         }
         if (expr.kind != ExprKind::Name) return false;
         const LocalInfo* local = find_local_slot(expr.name);
         if (local) {
             if (!local->integer_value_known) return false;
-            value = local->integer_known_value;
-            negative = local->integer_known_negative;
+            out.value = local->integer_known_value;
+            out.negative = local->integer_known_negative;
             return true;
         }
         ConstantValue constant;
@@ -4892,8 +4892,8 @@ private:
             !is_value_integer_type(constant.type)) {
             return false;
         }
-        value = constant.int_value;
-        negative = constant.int_negative;
+        out.value = constant.int_value;
+        out.negative = constant.int_negative;
         return true;
     }
 
@@ -14726,13 +14726,12 @@ private:
         if (!expr.type_args.empty()) fail(expr.loc, "Vec.reserve does not take type arguments");
         if (expr.args.size() != 1) fail(expr.loc, "Vec.reserve expects one capacity argument");
         const Expr& capacity_expr = *expr.args[0];
-        std::uint64_t known_capacity = 0;
-        bool known_negative = false;
-        if (known_integer_capacity(capacity_expr, known_capacity, known_negative)) {
-            if (known_negative) {
+        StaticIntegerValue known_capacity;
+        if (known_integer_capacity(capacity_expr, known_capacity)) {
+            if (known_capacity.negative) {
                 fail(capacity_expr.loc, "Vec.reserve capacity must be non-negative");
             }
-            widen_vector_storage(local, known_capacity);
+            widen_vector_storage(local, known_capacity.value);
             return make_void_noop_expr(expr.loc);
         }
 
@@ -14742,6 +14741,15 @@ private:
             fail(capacity_expr.loc, "Vec.reserve capacity must be an integer, got " + type_name(requested_capacity->type));
         }
         release_temporary_borrows(borrow_mark);
+
+        StaticIntegerValue folded_capacity;
+        if (try_fold_static_integer_value(*requested_capacity, folded_capacity)) {
+            if (folded_capacity.negative) {
+                fail(capacity_expr.loc, "Vec.reserve capacity must be non-negative");
+            }
+            widen_vector_storage(local, folded_capacity.value);
+            return make_void_noop_expr(expr.loc);
+        }
 
         return make_vec_reserve_expr(
             expr.loc,
