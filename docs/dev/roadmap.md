@@ -120,10 +120,12 @@
    exclusive fields. `Expr` and `IrExpr` also pack their mutually exclusive
    scalar payload slots (`int_value`, `float_value`, `bool_value`, and
    `tuple_index`) behind anonymous unions while preserving the existing field
-   names for parser, sema, and codegen call sites. Broader AST/IR node packing
+   names for parser, sema, and codegen call sites. Union-safe AST expression
+   cloning now lives in `ast_clone`, shared by parser compound-assignment
+   lowering and sema borrow-receiver synthesis. Broader AST/IR node packing
    should stay incremental: `Stmt` and the large expression child/vector
    payloads are still widely mutated while parsing and lowering, so their
-   payload split needs constructor/builder coverage first.
+   payload split needs more constructor/builder coverage first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions once their builders and cloning paths
      can preserve today's mutation flow

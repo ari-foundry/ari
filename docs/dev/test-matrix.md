@@ -396,6 +396,8 @@ Checklist:
 - [ ] AST/IR package cache summaries skip dependency parsing after validation
 - [x] AST/IR scalar payload packing preserves integer, bool, float, tuple-index,
       and indexed-assignment lowering paths
+- [x] parser and sema share union-safe AST expression clone helpers for
+      compound assignment targets and synthetic borrow receivers
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

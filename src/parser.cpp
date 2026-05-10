@@ -1,5 +1,6 @@
 #include "parser.hpp"
 
+#include "ast_clone.hpp"
 #include "cfg_eval.hpp"
 #include "module_path.hpp"
 
@@ -840,10 +841,7 @@ private:
             stmt->loc = loc;
             if (target->kind == ExprKind::Name) {
                 stmt->assign_name = target->name;
-            } else if (target->kind == ExprKind::FieldAccess ||
-                       target->kind == ExprKind::TupleIndex ||
-                       target->kind == ExprKind::Index ||
-                       (target->kind == ExprKind::Unary && target->op == TokenKind::Star)) {
+            } else if (is_assignment_target_expr(*target)) {
                 stmt->assign_target = std::move(target);
             } else {
                 fail(loc, "assignment target must be a binding, field access, index access, or pointer dereference");
@@ -1592,55 +1590,6 @@ private:
         expr->loc = loc;
         expr->name = name;
         return expr;
-    }
-
-    static ExprPtr clone_expression_tree(const Expr& expr) {
-        auto clone = std::make_unique<Expr>();
-        clone->kind = expr.kind;
-        clone->loc = expr.loc;
-        clone->int_negative = expr.int_negative;
-        clone->literal_suffix = expr.literal_suffix;
-        clone->string_value = expr.string_value;
-        clone->name = expr.name;
-        clone->label = expr.label;
-        clone->mutable_borrow = expr.mutable_borrow;
-        clone->op = expr.op;
-        clone->cast_type = expr.cast_type;
-        clone->receiver_type_args = expr.receiver_type_args;
-        clone->type_args = expr.type_args;
-        clone->field_names = expr.field_names;
-        switch (expr.kind) {
-            case ExprKind::Integer:
-                clone->int_value = expr.int_value;
-                break;
-            case ExprKind::Float:
-                clone->float_value = expr.float_value;
-                break;
-            case ExprKind::Bool:
-                clone->bool_value = expr.bool_value;
-                break;
-            case ExprKind::TupleIndex:
-                clone->tuple_index = expr.tuple_index;
-                break;
-            default:
-                break;
-        }
-        if (expr.operand) clone->operand = clone_expression_tree(*expr.operand);
-        if (expr.left) clone->left = clone_expression_tree(*expr.left);
-        if (expr.right) clone->right = clone_expression_tree(*expr.right);
-        for (const auto& arg : expr.args) clone->args.push_back(clone_expression_tree(*arg));
-        return clone;
-    }
-
-    static ExprPtr clone_assignment_target(const Expr& expr) {
-        if (expr.kind != ExprKind::Name &&
-            expr.kind != ExprKind::FieldAccess &&
-            expr.kind != ExprKind::TupleIndex &&
-            expr.kind != ExprKind::Index &&
-            !(expr.kind == ExprKind::Unary && expr.op == TokenKind::Star)) {
-            fail(expr.loc, "assignment target must be a binding, field access, index access, or pointer dereference");
-        }
-        return clone_expression_tree(expr);
     }
 
     bool starts_expression(TokenKind kind) const {

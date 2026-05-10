@@ -1,13 +1,14 @@
 fn main() -> i64 {
-  let pair = (3, 4);
+  var pair = (3, 4);
   var cells = [1, 2, 3];
   let exact = 1.5f64 + 2.0f64 == 3.5f64;
   let ready = true;
 
-  cells[1] = 5;
+  pair.0 += 2;
+  cells[1] += 3;
 
   if ready && exact {
-    pair.0 + pair.1 + cells[1] + 9
+    pair.0 + pair.1 + cells[1] + 7
   } else {
     0
   }

@@ -2,6 +2,7 @@
 
 #include "attribute_semantics.hpp"
 #include "aggregate_literal_semantics.hpp"
+#include "ast_clone.hpp"
 #include "ari_builtin.hpp"
 #include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
@@ -9758,49 +9759,6 @@ private:
         expr->loc = loc;
         expr->name = name;
         return expr;
-    }
-
-    static ExprPtr clone_borrowable_receiver_expr(const Expr& expr) {
-        auto clone = std::make_unique<Expr>();
-        clone->kind = expr.kind;
-        clone->loc = expr.loc;
-        clone->name = expr.name;
-        clone->int_negative = expr.int_negative;
-
-        switch (expr.kind) {
-            case ExprKind::Name:
-                return clone;
-            case ExprKind::FieldAccess:
-                break;
-            case ExprKind::TupleIndex:
-                clone->tuple_index = expr.tuple_index;
-                break;
-            case ExprKind::Index:
-                break;
-            case ExprKind::Integer:
-                clone->int_value = expr.int_value;
-                return clone;
-            default:
-                return nullptr;
-        }
-
-        switch (expr.kind) {
-            case ExprKind::FieldAccess:
-            case ExprKind::TupleIndex:
-                if (!expr.operand) return nullptr;
-                clone->operand = clone_borrowable_receiver_expr(*expr.operand);
-                if (!clone->operand) return nullptr;
-                return clone;
-            case ExprKind::Index:
-                if (!expr.operand || !expr.right || expr.right->kind != ExprKind::Integer) return nullptr;
-                clone->operand = clone_borrowable_receiver_expr(*expr.operand);
-                if (!clone->operand) return nullptr;
-                clone->right = clone_borrowable_receiver_expr(*expr.right);
-                if (!clone->right) return nullptr;
-                return clone;
-            default:
-                return nullptr;
-        }
     }
 
     static ExprPtr make_ast_borrow_expr(SourceLocation loc, const Expr& operand, bool mutable_borrow) {

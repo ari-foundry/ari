@@ -63,6 +63,8 @@ construction. Some helpers have already moved out to focused files:
   literal lowering
 - `enum_constructor_semantics` for expected-enum matching and final enum
   constructor IR node assembly after payload semantic checks
+- `ast_clone` for union-safe AST expression cloning shared by parser compound
+  assignment lowering and sema borrow-receiver synthesis
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
@@ -89,6 +91,9 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Block, match, and if expression node assembly now also goes through
      `ir_builders`. Future builder moves should be opportunistic and tied to a
      nearby semantic extraction, rather than treated as a standalone phase.
+   - AST expression cloning for assignment targets and synthetic borrow
+     receivers now lives in `ast_clone`, so future AST payload packing has one
+     place to preserve variant-specific copy rules.
 2. Keep constant evaluation helpers in `constant_semantics`.
    - Static integer arithmetic/bitwise/shift folding, `ConstantValue`, scalar
      constant construction/range helpers, scalar literal folding, constant
