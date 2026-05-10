@@ -1,0 +1,29 @@
+struct Cursor {
+  token: own i64,
+  mut current: i64,
+  end: i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  value
+}
+
+impl Iterator[i64] for Cursor {
+  fn next(self: ref mut Self) -> Option[i64] {
+    if self.current < self.end {
+      let value = self.current;
+      self.current = self.current + 1;
+      return Some(value);
+    }
+    return None<i64>();
+  }
+}
+
+fn main() -> i64 {
+  let cursor = Cursor { token: make_owned(9), current: 1, end: 4 };
+  var total = 0;
+  for value in cursor {
+    total = total + value;
+  }
+  total
+}

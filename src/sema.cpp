@@ -4112,6 +4112,9 @@ private:
             if (!path.empty()) states.emplace(path, LocalState::Alive);
             return;
         }
+        if (type.qualifier != TypeQualifier::Value) {
+            return;
+        }
 
         if (type.primitive == IrPrimitiveKind::Tuple ||
             type.primitive == IrPrimitiveKind::Array ||
@@ -10639,13 +10642,33 @@ private:
 
     IrExprPtr make_iterator_method_call(SourceLocation loc,
                                         const std::string& iterator_name,
-                                        const std::string& method_name) {
+                                        const std::string& method_name,
+                                        bool borrow_mut_receiver = false) {
         Expr call;
         call.kind = ExprKind::MethodCall;
         call.loc = loc;
         call.name = method_name;
-        call.operand = make_ast_name_expr(loc, iterator_name);
+        if (borrow_mut_receiver) {
+            ExprPtr receiver = make_ast_name_expr(loc, iterator_name);
+            call.operand = make_ast_borrow_expr(loc, *receiver, true);
+        } else {
+            call.operand = make_ast_name_expr(loc, iterator_name);
+        }
         return check_expr(call);
+    }
+
+    void append_hidden_iterator_owner_cleanup(SourceLocation loc,
+                                              const std::string& iterator_name,
+                                              std::vector<IrStmtPtr>& statements) {
+        LocalInfo* local = find_local_slot(iterator_name);
+        if (!local || !has_live_owner(*local)) return;
+        require_not_borrowed(loc, iterator_name, *local, "drop");
+        DropValueFactory make_value = [this, loc, iterator_name, type = local->type]() {
+            return make_local_lvalue_expr(loc, iterator_name, type);
+        };
+        append_drop_stmts_for_value(loc, local->type, make_value, statements, local);
+        for (auto& item : local->owned_field_states) item.second = LocalState::Dropped;
+        local->state = LocalState::Dropped;
     }
 
     void append_for_iterator_loop(
@@ -10656,9 +10679,10 @@ private:
     ) {
         IrType iterator_type = iterator->type;
         const bool borrowed_iterator = is_borrow_type(iterator_type);
-        if (is_owner_type(iterator_type) || (contains_borrow_type(iterator_type) && !borrowed_iterator)) {
+        const bool owning_iterator = is_owner_type(iterator_type);
+        if (contains_borrow_type(iterator_type) && !borrowed_iterator) {
             fail(stmt.loc,
-                 "Iterator[T] for-loop lowering currently requires a copyable iterator value or ref mut iterator value, got " +
+                 "Iterator[T] for-loop lowering currently requires a copyable iterator value, owning iterator value, or ref mut iterator value, got " +
                      type_name(iterator_type));
         }
         if (borrowed_iterator && iterator_type.qualifier != TypeQualifier::MutRef) {
@@ -10693,7 +10717,7 @@ private:
         loop->loc = stmt.loc;
         loop->label = stmt.label;
         loop->while_let_continue_on_mismatch = stmt.for_pattern_filter;
-        loop->match_value = make_iterator_method_call(stmt.loc, iterator_name, "next");
+        loop->match_value = make_iterator_method_call(stmt.loc, iterator_name, "next", owning_iterator);
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *loop->match_value);
         IrType enum_value_type = loop->match_value->type;
 
@@ -10749,6 +10773,7 @@ private:
             loop->match_arms.push_back(std::move(arm));
         }
         lowered.statements.push_back(std::move(loop));
+        append_hidden_iterator_owner_cleanup(stmt.loc, iterator_name, lowered.statements);
         pop_scope();
     }
 

@@ -327,6 +327,8 @@ check-control-flow: $(TARGET)
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-mut-self.ll
 	$(TARGET) tests/ok/for-iterator-ref-mut.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-ref-mut.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-ref-mut.ll
+	$(TARGET) tests/ok/for-iterator-owning-value.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-owning-value.ll
+	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-owning-value.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-direct.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-direct.elf; $(BUILD_DIR)/control-flow/for-iterator-direct.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-generic-iterator-direct.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-generic-iterator-direct.elf; $(BUILD_DIR)/control-flow/for-generic-iterator-direct.elf; code=$$?; test $$code -eq 11; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-into-iterator-direct.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-into-iterator-direct.elf; $(BUILD_DIR)/control-flow/for-into-iterator-direct.elf; code=$$?; test $$code -eq 42; fi
@@ -340,6 +342,7 @@ check-control-flow: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-nested-multi-payload-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-nested-multi-payload-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-nested-multi-payload-pattern.elf; code=$$?; test $$code -eq 55; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-mut-self.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-mut-self.elf; $(BUILD_DIR)/control-flow/for-iterator-mut-self.elf; code=$$?; test $$code -eq 15; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-ref-mut.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-ref-mut.elf; $(BUILD_DIR)/control-flow/for-iterator-ref-mut.elf; code=$$?; test $$code -eq 64; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-owning-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-owning-value.elf; $(BUILD_DIR)/control-flow/for-iterator-owning-value.elf; code=$$?; test $$code -eq 6; fi
 	if $(TARGET) tests/errors/for-iterator-planned.ari -o $(BUILD_DIR)/control-flow/for-iterator-planned.elf >$(BUILD_DIR)/control-flow/for-iterator-planned.err 2>&1; then exit 1; fi
 	grep -q "copyable IntoIterator\\[T\\] values" $(BUILD_DIR)/control-flow/for-iterator-planned.err
 	if $(TARGET) tests/errors/for-into-iterator-result-not-iterator.ari -o $(BUILD_DIR)/control-flow/for-into-iterator-result-not-iterator.elf >$(BUILD_DIR)/control-flow/for-into-iterator-result-not-iterator.err 2>&1; then exit 1; fi

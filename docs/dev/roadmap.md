@@ -56,44 +56,6 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
-3. Lower general `Iterator[T]`-based `for` loops.
-   Range loops, list literal loops, and stored local vector loops lower today
-   without trait dispatch. Sema now recognizes concrete and generic
-   `Iterator[T]`/`IntoIterator[T]` impls, reports the inferred item type, and
-   source `std::Iterator[T]` now reserves the preferred
-   `next(self: ref mut Self) -> Option[T]` method shape while still accepting
-   value-self `next(self)` impls for copyable snapshot-style iterators. Direct
-   copyable non-borrow `Iterator[T]` values now lower by storing the iterator
-   expression once in a hidden mutable binding and looping with
-   `while let std::Some(pattern) = iterator.next()`. The first
-   `IntoIterator[T]` executable subset is also implemented for copyable
-   non-borrow values whose `into_iter(self: ref mut Self)` result implements
-   `Iterator[T]`, including concrete and generic impls that return a distinct
-   iterator type; legacy value-self `into_iter(self)` impls remain accepted for
-   copyable snapshot-style containers. Direct `ref mut` `Iterator[T]` values
-   now lower through the same hidden `while let Some(pattern) = next()` loop,
-   advance the original iterator binding, and release the hidden borrow at the
-   loop boundary. Iterator trait-name/receiver contract
-   helpers are split into `iterator_semantics` so the remaining lowering work
-   can grow outside the main semantic checker. Because Ari does not have
-   associated types yet,
-   sema treats the `IntoIterator[T].into_iter` return type as an Ari-specific
-   contract: impl validation requires the concrete result to implement
-   `Iterator[T]`, generic impl placeholders are resolved before that contract
-   is checked, and `for` lowering rechecks the specialized result. The
-   remaining iterator model needs owner/borrow iterator value and lifetime
-   policy.
-   Iterator item patterns can now use scalar literal/range tests, or-patterns
-   over those tests, fieldless enum-case patterns, compact enum item payload
-   bindings/literal/range/or/alias tests, and nested aggregate-enum item case
-   patterns with positional multi-payload bindings, literal/range/or tests,
-   and aliases. Plain `for pattern in iterator` keeps
-   `while let Some(pattern) = iterator.next()` semantics, so the first
-   non-matching item ends the loop. `for let pattern in iterator` is the
-   filter-style form; non-matching `Some(_)` items continue to the next
-   iterator step.
-   - [state] add owner iterator inputs and finish the explicit iterator
-     lifetime rules for nested/break-heavy control-flow cases
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -126,6 +88,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [loop-state] track ownership and borrow state through loops, init-while
      updates, owning loop bindings, and owning break values instead of rejecting
      all state changes inside loops
+   - [iterator-lifetimes] integrate hidden `Iterator[T]` storage cleanup with
+     early returns, nested loops, and labeled break values so owner iterators
+     can exit through every control-flow edge instead of only normal loop exit
 3. Extend pattern binding modes beyond value bindings.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands

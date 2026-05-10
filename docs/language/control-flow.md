@@ -276,13 +276,16 @@ or-pattern, and enum-case loop heads are still rejected for list/vector loops
 because those loops bind every element instead of calling `Iterator[T].next()`.
 
 Direct copyable non-borrow `Iterator[T]` values lower through the standard
-`next(self: ref mut Self) -> Option[T]` step operation. Explicit
-`ref mut` iterator values are also accepted, so `for item in ref mut cursor`
-advances the original `cursor` and releases the hidden borrow after the loop.
-The iterator expression is evaluated once into a hidden mutable iterator
-binding, then Ari repeats `iterator.next()` while it returns `std::Some(item)`.
-Existing value-self iterator impls remain accepted for copyable snapshot-style
-iterators, but stateful iterators should prefer `self: ref mut Self`.
+`next(self: ref mut Self) -> Option[T]` step operation. Owning iterator values
+whose `next` receiver is `ref mut Self` are consumed into the hidden iterator
+storage, advanced there, and dropped at loop exit, so the original binding is
+moved by `for item in cursor`. Explicit `ref mut` iterator values are also
+accepted, so `for item in ref mut cursor` advances the original `cursor` and
+releases the hidden borrow after the loop. The iterator expression is evaluated
+once into a hidden mutable iterator binding, then Ari repeats `iterator.next()`
+while it returns `std::Some(item)`. Existing value-self iterator impls remain
+accepted for copyable snapshot-style iterators, but stateful iterators should
+prefer `self: ref mut Self`.
 Copyable non-borrow `IntoIterator[T]` values also lower when
 `into_iter(self: ref mut Self)` returns either `Self` or another copyable
 non-borrow value that implements `Iterator[T]`. Generic impls may return a
