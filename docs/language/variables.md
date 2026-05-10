@@ -110,6 +110,17 @@ total += other
 
 Tuple and fixed array pattern arity must match the value exactly unless the
 pattern uses one `..` rest. Struct pattern fields must exist on the struct.
+Aggregate declaration patterns can also be refutable when they contain literal,
+range, alias, or or-pattern tests. A mismatch takes the normal panic path:
+
+```ari
+let ((left, 0) | (0, left)) = pair
+var ([head, 0] | [0, head]): [i64, 2] = values
+head += left
+
+let (Point { x: axis, y: 0 } | Point { x: 0, y: axis }) = point
+```
+
 Single-payload enum cases can also be used in local bindings:
 
 ```ari

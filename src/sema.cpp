@@ -4497,17 +4497,33 @@ private:
                 ));
                 return;
             case PatternKind::Tuple:
-                lower_tuple_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                if (!is_aggregate_type(source_type)) {
+                    lower_tuple_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                    return;
+                }
+                lower_refutable_product_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
             case PatternKind::Array:
-                lower_tuple_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                if (!is_aggregate_type(source_type)) {
+                    lower_tuple_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                    return;
+                }
+                lower_refutable_product_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
             case PatternKind::Struct:
-                lower_struct_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                if (!is_aggregate_type(source_type)) {
+                    lower_struct_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                    return;
+                }
+                lower_refutable_product_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
             case PatternKind::EnumCase:
             case PatternKind::Alias:
             case PatternKind::Or:
+                if (is_aggregate_type(source_type)) {
+                    lower_refutable_product_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                    return;
+                }
                 lower_refutable_enum_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
             default:
@@ -4566,6 +4582,175 @@ private:
                 fail(arm.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
             }
             declare_local(arm.loc, arm.payload_name, arm.payload_type, mutable_binding);
+        }
+    }
+
+    void validate_product_binding_pattern_shape(const Pattern& pattern, const IrType& source_type) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+                return;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                validate_product_binding_pattern_shape(*pattern.alias_pattern, source_type);
+                return;
+            case PatternKind::Or:
+                for (const auto& alternative : pattern.alternatives) {
+                    validate_product_binding_pattern_shape(alternative, source_type);
+                }
+                return;
+            case PatternKind::Tuple:
+            case PatternKind::Array: {
+                bool array_pattern = pattern.kind == PatternKind::Array;
+                IrPrimitiveKind expected = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
+                const char* pattern_name = array_pattern ? "array" : "tuple";
+                if (source_type.primitive != expected) {
+                    fail(pattern.loc, std::string(pattern_name) + " binding pattern requires a " +
+                                      pattern_name + " value, got " + type_name(source_type));
+                }
+                const std::vector<IrType>& fields = aggregate_field_types(source_type);
+                if (pattern.has_rest) {
+                    if (pattern.elements.size() > fields.size()) {
+                        fail(pattern.loc,
+                             std::string(pattern_name) + " binding pattern has " + std::to_string(pattern.elements.size()) +
+                             " non-rest elements but value has " + std::to_string(fields.size()));
+                    }
+                } else if (pattern.elements.size() != fields.size()) {
+                    fail(pattern.loc,
+                         std::string(pattern_name) + " binding pattern has " + std::to_string(pattern.elements.size()) +
+                         " elements but value has " + std::to_string(fields.size()));
+                }
+                for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+                    std::size_t field_index = tuple_pattern_field_index(pattern, fields.size(), i);
+                    validate_product_binding_pattern_shape(pattern.elements[i], fields[field_index]);
+                }
+                return;
+            }
+            case PatternKind::Struct: {
+                if (source_type.primitive != IrPrimitiveKind::Struct) {
+                    fail(pattern.loc, "struct binding pattern requires a struct value, got " + type_name(source_type));
+                }
+                std::string struct_name = resolve_struct_type_name(pattern.case_name);
+                auto struct_found = structs_.find(struct_name);
+                if (struct_found == structs_.end()) {
+                    fail(pattern.loc, "unknown struct '" + pattern.case_name + "' in binding pattern");
+                }
+                require_struct_access(pattern.loc, struct_found->second);
+                if (struct_name != source_type.name) {
+                    fail(pattern.loc,
+                         "struct binding pattern type '" + struct_name + "' does not match value type " + type_name(source_type));
+                }
+                if (pattern.field_names.size() != pattern.elements.size()) {
+                    throw CompileError("internal error: struct binding pattern field/value arity mismatch");
+                }
+                std::set<std::string> seen_fields;
+                for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+                    const std::string& field_name = pattern.field_names[i];
+                    if (!seen_fields.insert(field_name).second) {
+                        fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct binding pattern");
+                    }
+                    std::size_t field_index = struct_field_index(pattern.elements[i].loc, source_type, field_name);
+                    validate_product_binding_pattern_shape(pattern.elements[i], source_type.field_types[field_index]);
+                }
+                return;
+            }
+            case PatternKind::EnumCase:
+                if (source_type.primitive != IrPrimitiveKind::Struct) return;
+                {
+                    const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
+                    if (!info.tuple_struct || !pattern.has_payload_pattern || !pattern.payload_pattern) return;
+                    const std::vector<IrType>& fields = aggregate_field_types(source_type);
+                    const Pattern& payload = *pattern.payload_pattern;
+                    if (payload.kind == PatternKind::Tuple) {
+                        if (payload.has_rest) {
+                            if (payload.elements.size() > fields.size()) {
+                                fail(payload.loc,
+                                     "tuple-struct binding pattern has " + std::to_string(payload.elements.size()) +
+                                     " non-rest elements but value has " + std::to_string(fields.size()));
+                            }
+                        } else if (payload.elements.size() != fields.size()) {
+                            fail(payload.loc,
+                                 "tuple-struct binding pattern has " + std::to_string(payload.elements.size()) +
+                                 " elements but value has " + std::to_string(fields.size()));
+                        }
+                        for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+                            std::size_t field_index = tuple_pattern_field_index(payload, fields.size(), i);
+                            validate_product_binding_pattern_shape(payload.elements[i], fields[field_index]);
+                        }
+                        return;
+                    }
+                    if (fields.size() == 1) {
+                        validate_product_binding_pattern_shape(payload, fields[0]);
+                    }
+                }
+                return;
+        }
+    }
+
+    void lower_refutable_product_binding_pattern_from_local(
+        const Pattern& pattern,
+        const std::string& source_name,
+        const IrType& source_type,
+        bool mutable_binding,
+        std::vector<IrStmtPtr>& statements
+    ) {
+        if (!is_aggregate_type(source_type)) {
+            fail(pattern.loc, "aggregate binding pattern requires tuple, array, or struct value");
+        }
+
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
+        std::set<std::string> reusable_names;
+        if (pattern_contains_or(pattern)) {
+            reusable_names = require_same_or_pattern_bindings(pattern.loc, alternatives, source_type);
+        }
+
+        bool has_irrefutable_alternative = false;
+        std::vector<TupleCheckedStmtArm> checked_arms;
+        checked_arms.reserve(alternatives.size() + 1);
+
+        for (std::size_t i = 0; i < alternatives.size(); ++i) {
+            const Pattern& alternative = alternatives[i];
+            validate_product_binding_pattern_shape(alternative, source_type);
+
+            TupleCheckedStmtArm arm;
+            arm.loc = alternative.loc;
+            std::vector<IrStmtPtr> condition_prelude;
+            arm.condition = lower_product_match_pattern_condition(
+                alternative,
+                source_name,
+                source_type,
+                condition_prelude
+            );
+            if (!arm.condition) has_irrefutable_alternative = true;
+            for (auto& statement : condition_prelude) {
+                statements.push_back(std::move(statement));
+            }
+
+            reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
+            lower_product_match_pattern_bindings_from_local(
+                alternative,
+                source_name,
+                source_type,
+                arm.body,
+                mutable_binding
+            );
+            reusable_pattern_binding_names_.clear();
+            checked_arms.push_back(std::move(arm));
+        }
+
+        if (!has_irrefutable_alternative) {
+            TupleCheckedStmtArm failure;
+            failure.loc = pattern.loc;
+            failure.body.push_back(make_panic_stmt(pattern.loc));
+            checked_arms.push_back(std::move(failure));
+        }
+
+        std::vector<IrStmtPtr> lowered = build_tuple_match_if_chain(checked_arms);
+        for (auto& statement : lowered) {
+            statements.push_back(std::move(statement));
         }
     }
 
@@ -8470,7 +8655,8 @@ private:
     void lower_tuple_match_value_bindings(const Pattern& pattern,
                                           const IrType& value_type,
                                           IrExprPtr value,
-                                          std::vector<IrStmtPtr>& statements) {
+                                          std::vector<IrStmtPtr>& statements,
+                                          bool mutable_binding = false) {
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -8482,11 +8668,11 @@ private:
                     std::string nested_name = make_hidden_local("$pattern");
                     declare_local(pattern.loc, nested_name, value_type, false);
                     statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
-                    lower_struct_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements);
+                    lower_struct_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
                 }
                 return;
             case PatternKind::Binding:
-                lower_binding_pattern_value(pattern, value_type, std::move(value), false, statements);
+                lower_binding_pattern_value(pattern, value_type, std::move(value), mutable_binding, statements);
                 return;
             case PatternKind::Alias: {
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
@@ -8496,13 +8682,14 @@ private:
                 if (is_owner_type(value_type)) {
                     fail(pattern.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
                 }
-                declare_local(pattern.loc, pattern.alias_name, value_type, false);
-                statements.push_back(make_ir_var_decl(pattern.loc, pattern.alias_name, value_type, std::move(value), false));
+                declare_local(pattern.loc, pattern.alias_name, value_type, mutable_binding);
+                statements.push_back(make_ir_var_decl(pattern.loc, pattern.alias_name, value_type, std::move(value), mutable_binding));
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     pattern.alias_name,
                     value_type,
-                    statements
+                    statements,
+                    mutable_binding
                 );
                 return;
             }
@@ -8510,21 +8697,21 @@ private:
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
-                lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements);
+                lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
                 return;
             }
             case PatternKind::Array: {
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
-                lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements);
+                lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
                 return;
             }
             case PatternKind::Struct: {
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
-                lower_struct_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements);
+                lower_struct_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
                 return;
             }
             case PatternKind::Or:
@@ -8539,17 +8726,18 @@ private:
     void lower_product_match_pattern_bindings_from_local(const Pattern& pattern,
                                                          const std::string& source_name,
                                                          const IrType& source_type,
-                                                         std::vector<IrStmtPtr>& statements) {
+                                                         std::vector<IrStmtPtr>& statements,
+                                                         bool mutable_binding = false) {
         if (source_type.primitive == IrPrimitiveKind::Tuple) {
-            lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+            lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
             return;
         }
         if (source_type.primitive == IrPrimitiveKind::Array) {
-            lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+            lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
             return;
         }
         if (source_type.primitive == IrPrimitiveKind::Struct) {
-            lower_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+            lower_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
             return;
         }
         switch (pattern.kind) {
@@ -8563,23 +8751,24 @@ private:
             case PatternKind::Array:
                 return;
             case PatternKind::Binding:
-                lower_binding_pattern_from_local(pattern, source_name, source_type, false, statements);
+                lower_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
-                declare_local(pattern.loc, pattern.alias_name, source_type, false);
+                declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
                     pattern.alias_name,
                     source_type,
                     make_local_lvalue_expr(pattern.loc, source_name, source_type),
-                    false
+                    mutable_binding
                 ));
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     source_name,
                     source_type,
-                    statements
+                    statements,
+                    mutable_binding
                 );
                 return;
             case PatternKind::Or:
@@ -8593,7 +8782,8 @@ private:
     void lower_positional_product_match_pattern_bindings_from_local(const Pattern& pattern,
                                                                     const std::string& source_name,
                                                                     const IrType& source_type,
-                                                                    std::vector<IrStmtPtr>& statements) {
+                                                                    std::vector<IrStmtPtr>& statements,
+                                                                    bool mutable_binding = false) {
         const std::vector<IrType>& fields = aggregate_field_types(source_type);
         require_tuple_pattern_arity(pattern, source_type, fields);
 
@@ -8605,7 +8795,8 @@ private:
                 item,
                 fields[field_index],
                 make_tuple_index_expr(item.loc, source_name, source_type, field_index),
-                statements
+                statements,
+                mutable_binding
             );
         }
     }
@@ -8613,7 +8804,8 @@ private:
     void lower_tuple_match_pattern_bindings_from_local(const Pattern& pattern,
                                                        const std::string& source_name,
                                                        const IrType& source_type,
-                                                       std::vector<IrStmtPtr>& statements) {
+                                                       std::vector<IrStmtPtr>& statements,
+                                                       bool mutable_binding = false) {
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -8621,23 +8813,24 @@ private:
             case PatternKind::Range:
                 return;
             case PatternKind::Binding:
-                lower_binding_pattern_from_local(pattern, source_name, source_type, false, statements);
+                lower_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
-                declare_local(pattern.loc, pattern.alias_name, source_type, false);
+                declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
                     pattern.alias_name,
                     source_type,
                     make_local_lvalue_expr(pattern.loc, source_name, source_type),
-                    false
+                    mutable_binding
                 ));
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     source_name,
                     source_type,
-                    statements
+                    statements,
+                    mutable_binding
                 );
                 return;
             case PatternKind::Or:
@@ -8648,7 +8841,7 @@ private:
             case PatternKind::EnumCase:
             case PatternKind::Struct:
                 if (source_type.primitive == IrPrimitiveKind::Struct) {
-                    lower_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+                    lower_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
                     return;
                 }
                 return;
@@ -8664,13 +8857,14 @@ private:
             fail(pattern.loc, std::string(pattern_name) + " match pattern requires a " +
                               pattern_name + " value, got " + type_name(source_type));
         }
-        lower_positional_product_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+        lower_positional_product_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
     }
 
     void lower_tuple_struct_match_pattern_bindings_from_local(const Pattern& pattern,
                                                               const std::string& source_name,
                                                               const IrType& source_type,
-                                                              std::vector<IrStmtPtr>& statements) {
+                                                              std::vector<IrStmtPtr>& statements,
+                                                              bool mutable_binding = false) {
         const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
         if (!info.tuple_struct) {
             fail(pattern.loc, "tuple-struct pattern requires a tuple struct");
@@ -8681,7 +8875,7 @@ private:
         const std::vector<IrType>& fields = aggregate_field_types(source_type);
         const Pattern& payload = *pattern.payload_pattern;
         if (payload.kind == PatternKind::Tuple) {
-            lower_positional_product_match_pattern_bindings_from_local(payload, source_name, source_type, statements);
+            lower_positional_product_match_pattern_bindings_from_local(payload, source_name, source_type, statements, mutable_binding);
             return;
         }
         if (fields.size() != 1) {
@@ -8693,14 +8887,16 @@ private:
             payload,
             fields[0],
             make_tuple_index_expr(payload.loc, source_name, source_type, 0),
-            statements
+            statements,
+            mutable_binding
         );
     }
 
     void lower_struct_match_pattern_bindings_from_local(const Pattern& pattern,
                                                         const std::string& source_name,
                                                         const IrType& source_type,
-                                                        std::vector<IrStmtPtr>& statements) {
+                                                        std::vector<IrStmtPtr>& statements,
+                                                        bool mutable_binding = false) {
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -8708,23 +8904,24 @@ private:
             case PatternKind::Range:
                 return;
             case PatternKind::Binding:
-                lower_binding_pattern_from_local(pattern, source_name, source_type, false, statements);
+                lower_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
-                declare_local(pattern.loc, pattern.alias_name, source_type, false);
+                declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
                     pattern.alias_name,
                     source_type,
                     make_local_lvalue_expr(pattern.loc, source_name, source_type),
-                    false
+                    mutable_binding
                 ));
                 lower_struct_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
                     source_name,
                     source_type,
-                    statements
+                    statements,
+                    mutable_binding
                 );
                 return;
             case PatternKind::Or:
@@ -8733,7 +8930,7 @@ private:
                 }
                 return;
             case PatternKind::EnumCase:
-                lower_tuple_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements);
+                lower_tuple_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
                 return;
             case PatternKind::Tuple:
                 fail(pattern.loc, "tuple patterns cannot match named struct values; use the tuple-struct name");
@@ -8762,7 +8959,8 @@ private:
                 pattern.elements[i],
                 source_type.field_types[field_index],
                 make_tuple_index_expr(pattern.elements[i].loc, source_name, source_type, field_index),
-                statements
+                statements,
+                mutable_binding
             );
         }
     }

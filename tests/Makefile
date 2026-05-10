@@ -1226,6 +1226,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/variables-enum-pattern-binding.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/variables-enum-or-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.raw
 	$(BUILD_DIR)/variables/variables-enum-or-pattern-binding.raw; code=$$?; test $$code -eq 33
+	$(TARGET) --freestanding tests/ok/variables-aggregate-or-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.raw
+	$(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.raw; code=$$?; test $$code -eq 41
 	$(TARGET) --freestanding tests/ok/ownership-aggregate-field-access.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-access.raw
 	$(BUILD_DIR)/variables/ownership-aggregate-field-access.raw; code=$$?; test $$code -eq 7
 	$(TARGET) --freestanding tests/ok/ownership-aggregate-field-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-move.raw
@@ -1267,6 +1269,9 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/variables-enum-or-pattern-binding.ari --emit-llvm $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.ll
 	grep -q "match.arm" $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.ll
 	grep -q "store i64" $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.ll
+	$(TARGET) tests/ok/variables-aggregate-or-pattern-binding.ari --emit-llvm $(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.ll
+	grep -q "@ari_builtin_panic" $(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.ll
+	grep -q "store i64" $(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.ll
 	$(TARGET) tests/ok/variables-enum-pattern-binding-trap.ari --emit-llvm $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.ll
 	grep -q "@ari_builtin_panic" $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.ll
 	$(TARGET) tests/ok/variables-host-scalars.ari --emit-llvm $(BUILD_DIR)/variables/variables-host-scalars.ll

@@ -1,0 +1,20 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Pair(i64, i64)
+
+fn main() -> i64 {
+  let ((left, 0) | (0, left)) = (0, 7);
+
+  var ([head, 0] | [0, head]): [i64, 2] = [8, 0];
+  head += left;
+
+  let point = Point { x: 0, y: 9 };
+  let (Point { x: axis, y: 0 } | Point { x: 0, y: axis }) = point;
+
+  let (Pair(side, 0) | Pair(0, side)) = Pair(10, 0);
+
+  return left + head + axis + side;
+}

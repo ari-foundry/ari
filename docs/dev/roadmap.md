@@ -113,10 +113,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share
    same-name/same-type or-pattern bindings through the product pattern engine.
-   - [or-bindings-decls] extend the same binding unification to refutable
-     aggregate `let`/`var`, control-flow, for-loop, and function-parameter
-     positions once the shared binding-mode engine owns declaration-lifetime
-     locals
+   Refutable aggregate `let`/`var` declarations now reuse that engine for
+   tuple, fixed-array, named-struct, and tuple-struct literal/range/alias/or
+   tests, and preserve `var` mutability for every introduced binding.
+   - [or-bindings-control] extend the same binding unification to aggregate
+     `if let`, `while let`, for-loop filters, and function-parameter regression
+     coverage once those positions share declaration-lifetime locals
    - [slice-patterns] lower `Slice[T]` and `Vec[T]` length-checked patterns
      after the shared binding-mode engine decides reference/ownership behavior
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real
