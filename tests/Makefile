@@ -1038,6 +1038,8 @@ check-traits: $(TARGET)
 	$(BUILD_DIR)/traits/trait-bound-static-dispatch.raw; code=$$?; test $$code -eq 6
 	$(TARGET) --freestanding tests/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.raw
 	$(BUILD_DIR)/traits/trait-supertrait-static.raw; code=$$?; test $$code -eq 56
+	$(TARGET) --freestanding tests/ok/trait-qualified-call.ari -o $(BUILD_DIR)/traits/trait-qualified-call.raw
+	$(BUILD_DIR)/traits/trait-qualified-call.raw; code=$$?; test $$code -eq 150
 	$(TARGET) --freestanding tests/ok/trait-bound-generic-args.ari -o $(BUILD_DIR)/traits/trait-bound-generic-args.raw
 	$(BUILD_DIR)/traits/trait-bound-generic-args.raw; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-bound-static-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-bound-static-dispatch.ll
@@ -1113,6 +1115,8 @@ check-traits: $(TARGET)
 	grep -q "unknown method 'missing' for type i64" $(BUILD_DIR)/traits/trait-method-unknown.err
 	if $(TARGET) tests/errors/trait-method-ambiguous.ari -o $(BUILD_DIR)/traits/trait-method-ambiguous.elf >$(BUILD_DIR)/traits/trait-method-ambiguous.err 2>&1; then exit 1; fi
 	grep -q "method call 'score' for type i64 is ambiguous" $(BUILD_DIR)/traits/trait-method-ambiguous.err
+	if $(TARGET) tests/errors/trait-qualified-supertrait-ambiguous.ari -o $(BUILD_DIR)/traits/trait-qualified-supertrait-ambiguous.elf >$(BUILD_DIR)/traits/trait-qualified-supertrait-ambiguous.err 2>&1; then exit 1; fi
+	grep -q "trait-qualified method call 'BothScores::score' for type i64 is ambiguous" $(BUILD_DIR)/traits/trait-qualified-supertrait-ambiguous.err
 	if $(TARGET) tests/errors/trait-associated-ambiguous.ari -o $(BUILD_DIR)/traits/trait-associated-ambiguous.elf >$(BUILD_DIR)/traits/trait-associated-ambiguous.err 2>&1; then exit 1; fi
 	grep -q "associated function 'pick' for type Box is ambiguous" $(BUILD_DIR)/traits/trait-associated-ambiguous.err
 	if $(TARGET) tests/errors/trait-bound-missing-impl.ari -o $(BUILD_DIR)/traits/trait-bound-missing-impl.elf >$(BUILD_DIR)/traits/trait-bound-missing-impl.err 2>&1; then exit 1; fi

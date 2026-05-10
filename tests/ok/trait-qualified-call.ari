@@ -1,0 +1,58 @@
+trait LeftScore {
+  fn score(self) -> i64
+}
+
+trait RightScore {
+  fn score(self) -> i64
+}
+
+trait AddAs[T] {
+  fn add_as(self, other: T) -> T
+}
+
+trait BaseScore {
+  fn base(self) -> i64
+}
+
+trait ChildScore: BaseScore {
+  fn child(self) -> i64
+}
+
+impl LeftScore for i64 {
+  fn score(self) -> i64 {
+    1
+  }
+}
+
+impl RightScore for i64 {
+  fn score(self) -> i64 {
+    2
+  }
+}
+
+impl AddAs[i64] for i64 {
+  fn add_as(self, other: i64) -> i64 {
+    self + other
+  }
+}
+
+impl BaseScore for i64 {
+  fn base(self) -> i64 {
+    self + 3
+  }
+}
+
+impl ChildScore for i64 {
+  fn child(self) -> i64 {
+    self + 4
+  }
+}
+
+fn main() -> i64 {
+  let value = 1i64;
+  let left = LeftScore::score(value);
+  let right = RightScore::score(value);
+  let generic = AddAs<i64>::add_as(20i64, 2i64);
+  let inherited = ChildScore::base(5i64);
+  left * 100 + right * 10 + generic + inherited
+}

@@ -1959,6 +1959,35 @@ private:
         return trait_application_has_method(trait_name, trait_args, method_name, visiting);
     }
 
+    bool try_resolve_trait_qualified_call_target(
+        SourceLocation loc,
+        const std::string& receiver_name,
+        const std::vector<TypeRef>& type_args,
+        std::string& trait_name,
+        std::vector<IrType>& trait_args
+    ) {
+        std::string resolved = resolve_trait_name(receiver_name);
+        auto trait_found = traits_.find(resolved);
+        if (trait_found == traits_.end()) return false;
+
+        const TraitInfo& trait = trait_found->second;
+        require_trait_access(loc, trait);
+        if (type_args.size() != trait.generic_arity) {
+            fail(loc,
+                 "trait '" + trait.name + "' expects " +
+                     std::to_string(trait.generic_arity) +
+                     " type argument" + (trait.generic_arity == 1 ? "" : "s"));
+        }
+
+        trait_name = trait.name;
+        trait_args.clear();
+        trait_args.reserve(type_args.size());
+        for (const auto& type_arg : type_args) {
+            trait_args.push_back(resolve_executable_type(type_arg));
+        }
+        return true;
+    }
+
     GenericTraitBound resolve_generic_trait_bound_with_context(
         const GenericParam& generic,
         const std::string& module_name,
@@ -15034,6 +15063,122 @@ private:
                          is_prelude_slice_type(local->type));
     }
 
+    const ImplMethodInfo* select_trait_qualified_concrete_method_impl(
+        SourceLocation loc,
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const IrType& receiver_type,
+        const std::string& method_name,
+        const std::vector<ImplMethodInfo>& candidates
+    ) const {
+        const ImplMethodInfo* selected = nullptr;
+        for (const auto& candidate : candidates) {
+            if (!same_type(candidate.receiver_type, receiver_type)) continue;
+            if (candidate.trait_name.empty()) continue;
+            if (!trait_application_implies_trait(
+                    trait_name,
+                    trait_args,
+                    candidate.trait_name,
+                    candidate.trait_args)) {
+                continue;
+            }
+            if (selected) {
+                fail(loc,
+                     "trait-qualified method call '" +
+                         trait_method_display(trait_name, trait_args, method_name) +
+                         "' for type " + type_name(receiver_type) + " is ambiguous");
+            }
+            selected = &candidate;
+        }
+        return selected;
+    }
+
+    bool try_select_trait_qualified_generic_method_impl(
+        const Expr& expr,
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const IrType& receiver_type,
+        const std::string& method_name,
+        const std::vector<IrType>& arg_types,
+        ImplMethodInfo& selected
+    ) {
+        std::vector<ImplMethodInfo> matches;
+        std::string first_bound_failure;
+        std::string first_inference_failure;
+        bool saw_wrong_arg_count = false;
+
+        Expr method_expr;
+        method_expr.kind = ExprKind::Call;
+        method_expr.loc = expr.loc;
+        method_expr.name = method_name;
+
+        for (const auto& candidate : generic_method_impls_) {
+            if (basename_of_qualified_name(candidate.fn->name) != method_name) continue;
+            if (candidate.trait_name.empty()) continue;
+
+            std::map<std::string, IrType> substitutions;
+            if (!infer_generic_impl_method_substitutions(candidate, receiver_type, substitutions)) continue;
+
+            std::vector<IrType> candidate_trait_args;
+            candidate_trait_args.reserve(candidate.trait_args.size());
+            for (const auto& arg : candidate.trait_args) {
+                candidate_trait_args.push_back(substitute_impl_generic_type(arg, substitutions));
+            }
+            if (!trait_application_implies_trait(
+                    trait_name,
+                    trait_args,
+                    candidate.trait_name,
+                    candidate_trait_args)) {
+                continue;
+            }
+
+            if (candidate.sig.params.size() != arg_types.size() + 1) {
+                saw_wrong_arg_count = true;
+                continue;
+            }
+            if (!bind_or_infer_method_generic_type_args(
+                    method_expr,
+                    candidate,
+                    arg_types,
+                    substitutions,
+                    &first_inference_failure)) {
+                continue;
+            }
+
+            std::set<std::string> visiting;
+            std::string bound_failure;
+            if (!impl_generic_bounds_satisfied(candidate.generic_bounds, substitutions, visiting, &bound_failure)) {
+                if (first_bound_failure.empty()) first_bound_failure = bound_failure;
+                continue;
+            }
+            if (!impl_generic_bounds_satisfied(candidate.method_generic_bounds, substitutions, visiting, &bound_failure)) {
+                if (first_bound_failure.empty()) first_bound_failure = bound_failure;
+                continue;
+            }
+
+            matches.push_back(specialize_generic_impl_method_with_substitutions(
+                candidate,
+                receiver_type,
+                method_name,
+                std::move(substitutions)));
+        }
+
+        if (matches.empty()) {
+            if (!first_bound_failure.empty()) fail(expr.loc, first_bound_failure);
+            if (!first_inference_failure.empty()) fail(expr.loc, first_inference_failure);
+            if (saw_wrong_arg_count) fail(expr.loc, "wrong argument count for method '" + method_name + "'");
+            return false;
+        }
+        if (matches.size() > 1) {
+            fail(expr.loc,
+                 "trait-qualified method call '" +
+                     trait_method_display(trait_name, trait_args, method_name) +
+                     "' for type " + type_name(receiver_type) + " is ambiguous");
+        }
+        selected = std::move(matches.front());
+        return true;
+    }
+
     const ImplMethodInfo* select_constrained_method_impl(
         const Expr& method_expr,
         const IrType& receiver_type,
@@ -15332,12 +15477,140 @@ private:
         return lowered;
     }
 
+    IrExprPtr check_trait_qualified_method_call(
+        const Expr& expr,
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const std::string& method_name,
+        IrExprPtr lowered
+    ) {
+        const std::string display = trait_method_display(trait_name, trait_args, method_name);
+        if (!trait_application_has_method(trait_name, trait_args, method_name)) {
+            fail(expr.loc, "trait '" + trait_application_display(trait_name, trait_args) +
+                     "' has no method '" + method_name + "'");
+        }
+        if (expr.args.empty()) {
+            fail(expr.loc, "trait-qualified method call '" + display + "' requires a receiver argument");
+        }
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr receiver = check_expr(*expr.args.front());
+        IrType method_receiver_type = receiver->type;
+        if (is_receiver_borrow_type(method_receiver_type)) {
+            method_receiver_type = value_qualified_type(method_receiver_type);
+        }
+
+        std::vector<IrExprPtr> checked_args;
+        std::vector<IrType> arg_types;
+        checked_args.reserve(expr.args.size() - 1);
+        arg_types.reserve(expr.args.size() - 1);
+        for (std::size_t i = 1; i < expr.args.size(); ++i) {
+            IrExprPtr arg = check_expr(*expr.args[i]);
+            arg_types.push_back(arg->type);
+            checked_args.push_back(std::move(arg));
+        }
+
+        if (!type_implements_trait(trait_name, trait_args, method_receiver_type)) {
+            fail(expr.loc,
+                 "type " + type_name(method_receiver_type) + " does not implement trait '" +
+                     trait_application_display(trait_name, trait_args) +
+                     "' for trait-qualified method call");
+        }
+
+        const ImplMethodInfo* selected = nullptr;
+        auto found = method_impls_.find(method_lookup_key(method_receiver_type, method_name));
+        if (found != method_impls_.end()) {
+            selected = select_trait_qualified_concrete_method_impl(
+                expr.loc,
+                trait_name,
+                trait_args,
+                method_receiver_type,
+                method_name,
+                found->second);
+        }
+
+        ImplMethodInfo generic_selected;
+        bool has_generic_selected = false;
+        if (!selected) {
+            has_generic_selected = try_select_trait_qualified_generic_method_impl(
+                expr,
+                trait_name,
+                trait_args,
+                method_receiver_type,
+                method_name,
+                arg_types,
+                generic_selected);
+        }
+        if (!selected && !has_generic_selected) {
+            fail(expr.loc,
+                 "trait-qualified method call '" + display +
+                     "' has no matching impl for type " + type_name(method_receiver_type));
+        }
+
+        const ImplMethodInfo& method = has_generic_selected ? generic_selected : *selected;
+        const FunctionSig& sig = method.sig;
+        if (sig.params.empty()) {
+            fail(expr.loc, "method '" + method_name + "' for type " + type_name(method_receiver_type) +
+                     " has no receiver parameter");
+        }
+        if (sig.params.size() != expr.args.size()) {
+            fail(expr.loc, "wrong argument count for trait-qualified method call '" + display + "'");
+        }
+
+        bool mutable_receiver_borrow = false;
+        if (!is_borrow_type(receiver->type) &&
+            borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
+            ExprPtr borrow_expr = make_ast_borrow_expr(expr.args.front()->loc, *expr.args.front(), mutable_receiver_borrow);
+            if (!borrow_expr->operand) {
+                fail(expr.loc,
+                     "method '" + method_name +
+                         "' with borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+            }
+            receiver = check_expr(*borrow_expr);
+        }
+
+        coerce_expr_to_expected(*receiver, sig.params[0]);
+        require_assignable(expr.loc, sig.params[0], receiver->type);
+
+        lowered->kind = IrExprKind::Call;
+        lowered->name = method.lowered_name;
+        lowered->type = sig.result;
+        require_impl_method_access(expr.loc, method, method_name);
+        queue_impl_method_for_lowering(method);
+        lowered->args.reserve(expr.args.size());
+        lowered->args.push_back(std::move(receiver));
+        for (std::size_t i = 1; i < expr.args.size(); ++i) {
+            IrExprPtr arg = std::move(checked_args[i - 1]);
+            coerce_expr_to_expected(*arg, sig.params[i]);
+            require_assignable(expr.loc, sig.params[i], arg->type);
+            lowered->args.push_back(std::move(arg));
+        }
+        release_temporary_borrows(borrow_mark);
+        return lowered;
+    }
+
     IrExprPtr check_associated_call(
         const Expr& expr,
         const std::string& receiver_name,
         const std::string& method_name,
         IrExprPtr lowered
     ) {
+        std::string trait_name;
+        std::vector<IrType> trait_args;
+        if (try_resolve_trait_qualified_call_target(
+                expr.loc,
+                receiver_name,
+                expr.type_args,
+                trait_name,
+                trait_args)) {
+            return check_trait_qualified_method_call(
+                expr,
+                trait_name,
+                trait_args,
+                method_name,
+                std::move(lowered));
+        }
+
         std::size_t borrow_mark = temporary_borrow_mark();
         std::vector<IrExprPtr> checked_args;
         std::vector<IrType> arg_types;

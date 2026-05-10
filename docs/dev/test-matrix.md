@@ -430,6 +430,8 @@ Checklist:
       supertrait impls for the same receiver type
 - [x] allow generic bounds on a child trait to statically dispatch methods
       declared by its supertraits
+- [x] lower trait-qualified calls such as `Trait::method(receiver, ...)` and
+      `Trait<T>::method(receiver, ...)` for explicit static dispatch
 - [x] accept bare `self` in trait/impl method signatures as `Self`
 - [x] lower concrete `value.method(...)` calls through matching impl methods
 - [x] reject unknown and ambiguous method calls

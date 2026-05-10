@@ -114,6 +114,24 @@ Any `impl Child for T` must also have a matching `impl Base for T`. Generic
 bounds inherit supertrait methods for static dispatch, so a `T: Child` function
 can call both `child()` and `base()` when the concrete type provides both impls.
 
+When multiple traits provide the same method name for a type, use a
+trait-qualified call to pick the impl explicitly:
+
+```ari
+let left = LeftScore::score(value)
+let right = RightScore::score(value)
+```
+
+Generic trait applications use expression-call brackets:
+
+```ari
+let value = AddAs<i64>::add_as(20, 2)
+```
+
+A child trait can name a unique inherited supertrait method, such as
+`Child::base(value)`. If more than one supertrait exposes the same method name,
+name the specific supertrait instead.
+
 This is behavior composition, not struct inheritance. Ari keeps structs as data
 layout declarations; use named fields, tuple structs, or explicit embedding for
 data reuse. There is no hidden base-object layout or implicit field/method

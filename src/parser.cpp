@@ -1837,7 +1837,7 @@ private:
                 --depth;
                 if (depth == 0) {
                     TokenKind next = peek(static_cast<int>(i - pos_ + 1)).kind;
-                    return next == TokenKind::LParen;
+                    return next == TokenKind::LParen || next == TokenKind::ColonColon;
                 }
             } else if (kind == TokenKind::End || kind == TokenKind::Semicolon) {
                 return false;
@@ -1868,7 +1868,8 @@ private:
                 --depth;
                 if (depth == 0) {
                     TokenKind next = peek(static_cast<int>(i - pos_ + 1)).kind;
-                    return next == TokenKind::LParen || next == TokenKind::LBrace;
+                    return next == TokenKind::LParen || next == TokenKind::LBrace ||
+                           next == TokenKind::ColonColon;
                 }
             }
         }
@@ -1901,6 +1902,11 @@ private:
                     expr = parse_struct_literal(std::move(expr));
                     continue;
                 }
+                if (match(TokenKind::ColonColon)) {
+                    Token part = expect_identifier_or_contextual_name_keyword("expected name after ::");
+                    expr->name += "::" + part.text;
+                    continue;
+                }
                 if (!check(TokenKind::LParen)) {
                     fail(expr->loc, "generic type arguments in expression position must be followed by a call");
                 }
@@ -1915,6 +1921,11 @@ private:
                     *expr);
                 if (allow_struct_literals_ && check(TokenKind::LBrace)) {
                     expr = parse_struct_literal(std::move(expr));
+                    continue;
+                }
+                if (match(TokenKind::ColonColon)) {
+                    Token part = expect_identifier_or_contextual_name_keyword("expected name after ::");
+                    expr->name += "::" + part.text;
                     continue;
                 }
                 if (!check(TokenKind::LParen)) {

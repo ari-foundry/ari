@@ -15,6 +15,12 @@ std::string trait_application_display(const std::string& trait_name, const std::
     return out;
 }
 
+std::string trait_method_display(const std::string& trait_name,
+                                 const std::vector<IrType>& trait_args,
+                                 const std::string& method_name) {
+    return trait_application_display(trait_name, trait_args) + "::" + method_name;
+}
+
 std::string trait_impl_key(const std::string& trait_name,
                            const std::vector<IrType>& trait_args,
                            const IrType& self_type) {
