@@ -289,12 +289,14 @@ check-control-flow: $(TARGET)
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	$(TARGET) tests/ok/labeled-block-aggregate.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
 	grep -q "store { i64, i64 }" $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
+	$(TARGET) tests/ok/for-iterator-direct.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-direct.ll
+	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-direct.ll
+	$(TARGET) tests/ok/for-generic-iterator-direct.ari --emit-llvm $(BUILD_DIR)/control-flow/for-generic-iterator-direct.ll
+	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-generic-iterator-direct.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-direct.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-direct.elf; $(BUILD_DIR)/control-flow/for-iterator-direct.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-generic-iterator-direct.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-generic-iterator-direct.elf; $(BUILD_DIR)/control-flow/for-generic-iterator-direct.elf; code=$$?; test $$code -eq 11; fi
 	if $(TARGET) tests/errors/for-iterator-planned.ari -o $(BUILD_DIR)/control-flow/for-iterator-planned.elf >$(BUILD_DIR)/control-flow/for-iterator-planned.err 2>&1; then exit 1; fi
-	grep -q "Iterator\\[T\\] lowering is planned" $(BUILD_DIR)/control-flow/for-iterator-planned.err
-	if $(TARGET) tests/errors/for-iterator-trait-planned.ari -o $(BUILD_DIR)/control-flow/for-iterator-trait-planned.elf >$(BUILD_DIR)/control-flow/for-iterator-trait-planned.err 2>&1; then exit 1; fi
-	grep -q "for over iter::Iterator\\[i64\\] value of type Cursor is recognized" $(BUILD_DIR)/control-flow/for-iterator-trait-planned.err
-	if $(TARGET) tests/errors/for-generic-iterator-trait-planned.ari -o $(BUILD_DIR)/control-flow/for-generic-iterator-trait-planned.elf >$(BUILD_DIR)/control-flow/for-generic-iterator-trait-planned.err 2>&1; then exit 1; fi
-	grep -q "for over Iterator\\[i64\\] value of type Cursor\\[i64\\] is recognized" $(BUILD_DIR)/control-flow/for-generic-iterator-trait-planned.err
+	grep -q "direct Iterator\\[T\\] values" $(BUILD_DIR)/control-flow/for-iterator-planned.err
 	if $(TARGET) tests/errors/for-into-iterator-trait-planned.ari -o $(BUILD_DIR)/control-flow/for-into-iterator-trait-planned.elf >$(BUILD_DIR)/control-flow/for-into-iterator-trait-planned.err 2>&1; then exit 1; fi
 	grep -q "for over IntoIterator\\[i64\\] value of type Bag is recognized" $(BUILD_DIR)/control-flow/for-into-iterator-trait-planned.err
 	if $(TARGET) tests/errors/for-pattern-planned.ari -o $(BUILD_DIR)/control-flow/for-pattern-planned.elf >$(BUILD_DIR)/control-flow/for-pattern-planned.err 2>&1; then exit 1; fi

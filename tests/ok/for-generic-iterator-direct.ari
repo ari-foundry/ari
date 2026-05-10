@@ -1,0 +1,18 @@
+struct Empty[T] {
+  marker: T,
+}
+
+impl[T] Iterator[T] for Empty[T] {
+  fn next(self) -> Option[T] {
+    None<T>()
+  }
+}
+
+fn main() -> i64 {
+  let empty = Empty { marker: 9 };
+  var total = 11;
+  for value in empty {
+    total = value;
+  }
+  return total;
+}

@@ -374,6 +374,7 @@ Checklist:
       equality/order, conversion, iterator, string/owned surfaces
 - [x] reserve `Iterable[T]`
 - [x] reserve `Iterator[T]` with `next(self) -> Option[T]`
+- [x] lower direct copyable `Iterator[T]` `for` loops through `next`
 - [x] reserve `IntoIterator[T]`
 - [x] reserve `iter::Iterable[T]`
 - [x] reserve `iter::Iterator[T]`

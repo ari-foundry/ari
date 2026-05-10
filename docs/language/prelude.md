@@ -308,8 +308,9 @@ copyable LLVM trait-object subset lower through the same source trait table.
 fn next(self) -> Option[T]
 ```
 
-`IntoIterator[T]` is reserved for the future conversion step used by general
-`for` lowering.
+Direct `for` lowering works for copyable non-borrow iterator values by calling
+`next` until it returns `None`. `IntoIterator[T]` is reserved for the future
+conversion step used by broader `for` lowering.
 
 ## Context
 

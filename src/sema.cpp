@@ -9534,6 +9534,61 @@ private:
         }
     }
 
+    static Pattern clone_pattern(const Pattern& pattern) {
+        Pattern copy;
+        copy.kind = pattern.kind;
+        copy.case_name = pattern.case_name;
+        copy.has_payload_pattern = pattern.has_payload_pattern;
+        copy.has_payload_binding = pattern.has_payload_binding;
+        copy.payload_name = pattern.payload_name;
+        copy.int_value = pattern.int_value;
+        copy.int_negative = pattern.int_negative;
+        copy.literal_suffix = pattern.literal_suffix;
+        copy.range_end_value = pattern.range_end_value;
+        copy.range_end_negative = pattern.range_end_negative;
+        copy.range_end_suffix = pattern.range_end_suffix;
+        copy.range_inclusive = pattern.range_inclusive;
+        copy.bool_value = pattern.bool_value;
+        copy.field_names = pattern.field_names;
+        copy.has_rest = pattern.has_rest;
+        copy.rest_index = pattern.rest_index;
+        copy.alias_name = pattern.alias_name;
+        copy.loc = pattern.loc;
+        if (pattern.payload_pattern) {
+            copy.payload_pattern = std::make_unique<Pattern>(clone_pattern(*pattern.payload_pattern));
+        }
+        if (pattern.alias_pattern) {
+            copy.alias_pattern = std::make_unique<Pattern>(clone_pattern(*pattern.alias_pattern));
+        }
+        copy.alternatives.reserve(pattern.alternatives.size());
+        for (const auto& alternative : pattern.alternatives) {
+            copy.alternatives.push_back(clone_pattern(alternative));
+        }
+        copy.elements.reserve(pattern.elements.size());
+        for (const auto& element : pattern.elements) {
+            copy.elements.push_back(clone_pattern(element));
+        }
+        return copy;
+    }
+
+    static Pattern make_iterator_some_pattern(const Pattern& item_pattern) {
+        Pattern pattern;
+        pattern.kind = PatternKind::EnumCase;
+        pattern.case_name = "std::Some";
+        pattern.loc = item_pattern.loc;
+        pattern.has_payload_pattern = true;
+        pattern.payload_pattern = std::make_unique<Pattern>(clone_pattern(item_pattern));
+        return pattern;
+    }
+
+    static ExprPtr make_ast_name_expr(SourceLocation loc, const std::string& name) {
+        auto expr = std::make_unique<Expr>();
+        expr->kind = ExprKind::Name;
+        expr->loc = loc;
+        expr->name = name;
+        return expr;
+    }
+
     static std::vector<std::string> for_iterator_trait_candidates(ForIteratorTraitKind kind) {
         if (kind == ForIteratorTraitKind::Iterator) {
             return {"std::Iterator", "std::iter::Iterator"};
@@ -9619,6 +9674,97 @@ private:
         return false;
     }
 
+    IrExprPtr make_iterator_next_call(SourceLocation loc, const std::string& iterator_name) {
+        Expr call;
+        call.kind = ExprKind::MethodCall;
+        call.loc = loc;
+        call.name = "next";
+        call.operand = make_ast_name_expr(loc, iterator_name);
+        return check_expr(call);
+    }
+
+    void check_for_iterator(
+        const Stmt& stmt,
+        IrStmt& lowered,
+        IrExprPtr iterable,
+        const ForIteratorTraitMatch& iterator_match
+    ) {
+        if (iterator_match.kind == ForIteratorTraitKind::IntoIterator) {
+            std::string trait_display =
+                for_iterator_trait_display(iterator_match.trait_name, iterator_match.item_type);
+            fail(stmt.loc,
+                 "for over " + trait_display + " value of type " + type_name(iterable->type) +
+                     " is recognized, but IntoIterator[T] conversion and next-style loop lowering are not implemented yet");
+        }
+        if (is_owner_type(iterable->type) || contains_borrow_type(iterable->type)) {
+            fail(stmt.loc,
+                 "Iterator[T] for-loop lowering currently requires a copyable non-borrow iterator value, got " +
+                     type_name(iterable->type));
+        }
+        if (is_owner_type(iterator_match.item_type) || contains_borrow_type(iterator_match.item_type)) {
+            fail(stmt.for_pattern.loc,
+                 "Iterator[T] for-loop item bindings currently require copyable non-borrow items, got " +
+                     type_name(iterator_match.item_type));
+        }
+        if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
+            require_irrefutable_for_vector_pattern(stmt.for_pattern, iterator_match.item_type);
+        }
+
+        lowered.kind = IrStmtKind::Block;
+        std::string iterator_name = make_hidden_local("$for_iter");
+        IrType iterator_type = iterable->type;
+        declare_local(stmt.loc, iterator_name, iterator_type, false);
+        lowered.statements.push_back(make_ir_var_decl(stmt.loc, iterator_name, iterator_type, std::move(iterable), false));
+
+        auto loop = std::make_unique<IrStmt>();
+        loop->kind = IrStmtKind::WhileLet;
+        loop->loc = stmt.loc;
+        loop->label = stmt.label;
+        loop->match_value = make_iterator_next_call(stmt.loc, iterator_name);
+        const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *loop->match_value);
+        IrType enum_value_type = loop->match_value->type;
+
+        EnumMatchCoverage coverage;
+        Pattern some_pattern = make_iterator_some_pattern(stmt.for_pattern);
+        std::vector<IrMatchArm> pattern_arms = lower_match_arm_patterns(
+            some_pattern,
+            enum_info,
+            enum_value_type,
+            coverage
+        );
+        if (pattern_arms.empty()) {
+            fail(stmt.for_pattern.loc, "iterator for-loop pattern did not lower to a match arm");
+        }
+
+        StateSnapshot loop_input = snapshot_states();
+        LoopInfo loop_info;
+        loop_info.label = stmt.label;
+        push_loop(stmt.loc, loop_info);
+        push_scope();
+        declare_match_arm_bindings(pattern_arms.front());
+        CheckedStatements body = check_statements(stmt.loop_body, false);
+        loop->loop_body = std::move(body.statements);
+        if (body.flow == Flow::Returns) discard_scope();
+        else if (body.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, loop->loop_body);
+            pop_scope();
+        }
+        StateSnapshot loop_body_state = snapshot_states();
+        loops_.pop_back();
+
+        if (body.flow == Flow::Continues) {
+            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
+            restore_states(merge_zone_generations(loop_input, loop_body_state));
+        } else {
+            restore_states(loop_input);
+        }
+        for (auto& arm : pattern_arms) {
+            loop->match_arms.push_back(std::move(arm));
+        }
+        lowered.statements.push_back(std::move(loop));
+    }
+
     void check_for(const Stmt& stmt, IrStmt& lowered) {
         std::string range_call_name;
         bool is_range_call = false;
@@ -9657,19 +9803,11 @@ private:
         }
         ForIteratorTraitMatch iterator_match;
         if (try_find_for_iterator_trait(iterable->type, iterator_match)) {
-            std::string trait_display =
-                for_iterator_trait_display(iterator_match.trait_name, iterator_match.item_type);
-            if (iterator_match.kind == ForIteratorTraitKind::IntoIterator) {
-                fail(stmt.loc,
-                     "for over " + trait_display + " value of type " + type_name(iterable->type) +
-                         " is recognized, but IntoIterator[T] conversion and next-style loop lowering are not implemented yet");
-            }
-            fail(stmt.loc,
-                 "for over " + trait_display + " value of type " + type_name(iterable->type) +
-                     " is recognized, but next-style Iterator[T] loop lowering is not implemented yet");
+            check_for_iterator(stmt, lowered, std::move(iterable), iterator_match);
+            return;
         }
         fail(stmt.loc,
-             "for currently supports range values, range(start, end), range_inclusive(start, end), 0..end, 0..=end, list literals, or stored local vector values; Iterator[T] lowering is planned");
+             "for currently supports range values, range(start, end), range_inclusive(start, end), 0..end, 0..=end, list literals, stored local vector values, or direct Iterator[T] values");
     }
 
     void check_for_range(const Stmt& stmt, IrStmt& lowered, const std::string& call_name = "") {

@@ -61,12 +61,14 @@
    without trait dispatch. Sema now recognizes concrete and generic
    `Iterator[T]`/`IntoIterator[T]` impls, reports the inferred item type, and
    source `std::Iterator[T]` now reserves the required
-   `next(self) -> Option[T]` method shape. The construct remains rejected until
-   runtime lowering exists. The remaining iterator model needs
-   `IntoIterator[T]` conversion plus generic `Option[T]` result lowering for
-   `next` on every backend.
+   `next(self) -> Option[T]` method shape. Direct copyable non-borrow
+   `Iterator[T]` values now lower by storing the iterator expression once and
+   looping with `while let std::Some(pattern) = iterator.next()`. The remaining
+   iterator model needs `IntoIterator[T]` conversion, stateful/mutable iterator
+   receiver policy, and refutable loop-head semantics.
    - [into] lower `IntoIterator[T]` conversion into an iterator value
-   - [loop] lower direct `Iterator[T]::next`-style iteration state
+   - [state] define mutable/stateful iterator receiver policy instead of the
+     current copyable value-self subset
    - [pattern] bind refutable enum-case loop-head patterns after the iterator
      failure/skip semantics are designed
 

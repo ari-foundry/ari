@@ -9,9 +9,11 @@ impl iter::Iterator[i64] for Cursor {
 }
 
 fn main() -> i64 {
-  let cursor = Cursor { current: 0 };
+  let cursor = Cursor { current: 37 };
+  var total = 0;
   for value in cursor {
-    return value;
+    total = value + 5;
+    break;
   }
-  return 0;
+  return total;
 }
