@@ -70,15 +70,22 @@
    have associated types yet, sema treats the `IntoIterator[T].into_iter`
    return type as an impl-specific contract and validates the concrete result at
    `for` lowering sites. The remaining iterator model needs a first-class
-   source spelling for that iterator result, stateful/mutable iterator receiver
-   policy, and refutable loop-head semantics.
+   source spelling for that iterator result and stateful/mutable iterator
+   receiver policy. Iterator item patterns can now use scalar literal/range
+   tests and fieldless enum-case patterns; the current semantics are
+   `while let Some(pattern) = iterator.next()`, so the first non-matching item
+   ends the loop rather than being skipped.
    - [contract] replace the compiler-known `into_iter` result relaxation with
      a first-class associated iterator type or equivalent Ari-specific trait
      contract
    - [state] define mutable/stateful iterator receiver policy instead of the
      current copyable value-self subset
-   - [pattern] bind refutable enum-case loop-head patterns after the iterator
-     failure/skip semantics are designed
+   - [pattern-filter] decide whether Ari also wants a separate skip/filter
+     loop form for refutable item patterns instead of only the current
+     stop-on-first-mismatch semantics
+   - [pattern-payload] extend iterator item enum-case patterns to payload
+     bindings after nested aggregate-enum payload storage rules allow
+     `Option[PayloadEnum]` values
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

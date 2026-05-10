@@ -238,6 +238,8 @@ Checklist:
       `into_iter` and `next`
 - [x] lower distinct-result copyable `IntoIterator[T]` for-loop values when
       `into_iter` returns another `Iterator[T]`
+- [x] lower refutable scalar and fieldless enum-case item patterns for
+      `Iterator[T]` loops with stop-on-first-mismatch semantics
 - [x] reject unsupported iterator for-loop shapes with trait-aware planned
       diagnostics
 - [x] reject enum-case `for` patterns with a planned diagnostic
@@ -385,6 +387,8 @@ Checklist:
       `into_iter` and `next`
 - [x] allow `IntoIterator[T].into_iter` impls to return a distinct iterator
       type and validate that result at `for` lowering sites
+- [x] lower iterator item literal/range and fieldless enum-case patterns through
+      the `while let Some(pattern) = next()` path
 - [x] reserve `iter::Iterable[T]`
 - [x] reserve `iter::Iterator[T]`
 - [x] reserve `iter::IntoIterator[T]`

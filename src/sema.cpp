@@ -9548,6 +9548,48 @@ private:
         }
     }
 
+    void require_supported_for_iterator_pattern(const Pattern& pattern, const IrType& value_type) {
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return;
+            case PatternKind::Tuple:
+            case PatternKind::Array:
+            case PatternKind::Struct:
+                require_irrefutable_for_vector_pattern(pattern, value_type);
+                return;
+            case PatternKind::EnumCase:
+                if (value_type.primitive == IrPrimitiveKind::Struct) {
+                    require_irrefutable_tuple_struct_for_pattern(pattern, value_type);
+                    return;
+                }
+                if (is_value_enum_type(value_type)) return;
+                fail(pattern.loc, "enum-case iterator for-loop pattern requires an enum item, got " + type_name(value_type));
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased iterator for-loop pattern");
+                require_supported_for_iterator_pattern(*pattern.alias_pattern, value_type);
+                return;
+            case PatternKind::IntegerLiteral:
+                if (!is_value_integer_type(value_type)) {
+                    fail(pattern.loc, "integer iterator for-loop pattern requires an integer item, got " + type_name(value_type));
+                }
+                return;
+            case PatternKind::BoolLiteral:
+                if (value_type.qualifier != TypeQualifier::Value || value_type.primitive != IrPrimitiveKind::Bool) {
+                    fail(pattern.loc, "bool iterator for-loop pattern requires a bool item, got " + type_name(value_type));
+                }
+                return;
+            case PatternKind::Range:
+                if (!is_value_integer_type(value_type)) {
+                    fail(pattern.loc, "range iterator for-loop pattern requires an integer item, got " + type_name(value_type));
+                }
+                return;
+            case PatternKind::Or:
+                fail_refutable_for_pattern(pattern.loc);
+                return;
+        }
+    }
+
     static Pattern clone_pattern(const Pattern& pattern) {
         Pattern copy;
         copy.kind = pattern.kind;
@@ -9725,7 +9767,7 @@ private:
                      type_name(item_type));
         }
         if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
-            require_irrefutable_for_vector_pattern(stmt.for_pattern, item_type);
+            require_supported_for_iterator_pattern(stmt.for_pattern, item_type);
         }
 
         std::string iterator_name = make_hidden_local("$for_iter");

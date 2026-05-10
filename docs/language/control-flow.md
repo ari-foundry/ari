@@ -272,10 +272,27 @@ Copyable non-borrow `IntoIterator[T]` values also lower when `into_iter(self)`
 returns either `Self` or another copyable non-borrow value that implements
 `Iterator[T]`.
 
+Iterator item patterns may be more specific than a plain binding:
+
+```ari
+for Ready in cursor {
+  total = total + 1;
+}
+
+for 11 in numbers {
+  total = total + 1;
+}
+```
+
+These patterns use `while let Some(pattern) = iterator.next()` semantics. If an
+item does not match, the loop ends; it is not skipped. This keeps the lowering
+predictable until Ari grows a distinct filter-style loop form. Enum-case item
+patterns are currently limited to fieldless cases because payload-bearing enum
+items inside `Option[T]` still depend on broader aggregate enum payload storage.
+
 The current source trait still uses a compiler-known return contract for
 `into_iter` instead of a first-class associated iterator type. Mutable/stateful
-iterator receivers and refutable enum-case item patterns such as `for
-Some(value) in items` are still planned.
+iterator receivers remain planned.
 
 ## Break
 

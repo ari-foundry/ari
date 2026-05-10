@@ -1,0 +1,52 @@
+enum Flag {
+  Off,
+  On,
+}
+
+struct FlagCursor {
+  value: Flag,
+}
+
+impl Iterator[Flag] for FlagCursor {
+  fn next(self) -> Option[Flag] {
+    Some(self.value)
+  }
+}
+
+struct NumberCursor {
+  value: i64,
+}
+
+impl Iterator[i64] for NumberCursor {
+  fn next(self) -> Option[i64] {
+    Some(self.value)
+  }
+}
+
+fn main() -> i64 {
+  var total = 0;
+  let on = FlagCursor { value: On };
+  let off = FlagCursor { value: Off };
+  let eleven = NumberCursor { value: 11 };
+  let twelve = NumberCursor { value: 11 };
+
+  for On in on {
+    total = total + 31;
+    break;
+  }
+
+  for On in off {
+    total = total + 100;
+  }
+
+  for 11 in eleven {
+    total = total + 11;
+    break;
+  }
+
+  for 12 in twelve {
+    total = total + 100;
+  }
+
+  return total;
+}
