@@ -14,6 +14,8 @@ construction. Some helpers have already moved out to focused files:
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions, and
   direct builtin calls
+- `control_flow_semantics` for product-pattern if-chain assembly shared by
+  aggregate match, declaration, `if let`, and `while let` lowering
 - `module_metadata` and `module_cache` for package graph summaries and caches
 - `product_coverage` for symbolic product-rectangle coverage math used by
   aggregate pattern exhaustiveness diagnostics

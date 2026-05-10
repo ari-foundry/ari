@@ -4,6 +4,7 @@
 #include "ari_builtin.hpp"
 #include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
+#include "control_flow_semantics.hpp"
 #include "ir_builders.hpp"
 #include "iterator_semantics.hpp"
 #include "layout.hpp"
@@ -110,19 +111,6 @@ struct TupleMatchCoverage {
     bool has_symbolic_universe = false;
     ProductRect symbolic_universe;
     std::vector<ProductRect> covered_symbolic_products;
-};
-
-struct TupleCheckedStmtArm {
-    SourceLocation loc;
-    IrExprPtr condition;
-    std::vector<IrStmtPtr> body;
-};
-
-struct TupleCheckedExprArm {
-    SourceLocation loc;
-    IrExprPtr condition;
-    std::vector<IrStmtPtr> body;
-    IrExprPtr value;
 };
 
 struct StructInfo {
@@ -9091,40 +9079,6 @@ private:
         fail(loc, message);
     }
 
-    std::vector<IrStmtPtr> build_tuple_match_if_chain(std::vector<TupleCheckedStmtArm>& arms) {
-        std::vector<IrStmtPtr> current;
-        for (std::size_t i = arms.size(); i-- > 0;) {
-            TupleCheckedStmtArm& arm = arms[i];
-            if (!arm.condition) {
-                current = std::move(arm.body);
-                continue;
-            }
-
-            auto if_stmt = std::make_unique<IrStmt>();
-            if_stmt->kind = IrStmtKind::If;
-            if_stmt->loc = arm.loc;
-            if_stmt->condition = std::move(arm.condition);
-            if_stmt->then_body = std::move(arm.body);
-            if_stmt->else_body = std::move(current);
-            current.clear();
-            current.push_back(std::move(if_stmt));
-        }
-        return current;
-    }
-
-    IrExprPtr make_tuple_match_block_value(SourceLocation loc,
-                                           IrType result_type,
-                                           std::vector<IrStmtPtr> body,
-                                           IrExprPtr value) {
-        auto block = std::make_unique<IrExpr>();
-        block->kind = IrExprKind::Block;
-        block->loc = loc;
-        block->type = std::move(result_type);
-        block->block_body = std::move(body);
-        block->block_value = std::move(value);
-        return block;
-    }
-
     IrExprPtr make_default_value_expr(SourceLocation loc, const IrType& type) const {
         if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
             return make_bool_literal_expr(loc, false);
@@ -9184,37 +9138,6 @@ private:
             std::move(body),
             make_default_value_expr(loc, result_type)
         );
-    }
-
-    IrExprPtr build_tuple_match_if_expr_chain(std::vector<TupleCheckedExprArm>& arms,
-                                              const IrType& result_type) {
-        IrExprPtr current;
-        for (std::size_t i = arms.size(); i-- > 0;) {
-            TupleCheckedExprArm& arm = arms[i];
-            if (!arm.condition) {
-                current = make_tuple_match_block_value(
-                    arm.loc,
-                    result_type,
-                    std::move(arm.body),
-                    std::move(arm.value)
-                );
-                continue;
-            }
-            if (!current) {
-                current = make_unreachable_match_fallback_expr(arm.loc, result_type);
-            }
-
-            auto if_expr = std::make_unique<IrExpr>();
-            if_expr->kind = IrExprKind::If;
-            if_expr->loc = arm.loc;
-            if_expr->type = result_type;
-            if_expr->condition = std::move(arm.condition);
-            if_expr->then_body = std::move(arm.body);
-            if_expr->then_value = std::move(arm.value);
-            if_expr->else_value = std::move(current);
-            current = std::move(if_expr);
-        }
-        return current;
     }
 
     IrStmtPtr make_bool_assignment_stmt(SourceLocation loc, const std::string& name, bool value) const {
@@ -9789,9 +9712,15 @@ private:
     }
 
     void check_while_let(const Stmt& stmt, IrStmt& lowered) {
+        IrExprPtr match_value = check_expr(*stmt.condition);
+        if (is_aggregate_type(match_value->type)) {
+            check_aggregate_while_let(stmt, lowered, std::move(match_value));
+            return;
+        }
+
         lowered.kind = IrStmtKind::WhileLet;
         lowered.label = stmt.label;
-        lowered.match_value = check_expr(*stmt.condition);
+        lowered.match_value = std::move(match_value);
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
         IrType enum_value_type = lowered.match_value->type;
         EnumMatchCoverage coverage;
@@ -9836,6 +9765,109 @@ private:
         for (auto& arm : pattern_arms) {
             lowered.match_arms.push_back(std::move(arm));
         }
+    }
+
+    static IrStmtPtr make_unlabeled_break_stmt(SourceLocation loc) {
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::Break;
+        stmt->loc = loc;
+        return stmt;
+    }
+
+    void check_aggregate_while_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
+        IrType subject_type = subject->type;
+        lowered.kind = IrStmtKind::While;
+        lowered.label = stmt.label;
+        lowered.condition = make_bool_literal_expr(stmt.loc, true);
+
+        std::string subject_name = make_hidden_local(
+            subject_type.primitive == IrPrimitiveKind::Struct ? "$whilelet_struct" : "$whilelet_tuple");
+        declare_local(stmt.loc, subject_name, subject_type, false);
+        lowered.loop_body.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
+
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(stmt.condition_pattern);
+        std::set<std::string> reusable_names;
+        if (pattern_contains_or(stmt.condition_pattern)) {
+            reusable_names = require_same_or_pattern_bindings(stmt.condition_pattern.loc, alternatives, subject_type);
+        }
+
+        bool has_irrefutable_alternative = false;
+        std::vector<TupleCheckedStmtArm> checked_arms;
+        checked_arms.reserve(alternatives.size() + 1);
+
+        for (const auto& pattern : alternatives) {
+            TupleCheckedStmtArm arm;
+            arm.loc = pattern.loc;
+            std::vector<IrStmtPtr> condition_prelude;
+            arm.condition = lower_product_match_pattern_condition(
+                pattern,
+                subject_name,
+                subject_type,
+                condition_prelude
+            );
+            if (!arm.condition) has_irrefutable_alternative = true;
+            for (auto& statement : condition_prelude) {
+                lowered.loop_body.push_back(std::move(statement));
+            }
+            checked_arms.push_back(std::move(arm));
+        }
+
+        StateSnapshot loop_input = snapshot_states();
+        LoopInfo loop;
+        loop.label = stmt.label;
+        push_loop(stmt.loc, loop);
+
+        for (std::size_t i = 0; i < alternatives.size(); ++i) {
+            restore_states(loop_input);
+            push_scope();
+            reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
+            lower_product_match_pattern_bindings_from_local(
+                alternatives[i],
+                subject_name,
+                subject_type,
+                checked_arms[i].body
+            );
+            reusable_pattern_binding_names_.clear();
+
+            CheckedStatements body = check_statements(stmt.loop_body, false);
+            for (auto& statement : body.statements) {
+                checked_arms[i].body.push_back(std::move(statement));
+            }
+            if (body.flow == Flow::Returns) discard_scope();
+            else if (body.flow == Flow::Stops) discard_scope();
+            else {
+                append_current_scope_auto_destroy_cleanup(stmt.loc, checked_arms[i].body);
+                pop_scope();
+            }
+
+            StateSnapshot loop_body_state = snapshot_states();
+            if (body.flow == Flow::Continues) {
+                require_same_states(
+                    stmt.loc,
+                    loop_input,
+                    loop_body_state,
+                    "cannot change ownership state inside loop yet"
+                );
+                restore_states(merge_zone_generations(loop_input, loop_body_state));
+            } else {
+                restore_states(loop_input);
+            }
+        }
+        loops_.pop_back();
+
+        if (!has_irrefutable_alternative) {
+            TupleCheckedStmtArm fallback;
+            fallback.loc = stmt.loc;
+            fallback.body.push_back(make_unlabeled_break_stmt(stmt.loc));
+            checked_arms.push_back(std::move(fallback));
+        }
+
+        std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
+        for (auto& statement : chain) {
+            lowered.loop_body.push_back(std::move(statement));
+        }
+
+        restore_states(loop_input);
     }
 
     void fail_refutable_for_pattern(SourceLocation loc) const {
@@ -11705,7 +11737,13 @@ private:
         require_tuple_match_exhaustive(expr.loc, subject_type, coverage);
         restore_states(continuing_state);
         lowered->type = result_type;
-        lowered->block_value = build_tuple_match_if_expr_chain(checked_arms, result_type);
+        lowered->block_value = build_tuple_match_if_expr_chain(
+            checked_arms,
+            result_type,
+            [this](SourceLocation loc, const IrType& type) {
+                return make_unreachable_match_fallback_expr(loc, type);
+            }
+        );
         return lowered;
     }
 
@@ -12146,7 +12184,13 @@ private:
         checked_arms.push_back(std::move(fallback));
 
         lowered->type = result_type;
-        lowered->block_value = build_tuple_match_if_expr_chain(checked_arms, result_type);
+        lowered->block_value = build_tuple_match_if_expr_chain(
+            checked_arms,
+            result_type,
+            [this](SourceLocation loc, const IrType& type) {
+                return make_unreachable_match_fallback_expr(loc, type);
+            }
+        );
         return lowered;
     }
 

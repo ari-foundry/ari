@@ -146,7 +146,7 @@ while value < 10 {
 }
 ```
 
-`while let` repeats while an enum-case pattern matches:
+`while let` repeats while an enum-case or aggregate pattern matches:
 
 ```ari
 while let Some(value) = next(index) {
@@ -157,12 +157,20 @@ while let chosen @ (Add(value) | Sub(value)) = next(index) {
   total = total + weight(chosen) + (value as i64);
   index = index + 1;
 }
+
+while let ((left, 0) | (0, left)) = tuple_at(index) {
+  total = total + left;
+  index = index + 1;
+}
 ```
 
 Enum `while let` supports same-name/same-type or-pattern alternatives and
 alias-wrapped alternatives. The loop body is checked once with the shared
 bindings, then each matching alternative fills those bindings before entering
-the body.
+the body. Aggregate `while let` supports tuple, fixed array, named struct, and
+tuple-struct or-pattern alternatives. It re-evaluates the aggregate expression
+each iteration, executes the first matching alternative, and exits the loop
+when no alternative matches.
 
 Loops currently cannot change the ownership state of an outer binding. That
 rule is conservative until the checker can track loop invariants.

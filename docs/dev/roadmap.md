@@ -99,8 +99,9 @@
    expressions now expand tuple, fixed-array, named-struct, and tuple-struct
    or-pattern alternatives, require same-name/same-type bindings, and bind
    values from the alternative that actually matched.
-   - [while-let-product] lower aggregate `while let` by rechecking the product
-     pattern each iteration instead of using enum-only `WhileLet` IR
+   Aggregate `while let` now re-evaluates the aggregate expression each
+   iteration, dispatches through the product pattern if-chain, and exits the
+   loop on the first non-match instead of using enum-only `WhileLet` IR.
    - [for-control] keep `for let` iterator filters and future vector/slice
      filters on the same product binding path
    - [param-coverage] add function-parameter regression coverage once

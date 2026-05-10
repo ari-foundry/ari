@@ -1,0 +1,59 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Pair(i64, i64)
+
+fn tuple_at(index: i64) -> (i64, i64) {
+  if index == 0 {
+    return (0, 7);
+  }
+  if index == 1 {
+    return (11, 0);
+  }
+  return (1, 2);
+}
+
+fn point_at(index: i64) -> Point {
+  if index == 0 {
+    return Point { x: 0, y: 3 };
+  }
+  if index == 1 {
+    return Point { x: 5, y: 0 };
+  }
+  return Point { x: 1, y: 2 };
+}
+
+fn pair_at(index: i64) -> Pair {
+  if index == 0 {
+    return Pair(0, 4);
+  }
+  if index == 1 {
+    return Pair(6, 0);
+  }
+  return Pair(1, 2);
+}
+
+fn main() -> i64 {
+  var total = 0;
+  var index = 0;
+  while let ((left, 0) | (0, left)) = tuple_at(index) {
+    total = total + left;
+    index = index + 1;
+  }
+
+  var point_index = 0;
+  while let (Point { x: axis, y: 0 } | Point { x: 0, y: axis }) = point_at(point_index) {
+    total = total + axis;
+    point_index = point_index + 1;
+  }
+
+  var pair_index = 0;
+  while let (Pair(side, 0) | Pair(0, side)) = pair_at(pair_index) {
+    total = total + side;
+    pair_index = pair_index + 1;
+  }
+
+  return total;
+}
