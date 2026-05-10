@@ -1,0 +1,15 @@
+const BASE: i64 = 2;
+
+fn main() -> i64 {
+  let reserve_to = BASE + 2;
+  let keep = reserve_to - 1;
+  var values: Vec[i64] = [];
+  values.reserve(reserve_to);
+  values.push(1);
+  values.push(2);
+  values.push(3);
+  values.push(4);
+  values.truncate(keep);
+  values.push(9);
+  return values.capacity() + values.len() + values[3];
+}

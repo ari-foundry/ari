@@ -4,6 +4,7 @@
 #include "ari_builtin.hpp"
 #include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
+#include "constant_semantics.hpp"
 #include "control_flow_semantics.hpp"
 #include "ir_builders.hpp"
 #include "iterator_semantics.hpp"
@@ -4702,7 +4703,7 @@ private:
         invalidate_vector_known_length(local);
     }
 
-    static void set_known_integer_value_from_expr(LocalInfo& local, const IrExpr& expr) {
+    void set_known_integer_value_from_expr(LocalInfo& local, const Expr& source, const IrExpr& expr) {
         local.integer_value_known = false;
         local.integer_known_value = 0;
         local.integer_known_negative = false;
@@ -4710,7 +4711,7 @@ private:
             return;
         }
         StaticIntegerValue value;
-        if (!try_fold_static_integer_value(expr, value)) return;
+        if (!known_integer_capacity(source, value) && !try_fold_static_integer_value(expr, value)) return;
         local.integer_value_known = true;
         local.integer_known_value = value.value;
         local.integer_known_negative = value.negative;
@@ -4791,7 +4792,7 @@ private:
         local.generic_origin = std::move(generic_origin);
         local.auto_destroy_zone = is_zone_temp_call(*local.ir_init_expr);
         set_vector_known_length_from_expr(local, *local.ir_init_expr);
-        set_known_integer_value_from_expr(local, *local.ir_init_expr);
+        set_known_integer_value_from_expr(local, *stmt.binding.init, *local.ir_init_expr);
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
 
@@ -4875,23 +4876,37 @@ private:
             out.negative = expr.int_negative;
             return true;
         }
-        if (expr.kind != ExprKind::Name) return false;
-        const LocalInfo* local = find_local_slot(expr.name);
-        if (local) {
-            if (!local->integer_value_known) return false;
-            out.value = local->integer_known_value;
-            out.negative = local->integer_known_negative;
+        if (expr.kind == ExprKind::Name) {
+            const LocalInfo* local = find_local_slot(expr.name);
+            if (local) {
+                if (!local->integer_value_known) return false;
+                out.value = local->integer_known_value;
+                out.negative = local->integer_known_negative;
+                return true;
+            }
+            ConstantValue constant;
+            if (!resolve_constant_value(expr.loc, expr.name, constant) ||
+                constant.kind != ConstantValueKind::Integer ||
+                !is_value_integer_type(constant.type)) {
+                return false;
+            }
+            out.value = constant.int_value;
+            out.negative = constant.int_negative;
             return true;
         }
-        ConstantValue constant;
-        if (!resolve_constant_value(expr.loc, expr.name, constant) ||
-            constant.kind != ConstantValueKind::Integer ||
-            !is_value_integer_type(constant.type)) {
-            return false;
+        if (expr.kind == ExprKind::Unary && expr.operand) {
+            StaticIntegerValue operand;
+            return known_integer_capacity(*expr.operand, operand) &&
+                   fold_static_integer_unary(expr.op, operand, out);
         }
-        out.value = constant.int_value;
-        out.negative = constant.int_negative;
-        return true;
+        if (expr.kind == ExprKind::Binary && expr.left && expr.right) {
+            StaticIntegerValue left;
+            StaticIntegerValue right;
+            return known_integer_capacity(*expr.left, left) &&
+                   known_integer_capacity(*expr.right, right) &&
+                   fold_static_integer_binary(expr.op, left, right, out);
+        }
+        return false;
     }
 
     void lower_binding_pattern_from_local(

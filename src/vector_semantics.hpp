@@ -1,5 +1,6 @@
 #pragma once
 
+#include "constant_semantics.hpp"
 #include "ir.hpp"
 
 #include <cstdint>
@@ -14,12 +15,6 @@ void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
 bool vector_literal_length(const IrExpr& expr, std::uint64_t& out);
 std::string local_vec_api_freeze_message(const std::string& method_name);
 
-struct StaticIntegerValue {
-    std::uint64_t value = 0;
-    bool negative = false;
-};
-
-bool try_fold_static_integer_value(const IrExpr& expr, StaticIntegerValue& out);
 bool vector_known_length_after_truncate(std::uint64_t current_length,
                                         const StaticIntegerValue& requested_length,
                                         std::uint64_t& out);
