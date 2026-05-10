@@ -479,8 +479,9 @@ vectors panic.
 `get(index)` reads a copyable element at a runtime index without changing the
 runtime length, and uses the same bounds checks as `values[index]`. Literal,
 constant, static-expression, and immutable local indexes are rejected at compile
-time when negative for `get`, `set`, `swap`, `remove`, and `insert`; other
-runtime indexes still use the vector bounds checks.
+time when negative, and when outside the compiler-known current length, for
+`get`, `set`, `swap`, `remove`, and `insert`; other runtime indexes still use
+the vector bounds checks.
 `contains(value)` returns `true` when a copyable comparable element equal to
 `value` appears inside the current runtime length. `index_of(value)` returns
 the first matching runtime index as `i64`, or `-1` when no element matches.

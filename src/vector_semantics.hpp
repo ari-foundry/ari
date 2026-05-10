@@ -70,6 +70,12 @@ void require_local_vec_non_negative_argument(SourceLocation loc,
                                              LocalVecMethod method,
                                              const char* role,
                                              const StaticIntegerValue& value);
+void require_local_vec_static_index_in_known_bounds(SourceLocation loc,
+                                                    LocalVecMethod method,
+                                                    const char* role,
+                                                    const StaticIntegerValue& value,
+                                                    VectorKnownLength length,
+                                                    bool allow_end);
 std::string local_vec_api_freeze_message(const std::string& method_name);
 
 bool vector_known_length_after_truncate(std::uint64_t current_length,

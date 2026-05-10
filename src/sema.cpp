@@ -4899,16 +4899,18 @@ private:
         return nullptr;
     }
 
-    void require_local_vec_static_non_negative_argument(const Expr& source,
-                                                        const IrExpr& lowered,
-                                                        LocalVecMethod method,
-                                                        const char* role) {
+    void require_local_vec_static_index_argument(const Expr& source,
+                                                 const IrExpr& lowered,
+                                                 LocalVecMethod method,
+                                                 const char* role,
+                                                 VectorKnownLength length,
+                                                 bool allow_end = false) {
         StaticIntegerValue source_known;
         StaticIntegerValue folded_known;
         const StaticIntegerValue* known =
             known_integer_argument_value(source, lowered, source_known, folded_known);
         if (known) {
-            require_local_vec_non_negative_argument(source.loc, method, role, *known);
+            require_local_vec_static_index_in_known_bounds(source.loc, method, role, *known, length, allow_end);
         }
     }
 
@@ -13821,7 +13823,13 @@ private:
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
         require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Get, "index", index->type);
-        require_local_vec_static_non_negative_argument(*expr.args[0], *index, LocalVecMethod::Get, "index");
+        require_local_vec_static_index_argument(
+            *expr.args[0],
+            *index,
+            LocalVecMethod::Get,
+            "index",
+            vector_known_length_state(local)
+        );
         release_temporary_borrows(borrow_mark);
 
         return make_vec_index_expr(
@@ -13953,7 +13961,13 @@ private:
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
         require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Set, "index", index->type);
-        require_local_vec_static_non_negative_argument(*expr.args[0], *index, LocalVecMethod::Set, "index");
+        require_local_vec_static_index_argument(
+            *expr.args[0],
+            *index,
+            LocalVecMethod::Set,
+            "index",
+            vector_known_length_state(local)
+        );
         IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);
         coerce_expr_to_expected(*value, local.type.args[0]);
         require_assignable(expr.args[1]->loc, local.type.args[0], value->type);
@@ -13981,11 +13995,12 @@ private:
             "first index",
             first_index->type
         );
-        require_local_vec_static_non_negative_argument(
+        require_local_vec_static_index_argument(
             *expr.args[0],
             *first_index,
             LocalVecMethod::Swap,
-            "first index"
+            "first index",
+            vector_known_length_state(local)
         );
         IrExprPtr second_index = check_expr(*expr.args[1]);
         require_local_vec_integer_argument(
@@ -13994,11 +14009,12 @@ private:
             "second index",
             second_index->type
         );
-        require_local_vec_static_non_negative_argument(
+        require_local_vec_static_index_argument(
             *expr.args[1],
             *second_index,
             LocalVecMethod::Swap,
-            "second index"
+            "second index",
+            vector_known_length_state(local)
         );
         release_temporary_borrows(borrow_mark);
 
@@ -14019,7 +14035,13 @@ private:
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
         require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Remove, "index", index->type);
-        require_local_vec_static_non_negative_argument(*expr.args[0], *index, LocalVecMethod::Remove, "index");
+        require_local_vec_static_index_argument(
+            *expr.args[0],
+            *index,
+            LocalVecMethod::Remove,
+            "index",
+            vector_known_length_state(local)
+        );
         release_temporary_borrows(borrow_mark);
 
         set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));
@@ -14040,7 +14062,14 @@ private:
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
         require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Insert, "index", index->type);
-        require_local_vec_static_non_negative_argument(*expr.args[0], *index, LocalVecMethod::Insert, "index");
+        require_local_vec_static_index_argument(
+            *expr.args[0],
+            *index,
+            LocalVecMethod::Insert,
+            "index",
+            vector_known_length_state(local),
+            true
+        );
         IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);
         coerce_expr_to_expected(*value, local.type.args[0]);
         require_assignable(expr.args[1]->loc, local.type.args[0], value->type);

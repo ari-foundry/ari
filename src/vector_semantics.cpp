@@ -265,6 +265,24 @@ void require_local_vec_non_negative_argument(SourceLocation loc,
     fail(loc, display + " " + role + " must be non-negative");
 }
 
+void require_local_vec_static_index_in_known_bounds(SourceLocation loc,
+                                                    LocalVecMethod method,
+                                                    const char* role,
+                                                    const StaticIntegerValue& value,
+                                                    VectorKnownLength length,
+                                                    bool allow_end) {
+    require_local_vec_non_negative_argument(loc, method, role, value);
+    if (!length.known) return;
+
+    const bool out_of_bounds = allow_end ? value.value > length.length : value.value >= length.length;
+    if (!out_of_bounds) return;
+
+    std::string display = std::string("Vec.") + local_vec_method_name(method);
+    fail(loc,
+         display + " " + role + " " + std::to_string(value.value) +
+             " is out of range for " + std::to_string(length.length) + " elements");
+}
+
 std::string local_vec_api_freeze_message(const std::string& method_name) {
     std::string supported;
     for (std::size_t i = 0; i < kLocalVecMethods.size(); ++i) {
