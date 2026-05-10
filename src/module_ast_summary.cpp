@@ -91,7 +91,7 @@ void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) 
 }
 
 bool is_summary_const_unary_op(TokenKind op) {
-    return op == TokenKind::Bang || op == TokenKind::Minus;
+    return op == TokenKind::Bang || op == TokenKind::Minus || op == TokenKind::Tilde;
 }
 
 bool is_summary_const_binary_op(TokenKind op) {

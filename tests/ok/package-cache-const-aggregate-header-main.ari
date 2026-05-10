@@ -20,8 +20,9 @@ fn main() -> i64 {
   };
   let wide = cache_const_aggregates::WIDE;
   let bits = cache_const_aggregates::BITS;
+  let inverted = cache_const_aggregates::INVERTED;
   if flags.0 && pair.1 {
-    p.x + nums[1] + pair.0 + choice + empty + direct + slot + wide + bits
+    p.x + nums[1] + pair.0 + choice + empty + direct + slot + wide + bits + inverted
   } else {
     0
   }

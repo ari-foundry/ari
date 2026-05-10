@@ -387,7 +387,8 @@ Checklist:
 - [x] AST summary declaration payloads materialize tuple, struct, fixed-array,
       enum, and generic enum constant initializers for header-like cached modules
 - [x] AST summary declaration payloads preserve explicit casts plus arithmetic,
-      bitwise, and shift constant expressions for header-like cached modules
+      bitwise, unary bitwise-not, and shift constant expressions for
+      header-like cached modules
 - [x] cached header-like dependencies can load declaration-safe materialized
       summaries instead of reparsing cached source text
 - [ ] AST/IR package cache summaries skip dependency parsing after validation

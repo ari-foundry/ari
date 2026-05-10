@@ -649,10 +649,11 @@ check-modules: $(TARGET)
 	grep -q "4:call" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	grep -q "4:cast" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	grep -q "6:binary" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "5:unary" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache.ll $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache-use.ll
 	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari -o $(BUILD_DIR)/modules/package-cache-const-aggregate-header.raw
-	$(BUILD_DIR)/modules/package-cache-const-aggregate-header.raw; code=$$?; test $$code -eq 57
+	$(BUILD_DIR)/modules/package-cache-const-aggregate-header.raw; code=$$?; test $$code -eq 64
 	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache.ll
 	grep -Eq "ast-summary.*extern_header.*tests/packages/extern_header.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-extern-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache-use.ll

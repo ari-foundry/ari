@@ -104,10 +104,10 @@
    constants, can now feed materialized declarations directly into the loader
    without reparsing the cached source snapshot. Const initializer summaries
    cover scalar and aggregate literals, enum/tuple-struct constructors,
-   explicit integer casts, arithmetic, bitwise, and shift expressions. The
-   remaining package-cache work is to extend that path to future IR summaries
-   for dependencies with executable bodies, then skip dependency source parsing
-   whenever validation succeeds.
+   explicit integer casts, arithmetic, bitwise, unary bitwise-not, and shift
+   expressions. The remaining package-cache work is to extend that path to
+   future IR summaries for dependencies with executable bodies, then skip
+   dependency source parsing whenever validation succeeds.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies with executable function or impl bodies
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
