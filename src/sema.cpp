@@ -7,6 +7,7 @@
 #include "cfg_eval.hpp"
 #include "constant_semantics.hpp"
 #include "control_flow_semantics.hpp"
+#include "enum_constructor_semantics.hpp"
 #include "ir_builders.hpp"
 #include "iterator_semantics.hpp"
 #include "layout.hpp"
@@ -15761,11 +15762,62 @@ private:
         return type_args;
     }
 
-    IrExprPtr check_enum_constructor_call(const Expr& expr, const EnumCaseInfo& base_info) {
+    std::vector<IrType> enum_constructor_type_args_from_expected(
+        const Expr& expr,
+        const EnumCaseInfo& info,
+        const IrType* expected,
+        bool& has_type_args
+    ) {
+        has_type_args = false;
+        auto enum_found = enums_.find(info.enum_name);
+        if (enum_found == enums_.end()) fail(expr.loc, "unknown enum '" + info.enum_name + "'");
+        const EnumInfo& enum_info = enum_found->second;
+        if (!info.is_generic) {
+            if (!expr.type_args.empty()) {
+                fail(expr.loc, "enum case constructor '" + expr.name + "' does not take type arguments");
+            }
+            has_type_args = true;
+            return {};
+        }
+
+        std::vector<IrType> type_args;
+        type_args.reserve(enum_info.generic_arity);
+        if (!expr.type_args.empty()) {
+            if (expr.type_args.size() != enum_info.generic_arity) {
+                fail(expr.loc,
+                     "enum '" + enum_info.name + "' expects " + std::to_string(enum_info.generic_arity) +
+                         " type argument" + (enum_info.generic_arity == 1 ? "" : "s"));
+            }
+            for (const auto& arg : expr.type_args) {
+                type_args.push_back(resolve_executable_type(arg));
+            }
+            has_type_args = true;
+            return type_args;
+        }
+
+        if (expected_type_matches_enum_constructor(expected, info.enum_name, enum_info.generic_arity)) {
+            has_type_args = true;
+            return expected->args;
+        }
+
+        return {};
+    }
+
+    IrExprPtr check_enum_constructor_call(const Expr& expr, const EnumCaseInfo& base_info, const IrType* expected = nullptr) {
         require_enum_case_access(expr.loc, base_info);
         auto enum_found = enums_.find(base_info.enum_name);
         if (enum_found != enums_.end() && enum_found->second.deprecated) {
             warn_deprecated_use(expr.loc, "enum", enum_found->second.name, enum_found->second.deprecated_message);
+        }
+        if (expr.args.size() != base_info.payload_refs.size()) {
+            fail(expr.loc, "wrong payload count for enum case '" + base_info.name + "'");
+        }
+
+        EnumCaseInfo info = base_info;
+        bool has_type_args = !base_info.is_generic;
+        std::vector<IrType> type_args = enum_constructor_type_args_from_expected(expr, base_info, expected, has_type_args);
+        if (base_info.is_generic && has_type_args) {
+            info = specialize_enum_case_info(expr.loc, base_info, type_args);
         }
 
         std::vector<IrExprPtr> args;
@@ -15773,16 +15825,16 @@ private:
         args.reserve(expr.args.size());
         arg_types.reserve(expr.args.size());
         std::size_t borrow_mark = temporary_borrow_mark();
-        for (const auto& arg_expr : expr.args) {
-            IrExprPtr arg = check_expr(*arg_expr);
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            const IrType* payload_expected = has_type_args ? &info.payloads[i] : nullptr;
+            IrExprPtr arg = check_expr_maybe_expected(*expr.args[i], payload_expected);
             arg_types.push_back(arg->type);
             args.push_back(std::move(arg));
         }
         release_temporary_borrows(borrow_mark);
 
-        EnumCaseInfo info = base_info;
-        std::vector<IrType> type_args = enum_constructor_type_args(expr, base_info, arg_types);
-        if (base_info.is_generic) {
+        if (base_info.is_generic && !has_type_args) {
+            type_args = enum_constructor_type_args(expr, base_info, arg_types);
             info = specialize_enum_case_info(expr.loc, base_info, type_args);
         }
         return make_enum_construct(expr.loc, info, std::move(args));
@@ -15882,7 +15934,7 @@ private:
             std::string case_name = resolve_enum_case_name(expr.name);
             auto case_found = enum_cases_.find(case_name);
             if (case_found != enum_cases_.end()) {
-                return check_enum_constructor_call(expr, case_found->second);
+                return check_enum_constructor_call(expr, case_found->second, expected);
             }
             std::string struct_name = resolve_struct_type_name(expr.name);
             auto struct_found = structs_.find(struct_name);

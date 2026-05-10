@@ -1078,6 +1078,9 @@ check-traits: $(TARGET)
 	$(TARGET) tests/ok/trait-qualified-associated-expected-aggregates.ari --emit-llvm $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.ll
 	grep -q "Boxed" $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-qualified-associated-expected-aggregates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.elf; $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.elf; code=$$?; test $$code -eq 36; fi
+	$(TARGET) tests/ok/trait-qualified-associated-expected-enum-payload.ari --emit-llvm $(BUILD_DIR)/traits/trait-qualified-associated-expected-enum-payload.ll
+	grep -q "Build" $(BUILD_DIR)/traits/trait-qualified-associated-expected-enum-payload.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-qualified-associated-expected-enum-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-qualified-associated-expected-enum-payload.elf; $(BUILD_DIR)/traits/trait-qualified-associated-expected-enum-payload.elf; code=$$?; test $$code -eq 61; fi
 	$(TARGET) --freestanding tests/ok/trait-bound-generic-args.ari -o $(BUILD_DIR)/traits/trait-bound-generic-args.raw
 	$(BUILD_DIR)/traits/trait-bound-generic-args.raw; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-bound-static-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-bound-static-dispatch.ll

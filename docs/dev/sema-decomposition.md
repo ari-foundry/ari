@@ -32,6 +32,8 @@ construction. Some helpers have already moved out to focused files:
   and future trait-resolution extraction
 - `aggregate_literal_semantics` for pure expected-element selection shared by
   tuple, struct, fixed-array, and local `Vec[T]` literal lowering
+- `enum_constructor_semantics` for pure expected-enum matching used before
+  lowering generic enum constructor payloads
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or
@@ -46,8 +48,8 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Local lvalues, IR var declarations, tuple/vector index helpers, scalar
      literals, casts, bool binary conditions, pointer operation nodes, and
      direct builtin call nodes are already outside `sema.cpp`.
-   - Next small targets are enum constructors and block/match/if expression
-     assembly once their semantic checks have narrow inputs.
+   - Next small targets are enum constructor IR assembly and block/match/if
+     expression assembly once their semantic checks have narrow inputs.
 2. Extract constant evaluation into `constant_semantics`.
    - Static integer arithmetic/bitwise/shift folding, `ConstantValue`, scalar
      constant construction/range helpers, scalar literal folding, constant

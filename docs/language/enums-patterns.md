@@ -28,11 +28,13 @@ Concrete generic enum types also use square brackets in type positions:
 let value: Option[i64] = Some(20)
 ```
 
-Generic enum values can be constructed once the type argument is explicit or
-can be inferred from payload values. Option/Result-style generic enums support
-`?` and `??`; generic enum pattern matching and refutable payload bindings use
-the concrete type arguments of the matched value. Constant generic enum values
-can be initialized when the constant annotation supplies the concrete enum type.
+Generic enum values can be constructed once the type argument is explicit, can
+be inferred from payload values, or comes from an expected enum type such as a
+local annotation, assignment target, or return type. Option/Result-style
+generic enums support `?` and `??`; generic enum pattern matching and
+refutable payload bindings use the concrete type arguments of the matched
+value. Constant generic enum values can be initialized when the constant
+annotation supplies the concrete enum type.
 
 ## Constructors
 
@@ -54,8 +56,16 @@ Generic payload constructors can infer type arguments:
 let full: Option[i64] = Some(42)
 ```
 
-Use angle brackets on the call when the payload does not determine the type,
-or when spelling the specialization explicitly:
+The expected enum type can also specialize zero-payload cases and is passed
+into payload expressions before they are checked:
+
+```ari
+let empty: Option[i64] = None()
+let full: Option[i64] = Some(42)
+```
+
+Use angle brackets on the call when neither the payload nor an expected enum
+type determines the type, or when spelling the specialization explicitly:
 
 ```ari
 let empty = None<i64>()

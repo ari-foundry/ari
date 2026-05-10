@@ -1,0 +1,83 @@
+trait Build {
+  fn build(value: i64) -> Self
+}
+
+enum Number {
+  Missing,
+  Value(i32),
+}
+
+enum Small {
+  MissingSmall,
+  Tiny(i32),
+}
+
+impl Build for Number {
+  fn build(value: i64) -> Number {
+    Value(value as i32)
+  }
+}
+
+impl Build for Small {
+  fn build(value: i64) -> Small {
+    Tiny(value as i32)
+  }
+}
+
+fn option(flag: bool) -> Option[Number] {
+  if flag {
+    return Some(Build::build(10));
+  }
+  return None();
+}
+
+fn result(flag: bool) -> Result[Number, Small] {
+  if flag {
+    return Ok(Build::build(20));
+  }
+  return Err(Build::build(7));
+}
+
+fn score_number(value: Number) -> i64 {
+  match value {
+    Missing => 0,
+    Value(inner) => inner as i64,
+  }
+}
+
+fn score_small(value: Small) -> i64 {
+  match value {
+    MissingSmall => 0,
+    Tiny(inner) => inner as i64,
+  }
+}
+
+fn score_option(value: Option[Number]) -> i64 {
+  match value {
+    Some(inner) => score_number(inner),
+    None => 6,
+  }
+}
+
+fn score_result(value: Result[Number, Small]) -> i64 {
+  match value {
+    Ok(inner) => score_number(inner),
+    Err(code) => score_small(code),
+  }
+}
+
+fn main() -> i64 {
+  let direct: Option[Number] = Some(Build::build(3));
+  let empty: Option[Number] = None();
+  let ok: Result[Number, Small] = Ok(Build::build(4));
+  let err: Result[Number, Small] = Err(Build::build(5));
+
+  score_option(direct) +
+    score_option(empty) +
+    score_result(ok) +
+    score_result(err) +
+    score_option(option(true)) +
+    score_option(option(false)) +
+    score_result(result(true)) +
+    score_result(result(false))
+}
