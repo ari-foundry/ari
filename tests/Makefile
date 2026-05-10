@@ -1365,6 +1365,9 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/vector-reserve-known-local.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-known-local.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-reserve-known-local.ll
 	if grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-known-local.ll; then exit 1; fi
+	$(TARGET) tests/ok/vector-reserve-known-static-local.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-known-static-local.ll
+	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-reserve-known-static-local.ll
+	if grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-known-static-local.ll; then exit 1; fi
 	$(TARGET) tests/ok/vector-reserve-const.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-const.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-reserve-const.ll
 	if grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-const.ll; then exit 1; fi
@@ -1427,6 +1430,7 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-runtime.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-runtime.elf; $(BUILD_DIR)/variables/vector-reserve-runtime.elf; code=$$?; test $$code -eq 6; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-runtime-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-runtime-trap.elf; if $(BUILD_DIR)/variables/vector-reserve-runtime-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-known-local.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-known-local.elf; $(BUILD_DIR)/variables/vector-reserve-known-local.elf; code=$$?; test $$code -eq 18; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-known-static-local.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-known-static-local.elf; $(BUILD_DIR)/variables/vector-reserve-known-static-local.elf; code=$$?; test $$code -eq 18; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-const.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-const.elf; $(BUILD_DIR)/variables/vector-reserve-const.elf; code=$$?; test $$code -eq 18; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-static-expr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-static-expr.elf; $(BUILD_DIR)/variables/vector-reserve-static-expr.elf; code=$$?; test $$code -eq 18; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-autogrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-autogrow.elf; $(BUILD_DIR)/variables/vector-push-autogrow.elf; code=$$?; test $$code -eq 23; fi
@@ -1487,6 +1491,8 @@ check-variables: $(TARGET)
 	grep -Fq "local Vec method 'map' is reserved for allocator-backed std collection APIs" $(BUILD_DIR)/variables/vector-api-freeze.err
 	if $(TARGET) tests/errors/vector-reserve-known-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-known-negative.elf >$(BUILD_DIR)/variables/vector-reserve-known-negative.err 2>&1; then exit 1; fi
 	grep -q "Vec.reserve capacity must be non-negative" $(BUILD_DIR)/variables/vector-reserve-known-negative.err
+	if $(TARGET) tests/errors/vector-reserve-known-static-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-known-static-negative.elf >$(BUILD_DIR)/variables/vector-reserve-known-static-negative.err 2>&1; then exit 1; fi
+	grep -q "Vec.reserve capacity must be non-negative" $(BUILD_DIR)/variables/vector-reserve-known-static-negative.err
 	if $(TARGET) tests/errors/vector-reserve-const-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-const-negative.elf >$(BUILD_DIR)/variables/vector-reserve-const-negative.err 2>&1; then exit 1; fi
 	grep -q "Vec.reserve capacity must be non-negative" $(BUILD_DIR)/variables/vector-reserve-const-negative.err
 	if $(TARGET) tests/errors/vector-reserve-static-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-static-negative.elf >$(BUILD_DIR)/variables/vector-reserve-static-negative.err 2>&1; then exit 1; fi

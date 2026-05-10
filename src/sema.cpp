@@ -4711,12 +4711,14 @@ private:
         local.integer_value_known = false;
         local.integer_known_value = 0;
         local.integer_known_negative = false;
-        if (local.mutable_binding || expr.kind != IrExprKind::Integer || !is_value_integer_type(local.type)) {
+        if (local.mutable_binding || !is_value_integer_type(local.type)) {
             return;
         }
+        StaticIntegerValue value;
+        if (!try_fold_static_integer_value(expr, value)) return;
         local.integer_value_known = true;
-        local.integer_known_value = expr.int_value;
-        local.integer_known_negative = expr.int_negative;
+        local.integer_known_value = value.value;
+        local.integer_known_negative = value.negative;
     }
 
     void require_nullable_pointer_initializer(SourceLocation loc,

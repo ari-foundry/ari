@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  let capacity = 1 - 2;
+  var values: Vec[i64] = [];
+  values.reserve(capacity);
+  return 0;
+}

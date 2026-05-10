@@ -54,6 +54,19 @@ bool is_integer_type(const IrType& type) {
     }
 }
 
+bool is_signed_integer_type(const IrType& type) {
+    if (type.qualifier != TypeQualifier::Value) return false;
+    switch (type.primitive) {
+        case IrPrimitiveKind::I8:
+        case IrPrimitiveKind::I16:
+        case IrPrimitiveKind::I32:
+        case IrPrimitiveKind::I64:
+            return true;
+        default:
+            return false;
+    }
+}
+
 bool static_integer_to_i64(const StaticIntegerValue& value, std::int64_t& out) {
     if (value.negative) {
         const std::uint64_t min_magnitude =
@@ -135,6 +148,7 @@ bool try_fold_static_integer_value(const IrExpr& expr, StaticIntegerValue& out) 
         return true;
     }
     if (expr.kind != IrExprKind::Binary) return false;
+    if (!is_signed_integer_type(expr.type)) return false;
 
     switch (expr.op) {
         case IrBinaryOp::Add:

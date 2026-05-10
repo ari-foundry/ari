@@ -1,0 +1,11 @@
+const BASE: i64 = 1;
+
+fn main() -> i64 {
+  let capacity = BASE + 2;
+  var values: Vec[i64] = [];
+  values.reserve(capacity);
+  values.push(10);
+  values.push(11);
+  values.push(12);
+  return values.capacity() + values.len() + values[2];
+}

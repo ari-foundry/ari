@@ -10,7 +10,8 @@ construction. Some helpers have already moved out to focused files:
 - `try_model` for `?` residual shape helpers
 - `type_semantics` for shared type predicates, raw-pointer type checks,
   literal range checks, and assignability/operand diagnostics
-- `vector_semantics` for local `Vec[T]` storage helpers
+- `vector_semantics` for local `Vec[T]` storage helpers and static capacity
+  folding
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions, and
   direct builtin calls
