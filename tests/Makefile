@@ -391,7 +391,7 @@ check-match: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-payload-literals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; code=$$?; test $$code -eq 64; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-nested-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.elf; $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.elf; code=$$?; test $$code -eq 99; fi
 	$(TARGET) --freestanding tests/ok/match-or-binding.ari -o $(BUILD_DIR)/match/match-or-binding.raw
-	$(BUILD_DIR)/match/match-or-binding.raw; code=$$?; test $$code -eq 14
+	$(BUILD_DIR)/match/match-or-binding.raw; code=$$?; test $$code -eq 41
 	$(TARGET) --freestanding tests/ok/match-range-overlap.ari -o $(BUILD_DIR)/match/match-range-overlap.raw
 	$(BUILD_DIR)/match/match-range-overlap.raw; code=$$?; test $$code -eq 1
 	$(TARGET) --freestanding tests/ok/match-shadow-warning.ari -o $(BUILD_DIR)/match/match-shadow-warning.raw >$(BUILD_DIR)/match/match-shadow-warning.warn 2>&1

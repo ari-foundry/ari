@@ -111,8 +111,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 2. Extend pattern binding modes beyond value bindings.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
-   - [or-bindings] support binding unification for or-patterns in all aggregate
-     pattern positions
+   Tuple, fixed-array, named-struct, and tuple-struct match arms now share
+   same-name/same-type or-pattern bindings through the product pattern engine.
+   - [or-bindings-decls] extend the same binding unification to refutable
+     aggregate `let`/`var`, control-flow, for-loop, and function-parameter
+     positions once the shared binding-mode engine owns declaration-lifetime
+     locals
    - [slice-patterns] lower `Slice[T]` and `Vec[T]` length-checked patterns
      after the shared binding-mode engine decides reference/ownership behavior
    - [macro-pattern] allow pattern-position macro expansion after the macro system is real

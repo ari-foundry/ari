@@ -4,6 +4,13 @@ enum Token {
   End,
 }
 
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Pair(i64, i64)
+
 fn enum_score(value: Token) -> i64 {
   return match value {
     Add(amount) | Sub(amount) => amount as i64,
@@ -24,5 +31,21 @@ fn main() -> i64 {
     _ => 0,
   };
 
-  return enum_score(Sub(5)) + pair_value + nested_value;
+  let array_value = match [0, 8] {
+    [item, 0] | [0, item] => item,
+    _ => 99,
+  };
+
+  let point = Point { x: 0, y: 9 };
+  let struct_value = match point {
+    Point { x: axis, y: 0 } | Point { x: 0, y: axis } => axis,
+    _ => 99,
+  };
+
+  let tuple_struct_value = match Pair(10, 0) {
+    Pair(side, 0) | Pair(0, side) => side,
+    _ => 99,
+  };
+
+  return enum_score(Sub(5)) + pair_value + nested_value + array_value + struct_value + tuple_struct_value;
 }

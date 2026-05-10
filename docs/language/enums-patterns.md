@@ -344,6 +344,16 @@ let mirrored = match pair {
   (value, 0) | (0, value) => value,
   _ => 0,
 };
+
+let array_mirrored = match [0, 8] {
+  [item, 0] | [0, item] => item,
+  _ => 0,
+};
+
+let point_mirrored = match point {
+  Point { x: axis, y: 0 } | Point { x: 0, y: axis } => axis,
+  _ => 0,
+};
 ```
 
 Aliases can wrap an or-pattern in match arms. Ari expands the alternatives and
