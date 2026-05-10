@@ -1144,7 +1144,11 @@ private:
                 line("  store " + bound.type + " " + bound.name + ", ptr " + local_slot(arm.loc, arm.value_name));
             }
             emit_payload_bindings(arm, value);
-            line("  br label %" + body_label);
+            if (stmt.while_let_continue_on_mismatch && i + 1 == stmt.match_arms.size()) {
+                line("  br label %" + cond_label);
+            } else {
+                line("  br label %" + body_label);
+            }
         }
 
         loops_.push_back(make_loop_context(end_label, cond_label, cond_label, stmt.label));

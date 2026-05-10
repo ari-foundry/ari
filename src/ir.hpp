@@ -380,6 +380,7 @@ struct IrStmt {
     IrExprPtr rhs;
     IrExprPtr assign_target;
     IrExprPtr condition;
+    bool while_let_continue_on_mismatch = false;
     std::string for_binding_name;
     std::string for_index_name;
     std::string for_end_name;

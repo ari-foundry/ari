@@ -78,18 +78,17 @@
    Iterator item patterns can now
    use scalar literal/range tests, or-patterns over those tests, fieldless
    enum-case patterns, and compact enum item payload
-   bindings/literal/range/or/alias tests; the current
-   semantics are `while let Some(pattern) = iterator.next()`, so the first
-   non-matching item ends the loop rather than being skipped.
+   bindings/literal/range/or/alias tests. Plain `for pattern in iterator`
+   keeps `while let Some(pattern) = iterator.next()` semantics, so the first
+   non-matching item ends the loop. `for let pattern in iterator` is the
+   filter-style form; non-matching `Some(_)` items continue to the next
+   iterator step.
    - [contract] replace the compiler-known `into_iter` result relaxation with
      a first-class associated iterator type or equivalent Ari-specific trait
      contract
    - [state] extend the new mutable iterator receiver support beyond copyable
      non-borrow values to owner/borrow iterator values and explicit iterator
      lifetime rules
-   - [pattern-filter] decide whether Ari also wants a separate skip/filter
-     loop form for refutable item patterns instead of only the current
-     stop-on-first-mismatch semantics
    - [pattern-payload] extend iterator item enum-case payload patterns to
      aggregate enum item payloads after nested aggregate-enum payload storage
      rules allow `Option[PayloadEnum]` values whose payload enum uses aggregate

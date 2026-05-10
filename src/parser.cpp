@@ -1183,6 +1183,7 @@ private:
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::For;
         stmt->loc = peek().loc;
+        stmt->for_pattern_filter = match(TokenKind::KwLet);
         stmt->for_pattern = parse_for_pattern();
         expect(TokenKind::KwIn, "expected in after for pattern");
         stmt->for_iterable = parse_expression_without_struct_literals();

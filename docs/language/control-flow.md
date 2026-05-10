@@ -306,10 +306,23 @@ for Just(5 | 6) in maybe_values {
 
 These patterns use `while let Some(pattern) = iterator.next()` semantics. If an
 item does not match, the loop ends; it is not skipped. This keeps the lowering
-predictable until Ari grows a distinct filter-style loop form. Or-pattern
-alternatives must bind the same names. Enum-case item patterns are currently
-limited to fieldless cases and compact enum payload cases. Aggregate-layout enum
-items inside `Option[T]` still depend on broader aggregate enum payload storage.
+predictable for plain `for` loops.
+
+Use `for let pattern in iterator` when non-matching iterator items should be
+skipped instead:
+
+```ari
+for let 10..=20 in scores {
+  total = total + 1;
+}
+```
+
+`for let` filters currently require an `Iterator[T]` or `IntoIterator[T]`
+value. Range, list-literal, and stored-vector loops still use irrefutable
+binding/destructuring loop heads. Or-pattern alternatives must bind the same
+names. Enum-case item patterns are currently limited to fieldless cases and
+compact enum payload cases. Aggregate-layout enum items inside `Option[T]`
+still depend on broader aggregate enum payload storage.
 
 The current source trait still uses a compiler-known return contract for
 `into_iter` instead of a first-class associated iterator type. Mutable

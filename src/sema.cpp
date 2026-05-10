@@ -9503,7 +9503,7 @@ private:
 
     void fail_refutable_for_pattern(SourceLocation loc) const {
         fail(loc,
-             "refutable for-loop patterns are planned for Iterator[T] filtering; vector loop heads currently support irrefutable binding, alias, tuple, struct, and tuple-struct patterns");
+             "refutable for-loop patterns require for-let filters on Iterator[T]; vector loop heads currently support irrefutable binding, alias, tuple, struct, and tuple-struct patterns");
     }
 
     void require_irrefutable_tuple_struct_for_pattern(const Pattern& pattern, const IrType& value_type) {
@@ -9741,6 +9741,13 @@ private:
         return pattern;
     }
 
+    static Pattern make_wildcard_pattern(SourceLocation loc) {
+        Pattern pattern;
+        pattern.kind = PatternKind::Wildcard;
+        pattern.loc = loc;
+        return pattern;
+    }
+
     static ExprPtr make_ast_name_expr(SourceLocation loc, const std::string& name) {
         auto expr = std::make_unique<Expr>();
         expr->kind = ExprKind::Name;
@@ -9911,6 +9918,10 @@ private:
                  "Iterator[T] for-loop item bindings currently require copyable non-borrow items, got " +
                      type_name(item_type));
         }
+        if (stmt.for_pattern_filter &&
+            (stmt.for_pattern.kind == PatternKind::Binding || stmt.for_pattern.kind == PatternKind::Wildcard)) {
+            fail(stmt.for_pattern.loc, "for-let iterator filters require a refutable item pattern");
+        }
         Pattern item_pattern = normalize_iterator_item_pattern(stmt.for_pattern, item_type);
         if (item_pattern.kind != PatternKind::Binding && item_pattern.kind != PatternKind::Wildcard) {
             require_supported_for_iterator_pattern(item_pattern, item_type);
@@ -9925,6 +9936,7 @@ private:
         loop->kind = IrStmtKind::WhileLet;
         loop->loc = stmt.loc;
         loop->label = stmt.label;
+        loop->while_let_continue_on_mismatch = stmt.for_pattern_filter;
         loop->match_value = make_iterator_method_call(stmt.loc, iterator_name, "next");
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *loop->match_value);
         IrType enum_value_type = loop->match_value->type;
@@ -9939,6 +9951,19 @@ private:
         );
         if (pattern_arms.empty()) {
             fail(stmt.for_pattern.loc, "iterator for-loop pattern did not lower to a match arm");
+        }
+        if (stmt.for_pattern_filter) {
+            Pattern skip_pattern = make_iterator_some_pattern(make_wildcard_pattern(stmt.for_pattern.loc));
+            std::vector<IrMatchArm> skip_arms = lower_match_arm_patterns(
+                skip_pattern,
+                enum_info,
+                enum_value_type,
+                coverage
+            );
+            if (skip_arms.size() != 1) {
+                fail(stmt.for_pattern.loc, "iterator for-let fallback pattern did not lower to a single match arm");
+            }
+            pattern_arms.push_back(std::move(skip_arms.front()));
         }
 
         StateSnapshot loop_input = snapshot_states();
@@ -10024,6 +10049,9 @@ private:
                 is_prelude_range_function_name(range_call_name);
         }
         if (is_range_call) {
+            if (stmt.for_pattern_filter) {
+                fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
+            }
             if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
                 fail(stmt.for_pattern.loc,
                      "range for-loop patterns must be a binding or _; richer loop-head patterns are implemented for list literals and planned for Iterator[T]");
@@ -10032,11 +10060,17 @@ private:
             return;
         }
         if (stmt.for_iterable && stmt.for_iterable->kind == ExprKind::Vector) {
+            if (stmt.for_pattern_filter) {
+                fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
+            }
             check_for_vector(stmt, lowered);
             return;
         }
         IrExprPtr iterable = check_expr(*stmt.for_iterable);
         if (is_prelude_range_type(iterable->type)) {
+            if (stmt.for_pattern_filter) {
+                fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
+            }
             if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
                 fail(stmt.for_pattern.loc,
                      "range for-loop patterns must be a binding or _; richer loop-head patterns are implemented for list literals and planned for Iterator[T]");
@@ -10045,6 +10079,9 @@ private:
             return;
         }
         if (iterable->type.primitive == IrPrimitiveKind::Vector) {
+            if (stmt.for_pattern_filter) {
+                fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
+            }
             check_for_vector_value(stmt, lowered, std::move(iterable));
             return;
         }

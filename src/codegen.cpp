@@ -1585,11 +1585,17 @@ private:
         emit_push(Reg::RAX);
 
         std::vector<std::size_t> jump_body;
-        for (const auto& arm : stmt.match_arms) {
+        std::vector<std::size_t> jump_continue;
+        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
+            const auto& arm = stmt.match_arms[i];
             std::vector<std::size_t> jump_next = emit_match_arm_fail_jumps(arm);
             emit_match_arm_bindings(arm);
             emit_pop(Reg::RCX);
-            jump_body.push_back(emit_jmp_placeholder());
+            if (stmt.while_let_continue_on_mismatch && i + 1 == stmt.match_arms.size()) {
+                jump_continue.push_back(emit_jmp_placeholder());
+            } else {
+                jump_body.push_back(emit_jmp_placeholder());
+            }
             for (std::size_t patch : jump_next) patch_rel32(patch, out_.size());
         }
 
@@ -1598,6 +1604,7 @@ private:
 
         std::size_t body = out_.size();
         for (std::size_t patch : jump_body) patch_rel32(patch, body);
+        for (std::size_t patch : jump_continue) patch_rel32(patch, cond);
 
         LoopLabels labels;
         labels.plain_continue_known = true;

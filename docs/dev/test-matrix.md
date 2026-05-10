@@ -245,6 +245,10 @@ Checklist:
 - [x] lower refutable scalar literal/range, or-pattern, fieldless enum-case,
       and compact enum payload item patterns for `Iterator[T]` loops with
       stop-on-first-mismatch semantics
+- [x] lower `for let pattern in iterator` as a filter loop that skips
+      non-matching `Some(_)` items
+- [x] reject `for let` filter syntax on range/list/vector loops until those
+      collections lower through `Iterator[T]`
 - [x] reject unsupported iterator for-loop shapes with trait-aware planned
       diagnostics
 - [x] reject enum-case `for` patterns with a planned diagnostic
