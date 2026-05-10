@@ -60,9 +60,11 @@
    Range loops, list literal loops, and stored local vector loops lower today
    without trait dispatch. Sema now recognizes concrete and generic
    `Iterator[T]`/`IntoIterator[T]` impls, reports the inferred item type, and
-   keeps the construct rejected until runtime lowering exists. The remaining
-   iterator model needs `IntoIterator[T]` conversion plus generic `Option[T]`
-   result lowering for `next` on every backend.
+   source `std::Iterator[T]` now reserves the required
+   `next(self) -> Option[T]` method shape. The construct remains rejected until
+   runtime lowering exists. The remaining iterator model needs
+   `IntoIterator[T]` conversion plus generic `Option[T]` result lowering for
+   `next` on every backend.
    - [into] lower `IntoIterator[T]` conversion into an iterator value
    - [loop] lower direct `Iterator[T]::next`-style iteration state
    - [pattern] bind refutable enum-case loop-head patterns after the iterator

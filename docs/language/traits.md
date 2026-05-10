@@ -283,6 +283,10 @@ ToString
 ToOwned
 ```
 
+`Iterator[T]` requires `fn next(self) -> Option[T]`. General `for` lowering over
+that method is still planned, but ordinary impl validation and method calls use
+the source trait shape today.
+
 `Drop` is the prelude trait connected to explicit ownership destruction:
 
 ```ari

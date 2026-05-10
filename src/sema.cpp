@@ -2226,10 +2226,16 @@ private:
         std::size_t payload_count,
         bool& aggregate_layout
     ) const {
+        bool unresolved_generic_payload =
+            payload_type.qualifier == TypeQualifier::Value &&
+            payload_type.primitive == IrPrimitiveKind::Unknown &&
+            payload_type.args.empty();
         bool payload_needs_aggregate =
             !is_legacy_enum_payload_type(payload_type) || payload_count > 1;
         if (payload_needs_aggregate) aggregate_layout = true;
-        if (payload_needs_aggregate && !is_aggregate_enum_payload_type(payload_type)) {
+        if (payload_needs_aggregate &&
+            !unresolved_generic_payload &&
+            !is_aggregate_enum_payload_type(payload_type)) {
             fail(loc,
                  "enum aggregate payloads currently support integer, bool, pointer-shaped, or one-word enum values, got " +
                      type_name(payload_type));

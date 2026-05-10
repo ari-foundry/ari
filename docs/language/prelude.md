@@ -302,6 +302,15 @@ duplicate impls, declared method conformance, and generic function trait
 bounds. Concrete impl method calls, trait-bound generic calls, and the current
 copyable LLVM trait-object subset lower through the same source trait table.
 
+`Iterator[T]` has one required step method:
+
+```ari
+fn next(self) -> Option[T]
+```
+
+`IntoIterator[T]` is reserved for the future conversion step used by general
+`for` lowering.
+
 ## Context
 
 The LLVM host backend initializes a small runtime context inside `@ari_entry`

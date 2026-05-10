@@ -373,7 +373,7 @@ Checklist:
 - [x] reserve Rust-like standard traits: debug/display/default/clone/copy/drop,
       equality/order, conversion, iterator, string/owned surfaces
 - [x] reserve `Iterable[T]`
-- [x] reserve `Iterator[T]`
+- [x] reserve `Iterator[T]` with `next(self) -> Option[T]`
 - [x] reserve `IntoIterator[T]`
 - [x] reserve `iter::Iterable[T]`
 - [x] reserve `iter::Iterator[T]`

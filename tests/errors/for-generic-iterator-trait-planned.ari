@@ -3,6 +3,9 @@ struct Cursor[T] {
 }
 
 impl[T] Iterator[T] for Cursor[T] {
+  fn next(self) -> Option[T] {
+    None<T>()
+  }
 }
 
 fn main() -> i64 {

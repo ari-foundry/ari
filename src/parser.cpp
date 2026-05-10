@@ -75,8 +75,10 @@ private:
         return tokens_[pos_++];
     }
 
-    Token expect_identifier_or_drop_keyword(const std::string& message) {
-        if (!check(TokenKind::Identifier) && !check(TokenKind::KwDrop)) fail(peek().loc, message);
+    Token expect_identifier_or_contextual_name_keyword(const std::string& message) {
+        if (!check(TokenKind::Identifier) && !check(TokenKind::KwDrop) && !check(TokenKind::KwNext)) {
+            fail(peek().loc, message);
+        }
         return tokens_[pos_++];
     }
 
@@ -112,7 +114,7 @@ private:
     std::string parse_path_after_first(const Token& first) {
         std::string path = first.text;
         while (match(TokenKind::ColonColon)) {
-            Token part = expect_identifier_or_drop_keyword("expected name after ::");
+            Token part = expect_identifier_or_contextual_name_keyword("expected name after ::");
             path += "::" + part.text;
         }
         return path;
@@ -486,7 +488,7 @@ private:
         bool public_decl,
         std::vector<Attribute> attributes = {}
     ) {
-        Token name = expect_identifier_or_drop_keyword("expected function name");
+        Token name = expect_identifier_or_contextual_name_keyword("expected function name");
         FunctionDecl fn;
         fn.name = qualify_name(name.text);
         fn.module_name = current_module_name();
@@ -1998,7 +2000,7 @@ private:
                     expr = std::move(access);
                     continue;
                 }
-                Token field = expect_identifier_or_drop_keyword("expected field name after .");
+                Token field = expect_identifier_or_contextual_name_keyword("expected field name after .");
                 std::vector<TypeRef> method_type_args;
                 if (is_angle_type_arg_postfix()) {
                     Expr type_arg_holder;

@@ -3,6 +3,9 @@ struct Cursor {
 }
 
 impl iter::Iterator[i64] for Cursor {
+  fn next(self) -> Option[i64] {
+    Some(self.current)
+  }
 }
 
 fn main() -> i64 {

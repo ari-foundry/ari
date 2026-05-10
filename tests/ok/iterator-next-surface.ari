@@ -1,0 +1,17 @@
+struct Cursor {
+  current: i64,
+}
+
+impl Iterator[i64] for Cursor {
+  fn next(self) -> Option[i64] {
+    Some(self.current)
+  }
+}
+
+fn main() -> i64 {
+  let cursor = Cursor { current: 37 };
+  match cursor.next() {
+    Some(value) => value,
+    None => 0,
+  }
+}

@@ -1003,6 +1003,9 @@ check-traits: $(TARGET)
 	$(TARGET) tests/ok/generic-trait-method-bound.ari --emit-llvm $(BUILD_DIR)/traits/generic-trait-method-bound.ll
 	grep -q "Score" $(BUILD_DIR)/traits/generic-trait-method-bound.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/generic-trait-method-bound.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/generic-trait-method-bound.elf; $(BUILD_DIR)/traits/generic-trait-method-bound.elf; code=$$?; test $$code -eq 45; fi
+	$(TARGET) tests/ok/iterator-next-surface.ari --emit-llvm $(BUILD_DIR)/traits/iterator-next-surface.ll
+	grep -q "Cursor.*next" $(BUILD_DIR)/traits/iterator-next-surface.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/iterator-next-surface.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/iterator-next-surface.elf; $(BUILD_DIR)/traits/iterator-next-surface.elf; code=$$?; test $$code -eq 37; fi
 	if $(TARGET) tests/errors/trait-drop-missing-method.ari -o $(BUILD_DIR)/traits/trait-drop-missing-method.elf >$(BUILD_DIR)/traits/trait-drop-missing-method.err 2>&1; then exit 1; fi
 	grep -q "impl of trait 'std::Drop' for i64 is missing method 'drop'" $(BUILD_DIR)/traits/trait-drop-missing-method.err
 	if $(TARGET) tests/errors/unknown-trait-impl.ari -o $(BUILD_DIR)/traits/unknown-trait-impl.elf >$(BUILD_DIR)/traits/unknown-trait-impl.err 2>&1; then exit 1; fi
