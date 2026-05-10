@@ -36,12 +36,12 @@
    there as well, along with `as_slice` data-pointer and view construction.
    Local Vec integer and non-negative operand diagnostics for
    index/capacity/length arguments are also centralized there. Local Vec IR
-   construction helpers include `push` alongside the other method lowerings.
-   Known-length updates for local `push`, `insert`, `pop`, `remove`, `clear`,
-   and `truncate` now use small `vector_semantics` transition helpers. The
-   shared constant value model, constant-to-IR literal construction, scalar
-   literal folding, constant binary result evaluation, and static integer
-   folding for local Vec capacity and length decisions now live in
+   construction helpers include `first`, `last`, and `push` alongside the other
+   method lowerings. Known-length updates for local `push`, `insert`, `pop`,
+   `remove`, `clear`, and `truncate` now use small `vector_semantics`
+   transition helpers. The shared constant value model, constant-to-IR literal
+   construction, scalar literal folding, constant binary result evaluation, and
+   static integer folding for local Vec capacity and length decisions now live in
    `constant_semantics`;
    this keeps
    allocator-backed work from growing the main semantic checker. Introduce the

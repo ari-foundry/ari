@@ -13803,11 +13803,7 @@ private:
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "first");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::First, expr.type_args.size(), expr.args.size());
-        return make_vec_index_expr(
-            expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
-            make_integer_literal(expr.loc, i64_type(expr.loc), 0)
-        );
+        return make_vec_first_expr(expr.loc, expr.operand->loc, name, local.type);
     }
 
     IrExprPtr check_vec_last_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
@@ -13815,19 +13811,7 @@ private:
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "last");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Last, expr.type_args.size(), expr.args.size());
-
-        auto index = std::make_unique<IrExpr>();
-        index->kind = IrExprKind::Binary;
-        index->loc = expr.loc;
-        index->op = IrBinaryOp::Sub;
-        index->type = i64_type(expr.loc);
-        index->left = make_collection_len_expr(expr.loc, make_vec_local_lvalue(expr.operand->loc, name, local.type));
-        index->right = make_integer_literal(expr.loc, i64_type(expr.loc), 1);
-        return make_vec_index_expr(
-            expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
-            std::move(index)
-        );
+        return make_vec_last_expr(expr.loc, expr.operand->loc, name, local.type);
     }
 
     IrExprPtr check_vec_get_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {

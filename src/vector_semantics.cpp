@@ -329,6 +329,35 @@ IrExprPtr make_vec_index_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr in
     return out;
 }
 
+IrExprPtr make_vec_first_expr(SourceLocation loc,
+                              SourceLocation receiver_loc,
+                              const std::string& name,
+                              const IrType& type) {
+    return make_vec_index_expr(
+        loc,
+        make_vec_local_lvalue(receiver_loc, name, type),
+        make_i64_literal(loc, 0)
+    );
+}
+
+IrExprPtr make_vec_last_expr(SourceLocation loc,
+                             SourceLocation receiver_loc,
+                             const std::string& name,
+                             const IrType& type) {
+    auto index = std::make_unique<IrExpr>();
+    index->kind = IrExprKind::Binary;
+    index->loc = loc;
+    index->op = IrBinaryOp::Sub;
+    index->type = i64_type(loc);
+    index->left = make_collection_len_expr(loc, make_vec_local_lvalue(receiver_loc, name, type));
+    index->right = make_i64_literal(loc, 1);
+    return make_vec_index_expr(
+        loc,
+        make_vec_local_lvalue(receiver_loc, name, type),
+        std::move(index)
+    );
+}
+
 IrExprPtr make_vec_pop_expr(SourceLocation loc, IrExprPtr vector) {
     if (!vector || !is_vector_storage_type(vector->type)) {
         fail(loc, "Vec.pop requires local Vec storage");
