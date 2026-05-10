@@ -13868,8 +13868,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "first");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.first does not take type arguments");
-        if (!expr.args.empty()) fail(expr.loc, "Vec.first expects no arguments");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::First, expr.type_args.size(), expr.args.size());
         return make_vec_index_expr(
             expr.loc,
             make_vec_local_lvalue(expr.operand->loc, name, local.type),
@@ -13881,8 +13880,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "last");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.last does not take type arguments");
-        if (!expr.args.empty()) fail(expr.loc, "Vec.last expects no arguments");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Last, expr.type_args.size(), expr.args.size());
 
         auto index = std::make_unique<IrExpr>();
         index->kind = IrExprKind::Binary;
@@ -13902,8 +13900,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "get");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.get does not take type arguments");
-        if (expr.args.size() != 1) fail(expr.loc, "Vec.get expects one index argument");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Get, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
@@ -13923,8 +13920,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "reserve");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.reserve does not take type arguments");
-        if (expr.args.size() != 1) fail(expr.loc, "Vec.reserve expects one capacity argument");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Reserve, expr.type_args.size(), expr.args.size());
         const Expr& capacity_expr = *expr.args[0];
         StaticIntegerValue known_capacity;
         if (known_integer_capacity(capacity_expr, known_capacity)) {
@@ -13960,8 +13956,7 @@ private:
 
     IrExprPtr check_vec_capacity_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) const {
         (void)lowered;
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.capacity does not take type arguments");
-        if (!expr.args.empty()) fail(expr.loc, "Vec.capacity expects no arguments");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Capacity, expr.type_args.size(), expr.args.size());
         return make_vec_capacity_expr(expr.loc, local.type);
     }
 
@@ -13969,8 +13964,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "pop");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.pop does not take type arguments");
-        if (!expr.args.empty()) fail(expr.loc, "Vec.pop expects no arguments");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Pop, expr.type_args.size(), expr.args.size());
         if (local.vector_length_known) {
             if (local.vector_known_length > 0) {
                 --local.vector_known_length;
@@ -13988,8 +13982,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "clear");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.clear does not take type arguments");
-        if (!expr.args.empty()) fail(expr.loc, "Vec.clear expects no arguments");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Clear, expr.type_args.size(), expr.args.size());
         set_vector_known_length(local, 0);
         return make_vec_clear_expr(
             expr.loc,
@@ -14001,8 +13994,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "truncate");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.truncate does not take type arguments");
-        if (expr.args.size() != 1) fail(expr.loc, "Vec.truncate expects one length argument");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Truncate, expr.type_args.size(), expr.args.size());
 
         const Expr& length_expr = *expr.args[0];
         StaticIntegerValue source_known_length;
@@ -14040,8 +14032,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "set");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.set does not take type arguments");
-        if (expr.args.size() != 2) fail(expr.loc, "Vec.set expects an index and value");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Set, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
@@ -14065,8 +14056,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "swap");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.swap does not take type arguments");
-        if (expr.args.size() != 2) fail(expr.loc, "Vec.swap expects two indexes");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Swap, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr first_index = check_expr(*expr.args[0]);
@@ -14091,8 +14081,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "remove");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.remove does not take type arguments");
-        if (expr.args.size() != 1) fail(expr.loc, "Vec.remove expects one index argument");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Remove, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
@@ -14120,8 +14109,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "insert");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.insert does not take type arguments");
-        if (expr.args.size() != 2) fail(expr.loc, "Vec.insert expects an index and value");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Insert, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
@@ -14147,8 +14135,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "contains");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.contains does not take type arguments");
-        if (expr.args.size() != 1) fail(expr.loc, "Vec.contains expects one value argument");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Contains, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
@@ -14167,8 +14154,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "index_of");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.index_of does not take type arguments");
-        if (expr.args.size() != 1) fail(expr.loc, "Vec.index_of expects one value argument");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::IndexOf, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
@@ -14187,8 +14173,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "count");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.count does not take type arguments");
-        if (expr.args.size() != 1) fail(expr.loc, "Vec.count expects one value argument");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Count, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
@@ -14206,8 +14191,7 @@ private:
     IrExprPtr check_vec_push_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "push");
-        if (!expr.type_args.empty()) fail(expr.loc, "Vec.push does not take type arguments");
-        if (expr.args.size() != 1) fail(expr.loc, "Vec.push expects one value argument");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Push, expr.type_args.size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);

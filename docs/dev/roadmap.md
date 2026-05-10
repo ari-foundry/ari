@@ -30,10 +30,10 @@
    collection APIs instead of falling through to the generic unknown-method
    error. Vec storage helper logic is split out of `sema.cpp` into
    `vector_semantics`, including the frozen temporary local method list used
-   by sema dispatch and diagnostics, while the shared constant value model,
-   constant-to-IR literal construction, scalar literal folding, constant binary
-   result evaluation, and static integer folding for local Vec capacity and
-   length decisions now live in `constant_semantics`;
+   by sema dispatch and method shape diagnostics, while the shared constant
+   value model, constant-to-IR literal construction, scalar literal folding,
+   constant binary result evaluation, and static integer folding for local Vec
+   capacity and length decisions now live in `constant_semantics`;
    this keeps
    allocator-backed work from growing the main semantic checker. Introduce the
    explicit allocation/capability path before broadening vector patterns or std
@@ -41,6 +41,9 @@
    - [allocator] thread explicit allocator/capability values through creation
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      reserve capacity with runtime heap capacity growth
+   - [shape-cleanup] move the remaining `len`, `is_empty`, and `as_slice`
+     builtin/method shape diagnostics behind vector/slice helper APIs once
+     those lowering paths are split from general method dispatch
    - [ops-runtime] port the existing `push`, `insert`, `pop`, `remove`,
      `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
      `reserve` operations to allocator-backed storage instead of fixed

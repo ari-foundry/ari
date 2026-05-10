@@ -3,6 +3,7 @@
 #include "constant_semantics.hpp"
 #include "ir.hpp"
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 
@@ -37,6 +38,10 @@ void widen_vector_storage_type(IrType& type, std::uint64_t capacity);
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
 bool vector_literal_length(const IrExpr& expr, std::uint64_t& out);
 LocalVecMethod classify_local_vec_method(const std::string& method_name);
+void require_local_vec_method_shape(SourceLocation loc,
+                                    LocalVecMethod method,
+                                    std::size_t type_arg_count,
+                                    std::size_t arg_count);
 std::string local_vec_api_freeze_message(const std::string& method_name);
 
 bool vector_known_length_after_truncate(std::uint64_t current_length,

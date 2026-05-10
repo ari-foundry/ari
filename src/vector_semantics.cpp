@@ -69,6 +69,13 @@ constexpr std::array<LocalVecMethodInfo, 19> kLocalVecMethods{{
     {"truncate", LocalVecMethod::Truncate},
 }};
 
+const char* local_vec_method_name(LocalVecMethod method) {
+    for (const auto& info : kLocalVecMethods) {
+        if (info.method == method) return info.name;
+    }
+    return "<unknown>";
+}
+
 } // namespace
 
 bool is_vector_storage_type(const IrType& type) {
@@ -109,6 +116,61 @@ LocalVecMethod classify_local_vec_method(const std::string& method_name) {
         if (method_name == info.name) return info.method;
     }
     return LocalVecMethod::Unknown;
+}
+
+void require_local_vec_method_shape(SourceLocation loc,
+                                    LocalVecMethod method,
+                                    std::size_t type_arg_count,
+                                    std::size_t arg_count) {
+    if (method == LocalVecMethod::Unknown ||
+        method == LocalVecMethod::AsSlice ||
+        method == LocalVecMethod::IsEmpty ||
+        method == LocalVecMethod::Len) {
+        return;
+    }
+
+    std::string display = std::string("Vec.") + local_vec_method_name(method);
+    if (type_arg_count != 0) {
+        fail(loc, display + " does not take type arguments");
+    }
+
+    switch (method) {
+        case LocalVecMethod::First:
+        case LocalVecMethod::Last:
+        case LocalVecMethod::Capacity:
+        case LocalVecMethod::Pop:
+        case LocalVecMethod::Clear:
+            if (arg_count != 0) fail(loc, display + " expects no arguments");
+            return;
+        case LocalVecMethod::Get:
+        case LocalVecMethod::Remove:
+            if (arg_count != 1) fail(loc, display + " expects one index argument");
+            return;
+        case LocalVecMethod::Reserve:
+            if (arg_count != 1) fail(loc, display + " expects one capacity argument");
+            return;
+        case LocalVecMethod::Truncate:
+            if (arg_count != 1) fail(loc, display + " expects one length argument");
+            return;
+        case LocalVecMethod::Set:
+        case LocalVecMethod::Insert:
+            if (arg_count != 2) fail(loc, display + " expects an index and value");
+            return;
+        case LocalVecMethod::Swap:
+            if (arg_count != 2) fail(loc, display + " expects two indexes");
+            return;
+        case LocalVecMethod::Contains:
+        case LocalVecMethod::IndexOf:
+        case LocalVecMethod::Count:
+        case LocalVecMethod::Push:
+            if (arg_count != 1) fail(loc, display + " expects one value argument");
+            return;
+        case LocalVecMethod::Unknown:
+        case LocalVecMethod::AsSlice:
+        case LocalVecMethod::IsEmpty:
+        case LocalVecMethod::Len:
+            return;
+    }
 }
 
 std::string local_vec_api_freeze_message(const std::string& method_name) {
