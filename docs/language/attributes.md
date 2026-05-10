@@ -22,8 +22,10 @@ current aggregate surface can use C layout. `@repr(C)` struct fields may use
 value, raw pointer, `ref`, or `ref mut` types.
 Generic structs may store generic fields by value; each concrete instantiation
 resolves those fields to concrete layout slots before IR emission. Generic
-`ptr T`, `ref T`, and `ref mut T` fields remain pointer-sized slots. `own`
-fields are rejected until the ownership ABI policy is explicit.
+`ptr T`, `ref T`, and `ref mut T` fields remain pointer-sized slots. C header
+emission renders `ref T` as `const T*`; `ptr T` and `ref mut T` remain mutable
+pointer spellings. `own` fields are rejected until the ownership ABI policy is
+explicit.
 `@repr(C)` enums currently must be fieldless, including generic enums; generic
 parameters are accepted only when they do not appear in payload storage.
 
@@ -89,10 +91,11 @@ visibility, as are Ari-owned runtime helpers.
 Use `--emit-c-header path` with the LLVM/shared path to write a small C header
 for exported scalar/raw-pointer functions, public non-generic `@repr(C)` struct
 declarations whose fields are scalar, raw pointer, `ref`, or `ref mut` slots,
-and public fieldless `@repr(C)` enums. Fieldless generic enum type parameters
-do not affect layout, so the C header emits one erased tag typedef for the
-source enum name. Enum headers use Ari's current fixed tag ABI by emitting
-`typedef int64_t Name;` plus prefixed integer constants such as
+and public fieldless `@repr(C)` enums. Immutable `ref` fields and exported
+parameters are written as `const` C pointers in the header. Fieldless generic
+enum type parameters do not affect layout, so the C header emits one erased tag
+typedef for the source enum name. Enum headers use Ari's current fixed tag ABI
+by emitting `typedef int64_t Name;` plus prefixed integer constants such as
 `Name_Case = 0`. The current header emitter skips private helpers, private
 structs, and private enums. Generic `@repr(C)` structs are emitted as opaque
 typedefs so pointer-only C APIs can name them, but their concrete field

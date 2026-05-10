@@ -862,10 +862,11 @@ check-meta: $(TARGET)
 	grep -q 'bool flag;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'ApiStatus status;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'void\* raw;' $(BUILD_DIR)/meta/c-header-repr-struct.h
-	grep -q 'int64_t\* shared;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'const int64_t\* shared;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t\* unique;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_ping(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_observe(ApiSlots\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t ari_observe_ref(const int64_t\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_observe_generic(GenericHandle\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_status_code(ApiStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_wire_status_code(WireStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h

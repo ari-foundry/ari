@@ -65,8 +65,9 @@
      ownership-qualified fields, by-value aggregate function ABI, and concrete
      generic struct header definitions; public non-generic `@repr(C)` struct
      declarations with scalar/raw-pointer/borrow fields are emitted in C
-     headers, public generic `@repr(C)` structs are emitted as opaque C typedefs
-     for pointer-only APIs, public fieldless `@repr(C)` enums, including generic
+     headers with immutable `ref` slots spelled as `const` C pointers, public
+     generic `@repr(C)` structs are emitted as opaque C typedefs for
+     pointer-only APIs, public fieldless `@repr(C)` enums, including generic
      fieldless enums whose type parameters do not affect layout, are emitted as
      fixed-width tag typedefs plus prefixed constants, scalar/raw-pointer
      exported function C headers are implemented,

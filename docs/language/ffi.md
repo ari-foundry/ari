@@ -259,7 +259,7 @@ c_float/c_double  -> float/double
 c_void            -> void
 bool              -> i1
 string            -> ptr to NUL-terminated bytes
-ref T             -> ptr
+ref T             -> ptr (C headers spell this as const T*)
 ref mut T         -> ptr
 ptr T             -> ptr
 compact enum      -> i64 tagged union word
@@ -366,7 +366,9 @@ ari api.ari --shared --emit-c-header api.h --emit-llvm api.ll
 
 Explicit `@export("symbol")` and `@no_mangle` functions use that C symbol.
 Public functions without an explicit export use Ari's mangled symbol, matching
-the shared-library output. Fieldless enum declarations are emitted as
+the shared-library output. Immutable `ref` slots are written as `const T*` in
+C headers, while `ref mut T` and `ptr T` are written as mutable `T*`. Fieldless
+enum declarations are emitted as
 `typedef int64_t Name;` plus prefixed integer constants such as `Name_Case = 0`
 so the header matches Ari's current fixed tag ABI instead of relying on C's
 implementation-defined enum width. Generic fieldless enum type parameters do

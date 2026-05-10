@@ -46,6 +46,11 @@ pub fn observe(slots: ptr ApiSlots) -> i64 {
   return 0;
 }
 
+@export("ari_observe_ref")
+pub fn observe_ref(value: ref i64) -> i64 {
+  return 0;
+}
+
 @export("ari_observe_generic")
 pub fn observe_generic(handle: ptr GenericHandle[i64]) -> i64 {
   return 0;

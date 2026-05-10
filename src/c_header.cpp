@@ -54,6 +54,10 @@ std::string c_record_type_name(const IrType& type, const CRecordNames& c_record_
                        "; expose a public non-generic @repr(C) struct or an explicit raw pointer ABI");
 }
 
+std::string c_pointer_type_name(const std::string& pointee, bool const_pointee) {
+    return (const_pointee ? "const " : "") + pointee + "*";
+}
+
 std::string c_enum_type_name(const IrType& type, const CEnumNames& c_enum_names) {
     auto found = c_enum_names.find(type.name);
     if (found != c_enum_names.end()) return found->second;
@@ -75,14 +79,19 @@ std::string c_type_name(const IrType& type,
         type.qualifier == TypeQualifier::MutRef) {
         IrType pointee = type;
         pointee.qualifier = TypeQualifier::Value;
-        if (pointee.primitive == IrPrimitiveKind::Void) return "void*";
+        bool const_pointee = type.qualifier == TypeQualifier::Ref;
+        if (pointee.primitive == IrPrimitiveKind::Void) {
+            return c_pointer_type_name("void", const_pointee);
+        }
         if (pointee.primitive == IrPrimitiveKind::Struct) {
-            return c_record_type_name(pointee, c_record_names) + "*";
+            return c_pointer_type_name(c_record_type_name(pointee, c_record_names),
+                                       const_pointee);
         }
         if (pointee.primitive == IrPrimitiveKind::Enum) {
-            return c_enum_type_name(pointee, c_enum_names) + "*";
+            return c_pointer_type_name(c_enum_type_name(pointee, c_enum_names),
+                                       const_pointee);
         }
-        return c_scalar_type_name(pointee) + "*";
+        return c_pointer_type_name(c_scalar_type_name(pointee), const_pointee);
     }
 
     if (type.primitive == IrPrimitiveKind::String) {
