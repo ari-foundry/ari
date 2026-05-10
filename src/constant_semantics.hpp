@@ -64,6 +64,9 @@ ConstantValue make_integer_literal_constant(SourceLocation loc,
                                             const std::string& literal_suffix,
                                             std::uint64_t int_value,
                                             bool int_negative);
+ConstantValue cast_integer_constant(SourceLocation loc,
+                                    const ConstantValue& value,
+                                    const IrType& target);
 ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, bool result);
 ConstantValue make_bool_literal_constant(SourceLocation loc, const IrType& expected, bool result);
 ConstantValue evaluate_constant_bool_binary(SourceLocation loc,

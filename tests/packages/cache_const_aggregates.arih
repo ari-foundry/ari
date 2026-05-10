@@ -22,3 +22,5 @@ pub const NUMS: [i64, 3] = [2, 5, 8];
 pub const CHOSEN: Choice = Score(6i32);
 pub const EMPTY: Choice = Zero;
 pub const FULL_SLOT: Slot[i32] = Full<i32>(9i32);
+pub const WIDE: i64 = 4i32 as i64;
+pub const BITS: i64 = (1i64 << 3) | 2i64;

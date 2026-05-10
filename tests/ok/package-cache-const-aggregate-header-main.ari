@@ -18,8 +18,10 @@ fn main() -> i64 {
     cache_const_aggregates::Full(inner) => inner as i64,
     cache_const_aggregates::Empty => 0,
   };
+  let wide = cache_const_aggregates::WIDE;
+  let bits = cache_const_aggregates::BITS;
   if flags.0 && pair.1 {
-    p.x + nums[1] + pair.0 + choice + empty + direct + slot
+    p.x + nums[1] + pair.0 + choice + empty + direct + slot + wide + bits
   } else {
     0
   }

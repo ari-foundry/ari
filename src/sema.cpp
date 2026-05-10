@@ -6150,6 +6150,9 @@ private:
             if (expr.op == TokenKind::Bang) return bool_type(expr.loc);
             return infer_constant_expr_type(*expr.operand, fallback);
         }
+        if (expr.kind == ExprKind::Cast) {
+            return resolve_executable_type(expr.cast_type);
+        }
         if (expr.kind == ExprKind::Binary) {
             if (expr.op == TokenKind::AmpAmp ||
                 expr.op == TokenKind::PipePipe ||
@@ -6276,6 +6279,15 @@ private:
             return make_unsigned_integer_constant(expr.loc, expected, result_bits);
         }
         fail(expr.loc, "unsupported constant unary operator");
+    }
+
+    ConstantValue evaluate_constant_cast_expr(const Expr& expr, const IrType& expected) {
+        if (!expr.operand) fail(expr.loc, "missing constant cast operand");
+        IrType target = resolve_executable_type(expr.cast_type);
+        require_assignable(expr.loc, expected, target);
+        IrType source_type = infer_constant_expr_type(*expr.operand, target);
+        ConstantValue value = evaluate_constant_expr(*expr.operand, source_type);
+        return cast_integer_constant(expr.loc, value, target);
     }
 
     std::vector<ConstantValue> evaluate_constant_expr_list(
@@ -6550,6 +6562,10 @@ private:
 
         if (expr.kind == ExprKind::Unary) {
             return evaluate_constant_unary_expr(expr, expected);
+        }
+
+        if (expr.kind == ExprKind::Cast) {
+            return evaluate_constant_cast_expr(expr, expected);
         }
 
         if (expr.kind == ExprKind::Binary) {

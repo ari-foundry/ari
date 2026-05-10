@@ -246,6 +246,28 @@ ConstantValue make_integer_literal_constant(SourceLocation loc,
     return value;
 }
 
+ConstantValue cast_integer_constant(SourceLocation loc,
+                                    const ConstantValue& value,
+                                    const IrType& target) {
+    if (value.kind != ConstantValueKind::Integer || !is_integer_type(value.type) || !is_integer_type(target)) {
+        fail(loc, "constant casts currently require integer types, got " +
+                  type_name(value.type) + " as " + type_name(target));
+    }
+
+    unsigned from_width = integer_primitive_bit_width(value.type.primitive);
+    unsigned to_width = integer_primitive_bit_width(target.primitive);
+    std::uint64_t raw = constant_integer_raw_bits(value, from_width);
+    if (from_width < to_width && is_signed_integer_type(value.type)) {
+        raw = static_cast<std::uint64_t>(sign_extend_integer_bits(raw, from_width));
+    }
+    raw &= integer_bit_mask(to_width);
+
+    if (is_signed_integer_type(target)) {
+        return make_signed_integer_constant(loc, target, sign_extend_integer_bits(raw, to_width));
+    }
+    return make_unsigned_integer_constant(loc, target, raw);
+}
+
 ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, bool result) {
     if (expected.qualifier != TypeQualifier::Value || expected.primitive != IrPrimitiveKind::Bool) {
         fail(loc, "type mismatch: expected " + type_name(expected) + ", got bool");

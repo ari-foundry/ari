@@ -109,6 +109,11 @@ bool is_summary_const_binary_op(TokenKind op) {
         case TokenKind::Star:
         case TokenKind::Slash:
         case TokenKind::Percent:
+        case TokenKind::Amp:
+        case TokenKind::Pipe:
+        case TokenKind::Caret:
+        case TokenKind::LessLess:
+        case TokenKind::GreaterGreater:
             return true;
         default:
             return false;
@@ -157,6 +162,15 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             append_count(out, static_cast<std::uint64_t>(expr.op));
             out << left.str();
             out << right.str();
+            return true;
+        }
+        case ExprKind::Cast: {
+            if (!expr.operand) return false;
+            std::ostringstream operand;
+            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            append_field(out, "cast");
+            append_type(out, expr.cast_type);
+            out << operand.str();
             return true;
         }
         case ExprKind::Tuple: {
@@ -750,6 +764,12 @@ private:
             if (!is_summary_const_binary_op(expr->op)) fail("unsupported constant summary binary operator");
             expr->left = read_const_expr(label + " binary left operand");
             expr->right = read_const_expr(label + " binary right operand");
+            return expr;
+        }
+        if (kind == "cast") {
+            expr->kind = ExprKind::Cast;
+            expr->cast_type = read_type(label + " cast type");
+            expr->operand = read_const_expr(label + " cast operand");
             return expr;
         }
         if (kind == "tuple") {

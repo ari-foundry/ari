@@ -58,8 +58,9 @@ Constants are module items, so `pub const`, `use`, `A::B`, `self::`, and
 Current constant initializers support integer literals, bool literals, other
 constants, integer arithmetic (`+`, `-`, `*`, `/`, `%`), bit operations
 (`&`, `|`, `^`, `~`, `<<`, `>>`), unary `-`, bool `!`, `&&`, `||`, scalar
-comparisons, tuple literals, fixed-array literals, named struct literals,
-tuple-struct constructors, and enum case constructors.
+comparisons, explicit integer casts with `as`, tuple literals, fixed-array
+literals, named struct literals, tuple-struct constructors, and enum case
+constructors.
 Integer literal suffixes such as `7u8` are checked before the value is assigned
 to the constant's declared type; unsuffixed integer literals are checked
 directly against that declared type.
