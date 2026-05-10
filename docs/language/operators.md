@@ -133,6 +133,9 @@ enums such as `OptionI64` can use `?` when the current function returns that
 same enum type; cross-enum residual conversion for aggregate enum layouts is
 still planned.
 
+When `?` returns from inside an owning `Iterator[T]` loop, Ari first runs the
+same hidden iterator-owner cleanup used by direct `return` statements.
+
 ## Range Operators
 
 Exclusive range syntax (`start..end`) and inclusive range syntax

@@ -784,6 +784,7 @@ private:
         collect_expr_locals(expr.else_value, locals);
         collect_locals(expr.block_body, locals);
         collect_expr_locals(expr.block_value, locals);
+        collect_locals(expr.try_residual_cleanup, locals);
         collect_expr_locals(expr.match_value, locals);
         for (const auto& arg : expr.args) collect_expr_locals(arg, locals);
         for (const auto& arm : expr.match_arms) {
@@ -2800,6 +2801,7 @@ private:
 
         emit_label(fail);
         Value residual = emit_try_residual_return_value(expr, value);
+        emit_statements(expr.try_residual_cleanup);
         line("  ret " + residual.type + " " + residual.name);
 
         emit_label(ok);

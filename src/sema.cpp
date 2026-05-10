@@ -10688,6 +10688,14 @@ private:
         }
     }
 
+    std::vector<IrStmtPtr> make_active_loop_exit_owner_cleanup_for_branch(SourceLocation loc) {
+        StateSnapshot before_cleanup = snapshot_states();
+        std::vector<IrStmtPtr> cleanup;
+        append_active_loop_exit_owner_cleanup(loc, cleanup);
+        restore_states(before_cleanup);
+        return cleanup;
+    }
+
     void append_outer_loop_exit_owner_cleanup_until(SourceLocation loc,
                                                    const LoopInfo& target,
                                                    std::vector<IrStmtPtr>& statements) {
@@ -13168,6 +13176,7 @@ private:
         if (lowered->try_residual_has_payload) {
             lowered->try_return_residual_payload_type = return_shape.residual_payloads[0];
         }
+        lowered->try_residual_cleanup = make_active_loop_exit_owner_cleanup_for_branch(expr.loc);
         lowered->operand = std::move(operand);
         return lowered;
     }

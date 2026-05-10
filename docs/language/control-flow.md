@@ -289,7 +289,8 @@ prefer `self: ref mut Self`.
 If a `return` exits the function from inside an owning iterator loop, Ari
 drops the hidden iterator owner before returning. A `break` from the iterator
 loop itself uses the normal loop-exit cleanup; a break to an outer label also
-drops any hidden owning iterators for nested loops that it skips.
+drops any hidden owning iterators for nested loops that it skips. Postfix `?`
+residual returns use the same cleanup path before returning from the function.
 Copyable non-borrow `IntoIterator[T]` values also lower when
 `into_iter(self: ref mut Self)` returns either `Self` or another copyable
 non-borrow value that implements `Iterator[T]`. Generic impls may return a

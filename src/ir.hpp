@@ -245,6 +245,7 @@ struct IrExpr {
     IrExprPtr else_value;
     std::vector<IrStmtPtr> block_body;
     IrExprPtr block_value;
+    std::vector<IrStmtPtr> try_residual_cleanup;
     IrExprPtr match_value;
     std::vector<IrMatchExprArm> match_arms;
     std::vector<std::unique_ptr<IrExpr>> args;
