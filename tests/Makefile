@@ -437,6 +437,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/constant-bitwise-folding.raw; code=$$?; test $$code -eq 11
 	$(TARGET) --freestanding tests/ok/constant-aggregates.ari -o $(BUILD_DIR)/match/constant-aggregates.raw
 	$(BUILD_DIR)/match/constant-aggregates.raw; code=$$?; test $$code -eq 34
+	$(TARGET) --freestanding tests/ok/constant-direct-composite.ari -o $(BUILD_DIR)/match/constant-direct-composite.raw
+	$(BUILD_DIR)/match/constant-direct-composite.raw; code=$$?; test $$code -eq 22
 	$(TARGET) --freestanding tests/ok/array-patterns.ari -o $(BUILD_DIR)/match/array-patterns.raw
 	$(BUILD_DIR)/match/array-patterns.raw; code=$$?; test $$code -eq 25
 	$(TARGET) tests/ok/match-patterns.ari --emit-llvm $(BUILD_DIR)/match/match-patterns.ll
@@ -491,6 +493,9 @@ check-match: $(TARGET)
 	$(TARGET) tests/ok/constant-aggregates.ari --emit-llvm $(BUILD_DIR)/match/constant-aggregates.ll
 	grep -q "insertvalue { i64, i64 }" $(BUILD_DIR)/match/constant-aggregates.ll
 	grep -q "insertvalue \\[3 x i64\\]" $(BUILD_DIR)/match/constant-aggregates.ll
+	$(TARGET) tests/ok/constant-direct-composite.ari --emit-llvm $(BUILD_DIR)/match/constant-direct-composite.ll
+	grep -q "insertvalue { i64, i1 }" $(BUILD_DIR)/match/constant-direct-composite.ll
+	grep -q "insertvalue \\[2 x i64\\]" $(BUILD_DIR)/match/constant-direct-composite.ll
 	$(TARGET) tests/ok/array-patterns.ari --emit-llvm $(BUILD_DIR)/match/array-patterns.ll
 	grep -q "extractvalue \\[4 x i64\\]" $(BUILD_DIR)/match/array-patterns.ll
 	$(TARGET) tests/ok/match-symbolic-product.ari --emit-llvm $(BUILD_DIR)/match/match-symbolic-product.ll

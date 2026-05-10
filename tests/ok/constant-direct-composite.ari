@@ -1,0 +1,22 @@
+enum Choice {
+  Empty,
+  Score(i32),
+}
+
+const NESTED: ((i64, bool), [i64, 2]) = ((9, true), [3, 4]);
+const CHOICE: Choice = Score(6i32);
+
+fn main() -> i64 {
+  let nested = NESTED;
+  let head = nested.0;
+  let nums = nested.1;
+  let score = match CHOICE {
+    Score(value) => value as i64,
+    Empty => 0,
+  };
+  if head.1 {
+    head.0 + nums[0] + nums[1] + score
+  } else {
+    0
+  }
+}

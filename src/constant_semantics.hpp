@@ -47,6 +47,7 @@ unsigned constant_shift_amount(SourceLocation loc, const ConstantValue& value, u
 ConstantValue make_signed_integer_constant(SourceLocation loc, const IrType& type, std::int64_t result);
 ConstantValue make_unsigned_integer_constant(SourceLocation loc, const IrType& type, std::uint64_t result);
 ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, bool result);
+IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value);
 bool fold_static_integer_unary(TokenKind op,
                                const StaticIntegerValue& operand,
                                StaticIntegerValue& out);

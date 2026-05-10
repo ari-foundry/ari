@@ -6674,56 +6674,6 @@ private:
         return value.kind == ConstantValueKind::Integer || value.kind == ConstantValueKind::Bool;
     }
 
-    IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value) const {
-        auto expr = std::make_unique<IrExpr>();
-        expr->loc = loc;
-        expr->type = value.type;
-
-        switch (value.kind) {
-            case ConstantValueKind::Bool:
-                expr->kind = IrExprKind::Bool;
-                expr->bool_value = value.bool_value;
-                return expr;
-            case ConstantValueKind::Tuple:
-            case ConstantValueKind::Struct:
-                expr->kind = IrExprKind::Tuple;
-                expr->args.reserve(value.elements.size());
-                for (const auto& item : value.elements) {
-                    expr->args.push_back(make_constant_expr(loc, item));
-                }
-                return expr;
-            case ConstantValueKind::Array:
-                expr->kind = IrExprKind::Vector;
-                expr->args.reserve(value.elements.size());
-                for (const auto& item : value.elements) {
-                    expr->args.push_back(make_constant_expr(loc, item));
-                }
-                return expr;
-            case ConstantValueKind::Enum:
-                expr->kind = IrExprKind::EnumConstruct;
-                expr->enum_name = value.enum_name;
-                expr->case_name = value.case_name;
-                expr->enum_tag = value.enum_tag;
-                expr->has_payload = !value.elements.empty();
-                if (has_aggregate_enum_layout(value.type)) {
-                    expr->args.reserve(value.elements.size());
-                    for (const auto& item : value.elements) {
-                        expr->args.push_back(make_constant_expr(loc, item));
-                    }
-                } else if (!value.elements.empty()) {
-                    expr->payload_type = value.elements[0].type;
-                    expr->payload = make_constant_expr(loc, value.elements[0]);
-                }
-                return expr;
-            case ConstantValueKind::Integer:
-                break;
-        }
-        expr->kind = IrExprKind::Integer;
-        expr->int_value = value.int_value;
-        expr->int_negative = value.int_negative;
-        return expr;
-    }
-
     EnumCaseInfo enum_case_for_match_value(
         SourceLocation loc,
         const EnumCaseInfo& info,
