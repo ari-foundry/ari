@@ -1,0 +1,62 @@
+enum Choice {
+  Empty,
+  One(i64),
+  Pair(i64, i64),
+}
+
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  match 3 {
+    0 => {
+      total = 99;
+    },
+    1..=3 => {
+      total = total + 4;
+    },
+    _ => {
+      total = 1;
+    },
+  }
+
+  let choice = Pair(5, 6);
+  match choice {
+    Empty => {
+      total = 99;
+    },
+    One(value) => {
+      total = total + value;
+    },
+    Pair(left, right) => {
+      total = total + left + right;
+    },
+  }
+
+  let point = Point { x: 2, y: 8 };
+  match point {
+    Point { x: 2, y } => {
+      total = total + y;
+    },
+    _ => {
+      total = 0;
+    },
+  }
+
+  match (1, true) {
+    (1, flag) => {
+      if flag {
+        total = total + 7;
+      }
+    },
+    _ => {
+      total = 0;
+    },
+  }
+
+  return total;
+}

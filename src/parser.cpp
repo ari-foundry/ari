@@ -1266,7 +1266,7 @@ private:
             arm.loc = arm.pattern.loc;
             expect(TokenKind::FatArrow, "expected => after match pattern");
             arm.body = parse_block();
-            stmt->match_arms.push_back(std::move(arm));
+            ensure_stmt_match_arms(*stmt).push_back(std::move(arm));
             optional_separator();
         }
         return stmt;

@@ -824,11 +824,11 @@ private:
                 for (const auto& binding : stmt.init_bindings) locals.push_back({binding.name, binding.type});
                 for (const auto& binding : stmt.init_bindings) collect_expr_locals(binding.init, locals);
                 collect_expr_locals(stmt.condition, locals);
-                if (stmt.kind == IrStmtKind::WhileLet && !stmt.match_arms.empty() && stmt.match_arms[0].has_value_binding) {
-                    locals.push_back({stmt.match_arms[0].value_name, stmt.match_arms[0].value_type});
+                if (stmt.kind == IrStmtKind::WhileLet && !ir_stmt_match_arms(stmt).empty() && ir_stmt_match_arms(stmt)[0].has_value_binding) {
+                    locals.push_back({ir_stmt_match_arms(stmt)[0].value_name, ir_stmt_match_arms(stmt)[0].value_type});
                 }
-                if (stmt.kind == IrStmtKind::WhileLet && !stmt.match_arms.empty() && stmt.match_arms[0].has_payload_binding) {
-                    collect_payload_binding_locals(stmt.match_arms[0], locals);
+                if (stmt.kind == IrStmtKind::WhileLet && !ir_stmt_match_arms(stmt).empty() && ir_stmt_match_arms(stmt)[0].has_payload_binding) {
+                    collect_payload_binding_locals(ir_stmt_match_arms(stmt)[0], locals);
                 }
                 collect_locals(stmt.loop_body, locals);
                 for (const auto& update : stmt.updates) collect_expr_locals(update, locals);
@@ -848,7 +848,7 @@ private:
                 break;
             case IrStmtKind::Match:
                 collect_expr_locals(stmt.match_value, locals);
-                for (const auto& arm : stmt.match_arms) {
+                for (const auto& arm : ir_stmt_match_arms(stmt)) {
                     if (arm.has_value_binding) locals.push_back({arm.value_name, arm.value_type});
                     collect_payload_binding_locals(arm, locals);
                     collect_locals(arm.body, locals);
@@ -1108,13 +1108,13 @@ private:
     }
 
     void emit_while_let(const IrStmt& stmt) {
-        if (stmt.match_arms.empty()) throw CompileError(where(stmt.loc) + ": while-let missing lowered pattern");
+        if (ir_stmt_match_arms(stmt).empty()) throw CompileError(where(stmt.loc) + ": while-let missing lowered pattern");
         std::string cond_label = label("whilelet.cond");
         std::string body_label = label("whilelet.body");
         std::string end_label = label("whilelet.end");
         std::vector<std::string> arm_labels;
-        arm_labels.reserve(stmt.match_arms.size());
-        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
+        arm_labels.reserve(ir_stmt_match_arms(stmt).size());
+        for (std::size_t i = 0; i < ir_stmt_match_arms(stmt).size(); ++i) {
             arm_labels.push_back(label("whilelet.arm"));
         }
 
@@ -1129,23 +1129,23 @@ private:
             subject_type = tag.type;
         }
 
-        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
-            const IrMatchArm& arm = stmt.match_arms[i];
-            std::string next = (i + 1 == stmt.match_arms.size()) ? end_label : label("whilelet.test");
+        for (std::size_t i = 0; i < ir_stmt_match_arms(stmt).size(); ++i) {
+            const IrMatchArm& arm = ir_stmt_match_arms(stmt)[i];
+            std::string next = (i + 1 == ir_stmt_match_arms(stmt).size()) ? end_label : label("whilelet.test");
             std::string cmp = emit_match_condition(arm, value, subject, subject_type);
             line("  br i1 " + cmp + ", label %" + arm_labels[i] + ", label %" + next);
             if (next != end_label) emit_label(next);
         }
 
-        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
-            const IrMatchArm& arm = stmt.match_arms[i];
+        for (std::size_t i = 0; i < ir_stmt_match_arms(stmt).size(); ++i) {
+            const IrMatchArm& arm = ir_stmt_match_arms(stmt)[i];
             emit_label(arm_labels[i]);
             if (arm.has_value_binding) {
                 Value bound = cast_value(value, arm.value_type);
                 line("  store " + bound.type + " " + bound.name + ", ptr " + local_slot(arm.loc, arm.value_name));
             }
             emit_payload_bindings(arm, value);
-            if (stmt.while_let_continue_on_mismatch && i + 1 == stmt.match_arms.size()) {
+            if (stmt.while_let_continue_on_mismatch && i + 1 == ir_stmt_match_arms(stmt).size()) {
                 line("  br label %" + cond_label);
             } else {
                 line("  br label %" + body_label);
@@ -1309,25 +1309,25 @@ private:
         }
         std::string end_label = label("match.end");
         std::vector<std::string> arm_labels;
-        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) arm_labels.push_back(label("match.arm"));
+        for (std::size_t i = 0; i < ir_stmt_match_arms(stmt).size(); ++i) arm_labels.push_back(label("match.arm"));
 
         std::string first_test = label("match.test");
         line("  br label %" + first_test);
         emit_label(first_test);
-        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
-            const IrMatchArm& arm = stmt.match_arms[i];
+        for (std::size_t i = 0; i < ir_stmt_match_arms(stmt).size(); ++i) {
+            const IrMatchArm& arm = ir_stmt_match_arms(stmt)[i];
             if (arm.wildcard) {
                 line("  br label %" + arm_labels[i]);
             } else {
-                std::string next = (i + 1 == stmt.match_arms.size()) ? arm_labels[i] : label("match.test");
+                std::string next = (i + 1 == ir_stmt_match_arms(stmt).size()) ? arm_labels[i] : label("match.test");
                 std::string cmp = emit_match_condition(arm, value, subject, subject_type);
                 line("  br i1 " + cmp + ", label %" + arm_labels[i] + ", label %" + next);
                 if (next != arm_labels[i]) emit_label(next);
             }
         }
 
-        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
-            const IrMatchArm& arm = stmt.match_arms[i];
+        for (std::size_t i = 0; i < ir_stmt_match_arms(stmt).size(); ++i) {
+            const IrMatchArm& arm = ir_stmt_match_arms(stmt)[i];
             emit_label(arm_labels[i]);
             if (arm.has_value_binding) {
                 Value bound = cast_value(value, arm.value_type);

@@ -429,11 +429,11 @@ private:
             case IrStmtKind::While:
             case IrStmtKind::WhileLet:
                 collect_expr_locals(stmt.condition);
-                if (stmt.kind == IrStmtKind::WhileLet && !stmt.match_arms.empty() && stmt.match_arms[0].has_payload_binding) {
-                    add_payload_binding_locals(stmt.match_arms[0]);
+                if (stmt.kind == IrStmtKind::WhileLet && !ir_stmt_match_arms(stmt).empty() && ir_stmt_match_arms(stmt)[0].has_payload_binding) {
+                    add_payload_binding_locals(ir_stmt_match_arms(stmt)[0]);
                 }
-                if (stmt.kind == IrStmtKind::WhileLet && !stmt.match_arms.empty() && stmt.match_arms[0].has_value_binding) {
-                    add_local(stmt.match_arms[0].value_name, stmt.match_arms[0].value_type);
+                if (stmt.kind == IrStmtKind::WhileLet && !ir_stmt_match_arms(stmt).empty() && ir_stmt_match_arms(stmt)[0].has_value_binding) {
+                    add_local(ir_stmt_match_arms(stmt)[0].value_name, ir_stmt_match_arms(stmt)[0].value_type);
                 }
                 collect_locals(stmt.loop_body);
                 break;
@@ -463,7 +463,7 @@ private:
                 break;
             case IrStmtKind::Match:
                 collect_expr_locals(stmt.match_value);
-                for (const auto& arm : stmt.match_arms) {
+                for (const auto& arm : ir_stmt_match_arms(stmt)) {
                     if (arm.has_value_binding) add_local(arm.value_name, arm.value_type);
                     add_payload_binding_locals(arm);
                     collect_locals(arm.body);
@@ -1615,19 +1615,19 @@ private:
     }
 
     void emit_while_let(const IrStmt& stmt) {
-        if (stmt.match_arms.empty()) throw CompileError(where(stmt.loc) + ": while-let missing lowered pattern");
+        if (ir_stmt_match_arms(stmt).empty()) throw CompileError(where(stmt.loc) + ": while-let missing lowered pattern");
         std::size_t cond = out_.size();
         emit_expr(*stmt.match_value);
         emit_push(Reg::RAX);
 
         std::vector<std::size_t> jump_body;
         std::vector<std::size_t> jump_continue;
-        for (std::size_t i = 0; i < stmt.match_arms.size(); ++i) {
-            const auto& arm = stmt.match_arms[i];
+        for (std::size_t i = 0; i < ir_stmt_match_arms(stmt).size(); ++i) {
+            const auto& arm = ir_stmt_match_arms(stmt)[i];
             std::vector<std::size_t> jump_next = emit_match_arm_fail_jumps(arm);
             emit_match_arm_bindings(arm);
             emit_pop(Reg::RCX);
-            if (stmt.while_let_continue_on_mismatch && i + 1 == stmt.match_arms.size()) {
+            if (stmt.while_let_continue_on_mismatch && i + 1 == ir_stmt_match_arms(stmt).size()) {
                 jump_continue.push_back(emit_jmp_placeholder());
             } else {
                 jump_body.push_back(emit_jmp_placeholder());
@@ -1851,7 +1851,7 @@ private:
         emit_push(Reg::RAX);
 
         std::vector<std::size_t> end_patches;
-        for (const auto& arm : stmt.match_arms) {
+        for (const auto& arm : ir_stmt_match_arms(stmt)) {
             bool has_next_patch = false;
 
             std::vector<std::size_t> next_patches;
@@ -2123,7 +2123,7 @@ private:
         const IrType& enum_type = stmt.match_value->type;
 
         std::vector<std::size_t> end_patches;
-        for (const auto& arm : stmt.match_arms) {
+        for (const auto& arm : ir_stmt_match_arms(stmt)) {
             bool has_next_patch = false;
             std::vector<std::size_t> next_patches;
             if (!arm.wildcard) {

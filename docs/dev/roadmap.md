@@ -145,7 +145,9 @@
    allocated by `ir_builders`. AST `if let`/`while let` condition patterns and
    `for` loop-head patterns now also live behind pattern payload pointers so
    ordinary expressions and non-loop statements no longer carry a full
-   `Pattern` object.
+   `Pattern` object. AST and IR match statement arm vectors now live behind
+   match-statement payload pointers, covering parser match statements, sema
+   enum/scalar match lowering, while-let lowering, and both backends.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
@@ -157,7 +159,7 @@
    - [stmt-payload-groups] split the remaining AST/IR statement-only fields by
      statement kind once parser and sema statement construction has enough
      focused helpers; small next targets are block/branch/loop body vectors,
-     match-arm vectors, assignment payloads, and label/drop/break metadata
+     assignment payloads, and label/drop/break metadata
    - [expr-child-vector-payloads] split expression child/vector fields after
      builders cover the remaining parser/sema/backend mutation paths
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

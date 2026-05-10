@@ -211,7 +211,7 @@ static bool merge_labeled_break_vector_known_length(VectorKnownLength& merged,
                 merged, has_merged, storage_type, statement.loop_body, label);
         case IrStmtKind::Match:
             return merge_labeled_break_vector_known_lengths(
-                merged, has_merged, storage_type, statement.match_arms, label);
+                merged, has_merged, storage_type, ir_stmt_match_arms(statement), label);
         default:
             return true;
     }
@@ -332,7 +332,7 @@ static bool merge_labeled_break_source_vector_known_length(VectorKnownLength& me
                 merged, has_merged, lookup, statement.loop_body, label);
         case StmtKind::Match:
             return merge_labeled_break_source_vector_known_lengths(
-                merged, has_merged, lookup, statement.match_arms, label);
+                merged, has_merged, lookup, stmt_match_arms(statement), label);
         default:
             return true;
     }
@@ -451,7 +451,7 @@ static void merge_labeled_break_source_vector_storage_capacity(std::uint64_t& ca
             break;
         case StmtKind::Match:
             merge_labeled_break_source_vector_storage_capacity(
-                capacity, statement.match_arms, label, lookup);
+                capacity, stmt_match_arms(statement), label, lookup);
             break;
         default:
             break;
@@ -558,7 +558,7 @@ static void merge_labeled_break_vector_storage_capacity(std::uint64_t& capacity,
             merge_labeled_break_vector_storage_capacity(capacity, statement.loop_body, label);
             break;
         case IrStmtKind::Match:
-            merge_labeled_break_vector_storage_capacity(capacity, statement.match_arms, label);
+            merge_labeled_break_vector_storage_capacity(capacity, ir_stmt_match_arms(statement), label);
             break;
         default:
             break;

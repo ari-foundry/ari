@@ -5046,10 +5046,11 @@ private:
         match->kind = IrStmtKind::Match;
         match->loc = pattern.loc;
         match->match_value = std::move(source);
+        IrStmtMatchArms& match_arms = ensure_ir_stmt_match_arms(*match);
         for (auto& success : success_arms) {
-            match->match_arms.push_back(std::move(success));
+            match_arms.push_back(std::move(success));
         }
-        match->match_arms.push_back(std::move(failure));
+        match_arms.push_back(std::move(failure));
         statements.push_back(std::move(match));
     }
 
@@ -8815,19 +8816,20 @@ private:
         pattern_match->kind = IrStmtKind::Match;
         pattern_match->loc = stmt.loc;
         pattern_match->match_value = make_local_lvalue_expr(stmt.loc, subject_name, enum_value_type);
+        IrStmtMatchArms& match_arms = ensure_ir_stmt_match_arms(*pattern_match);
         for (auto& arm : then_arms) {
             arm.body.push_back(make_bool_assignment_stmt(arm.loc, matched_name, true));
-            pattern_match->match_arms.push_back(std::move(arm));
+            match_arms.push_back(std::move(arm));
         }
         IrMatchArm no_match;
         no_match.loc = stmt.loc;
         no_match.wildcard = true;
-        pattern_match->match_arms.push_back(std::move(no_match));
+        match_arms.push_back(std::move(no_match));
         lowered.statements.push_back(std::move(pattern_match));
 
         StateSnapshot branch_input = snapshot_states();
         push_scope();
-        declare_match_arm_bindings(lowered.statements.back()->match_arms.front());
+        declare_match_arm_bindings(ir_stmt_match_arms(*lowered.statements.back()).front());
         CheckedStatements then_checked = check_statements(stmt.then_body, false);
         std::vector<IrStmtPtr> then_body = std::move(then_checked.statements);
         if (then_checked.flow == Flow::Returns) discard_scope();
@@ -9057,7 +9059,8 @@ private:
         ProductMatchCoverage coverage;
         std::vector<TupleCheckedStmtArm> checked_arms;
 
-        for (const auto& arm : stmt.match_arms) {
+        const StmtMatchArms& source_arms = stmt_match_arms(stmt);
+        for (const auto& arm : source_arms) {
             if (coverage.has_irrefutable_arm) {
                 fail(arm.pattern.loc, "unreachable match arm after irrefutable pattern");
             }
@@ -9137,7 +9140,8 @@ private:
     }
 
     Flow check_match(const Stmt& stmt, IrStmt& lowered) {
-        if (stmt.match_arms.empty()) fail(stmt.loc, "match must have at least one arm");
+        const StmtMatchArms& source_arms = stmt_match_arms(stmt);
+        if (source_arms.empty()) fail(stmt.loc, "match must have at least one arm");
 
         lowered.match_value = check_expr(*stmt.match_value);
         if (is_borrow_type(lowered.match_value->type)) {
@@ -9169,7 +9173,8 @@ private:
         bool all_non_continuing = true;
         EnumMatchCoverage coverage;
 
-        for (const auto& arm : stmt.match_arms) {
+        IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(lowered);
+        for (const auto& arm : source_arms) {
             std::set<std::string> reusable_names;
             if (pattern_contains_or(arm.pattern)) {
                 std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
@@ -9217,7 +9222,7 @@ private:
                     all_return = false;
                 }
 
-                lowered.match_arms.push_back(std::move(lowered_arm));
+                lowered_arms.push_back(std::move(lowered_arm));
                 ++alternative_index;
             }
         }
@@ -9233,6 +9238,7 @@ private:
     }
 
     Flow check_scalar_match(const Stmt& stmt, IrStmt& lowered) {
+        const StmtMatchArms& source_arms = stmt_match_arms(stmt);
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
         bool has_continuing_state = false;
@@ -9240,7 +9246,8 @@ private:
         bool all_non_continuing = true;
         ScalarMatchCoverage coverage;
 
-        for (const auto& arm : stmt.match_arms) {
+        IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(lowered);
+        for (const auto& arm : source_arms) {
             std::set<std::string> reusable_names;
             if (pattern_contains_or(arm.pattern)) {
                 std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
@@ -9284,7 +9291,7 @@ private:
                     all_return = false;
                 }
 
-                lowered.match_arms.push_back(std::move(lowered_arm));
+                lowered_arms.push_back(std::move(lowered_arm));
                 ++alternative_index;
             }
         }
@@ -9372,8 +9379,9 @@ private:
         } else {
             restore_states(loop_input);
         }
+        IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(lowered);
         for (auto& arm : pattern_arms) {
-            lowered.match_arms.push_back(std::move(arm));
+            lowered_arms.push_back(std::move(arm));
         }
     }
 
@@ -9891,8 +9899,9 @@ private:
         } else {
             restore_states(loop_input);
         }
+        IrStmtMatchArms& loop_arms = ensure_ir_stmt_match_arms(*loop);
         for (auto& arm : pattern_arms) {
-            loop->match_arms.push_back(std::move(arm));
+            loop_arms.push_back(std::move(arm));
         }
         lowered.statements.push_back(std::move(loop));
         append_hidden_iterator_owner_cleanup(stmt.loc, iterator_name, lowered.statements);
@@ -11712,14 +11721,15 @@ private:
         pattern_match->kind = IrStmtKind::Match;
         pattern_match->loc = expr.loc;
         pattern_match->match_value = make_local_lvalue_expr(expr.loc, subject_name, enum_value_type);
+        IrStmtMatchArms& match_arms = ensure_ir_stmt_match_arms(*pattern_match);
         for (auto& arm : then_arms) {
             arm.body.push_back(make_bool_assignment_stmt(arm.loc, matched_name, true));
-            pattern_match->match_arms.push_back(std::move(arm));
+            match_arms.push_back(std::move(arm));
         }
         IrMatchArm no_match;
         no_match.loc = expr.loc;
         no_match.wildcard = true;
-        pattern_match->match_arms.push_back(std::move(no_match));
+        match_arms.push_back(std::move(no_match));
         lowered->block_body.push_back(std::move(pattern_match));
 
         IrExprPtr if_expr = make_ir_if_expr(
@@ -15959,7 +15969,7 @@ private:
                 coerce_labeled_break_values(stmt.loop_body, label, expected);
                 break;
             case IrStmtKind::Match:
-                coerce_labeled_break_values(stmt.match_arms, label, expected);
+                coerce_labeled_break_values(ensure_ir_stmt_match_arms(stmt), label, expected);
                 break;
             default:
                 break;

@@ -203,6 +203,8 @@ struct MatchArm {
     SourceLocation loc;
 };
 
+using StmtMatchArms = std::vector<MatchArm>;
+
 enum class StmtKind {
     Block,
     VarDecl,
@@ -252,12 +254,22 @@ struct Stmt {
     std::vector<std::unique_ptr<Stmt>> loop_body;
     std::vector<Binding> init_bindings;
     std::vector<ExprPtr> updates;
-    std::vector<MatchArm> match_arms;
+    std::unique_ptr<StmtMatchArms> match_arms;
     std::string drop_name;
     std::string label;
     std::string break_label;
     ExprPtr break_value;
 };
+
+inline const StmtMatchArms& stmt_match_arms(const Stmt& stmt) {
+    static const StmtMatchArms empty;
+    return stmt.match_arms ? *stmt.match_arms : empty;
+}
+
+inline StmtMatchArms& ensure_stmt_match_arms(Stmt& stmt) {
+    if (!stmt.match_arms) stmt.match_arms = std::make_unique<StmtMatchArms>();
+    return *stmt.match_arms;
+}
 
 struct FunctionDecl {
     std::string name;

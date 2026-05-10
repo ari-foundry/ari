@@ -326,6 +326,8 @@ struct IrMatchArm {
     std::vector<IrStmtPtr> body;
 };
 
+using IrStmtMatchArms = std::vector<IrMatchArm>;
+
 struct IrParam {
     std::string name;
     IrType type;
@@ -442,12 +444,22 @@ struct IrStmt {
     std::vector<std::unique_ptr<IrStmt>> loop_body;
     std::vector<IrBinding> init_bindings;
     std::vector<IrExprPtr> updates;
-    std::vector<IrMatchArm> match_arms;
+    std::unique_ptr<IrStmtMatchArms> match_arms;
     std::string drop_name;
     std::string label;
     std::string break_label;
     IrExprPtr break_value;
 };
+
+inline const IrStmtMatchArms& ir_stmt_match_arms(const IrStmt& stmt) {
+    static const IrStmtMatchArms empty;
+    return stmt.match_arms ? *stmt.match_arms : empty;
+}
+
+inline IrStmtMatchArms& ensure_ir_stmt_match_arms(IrStmt& stmt) {
+    if (!stmt.match_arms) stmt.match_arms = std::make_unique<IrStmtMatchArms>();
+    return *stmt.match_arms;
+}
 
 struct IrFunction {
     std::string name;
