@@ -1,6 +1,7 @@
 #include "vector_semantics.hpp"
 
 #include "common.hpp"
+#include "type_semantics.hpp"
 
 #include <algorithm>
 #include <array>
@@ -199,6 +200,15 @@ void require_local_vec_method_shape(SourceLocation loc,
         case LocalVecMethod::Len:
             return;
     }
+}
+
+void require_local_vec_integer_argument(SourceLocation loc,
+                                        LocalVecMethod method,
+                                        const char* role,
+                                        const IrType& type) {
+    if (is_value_integer_type(type)) return;
+    std::string display = std::string("Vec.") + local_vec_method_name(method);
+    fail(loc, display + " " + role + " must be an integer, got " + type_name(type));
 }
 
 std::string local_vec_api_freeze_message(const std::string& method_name) {

@@ -17,8 +17,8 @@ construction. Some helpers have already moved out to focused files:
   literal range checks, and assignability/operand diagnostics
 - `vector_semantics` for local `Vec[T]` storage helpers, frozen local method
   classification and shape diagnostics, shared `len`/`is_empty`/`as_slice`
-  shape diagnostics, frozen API diagnostics, and known length/capacity state
-  transitions
+  shape diagnostics, local Vec integer operand diagnostics, frozen API
+  diagnostics, and known length/capacity state transitions
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions,
   pointer operations, direct builtin calls, match expression arms, and

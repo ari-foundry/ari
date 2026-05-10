@@ -54,6 +54,10 @@ void require_local_vec_method_shape(SourceLocation loc,
                                     LocalVecMethod method,
                                     std::size_t type_arg_count,
                                     std::size_t arg_count);
+void require_local_vec_integer_argument(SourceLocation loc,
+                                        LocalVecMethod method,
+                                        const char* role,
+                                        const IrType& type);
 std::string local_vec_api_freeze_message(const std::string& method_name);
 
 bool vector_known_length_after_truncate(std::uint64_t current_length,

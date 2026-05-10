@@ -1555,6 +1555,8 @@ check-variables: $(TARGET)
 	grep -Fq "local Vec method 'map' is reserved for allocator-backed std collection APIs" $(BUILD_DIR)/variables/vector-api-freeze.err
 	if $(TARGET) tests/errors/vector-method-shape.ari -o $(BUILD_DIR)/variables/vector-method-shape.elf >$(BUILD_DIR)/variables/vector-method-shape.err 2>&1; then exit 1; fi
 	grep -q "Vec.push expects one value argument" $(BUILD_DIR)/variables/vector-method-shape.err
+	if $(TARGET) tests/errors/vector-method-index-type.ari -o $(BUILD_DIR)/variables/vector-method-index-type.elf >$(BUILD_DIR)/variables/vector-method-index-type.err 2>&1; then exit 1; fi
+	grep -q "Vec.get index must be an integer, got bool" $(BUILD_DIR)/variables/vector-method-index-type.err
 	if $(TARGET) tests/errors/slice-view-method-shape.ari -o $(BUILD_DIR)/variables/slice-view-method-shape.elf >$(BUILD_DIR)/variables/slice-view-method-shape.err 2>&1; then exit 1; fi
 	grep -q "as_slice expects no arguments" $(BUILD_DIR)/variables/slice-view-method-shape.err
 	if $(TARGET) tests/errors/vector-reserve-known-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-known-negative.elf >$(BUILD_DIR)/variables/vector-reserve-known-negative.err 2>&1; then exit 1; fi

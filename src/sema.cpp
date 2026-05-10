@@ -13899,9 +13899,7 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
-        if (!is_value_integer_type(index->type)) {
-            fail(expr.args[0]->loc, "Vec.get index must be an integer, got " + type_name(index->type));
-        }
+        require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Get, "index", index->type);
         release_temporary_borrows(borrow_mark);
 
         return make_vec_index_expr(
@@ -13928,9 +13926,12 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr requested_capacity = check_expr(capacity_expr);
-        if (!is_value_integer_type(requested_capacity->type)) {
-            fail(capacity_expr.loc, "Vec.reserve capacity must be an integer, got " + type_name(requested_capacity->type));
-        }
+        require_local_vec_integer_argument(
+            capacity_expr.loc,
+            LocalVecMethod::Reserve,
+            "capacity",
+            requested_capacity->type
+        );
         release_temporary_borrows(borrow_mark);
 
         StaticIntegerValue folded_capacity;
@@ -13996,9 +13997,7 @@ private:
         bool has_source_known_length = known_integer_capacity(length_expr, source_known_length);
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr new_length = check_expr(length_expr);
-        if (!is_value_integer_type(new_length->type)) {
-            fail(length_expr.loc, "Vec.truncate length must be an integer, got " + type_name(new_length->type));
-        }
+        require_local_vec_integer_argument(length_expr.loc, LocalVecMethod::Truncate, "length", new_length->type);
         StaticIntegerValue folded_length;
         const StaticIntegerValue* requested_known_length = nullptr;
         if (has_source_known_length) {
@@ -14031,9 +14030,7 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
-        if (!is_value_integer_type(index->type)) {
-            fail(expr.args[0]->loc, "Vec.set index must be an integer, got " + type_name(index->type));
-        }
+        require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Set, "index", index->type);
         IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);
         coerce_expr_to_expected(*value, local.type.args[0]);
         require_assignable(expr.args[1]->loc, local.type.args[0], value->type);
@@ -14055,13 +14052,19 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr first_index = check_expr(*expr.args[0]);
-        if (!is_value_integer_type(first_index->type)) {
-            fail(expr.args[0]->loc, "Vec.swap first index must be an integer, got " + type_name(first_index->type));
-        }
+        require_local_vec_integer_argument(
+            expr.args[0]->loc,
+            LocalVecMethod::Swap,
+            "first index",
+            first_index->type
+        );
         IrExprPtr second_index = check_expr(*expr.args[1]);
-        if (!is_value_integer_type(second_index->type)) {
-            fail(expr.args[1]->loc, "Vec.swap second index must be an integer, got " + type_name(second_index->type));
-        }
+        require_local_vec_integer_argument(
+            expr.args[1]->loc,
+            LocalVecMethod::Swap,
+            "second index",
+            second_index->type
+        );
         release_temporary_borrows(borrow_mark);
 
         return make_vec_swap_expr(
@@ -14080,9 +14083,7 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
-        if (!is_value_integer_type(index->type)) {
-            fail(expr.args[0]->loc, "Vec.remove index must be an integer, got " + type_name(index->type));
-        }
+        require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Remove, "index", index->type);
         release_temporary_borrows(borrow_mark);
 
         if (local.vector_length_known) {
@@ -14108,9 +14109,7 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
-        if (!is_value_integer_type(index->type)) {
-            fail(expr.args[0]->loc, "Vec.insert index must be an integer, got " + type_name(index->type));
-        }
+        require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Insert, "index", index->type);
         IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);
         coerce_expr_to_expected(*value, local.type.args[0]);
         require_assignable(expr.args[1]->loc, local.type.args[0], value->type);
