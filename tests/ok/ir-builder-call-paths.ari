@@ -1,0 +1,67 @@
+trait Build {
+  fn build(x: i64, y: i64) -> Self
+}
+
+trait LeftScore {
+  fn score(self) -> i64
+}
+
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+impl Build for Point {
+  fn build(x: i64, y: i64) -> Point {
+    Point { x: x, y: y }
+  }
+}
+
+impl LeftScore for i64 {
+  fn score(self) -> i64 {
+    self + 1
+  }
+}
+
+impl Point {
+  fn new(x: i64, y: i64) -> Point {
+    Point { x: x, y: y }
+  }
+
+  fn sum(self) -> i64 {
+    self.x + self.y
+  }
+}
+
+fn identity[T](value: T) -> T {
+  value
+}
+
+fn add(left: i64, right: i64) -> i64 {
+  left + right
+}
+
+fn main() -> i64 {
+  var zone = zone::create(160);
+
+  let typed = zone::alloc<i64>(ref mut zone);
+  *typed = 6;
+
+  let placed = zone::new<i64>(ref mut zone, 10);
+  let scratch = zone::scratch<i64>(64, 8);
+  let scratch_value = *scratch;
+  let promoted = zone::promote<i64>(ref mut zone, scratch);
+  let promoted_value = *promoted;
+
+  let direct = add(1, 2);
+  let generic = identity(4);
+  let inherent = Point::new(4, 5).sum();
+  let trait_associated = Point::build(6, 7).sum();
+  let qualified_associated = Build::build<Point>(8, 9).sum();
+  let qualified_method = LeftScore::score(11i64);
+
+  let zone_total = *typed + *placed + scratch_value + promoted_value;
+  zone::destroy(zone);
+
+  return direct + generic + inherent + trait_associated + qualified_associated + qualified_method + zone_total;
+}

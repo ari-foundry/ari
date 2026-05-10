@@ -132,10 +132,12 @@
    match expression construction now goes through `ast_builders`, reducing
    parser/sema direct writes to union-backed expression fields before larger
    payload splits. IR integer, float, string, bool, null, pointer default,
-   tuple-default, and direct call construction paths now also go through
+   tuple-default, and direct/general call construction paths now also go through
    `ir_builders`, including product-match fallback defaults, tuple/struct/
    tuple-struct/range aggregate construction, generated `@test` main calls,
-   field/tuple/array/slice index access nodes, and drop destructor calls.
+   field/tuple/array/slice index access nodes, drop destructor calls, plain
+   function calls, generic specializations, inherent associated calls, trait
+   associated and trait-qualified calls, method calls, and zone helper calls.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
@@ -143,9 +145,9 @@
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions once their builders and cloning paths
      can preserve today's mutation flow
-   - [ir-builder-followup] route scattered IR expression construction paths
-     for remaining general call and control-flow cases through builders before
-     splitting child/vector payload storage
+   - [ir-control-flow-builder-followup] route scattered IR expression
+     construction paths for remaining control-flow cases through builders
+     before splitting child/vector payload storage
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

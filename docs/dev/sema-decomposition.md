@@ -35,8 +35,9 @@ construction. Some helpers have already moved out to focused files:
   var declarations, tuple/vector indexes, arbitrary-operand tuple/index access
   nodes, scalar/string/null literals, tuple/struct/tuple-struct/range
   aggregate construction, casts, bool conditions, pointer operations, direct
-  calls and builtin calls, match expression arms, and block/match/if expression
-  nodes
+  calls, generic call specializations, inherent/trait associated calls,
+  trait-qualified calls, method calls, zone helper calls, builtin calls, match
+  expression arms, and block/match/if expression nodes
 - `control_flow_semantics` for product-pattern if-chain assembly shared by
   aggregate match, declaration, `if let`, and `while let` lowering
 - `module_metadata` and `module_cache` for package graph summaries and caches
@@ -99,7 +100,9 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Local lvalues, IR var declarations, tuple/vector index helpers, scalar
      literals, string/null literal helpers, tuple/struct/tuple-struct/range
      aggregate construction, arbitrary-operand tuple/index access nodes, casts,
-     bool binary conditions, pointer operation nodes, direct call nodes, and
+     bool binary conditions, pointer operation nodes, direct call nodes, generic
+     call specializations, inherent/trait associated call nodes,
+     trait-qualified call nodes, method call nodes, zone helper call nodes, and
      direct builtin call nodes are already outside `sema.cpp`; enum constructor
      IR assembly now lives with `enum_constructor_semantics` because it shares
      enum-specific layout decisions.

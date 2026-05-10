@@ -1398,6 +1398,13 @@ check-variables: $(TARGET)
 	grep -q "@.ari.str" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "ptr null" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "insertvalue { double, ptr }" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
+	$(TARGET) tests/ok/ir-builder-call-paths.ari --emit-llvm $(BUILD_DIR)/variables/ir-builder-call-paths.ll
+	grep -q 'call i64 @"_ARNv3add"' $(BUILD_DIR)/variables/ir-builder-call-paths.ll
+	grep -q "_ARNv15identity__G_i64" $(BUILD_DIR)/variables/ir-builder-call-paths.ll
+	grep -q "_ARNv4impl5Point8inherent3new" $(BUILD_DIR)/variables/ir-builder-call-paths.ll
+	grep -q "_ARNv4impl5Point5Build5build" $(BUILD_DIR)/variables/ir-builder-call-paths.ll
+	grep -q "_ARNv4impl3i649LeftScore5score" $(BUILD_DIR)/variables/ir-builder-call-paths.ll
+	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/variables/ir-builder-call-paths.ll
 	$(TARGET) tests/ok/scalar-payload-unions.ari --emit-llvm $(BUILD_DIR)/variables/scalar-payload-unions.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/variables/scalar-payload-unions.ll
 	grep -q "getelementptr inbounds \\[3 x i64\\]" $(BUILD_DIR)/variables/scalar-payload-unions.ll
@@ -1566,6 +1573,7 @@ check-variables: $(TARGET)
 	if $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.raw; then exit 1; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-basic.elf; $(BUILD_DIR)/variables/variables-basic.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ir-builder-smoke.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/ir-builder-smoke.elf; $(BUILD_DIR)/variables/ir-builder-smoke.elf; code=$$?; test $$code -eq 16; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ir-builder-call-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/ir-builder-call-paths.elf; $(BUILD_DIR)/variables/ir-builder-call-paths.elf; code=$$?; test $$code -eq 90; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/unit-empty-tuple.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/unit-empty-tuple.elf; $(BUILD_DIR)/variables/unit-empty-tuple.elf; code=$$?; test $$code -eq 10; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-host-scalars.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-host-scalars.elf; $(BUILD_DIR)/variables/variables-host-scalars.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ownership-aggregate-storage.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/ownership-aggregate-storage.elf; $(BUILD_DIR)/variables/ownership-aggregate-storage.elf; code=$$?; test $$code -eq 47; fi

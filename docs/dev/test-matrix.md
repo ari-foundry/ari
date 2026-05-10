@@ -415,6 +415,9 @@ Checklist:
       reads, fixed-array static/dynamic indexing, and destructor call lowering
 - [x] IR aggregate builders preserve tuple, struct, tuple-struct, expected
       aggregate, and range constructor lowering paths
+- [x] IR call builders preserve direct, generic, inherent associated, trait
+      associated, trait-qualified method, method, and zone helper call lowering
+      paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

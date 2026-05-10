@@ -4632,16 +4632,13 @@ private:
         coerce_expr_to_expected(*value, allocated);
         require_assignable(call.args[1]->loc, allocated, value->type);
 
-        auto init = std::make_unique<IrExpr>();
-        init->kind = IrExprKind::Call;
-        init->loc = call.loc;
-        init->name = "zone::new";
-        init->type = pointer_type;
-        init->args.reserve(4);
-        init->args.push_back(std::move(zone_arg));
-        init->args.push_back(make_integer_literal(call.loc, i64_type(call.loc), size_bytes));
-        init->args.push_back(make_integer_literal(call.loc, i64_type(call.loc), align_bytes));
-        init->args.push_back(std::move(value));
+        std::vector<IrExprPtr> init_args;
+        init_args.reserve(4);
+        init_args.push_back(std::move(zone_arg));
+        init_args.push_back(make_integer_literal(call.loc, i64_type(call.loc), size_bytes));
+        init_args.push_back(make_integer_literal(call.loc, i64_type(call.loc), align_bytes));
+        init_args.push_back(std::move(value));
+        IrExprPtr init = make_ir_call_expr(call.loc, "zone::new", pointer_type, std::move(init_args));
 
         coerce_expr_to_expected(*init, declared);
         require_assignable(stmt.loc, declared, init->type);
@@ -13440,6 +13437,7 @@ private:
     }
 
     IrExprPtr check_generic_call(const Expr& expr, const FunctionDecl& fn, const std::string& resolved_name, IrExprPtr lowered) {
+        (void)lowered;
         require_function_decl_access(expr.loc, fn, resolved_name);
         if (const Attribute* deprecated = deprecated_attribute(fn.attributes)) {
             warn_deprecated_use(expr.loc, "function", resolved_name, deprecated_message(fn.attributes));
@@ -13450,10 +13448,10 @@ private:
             fail(expr.loc, "function calls support up to 65535 arguments");
         }
 
-        lowered->kind = IrExprKind::Call;
-        lowered->args.reserve(expr.args.size());
+        std::vector<IrExprPtr> args;
+        args.reserve(expr.args.size());
         std::size_t borrow_mark = temporary_borrow_mark();
-        for (const auto& arg_expr : expr.args) lowered->args.push_back(check_expr(*arg_expr));
+        for (const auto& arg_expr : expr.args) args.push_back(check_expr(*arg_expr));
 
         std::map<std::string, IrType> substitutions;
         if (!expr.type_args.empty()) {
@@ -13472,7 +13470,7 @@ private:
             }
         }
         for (std::size_t i = 0; i < fn.params.size(); ++i) {
-            infer_generic_type(expr.loc, fn.params[i].type, lowered->args[i]->type, fn.generics, substitutions);
+            infer_generic_type(expr.loc, fn.params[i].type, args[i]->type, fn.generics, substitutions);
         }
         for (const auto& generic : fn.generics) {
             if (!substitutions.count(generic.name)) {
@@ -13485,16 +13483,14 @@ private:
         param_types.reserve(fn.params.size());
         for (std::size_t i = 0; i < fn.params.size(); ++i) {
             IrType param_type = resolve_type_with_substitutions(fn.params[i].type, substitutions);
-            coerce_expr_to_expected(*lowered->args[i], param_type);
-            require_assignable(expr.loc, param_type, lowered->args[i]->type);
+            coerce_expr_to_expected(*args[i], param_type);
+            require_assignable(expr.loc, param_type, args[i]->type);
             param_types.push_back(param_type);
         }
         IrType result = fn.has_return_type ? resolve_type_with_substitutions(fn.return_type, substitutions) : void_type(fn.loc);
         release_temporary_borrows(borrow_mark);
 
         std::string specialized_name = generic_specialization_name(fn, substitutions);
-        lowered->name = specialized_name;
-        lowered->type = result;
 
         if (!queued_specializations_.count(specialized_name)) {
             FunctionSig sig;
@@ -13507,7 +13503,7 @@ private:
             pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
             queued_specializations_.insert(specialized_name);
         }
-        return lowered;
+        return make_ir_call_expr(expr.loc, std::move(specialized_name), result, std::move(args));
     }
 
     void queue_generic_function_specialization(
@@ -14334,6 +14330,7 @@ private:
     }
 
     IrExprPtr check_typed_zone_alloc_call(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
         if (expr.type_args.empty()) return nullptr;
         if (expr.type_args.size() != 1) {
             fail(expr.loc, "zone::alloc<T> expects exactly one type argument");
@@ -14370,19 +14367,19 @@ private:
         coerce_expr_to_expected(*zone_arg, zone);
         require_assignable(expr.args[0]->loc, zone, zone_arg->type);
 
-        lowered->kind = IrExprKind::Call;
-        lowered->name = "zone::alloc";
-        lowered->type = allocated;
-        lowered->type.qualifier = TypeQualifier::Ptr;
-        lowered->args.reserve(3);
-        lowered->args.push_back(std::move(zone_arg));
-        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
-        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
+        IrType pointer_type = allocated;
+        pointer_type.qualifier = TypeQualifier::Ptr;
+        std::vector<IrExprPtr> args;
+        args.reserve(3);
+        args.push_back(std::move(zone_arg));
+        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
+        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
         release_temporary_borrows(borrow_mark);
-        return lowered;
+        return make_ir_call_expr(expr.loc, "zone::alloc", std::move(pointer_type), std::move(args));
     }
 
     IrExprPtr check_zone_new_call(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
         if (expr.type_args.size() != 1) {
             fail(expr.loc, "zone::new<T> expects exactly one type argument");
         }
@@ -14425,20 +14422,20 @@ private:
         coerce_expr_to_expected(*value, allocated);
         require_assignable(expr.args[1]->loc, allocated, value->type);
 
-        lowered->kind = IrExprKind::Call;
-        lowered->name = "zone::new";
-        lowered->type = allocated;
-        lowered->type.qualifier = TypeQualifier::Ptr;
-        lowered->args.reserve(4);
-        lowered->args.push_back(std::move(zone_arg));
-        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
-        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
-        lowered->args.push_back(std::move(value));
+        IrType pointer_type = allocated;
+        pointer_type.qualifier = TypeQualifier::Ptr;
+        std::vector<IrExprPtr> args;
+        args.reserve(4);
+        args.push_back(std::move(zone_arg));
+        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
+        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
+        args.push_back(std::move(value));
         release_temporary_borrows(borrow_mark);
-        return lowered;
+        return make_ir_call_expr(expr.loc, "zone::new", std::move(pointer_type), std::move(args));
     }
 
     IrExprPtr check_zone_promote_call(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
         if (expr.type_args.size() != 1) {
             fail(expr.loc, "zone::promote<T> expects exactly one type argument");
         }
@@ -14482,25 +14479,20 @@ private:
         coerce_expr_to_expected(*source, source_pointer_type);
         require_assignable(expr.args[1]->loc, source_pointer_type, source->type);
 
-        auto value = std::make_unique<IrExpr>();
-        value->kind = IrExprKind::PointerLoad;
-        value->loc = expr.args[1]->loc;
-        value->type = allocated;
-        value->operand = std::move(source);
+        IrExprPtr value = make_pointer_load_expr(expr.args[1]->loc, std::move(source), allocated);
 
-        lowered->kind = IrExprKind::Call;
-        lowered->name = "zone::new";
-        lowered->type = source_pointer_type;
-        lowered->args.reserve(4);
-        lowered->args.push_back(std::move(zone_arg));
-        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
-        lowered->args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
-        lowered->args.push_back(std::move(value));
+        std::vector<IrExprPtr> args;
+        args.reserve(4);
+        args.push_back(std::move(zone_arg));
+        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
+        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
+        args.push_back(std::move(value));
         release_temporary_borrows(borrow_mark);
-        return lowered;
+        return make_ir_call_expr(expr.loc, "zone::new", std::move(source_pointer_type), std::move(args));
     }
 
     IrExprPtr check_zone_temp_call(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
         if (!expr.type_args.empty()) {
             fail(expr.loc, "zone::temp does not take type arguments");
         }
@@ -14517,12 +14509,9 @@ private:
 
         IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", expr.loc);
         zone.qualifier = TypeQualifier::Own;
-        lowered->kind = IrExprKind::Call;
-        lowered->loc = expr.loc;
-        lowered->name = "zone::temp";
-        lowered->type = zone;
-        lowered->args.push_back(std::move(capacity));
-        return lowered;
+        std::vector<IrExprPtr> args;
+        args.push_back(std::move(capacity));
+        return make_ir_call_expr(expr.loc, "zone::temp", std::move(zone), std::move(args));
     }
 
     bool is_collection_len_method_receiver(const Expr& expr) {
@@ -15180,10 +15169,8 @@ private:
             fail(expr.loc, "function calls support up to 65535 arguments");
         }
 
-        lowered->kind = IrExprKind::Call;
-        lowered->name = function_name;
-        lowered->type = sig.result;
-        lowered->args.reserve(expr.args.size());
+        std::vector<IrExprPtr> args;
+        args.reserve(expr.args.size());
         std::size_t borrow_mark = temporary_borrow_mark();
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = i < sig.params.size()
@@ -15203,11 +15190,12 @@ private:
                     : "extern C call argument";
                 require_no_zone_pointer_escape(expr.args[i]->loc, *arg, escape_context);
             }
-            lowered->args.push_back(std::move(arg));
+            args.push_back(std::move(arg));
         }
         release_temporary_borrows(borrow_mark);
-        mark_zone_reset_call(*lowered);
-        return lowered;
+        IrExprPtr call = make_ir_call_expr(expr.loc, function_name, sig.result, std::move(args));
+        mark_zone_reset_call(*call);
+        return call;
     }
 
     IrExprPtr check_trait_qualified_method_call(
@@ -15217,6 +15205,7 @@ private:
         const std::string& method_name,
         IrExprPtr lowered
     ) {
+        (void)lowered;
         const std::string display = trait_method_display(trait_name, trait_args, method_name);
         if (!trait_application_has_method(trait_name, trait_args, method_name)) {
             fail(expr.loc, "trait '" + trait_application_display(trait_name, trait_args) +
@@ -15308,21 +15297,19 @@ private:
         coerce_expr_to_expected(*receiver, sig.params[0]);
         require_assignable(expr.loc, sig.params[0], receiver->type);
 
-        lowered->kind = IrExprKind::Call;
-        lowered->name = method.lowered_name;
-        lowered->type = sig.result;
         require_impl_method_access(expr.loc, method, method_name);
         queue_impl_method_for_lowering(method);
-        lowered->args.reserve(expr.args.size());
-        lowered->args.push_back(std::move(receiver));
+        std::vector<IrExprPtr> args;
+        args.reserve(expr.args.size());
+        args.push_back(std::move(receiver));
         for (std::size_t i = 1; i < expr.args.size(); ++i) {
             IrExprPtr arg = std::move(checked_args[i - 1]);
             coerce_expr_to_expected(*arg, sig.params[i]);
             require_assignable(expr.loc, sig.params[i], arg->type);
-            lowered->args.push_back(std::move(arg));
+            args.push_back(std::move(arg));
         }
         release_temporary_borrows(borrow_mark);
-        return lowered;
+        return make_ir_call_expr(expr.loc, method.lowered_name, sig.result, std::move(args));
     }
 
     IrExprPtr check_trait_qualified_associated_call(
@@ -15333,6 +15320,7 @@ private:
         IrExprPtr lowered,
         const IrType* expected = nullptr
     ) {
+        (void)lowered;
         const std::string display = trait_method_display(trait_name, trait_args, method_name);
         IrType receiver_type;
         if (!expr.type_args.empty()) {
@@ -15417,19 +15405,17 @@ private:
             fail(expr.loc, "wrong argument count for trait-qualified associated function call '" + display + "'");
         }
 
-        lowered->kind = IrExprKind::Call;
-        lowered->name = method.lowered_name;
-        lowered->type = sig.result;
         queue_impl_method_for_lowering(method);
-        lowered->args.reserve(expr.args.size());
+        std::vector<IrExprPtr> args;
+        args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = std::move(checked_args[i]);
             coerce_expr_to_expected(*arg, sig.params[i]);
             require_assignable(expr.loc, sig.params[i], arg->type);
-            lowered->args.push_back(std::move(arg));
+            args.push_back(std::move(arg));
         }
         release_temporary_borrows(borrow_mark);
-        return lowered;
+        return make_ir_call_expr(expr.loc, method.lowered_name, sig.result, std::move(args));
     }
 
     IrExprPtr check_associated_call(
@@ -15523,19 +15509,17 @@ private:
             fail(expr.loc, "wrong argument count for associated function '" + method_name + "'");
         }
 
-        lowered->kind = IrExprKind::Call;
-        lowered->name = method.lowered_name;
-        lowered->type = sig.result;
         queue_impl_method_for_lowering(method);
-        lowered->args.reserve(expr.args.size());
+        std::vector<IrExprPtr> args;
+        args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = std::move(checked_args[i]);
             coerce_expr_to_expected(*arg, sig.params[i]);
             require_assignable(expr.loc, sig.params[i], arg->type);
-            lowered->args.push_back(std::move(arg));
+            args.push_back(std::move(arg));
         }
         release_temporary_borrows(borrow_mark);
-        return lowered;
+        return make_ir_call_expr(expr.loc, method.lowered_name, sig.result, std::move(args));
     }
 
     IrExprPtr check_trait_object_method_call(const Expr& expr, IrExprPtr receiver, IrExprPtr lowered) {
@@ -15742,21 +15726,19 @@ private:
         coerce_expr_to_expected(*receiver, sig.params[0]);
         require_assignable(expr.loc, sig.params[0], receiver->type);
 
-        lowered->kind = IrExprKind::Call;
-        lowered->name = method.lowered_name;
-        lowered->type = sig.result;
         require_impl_method_access(expr.loc, method, expr.name);
         queue_impl_method_for_lowering(method);
-        lowered->args.reserve(expr.args.size() + 1);
-        lowered->args.push_back(std::move(receiver));
+        std::vector<IrExprPtr> args;
+        args.reserve(expr.args.size() + 1);
+        args.push_back(std::move(receiver));
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = has_generic_selected ? std::move(generic_args[i]) : check_expr(*expr.args[i]);
             coerce_expr_to_expected(*arg, sig.params[i + 1]);
             require_assignable(expr.loc, sig.params[i + 1], arg->type);
-            lowered->args.push_back(std::move(arg));
+            args.push_back(std::move(arg));
         }
         release_temporary_borrows(borrow_mark);
-        return lowered;
+        return make_ir_call_expr(expr.loc, method.lowered_name, sig.result, std::move(args));
     }
 
     IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {
