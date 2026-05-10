@@ -143,8 +143,8 @@ pointer loads/stores.
 `ptr T` can be stored and passed as an FFI pointer-shaped value, and `T?` is a
 nullable spelling for the same raw pointer type. `null` constructs a nullable
 raw pointer. `T?` is deliberately not a value-level maybe type; use
-`Option[T]` or `Maybe[T]` when absence should be represented as data instead
-of an address. Raw pointer casts use ordinary explicit casts, including
+`Option[T]` when absence should be represented as data instead of an address.
+Raw pointer casts use ordinary explicit casts, including
 `ptr T` to `ptr U`, `T?` to another raw pointer type, `ptr T` to an integer
 address, and an integer address back to `ptr T`. An explicit borrow can also
 be converted to a raw pointer with `(ref value) as ptr T`, `(ref mut value) as

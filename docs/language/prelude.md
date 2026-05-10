@@ -32,7 +32,7 @@ after the matching source `std` surface is visible.
 Like Rust, public standard names are imported by the implicit prelude when
 `std` is auto-loaded. The source header decides this surface: public root items,
 root `pub use` re-exports, and public `std` child modules from `lib/std.arih`
-become visible in ordinary code. Write `Vec[T]`, `Option[T]`, `Maybe[T]`,
+become visible in ordinary code. Write `Vec[T]`, `Option[T]`,
 `Range[T]`, `Iterator[T]`, `range(...)`, `size_of<T>()`,
 `write_i64(...)`, `create(...)`, `new<T>(...)`, and pointer helpers directly.
 Nested forms such as `fmt::Display`, `iter::Iterator[T]`, `mem::size_of<T>()`,
@@ -474,13 +474,12 @@ enum Result[T, E] {
 }
 ```
 
-They are available without `std::` through the implicit prelude. `Maybe[T]` is
-a public alias for `Option[T]`, so `Maybe[i64]`, `std::Maybe[i64]`, and a
-module alias such as `core::Maybe[i64]` all name the same enum. Use explicit
-paths such as `std::Option[i64]`, `std::Maybe[i64]`, `std::Some(1)`, or
+They are available without `std::` through the implicit prelude. Ari keeps the
+standard absence type to one spelling, `Option[T]`; there is no `Maybe[T]`
+alias. Use explicit paths such as `std::Option[i64]`, `std::Some(1)`, or
 `std::Ok<i64, i32>(1)` when you want to spell the source module. Postfix `?`
-and `??` recognize the same Maybe/Result-style enum shapes on the LLVM backend
-path; the freestanding backend still needs the broader aggregate enum
+and `??` recognize the same Option/Result-style enum shapes on the LLVM
+backend path; the freestanding backend still needs the broader aggregate enum
 return/value ABI work.
 
 Additional Rust-like standard surfaces are reserved with clear diagnostics:

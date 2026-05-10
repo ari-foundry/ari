@@ -2679,7 +2679,7 @@ private:
 
     static void reject_type_args(const TypeRef& ast_type) {
         if (!ast_type.args.empty()) {
-            fail(ast_type.loc, "generic type applications are parsed but not supported for '" + ast_type.name + "' yet");
+            fail(ast_type.loc, "unsupported executable type '" + ast_type.name + "'");
         }
     }
 
@@ -11713,7 +11713,7 @@ private:
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
         if (!is_value_enum_type(lhs->type)) {
-            fail(expr.loc, "operator ?? requires a Maybe/Result-style enum value, got " + type_name(lhs->type));
+            fail(expr.loc, "operator ?? requires an Option/Result-style enum value, got " + type_name(lhs->type));
         }
 
         auto enum_found = enums_.find(lhs->type.name);

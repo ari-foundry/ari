@@ -639,8 +639,8 @@ borrow is live.
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,
 so `i64?` canonicalizes to `ptr i64` and `c_void?` canonicalizes to
-`ptr c_void`. It is not an `Option[T]` or `Maybe[T]` shorthand for ordinary
-values; use those ADTs explicitly when absence is part of a value model. `?`
+`ptr c_void`. It is not an `Option[T]` shorthand for ordinary values; use that
+ADT explicitly when absence is part of a value model. `?`
 is a postfix type suffix and cannot be combined with `own`, `ref`, or `ptr`
 qualifiers. `null` can initialize or be passed to any `ptr T` / `T?` expected
 type.

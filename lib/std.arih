@@ -22,8 +22,6 @@ pub enum Option[T] {
   Some(T),
 }
 
-pub use Option as Maybe;
-
 pub enum Result[T, E] {
   Err(E),
   Ok(T),

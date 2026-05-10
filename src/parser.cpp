@@ -2127,7 +2127,7 @@ private:
             case TokenKind::LBrace:
                 return parse_block_expression(token.loc);
             case TokenKind::Question:
-                fail(token.loc, "postfix ? must follow a Result/Maybe-style enum expression");
+                fail(token.loc, "postfix ? must follow an Option/Result-style enum expression");
             case TokenKind::KwMatch:
                 return parse_match_expression(token.loc);
             case TokenKind::KwIf:

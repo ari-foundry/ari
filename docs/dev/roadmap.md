@@ -126,9 +126,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
 5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
-    `RangeInclusive[T]` local values are implemented today. `Option[T]`,
-    `Maybe[T]` as a public alias of `Option[T]`, and `Result[T, E]` are source
-    `std` generic enums exposed through the implicit prelude and connected to
+    `RangeInclusive[T]` local values are implemented today. `Option[T]` and
+    `Result[T, E]` are source `std` generic enums exposed through the implicit
+    prelude and connected to
     `?`/`??` on the LLVM aggregate-enum path. `Slice[T]` is a source `std`
     view struct with `data: ptr T` and `len: i64`; `slice(data, len)` builds
     that view from a raw pointer and length, while `len(view)`, `view.len()`,
@@ -136,7 +136,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     view metadata with runtime bounds checks. It is non-owning and still relies
     on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
-    absence stays on the explicit `Option[T]`/`Maybe[T]` ADT path.
+    absence stays on the explicit `Option[T]` ADT path.
     - [owned] `Box[T]`
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host

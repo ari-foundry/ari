@@ -31,7 +31,7 @@ TryEnumShape analyze_try_enum_shape(
 ) {
     TryEnumShape shape;
     if (cases.size() != 2) {
-        shape.diagnostic = operator_name + " expects a two-case Result/Maybe-style enum, got " + enum_name;
+        shape.diagnostic = operator_name + " expects a two-case Option/Result-style enum, got " + enum_name;
         return shape;
     }
 

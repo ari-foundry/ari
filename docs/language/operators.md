@@ -102,15 +102,15 @@ Operands must be `bool`.
 ## Try Propagation
 
 The postfix `?` operator works on non-generic, two-case enum values whose cases
-look like `Maybe` or `Result`:
+look like `Option` or `Result`:
 
 ```ari
-enum MaybeI32 {
+enum OptionI32 {
   None,
   Some(i32),
 }
 
-fn bump(value: MaybeI32) -> MaybeI32 {
+fn bump(value: OptionI32) -> OptionI32 {
   let inner = value?
   return Some(inner + 1i32)
 }
@@ -122,14 +122,14 @@ When the value is successful, `?` evaluates to the success payload. Otherwise
 it immediately returns a residual value from the current function.
 
 The current function can return the same enum type as the expression being
-unwrapped, or another non-generic Maybe/Result-style enum with a compatible
+unwrapped, or another non-generic Option/Result-style enum with a compatible
 residual case. This lets `ResultI32` convert into another result enum with a
 different success payload as long as both residual cases carry the same payload
 type, and lets no-payload `None`/`Failure` residuals convert across compatible
-Maybe-style enums. Generic prelude `Option[T]`, its `Maybe[T]` alias, and
-`Result[T, E]` are source `std` enums using `None`/`Some(T)` and
+Option-style enums. Generic prelude `Option[T]` and `Result[T, E]` are source
+`std` enums using `None`/`Some(T)` and
 `Err(E)`/`Ok(T)` and can use `?` on the LLVM backend path. Aggregate-layout
-enums such as `MaybeI64` can use `?` when the current function returns that
+enums such as `OptionI64` can use `?` when the current function returns that
 same enum type; cross-enum residual conversion for aggregate enum layouts is
 still planned.
 
@@ -154,8 +154,8 @@ success payload. If it is `None`, `Err`, `Error`, or `Failure`, Ari evaluates
 the right side and uses that fallback value. The fallback must have the same
 type as the success payload.
 
-Generic prelude `Option[T]`, its `Maybe[T]` alias, and `Result[T, E]` values
-use the same rule on the LLVM backend path.
+Generic prelude `Option[T]` and `Result[T, E]` values use the same rule on the
+LLVM backend path.
 
 Ari's current operator-sugar set is intentionally closed around compound
 assignment, range syntax, postfix `?`, and `??`. Additional null/result

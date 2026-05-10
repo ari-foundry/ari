@@ -29,7 +29,7 @@ let value: Option[i64] = Some(20)
 ```
 
 Generic enum values can be constructed once the type argument is explicit or
-can be inferred from payload values. Maybe/Result-style generic enums support
+can be inferred from payload values. Option/Result-style generic enums support
 `?` and `??`; generic enum pattern matching and refutable payload bindings use
 the concrete type arguments of the matched value. Constant generic enum values
 can be initialized when the constant annotation supplies the concrete enum type.
@@ -128,7 +128,7 @@ fn choose(flag: bool) -> OptionI32 {
 ## Try Propagation
 
 Two-case enums can participate in postfix `?` propagation when they use the
-same surface shape as `Maybe` or `Result`. Success cases are named `Some`,
+same surface shape as `Option` or `Result`. Success cases are named `Some`,
 `Ok`, or `Success` and must carry one payload. Residual cases are named `None`,
 `Err`, `Error`, or `Failure`.
 
@@ -143,7 +143,7 @@ On a success case, `?` evaluates to the payload. On a residual case, the
 current function returns the original enum value immediately. The current
 function must return that same enum type.
 
-Generic Maybe/Result-style enums use the concrete type arguments of the enum
+Generic Option/Result-style enums use the concrete type arguments of the enum
 value:
 
 ```ari

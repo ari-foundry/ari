@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let value: Maybe[i64] = Some(1);
+  return value ?? 0;
+}

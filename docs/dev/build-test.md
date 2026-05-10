@@ -52,7 +52,7 @@ driver default when using a custom toolchain.
 
 `make check-operators` runs operator and literal-focused tests for integer and
 float literal suffixes, integer base prefixes, string escapes, bitwise-not,
-postfix `?`, Maybe/Result-style `??`, `f32`/`f64`/`f128` LLVM
+postfix `?`, Option/Result-style `??`, `f32`/`f64`/`f128` LLVM
 arithmetic/comparisons, invalid `?`, invalid `??`, invalid base/escape literals,
 and invalid suffix
 diagnostics.

@@ -146,9 +146,6 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/prelude-option-result.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result.ll
 	grep -q "try.ok" $(BUILD_DIR)/prelude/prelude-option-result.ll
 	grep -q "coalesce.ok" $(BUILD_DIR)/prelude/prelude-option-result.ll
-	$(TARGET) tests/ok/prelude-maybe-alias.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
-	grep -q "try.ok" $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
-	grep -q "coalesce.ok" $(BUILD_DIR)/prelude/prelude-maybe-alias.ll
 	$(TARGET) tests/ok/prelude-slice-view.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q '_ARNv3std12slice__G_i64' $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "slice.bounds.fail" $(BUILD_DIR)/prelude/prelude-slice-view.ll
@@ -157,7 +154,6 @@ check-prelude: $(TARGET)
 	grep -q "store i64 7" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 5" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-maybe-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; $(BUILD_DIR)/prelude/prelude-maybe-alias.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
@@ -178,6 +174,8 @@ check-prelude: $(TARGET)
 	grep -q "unknown function or enum case 'write_i64'" $(BUILD_DIR)/prelude/prelude-bare-without-std.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-path-without-std.ari -o $(BUILD_DIR)/prelude/prelude-path-without-std.elf >$(BUILD_DIR)/prelude/prelude-path-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'io::write_i64'" $(BUILD_DIR)/prelude/prelude-path-without-std.err
+	if $(TARGET) tests/errors/prelude-maybe-removed.ari -o $(BUILD_DIR)/prelude/prelude-maybe-removed.elf >$(BUILD_DIR)/prelude/prelude-maybe-removed.err 2>&1; then exit 1; fi
+	grep -q "unsupported executable type 'Maybe'" $(BUILD_DIR)/prelude/prelude-maybe-removed.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
 	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/errors/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi
@@ -733,7 +731,7 @@ check-operators: $(TARGET)
 	if $(TARGET) tests/errors/operators-question-non-enum.ari -o $(BUILD_DIR)/operators/operators-question-non-enum.elf >$(BUILD_DIR)/operators/operators-question-non-enum.err 2>&1; then exit 1; fi
 	grep -q "postfix ? requires an enum value, got i64" $(BUILD_DIR)/operators/operators-question-non-enum.err
 	if $(TARGET) tests/errors/operator-null-coalescing-non-enum.ari -o $(BUILD_DIR)/operators/operator-null-coalescing-non-enum.elf >$(BUILD_DIR)/operators/operator-null-coalescing-non-enum.err 2>&1; then exit 1; fi
-	grep -q "operator ?? requires a Maybe/Result-style enum value, got i64" $(BUILD_DIR)/operators/operator-null-coalescing-non-enum.err
+	grep -q "operator ?? requires an Option/Result-style enum value, got i64" $(BUILD_DIR)/operators/operator-null-coalescing-non-enum.err
 	if $(TARGET) tests/errors/operators-bitwise-not-bool.ari -o $(BUILD_DIR)/operators/operators-bitwise-not-bool.elf >$(BUILD_DIR)/operators/operators-bitwise-not-bool.err 2>&1; then exit 1; fi
 	grep -q "bitwise-not operand must be integer, got bool" $(BUILD_DIR)/operators/operators-bitwise-not-bool.err
 	if $(TARGET) tests/errors/operators-compound-immutable.ari -o $(BUILD_DIR)/operators/operators-compound-immutable.elf >$(BUILD_DIR)/operators/operators-compound-immutable.err 2>&1; then exit 1; fi
