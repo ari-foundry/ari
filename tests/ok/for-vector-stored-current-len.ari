@@ -1,0 +1,16 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [3, 4, 5];
+  values.truncate(1);
+
+  var total = 0;
+  for value in values {
+    total = total + value;
+  }
+
+  values.clear();
+  for _ in values {
+    total = total + 100;
+  }
+
+  return total;
+}

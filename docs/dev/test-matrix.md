@@ -195,7 +195,8 @@ Checklist:
 - [x] empty ranges do not run the loop body
 - [x] `iter::range(start, end)` qualified prelude form
 - [x] `for value in [a, b, c]` list literal iteration
-- [x] `for value in stored_vec` local vector iteration on the LLVM backend
+- [x] `for value in stored_vec` local vector iteration on the LLVM backend,
+      using the current vector length rather than reserved capacity
 - [x] `for _ in [a, b, c]` list literal wildcard pattern
 - [x] irrefutable tuple, named struct, tuple-struct, and alias loop heads for list literal iteration
 - [x] irrefutable tuple, named struct, tuple-struct, and alias loop heads for stored local vector iteration

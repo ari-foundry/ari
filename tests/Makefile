@@ -278,6 +278,9 @@ check-control-flow: $(TARGET)
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/control-flow/for-vector-stored.ll
 	$(TARGET) tests/ok/for-vector-stored-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.ll
+	$(TARGET) tests/ok/for-vector-stored-current-len.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-stored-current-len.ll
+	grep -q "store i64 1, ptr %.*for_end" $(BUILD_DIR)/control-flow/for-vector-stored-current-len.ll
+	grep -q "store i64 0, ptr %.*for_end" $(BUILD_DIR)/control-flow/for-vector-stored-current-len.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-pattern.elf; code=$$?; test $$code -eq 50; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-alias-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-alias-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-alias-pattern.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-stored.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-stored.elf; $(BUILD_DIR)/control-flow/for-vector-stored.elf; code=$$?; test $$code -eq 20; fi

@@ -242,6 +242,10 @@ for value in values {
 }
 ```
 
+Stored vector loops use the vector's current runtime length, not its reserved
+local capacity; when the compiler knows that length, the loop bound is lowered
+as a constant.
+
 `for _ in [1, 2, 3]` runs once per element while ignoring the element value.
 Bare empty `[]` cannot be iterated directly because it has no element type by
 itself. Give the value a typed local binding first, such as

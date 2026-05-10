@@ -550,6 +550,9 @@ for value in values {
 }
 ```
 
+The loop visits the current runtime length, not reserved capacity; when the
+compiler knows that current length, it lowers the loop bound as a constant.
+
 Non-empty list literals can be consumed directly by `for`:
 
 ```ari

@@ -10110,13 +10110,14 @@ private:
     }
 
     void check_for_vector_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
-        if (iterable->type.args.size() != 1 || iterable->type.array_size == 0) {
+        if (iterable->type.args.size() != 1) {
             fail(stmt.loc, "for currently supports stored local vector values with a known length");
         }
 
         IrType vector_type = iterable->type;
         IrType element_type = vector_type.args[0];
         IrType i64 = i64_type(stmt.loc);
+        VectorKnownLength current_length = known_local_vec_length_for_expr(*stmt.for_iterable);
 
         lowered.kind = IrStmtKind::Block;
         std::string vector_name = make_hidden_local("$for_vec");
@@ -10130,7 +10131,11 @@ private:
         loop->for_inclusive = false;
         loop->for_binding_type = i64;
         loop->for_start = make_integer_literal(stmt.loc, i64, 0);
-        loop->for_end = make_integer_literal(stmt.loc, i64, vector_type.array_size);
+        loop->for_end = make_local_vec_len_expr(
+            stmt.loc,
+            make_vec_local_lvalue(stmt.loc, vector_name, vector_type),
+            current_length
+        );
         loop->for_index_name = make_hidden_local("$for_index");
         loop->for_end_name = make_hidden_local("$for_end");
         declare_local(stmt.loc, loop->for_index_name, i64, true);
