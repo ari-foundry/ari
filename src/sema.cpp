@@ -4680,26 +4680,19 @@ private:
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
 
-    static void set_vector_known_length(LocalInfo& local, std::uint64_t length) {
-        if (!is_vector_storage_type(local.type)) return;
-        local.vector_length_known = true;
-        local.vector_known_length = length;
+    static VectorKnownLength vector_known_length_state(const LocalInfo& local) {
+        if (!is_vector_storage_type(local.type)) return {};
+        return VectorKnownLength{local.vector_length_known, local.vector_known_length};
     }
 
-    static void invalidate_vector_known_length(LocalInfo& local) {
+    static void set_vector_known_length(LocalInfo& local, VectorKnownLength state) {
         if (!is_vector_storage_type(local.type)) return;
-        local.vector_length_known = false;
-        local.vector_known_length = 0;
+        local.vector_length_known = state.known;
+        local.vector_known_length = state.known ? state.length : 0;
     }
 
     static void set_vector_known_length_from_expr(LocalInfo& local, const IrExpr& expr) {
-        if (!is_vector_storage_type(local.type)) return;
-        std::uint64_t length = 0;
-        if (vector_literal_length(expr, length)) {
-            set_vector_known_length(local, length);
-            return;
-        }
-        invalidate_vector_known_length(local);
+        set_vector_known_length(local, vector_known_length_from_expr(local.type, expr));
     }
 
     void set_known_integer_value_from_expr(LocalInfo& local, const Expr& source, const IrExpr& expr) {
@@ -4860,13 +4853,9 @@ private:
 
     void widen_vector_storage_for_push(LocalInfo& local) const {
         if (!is_vector_storage_type(local.type)) return;
-        if (local.vector_length_known) {
-            std::uint64_t required_capacity = local.vector_known_length + 1;
-            widen_vector_storage(local, required_capacity);
-            local.vector_known_length = required_capacity;
-            return;
-        }
-        widen_vector_storage(local, local.type.array_size + 1);
+        VectorKnownLength current = vector_known_length_state(local);
+        widen_vector_storage(local, vector_required_capacity_for_append(local.type, current));
+        set_vector_known_length(local, vector_known_length_after_append(current));
     }
 
     bool known_integer_capacity(const Expr& expr, StaticIntegerValue& out) {
@@ -13961,13 +13950,7 @@ private:
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "pop");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Pop, expr.type_args.size(), expr.args.size());
-        if (local.vector_length_known) {
-            if (local.vector_known_length > 0) {
-                --local.vector_known_length;
-            } else {
-                invalidate_vector_known_length(local);
-            }
-        }
+        set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));
         return make_vec_pop_expr(
             expr.loc,
             make_vec_local_lvalue(expr.operand->loc, name, local.type)
@@ -13979,7 +13962,7 @@ private:
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "clear");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Clear, expr.type_args.size(), expr.args.size());
-        set_vector_known_length(local, 0);
+        set_vector_known_length(local, vector_known_length_after_clear());
         return make_vec_clear_expr(
             expr.loc,
             make_vec_local_lvalue(expr.operand->loc, name, local.type)
@@ -14005,14 +13988,10 @@ private:
         } else if (try_fold_static_integer_value(*new_length, folded_length)) {
             requested_known_length = &folded_length;
         }
-        std::uint64_t updated_known_length = 0;
-        if (local.vector_length_known &&
-            requested_known_length &&
-            vector_known_length_after_truncate(local.vector_known_length, *requested_known_length, updated_known_length)) {
-            local.vector_known_length = updated_known_length;
-        } else {
-            invalidate_vector_known_length(local);
-        }
+        set_vector_known_length(
+            local,
+            vector_known_length_after_truncate(vector_known_length_state(local), requested_known_length)
+        );
         release_temporary_borrows(borrow_mark);
 
         return make_vec_truncate_expr(
@@ -14086,13 +14065,7 @@ private:
         require_local_vec_integer_argument(expr.args[0]->loc, LocalVecMethod::Remove, "index", index->type);
         release_temporary_borrows(borrow_mark);
 
-        if (local.vector_length_known) {
-            if (local.vector_known_length > 0) {
-                --local.vector_known_length;
-            } else {
-                invalidate_vector_known_length(local);
-            }
-        }
+        set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));
 
         return make_vec_remove_expr(
             expr.loc,

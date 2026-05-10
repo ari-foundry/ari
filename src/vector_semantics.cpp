@@ -112,6 +112,13 @@ bool vector_literal_length(const IrExpr& expr, std::uint64_t& out) {
     return true;
 }
 
+VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, const IrExpr& expr) {
+    if (!is_vector_storage_type(storage_type)) return {};
+    std::uint64_t length = 0;
+    if (!vector_literal_length(expr, length)) return {};
+    return VectorKnownLength{true, length};
+}
+
 LocalVecMethod classify_local_vec_method(const std::string& method_name) {
     for (const auto& info : kLocalVecMethods) {
         if (method_name == info.name) return info.method;
@@ -228,6 +235,37 @@ bool vector_known_length_after_truncate(std::uint64_t current_length,
     if (requested_length.negative) return false;
     out = std::min(current_length, requested_length.value);
     return true;
+}
+
+VectorKnownLength vector_known_length_after_append(VectorKnownLength current) {
+    if (!current.known) return {};
+    return VectorKnownLength{true, current.length + 1};
+}
+
+VectorKnownLength vector_known_length_after_remove(VectorKnownLength current) {
+    if (!current.known || current.length == 0) return {};
+    return VectorKnownLength{true, current.length - 1};
+}
+
+VectorKnownLength vector_known_length_after_clear() {
+    return VectorKnownLength{true, 0};
+}
+
+VectorKnownLength vector_known_length_after_truncate(VectorKnownLength current,
+                                                     const StaticIntegerValue* requested_length) {
+    std::uint64_t updated_length = 0;
+    if (!current.known ||
+        !requested_length ||
+        !vector_known_length_after_truncate(current.length, *requested_length, updated_length)) {
+        return {};
+    }
+    return VectorKnownLength{true, updated_length};
+}
+
+std::uint64_t vector_required_capacity_for_append(const IrType& storage_type,
+                                                  VectorKnownLength current) {
+    if (current.known) return current.length + 1;
+    return storage_type.array_size + 1;
 }
 
 IrExprPtr make_void_noop_expr(SourceLocation loc) {

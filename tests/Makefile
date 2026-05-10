@@ -1439,6 +1439,9 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/vector-pop.ari --emit-llvm $(BUILD_DIR)/variables/vector-pop.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-pop.ll
 	grep -q "vector.pop.empty" $(BUILD_DIR)/variables/vector-pop.ll
+	$(TARGET) tests/ok/vector-pop-push-capacity.ari --emit-llvm $(BUILD_DIR)/variables/vector-pop-push-capacity.ll
+	grep -q "alloca { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-pop-push-capacity.ll
+	if grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-pop-push-capacity.ll; then exit 1; fi
 	$(TARGET) tests/ok/vector-first-last.ari --emit-llvm $(BUILD_DIR)/variables/vector-first-last.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-first-last.ll
 	grep -q "vector.bounds.fail" $(BUILD_DIR)/variables/vector-first-last.ll
@@ -1497,6 +1500,7 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-static-expr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-static-expr.elf; $(BUILD_DIR)/variables/vector-reserve-static-expr.elf; code=$$?; test $$code -eq 18; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-autogrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-autogrow.elf; $(BUILD_DIR)/variables/vector-push-autogrow.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-pop.elf; $(BUILD_DIR)/variables/vector-pop.elf; code=$$?; test $$code -eq 26; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-pop-push-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-pop-push-capacity.elf; $(BUILD_DIR)/variables/vector-pop-push-capacity.elf; code=$$?; test $$code -eq 9; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-first-last.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-first-last.elf; $(BUILD_DIR)/variables/vector-first-last.elf; code=$$?; test $$code -eq 20; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-get.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-get.elf; $(BUILD_DIR)/variables/vector-get.elf; code=$$?; test $$code -eq 26; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-swap.elf; $(BUILD_DIR)/variables/vector-swap.elf; code=$$?; test $$code -eq 24; fi
