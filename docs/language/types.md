@@ -468,8 +468,10 @@ binding's current length. If the length is not precise, `push` reserves one
 additional static slot so the immediate append cannot hit a full local buffer.
 `capacity()` returns that reserved local capacity as an `i64`. `is_empty()`
 returns `true` when the current runtime length is zero and does not inspect
-reserved capacity. `clear()` sets the current runtime length to zero while
-keeping the reserved local capacity.
+reserved capacity. `len(values)`, `values.len()`, and `values.is_empty()` lower
+to constants when the compiler knows the current local vector length.
+`clear()` sets the current runtime length to zero while keeping the reserved
+local capacity.
 `pop()` returns the last copyable element, decreases the current runtime length,
 and panics through `panic` when the vector is empty. It does not shrink reserved
 local capacity. If the compiler knows the current local vector length is zero,

@@ -13745,12 +13745,35 @@ private:
     IrExprPtr check_vec_len_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
         require_collection_len_function_shape(expr.loc, expr.type_args.size(), expr.args.size());
-        return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.args[0]));
+        return check_collection_len_expr(expr.loc, *expr.args[0]);
+    }
+
+    std::optional<std::uint64_t> known_local_vec_length_for_expr(const Expr& expr) {
+        if (expr.kind != ExprKind::Name) return std::nullopt;
+        const LocalInfo* local = find_local_slot(expr.name);
+        if (!local || !is_vector_storage_type(local->type)) return std::nullopt;
+        VectorKnownLength length = vector_known_length_state(*local);
+        if (!length.known) return std::nullopt;
+        return length.length;
+    }
+
+    IrExprPtr check_collection_len_expr(SourceLocation loc, const Expr& source) {
+        std::optional<std::uint64_t> known_vec_length = known_local_vec_length_for_expr(source);
+        IrExprPtr operand = check_aggregate_access_operand(source);
+        if (known_vec_length && is_vector_storage_type(operand->type)) {
+            return make_integer_literal(loc, i64_type(loc), *known_vec_length);
+        }
+        return make_collection_len_expr(loc, std::move(operand));
     }
 
     IrExprPtr check_collection_is_empty_method_call(const Expr& expr) {
         require_collection_is_empty_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
-        IrExprPtr length = make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.operand));
+        std::optional<std::uint64_t> known_vec_length = known_local_vec_length_for_expr(*expr.operand);
+        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        if (known_vec_length && is_vector_storage_type(operand->type)) {
+            return make_bool_literal_expr(expr.loc, *known_vec_length == 0);
+        }
+        IrExprPtr length = make_collection_len_expr(expr.loc, std::move(operand));
         return make_collection_is_empty_expr(expr.loc, std::move(length));
     }
 
@@ -15542,7 +15565,7 @@ private:
     IrExprPtr check_method_call(const Expr& expr, IrExprPtr lowered) {
         if (expr.name == "len" && is_collection_len_method_receiver(*expr.operand)) {
             require_collection_len_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
-            return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.operand));
+            return check_collection_len_expr(expr.loc, *expr.operand);
         }
         if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr.operand)) {
             return check_collection_is_empty_method_call(expr);

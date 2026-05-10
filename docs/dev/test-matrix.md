@@ -204,7 +204,8 @@ Checklist:
 - [x] typed empty local `Vec[T]` literals through annotations and assignments
 - [x] checked dynamic indexing of stored local `Vec[T]`
 - [x] local `Vec[T]` literal reassignment with changing runtime length
-- [x] `len(value)` and `value.len()` for local vectors, fixed arrays, and constant-folded literal length
+- [x] `len(value)` and `value.len()` for local vectors, fixed arrays,
+      constant-folded literal length, and compiler-known local Vec length
 - [x] fixed-capacity local literal/const/static-signed-expr/known-local/runtime-checked `Vec.reserve(n)`, plus auto-widening local `Vec.push(value)` on the LLVM backend
 - [x] checked local `Vec.insert(index, value)` on the LLVM backend
 - [x] checked local `Vec.pop()` on the LLVM backend
@@ -215,7 +216,8 @@ Checklist:
       runtime-index rejection
 - [x] checked local `Vec.contains(value)`, `Vec.index_of(value)`, and `Vec.count(value)` on the LLVM backend
 - [x] fixed-capacity local `Vec.capacity()` on the LLVM backend
-- [x] `value.is_empty()` for local vectors, fixed arrays, and constant-folded literals
+- [x] `value.is_empty()` for local vectors, fixed arrays, constant-folded
+      literals, and compiler-known local Vec length
 - [x] fixed-capacity local `Vec.clear()` on the LLVM backend
 - [x] fixed-capacity local `Vec.truncate(n)` on the LLVM backend, including static/known-local length tracking for later local growth
 - [x] checked local `Vec.set(index, value)` on the LLVM backend, including

@@ -46,7 +46,9 @@
    Local Vec IR construction helpers include `first`, `last`, and `push`
    alongside the other method lowerings. Known-length updates for local `push`,
    `insert`, `pop`, `remove`, `clear`, and `truncate` now use small
-   `vector_semantics` transition helpers. The shared constant value model,
+   `vector_semantics` transition helpers, and local `Vec` `len`/`is_empty`
+   calls fold to constants when the current length is compiler-known. The
+   shared constant value model,
    constant-to-IR literal
    construction, scalar literal folding, constant binary result evaluation, and
    static integer folding for local Vec capacity and length decisions now live in

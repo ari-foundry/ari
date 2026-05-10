@@ -1401,11 +1401,16 @@ check-variables: $(TARGET)
 	grep -q "store { i64, \\[0 x i64\\] }" $(BUILD_DIR)/variables/vector-empty-typed.ll
 	grep -q "store { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-empty-typed.ll
 	$(TARGET) tests/ok/vector-len.ari --emit-llvm $(BUILD_DIR)/variables/vector-len.ll
-	grep -q "extractvalue { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-len.ll
+	grep -q "store i64 2, ptr %before" $(BUILD_DIR)/variables/vector-len.ll
+	grep -q "store i64 3, ptr %after" $(BUILD_DIR)/variables/vector-len.ll
+	if grep -q "extractvalue { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-len.ll; then exit 1; fi
 	$(TARGET) tests/ok/vector-push-reserve.ari --emit-llvm $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "vector.push.full" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "store i64 0, ptr" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	grep -q "store i1 1, ptr %empty_before" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	grep -q "store i1 0, ptr %empty_after" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	grep -q "store i1 1, ptr %empty_after_clear" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "vector.truncate.negative" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "store i64 9, ptr" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	$(TARGET) tests/ok/vector-reserve-runtime.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-runtime.ll

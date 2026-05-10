@@ -22,7 +22,8 @@ construction. Some helpers have already moved out to focused files:
   Vec storage views, local Vec integer/non-negative and known-index operand
   diagnostics, known-empty element/indexed method diagnostics, frozen API
   diagnostics, local Vec IR construction helpers such as `first`, `last`, and
-  `push`, and `VectorKnownLength`/capacity transition helpers
+  `push`, and `VectorKnownLength`/capacity transition helpers used by local
+  `len`/`is_empty` constant lowering
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions,
   pointer operations, direct builtin calls, match expression arms, and
