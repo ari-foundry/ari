@@ -8661,27 +8661,18 @@ private:
             std::vector<std::string> values;
             if (finite_product_pattern_values(pattern, subject_type, values)) {
                 finite_handled = true;
-                bool added = false;
-                for (const auto& value : values) {
-                    added = coverage.covered_products.insert(value).second || added;
+                if (note_finite_product_match_coverage(coverage, values)) {
+                    warn_aggregate_match_shadow(pattern.loc);
                 }
-                if (!added) warn_aggregate_match_shadow(pattern.loc);
             }
         }
 
         if (!coverage.has_symbolic_universe) return;
         std::vector<ProductRect> rects;
         if (!symbolic_product_pattern_rects(pattern, subject_type, rects)) return;
-        if (rects.empty()) return;
-        if (!finite_handled && product_rects_are_covered_by(rects, coverage.covered_symbolic_products)) {
+        if (note_symbolic_product_match_coverage(coverage, rects, finite_handled)) {
             warn_aggregate_match_shadow(pattern.loc);
-            return;
         }
-        coverage.covered_symbolic_products.insert(
-            coverage.covered_symbolic_products.end(),
-            rects.begin(),
-            rects.end()
-        );
     }
 
     void lower_tuple_match_value_bindings(const Pattern& pattern,
@@ -9000,16 +8991,7 @@ private:
     void require_tuple_match_exhaustive(SourceLocation loc,
                                         const IrType& match_type,
                                         const ProductMatchCoverage& coverage) const {
-        if (coverage.has_irrefutable_arm) return;
-        if (coverage.has_finite_universe &&
-            coverage.universe_size > 0 &&
-            coverage.covered_products.size() == coverage.universe_size) {
-            return;
-        }
-        if (coverage.has_symbolic_universe &&
-            product_rect_is_covered_by(coverage.symbolic_universe, coverage.covered_symbolic_products)) {
-            return;
-        }
+        if (product_match_coverage_is_exhaustive(coverage)) return;
         std::string kind = match_type.primitive == IrPrimitiveKind::Struct
             ? "struct"
             : (match_type.primitive == IrPrimitiveKind::Array ? "array" : "tuple");

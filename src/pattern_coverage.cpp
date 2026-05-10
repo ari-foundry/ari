@@ -183,6 +183,41 @@ bool combine_finite_product_domains(const std::vector<std::vector<std::string>>&
     return true;
 }
 
+bool note_finite_product_match_coverage(ProductMatchCoverage& coverage,
+                                        const std::vector<std::string>& values) {
+    bool added = false;
+    for (const auto& value : values) {
+        added = coverage.covered_products.insert(value).second || added;
+    }
+    return !added;
+}
+
+bool note_symbolic_product_match_coverage(ProductMatchCoverage& coverage,
+                                          const std::vector<ProductRect>& rects,
+                                          bool finite_handled) {
+    if (!coverage.has_symbolic_universe || rects.empty()) return false;
+    if (!finite_handled && product_rects_are_covered_by(rects, coverage.covered_symbolic_products)) {
+        return true;
+    }
+    coverage.covered_symbolic_products.insert(
+        coverage.covered_symbolic_products.end(),
+        rects.begin(),
+        rects.end()
+    );
+    return false;
+}
+
+bool product_match_coverage_is_exhaustive(const ProductMatchCoverage& coverage) {
+    if (coverage.has_irrefutable_arm) return true;
+    if (coverage.has_finite_universe &&
+        coverage.universe_size > 0 &&
+        coverage.covered_products.size() == coverage.universe_size) {
+        return true;
+    }
+    return coverage.has_symbolic_universe &&
+           product_rect_is_covered_by(coverage.symbolic_universe, coverage.covered_symbolic_products);
+}
+
 std::string product_missing_case_hint(const IrType& match_type,
                                       const ProductMatchCoverage& coverage,
                                       const std::set<std::string>& tuple_struct_names) {

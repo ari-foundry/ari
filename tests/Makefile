@@ -434,6 +434,9 @@ check-match: $(TARGET)
 	$(TARGET) --freestanding tests/ok/match-product-shadow-warning.ari -o $(BUILD_DIR)/match/match-product-shadow-warning.raw >$(BUILD_DIR)/match/match-product-shadow-warning.warn 2>&1
 	grep -q "warning: aggregate match pattern is fully shadowed by earlier match arms" $(BUILD_DIR)/match/match-product-shadow-warning.warn
 	$(BUILD_DIR)/match/match-product-shadow-warning.raw; code=$$?; test $$code -eq 1
+	$(TARGET) --freestanding tests/ok/match-symbolic-product-shadow-warning.ari -o $(BUILD_DIR)/match/match-symbolic-product-shadow-warning.raw >$(BUILD_DIR)/match/match-symbolic-product-shadow-warning.warn 2>&1
+	grep -q "warning: aggregate match pattern is fully shadowed by earlier match arms" $(BUILD_DIR)/match/match-symbolic-product-shadow-warning.warn
+	$(BUILD_DIR)/match/match-symbolic-product-shadow-warning.raw; code=$$?; test $$code -eq 1
 	$(TARGET) --freestanding tests/ok/match-alias-pattern.ari -o $(BUILD_DIR)/match/match-alias-pattern.raw
 	$(BUILD_DIR)/match/match-alias-pattern.raw; code=$$?; test $$code -eq 28
 	$(TARGET) --freestanding tests/ok/match-alias-or-pattern.ari -o $(BUILD_DIR)/match/match-alias-or-pattern.raw

@@ -60,6 +60,12 @@ std::string integer_product_value(std::uint64_t ordered_value);
 bool finite_scalar_product_domain(const IrType& type, std::vector<std::string>& out);
 bool combine_finite_product_domains(const std::vector<std::vector<std::string>>& domains,
                                     std::vector<std::string>& out);
+bool note_finite_product_match_coverage(ProductMatchCoverage& coverage,
+                                        const std::vector<std::string>& values);
+bool note_symbolic_product_match_coverage(ProductMatchCoverage& coverage,
+                                          const std::vector<ProductRect>& rects,
+                                          bool finite_handled);
+bool product_match_coverage_is_exhaustive(const ProductMatchCoverage& coverage);
 std::string product_missing_case_hint(const IrType& match_type,
                                       const ProductMatchCoverage& coverage,
                                       const std::set<std::string>& tuple_struct_names);

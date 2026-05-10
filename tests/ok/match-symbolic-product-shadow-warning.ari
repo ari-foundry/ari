@@ -1,0 +1,19 @@
+fn main() -> i64 {
+  let value = (3u16, true);
+  var total = 0;
+  match value {
+    (0u16..=100u16, true) => {
+      total = 1;
+    },
+    (10u16..=20u16, true) => {
+      total = 99;
+    },
+    (_, false) => {
+      total = 2;
+    },
+    (101u16..=65535u16, true) => {
+      total = 3;
+    },
+  }
+  return total;
+}
