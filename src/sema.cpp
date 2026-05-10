@@ -5935,12 +5935,13 @@ private:
     }
 
     void check_drop(const Stmt& stmt, IrStmt& lowered) {
-        LocalInfo& local = require_live_local(stmt.loc, stmt.drop_name);
-        require_not_borrowed(stmt.loc, stmt.drop_name, local, "drop");
+        const std::string& drop_name = stmt_drop_name(stmt);
+        LocalInfo& local = require_live_local(stmt.loc, drop_name);
+        require_not_borrowed(stmt.loc, drop_name, local, "drop");
         if (local.type.qualifier == TypeQualifier::Own && local.type.primitive == IrPrimitiveKind::Zone) {
-            fail(stmt.loc, "use zone::destroy(" + stmt.drop_name + ") to release a Zone");
+            fail(stmt.loc, "use zone::destroy(" + drop_name + ") to release a Zone");
         }
-        DropValueFactory make_value = [this, loc = stmt.loc, name = stmt.drop_name, type = local.type]() {
+        DropValueFactory make_value = [this, loc = stmt.loc, name = drop_name, type = local.type]() {
             return make_local_lvalue_expr(loc, name, type);
         };
         std::vector<IrStmtPtr> drop_statements;
@@ -5951,7 +5952,7 @@ private:
         }
         for (auto& item : local.owned_field_states) item.second = LocalState::Dropped;
         local.state = LocalState::Dropped;
-        lowered.drop_name = stmt.drop_name;
+        set_ir_stmt_drop_name(lowered, drop_name);
     }
 
     void check_return(const Stmt& stmt, IrStmt& lowered) {

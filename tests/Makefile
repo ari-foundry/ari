@@ -1383,6 +1383,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/ownership-aggregate-nested-field-move.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/ownership-array-element-move.ari -o $(BUILD_DIR)/variables/ownership-array-element-move.raw
 	$(BUILD_DIR)/variables/ownership-array-element-move.raw; code=$$?; test $$code -eq 6
+	$(TARGET) --freestanding tests/ok/drop-statement-payloads.ari -o $(BUILD_DIR)/variables/drop-statement-payloads.raw
+	$(BUILD_DIR)/variables/drop-statement-payloads.raw; code=$$?; test $$code -eq 9
 	$(TARGET) --freestanding tests/ok/array-fixed.ari -o $(BUILD_DIR)/variables/array-fixed.raw
 	$(BUILD_DIR)/variables/array-fixed.raw; code=$$?; test $$code -eq 4
 	$(TARGET) --freestanding tests/ok/scalar-payload-unions.ari -o $(BUILD_DIR)/variables/scalar-payload-unions.raw
@@ -1459,6 +1461,8 @@ check-variables: $(TARGET)
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-fields.ll) -eq 2
 	$(TARGET) tests/ok/drop-aggregate-moved-field.ari --emit-llvm $(BUILD_DIR)/variables/drop-aggregate-moved-field.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-moved-field.ll) -eq 2
+	$(TARGET) tests/ok/drop-statement-payloads.ari --emit-llvm $(BUILD_DIR)/variables/drop-statement-payloads.ll
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-statement-payloads.ll) -eq 3
 	$(TARGET) tests/ok/ownership-aggregate-field-access.ari --emit-llvm $(BUILD_DIR)/variables/ownership-aggregate-field-access.ll
 	grep -q "store i64" $(BUILD_DIR)/variables/ownership-aggregate-field-access.ll
 	$(TARGET) tests/ok/ownership-aggregate-field-move.ari --emit-llvm $(BUILD_DIR)/variables/ownership-aggregate-field-move.ll

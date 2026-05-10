@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ari {
@@ -255,7 +256,7 @@ struct Stmt {
     std::vector<Binding> init_bindings;
     std::vector<ExprPtr> updates;
     std::unique_ptr<StmtMatchArms> match_arms;
-    std::string drop_name;
+    std::unique_ptr<std::string> drop_name;
     std::string label;
     std::string break_label;
     ExprPtr break_value;
@@ -269,6 +270,15 @@ inline const StmtMatchArms& stmt_match_arms(const Stmt& stmt) {
 inline StmtMatchArms& ensure_stmt_match_arms(Stmt& stmt) {
     if (!stmt.match_arms) stmt.match_arms = std::make_unique<StmtMatchArms>();
     return *stmt.match_arms;
+}
+
+inline const std::string& stmt_drop_name(const Stmt& stmt) {
+    static const std::string empty;
+    return stmt.drop_name ? *stmt.drop_name : empty;
+}
+
+inline void set_stmt_drop_name(Stmt& stmt, std::string name) {
+    stmt.drop_name = std::make_unique<std::string>(std::move(name));
 }
 
 struct FunctionDecl {

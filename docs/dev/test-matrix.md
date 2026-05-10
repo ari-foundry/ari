@@ -428,6 +428,8 @@ Checklist:
       stored-vector, and iterator filter lowering paths
 - [x] AST/IR match statement arm payload packing preserves scalar, enum,
       aggregate, while-let, LLVM, and freestanding lowering paths
+- [x] AST/IR explicit-drop name payload packing preserves explicit destructor
+      lowering on LLVM and freestanding paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

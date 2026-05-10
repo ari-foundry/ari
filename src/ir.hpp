@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ari {
@@ -445,7 +446,7 @@ struct IrStmt {
     std::vector<IrBinding> init_bindings;
     std::vector<IrExprPtr> updates;
     std::unique_ptr<IrStmtMatchArms> match_arms;
-    std::string drop_name;
+    std::unique_ptr<std::string> drop_name;
     std::string label;
     std::string break_label;
     IrExprPtr break_value;
@@ -459,6 +460,15 @@ inline const IrStmtMatchArms& ir_stmt_match_arms(const IrStmt& stmt) {
 inline IrStmtMatchArms& ensure_ir_stmt_match_arms(IrStmt& stmt) {
     if (!stmt.match_arms) stmt.match_arms = std::make_unique<IrStmtMatchArms>();
     return *stmt.match_arms;
+}
+
+inline const std::string& ir_stmt_drop_name(const IrStmt& stmt) {
+    static const std::string empty;
+    return stmt.drop_name ? *stmt.drop_name : empty;
+}
+
+inline void set_ir_stmt_drop_name(IrStmt& stmt, std::string name) {
+    stmt.drop_name = std::make_unique<std::string>(std::move(name));
 }
 
 struct IrFunction {

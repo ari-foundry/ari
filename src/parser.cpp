@@ -1535,7 +1535,7 @@ private:
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::Drop;
         stmt->loc = name.loc;
-        stmt->drop_name = name.text;
+        set_stmt_drop_name(*stmt, name.text);
         require_semicolon("expected ; after drop");
         return stmt;
     }

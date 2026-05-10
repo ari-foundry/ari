@@ -1,0 +1,20 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+fn main() -> i64 {
+  let first: own i64 = 7;
+  drop first;
+
+  let condition = true;
+  let branch: own i64 = 5;
+  if condition {
+    drop branch;
+  } else {
+    drop branch;
+  }
+
+  return 9;
+}
