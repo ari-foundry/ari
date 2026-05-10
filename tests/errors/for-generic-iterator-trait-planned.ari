@@ -1,0 +1,14 @@
+struct Cursor[T] {
+  current: T,
+}
+
+impl[T] Iterator[T] for Cursor[T] {
+}
+
+fn main() -> i64 {
+  let cursor = Cursor { current: 0 };
+  for value in cursor {
+    return value;
+  }
+  return 0;
+}

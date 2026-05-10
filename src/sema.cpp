@@ -424,6 +424,17 @@ private:
         SourceLocation loc;
     };
 
+    enum class ForIteratorTraitKind {
+        Iterator,
+        IntoIterator
+    };
+
+    struct ForIteratorTraitMatch {
+        ForIteratorTraitKind kind = ForIteratorTraitKind::Iterator;
+        std::string trait_name;
+        IrType item_type;
+    };
+
     const Program& program_;
     SemaOptions options_;
     TargetInfo target_ = resolve_target_info(options_.target_triple);
@@ -9517,6 +9528,91 @@ private:
         }
     }
 
+    static std::vector<std::string> for_iterator_trait_candidates(ForIteratorTraitKind kind) {
+        if (kind == ForIteratorTraitKind::Iterator) {
+            return {"std::Iterator", "std::iter::Iterator"};
+        }
+        return {"std::IntoIterator", "std::iter::IntoIterator"};
+    }
+
+    static std::string for_iterator_trait_display(const std::string& trait_name, const IrType& item_type) {
+        std::string name = trait_name;
+        if (name.rfind("std::iter::", 0) == 0) {
+            name = "iter::" + name.substr(std::string("std::iter::").size());
+        } else if (name.rfind("std::", 0) == 0) {
+            name = name.substr(std::string("std::").size());
+        }
+        return name + "[" + type_name(item_type) + "]";
+    }
+
+    bool try_find_concrete_iterator_trait_impl(
+        const std::string& trait_name,
+        const IrType& self_type,
+        IrType& item_type
+    ) const {
+        for (const auto& impl : trait_impl_coherence_) {
+            if (!impl.generic_names.empty()) continue;
+            if (impl.trait_name != trait_name) continue;
+            if (impl.trait_args.size() != 1) continue;
+            if (!same_type(impl.self_type, self_type)) continue;
+            item_type = impl.trait_args[0];
+            item_type.qualifier = TypeQualifier::Value;
+            return true;
+        }
+        return false;
+    }
+
+    bool try_find_generic_iterator_trait_impl(
+        const std::string& trait_name,
+        const IrType& self_type,
+        IrType& item_type
+    ) const {
+        for (const auto& impl : generic_trait_impls_) {
+            if (impl.trait_name != trait_name) continue;
+            if (impl.trait_args.size() != 1) continue;
+
+            std::map<std::string, IrType> substitutions;
+            if (!infer_generic_impl_pattern_type(impl.self_type, self_type, impl.generic_names, substitutions)) continue;
+
+            bool complete = true;
+            for (const auto& generic_name : impl.generic_names) {
+                if (!substitutions.count(generic_name)) {
+                    complete = false;
+                    break;
+                }
+            }
+            if (!complete) continue;
+
+            substitutions.emplace("Self", self_type);
+            std::set<std::string> visiting;
+            if (!impl_generic_bounds_satisfied(impl.generic_bounds, substitutions, visiting, nullptr)) continue;
+
+            item_type = substitute_impl_generic_type(impl.trait_args[0], substitutions);
+            item_type.qualifier = TypeQualifier::Value;
+            return true;
+        }
+        return false;
+    }
+
+    bool try_find_for_iterator_trait(const IrType& iterable_type, ForIteratorTraitMatch& match) const {
+        IrType self_type = iterable_type;
+        self_type.qualifier = TypeQualifier::Value;
+
+        for (ForIteratorTraitKind kind : {ForIteratorTraitKind::Iterator, ForIteratorTraitKind::IntoIterator}) {
+            for (const auto& trait_name : for_iterator_trait_candidates(kind)) {
+                IrType item_type;
+                if (try_find_concrete_iterator_trait_impl(trait_name, self_type, item_type) ||
+                    try_find_generic_iterator_trait_impl(trait_name, self_type, item_type)) {
+                    match.kind = kind;
+                    match.trait_name = trait_name;
+                    match.item_type = item_type;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     void check_for(const Stmt& stmt, IrStmt& lowered) {
         std::string range_call_name;
         bool is_range_call = false;
@@ -9552,6 +9648,19 @@ private:
         if (iterable->type.primitive == IrPrimitiveKind::Vector) {
             check_for_vector_value(stmt, lowered, std::move(iterable));
             return;
+        }
+        ForIteratorTraitMatch iterator_match;
+        if (try_find_for_iterator_trait(iterable->type, iterator_match)) {
+            std::string trait_display =
+                for_iterator_trait_display(iterator_match.trait_name, iterator_match.item_type);
+            if (iterator_match.kind == ForIteratorTraitKind::IntoIterator) {
+                fail(stmt.loc,
+                     "for over " + trait_display + " value of type " + type_name(iterable->type) +
+                         " is recognized, but IntoIterator[T] conversion and next-style loop lowering are not implemented yet");
+            }
+            fail(stmt.loc,
+                 "for over " + trait_display + " value of type " + type_name(iterable->type) +
+                     " is recognized, but next-style Iterator[T] loop lowering is not implemented yet");
         }
         fail(stmt.loc,
              "for currently supports range values, range(start, end), range_inclusive(start, end), 0..end, 0..=end, list literals, or stored local vector values; Iterator[T] lowering is planned");

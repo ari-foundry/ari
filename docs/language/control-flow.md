@@ -265,8 +265,10 @@ These loop heads are destructuring bindings, not filters. Literal, range,
 or-pattern, and enum-case loop heads are still rejected until the general
 `Iterator[T]` model defines how failed matches advance the iterator.
 
-Enum-case patterns in `for`, such as `for Some(value) in items`, are reserved
-for the future `Iterator[T]` lowering model.
+General `Iterator[T]` and `IntoIterator[T]` values are recognized by their trait
+impls today, including the inferred item type, but they are still rejected until
+`next`-style loop lowering is implemented. Enum-case patterns in `for`, such as
+`for Some(value) in items`, are reserved for that lowering model.
 
 ## Break
 

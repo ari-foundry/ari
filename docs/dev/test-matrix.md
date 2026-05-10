@@ -233,7 +233,8 @@ Checklist:
 - [x] reject `continue` outside loops
 - [x] reject value `continue` outside init-while
 - [x] reject non-`range` for iterables
-- [x] reject general `Iterator[T]` for-loop lowering with a planned diagnostic
+- [x] reject general `Iterator[T]`/`IntoIterator[T]` for-loop lowering with
+      trait-aware item-type planned diagnostics
 - [x] reject enum-case `for` patterns with a planned diagnostic
 - [x] reject wrong `range` arity
 - [x] reject direct untyped empty `[]` iteration

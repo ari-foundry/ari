@@ -291,6 +291,12 @@ check-control-flow: $(TARGET)
 	grep -q "store { i64, i64 }" $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
 	if $(TARGET) tests/errors/for-iterator-planned.ari -o $(BUILD_DIR)/control-flow/for-iterator-planned.elf >$(BUILD_DIR)/control-flow/for-iterator-planned.err 2>&1; then exit 1; fi
 	grep -q "Iterator\\[T\\] lowering is planned" $(BUILD_DIR)/control-flow/for-iterator-planned.err
+	if $(TARGET) tests/errors/for-iterator-trait-planned.ari -o $(BUILD_DIR)/control-flow/for-iterator-trait-planned.elf >$(BUILD_DIR)/control-flow/for-iterator-trait-planned.err 2>&1; then exit 1; fi
+	grep -q "for over iter::Iterator\\[i64\\] value of type Cursor is recognized" $(BUILD_DIR)/control-flow/for-iterator-trait-planned.err
+	if $(TARGET) tests/errors/for-generic-iterator-trait-planned.ari -o $(BUILD_DIR)/control-flow/for-generic-iterator-trait-planned.elf >$(BUILD_DIR)/control-flow/for-generic-iterator-trait-planned.err 2>&1; then exit 1; fi
+	grep -q "for over Iterator\\[i64\\] value of type Cursor\\[i64\\] is recognized" $(BUILD_DIR)/control-flow/for-generic-iterator-trait-planned.err
+	if $(TARGET) tests/errors/for-into-iterator-trait-planned.ari -o $(BUILD_DIR)/control-flow/for-into-iterator-trait-planned.elf >$(BUILD_DIR)/control-flow/for-into-iterator-trait-planned.err 2>&1; then exit 1; fi
+	grep -q "for over IntoIterator\\[i64\\] value of type Bag is recognized" $(BUILD_DIR)/control-flow/for-into-iterator-trait-planned.err
 	if $(TARGET) tests/errors/for-pattern-planned.ari -o $(BUILD_DIR)/control-flow/for-pattern-planned.elf >$(BUILD_DIR)/control-flow/for-pattern-planned.err 2>&1; then exit 1; fi
 	grep -q "for enum-case patterns are planned for Iterator\\[T\\] values" $(BUILD_DIR)/control-flow/for-pattern-planned.err
 	if $(TARGET) tests/errors/for-vector-refutable-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-refutable-pattern.elf >$(BUILD_DIR)/control-flow/for-vector-refutable-pattern.err 2>&1; then exit 1; fi
