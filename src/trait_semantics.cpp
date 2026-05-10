@@ -27,4 +27,16 @@ std::string trait_impl_key(const std::string& trait_name,
     return trait_application_display(trait_name, trait_args) + " for " + type_name(self_type);
 }
 
+bool trait_method_param_is_self_receiver(const TypeRef& param) {
+    return param.name == "Self" &&
+           param.args.empty() &&
+           param.array_size == 0 &&
+           !param.is_dyn_object &&
+           !param.nullable;
+}
+
+bool trait_method_has_self_receiver(const std::vector<TypeRef>& params) {
+    return !params.empty() && trait_method_param_is_self_receiver(params.front());
+}
+
 } // namespace ari

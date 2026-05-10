@@ -25,9 +25,9 @@ construction. Some helpers have already moved out to focused files:
   aggregate pattern exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection and
   expansion helpers
-- `trait_semantics` for small trait display/key helpers shared by trait impl
-  validation, method dispatch diagnostics, and future trait-resolution
-  extraction
+- `trait_semantics` for small trait display/key helpers and pure trait-method
+  shape checks shared by trait impl validation, method dispatch diagnostics,
+  and future trait-resolution extraction
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

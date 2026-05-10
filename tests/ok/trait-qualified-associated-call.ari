@@ -1,0 +1,78 @@
+trait First {
+  fn pick(value: i64) -> Self
+}
+
+trait Second {
+  fn pick(value: i64) -> Self
+}
+
+trait GenericMake[Item] {
+  fn make(value: Item) -> Self
+}
+
+trait FactoryMake {
+  fn wrap[Item](value: Item) -> Box[Item]
+}
+
+trait BaseBuild {
+  fn base(value: i64) -> Self
+}
+
+trait ChildBuild: BaseBuild {
+  fn child(self) -> i64
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl First for Box[i64] {
+  fn pick(value: i64) -> Box[i64] {
+    Box { value: value }
+  }
+}
+
+impl Second for Box[i64] {
+  fn pick(value: i64) -> Box[i64] {
+    Box { value: value + 1 }
+  }
+}
+
+impl[T] GenericMake[T] for Box[T] {
+  fn make(value: T) -> Box[T] {
+    Box { value: value }
+  }
+}
+
+impl FactoryMake for Box[i64] {
+  fn wrap[Item](value: Item) -> Box[Item] {
+    Box { value: value }
+  }
+}
+
+impl BaseBuild for Box[i64] {
+  fn base(value: i64) -> Box[i64] {
+    Box { value: value + 3 }
+  }
+}
+
+impl ChildBuild for Box[i64] {
+  fn child(self) -> i64 {
+    self.value + 4
+  }
+}
+
+fn main() -> i64 {
+  let first = First::pick<Box[i64]>(1);
+  let second = Second::pick<Box[i64]>(1);
+  let generic = GenericMake<i64>::make<Box[i64]>(20);
+  let flag = GenericMake<bool>::make<Box[bool]>(true);
+  let wrapped = FactoryMake::wrap<Box[i64]>(5);
+  let explicit_wrapped = FactoryMake::wrap<Box[i64], i64>(6);
+  let inherited = ChildBuild::base<Box[i64]>(7);
+  if flag.value {
+    first.value + second.value + generic.value + wrapped.value + explicit_wrapped.value + inherited.value
+  } else {
+    0
+  }
+}

@@ -1610,6 +1610,7 @@ private:
         clone->mutable_borrow = expr.mutable_borrow;
         clone->op = expr.op;
         clone->cast_type = expr.cast_type;
+        clone->receiver_type_args = expr.receiver_type_args;
         clone->type_args = expr.type_args;
         clone->field_names = expr.field_names;
         if (expr.operand) clone->operand = clone_expression_tree(*expr.operand);
@@ -1903,6 +1904,10 @@ private:
                     continue;
                 }
                 if (match(TokenKind::ColonColon)) {
+                    if (!expr->receiver_type_args.empty()) {
+                        fail(expr->loc, "qualified expression type arguments were already provided");
+                    }
+                    expr->receiver_type_args = std::move(expr->type_args);
                     Token part = expect_identifier_or_contextual_name_keyword("expected name after ::");
                     expr->name += "::" + part.text;
                     continue;
@@ -1924,6 +1929,10 @@ private:
                     continue;
                 }
                 if (match(TokenKind::ColonColon)) {
+                    if (!expr->receiver_type_args.empty()) {
+                        fail(expr->loc, "qualified expression type arguments were already provided");
+                    }
+                    expr->receiver_type_args = std::move(expr->type_args);
                     Token part = expect_identifier_or_contextual_name_keyword("expected name after ::");
                     expr->name += "::" + part.text;
                     continue;
@@ -1958,6 +1967,7 @@ private:
                 call->loc = expr->loc;
                 if (expr->kind == ExprKind::Name) {
                     call->name = expr->name;
+                    call->receiver_type_args = std::move(expr->receiver_type_args);
                     call->type_args = std::move(expr->type_args);
                 } else {
                     call->operand = std::move(expr);

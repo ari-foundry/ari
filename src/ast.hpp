@@ -182,6 +182,7 @@ struct Expr {
     ExprPtr block_value;
     ExprPtr match_value;
     std::vector<std::unique_ptr<Expr>> args;
+    std::vector<TypeRef> receiver_type_args;
     std::vector<TypeRef> type_args;
     std::vector<std::string> field_names;
     std::vector<ExprMatchArm> match_arms;

@@ -291,6 +291,25 @@ let explicit = Box::make<i64>(20)
 let inferred = Box::make(true)
 ```
 
+When more than one trait impl provides the same associated function for the
+same type, qualify the call with the trait and pass the implementing type as
+the first associated-call type argument:
+
+```ari
+let first = First::pick<Box>(1)
+let second = Second::pick<Box>(1)
+```
+
+Generic trait arguments stay on the trait path, while the implementing type is
+written after the associated function name:
+
+```ari
+let boxed = Make<i64>::make<Box[i64]>(20)
+```
+
+If the associated function has method-level generics, put them after the
+implementing type or let Ari infer them from the value arguments.
+
 Inside modules, methods are private by default. Mark the method `pub`, or mark
 the whole `impl` block `pub`, to make its methods callable from outside the
 module.
