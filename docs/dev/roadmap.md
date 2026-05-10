@@ -148,7 +148,8 @@
    `Pattern` object. AST and IR match statement arm vectors now live behind
    match-statement payload pointers, covering parser match statements, sema
    enum/scalar match lowering, while-let lowering, and both backends. AST and
-   IR explicit-drop names now live behind drop-statement payload pointers too.
+   IR explicit-drop names now live behind drop-statement payload pointers too,
+   and break labels/values now live behind break-statement payload pointers.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
@@ -160,7 +161,7 @@
    - [stmt-payload-groups] split the remaining AST/IR statement-only fields by
      statement kind once parser and sema statement construction has enough
      focused helpers; small next targets are block/branch/loop body vectors,
-     assignment payloads, and label/break metadata
+     assignment payloads, and label metadata
    - [expr-child-vector-payloads] split expression child/vector fields after
      builders cover the remaining parser/sema/backend mutation paths
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

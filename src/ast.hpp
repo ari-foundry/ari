@@ -206,6 +206,11 @@ struct MatchArm {
 
 using StmtMatchArms = std::vector<MatchArm>;
 
+struct StmtBreakPayload {
+    std::string label;
+    ExprPtr value;
+};
+
 enum class StmtKind {
     Block,
     VarDecl,
@@ -258,8 +263,7 @@ struct Stmt {
     std::unique_ptr<StmtMatchArms> match_arms;
     std::unique_ptr<std::string> drop_name;
     std::string label;
-    std::string break_label;
-    ExprPtr break_value;
+    std::unique_ptr<StmtBreakPayload> break_payload;
 };
 
 inline const StmtMatchArms& stmt_match_arms(const Stmt& stmt) {
@@ -279,6 +283,32 @@ inline const std::string& stmt_drop_name(const Stmt& stmt) {
 
 inline void set_stmt_drop_name(Stmt& stmt, std::string name) {
     stmt.drop_name = std::make_unique<std::string>(std::move(name));
+}
+
+inline const StmtBreakPayload& stmt_break_payload(const Stmt& stmt) {
+    static const StmtBreakPayload empty;
+    return stmt.break_payload ? *stmt.break_payload : empty;
+}
+
+inline StmtBreakPayload& ensure_stmt_break_payload(Stmt& stmt) {
+    if (!stmt.break_payload) stmt.break_payload = std::make_unique<StmtBreakPayload>();
+    return *stmt.break_payload;
+}
+
+inline const std::string& stmt_break_label(const Stmt& stmt) {
+    return stmt_break_payload(stmt).label;
+}
+
+inline const ExprPtr& stmt_break_value(const Stmt& stmt) {
+    return stmt_break_payload(stmt).value;
+}
+
+inline void set_stmt_break_label(Stmt& stmt, std::string label) {
+    ensure_stmt_break_payload(stmt).label = std::move(label);
+}
+
+inline void set_stmt_break_value(Stmt& stmt, ExprPtr value) {
+    ensure_stmt_break_payload(stmt).value = std::move(value);
 }
 
 struct FunctionDecl {

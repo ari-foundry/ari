@@ -470,7 +470,7 @@ private:
                 }
                 break;
             case IrStmtKind::Break:
-                collect_expr_locals(stmt.break_value);
+                collect_expr_locals(ir_stmt_break_value(stmt));
                 break;
             default:
                 break;
@@ -1818,27 +1818,29 @@ private:
 
     void emit_break(const IrStmt& stmt) {
         LoopLabels& target = loop_for_break(stmt);
-        if (stmt.break_value) {
+        const IrExprPtr& break_value = ir_stmt_break_value(stmt);
+        if (break_value) {
             if (target.has_break_value_target) {
-                emit_store_value_to_offset(target.break_value_type, *stmt.break_value, target.break_value_target_offset);
+                emit_store_value_to_offset(target.break_value_type, *break_value, target.break_value_target_offset);
             } else {
-                emit_expr(*stmt.break_value);
+                emit_expr(*break_value);
             }
         }
         target.break_patches.push_back(emit_jmp_placeholder());
     }
 
     LoopLabels& loop_for_break(const IrStmt& stmt) {
-        if (stmt.break_label.empty()) {
+        const std::string& break_label = ir_stmt_break_label(stmt);
+        if (break_label.empty()) {
             for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
                 if (loop->is_loop) return *loop;
             }
             throw CompileError(where(stmt.loc) + ": break outside loop during codegen");
         }
         for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
-            if (loop->source_label == stmt.break_label) return *loop;
+            if (loop->source_label == break_label) return *loop;
         }
-        throw CompileError(where(stmt.loc) + ": unknown loop label '" + stmt.break_label + "' during codegen");
+        throw CompileError(where(stmt.loc) + ": unknown loop label '" + break_label + "' during codegen");
     }
 
     void emit_match(const IrStmt& stmt) {

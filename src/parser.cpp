@@ -1243,10 +1243,10 @@ private:
         stmt->kind = StmtKind::Break;
         stmt->loc = break_token.loc;
         if (check(TokenKind::Identifier)) {
-            stmt->break_label = tokens_[pos_++].text;
+            set_stmt_break_label(*stmt, tokens_[pos_++].text);
         }
         if (starts_expression(peek().kind) && peek().loc.line == break_token.loc.line) {
-            stmt->break_value = parse_expression();
+            set_stmt_break_value(*stmt, parse_expression());
         }
         require_semicolon("expected ; after break");
         return stmt;

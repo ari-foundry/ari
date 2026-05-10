@@ -189,8 +189,8 @@ static bool merge_labeled_break_vector_known_length(VectorKnownLength& merged,
                                                     const IrType& storage_type,
                                                     const IrStmt& statement,
                                                     const std::string& label) {
-    if (statement.kind == IrStmtKind::Break && statement.break_label == label) {
-        return merge_vector_known_length(merged, has_merged, storage_type, statement.break_value);
+    if (statement.kind == IrStmtKind::Break && ir_stmt_break_label(statement) == label) {
+        return merge_vector_known_length(merged, has_merged, storage_type, ir_stmt_break_value(statement));
     }
 
     switch (statement.kind) {
@@ -311,8 +311,8 @@ static bool merge_labeled_break_source_vector_known_length(VectorKnownLength& me
                                                            const VectorKnownLengthLookup& lookup,
                                                            const Stmt& statement,
                                                            const std::string& label) {
-    if (statement.kind == StmtKind::Break && statement.break_label == label) {
-        return merge_source_vector_known_length(merged, has_merged, statement.break_value, lookup);
+    if (statement.kind == StmtKind::Break && stmt_break_label(statement) == label) {
+        return merge_source_vector_known_length(merged, has_merged, stmt_break_value(statement), lookup);
     }
 
     switch (statement.kind) {
@@ -426,8 +426,8 @@ static void merge_labeled_break_source_vector_storage_capacity(std::uint64_t& ca
                                                                const Stmt& statement,
                                                                const std::string& label,
                                                                const VectorStorageCapacityLookup& lookup) {
-    if (statement.kind == StmtKind::Break && statement.break_label == label) {
-        merge_source_vector_storage_capacity(capacity, statement.break_value, lookup);
+    if (statement.kind == StmtKind::Break && stmt_break_label(statement) == label) {
+        merge_source_vector_storage_capacity(capacity, stmt_break_value(statement), lookup);
         return;
     }
 
@@ -535,9 +535,10 @@ static void merge_labeled_break_vector_storage_capacity(std::uint64_t& capacity,
 static void merge_labeled_break_vector_storage_capacity(std::uint64_t& capacity,
                                                         const IrStmt& statement,
                                                         const std::string& label) {
-    if (statement.kind == IrStmtKind::Break && statement.break_label == label) {
-        if (statement.break_value) {
-            capacity = std::max(capacity, vector_storage_capacity_from_expr(*statement.break_value));
+    if (statement.kind == IrStmtKind::Break && ir_stmt_break_label(statement) == label) {
+        const IrExprPtr& break_value = ir_stmt_break_value(statement);
+        if (break_value) {
+            capacity = std::max(capacity, vector_storage_capacity_from_expr(*break_value));
         }
         return;
     }

@@ -1,0 +1,28 @@
+fn main() -> i64 {
+  var total = 0;
+  while total < 10 {
+    total = total + 1;
+    if total == 3 {
+      break;
+    }
+  }
+
+  var outer = 0;
+  done: while outer < 5 {
+    var inner = 0;
+    while inner < 4 {
+      if outer == 2 {
+        break done;
+      }
+      inner = inner + 1;
+    }
+    outer = outer + 1;
+  }
+
+  let escaped = block: {
+    break block total + outer + 4;
+    0
+  };
+
+  return escaped;
+}

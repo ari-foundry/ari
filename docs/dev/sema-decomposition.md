@@ -95,7 +95,7 @@ patterns are lazy payloads too, leaving normal condition expressions and
 non-loop statements without embedded `Pattern` objects. AST and IR match
 statement arm vectors also live behind match-statement payload pointers, so
 non-match statement nodes no longer carry those vector slots directly. Explicit
-`drop` statement names are lazy payloads as well.
+`drop` statement names and `break` labels/values are lazy payloads as well.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

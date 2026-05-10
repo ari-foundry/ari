@@ -420,6 +420,11 @@ struct IrBinding {
     SourceLocation loc;
 };
 
+struct IrBreakPayload {
+    std::string label;
+    IrExprPtr value;
+};
+
 struct IrStmt {
     IrStmtKind kind = IrStmtKind::ExprStmt;
     SourceLocation loc;
@@ -448,8 +453,7 @@ struct IrStmt {
     std::unique_ptr<IrStmtMatchArms> match_arms;
     std::unique_ptr<std::string> drop_name;
     std::string label;
-    std::string break_label;
-    IrExprPtr break_value;
+    std::unique_ptr<IrBreakPayload> break_payload;
 };
 
 inline const IrStmtMatchArms& ir_stmt_match_arms(const IrStmt& stmt) {
@@ -469,6 +473,36 @@ inline const std::string& ir_stmt_drop_name(const IrStmt& stmt) {
 
 inline void set_ir_stmt_drop_name(IrStmt& stmt, std::string name) {
     stmt.drop_name = std::make_unique<std::string>(std::move(name));
+}
+
+inline const IrBreakPayload& ir_stmt_break_payload(const IrStmt& stmt) {
+    static const IrBreakPayload empty;
+    return stmt.break_payload ? *stmt.break_payload : empty;
+}
+
+inline IrBreakPayload& ensure_ir_stmt_break_payload(IrStmt& stmt) {
+    if (!stmt.break_payload) stmt.break_payload = std::make_unique<IrBreakPayload>();
+    return *stmt.break_payload;
+}
+
+inline const std::string& ir_stmt_break_label(const IrStmt& stmt) {
+    return ir_stmt_break_payload(stmt).label;
+}
+
+inline const IrExprPtr& ir_stmt_break_value(const IrStmt& stmt) {
+    return ir_stmt_break_payload(stmt).value;
+}
+
+inline IrExprPtr& ir_stmt_break_value(IrStmt& stmt) {
+    return ensure_ir_stmt_break_payload(stmt).value;
+}
+
+inline void set_ir_stmt_break_label(IrStmt& stmt, std::string label) {
+    ensure_ir_stmt_break_payload(stmt).label = std::move(label);
+}
+
+inline void set_ir_stmt_break_value(IrStmt& stmt, IrExprPtr value) {
+    ensure_ir_stmt_break_payload(stmt).value = std::move(value);
 }
 
 struct IrFunction {

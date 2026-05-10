@@ -865,7 +865,7 @@ private:
                 for (const auto& update : stmt.updates) collect_expr_locals(update, locals);
                 break;
             case IrStmtKind::Break:
-                collect_expr_locals(stmt.break_value, locals);
+                collect_expr_locals(ir_stmt_break_value(stmt), locals);
                 break;
             default:
                 break;
@@ -1027,11 +1027,12 @@ private:
             case IrStmtKind::Break:
                 {
                     LoopContext& target = loop_for_break(stmt);
-                    if (stmt.break_value) {
+                    const IrExprPtr& break_value = ir_stmt_break_value(stmt);
+                    if (break_value) {
                         if (!target.supports_break_value) {
                             throw CompileError(where(stmt.loc) + ": break value used with a non-value break target during LLVM lowering");
                         }
-                        Value value = cast_value(emit_expr(*stmt.break_value), target.break_value_type);
+                        Value value = cast_value(emit_expr(*break_value), target.break_value_type);
                         line("  store " + value.type + " " + value.name + ", ptr " + target.break_value_slot);
                     }
                     target.has_break = true;
@@ -1286,16 +1287,17 @@ private:
     }
 
     LoopContext& loop_for_break(const IrStmt& stmt) {
-        if (stmt.break_label.empty()) {
+        const std::string& break_label = ir_stmt_break_label(stmt);
+        if (break_label.empty()) {
             for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
                 if (loop->is_loop) return *loop;
             }
             throw CompileError(where(stmt.loc) + ": break outside loop during LLVM lowering");
         }
         for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
-            if (loop->source_label == stmt.break_label) return *loop;
+            if (loop->source_label == break_label) return *loop;
         }
-        throw CompileError(where(stmt.loc) + ": unknown loop label '" + stmt.break_label + "' during LLVM lowering");
+        throw CompileError(where(stmt.loc) + ": unknown loop label '" + break_label + "' during LLVM lowering");
     }
 
     void emit_match(const IrStmt& stmt) {

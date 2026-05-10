@@ -256,6 +256,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/let-while.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/labeled-break.ari -o $(BUILD_DIR)/control-flow/labeled-break.raw
 	$(BUILD_DIR)/control-flow/labeled-break.raw; code=$$?; test $$code -eq 2
+	$(TARGET) --freestanding tests/ok/break-statement-payloads.ari -o $(BUILD_DIR)/control-flow/break-statement-payloads.raw
+	$(BUILD_DIR)/control-flow/break-statement-payloads.raw; code=$$?; test $$code -eq 9
 	$(TARGET) --freestanding tests/ok/labeled-block.ari -o $(BUILD_DIR)/control-flow/labeled-block.raw
 	$(BUILD_DIR)/control-flow/labeled-block.raw; code=$$?; test $$code -eq 2
 	$(TARGET) tests/ok/if-while-let.ari --emit-llvm $(BUILD_DIR)/control-flow/if-while-let.ll
@@ -329,6 +331,9 @@ check-control-flow: $(TARGET)
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	$(TARGET) tests/ok/labeled-block-aggregate.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
 	grep -q "store { i64, i64 }" $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
+	$(TARGET) tests/ok/break-statement-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/break-statement-payloads.ll
+	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll
+	grep -q "while.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll
 	$(TARGET) tests/ok/for-iterator-direct.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-direct.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-direct.ll
 	$(TARGET) tests/ok/for-generic-iterator-direct.ari --emit-llvm $(BUILD_DIR)/control-flow/for-generic-iterator-direct.ll

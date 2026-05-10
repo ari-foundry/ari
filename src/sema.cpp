@@ -10330,9 +10330,11 @@ private:
     }
 
     void check_break(const Stmt& stmt, IrStmt& lowered) {
-        LoopInfo& target = mutable_loop_for_break(stmt.loc, stmt.break_label);
-        lowered.break_label = stmt.break_label;
-        if (!stmt.break_value) {
+        const std::string& break_label = stmt_break_label(stmt);
+        const ExprPtr& break_value = stmt_break_value(stmt);
+        LoopInfo& target = mutable_loop_for_break(stmt.loc, break_label);
+        set_ir_stmt_break_label(lowered, break_label);
+        if (!break_value) {
             if (target.supports_break_values) {
                 fail(stmt.loc, "break from labeled block expression must provide a value");
             }
@@ -10343,7 +10345,7 @@ private:
                 auto break_stmt = std::make_unique<IrStmt>();
                 break_stmt->kind = IrStmtKind::Break;
                 break_stmt->loc = stmt.loc;
-                break_stmt->break_label = stmt.break_label;
+                set_ir_stmt_break_label(*break_stmt, break_label);
                 cleanup.push_back(std::move(break_stmt));
                 lowered.kind = IrStmtKind::Block;
                 lowered.statements = std::move(cleanup);
@@ -10354,8 +10356,8 @@ private:
             fail(stmt.loc, "break values are only valid for labeled block expressions");
         }
         IrExprPtr value = target.has_break_result_type
-            ? check_expr_with_expected(*stmt.break_value, target.break_result_type)
-            : check_expr(*stmt.break_value);
+            ? check_expr_with_expected(*break_value, target.break_result_type)
+            : check_expr(*break_value);
         if (contains_borrow_type(value->type)) {
             fail(stmt.loc, "break values cannot be borrow values yet");
         }
@@ -10388,14 +10390,14 @@ private:
             auto break_stmt = std::make_unique<IrStmt>();
             break_stmt->kind = IrStmtKind::Break;
             break_stmt->loc = stmt.loc;
-            break_stmt->break_label = stmt.break_label;
-            break_stmt->break_value = std::move(value);
+            set_ir_stmt_break_label(*break_stmt, break_label);
+            set_ir_stmt_break_value(*break_stmt, std::move(value));
             cleanup.push_back(std::move(break_stmt));
             lowered.kind = IrStmtKind::Block;
             lowered.statements = std::move(cleanup);
             return;
         }
-        lowered.break_value = std::move(value);
+        set_ir_stmt_break_value(lowered, std::move(value));
     }
 
     void check_continue(const Stmt& stmt, IrStmt& lowered) {
@@ -15948,9 +15950,12 @@ private:
     }
 
     static void coerce_labeled_break_values(IrStmt& stmt, const std::string& label, const IrType& expected) {
-        if (stmt.kind == IrStmtKind::Break && stmt.break_label == label && stmt.break_value) {
-            coerce_expr_to_expected(*stmt.break_value, expected);
-            require_assignable(stmt.loc, expected, stmt.break_value->type);
+        if (stmt.kind == IrStmtKind::Break) {
+            IrExprPtr& break_value = ir_stmt_break_value(stmt);
+            if (ir_stmt_break_label(stmt) == label && break_value) {
+                coerce_expr_to_expected(*break_value, expected);
+                require_assignable(stmt.loc, expected, break_value->type);
+            }
             return;
         }
 
