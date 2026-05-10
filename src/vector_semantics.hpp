@@ -8,11 +8,35 @@
 
 namespace ari {
 
+enum class LocalVecMethod {
+    Unknown,
+    AsSlice,
+    Capacity,
+    Clear,
+    Contains,
+    Count,
+    First,
+    Get,
+    IndexOf,
+    Insert,
+    IsEmpty,
+    Last,
+    Len,
+    Pop,
+    Push,
+    Remove,
+    Reserve,
+    Set,
+    Swap,
+    Truncate,
+};
+
 bool is_vector_storage_type(const IrType& type);
 void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init);
 void widen_vector_storage_type(IrType& type, std::uint64_t capacity);
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
 bool vector_literal_length(const IrExpr& expr, std::uint64_t& out);
+LocalVecMethod classify_local_vec_method(const std::string& method_name);
 std::string local_vec_api_freeze_message(const std::string& method_name);
 
 bool vector_known_length_after_truncate(std::uint64_t current_length,

@@ -3,6 +3,7 @@
 #include "common.hpp"
 
 #include <algorithm>
+#include <array>
 #include <utility>
 
 namespace ari {
@@ -41,6 +42,33 @@ IrExprPtr make_i64_literal(SourceLocation loc, std::uint64_t value) {
     throw CompileError(where(loc) + ": " + message);
 }
 
+struct LocalVecMethodInfo {
+    const char* name;
+    LocalVecMethod method;
+};
+
+constexpr std::array<LocalVecMethodInfo, 19> kLocalVecMethods{{
+    {"as_slice", LocalVecMethod::AsSlice},
+    {"capacity", LocalVecMethod::Capacity},
+    {"clear", LocalVecMethod::Clear},
+    {"contains", LocalVecMethod::Contains},
+    {"count", LocalVecMethod::Count},
+    {"first", LocalVecMethod::First},
+    {"get", LocalVecMethod::Get},
+    {"index_of", LocalVecMethod::IndexOf},
+    {"insert", LocalVecMethod::Insert},
+    {"is_empty", LocalVecMethod::IsEmpty},
+    {"last", LocalVecMethod::Last},
+    {"len", LocalVecMethod::Len},
+    {"pop", LocalVecMethod::Pop},
+    {"push", LocalVecMethod::Push},
+    {"remove", LocalVecMethod::Remove},
+    {"reserve", LocalVecMethod::Reserve},
+    {"set", LocalVecMethod::Set},
+    {"swap", LocalVecMethod::Swap},
+    {"truncate", LocalVecMethod::Truncate},
+}};
+
 } // namespace
 
 bool is_vector_storage_type(const IrType& type) {
@@ -76,11 +104,19 @@ bool vector_literal_length(const IrExpr& expr, std::uint64_t& out) {
     return true;
 }
 
+LocalVecMethod classify_local_vec_method(const std::string& method_name) {
+    for (const auto& info : kLocalVecMethods) {
+        if (method_name == info.name) return info.method;
+    }
+    return LocalVecMethod::Unknown;
+}
+
 std::string local_vec_api_freeze_message(const std::string& method_name) {
-    const std::string supported =
-        "as_slice, capacity, clear, contains, count, first, get, index_of, "
-        "insert, is_empty, last, len, pop, push, remove, reserve, set, swap, "
-        "truncate";
+    std::string supported;
+    for (std::size_t i = 0; i < kLocalVecMethods.size(); ++i) {
+        if (i != 0) supported += ", ";
+        supported += kLocalVecMethods[i].name;
+    }
     return "local Vec method '" + method_name +
            "' is reserved for allocator-backed std collection APIs; supported temporary local Vec methods are: "
            + supported;

@@ -13820,8 +13820,7 @@ private:
         return make_collection_is_empty_expr(expr.loc, std::move(length));
     }
 
-    LocalInfo* vec_local_method_receiver(const Expr& method_expr, const std::string& method_name) {
-        (void)method_name;
+    LocalInfo* vec_local_method_receiver(const Expr& method_expr) {
         if (!method_expr.operand || method_expr.operand->kind != ExprKind::Name) return nullptr;
         LocalInfo* local = find_local_slot(method_expr.operand->name);
         if (!local || !is_vector_storage_type(local->type)) {
@@ -15609,84 +15608,45 @@ private:
                 return check_slice_view_method_call(expr, std::move(lowered), *local);
             }
         }
-        if (expr.name == "first") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "first")) {
-                return check_vec_first_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "last") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "last")) {
-                return check_vec_last_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "get") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "get")) {
-                return check_vec_get_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "reserve") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "reserve")) {
-                return check_vec_reserve_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "capacity") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "capacity")) {
-                return check_vec_capacity_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "pop") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "pop")) {
-                return check_vec_pop_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "clear") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "clear")) {
-                return check_vec_clear_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "truncate") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "truncate")) {
-                return check_vec_truncate_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "set") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "set")) {
-                return check_vec_set_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "swap") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "swap")) {
-                return check_vec_swap_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "remove") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "remove")) {
-                return check_vec_remove_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "insert") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "insert")) {
-                return check_vec_insert_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "contains") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "contains")) {
-                return check_vec_contains_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "index_of") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "index_of")) {
-                return check_vec_index_of_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "count") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "count")) {
-                return check_vec_count_method_call(expr, std::move(lowered), *local);
-            }
-        }
-        if (expr.name == "push") {
-            if (LocalInfo* local = vec_local_method_receiver(expr, "push")) {
-                return check_vec_push_method_call(expr, std::move(lowered), *local);
+        if (LocalInfo* local = vec_local_method_receiver(expr)) {
+            switch (classify_local_vec_method(expr.name)) {
+                case LocalVecMethod::First:
+                    return check_vec_first_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Last:
+                    return check_vec_last_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Get:
+                    return check_vec_get_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Reserve:
+                    return check_vec_reserve_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Capacity:
+                    return check_vec_capacity_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Pop:
+                    return check_vec_pop_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Clear:
+                    return check_vec_clear_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Truncate:
+                    return check_vec_truncate_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Set:
+                    return check_vec_set_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Swap:
+                    return check_vec_swap_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Remove:
+                    return check_vec_remove_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Insert:
+                    return check_vec_insert_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Contains:
+                    return check_vec_contains_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::IndexOf:
+                    return check_vec_index_of_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Count:
+                    return check_vec_count_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::Push:
+                    return check_vec_push_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::AsSlice:
+                case LocalVecMethod::IsEmpty:
+                case LocalVecMethod::Len:
+                case LocalVecMethod::Unknown:
+                    break;
             }
         }
 
