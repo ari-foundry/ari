@@ -15,6 +15,7 @@
 #include "prelude_resolver.hpp"
 #include "product_coverage.hpp"
 #include "symbol_mangle.hpp"
+#include "trait_semantics.hpp"
 #include "try_model.hpp"
 #include "type_semantics.hpp"
 #include "vector_semantics.hpp"
@@ -147,6 +148,7 @@ struct TraitInfo {
     std::string module_name;
     std::size_t generic_arity = 0;
     std::vector<std::string> generic_names;
+    std::vector<TypeRef> supertrait_refs;
     std::map<std::string, Method> methods;
     bool is_public = false;
     SourceLocation loc;
@@ -272,8 +274,10 @@ public:
         collect_enum_layouts();
         collect_constant_decls();
         validate_struct_decls();
+        resolve_trait_supertraits();
         validate_generic_constraints();
         validate_impls();
+        validate_supertrait_impls();
         validate_into_iterator_result_contracts();
         collect_impl_method_signatures();
         collect_function_signatures();
@@ -425,6 +429,7 @@ private:
     std::map<std::string, EnumInfo> enums_;
     std::map<std::string, EnumCaseInfo> enum_cases_;
     std::map<std::string, TraitInfo> traits_;
+    std::map<std::string, std::vector<GenericTraitBound>> trait_supertraits_;
     std::map<std::string, ModuleInfo> modules_;
     std::map<std::string, std::map<std::string, UseInfo>> uses_;
     std::set<std::string> impl_keys_;
@@ -1442,6 +1447,7 @@ private:
             for (const auto& generic : decl.generics) info.generic_names.push_back(generic.name);
             info.is_public = decl.is_public;
             info.loc = decl.loc;
+            info.supertrait_refs = decl.supertraits;
 
             std::set<std::string> trait_generic_names;
             for (const auto& generic : decl.generics) trait_generic_names.insert(generic.name);
@@ -1477,6 +1483,104 @@ private:
 
             auto inserted = traits_.emplace(decl.name, std::move(info));
             if (!inserted.second) fail(decl.loc, "duplicate trait '" + decl.name + "'");
+        }
+    }
+
+    GenericTraitBound resolve_supertrait_bound(const TypeRef& constraint) {
+        if (constraint.qualifier != TypeQualifier::Value) {
+            fail(constraint.loc, "supertraits cannot use ownership qualifiers");
+        }
+
+        std::string trait_name = resolve_trait_name(constraint.name);
+        auto found = traits_.find(trait_name);
+        if (found == traits_.end()) {
+            fail(constraint.loc, "unknown supertrait '" + constraint.name + "'");
+        }
+        const TraitInfo& trait = found->second;
+        require_trait_access(constraint.loc, trait);
+        if (constraint.args.size() != trait.generic_arity) {
+            fail(constraint.loc,
+                 "trait '" + trait.name + "' expects " + std::to_string(trait.generic_arity) +
+                     " type argument" + (trait.generic_arity == 1 ? "" : "s"));
+        }
+
+        GenericTraitBound bound;
+        bound.generic_name = "Self";
+        bound.trait_name = trait.name;
+        bound.loc = constraint.loc;
+        bound.trait_args.reserve(constraint.args.size());
+        for (const auto& arg : constraint.args) {
+            bound.trait_args.push_back(resolve_executable_type(arg));
+        }
+        return bound;
+    }
+
+    static std::map<std::string, IrType> trait_generic_placeholder_substitutions(const TraitInfo& trait) {
+        std::map<std::string, IrType> substitutions;
+        for (const auto& generic_name : trait.generic_names) {
+            IrType placeholder;
+            placeholder.qualifier = TypeQualifier::Value;
+            placeholder.primitive = IrPrimitiveKind::Unknown;
+            placeholder.name = generic_name;
+            placeholder.loc = trait.loc;
+            substitutions.emplace(generic_name, placeholder);
+        }
+        return substitutions;
+    }
+
+    void detect_supertrait_cycle_from(
+        const std::string& current,
+        std::vector<std::string>& stack,
+        std::set<std::string>& visiting,
+        std::set<std::string>& visited
+    ) const {
+        if (visited.count(current)) return;
+        if (!visiting.insert(current).second) {
+            fail(traits_.at(current).loc, "supertrait cycle involving trait '" + current + "'");
+        }
+        stack.push_back(current);
+
+        auto supers = trait_supertraits_.find(current);
+        if (supers != trait_supertraits_.end()) {
+            for (const auto& supertrait : supers->second) {
+                if (std::find(stack.begin(), stack.end(), supertrait.trait_name) != stack.end()) {
+                    fail(supertrait.loc, "trait '" + current + "' cannot require itself through a supertrait cycle");
+                }
+                detect_supertrait_cycle_from(supertrait.trait_name, stack, visiting, visited);
+            }
+        }
+
+        stack.pop_back();
+        visiting.erase(current);
+        visited.insert(current);
+    }
+
+    void resolve_trait_supertraits() {
+        for (const auto& item : traits_) {
+            const TraitInfo& trait = item.second;
+            if (trait.supertrait_refs.empty()) continue;
+
+            std::string previous_module = current_module_name_;
+            std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+            current_module_name_ = trait.module_name;
+            current_type_substitutions_ = trait_generic_placeholder_substitutions(trait);
+
+            std::vector<GenericTraitBound> bounds;
+            bounds.reserve(trait.supertrait_refs.size());
+            for (const auto& supertrait : trait.supertrait_refs) {
+                bounds.push_back(resolve_supertrait_bound(supertrait));
+            }
+            trait_supertraits_[trait.name] = std::move(bounds);
+
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+        }
+
+        std::set<std::string> visiting;
+        std::set<std::string> visited;
+        std::vector<std::string> stack;
+        for (const auto& item : traits_) {
+            detect_supertrait_cycle_from(item.first, stack, visiting, visited);
         }
     }
 
@@ -1548,27 +1652,6 @@ private:
         }
         if (type.nullable) key += "?";
         return key;
-    }
-
-    static std::string trait_application_display(const std::string& trait_name, const std::vector<IrType>& trait_args) {
-        std::string out = trait_name;
-        if (!trait_args.empty()) {
-            out += "[";
-            for (std::size_t i = 0; i < trait_args.size(); ++i) {
-                if (i > 0) out += ", ";
-                out += type_name(trait_args[i]);
-            }
-            out += "]";
-        }
-        return out;
-    }
-
-    static std::string trait_impl_key(
-        const std::string& trait_name,
-        const std::vector<IrType>& trait_args,
-        const IrType& self_type
-    ) {
-        return trait_application_display(trait_name, trait_args) + " for " + type_name(self_type);
     }
 
     static bool same_type_list(const std::vector<IrType>& left, const std::vector<IrType>& right) {
@@ -1746,6 +1829,134 @@ private:
             if (generic.has_constraint) bounds.push_back(resolve_generic_trait_bound(generic));
         }
         return bounds;
+    }
+
+    GenericTraitBound substitute_trait_bound(
+        const GenericTraitBound& bound,
+        const std::map<std::string, IrType>& substitutions
+    ) const {
+        GenericTraitBound resolved = bound;
+        for (auto& arg : resolved.trait_args) {
+            arg = substitute_impl_generic_type(arg, substitutions);
+        }
+        return resolved;
+    }
+
+    std::map<std::string, IrType> trait_application_substitutions(
+        const TraitInfo& trait,
+        const std::vector<IrType>& trait_args
+    ) const {
+        std::map<std::string, IrType> substitutions;
+        for (std::size_t i = 0; i < trait.generic_names.size() && i < trait_args.size(); ++i) {
+            substitutions.emplace(trait.generic_names[i], trait_args[i]);
+        }
+        return substitutions;
+    }
+
+    std::vector<GenericTraitBound> instantiated_supertrait_bounds(
+        const TraitInfo& trait,
+        const std::vector<IrType>& trait_args
+    ) const {
+        std::vector<GenericTraitBound> bounds;
+        auto found = trait_supertraits_.find(trait.name);
+        if (found == trait_supertraits_.end()) return bounds;
+
+        std::map<std::string, IrType> substitutions = trait_application_substitutions(trait, trait_args);
+        bounds.reserve(found->second.size());
+        for (const auto& bound : found->second) {
+            bounds.push_back(substitute_trait_bound(bound, substitutions));
+        }
+        return bounds;
+    }
+
+    bool trait_application_implies_trait(
+        const std::string& source_trait_name,
+        const std::vector<IrType>& source_trait_args,
+        const std::string& target_trait_name,
+        const std::vector<IrType>& target_trait_args,
+        std::set<std::string>& visiting
+    ) const {
+        if (source_trait_name == target_trait_name &&
+            same_type_list(source_trait_args, target_trait_args)) {
+            return true;
+        }
+
+        std::string key =
+            trait_application_display(source_trait_name, source_trait_args) +
+            "=>" +
+            trait_application_display(target_trait_name, target_trait_args);
+        if (!visiting.insert(key).second) return false;
+
+        auto trait_found = traits_.find(source_trait_name);
+        if (trait_found == traits_.end()) {
+            visiting.erase(key);
+            return false;
+        }
+
+        for (const auto& supertrait : instantiated_supertrait_bounds(trait_found->second, source_trait_args)) {
+            if (trait_application_implies_trait(
+                    supertrait.trait_name,
+                    supertrait.trait_args,
+                    target_trait_name,
+                    target_trait_args,
+                    visiting)) {
+                visiting.erase(key);
+                return true;
+            }
+        }
+
+        visiting.erase(key);
+        return false;
+    }
+
+    bool trait_application_implies_trait(
+        const std::string& source_trait_name,
+        const std::vector<IrType>& source_trait_args,
+        const std::string& target_trait_name,
+        const std::vector<IrType>& target_trait_args
+    ) const {
+        std::set<std::string> visiting;
+        return trait_application_implies_trait(
+            source_trait_name,
+            source_trait_args,
+            target_trait_name,
+            target_trait_args,
+            visiting);
+    }
+
+    bool trait_application_has_method(
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const std::string& method_name,
+        std::set<std::string>& visiting
+    ) const {
+        auto trait_found = traits_.find(trait_name);
+        if (trait_found == traits_.end()) return false;
+        if (trait_found->second.methods.count(method_name)) return true;
+
+        std::string key = trait_application_display(trait_name, trait_args) + "::" + method_name;
+        if (!visiting.insert(key).second) return false;
+        for (const auto& supertrait : instantiated_supertrait_bounds(trait_found->second, trait_args)) {
+            if (trait_application_has_method(
+                    supertrait.trait_name,
+                    supertrait.trait_args,
+                    method_name,
+                    visiting)) {
+                visiting.erase(key);
+                return true;
+            }
+        }
+        visiting.erase(key);
+        return false;
+    }
+
+    bool trait_application_has_method(
+        const std::string& trait_name,
+        const std::vector<IrType>& trait_args,
+        const std::string& method_name
+    ) const {
+        std::set<std::string> visiting;
+        return trait_application_has_method(trait_name, trait_args, method_name, visiting);
     }
 
     GenericTraitBound resolve_generic_trait_bound_with_context(
@@ -2099,6 +2310,48 @@ private:
                 generic_impl.loc = impl.trait_type.loc;
                 generic_trait_impls_.push_back(std::move(generic_impl));
             }
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+        }
+    }
+
+    void validate_supertrait_impls() {
+        for (const auto& impl : program_.impls) {
+            if (!impl.has_trait) continue;
+
+            std::string previous_module = current_module_name_;
+            std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+            current_module_name_ = impl.module_name;
+            std::map<std::string, IrType> substitutions = generic_placeholder_substitutions(impl.generics);
+            current_type_substitutions_ = substitutions;
+
+            std::string trait_name = resolve_trait_name(impl.trait_type.name);
+            auto trait_found = traits_.find(trait_name);
+            if (trait_found == traits_.end()) {
+                current_type_substitutions_ = std::move(previous_substitutions);
+                current_module_name_ = previous_module;
+                continue;
+            }
+            const TraitInfo& trait = trait_found->second;
+            IrType self_type = resolve_executable_type(impl.for_type);
+            std::vector<IrType> trait_args;
+            trait_args.reserve(trait.generic_names.size());
+            for (std::size_t i = 0; i < trait.generic_names.size(); ++i) {
+                trait_args.push_back(resolve_executable_type(impl.trait_type.args[i]));
+            }
+
+            for (const auto& supertrait : instantiated_supertrait_bounds(trait, trait_args)) {
+                if (!type_implements_trait(supertrait.trait_name, supertrait.trait_args, self_type)) {
+                    current_type_substitutions_ = std::move(previous_substitutions);
+                    current_module_name_ = previous_module;
+                    fail(impl.trait_type.loc,
+                         "impl of trait '" + trait.name + "' for " + type_name(self_type) +
+                             " requires supertrait '" +
+                             trait_application_display(supertrait.trait_name, supertrait.trait_args) +
+                             "'");
+                }
+            }
+
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
         }
@@ -13302,11 +13555,19 @@ private:
                 bool matches_bound = false;
                 for (const auto& bound : current_generic_bounds_) {
                     if (bound.generic_name != generic_origin) continue;
-                    auto trait_found = traits_.find(bound.trait_name);
-                    if (trait_found == traits_.end()) continue;
-                    if (!trait_found->second.methods.count(method_name)) continue;
+                    if (!trait_application_has_method(bound.trait_name, bound.trait_args, method_name)) continue;
                     has_applicable_bound = true;
-                    if (candidate.trait_name != bound.trait_name) continue;
+                    if (candidate.trait_name != bound.trait_name) {
+                        if (trait_application_implies_trait(
+                                bound.trait_name,
+                                bound.trait_args,
+                                candidate.trait_name,
+                                candidate.trait_args)) {
+                            matches_bound = true;
+                            break;
+                        }
+                        continue;
+                    }
                     if (candidate.trait_args.size() != bound.trait_args.size()) continue;
                     std::map<std::string, IrType> trait_substitutions = substitutions;
                     bool trait_args_match = true;
@@ -14784,14 +15045,17 @@ private:
         const ImplMethodInfo* selected = nullptr;
         for (const auto& bound : current_generic_bounds_) {
             if (bound.generic_name != generic_name) continue;
-            auto trait_found = traits_.find(bound.trait_name);
-            if (trait_found == traits_.end()) continue;
-            if (!trait_found->second.methods.count(method_expr.name)) continue;
+            if (!trait_application_has_method(bound.trait_name, bound.trait_args, method_expr.name)) continue;
 
             for (const auto& candidate : candidates) {
-                if (candidate.trait_name != bound.trait_name) continue;
                 if (!same_type(candidate.receiver_type, receiver_type)) continue;
-                if (!same_type_list(candidate.trait_args, bound.trait_args)) continue;
+                if (!trait_application_implies_trait(
+                        bound.trait_name,
+                        bound.trait_args,
+                        candidate.trait_name,
+                        candidate.trait_args)) {
+                    continue;
+                }
                 if (selected) {
                     fail(method_expr.loc,
                          "method call '" + method_expr.name + "' for generic parameter '" +

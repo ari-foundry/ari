@@ -426,6 +426,10 @@ Checklist:
 - [x] reject wrong trait type-argument counts
 - [x] reject duplicate trait impls for the same trait/type pair
 - [x] validate trait impl method completeness and signatures
+- [x] parse `trait Child: Parent` supertraits and require matching
+      supertrait impls for the same receiver type
+- [x] allow generic bounds on a child trait to statically dispatch methods
+      declared by its supertraits
 - [x] accept bare `self` in trait/impl method signatures as `Self`
 - [x] lower concrete `value.method(...)` calls through matching impl methods
 - [x] reject unknown and ambiguous method calls

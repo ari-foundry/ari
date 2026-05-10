@@ -652,6 +652,11 @@ private:
         decl.loc = name.loc;
         decl.attributes = std::move(attributes);
         decl.generics = parse_generics();
+        if (match(TokenKind::Colon)) {
+            do {
+                decl.supertraits.push_back(parse_type());
+            } while (match(TokenKind::Plus));
+        }
         expect(TokenKind::LBrace, "expected { after trait name");
         while (!match(TokenKind::RBrace)) {
             expect(TokenKind::KwFn, "expected trait method");

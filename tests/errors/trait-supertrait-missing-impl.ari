@@ -1,0 +1,17 @@
+trait Base {
+  fn base(self) -> i64
+}
+
+trait Child: Base {
+  fn child(self) -> i64
+}
+
+impl Child for i64 {
+  fn child(self) -> i64 {
+    self + 1
+  }
+}
+
+fn main() -> i64 {
+  0
+}

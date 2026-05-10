@@ -310,6 +310,7 @@ struct TraitDecl {
     bool is_public = false;
     std::vector<Attribute> attributes;
     std::vector<GenericParam> generics;
+    std::vector<TypeRef> supertraits;
     std::vector<FunctionDecl> methods;
     SourceLocation loc;
 };

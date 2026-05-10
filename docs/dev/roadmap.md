@@ -94,6 +94,21 @@
    iterator step.
    - [state] add owner iterator inputs and finish the explicit iterator
      lifetime rules for nested/break-heavy control-flow cases
+4. Complete trait composition and supertrait support.
+   Ari now parses `trait Child: Parent` supertraits, rejects supertrait cycles,
+   requires `impl Child for T` to be accompanied by the matching
+   `impl Parent for T`, and lets generic bounds on `Child` statically dispatch
+   methods declared by `Parent`. This deliberately follows a trait-composition
+   model rather than class inheritance: structs remain data-layout declarations
+   with explicit fields/embedding, and Ari should not add implicit struct
+   inheritance or hidden base-object layout.
+   - [dyn-supertrait] design vtable layout, conversion, and upcast rules for
+     `dyn Child` values when `Child` has supertraits
+   - [supertrait-associated] extend supertrait lookup to associated functions,
+     future associated types, and generic supertrait applications with richer
+     inference
+   - [disambiguation] add explicit syntax for choosing a specific trait method
+     when multiple supertraits expose the same method name
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

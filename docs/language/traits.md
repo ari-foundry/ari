@@ -96,6 +96,29 @@ impl[T: Score] Box[T] {
 The bound is checked when the impl method is specialized for a concrete
 receiver. Calling `Box[i64].score()` requires `i64` to implement `Score`.
 
+## Supertraits
+
+Traits can require other traits with `:`:
+
+```ari
+trait Base {
+  fn base(self) -> i64
+}
+
+trait Child: Base {
+  fn child(self) -> i64
+}
+```
+
+Any `impl Child for T` must also have a matching `impl Base for T`. Generic
+bounds inherit supertrait methods for static dispatch, so a `T: Child` function
+can call both `child()` and `base()` when the concrete type provides both impls.
+
+This is behavior composition, not struct inheritance. Ari keeps structs as data
+layout declarations; use named fields, tuple structs, or explicit embedding for
+data reuse. There is no hidden base-object layout or implicit field/method
+inheritance between structs.
+
 Generic inherent impl blocks can define methods over a generic `self` receiver:
 
 ```ari
@@ -332,12 +355,14 @@ prelude; it should live in an explicit collection/hash module later.
 
 ## Intended Model
 
-Traits should describe behavior without inheritance:
+Traits should describe behavior without class-style inheritance:
 
 - no class hierarchy
+- no struct inheritance
 - no hidden object layout
 - no implicit virtual dispatch by default
 - static dispatch first
+- explicit trait composition through supertraits
 - explicit vtable-backed dynamic dispatch only through a clear trait-object
   representation
 

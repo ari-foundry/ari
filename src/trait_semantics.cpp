@@ -1,0 +1,24 @@
+#include "trait_semantics.hpp"
+
+namespace ari {
+
+std::string trait_application_display(const std::string& trait_name, const std::vector<IrType>& trait_args) {
+    std::string out = trait_name;
+    if (!trait_args.empty()) {
+        out += "[";
+        for (std::size_t i = 0; i < trait_args.size(); ++i) {
+            if (i > 0) out += ", ";
+            out += type_name(trait_args[i]);
+        }
+        out += "]";
+    }
+    return out;
+}
+
+std::string trait_impl_key(const std::string& trait_name,
+                           const std::vector<IrType>& trait_args,
+                           const IrType& self_type) {
+    return trait_application_display(trait_name, trait_args) + " for " + type_name(self_type);
+}
+
+} // namespace ari

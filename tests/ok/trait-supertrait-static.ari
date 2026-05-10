@@ -1,0 +1,27 @@
+trait Base {
+  fn base(self) -> i64
+}
+
+trait Child: Base {
+  fn child(self) -> i64
+}
+
+impl Base for i64 {
+  fn base(self) -> i64 {
+    self + 1
+  }
+}
+
+impl Child for i64 {
+  fn child(self) -> i64 {
+    self + 2
+  }
+}
+
+fn score[T: Child](value: T) -> i64 {
+  value.base() * 10 + value.child()
+}
+
+fn main() -> i64 {
+  score<i64>(4)
+}

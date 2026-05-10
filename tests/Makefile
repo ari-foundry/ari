@@ -1036,6 +1036,8 @@ check-traits: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-generic-impl-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; code=$$?; test $$code -eq 11; fi
 	$(TARGET) --freestanding tests/ok/trait-bound-static-dispatch.ari -o $(BUILD_DIR)/traits/trait-bound-static-dispatch.raw
 	$(BUILD_DIR)/traits/trait-bound-static-dispatch.raw; code=$$?; test $$code -eq 6
+	$(TARGET) --freestanding tests/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.raw
+	$(BUILD_DIR)/traits/trait-supertrait-static.raw; code=$$?; test $$code -eq 56
 	$(TARGET) --freestanding tests/ok/trait-bound-generic-args.ari -o $(BUILD_DIR)/traits/trait-bound-generic-args.raw
 	$(BUILD_DIR)/traits/trait-bound-generic-args.raw; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-bound-static-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-bound-static-dispatch.ll
@@ -1115,6 +1117,8 @@ check-traits: $(TARGET)
 	grep -q "associated function 'pick' for type Box is ambiguous" $(BUILD_DIR)/traits/trait-associated-ambiguous.err
 	if $(TARGET) tests/errors/trait-bound-missing-impl.ari -o $(BUILD_DIR)/traits/trait-bound-missing-impl.elf >$(BUILD_DIR)/traits/trait-bound-missing-impl.err 2>&1; then exit 1; fi
 	grep -q "type i64 does not implement trait 'NeedsScore' required by generic parameter 'T'" $(BUILD_DIR)/traits/trait-bound-missing-impl.err
+	if $(TARGET) tests/errors/trait-supertrait-missing-impl.ari -o $(BUILD_DIR)/traits/trait-supertrait-missing-impl.elf >$(BUILD_DIR)/traits/trait-supertrait-missing-impl.err 2>&1; then exit 1; fi
+	grep -q "impl of trait 'Child' for i64 requires supertrait 'Base'" $(BUILD_DIR)/traits/trait-supertrait-missing-impl.err
 	if $(TARGET) tests/errors/generic-impl-bound-missing.ari -o $(BUILD_DIR)/traits/generic-impl-bound-missing.elf >$(BUILD_DIR)/traits/generic-impl-bound-missing.err 2>&1; then exit 1; fi
 	grep -q "type i64 does not implement trait 'Score' required by impl generic parameter 'T'" $(BUILD_DIR)/traits/generic-impl-bound-missing.err
 	if $(TARGET) tests/errors/generic-impl-coherence-concrete.ari -o $(BUILD_DIR)/traits/generic-impl-coherence-concrete.elf >$(BUILD_DIR)/traits/generic-impl-coherence-concrete.err 2>&1; then exit 1; fi
