@@ -72,9 +72,10 @@
    `for` lowering sites. The remaining iterator model needs a first-class
    source spelling for that iterator result and stateful/mutable iterator
    receiver policy. Iterator item patterns can now use scalar literal/range
-   tests, or-patterns over those tests, and fieldless enum-case patterns; the
-   current semantics are `while let Some(pattern) = iterator.next()`, so the
-   first non-matching item ends the loop rather than being skipped.
+   tests, or-patterns over those tests, fieldless enum-case patterns, and
+   compact enum item payload bindings/literal/range/or/alias tests; the current
+   semantics are `while let Some(pattern) = iterator.next()`, so the first
+   non-matching item ends the loop rather than being skipped.
    - [contract] replace the compiler-known `into_iter` result relaxation with
      a first-class associated iterator type or equivalent Ari-specific trait
      contract
@@ -83,9 +84,10 @@
    - [pattern-filter] decide whether Ari also wants a separate skip/filter
      loop form for refutable item patterns instead of only the current
      stop-on-first-mismatch semantics
-   - [pattern-payload] extend iterator item enum-case patterns to payload
-     bindings after nested aggregate-enum payload storage rules allow
-     `Option[PayloadEnum]` values
+   - [pattern-payload] extend iterator item enum-case payload patterns to
+     aggregate enum item payloads after nested aggregate-enum payload storage
+     rules allow `Option[PayloadEnum]` values whose payload enum uses aggregate
+     layout
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

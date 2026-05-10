@@ -290,14 +290,22 @@ for 11 | 12 in numbers {
 for 10..=20 in scores {
   total = total + 1;
 }
+
+for Just(value) in maybe_values {
+  total = total + (value as i64);
+}
+
+for Just(5 | 6) in maybe_values {
+  total = total + 1;
+}
 ```
 
 These patterns use `while let Some(pattern) = iterator.next()` semantics. If an
 item does not match, the loop ends; it is not skipped. This keeps the lowering
 predictable until Ari grows a distinct filter-style loop form. Or-pattern
 alternatives must bind the same names. Enum-case item patterns are currently
-limited to fieldless cases because payload-bearing enum items inside `Option[T]`
-still depend on broader aggregate enum payload storage.
+limited to fieldless cases and compact enum payload cases. Aggregate-layout enum
+items inside `Option[T]` still depend on broader aggregate enum payload storage.
 
 The current source trait still uses a compiler-known return contract for
 `into_iter` instead of a first-class associated iterator type. Mutable/stateful

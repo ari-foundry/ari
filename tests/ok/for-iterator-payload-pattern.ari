@@ -1,0 +1,50 @@
+enum MaybeI32 {
+  Nothing,
+  Just(i32),
+}
+
+struct MaybeCursor {
+  value: MaybeI32,
+}
+
+impl Iterator[MaybeI32] for MaybeCursor {
+  fn next(self) -> Option[MaybeI32] {
+    Some(self.value)
+  }
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  let hit = MaybeCursor { value: Just(5i32) };
+  let miss = MaybeCursor { value: Nothing };
+  let range_hit = MaybeCursor { value: Just(3i32) };
+  let or_hit = MaybeCursor { value: Just(6i32) };
+  let alias_hit = MaybeCursor { value: Just(7i32) };
+
+  for Just(value) in hit {
+    total = total + (value as i64);
+    break;
+  }
+
+  for Just(_) in miss {
+    total = total + 100;
+  }
+
+  for Just(2..=4) in range_hit {
+    total = total + 10;
+    break;
+  }
+
+  for Just(5 | 6) in or_hit {
+    total = total + 20;
+    break;
+  }
+
+  for Just(inner @ 7) in alias_hit {
+    total = total + (inner as i64);
+    break;
+  }
+
+  return total;
+}
