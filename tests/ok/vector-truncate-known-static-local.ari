@@ -1,0 +1,9 @@
+const LIMIT: i64 = 1;
+
+fn main() -> i64 {
+  let keep = LIMIT + 1;
+  var values: Vec[i64] = [2, 4, 6];
+  values.truncate(keep);
+  values.push(8);
+  return values.capacity() + values.len() + values[2];
+}

@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <utility>
 
@@ -130,6 +131,12 @@ void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity) {
     }
 }
 
+bool vector_literal_length(const IrExpr& expr, std::uint64_t& out) {
+    if (expr.kind != IrExprKind::Vector) return false;
+    out = static_cast<std::uint64_t>(expr.args.size());
+    return true;
+}
+
 std::string local_vec_api_freeze_message(const std::string& method_name) {
     const std::string supported =
         "as_slice, capacity, clear, contains, count, first, get, index_of, "
@@ -206,6 +213,14 @@ bool try_fold_static_integer_value(const IrExpr& expr, StaticIntegerValue& out) 
     }
     if (overflow) return false;
     out = static_integer_from_i64(result);
+    return true;
+}
+
+bool vector_known_length_after_truncate(std::uint64_t current_length,
+                                        const StaticIntegerValue& requested_length,
+                                        std::uint64_t& out) {
+    if (requested_length.negative) return false;
+    out = std::min(current_length, requested_length.value);
     return true;
 }
 

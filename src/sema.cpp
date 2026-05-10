@@ -4680,12 +4680,6 @@ private:
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
 
-    static bool vector_literal_length(const IrExpr& expr, std::uint64_t& out) {
-        if (expr.kind != IrExprKind::Vector) return false;
-        out = static_cast<std::uint64_t>(expr.args.size());
-        return true;
-    }
-
     static void set_vector_known_length(LocalInfo& local, std::uint64_t length) {
         if (!is_vector_storage_type(local.type)) return;
         local.vector_length_known = true;
@@ -14793,13 +14787,26 @@ private:
         if (!expr.type_args.empty()) fail(expr.loc, "Vec.truncate does not take type arguments");
         if (expr.args.size() != 1) fail(expr.loc, "Vec.truncate expects one length argument");
 
+        const Expr& length_expr = *expr.args[0];
+        StaticIntegerValue source_known_length;
+        bool has_source_known_length = known_integer_capacity(length_expr, source_known_length);
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr new_length = check_expr(*expr.args[0]);
+        IrExprPtr new_length = check_expr(length_expr);
         if (!is_value_integer_type(new_length->type)) {
-            fail(expr.args[0]->loc, "Vec.truncate length must be an integer, got " + type_name(new_length->type));
+            fail(length_expr.loc, "Vec.truncate length must be an integer, got " + type_name(new_length->type));
         }
-        if (local.vector_length_known && new_length->kind == IrExprKind::Integer && !new_length->int_negative) {
-            local.vector_known_length = std::min(local.vector_known_length, new_length->int_value);
+        StaticIntegerValue folded_length;
+        const StaticIntegerValue* requested_known_length = nullptr;
+        if (has_source_known_length) {
+            requested_known_length = &source_known_length;
+        } else if (try_fold_static_integer_value(*new_length, folded_length)) {
+            requested_known_length = &folded_length;
+        }
+        std::uint64_t updated_known_length = 0;
+        if (local.vector_length_known &&
+            requested_known_length &&
+            vector_known_length_after_truncate(local.vector_known_length, *requested_known_length, updated_known_length)) {
+            local.vector_known_length = updated_known_length;
         } else {
             invalidate_vector_known_length(local);
         }

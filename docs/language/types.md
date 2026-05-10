@@ -472,8 +472,12 @@ the first matching runtime index as `i64`, or `-1` when no element matches.
 current runtime length.
 `truncate(n)` shrinks the current runtime length to `n` when `n` is smaller
 than the current length, leaves it unchanged when `n` is larger, and panics for
-negative runtime lengths. `set(index, value)` overwrites an existing element
-inside the current runtime length and uses the same bounds checks as indexing.
+negative runtime lengths. Literal lengths, integer constants, static signed
+integer arithmetic expressions, and immutable local integers initialized from
+those expressions keep the compiler's local length tracking precise for later
+`push` and `insert` storage decisions. `set(index, value)` overwrites an
+existing element inside the current runtime length and uses the same bounds
+checks as indexing.
 `swap(a, b)` exchanges two elements inside the current runtime length, with the
 same bounds checks on both indexes.
 `remove(index)` returns the removed copyable element, shifts later elements one
