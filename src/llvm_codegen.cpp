@@ -2278,7 +2278,7 @@ private:
                     ? emit_enum_payload_slot(
                           arm.loc,
                           emit_compact_enum_payload_value(arm.loc, enum_value, binding.index, binding.compact_enum_type),
-                          0
+                          binding.compact_enum_payload_index
                       )
                     : emit_enum_payload_slot(arm.loc, enum_value, binding.index);
                 payload = cast_value(payload, binding.type);
@@ -2415,7 +2415,8 @@ private:
             condition = tag_both;
 
             if (payload_condition.has_payload_literal) {
-                Value nested_payload = emit_enum_payload_slot(arm.loc, nested, 0);
+                Value nested_payload = emit_enum_payload_slot(
+                    arm.loc, nested, payload_condition.nested_payload_index);
                 nested_payload = cast_value(nested_payload, payload_condition.payload_type);
                 std::string payload_cmp = temp();
                 std::string both = temp();
@@ -2426,7 +2427,8 @@ private:
             }
 
             if (payload_condition.has_payload_range) {
-                Value nested_payload = emit_enum_payload_slot(arm.loc, nested, 0);
+                Value nested_payload = emit_enum_payload_slot(
+                    arm.loc, nested, payload_condition.nested_payload_index);
                 nested_payload = cast_value(nested_payload, payload_condition.payload_type);
                 std::string lower = temp();
                 std::string upper = temp();

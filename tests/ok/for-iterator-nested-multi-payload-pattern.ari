@@ -1,0 +1,61 @@
+enum Item {
+  Empty,
+  Pair(i64, bool),
+  Other(i64),
+}
+
+struct Cursor {
+  mut step: i64,
+}
+
+impl Iterator[Item] for Cursor {
+  fn next(self: ref mut Self) -> Option[Item] {
+    if self.step == 0 {
+      self.step = 1;
+      return Some(Pair(4, true));
+    }
+    if self.step == 1 {
+      self.step = 2;
+      return Some(Empty);
+    }
+    if self.step == 2 {
+      self.step = 3;
+      return Some(Pair(9, false));
+    }
+    if self.step == 3 {
+      self.step = 4;
+      return Some(Pair(12, true));
+    }
+    return None<Item>();
+  }
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  let first = Cursor { step: 0 };
+  for Pair(4, flag) in first {
+    if flag {
+      total = total + 10;
+    }
+  }
+
+  let second = Cursor { step: 0 };
+  for let Pair(value @ 9, false) in second {
+    total = total + value;
+  }
+
+  let third = Cursor { step: 0 };
+  for let Pair(10..=12, ok @ true) in third {
+    if ok {
+      total = total + 20;
+    }
+  }
+
+  let fourth = Cursor { step: 0 };
+  for Pair(99, _) in fourth {
+    total = total + 100;
+  }
+
+  return total;
+}

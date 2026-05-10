@@ -6305,14 +6305,14 @@ private:
                 key += ":E" + std::to_string(condition.index) + ":" + condition.enum_type.name + ":" +
                        std::to_string(condition.tag);
                 if (condition.has_payload_literal) {
-                    key += std::string(":L") +
+                    key += std::string(":L") + std::to_string(condition.nested_payload_index) + ":" +
                            (condition.payload_literal_negative ? "-" : "") +
                            std::to_string(condition.payload_literal_int) + ":" +
                            (condition.payload_literal_is_bool ? "B" : "I") + ":" +
                            (condition.payload_literal_bool ? "1" : "0");
                 }
                 if (condition.has_payload_range) {
-                    key += std::string(":R") +
+                    key += std::string(":R") + std::to_string(condition.nested_payload_index) + ":" +
                            (condition.range_start_negative ? "-" : "") +
                            std::to_string(condition.range_start_int) + ":" +
                            (condition.range_end_negative ? "-" : "") +
@@ -6826,27 +6826,60 @@ private:
         if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
             fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
         }
-        if (case_info.payloads.size() > 1) {
-            fail(pattern.loc, "nested multi-payload enum case patterns are planned but are not supported yet");
+        IrPayloadEnumCondition tag_condition;
+        tag_condition.index = payload_index;
+        tag_condition.enum_type = payload_type;
+        tag_condition.tag = case_info.tag;
+
+        if (case_info.payloads.empty()) {
+            lowered_arm.payload_enum_conditions.push_back(std::move(tag_condition));
+            return;
         }
 
-        IrPayloadEnumCondition condition;
-        condition.index = payload_index;
-        condition.enum_type = payload_type;
-        condition.tag = case_info.tag;
-
-        if (!case_info.payloads.empty()) {
+        if (case_info.payloads.size() == 1) {
+            IrPayloadEnumCondition condition = tag_condition;
             lower_nested_enum_payload_slot_pattern(
                 *pattern.payload_pattern,
                 case_info.payloads[0],
                 payload_type,
                 lowered_arm,
                 payload_index,
+                0,
                 condition
             );
+            lowered_arm.payload_enum_conditions.push_back(std::move(condition));
+            return;
         }
 
-        lowered_arm.payload_enum_conditions.push_back(std::move(condition));
+        const Pattern& payload = *pattern.payload_pattern;
+        if (payload.kind != PatternKind::Tuple) {
+            fail(payload.loc, "nested multi-payload enum case patterns must use positional payload patterns");
+        }
+        require_tuple_pattern_arity(payload, case_info.enum_type, case_info.payloads);
+
+        lowered_arm.payload_enum_conditions.push_back(tag_condition);
+        std::size_t suffix_count = payload.has_rest ? payload.elements.size() - payload.rest_index : 0;
+        for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+            std::size_t nested_payload_index = i;
+            if (payload.has_rest && i >= payload.rest_index) {
+                nested_payload_index = case_info.payloads.size() - suffix_count + (i - payload.rest_index);
+            }
+
+            IrPayloadEnumCondition condition = tag_condition;
+            condition.nested_payload_index = static_cast<std::uint32_t>(nested_payload_index);
+            lower_nested_enum_payload_slot_pattern(
+                payload.elements[i],
+                case_info.payloads[nested_payload_index],
+                payload_type,
+                lowered_arm,
+                payload_index,
+                static_cast<std::uint32_t>(nested_payload_index),
+                condition
+            );
+            if (condition.has_payload_literal || condition.has_payload_range) {
+                lowered_arm.payload_enum_conditions.push_back(std::move(condition));
+            }
+        }
     }
 
     bool try_lower_nested_zero_payload_case(SourceLocation loc,
@@ -6874,10 +6907,13 @@ private:
                                                 const IrType& nested_enum_type,
                                                 IrMatchArm& lowered_arm,
                                                 std::uint32_t payload_index,
+                                                std::uint32_t nested_payload_index,
                                                 IrPayloadEnumCondition& condition) {
+        condition.nested_payload_index = nested_payload_index;
         switch (pattern.kind) {
             case PatternKind::Binding:
-                add_compact_enum_payload_binding(lowered_arm, payload_index, pattern.payload_name, nested_payload_type, nested_enum_type);
+                add_compact_enum_payload_binding(
+                    lowered_arm, payload_index, pattern.payload_name, nested_payload_type, nested_enum_type, nested_payload_index);
                 return;
             case PatternKind::Wildcard:
                 return;
@@ -6886,13 +6922,15 @@ private:
                 if (pattern_has_binding(*pattern.alias_pattern)) {
                     fail(pattern.loc, "alias payload patterns cannot contain another binding yet");
                 }
-                add_compact_enum_payload_binding(lowered_arm, payload_index, pattern.alias_name, nested_payload_type, nested_enum_type);
+                add_compact_enum_payload_binding(
+                    lowered_arm, payload_index, pattern.alias_name, nested_payload_type, nested_enum_type, nested_payload_index);
                 lower_nested_enum_payload_slot_pattern(
                     *pattern.alias_pattern,
                     nested_payload_type,
                     nested_enum_type,
                     lowered_arm,
                     payload_index,
+                    nested_payload_index,
                     condition
                 );
                 return;
@@ -7216,13 +7254,15 @@ private:
                                                  std::uint32_t index,
                                                  const std::string& name,
                                                  const IrType& type,
-                                                 const IrType& enum_type) {
+                                                 const IrType& enum_type,
+                                                 std::uint32_t nested_payload_index = 0) {
         IrPayloadBinding binding;
         binding.index = index;
         binding.name = name;
         binding.type = type;
         binding.compact_enum_payload = true;
         binding.compact_enum_type = enum_type;
+        binding.compact_enum_payload_index = nested_payload_index;
         arm.payload_bindings.push_back(binding);
         if (!arm.has_payload_binding) {
             arm.has_payload_binding = true;

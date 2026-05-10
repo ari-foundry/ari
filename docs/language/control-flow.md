@@ -303,6 +303,10 @@ for Just(value) in maybe_values {
 for Just(5 | 6) in maybe_values {
   total = total + 1;
 }
+
+for Pair(left @ 4, true) in pair_values {
+  total = total + left;
+}
 ```
 
 These patterns use `while let Some(pattern) = iterator.next()` semantics. If an
@@ -321,9 +325,12 @@ for let 10..=20 in scores {
 `for let` filters currently require an `Iterator[T]` or `IntoIterator[T]`
 value. Range, list-literal, and stored-vector loops still use irrefutable
 binding/destructuring loop heads. Or-pattern alternatives must bind the same
-names. Enum-case item patterns are currently limited to fieldless cases,
-compact enum payload cases, and LLVM nested aggregate-enum item cases whose
-`Option[T]` payload slot stores a single nested aggregate enum type.
+names. Enum-case item patterns support fieldless cases, compact enum payload
+cases, and nested aggregate-enum item cases whose `Option[T]` payload slot
+stores one nested aggregate enum type. Nested aggregate enum cases may bind or
+test positional multi-payload slots with literal/range/alias subpatterns.
+Or-patterns inside those nested payload slots remain planned; use an outer
+item-pattern alternative such as `Pair(1, _) | Pair(2, _)` for now.
 
 The current source trait still uses an Ari-specific return contract for
 `into_iter` instead of a first-class associated iterator type. Impl validation

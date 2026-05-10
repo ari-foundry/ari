@@ -88,6 +88,7 @@ struct IrPayloadBinding {
     IrType type;
     bool compact_enum_payload = false;
     IrType compact_enum_type;
+    std::uint32_t compact_enum_payload_index = 0;
 };
 
 struct IrPayloadLiteralCondition {
@@ -113,6 +114,7 @@ struct IrPayloadEnumCondition {
     std::uint32_t index = 0;
     IrType enum_type;
     std::uint32_t tag = 0;
+    std::uint32_t nested_payload_index = 0;
     bool has_payload_literal = false;
     std::uint64_t payload_literal_int = 0;
     bool payload_literal_negative = false;

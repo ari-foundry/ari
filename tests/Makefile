@@ -310,6 +310,9 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/for-iterator-aggregate-payload-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.ll
 	grep -F -q "extractvalue { i32, { i32, i64 } }" $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.ll
+	$(TARGET) tests/ok/for-iterator-nested-multi-payload-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-nested-multi-payload-pattern.ll
+	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-nested-multi-payload-pattern.ll
+	grep -F -q "extractvalue { i32, { i32, i64, i64 } }" $(BUILD_DIR)/control-flow/for-iterator-nested-multi-payload-pattern.ll
 	$(TARGET) tests/ok/for-iterator-mut-self.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-mut-self.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-mut-self.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-direct.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-direct.elf; $(BUILD_DIR)/control-flow/for-iterator-direct.elf; code=$$?; test $$code -eq 42; fi
@@ -322,6 +325,7 @@ check-control-flow: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-filter-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-filter-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-filter-pattern.elf; code=$$?; test $$code -eq 20; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-payload-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-payload-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-payload-pattern.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-aggregate-payload-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-aggregate-payload-pattern.elf; code=$$?; test $$code -eq 21; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-nested-multi-payload-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-nested-multi-payload-pattern.elf; $(BUILD_DIR)/control-flow/for-iterator-nested-multi-payload-pattern.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-iterator-mut-self.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-iterator-mut-self.elf; $(BUILD_DIR)/control-flow/for-iterator-mut-self.elf; code=$$?; test $$code -eq 15; fi
 	if $(TARGET) tests/errors/for-iterator-planned.ari -o $(BUILD_DIR)/control-flow/for-iterator-planned.elf >$(BUILD_DIR)/control-flow/for-iterator-planned.err 2>&1; then exit 1; fi
 	grep -q "copyable IntoIterator\\[T\\] values" $(BUILD_DIR)/control-flow/for-iterator-planned.err

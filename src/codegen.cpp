@@ -1931,7 +1931,8 @@ private:
             patches.push_back(emit_jcc_placeholder(0x85));
 
             if (condition.has_payload_literal) {
-                emit_load_nested_enum_payload_slot(condition, arm.loc, match_base_offset, enum_type, 0);
+                emit_load_nested_enum_payload_slot(
+                    condition, arm.loc, match_base_offset, enum_type, condition.nested_payload_index);
                 emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
                 emit_mov_reg_imm64(Reg::RCX, nested_payload_literal_bits(condition));
                 emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
@@ -1939,13 +1940,15 @@ private:
             }
 
             if (condition.has_payload_range) {
-                emit_load_nested_enum_payload_slot(condition, arm.loc, match_base_offset, enum_type, 0);
+                emit_load_nested_enum_payload_slot(
+                    condition, arm.loc, match_base_offset, enum_type, condition.nested_payload_index);
                 emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
                 emit_mov_reg_imm64(Reg::RCX, nested_payload_range_start_bits(condition));
                 emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
                 patches.push_back(emit_jcc_placeholder(condition.range_is_unsigned ? 0x82 : 0x8C));
 
-                emit_load_nested_enum_payload_slot(condition, arm.loc, match_base_offset, enum_type, 0);
+                emit_load_nested_enum_payload_slot(
+                    condition, arm.loc, match_base_offset, enum_type, condition.nested_payload_index);
                 emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.payload_type);
                 emit_mov_reg_imm64(Reg::RCX, nested_payload_range_end_bits(condition));
                 emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
@@ -2089,7 +2092,8 @@ private:
                     IrPayloadEnumCondition nested;
                     nested.index = binding.index;
                     nested.enum_type = binding.compact_enum_type;
-                    emit_load_nested_enum_payload_slot(nested, arm.loc, match_base_offset, enum_type, 0);
+                    emit_load_nested_enum_payload_slot(
+                        nested, arm.loc, match_base_offset, enum_type, binding.compact_enum_payload_index);
                     emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, binding.type);
                     emit_store_rax_to_local(local_offset(arm.loc, binding.name), binding.type);
                     continue;
