@@ -125,9 +125,11 @@ bindings, host string/float bindings, and pattern bindings inside `match` arms.
 `make check-ffi` runs C FFI tests for libc declarations, explicit C link names,
 module externs, x86-64 C ABI type aliases, `ptr c_char` string arguments,
 `c_void` returns, `ref mut` pointer parameters, C varargs with default
-promotions, variadic function-pointer rejection, permanent generic-extern
-rejection, and the by-value `c_void` diagnostic. When `clang` and `ar` are
-available it also builds and links a small C helper library.
+promotions, nullable raw pointers, pointer casts, byte-wise and typed pointer
+offsets, layout queries, raw pointer load/store/dereference helpers, aggregate
+pointer field/index access, variadic function-pointer rejection, permanent
+generic-extern rejection, and the by-value `c_void` diagnostic. When `clang` and
+`ar` are available it also builds and links a small C helper library.
 
 `make check-functions` runs the function-focused suite: `main` rules, return
 checking, recursion, void functions, argument counts/types, generic calls,

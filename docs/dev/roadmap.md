@@ -60,7 +60,10 @@
    Ari-owned `extern "ari"` builtin hooks are represented as explicit
    non-C ABI shims in IR, and scalar C aliases now follow target triples.
    The next FFI priority is to make foreign aggregate layout and pointer
-   interop explicit enough for stable C headers.
+   interop explicit enough for stable C headers. The raw-pointer helper
+   surface is implemented for nullable pointers, casts, byte/typed offsets,
+   layout queries, scalar/plain-aggregate loads and stores, dereference syntax,
+   and scalar aggregate field/element access on the supported backends.
    - [repr] finish `repr(C)` aggregate ABI layout policy for
      ownership-qualified fields, by-value aggregate function ABI, and concrete
      generic struct header definitions; public non-generic `@repr(C)` struct
@@ -74,13 +77,6 @@
      generic value fields are accepted after concrete instantiation, generic
      `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
      and generic fieldless enums are accepted because their layout is payload-free
-   - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable
-     raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer
-     casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate
-     offsets, scalar/plain Ari-aggregate load/store helpers, scalar/plain
-     Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate
-     field/element pointer access, and `size_of<T>()` / `align_of<T>()`
-     layout queries are implemented
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -132,6 +128,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      nested aggregate-enum values once the ABI and copy rules are explicit
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
+   - [payload-pointers] lower direct payload field pointer access for
+     aggregate enum payloads after payload ABI and aliasing rules are explicit
 5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
