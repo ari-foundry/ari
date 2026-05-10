@@ -12,6 +12,16 @@ fn main() -> i64 {
   };
   let block_len = from_block.len();
 
+  let left: Vec[i64] = [10, 11, 12];
+  let right: Vec[i64] = [13, 14, 15];
+  let from_locals: Vec[i64] = if false {
+    left
+  } else {
+    right
+  };
+  let locals_len = from_locals.len();
+
   return assigned.capacity() + assigned_len + assigned[2] +
-         from_block.capacity() + block_len + from_block[2];
+         from_block.capacity() + block_len + from_block[2] +
+         from_locals.capacity() + locals_len + from_locals[2];
 }

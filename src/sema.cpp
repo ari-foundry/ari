@@ -4881,36 +4881,10 @@ private:
     }
 
     std::uint64_t vector_storage_capacity_from_source_expr(const Expr& expr) {
-        if (expr.kind == ExprKind::Vector) {
-            return static_cast<std::uint64_t>(expr.args.size());
-        }
-        if (expr.kind == ExprKind::Name) {
-            const LocalInfo* local = find_local_slot(expr.name);
+        return vector_storage_capacity_from_source_tree(expr, [this](const std::string& name) {
+            const LocalInfo* local = find_local_slot(name);
             return local && is_vector_storage_type(local->type) ? local->type.array_size : 0;
-        }
-        if (expr.kind == ExprKind::Block && expr.block_value) {
-            return vector_storage_capacity_from_source_expr(*expr.block_value);
-        }
-        if (expr.kind == ExprKind::If) {
-            std::uint64_t capacity = 0;
-            if (expr.then_value) {
-                capacity = std::max(capacity, vector_storage_capacity_from_source_expr(*expr.then_value));
-            }
-            if (expr.else_value) {
-                capacity = std::max(capacity, vector_storage_capacity_from_source_expr(*expr.else_value));
-            }
-            return capacity;
-        }
-        if (expr.kind == ExprKind::Match) {
-            std::uint64_t capacity = 0;
-            for (const auto& arm : expr.match_arms) {
-                if (arm.value) {
-                    capacity = std::max(capacity, vector_storage_capacity_from_source_expr(*arm.value));
-                }
-            }
-            return capacity;
-        }
-        return 0;
+        });
     }
 
     void widen_vector_result_storage_from_source(IrType& type, const Expr& expr) {

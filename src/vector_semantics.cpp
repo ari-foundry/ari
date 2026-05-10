@@ -239,6 +239,45 @@ VectorKnownLength vector_known_length_from_source_tree(const Expr& source,
     return {};
 }
 
+std::uint64_t vector_storage_capacity_from_source_tree(const Expr& source,
+                                                       const VectorStorageCapacityLookup& lookup) {
+    if (source.kind == ExprKind::Vector) {
+        return static_cast<std::uint64_t>(source.args.size());
+    }
+    if (source.kind == ExprKind::Name) {
+        return lookup ? lookup(source.name) : 0;
+    }
+    if (source.kind == ExprKind::Block && source.block_value) {
+        return vector_storage_capacity_from_source_tree(*source.block_value, lookup);
+    }
+    if (source.kind == ExprKind::If) {
+        std::uint64_t capacity = 0;
+        if (source.then_value) {
+            capacity = std::max(
+                capacity,
+                vector_storage_capacity_from_source_tree(*source.then_value, lookup));
+        }
+        if (source.else_value) {
+            capacity = std::max(
+                capacity,
+                vector_storage_capacity_from_source_tree(*source.else_value, lookup));
+        }
+        return capacity;
+    }
+    if (source.kind == ExprKind::Match) {
+        std::uint64_t capacity = 0;
+        for (const auto& arm : source.match_arms) {
+            if (arm.value) {
+                capacity = std::max(
+                    capacity,
+                    vector_storage_capacity_from_source_tree(*arm.value, lookup));
+            }
+        }
+        return capacity;
+    }
+    return 0;
+}
+
 std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr) {
     std::uint64_t capacity = is_vector_storage_type(expr.type) ? expr.type.array_size : 0;
     auto merge_capacity = [&](const IrExprPtr& value) {

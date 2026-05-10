@@ -41,6 +41,7 @@ struct VectorKnownLength {
 };
 
 using VectorKnownLengthLookup = std::function<VectorKnownLength(const std::string&)>;
+using VectorStorageCapacityLookup = std::function<std::uint64_t(const std::string&)>;
 
 bool is_vector_storage_type(const IrType& type);
 IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length);
@@ -53,6 +54,8 @@ VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, cons
 VectorKnownLength vector_known_length_from_source_tree(const Expr& source,
                                                        const VectorKnownLengthLookup& lookup);
 std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr);
+std::uint64_t vector_storage_capacity_from_source_tree(const Expr& source,
+                                                       const VectorStorageCapacityLookup& lookup);
 LocalVecMethod classify_local_vec_method(const std::string& method_name);
 void require_collection_len_function_shape(SourceLocation loc,
                                            std::size_t type_arg_count,

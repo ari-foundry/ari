@@ -24,12 +24,12 @@ construction. Some helpers have already moved out to focused files:
   method diagnostics, frozen API diagnostics, local Vec IR construction helpers
   such as `first`, `last`, and `push`, and `VectorKnownLength`/capacity
   transition helpers used by local `len`/`is_empty`, `as_slice` length, and
-  stored-vector `for` loop bound constant lowering, plus local Vec
-  source-AST known-length merging with semantic local-name callbacks for direct
-  `len`/`is_empty` folding, direct index diagnostics, local-vector
-  initialization, assignment, stored-vector `for` loop bounds, local-binding copies inside
-  `if`/block/`match`/`if let` expression results, and nested result
-  storage-capacity reads
+  stored-vector `for` loop bound constant lowering, plus local Vec source-AST
+  known-length and storage-capacity merging with semantic local-name callbacks
+  for direct `len`/`is_empty` folding, direct index diagnostics, local-vector
+  initialization, assignment, stored-vector `for` loop bounds, local-binding
+  copies inside `if`/block/`match`/`if let` expression results, and nested
+  result storage-capacity reads
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions,
   pointer operations, direct builtin calls, match expression arms, and
