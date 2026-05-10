@@ -1461,15 +1461,41 @@ private:
         return Value{lltype, out, type};
     }
 
+    static bool is_reference_like_lvalue_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Ref ||
+               type.qualifier == TypeQualifier::MutRef ||
+               type.qualifier == TypeQualifier::Ptr;
+    }
+
+    static IrType lvalue_pointee_type(IrType type) {
+        type.qualifier = TypeQualifier::Value;
+        return type;
+    }
+
+    const IrType& gep_base_type(const IrExpr& expr, IrType& scratch) const {
+        if (is_reference_like_lvalue_type(expr.type)) {
+            scratch = lvalue_pointee_type(expr.type);
+            return scratch;
+        }
+        return expr.type;
+    }
+
     std::string emit_lvalue_ptr(const IrExpr& expr) {
-        if (expr.kind == IrExprKind::Local) return local_slot(expr.loc, expr.name);
+        if (expr.kind == IrExprKind::Local) {
+            std::string slot = local_slot(expr.loc, expr.name);
+            if (!is_reference_like_lvalue_type(expr.type)) return slot;
+            std::string out = temp();
+            line("  " + out + " = load ptr, ptr " + slot);
+            return out;
+        }
         if (expr.kind == IrExprKind::PointerLoad && expr.operand) {
             return emit_expr(*expr.operand).name;
         }
         if (expr.kind == IrExprKind::TupleIndex && expr.operand) {
             std::string base = emit_lvalue_ptr(*expr.operand);
             std::string ptr = temp();
-            line("  " + ptr + " = getelementptr inbounds " + llvm_type(expr.operand->type) +
+            IrType base_type;
+            line("  " + ptr + " = getelementptr inbounds " + llvm_type(gep_base_type(*expr.operand, base_type)) +
                  ", ptr " + base + ", i32 0, i32 " + std::to_string(expr.tuple_index));
             return ptr;
         }
@@ -1485,13 +1511,15 @@ private:
             IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
             Value index = cast_value(emit_expr(*expr.right), index_type);
             std::string ptr = temp();
+            IrType base_type;
+            const IrType& storage_type = gep_base_type(*expr.operand, base_type);
             if (expr.operand->type.primitive == IrPrimitiveKind::Array) {
                 emit_array_bounds_check(index, expr.operand->type.array_size);
-                line("  " + ptr + " = getelementptr inbounds " + llvm_type(expr.operand->type) +
+                line("  " + ptr + " = getelementptr inbounds " + llvm_type(storage_type) +
                      ", ptr " + base + ", i64 0, i64 " + index.name);
             } else {
                 emit_vector_bounds_check(index, expr.operand->type, base);
-                line("  " + ptr + " = getelementptr inbounds " + llvm_type(expr.operand->type) +
+                line("  " + ptr + " = getelementptr inbounds " + llvm_type(storage_type) +
                      ", ptr " + base + ", i32 0, i32 1, i64 " + index.name);
             }
             return ptr;
@@ -1501,6 +1529,11 @@ private:
 
     static bool is_pointer_backed_lvalue(const IrExpr& expr) {
         if (expr.kind == IrExprKind::PointerLoad) return true;
+        if (expr.kind == IrExprKind::Local) {
+            return expr.type.qualifier == TypeQualifier::Ref ||
+                   expr.type.qualifier == TypeQualifier::MutRef ||
+                   expr.type.qualifier == TypeQualifier::Ptr;
+        }
         if ((expr.kind == IrExprKind::TupleIndex ||
              expr.kind == IrExprKind::Index) &&
             expr.operand) {

@@ -83,7 +83,7 @@ pub mod iter {
   }
 
   pub trait Iterator[T] {
-    fn next(self) -> Option[T];
+    fn next(self: ref mut Self) -> Option[T];
   }
 
   pub trait IntoIterator[T] {
@@ -201,7 +201,7 @@ pub trait Iterable[T] {
 }
 
 pub trait Iterator[T] {
-  fn next(self) -> Option[T];
+  fn next(self: ref mut Self) -> Option[T];
 }
 
 pub trait IntoIterator[T] {

@@ -283,14 +283,18 @@ ToString
 ToOwned
 ```
 
-`Iterator[T]` requires `fn next(self) -> Option[T]`. Direct `for` lowering works
-for copyable non-borrow iterator values.
+`Iterator[T]` requires `fn next(self: ref mut Self) -> Option[T]`. Direct `for`
+lowering works for copyable non-borrow iterator values by storing the iterator
+once and mutably borrowing that hidden iterator binding for each `next` call.
+The compiler still accepts value-self `next(self)` impls for copyable
+snapshot-style iterators while older surface tests migrate.
 
 `IntoIterator[T]` currently declares `fn into_iter(self) -> Self` as the default
 source shape. Impl methods may return a distinct iterator type; `for` lowering
 validates that the concrete `into_iter` result implements `Iterator[T]`.
-Stateful iterator receiver policy and a first-class associated iterator result
-spelling remain planned.
+The first stateful `Iterator.next` receiver policy is implemented for copyable
+iterator values. A first-class associated iterator result spelling, owner/borrow
+iterator values, and mutable `IntoIterator` receiver policy remain planned.
 
 `Drop` is the prelude trait connected to explicit ownership destruction:
 

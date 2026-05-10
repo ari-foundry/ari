@@ -60,27 +60,31 @@
    Range loops, list literal loops, and stored local vector loops lower today
    without trait dispatch. Sema now recognizes concrete and generic
    `Iterator[T]`/`IntoIterator[T]` impls, reports the inferred item type, and
-   source `std::Iterator[T]` now reserves the required
-   `next(self) -> Option[T]` method shape. Direct copyable non-borrow
-   `Iterator[T]` values now lower by storing the iterator expression once and
-   looping with `while let std::Some(pattern) = iterator.next()`. The first
+   source `std::Iterator[T]` now reserves the preferred
+   `next(self: ref mut Self) -> Option[T]` method shape while still accepting
+   value-self `next(self)` impls for copyable snapshot-style iterators. Direct
+   copyable non-borrow `Iterator[T]` values now lower by storing the iterator
+   expression once in a hidden mutable binding and looping with
+   `while let std::Some(pattern) = iterator.next()`. The first
    `IntoIterator[T]` executable subset is also implemented for copyable
    non-borrow values whose `into_iter(self)` result implements `Iterator[T]`,
    including impls that return a distinct iterator type. Because Ari does not
    have associated types yet, sema treats the `IntoIterator[T].into_iter`
    return type as an impl-specific contract and validates the concrete result at
    `for` lowering sites. The remaining iterator model needs a first-class
-   source spelling for that iterator result and stateful/mutable iterator
-   receiver policy. Iterator item patterns can now use scalar literal/range
-   tests, or-patterns over those tests, fieldless enum-case patterns, and
-   compact enum item payload bindings/literal/range/or/alias tests; the current
+   source spelling for that iterator result, owner/borrow iterator value policy,
+   and mutable `IntoIterator` receiver policy. Iterator item patterns can now
+   use scalar literal/range tests, or-patterns over those tests, fieldless
+   enum-case patterns, and compact enum item payload
+   bindings/literal/range/or/alias tests; the current
    semantics are `while let Some(pattern) = iterator.next()`, so the first
    non-matching item ends the loop rather than being skipped.
    - [contract] replace the compiler-known `into_iter` result relaxation with
      a first-class associated iterator type or equivalent Ari-specific trait
      contract
-   - [state] define mutable/stateful iterator receiver policy instead of the
-     current copyable value-self subset
+   - [state] extend the new `next(self: ref mut Self)` support beyond copyable
+     non-borrow iterator values to owner/borrow iterator values, explicit
+     iterator lifetime rules, and any mutable `IntoIterator` receiver policy
    - [pattern-filter] decide whether Ari also wants a separate skip/filter
      loop form for refutable item patterns instead of only the current
      stop-on-first-mismatch semantics

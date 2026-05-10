@@ -305,11 +305,13 @@ copyable LLVM trait-object subset lower through the same source trait table.
 `Iterator[T]` has one required step method:
 
 ```ari
-fn next(self) -> Option[T]
+fn next(self: ref mut Self) -> Option[T]
 ```
 
-Direct `for` lowering works for copyable non-borrow iterator values by calling
-`next` until it returns `None`.
+Direct `for` lowering works for copyable non-borrow iterator values by storing
+the iterator once, mutably borrowing that hidden iterator binding, and calling
+`next` until it returns `None`. Value-self `next(self)` impls remain accepted as
+a compatibility subset for copyable snapshot-style iterators.
 
 `IntoIterator[T]` has one current conversion method:
 

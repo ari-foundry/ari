@@ -75,6 +75,8 @@ Rules currently checked:
 - a binding cannot be moved, dropped, or assigned while borrowed
 - borrowed aggregate fields and elements are tracked by path, so unrelated
   fields can still be read or assigned
+- fields behind a `ref mut Struct` parameter can be read and assigned through
+  the borrow, subject to the struct field's own `mut` marker
 - a named borrow keeps the source borrowed until the binding's block exits
 - borrow bindings must be initialized directly with `ref` or `ref mut`
 - borrow bindings cannot be reassigned

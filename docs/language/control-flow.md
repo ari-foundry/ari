@@ -266,8 +266,11 @@ or-pattern, and enum-case loop heads are still rejected for list/vector loops
 because those loops bind every element instead of calling `Iterator[T].next()`.
 
 Direct copyable non-borrow `Iterator[T]` values lower through the standard
-`next(self) -> Option[T]` step operation. The iterator expression is evaluated
-once, then Ari repeats `iterator.next()` while it returns `std::Some(item)`.
+`next(self: ref mut Self) -> Option[T]` step operation. The iterator expression
+is evaluated once into a hidden mutable iterator binding, then Ari repeats
+`iterator.next()` while it returns `std::Some(item)`. Existing value-self
+iterator impls remain accepted for copyable snapshot-style iterators, but
+stateful iterators should prefer `self: ref mut Self`.
 Copyable non-borrow `IntoIterator[T]` values also lower when `into_iter(self)`
 returns either `Self` or another copyable non-borrow value that implements
 `Iterator[T]`.
@@ -308,8 +311,10 @@ limited to fieldless cases and compact enum payload cases. Aggregate-layout enum
 items inside `Option[T]` still depend on broader aggregate enum payload storage.
 
 The current source trait still uses a compiler-known return contract for
-`into_iter` instead of a first-class associated iterator type. Mutable/stateful
-iterator receivers remain planned.
+`into_iter` instead of a first-class associated iterator type. Mutable
+`Iterator.next` receivers now work for copyable non-borrow iterator values; the
+broader policy for owner/borrow iterator values and mutable `IntoIterator`
+receivers remains planned.
 
 ## Break
 

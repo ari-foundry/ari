@@ -1600,6 +1600,34 @@ private:
         return true;
     }
 
+    static IrType value_qualified_type(IrType type) {
+        type.qualifier = TypeQualifier::Value;
+        return type;
+    }
+
+    static bool is_receiver_borrow_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Ref || type.qualifier == TypeQualifier::MutRef;
+    }
+
+    static bool same_receiver_base_type(const IrType& left, const IrType& right) {
+        return same_type(value_qualified_type(left), value_qualified_type(right));
+    }
+
+    static bool is_self_receiver_param(const IrType& param, const IrType& self_type) {
+        if (same_type(param, self_type)) return true;
+        if (!is_receiver_borrow_type(param)) return false;
+        return same_receiver_base_type(param, self_type);
+    }
+
+    static bool borrowed_receiver_matches_value(const IrType& expected,
+                                                const IrType& receiver_type,
+                                                bool& mutable_borrow) {
+        if (!is_receiver_borrow_type(expected)) return false;
+        if (!same_receiver_base_type(expected, receiver_type)) return false;
+        mutable_borrow = expected.qualifier == TypeQualifier::MutRef;
+        return true;
+    }
+
     static bool has_name(const std::vector<std::string>& names, const std::string& name) {
         return std::find(names.begin(), names.end(), name) != names.end();
     }
@@ -1872,8 +1900,23 @@ private:
         return name == "std::IntoIterator" || name == "std::iter::IntoIterator";
     }
 
+    static bool is_std_iterator_trait_name(const std::string& name) {
+        return name == "std::Iterator" || name == "std::iter::Iterator";
+    }
+
     static bool is_into_iterator_result_contract(const TraitInfo& trait, const std::string& method_name) {
         return method_name == "into_iter" && is_std_into_iterator_trait_name(trait.name);
+    }
+
+    static bool is_iterator_next_receiver_contract(const TraitInfo& trait, const std::string& method_name) {
+        return method_name == "next" && is_std_iterator_trait_name(trait.name);
+    }
+
+    static bool iterator_receiver_compatible(const IrType& expected, const IrType& actual) {
+        if (same_type(expected, actual)) return true;
+        return (expected.qualifier == TypeQualifier::Value || is_receiver_borrow_type(expected)) &&
+               (actual.qualifier == TypeQualifier::Value || is_receiver_borrow_type(actual)) &&
+               same_receiver_base_type(expected, actual);
     }
 
     void validate_trait_impl_methods(
@@ -1950,6 +1993,11 @@ private:
                 IrType expected = resolve_impl_method_type(expected_method.params[i], expected_method_substitutions);
                 IrType actual = resolve_impl_method_type(actual_method.params[i].type, actual_method_substitutions);
                 if (!same_type(expected, actual)) {
+                    if (i == 0 &&
+                        is_iterator_next_receiver_contract(trait, item.first) &&
+                        iterator_receiver_compatible(expected, actual)) {
+                        continue;
+                    }
                     fail(actual_method.params[i].type.loc,
                          "method '" + item.first + "' parameter " + std::to_string(i + 1) +
                              " type mismatch: expected " + type_name(expected) +
@@ -2167,8 +2215,11 @@ private:
                     drop_impls_[drop_impl_key(self_type)] = info;
                 }
 
+                bool has_self_receiver = !info.sig.params.empty() &&
+                    is_self_receiver_param(info.sig.params[0], self_type);
+
                 if (!impl.generics.empty() || !method.generics.empty()) {
-                    if (info.sig.params.empty() || !same_type(info.sig.params[0], self_type)) {
+                    if (!has_self_receiver) {
                         generic_associated_impls_.push_back(std::move(info));
                     } else {
                         generic_method_impls_.push_back(std::move(info));
@@ -2180,8 +2231,8 @@ private:
                         fail(method.loc, "duplicate lowered impl method '" + method_name + "' for " + type_name(self_type));
                     }
 
-                    if (!info.sig.params.empty() && same_type(info.sig.params[0], self_type)) {
-                        method_impls_[method_lookup_key(info.sig.params[0], method_name)].push_back(std::move(info));
+                    if (has_self_receiver) {
+                        method_impls_[method_lookup_key(self_type, method_name)].push_back(std::move(info));
                     } else {
                         associated_impls_[method_lookup_key(self_type, method_name)].push_back(std::move(info));
                     }
@@ -4971,12 +5022,16 @@ private:
 
     IrExprPtr check_tracked_assignment_target(SourceLocation loc, TrackedAggregateAccess access) {
         LocalInfo& local = require_live_local(loc, access.base_name);
-        if (!local.mutable_binding) fail(loc, "cannot assign to field of immutable binding '" + access.base_name + "'");
+        bool can_assign_through_base =
+            local.mutable_binding || access.base_type.qualifier == TypeQualifier::MutRef;
+        if (!can_assign_through_base) {
+            fail(loc, "cannot assign to field of immutable binding '" + access.base_name + "'");
+        }
         require_can_assign_borrow_path(loc, access.base_name, local, access.path);
         if (access.has_final_field_mutability && !access.final_field_mutable) {
             fail(loc,
                  "cannot assign to immutable field '" + access.final_field_label +
-                 "' of struct '" + access.final_container_name + "'");
+                     "' of struct '" + access.final_container_name + "'");
         }
         if (is_owner_type(access.type)) {
             require_can_assign_owned_field(loc, access.base_name, access.path);
@@ -9689,6 +9744,47 @@ private:
         return expr;
     }
 
+    static ExprPtr clone_borrowable_receiver_expr(const Expr& expr) {
+        auto clone = std::make_unique<Expr>();
+        clone->kind = expr.kind;
+        clone->loc = expr.loc;
+        clone->name = expr.name;
+        clone->tuple_index = expr.tuple_index;
+        clone->int_value = expr.int_value;
+        clone->int_negative = expr.int_negative;
+
+        switch (expr.kind) {
+            case ExprKind::Name:
+                return clone;
+            case ExprKind::FieldAccess:
+            case ExprKind::TupleIndex:
+                if (!expr.operand) return nullptr;
+                clone->operand = clone_borrowable_receiver_expr(*expr.operand);
+                if (!clone->operand) return nullptr;
+                return clone;
+            case ExprKind::Index:
+                if (!expr.operand || !expr.right || expr.right->kind != ExprKind::Integer) return nullptr;
+                clone->operand = clone_borrowable_receiver_expr(*expr.operand);
+                if (!clone->operand) return nullptr;
+                clone->right = clone_borrowable_receiver_expr(*expr.right);
+                if (!clone->right) return nullptr;
+                return clone;
+            case ExprKind::Integer:
+                return clone;
+            default:
+                return nullptr;
+        }
+    }
+
+    static ExprPtr make_ast_borrow_expr(SourceLocation loc, const Expr& operand, bool mutable_borrow) {
+        auto borrow = std::make_unique<Expr>();
+        borrow->kind = ExprKind::Borrow;
+        borrow->loc = loc;
+        borrow->mutable_borrow = mutable_borrow;
+        borrow->operand = clone_borrowable_receiver_expr(operand);
+        return borrow;
+    }
+
     static std::vector<std::string> for_iterator_trait_candidates(ForIteratorTraitKind kind) {
         if (kind == ForIteratorTraitKind::Iterator) {
             return {"std::Iterator", "std::iter::Iterator"};
@@ -9817,8 +9913,8 @@ private:
 
         std::string iterator_name = make_hidden_local("$for_iter");
         IrType iterator_type = iterator->type;
-        declare_local(stmt.loc, iterator_name, iterator_type, false);
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, iterator_name, iterator_type, std::move(iterator), false));
+        declare_local(stmt.loc, iterator_name, iterator_type, true);
+        lowered.statements.push_back(make_ir_var_decl(stmt.loc, iterator_name, iterator_type, std::move(iterator), true));
 
         auto loop = std::make_unique<IrStmt>();
         loop->kind = IrStmtKind::WhileLet;
@@ -14794,6 +14890,17 @@ private:
         }
         if (sig.params.size() != expr.args.size() + 1) {
             fail(expr.loc, "wrong argument count for method '" + expr.name + "'");
+        }
+
+        bool mutable_receiver_borrow = false;
+        if (borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
+            ExprPtr borrow_expr = make_ast_borrow_expr(expr.operand->loc, *expr.operand, mutable_receiver_borrow);
+            if (!borrow_expr->operand) {
+                fail(expr.loc,
+                     "method '" + expr.name +
+                         "' with borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
+            }
+            receiver = check_expr(*borrow_expr);
         }
 
         coerce_expr_to_expected(*receiver, sig.params[0]);
