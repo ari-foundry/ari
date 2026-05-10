@@ -20,21 +20,41 @@ Pattern clone_pattern_without_children(const Pattern& pattern) {
     copy.has_payload_pattern = pattern.has_payload_pattern;
     copy.has_payload_binding = pattern.has_payload_binding;
     copy.payload_name = pattern.payload_name;
-    copy.int_value = pattern.int_value;
     copy.int_negative = pattern.int_negative;
     copy.literal_suffix = pattern.literal_suffix;
     copy.range_end_value = pattern.range_end_value;
     copy.range_end_negative = pattern.range_end_negative;
     copy.range_end_suffix = pattern.range_end_suffix;
     copy.range_inclusive = pattern.range_inclusive;
-    copy.bool_value = pattern.bool_value;
     copy.field_names = pattern.field_names;
     copy.has_rest = pattern.has_rest;
     copy.rest_index = pattern.rest_index;
     copy.alias_name = pattern.alias_name;
     copy.loc = pattern.loc;
+    switch (pattern.kind) {
+        case PatternKind::IntegerLiteral:
+        case PatternKind::Range:
+            copy.int_value = pattern.int_value;
+            break;
+        case PatternKind::BoolLiteral:
+            copy.bool_value = pattern.bool_value;
+            break;
+        default:
+            break;
+    }
     return copy;
 }
+
+constexpr std::size_t kMaxOrPatternExpansions = 64;
+
+void append_pattern_expansion(std::vector<Pattern>& out, Pattern pattern, SourceLocation loc) {
+    if (out.size() >= kMaxOrPatternExpansions) {
+        fail(loc, "or-pattern expands to too many alternatives");
+    }
+    out.push_back(std::move(pattern));
+}
+
+} // namespace
 
 Pattern clone_pattern(const Pattern& pattern) {
     Pattern copy = clone_pattern_without_children(pattern);
@@ -54,17 +74,6 @@ Pattern clone_pattern(const Pattern& pattern) {
     }
     return copy;
 }
-
-constexpr std::size_t kMaxOrPatternExpansions = 64;
-
-void append_pattern_expansion(std::vector<Pattern>& out, Pattern pattern, SourceLocation loc) {
-    if (out.size() >= kMaxOrPatternExpansions) {
-        fail(loc, "or-pattern expands to too many alternatives");
-    }
-    out.push_back(std::move(pattern));
-}
-
-} // namespace
 
 bool pattern_has_binding(const Pattern& pattern) {
     if (pattern.kind == PatternKind::Binding) return true;

@@ -1,0 +1,35 @@
+fn scalar_score(value: i64) -> i64 {
+  return match value {
+    1 | 2 => 3,
+    small @ 3..=5 => small,
+    _ => 7,
+  };
+}
+
+fn bool_score(value: bool) -> i64 {
+  return match value {
+    true => 11,
+    false => 13,
+  };
+}
+
+fn signed_range_score(value: i64) -> i64 {
+  return match value {
+    -3..0 => 5,
+    _ => 0,
+  };
+}
+
+fn product_score(value: (i64, bool)) -> i64 {
+  return match value {
+    pair @ ((1, false) | (2, true)) => pair.0 + 17,
+    _ => 0,
+  };
+}
+
+fn main() -> i64 {
+  return scalar_score(4) +
+         bool_score(false) +
+         signed_range_score(-2) +
+         product_score((2, true));
+}

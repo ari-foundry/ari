@@ -419,6 +419,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-expression.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/match-literals.ari -o $(BUILD_DIR)/match/match-literals.raw
 	$(BUILD_DIR)/match/match-literals.raw; code=$$?; test $$code -eq 128
+	$(TARGET) --freestanding tests/ok/pattern-payload-unions.ari -o $(BUILD_DIR)/match/pattern-payload-unions.raw
+	$(BUILD_DIR)/match/pattern-payload-unions.raw; code=$$?; test $$code -eq 41
 	$(TARGET) --freestanding tests/ok/match-tuple-pattern.ari -o $(BUILD_DIR)/match/match-tuple-pattern.raw
 	$(BUILD_DIR)/match/match-tuple-pattern.raw; code=$$?; test $$code -eq 32
 	$(TARGET) --freestanding tests/ok/match-struct-pattern.ari -o $(BUILD_DIR)/match/match-struct-pattern.raw
@@ -478,6 +480,11 @@ check-match: $(TARGET)
 	grep -q "icmp eq i1" $(BUILD_DIR)/match/match-literals.ll
 	grep -q "icmp sge i64" $(BUILD_DIR)/match/match-literals.ll
 	grep -q "icmp slt i64" $(BUILD_DIR)/match/match-literals.ll
+	$(TARGET) tests/ok/pattern-payload-unions.ari --emit-llvm $(BUILD_DIR)/match/pattern-payload-unions.ll
+	grep -q "icmp eq i1" $(BUILD_DIR)/match/pattern-payload-unions.ll
+	grep -q "icmp sge i64" $(BUILD_DIR)/match/pattern-payload-unions.ll
+	grep -q "match.expr.arm" $(BUILD_DIR)/match/pattern-payload-unions.ll
+	grep -q "store { i64, i1 }" $(BUILD_DIR)/match/pattern-payload-unions.ll
 	$(TARGET) tests/ok/match-alias-pattern.ari --emit-llvm $(BUILD_DIR)/match/match-alias-pattern.ll
 	grep -q "store i64" $(BUILD_DIR)/match/match-alias-pattern.ll
 	grep -q "store i8" $(BUILD_DIR)/match/match-alias-pattern.ll

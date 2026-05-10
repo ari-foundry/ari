@@ -49,7 +49,9 @@ construction. Some helpers have already moved out to focused files:
   formatting, finite/symbolic product pattern domain lowering, enum match
   coverage state, enum duplicate detection, and enum exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection, positional
-  product field mapping, and or-pattern expansion helpers
+  product field mapping, or-pattern expansion helpers, and union-safe pattern
+  cloning shared by match/or-pattern normalization and sema iterator-filter
+  rewrites
 - `for_pattern_semantics` for irrefutable non-iterator `for` loop-head pattern
   validation shared by range, list-literal, and stored-vector loops
 - `move_semantics` for pure helpers around explicit ownership-consumption
@@ -68,8 +70,9 @@ construction. Some helpers have already moved out to focused files:
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
-literal payload in a tagged union, and `Expr`/`IrExpr` scalar literal and
-tuple-index payloads now share anonymous unions. Broader `Stmt` and expression
+literal payload in a tagged union, `Expr`/`IrExpr` scalar literal and
+tuple-index payloads now share anonymous unions, and AST `Pattern` integer/bool
+literal payloads share a union-backed slot. Broader `Stmt` and expression
 child/vector payload packing remains a separate refactor because those nodes
 are mutated across parser cloning, semantic lowering, and IR builder paths.
 

@@ -398,6 +398,10 @@ Checklist:
       and indexed-assignment lowering paths
 - [x] parser and sema share union-safe AST expression clone helpers for
       compound assignment targets and synthetic borrow receivers
+- [x] AST pattern literal payload packing preserves integer, bool, signed range,
+      or-pattern, alias, and product-pattern match lowering paths
+- [x] sema iterator filter rewrites reuse the shared union-safe pattern clone
+      helper
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

@@ -86,20 +86,24 @@ enum class PatternKind {
 };
 
 struct Pattern {
+    Pattern() : int_value(0) {}
+
     PatternKind kind = PatternKind::EnumCase;
     std::string case_name;
     bool has_payload_pattern = false;
     bool has_payload_binding = false;
     std::string payload_name;
     std::unique_ptr<Pattern> payload_pattern;
-    std::uint64_t int_value = 0;
+    union {
+        std::uint64_t int_value;
+        bool bool_value;
+    };
     bool int_negative = false;
     std::string literal_suffix;
     std::uint64_t range_end_value = 0;
     bool range_end_negative = false;
     std::string range_end_suffix;
     bool range_inclusive = false;
-    bool bool_value = false;
     std::vector<Pattern> alternatives;
     std::vector<std::string> field_names;
     std::vector<Pattern> elements;

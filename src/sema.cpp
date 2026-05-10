@@ -9660,43 +9660,6 @@ private:
         }
     }
 
-    static Pattern clone_pattern(const Pattern& pattern) {
-        Pattern copy;
-        copy.kind = pattern.kind;
-        copy.case_name = pattern.case_name;
-        copy.has_payload_pattern = pattern.has_payload_pattern;
-        copy.has_payload_binding = pattern.has_payload_binding;
-        copy.payload_name = pattern.payload_name;
-        copy.int_value = pattern.int_value;
-        copy.int_negative = pattern.int_negative;
-        copy.literal_suffix = pattern.literal_suffix;
-        copy.range_end_value = pattern.range_end_value;
-        copy.range_end_negative = pattern.range_end_negative;
-        copy.range_end_suffix = pattern.range_end_suffix;
-        copy.range_inclusive = pattern.range_inclusive;
-        copy.bool_value = pattern.bool_value;
-        copy.field_names = pattern.field_names;
-        copy.has_rest = pattern.has_rest;
-        copy.rest_index = pattern.rest_index;
-        copy.alias_name = pattern.alias_name;
-        copy.loc = pattern.loc;
-        if (pattern.payload_pattern) {
-            copy.payload_pattern = std::make_unique<Pattern>(clone_pattern(*pattern.payload_pattern));
-        }
-        if (pattern.alias_pattern) {
-            copy.alias_pattern = std::make_unique<Pattern>(clone_pattern(*pattern.alias_pattern));
-        }
-        copy.alternatives.reserve(pattern.alternatives.size());
-        for (const auto& alternative : pattern.alternatives) {
-            copy.alternatives.push_back(clone_pattern(alternative));
-        }
-        copy.elements.reserve(pattern.elements.size());
-        for (const auto& element : pattern.elements) {
-            copy.elements.push_back(clone_pattern(element));
-        }
-        return copy;
-    }
-
     bool iterator_binding_names_enum_case(const Pattern& pattern, const IrType& value_type) {
         if (pattern.kind != PatternKind::Binding || !is_value_enum_type(value_type)) return false;
         std::string case_name = resolve_enum_case_name(pattern.payload_name);
