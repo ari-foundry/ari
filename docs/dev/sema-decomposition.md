@@ -89,7 +89,12 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Scalar bool/integer match exhaustiveness diagnostics now also live in
      `pattern_coverage`; `sema.cpp` only raises the returned message.
    - Finite product coverage value encoding, finite scalar product domains,
-     and finite product domain combination now also live in `pattern_coverage`.
+     finite aggregate product domain recursion, and finite product domain
+     combination now also live in `pattern_coverage`.
+   - Symbolic product universe/domain recursion for tuple, array, and struct
+     values also lives in `pattern_coverage`; `sema.cpp` still lowers concrete
+     source patterns into those domains because tuple-struct and named-struct
+     checks depend on semantic tables.
    - Product match coverage state and product missing-case hint formatting now
      live in `pattern_coverage`; `sema.cpp` only supplies tuple-struct names for
      user-facing struct-pattern spelling.
@@ -100,8 +105,8 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      enum exhaustiveness diagnostics now live in `pattern_coverage`;
      `sema.cpp` still performs enum case resolution and payload type
      validation.
-   - Move the remaining sema-bound finite product aggregate recursion,
-     plus payload-shape checks that still depend on semantic tables.
+   - Move the remaining sema-bound finite/symbolic product pattern aggregate
+     recursion, plus payload-shape checks that still depend on semantic tables.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
      abstracted.
 

@@ -197,6 +197,23 @@ bool finite_scalar_product_domain(const IrType& type, std::vector<std::string>& 
     return true;
 }
 
+bool finite_product_coverage_domain(const IrType& type, std::vector<std::string>& out) {
+    if (finite_scalar_product_domain(type, out)) return true;
+    if (type.primitive != IrPrimitiveKind::Tuple &&
+        type.primitive != IrPrimitiveKind::Array &&
+        type.primitive != IrPrimitiveKind::Struct) {
+        return false;
+    }
+
+    std::vector<std::vector<std::string>> domains;
+    for (const auto& field_type : product_coverage_field_types(type)) {
+        std::vector<std::string> field_domain;
+        if (!finite_product_coverage_domain(field_type, field_domain)) return false;
+        domains.push_back(std::move(field_domain));
+    }
+    return combine_finite_product_domains(domains, out);
+}
+
 std::string product_coverage_join(const std::string& prefix, const std::string& suffix) {
     if (prefix.empty()) return suffix;
     return prefix + "\x1f" + suffix;
@@ -218,6 +235,33 @@ bool combine_finite_product_domains(const std::vector<std::vector<std::string>>&
         result = std::move(next);
     }
     out = std::move(result);
+    return true;
+}
+
+bool symbolic_product_coverage_domain(const IrType& type, ProductRect& out) {
+    if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+        out.push_back(ProductInterval{0, 1});
+        return true;
+    }
+    if (is_value_integer_type(type)) {
+        out.push_back(ProductInterval{0, integer_pattern_max_order_value(type)});
+        return true;
+    }
+    if (type.primitive != IrPrimitiveKind::Tuple &&
+        type.primitive != IrPrimitiveKind::Array &&
+        type.primitive != IrPrimitiveKind::Struct) {
+        return false;
+    }
+    for (const auto& field_type : product_coverage_field_types(type)) {
+        if (!symbolic_product_coverage_domain(field_type, out)) return false;
+    }
+    return true;
+}
+
+bool symbolic_product_coverage_domain_rects(const IrType& type, std::vector<ProductRect>& out) {
+    ProductRect rect;
+    if (!symbolic_product_coverage_domain(type, rect)) return false;
+    out = {std::move(rect)};
     return true;
 }
 

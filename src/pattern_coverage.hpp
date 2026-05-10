@@ -85,8 +85,11 @@ std::uint64_t integer_pattern_max_order_value(const IrType& match_type);
 std::string bool_product_value(bool value);
 std::string integer_product_value(std::uint64_t ordered_value);
 bool finite_scalar_product_domain(const IrType& type, std::vector<std::string>& out);
+bool finite_product_coverage_domain(const IrType& type, std::vector<std::string>& out);
 bool combine_finite_product_domains(const std::vector<std::vector<std::string>>& domains,
                                     std::vector<std::string>& out);
+bool symbolic_product_coverage_domain(const IrType& type, ProductRect& out);
+bool symbolic_product_coverage_domain_rects(const IrType& type, std::vector<ProductRect>& out);
 bool note_finite_product_match_coverage(ProductMatchCoverage& coverage,
                                         const std::vector<std::string>& values);
 bool note_symbolic_product_match_coverage(ProductMatchCoverage& coverage,

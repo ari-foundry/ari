@@ -8146,23 +8146,6 @@ private:
 
     static constexpr std::size_t kMaxSymbolicProductRectangles = 1024;
 
-    bool finite_product_domain(const IrType& type, std::vector<std::string>& out) const {
-        if (finite_scalar_product_domain(type, out)) return true;
-        if (type.primitive != IrPrimitiveKind::Tuple &&
-            type.primitive != IrPrimitiveKind::Array &&
-            type.primitive != IrPrimitiveKind::Struct) {
-            return false;
-        }
-
-        std::vector<std::vector<std::string>> domains;
-        for (const auto& field_type : aggregate_field_types(type)) {
-            std::vector<std::string> field_domain;
-            if (!finite_product_domain(field_type, field_domain)) return false;
-            domains.push_back(std::move(field_domain));
-        }
-        return combine_finite_product_domains(domains, out);
-    }
-
     bool finite_integer_pattern_values(const Pattern& pattern,
                                        const IrType& type,
                                        std::vector<std::string>& out) const {
@@ -8241,7 +8224,7 @@ private:
             std::vector<std::string> field_values;
             bool ok = item
                 ? finite_product_pattern_values(*item, fields[field_index], field_values)
-                : finite_product_domain(fields[field_index], field_values);
+                : finite_product_coverage_domain(fields[field_index], field_values);
             if (!ok) return false;
             domains.push_back(std::move(field_values));
         }
@@ -8291,7 +8274,7 @@ private:
             std::vector<std::string> field_values;
             bool ok = field_patterns[field_index]
                 ? finite_product_pattern_values(*field_patterns[field_index], type.field_types[field_index], field_values)
-                : finite_product_domain(type.field_types[field_index], field_values);
+                : finite_product_coverage_domain(type.field_types[field_index], field_values);
             if (!ok) return false;
             domains.push_back(std::move(field_values));
         }
@@ -8304,7 +8287,7 @@ private:
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
-                return finite_product_domain(type, out);
+                return finite_product_coverage_domain(type, out);
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
                 return finite_product_pattern_values(*pattern.alias_pattern, type, out);
@@ -8350,33 +8333,6 @@ private:
                 return finite_struct_product_pattern_values(pattern, type, out);
         }
         return false;
-    }
-
-    bool symbolic_product_domain(const IrType& type, ProductRect& out) const {
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
-            out.push_back(ProductInterval{0, 1});
-            return true;
-        }
-        if (is_value_integer_type(type)) {
-            out.push_back(ProductInterval{0, integer_pattern_max_order_value(type)});
-            return true;
-        }
-        if (type.primitive != IrPrimitiveKind::Tuple &&
-            type.primitive != IrPrimitiveKind::Array &&
-            type.primitive != IrPrimitiveKind::Struct) {
-            return false;
-        }
-        for (const auto& field_type : aggregate_field_types(type)) {
-            if (!symbolic_product_domain(field_type, out)) return false;
-        }
-        return true;
-    }
-
-    bool symbolic_product_domain_rects(const IrType& type, std::vector<ProductRect>& out) const {
-        ProductRect rect;
-        if (!symbolic_product_domain(type, rect)) return false;
-        out = {std::move(rect)};
-        return true;
     }
 
     bool symbolic_integer_pattern_rects(const Pattern& pattern,
@@ -8459,7 +8415,7 @@ private:
             std::vector<ProductRect> field_rects;
             bool ok = item
                 ? symbolic_product_pattern_rects(*item, fields[field_index], field_rects)
-                : symbolic_product_domain_rects(fields[field_index], field_rects);
+                : symbolic_product_coverage_domain_rects(fields[field_index], field_rects);
             if (!ok) return false;
             domains.push_back(std::move(field_rects));
         }
@@ -8509,7 +8465,7 @@ private:
             std::vector<ProductRect> field_rects;
             bool ok = field_patterns[field_index]
                 ? symbolic_product_pattern_rects(*field_patterns[field_index], type.field_types[field_index], field_rects)
-                : symbolic_product_domain_rects(type.field_types[field_index], field_rects);
+                : symbolic_product_coverage_domain_rects(type.field_types[field_index], field_rects);
             if (!ok) return false;
             domains.push_back(std::move(field_rects));
         }
@@ -8522,7 +8478,7 @@ private:
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
-                return symbolic_product_domain_rects(type, out);
+                return symbolic_product_coverage_domain_rects(type, out);
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
                 return symbolic_product_pattern_rects(*pattern.alias_pattern, type, out);
@@ -8577,7 +8533,7 @@ private:
         if (!coverage.checked_finite_universe) {
             coverage.checked_finite_universe = true;
             std::vector<std::string> universe;
-            if (finite_product_domain(subject_type, universe)) {
+            if (finite_product_coverage_domain(subject_type, universe)) {
                 coverage.has_finite_universe = true;
                 coverage.universe_size = universe.size();
             }
@@ -8585,7 +8541,7 @@ private:
         if (!coverage.checked_symbolic_universe) {
             coverage.checked_symbolic_universe = true;
             ProductRect universe;
-            if (symbolic_product_domain(subject_type, universe)) {
+            if (symbolic_product_coverage_domain(subject_type, universe)) {
                 coverage.has_symbolic_universe = true;
                 coverage.symbolic_universe = std::move(universe);
             }
