@@ -28,8 +28,9 @@ construction. Some helpers have already moved out to focused files:
 - `move_semantics` for pure helpers around explicit ownership-consumption
   syntax such as `take(place)` place-shape validation
 - `trait_semantics` for small trait display/key helpers and pure trait-method
-  shape checks shared by trait impl validation, method dispatch diagnostics,
-  and future trait-resolution extraction
+  shape checks, including syntactic `self` receiver classification, shared by
+  trait impl validation, method dispatch diagnostics, and future
+  trait-resolution extraction
 - `aggregate_literal_semantics` for pure expected-element selection shared by
   tuple, struct, fixed-array, and local `Vec[T]` literal lowering
 - `enum_constructor_semantics` for pure expected-enum matching used before

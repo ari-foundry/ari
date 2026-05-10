@@ -322,6 +322,7 @@ let pair: (Box[i64], Box[i64]) = (Make<i64>::make(3), Make<i64>::make(4))
 
 Expected enum payload types are forwarded too, so a trait-qualified associated
 call inside `Some(...)` or `Ok(...)` can use the payload type to select `Self`.
+This includes primitive implementing types such as `i64`.
 
 If the associated function has method-level generics, put them after the
 implementing type or let Ari infer them from the value arguments. If the

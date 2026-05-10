@@ -146,6 +146,7 @@ struct TraitInfo {
         std::vector<TypeRef> params;
         TypeRef result;
         bool has_result = false;
+        bool has_self_receiver = false;
         SourceLocation loc;
     };
 
@@ -1466,6 +1467,7 @@ private:
                 trait_method.generics = method.generics;
                 trait_method.loc = method.loc;
                 trait_method.has_result = method.has_return_type;
+                trait_method.has_self_receiver = function_params_have_self_receiver(method.params);
                 if (method.has_return_type) trait_method.result = method.return_type;
                 for (const auto& param : method.params) {
                     if (param.has_pattern) {
@@ -1671,12 +1673,6 @@ private:
 
     static bool same_receiver_base_type(const IrType& left, const IrType& right) {
         return same_type(value_qualified_type(left), value_qualified_type(right));
-    }
-
-    static bool is_self_receiver_param(const IrType& param, const IrType& self_type) {
-        if (same_type(param, self_type)) return true;
-        if (!is_receiver_borrow_type(param)) return false;
-        return same_receiver_base_type(param, self_type);
     }
 
     static bool borrowed_receiver_matches_value(const IrType& expected,
@@ -2304,6 +2300,11 @@ private:
                          " is missing method '" + item.first + "'");
             }
             const FunctionDecl& actual_method = *found->second;
+            bool actual_has_self_receiver = function_params_have_self_receiver(actual_method.params);
+            if (actual_has_self_receiver != expected_method.has_self_receiver) {
+                fail(actual_method.loc,
+                     "method '" + item.first + "' receiver kind mismatch with trait declaration");
+            }
             if (actual_method.generics.size() != expected_method.generics.size()) {
                 fail(actual_method.loc,
                      "method '" + item.first + "' generic parameter count mismatch: trait expects " +
@@ -2662,8 +2663,7 @@ private:
                     drop_impls_[drop_impl_key(self_type)] = info;
                 }
 
-                bool has_self_receiver = !info.sig.params.empty() &&
-                    is_self_receiver_param(info.sig.params[0], self_type);
+                bool has_self_receiver = function_params_have_self_receiver(method.params);
 
                 if (!impl.generics.empty() || !method.generics.empty()) {
                     if (!has_self_receiver) {
@@ -16246,7 +16246,7 @@ private:
                 fail(expr.loc, "trait '" + trait_application_display(trait_name, trait_args) +
                          "' has no method '" + method_name + "'");
             }
-            if (!trait_method_has_self_receiver(trait_method->params)) {
+            if (!trait_method->has_self_receiver) {
                 return check_trait_qualified_associated_call(
                     expr,
                     trait_name,

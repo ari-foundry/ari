@@ -1,0 +1,21 @@
+trait Build {
+  fn build(value: i64) -> Self
+}
+
+impl Build for i64 {
+  fn build(value: i64) -> i64 {
+    value + 1
+  }
+}
+
+fn inferred_return() -> i64 {
+  Build::build(11)
+}
+
+fn main() -> i64 {
+  let explicit = Build::build<i64>(5);
+  let inferred: i64 = Build::build(7);
+  let wrapped: Option[i64] = Some(Build::build(13));
+
+  explicit + inferred + inferred_return() + (wrapped ?? 0)
+}

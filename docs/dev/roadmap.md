@@ -96,9 +96,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      projection syntax for generic APIs such as iterator item types
    - [generic-supertrait-inference] handle richer generic supertrait
      applications once associated types and projections exist
-   - [small-follow-up] align trait-qualified associated calls with primitive
-     `Self` impls in expected-result inference so expected `i64` results work
-     like explicit primitive impl dispatch
 2. Refine borrow checking beyond lexical named borrows.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
    - [reborrow] allow safe reborrowing from existing borrow bindings
