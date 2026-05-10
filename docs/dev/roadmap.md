@@ -218,9 +218,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [values] materialize eventual `f128` scalar expressions
    - [abi-c] define foreign/platform C float ABI once raw C extern calls exist
 5. Expand FFI type coverage beyond the x86-64 Linux C aliases.
-6. Decide whether source-level function overloading belongs in Ari. The current
-   v0 mangling intentionally omits parameter types because overloading is not
-   supported.
 
 ## Bootstrap Direction
 

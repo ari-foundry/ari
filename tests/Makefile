@@ -1588,6 +1588,8 @@ check-functions: $(TARGET) check-function-errors
 	$(BUILD_DIR)/functions/function-generic-surface.elf; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/function-generic-call.ari -o $(BUILD_DIR)/functions/function-generic-call.elf
 	$(BUILD_DIR)/functions/function-generic-call.elf; code=$$?; test $$code -eq 22
+	$(TARGET) --freestanding tests/ok/function-generic-companion.ari -o $(BUILD_DIR)/functions/function-generic-companion.elf
+	$(BUILD_DIR)/functions/function-generic-companion.elf; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/function-pointer-call.ari -o $(BUILD_DIR)/functions/function-pointer-call.raw
 	$(BUILD_DIR)/functions/function-pointer-call.raw; code=$$?; test $$code -eq 7
 	$(TARGET) tests/ok/function-pointer-call.ari --emit-llvm $(BUILD_DIR)/functions/function-pointer-call.ll
@@ -1621,6 +1623,8 @@ check-function-errors: $(TARGET)
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/functions/errors/function-arg-type-mismatch.err
 	if $(TARGET) tests/errors/function-param-pattern.ari -o $(BUILD_DIR)/functions/errors/function-param-pattern.elf >$(BUILD_DIR)/functions/errors/function-param-pattern.err 2>&1; then exit 1; fi
 	grep -q "tuple binding pattern requires a tuple value, got i64" $(BUILD_DIR)/functions/errors/function-param-pattern.err
+	if $(TARGET) tests/errors/function-overload-params.ari -o $(BUILD_DIR)/functions/errors/function-overload-params.elf >$(BUILD_DIR)/functions/errors/function-overload-params.err 2>&1; then exit 1; fi
+	grep -q "duplicate executable function 'pick'" $(BUILD_DIR)/functions/errors/function-overload-params.err
 	if $(TARGET) tests/errors/function-void-return-value.ari -o $(BUILD_DIR)/functions/errors/function-void-return-value.elf >$(BUILD_DIR)/functions/errors/function-void-return-value.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected void, got i64" $(BUILD_DIR)/functions/errors/function-void-return-value.err
 	if $(TARGET) tests/errors/function-module-private.ari -o $(BUILD_DIR)/functions/errors/function-module-private.elf >$(BUILD_DIR)/functions/errors/function-module-private.err 2>&1; then exit 1; fi

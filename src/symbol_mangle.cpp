@@ -48,8 +48,8 @@ std::string encode_segment(const std::string& text) {
 
 std::string mangle_function_name(const std::string& name) {
     // Rust v0-style shape: fixed prefix plus length-prefixed path segments.
-    // Ari has no function overloading, so parameter names/types and return
-    // types are intentionally excluded from the public symbol identity.
+    // Ari has no argument-based function overloading, so parameter names/types
+    // and return types are intentionally excluded from public symbol identity.
     std::string out = "_ARNv";
     for (const auto& part : split_path(name)) {
         std::string encoded = encode_segment(part);

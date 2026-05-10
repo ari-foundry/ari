@@ -138,6 +138,20 @@ fn main() -> i64 {
 Calls are type-checked against the callee signature. Ari does not implicitly cast
 between integer widths, so callers must write `as` when they want a conversion.
 
+## Overload Policy
+
+Ari does not choose between functions by argument count or argument type. Two
+concrete functions cannot share the same fully qualified source path, even when
+their parameter lists differ.
+
+Use distinct names, module paths, inherent methods, or traits when a concept has
+multiple typed entry points. This keeps calls and ABI symbols path-based instead
+of choosing overloads from argument types.
+
+A generic function may share a path with a concrete function when calls are
+syntactically disambiguated with type arguments, such as `alloc<T>(...)`. Calls
+without type arguments choose the concrete function first.
+
 ## Function Pointers
 
 Function pointer types use `fn(param_types...) -> result_type`:

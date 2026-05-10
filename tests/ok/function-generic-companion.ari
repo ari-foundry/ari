@@ -1,0 +1,11 @@
+fn pick(value: i64) -> i64 {
+  value + 1
+}
+
+fn pick[T](value: T) -> T {
+  value
+}
+
+fn main() -> i64 {
+  pick(4) + pick<i64>(7)
+}

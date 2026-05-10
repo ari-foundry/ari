@@ -12,10 +12,11 @@ The prefix `_ARNv` means "Ari name, v0". Each source path segment is encoded as
 `<byte-length><segment>`, so `Math::add` becomes `4Math3add`.
 
 Function parameter names, parameter types, and return types are not part of the
-public symbol name. Ari currently has no function overloading, so the function
-path is the stable identity. Generic specializations still receive distinct
-lowered function names before mangling, so their specialization identity remains
-visible without encoding every call ABI detail into the symbol.
+public symbol name. Ari intentionally does not support argument-based
+source-level overloading, so a concrete function's fully qualified path is the
+stable source identity. Generic specializations receive distinct lowered
+function names before mangling, so their specialization identity remains visible
+without encoding every call ABI detail into the symbol.
 
 Non-identifier bytes inside synthesized names are escaped as `_uXX`, where
 `XX` is the lowercase hexadecimal byte value.
@@ -34,5 +35,6 @@ Raw `--freestanding` ELF output also records `@export`/`@no_mangle` names in
 the static symbol table. The raw backend still rejects imported `extern "C"`
 calls until a real native C ABI and link path exists.
 
-This mangling is intentionally still a v0 ABI. Future overloading or ABI
-versioning work may revise the symbol identity rules.
+This mangling is intentionally still a v0 ABI. Future ABI versioning work may
+revise symbol identity rules, but argument-based source-level overloading is not
+part of the current language policy.

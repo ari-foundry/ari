@@ -2412,6 +2412,7 @@ private:
             if (!is_executable_function(fn)) continue;
             if (enum_cases_.count(fn.name)) fail(fn.loc, "function '" + fn.name + "' conflicts with enum case constructor");
             if (is_format_print_name(fn.name)) fail(fn.loc, "function '" + fn.name + "' conflicts with prelude print builtin");
+            if (functions_.count(fn.name)) fail(fn.loc, "duplicate executable function '" + fn.name + "'");
 
             FunctionSig sig;
             sig.loc = fn.loc;
@@ -2469,6 +2470,7 @@ private:
         }
         if (enum_cases_.count(fn.name)) fail(fn.loc, "extern function '" + fn.name + "' conflicts with enum case constructor");
         if (is_format_print_name(fn.name)) fail(fn.loc, "extern function '" + fn.name + "' conflicts with prelude print builtin");
+        if (functions_.count(fn.name)) fail(fn.loc, "duplicate function '" + fn.name + "'");
         (void)exported_link_name(fn);
         if (is_ari_abi) {
             if (fn.extern_link_name.empty()) {
@@ -14053,6 +14055,13 @@ private:
         }
         if (can_use_source_declared_prelude_special && is_prelude_range_function_name(special_name)) {
             return check_range_call(expr, std::move(lowered), nullptr, special_name);
+        }
+
+        if (!expr.type_args.empty()) {
+            std::string generic_name;
+            if (const FunctionDecl* generic = find_generic_function(expr, generic_name)) {
+                return check_generic_call(expr, *generic, generic_name, std::move(lowered));
+            }
         }
 
         std::string function_name = resolve_function_name(expr.name);

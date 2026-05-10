@@ -48,7 +48,8 @@ Host output uses LLVM IR symbols directly, and Ari's external FFI surface is C
 ABI only. Ari functions are emitted with Ari mangled names such as
 `_ARNv4main`; the name encodes the source function path with a Rust-inspired
 length-prefixed scheme. Parameter names, parameter types, and return types are
-not encoded because Ari does not support function overloading yet.
+not encoded because Ari intentionally does not support argument-based
+source-level function overloading.
 
 For `--shared` host output, sema marks public functions plus explicit
 `@export`/`@no_mangle` functions as ABI-visible. The LLVM backend emits private
