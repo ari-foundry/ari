@@ -413,6 +413,8 @@ Checklist:
       default lowering paths
 - [x] IR access builders preserve struct field assignment/access, tuple-index
       reads, fixed-array static/dynamic indexing, and destructor call lowering
+- [x] IR aggregate builders preserve tuple, struct, tuple-struct, expected
+      aggregate, and range constructor lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

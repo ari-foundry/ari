@@ -11024,10 +11024,11 @@ private:
     }
 
     IrExprPtr check_tuple(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
+        (void)lowered;
         if (expr.args.size() == 1) fail(expr.loc, "single-element tuple literals are not supported");
-        lowered->kind = IrExprKind::Tuple;
-        lowered->type = primitive_type(IrPrimitiveKind::Tuple, "Tuple", expr.loc);
-        lowered->args.reserve(expr.args.size());
+        IrType tuple_type = primitive_type(IrPrimitiveKind::Tuple, "Tuple", expr.loc);
+        std::vector<IrExprPtr> elements;
+        elements.reserve(expr.args.size());
         bool use_expected_type = expected &&
             expected->qualifier == TypeQualifier::Value &&
             expected->primitive == IrPrimitiveKind::Tuple &&
@@ -11042,16 +11043,17 @@ private:
             }
             require_plain_prelude_aggregate_element(expr.loc, value->type, "tuple");
             require_no_zone_pointer_escape(item->loc, *value, "tuple literal");
-            lowered->type.args.push_back(value->type);
-            lowered->args.push_back(std::move(value));
+            tuple_type.args.push_back(value->type);
+            elements.push_back(std::move(value));
         }
         if (use_expected_type) {
-            lowered->type = *expected;
+            tuple_type = *expected;
         }
-        return lowered;
+        return make_ir_tuple_expr(expr.loc, std::move(tuple_type), std::move(elements));
     }
 
     IrExprPtr check_struct_literal(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
+        (void)lowered;
         std::string struct_name = resolve_struct_type_name(expr.name);
         auto struct_found = structs_.find(struct_name);
         if (struct_found == structs_.end()) {
@@ -11113,24 +11115,24 @@ private:
             struct_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
         }
 
-        lowered->kind = IrExprKind::Tuple;
-        lowered->type = struct_type;
-        lowered->args.reserve(struct_type.field_names.size());
+        std::vector<IrExprPtr> elements;
+        elements.reserve(struct_type.field_names.size());
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
             IrExprPtr value = std::move(lowered_values[i]);
             coerce_expr_to_expected(*value, struct_type.field_types[i]);
             require_assignable(expr.loc, struct_type.field_types[i], value->type);
             require_plain_prelude_aggregate_element(expr.loc, value->type, "struct");
             require_no_zone_pointer_escape(value->loc, *value, "struct literal");
-            lowered->args.push_back(std::move(value));
+            elements.push_back(std::move(value));
         }
-        return lowered;
+        return make_ir_tuple_expr(expr.loc, std::move(struct_type), std::move(elements));
     }
 
     IrExprPtr check_struct_constructor_call(const Expr& expr,
                                             const StructInfo& info,
                                             IrExprPtr lowered,
                                             const IrType* expected = nullptr) {
+        (void)lowered;
         if (!info.tuple_struct) {
             fail(expr.loc, "named struct '" + info.name + "' must be constructed with field literal syntax");
         }
@@ -11169,18 +11171,17 @@ private:
             struct_type = resolve_struct_literal_type(expr.loc, info.name, explicit_type_args);
         }
 
-        lowered->kind = IrExprKind::Tuple;
-        lowered->type = struct_type;
-        lowered->args.reserve(expr.args.size());
+        std::vector<IrExprPtr> elements;
+        elements.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr value = std::move(lowered_values[i]);
             coerce_expr_to_expected(*value, struct_type.field_types[i]);
             require_assignable(expr.loc, struct_type.field_types[i], value->type);
             require_plain_prelude_aggregate_element(expr.loc, value->type, "tuple struct");
             require_no_zone_pointer_escape(value->loc, *value, "tuple struct literal");
-            lowered->args.push_back(std::move(value));
+            elements.push_back(std::move(value));
         }
-        return lowered;
+        return make_ir_tuple_expr(expr.loc, std::move(struct_type), std::move(elements));
     }
 
     IrExprPtr check_vector(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
@@ -13614,6 +13615,7 @@ private:
                                IrExprPtr lowered,
                                const IrType* expected_range = nullptr,
                                const std::string& call_name = "") {
+        (void)lowered;
         if (!expr.type_args.empty()) {
             fail(expr.loc, "range constructors do not take type arguments");
         }
@@ -13634,14 +13636,11 @@ private:
             has_bound = true;
         }
 
-        lowered->kind = IrExprKind::Tuple;
-        lowered->loc = expr.loc;
-        lowered->type = prelude_range_type(
+        IrType range_type = prelude_range_type(
             expr.loc,
             is_prelude_inclusive_range_function_name(range_name),
             bound
         );
-        lowered->args.reserve(2);
         IrExprPtr start = has_bound
             ? check_expr_with_expected(*expr.args[0], bound)
             : check_expr(*expr.args[0]);
@@ -13650,7 +13649,7 @@ private:
                 fail(expr.args[0]->loc, "range bounds must be integers");
             }
             bound = start->type;
-            lowered->type = prelude_range_type(
+            range_type = prelude_range_type(
                 expr.loc,
                 is_prelude_inclusive_range_function_name(range_name),
                 bound
@@ -13663,9 +13662,11 @@ private:
         coerce_expr_to_expected(*end, bound);
         require_assignable(expr.args[1]->loc, bound, end->type);
 
-        lowered->args.push_back(std::move(start));
-        lowered->args.push_back(std::move(end));
-        return lowered;
+        std::vector<IrExprPtr> args;
+        args.reserve(2);
+        args.push_back(std::move(start));
+        args.push_back(std::move(end));
+        return make_ir_tuple_expr(expr.loc, std::move(range_type), std::move(args));
     }
 
     IrExprPtr check_explicit_move_call(const Expr& expr, IrExprPtr lowered, bool require_place) {
