@@ -39,7 +39,8 @@ construction. Some helpers have already moved out to focused files:
   trait-qualified calls, method calls, zone helper calls, builtin calls, match
   expression arms, and block/match/if expression nodes
 - `control_flow_semantics` for product-pattern if-chain assembly shared by
-  aggregate match, declaration, `if let`, and `while let` lowering
+  aggregate match, declaration, `if let`, and `while let` lowering, while
+  still routing expression blocks and conditionals through `ir_builders`
 - `module_metadata` and `module_cache` for package graph summaries and caches
 - `product_coverage` for symbolic product-rectangle coverage math used by
   aggregate pattern exhaustiveness diagnostics

@@ -137,7 +137,8 @@
    tuple-struct/range aggregate construction, generated `@test` main calls,
    field/tuple/array/slice index access nodes, drop destructor calls, plain
    function calls, generic specializations, inherent associated calls, trait
-   associated and trait-qualified calls, method calls, and zone helper calls.
+   associated and trait-qualified calls, method calls, zone helper calls, and
+   tuple/product control-flow expression chains.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
@@ -145,9 +146,6 @@
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions once their builders and cloning paths
      can preserve today's mutation flow
-   - [ir-control-flow-builder-followup] route scattered IR expression
-     construction paths for remaining control-flow cases through builders
-     before splitting child/vector payload storage
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

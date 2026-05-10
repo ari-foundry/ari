@@ -1,7 +1,8 @@
 #include "control_flow_semantics.hpp"
 
+#include "ir_builders.hpp"
+
 #include <cstddef>
-#include <memory>
 #include <utility>
 
 namespace ari {
@@ -10,13 +11,7 @@ IrExprPtr make_tuple_match_block_value(SourceLocation loc,
                                        IrType result_type,
                                        std::vector<IrStmtPtr> body,
                                        IrExprPtr value) {
-    auto block = std::make_unique<IrExpr>();
-    block->kind = IrExprKind::Block;
-    block->loc = loc;
-    block->type = std::move(result_type);
-    block->block_body = std::move(body);
-    block->block_value = std::move(value);
-    return block;
+    return make_ir_block_expr(loc, {}, std::move(result_type), std::move(body), std::move(value));
 }
 
 std::vector<IrStmtPtr> build_tuple_match_if_chain(std::vector<TupleCheckedStmtArm>& arms) {
@@ -61,15 +56,15 @@ IrExprPtr build_tuple_match_if_expr_chain(
             current = make_fallback(arm.loc, result_type);
         }
 
-        auto if_expr = std::make_unique<IrExpr>();
-        if_expr->kind = IrExprKind::If;
-        if_expr->loc = arm.loc;
-        if_expr->type = result_type;
-        if_expr->condition = std::move(arm.condition);
-        if_expr->then_body = std::move(arm.body);
-        if_expr->then_value = std::move(arm.value);
-        if_expr->else_value = std::move(current);
-        current = std::move(if_expr);
+        current = make_ir_if_expr(
+            arm.loc,
+            result_type,
+            std::move(arm.condition),
+            std::move(arm.body),
+            std::move(arm.value),
+            {},
+            std::move(current)
+        );
     }
     return current;
 }

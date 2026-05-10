@@ -418,6 +418,8 @@ Checklist:
 - [x] IR call builders preserve direct, generic, inherent associated, trait
       associated, trait-qualified method, method, and zone helper call lowering
       paths
+- [x] IR control-flow builders preserve aggregate/product if-let and match
+      expression chain lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias
