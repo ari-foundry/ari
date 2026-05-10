@@ -423,6 +423,9 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-or-binding.raw; code=$$?; test $$code -eq 41
 	$(TARGET) --freestanding tests/ok/match-range-overlap.ari -o $(BUILD_DIR)/match/match-range-overlap.raw
 	$(BUILD_DIR)/match/match-range-overlap.raw; code=$$?; test $$code -eq 1
+	$(TARGET) --freestanding tests/ok/match-signed-range-coverage.ari -o $(BUILD_DIR)/match/match-signed-range-coverage.raw >$(BUILD_DIR)/match/match-signed-range-coverage.warn 2>&1
+	grep -q "warning: scalar match pattern is fully shadowed by earlier match arms" $(BUILD_DIR)/match/match-signed-range-coverage.warn
+	$(BUILD_DIR)/match/match-signed-range-coverage.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --freestanding tests/ok/match-shadow-warning.ari -o $(BUILD_DIR)/match/match-shadow-warning.raw >$(BUILD_DIR)/match/match-shadow-warning.warn 2>&1
 	grep -q "warning: scalar match pattern is fully shadowed by earlier match arms" $(BUILD_DIR)/match/match-shadow-warning.warn
 	$(BUILD_DIR)/match/match-shadow-warning.raw; code=$$?; test $$code -eq 13

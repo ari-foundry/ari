@@ -26,6 +26,9 @@ construction. Some helpers have already moved out to focused files:
 - `module_metadata` and `module_cache` for package graph summaries and caches
 - `product_coverage` for symbolic product-rectangle coverage math used by
   aggregate pattern exhaustiveness diagnostics
+- `pattern_coverage` for scalar integer match interval coverage, including
+  signed-pattern ordering, range interval merging, scalar exhaustiveness, and
+  fully-shadowed scalar range/literal detection
 - `pattern_semantics` for pure pattern binding/or-pattern detection and
   expansion helpers
 - `move_semantics` for pure helpers around explicit ownership-consumption
@@ -75,9 +78,12 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Product rectangle math now lives in `product_coverage`.
    - Pure pattern binding/or-pattern detection and expansion helpers now live
      in `pattern_semantics`.
-   - Move scalar range interval math, finite product domain enumeration,
-     duplicate/shadow detection helpers, and the remaining sema-bound
-     exhaustiveness formatting.
+   - Scalar integer range interval math now lives in `pattern_coverage`,
+     including signed ordering, interval merging, scalar exhaustiveness, and
+     scalar fully-shadowed checks.
+   - Move finite product domain enumeration, duplicate/shadow detection helpers
+     for enum/product matches, and the remaining sema-bound exhaustiveness
+     formatting.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
      abstracted.
 

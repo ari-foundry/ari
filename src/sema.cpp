@@ -14,6 +14,7 @@
 #include "module_path.hpp"
 #include "move_semantics.hpp"
 #include "parser.hpp"
+#include "pattern_coverage.hpp"
 #include "pattern_semantics.hpp"
 #include "prelude_macros.hpp"
 #include "prelude_resolver.hpp"
@@ -99,12 +100,6 @@ struct EnumMatchCoverage {
     std::set<std::uint32_t> covered_tags;
     std::set<std::string> covered_payload_literals;
     std::map<std::uint32_t, unsigned> covered_bool_payloads;
-};
-
-struct ScalarMatchCoverage {
-    bool has_wildcard = false;
-    std::set<std::string> covered_patterns;
-    std::vector<std::pair<std::uint64_t, std::uint64_t>> integer_intervals;
 };
 
 struct TupleMatchCoverage {
@@ -16601,96 +16596,6 @@ private:
             ? default_type
             : integer_literal_suffix_type(suffix, loc);
         return literal;
-    }
-
-    static void note_integer_coverage(ScalarMatchCoverage& coverage,
-                                      const IrType& match_type,
-                                      std::uint64_t value,
-                                      bool negative) {
-        std::uint64_t point = integer_pattern_order_value(value, negative, match_type);
-        add_integer_coverage_interval(coverage, point, point);
-    }
-
-    static void note_integer_range_coverage(ScalarMatchCoverage& coverage,
-                                            const IrType& match_type,
-                                            const Pattern& pattern) {
-        std::uint64_t start = 0;
-        std::uint64_t end = 0;
-        if (!integer_range_coverage_interval(pattern, match_type, start, end)) return;
-        add_integer_coverage_interval(coverage, start, end);
-    }
-
-    static bool integer_range_coverage_interval(const Pattern& pattern,
-                                                const IrType& match_type,
-                                                std::uint64_t& start,
-                                                std::uint64_t& end) {
-        start = integer_pattern_order_value(pattern.int_value, pattern.int_negative, match_type);
-        end = integer_pattern_order_value(pattern.range_end_value, pattern.range_end_negative, match_type);
-        if (!pattern.range_inclusive) {
-            if (start >= end) return false;
-            --end;
-        }
-        return start <= end;
-    }
-
-    static bool integer_interval_is_fully_covered(const ScalarMatchCoverage& coverage,
-                                                  std::uint64_t start,
-                                                  std::uint64_t end) {
-        if (start > end) return false;
-        for (const auto& interval : coverage.integer_intervals) {
-            if (interval.first <= start && end <= interval.second) return true;
-            if (start < interval.first) return false;
-        }
-        return false;
-    }
-
-    static void add_integer_coverage_interval(ScalarMatchCoverage& coverage,
-                                              std::uint64_t start,
-                                              std::uint64_t end) {
-        if (start > end) return;
-        coverage.integer_intervals.push_back({start, end});
-        std::sort(coverage.integer_intervals.begin(), coverage.integer_intervals.end());
-
-        std::vector<std::pair<std::uint64_t, std::uint64_t>> merged;
-        for (const auto& interval : coverage.integer_intervals) {
-            if (merged.empty()) {
-                merged.push_back(interval);
-                continue;
-            }
-            auto& last = merged.back();
-            bool adjacent = last.second != std::numeric_limits<std::uint64_t>::max() &&
-                            interval.first == last.second + 1;
-            if (interval.first <= last.second || adjacent) {
-                if (interval.second > last.second) last.second = interval.second;
-            } else {
-                merged.push_back(interval);
-            }
-        }
-        coverage.integer_intervals = std::move(merged);
-    }
-
-    static bool integer_coverage_is_exhaustive(
-        const IrType& match_type,
-        const std::vector<std::pair<std::uint64_t, std::uint64_t>>& intervals
-    ) {
-        if (!is_value_integer_type(match_type) || intervals.empty()) return false;
-        return intervals.front().first == 0 &&
-               intervals.front().second == integer_pattern_max_order_value(match_type);
-    }
-
-    static std::uint64_t integer_pattern_order_value(std::uint64_t value,
-                                                     bool negative,
-                                                     const IrType& match_type) {
-        if (is_unsigned_integer_primitive(match_type.primitive)) return value;
-        std::uint64_t bias = signed_negative_limit(match_type.primitive);
-        return negative ? bias - value : bias + value;
-    }
-
-    static std::uint64_t integer_pattern_max_order_value(const IrType& match_type) {
-        if (is_unsigned_integer_primitive(match_type.primitive)) {
-            return unsigned_max(match_type.primitive);
-        }
-        return signed_negative_limit(match_type.primitive) + signed_positive_max(match_type.primitive);
     }
 
     static void coerce_labeled_break_values(const std::vector<IrStmtPtr>& statements, const std::string& label, const IrType& expected) {
