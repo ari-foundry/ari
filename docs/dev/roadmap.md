@@ -56,6 +56,15 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
+3. Finish hidden owner cleanup for iterator exit edges.
+   Owning `Iterator[T]` for-loop values are moved into hidden mutable storage
+   and dropped on normal loop exit. Direct `return` statements inside such
+   loops now drop the active hidden iterator owners before returning, and
+   breaks to outer labels drop hidden owning iterators for nested loops whose
+   normal loop-exit cleanup is skipped. Keep this in Near-Term because it is a
+   correctness follow-up to the executable iterator surface.
+   - [try-residual] route postfix `?` residual returns through the same hidden
+     iterator-owner cleanup path before returning from the function
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -88,9 +97,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [loop-state] track ownership and borrow state through loops, init-while
      updates, owning loop bindings, and owning break values instead of rejecting
      all state changes inside loops
-   - [iterator-lifetimes] integrate hidden `Iterator[T]` storage cleanup with
-     early returns, nested loops, and labeled break values so owner iterators
-     can exit through every control-flow edge instead of only normal loop exit
 3. Extend pattern binding modes beyond value bindings.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands

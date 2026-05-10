@@ -1,0 +1,49 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+struct Cursor {
+  token: own i64,
+  mut current: i64,
+  end: i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  value
+}
+
+impl Iterator[i64] for Cursor {
+  fn next(self: ref mut Self) -> Option[i64] {
+    if self.current < self.end {
+      let value = self.current;
+      self.current = self.current + 1;
+      return Some(value);
+    }
+    return None<i64>();
+  }
+}
+
+fn return_score() -> i64 {
+  let cursor = Cursor { token: make_owned(99), current: 3, end: 5 };
+  for value in cursor {
+    return value;
+  }
+  return 0;
+}
+
+fn break_score() -> i64 {
+  let result = done: {
+    let cursor = Cursor { token: make_owned(77), current: 7, end: 8 };
+    for value in cursor {
+      break done value;
+    }
+    0
+  };
+  return result;
+}
+
+fn main() -> i64 {
+  return return_score() + break_score();
+}

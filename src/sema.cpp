@@ -362,6 +362,7 @@ private:
         bool has_break_result_type = false;
         IrType break_result_type;
         std::vector<StateSnapshot> break_state_snapshots;
+        std::vector<std::string> exit_cleanup_owner_names;
     };
 
     struct TemporaryBorrow {
@@ -5930,6 +5931,7 @@ private:
             "$return",
             "function return"
         );
+        append_active_loop_exit_owner_cleanup(stmt.loc, cleanup);
         require_no_live_owners_before_return(stmt.loc);
         if (!cleanup.empty()) {
             std::vector<IrStmtPtr> block;
@@ -10671,6 +10673,30 @@ private:
         local->state = LocalState::Dropped;
     }
 
+    void append_loop_exit_owner_cleanup(SourceLocation loc,
+                                        const LoopInfo& loop,
+                                        std::vector<IrStmtPtr>& statements) {
+        for (const auto& name : loop.exit_cleanup_owner_names) {
+            append_hidden_iterator_owner_cleanup(loc, name, statements);
+        }
+    }
+
+    void append_active_loop_exit_owner_cleanup(SourceLocation loc,
+                                               std::vector<IrStmtPtr>& statements) {
+        for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
+            append_loop_exit_owner_cleanup(loc, *loop, statements);
+        }
+    }
+
+    void append_outer_loop_exit_owner_cleanup_until(SourceLocation loc,
+                                                   const LoopInfo& target,
+                                                   std::vector<IrStmtPtr>& statements) {
+        for (auto loop = loops_.rbegin(); loop != loops_.rend(); ++loop) {
+            if (&*loop == &target) return;
+            append_loop_exit_owner_cleanup(loc, *loop, statements);
+        }
+    }
+
     void append_for_iterator_loop(
         const Stmt& stmt,
         IrStmt& lowered,
@@ -10749,6 +10775,7 @@ private:
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop_info;
         loop_info.label = stmt.label;
+        if (owning_iterator) loop_info.exit_cleanup_owner_names.push_back(iterator_name);
         push_loop(stmt.loc, loop_info);
         push_scope();
         declare_match_arm_bindings(pattern_arms.front());
@@ -11226,6 +11253,7 @@ private:
             }
             std::vector<IrStmtPtr> cleanup;
             append_auto_destroy_zone_cleanup(stmt.loc, cleanup, target.scope_depth);
+            append_outer_loop_exit_owner_cleanup_until(stmt.loc, target, cleanup);
             if (!cleanup.empty()) {
                 auto break_stmt = std::make_unique<IrStmt>();
                 break_stmt->kind = IrStmtKind::Break;
@@ -11266,6 +11294,7 @@ private:
             "$break",
             "labeled block break value"
         );
+        append_outer_loop_exit_owner_cleanup_until(stmt.loc, target, cleanup);
         target.break_state_snapshots.push_back(snapshot_states());
         if (!cleanup.empty()) {
             auto break_stmt = std::make_unique<IrStmt>();

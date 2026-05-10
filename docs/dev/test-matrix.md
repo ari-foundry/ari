@@ -247,6 +247,8 @@ Checklist:
 - [x] lower owning `Iterator[T]` values by moving them into hidden loop storage,
       calling `next(self: ref mut Self)`, and dropping the hidden owner at loop
       exit
+- [x] drop hidden owning iterator storage before `return` exits a function from
+      inside the loop
 - [x] lower refutable scalar literal/range, or-pattern, fieldless enum-case,
       compact enum payload, homogeneous nested aggregate-enum payload, and
       nested aggregate-enum multi-payload item patterns with nested
