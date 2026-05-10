@@ -2,11 +2,13 @@ const BASE: i64 = 5;
 const SCORE: i64 = (BASE + 3) * 2 - 4 / 2 + 7 % 4;
 const NEGATED: i64 = -SCORE + 20;
 const SMALL: u8 = 10u8 - 5u8;
-const READY: bool = SCORE >= 17 && NEGATED == 3 && !(BASE < 5);
+const DIRECT_BYTE: u8 = 7u8;
+const DIRECT_FLAG: bool = true;
+const READY: bool = SCORE >= 17 && NEGATED == 3 && !(BASE < 5) && DIRECT_FLAG;
 
 fn main() -> i64 {
   if READY {
-    return SCORE + NEGATED + (SMALL as i64);
+    return SCORE + NEGATED + (SMALL as i64) + (DIRECT_BYTE as i64);
   }
   return 0;
 }

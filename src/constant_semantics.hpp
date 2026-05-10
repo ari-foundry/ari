@@ -46,7 +46,13 @@ std::int64_t sign_extend_integer_bits(std::uint64_t raw, unsigned width);
 unsigned constant_shift_amount(SourceLocation loc, const ConstantValue& value, unsigned width);
 ConstantValue make_signed_integer_constant(SourceLocation loc, const IrType& type, std::int64_t result);
 ConstantValue make_unsigned_integer_constant(SourceLocation loc, const IrType& type, std::uint64_t result);
+ConstantValue make_integer_literal_constant(SourceLocation loc,
+                                            const IrType& expected,
+                                            const std::string& literal_suffix,
+                                            std::uint64_t int_value,
+                                            bool int_negative);
 ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, bool result);
+ConstantValue make_bool_literal_constant(SourceLocation loc, const IrType& expected, bool result);
 IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value);
 bool fold_static_integer_unary(TokenKind op,
                                const StaticIntegerValue& operand,

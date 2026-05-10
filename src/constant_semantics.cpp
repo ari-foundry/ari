@@ -167,6 +167,38 @@ ConstantValue make_unsigned_integer_constant(SourceLocation loc, const IrType& t
     return value;
 }
 
+ConstantValue make_integer_literal_constant(SourceLocation loc,
+                                            const IrType& expected,
+                                            const std::string& literal_suffix,
+                                            std::uint64_t int_value,
+                                            bool int_negative) {
+    if (!is_integer_type(expected)) {
+        fail(loc, "integer constant literal requires an integer result type");
+    }
+
+    IrType literal_type = literal_suffix.empty()
+        ? expected
+        : integer_literal_suffix_type(literal_suffix, loc);
+    IrExpr literal;
+    literal.kind = IrExprKind::Integer;
+    literal.loc = loc;
+    literal.type = literal_type;
+    literal.int_value = int_value;
+    literal.int_negative = int_negative;
+    if (!integer_literal_fits(literal, literal_type)) {
+        fail(loc, "integer literal " + integer_literal_name(literal) +
+                  " is out of range for " + type_name(literal_type));
+    }
+    require_assignable(loc, expected, literal_type);
+
+    ConstantValue value;
+    value.kind = ConstantValueKind::Integer;
+    value.type = expected;
+    value.int_value = int_value;
+    value.int_negative = int_negative;
+    return value;
+}
+
 ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, bool result) {
     if (expected.qualifier != TypeQualifier::Value || expected.primitive != IrPrimitiveKind::Bool) {
         fail(loc, "type mismatch: expected " + type_name(expected) + ", got bool");
@@ -177,6 +209,10 @@ ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, boo
     value.is_bool = true;
     value.bool_value = result;
     return value;
+}
+
+ConstantValue make_bool_literal_constant(SourceLocation loc, const IrType& expected, bool result) {
+    return make_bool_constant(loc, expected, result);
 }
 
 IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value) {

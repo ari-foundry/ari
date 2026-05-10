@@ -432,7 +432,7 @@ check-match: $(TARGET)
 	$(TARGET) --freestanding tests/ok/constant-patterns.ari -o $(BUILD_DIR)/match/constant-patterns.raw
 	$(BUILD_DIR)/match/constant-patterns.raw; code=$$?; test $$code -eq 61
 	$(TARGET) --freestanding tests/ok/constant-folding.ari -o $(BUILD_DIR)/match/constant-folding.raw
-	$(BUILD_DIR)/match/constant-folding.raw; code=$$?; test $$code -eq 25
+	$(BUILD_DIR)/match/constant-folding.raw; code=$$?; test $$code -eq 32
 	$(TARGET) --freestanding tests/ok/constant-bitwise-folding.ari -o $(BUILD_DIR)/match/constant-bitwise-folding.raw
 	$(BUILD_DIR)/match/constant-bitwise-folding.raw; code=$$?; test $$code -eq 11
 	$(TARGET) --freestanding tests/ok/constant-aggregates.ari -o $(BUILD_DIR)/match/constant-aggregates.raw

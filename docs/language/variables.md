@@ -60,6 +60,9 @@ constants, integer arithmetic (`+`, `-`, `*`, `/`, `%`), bit operations
 (`&`, `|`, `^`, `~`, `<<`, `>>`), unary `-`, bool `!`, `&&`, `||`, scalar
 comparisons, tuple literals, fixed-array literals, named struct literals,
 tuple-struct constructors, and enum case constructors.
+Integer literal suffixes such as `7u8` are checked before the value is assigned
+to the constant's declared type; unsuffixed integer literals are checked
+directly against that declared type.
 Generic enum constants are specialized from the declared constant type, so
 `const VALUE: Option[i32] = Some(7i32);` and
 `const EMPTY: Option[i32] = None;` are accepted.

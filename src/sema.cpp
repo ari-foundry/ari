@@ -6571,38 +6571,19 @@ private:
 
     ConstantValue evaluate_constant_expr(const Expr& expr, const IrType& expected) {
         if (is_value_integer_type(expected) && expr.kind == ExprKind::Integer) {
-            IrType literal_type = expr.literal_suffix.empty()
-                ? expected
-                : integer_literal_suffix_type(expr.literal_suffix, expr.loc);
-            IrExpr literal;
-            literal.kind = IrExprKind::Integer;
-            literal.loc = expr.loc;
-            literal.int_value = expr.int_value;
-            literal.int_negative = expr.int_negative;
-            literal.type = literal_type;
-            if (!integer_literal_fits(literal, literal_type)) {
-                fail(expr.loc, "integer literal " + integer_literal_name(literal) +
-                               " is out of range for " + type_name(literal_type));
-            }
-            require_assignable(expr.loc, expected, literal_type);
-
-            ConstantValue value;
-            value.kind = ConstantValueKind::Integer;
-            value.type = expected;
-            value.int_value = expr.int_value;
-            value.int_negative = expr.int_negative;
-            return value;
+            return make_integer_literal_constant(
+                expr.loc,
+                expected,
+                expr.literal_suffix,
+                expr.int_value,
+                expr.int_negative
+            );
         }
 
         if (expected.qualifier == TypeQualifier::Value &&
             expected.primitive == IrPrimitiveKind::Bool &&
             expr.kind == ExprKind::Bool) {
-            ConstantValue value;
-            value.kind = ConstantValueKind::Bool;
-            value.type = expected;
-            value.is_bool = true;
-            value.bool_value = expr.bool_value;
-            return value;
+            return make_bool_literal_constant(expr.loc, expected, expr.bool_value);
         }
 
         if (expr.kind == ExprKind::Name) {
