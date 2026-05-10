@@ -1404,6 +1404,9 @@ check-variables: $(TARGET)
 	grep -q "store i64 2, ptr %before" $(BUILD_DIR)/variables/vector-len.ll
 	grep -q "store i64 3, ptr %after" $(BUILD_DIR)/variables/vector-len.ll
 	if grep -q "extractvalue { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-len.ll; then exit 1; fi
+	$(TARGET) tests/ok/vector-as-slice-known-len.ari --emit-llvm $(BUILD_DIR)/variables/vector-as-slice-known-len.ll
+	grep -Eq "insertvalue \\{ ptr, i64 \\} .* i64 2, 1" $(BUILD_DIR)/variables/vector-as-slice-known-len.ll
+	if grep -q "extractvalue { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-as-slice-known-len.ll; then exit 1; fi
 	$(TARGET) tests/ok/vector-push-reserve.ari --emit-llvm $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "vector.push.full" $(BUILD_DIR)/variables/vector-push-reserve.ll

@@ -52,6 +52,15 @@ IrExprPtr make_i64_literal(SourceLocation loc, std::uint64_t value) {
     return expr;
 }
 
+IrExprPtr make_bool_literal(SourceLocation loc, bool value) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::Bool;
+    expr->loc = loc;
+    expr->type = bool_type(loc);
+    expr->bool_value = value;
+    return expr;
+}
+
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
     throw CompileError(where(loc) + ": " + message);
 }
@@ -648,6 +657,21 @@ IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr va
     lowered->operand = std::move(vector);
     lowered->payload = std::move(value);
     return lowered;
+}
+
+IrExprPtr make_local_vec_len_expr(SourceLocation loc, IrExprPtr value, VectorKnownLength length) {
+    if (length.known && value && is_vector_storage_type(value->type)) {
+        return make_i64_literal(loc, length.length);
+    }
+    return make_collection_len_expr(loc, std::move(value));
+}
+
+IrExprPtr make_local_vec_is_empty_expr(SourceLocation loc, IrExprPtr value, VectorKnownLength length) {
+    if (length.known && value && is_vector_storage_type(value->type)) {
+        return make_bool_literal(loc, length.length == 0);
+    }
+    IrExprPtr lowered_length = make_collection_len_expr(loc, std::move(value));
+    return make_collection_is_empty_expr(loc, std::move(lowered_length));
 }
 
 IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value) {

@@ -120,6 +120,8 @@ IrExprPtr make_vec_push_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr val
 IrExprPtr make_vec_contains_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
 IrExprPtr make_vec_index_of_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
 IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
+IrExprPtr make_local_vec_len_expr(SourceLocation loc, IrExprPtr value, VectorKnownLength length);
+IrExprPtr make_local_vec_is_empty_expr(SourceLocation loc, IrExprPtr value, VectorKnownLength length);
 IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value);
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length);
 IrExprPtr make_slice_data_pointer_expr(SourceLocation loc, IrExprPtr lvalue, const IrType& element);

@@ -13729,9 +13729,10 @@ private:
                 make_vec_storage_lvalue_expr(expr.operand->loc, name, local.type),
                 element
             );
-            length = make_collection_len_expr(
+            length = make_local_vec_len_expr(
                 expr.loc,
-                make_vec_local_lvalue(expr.operand->loc, name, local.type)
+                make_vec_local_lvalue(expr.operand->loc, name, local.type),
+                vector_known_length_state(local)
             );
         }
         return make_slice_view_expr(
@@ -13748,33 +13749,24 @@ private:
         return check_collection_len_expr(expr.loc, *expr.args[0]);
     }
 
-    std::optional<std::uint64_t> known_local_vec_length_for_expr(const Expr& expr) {
-        if (expr.kind != ExprKind::Name) return std::nullopt;
+    VectorKnownLength known_local_vec_length_for_expr(const Expr& expr) {
+        if (expr.kind != ExprKind::Name) return {};
         const LocalInfo* local = find_local_slot(expr.name);
-        if (!local || !is_vector_storage_type(local->type)) return std::nullopt;
-        VectorKnownLength length = vector_known_length_state(*local);
-        if (!length.known) return std::nullopt;
-        return length.length;
+        if (!local || !is_vector_storage_type(local->type)) return {};
+        return vector_known_length_state(*local);
     }
 
     IrExprPtr check_collection_len_expr(SourceLocation loc, const Expr& source) {
-        std::optional<std::uint64_t> known_vec_length = known_local_vec_length_for_expr(source);
+        VectorKnownLength known_vec_length = known_local_vec_length_for_expr(source);
         IrExprPtr operand = check_aggregate_access_operand(source);
-        if (known_vec_length && is_vector_storage_type(operand->type)) {
-            return make_integer_literal(loc, i64_type(loc), *known_vec_length);
-        }
-        return make_collection_len_expr(loc, std::move(operand));
+        return make_local_vec_len_expr(loc, std::move(operand), known_vec_length);
     }
 
     IrExprPtr check_collection_is_empty_method_call(const Expr& expr) {
         require_collection_is_empty_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
-        std::optional<std::uint64_t> known_vec_length = known_local_vec_length_for_expr(*expr.operand);
+        VectorKnownLength known_vec_length = known_local_vec_length_for_expr(*expr.operand);
         IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
-        if (known_vec_length && is_vector_storage_type(operand->type)) {
-            return make_bool_literal_expr(expr.loc, *known_vec_length == 0);
-        }
-        IrExprPtr length = make_collection_len_expr(expr.loc, std::move(operand));
-        return make_collection_is_empty_expr(expr.loc, std::move(length));
+        return make_local_vec_is_empty_expr(expr.loc, std::move(operand), known_vec_length);
     }
 
     LocalInfo* vec_local_method_receiver(const Expr& method_expr) {

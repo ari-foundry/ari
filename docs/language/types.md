@@ -413,9 +413,11 @@ The same `len(view)`, `view.len()`, and `view.is_empty()` forms read the stored
 length from a `Slice[T]` view. `view[index]` reads or writes through the view's
 stored raw pointer with bounds checks against that stored length. Mutable local
 fixed arrays and mutable local `Vec[T]` values can create a non-owning writable
-view with `values.as_slice()`. Slice views can be sliced again with
-`view[start..end]` or `view[start..=end]`; the result stores an adjusted raw
-pointer and length after checking the requested range against the source view.
+view with `values.as_slice()`; local vector views store a constant length when
+the compiler knows the current local vector length. Slice views can be sliced
+again with `view[start..end]` or `view[start..=end]`; the result stores an
+adjusted raw pointer and length after checking the requested range against the
+source view.
 Array lengths, including direct array literal lengths, are folded directly:
 
 ```ari
