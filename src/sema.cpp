@@ -3114,29 +3114,17 @@ private:
             auto sig = functions_.find(test->name);
             if (sig == functions_.end()) throw CompileError("internal error: missing @test function '" + test->name + "'");
 
-            auto call = std::make_unique<IrExpr>();
-            call->kind = IrExprKind::Call;
-            call->loc = test->loc;
-            call->name = test->name;
-            call->type = sig->second.result;
-
             auto stmt = std::make_unique<IrStmt>();
             stmt->kind = IrStmtKind::ExprStmt;
             stmt->loc = test->loc;
-            stmt->expr = std::move(call);
+            stmt->expr = make_ir_call_expr(test->loc, test->name, sig->second.result);
             fn.body.push_back(std::move(stmt));
         }
-
-        auto zero = std::make_unique<IrExpr>();
-        zero->kind = IrExprKind::Integer;
-        zero->loc = loc;
-        zero->type = fn.return_type;
-        zero->int_value = 0;
 
         auto ret = std::make_unique<IrStmt>();
         ret->kind = IrStmtKind::Return;
         ret->loc = loc;
-        ret->expr = std::move(zero);
+        ret->expr = make_integer_zero(loc, fn.return_type);
         fn.body.push_back(std::move(ret));
 
         return fn;
@@ -8773,34 +8761,25 @@ private:
             type.primitive == IrPrimitiveKind::Enum) {
             return make_integer_zero(loc, type);
         }
+        if (is_raw_pointer_type(type)) {
+            return make_null_literal_expr(loc, type);
+        }
         if (type.primitive == IrPrimitiveKind::F32 ||
             type.primitive == IrPrimitiveKind::F64 ||
             type.primitive == IrPrimitiveKind::F128) {
-            auto value = std::make_unique<IrExpr>();
-            value->kind = IrExprKind::Float;
-            value->loc = loc;
-            value->type = type;
-            value->float_value = 0.0;
-            return value;
+            return make_float_literal_expr(loc, type, 0.0);
         }
         if (type.primitive == IrPrimitiveKind::String) {
-            auto value = std::make_unique<IrExpr>();
-            value->kind = IrExprKind::String;
-            value->loc = loc;
-            value->type = type;
-            return value;
+            return make_string_literal_expr(loc, type);
         }
         if (type.primitive == IrPrimitiveKind::Tuple ||
             type.primitive == IrPrimitiveKind::Array ||
             type.primitive == IrPrimitiveKind::Struct) {
-            auto value = std::make_unique<IrExpr>();
-            value->kind = IrExprKind::Tuple;
-            value->loc = loc;
-            value->type = type;
+            std::vector<IrExprPtr> elements;
             for (const auto& field_type : aggregate_field_types(type)) {
-                value->args.push_back(make_default_value_expr(loc, field_type));
+                elements.push_back(make_default_value_expr(loc, field_type));
             }
-            return value;
+            return make_ir_tuple_expr(loc, type, std::move(elements));
         }
         fail(loc, "internal error: cannot build unreachable match fallback for " + type_name(type));
     }
@@ -10564,39 +10543,33 @@ private:
         auto lowered = std::make_unique<IrExpr>();
         lowered->loc = expr.loc;
         switch (expr.kind) {
-            case ExprKind::Integer:
-                lowered->kind = IrExprKind::Integer;
-                lowered->int_value = expr.int_value;
-                lowered->int_negative = expr.int_negative;
-                lowered->type = expr.literal_suffix.empty()
+            case ExprKind::Integer: {
+                IrType literal_type = expr.literal_suffix.empty()
                     ? i64_type(expr.loc)
                     : integer_literal_suffix_type(expr.literal_suffix, expr.loc);
-                if (!expr.literal_suffix.empty() && !integer_literal_fits(*lowered, lowered->type)) {
-                    fail(expr.loc, "integer literal " + integer_literal_name(*lowered) +
-                                   " is out of range for " + type_name(lowered->type));
+                IrExprPtr literal = make_integer_literal(expr.loc, literal_type, expr.int_value, expr.int_negative);
+                if (!expr.literal_suffix.empty() && !integer_literal_fits(*literal, literal->type)) {
+                    fail(expr.loc, "integer literal " + integer_literal_name(*literal) +
+                                   " is out of range for " + type_name(literal->type));
                 }
-                return lowered;
-            case ExprKind::Float:
-                lowered->kind = IrExprKind::Float;
-                lowered->float_value = expr.float_value;
-                lowered->type = expr.literal_suffix.empty()
+                return literal;
+            }
+            case ExprKind::Float: {
+                IrType literal_type = expr.literal_suffix.empty()
                     ? primitive_type(IrPrimitiveKind::F64, "f64", expr.loc)
                     : float_literal_suffix_type(expr.literal_suffix, expr.loc);
-                return lowered;
+                return make_float_literal_expr(expr.loc, literal_type, expr.float_value);
+            }
             case ExprKind::String:
-                lowered->kind = IrExprKind::String;
-                lowered->string_value = expr.string_value;
-                lowered->type = primitive_type(IrPrimitiveKind::String, "string", expr.loc);
-                return lowered;
+                return make_string_literal_expr(
+                    expr.loc,
+                    primitive_type(IrPrimitiveKind::String, "string", expr.loc),
+                    expr.string_value
+                );
             case ExprKind::Bool:
-                lowered->kind = IrExprKind::Bool;
-                lowered->bool_value = expr.bool_value;
-                lowered->type = bool_type(expr.loc);
-                return lowered;
+                return make_bool_literal_expr(expr.loc, expr.bool_value);
             case ExprKind::Null:
-                lowered->kind = IrExprKind::Null;
-                lowered->type = null_pointer_type(expr.loc);
-                return lowered;
+                return make_null_literal_expr(expr.loc, null_pointer_type(expr.loc));
             case ExprKind::Name: {
                 LocalInfo* local_slot = find_local_slot(expr.name);
                 if (!local_slot) {

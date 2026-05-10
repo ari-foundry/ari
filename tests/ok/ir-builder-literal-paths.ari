@@ -1,0 +1,28 @@
+extern "C" fn puts(text: string) -> i32;
+
+fn main() -> i64 {
+  let text: string = "ir builders";
+  let raw: ptr c_void = null;
+  let pair = (1.25f64, raw);
+
+  let selected = match (true, false) {
+    (true, false) => text,
+    (true, true) => "right",
+    (false, false) => "down",
+    (false, true) => "up",
+  };
+
+  let fallback = match (true, false) {
+    (true, false) => (2.5f64, raw),
+    (true, true) => (3.5f64, raw),
+    (false, false) => (4.5f64, raw),
+    (false, true) => (5.5f64, raw),
+  };
+
+  puts(selected);
+
+  if pair.0 < fallback.0 {
+    return 0;
+  }
+  return 1;
+}

@@ -101,12 +101,13 @@ IrExprPtr make_vector_index_expr(SourceLocation loc,
     return expr;
 }
 
-IrExprPtr make_integer_literal(SourceLocation loc, const IrType& type, std::uint64_t value) {
+IrExprPtr make_integer_literal(SourceLocation loc, const IrType& type, std::uint64_t value, bool negative) {
     auto literal = std::make_unique<IrExpr>();
     literal->kind = IrExprKind::Integer;
     literal->loc = loc;
     literal->type = type;
     literal->int_value = value;
+    literal->int_negative = negative;
     return literal;
 }
 
@@ -121,6 +122,41 @@ IrExprPtr make_bool_literal_expr(SourceLocation loc, bool value) {
     literal->type = bool_type(loc);
     literal->bool_value = value;
     return literal;
+}
+
+IrExprPtr make_float_literal_expr(SourceLocation loc, const IrType& type, double value) {
+    auto literal = std::make_unique<IrExpr>();
+    literal->kind = IrExprKind::Float;
+    literal->loc = loc;
+    literal->type = type;
+    literal->float_value = value;
+    return literal;
+}
+
+IrExprPtr make_string_literal_expr(SourceLocation loc, const IrType& type, std::string value) {
+    auto literal = std::make_unique<IrExpr>();
+    literal->kind = IrExprKind::String;
+    literal->loc = loc;
+    literal->type = type;
+    literal->string_value = std::move(value);
+    return literal;
+}
+
+IrExprPtr make_null_literal_expr(SourceLocation loc, const IrType& type) {
+    auto literal = std::make_unique<IrExpr>();
+    literal->kind = IrExprKind::Null;
+    literal->loc = loc;
+    literal->type = type;
+    return literal;
+}
+
+IrExprPtr make_ir_tuple_expr(SourceLocation loc, IrType type, std::vector<IrExprPtr> elements) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::Tuple;
+    expr->loc = loc;
+    expr->type = std::move(type);
+    expr->args = std::move(elements);
+    return expr;
 }
 
 IrExprPtr make_bool_binary_expr(SourceLocation loc, IrBinaryOp op, IrExprPtr left, IrExprPtr right) {
@@ -183,17 +219,24 @@ IrExprPtr make_pointer_store_expr(SourceLocation loc, IrExprPtr pointer, IrExprP
     return expr;
 }
 
+IrExprPtr make_ir_call_expr(SourceLocation loc,
+                            std::string name,
+                            IrType result,
+                            std::vector<IrExprPtr> args) {
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::Call;
+    lowered->loc = loc;
+    lowered->name = std::move(name);
+    lowered->type = std::move(result);
+    lowered->args = std::move(args);
+    return lowered;
+}
+
 IrExprPtr make_builtin_call(SourceLocation loc,
                             const std::string& name,
                             std::vector<IrExprPtr> args,
                             const IrType& result) {
-    auto lowered = std::make_unique<IrExpr>();
-    lowered->kind = IrExprKind::Call;
-    lowered->loc = loc;
-    lowered->name = name;
-    lowered->type = result;
-    lowered->args = std::move(args);
-    return lowered;
+    return make_ir_call_expr(loc, name, result, std::move(args));
 }
 
 IrMatchExprArm make_match_expr_arm(IrMatchArm arm) {
