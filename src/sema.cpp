@@ -9360,93 +9360,147 @@ private:
         declare_local(stmt.loc, subject_name, subject_type, false);
         lowered.statements.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
-        std::vector<IrStmtPtr> condition_prelude;
-        IrExprPtr condition = lower_product_match_pattern_condition(
-            stmt.condition_pattern,
-            subject_name,
-            subject_type,
-            condition_prelude
-        );
-        for (auto& statement : condition_prelude) {
-            lowered.statements.push_back(std::move(statement));
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(stmt.condition_pattern);
+        std::set<std::string> reusable_names;
+        if (pattern_contains_or(stmt.condition_pattern)) {
+            reusable_names = require_same_or_pattern_bindings(stmt.condition_pattern.loc, alternatives, subject_type);
         }
 
-        if (!condition && !stmt.else_body.empty()) {
+        bool has_irrefutable_alternative = false;
+        StateSnapshot branch_input = snapshot_states();
+        StateSnapshot continuing_state;
+        bool has_continuing_state = false;
+        bool all_return = true;
+        bool all_non_continuing = true;
+        std::vector<TupleCheckedStmtArm> checked_arms;
+        checked_arms.reserve(alternatives.size() + 1);
+
+        for (std::size_t i = 0; i < alternatives.size(); ++i) {
+            const Pattern& pattern = alternatives[i];
+            TupleCheckedStmtArm lowered_arm;
+            lowered_arm.loc = pattern.loc;
+
+            std::vector<IrStmtPtr> condition_prelude;
+            lowered_arm.condition = lower_product_match_pattern_condition(
+                pattern,
+                subject_name,
+                subject_type,
+                condition_prelude
+            );
+            if (!lowered_arm.condition) {
+                has_irrefutable_alternative = true;
+                if (!stmt.else_body.empty()) {
+                    fail(stmt.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
+                }
+            }
+            for (auto& statement : condition_prelude) {
+                lowered.statements.push_back(std::move(statement));
+            }
+
+            restore_states(branch_input);
+            push_scope();
+            reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
+            lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
+            reusable_pattern_binding_names_.clear();
+            CheckedStatements then_checked = check_statements(stmt.then_body, false);
+            for (auto& statement : then_checked.statements) {
+                lowered_arm.body.push_back(std::move(statement));
+            }
+            if (then_checked.flow == Flow::Returns) discard_scope();
+            else if (then_checked.flow == Flow::Stops) discard_scope();
+            else {
+                append_current_scope_auto_destroy_cleanup(stmt.loc, lowered_arm.body);
+                pop_scope();
+            }
+            StateSnapshot then_state = snapshot_states();
+
+            if (then_checked.flow == Flow::Continues) {
+                all_return = false;
+                all_non_continuing = false;
+                if (!has_continuing_state) {
+                    continuing_state = then_state;
+                    has_continuing_state = true;
+                } else {
+                    require_same_states(
+                        stmt.loc,
+                        continuing_state,
+                        then_state,
+                        "has incompatible ownership states after if-let pattern alternatives"
+                    );
+                    merge_zone_generations_into(continuing_state, then_state);
+                }
+            } else if (then_checked.flow == Flow::Stops) {
+                all_return = false;
+            }
+
+            checked_arms.push_back(std::move(lowered_arm));
+        }
+
+        if (has_irrefutable_alternative && !stmt.else_body.empty()) {
             fail(stmt.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
         }
 
-        StateSnapshot branch_input = snapshot_states();
-        std::vector<IrStmtPtr> then_body;
-        push_scope();
-        lower_product_match_pattern_bindings_from_local(stmt.condition_pattern, subject_name, subject_type, then_body);
-        CheckedStatements then_checked = check_statements(stmt.then_body, false);
-        for (auto& statement : then_checked.statements) {
-            then_body.push_back(std::move(statement));
-        }
-        if (then_checked.flow == Flow::Returns) discard_scope();
-        else if (then_checked.flow == Flow::Stops) discard_scope();
-        else {
-            append_current_scope_auto_destroy_cleanup(stmt.loc, then_body);
-            pop_scope();
-        }
-        StateSnapshot then_state = snapshot_states();
+        if (!stmt.else_body.empty()) {
+            restore_states(branch_input);
+            CheckedStatements else_checked = check_statements(stmt.else_body, true);
+            TupleCheckedStmtArm fallback;
+            fallback.loc = stmt.loc;
+            fallback.body = std::move(else_checked.statements);
+            checked_arms.push_back(std::move(fallback));
+            StateSnapshot else_state = snapshot_states();
 
-        if (!condition) {
-            for (auto& statement : then_body) {
+            if (else_checked.flow == Flow::Continues) {
+                all_return = false;
+                all_non_continuing = false;
+                if (!has_continuing_state) {
+                    continuing_state = else_state;
+                    has_continuing_state = true;
+                } else {
+                    require_same_states(
+                        stmt.loc,
+                        continuing_state,
+                        else_state,
+                        "has incompatible ownership states after if-let branches"
+                    );
+                    merge_zone_generations_into(continuing_state, else_state);
+                }
+            } else if (else_checked.flow == Flow::Stops) {
+                all_return = false;
+            }
+
+            std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
+            for (auto& statement : chain) {
                 lowered.statements.push_back(std::move(statement));
             }
-            if (then_checked.flow == Flow::Returns) {
+
+            if (all_non_continuing) {
                 restore_states(branch_input);
-                return Flow::Returns;
+                return all_return ? Flow::Returns : Flow::Stops;
             }
-            if (then_checked.flow == Flow::Stops) {
-                restore_states(branch_input);
-                return Flow::Stops;
-            }
-            restore_states(then_state);
+            restore_states(continuing_state);
             return Flow::Continues;
         }
 
-        restore_states(branch_input);
-        auto if_stmt = std::make_unique<IrStmt>();
-        if_stmt->kind = IrStmtKind::If;
-        if_stmt->loc = stmt.loc;
-        if_stmt->condition = std::move(condition);
-        if_stmt->then_body = std::move(then_body);
+        std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
+        for (auto& statement : chain) {
+            lowered.statements.push_back(std::move(statement));
+        }
 
-        if (stmt.else_body.empty()) {
-            if (then_checked.flow == Flow::Continues) {
-                require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if-let without else");
-                restore_states(merge_zone_generations(branch_input, then_state));
-            } else {
+        if (has_irrefutable_alternative) {
+            if (all_non_continuing) {
                 restore_states(branch_input);
+                return all_return ? Flow::Returns : Flow::Stops;
             }
-            lowered.statements.push_back(std::move(if_stmt));
+            restore_states(continuing_state);
             return Flow::Continues;
         }
 
-        CheckedStatements else_checked = check_statements(stmt.else_body, true);
-        if_stmt->else_body = std::move(else_checked.statements);
-        StateSnapshot else_state = snapshot_states();
-        lowered.statements.push_back(std::move(if_stmt));
-
-        if (then_checked.flow != Flow::Continues && else_checked.flow != Flow::Continues) {
+        if (has_continuing_state) {
+            require_same_states(stmt.loc, branch_input, continuing_state, "changes ownership state in if-let without else");
+            restore_states(merge_zone_generations(branch_input, continuing_state));
+        } else {
             restore_states(branch_input);
-            if (then_checked.flow == Flow::Returns && else_checked.flow == Flow::Returns) return Flow::Returns;
-            return Flow::Stops;
         }
-        if (then_checked.flow != Flow::Continues) {
-            restore_states(else_state);
-            return Flow::Continues;
-        }
-        if (else_checked.flow != Flow::Continues) {
-            restore_states(then_state);
-            return Flow::Continues;
-        }
-
-        require_same_states(stmt.loc, then_state, else_state,
-                            "has incompatible ownership states after if-let branches");
-        restore_states(merge_zone_generations(then_state, else_state));
         return Flow::Continues;
     }
 
@@ -11975,53 +12029,101 @@ private:
         declare_local(expr.loc, subject_name, subject_type, false);
         lowered->block_body.push_back(make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));
 
-        std::vector<IrStmtPtr> condition_prelude;
-        IrExprPtr condition = lower_product_match_pattern_condition(
-            expr.condition_pattern,
-            subject_name,
-            subject_type,
-            condition_prelude
-        );
-        for (auto& statement : condition_prelude) {
-            lowered->block_body.push_back(std::move(statement));
+        StateSnapshot branch_input = snapshot_states();
+        StateSnapshot continuing_state;
+        bool has_continuing_state = false;
+        bool has_result = false;
+        bool has_irrefutable_alternative = false;
+        IrType result_type;
+        std::vector<TupleCheckedExprArm> checked_arms;
+
+        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(expr.condition_pattern);
+        std::set<std::string> reusable_names;
+        if (pattern_contains_or(expr.condition_pattern)) {
+            reusable_names = require_same_or_pattern_bindings(expr.condition_pattern.loc, alternatives, subject_type);
         }
-        if (!condition) {
+
+        for (std::size_t i = 0; i < alternatives.size(); ++i) {
+            const Pattern& pattern = alternatives[i];
+            TupleCheckedExprArm lowered_arm;
+            lowered_arm.loc = pattern.loc;
+
+            std::vector<IrStmtPtr> condition_prelude;
+            lowered_arm.condition = lower_product_match_pattern_condition(
+                pattern,
+                subject_name,
+                subject_type,
+                condition_prelude
+            );
+            if (!lowered_arm.condition) {
+                has_irrefutable_alternative = true;
+                fail(expr.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
+            }
+            for (auto& statement : condition_prelude) {
+                lowered->block_body.push_back(std::move(statement));
+            }
+
+            restore_states(branch_input);
+            push_scope();
+            reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
+            lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
+            reusable_pattern_binding_names_.clear();
+            CheckedStatements then_checked = check_statements(expr.then_body, false);
+            if (then_checked.flow == Flow::Returns) {
+                discard_scope();
+                fail(expr.loc, "if-let expression arm must reach its final value");
+            }
+            for (auto& statement : then_checked.statements) {
+                lowered_arm.body.push_back(std::move(statement));
+            }
+
+            IrExprPtr then_value = check_expr(*expr.then_value);
+            if (is_borrow_type(then_value->type)) {
+                pop_scope();
+                fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
+            }
+            if (is_void_value_type(then_value->type)) {
+                pop_scope();
+                fail(expr.loc, "if-let expression arm must produce a value");
+            }
+            if (!has_result) {
+                result_type = then_value->type;
+                has_result = true;
+            } else {
+                coerce_expr_to_expected(*then_value, result_type);
+                require_assignable(expr.loc, result_type, then_value->type);
+            }
+            then_value = materialize_value_before_auto_destroy_cleanup(
+                expr.loc,
+                std::move(then_value),
+                lowered_arm.body,
+                scopes_.size() - 1,
+                "$iflet",
+                "if-let expression result"
+            );
+            lowered_arm.value = std::move(then_value);
+            pop_scope();
+
+            StateSnapshot then_state = snapshot_states();
+            if (!has_continuing_state) {
+                continuing_state = then_state;
+                has_continuing_state = true;
+            } else {
+                require_same_states(
+                    expr.loc,
+                    continuing_state,
+                    then_state,
+                    "has incompatible ownership states after if-let pattern alternatives"
+                );
+                merge_zone_generations_into(continuing_state, then_state);
+            }
+
+            checked_arms.push_back(std::move(lowered_arm));
+        }
+
+        if (has_irrefutable_alternative) {
             fail(expr.condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
         }
-
-        StateSnapshot branch_input = snapshot_states();
-        std::vector<IrStmtPtr> then_body;
-        push_scope();
-        lower_product_match_pattern_bindings_from_local(expr.condition_pattern, subject_name, subject_type, then_body);
-        CheckedStatements then_checked = check_statements(expr.then_body, false);
-        if (then_checked.flow == Flow::Returns) {
-            discard_scope();
-            fail(expr.loc, "if-let expression arm must reach its final value");
-        }
-        for (auto& statement : then_checked.statements) {
-            then_body.push_back(std::move(statement));
-        }
-
-        IrExprPtr then_value = check_expr(*expr.then_value);
-        if (is_borrow_type(then_value->type)) {
-            pop_scope();
-            fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
-        }
-        if (is_void_value_type(then_value->type)) {
-            pop_scope();
-            fail(expr.loc, "if-let expression arm must produce a value");
-        }
-        then_value = materialize_value_before_auto_destroy_cleanup(
-            expr.loc,
-            std::move(then_value),
-            then_body,
-            scopes_.size() - 1,
-            "$iflet",
-            "if-let expression result"
-        );
-        pop_scope();
-        StateSnapshot then_state = snapshot_states();
-        IrType result_type = then_value->type;
 
         restore_states(branch_input);
         CheckedExprBlock else_checked = check_value_block(
@@ -12032,22 +12134,19 @@ private:
         coerce_expr_to_expected(*else_checked.value, result_type);
         require_assignable(expr.loc, result_type, else_checked.value->type);
 
-        require_same_states(expr.loc, then_state, else_checked.state,
+        require_same_states(expr.loc, continuing_state, else_checked.state,
                             "has incompatible ownership states after if-let expression branches");
-        restore_states(merge_zone_generations(then_state, else_checked.state));
+        merge_zone_generations_into(continuing_state, else_checked.state);
+        restore_states(continuing_state);
 
-        auto if_expr = std::make_unique<IrExpr>();
-        if_expr->kind = IrExprKind::If;
-        if_expr->loc = expr.loc;
-        if_expr->type = result_type;
-        if_expr->condition = std::move(condition);
-        if_expr->then_body = std::move(then_body);
-        if_expr->then_value = std::move(then_value);
-        if_expr->else_body = std::move(else_checked.statements);
-        if_expr->else_value = std::move(else_checked.value);
+        TupleCheckedExprArm fallback;
+        fallback.loc = expr.loc;
+        fallback.body = std::move(else_checked.statements);
+        fallback.value = std::move(else_checked.value);
+        checked_arms.push_back(std::move(fallback));
 
         lowered->type = result_type;
-        lowered->block_value = std::move(if_expr);
+        lowered->block_value = build_tuple_match_if_expr_chain(checked_arms, result_type);
         return lowered;
     }
 

@@ -1,0 +1,37 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Pair(i64, i64)
+
+fn main() -> i64 {
+  var total = 0;
+  if let ((left, 0) | (0, left)) = (0, 7) {
+    total = total + left;
+  } else {
+    total = 99;
+  }
+
+  let point = Point { x: 0, y: 11 };
+  let struct_score = if let (Point { x: axis, y: 0 } | Point { x: 0, y: axis }) = point {
+    axis
+  } else {
+    0
+  };
+
+  let pair = Pair(0, 13);
+  let tuple_struct_score = if let (Pair(side, 0) | Pair(0, side)) = pair {
+    side
+  } else {
+    0
+  };
+
+  let fallback = if let ([item, 0] | [0, item]) = [1, 2] {
+    item
+  } else {
+    5
+  };
+
+  return total + struct_score + tuple_struct_score + fallback;
+}

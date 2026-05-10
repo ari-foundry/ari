@@ -103,9 +103,11 @@ let aggregate_score = if let (Point { y: py, .. }, Rgb(red, false)) = (point, co
 };
 ```
 
-Aggregate `if let` supports the same tuple, named struct, and tuple-struct
-patterns as `match`. Irrefutable aggregate patterns such as `(x, y)` do not
-need `if let`; Ari rejects them when an `else` arm is present.
+Aggregate `if let` supports the same tuple, fixed array, named struct, and
+tuple-struct patterns as `match`. Or-pattern alternatives may bind the same
+names with the same types, so `(left, 0) | (0, left)` binds `left` from the
+alternative that actually matched. Irrefutable aggregate patterns such as
+`(x, y)` do not need `if let`; Ari rejects them when an `else` arm is present.
 
 ## Block Expressions
 

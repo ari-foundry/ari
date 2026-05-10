@@ -211,6 +211,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/if-let-or-pattern.raw; code=$$?; test $$code -eq 44
 	$(TARGET) --freestanding tests/ok/if-let-aggregate-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-aggregate-pattern.raw
 	$(BUILD_DIR)/control-flow/if-let-aggregate-pattern.raw; code=$$?; test $$code -eq 17
+	$(TARGET) --freestanding tests/ok/if-let-aggregate-or-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.raw
+	$(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.raw; code=$$?; test $$code -eq 36
 	$(TARGET) --freestanding tests/ok/block-expression.ari -o $(BUILD_DIR)/control-flow/block-expression.raw
 	$(BUILD_DIR)/control-flow/block-expression.raw; code=$$?; test $$code -eq 27
 	$(TARGET) --freestanding tests/ok/labeled-block-expression.ari -o $(BUILD_DIR)/control-flow/labeled-block-expression.raw
@@ -283,6 +285,9 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/if-let-or-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/if-let-or-pattern.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/if-let-or-pattern.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-let-or-pattern.ll
+	$(TARGET) tests/ok/if-let-aggregate-or-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.ll
+	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.ll
+	grep -q "extractvalue" $(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.ll
 	$(TARGET) tests/ok/block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/block-expression.ll
 	grep -q "_ARNv4main" $(BUILD_DIR)/control-flow/block-expression.ll
 	$(TARGET) tests/ok/labeled-block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-expression.ll
