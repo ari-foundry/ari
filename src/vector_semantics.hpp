@@ -99,5 +99,7 @@ IrExprPtr make_vec_index_of_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr
 IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value);
 IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value);
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length);
+IrExprPtr make_slice_data_pointer_expr(SourceLocation loc, IrExprPtr lvalue, const IrType& element);
+IrExprPtr make_slice_view_expr(SourceLocation loc, IrExprPtr data, IrExprPtr length, IrType slice_type);
 
 } // namespace ari

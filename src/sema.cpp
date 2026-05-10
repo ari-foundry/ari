@@ -13675,32 +13675,6 @@ private:
         return value;
     }
 
-    static IrExprPtr make_raw_pointer_to_lvalue(SourceLocation loc, IrExprPtr lvalue, const IrType& element) {
-        IrType pointer = element;
-        pointer.qualifier = TypeQualifier::Ptr;
-
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::Borrow;
-        lowered->loc = loc;
-        lowered->type = std::move(pointer);
-        lowered->operand = std::move(lvalue);
-        return lowered;
-    }
-
-    IrExprPtr make_slice_view_expr(SourceLocation loc,
-                                   IrExprPtr data,
-                                   IrExprPtr length,
-                                   const IrType& element) {
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::Tuple;
-        lowered->loc = loc;
-        lowered->type = prelude_slice_type(loc, element);
-        lowered->args.reserve(2);
-        lowered->args.push_back(std::move(data));
-        lowered->args.push_back(std::move(length));
-        return lowered;
-    }
-
     LocalInfo* slice_view_local_method_receiver(const Expr& method_expr) {
         if (!method_expr.operand || method_expr.operand->kind != ExprKind::Name) return nullptr;
         LocalInfo* local = find_local_slot(method_expr.operand->name);
@@ -13739,7 +13713,7 @@ private:
         IrExprPtr data;
         IrExprPtr length;
         if (local.type.primitive == IrPrimitiveKind::Array) {
-            data = make_raw_pointer_to_lvalue(
+            data = make_slice_data_pointer_expr(
                 expr.loc,
                 make_local_lvalue_expr(expr.operand->loc, name, local.type),
                 element
@@ -13754,13 +13728,18 @@ private:
             storage_lvalue->type = std::move(storage);
             storage_lvalue->operand = make_vec_local_lvalue(expr.operand->loc, name, local.type);
 
-            data = make_raw_pointer_to_lvalue(expr.loc, std::move(storage_lvalue), element);
+            data = make_slice_data_pointer_expr(expr.loc, std::move(storage_lvalue), element);
             length = make_collection_len_expr(
                 expr.loc,
                 make_vec_local_lvalue(expr.operand->loc, name, local.type)
             );
         }
-        return make_slice_view_expr(expr.loc, std::move(data), std::move(length), element);
+        return make_slice_view_expr(
+            expr.loc,
+            std::move(data),
+            std::move(length),
+            prelude_slice_type(expr.loc, element)
+        );
     }
 
     IrExprPtr check_vec_len_call(const Expr& expr, IrExprPtr lowered) {

@@ -591,4 +591,27 @@ IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length) {
     return empty;
 }
 
+IrExprPtr make_slice_data_pointer_expr(SourceLocation loc, IrExprPtr lvalue, const IrType& element) {
+    IrType pointer = element;
+    pointer.qualifier = TypeQualifier::Ptr;
+
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::Borrow;
+    lowered->loc = loc;
+    lowered->type = std::move(pointer);
+    lowered->operand = std::move(lvalue);
+    return lowered;
+}
+
+IrExprPtr make_slice_view_expr(SourceLocation loc, IrExprPtr data, IrExprPtr length, IrType slice_type) {
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::Tuple;
+    lowered->loc = loc;
+    lowered->type = std::move(slice_type);
+    lowered->args.reserve(2);
+    lowered->args.push_back(std::move(data));
+    lowered->args.push_back(std::move(length));
+    return lowered;
+}
+
 } // namespace ari

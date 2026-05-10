@@ -33,7 +33,8 @@
    by sema dispatch, local method shape diagnostics, and the shared `len`,
    `is_empty`, and `as_slice` builtin/method shape checks. Shared collection
    `len` lowering for arrays, local Vec storage, and Slice views is centralized
-   there as well. Local Vec integer and non-negative operand diagnostics for
+   there as well, along with `as_slice` data-pointer and view construction.
+   Local Vec integer and non-negative operand diagnostics for
    index/capacity/length arguments are also centralized there. Local Vec IR
    construction helpers include `push` alongside the other method lowerings.
    Known-length updates for local `push`, `insert`, `pop`, `remove`, `clear`,
