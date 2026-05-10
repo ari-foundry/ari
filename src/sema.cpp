@@ -285,6 +285,7 @@ public:
         validate_struct_decls();
         validate_generic_constraints();
         validate_impls();
+        validate_into_iterator_result_contracts();
         collect_impl_method_signatures();
         collect_function_signatures();
         std::vector<const FunctionDecl*> test_functions = collect_test_functions();
@@ -2135,6 +2136,60 @@ private:
                 generic_impl.loc = impl.trait_type.loc;
                 generic_trait_impls_.push_back(std::move(generic_impl));
             }
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+        }
+    }
+
+    const FunctionDecl& require_impl_method_decl(const ImplDecl& impl, const std::string& name) const {
+        for (const auto& method : impl.methods) {
+            if (basename_of_qualified_name(method.name) == name) return method;
+        }
+        throw CompileError("internal error: missing validated impl method '" + name + "'");
+    }
+
+    void validate_into_iterator_result_contracts() {
+        for (const auto& impl : program_.impls) {
+            if (!impl.has_trait) continue;
+
+            std::string previous_module = current_module_name_;
+            std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+            current_module_name_ = impl.module_name;
+            std::map<std::string, IrType> substitutions = generic_placeholder_substitutions(impl.generics);
+            IrType self_type = resolve_executable_type(impl.for_type);
+            substitutions.emplace("Self", self_type);
+            current_type_substitutions_ = substitutions;
+
+            std::string trait_name = resolve_trait_name(impl.trait_type.name);
+            if (!is_std_into_iterator_trait_name(trait_name)) {
+                current_type_substitutions_ = std::move(previous_substitutions);
+                current_module_name_ = previous_module;
+                continue;
+            }
+            IrType item_type = resolve_executable_type(impl.trait_type.args[0]);
+            item_type.qualifier = TypeQualifier::Value;
+            const FunctionDecl& method = require_impl_method_decl(impl, "into_iter");
+            IrType result_type = method.has_return_type
+                ? resolve_type_with_substitutions(method.return_type, substitutions)
+                : void_type(method.loc);
+            if (result_type.primitive == IrPrimitiveKind::Void) {
+                fail(method.loc, "method 'into_iter' must return an iterator value");
+            }
+
+            ForIteratorTraitMatch iterator_match;
+            if (!try_find_for_iterator_trait_kind(result_type, ForIteratorTraitKind::Iterator, iterator_match)) {
+                fail(method.has_return_type ? method.return_type.loc : method.loc,
+                     "method 'into_iter' for " + for_iterator_trait_display(trait_name, item_type) +
+                         " must return a type that implements Iterator[" + type_name(item_type) +
+                         "], got " + type_name(result_type));
+            }
+            if (!same_type(iterator_match.item_type, item_type)) {
+                fail(method.has_return_type ? method.return_type.loc : method.loc,
+                     "method 'into_iter' for " + for_iterator_trait_display(trait_name, item_type) +
+                         " returns Iterator[" + type_name(iterator_match.item_type) +
+                         "] instead of Iterator[" + type_name(item_type) + "]");
+            }
+
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
         }

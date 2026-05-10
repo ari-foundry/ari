@@ -321,9 +321,10 @@ fn into_iter(self: ref mut Self) -> Self
 
 `Self` is the default return shape in the source header. Trait impls may return
 a distinct iterator type while the associated-iterator contract is still
-compiler-known; `for` lowering validates that the actual `into_iter` result
-implements `Iterator[T]`. Value-self `into_iter(self)` impls remain accepted as
-a compatibility subset for copyable snapshot-style containers.
+compiler-known; impl validation requires the actual `into_iter` result to
+implement `Iterator[T]`, and `for` lowering rechecks the specialized result.
+Value-self `into_iter(self)` impls remain accepted as a compatibility subset
+for copyable snapshot-style containers.
 
 ## Context
 

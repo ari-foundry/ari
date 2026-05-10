@@ -71,10 +71,11 @@
    `Iterator[T]`, including impls that return a distinct iterator type; legacy
    value-self `into_iter(self)` impls remain accepted for copyable
    snapshot-style containers. Because Ari does not have associated types yet,
-   sema treats the `IntoIterator[T].into_iter` return type as an impl-specific
-   contract and validates the concrete result at `for` lowering sites. The
-   remaining iterator model needs a first-class source spelling for that
-   iterator result plus owner/borrow iterator value and lifetime policy.
+   sema treats the `IntoIterator[T].into_iter` return type as an Ari-specific
+   contract: impl validation requires the concrete result to implement
+   `Iterator[T]`, and `for` lowering rechecks the specialized result. The
+   remaining iterator model needs owner/borrow iterator value and lifetime
+   policy.
    Iterator item patterns can now
    use scalar literal/range tests, or-patterns over those tests, fieldless
    enum-case patterns, and compact enum item payload
@@ -83,9 +84,6 @@
    non-matching item ends the loop. `for let pattern in iterator` is the
    filter-style form; non-matching `Some(_)` items continue to the next
    iterator step.
-   - [contract] replace the compiler-known `into_iter` result relaxation with
-     a first-class associated iterator type or equivalent Ari-specific trait
-     contract
    - [state] extend the new mutable iterator receiver support beyond copyable
      non-borrow values to owner/borrow iterator values and explicit iterator
      lifetime rules

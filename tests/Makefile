@@ -319,7 +319,7 @@ check-control-flow: $(TARGET)
 	if $(TARGET) tests/errors/for-iterator-planned.ari -o $(BUILD_DIR)/control-flow/for-iterator-planned.elf >$(BUILD_DIR)/control-flow/for-iterator-planned.err 2>&1; then exit 1; fi
 	grep -q "copyable IntoIterator\\[T\\] values" $(BUILD_DIR)/control-flow/for-iterator-planned.err
 	if $(TARGET) tests/errors/for-into-iterator-result-not-iterator.ari -o $(BUILD_DIR)/control-flow/for-into-iterator-result-not-iterator.elf >$(BUILD_DIR)/control-flow/for-into-iterator-result-not-iterator.err 2>&1; then exit 1; fi
-	grep -q "calls into_iter() but the result type i64 does not implement Iterator\\[i64\\]" $(BUILD_DIR)/control-flow/for-into-iterator-result-not-iterator.err
+	grep -q "method 'into_iter' for IntoIterator\\[i64\\] must return a type that implements Iterator\\[i64\\], got i64" $(BUILD_DIR)/control-flow/for-into-iterator-result-not-iterator.err
 	if $(TARGET) tests/errors/for-pattern-planned.ari -o $(BUILD_DIR)/control-flow/for-pattern-planned.elf >$(BUILD_DIR)/control-flow/for-pattern-planned.err 2>&1; then exit 1; fi
 	grep -q "for enum-case patterns are planned for Iterator\\[T\\] values" $(BUILD_DIR)/control-flow/for-pattern-planned.err
 	if $(TARGET) tests/errors/for-vector-refutable-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-refutable-pattern.elf >$(BUILD_DIR)/control-flow/for-vector-refutable-pattern.err 2>&1; then exit 1; fi

@@ -401,6 +401,8 @@ Checklist:
       `into_iter` and `next`
 - [x] allow `IntoIterator[T].into_iter` impls to return a distinct iterator
       type and validate that result at `for` lowering sites
+- [x] reject `IntoIterator[T].into_iter` impls whose concrete result does not
+      implement `Iterator[T]`
 - [x] lower iterator item literal/range/or, fieldless enum-case, and compact
       enum payload patterns through the `while let Some(pattern) = next()` path
 - [x] reserve `iter::Iterable[T]`
