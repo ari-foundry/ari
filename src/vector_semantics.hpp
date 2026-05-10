@@ -5,9 +5,12 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <string>
 
 namespace ari {
+
+struct Expr;
 
 enum class LocalVecMethod {
     Unknown,
@@ -37,6 +40,8 @@ struct VectorKnownLength {
     std::uint64_t length = 0;
 };
 
+using VectorKnownLengthLookup = std::function<VectorKnownLength(const std::string&)>;
+
 bool is_vector_storage_type(const IrType& type);
 IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length);
 const IrType& require_typed_empty_vector_element_type(SourceLocation loc, const IrType& expected);
@@ -45,6 +50,8 @@ void widen_vector_storage_type(IrType& type, std::uint64_t capacity);
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
 bool vector_literal_length(const IrExpr& expr, std::uint64_t& out);
 VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, const IrExpr& expr);
+VectorKnownLength vector_known_length_from_source_tree(const Expr& source,
+                                                       const VectorKnownLengthLookup& lookup);
 std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr);
 LocalVecMethod classify_local_vec_method(const std::string& method_name);
 void require_collection_len_function_shape(SourceLocation loc,

@@ -4684,48 +4684,12 @@ private:
         local.vector_known_length = state.known ? state.length : 0;
     }
 
-    bool merge_source_vector_known_length(VectorKnownLength& merged,
-                                          bool& has_merged,
-                                          const ExprPtr& source) {
-        if (!source) return false;
-        VectorKnownLength length = vector_known_length_from_source_expr(*source);
-        if (!length.known) return false;
-        if (!has_merged) {
-            merged = length;
-            has_merged = true;
-            return true;
-        }
-        return merged.length == length.length;
-    }
-
     VectorKnownLength vector_known_length_from_source_expr(const Expr& source) {
-        if (source.kind == ExprKind::Vector) {
-            return VectorKnownLength{true, static_cast<std::uint64_t>(source.args.size())};
-        }
-        if (source.kind == ExprKind::Name) {
-            const LocalInfo* source_local = find_local_slot(source.name);
+        return vector_known_length_from_source_tree(source, [this](const std::string& name) -> VectorKnownLength {
+            const LocalInfo* source_local = find_local_slot(name);
             if (!source_local || !is_vector_storage_type(source_local->type)) return {};
             return vector_known_length_state(*source_local);
-        }
-        if (source.kind == ExprKind::Block && source.block_value) {
-            return vector_known_length_from_source_expr(*source.block_value);
-        }
-        if (source.kind == ExprKind::If) {
-            VectorKnownLength merged;
-            bool has_merged = false;
-            if (!merge_source_vector_known_length(merged, has_merged, source.then_value)) return {};
-            if (!merge_source_vector_known_length(merged, has_merged, source.else_value)) return {};
-            return has_merged ? merged : VectorKnownLength{};
-        }
-        if (source.kind == ExprKind::Match) {
-            VectorKnownLength merged;
-            bool has_merged = false;
-            for (const auto& arm : source.match_arms) {
-                if (!merge_source_vector_known_length(merged, has_merged, arm.value)) return {};
-            }
-            return has_merged ? merged : VectorKnownLength{};
-        }
-        return {};
+        });
     }
 
     VectorKnownLength vector_known_length_from_source_expr(const IrType& storage_type,

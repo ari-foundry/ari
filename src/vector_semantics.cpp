@@ -1,5 +1,6 @@
 #include "vector_semantics.hpp"
 
+#include "ast.hpp"
 #include "common.hpp"
 #include "type_semantics.hpp"
 
@@ -188,6 +189,50 @@ VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, cons
         bool has_merged = false;
         for (const auto& arm : expr.match_arms) {
             if (!merge_length(merged, has_merged, arm.value)) return {};
+        }
+        return has_merged ? merged : VectorKnownLength{};
+    }
+    return {};
+}
+
+bool merge_source_vector_known_length(VectorKnownLength& merged,
+                                      bool& has_merged,
+                                      const ExprPtr& source,
+                                      const VectorKnownLengthLookup& lookup) {
+    if (!source) return false;
+    VectorKnownLength length = vector_known_length_from_source_tree(*source, lookup);
+    if (!length.known) return false;
+    if (!has_merged) {
+        merged = length;
+        has_merged = true;
+        return true;
+    }
+    return merged.length == length.length;
+}
+
+VectorKnownLength vector_known_length_from_source_tree(const Expr& source,
+                                                       const VectorKnownLengthLookup& lookup) {
+    if (source.kind == ExprKind::Vector) {
+        return VectorKnownLength{true, static_cast<std::uint64_t>(source.args.size())};
+    }
+    if (source.kind == ExprKind::Name) {
+        return lookup ? lookup(source.name) : VectorKnownLength{};
+    }
+    if (source.kind == ExprKind::Block && source.block_value) {
+        return vector_known_length_from_source_tree(*source.block_value, lookup);
+    }
+    if (source.kind == ExprKind::If) {
+        VectorKnownLength merged;
+        bool has_merged = false;
+        if (!merge_source_vector_known_length(merged, has_merged, source.then_value, lookup)) return {};
+        if (!merge_source_vector_known_length(merged, has_merged, source.else_value, lookup)) return {};
+        return has_merged ? merged : VectorKnownLength{};
+    }
+    if (source.kind == ExprKind::Match) {
+        VectorKnownLength merged;
+        bool has_merged = false;
+        for (const auto& arm : source.match_arms) {
+            if (!merge_source_vector_known_length(merged, has_merged, arm.value, lookup)) return {};
         }
         return has_merged ? merged : VectorKnownLength{};
     }
