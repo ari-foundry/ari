@@ -210,11 +210,13 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    IEEE bit-pattern scalar storage, and raw pointer load/store/dereference of
    `ptr f32` and `ptr f64` uses the same scalar bit storage path. Freestanding
    `f32`/`f64` arithmetic and ordered comparisons now lower with SSE scalar
-   instructions. This intentionally does not pretend to be complete native
-   float lowering yet: calls and `f128` still fail with dedicated freestanding
-   diagnostics.
+   instructions, and direct Ari calls can pass or return `f32`/`f64` as raw
+   scalar ABI bit patterns. This intentionally does not pretend to be complete
+   native float lowering yet: `f128` still fails with dedicated freestanding
+   diagnostics, and foreign/platform C float ABI work remains tied to the raw
+   C-import path.
    - [values] materialize eventual `f128` scalar expressions
-   - [abi] pass and return supported floats with the platform calling convention
+   - [abi-c] define foreign/platform C float ABI once raw C extern calls exist
 5. Expand FFI type coverage beyond the x86-64 Linux C aliases.
 6. Decide whether source-level function overloading belongs in Ari. The current
    v0 mangling intentionally omits parameter types because overloading is not

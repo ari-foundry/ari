@@ -1573,6 +1573,11 @@ check-functions: $(TARGET) check-function-errors
 	$(BUILD_DIR)/functions/function-seven-args-host.elf; code=$$?; test $$code -eq 28
 	$(TARGET) --freestanding tests/ok/function-narrow-return-freestanding.ari -o $(BUILD_DIR)/functions/function-narrow-return-freestanding.elf
 	$(BUILD_DIR)/functions/function-narrow-return-freestanding.elf; code=$$?; test $$code -eq 23
+	$(TARGET) --freestanding tests/ok/function-float-freestanding.ari -o $(BUILD_DIR)/functions/function-float-freestanding.elf
+	$(BUILD_DIR)/functions/function-float-freestanding.elf; code=$$?; test $$code -eq 3
+	$(TARGET) tests/ok/function-float-freestanding.ari --emit-llvm $(BUILD_DIR)/functions/function-float-freestanding.ll
+	grep -q 'define double @"_ARNv5widen"' $(BUILD_DIR)/functions/function-float-freestanding.ll
+	grep -q 'define float @"_ARNv6narrow"' $(BUILD_DIR)/functions/function-float-freestanding.ll
 	$(TARGET) --freestanding tests/ok/function-aggregate-return-freestanding.ari -o $(BUILD_DIR)/functions/function-aggregate-return-freestanding.elf
 	$(BUILD_DIR)/functions/function-aggregate-return-freestanding.elf; code=$$?; test $$code -eq 69
 	$(TARGET) --freestanding tests/ok/function-aggregate-params-freestanding.ari -o $(BUILD_DIR)/functions/function-aggregate-params-freestanding.elf

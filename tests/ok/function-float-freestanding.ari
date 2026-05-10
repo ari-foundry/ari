@@ -1,0 +1,20 @@
+fn widen(value: f32, bonus: f64) -> f64 {
+  return (value as f64) + bonus;
+}
+
+fn narrow(value: f64) -> f32 {
+  return value as f32;
+}
+
+fn main() -> i64 {
+  var score: i64 = 0;
+  let wide: f64 = widen(1.5f32, 2.5f64);
+  let small: f32 = narrow(wide);
+  if wide == 4.0f64 {
+    score = score + 1;
+  }
+  if small == 4.0f32 {
+    score = score + 2;
+  }
+  return score;
+}

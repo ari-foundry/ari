@@ -79,9 +79,9 @@ The default LLVM host backend lowers `f32`, `f64`, and `f128` values as LLVM
 local `f32`/`f64` literal values as raw IEEE bit patterns, including
 `ptr_load`, `ptr_store`, and `*pointer` access through `ptr f32` or `ptr f64`.
 It also lowers `f32`/`f64` arithmetic and ordered comparisons with SSE scalar
-instructions, including `f32`/`f64` width casts and integer/float casts. It
-still rejects `f128` and float calls until the remaining native floating-point
-ABI work is implemented.
+instructions, including `f32`/`f64` width casts, integer/float casts, and
+direct Ari calls that pass or return `f32`/`f64`. It still rejects `f128` until
+the remaining native floating-point work is implemented.
 
 ## Strings
 

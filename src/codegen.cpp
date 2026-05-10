@@ -72,7 +72,7 @@ public:
         : fn_(fn), extern_abis_(extern_abis) {}
 
     CompiledFunction emit() {
-        reject_float_function_abi();
+        reject_unsupported_float_function_abi();
         if (has_aggregate_return()) add_aggregate_return_pointer_local();
         for (const auto& param : fn_.params) add_local(param.name, param.type);
         collect_locals(fn_.body);
@@ -188,16 +188,18 @@ private:
         return type.qualifier == TypeQualifier::Value && is_integer_primitive(type.primitive);
     }
 
-    void reject_float_function_abi() const {
+    void reject_unsupported_float_function_abi() const {
         for (const auto& param : fn_.params) {
-            if (is_raw_float_type(param.type)) {
+            if (param.type.qualifier == TypeQualifier::Value &&
+                param.type.primitive == IrPrimitiveKind::F128) {
                 throw CompileError(where(param.type.loc) +
-                                   ": freestanding backend does not lower float parameters yet");
+                                   ": freestanding backend does not lower f128 parameters yet");
             }
         }
-        if (is_raw_float_type(fn_.return_type)) {
+        if (fn_.return_type.qualifier == TypeQualifier::Value &&
+            fn_.return_type.primitive == IrPrimitiveKind::F128) {
             throw CompileError(where(fn_.loc) +
-                               ": freestanding backend does not lower float return values yet");
+                               ": freestanding backend does not lower f128 return values yet");
         }
     }
 
@@ -1391,9 +1393,10 @@ private:
                 emit_mov_mem_rsp_reg(static_cast<int>((i + abi_shift) * 8), Reg::RAX);
                 continue;
             }
-            if (is_raw_float_type(expr.args[i]->type)) {
+            if (expr.args[i]->type.qualifier == TypeQualifier::Value &&
+                expr.args[i]->type.primitive == IrPrimitiveKind::F128) {
                 throw CompileError(where(expr.args[i]->loc) +
-                                   ": freestanding backend does not lower float call arguments yet");
+                                   ": freestanding backend does not lower f128 call arguments yet");
             }
             emit_expr(*expr.args[i]);
             emit_mov_mem_rsp_reg(static_cast<int>((i + abi_shift) * 8), Reg::RAX);
@@ -2693,9 +2696,10 @@ private:
             emit_lea_reg_local(Reg::RAX, temp_offset);
             return;
         }
-        if (is_raw_float_type(expr.type)) {
+        if (expr.type.qualifier == TypeQualifier::Value &&
+            expr.type.primitive == IrPrimitiveKind::F128) {
             throw CompileError(where(expr.loc) +
-                               ": freestanding backend does not lower float call return values yet");
+                               ": freestanding backend does not lower f128 call return values yet");
         }
         if (expr.args.size() > static_cast<std::size_t>(0xffff)) {
             throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
@@ -2735,9 +2739,10 @@ private:
             emit_lea_reg_local(Reg::RAX, temp_offset);
             return;
         }
-        if (is_raw_float_type(expr.type)) {
+        if (expr.type.qualifier == TypeQualifier::Value &&
+            expr.type.primitive == IrPrimitiveKind::F128) {
             throw CompileError(where(expr.loc) +
-                               ": freestanding backend does not lower float call return values yet");
+                               ": freestanding backend does not lower f128 call return values yet");
         }
         if (expr.args.size() > static_cast<std::size_t>(0xffff)) {
             throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");

@@ -38,7 +38,8 @@ let normal = 1.0e+1f64
 and `fp128`. The freestanding backend can materialize local `f32`/`f64` literal
 values, move them through raw `ptr f32`/`ptr f64` loads and stores, and lower
 `f32`/`f64` arithmetic, ordered comparisons, width casts, and integer/float
-casts. It still rejects calls and `f128`.
+casts. Direct Ari calls can pass and return `f32`/`f64` values on this backend.
+It still rejects `f128`.
 
 ## Bit Operations
 

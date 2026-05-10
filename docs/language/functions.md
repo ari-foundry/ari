@@ -49,9 +49,11 @@ checking layer. The LLVM/glibc backend lowers calls as LLVM calls. The
 freestanding backend uses registers for the first six scalar arguments and stack
 slots for the rest. Narrow integer returns from freestanding functions are
 normalized at the return boundary, so `u8`, `u16`, and `u32` results wrap to
-their declared width before callers observe them. Freestanding direct and
-function-pointer calls can pass and return tuple, struct, fixed-array, and
-currently supported aggregate enum values through hidden pointer slots.
+their declared width before callers observe them. Freestanding direct calls can
+pass and return `f32`/`f64` values as raw IEEE bit patterns in the same scalar
+ABI slots. Freestanding direct and function-pointer calls can pass and return
+tuple, struct, fixed-array, and currently supported aggregate enum values
+through hidden pointer slots.
 Aggregate parameters are copied into callee-local storage at function entry, so
 mutating a parameter copy does not mutate the caller's value.
 
