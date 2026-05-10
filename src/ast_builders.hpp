@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace ari {
 
@@ -12,9 +13,23 @@ ExprPtr make_ast_integer_expr(SourceLocation loc,
                               bool negative = false,
                               std::string literal_suffix = {});
 ExprPtr make_ast_float_expr(SourceLocation loc, double value, std::string literal_suffix = {});
+ExprPtr make_ast_string_expr(SourceLocation loc, std::string value);
 ExprPtr make_ast_bool_expr(SourceLocation loc, bool value);
+ExprPtr make_ast_null_expr(SourceLocation loc);
 ExprPtr make_ast_name_expr(SourceLocation loc, std::string name);
 ExprPtr make_ast_tuple_index_expr(SourceLocation loc, ExprPtr operand, std::uint64_t index);
 ExprPtr make_ast_borrow_expr(SourceLocation loc, ExprPtr operand, bool mutable_borrow);
+ExprPtr make_ast_tuple_expr(SourceLocation loc, std::vector<ExprPtr> elements = {});
+ExprPtr make_ast_vector_expr(SourceLocation loc, std::vector<ExprPtr> elements = {});
+ExprPtr make_ast_struct_literal_expr(SourceLocation loc,
+                                     std::string name,
+                                     std::vector<TypeRef> type_args,
+                                     std::vector<std::string> field_names,
+                                     std::vector<ExprPtr> field_values);
+ExprPtr make_ast_block_expr(SourceLocation loc,
+                            std::string label,
+                            std::vector<StmtPtr> body,
+                            ExprPtr value);
+ExprPtr make_ast_match_expr(SourceLocation loc, ExprPtr value, std::vector<ExprMatchArm> arms);
 
 } // namespace ari

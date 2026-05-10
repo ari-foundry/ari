@@ -836,6 +836,11 @@ check-operators: $(TARGET)
 	grep -q "match.expr.arm" $(BUILD_DIR)/operators/ast-builder-scalar-paths.ll
 	grep -q "getelementptr inbounds { i64, i1 }" $(BUILD_DIR)/operators/ast-builder-scalar-paths.ll
 	grep -q "call i64 @\"_ARNv7inspect\"" $(BUILD_DIR)/operators/ast-builder-scalar-paths.ll
+	$(TARGET) tests/ok/ast-builder-composite-paths.ari --emit-llvm $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
+	grep -q "@.ari.str" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
+	grep -q "ptr null" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
+	grep -q "insertvalue { i64, i1 }" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
+	grep -q "match.expr.arm" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
 	$(TARGET) tests/ok/operators-try.ari --emit-llvm $(BUILD_DIR)/operators/operators-try.ll
 	grep -q "try.ok" $(BUILD_DIR)/operators/operators-try.ll
 	grep -q "try.return" $(BUILD_DIR)/operators/operators-try.ll

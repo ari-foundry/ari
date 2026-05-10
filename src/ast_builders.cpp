@@ -27,6 +27,14 @@ ExprPtr make_ast_float_expr(SourceLocation loc, double value, std::string litera
     return expr;
 }
 
+ExprPtr make_ast_string_expr(SourceLocation loc, std::string value) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::String;
+    expr->loc = loc;
+    expr->string_value = std::move(value);
+    return expr;
+}
+
 ExprPtr make_ast_bool_expr(SourceLocation loc, bool value) {
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::Bool;
@@ -35,11 +43,71 @@ ExprPtr make_ast_bool_expr(SourceLocation loc, bool value) {
     return expr;
 }
 
+ExprPtr make_ast_null_expr(SourceLocation loc) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Null;
+    expr->loc = loc;
+    return expr;
+}
+
 ExprPtr make_ast_name_expr(SourceLocation loc, std::string name) {
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::Name;
     expr->loc = loc;
     expr->name = std::move(name);
+    return expr;
+}
+
+ExprPtr make_ast_tuple_expr(SourceLocation loc, std::vector<ExprPtr> elements) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Tuple;
+    expr->loc = loc;
+    expr->args = std::move(elements);
+    return expr;
+}
+
+ExprPtr make_ast_vector_expr(SourceLocation loc, std::vector<ExprPtr> elements) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Vector;
+    expr->loc = loc;
+    expr->args = std::move(elements);
+    return expr;
+}
+
+ExprPtr make_ast_struct_literal_expr(SourceLocation loc,
+                                     std::string name,
+                                     std::vector<TypeRef> type_args,
+                                     std::vector<std::string> field_names,
+                                     std::vector<ExprPtr> field_values) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::StructLiteral;
+    expr->loc = loc;
+    expr->name = std::move(name);
+    expr->type_args = std::move(type_args);
+    expr->field_names = std::move(field_names);
+    expr->args = std::move(field_values);
+    return expr;
+}
+
+ExprPtr make_ast_block_expr(SourceLocation loc,
+                            std::string label,
+                            std::vector<StmtPtr> body,
+                            ExprPtr value) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Block;
+    expr->loc = loc;
+    expr->label = std::move(label);
+    expr->block_body = std::move(body);
+    expr->block_value = std::move(value);
+    return expr;
+}
+
+ExprPtr make_ast_match_expr(SourceLocation loc, ExprPtr value, std::vector<ExprMatchArm> arms) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Match;
+    expr->loc = loc;
+    expr->match_value = std::move(value);
+    expr->match_arms = std::move(arms);
     return expr;
 }
 

@@ -406,6 +406,8 @@ Checklist:
       match lowering, aggregate enum nested-payload tests, and raw/LLVM backends
 - [x] AST expression builders preserve compound-assignment name cloning,
       matches! bool arms, tuple-index borrowing, and negative scalar literals
+- [x] AST composite builders preserve string/null, tuple/vector/struct literal,
+      labeled-block, and match expression lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

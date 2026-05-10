@@ -1723,18 +1723,16 @@ private:
     }
 
     ExprPtr parse_matches_macro(SourceLocation loc) {
-        auto expr = std::make_unique<Expr>();
-        expr->kind = ExprKind::Match;
-        expr->loc = loc;
         expect(TokenKind::LParen, "expected ( after matches!");
-        expr->match_value = parse_expression();
+        ExprPtr match_value = parse_expression();
         expect(TokenKind::Comma, "expected , after matches! value");
 
+        std::vector<ExprMatchArm> arms;
         ExprMatchArm yes;
         yes.pattern = parse_pattern();
         yes.loc = yes.pattern.loc;
         yes.value = make_ast_bool_expr(yes.loc, true);
-        expr->match_arms.push_back(std::move(yes));
+        arms.push_back(std::move(yes));
 
         if (match(TokenKind::Comma) && !check(TokenKind::RParen)) {
             fail(tokens_[pos_ - 1].loc, "matches! expects exactly an expression and a pattern");
@@ -1748,8 +1746,8 @@ private:
         no.pattern = std::move(wildcard);
         no.loc = loc;
         no.value = make_ast_bool_expr(loc, false);
-        expr->match_arms.push_back(std::move(no));
-        return expr;
+        arms.push_back(std::move(no));
+        return make_ast_match_expr(loc, std::move(match_value), std::move(arms));
     }
 
     bool is_legacy_bracket_type_arg_postfix() const {
@@ -1993,75 +1991,70 @@ private:
 
     ExprPtr parse_primary() {
         Token token = tokens_[pos_++];
-        auto expr = std::make_unique<Expr>();
-        expr->loc = token.loc;
         switch (token.kind) {
             case TokenKind::Integer:
                 return make_ast_integer_expr(token.loc, token.int_value, false, token.literal_suffix);
             case TokenKind::Float:
                 return make_ast_float_expr(token.loc, token.float_value, token.literal_suffix);
             case TokenKind::String:
-                expr->kind = ExprKind::String;
-                expr->string_value = token.text;
-                return expr;
+                return make_ast_string_expr(token.loc, token.text);
             case TokenKind::KwTrue:
                 return make_ast_bool_expr(token.loc, true);
             case TokenKind::KwFalse:
                 return make_ast_bool_expr(token.loc, false);
             case TokenKind::KwNull:
-                expr->kind = ExprKind::Null;
-                return expr;
+                return make_ast_null_expr(token.loc);
             case TokenKind::Identifier:
                 if (check(TokenKind::Colon)) {
                     std::string label = token.text;
                     expect(TokenKind::Colon, "expected : after block expression label");
-                    auto block = std::make_unique<Expr>();
-                    block->kind = ExprKind::Block;
-                    block->loc = token.loc;
-                    block->label = std::move(label);
-                    block->block_value = parse_braced_value_block(
+                    std::vector<StmtPtr> body;
+                    ExprPtr value = parse_braced_value_block(
                         "expected { after block expression label",
                         "block expression",
                         "block expression must end with a value",
-                        block->block_body);
-                    return block;
+                        body);
+                    return make_ast_block_expr(token.loc, std::move(label), std::move(body), std::move(value));
                 }
-                expr = make_ast_name_expr(token.loc, parse_path_after_first(token));
-                if (allow_struct_literals_ && check(TokenKind::LBrace)) {
-                    return parse_struct_literal(std::move(expr));
-                }
-                return expr;
-            case TokenKind::LParen:
-                if (match(TokenKind::RParen)) {
-                    expr->kind = ExprKind::Tuple;
+                {
+                    ExprPtr expr = make_ast_name_expr(token.loc, parse_path_after_first(token));
+                    if (allow_struct_literals_ && check(TokenKind::LBrace)) {
+                        return parse_struct_literal(std::move(expr));
+                    }
                     return expr;
                 }
-                expr = parse_expression();
-                if (match(TokenKind::Comma)) {
-                    auto tuple = std::make_unique<Expr>();
-                    tuple->kind = ExprKind::Tuple;
-                    tuple->loc = token.loc;
-                    tuple->args.push_back(std::move(expr));
-                    if (!check(TokenKind::RParen)) {
+            case TokenKind::LParen:
+                if (match(TokenKind::RParen)) {
+                    return make_ast_tuple_expr(token.loc);
+                }
+                {
+                    ExprPtr expr = parse_expression();
+                    if (match(TokenKind::Comma)) {
+                        std::vector<ExprPtr> elements;
+                        elements.push_back(std::move(expr));
+                        if (!check(TokenKind::RParen)) {
+                            do {
+                                elements.push_back(parse_expression());
+                            } while (match(TokenKind::Comma));
+                        }
+                        expect(TokenKind::RParen, "expected ) after tuple literal");
+                        if (elements.size() == 1) fail(token.loc, "single-element tuple literals are not supported");
+                        return make_ast_tuple_expr(token.loc, std::move(elements));
+                    }
+                    expect(TokenKind::RParen, "expected ) after expression");
+                    return expr;
+                }
+            case TokenKind::LBracket:
+                {
+                    std::vector<ExprPtr> elements;
+                    if (!check(TokenKind::RBracket)) {
                         do {
-                            tuple->args.push_back(parse_expression());
+                            elements.push_back(parse_expression());
                         } while (match(TokenKind::Comma));
                     }
-                    expect(TokenKind::RParen, "expected ) after tuple literal");
-                    if (tuple->args.size() == 1) fail(token.loc, "single-element tuple literals are not supported");
-                    return tuple;
+                    expect(TokenKind::RBracket, "expected ] after array/vector literal");
+                    return make_ast_vector_expr(token.loc, std::move(elements));
                 }
-                expect(TokenKind::RParen, "expected ) after expression");
-                return expr;
-            case TokenKind::LBracket:
-                expr->kind = ExprKind::Vector;
-                if (!check(TokenKind::RBracket)) {
-                    do {
-                        expr->args.push_back(parse_expression());
-                    } while (match(TokenKind::Comma));
-                }
-                expect(TokenKind::RBracket, "expected ] after array/vector literal");
-                return expr;
             case TokenKind::LBrace:
                 return parse_block_expression(token.loc);
             case TokenKind::Question:
@@ -2077,21 +2070,23 @@ private:
 
     ExprPtr parse_struct_literal(ExprPtr name_expr) {
         expect(TokenKind::LBrace, "expected { after struct literal type");
-        auto literal = std::make_unique<Expr>();
-        literal->kind = ExprKind::StructLiteral;
-        literal->loc = name_expr->loc;
-        literal->name = name_expr->name;
-        literal->type_args = std::move(name_expr->type_args);
+        std::vector<std::string> field_names;
+        std::vector<ExprPtr> field_values;
         if (!check(TokenKind::RBrace)) {
             do {
                 Token field = expect(TokenKind::Identifier, "expected struct literal field name");
                 expect(TokenKind::Colon, "expected : after struct literal field name");
-                literal->field_names.push_back(field.text);
-                literal->args.push_back(parse_expression());
+                field_names.push_back(field.text);
+                field_values.push_back(parse_expression());
             } while (match(TokenKind::Comma) && !check(TokenKind::RBrace));
         }
         expect(TokenKind::RBrace, "expected } after struct literal");
-        return literal;
+        return make_ast_struct_literal_expr(
+            name_expr->loc,
+            std::move(name_expr->name),
+            std::move(name_expr->type_args),
+            std::move(field_names),
+            std::move(field_values));
     }
 
     ExprPtr parse_braced_value_after_open(
@@ -2166,22 +2161,18 @@ private:
     }
 
     ExprPtr parse_block_expression(SourceLocation loc) {
-        auto expr = std::make_unique<Expr>();
-        expr->kind = ExprKind::Block;
-        expr->loc = loc;
-        expr->block_value = parse_braced_value_after_open(
+        std::vector<StmtPtr> body;
+        ExprPtr value = parse_braced_value_after_open(
             "block expression",
             "block expression must end with a value",
-            expr->block_body);
-        return expr;
+            body);
+        return make_ast_block_expr(loc, {}, std::move(body), std::move(value));
     }
 
     ExprPtr parse_match_expression(SourceLocation loc) {
-        auto expr = std::make_unique<Expr>();
-        expr->kind = ExprKind::Match;
-        expr->loc = loc;
-        expr->match_value = parse_expression_without_struct_literals();
+        ExprPtr match_value = parse_expression_without_struct_literals();
         expect(TokenKind::LBrace, "expected { after match value");
+        std::vector<ExprMatchArm> arms;
         while (!match(TokenKind::RBrace)) {
             if (check(TokenKind::End)) fail(peek().loc, "unterminated match expression");
             ExprMatchArm arm;
@@ -2189,10 +2180,10 @@ private:
             arm.loc = arm.pattern.loc;
             expect(TokenKind::FatArrow, "expected => after match pattern");
             arm.value = parse_expression();
-            expr->match_arms.push_back(std::move(arm));
+            arms.push_back(std::move(arm));
             optional_separator();
         }
-        return expr;
+        return make_ast_match_expr(loc, std::move(match_value), std::move(arms));
     }
 
     static void reject_planned_operator(const Token& token) {

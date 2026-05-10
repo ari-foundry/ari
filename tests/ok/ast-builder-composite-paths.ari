@@ -1,0 +1,21 @@
+extern "C" fn puts(text: string) -> i32;
+
+struct Box {
+  value: i64,
+  ok: bool,
+}
+
+fn main() -> i64 {
+  let text: string = "builder";
+  let raw: ptr c_void = null;
+  let box = Box { value: 3, ok: true };
+  let items = [1, 2, 3];
+  let block = done: {
+    puts(text);
+    box.value + items[1]
+  };
+  return match box.ok {
+    true => block,
+    false => 0,
+  };
+}
