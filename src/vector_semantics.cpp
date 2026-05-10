@@ -112,6 +112,15 @@ IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::
     return type;
 }
 
+const IrType& require_typed_empty_vector_element_type(SourceLocation loc, const IrType& expected) {
+    if (expected.qualifier != TypeQualifier::Value ||
+        expected.primitive != IrPrimitiveKind::Vector ||
+        expected.args.size() != 1) {
+        fail(loc, "empty [] literals need an explicit Vec[T] type or non-empty array elements");
+    }
+    return expected.args[0];
+}
+
 void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init) {
     if (declared.primitive != IrPrimitiveKind::Vector ||
         init.type.primitive != IrPrimitiveKind::Vector ||
@@ -311,6 +320,14 @@ IrExprPtr make_void_noop_expr(SourceLocation loc) {
     lowered->kind = IrExprKind::Noop;
     lowered->loc = loc;
     lowered->type = void_type(loc);
+    return lowered;
+}
+
+IrExprPtr make_empty_vector_literal_expr(SourceLocation loc, const IrType& element) {
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::Vector;
+    lowered->loc = loc;
+    lowered->type = make_vector_storage_type(loc, element, 0);
     return lowered;
 }
 

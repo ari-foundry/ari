@@ -1555,6 +1555,8 @@ check-variables: $(TARGET)
 	grep -q "len expects no method arguments" $(BUILD_DIR)/variables/collection-len-method-shape.err
 	if $(TARGET) tests/errors/vector-empty-untyped.ari -o $(BUILD_DIR)/variables/vector-empty-untyped.elf >$(BUILD_DIR)/variables/vector-empty-untyped.err 2>&1; then exit 1; fi
 	grep -Fq "empty [] literals need an explicit Vec[T] type or non-empty array elements" $(BUILD_DIR)/variables/vector-empty-untyped.err
+	if $(TARGET) tests/errors/vector-empty-non-vec-expected.ari -o $(BUILD_DIR)/variables/vector-empty-non-vec-expected.elf >$(BUILD_DIR)/variables/vector-empty-non-vec-expected.err 2>&1; then exit 1; fi
+	grep -Fq "empty [] literals need an explicit Vec[T] type or non-empty array elements" $(BUILD_DIR)/variables/vector-empty-non-vec-expected.err
 	if $(TARGET) tests/errors/vector-api-freeze.ari -o $(BUILD_DIR)/variables/vector-api-freeze.elf >$(BUILD_DIR)/variables/vector-api-freeze.err 2>&1; then exit 1; fi
 	grep -Fq "local Vec method 'map' is reserved for allocator-backed std collection APIs" $(BUILD_DIR)/variables/vector-api-freeze.err
 	if $(TARGET) tests/errors/vector-method-shape.ari -o $(BUILD_DIR)/variables/vector-method-shape.elf >$(BUILD_DIR)/variables/vector-method-shape.err 2>&1; then exit 1; fi

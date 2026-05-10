@@ -15,13 +15,13 @@ construction. Some helpers have already moved out to focused files:
   for scalar matches and enum payload conditions
 - `type_semantics` for shared type predicates, raw-pointer type checks,
   literal range checks, and assignability/operand diagnostics
-- `vector_semantics` for local `Vec[T]` storage type/helpers, frozen local
-  method classification and shape diagnostics, shared
-  `len`/`is_empty`/`as_slice` shape diagnostics, shared collection `len`
-  lowering, `as_slice` data/view IR construction including Vec storage views,
-  local Vec integer/non-negative operand diagnostics, frozen API diagnostics,
-  local Vec IR construction helpers such as `first`, `last`, and `push`, and
-  `VectorKnownLength`/capacity transition helpers
+- `vector_semantics` for local `Vec[T]` storage type/helpers, typed empty
+  vector literal construction, frozen local method classification and shape
+  diagnostics, shared `len`/`is_empty`/`as_slice` shape diagnostics, shared
+  collection `len` lowering, `as_slice` data/view IR construction including
+  Vec storage views, local Vec integer/non-negative operand diagnostics, frozen
+  API diagnostics, local Vec IR construction helpers such as `first`, `last`,
+  and `push`, and `VectorKnownLength`/capacity transition helpers
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions,
   pointer operations, direct builtin calls, match expression arms, and
@@ -47,8 +47,9 @@ construction. Some helpers have already moved out to focused files:
   shape checks, including syntactic `self` receiver classification, shared by
   trait impl validation, method dispatch diagnostics, and future
   trait-resolution extraction
-- `aggregate_literal_semantics` for pure expected-element selection shared by
-  tuple, struct, fixed-array, and local `Vec[T]` literal lowering
+- `aggregate_literal_semantics` for pure expected-element selection and shared
+  element diagnostics used by tuple, struct, fixed-array, and local `Vec[T]`
+  literal lowering
 - `enum_constructor_semantics` for expected-enum matching and final enum
   constructor IR node assembly after payload semantic checks
 

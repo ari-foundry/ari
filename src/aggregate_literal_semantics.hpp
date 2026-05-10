@@ -13,6 +13,10 @@ const IrType* tuple_literal_expected_element_type(const IrType* expected,
 
 const IrType* vector_literal_expected_element_type(const IrType* expected);
 
+void require_plain_prelude_aggregate_element(SourceLocation loc,
+                                             const IrType& type,
+                                             const std::string& aggregate);
+
 bool expected_type_matches_struct_literal(const IrType* expected,
                                           const std::string& struct_name,
                                           std::size_t generic_arity,

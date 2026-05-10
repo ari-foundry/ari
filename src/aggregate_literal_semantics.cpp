@@ -1,6 +1,16 @@
 #include "aggregate_literal_semantics.hpp"
 
+#include "common.hpp"
+#include "type_semantics.hpp"
+
 namespace ari {
+namespace {
+
+[[noreturn]] void fail(SourceLocation loc, const std::string& message) {
+    throw CompileError(where(loc) + ": " + message);
+}
+
+} // namespace
 
 const IrType* tuple_literal_expected_element_type(const IrType* expected,
                                                   std::size_t arity,
@@ -21,6 +31,12 @@ const IrType* vector_literal_expected_element_type(const IrType* expected) {
         return nullptr;
     }
     return &expected->args[0];
+}
+
+void require_plain_prelude_aggregate_element(SourceLocation loc,
+                                             const IrType& type,
+                                             const std::string& aggregate) {
+    if (is_void_value_type(type)) fail(loc, aggregate + " literals cannot store void values");
 }
 
 bool expected_type_matches_struct_literal(const IrType* expected,

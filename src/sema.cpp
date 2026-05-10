@@ -10420,18 +10420,9 @@ private:
     }
 
     IrExprPtr make_typed_empty_vector_expr(SourceLocation loc, const IrType& expected) const {
-        if (expected.qualifier != TypeQualifier::Value ||
-            expected.primitive != IrPrimitiveKind::Vector ||
-            expected.args.size() != 1) {
-            fail(loc, "empty [] literals need an explicit Vec[T] type or non-empty array elements");
-        }
-        require_plain_prelude_aggregate_element(loc, expected.args[0], "vector");
-
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::Vector;
-        lowered->loc = loc;
-        lowered->type = make_vector_storage_type(loc, expected.args[0], 0);
-        return lowered;
+        const IrType& element = require_typed_empty_vector_element_type(loc, expected);
+        require_plain_prelude_aggregate_element(loc, element, "vector");
+        return make_empty_vector_literal_expr(loc, element);
     }
 
     IrExprPtr check_expr_with_expected(const Expr& expr, const IrType& expected) {
@@ -12011,10 +12002,6 @@ private:
         pop_scope();
         StateSnapshot state = snapshot_states();
         return CheckedExprBlock{std::move(checked.statements), std::move(value), std::move(state)};
-    }
-
-    static void require_plain_prelude_aggregate_element(SourceLocation loc, const IrType& type, const std::string& aggregate) {
-        if (is_void_value_type(type)) fail(loc, aggregate + " literals cannot store void values");
     }
 
     IrExprPtr make_enum_construct(SourceLocation loc, const EnumCaseInfo& info, std::vector<IrExprPtr> args) {

@@ -39,6 +39,7 @@ struct VectorKnownLength {
 
 bool is_vector_storage_type(const IrType& type);
 IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length);
+const IrType& require_typed_empty_vector_element_type(SourceLocation loc, const IrType& expected);
 void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init);
 void widen_vector_storage_type(IrType& type, std::uint64_t capacity);
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
@@ -83,6 +84,7 @@ std::uint64_t vector_required_capacity_for_append(const IrType& storage_type,
                                                   VectorKnownLength current);
 
 IrExprPtr make_void_noop_expr(SourceLocation loc);
+IrExprPtr make_empty_vector_literal_expr(SourceLocation loc, const IrType& element);
 IrExprPtr make_vec_local_lvalue(SourceLocation loc, std::string name, IrType type);
 IrExprPtr make_vec_capacity_expr(SourceLocation loc, const IrType& type);
 IrExprPtr make_vec_index_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr index);
