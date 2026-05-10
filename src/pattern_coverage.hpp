@@ -6,6 +6,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -15,6 +16,9 @@
 namespace ari {
 
 inline constexpr std::size_t kMaxFiniteProductCoverageValues = 4096;
+inline constexpr std::size_t kMaxSymbolicProductRectangles = 1024;
+
+struct ConstantValue;
 
 struct ScalarMatchCoverage {
     bool has_wildcard = false;
@@ -45,6 +49,13 @@ struct ProductMatchCoverage {
     bool has_symbolic_universe = false;
     ProductRect symbolic_universe;
     std::vector<ProductRect> covered_symbolic_products;
+};
+
+struct ProductPatternCoverageHooks {
+    std::function<bool(const Pattern&, ConstantValue&)> try_constant_pattern_value;
+    std::function<bool(SourceLocation, const std::string&, const IrType&)> tuple_struct_pattern_matches;
+    std::function<void(SourceLocation, const std::string&, const IrType&)> require_struct_pattern_matches;
+    std::function<std::size_t(SourceLocation, const IrType&, const std::string&)> struct_field_index;
 };
 
 void note_integer_coverage(ScalarMatchCoverage& coverage,
@@ -90,6 +101,14 @@ bool combine_finite_product_domains(const std::vector<std::vector<std::string>>&
                                     std::vector<std::string>& out);
 bool symbolic_product_coverage_domain(const IrType& type, ProductRect& out);
 bool symbolic_product_coverage_domain_rects(const IrType& type, std::vector<ProductRect>& out);
+bool finite_product_pattern_values(const Pattern& pattern,
+                                   const IrType& type,
+                                   const ProductPatternCoverageHooks& hooks,
+                                   std::vector<std::string>& out);
+bool symbolic_product_pattern_rects(const Pattern& pattern,
+                                    const IrType& type,
+                                    const ProductPatternCoverageHooks& hooks,
+                                    std::vector<ProductRect>& out);
 bool note_finite_product_match_coverage(ProductMatchCoverage& coverage,
                                         const std::vector<std::string>& values);
 bool note_symbolic_product_match_coverage(ProductMatchCoverage& coverage,

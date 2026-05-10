@@ -32,8 +32,8 @@ construction. Some helpers have already moved out to focused files:
   diagnostics, plus finite product coverage value encoding, finite scalar
   domain enumeration, product match coverage state, product duplicate/shadow
   detection, product exhaustiveness checks, product missing-case hint
-  formatting, enum match coverage state, enum duplicate detection, and enum
-  exhaustiveness diagnostics
+  formatting, finite/symbolic product pattern domain lowering, enum match
+  coverage state, enum duplicate detection, and enum exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection, positional
   product field mapping, and or-pattern expansion helpers
 - `move_semantics` for pure helpers around explicit ownership-consumption
@@ -93,9 +93,11 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      finite aggregate product domain recursion, and finite product domain
      combination now also live in `pattern_coverage`.
    - Symbolic product universe/domain recursion for tuple, array, and struct
-     values also lives in `pattern_coverage`; `sema.cpp` still lowers concrete
-     source patterns into those domains because tuple-struct and named-struct
-     checks depend on semantic tables.
+     values also lives in `pattern_coverage`.
+   - Finite/symbolic product pattern domain lowering for tuple, array, named
+     struct, and tuple-struct patterns now lives in `pattern_coverage` behind
+     semantic callbacks for constant lookup, struct field lookup, and
+     tuple-struct validation.
    - Product match coverage state and product missing-case hint formatting now
      live in `pattern_coverage`; `sema.cpp` only supplies tuple-struct names for
      user-facing struct-pattern spelling.
@@ -106,9 +108,8 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      enum exhaustiveness diagnostics now live in `pattern_coverage`;
      `sema.cpp` still performs enum case resolution and payload type
      validation.
-   - Move the remaining sema-bound tuple-struct and named-struct finite/symbolic
-     product pattern recursion, plus payload-shape checks that still depend on
-     semantic tables.
+   - Move the remaining semantic-table callbacks for product pattern coverage
+     after struct/type declaration tables are extracted.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
      abstracted.
 

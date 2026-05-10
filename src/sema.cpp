@@ -8136,375 +8136,6 @@ private:
         fail(pattern.loc, "aggregate match pattern requires tuple, array, or struct value");
     }
 
-    static constexpr std::size_t kMaxSymbolicProductRectangles = 1024;
-
-    bool finite_integer_pattern_values(const Pattern& pattern,
-                                       const IrType& type,
-                                       std::vector<std::string>& out) const {
-        if (!is_value_integer_type(type)) return false;
-        IrExpr literal = make_pattern_integer_literal(
-            pattern.loc,
-            pattern.int_value,
-            pattern.int_negative,
-            pattern.literal_suffix,
-            type
-        );
-        if (!integer_literal_fits(literal, literal.type)) {
-            fail(pattern.loc, "integer literal " + integer_literal_name(literal) +
-                              " is out of range for " + type_name(literal.type));
-        }
-        require_assignable(pattern.loc, type, literal.type);
-        out = {integer_product_value(integer_pattern_order_value(pattern.int_value, pattern.int_negative, type))};
-        return true;
-    }
-
-    bool finite_integer_range_pattern_values(const Pattern& pattern,
-                                             const IrType& type,
-                                             std::vector<std::string>& out) const {
-        if (!is_value_integer_type(type)) return false;
-        if (!range_start_le_end(pattern, type)) {
-            fail(pattern.loc, "range pattern start must be <= end");
-        }
-        std::uint64_t start = 0;
-        std::uint64_t end = 0;
-        if (!integer_range_coverage_interval(pattern, type, start, end)) return true;
-        if (end - start + 1 > kMaxFiniteProductCoverageValues) return false;
-        out.clear();
-        for (std::uint64_t value = start; value <= end; ++value) {
-            out.push_back(integer_product_value(value));
-        }
-        return true;
-    }
-
-    bool finite_constant_product_values(SourceLocation loc,
-                                        const ConstantValue& value,
-                                        const IrType& type,
-                                        std::vector<std::string>& out) const {
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
-            if (!value.is_bool) fail(loc, "bool tuple constant pattern must have type bool");
-            out = {bool_product_value(value.bool_value)};
-            return true;
-        }
-        if (!is_value_integer_type(type)) return false;
-        if (value.is_bool || !is_value_integer_type(value.type)) {
-            fail(loc, "integer tuple constant pattern must have an integer type");
-        }
-        require_assignable(loc, type, value.type);
-        out = {integer_product_value(integer_pattern_order_value(value.int_value, value.int_negative, type))};
-        return true;
-    }
-
-    bool finite_positional_product_pattern_values(const Pattern& pattern,
-                                                  const IrType& type,
-                                                  std::vector<std::string>& out) {
-        const std::vector<IrType>& fields = aggregate_field_types(type);
-        require_tuple_pattern_arity(pattern, type, fields);
-
-        std::vector<std::vector<std::string>> domains;
-        domains.reserve(fields.size());
-        for (std::size_t field_index = 0; field_index < fields.size(); ++field_index) {
-            const Pattern* item = positional_product_field_pattern(pattern, fields.size(), field_index);
-
-            std::vector<std::string> field_values;
-            bool ok = item
-                ? finite_product_pattern_values(*item, fields[field_index], field_values)
-                : finite_product_coverage_domain(fields[field_index], field_values);
-            if (!ok) return false;
-            domains.push_back(std::move(field_values));
-        }
-        return combine_finite_product_domains(domains, out);
-    }
-
-    bool finite_tuple_struct_product_pattern_values(const Pattern& pattern,
-                                                    const IrType& type,
-                                                    std::vector<std::string>& out) {
-        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
-        if (!info.tuple_struct) return false;
-        if (!pattern.has_payload_pattern || !pattern.payload_pattern) return false;
-        const std::vector<IrType>& fields = aggregate_field_types(type);
-        const Pattern& payload = *pattern.payload_pattern;
-        if (payload.kind == PatternKind::Tuple) {
-            return finite_positional_product_pattern_values(payload, type, out);
-        }
-        if (fields.size() != 1) return false;
-        return finite_product_pattern_values(payload, fields[0], out);
-    }
-
-    bool finite_struct_product_pattern_values(const Pattern& pattern,
-                                              const IrType& type,
-                                              std::vector<std::string>& out) {
-        require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
-        if (pattern.field_names.size() != pattern.elements.size()) {
-            throw CompileError("internal error: struct match pattern field/value arity mismatch");
-        }
-        if (!pattern.has_rest && pattern.field_names.size() != type.field_names.size()) {
-            fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
-        }
-
-        std::vector<const Pattern*> field_patterns(type.field_names.size(), nullptr);
-        std::set<std::string> seen_fields;
-        for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
-            const std::string& field_name = pattern.field_names[i];
-            if (!seen_fields.insert(field_name).second) {
-                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
-            }
-            std::size_t field_index = struct_field_index(pattern.elements[i].loc, type, field_name);
-            field_patterns[field_index] = &pattern.elements[i];
-        }
-
-        std::vector<std::vector<std::string>> domains;
-        domains.reserve(type.field_types.size());
-        for (std::size_t field_index = 0; field_index < type.field_types.size(); ++field_index) {
-            std::vector<std::string> field_values;
-            bool ok = field_patterns[field_index]
-                ? finite_product_pattern_values(*field_patterns[field_index], type.field_types[field_index], field_values)
-                : finite_product_coverage_domain(type.field_types[field_index], field_values);
-            if (!ok) return false;
-            domains.push_back(std::move(field_values));
-        }
-        return combine_finite_product_domains(domains, out);
-    }
-
-    bool finite_product_pattern_values(const Pattern& pattern,
-                                       const IrType& type,
-                                       std::vector<std::string>& out) {
-        switch (pattern.kind) {
-            case PatternKind::Wildcard:
-            case PatternKind::Binding:
-                return finite_product_coverage_domain(type, out);
-            case PatternKind::Alias:
-                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
-                return finite_product_pattern_values(*pattern.alias_pattern, type, out);
-            case PatternKind::Or: {
-                if (pattern_has_binding(pattern)) {
-                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
-                }
-                std::set<std::string> values;
-                for (const auto& alternative : pattern.alternatives) {
-                    std::vector<std::string> alternative_values;
-                    if (!finite_product_pattern_values(alternative, type, alternative_values)) return false;
-                    values.insert(alternative_values.begin(), alternative_values.end());
-                }
-                out.assign(values.begin(), values.end());
-                return true;
-            }
-            case PatternKind::BoolLiteral:
-                if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Bool) return false;
-                out = {bool_product_value(pattern.bool_value)};
-                return true;
-            case PatternKind::IntegerLiteral:
-                return finite_integer_pattern_values(pattern, type, out);
-            case PatternKind::Range:
-                return finite_integer_range_pattern_values(pattern, type, out);
-            case PatternKind::EnumCase: {
-                ConstantValue constant_pattern;
-                if (try_constant_pattern_value(pattern, constant_pattern)) {
-                    return finite_constant_product_values(pattern.loc, constant_pattern, type, out);
-                }
-                if (type.primitive == IrPrimitiveKind::Struct) {
-                    return finite_tuple_struct_product_pattern_values(pattern, type, out);
-                }
-                return false;
-            }
-            case PatternKind::Tuple:
-                if (type.primitive != IrPrimitiveKind::Tuple) return false;
-                return finite_positional_product_pattern_values(pattern, type, out);
-            case PatternKind::Array:
-                if (type.primitive != IrPrimitiveKind::Array) return false;
-                return finite_positional_product_pattern_values(pattern, type, out);
-            case PatternKind::Struct:
-                if (type.primitive != IrPrimitiveKind::Struct) return false;
-                return finite_struct_product_pattern_values(pattern, type, out);
-        }
-        return false;
-    }
-
-    bool symbolic_integer_pattern_rects(const Pattern& pattern,
-                                        const IrType& type,
-                                        std::vector<ProductRect>& out) const {
-        if (!is_value_integer_type(type)) return false;
-        IrExpr literal = make_pattern_integer_literal(
-            pattern.loc,
-            pattern.int_value,
-            pattern.int_negative,
-            pattern.literal_suffix,
-            type
-        );
-        if (!integer_literal_fits(literal, literal.type)) {
-            fail(pattern.loc, "integer literal " + integer_literal_name(literal) +
-                              " is out of range for " + type_name(literal.type));
-        }
-        require_assignable(pattern.loc, type, literal.type);
-        std::uint64_t point = integer_pattern_order_value(pattern.int_value, pattern.int_negative, type);
-        out = {ProductRect{ProductInterval{point, point}}};
-        return true;
-    }
-
-    bool symbolic_integer_range_pattern_rects(const Pattern& pattern,
-                                              const IrType& type,
-                                              std::vector<ProductRect>& out) const {
-        if (!is_value_integer_type(type)) return false;
-        if (!range_start_le_end(pattern, type)) {
-            fail(pattern.loc, "range pattern start must be <= end");
-        }
-        std::uint64_t start = 0;
-        std::uint64_t end = 0;
-        if (!integer_range_coverage_interval(pattern, type, start, end)) {
-            out.clear();
-            return true;
-        }
-        out = {ProductRect{ProductInterval{start, end}}};
-        return true;
-    }
-
-    bool symbolic_constant_product_rects(SourceLocation loc,
-                                         const ConstantValue& value,
-                                         const IrType& type,
-                                         std::vector<ProductRect>& out) const {
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
-            if (!value.is_bool) fail(loc, "bool tuple constant pattern must have type bool");
-            std::uint64_t point = value.bool_value ? 1 : 0;
-            out = {ProductRect{ProductInterval{point, point}}};
-            return true;
-        }
-        if (!is_value_integer_type(type)) return false;
-        if (value.is_bool || !is_value_integer_type(value.type)) {
-            fail(loc, "integer tuple constant pattern must have an integer type");
-        }
-        require_assignable(loc, type, value.type);
-        std::uint64_t point = integer_pattern_order_value(value.int_value, value.int_negative, type);
-        out = {ProductRect{ProductInterval{point, point}}};
-        return true;
-    }
-
-    bool symbolic_positional_product_pattern_rects(const Pattern& pattern,
-                                                   const IrType& type,
-                                                   std::vector<ProductRect>& out) {
-        const std::vector<IrType>& fields = aggregate_field_types(type);
-        require_tuple_pattern_arity(pattern, type, fields);
-
-        std::vector<std::vector<ProductRect>> domains;
-        domains.reserve(fields.size());
-        for (std::size_t field_index = 0; field_index < fields.size(); ++field_index) {
-            const Pattern* item = positional_product_field_pattern(pattern, fields.size(), field_index);
-
-            std::vector<ProductRect> field_rects;
-            bool ok = item
-                ? symbolic_product_pattern_rects(*item, fields[field_index], field_rects)
-                : symbolic_product_coverage_domain_rects(fields[field_index], field_rects);
-            if (!ok) return false;
-            domains.push_back(std::move(field_rects));
-        }
-        return combine_product_rect_domains(domains, kMaxSymbolicProductRectangles, out);
-    }
-
-    bool symbolic_tuple_struct_product_pattern_rects(const Pattern& pattern,
-                                                     const IrType& type,
-                                                     std::vector<ProductRect>& out) {
-        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
-        if (!info.tuple_struct) return false;
-        if (!pattern.has_payload_pattern || !pattern.payload_pattern) return false;
-        const std::vector<IrType>& fields = aggregate_field_types(type);
-        const Pattern& payload = *pattern.payload_pattern;
-        if (payload.kind == PatternKind::Tuple) {
-            return symbolic_positional_product_pattern_rects(payload, type, out);
-        }
-        if (fields.size() != 1) return false;
-        return symbolic_product_pattern_rects(payload, fields[0], out);
-    }
-
-    bool symbolic_struct_product_pattern_rects(const Pattern& pattern,
-                                               const IrType& type,
-                                               std::vector<ProductRect>& out) {
-        require_struct_match_pattern_type(pattern.loc, pattern.case_name, type);
-        if (pattern.field_names.size() != pattern.elements.size()) {
-            throw CompileError("internal error: struct match pattern field/value arity mismatch");
-        }
-        if (!pattern.has_rest && pattern.field_names.size() != type.field_names.size()) {
-            fail(pattern.loc, "struct match pattern must mention all fields or use '..'");
-        }
-
-        std::vector<const Pattern*> field_patterns(type.field_names.size(), nullptr);
-        std::set<std::string> seen_fields;
-        for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
-            const std::string& field_name = pattern.field_names[i];
-            if (!seen_fields.insert(field_name).second) {
-                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
-            }
-            std::size_t field_index = struct_field_index(pattern.elements[i].loc, type, field_name);
-            field_patterns[field_index] = &pattern.elements[i];
-        }
-
-        std::vector<std::vector<ProductRect>> domains;
-        domains.reserve(type.field_types.size());
-        for (std::size_t field_index = 0; field_index < type.field_types.size(); ++field_index) {
-            std::vector<ProductRect> field_rects;
-            bool ok = field_patterns[field_index]
-                ? symbolic_product_pattern_rects(*field_patterns[field_index], type.field_types[field_index], field_rects)
-                : symbolic_product_coverage_domain_rects(type.field_types[field_index], field_rects);
-            if (!ok) return false;
-            domains.push_back(std::move(field_rects));
-        }
-        return combine_product_rect_domains(domains, kMaxSymbolicProductRectangles, out);
-    }
-
-    bool symbolic_product_pattern_rects(const Pattern& pattern,
-                                        const IrType& type,
-                                        std::vector<ProductRect>& out) {
-        switch (pattern.kind) {
-            case PatternKind::Wildcard:
-            case PatternKind::Binding:
-                return symbolic_product_coverage_domain_rects(type, out);
-            case PatternKind::Alias:
-                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
-                return symbolic_product_pattern_rects(*pattern.alias_pattern, type, out);
-            case PatternKind::Or: {
-                if (pattern_has_binding(pattern)) {
-                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
-                }
-                out.clear();
-                for (const auto& alternative : pattern.alternatives) {
-                    std::vector<ProductRect> alternative_rects;
-                    if (!symbolic_product_pattern_rects(alternative, type, alternative_rects)) return false;
-                    out.insert(out.end(), alternative_rects.begin(), alternative_rects.end());
-                    if (out.size() > kMaxSymbolicProductRectangles) return false;
-                }
-                return true;
-            }
-            case PatternKind::BoolLiteral:
-                if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Bool) return false;
-                {
-                    std::uint64_t point = pattern.bool_value ? 1 : 0;
-                    out = {ProductRect{ProductInterval{point, point}}};
-                }
-                return true;
-            case PatternKind::IntegerLiteral:
-                return symbolic_integer_pattern_rects(pattern, type, out);
-            case PatternKind::Range:
-                return symbolic_integer_range_pattern_rects(pattern, type, out);
-            case PatternKind::EnumCase: {
-                ConstantValue constant_pattern;
-                if (try_constant_pattern_value(pattern, constant_pattern)) {
-                    return symbolic_constant_product_rects(pattern.loc, constant_pattern, type, out);
-                }
-                if (type.primitive == IrPrimitiveKind::Struct) {
-                    return symbolic_tuple_struct_product_pattern_rects(pattern, type, out);
-                }
-                return false;
-            }
-            case PatternKind::Tuple:
-                if (type.primitive != IrPrimitiveKind::Tuple) return false;
-                return symbolic_positional_product_pattern_rects(pattern, type, out);
-            case PatternKind::Array:
-                if (type.primitive != IrPrimitiveKind::Array) return false;
-                return symbolic_positional_product_pattern_rects(pattern, type, out);
-            case PatternKind::Struct:
-                if (type.primitive != IrPrimitiveKind::Struct) return false;
-                return symbolic_struct_product_pattern_rects(pattern, type, out);
-        }
-        return false;
-    }
-
     void initialize_product_match_coverage(const IrType& subject_type, ProductMatchCoverage& coverage) {
         if (!coverage.checked_finite_universe) {
             coverage.checked_finite_universe = true;
@@ -8524,14 +8155,39 @@ private:
         }
     }
 
+    ProductPatternCoverageHooks product_pattern_coverage_hooks() {
+        ProductPatternCoverageHooks hooks;
+        hooks.try_constant_pattern_value = [this](const Pattern& pattern, ConstantValue& value) {
+            return try_constant_pattern_value(pattern, value);
+        };
+        hooks.tuple_struct_pattern_matches = [this](SourceLocation loc,
+                                                    const std::string& name,
+                                                    const IrType& type) {
+            const StructInfo& info = require_struct_match_pattern_type(loc, name, type);
+            return info.tuple_struct;
+        };
+        hooks.require_struct_pattern_matches = [this](SourceLocation loc,
+                                                      const std::string& name,
+                                                      const IrType& type) {
+            (void)require_struct_match_pattern_type(loc, name, type);
+        };
+        hooks.struct_field_index = [this](SourceLocation loc,
+                                          const IrType& type,
+                                          const std::string& field_name) {
+            return struct_field_index(loc, type, field_name);
+        };
+        return hooks;
+    }
+
     void note_product_match_coverage(const Pattern& pattern,
                                      const IrType& subject_type,
                                      ProductMatchCoverage& coverage) {
         initialize_product_match_coverage(subject_type, coverage);
+        ProductPatternCoverageHooks hooks = product_pattern_coverage_hooks();
         bool finite_handled = false;
         if (coverage.has_finite_universe) {
             std::vector<std::string> values;
-            if (finite_product_pattern_values(pattern, subject_type, values)) {
+            if (finite_product_pattern_values(pattern, subject_type, hooks, values)) {
                 finite_handled = true;
                 if (note_finite_product_match_coverage(coverage, values)) {
                     warn_aggregate_match_shadow(pattern.loc);
@@ -8541,7 +8197,7 @@ private:
 
         if (!coverage.has_symbolic_universe) return;
         std::vector<ProductRect> rects;
-        if (!symbolic_product_pattern_rects(pattern, subject_type, rects)) return;
+        if (!symbolic_product_pattern_rects(pattern, subject_type, hooks, rects)) return;
         if (note_symbolic_product_match_coverage(coverage, rects, finite_handled)) {
             warn_aggregate_match_shadow(pattern.loc);
         }
