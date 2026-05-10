@@ -1,0 +1,71 @@
+mod Consts {
+  pub const SMALL: i32 = 7;
+  pub const WIDE: i64 = 12;
+  pub const INNER: i32 = 3;
+  pub const YES: bool = true;
+}
+
+enum MaybeI32 {
+  Some(i32),
+  Missing,
+}
+
+enum Wide {
+  Big(i64),
+  WideFlag(bool),
+  WideNone,
+}
+
+enum Inner {
+  InnerEmpty,
+  Small(i32),
+  InnerFlag(bool),
+}
+
+enum Outer {
+  Wrap(Inner),
+  Other(i64),
+  OuterNone,
+}
+
+fn compact(value: MaybeI32) -> i64 {
+  return match value {
+    Some(Consts::SMALL) => 4,
+    Some(_) => 5,
+    Missing => 6,
+  };
+}
+
+fn aggregate(value: Wide) -> i64 {
+  return match value {
+    Big(Consts::WIDE) => 20,
+    WideFlag(Consts::YES) => 5,
+    Big(_) => 1,
+    WideFlag(_) => 2,
+    WideNone => 3,
+  };
+}
+
+fn nested(value: Outer) -> i64 {
+  return match value {
+    Wrap(Small(Consts::INNER)) => 8,
+    Wrap(InnerFlag(Consts::YES)) => 9,
+    Wrap(_) => 1,
+    Other(_) => 2,
+    OuterNone => 3,
+  };
+}
+
+fn main() -> i64 {
+  return compact(Some(7i32)) +
+         compact(Some(8i32)) +
+         compact(Missing) +
+         aggregate(Big(12i64)) +
+         aggregate(WideFlag(true)) +
+         aggregate(Big(1i64)) +
+         aggregate(WideNone) +
+         nested(Wrap(Small(3i32))) +
+         nested(Wrap(InnerFlag(true))) +
+         nested(Wrap(Small(4i32))) +
+         nested(OuterNone);
+}

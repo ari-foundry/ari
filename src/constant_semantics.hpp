@@ -36,6 +36,19 @@ struct StaticIntegerValue {
     bool negative = false;
 };
 
+class ConstantEvaluationStackGuard {
+public:
+    ConstantEvaluationStackGuard(std::vector<std::string>& stack, std::string name);
+    ConstantEvaluationStackGuard(const ConstantEvaluationStackGuard&) = delete;
+    ConstantEvaluationStackGuard& operator=(const ConstantEvaluationStackGuard&) = delete;
+    ~ConstantEvaluationStackGuard();
+
+private:
+    std::vector<std::string>& stack_;
+};
+
+std::string format_constant_cycle_path(const std::vector<std::string>& stack,
+                                       const std::string& repeated_name);
 bool static_integer_value_to_i64(const StaticIntegerValue& value, std::int64_t& out);
 StaticIntegerValue static_integer_value_from_i64(std::int64_t value);
 std::int64_t constant_integer_to_i64(SourceLocation loc, const ConstantValue& value);
@@ -75,6 +88,23 @@ ConstantValue evaluate_constant_integer_binary(SourceLocation loc,
                                                const ConstantValue& left,
                                                const ConstantValue& right);
 IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value);
+IrMatchArm make_scalar_constant_match_arm(SourceLocation loc,
+                                          const ConstantValue& value,
+                                          const IrType& match_type);
+void set_nested_enum_payload_constant_literal(SourceLocation loc,
+                                              const ConstantValue& value,
+                                              const IrType& nested_payload_type,
+                                              IrPayloadEnumCondition& condition);
+void lower_aggregate_enum_payload_constant_pattern(SourceLocation loc,
+                                                   const ConstantValue& value,
+                                                   const IrType& payload_type,
+                                                   IrMatchArm& lowered_arm,
+                                                   std::uint32_t payload_index);
+void lower_compact_enum_payload_constant_pattern(SourceLocation loc,
+                                                 const ConstantValue& value,
+                                                 const IrType& payload_type,
+                                                 std::uint32_t enum_tag,
+                                                 IrMatchArm& lowered_arm);
 bool fold_static_integer_unary(TokenKind op,
                                const StaticIntegerValue& operand,
                                StaticIntegerValue& out);

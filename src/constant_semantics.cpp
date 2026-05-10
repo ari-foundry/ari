@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "type_semantics.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <string>
@@ -45,10 +46,56 @@ bool is_signed_integer_type(const IrType& type) {
     }
 }
 
+std::uint64_t constant_integer_payload_bits(const ConstantValue& value, const IrType& payload_type) {
+    std::uint64_t raw = value.int_negative ? 0 - value.int_value : value.int_value;
+    unsigned width = integer_primitive_bit_width(payload_type.primitive);
+    if (width == 64) return raw;
+    std::uint64_t mask = (1ULL << width) - 1ULL;
+    raw &= mask;
+    if (is_signed_integer_primitive(payload_type.primitive) && (raw & (1ULL << (width - 1)))) {
+        raw |= ~mask;
+    }
+    return raw;
+}
+
+void add_payload_literal_condition(IrMatchArm& lowered_arm,
+                                   std::uint32_t payload_index,
+                                   std::uint64_t payload_bits) {
+    lowered_arm.payload_literal_conditions.push_back(IrPayloadLiteralCondition{
+        payload_index,
+        payload_bits,
+        false,
+        false
+    });
+}
+
 } // namespace
 
 static std::uint64_t int64_min_magnitude() {
     return static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) + 1ULL;
+}
+
+ConstantEvaluationStackGuard::ConstantEvaluationStackGuard(std::vector<std::string>& stack, std::string name)
+    : stack_(stack) {
+    stack_.push_back(std::move(name));
+}
+
+ConstantEvaluationStackGuard::~ConstantEvaluationStackGuard() {
+    stack_.pop_back();
+}
+
+std::string format_constant_cycle_path(const std::vector<std::string>& stack,
+                                       const std::string& repeated_name) {
+    auto first = std::find(stack.begin(), stack.end(), repeated_name);
+    std::string path;
+    if (first == stack.end()) first = stack.begin();
+    for (auto it = first; it != stack.end(); ++it) {
+        if (!path.empty()) path += " -> ";
+        path += *it;
+    }
+    if (!path.empty()) path += " -> ";
+    path += repeated_name;
+    return path;
 }
 
 bool static_integer_value_to_i64(const StaticIntegerValue& value, std::int64_t& out) {
@@ -469,6 +516,118 @@ IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value) {
     expr->int_value = value.int_value;
     expr->int_negative = value.int_negative;
     return expr;
+}
+
+IrMatchArm make_scalar_constant_match_arm(SourceLocation loc,
+                                          const ConstantValue& value,
+                                          const IrType& match_type) {
+    IrMatchArm lowered_arm;
+    lowered_arm.loc = loc;
+
+    if (match_type.qualifier == TypeQualifier::Value && match_type.primitive == IrPrimitiveKind::Bool) {
+        if (!value.is_bool) {
+            fail(loc, "bool match constant pattern must have type bool");
+        }
+        lowered_arm.has_literal = true;
+        lowered_arm.literal_is_bool = true;
+        lowered_arm.literal_bool = value.bool_value;
+        return lowered_arm;
+    }
+
+    if (!is_value_integer_type(match_type)) {
+        fail(loc, "constant match patterns require integer or bool match values");
+    }
+    if (value.is_bool || !is_value_integer_type(value.type)) {
+        fail(loc, "integer match constant pattern must have an integer type");
+    }
+    require_assignable(loc, match_type, value.type);
+
+    lowered_arm.has_literal = true;
+    lowered_arm.literal_int = value.int_value;
+    lowered_arm.literal_negative = value.int_negative;
+    return lowered_arm;
+}
+
+void set_nested_enum_payload_constant_literal(SourceLocation loc,
+                                              const ConstantValue& value,
+                                              const IrType& nested_payload_type,
+                                              IrPayloadEnumCondition& condition) {
+    if (nested_payload_type.qualifier == TypeQualifier::Value &&
+        nested_payload_type.primitive == IrPrimitiveKind::Bool) {
+        if (!value.is_bool) fail(loc, "bool nested enum payload constant pattern must have type bool");
+        condition.has_payload_literal = true;
+        condition.payload_literal_int = value.bool_value ? 1ULL : 0ULL;
+        condition.payload_literal_negative = false;
+        condition.payload_literal_is_bool = true;
+        condition.payload_literal_bool = value.bool_value;
+        condition.payload_type = nested_payload_type;
+        return;
+    }
+
+    if (!is_value_integer_type(nested_payload_type)) {
+        fail(loc, "constant nested enum payload patterns require integer or bool payloads");
+    }
+    if (value.is_bool || !is_value_integer_type(value.type)) {
+        fail(loc, "integer nested enum payload constant pattern must have an integer type");
+    }
+    require_assignable(loc, nested_payload_type, value.type);
+    condition.has_payload_literal = true;
+    condition.payload_literal_int = value.int_value;
+    condition.payload_literal_negative = value.int_negative;
+    condition.payload_literal_is_bool = false;
+    condition.payload_type = nested_payload_type;
+}
+
+void lower_aggregate_enum_payload_constant_pattern(SourceLocation loc,
+                                                   const ConstantValue& value,
+                                                   const IrType& payload_type,
+                                                   IrMatchArm& lowered_arm,
+                                                   std::uint32_t payload_index) {
+    if (payload_type.qualifier == TypeQualifier::Value &&
+        payload_type.primitive == IrPrimitiveKind::Bool) {
+        if (!value.is_bool) fail(loc, "bool payload constant pattern must have type bool");
+        add_payload_literal_condition(lowered_arm, payload_index, value.bool_value ? 1ULL : 0ULL);
+        lowered_arm.payload_literal_conditions.back().is_bool = true;
+        lowered_arm.payload_literal_conditions.back().bool_value = value.bool_value;
+        return;
+    }
+
+    if (!is_value_integer_type(payload_type)) {
+        fail(loc, "constant enum payload patterns require integer or bool payloads");
+    }
+    if (value.is_bool || !is_value_integer_type(value.type)) {
+        fail(loc, "integer payload constant pattern must have an integer type");
+    }
+    require_assignable(loc, payload_type, value.type);
+    add_payload_literal_condition(lowered_arm, payload_index, constant_integer_payload_bits(value, payload_type));
+}
+
+void lower_compact_enum_payload_constant_pattern(SourceLocation loc,
+                                                 const ConstantValue& value,
+                                                 const IrType& payload_type,
+                                                 std::uint32_t enum_tag,
+                                                 IrMatchArm& lowered_arm) {
+    if (payload_type.qualifier == TypeQualifier::Value &&
+        payload_type.primitive == IrPrimitiveKind::Bool) {
+        if (!value.is_bool) fail(loc, "bool payload constant pattern must have type bool");
+        lowered_arm.has_literal = true;
+        lowered_arm.literal_int = ((value.bool_value ? 1ULL : 0ULL) << 32) | enum_tag;
+        lowered_arm.literal_negative = false;
+        return;
+    }
+
+    if (!is_value_integer_type(payload_type)) {
+        fail(loc, "constant enum payload patterns require integer or bool payloads");
+    }
+    if (value.is_bool || !is_value_integer_type(value.type)) {
+        fail(loc, "integer payload constant pattern must have an integer type");
+    }
+    require_assignable(loc, payload_type, value.type);
+
+    std::uint64_t payload_bits = constant_integer_payload_bits(value, payload_type);
+    lowered_arm.has_literal = true;
+    lowered_arm.literal_int = (payload_bits << 32) | enum_tag;
+    lowered_arm.literal_negative = false;
 }
 
 bool fold_static_integer_unary(TokenKind op,

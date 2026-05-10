@@ -10,7 +10,9 @@ construction. Some helpers have already moved out to focused files:
 - `try_model` for `?` residual shape helpers
 - `constant_semantics` for the shared constant value model, scalar constant
   construction/checking, and static integer arithmetic/bitwise/shift folding
-  used by constant-like local reasoning and local Vec capacity/length decisions
+  used by constant-like local reasoning and local Vec capacity/length
+  decisions, plus constant-cycle path formatting and constant pattern lowering
+  for scalar matches and enum payload conditions
 - `type_semantics` for shared type predicates, raw-pointer type checks,
   literal range checks, and assignability/operand diagnostics
 - `vector_semantics` for local `Vec[T]` storage helpers and known length/capacity
@@ -55,14 +57,20 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Block, match, and if expression node assembly now also goes through
      `ir_builders`. Future builder moves should be opportunistic and tied to a
      nearby semantic extraction, rather than treated as a standalone phase.
-2. Extract constant evaluation into `constant_semantics`.
+2. Keep constant evaluation helpers in `constant_semantics`.
    - Static integer arithmetic/bitwise/shift folding, `ConstantValue`, scalar
      constant construction/range helpers, scalar literal folding, constant
      binary result evaluation, and constant-to-IR literal construction have
      moved into
      `constant_semantics`.
-   - Move constant pattern conversion and cycle diagnostics next.
-   - Keep the constant declaration table owned by `SemanticChecker` initially.
+   - Constant-cycle diagnostics now use a small stack guard and path formatter
+     in `constant_semantics`.
+   - Constant pattern conversion for scalar match arms, compact enum payload
+     literals, aggregate enum payload literal conditions, and nested enum
+     payload literal conditions also lives in `constant_semantics`.
+   - The constant declaration table intentionally remains owned by
+     `SemanticChecker` until declaration collection moves out as a stateful
+     table extraction.
 3. Continue extracting pattern coverage helpers into `pattern_coverage`.
    - Product rectangle math now lives in `product_coverage`.
    - Pure pattern binding/or-pattern detection and expansion helpers now live
@@ -146,14 +154,13 @@ surface.
 
 ## Suggested Order
 
-1. `constant_semantics`
-2. `pattern_coverage`
-3. `local_state`
-4. `borrow_semantics`
-5. `zone_semantics`
-6. `name_resolution`
-7. `trait_semantics`
-8. `expr_lowering` / `stmt_lowering`
+1. `pattern_coverage`
+2. `local_state`
+3. `borrow_semantics`
+4. `zone_semantics`
+5. `name_resolution`
+6. `trait_semantics`
+7. `expr_lowering` / `stmt_lowering`
 
 This order keeps early patches mostly pure, then moves stateful pieces only
 after their dependencies have a stable API. The end state should make

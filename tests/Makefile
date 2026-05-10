@@ -437,6 +437,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-enum-payload-literals.raw; code=$$?; test $$code -eq 66
 	$(TARGET) --freestanding tests/ok/constant-patterns.ari -o $(BUILD_DIR)/match/constant-patterns.raw
 	$(BUILD_DIR)/match/constant-patterns.raw; code=$$?; test $$code -eq 61
+	$(TARGET) --freestanding tests/ok/constant-enum-payload-patterns.ari -o $(BUILD_DIR)/match/constant-enum-payload-patterns.raw
+	$(BUILD_DIR)/match/constant-enum-payload-patterns.raw; code=$$?; test $$code -eq 65
 	$(TARGET) --freestanding tests/ok/constant-folding.ari -o $(BUILD_DIR)/match/constant-folding.raw
 	$(BUILD_DIR)/match/constant-folding.raw; code=$$?; test $$code -eq 32
 	$(TARGET) --freestanding tests/ok/constant-bitwise-folding.ari -o $(BUILD_DIR)/match/constant-bitwise-folding.raw
