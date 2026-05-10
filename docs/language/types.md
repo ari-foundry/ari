@@ -417,6 +417,9 @@ storage to the source vector's current storage capacity before the copy.
 Vec-valued `if` and block expressions participate in this tracking when their
 nested results have a fixed local capacity, and same-length `if` arms preserve
 the compiler-known current length.
+Vec-valued `match` and `if let` expressions also size their expected local
+storage before branch result materialization, so same-length arms preserve the
+known length there too.
 The same `len(view)`, `view.len()`, and `view.is_empty()` forms read the stored
 length from a `Slice[T]` view. `view[index]` reads or writes through the view's
 stored raw pointer with bounds checks against that stored length. Mutable local

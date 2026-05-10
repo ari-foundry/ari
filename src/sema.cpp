@@ -4874,6 +4874,61 @@ private:
         widen_vector_storage_type(type, vector_storage_capacity_from_expr(value));
     }
 
+    std::uint64_t vector_storage_capacity_from_source_expr(const Expr& expr) {
+        if (expr.kind == ExprKind::Vector) {
+            return static_cast<std::uint64_t>(expr.args.size());
+        }
+        if (expr.kind == ExprKind::Name) {
+            const LocalInfo* local = find_local_slot(expr.name);
+            return local && is_vector_storage_type(local->type) ? local->type.array_size : 0;
+        }
+        if (expr.kind == ExprKind::Block && expr.block_value) {
+            return vector_storage_capacity_from_source_expr(*expr.block_value);
+        }
+        if (expr.kind == ExprKind::If) {
+            std::uint64_t capacity = 0;
+            if (expr.then_value) {
+                capacity = std::max(capacity, vector_storage_capacity_from_source_expr(*expr.then_value));
+            }
+            if (expr.else_value) {
+                capacity = std::max(capacity, vector_storage_capacity_from_source_expr(*expr.else_value));
+            }
+            return capacity;
+        }
+        if (expr.kind == ExprKind::Match) {
+            std::uint64_t capacity = 0;
+            for (const auto& arm : expr.match_arms) {
+                if (arm.value) {
+                    capacity = std::max(capacity, vector_storage_capacity_from_source_expr(*arm.value));
+                }
+            }
+            return capacity;
+        }
+        return 0;
+    }
+
+    void widen_vector_result_storage_from_source(IrType& type, const Expr& expr) {
+        if (!is_vector_storage_type(type)) return;
+        widen_vector_storage_type(type, vector_storage_capacity_from_source_expr(expr));
+    }
+
+    IrType sized_control_flow_expected_type(const IrType& expected,
+                                            const std::vector<const Expr*>& values) {
+        IrType sized = expected;
+        if (!is_vector_storage_type(sized) || sized.array_size != 0) return sized;
+        for (const Expr* value : values) {
+            if (value) widen_vector_result_storage_from_source(sized, *value);
+        }
+        return sized;
+    }
+
+    std::vector<const Expr*> match_arm_value_exprs(const Expr& expr) const {
+        std::vector<const Expr*> values;
+        values.reserve(expr.match_arms.size());
+        for (const auto& arm : expr.match_arms) values.push_back(arm.value.get());
+        return values;
+    }
+
     bool known_integer_capacity(const Expr& expr, StaticIntegerValue& out) {
         if (expr.kind == ExprKind::Integer) {
             out.value = expr.int_value;
@@ -11321,6 +11376,12 @@ private:
         IrType result_type;
         ProductMatchCoverage coverage;
         std::vector<TupleCheckedExprArm> checked_arms;
+        IrType explicit_result_expected;
+        const IrType* result_expected = expected;
+        if (expected) {
+            explicit_result_expected = sized_control_flow_expected_type(*expected, match_arm_value_exprs(expr));
+            result_expected = &explicit_result_expected;
+        }
 
         for (const auto& arm : expr.match_arms) {
             if (coverage.has_irrefutable_arm) {
@@ -11355,7 +11416,7 @@ private:
                 reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
                 lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
                 reusable_pattern_binding_names_.clear();
-                const IrType* arm_expected = expected ? expected : (has_result ? &result_type : nullptr);
+                const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
                 if (is_borrow_type(value->type)) {
                     pop_scope();
@@ -11365,10 +11426,10 @@ private:
                     pop_scope();
                     fail(arm.loc, "match expression arms must produce a value");
                 }
-                if (expected) {
-                    coerce_expr_to_expected(*value, *expected);
-                    require_assignable(arm.loc, *expected, value->type);
-                    result_type = *expected;
+                if (result_expected) {
+                    coerce_expr_to_expected(*value, *result_expected);
+                    require_assignable(arm.loc, *result_expected, value->type);
+                    result_type = *result_expected;
                     has_result = true;
                 } else if (!has_result) {
                     result_type = value->type;
@@ -11451,6 +11512,12 @@ private:
         EnumMatchCoverage coverage;
         bool has_result = false;
         IrType result_type;
+        IrType explicit_result_expected;
+        const IrType* result_expected = expected;
+        if (expected) {
+            explicit_result_expected = sized_control_flow_expected_type(*expected, match_arm_value_exprs(expr));
+            result_expected = &explicit_result_expected;
+        }
 
         for (const auto& arm : expr.match_arms) {
             std::set<std::string> reusable_names;
@@ -11477,15 +11544,15 @@ private:
                 declare_match_arm_bindings(lowered_arm);
                 reusable_pattern_binding_names_.clear();
 
-                const IrType* arm_expected = expected ? expected : (has_result ? &result_type : nullptr);
+                const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
                 if (is_borrow_type(value->type)) {
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
-                if (expected) {
-                    coerce_expr_to_expected(*value, *expected);
-                    require_assignable(arm.loc, *expected, value->type);
-                    result_type = *expected;
+                if (result_expected) {
+                    coerce_expr_to_expected(*value, *result_expected);
+                    require_assignable(arm.loc, *result_expected, value->type);
+                    result_type = *result_expected;
                     has_result = true;
                 } else if (!has_result) {
                     result_type = value->type;
@@ -11533,6 +11600,12 @@ private:
         ScalarMatchCoverage coverage;
         bool has_result = false;
         IrType result_type;
+        IrType explicit_result_expected;
+        const IrType* result_expected = expected;
+        if (expected) {
+            explicit_result_expected = sized_control_flow_expected_type(*expected, match_arm_value_exprs(expr));
+            result_expected = &explicit_result_expected;
+        }
 
         for (const auto& arm : expr.match_arms) {
             std::set<std::string> reusable_names;
@@ -11555,15 +11628,15 @@ private:
                 reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
                 declare_match_arm_bindings(lowered_arm);
                 reusable_pattern_binding_names_.clear();
-                const IrType* arm_expected = expected ? expected : (has_result ? &result_type : nullptr);
+                const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
                 if (is_borrow_type(value->type)) {
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
-                if (expected) {
-                    coerce_expr_to_expected(*value, *expected);
-                    require_assignable(arm.loc, *expected, value->type);
-                    result_type = *expected;
+                if (result_expected) {
+                    coerce_expr_to_expected(*value, *result_expected);
+                    require_assignable(arm.loc, *result_expected, value->type);
+                    result_type = *result_expected;
                     has_result = true;
                 } else if (!has_result) {
                     result_type = value->type;
@@ -11684,6 +11757,14 @@ private:
             true
         ));
 
+        std::vector<const Expr*> result_values{expr.then_value.get(), expr.else_value.get()};
+        IrType explicit_result_expected;
+        const IrType* result_expected = expected;
+        if (expected) {
+            explicit_result_expected = sized_control_flow_expected_type(*expected, result_values);
+            result_expected = &explicit_result_expected;
+        }
+
         StateSnapshot branch_input = snapshot_states();
         push_scope();
         declare_match_arm_bindings(then_arms.front());
@@ -11692,7 +11773,7 @@ private:
             discard_scope();
             fail(expr.loc, "if-let expression arm must reach its final value");
         }
-        IrExprPtr then_value = check_expr_maybe_expected(*expr.then_value, expected);
+        IrExprPtr then_value = check_expr_maybe_expected(*expr.then_value, result_expected);
         if (contains_borrow_type(then_value->type)) {
             pop_scope();
             fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
@@ -11701,8 +11782,8 @@ private:
             pop_scope();
             fail(expr.loc, "if-let expression arm must produce a value");
         }
-        IrType result_type = expected ? *expected : then_value->type;
-        if (expected) {
+        IrType result_type = result_expected ? *result_expected : then_value->type;
+        if (result_expected) {
             coerce_expr_to_expected(*then_value, result_type);
             require_assignable(expr.loc, result_type, then_value->type);
         }
@@ -11781,6 +11862,13 @@ private:
         bool has_irrefutable_alternative = false;
         IrType result_type;
         std::vector<TupleCheckedExprArm> checked_arms;
+        std::vector<const Expr*> result_values{expr.then_value.get(), expr.else_value.get()};
+        IrType explicit_result_expected;
+        const IrType* result_expected = expected;
+        if (expected) {
+            explicit_result_expected = sized_control_flow_expected_type(*expected, result_values);
+            result_expected = &explicit_result_expected;
+        }
 
         std::vector<Pattern> alternatives = expand_or_pattern_alternatives(expr.condition_pattern);
         std::set<std::string> reusable_names;
@@ -11822,7 +11910,7 @@ private:
                 lowered_arm.body.push_back(std::move(statement));
             }
 
-            const IrType* arm_expected = expected ? expected : (has_result ? &result_type : nullptr);
+            const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
             IrExprPtr then_value = check_expr_maybe_expected(*expr.then_value, arm_expected);
             if (is_borrow_type(then_value->type)) {
                 pop_scope();
@@ -11832,10 +11920,10 @@ private:
                 pop_scope();
                 fail(expr.loc, "if-let expression arm must produce a value");
             }
-            if (expected) {
-                coerce_expr_to_expected(*then_value, *expected);
-                require_assignable(expr.loc, *expected, then_value->type);
-                result_type = *expected;
+            if (result_expected) {
+                coerce_expr_to_expected(*then_value, *result_expected);
+                require_assignable(expr.loc, *result_expected, then_value->type);
+                result_type = *result_expected;
                 has_result = true;
             } else if (!has_result) {
                 result_type = then_value->type;

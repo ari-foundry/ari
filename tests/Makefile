@@ -1418,6 +1418,11 @@ check-variables: $(TARGET)
 	grep -q "%from_block.addr.* = alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
 	grep -q "store i64 3, ptr %assigned_len" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
 	grep -q "store i64 3, ptr %block_len" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
+	$(TARGET) tests/ok/vector-match-capacity.ari --emit-llvm $(BUILD_DIR)/variables/vector-match-capacity.ll
+	grep -q "%from_match.addr.* = alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-match-capacity.ll
+	grep -q "%from_iflet.addr.* = alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-match-capacity.ll
+	grep -q "store i64 3, ptr %match_len" $(BUILD_DIR)/variables/vector-match-capacity.ll
+	grep -q "store i64 3, ptr %iflet_len" $(BUILD_DIR)/variables/vector-match-capacity.ll
 	$(TARGET) tests/ok/vector-as-slice-known-len.ari --emit-llvm $(BUILD_DIR)/variables/vector-as-slice-known-len.ll
 	grep -Eq "insertvalue \\{ ptr, i64 \\} .* i64 2, 1" $(BUILD_DIR)/variables/vector-as-slice-known-len.ll
 	if grep -q "extractvalue { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-as-slice-known-len.ll; then exit 1; fi
