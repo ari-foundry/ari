@@ -476,6 +476,22 @@ IrExprPtr make_vec_insert_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr i
     return lowered;
 }
 
+IrExprPtr make_vec_push_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value) {
+    if (!vector || !is_vector_storage_type(vector->type)) {
+        fail(loc, "Vec.push requires local Vec storage");
+    }
+    if (!value) {
+        fail(loc, "Vec.push expects a value");
+    }
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::VectorPush;
+    lowered->loc = loc;
+    lowered->type = void_type(loc);
+    lowered->operand = std::move(vector);
+    lowered->right = std::move(value);
+    return lowered;
+}
+
 IrExprPtr make_vec_contains_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr value) {
     if (!vector || !is_vector_storage_type(vector->type)) {
         fail(loc, "Vec.contains requires local Vec storage");

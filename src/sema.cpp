@@ -14162,6 +14162,7 @@ private:
     }
 
     IrExprPtr check_vec_push_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
+        (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "push");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Push, expr.type_args.size(), expr.args.size());
@@ -14174,12 +14175,11 @@ private:
 
         widen_vector_storage_for_push(local);
 
-        lowered->kind = IrExprKind::VectorPush;
-        lowered->loc = expr.loc;
-        lowered->type = void_type(expr.loc);
-        lowered->operand = make_vec_local_lvalue(expr.operand->loc, name, local.type);
-        lowered->right = std::move(value);
-        return lowered;
+        return make_vec_push_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(value)
+        );
     }
 
     std::optional<IrType> resolve_optional_pointer_helper_type_arg(const Expr& expr,
