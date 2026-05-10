@@ -161,7 +161,7 @@ std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
         !arm.payload_enum_conditions.empty()) {
         std::string key = std::to_string(arm.enum_tag);
         for (const auto& condition : arm.payload_literal_conditions) {
-            key += ":L" + std::to_string(condition.index) + ":" + std::to_string(condition.value);
+            key += ":L" + std::to_string(condition.index) + ":" + std::to_string(condition.bits());
         }
         for (const auto& condition : arm.payload_range_conditions) {
             key += ":R" + std::to_string(condition.index) + ":" +

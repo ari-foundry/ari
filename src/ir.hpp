@@ -91,12 +91,44 @@ struct IrPayloadBinding {
     std::uint32_t compact_enum_payload_index = 0;
 };
 
-struct IrPayloadLiteralCondition {
-    std::uint32_t index = 0;
-    std::uint64_t value = 0;
-    bool is_bool = false;
-    bool bool_value = false;
+union IrPayloadLiteralValue {
+    std::uint64_t integer;
+    bool boolean;
+
+    constexpr IrPayloadLiteralValue() : integer(0) {}
 };
+
+struct IrPayloadLiteralCondition {
+    IrPayloadLiteralValue literal;
+    std::uint32_t index = 0;
+    bool is_bool = false;
+
+    static IrPayloadLiteralCondition integer(std::uint32_t index, std::uint64_t value) {
+        IrPayloadLiteralCondition condition;
+        condition.index = index;
+        condition.literal.integer = value;
+        return condition;
+    }
+
+    static IrPayloadLiteralCondition boolean(std::uint32_t index, bool value) {
+        IrPayloadLiteralCondition condition;
+        condition.index = index;
+        condition.is_bool = true;
+        condition.literal.boolean = value;
+        return condition;
+    }
+
+    std::uint64_t bits() const {
+        return is_bool ? (literal.boolean ? 1ULL : 0ULL) : literal.integer;
+    }
+
+    bool bool_literal() const {
+        return literal.boolean;
+    }
+};
+
+static_assert(sizeof(IrPayloadLiteralCondition) <= 16,
+              "IrPayloadLiteralCondition should keep mutually exclusive literals packed");
 
 struct IrPayloadRangeCondition {
     std::uint32_t index = 0;

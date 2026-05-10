@@ -114,6 +114,15 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
+3. Pack AST/IR variant payload storage opportunistically.
+   IR aggregate-enum payload literal conditions now share integer and bool
+   literal storage through a tagged union instead of keeping parallel mutually
+   exclusive fields. Broader AST/IR node packing should stay incremental:
+   `Expr`, `Stmt`, and `IrExpr` are still widely mutated while parsing and
+   lowering, so their payload split needs constructor/builder coverage first.
+   - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
+     variant payload structs or unions once their builders and cloning paths
+     can preserve today's mutation flow
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

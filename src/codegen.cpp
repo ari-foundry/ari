@@ -2034,8 +2034,7 @@ private:
     }
 
     static std::uint64_t aggregate_payload_literal_bits(const IrPayloadLiteralCondition& condition) {
-        if (condition.is_bool) return condition.bool_value ? 1 : 0;
-        return condition.value;
+        return condition.bits();
     }
 
     static std::uint64_t nested_payload_literal_bits(const IrPayloadEnumCondition& condition) {

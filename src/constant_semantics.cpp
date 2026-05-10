@@ -61,12 +61,8 @@ std::uint64_t constant_integer_payload_bits(const ConstantValue& value, const Ir
 void add_payload_literal_condition(IrMatchArm& lowered_arm,
                                    std::uint32_t payload_index,
                                    std::uint64_t payload_bits) {
-    lowered_arm.payload_literal_conditions.push_back(IrPayloadLiteralCondition{
-        payload_index,
-        payload_bits,
-        false,
-        false
-    });
+    lowered_arm.payload_literal_conditions.push_back(
+        IrPayloadLiteralCondition::integer(payload_index, payload_bits));
 }
 
 } // namespace
@@ -608,9 +604,8 @@ void lower_aggregate_enum_payload_constant_pattern(SourceLocation loc,
     if (payload_type.qualifier == TypeQualifier::Value &&
         payload_type.primitive == IrPrimitiveKind::Bool) {
         if (!value.is_bool) fail(loc, "bool payload constant pattern must have type bool");
-        add_payload_literal_condition(lowered_arm, payload_index, value.bool_value ? 1ULL : 0ULL);
-        lowered_arm.payload_literal_conditions.back().is_bool = true;
-        lowered_arm.payload_literal_conditions.back().bool_value = value.bool_value;
+        lowered_arm.payload_literal_conditions.push_back(
+            IrPayloadLiteralCondition::boolean(payload_index, value.bool_value));
         return;
     }
 

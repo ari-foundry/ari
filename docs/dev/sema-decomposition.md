@@ -64,6 +64,12 @@ construction. Some helpers have already moved out to focused files:
 - `enum_constructor_semantics` for expected-enum matching and final enum
   constructor IR node assembly after payload semantic checks
 
+IR payload records should also stay compact as more pattern metadata moves out
+of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
+literal payload in a tagged union; broader `Expr`, `Stmt`, and `IrExpr` payload
+packing remains a separate refactor because those nodes are mutated across
+parser cloning, semantic lowering, and IR builder paths.
+
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or
 reuse the existing feature check target for the moved responsibility.

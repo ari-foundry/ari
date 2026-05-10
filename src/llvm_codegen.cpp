@@ -2487,8 +2487,8 @@ private:
     }
 
     static std::string match_payload_literal_constant(const IrPayloadLiteralCondition& condition) {
-        if (condition.is_bool) return condition.bool_value ? "1" : "0";
-        return std::to_string(condition.value);
+        if (condition.is_bool) return condition.bool_literal() ? "1" : "0";
+        return std::to_string(condition.bits());
     }
 
     static std::string match_payload_range_start_constant(const IrPayloadRangeCondition& condition) {

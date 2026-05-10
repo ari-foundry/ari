@@ -7233,12 +7233,8 @@ private:
     static void set_aggregate_enum_payload_literal_condition(IrMatchArm& lowered_arm,
                                                              std::uint32_t payload_index,
                                                              std::uint64_t payload_bits) {
-        lowered_arm.payload_literal_conditions.push_back(IrPayloadLiteralCondition{
-            payload_index,
-            payload_bits,
-            false,
-            false
-        });
+        lowered_arm.payload_literal_conditions.push_back(
+            IrPayloadLiteralCondition::integer(payload_index, payload_bits));
     }
 
     static void lower_aggregate_enum_payload_bool_literal(SourceLocation loc,
@@ -7250,9 +7246,8 @@ private:
             payload_type.primitive != IrPrimitiveKind::Bool) {
             fail(loc, "bool payload patterns require a bool enum payload");
         }
-        set_aggregate_enum_payload_literal_condition(lowered_arm, payload_index, value ? 1ULL : 0ULL);
-        lowered_arm.payload_literal_conditions.back().is_bool = true;
-        lowered_arm.payload_literal_conditions.back().bool_value = value;
+        lowered_arm.payload_literal_conditions.push_back(
+            IrPayloadLiteralCondition::boolean(payload_index, value));
     }
 
     static void lower_aggregate_enum_payload_integer_literal(const Pattern& pattern,
