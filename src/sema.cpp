@@ -2512,12 +2512,16 @@ private:
         for (const auto& decl : program_.structs) {
             if (!decl.is_public) continue;
             if (!find_attribute(decl.attributes, "repr")) continue;
-            if (!decl.generics.empty()) continue;
 
             IrCRecord record;
             record.name = decl.name;
             record.c_name = unqualified_name(decl.name);
             record.loc = decl.loc;
+            record.opaque = !decl.generics.empty();
+            if (record.opaque) {
+                ir.c_records.push_back(std::move(record));
+                continue;
+            }
             for (const auto& field : decl.fields) {
                 record.fields.push_back(IrCRecordField{
                     field.name,

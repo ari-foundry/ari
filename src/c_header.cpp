@@ -216,6 +216,7 @@ std::string emit_c_header(const IrProgram& program) {
         }
         out << "\n";
         for (const auto& record : program.c_records) {
+            if (record.opaque) continue;
             out << record_definition(record, c_record_names, c_enum_names) << "\n\n";
         }
     }

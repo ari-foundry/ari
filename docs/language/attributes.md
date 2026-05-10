@@ -94,9 +94,11 @@ do not affect layout, so the C header emits one erased tag typedef for the
 source enum name. Enum headers use Ari's current fixed tag ABI by emitting
 `typedef int64_t Name;` plus prefixed integer constants such as
 `Name_Case = 0`. The current header emitter skips private helpers, private
-structs, and private enums, does not emit generic struct declarations yet, and
-rejects Ari-only values such as `string`, owned values, and aggregate
-parameters until their C ABI policy is explicit.
+structs, and private enums. Generic `@repr(C)` structs are emitted as opaque
+typedefs so pointer-only C APIs can name them, but their concrete field
+definitions are still planned. Header generation rejects Ari-only values such
+as `string`, owned values, and aggregate parameters until their C ABI policy is
+explicit.
 Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.

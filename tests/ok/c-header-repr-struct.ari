@@ -27,6 +27,11 @@ pub struct ApiSlots {
 }
 
 @repr(C)
+pub struct GenericHandle[T] {
+  raw: ptr T,
+}
+
+@repr(C)
 struct HiddenSlots {
   value: i64,
 }
@@ -38,6 +43,11 @@ pub fn ping(value: i64) -> i64 {
 
 @export("ari_observe")
 pub fn observe(slots: ptr ApiSlots) -> i64 {
+  return 0;
+}
+
+@export("ari_observe_generic")
+pub fn observe_generic(handle: ptr GenericHandle[i64]) -> i64 {
   return 0;
 }
 

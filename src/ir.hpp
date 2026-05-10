@@ -295,6 +295,7 @@ struct IrCRecord {
     std::string c_name;
     std::vector<IrCRecordField> fields;
     SourceLocation loc;
+    bool opaque = false;
 };
 
 struct IrCEnumCase {

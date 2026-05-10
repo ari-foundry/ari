@@ -856,6 +856,7 @@ check-meta: $(TARGET)
 	grep -q 'WireStatus_Offline = 0,' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'WireStatus_Online = 1,' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'typedef struct ApiSlots ApiSlots;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'typedef struct GenericHandle GenericHandle;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'struct ApiSlots {' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t value;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'bool flag;' $(BUILD_DIR)/meta/c-header-repr-struct.h
@@ -865,10 +866,12 @@ check-meta: $(TARGET)
 	grep -q 'int64_t\* unique;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_ping(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_observe(ApiSlots\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t ari_observe_generic(GenericHandle\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_status_code(ApiStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_wire_status_code(WireStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	if grep -q 'HiddenSlots' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	if grep -q 'HiddenStatus' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
+	if grep -q 'struct GenericHandle {' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw
 	$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw; code=$$?; test $$code -eq 10
 	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
