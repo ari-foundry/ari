@@ -94,34 +94,29 @@
    iterator step.
    - [state] add owner iterator inputs and finish the explicit iterator
      lifetime rules for nested/break-heavy control-flow cases
-4. Complete trait composition and supertrait support.
-   Ari now parses `trait Child: Parent` supertraits, rejects supertrait cycles,
-   requires `impl Child for T` to be accompanied by the matching
-   `impl Parent for T`, and lets generic bounds on `Child` statically dispatch
-   methods declared by `Parent`. Static disambiguation is also implemented:
-   `Trait::method(receiver, ...)` and generic `Trait<T>::method(receiver, ...)`
-   pick a specific trait impl, while a child-trait-qualified call remains an
-   error if multiple supertraits provide the same method name. LLVM `dyn Child`
-   vtables now include object-safe methods inherited from supertraits, so
-   concrete-to-dyn conversion can dispatch both child and supertrait methods;
-   dyn-to-dyn upcasts to the same trait or an inherited supertrait preserve the
-   data pointer and adjust the vtable pointer to the supertrait slot range.
-   Inherited dyn method names that are ambiguous across supertraits and
-   unrelated dyn-to-dyn casts are rejected. This deliberately follows a
-   trait-composition model rather than
-   class inheritance: structs remain data-layout declarations with explicit
-   fields/embedding, and Ari should not add implicit struct inheritance or
-   hidden base-object layout.
-   - [supertrait-associated] extend supertrait lookup to associated functions,
-     future associated types, and generic supertrait applications with richer
-     inference
-
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Medium-Term Language Work
 
-1. Refine borrow checking beyond lexical named borrows.
+1. Extend associated items on traits.
+   The near-term trait-composition surface is complete for method lookup:
+   `trait Child: Parent` parses and checks, supertrait impls are required,
+   generic child-trait bounds can statically dispatch parent methods,
+   trait-qualified method calls disambiguate static dispatch, and LLVM
+   `dyn Child` values include object-safe supertrait methods with dyn-to-dyn
+   upcasts to inherited supertraits. Keep Ari on trait composition instead of
+   struct inheritance: structs remain explicit data layouts with field
+   embedding rather than hidden base-object layout.
+   - [trait-qualified-associated] design an explicit syntax for selecting a
+     trait impl's associated function when multiple traits provide the same
+     associated function for one receiver type; avoid copying Rust's full
+     `<T as Trait>::item` spelling unless Ari really needs that shape
+   - [associated-types] add associated type declarations, impl witnesses, and
+     projection syntax for generic APIs such as iterator item types
+   - [generic-supertrait-inference] handle richer generic supertrait
+     applications once associated types and projections exist
+2. Refine borrow checking beyond lexical named borrows.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
    - [reborrow] allow safe reborrowing from existing borrow bindings
    - [borrow-results] allow borrow-valued function returns, `if`/`match`/block
@@ -131,7 +126,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [loop-state] track ownership and borrow state through loops, init-while
      updates, owning loop bindings, and owning break values instead of rejecting
      all state changes inside loops
-2. Extend pattern binding modes beyond value bindings.
+3. Extend pattern binding modes beyond value bindings.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share
@@ -151,7 +146,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      still need shared lowering. Future `for let` filters over vector and slice
      values should reuse the same product-pattern binding path once vector/slice
      patterns have length-checked lowering.
-3. Implement user-defined compile-time meta expansion for `meta fn`.
+4. Implement user-defined compile-time meta expansion for `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
    Meta functions are intentionally non-generic; define concrete meta entry
    points over `token_stream`, `ast`, or `type` instead of instantiating them.
@@ -162,7 +157,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
-4. Expand aggregate enum payload storage beyond the nested-enum MVP.
+5. Expand aggregate enum payload storage beyond the nested-enum MVP.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values, and
    LLVM homogeneous nested aggregate-enum values today. Nested enum-case
@@ -181,7 +176,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      aggregate enum payloads after payload ABI and aliasing rules are explicit
    - [repr-c-payloads] define C tagged-union layout and C header emission for
      payload-bearing `@repr(C)` enums after aggregate enum payload ABI is stable
-5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
+6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
     prelude and connected to
@@ -200,7 +195,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
-6. Design `std` smart-pointer and explicit move surfaces.
+7. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
     for common heap and shared-resource patterns.
@@ -214,7 +209,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       ref-count increments, and deterministic release
     - [interop] decide how smart pointers expose raw pointers for FFI without
       pretending Ari has a globally safe borrow model
-7. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
+8. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, and
@@ -231,14 +226,15 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
     - [freestanding] lower stored local vector values in the raw backend
-8. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+9. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot
     method calls are implemented for concrete and generic-impl-specialized,
     copyable, non-borrow source values on the LLVM backend. Dyn-to-dyn upcasts
-    are deliberately rejected; build a new dyn value from a concrete source
-    instead.
+    to the same trait or an inherited supertrait are implemented on LLVM by
+    preserving the data pointer and offsetting the vtable pointer; unrelated
+    dyn casts remain rejected.
     - [ownership] define dyn object data-pointer ownership for `own` and
       borrow-valued source types
     - [freestanding] lower trait-object values and dispatch in the raw backend
