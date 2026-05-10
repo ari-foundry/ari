@@ -220,7 +220,8 @@ Checklist:
       block, or local-binding known length across branch result materialization
 - [x] `len(value)` and `value.len()` for local vectors, fixed arrays,
       constant-folded literal length, and compiler-known local Vec length,
-      including local Vec `as_slice()` view length construction
+      including local Vec `as_slice()` view length construction and
+      source-known Vec control-flow expression result lengths
 - [x] fixed-capacity local literal/const/static-signed-expr/known-local/runtime-checked `Vec.reserve(n)`, plus auto-widening local `Vec.push(value)` on the LLVM backend
 - [x] checked local `Vec.insert(index, value)` on the LLVM backend
 - [x] checked local `Vec.pop()` on the LLVM backend

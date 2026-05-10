@@ -20,5 +20,24 @@ fn main() -> i64 {
   };
   let match_len = from_match.len();
 
-  return if_len + match_len + from_if[0] + from_match[0];
+  let direct_len = len(if true {
+    left
+  } else {
+    right
+  });
+
+  let method_len = (match 1 {
+    0 => left,
+    _ => right,
+  }).len();
+
+  let direct_empty = (if false {
+    left
+  } else {
+    right
+  }).is_empty();
+
+  return if_len + match_len + direct_len + method_len +
+         from_if[0] + from_match[0] +
+         if direct_empty { 99 } else { 0 };
 }

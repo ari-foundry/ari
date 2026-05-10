@@ -51,9 +51,10 @@
    `insert`, `pop`, `remove`, `clear`, and `truncate` now use small
    `vector_semantics` transition helpers, and local `Vec` `len`/`is_empty`
    calls plus `as_slice` view lengths and stored-vector `for` loop bounds fold
-   to constants when the current length is compiler-known. Direct indexing of
-   Vec-valued control-flow expressions also uses source-known local branch
-   lengths for static out-of-range diagnostics. Local `Vec`
+   to constants when the current length is compiler-known. `len(...)`,
+   `.len()`, `.is_empty()`, and direct indexing of Vec-valued control-flow
+   expressions also use source-known local branch lengths for constants and
+   static out-of-range diagnostics. Local `Vec`
    initialization and assignment from another local `Vec` also preserve that
    compiler-known current length when the source binding is still precise, and
    assignment from another local `Vec` widens the fixed local target storage to

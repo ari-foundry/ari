@@ -13940,15 +13940,17 @@ private:
     }
 
     IrExprPtr check_collection_len_expr(SourceLocation loc, const Expr& source) {
-        VectorKnownLength known_vec_length = known_local_vec_length_for_expr(source);
         IrExprPtr operand = check_aggregate_access_operand(source);
+        VectorKnownLength known_vec_length =
+            vector_known_length_from_source_expr(operand->type, source, *operand);
         return make_local_vec_len_expr(loc, std::move(operand), known_vec_length);
     }
 
     IrExprPtr check_collection_is_empty_method_call(const Expr& expr) {
         require_collection_is_empty_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
-        VectorKnownLength known_vec_length = known_local_vec_length_for_expr(*expr.operand);
         IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        VectorKnownLength known_vec_length =
+            vector_known_length_from_source_expr(operand->type, *expr.operand, *operand);
         return make_local_vec_is_empty_expr(expr.loc, std::move(operand), known_vec_length);
     }
 
@@ -14677,11 +14679,28 @@ private:
 
     bool is_collection_len_method_receiver(const Expr& expr) {
         if (expr.kind == ExprKind::Vector) return true;
-        if (expr.kind != ExprKind::Name) return false;
-        const LocalInfo* local = find_local_slot(expr.name);
-        return local && (local->type.primitive == IrPrimitiveKind::Vector ||
-                         local->type.primitive == IrPrimitiveKind::Array ||
-                         is_prelude_slice_type(local->type));
+        if (expr.kind == ExprKind::Name) {
+            const LocalInfo* local = find_local_slot(expr.name);
+            return local && (local->type.primitive == IrPrimitiveKind::Vector ||
+                             local->type.primitive == IrPrimitiveKind::Array ||
+                             is_prelude_slice_type(local->type));
+        }
+        if (expr.kind == ExprKind::Block && expr.block_value) {
+            return is_collection_len_method_receiver(*expr.block_value);
+        }
+        if (expr.kind == ExprKind::If) {
+            return expr.then_value && expr.else_value &&
+                   is_collection_len_method_receiver(*expr.then_value) &&
+                   is_collection_len_method_receiver(*expr.else_value);
+        }
+        if (expr.kind == ExprKind::Match) {
+            if (expr.match_arms.empty()) return false;
+            for (const auto& arm : expr.match_arms) {
+                if (!arm.value || !is_collection_len_method_receiver(*arm.value)) return false;
+            }
+            return true;
+        }
+        return false;
     }
 
     const ImplMethodInfo* select_trait_qualified_concrete_method_impl(
