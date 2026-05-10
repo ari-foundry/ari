@@ -34,8 +34,8 @@ construction. Some helpers have already moved out to focused files:
   detection, product exhaustiveness checks, product missing-case hint
   formatting, enum match coverage state, enum duplicate detection, and enum
   exhaustiveness diagnostics
-- `pattern_semantics` for pure pattern binding/or-pattern detection and
-  expansion helpers
+- `pattern_semantics` for pure pattern binding/or-pattern detection, positional
+  product field mapping, and or-pattern expansion helpers
 - `move_semantics` for pure helpers around explicit ownership-consumption
   syntax such as `take(place)` place-shape validation
 - `trait_semantics` for small trait display/key helpers and pure trait-method
@@ -81,8 +81,9 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      table extraction.
 3. Continue extracting pattern coverage helpers into `pattern_coverage`.
    - Product rectangle math now lives in `product_coverage`.
-   - Pure pattern binding/or-pattern detection and expansion helpers now live
-     in `pattern_semantics`.
+   - Pure pattern binding/or-pattern detection, positional tuple/array field
+     mapping for rest patterns, and expansion helpers now live in
+     `pattern_semantics`.
    - Scalar integer range interval math now lives in `pattern_coverage`,
      including signed ordering, interval merging, scalar exhaustiveness, and
      scalar fully-shadowed checks.
@@ -105,8 +106,9 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      enum exhaustiveness diagnostics now live in `pattern_coverage`;
      `sema.cpp` still performs enum case resolution and payload type
      validation.
-   - Move the remaining sema-bound finite/symbolic product pattern aggregate
-     recursion, plus payload-shape checks that still depend on semantic tables.
+   - Move the remaining sema-bound tuple-struct and named-struct finite/symbolic
+     product pattern recursion, plus payload-shape checks that still depend on
+     semantic tables.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
      abstracted.
 

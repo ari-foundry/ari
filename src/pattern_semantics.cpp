@@ -148,4 +148,26 @@ std::vector<Pattern> expand_or_pattern_alternatives(const Pattern& pattern) {
     return expanded;
 }
 
+std::size_t tuple_pattern_field_index(const Pattern& pattern,
+                                      std::size_t field_count,
+                                      std::size_t pattern_index) {
+    if (!pattern.has_rest || pattern_index < pattern.rest_index) return pattern_index;
+    std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+    return field_count - suffix_count + (pattern_index - pattern.rest_index);
+}
+
+const Pattern* positional_product_field_pattern(const Pattern& pattern,
+                                                std::size_t field_count,
+                                                std::size_t field_index) {
+    if (!pattern.has_rest) return &pattern.elements[field_index];
+    if (field_index < pattern.rest_index) return &pattern.elements[field_index];
+
+    std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+    std::size_t suffix_start = field_count - suffix_count;
+    if (field_index >= suffix_start) {
+        return &pattern.elements[pattern.rest_index + field_index - suffix_start];
+    }
+    return nullptr;
+}
+
 } // namespace ari

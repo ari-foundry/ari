@@ -11,5 +11,11 @@ fn main() -> i64 {
     (0u16..=65535u16, true) => 3,
   };
 
-  return first + second;
+  let third = match (42u16, true, false) {
+    (0u16..=100u16, .., false) => 4,
+    (0u16..=100u16, .., true) => 5,
+    (101u16..=65535u16, ..) => 6,
+  };
+
+  return first + second + third;
 }

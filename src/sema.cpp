@@ -7719,14 +7719,6 @@ private:
         return make_bool_binary_expr(loc, op, std::move(left), std::move(right));
     }
 
-    static std::size_t tuple_pattern_field_index(const Pattern& pattern,
-                                                 std::size_t field_count,
-                                                 std::size_t pattern_index) {
-        if (!pattern.has_rest || pattern_index < pattern.rest_index) return pattern_index;
-        std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
-        return field_count - suffix_count + (pattern_index - pattern.rest_index);
-    }
-
     static void require_tuple_pattern_arity(const Pattern& pattern,
                                             const IrType& source_type,
                                             const std::vector<IrType>& fields) {
@@ -8208,18 +8200,10 @@ private:
         const std::vector<IrType>& fields = aggregate_field_types(type);
         require_tuple_pattern_arity(pattern, type, fields);
 
-        std::size_t suffix_count = pattern.has_rest ? pattern.elements.size() - pattern.rest_index : 0;
         std::vector<std::vector<std::string>> domains;
         domains.reserve(fields.size());
         for (std::size_t field_index = 0; field_index < fields.size(); ++field_index) {
-            const Pattern* item = nullptr;
-            if (!pattern.has_rest) {
-                item = &pattern.elements[field_index];
-            } else if (field_index < pattern.rest_index) {
-                item = &pattern.elements[field_index];
-            } else if (field_index >= fields.size() - suffix_count) {
-                item = &pattern.elements[pattern.rest_index + field_index - (fields.size() - suffix_count)];
-            }
+            const Pattern* item = positional_product_field_pattern(pattern, fields.size(), field_index);
 
             std::vector<std::string> field_values;
             bool ok = item
@@ -8399,18 +8383,10 @@ private:
         const std::vector<IrType>& fields = aggregate_field_types(type);
         require_tuple_pattern_arity(pattern, type, fields);
 
-        std::size_t suffix_count = pattern.has_rest ? pattern.elements.size() - pattern.rest_index : 0;
         std::vector<std::vector<ProductRect>> domains;
         domains.reserve(fields.size());
         for (std::size_t field_index = 0; field_index < fields.size(); ++field_index) {
-            const Pattern* item = nullptr;
-            if (!pattern.has_rest) {
-                item = &pattern.elements[field_index];
-            } else if (field_index < pattern.rest_index) {
-                item = &pattern.elements[field_index];
-            } else if (field_index >= fields.size() - suffix_count) {
-                item = &pattern.elements[pattern.rest_index + field_index - (fields.size() - suffix_count)];
-            }
+            const Pattern* item = positional_product_field_pattern(pattern, fields.size(), field_index);
 
             std::vector<ProductRect> field_rects;
             bool ok = item

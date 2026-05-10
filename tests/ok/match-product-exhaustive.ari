@@ -34,5 +34,11 @@ fn main() -> i64 {
     Bits(false, _) => 4,
   };
 
-  return tuple_score + nested_score + struct_score + tuple_struct_score;
+  let rest_tuple_score = match (true, false, true) {
+    (true, .., true) => 8,
+    (true, .., false) => 9,
+    (false, ..) => 10,
+  };
+
+  return tuple_score + nested_score + struct_score + tuple_struct_score + rest_tuple_score;
 }

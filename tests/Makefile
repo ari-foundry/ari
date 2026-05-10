@@ -414,11 +414,11 @@ check-match: $(TARGET)
 	$(TARGET) --freestanding tests/ok/match-struct-pattern.ari -o $(BUILD_DIR)/match/match-struct-pattern.raw
 	$(BUILD_DIR)/match/match-struct-pattern.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/match-product-exhaustive.ari -o $(BUILD_DIR)/match/match-product-exhaustive.raw
-	$(BUILD_DIR)/match/match-product-exhaustive.raw; code=$$?; test $$code -eq 17
+	$(BUILD_DIR)/match/match-product-exhaustive.raw; code=$$?; test $$code -eq 25
 	$(TARGET) --freestanding tests/ok/match-finite-product-domain.ari -o $(BUILD_DIR)/match/match-finite-product-domain.raw
 	$(BUILD_DIR)/match/match-finite-product-domain.raw; code=$$?; test $$code -eq 6
 	$(TARGET) --freestanding tests/ok/match-symbolic-product.ari -o $(BUILD_DIR)/match/match-symbolic-product.raw
-	$(BUILD_DIR)/match/match-symbolic-product.raw; code=$$?; test $$code -eq 5
+	$(BUILD_DIR)/match/match-symbolic-product.raw; code=$$?; test $$code -eq 9
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-payload-literals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; code=$$?; test $$code -eq 64; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-nested-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.elf; $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.elf; code=$$?; test $$code -eq 99; fi
 	$(TARGET) --freestanding tests/ok/match-or-binding.ari -o $(BUILD_DIR)/match/match-or-binding.raw
