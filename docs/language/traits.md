@@ -312,6 +312,11 @@ result type as the implementing type:
 
 ```ari
 let boxed: Box[i64] = Make<i64>::make(20)
+let branched: Box[i64] = if ready {
+  Make<i64>::make(1)
+} else {
+  Make<i64>::make(2)
+}
 ```
 
 If the associated function has method-level generics, put them after the

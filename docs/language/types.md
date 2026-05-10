@@ -327,6 +327,7 @@ or let Ari infer it from an explicit expected result type:
 ```ari
 let boxed = Make<i64>::make<Box[i64]>(20)
 let inferred: Box[i64] = Make<i64>::make(20)
+let branched: Box[i64] = if ready { Make<i64>::make(1) } else { Make<i64>::make(2) }
 ```
 
 Generic trait methods with method-level bounds are supported too. Generic

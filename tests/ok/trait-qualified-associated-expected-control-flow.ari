@@ -1,0 +1,50 @@
+trait Build {
+  fn build(value: i64) -> Self
+}
+
+struct Box {
+  value: i64,
+}
+
+enum Choice {
+  Left,
+  Right,
+}
+
+impl Build for Box {
+  fn build(value: i64) -> Box {
+    Box { value: value }
+  }
+}
+
+fn main() -> i64 {
+  let from_if: Box = if true {
+    Build::build(1)
+  } else {
+    Build::build(2)
+  };
+
+  let from_block: Box = {
+    let seed = 3;
+    Build::build(seed)
+  };
+
+  let choice = Right;
+  let from_match: Box = match choice {
+    Left => Build::build(4),
+    Right => Build::build(5),
+  };
+
+  let from_labeled: Box = done: {
+    break done Build::build(6);
+    Build::build(7)
+  };
+
+  let from_if_let: Box = if let Left = Left {
+    Build::build(8)
+  } else {
+    Build::build(9)
+  };
+
+  from_if.value + from_block.value + from_match.value + from_labeled.value + from_if_let.value
+}
