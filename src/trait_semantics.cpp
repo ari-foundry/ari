@@ -39,4 +39,10 @@ bool trait_method_has_self_receiver(const std::vector<TypeRef>& params) {
     return !params.empty() && trait_method_param_is_self_receiver(params.front());
 }
 
+bool trait_expected_type_can_select_associated_self(const IrType& expected) {
+    return expected.qualifier == TypeQualifier::Value &&
+           expected.primitive != IrPrimitiveKind::Unknown &&
+           expected.primitive != IrPrimitiveKind::Void;
+}
+
 } // namespace ari

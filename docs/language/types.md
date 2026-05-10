@@ -321,10 +321,12 @@ let inferred = Box::make(true)
 ```
 
 If two traits provide the same associated function for one type, qualify the
-call with the trait and provide the implementing type after the function name:
+call with the trait and provide the implementing type after the function name,
+or let Ari infer it from an explicit expected result type:
 
 ```ari
 let boxed = Make<i64>::make<Box[i64]>(20)
+let inferred: Box[i64] = Make<i64>::make(20)
 ```
 
 Generic trait methods with method-level bounds are supported too. Generic

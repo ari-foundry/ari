@@ -1,0 +1,22 @@
+trait Build {
+  fn build(value: i64) -> Self
+}
+
+struct Box {
+  value: i64,
+}
+
+struct Other {
+  value: i64,
+}
+
+impl Build for Box {
+  fn build(value: i64) -> Box {
+    Box { value: value }
+  }
+}
+
+fn main() -> i64 {
+  let other: Other = Build::build(1);
+  other.value
+}

@@ -64,14 +64,18 @@ impl ChildBuild for Box[i64] {
 
 fn main() -> i64 {
   let first = First::pick<Box[i64]>(1);
+  let inferred_first: Box[i64] = First::pick(8);
   let second = Second::pick<Box[i64]>(1);
   let generic = GenericMake<i64>::make<Box[i64]>(20);
+  let inferred_generic: Box[i64] = GenericMake<i64>::make(30);
   let flag = GenericMake<bool>::make<Box[bool]>(true);
+  let inferred_flag: Box[bool] = GenericMake<bool>::make(false);
   let wrapped = FactoryMake::wrap<Box[i64]>(5);
   let explicit_wrapped = FactoryMake::wrap<Box[i64], i64>(6);
   let inherited = ChildBuild::base<Box[i64]>(7);
-  if flag.value {
-    first.value + second.value + generic.value + wrapped.value + explicit_wrapped.value + inherited.value
+  let inferred_inherited: Box[i64] = ChildBuild::base(11);
+  if flag.value && !inferred_flag.value {
+    first.value + inferred_first.value + second.value + generic.value + inferred_generic.value + wrapped.value + explicit_wrapped.value + inherited.value + inferred_inherited.value
   } else {
     0
   }

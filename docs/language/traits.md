@@ -307,8 +307,17 @@ written after the associated function name:
 let boxed = Make<i64>::make<Box[i64]>(20)
 ```
 
+When the destination has an explicit value type, Ari can use that expected
+result type as the implementing type:
+
+```ari
+let boxed: Box[i64] = Make<i64>::make(20)
+```
+
 If the associated function has method-level generics, put them after the
-implementing type or let Ari infer them from the value arguments.
+implementing type or let Ari infer them from the value arguments. If the
+implementing type is inferred from the expected result type, method-level
+generics must be inferred from the value arguments.
 
 Inside modules, methods are private by default. Mark the method `pub`, or mark
 the whole `impl` block `pub`, to make its methods callable from outside the

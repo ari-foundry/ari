@@ -109,6 +109,10 @@ These moves should happen after pure helpers and local state have settled.
    - Move generic binding/inference, trait bound validation, impl coherence,
      inherent and trait method selection, associated calls, trait object
      conversion, vtable planning, and object-safety checks.
+   - Pure trait-call helpers already live in `trait_semantics`, including
+     display keys, `Self` receiver recognition, and whether an expected value
+     type can select the implementing type for a trait-qualified associated
+     call.
    - Use `name_resolution` and `declaration_tables` as read-only inputs where
      possible.
 

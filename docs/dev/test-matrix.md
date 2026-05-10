@@ -440,8 +440,9 @@ Checklist:
 - [x] lower trait-qualified calls such as `Trait::method(receiver, ...)` and
       `Trait<T>::method(receiver, ...)` for explicit static dispatch
 - [x] lower trait-qualified associated function calls such as
-      `Trait::make<SelfType>(...)` and `Trait<T>::make<SelfType>(...)` to
-      disambiguate same-named trait associated functions
+      `Trait::make<SelfType>(...)` and `Trait<T>::make<SelfType>(...)`, plus
+      expected-result forms such as `let x: SelfType = Trait<T>::make(...)`,
+      to disambiguate same-named trait associated functions
 - [x] include object-safe supertrait methods in LLVM `dyn Child` vtables and
       reject ambiguous inherited dyn method names
 - [x] allow LLVM dyn-to-dyn upcasts from a child trait object to the same trait

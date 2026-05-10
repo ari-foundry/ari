@@ -82,19 +82,19 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    trait-qualified method calls disambiguate static dispatch, and LLVM
    `dyn Child` values include object-safe supertrait methods with dyn-to-dyn
    upcasts to inherited supertraits. Trait-qualified associated function calls
-   such as `Trait::make<SelfType>(...)` and
-   `Trait<T>::make<SelfType>(...)` now disambiguate same-named trait
-   associated functions without adopting Rust's full `<T as Trait>::item`
-   spelling. Keep Ari on trait composition instead of struct inheritance:
+   such as `Trait::make<SelfType>(...)`, `Trait<T>::make<SelfType>(...)`, and
+   expected-result forms like `let x: SelfType = Trait<T>::make(...)` now
+   disambiguate same-named trait associated functions without adopting Rust's
+   full `<T as Trait>::item` spelling. Keep Ari on trait composition instead of struct inheritance:
    structs remain explicit data layouts with field embedding rather than hidden
    base-object layout.
    - [associated-types] add associated type declarations, impl witnesses, and
      projection syntax for generic APIs such as iterator item types
    - [generic-supertrait-inference] handle richer generic supertrait
      applications once associated types and projections exist
-   - [follow-up] consider expected-return-type inference for the implementing
-     type in trait-qualified associated calls once Ari has a general
-     overload/expected-type selection policy
+   - [small-follow-up] propagate expected result types into `if`, `match`, and
+     block expression result arms so expected-type-driven call inference also
+     works in nested expression results
 2. Refine borrow checking beyond lexical named borrows.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
    - [reborrow] allow safe reborrowing from existing borrow bindings

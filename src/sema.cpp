@@ -11271,6 +11271,9 @@ private:
                 is_prelude_range_type(expected)) {
                 return check_range_call(expr, std::make_unique<IrExpr>(), &expected, range_name);
             }
+            auto lowered = std::make_unique<IrExpr>();
+            lowered->loc = expr.loc;
+            return check_call(expr, std::move(lowered), &expected);
         }
         return check_expr(expr);
     }
@@ -15635,7 +15638,7 @@ private:
         return make_enum_construct(expr.loc, info, std::move(args));
     }
 
-    IrExprPtr check_call(const Expr& expr, IrExprPtr lowered) {
+    IrExprPtr check_call(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         if (expr.operand) {
             return check_indirect_call(expr.loc, check_expr(*expr.operand), expr.args, std::move(lowered));
         }
@@ -15709,7 +15712,7 @@ private:
             return check_zone_temp_call(expr, std::move(lowered));
         }
         if (can_use_source_declared_prelude_special && is_prelude_range_function_name(special_name)) {
-            return check_range_call(expr, std::move(lowered), nullptr, special_name);
+            return check_range_call(expr, std::move(lowered), expected, special_name);
         }
 
         if (!expr.type_args.empty()) {
@@ -15743,7 +15746,8 @@ private:
             std::string receiver_name;
             std::string method_name;
             if (split_associated_call_name(expr.name, receiver_name, method_name)) {
-                if (IrExprPtr associated = check_associated_call(expr, receiver_name, method_name, std::move(lowered))) {
+                if (IrExprPtr associated =
+                        check_associated_call(expr, receiver_name, method_name, std::move(lowered), expected)) {
                     return associated;
                 }
             }
@@ -15917,18 +15921,22 @@ private:
         const std::string& trait_name,
         const std::vector<IrType>& trait_args,
         const std::string& method_name,
-        IrExprPtr lowered
+        IrExprPtr lowered,
+        const IrType* expected = nullptr
     ) {
         const std::string display = trait_method_display(trait_name, trait_args, method_name);
-        if (expr.type_args.empty()) {
+        IrType receiver_type;
+        if (!expr.type_args.empty()) {
+            receiver_type = resolve_executable_type(expr.type_args.front());
+        } else if (expected && trait_expected_type_can_select_associated_self(*expected)) {
+            receiver_type = *expected;
+        } else {
             fail(expr.loc,
                  "trait-qualified associated function call '" + display +
                      "' requires an explicit implementing type argument");
         }
-
-        IrType receiver_type = resolve_executable_type(expr.type_args.front());
         if (receiver_type.qualifier != TypeQualifier::Value) {
-            fail(expr.type_args.front().loc,
+            fail(expr.type_args.empty() ? expr.loc : expr.type_args.front().loc,
                  "trait-qualified associated function implementing type must be a value type, got " +
                      type_name(receiver_type));
         }
@@ -15945,7 +15953,9 @@ private:
         method_expr.kind = ExprKind::Call;
         method_expr.loc = expr.loc;
         method_expr.name = method_name;
-        method_expr.type_args.assign(expr.type_args.begin() + 1, expr.type_args.end());
+        if (!expr.type_args.empty()) {
+            method_expr.type_args.assign(expr.type_args.begin() + 1, expr.type_args.end());
+        }
 
         std::size_t borrow_mark = temporary_borrow_mark();
         std::vector<IrExprPtr> checked_args;
@@ -16017,7 +16027,8 @@ private:
         const Expr& expr,
         const std::string& receiver_name,
         const std::string& method_name,
-        IrExprPtr lowered
+        IrExprPtr lowered,
+        const IrType* expected = nullptr
     ) {
         std::string trait_name;
         std::vector<IrType> trait_args;
@@ -16039,7 +16050,8 @@ private:
                     trait_name,
                     trait_args,
                     method_name,
-                    std::move(lowered));
+                    std::move(lowered),
+                    expected);
             }
             return check_trait_qualified_method_call(
                 expr,

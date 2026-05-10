@@ -1072,7 +1072,7 @@ check-traits: $(TARGET)
 	$(TARGET) --freestanding tests/ok/trait-qualified-call.ari -o $(BUILD_DIR)/traits/trait-qualified-call.raw
 	$(BUILD_DIR)/traits/trait-qualified-call.raw; code=$$?; test $$code -eq 150
 	$(TARGET) --freestanding tests/ok/trait-qualified-associated-call.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-call.raw
-	$(BUILD_DIR)/traits/trait-qualified-associated-call.raw; code=$$?; test $$code -eq 44
+	$(BUILD_DIR)/traits/trait-qualified-associated-call.raw; code=$$?; test $$code -eq 96
 	$(TARGET) --freestanding tests/ok/trait-bound-generic-args.ari -o $(BUILD_DIR)/traits/trait-bound-generic-args.raw
 	$(BUILD_DIR)/traits/trait-bound-generic-args.raw; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-bound-static-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-bound-static-dispatch.ll
@@ -1158,6 +1158,8 @@ check-traits: $(TARGET)
 	grep -q "trait-qualified associated function call 'Build::build' requires an explicit implementing type argument" $(BUILD_DIR)/traits/trait-qualified-associated-missing-self.err
 	if $(TARGET) tests/errors/trait-qualified-associated-missing-impl.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-missing-impl.elf >$(BUILD_DIR)/traits/trait-qualified-associated-missing-impl.err 2>&1; then exit 1; fi
 	grep -q "type Box does not implement trait 'Build' for trait-qualified associated function call" $(BUILD_DIR)/traits/trait-qualified-associated-missing-impl.err
+	if $(TARGET) tests/errors/trait-qualified-associated-expected-missing-impl.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-expected-missing-impl.elf >$(BUILD_DIR)/traits/trait-qualified-associated-expected-missing-impl.err 2>&1; then exit 1; fi
+	grep -q "type Other does not implement trait 'Build' for trait-qualified associated function call" $(BUILD_DIR)/traits/trait-qualified-associated-expected-missing-impl.err
 	if $(TARGET) tests/errors/trait-bound-missing-impl.ari -o $(BUILD_DIR)/traits/trait-bound-missing-impl.elf >$(BUILD_DIR)/traits/trait-bound-missing-impl.err 2>&1; then exit 1; fi
 	grep -q "type i64 does not implement trait 'NeedsScore' required by generic parameter 'T'" $(BUILD_DIR)/traits/trait-bound-missing-impl.err
 	if $(TARGET) tests/errors/trait-supertrait-missing-impl.ari -o $(BUILD_DIR)/traits/trait-supertrait-missing-impl.elf >$(BUILD_DIR)/traits/trait-supertrait-missing-impl.err 2>&1; then exit 1; fi

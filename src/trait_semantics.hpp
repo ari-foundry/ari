@@ -17,5 +17,6 @@ std::string trait_impl_key(const std::string& trait_name,
                            const IrType& self_type);
 bool trait_method_param_is_self_receiver(const TypeRef& param);
 bool trait_method_has_self_receiver(const std::vector<TypeRef>& params);
+bool trait_expected_type_can_select_associated_self(const IrType& expected);
 
 } // namespace ari
