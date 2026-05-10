@@ -1,0 +1,5 @@
+const TOO_WIDE: u8 = 1u8 << 8u8;
+
+fn main() -> i64 {
+  return TOO_WIDE as i64;
+}

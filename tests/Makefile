@@ -541,6 +541,8 @@ check-match: $(TARGET)
 	grep -q "integer match constant pattern must have an integer type" $(BUILD_DIR)/match/constant-pattern-type.err
 	if $(TARGET) tests/errors/constant-folding-div-zero.ari -o $(BUILD_DIR)/match/constant-folding-div-zero.elf >$(BUILD_DIR)/match/constant-folding-div-zero.err 2>&1; then exit 1; fi
 	grep -q "constant expression divides by zero" $(BUILD_DIR)/match/constant-folding-div-zero.err
+	if $(TARGET) tests/errors/constant-shift-too-wide.ari -o $(BUILD_DIR)/match/constant-shift-too-wide.elf >$(BUILD_DIR)/match/constant-shift-too-wide.err 2>&1; then exit 1; fi
+	grep -q "constant shift amount must be less than 8" $(BUILD_DIR)/match/constant-shift-too-wide.err
 	if $(TARGET) tests/errors/constant-cycle-path.ari -o $(BUILD_DIR)/match/constant-cycle-path.elf >$(BUILD_DIR)/match/constant-cycle-path.err 2>&1; then exit 1; fi
 	grep -q "constant cycle: A -> B -> C -> A" $(BUILD_DIR)/match/constant-cycle-path.err
 	if $(TARGET) tests/errors/constant-aggregate-array-arity.ari -o $(BUILD_DIR)/match/constant-aggregate-array-arity.elf >$(BUILD_DIR)/match/constant-aggregate-array-arity.err 2>&1; then exit 1; fi

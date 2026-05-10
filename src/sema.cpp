@@ -176,28 +176,6 @@ struct ModuleInfo {
     SourceLocation loc;
 };
 
-enum class ConstantValueKind {
-    Integer,
-    Bool,
-    Tuple,
-    Struct,
-    Array,
-    Enum
-};
-
-struct ConstantValue {
-    ConstantValueKind kind = ConstantValueKind::Integer;
-    IrType type;
-    bool is_bool = false;
-    std::uint64_t int_value = 0;
-    bool int_negative = false;
-    bool bool_value = false;
-    std::vector<ConstantValue> elements;
-    std::string enum_name;
-    std::string case_name;
-    std::uint32_t enum_tag = 0;
-};
-
 struct ConstantInfo {
     std::string name;
     std::string module_name;
@@ -6138,110 +6116,6 @@ private:
         }
         require_numeric_operands(loc, left_type, right_type);
         return left_type;
-    }
-
-    static std::uint64_t int64_min_magnitude() {
-        return static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) + 1ULL;
-    }
-
-    static std::int64_t constant_integer_to_i64(SourceLocation loc, const ConstantValue& value) {
-        if (value.int_negative) {
-            if (value.int_value == int64_min_magnitude()) return std::numeric_limits<std::int64_t>::min();
-            if (value.int_value > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-                fail(loc, "constant integer expression operand is out of range for i64");
-            }
-            return -static_cast<std::int64_t>(value.int_value);
-        }
-        if (value.int_value > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(loc, "constant integer expression operand is out of range for i64");
-        }
-        return static_cast<std::int64_t>(value.int_value);
-    }
-
-    static std::uint64_t constant_integer_to_u64(SourceLocation loc, const ConstantValue& value) {
-        if (value.int_negative) fail(loc, "unsigned constant arithmetic cannot use negative operands");
-        return value.int_value;
-    }
-
-    static std::uint64_t integer_bit_mask(unsigned width) {
-        if (width >= 64) return std::numeric_limits<std::uint64_t>::max();
-        return (1ULL << width) - 1ULL;
-    }
-
-    static std::uint64_t constant_integer_raw_bits(const ConstantValue& value, unsigned width) {
-        std::uint64_t raw = value.int_negative ? 0 - value.int_value : value.int_value;
-        return raw & integer_bit_mask(width);
-    }
-
-    static std::int64_t sign_extend_integer_bits(std::uint64_t raw, unsigned width) {
-        raw &= integer_bit_mask(width);
-        if (width == 0) return 0;
-        if (width < 64 && (raw & (1ULL << (width - 1)))) {
-            raw |= ~integer_bit_mask(width);
-        }
-        return static_cast<std::int64_t>(raw);
-    }
-
-    static unsigned constant_shift_amount(SourceLocation loc,
-                                          const ConstantValue& value,
-                                          unsigned width) {
-        if (value.int_negative) fail(loc, "constant shift amount must be non-negative");
-        if (width == 0 || value.int_value >= width) {
-            fail(loc, "constant shift amount must be less than " + std::to_string(width));
-        }
-        return static_cast<unsigned>(value.int_value);
-    }
-
-    ConstantValue make_signed_integer_constant(SourceLocation loc, const IrType& type, std::int64_t result) {
-        ConstantValue value;
-        value.kind = ConstantValueKind::Integer;
-        value.type = type;
-        value.int_negative = result < 0;
-        value.int_value = result == std::numeric_limits<std::int64_t>::min()
-            ? int64_min_magnitude()
-            : static_cast<std::uint64_t>(value.int_negative ? -result : result);
-
-        IrExpr literal;
-        literal.kind = IrExprKind::Integer;
-        literal.loc = loc;
-        literal.type = type;
-        literal.int_value = value.int_value;
-        literal.int_negative = value.int_negative;
-        if (!integer_literal_fits(literal, type)) {
-            fail(loc, "constant integer expression result is out of range for " + type_name(type));
-        }
-        return value;
-    }
-
-    ConstantValue make_unsigned_integer_constant(SourceLocation loc, const IrType& type, std::uint64_t result) {
-        ConstantValue value;
-        value.kind = ConstantValueKind::Integer;
-        value.type = type;
-        value.int_value = result;
-        value.int_negative = false;
-
-        IrExpr literal;
-        literal.kind = IrExprKind::Integer;
-        literal.loc = loc;
-        literal.type = type;
-        literal.int_value = value.int_value;
-        literal.int_negative = false;
-        if (!integer_literal_fits(literal, type)) {
-            fail(loc, "constant integer expression result is out of range for " + type_name(type));
-        }
-        return value;
-    }
-
-    ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, bool result) {
-        if (expected.qualifier != TypeQualifier::Value || expected.primitive != IrPrimitiveKind::Bool) {
-            fail(loc, "type mismatch: expected " + type_name(expected) + ", got bool");
-        }
-        ConstantValue value;
-        value.kind = ConstantValueKind::Bool;
-        value.type = expected;
-        value.is_bool = true;
-        value.bool_value = result;
-        return value;
     }
 
     ConstantValue evaluate_constant_binary_expr(const Expr& expr, const IrType& expected) {

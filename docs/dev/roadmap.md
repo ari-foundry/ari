@@ -29,11 +29,11 @@
    dedicated diagnostic that points users at the future allocator-backed std
    collection APIs instead of falling through to the generic unknown-method
    error. Vec storage helper logic is split out of `sema.cpp` into
-   `vector_semantics`, while shared static integer folding for local Vec
-   capacity and length decisions now lives in `constant_semantics`; this keeps
-   allocator-backed work from growing the main semantic checker. Introduce the
-   explicit allocation/capability path before broadening vector patterns or std
-   collection APIs.
+   `vector_semantics`, while the shared constant value model plus static
+   integer folding for local Vec capacity and length decisions now live in
+   `constant_semantics`; this keeps allocator-backed work from growing the main
+   semantic checker. Introduce the explicit allocation/capability path before
+   broadening vector patterns or std collection APIs.
    - [allocator] thread explicit allocator/capability values through creation
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      reserve capacity with runtime heap capacity growth
