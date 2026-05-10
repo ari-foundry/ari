@@ -436,10 +436,11 @@ value includes object-safe methods declared by `Child` and its supertraits, so
 `value.base()` can dispatch through a `dyn Child` vtable when `Child: Base`.
 If more than one supertrait exposes the same dyn method name, the method call is
 ambiguous; use static trait-qualified dispatch on the concrete value before
-erasing it. Trait-object upcasts are rejected: Ari does not reinterpret one dyn
-object as another dyn trait object, so create the target dyn value from a
-concrete source with `as dyn Trait[...]`. `own`/borrow-valued dyn data pointers
-and raw `--freestanding` lowering are still planned.
+erasing it. A dyn object can also be upcast to the same trait or one of its
+supertraits with `as dyn Base`; the data pointer is preserved and the vtable
+pointer is adjusted to the inherited supertrait method slots. Unrelated
+dyn-to-dyn casts remain rejected. `own`/borrow-valued dyn data pointers and raw
+`--freestanding` lowering are still planned.
 
 ## Current Status
 
@@ -456,4 +457,5 @@ executable for concrete copyable source values, including vtables built from
 generic impl specializations and inherited object-safe supertrait methods.
 Generic trait methods are deliberately static-only for dyn objects. Associated
 types, non-copy dyn data ownership, and raw backend dyn dispatch are still
-planned. Dyn-to-dyn upcasts are explicitly rejected.
+planned. Dyn-to-dyn upcasts are executable when the target is the same trait or
+an inherited supertrait; unrelated dyn casts are rejected.

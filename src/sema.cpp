@@ -424,6 +424,11 @@ private:
         const TraitInfo::Method* method = nullptr;
     };
 
+    struct TraitObjectConversion {
+        std::string vtable_name;
+        std::uint64_t vtable_offset = 0;
+    };
+
     const Program& program_;
     SemaOptions options_;
     TargetInfo target_ = resolve_target_info(options_.target_triple);
@@ -2016,6 +2021,54 @@ private:
             selected = &entry;
         }
         return selected;
+    }
+
+    static bool same_trait_object_method_entry(
+        const TraitObjectMethodEntry& left,
+        const TraitObjectMethodEntry& right
+    ) {
+        if (!left.trait || !right.trait || !left.method || !right.method) return false;
+        return left.trait->name == right.trait->name &&
+               same_type_list(left.trait_args, right.trait_args) &&
+               left.method->name == right.method->name;
+    }
+
+    std::uint64_t trait_object_upcast_vtable_offset(
+        SourceLocation loc,
+        const IrType& source,
+        const IrType& target
+    ) const {
+        auto source_trait_found = traits_.find(source.name);
+        auto target_trait_found = traits_.find(target.name);
+        if (source_trait_found == traits_.end() || target_trait_found == traits_.end()) {
+            fail(loc, "unknown trait in dyn upcast from " + type_name(source) + " to " + type_name(target));
+        }
+
+        std::vector<TraitObjectMethodEntry> source_methods =
+            collect_trait_object_methods(source_trait_found->second, source.args);
+        std::vector<TraitObjectMethodEntry> target_methods =
+            collect_trait_object_methods(target_trait_found->second, target.args);
+        if (target_methods.empty()) return 0;
+
+        for (const auto& entry : target_methods) {
+            require_trait_object_method_object_safe(loc, *entry.method);
+        }
+
+        if (target_methods.size() <= source_methods.size()) {
+            for (std::size_t base = 0; base + target_methods.size() <= source_methods.size(); ++base) {
+                bool matches = true;
+                for (std::size_t i = 0; i < target_methods.size(); ++i) {
+                    if (!same_trait_object_method_entry(source_methods[base + i], target_methods[i])) {
+                        matches = false;
+                        break;
+                    }
+                }
+                if (matches) return static_cast<std::uint64_t>(base);
+            }
+        }
+
+        fail(loc, "trait object upcast from " + type_name(source) + " to " +
+                      type_name(target) + " cannot locate a compatible vtable layout");
     }
 
     bool try_resolve_trait_qualified_call_target(
@@ -12784,7 +12837,10 @@ private:
         }
 
         if (is_value_trait_object_type(target)) {
-            lowered->name = require_trait_object_conversion(expr.loc, operand->type, target);
+            TraitObjectConversion conversion =
+                require_trait_object_conversion(expr.loc, operand->type, target);
+            lowered->name = conversion.vtable_name;
+            lowered->tuple_index = conversion.vtable_offset;
             lowered->kind = IrExprKind::Cast;
             lowered->type = target;
             lowered->operand = std::move(operand);
@@ -12808,12 +12864,19 @@ private:
         return lowered;
     }
 
-    std::string require_trait_object_conversion(SourceLocation loc, const IrType& source, const IrType& target) {
+    TraitObjectConversion require_trait_object_conversion(SourceLocation loc, const IrType& source, const IrType& target) {
         if (source.qualifier != TypeQualifier::Value) {
             fail(loc, "trait object conversions currently require value operands, got " + type_name(source));
         }
         if (source.primitive == IrPrimitiveKind::TraitObject) {
-            fail(loc, "trait object upcasts are not supported; convert from a concrete value with as dyn Trait[...]");
+            if (!trait_application_implies_trait(source.name, source.args, target.name, target.args)) {
+                fail(loc, "trait object upcast from " + type_name(source) + " to " +
+                              type_name(target) +
+                              " requires the target trait to be the same trait or a supertrait");
+            }
+            TraitObjectConversion conversion;
+            conversion.vtable_offset = trait_object_upcast_vtable_offset(loc, source, target);
+            return conversion;
         }
         if (is_owner_type(source) || contains_borrow_type(source)) {
             fail(loc, "trait object conversions currently require copyable non-borrow values, got " + type_name(source));
@@ -12822,7 +12885,9 @@ private:
             fail(loc, "type " + type_name(source) + " does not implement trait '" +
                            trait_application_display(target.name, target.args) + "' for dyn conversion");
         }
-        return register_trait_object_vtable(loc, source, target);
+        TraitObjectConversion conversion;
+        conversion.vtable_name = register_trait_object_vtable(loc, source, target);
+        return conversion;
     }
 
     const ImplMethodInfo* find_concrete_trait_method_impl(
@@ -12846,7 +12911,7 @@ private:
         return selected;
     }
 
-    void require_trait_object_method_object_safe(SourceLocation loc, const TraitInfo::Method& method) {
+    void require_trait_object_method_object_safe(SourceLocation loc, const TraitInfo::Method& method) const {
         if (!method.generics.empty()) {
             fail(loc,
                  "trait object method '" + method.name +

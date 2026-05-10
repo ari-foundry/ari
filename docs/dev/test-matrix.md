@@ -434,6 +434,8 @@ Checklist:
       `Trait<T>::method(receiver, ...)` for explicit static dispatch
 - [x] include object-safe supertrait methods in LLVM `dyn Child` vtables and
       reject ambiguous inherited dyn method names
+- [x] allow LLVM dyn-to-dyn upcasts from a child trait object to the same trait
+      or a supertrait, and reject unrelated dyn-to-dyn casts
 - [x] accept bare `self` in trait/impl method signatures as `Self`
 - [x] lower concrete `value.method(...)` calls through matching impl methods
 - [x] reject unknown and ambiguous method calls

@@ -104,14 +104,14 @@
    error if multiple supertraits provide the same method name. LLVM `dyn Child`
    vtables now include object-safe methods inherited from supertraits, so
    concrete-to-dyn conversion can dispatch both child and supertrait methods;
-   inherited dyn method names that are ambiguous across supertraits are
-   rejected. This deliberately follows a trait-composition model rather than
+   dyn-to-dyn upcasts to the same trait or an inherited supertrait preserve the
+   data pointer and adjust the vtable pointer to the supertrait slot range.
+   Inherited dyn method names that are ambiguous across supertraits and
+   unrelated dyn-to-dyn casts are rejected. This deliberately follows a
+   trait-composition model rather than
    class inheritance: structs remain data-layout declarations with explicit
    fields/embedding, and Ari should not add implicit struct inheritance or
    hidden base-object layout.
-   - [dyn-supertrait] design vtable layout, conversion, and upcast rules for
-     dyn-to-dyn upcasts; concrete-to-`dyn Child` vtables already include
-     object-safe supertrait methods on LLVM
    - [supertrait-associated] extend supertrait lookup to associated functions,
      future associated types, and generic supertrait applications with richer
      inference

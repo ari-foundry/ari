@@ -1037,6 +1037,9 @@ check-traits: $(TARGET)
 	$(TARGET) tests/ok/trait-object-supertrait-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_ChildScore" $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-supertrait-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.elf; $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.elf; code=$$?; test $$code -eq 26; fi
+	$(TARGET) tests/ok/trait-object-supertrait-upcast.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-supertrait-upcast.ll
+	grep -q "getelementptr ptr, ptr .* i64 1" $(BUILD_DIR)/traits/trait-object-supertrait-upcast.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-supertrait-upcast.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; code=$$?; test $$code -eq 12; fi
 	$(TARGET) --freestanding tests/ok/trait-bound-static-dispatch.ari -o $(BUILD_DIR)/traits/trait-bound-static-dispatch.raw
 	$(BUILD_DIR)/traits/trait-bound-static-dispatch.raw; code=$$?; test $$code -eq 6
 	$(TARGET) --freestanding tests/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.raw
@@ -1087,7 +1090,7 @@ check-traits: $(TARGET)
 	if $(TARGET) tests/errors/trait-object-coerce-missing-impl.ari -o $(BUILD_DIR)/traits/trait-object-coerce-missing-impl.elf >$(BUILD_DIR)/traits/trait-object-coerce-missing-impl.err 2>&1; then exit 1; fi
 	grep -q "type i64 does not implement trait 'Score' for dyn conversion" $(BUILD_DIR)/traits/trait-object-coerce-missing-impl.err
 	if $(TARGET) tests/errors/trait-object-upcast.ari -o $(BUILD_DIR)/traits/trait-object-upcast.elf >$(BUILD_DIR)/traits/trait-object-upcast.err 2>&1; then exit 1; fi
-	grep -q "trait object upcasts are not supported; convert from a concrete value with as dyn Trait\\[...\\]" $(BUILD_DIR)/traits/trait-object-upcast.err
+	grep -q "trait object upcast from dyn Score to dyn Show requires the target trait to be the same trait or a supertrait" $(BUILD_DIR)/traits/trait-object-upcast.err
 	if $(TARGET) tests/errors/trait-object-generic-method-conversion.ari -o $(BUILD_DIR)/traits/trait-object-generic-method-conversion.elf >$(BUILD_DIR)/traits/trait-object-generic-method-conversion.err 2>&1; then exit 1; fi
 	grep -q "trait object method 'keep' is generic and is not object-safe" $(BUILD_DIR)/traits/trait-object-generic-method-conversion.err
 	if $(TARGET) tests/errors/trait-object-generic-method-call.ari -o $(BUILD_DIR)/traits/trait-object-generic-method-call.elf >$(BUILD_DIR)/traits/trait-object-generic-method-call.err 2>&1; then exit 1; fi

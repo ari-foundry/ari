@@ -2560,6 +2560,28 @@ private:
 
     Value emit_trait_object_cast(const IrExpr& expr) {
         Value source = emit_expr(*expr.operand);
+        if (expr.operand->type.primitive == IrPrimitiveKind::TraitObject) {
+            std::string data = temp();
+            line("  " + data + " = extractvalue " + source.type + " " + source.name + ", 0");
+            std::string source_vtable = temp();
+            line("  " + source_vtable + " = extractvalue " + source.type + " " + source.name + ", 1");
+
+            std::string target_vtable = source_vtable;
+            if (expr.tuple_index != 0) {
+                target_vtable = temp();
+                line("  " + target_vtable + " = getelementptr ptr, ptr " + source_vtable +
+                     ", i64 " + std::to_string(expr.tuple_index));
+            }
+
+            std::string object_type = llvm_type(expr.type);
+            std::string with_data = temp();
+            line("  " + with_data + " = insertvalue " + object_type + " undef, ptr " + data + ", 0");
+            std::string with_vtable = temp();
+            line("  " + with_vtable + " = insertvalue " + object_type + " " + with_data +
+                 ", ptr " + target_vtable + ", 1");
+            return Value{object_type, with_vtable, expr.type};
+        }
+
         std::string source_slot = temp();
         line("  " + source_slot + " = alloca " + source.type);
         line("  store " + source.type + " " + source.name + ", ptr " + source_slot);
