@@ -68,9 +68,12 @@
    `while let std::Some(pattern) = iterator.next()`. The first
    `IntoIterator[T]` executable subset is also implemented for copyable
    non-borrow values whose `into_iter(self: ref mut Self)` result implements
-   `Iterator[T]`, including impls that return a distinct iterator type; legacy
-   value-self `into_iter(self)` impls remain accepted for copyable
-   snapshot-style containers. Because Ari does not have associated types yet,
+   `Iterator[T]`, including concrete and generic impls that return a distinct
+   iterator type; legacy value-self `into_iter(self)` impls remain accepted for
+   copyable snapshot-style containers. Iterator trait-name/receiver contract
+   helpers are split into `iterator_semantics` so the remaining lowering work
+   can grow outside the main semantic checker. Because Ari does not have
+   associated types yet,
    sema treats the `IntoIterator[T].into_iter` return type as an Ari-specific
    contract: impl validation requires the concrete result to implement
    `Iterator[T]`, generic impl placeholders are resolved before that contract
@@ -92,6 +95,14 @@
      aggregate enum item payloads after nested aggregate-enum payload storage
      rules allow `Option[PayloadEnum]` values whose payload enum uses aggregate
      layout
+4. Promote nested aggregate-enum payload storage into the executable subset.
+   This is the direct prerequisite for iterator item patterns over
+   `Option[PayloadEnum]`, because `Iterator[T].next` returns `Option[T]` and
+   aggregate enum item payloads currently cannot be stored inside another
+   aggregate enum payload slot.
+   - [nested-aggregate-enums] allow aggregate enum payload slots to store
+     nested aggregate-enum values once the ABI, copy, and pattern extraction
+     rules are explicit
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -132,7 +143,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
-4. Expand aggregate enum payload storage.
+4. Expand aggregate enum payload storage beyond the nested-enum MVP.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, plus one-word enum values
    today. Nested enum-case subpatterns can inspect one-word enum payload slots
@@ -140,8 +151,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    can store/copy local and pointer-backed aggregate enum values, including
    direct enum-constructor stores through raw pointers. The stored payload
    universe is still intentionally narrow.
-   - [nested-aggregate-enums] allow aggregate enum payload slots to store
-     nested aggregate-enum values once the ABI and copy rules are explicit
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
    - [payload-pointers] lower direct payload field pointer access for

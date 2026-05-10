@@ -401,6 +401,8 @@ Checklist:
       `into_iter` and `next`
 - [x] allow `IntoIterator[T].into_iter` impls to return a distinct iterator
       type and validate that result at `for` lowering sites
+- [x] lower generic `IntoIterator[T]` impls that return a distinct generic
+      iterator type
 - [x] reject `IntoIterator[T].into_iter` impls whose concrete result does not
       implement `Iterator[T]`
 - [x] keep generic direct `Iterator[T]` impls valid while the

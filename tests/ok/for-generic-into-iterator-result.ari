@@ -1,0 +1,35 @@
+struct Bag[T] {
+  value: T,
+  mut drained: bool,
+}
+
+struct BagIter[T] {
+  value: T,
+  mut done: bool,
+}
+
+impl[T] Iterator[T] for BagIter[T] {
+  fn next(self: ref mut Self) -> Option[T] {
+    if self.done {
+      return None<T>();
+    }
+    self.done = true;
+    return Some(self.value);
+  }
+}
+
+impl[T] IntoIterator[T] for Bag[T] {
+  fn into_iter(self: ref mut Self) -> BagIter[T] {
+    self.drained = true;
+    return BagIter { value: self.value, done: false };
+  }
+}
+
+fn main() -> i64 {
+  let bag = Bag { value: 42, drained: false };
+  var total = 0;
+  for value in bag {
+    total = total + value;
+  }
+  return total;
+}

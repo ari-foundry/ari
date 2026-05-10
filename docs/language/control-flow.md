@@ -273,7 +273,8 @@ iterator impls remain accepted for copyable snapshot-style iterators, but
 stateful iterators should prefer `self: ref mut Self`.
 Copyable non-borrow `IntoIterator[T]` values also lower when
 `into_iter(self: ref mut Self)` returns either `Self` or another copyable
-non-borrow value that implements `Iterator[T]`. Existing value-self
+non-borrow value that implements `Iterator[T]`. Generic impls may return a
+distinct generic iterator type such as `BagIter[T]`. Existing value-self
 `into_iter(self)` impls remain accepted for copyable snapshot-style containers.
 
 Iterator item patterns may be more specific than a plain binding:

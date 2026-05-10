@@ -5,6 +5,7 @@
 #include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
 #include "ir_builders.hpp"
+#include "iterator_semantics.hpp"
 #include "layout.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
@@ -423,17 +424,6 @@ private:
         IrType self_type;
         std::vector<std::string> generic_names;
         SourceLocation loc;
-    };
-
-    enum class ForIteratorTraitKind {
-        Iterator,
-        IntoIterator
-    };
-
-    struct ForIteratorTraitMatch {
-        ForIteratorTraitKind kind = ForIteratorTraitKind::Iterator;
-        std::string trait_name;
-        IrType item_type;
     };
 
     const Program& program_;
@@ -1897,31 +1887,16 @@ private:
         }
     }
 
-    static bool is_std_into_iterator_trait_name(const std::string& name) {
-        return name == "std::IntoIterator" || name == "std::iter::IntoIterator";
-    }
-
-    static bool is_std_iterator_trait_name(const std::string& name) {
-        return name == "std::Iterator" || name == "std::iter::Iterator";
-    }
-
     static bool is_into_iterator_result_contract(const TraitInfo& trait, const std::string& method_name) {
-        return method_name == "into_iter" && is_std_into_iterator_trait_name(trait.name);
+        return ari::is_into_iterator_result_contract(trait.name, method_name);
     }
 
     static bool is_iterator_next_receiver_contract(const TraitInfo& trait, const std::string& method_name) {
-        return method_name == "next" && is_std_iterator_trait_name(trait.name);
+        return ari::is_iterator_next_receiver_contract(trait.name, method_name);
     }
 
     static bool is_into_iterator_receiver_contract(const TraitInfo& trait, const std::string& method_name) {
-        return method_name == "into_iter" && is_std_into_iterator_trait_name(trait.name);
-    }
-
-    static bool iterator_receiver_compatible(const IrType& expected, const IrType& actual) {
-        if (same_type(expected, actual)) return true;
-        return (expected.qualifier == TypeQualifier::Value || is_receiver_borrow_type(expected)) &&
-               (actual.qualifier == TypeQualifier::Value || is_receiver_borrow_type(actual)) &&
-               same_receiver_base_type(expected, actual);
+        return ari::is_into_iterator_receiver_contract(trait.name, method_name);
     }
 
     void validate_trait_impl_methods(
@@ -9851,23 +9826,6 @@ private:
         borrow->mutable_borrow = mutable_borrow;
         borrow->operand = clone_borrowable_receiver_expr(operand);
         return borrow;
-    }
-
-    static std::vector<std::string> for_iterator_trait_candidates(ForIteratorTraitKind kind) {
-        if (kind == ForIteratorTraitKind::Iterator) {
-            return {"std::Iterator", "std::iter::Iterator"};
-        }
-        return {"std::IntoIterator", "std::iter::IntoIterator"};
-    }
-
-    static std::string for_iterator_trait_display(const std::string& trait_name, const IrType& item_type) {
-        std::string name = trait_name;
-        if (name.rfind("std::iter::", 0) == 0) {
-            name = "iter::" + name.substr(std::string("std::iter::").size());
-        } else if (name.rfind("std::", 0) == 0) {
-            name = name.substr(std::string("std::").size());
-        }
-        return name + "[" + type_name(item_type) + "]";
     }
 
     bool try_find_concrete_iterator_trait_impl(
