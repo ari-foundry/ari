@@ -1,0 +1,8 @@
+struct Bits(bool, bool)
+
+fn main() -> i64 {
+  return match Bits(false, false) {
+    Bits(false, _) => 1,
+    Bits(true, false) => 2,
+  };
+}

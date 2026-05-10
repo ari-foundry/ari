@@ -34,6 +34,104 @@ void add_integer_coverage_interval(ScalarMatchCoverage& coverage,
     coverage.integer_intervals = std::move(merged);
 }
 
+std::string join_product_pattern_parts(const std::vector<std::string>& parts,
+                                       const std::string& separator) {
+    std::string out;
+    for (std::size_t i = 0; i < parts.size(); ++i) {
+        if (i != 0) out += separator;
+        out += parts[i];
+    }
+    return out;
+}
+
+std::string ordered_integer_product_literal(std::uint64_t ordered_value,
+                                            const IrType& type) {
+    std::string suffix = type_name(type);
+    if (is_unsigned_integer_primitive(type.primitive)) {
+        return std::to_string(ordered_value) + suffix;
+    }
+
+    std::uint64_t bias = signed_negative_limit(type.primitive);
+    if (ordered_value < bias) {
+        return "-" + std::to_string(bias - ordered_value) + suffix;
+    }
+    return std::to_string(ordered_value - bias) + suffix;
+}
+
+bool product_interval_covers_domain(const ProductInterval& interval,
+                                    const IrType& type) {
+    if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+        return interval.start == 0 && interval.end == 1;
+    }
+    if (is_value_integer_type(type)) {
+        return interval.start == 0 && interval.end == integer_pattern_max_order_value(type);
+    }
+    return false;
+}
+
+const std::vector<IrType>& product_coverage_field_types(const IrType& type) {
+    if (type.primitive == IrPrimitiveKind::Struct ||
+        type.primitive == IrPrimitiveKind::Array) {
+        return type.field_types;
+    }
+    return type.args;
+}
+
+std::string format_product_missing_case(const IrType& type,
+                                        const ProductRect& rect,
+                                        std::size_t& dimension,
+                                        const std::set<std::string>& tuple_struct_names) {
+    if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+        if (dimension >= rect.size()) return "_";
+        const ProductInterval interval = rect[dimension++];
+        if (product_interval_covers_domain(interval, type)) return "_";
+        if (interval.start == interval.end) return interval.start == 0 ? "false" : "true";
+        return "_";
+    }
+    if (is_value_integer_type(type)) {
+        if (dimension >= rect.size()) return "_";
+        const ProductInterval interval = rect[dimension++];
+        if (product_interval_covers_domain(interval, type)) return "_";
+        if (interval.start == interval.end) {
+            return ordered_integer_product_literal(interval.start, type);
+        }
+        return ordered_integer_product_literal(interval.start, type) + "..=" +
+               ordered_integer_product_literal(interval.end, type);
+    }
+    if (type.primitive == IrPrimitiveKind::Tuple ||
+        type.primitive == IrPrimitiveKind::Array ||
+        type.primitive == IrPrimitiveKind::Struct) {
+        std::vector<std::string> parts;
+        const std::vector<IrType>& fields = product_coverage_field_types(type);
+        parts.reserve(fields.size());
+        for (const auto& field_type : fields) {
+            parts.push_back(format_product_missing_case(field_type, rect, dimension, tuple_struct_names));
+        }
+
+        if (type.primitive == IrPrimitiveKind::Tuple) {
+            return "(" + join_product_pattern_parts(parts, ", ") + ")";
+        }
+        if (type.primitive == IrPrimitiveKind::Array) {
+            return "[" + join_product_pattern_parts(parts, ", ") + "]";
+        }
+
+        if (tuple_struct_names.count(type.name)) {
+            return type.name + "(" + join_product_pattern_parts(parts, ", ") + ")";
+        }
+
+        std::vector<std::string> named_parts;
+        named_parts.reserve(parts.size());
+        for (std::size_t i = 0; i < parts.size(); ++i) {
+            std::string field_name = i < type.field_names.size()
+                ? type.field_names[i]
+                : ("_" + std::to_string(i));
+            named_parts.push_back(field_name + ": " + parts[i]);
+        }
+        return type.name + " { " + join_product_pattern_parts(named_parts, ", ") + " }";
+    }
+    return "_";
+}
+
 } // namespace
 
 std::string bool_product_value(bool value) {
@@ -83,6 +181,18 @@ bool combine_finite_product_domains(const std::vector<std::vector<std::string>>&
     }
     out = std::move(result);
     return true;
+}
+
+std::string product_missing_case_hint(const IrType& match_type,
+                                      const ProductMatchCoverage& coverage,
+                                      const std::set<std::string>& tuple_struct_names) {
+    if (!coverage.has_symbolic_universe) return "";
+    ProductRect missing;
+    if (!product_rect_first_gap(coverage.symbolic_universe, coverage.covered_symbolic_products, missing)) {
+        return "";
+    }
+    std::size_t dimension = 0;
+    return format_product_missing_case(match_type, missing, dimension, tuple_struct_names);
 }
 
 void note_integer_coverage(ScalarMatchCoverage& coverage,

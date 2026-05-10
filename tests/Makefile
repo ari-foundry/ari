@@ -545,6 +545,8 @@ check-match: $(TARGET)
 	grep -q "tuple match must cover every supported product case" $(BUILD_DIR)/match/match-product-nonexhaustive-bool.err
 	if $(TARGET) tests/errors/match-symbolic-product-missing.ari -o $(BUILD_DIR)/match/match-symbolic-product-missing.elf >$(BUILD_DIR)/match/match-symbolic-product-missing.err 2>&1; then exit 1; fi
 	grep -q "missing case such as (_, true)" $(BUILD_DIR)/match/match-symbolic-product-missing.err
+	if $(TARGET) tests/errors/match-tuple-struct-missing-hint.ari -o $(BUILD_DIR)/match/match-tuple-struct-missing-hint.elf >$(BUILD_DIR)/match/match-tuple-struct-missing-hint.err 2>&1; then exit 1; fi
+	grep -q "missing case such as Bits(true, true)" $(BUILD_DIR)/match/match-tuple-struct-missing-hint.err
 	if $(TARGET) tests/errors/match-struct-pattern-missing-field.ari -o $(BUILD_DIR)/match/match-struct-pattern-missing-field.elf >$(BUILD_DIR)/match/match-struct-pattern-missing-field.err 2>&1; then exit 1; fi
 	grep -q "struct match pattern must mention all fields or use '..'" $(BUILD_DIR)/match/match-struct-pattern-missing-field.err
 	if $(TARGET) tests/errors/match-enum-payload-literal-nonexhaustive.ari -o $(BUILD_DIR)/match/match-enum-payload-literal-nonexhaustive.elf >$(BUILD_DIR)/match/match-enum-payload-literal-nonexhaustive.err 2>&1; then exit 1; fi

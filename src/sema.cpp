@@ -102,18 +102,6 @@ struct EnumMatchCoverage {
     std::map<std::uint32_t, unsigned> covered_bool_payloads;
 };
 
-struct TupleMatchCoverage {
-    bool has_irrefutable_arm = false;
-    bool checked_finite_universe = false;
-    bool has_finite_universe = false;
-    std::size_t universe_size = 0;
-    std::set<std::string> covered_products;
-    bool checked_symbolic_universe = false;
-    bool has_symbolic_universe = false;
-    ProductRect symbolic_universe;
-    std::vector<ProductRect> covered_symbolic_products;
-};
-
 struct StructInfo {
     struct Field {
         std::string name;
@@ -8645,7 +8633,7 @@ private:
         return false;
     }
 
-    void initialize_product_match_coverage(const IrType& subject_type, TupleMatchCoverage& coverage) {
+    void initialize_product_match_coverage(const IrType& subject_type, ProductMatchCoverage& coverage) {
         if (!coverage.checked_finite_universe) {
             coverage.checked_finite_universe = true;
             std::vector<std::string> universe;
@@ -8666,7 +8654,7 @@ private:
 
     void note_product_match_coverage(const Pattern& pattern,
                                      const IrType& subject_type,
-                                     TupleMatchCoverage& coverage) {
+                                     ProductMatchCoverage& coverage) {
         initialize_product_match_coverage(subject_type, coverage);
         bool finite_handled = false;
         if (coverage.has_finite_universe) {
@@ -9009,111 +8997,9 @@ private:
         }
     }
 
-    static std::string join_product_pattern_parts(const std::vector<std::string>& parts,
-                                                  const std::string& separator) {
-        std::string out;
-        for (std::size_t i = 0; i < parts.size(); ++i) {
-            if (i != 0) out += separator;
-            out += parts[i];
-        }
-        return out;
-    }
-
-    static std::string ordered_integer_product_literal(std::uint64_t ordered_value,
-                                                       const IrType& type) {
-        std::string suffix = type_name(type);
-        if (is_unsigned_integer_primitive(type.primitive)) {
-            return std::to_string(ordered_value) + suffix;
-        }
-
-        std::uint64_t bias = signed_negative_limit(type.primitive);
-        if (ordered_value < bias) {
-            return "-" + std::to_string(bias - ordered_value) + suffix;
-        }
-        return std::to_string(ordered_value - bias) + suffix;
-    }
-
-    static bool product_interval_covers_domain(const ProductInterval& interval,
-                                               const IrType& type) {
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
-            return interval.start == 0 && interval.end == 1;
-        }
-        if (is_value_integer_type(type)) {
-            return interval.start == 0 && interval.end == integer_pattern_max_order_value(type);
-        }
-        return false;
-    }
-
-    std::string format_product_missing_case(const IrType& type,
-                                            const ProductRect& rect,
-                                            std::size_t& dimension) const {
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
-            if (dimension >= rect.size()) return "_";
-            const ProductInterval interval = rect[dimension++];
-            if (product_interval_covers_domain(interval, type)) return "_";
-            if (interval.start == interval.end) return interval.start == 0 ? "false" : "true";
-            return "_";
-        }
-        if (is_value_integer_type(type)) {
-            if (dimension >= rect.size()) return "_";
-            const ProductInterval interval = rect[dimension++];
-            if (product_interval_covers_domain(interval, type)) return "_";
-            if (interval.start == interval.end) {
-                return ordered_integer_product_literal(interval.start, type);
-            }
-            return ordered_integer_product_literal(interval.start, type) + "..=" +
-                   ordered_integer_product_literal(interval.end, type);
-        }
-        if (type.primitive == IrPrimitiveKind::Tuple ||
-            type.primitive == IrPrimitiveKind::Array ||
-            type.primitive == IrPrimitiveKind::Struct) {
-            std::vector<std::string> parts;
-            const std::vector<IrType>& fields = aggregate_field_types(type);
-            parts.reserve(fields.size());
-            for (const auto& field_type : fields) {
-                parts.push_back(format_product_missing_case(field_type, rect, dimension));
-            }
-
-            if (type.primitive == IrPrimitiveKind::Tuple) {
-                return "(" + join_product_pattern_parts(parts, ", ") + ")";
-            }
-            if (type.primitive == IrPrimitiveKind::Array) {
-                return "[" + join_product_pattern_parts(parts, ", ") + "]";
-            }
-
-            auto struct_found = structs_.find(type.name);
-            bool tuple_struct = struct_found != structs_.end() && struct_found->second.tuple_struct;
-            if (tuple_struct) {
-                return type.name + "(" + join_product_pattern_parts(parts, ", ") + ")";
-            }
-
-            std::vector<std::string> named_parts;
-            named_parts.reserve(parts.size());
-            for (std::size_t i = 0; i < parts.size(); ++i) {
-                std::string field_name = i < type.field_names.size()
-                    ? type.field_names[i]
-                    : ("_" + std::to_string(i));
-                named_parts.push_back(field_name + ": " + parts[i]);
-            }
-            return type.name + " { " + join_product_pattern_parts(named_parts, ", ") + " }";
-        }
-        return "_";
-    }
-
-    std::string product_missing_case_hint(const IrType& match_type,
-                                          const TupleMatchCoverage& coverage) const {
-        if (!coverage.has_symbolic_universe) return "";
-        ProductRect missing;
-        if (!product_rect_first_gap(coverage.symbolic_universe, coverage.covered_symbolic_products, missing)) {
-            return "";
-        }
-        std::size_t dimension = 0;
-        return format_product_missing_case(match_type, missing, dimension);
-    }
-
     void require_tuple_match_exhaustive(SourceLocation loc,
                                         const IrType& match_type,
-                                        const TupleMatchCoverage& coverage) const {
+                                        const ProductMatchCoverage& coverage) const {
         if (coverage.has_irrefutable_arm) return;
         if (coverage.has_finite_universe &&
             coverage.universe_size > 0 &&
@@ -9128,7 +9014,11 @@ private:
             ? "struct"
             : (match_type.primitive == IrPrimitiveKind::Array ? "array" : "tuple");
         std::string message = kind + " match must cover every supported product case or include an irrefutable arm such as _ or a binding-only pattern";
-        std::string missing = product_missing_case_hint(match_type, coverage);
+        std::set<std::string> tuple_struct_names;
+        for (const auto& [name, info] : structs_) {
+            if (info.tuple_struct) tuple_struct_names.insert(name);
+        }
+        std::string missing = product_missing_case_hint(match_type, coverage, tuple_struct_names);
         if (!missing.empty()) {
             message += "; missing case such as " + missing;
         }
@@ -9501,7 +9391,7 @@ private:
         bool has_continuing_state = false;
         bool all_return = true;
         bool all_non_continuing = true;
-        TupleMatchCoverage coverage;
+        ProductMatchCoverage coverage;
         std::vector<TupleCheckedStmtArm> checked_arms;
 
         for (const auto& arm : stmt.match_arms) {
@@ -11886,7 +11776,7 @@ private:
         bool has_continuing_state = false;
         bool has_result = false;
         IrType result_type;
-        TupleMatchCoverage coverage;
+        ProductMatchCoverage coverage;
         std::vector<TupleCheckedExprArm> checked_arms;
 
         for (const auto& arm : expr.match_arms) {

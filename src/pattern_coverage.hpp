@@ -2,6 +2,7 @@
 
 #include "ast.hpp"
 #include "ir.hpp"
+#include "product_coverage.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -18,6 +19,18 @@ struct ScalarMatchCoverage {
     bool has_wildcard = false;
     std::set<std::string> covered_patterns;
     std::vector<std::pair<std::uint64_t, std::uint64_t>> integer_intervals;
+};
+
+struct ProductMatchCoverage {
+    bool has_irrefutable_arm = false;
+    bool checked_finite_universe = false;
+    bool has_finite_universe = false;
+    std::size_t universe_size = 0;
+    std::set<std::string> covered_products;
+    bool checked_symbolic_universe = false;
+    bool has_symbolic_universe = false;
+    ProductRect symbolic_universe;
+    std::vector<ProductRect> covered_symbolic_products;
 };
 
 void note_integer_coverage(ScalarMatchCoverage& coverage,
@@ -47,5 +60,8 @@ std::string integer_product_value(std::uint64_t ordered_value);
 bool finite_scalar_product_domain(const IrType& type, std::vector<std::string>& out);
 bool combine_finite_product_domains(const std::vector<std::vector<std::string>>& domains,
                                     std::vector<std::string>& out);
+std::string product_missing_case_hint(const IrType& match_type,
+                                      const ProductMatchCoverage& coverage,
+                                      const std::set<std::string>& tuple_struct_names);
 
 } // namespace ari
