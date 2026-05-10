@@ -317,8 +317,8 @@ Checklist:
       and AST-summary records
 - [x] stale module metadata reports changed cfg, source, import, and item records
 - [x] source-snapshot module caches can be emitted and reused after validating
-      search paths, cfg features, implicit `std`, source hashes, and import
-      resolution
+      search paths, cfg features, selected target triples, implicit `std`,
+      source hashes, and import resolution
 - [x] validated source-snapshot module cache use resolves module imports from
       the cached import table instead of rediscovering candidate files
 - [x] source-snapshot module cache use rechecks the parsed cached source graph

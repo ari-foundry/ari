@@ -230,7 +230,9 @@ backend until the raw backend has a native C ABI and link path.
 ## Type Mapping
 
 Current LLVM host C FFI type mapping follows the selected `--target` triple.
-Without `--target`, Ari uses the host default target triple.
+Without `--target`, Ari uses the host default target triple. The selected
+triple is canonicalized before semantic checking, LLVM emission, and module
+metadata/cache emission, so changing targets invalidates cached package graphs.
 
 ```text
 i8/i16/i32/i64    -> i8/i16/i32/i64
@@ -270,7 +272,9 @@ rejected.
 For the current supported target tables, `c_char` is signed (`i8`). Use
 `c_schar` or `c_uchar` when an API needs explicit signedness. Pointer-width
 aliases such as `size_t`, `ptrdiff_t`, `intptr_t`, `usize`, and `isize`, plus
-`c_long`/`c_ulong`, follow the selected target's ILP32/LP64/LLP64 layout.
+`c_long`/`c_ulong`, follow the selected target's ILP32/LP64/LLP64 layout. For
+example, `c_long` is 64-bit on LP64 Unix targets, but 32-bit on ILP32 and
+LLP64 Windows targets.
 
 The `null` literal can initialize or be passed to any `ptr T` type. `T?` is a
 nullable raw-pointer spelling for the same type, so `c_void?` and `ptr c_void`

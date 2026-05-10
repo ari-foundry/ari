@@ -56,20 +56,22 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
-3. Refine target-specific C ABI aliases and FFI layout.
-   C ABI scalar alias lowering is split out of `sema.cpp` into
-   `c_abi_types`, and the current LLVM host table now preserves Ari signedness
-   for unsigned C aliases, including `c_uchar`, `c_ushort`, `c_uint`,
-   `c_ulong`, `c_ulonglong`, `size_t`, `uintptr_t`, and `uintmax_t`.
-   `c_bool` and signed/unsigned max-width aliases are covered by the same
-   table. `--target` now selects the LLVM target triple, `@cfg(target(...))`
-   predicates, and the C scalar alias layout for ILP32, LP64, and LLP64
-   families, so `c_long`, `c_ulong`, `size_t`, `ptrdiff_t`, `intptr_t`,
-   `usize`, and `isize` are no longer hardwired to x86-64 Linux widths.
-   - [ffi-tests] add broader cross-target ABI fixtures for more triples and
-     plain-char policies as target support grows
-   - [cache-target] treat target triples as first-class module-cache inputs in
-     stale diagnostics beyond the current metadata option record
+3. Finish `repr(C)` aggregate ABI and raw-pointer FFI edges.
+   Ari-owned `extern "ari"` builtin hooks are represented as explicit
+   non-C ABI shims in IR, and scalar C aliases now follow target triples.
+   The next FFI priority is to make foreign aggregate layout and pointer
+   interop explicit enough for stable C headers.
+   - [repr] finish `repr(C)` aggregate ABI layout, including value-stored
+     generic fields and the policy for ownership-qualified fields; generic
+     `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
+     and generic fieldless enums are accepted because their layout is payload-free
+   - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable
+     raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer
+     casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate
+     offsets, scalar/plain Ari-aggregate load/store helpers, scalar/plain
+     Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate
+     field/element pointer access, and `size_of<T>()` / `align_of<T>()`
+     layout queries are implemented
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -109,16 +111,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
-4. Expand the FFI surface.
-   Ari-owned `extern "ari"` builtin hooks are represented as explicit
-   non-C ABI shims in IR, so the remaining FFI work can stay focused on
-   foreign C layout and pointer interop.
-   - [repr] finish `repr(C)` aggregate ABI layout, including value-stored
-     generic fields and the policy for ownership-qualified fields; generic
-     `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
-     and generic fieldless enums are accepted because their layout is payload-free
-   - [pointers] finish `repr(C)`-aware aggregate pointer layout; nullable raw-pointer literals, nullable `T?` raw-pointer type suffixes, pointer casts, byte-wise pointer offsets, typed scalar/Ari-layout aggregate offsets, scalar/plain-Ari-aggregate load/store helpers, scalar/plain-Ari-aggregate `*pointer` dereference syntax, Ari-layout scalar aggregate field/element pointer access, and `size_of<T>()` / `align_of<T>()` layout queries are implemented
-5. Expand aggregate enum payload storage.
+4. Expand aggregate enum payload storage.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, plus one-word enum values
    today. Nested enum-case subpatterns can inspect one-word enum payload slots
@@ -130,7 +123,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      nested aggregate-enum values once the ABI and copy rules are explicit
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
-6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
+5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]`,
     `Maybe[T]` as a public alias of `Option[T]`, and `Result[T, E]` are source
     `std` generic enums exposed through the implicit prelude and connected to
@@ -149,7 +142,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
-7. Design `std` smart-pointer and explicit move surfaces.
+6. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
     for common heap and shared-resource patterns.
@@ -163,7 +156,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       ref-count increments, and deterministic release
     - [interop] decide how smart pointers expose raw pointers for FFI without
       pretending Ari has a globally safe borrow model
-8. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
+7. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, and
@@ -180,14 +173,14 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
     - [freestanding] lower stored local vector values in the raw backend
-9. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
+8. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
     loops, and stored local vector loops lower today without trait dispatch; the
     general iterator model needs trait-bound resolution plus generic
     `Option[T]` result lowering for `next` on every backend.
     - [trait] resolve `IntoIterator[T]`/`Iterator[T]`
     - [loop] lower `next`-style iteration state
     - [pattern] bind refutable enum-case loop-head patterns after the iterator failure/skip semantics are designed
-10. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+9. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot

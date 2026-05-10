@@ -187,6 +187,15 @@ void require_same_cfg(const ModuleCache& cache,
     }
 }
 
+void require_same_target(const ModuleCache& cache,
+                         const ModuleLoadOptions& options,
+                         const std::string& display_path) {
+    if (cache.metadata.target_triple != options.target_triple) {
+        fail_stale(display_path, "target option changed from '" +
+                   cache.metadata.target_triple + "' to '" + options.target_triple + "'");
+    }
+}
+
 std::string source_key(const std::string& module_name, const std::string& path, bool is_root) {
     return module_name + "\t" + path + "\t" + bool_key(is_root);
 }
@@ -487,6 +496,7 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
     }
     require_same_search_paths(cache, options, display_path);
     require_same_cfg(cache, options, display_path);
+    require_same_target(cache, options, display_path);
     if (cache.metadata.implicit_std != options.implicit_std) {
         fail_stale(display_path, "implicit_std option changed from " +
                    bool_key(cache.metadata.implicit_std) + " to " +

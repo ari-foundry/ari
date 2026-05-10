@@ -268,10 +268,11 @@ Ari can emit a compact module graph summary for file-backed package work:
 ari app.ari -I packages --emit-module-metadata build/app.arimeta --emit-llvm build/app.ll
 ```
 
-The metadata file records the module search paths, active cfg features, source
-files with stable content hashes, resolved file-backed imports, and declaration
-names seen in each source file. It is intentionally a summary format; use a
-module cache when you want to reuse a validated package source snapshot.
+The metadata file records the module search paths, active cfg features, the
+selected target triple, source files with stable content hashes, resolved
+file-backed imports, and declaration names seen in each source file. It is
+intentionally a summary format; use a module cache when you want to reuse a
+validated package source snapshot.
 Current metadata is written as `ari-module-metadata-v2`; older v1 summaries can
 be parsed for diagnostics, but `--check-module-metadata` asks you to regenerate
 them because v1 lacks source content hashes.
@@ -286,13 +287,13 @@ ari app.ari -I packages --check-module-metadata build/app.arimeta --emit-llvm bu
 ```
 
 This is the validation layer for later package caching. If source contents,
-search paths, cfg features, imports, or declarations change, regenerate the
-metadata.
+search paths, cfg features, the target triple, imports, or declarations change,
+regenerate the metadata.
 Stale metadata diagnostics name the first changed input class they can identify:
-search path, cfg feature, implicit standard-library option, source file, resolved
-import, declaration item, or source content hash. That keeps package-cache
-failures tied to the module, import, item, or source file that actually changed
-instead of a generic cache miss.
+search path, cfg feature, target triple, implicit standard-library option,
+source file, resolved import, declaration item, or source content hash. That
+keeps package-cache failures tied to the module, import, item, or source file
+that actually changed instead of a generic cache miss.
 
 ## Module Cache
 
@@ -314,9 +315,10 @@ ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/
 ```
 
 Cache validation checks the root input, module search paths, active cfg
-features, implicit `std` mode, current source content hashes, and whether each
-cached `mod` import still resolves to the same file. If any input changed, Ari
-rejects the cache and asks you to regenerate it with `--emit-module-cache`.
+features, selected target triple, implicit `std` mode, current source content
+hashes, and whether each cached `mod` import still resolves to the same file.
+If any input changed, Ari rejects the cache and asks you to regenerate it with
+`--emit-module-cache`.
 Malformed caches that repeat a source snapshot or AST summary for the same
 module/path/root record are rejected before validation. The embedded metadata
 summary is parsed with the same duplicate-record checks as a standalone

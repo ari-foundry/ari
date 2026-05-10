@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  let count: size_t = 1u64;
+  let offset: ptrdiff_t = -2i64;
+  let wide: c_long = -3i64;
+  let unsigned_wide: c_ulong = 4u64;
+  return 0;
+}

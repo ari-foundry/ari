@@ -178,7 +178,7 @@ int run(int argc, char** argv) {
     ModuleLoadOptions load_options;
     load_options.module_search_paths = std::move(module_search_paths);
     load_options.cfg_features = cfg_features;
-    load_options.target_triple = target_triple;
+    load_options.target_triple = target.triple;
     load_options.implicit_std = implicit_std;
     ModuleCache input_cache;
     if (!module_cache_input.empty()) {
@@ -208,7 +208,7 @@ int run(int argc, char** argv) {
     sema_options.test_mode = test_mode;
     sema_options.implicit_std = implicit_std;
     sema_options.cfg_features = cfg_features;
-    sema_options.target_triple = target_triple;
+    sema_options.target_triple = target.triple;
     IrProgram ir = check_program(program, std::move(sema_options));
     for (const auto& warning : ir.warnings) {
         std::cerr << warning << "\n";
@@ -228,7 +228,7 @@ int run(int argc, char** argv) {
 
     LlvmEmitOptions llvm_options;
     llvm_options.shared_library = shared_library;
-    llvm_options.target_triple = target_triple;
+    llvm_options.target_triple = target.triple;
     std::string llvm = emit_llvm_ir(ir, llvm_options);
     std::string llvm_path = llvm_output.empty() ? output + ".ll" : llvm_output;
     write_text_file(llvm_path, llvm);

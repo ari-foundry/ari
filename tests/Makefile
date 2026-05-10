@@ -569,6 +569,9 @@ check-modules: $(TARGET)
 	grep -q "module cache is missing validated import 'package_math'" $(BUILD_DIR)/modules/package-module-main-cache-missing-import.err
 	if $(TARGET) -Itests/packages --cfg-feature stale tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-stale.ll >$(BUILD_DIR)/modules/package-module-main-cache-stale.err 2>&1; then exit 1; fi
 	grep -q "current source graph has new cfg feature 'stale'" $(BUILD_DIR)/modules/package-module-main-cache-stale.err
+	$(TARGET) -Itests/packages --target i686-unknown-linux-gnu tests/ok/package-module-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-module-main-target.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-target.ll
+	if $(TARGET) -Itests/packages --target x86_64-pc-linux-gnu tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-target.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-target-stale.ll >$(BUILD_DIR)/modules/package-module-main-target-stale.err 2>&1; then exit 1; fi
+	grep -q "target option changed from 'i686-unknown-linux-gnu' to 'x86_64-pc-linux-gnu'" $(BUILD_DIR)/modules/package-module-main-target-stale.err
 	rm -rf $(BUILD_DIR)/modules/cache-root $(BUILD_DIR)/modules/cache-packages
 	mkdir -p $(BUILD_DIR)/modules/cache-root $(BUILD_DIR)/modules/cache-packages/nested
 	cp tests/ok/package-module-main.ari $(BUILD_DIR)/modules/cache-root/app.ari
@@ -1356,6 +1359,13 @@ check-ffi: $(TARGET)
 	$(TARGET) --target i686-unknown-linux-gnu tests/ok/ffi-c-target-ilp32.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-target-ilp32.ll
 	grep -q 'target triple = "i686-unknown-linux-gnu"' $(BUILD_DIR)/ffi/ffi-c-target-ilp32.ll
 	grep -q 'alloca i32' $(BUILD_DIR)/ffi/ffi-c-target-ilp32.ll
+	$(TARGET) --target x86_64-pc-linux-gnu tests/ok/ffi-c-target-lp64.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-target-lp64.ll
+	grep -q 'target triple = "x86_64-pc-linux-gnu"' $(BUILD_DIR)/ffi/ffi-c-target-lp64.ll
+	grep -q 'alloca i64' $(BUILD_DIR)/ffi/ffi-c-target-lp64.ll
+	$(TARGET) --target x86_64-pc-windows-msvc tests/ok/ffi-c-target-llp64.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-target-llp64.ll
+	grep -q 'target triple = "x86_64-pc-windows-msvc"' $(BUILD_DIR)/ffi/ffi-c-target-llp64.ll
+	grep -q 'alloca i32' $(BUILD_DIR)/ffi/ffi-c-target-llp64.ll
+	grep -q 'alloca i64' $(BUILD_DIR)/ffi/ffi-c-target-llp64.ll
 	$(TARGET) tests/ok/ffi-c-null-pointer.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
 	grep -q 'declare i64 @"ari_test_is_null"(ptr)' $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
 	grep -q 'store ptr null' $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
