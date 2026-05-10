@@ -357,7 +357,7 @@ current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 from the LLVM/shared-library ABI surface. The first supported slice covers
 exported scalar/raw-pointer functions, public non-generic `@repr(C)` structs
 whose fields are scalar, raw pointer, `ref`, or `ref mut` slots, and public
-non-generic fieldless `@repr(C)` enums:
+fieldless `@repr(C)` enums:
 
 ```sh
 ari api.ari --shared --emit-c-header api.h --emit-llvm api.ll
@@ -368,12 +368,14 @@ Public functions without an explicit export use Ari's mangled symbol, matching
 the shared-library output. Fieldless enum declarations are emitted as
 `typedef int64_t Name;` plus prefixed integer constants such as `Name_Case = 0`
 so the header matches Ari's current fixed tag ABI instead of relying on C's
-implementation-defined enum width. Private helpers and private `@repr(C)`
-aggregates are not emitted. Generic `@repr(C)` aggregate declarations are not
-emitted yet. Header generation currently rejects Ari-only values such as
-`string`, ownership-qualified values, and aggregate parameters or returns;
-expose a `ptr c_char`, `ptr c_void`, or other scalar/raw pointer C ABI type
-until those layouts are defined.
+implementation-defined enum width. Generic fieldless enum type parameters do
+not affect layout, so `WireStatus[i64]` and `WireStatus[bool]` share one C
+typedef named `WireStatus`. Private helpers and private `@repr(C)` aggregates
+are not emitted. Generic `@repr(C)` struct declarations are not emitted yet.
+Header generation currently rejects Ari-only values such as `string`,
+ownership-qualified values, and aggregate parameters or returns; expose a
+`ptr c_char`, `ptr c_void`, or other scalar/raw pointer C ABI type until those
+layouts are defined.
 
 ## Runtime Entry
 
@@ -389,6 +391,6 @@ shuts the context down afterward.
 
 ## Planned FFI Surface
 
-The next FFI pieces are generic/concrete `repr(C)` header instantiations,
-payload-bearing enum layouts, by-value aggregate function ABI, and non-C ABI
-adapters via explicit C-compatible shims.
+The next FFI pieces are generic/concrete `repr(C)` struct header
+instantiations, payload-bearing enum layouts, by-value aggregate function ABI,
+and non-C ABI adapters via explicit C-compatible shims.

@@ -6,6 +6,12 @@ pub enum ApiStatus {
 }
 
 @repr(C)
+pub enum WireStatus[T] {
+  Offline,
+  Online,
+}
+
+@repr(C)
 enum HiddenStatus {
   Secret,
 }
@@ -38,4 +44,9 @@ pub fn observe(slots: ptr ApiSlots) -> i64 {
 @export("ari_status_code")
 pub fn status_code(status: ApiStatus) -> i64 {
   return 1;
+}
+
+@export("ari_wire_status_code")
+pub fn wire_status_code(status: WireStatus[i64]) -> i64 {
+  return 2;
 }

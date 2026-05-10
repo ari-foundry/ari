@@ -852,6 +852,9 @@ check-meta: $(TARGET)
 	grep -q 'ApiStatus_Ready = 0,' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'ApiStatus_Busy = 1,' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'ApiStatus_Done = 2,' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'typedef int64_t WireStatus;' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'WireStatus_Offline = 0,' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'WireStatus_Online = 1,' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'typedef struct ApiSlots ApiSlots;' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'struct ApiSlots {' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t value;' $(BUILD_DIR)/meta/c-header-repr-struct.h
@@ -863,6 +866,7 @@ check-meta: $(TARGET)
 	grep -q 'int64_t ari_ping(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_observe(ApiSlots\* arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	grep -q 'int64_t ari_status_code(ApiStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
+	grep -q 'int64_t ari_wire_status_code(WireStatus arg0);' $(BUILD_DIR)/meta/c-header-repr-struct.h
 	if grep -q 'HiddenSlots' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	if grep -q 'HiddenStatus' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw

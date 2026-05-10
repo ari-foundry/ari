@@ -2533,7 +2533,6 @@ private:
         for (const auto& decl : program_.enums) {
             if (!decl.is_public) continue;
             if (!find_attribute(decl.attributes, "repr")) continue;
-            if (!decl.generics.empty()) continue;
 
             IrCEnum item;
             item.name = decl.name;

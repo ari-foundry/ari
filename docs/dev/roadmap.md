@@ -63,11 +63,12 @@
    interop explicit enough for stable C headers.
    - [repr] finish `repr(C)` aggregate ABI layout policy for
      ownership-qualified fields, by-value aggregate function ABI, and generic
-     concrete header instantiations; public non-generic `@repr(C)` struct
+     concrete struct header instantiations; public non-generic `@repr(C)` struct
      declarations with scalar/raw-pointer/borrow fields are emitted in C
-     headers, public non-generic fieldless `@repr(C)` enums are emitted as
-     fixed-width tag typedefs plus prefixed constants, scalar/raw-pointer
-     exported function C headers are implemented,
+     headers, public fieldless `@repr(C)` enums, including generic fieldless
+     enums whose type parameters do not affect layout, are emitted as fixed-width
+     tag typedefs plus prefixed constants, scalar/raw-pointer exported function
+     C headers are implemented,
      generic value fields are accepted after concrete instantiation, generic
      `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
      and generic fieldless enums are accepted because their layout is payload-free
