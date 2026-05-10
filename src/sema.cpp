@@ -13720,15 +13720,11 @@ private:
             );
             length = make_integer_literal(expr.loc, i64_type(expr.loc), local.type.array_size);
         } else {
-            IrType storage = array_storage_type(expr.operand->loc, element, local.type.array_size);
-            auto storage_lvalue = std::make_unique<IrExpr>();
-            storage_lvalue->kind = IrExprKind::TupleIndex;
-            storage_lvalue->loc = expr.operand->loc;
-            storage_lvalue->tuple_index = 1;
-            storage_lvalue->type = std::move(storage);
-            storage_lvalue->operand = make_vec_local_lvalue(expr.operand->loc, name, local.type);
-
-            data = make_slice_data_pointer_expr(expr.loc, std::move(storage_lvalue), element);
+            data = make_slice_data_pointer_expr(
+                expr.loc,
+                make_vec_storage_lvalue_expr(expr.operand->loc, name, local.type),
+                element
+            );
             length = make_collection_len_expr(
                 expr.loc,
                 make_vec_local_lvalue(expr.operand->loc, name, local.type)

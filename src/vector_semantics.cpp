@@ -30,6 +30,19 @@ IrType void_type(SourceLocation loc) {
     return primitive_type(IrPrimitiveKind::Void, "void", loc);
 }
 
+IrType array_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
+    IrType type = primitive_type(IrPrimitiveKind::Array, "Array", loc);
+    type.args.push_back(element);
+    type.array_size = length;
+    type.field_types.reserve(static_cast<std::size_t>(length));
+    type.field_mutable.reserve(static_cast<std::size_t>(length));
+    for (std::uint64_t i = 0; i < length; ++i) {
+        type.field_types.push_back(element);
+        type.field_mutable.push_back(false);
+    }
+    return type;
+}
+
 IrExprPtr make_i64_literal(SourceLocation loc, std::uint64_t value) {
     auto expr = std::make_unique<IrExpr>();
     expr->kind = IrExprKind::Integer;
@@ -641,6 +654,23 @@ IrExprPtr make_slice_view_expr(SourceLocation loc, IrExprPtr data, IrExprPtr len
     lowered->args.push_back(std::move(data));
     lowered->args.push_back(std::move(length));
     return lowered;
+}
+
+IrExprPtr make_vec_storage_lvalue_expr(SourceLocation loc, std::string name, const IrType& type) {
+    if (!is_vector_storage_type(type)) {
+        fail(loc, "Vec storage view requires local Vec storage");
+    }
+    if (type.args.empty()) {
+        fail(loc, "Vec storage view requires an element type");
+    }
+
+    auto storage = std::make_unique<IrExpr>();
+    storage->kind = IrExprKind::TupleIndex;
+    storage->loc = loc;
+    storage->tuple_index = 1;
+    storage->type = array_storage_type(loc, type.args[0], type.array_size);
+    storage->operand = make_vec_local_lvalue(loc, std::move(name), type);
+    return storage;
 }
 
 } // namespace ari

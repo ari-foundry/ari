@@ -109,5 +109,6 @@ IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value);
 IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length);
 IrExprPtr make_slice_data_pointer_expr(SourceLocation loc, IrExprPtr lvalue, const IrType& element);
 IrExprPtr make_slice_view_expr(SourceLocation loc, IrExprPtr data, IrExprPtr length, IrType slice_type);
+IrExprPtr make_vec_storage_lvalue_expr(SourceLocation loc, std::string name, const IrType& type);
 
 } // namespace ari
