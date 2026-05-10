@@ -117,9 +117,13 @@
 3. Pack AST/IR variant payload storage opportunistically.
    IR aggregate-enum payload literal conditions now share integer and bool
    literal storage through a tagged union instead of keeping parallel mutually
-   exclusive fields. Broader AST/IR node packing should stay incremental:
-   `Expr`, `Stmt`, and `IrExpr` are still widely mutated while parsing and
-   lowering, so their payload split needs constructor/builder coverage first.
+   exclusive fields. `Expr` and `IrExpr` also pack their mutually exclusive
+   scalar payload slots (`int_value`, `float_value`, `bool_value`, and
+   `tuple_index`) behind anonymous unions while preserving the existing field
+   names for parser, sema, and codegen call sites. Broader AST/IR node packing
+   should stay incremental: `Stmt` and the large expression child/vector
+   payloads are still widely mutated while parsing and lowering, so their
+   payload split needs constructor/builder coverage first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions once their builders and cloning paths
      can preserve today's mutation flow

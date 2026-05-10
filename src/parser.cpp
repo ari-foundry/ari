@@ -1598,21 +1598,33 @@ private:
         auto clone = std::make_unique<Expr>();
         clone->kind = expr.kind;
         clone->loc = expr.loc;
-        clone->int_value = expr.int_value;
         clone->int_negative = expr.int_negative;
-        clone->float_value = expr.float_value;
         clone->literal_suffix = expr.literal_suffix;
         clone->string_value = expr.string_value;
-        clone->bool_value = expr.bool_value;
         clone->name = expr.name;
         clone->label = expr.label;
-        clone->tuple_index = expr.tuple_index;
         clone->mutable_borrow = expr.mutable_borrow;
         clone->op = expr.op;
         clone->cast_type = expr.cast_type;
         clone->receiver_type_args = expr.receiver_type_args;
         clone->type_args = expr.type_args;
         clone->field_names = expr.field_names;
+        switch (expr.kind) {
+            case ExprKind::Integer:
+                clone->int_value = expr.int_value;
+                break;
+            case ExprKind::Float:
+                clone->float_value = expr.float_value;
+                break;
+            case ExprKind::Bool:
+                clone->bool_value = expr.bool_value;
+                break;
+            case ExprKind::TupleIndex:
+                clone->tuple_index = expr.tuple_index;
+                break;
+            default:
+                break;
+        }
         if (expr.operand) clone->operand = clone_expression_tree(*expr.operand);
         if (expr.left) clone->left = clone_expression_tree(*expr.left);
         if (expr.right) clone->right = clone_expression_tree(*expr.right);

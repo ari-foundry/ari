@@ -154,17 +154,21 @@ enum class ExprKind {
 };
 
 struct Expr {
+    Expr() : int_value(0) {}
+
     ExprKind kind = ExprKind::Integer;
     SourceLocation loc;
-    std::uint64_t int_value = 0;
+    union {
+        std::uint64_t int_value;
+        double float_value;
+        bool bool_value;
+        std::uint64_t tuple_index;
+    };
     bool int_negative = false;
-    double float_value = 0.0;
     std::string literal_suffix;
     std::string string_value;
-    bool bool_value = false;
     std::string name;
     std::string label;
-    std::uint64_t tuple_index = 0;
     bool mutable_borrow = false;
     TokenKind op = TokenKind::End;
     TypeRef cast_type;

@@ -1345,6 +1345,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/ownership-array-element-move.raw; code=$$?; test $$code -eq 6
 	$(TARGET) --freestanding tests/ok/array-fixed.ari -o $(BUILD_DIR)/variables/array-fixed.raw
 	$(BUILD_DIR)/variables/array-fixed.raw; code=$$?; test $$code -eq 4
+	$(TARGET) --freestanding tests/ok/scalar-payload-unions.ari -o $(BUILD_DIR)/variables/scalar-payload-unions.raw
+	$(BUILD_DIR)/variables/scalar-payload-unions.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/array-literal-default.ari -o $(BUILD_DIR)/variables/array-literal-default.raw
 	$(BUILD_DIR)/variables/array-literal-default.raw; code=$$?; test $$code -eq 14
 	$(TARGET) --freestanding tests/ok/array-dynamic-index.ari -o $(BUILD_DIR)/variables/array-dynamic-index.raw
@@ -1365,6 +1367,11 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/ir-builder-smoke.ari --emit-llvm $(BUILD_DIR)/variables/ir-builder-smoke.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/variables/ir-builder-smoke.ll
 	grep -q "getelementptr inbounds { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/ir-builder-smoke.ll
+	$(TARGET) tests/ok/scalar-payload-unions.ari --emit-llvm $(BUILD_DIR)/variables/scalar-payload-unions.ll
+	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/variables/scalar-payload-unions.ll
+	grep -q "getelementptr inbounds \\[3 x i64\\]" $(BUILD_DIR)/variables/scalar-payload-unions.ll
+	grep -q "fadd double" $(BUILD_DIR)/variables/scalar-payload-unions.ll
+	grep -q "fcmp" $(BUILD_DIR)/variables/scalar-payload-unions.ll
 	$(TARGET) tests/ok/unit-empty-tuple.ari --emit-llvm $(BUILD_DIR)/variables/unit-empty-tuple.ll
 	grep -q "define {}" $(BUILD_DIR)/variables/unit-empty-tuple.ll
 	grep -q "store {} zeroinitializer" $(BUILD_DIR)/variables/unit-empty-tuple.ll

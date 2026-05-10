@@ -66,9 +66,10 @@ construction. Some helpers have already moved out to focused files:
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
-literal payload in a tagged union; broader `Expr`, `Stmt`, and `IrExpr` payload
-packing remains a separate refactor because those nodes are mutated across
-parser cloning, semantic lowering, and IR builder paths.
+literal payload in a tagged union, and `Expr`/`IrExpr` scalar literal and
+tuple-index payloads now share anonymous unions. Broader `Stmt` and expression
+child/vector payload packing remains a separate refactor because those nodes
+are mutated across parser cloning, semantic lowering, and IR builder paths.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

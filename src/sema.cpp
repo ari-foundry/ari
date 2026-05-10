@@ -9765,13 +9765,26 @@ private:
         clone->kind = expr.kind;
         clone->loc = expr.loc;
         clone->name = expr.name;
-        clone->tuple_index = expr.tuple_index;
-        clone->int_value = expr.int_value;
         clone->int_negative = expr.int_negative;
 
         switch (expr.kind) {
             case ExprKind::Name:
                 return clone;
+            case ExprKind::FieldAccess:
+                break;
+            case ExprKind::TupleIndex:
+                clone->tuple_index = expr.tuple_index;
+                break;
+            case ExprKind::Index:
+                break;
+            case ExprKind::Integer:
+                clone->int_value = expr.int_value;
+                return clone;
+            default:
+                return nullptr;
+        }
+
+        switch (expr.kind) {
             case ExprKind::FieldAccess:
             case ExprKind::TupleIndex:
                 if (!expr.operand) return nullptr;
@@ -9784,8 +9797,6 @@ private:
                 if (!clone->operand) return nullptr;
                 clone->right = clone_borrowable_receiver_expr(*expr.right);
                 if (!clone->right) return nullptr;
-                return clone;
-            case ExprKind::Integer:
                 return clone;
             default:
                 return nullptr;

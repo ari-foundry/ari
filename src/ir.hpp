@@ -241,21 +241,25 @@ enum class IrExprKind {
 };
 
 struct IrExpr {
+    IrExpr() : int_value(0) {}
+
     IrExprKind kind = IrExprKind::Integer;
     IrType type;
     SourceLocation loc;
-    std::uint64_t int_value = 0;
+    union {
+        std::uint64_t int_value;
+        double float_value;
+        bool bool_value;
+        std::uint64_t tuple_index;
+    };
     bool int_negative = false;
-    double float_value = 0.0;
     std::string string_value;
-    bool bool_value = false;
     std::string name;
     std::string label;
     std::string enum_name;
     std::string case_name;
     std::vector<std::string> format_parts;
     std::uint32_t enum_tag = 0;
-    std::uint64_t tuple_index = 0;
     bool has_payload = false;
     bool print_newline = false;
     bool mutable_borrow = false;
