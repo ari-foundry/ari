@@ -54,7 +54,8 @@
    to constants when the current length is compiler-known. `len(...)`,
    `.len()`, `.is_empty()`, and direct indexing of Vec-valued control-flow
    expressions also use source-known local branch lengths for constants and
-   static out-of-range diagnostics. Local `Vec`
+   static out-of-range diagnostics, and stored-vector `for` loops use the same
+   source-known branch lengths for constant loop bounds. Local `Vec`
    initialization and assignment from another local `Vec` also preserve that
    compiler-known current length when the source binding is still precise, and
    assignment from another local `Vec` widens the fixed local target storage to

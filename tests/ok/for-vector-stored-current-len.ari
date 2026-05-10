@@ -12,5 +12,19 @@ fn main() -> i64 {
     total = total + 100;
   }
 
+  var left: Vec[i64] = [7, 8, 9];
+  left.truncate(1);
+
+  var right: Vec[i64] = [11, 12, 13];
+  right.truncate(1);
+
+  for selected in if true {
+    left
+  } else {
+    right
+  } {
+    total = total + selected;
+  }
+
   return total;
 }

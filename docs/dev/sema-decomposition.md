@@ -27,7 +27,7 @@ construction. Some helpers have already moved out to focused files:
   stored-vector `for` loop bound constant lowering, plus local Vec
   source-AST known-length merging with semantic local-name callbacks for direct
   `len`/`is_empty` folding, direct index diagnostics, local-vector
-  initialization, assignment, local-binding copies inside
+  initialization, assignment, stored-vector `for` loop bounds, local-binding copies inside
   `if`/block/`match`/`if let` expression results, and nested result
   storage-capacity reads
 - `ir_builders` for basic IR node construction helpers such as local lvalues,

@@ -10199,7 +10199,8 @@ private:
         IrType vector_type = iterable->type;
         IrType element_type = vector_type.args[0];
         IrType i64 = i64_type(stmt.loc);
-        VectorKnownLength current_length = known_local_vec_length_for_expr(*stmt.for_iterable);
+        VectorKnownLength current_length =
+            vector_known_length_from_source_expr(vector_type, *stmt.for_iterable, *iterable);
 
         lowered.kind = IrStmtKind::Block;
         std::string vector_name = make_hidden_local("$for_vec");
