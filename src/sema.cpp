@@ -8,6 +8,7 @@
 #include "constant_semantics.hpp"
 #include "control_flow_semantics.hpp"
 #include "enum_constructor_semantics.hpp"
+#include "for_pattern_semantics.hpp"
 #include "ir_builders.hpp"
 #include "iterator_semantics.hpp"
 #include "layout.hpp"
@@ -8246,6 +8247,25 @@ private:
         return hooks;
     }
 
+    ForPatternValidationHooks for_pattern_validation_hooks() {
+        ForPatternValidationHooks hooks;
+        hooks.require_struct_pattern_type = [this](SourceLocation loc,
+                                                   const std::string& name,
+                                                   const IrType& type) {
+            const StructInfo& info = require_struct_match_pattern_type(loc, name, type);
+            ForPatternStructInfo out;
+            out.name = info.name;
+            out.tuple_struct = info.tuple_struct;
+            return out;
+        };
+        hooks.struct_field_index = [this](SourceLocation loc,
+                                          const IrType& type,
+                                          const std::string& field_name) {
+            return struct_field_index(loc, type, field_name);
+        };
+        return hooks;
+    }
+
     void note_product_match_coverage(const Pattern& pattern,
                                      const IrType& subject_type,
                                      ProductMatchCoverage& coverage) {
@@ -9393,111 +9413,71 @@ private:
         restore_states(loop_input);
     }
 
-    void fail_refutable_for_pattern(SourceLocation loc) const {
-        fail(loc,
-             "refutable for-loop patterns require for-let filters on Iterator[T]; non-iterator loop heads currently support irrefutable binding and alias patterns, with aggregate destructuring for list and vector items");
+    void bind_irrefutable_non_iterator_for_item(SourceLocation loc,
+                                                const std::string& item_name,
+                                                const IrType& item_type,
+                                                std::string* loop_binding_name,
+                                                IrExprPtr* item_expr,
+                                                std::vector<IrStmtPtr>& pattern_prelude) {
+        declare_local(loc, item_name, item_type, false);
+        if (loop_binding_name) {
+            *loop_binding_name = item_name;
+        }
+        if (item_expr && *item_expr) {
+            pattern_prelude.push_back(
+                make_ir_var_decl(loc, item_name, item_type, std::move(*item_expr), false)
+            );
+        }
     }
 
-    void require_irrefutable_tuple_struct_for_pattern(const Pattern& pattern, const IrType& value_type) {
-        const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, value_type);
-        if (!info.tuple_struct) {
-            fail(pattern.loc, "tuple-struct for-loop pattern requires a tuple struct");
-        }
-        if (!pattern.has_payload_pattern || !pattern.payload_pattern) {
-            fail(pattern.loc, "tuple-struct for-loop pattern '" + pattern.case_name + "' requires positional fields");
+    void lower_irrefutable_non_iterator_for_head(const Pattern& pattern,
+                                                 const IrType& item_type,
+                                                 std::string* loop_binding_name,
+                                                 IrExprPtr* item_expr,
+                                                 std::vector<IrStmtPtr>& pattern_prelude,
+                                                 bool materialize_wildcard_aggregate) {
+        if (pattern.kind == PatternKind::Binding) {
+            bind_irrefutable_non_iterator_for_item(
+                pattern.loc,
+                pattern.payload_name,
+                item_type,
+                loop_binding_name,
+                item_expr,
+                pattern_prelude
+            );
+            return;
         }
 
-        const std::vector<IrType>& fields = aggregate_field_types(value_type);
-        const Pattern& payload = *pattern.payload_pattern;
-        if (payload.kind == PatternKind::Tuple) {
-            require_tuple_pattern_arity(payload, value_type, fields);
-            for (std::size_t i = 0; i < payload.elements.size(); ++i) {
-                require_irrefutable_for_vector_pattern(
-                    payload.elements[i],
-                    fields[tuple_pattern_field_index(payload, fields.size(), i)]
+        if (pattern.kind == PatternKind::Wildcard) {
+            if (materialize_wildcard_aggregate && is_aggregate_type(item_type)) {
+                bind_irrefutable_non_iterator_for_item(
+                    pattern.loc,
+                    make_hidden_local("$for_item"),
+                    item_type,
+                    loop_binding_name,
+                    item_expr,
+                    pattern_prelude
                 );
             }
             return;
         }
-        if (fields.size() != 1) {
-            fail(payload.loc,
-                 "tuple-struct for-loop pattern for '" + info.name + "' has 1 field but value has " +
-                     std::to_string(fields.size()));
-        }
-        require_irrefutable_for_vector_pattern(payload, fields[0]);
-    }
 
-    void require_irrefutable_for_vector_pattern(const Pattern& pattern, const IrType& value_type) {
-        switch (pattern.kind) {
-            case PatternKind::Wildcard:
-            case PatternKind::Binding:
-                return;
-            case PatternKind::Tuple: {
-                if (value_type.primitive != IrPrimitiveKind::Tuple) {
-                    fail(pattern.loc, "tuple for-loop pattern requires a tuple element, got " + type_name(value_type));
-                }
-                const std::vector<IrType>& fields = aggregate_field_types(value_type);
-                require_tuple_pattern_arity(pattern, value_type, fields);
-                for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
-                    require_irrefutable_for_vector_pattern(
-                        pattern.elements[i],
-                        fields[tuple_pattern_field_index(pattern, fields.size(), i)]
-                    );
-                }
-                return;
-            }
-            case PatternKind::Array: {
-                if (value_type.primitive != IrPrimitiveKind::Array) {
-                    fail(pattern.loc, "array for-loop pattern requires an array element, got " + type_name(value_type));
-                }
-                const std::vector<IrType>& fields = aggregate_field_types(value_type);
-                require_tuple_pattern_arity(pattern, value_type, fields);
-                for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
-                    require_irrefutable_for_vector_pattern(
-                        pattern.elements[i],
-                        fields[tuple_pattern_field_index(pattern, fields.size(), i)]
-                    );
-                }
-                return;
-            }
-            case PatternKind::Struct: {
-                require_struct_match_pattern_type(pattern.loc, pattern.case_name, value_type);
-                if (pattern.field_names.size() != pattern.elements.size()) {
-                    throw CompileError("internal error: struct for-loop pattern field/value arity mismatch");
-                }
-                if (!pattern.has_rest && pattern.field_names.size() != value_type.field_names.size()) {
-                    fail(pattern.loc, "struct for-loop pattern must mention all fields or use '..'");
-                }
-                std::set<std::string> seen_fields;
-                for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
-                    const std::string& field_name = pattern.field_names[i];
-                    if (!seen_fields.insert(field_name).second) {
-                        fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct for-loop pattern");
-                    }
-                    std::size_t field_index = struct_field_index(pattern.elements[i].loc, value_type, field_name);
-                    require_irrefutable_for_vector_pattern(pattern.elements[i], value_type.field_types[field_index]);
-                }
-                return;
-            }
-            case PatternKind::EnumCase:
-                if (value_type.primitive == IrPrimitiveKind::Struct) {
-                    require_irrefutable_tuple_struct_for_pattern(pattern, value_type);
-                    return;
-                }
-                fail(pattern.loc,
-                     "for enum-case patterns are planned for Iterator[T] values but are not supported yet");
-                return;
-            case PatternKind::Alias:
-                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased for-loop pattern");
-                require_irrefutable_for_vector_pattern(*pattern.alias_pattern, value_type);
-                return;
-            case PatternKind::IntegerLiteral:
-            case PatternKind::BoolLiteral:
-            case PatternKind::Range:
-            case PatternKind::Or:
-                fail_refutable_for_pattern(pattern.loc);
-                return;
-        }
+        require_irrefutable_non_iterator_for_pattern(pattern, item_type, for_pattern_validation_hooks());
+        std::string item_name = make_hidden_local("$for_item");
+        bind_irrefutable_non_iterator_for_item(
+            pattern.loc,
+            item_name,
+            item_type,
+            loop_binding_name,
+            item_expr,
+            pattern_prelude
+        );
+        lower_product_match_pattern_bindings_from_local(
+            pattern,
+            item_name,
+            item_type,
+            pattern_prelude
+        );
     }
 
     void require_supported_for_iterator_pattern(const Pattern& pattern, const IrType& value_type) {
@@ -9508,11 +9488,11 @@ private:
             case PatternKind::Tuple:
             case PatternKind::Array:
             case PatternKind::Struct:
-                require_irrefutable_for_vector_pattern(pattern, value_type);
+                require_irrefutable_non_iterator_for_pattern(pattern, value_type, for_pattern_validation_hooks());
                 return;
             case PatternKind::EnumCase:
                 if (value_type.primitive == IrPrimitiveKind::Struct) {
-                    require_irrefutable_tuple_struct_for_pattern(pattern, value_type);
+                    require_irrefutable_non_iterator_for_pattern(pattern, value_type, for_pattern_validation_hooks());
                     return;
                 }
                 if (is_value_enum_type(value_type)) return;
@@ -10077,20 +10057,14 @@ private:
         push_loop(stmt.loc, loop);
         push_scope();
         std::vector<IrStmtPtr> pattern_prelude;
-        if (stmt.for_pattern.kind == PatternKind::Binding) {
-            lowered.for_binding_name = stmt.for_pattern.payload_name;
-            declare_local(stmt.for_pattern.loc, lowered.for_binding_name, bound_type, false);
-        } else if (stmt.for_pattern.kind != PatternKind::Wildcard) {
-            require_irrefutable_for_vector_pattern(stmt.for_pattern, bound_type);
-            lowered.for_binding_name = make_hidden_local("$for_item");
-            declare_local(stmt.for_pattern.loc, lowered.for_binding_name, bound_type, false);
-            lower_product_match_pattern_bindings_from_local(
-                stmt.for_pattern,
-                lowered.for_binding_name,
-                bound_type,
-                pattern_prelude
-            );
-        }
+        lower_irrefutable_non_iterator_for_head(
+            stmt.for_pattern,
+            bound_type,
+            &lowered.for_binding_name,
+            nullptr,
+            pattern_prelude,
+            false
+        );
         CheckedStatements body = check_statements(stmt.loop_body, false);
         lowered.loop_body = std::move(pattern_prelude);
         for (auto& body_stmt : body.statements) {
@@ -10130,25 +10104,14 @@ private:
         push_loop(stmt.loc, loop);
         push_scope();
         std::vector<IrStmtPtr> pattern_prelude;
-        if (stmt.for_pattern.kind == PatternKind::Binding) {
-            lowered.for_binding_name = stmt.for_pattern.payload_name;
-            declare_local(stmt.for_pattern.loc, lowered.for_binding_name, lowered.for_binding_type, false);
-        } else if (stmt.for_pattern.kind == PatternKind::Wildcard) {
-            if (is_aggregate_type(lowered.for_binding_type)) {
-                lowered.for_binding_name = make_hidden_local("$for_item");
-                declare_local(stmt.for_pattern.loc, lowered.for_binding_name, lowered.for_binding_type, false);
-            }
-        } else {
-            require_irrefutable_for_vector_pattern(stmt.for_pattern, lowered.for_binding_type);
-            lowered.for_binding_name = make_hidden_local("$for_item");
-            declare_local(stmt.for_pattern.loc, lowered.for_binding_name, lowered.for_binding_type, false);
-            lower_product_match_pattern_bindings_from_local(
-                stmt.for_pattern,
-                lowered.for_binding_name,
-                lowered.for_binding_type,
-                pattern_prelude
-            );
-        }
+        lower_irrefutable_non_iterator_for_head(
+            stmt.for_pattern,
+            lowered.for_binding_type,
+            &lowered.for_binding_name,
+            nullptr,
+            pattern_prelude,
+            true
+        );
         CheckedStatements body = check_statements(stmt.loop_body, false);
         lowered.loop_body = std::move(pattern_prelude);
         for (auto& body_stmt : body.statements) {
@@ -10212,33 +10175,14 @@ private:
 
         std::vector<IrStmtPtr> pattern_prelude;
         IrExprPtr element = make_vector_index_expr(stmt.loc, vector_name, vector_type, loop->for_index_name, i64);
-        if (stmt.for_pattern.kind == PatternKind::Binding) {
-            declare_local(stmt.for_pattern.loc, stmt.for_pattern.payload_name, element_type, false);
-            pattern_prelude.push_back(
-                make_ir_var_decl(stmt.for_pattern.loc, stmt.for_pattern.payload_name, element_type, std::move(element), false)
-            );
-        } else if (stmt.for_pattern.kind == PatternKind::Wildcard) {
-            if (is_aggregate_type(element_type)) {
-                std::string item_name = make_hidden_local("$for_item");
-                declare_local(stmt.for_pattern.loc, item_name, element_type, false);
-                pattern_prelude.push_back(
-                    make_ir_var_decl(stmt.for_pattern.loc, item_name, element_type, std::move(element), false)
-                );
-            }
-        } else {
-            require_irrefutable_for_vector_pattern(stmt.for_pattern, element_type);
-            std::string item_name = make_hidden_local("$for_item");
-            declare_local(stmt.for_pattern.loc, item_name, element_type, false);
-            pattern_prelude.push_back(
-                make_ir_var_decl(stmt.for_pattern.loc, item_name, element_type, std::move(element), false)
-            );
-            lower_product_match_pattern_bindings_from_local(
-                stmt.for_pattern,
-                item_name,
-                element_type,
-                pattern_prelude
-            );
-        }
+        lower_irrefutable_non_iterator_for_head(
+            stmt.for_pattern,
+            element_type,
+            nullptr,
+            &element,
+            pattern_prelude,
+            true
+        );
 
         CheckedStatements body = check_statements(stmt.loop_body, false);
         loop->loop_body = std::move(pattern_prelude);

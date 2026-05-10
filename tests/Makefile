@@ -378,6 +378,8 @@ check-control-flow: $(TARGET)
 	grep -q "for-let filters currently require an Iterator\\[T\\] or IntoIterator\\[T\\] value" $(BUILD_DIR)/control-flow/for-let-filter-range.err
 	if $(TARGET) tests/errors/for-vector-alias-refutable-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-alias-refutable-pattern.elf >$(BUILD_DIR)/control-flow/for-vector-alias-refutable-pattern.err 2>&1; then exit 1; fi
 	grep -q "refutable for-loop patterns require for-let filters on Iterator\\[T\\]" $(BUILD_DIR)/control-flow/for-vector-alias-refutable-pattern.err
+	if $(TARGET) tests/errors/for-range-alias-refutable-pattern.ari -o $(BUILD_DIR)/control-flow/for-range-alias-refutable-pattern.elf >$(BUILD_DIR)/control-flow/for-range-alias-refutable-pattern.err 2>&1; then exit 1; fi
+	grep -q "refutable for-loop patterns require for-let filters on Iterator\\[T\\]" $(BUILD_DIR)/control-flow/for-range-alias-refutable-pattern.err
 	if $(TARGET) tests/errors/range-type-non-integer.ari -o $(BUILD_DIR)/control-flow/range-type-non-integer.elf >$(BUILD_DIR)/control-flow/range-type-non-integer.err 2>&1; then exit 1; fi
 	grep -q "prelude range types require integer bounds" $(BUILD_DIR)/control-flow/range-type-non-integer.err
 	if $(TARGET) tests/errors/break-unknown-label.ari -o $(BUILD_DIR)/control-flow/break-unknown-label.elf >$(BUILD_DIR)/control-flow/break-unknown-label.err 2>&1; then exit 1; fi

@@ -163,13 +163,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and
      function-parameter patterns on one shared binding-mode engine; value alias
      patterns now work in range, list-literal, and stored-vector loop heads when
-     the wrapped pattern is irrefutable, but reference/ownership binding modes
-     still need shared lowering. Future `for let` filters over vector and slice
-     values should reuse the same product-pattern binding path once vector/slice
-     patterns have length-checked lowering.
-   - [for-pattern-helper] rename and extract the shared irrefutable non-iterator
-     loop-head validation/lowering helper once range, list-literal, and
-     stored-vector loop heads grow another shared pattern mode
+     the wrapped pattern is irrefutable. Non-iterator loop-head validation now
+     lives in `for_pattern_semantics`, with a shared sema lowering helper for
+     range, list-literal, and stored-vector loop heads; reference/ownership
+     binding modes still need shared lowering. Future `for let` filters over
+     vector and slice values should reuse the same product-pattern binding path
+     once vector/slice patterns have length-checked lowering.
 4. Implement user-defined compile-time meta expansion for `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
    Meta functions are intentionally non-generic; define concrete meta entry

@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  for item @ 2 in range(0, 3) {
+    return item;
+  }
+
+  return 0;
+}

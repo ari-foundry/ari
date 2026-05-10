@@ -50,6 +50,8 @@ construction. Some helpers have already moved out to focused files:
   coverage state, enum duplicate detection, and enum exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection, positional
   product field mapping, and or-pattern expansion helpers
+- `for_pattern_semantics` for irrefutable non-iterator `for` loop-head pattern
+  validation shared by range, list-literal, and stored-vector loops
 - `move_semantics` for pure helpers around explicit ownership-consumption
   syntax such as `take(place)` place-shape validation
 - `trait_semantics` for small trait display/key helpers and pure trait-method
@@ -123,6 +125,10 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      enum exhaustiveness diagnostics now live in `pattern_coverage`;
      `sema.cpp` still performs enum case resolution and payload type
      validation.
+   - Irrefutable non-iterator `for` loop-head validation now lives in
+     `for_pattern_semantics`; `sema.cpp` only wires struct lookup callbacks and
+     emits the actual loop binding locals while broader pattern-binding
+     lowering stays stateful.
    - Move the remaining semantic-table callbacks for product pattern coverage
      after struct/type declaration tables are extracted.
    - Leave binding emission in `SemanticChecker` until local-scope mutation is
