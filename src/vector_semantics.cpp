@@ -137,6 +137,36 @@ IrExprPtr make_vec_pop_expr(SourceLocation loc, IrExprPtr vector) {
     return lowered;
 }
 
+IrExprPtr make_vec_reserve_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr requested_capacity) {
+    if (!vector || !is_vector_storage_type(vector->type)) {
+        fail(loc, "Vec.reserve requires local Vec storage");
+    }
+    if (!requested_capacity) {
+        fail(loc, "Vec.reserve expects an integer capacity");
+    }
+    switch (requested_capacity->type.primitive) {
+        case IrPrimitiveKind::I8:
+        case IrPrimitiveKind::I16:
+        case IrPrimitiveKind::I32:
+        case IrPrimitiveKind::I64:
+        case IrPrimitiveKind::U8:
+        case IrPrimitiveKind::U16:
+        case IrPrimitiveKind::U32:
+        case IrPrimitiveKind::U64:
+            break;
+        default:
+            fail(loc, "Vec.reserve expects an integer capacity");
+    }
+
+    auto lowered = std::make_unique<IrExpr>();
+    lowered->kind = IrExprKind::VectorReserve;
+    lowered->loc = loc;
+    lowered->type = void_type(loc);
+    lowered->operand = std::move(vector);
+    lowered->right = std::move(requested_capacity);
+    return lowered;
+}
+
 IrExprPtr make_vec_clear_expr(SourceLocation loc, IrExprPtr vector) {
     if (!vector || !is_vector_storage_type(vector->type)) {
         fail(loc, "Vec.clear requires local Vec storage");

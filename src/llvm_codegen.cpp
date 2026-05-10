@@ -1419,6 +1419,8 @@ private:
                 return emit_vector_push(expr);
             case IrExprKind::VectorPop:
                 return emit_vector_pop(expr);
+            case IrExprKind::VectorReserve:
+                return emit_vector_reserve(expr);
             case IrExprKind::VectorClear:
                 return emit_vector_clear(expr);
             case IrExprKind::VectorTruncate:
@@ -1766,6 +1768,32 @@ private:
              ", ptr " + base + ", i32 0, i32 1, i64 " + next_len);
         line("  " + out + " = load " + llvm_type(element_type) + ", ptr " + item_ptr);
         return Value{llvm_type(element_type), out, element_type};
+    }
+
+    Value emit_vector_reserve(const IrExpr& expr) {
+        if (!expr.operand || !expr.right || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
+            expr.operand->type.args.size() != 1) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.reserve lowering");
+        }
+        const IrType& vector_type = expr.operand->type;
+        IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
+        Value requested = cast_value(emit_expr(*expr.right), index_type);
+
+        std::string negative = temp();
+        std::string too_large = temp();
+        std::string bad = temp();
+        std::string fail_label = label("vector.reserve.fail");
+        std::string ok_label = label("vector.reserve.ok");
+        line("  " + negative + " = icmp slt i64 " + requested.name + ", 0");
+        line("  " + too_large + " = icmp sgt i64 " + requested.name + ", " +
+             std::to_string(vector_type.array_size));
+        line("  " + bad + " = or i1 " + negative + ", " + too_large);
+        line("  br i1 " + bad + ", label %" + fail_label + ", label %" + ok_label);
+        emit_label(fail_label);
+        line("  call void @ari_builtin_panic()");
+        line("  unreachable");
+        emit_label(ok_label);
+        return Value{"void", "", expr.type};
     }
 
     Value emit_vector_clear(const IrExpr& expr) {

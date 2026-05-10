@@ -1,0 +1,10 @@
+fn requested_capacity(value: i64) -> i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  var values: Vec[i64] = [1, 2, 3];
+  let requested = requested_capacity(2);
+  values.reserve(requested);
+  return values.capacity() + values.len();
+}

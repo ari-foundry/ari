@@ -14685,11 +14685,26 @@ private:
         if (!expr.type_args.empty()) fail(expr.loc, "Vec.reserve does not take type arguments");
         if (expr.args.size() != 1) fail(expr.loc, "Vec.reserve expects one capacity argument");
         const Expr& capacity_expr = *expr.args[0];
-        if (capacity_expr.kind != ExprKind::Integer || capacity_expr.int_negative) {
-            fail(capacity_expr.loc, "Vec.reserve currently expects a non-negative integer literal capacity");
+        if (capacity_expr.kind == ExprKind::Integer) {
+            if (capacity_expr.int_negative) {
+                fail(capacity_expr.loc, "Vec.reserve capacity must be non-negative");
+            }
+            widen_vector_storage(local, capacity_expr.int_value);
+            return make_void_noop_expr(expr.loc);
         }
-        widen_vector_storage(local, capacity_expr.int_value);
-        return make_void_noop_expr(expr.loc);
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr requested_capacity = check_expr(capacity_expr);
+        if (!is_value_integer_type(requested_capacity->type)) {
+            fail(capacity_expr.loc, "Vec.reserve capacity must be an integer, got " + type_name(requested_capacity->type));
+        }
+        release_temporary_borrows(borrow_mark);
+
+        return make_vec_reserve_expr(
+            expr.loc,
+            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            std::move(requested_capacity)
+        );
     }
 
     IrExprPtr check_vec_capacity_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) const {

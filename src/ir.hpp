@@ -187,6 +187,7 @@ enum class IrExprKind {
     Vector,
     VectorPush,
     VectorPop,
+    VectorReserve,
     VectorClear,
     VectorTruncate,
     VectorSet,

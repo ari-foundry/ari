@@ -18,6 +18,7 @@ IrExprPtr make_vec_local_lvalue(SourceLocation loc, std::string name, IrType typ
 IrExprPtr make_vec_capacity_expr(SourceLocation loc, const IrType& type);
 IrExprPtr make_vec_index_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr index);
 IrExprPtr make_vec_pop_expr(SourceLocation loc, IrExprPtr vector);
+IrExprPtr make_vec_reserve_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr requested_capacity);
 IrExprPtr make_vec_clear_expr(SourceLocation loc, IrExprPtr vector);
 IrExprPtr make_vec_truncate_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr new_length);
 IrExprPtr make_vec_set_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr index, IrExprPtr value);

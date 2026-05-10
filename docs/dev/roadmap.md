@@ -14,6 +14,9 @@
    Local `push` and `insert` now auto-widen stack storage when sema can track
    the current length, so empty `Vec[T]` locals can grow through
    straight-line appends/inserts without an explicit `reserve`.
+   Runtime `reserve(n)` values now lower to a local-capacity guard, so the
+   call no longer requires a literal, but it still does not allocate or grow
+   beyond the fixed local stack storage.
    This local API is now frozen as a temporary executable subset: do not add
    more compiler-known `Vec` convenience methods before the allocator-backed
    library design lands. Unsupported local `Vec` method calls now get a
@@ -24,8 +27,8 @@
    semantic checker. Introduce the explicit allocation/capability path before
    broadening vector patterns or std collection APIs.
    - [allocator] thread explicit allocator/capability values through creation
-   - [capacity] replace local literal/reserve capacity with runtime heap
-     capacity growth
+   - [capacity] replace local literal/runtime-checked reserve capacity with
+     runtime heap capacity growth
    - [ops-runtime] port the existing `push`, `insert`, `pop`, `remove`,
      `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
      `reserve` operations to allocator-backed storage instead of fixed

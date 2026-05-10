@@ -441,16 +441,19 @@ That local method list is intentionally frozen while `Vec[T]` is still a
 stack-backed executable subset. Other compiler-known collection conveniences
 are reserved for the future allocator-backed std library design.
 
-`reserve(n)` currently expects a non-negative integer literal. It widens the
-compiler-known local storage capacity for that binding; it does not allocate
-heap storage yet. `push(value)` appends a copyable element, increments the
-runtime length, and auto-widens the stack-backed local capacity when the
-compiler can track the binding's current length. If the length is not precise,
-`push` reserves one additional static slot so the immediate append cannot hit a
-full local buffer. `capacity()` returns that reserved local capacity as an
-`i64`. `is_empty()` returns `true` when the current runtime length is zero and
-does not inspect reserved capacity. `clear()` sets the current runtime length
-to zero while keeping the reserved local capacity.
+`reserve(n)` accepts any integer capacity. A non-negative integer literal
+widens the compiler-known local storage capacity for that binding. A runtime
+integer value lowers to a bounds check against the current reserved local
+capacity and panics through `panic` when the requested capacity is negative or
+larger than that fixed local storage. It does not allocate heap storage yet.
+`push(value)` appends a copyable element, increments the runtime length, and
+auto-widens the stack-backed local capacity when the compiler can track the
+binding's current length. If the length is not precise, `push` reserves one
+additional static slot so the immediate append cannot hit a full local buffer.
+`capacity()` returns that reserved local capacity as an `i64`. `is_empty()`
+returns `true` when the current runtime length is zero and does not inspect
+reserved capacity. `clear()` sets the current runtime length to zero while
+keeping the reserved local capacity.
 `pop()` returns the last copyable element, decreases the current runtime length,
 and panics through `panic` when the vector is empty. It does not shrink reserved
 local capacity.

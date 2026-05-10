@@ -1358,6 +1358,10 @@ check-variables: $(TARGET)
 	grep -q "store i64 0, ptr" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "vector.truncate.negative" $(BUILD_DIR)/variables/vector-push-reserve.ll
 	grep -q "store i64 9, ptr" $(BUILD_DIR)/variables/vector-push-reserve.ll
+	$(TARGET) tests/ok/vector-reserve-runtime.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-runtime.ll
+	grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-runtime.ll
+	$(TARGET) tests/ok/vector-reserve-runtime-trap.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-runtime-trap.ll
+	grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-runtime-trap.ll
 	$(TARGET) tests/ok/vector-push-autogrow.ari --emit-llvm $(BUILD_DIR)/variables/vector-push-autogrow.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-push-autogrow.ll
 	grep -q "alloca { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-push-autogrow.ll
@@ -1411,6 +1415,8 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-empty-typed.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-empty-typed.elf; $(BUILD_DIR)/variables/vector-empty-typed.elf; code=$$?; test $$code -eq 3; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-len.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-len.elf; $(BUILD_DIR)/variables/vector-len.elf; code=$$?; test $$code -eq 10; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-reserve.elf; $(BUILD_DIR)/variables/vector-push-reserve.elf; code=$$?; test $$code -eq 24; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-runtime.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-runtime.elf; $(BUILD_DIR)/variables/vector-reserve-runtime.elf; code=$$?; test $$code -eq 6; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-runtime-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-runtime-trap.elf; if $(BUILD_DIR)/variables/vector-reserve-runtime-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-autogrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-autogrow.elf; $(BUILD_DIR)/variables/vector-push-autogrow.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-pop.elf; $(BUILD_DIR)/variables/vector-pop.elf; code=$$?; test $$code -eq 26; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-first-last.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-first-last.elf; $(BUILD_DIR)/variables/vector-first-last.elf; code=$$?; test $$code -eq 20; fi
