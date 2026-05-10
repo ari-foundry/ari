@@ -76,6 +76,9 @@ void require_local_vec_static_index_in_known_bounds(SourceLocation loc,
                                                     const StaticIntegerValue& value,
                                                     VectorKnownLength length,
                                                     bool allow_end);
+void require_local_vec_known_non_empty(SourceLocation loc,
+                                       LocalVecMethod method,
+                                       VectorKnownLength length);
 std::string local_vec_api_freeze_message(const std::string& method_name);
 
 bool vector_known_length_after_truncate(std::uint64_t current_length,

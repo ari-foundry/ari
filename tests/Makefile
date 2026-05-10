@@ -1567,6 +1567,12 @@ check-variables: $(TARGET)
 	grep -q "Vec.get index must be non-negative" $(BUILD_DIR)/variables/vector-method-static-negative-index.err
 	if $(TARGET) tests/errors/vector-method-static-index-out-of-range.ari -o $(BUILD_DIR)/variables/vector-method-static-index-out-of-range.elf >$(BUILD_DIR)/variables/vector-method-static-index-out-of-range.err 2>&1; then exit 1; fi
 	grep -q "Vec.get index 2 is out of range for 2 elements" $(BUILD_DIR)/variables/vector-method-static-index-out-of-range.err
+	if $(TARGET) tests/errors/vector-method-known-empty-first.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-first.elf >$(BUILD_DIR)/variables/vector-method-known-empty-first.err 2>&1; then exit 1; fi
+	grep -q "Vec.first requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-first.err
+	if $(TARGET) tests/errors/vector-method-known-empty-last-after-clear.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-last-after-clear.elf >$(BUILD_DIR)/variables/vector-method-known-empty-last-after-clear.err 2>&1; then exit 1; fi
+	grep -q "Vec.last requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-last-after-clear.err
+	if $(TARGET) tests/errors/vector-method-known-empty-pop.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-pop.elf >$(BUILD_DIR)/variables/vector-method-known-empty-pop.err 2>&1; then exit 1; fi
+	grep -q "Vec.pop requires a non-empty Vec" $(BUILD_DIR)/variables/vector-method-known-empty-pop.err
 	if $(TARGET) tests/errors/slice-view-method-shape.ari -o $(BUILD_DIR)/variables/slice-view-method-shape.elf >$(BUILD_DIR)/variables/slice-view-method-shape.err 2>&1; then exit 1; fi
 	grep -q "as_slice expects no arguments" $(BUILD_DIR)/variables/slice-view-method-shape.err
 	if $(TARGET) tests/errors/vector-reserve-known-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-known-negative.elf >$(BUILD_DIR)/variables/vector-reserve-known-negative.err 2>&1; then exit 1; fi

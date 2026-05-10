@@ -13803,6 +13803,7 @@ private:
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "first");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::First, expr.type_args.size(), expr.args.size());
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::First, vector_known_length_state(local));
         return make_vec_first_expr(expr.loc, expr.operand->loc, name, local.type);
     }
 
@@ -13811,6 +13812,7 @@ private:
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "last");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Last, expr.type_args.size(), expr.args.size());
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Last, vector_known_length_state(local));
         return make_vec_last_expr(expr.loc, expr.operand->loc, name, local.type);
     }
 
@@ -13897,6 +13899,7 @@ private:
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "pop");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Pop, expr.type_args.size(), expr.args.size());
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Pop, vector_known_length_state(local));
         set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));
         return make_vec_pop_expr(
             expr.loc,

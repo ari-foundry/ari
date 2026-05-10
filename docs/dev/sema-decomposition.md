@@ -20,9 +20,9 @@ construction. Some helpers have already moved out to focused files:
   diagnostics, shared `len`/`is_empty`/`as_slice` shape diagnostics, shared
   collection `len` lowering, `as_slice` data/view IR construction including
   Vec storage views, local Vec integer/non-negative and known-index operand
-  diagnostics, frozen API diagnostics, local Vec IR construction helpers such
-  as `first`, `last`, and `push`, and `VectorKnownLength`/capacity transition
-  helpers
+  diagnostics, known-empty `first`/`last`/`pop` diagnostics, frozen API
+  diagnostics, local Vec IR construction helpers such as `first`, `last`, and
+  `push`, and `VectorKnownLength`/capacity transition helpers
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions,
   pointer operations, direct builtin calls, match expression arms, and

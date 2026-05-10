@@ -283,6 +283,14 @@ void require_local_vec_static_index_in_known_bounds(SourceLocation loc,
              " is out of range for " + std::to_string(length.length) + " elements");
 }
 
+void require_local_vec_known_non_empty(SourceLocation loc,
+                                       LocalVecMethod method,
+                                       VectorKnownLength length) {
+    if (!length.known || length.length != 0) return;
+    std::string display = std::string("Vec.") + local_vec_method_name(method);
+    fail(loc, display + " requires a non-empty Vec");
+}
+
 std::string local_vec_api_freeze_message(const std::string& method_name) {
     std::string supported;
     for (std::size_t i = 0; i < kLocalVecMethods.size(); ++i) {

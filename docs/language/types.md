@@ -472,10 +472,12 @@ reserved capacity. `clear()` sets the current runtime length to zero while
 keeping the reserved local capacity.
 `pop()` returns the last copyable element, decreases the current runtime length,
 and panics through `panic` when the vector is empty. It does not shrink reserved
-local capacity.
+local capacity. If the compiler knows the current local vector length is zero,
+the call is rejected before lowering.
 `first()` and `last()` read the first or last copyable element without changing
 the runtime length, and use the same bounds checks as indexing, so empty
-vectors panic.
+vectors panic. If the compiler knows the current local vector length is zero,
+the call is rejected before lowering.
 `get(index)` reads a copyable element at a runtime index without changing the
 runtime length, and uses the same bounds checks as `values[index]`. Literal,
 constant, static-expression, and immutable local indexes are rejected at compile
