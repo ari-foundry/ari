@@ -1,0 +1,5 @@
+fn main() -> i64 {
+  var values = [1, 2, 3];
+  let view = values.as_slice(0);
+  return len(view);
+}

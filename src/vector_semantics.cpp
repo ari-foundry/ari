@@ -118,6 +118,34 @@ LocalVecMethod classify_local_vec_method(const std::string& method_name) {
     return LocalVecMethod::Unknown;
 }
 
+void require_collection_len_function_shape(SourceLocation loc,
+                                           std::size_t type_arg_count,
+                                           std::size_t arg_count) {
+    if (type_arg_count != 0) fail(loc, "len does not take type arguments");
+    if (arg_count != 1) fail(loc, "len expects one array, Vec, or Slice value");
+}
+
+void require_collection_len_method_shape(SourceLocation loc,
+                                         std::size_t type_arg_count,
+                                         std::size_t arg_count) {
+    if (type_arg_count != 0) fail(loc, "len does not take type arguments");
+    if (arg_count != 0) fail(loc, "len expects no method arguments");
+}
+
+void require_collection_is_empty_method_shape(SourceLocation loc,
+                                              std::size_t type_arg_count,
+                                              std::size_t arg_count) {
+    if (type_arg_count != 0) fail(loc, "is_empty does not take type arguments");
+    if (arg_count != 0) fail(loc, "is_empty expects no method arguments");
+}
+
+void require_slice_view_method_shape(SourceLocation loc,
+                                     std::size_t type_arg_count,
+                                     std::size_t arg_count) {
+    if (type_arg_count != 0) fail(loc, "as_slice does not take type arguments");
+    if (arg_count != 0) fail(loc, "as_slice expects no arguments");
+}
+
 void require_local_vec_method_shape(SourceLocation loc,
                                     LocalVecMethod method,
                                     std::size_t type_arg_count,

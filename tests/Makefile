@@ -1547,12 +1547,16 @@ check-variables: $(TARGET)
 	grep -q "array index 2 is out of range for 2 elements" $(BUILD_DIR)/variables/array-index-out-of-range.err
 	if $(TARGET) tests/errors/vector-len-non-vec.ari -o $(BUILD_DIR)/variables/vector-len-non-vec.elf >$(BUILD_DIR)/variables/vector-len-non-vec.err 2>&1; then exit 1; fi
 	grep -q "len expects an array, Vec, or Slice value, got i64" $(BUILD_DIR)/variables/vector-len-non-vec.err
+	if $(TARGET) tests/errors/collection-len-method-shape.ari -o $(BUILD_DIR)/variables/collection-len-method-shape.elf >$(BUILD_DIR)/variables/collection-len-method-shape.err 2>&1; then exit 1; fi
+	grep -q "len expects no method arguments" $(BUILD_DIR)/variables/collection-len-method-shape.err
 	if $(TARGET) tests/errors/vector-empty-untyped.ari -o $(BUILD_DIR)/variables/vector-empty-untyped.elf >$(BUILD_DIR)/variables/vector-empty-untyped.err 2>&1; then exit 1; fi
 	grep -Fq "empty [] literals need an explicit Vec[T] type or non-empty array elements" $(BUILD_DIR)/variables/vector-empty-untyped.err
 	if $(TARGET) tests/errors/vector-api-freeze.ari -o $(BUILD_DIR)/variables/vector-api-freeze.elf >$(BUILD_DIR)/variables/vector-api-freeze.err 2>&1; then exit 1; fi
 	grep -Fq "local Vec method 'map' is reserved for allocator-backed std collection APIs" $(BUILD_DIR)/variables/vector-api-freeze.err
 	if $(TARGET) tests/errors/vector-method-shape.ari -o $(BUILD_DIR)/variables/vector-method-shape.elf >$(BUILD_DIR)/variables/vector-method-shape.err 2>&1; then exit 1; fi
 	grep -q "Vec.push expects one value argument" $(BUILD_DIR)/variables/vector-method-shape.err
+	if $(TARGET) tests/errors/slice-view-method-shape.ari -o $(BUILD_DIR)/variables/slice-view-method-shape.elf >$(BUILD_DIR)/variables/slice-view-method-shape.err 2>&1; then exit 1; fi
+	grep -q "as_slice expects no arguments" $(BUILD_DIR)/variables/slice-view-method-shape.err
 	if $(TARGET) tests/errors/vector-reserve-known-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-known-negative.elf >$(BUILD_DIR)/variables/vector-reserve-known-negative.err 2>&1; then exit 1; fi
 	grep -q "Vec.reserve capacity must be non-negative" $(BUILD_DIR)/variables/vector-reserve-known-negative.err
 	if $(TARGET) tests/errors/vector-reserve-known-static-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-known-static-negative.elf >$(BUILD_DIR)/variables/vector-reserve-known-static-negative.err 2>&1; then exit 1; fi

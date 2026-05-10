@@ -38,6 +38,18 @@ void widen_vector_storage_type(IrType& type, std::uint64_t capacity);
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
 bool vector_literal_length(const IrExpr& expr, std::uint64_t& out);
 LocalVecMethod classify_local_vec_method(const std::string& method_name);
+void require_collection_len_function_shape(SourceLocation loc,
+                                           std::size_t type_arg_count,
+                                           std::size_t arg_count);
+void require_collection_len_method_shape(SourceLocation loc,
+                                         std::size_t type_arg_count,
+                                         std::size_t arg_count);
+void require_collection_is_empty_method_shape(SourceLocation loc,
+                                              std::size_t type_arg_count,
+                                              std::size_t arg_count);
+void require_slice_view_method_shape(SourceLocation loc,
+                                     std::size_t type_arg_count,
+                                     std::size_t arg_count);
 void require_local_vec_method_shape(SourceLocation loc,
                                     LocalVecMethod method,
                                     std::size_t type_arg_count,

@@ -13773,8 +13773,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_slice_view_receiver(expr.loc, name, local);
-        if (!expr.type_args.empty()) fail(expr.loc, "as_slice does not take type arguments");
-        if (!expr.args.empty()) fail(expr.loc, "as_slice expects no arguments");
+        require_slice_view_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
 
         const IrType& element = local.type.args[0];
         IrExprPtr data;
@@ -13806,16 +13805,12 @@ private:
 
     IrExprPtr check_vec_len_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (!expr.type_args.empty()) {
-            fail(expr.loc, "len does not take type arguments");
-        }
-        if (expr.args.size() != 1) fail(expr.loc, "len expects one array, Vec, or Slice value");
+        require_collection_len_function_shape(expr.loc, expr.type_args.size(), expr.args.size());
         return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.args[0]));
     }
 
     IrExprPtr check_collection_is_empty_method_call(const Expr& expr) {
-        if (!expr.type_args.empty()) fail(expr.loc, "is_empty does not take type arguments");
-        if (!expr.args.empty()) fail(expr.loc, "is_empty expects no method arguments");
+        require_collection_is_empty_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
         IrExprPtr length = make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.operand));
         return make_collection_is_empty_expr(expr.loc, std::move(length));
     }
@@ -15580,8 +15575,7 @@ private:
 
     IrExprPtr check_method_call(const Expr& expr, IrExprPtr lowered) {
         if (expr.name == "len" && is_collection_len_method_receiver(*expr.operand)) {
-            if (!expr.type_args.empty()) fail(expr.loc, "len does not take type arguments");
-            if (!expr.args.empty()) fail(expr.loc, "len expects no method arguments");
+            require_collection_len_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
             return make_collection_len_expr(expr.loc, check_aggregate_access_operand(*expr.operand));
         }
         if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr.operand)) {
