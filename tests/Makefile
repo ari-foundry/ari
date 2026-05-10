@@ -1418,6 +1418,9 @@ check-variables: $(TARGET)
 	grep -q "%from_block.addr.* = alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
 	grep -q "store i64 3, ptr %assigned_len" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
 	grep -q "store i64 3, ptr %block_len" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
+	$(TARGET) tests/ok/vector-control-flow-known-local-length.ari --emit-llvm $(BUILD_DIR)/variables/vector-control-flow-known-local-length.ll
+	grep -q "store i64 1, ptr %if_len" $(BUILD_DIR)/variables/vector-control-flow-known-local-length.ll
+	grep -q "store i64 1, ptr %match_len" $(BUILD_DIR)/variables/vector-control-flow-known-local-length.ll
 	$(TARGET) tests/ok/vector-match-capacity.ari --emit-llvm $(BUILD_DIR)/variables/vector-match-capacity.ll
 	grep -q "%from_match.addr.* = alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-match-capacity.ll
 	grep -q "%from_iflet.addr.* = alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-match-capacity.ll

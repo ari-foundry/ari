@@ -1,0 +1,24 @@
+fn main() -> i64 {
+  var left: Vec[i64] = [1, 2, 3];
+  left.truncate(1);
+
+  var right: Vec[i64] = [4, 5, 6];
+  right.truncate(1);
+
+  let from_if: Vec[i64] = if true {
+    left
+  } else {
+    right
+  };
+  let if_len = from_if.len();
+
+  let from_match: Vec[i64] = match 1 {
+    0 => left,
+    _ => {
+      right
+    },
+  };
+  let match_len = from_match.len();
+
+  return if_len + match_len + from_if[0] + from_match[0];
+}
