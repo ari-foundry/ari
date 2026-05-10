@@ -25,6 +25,8 @@ construction. Some helpers have already moved out to focused files:
   aggregate pattern exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection and
   expansion helpers
+- `move_semantics` for pure helpers around explicit ownership-consumption
+  syntax such as `take(place)` place-shape validation
 - `trait_semantics` for small trait display/key helpers and pure trait-method
   shape checks shared by trait impl validation, method dispatch diagnostics,
   and future trait-resolution extraction

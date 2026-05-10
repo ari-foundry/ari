@@ -1,0 +1,35 @@
+struct Holder {
+  mut token: own i64,
+  mut spare: own i64,
+  mut count: i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume(value: own i64) -> i64 {
+  drop value;
+  return 5;
+}
+
+fn main() -> i64 {
+  var holder = Holder {
+    token: make_owned(1),
+    spare: make_owned(2),
+    count: 11,
+  };
+
+  let token = take(holder.token);
+  let temp = move(make_owned(3));
+  let copied = take<i64>(holder.count);
+  let spare = std::move(holder.spare);
+
+  let score = consume(token) + consume(temp) + copied + holder.count;
+  drop spare;
+
+  holder.token = make_owned(4);
+  holder.spare = make_owned(5);
+  drop holder;
+  return score;
+}

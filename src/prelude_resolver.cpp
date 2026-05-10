@@ -165,6 +165,22 @@ bool is_prelude_align_of_function_name(const std::string& name) {
     });
 }
 
+bool is_prelude_move_function_name(const std::string& name) {
+    return is_name_in(name, {
+        "move",
+        "std::move",
+        "prelude::move",
+    });
+}
+
+bool is_prelude_take_function_name(const std::string& name) {
+    return is_name_in(name, {
+        "take",
+        "std::take",
+        "prelude::take",
+    });
+}
+
 bool is_zone_alloc_function_name(const std::string& name) {
     return is_name_in(name, {
         "alloc",
@@ -224,6 +240,8 @@ bool is_source_declared_prelude_special_name(const std::string& name) {
            is_prelude_pointer_store_function_name(name) ||
            is_prelude_size_of_function_name(name) ||
            is_prelude_align_of_function_name(name) ||
+           is_prelude_move_function_name(name) ||
+           is_prelude_take_function_name(name) ||
            is_zone_alloc_function_name(name) ||
            is_zone_new_function_name(name) ||
            is_zone_promote_function_name(name) ||

@@ -10,6 +10,7 @@
 #include "iterator_semantics.hpp"
 #include "layout.hpp"
 #include "module_path.hpp"
+#include "move_semantics.hpp"
 #include "parser.hpp"
 #include "pattern_semantics.hpp"
 #include "prelude_macros.hpp"
@@ -14302,6 +14303,40 @@ private:
         return lowered;
     }
 
+    IrExprPtr check_explicit_move_call(const Expr& expr, IrExprPtr lowered, bool require_place) {
+        (void)lowered;
+        const char* helper_name = require_place ? "take" : "move";
+        if (expr.args.size() != 1) {
+            fail(expr.loc, std::string(helper_name) + " expects one value");
+        }
+        if (expr.type_args.size() > 1) {
+            fail(expr.loc, std::string(helper_name) + " expects at most one type argument");
+        }
+        if (require_place && !is_take_place_expression(*expr.args[0])) {
+            fail(expr.args[0]->loc, take_place_expectation());
+        }
+
+        std::optional<IrType> expected;
+        if (!expr.type_args.empty()) {
+            expected = resolve_executable_type(expr.type_args.front());
+        }
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr value = expected
+            ? check_expr_with_expected(*expr.args[0], *expected)
+            : check_expr(*expr.args[0]);
+        if (expected) {
+            coerce_expr_to_expected(*value, *expected);
+            require_assignable(expr.args[0]->loc, *expected, value->type);
+        }
+        if (contains_borrow_type(value->type)) {
+            fail(expr.args[0]->loc,
+                 std::string(helper_name) + " cannot return borrow-valued expressions");
+        }
+        release_temporary_borrows(borrow_mark);
+        return value;
+    }
+
     IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value) {
         if ((value->type.primitive != IrPrimitiveKind::Vector &&
              value->type.primitive != IrPrimitiveKind::Array &&
@@ -15648,6 +15683,12 @@ private:
         }
         if (can_use_source_declared_prelude_special && is_prelude_align_of_function_name(special_name)) {
             return check_layout_query_call(expr, std::move(lowered), true);
+        }
+        if (can_use_source_declared_prelude_special && is_prelude_move_function_name(special_name)) {
+            return check_explicit_move_call(expr, std::move(lowered), false);
+        }
+        if (can_use_source_declared_prelude_special && is_prelude_take_function_name(special_name)) {
+            return check_explicit_move_call(expr, std::move(lowered), true);
         }
         if (can_use_source_declared_prelude_special && is_zone_alloc_function_name(special_name) && !expr.type_args.empty()) {
             return check_typed_zone_alloc_call(expr, std::move(lowered));

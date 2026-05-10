@@ -42,6 +42,27 @@ fn main() -> i64 {
 
 The call to `consume` moves `token`. Reading `token` after that call is rejected.
 
+## Explicit Moves
+
+`move(value)` and `take(place)` are prelude helpers for APIs where ownership
+consumption should be visible at the call site. They do not add a second move
+system; sema lowers them through the same ownership checker used by ordinary
+reads.
+
+```ari
+let token = move(make_owned(7));
+let field = take(holder.token);
+```
+
+`move(value)` accepts any non-borrow expression and returns it as the same type,
+so owning locals are marked moved and owning temporaries can be named. Copyable
+values remain copyable. `take(place)` is stricter: its argument must be a local
+binding, field, tuple index, or index expression. Use `take` when an API wants
+to make it clear that a concrete storage place is being consumed.
+
+Both helpers reject borrow-valued results, because Ari does not allow returning
+or storing temporary borrow values through these generic prelude helpers.
+
 ## Borrowing
 
 Borrows can be passed directly to calls, or bound to a local borrow binding:

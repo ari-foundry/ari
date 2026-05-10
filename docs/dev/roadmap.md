@@ -177,13 +177,13 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 7. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
-    for common heap and shared-resource patterns.
+    for common heap and shared-resource patterns. The explicit move surface
+    itself is now available through prelude `move(value)` and `take(place)`;
+    remaining work is the pointer family and its clone/drop behavior.
     - [unique] define `Unique[T]` / `Box[T]` as unique heap owners with explicit
       zone or allocator capability construction
     - [shared] define `Shared[T]` and `Weak[T]` reference-counted handles,
       including whether counts are atomic or single-threaded by default
-    - [move] add explicit `move(value)` / `take(place)` style helpers for APIs
-      that should visibly consume bindings instead of relying on read syntax
     - [clone-drop] define `Clone`/`Drop` interaction for smart pointers,
       ref-count increments, and deterministic release
     - [interop] decide how smart pointers expose raw pointers for FFI without

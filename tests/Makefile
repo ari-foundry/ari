@@ -126,6 +126,8 @@ check-prelude: $(TARGET)
 	fi
 	$(TARGET) --freestanding tests/ok/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.raw
 	$(BUILD_DIR)/prelude/prelude-trait-surface.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.raw
+	$(BUILD_DIR)/prelude/prelude-explicit-move.raw; code=$$?; test $$code -eq 32
 	$(TARGET) tests/ok/prelude-header-main.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/prelude-header-main.ll
@@ -180,6 +182,10 @@ check-prelude: $(TARGET)
 	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
 	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/errors/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'std::mem::size_of'" $(BUILD_DIR)/prelude/prelude-special-missing-decl.err
+	if $(TARGET) tests/errors/prelude-take-non-place.ari -o $(BUILD_DIR)/prelude/prelude-take-non-place.elf >$(BUILD_DIR)/prelude/prelude-take-non-place.err 2>&1; then exit 1; fi
+	grep -q "take expects a local binding, field, tuple index, or index expression" $(BUILD_DIR)/prelude/prelude-take-non-place.err
+	if $(TARGET) tests/errors/prelude-move-borrow-result.ari -o $(BUILD_DIR)/prelude/prelude-move-borrow-result.elf >$(BUILD_DIR)/prelude/prelude-move-borrow-result.err 2>&1; then exit 1; fi
+	grep -q "move cannot return borrow-valued expressions" $(BUILD_DIR)/prelude/prelude-move-borrow-result.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-trait-without-std.ari -o $(BUILD_DIR)/prelude/prelude-trait-without-std.elf >$(BUILD_DIR)/prelude/prelude-trait-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown trait 'Debug'" $(BUILD_DIR)/prelude/prelude-trait-without-std.err
 	if $(TARGET) tests/errors/ari-builtin-unknown.ari -o $(BUILD_DIR)/prelude/ari-builtin-unknown.elf >$(BUILD_DIR)/prelude/ari-builtin-unknown.err 2>&1; then exit 1; fi
