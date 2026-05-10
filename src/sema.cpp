@@ -4860,6 +4860,11 @@ private:
         set_vector_known_length(local, vector_known_length_after_append(current));
     }
 
+    void widen_vector_storage_for_assignment(LocalInfo& local, const IrExpr& value) const {
+        if (!is_vector_storage_type(local.type)) return;
+        widen_vector_storage(local, vector_storage_capacity_from_expr(value));
+    }
+
     bool known_integer_capacity(const Expr& expr, StaticIntegerValue& out) {
         if (expr.kind == ExprKind::Integer) {
             out.value = expr.int_value;
@@ -5475,11 +5480,7 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*stmt.rhs, target.type);
-        if (is_vector_storage_type(target.type) &&
-            value->kind == IrExprKind::Vector &&
-            value->args.size() > target.type.array_size) {
-            widen_vector_storage(target, static_cast<std::uint64_t>(value->args.size()));
-        }
+        widen_vector_storage_for_assignment(target, *value);
         coerce_expr_to_expected(*value, target.type);
         require_assignable(stmt.loc, target.type, value->type);
         VectorKnownLength assigned_vector_length =

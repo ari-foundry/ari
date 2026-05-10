@@ -1,0 +1,12 @@
+fn main() -> i64 {
+  var source: Vec[i64] = [];
+  source.push(4);
+  source.push(5);
+  source.push(6);
+
+  var assigned: Vec[i64] = [];
+  assigned = source;
+  let assigned_len = assigned.len();
+
+  return assigned.capacity() + assigned_len + assigned[2];
+}

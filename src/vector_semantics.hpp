@@ -45,6 +45,7 @@ void widen_vector_storage_type(IrType& type, std::uint64_t capacity);
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
 bool vector_literal_length(const IrExpr& expr, std::uint64_t& out);
 VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, const IrExpr& expr);
+std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr);
 LocalVecMethod classify_local_vec_method(const std::string& method_name);
 void require_collection_len_function_shape(SourceLocation loc,
                                            std::size_t type_arg_count,

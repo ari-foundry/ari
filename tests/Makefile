@@ -1410,6 +1410,9 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/vector-known-length-copy.ari --emit-llvm $(BUILD_DIR)/variables/vector-known-length-copy.ll
 	grep -q "store i64 1, ptr %copied_len" $(BUILD_DIR)/variables/vector-known-length-copy.ll
 	grep -q "store i64 1, ptr %assigned_len" $(BUILD_DIR)/variables/vector-known-length-copy.ll
+	$(TARGET) tests/ok/vector-copy-capacity.ari --emit-llvm $(BUILD_DIR)/variables/vector-copy-capacity.ll
+	grep -q "%assigned.addr.* = alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-copy-capacity.ll
+	grep -q "store i64 3, ptr %assigned_len" $(BUILD_DIR)/variables/vector-copy-capacity.ll
 	$(TARGET) tests/ok/vector-as-slice-known-len.ari --emit-llvm $(BUILD_DIR)/variables/vector-as-slice-known-len.ll
 	grep -Eq "insertvalue \\{ ptr, i64 \\} .* i64 2, 1" $(BUILD_DIR)/variables/vector-as-slice-known-len.ll
 	if grep -q "extractvalue { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-as-slice-known-len.ll; then exit 1; fi

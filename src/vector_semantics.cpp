@@ -166,6 +166,11 @@ VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, cons
     return VectorKnownLength{true, length};
 }
 
+std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr) {
+    if (!is_vector_storage_type(expr.type)) return 0;
+    return expr.type.array_size;
+}
+
 LocalVecMethod classify_local_vec_method(const std::string& method_name) {
     for (const auto& info : kLocalVecMethods) {
         if (method_name == info.name) return info.method;

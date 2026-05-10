@@ -209,6 +209,8 @@ Checklist:
 - [x] local `Vec[T]` literal reassignment with changing runtime length
 - [x] local `Vec[T]` initialization and assignment from another local vector
       preserve compiler-known current length when the source length is precise
+- [x] local `Vec[T]` assignment from another local vector widens the target's
+      fixed local storage to the source storage capacity
 - [x] `len(value)` and `value.len()` for local vectors, fixed arrays,
       constant-folded literal length, and compiler-known local Vec length,
       including local Vec `as_slice()` view length construction

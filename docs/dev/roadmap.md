@@ -53,7 +53,9 @@
    calls plus `as_slice` view lengths and stored-vector `for` loop bounds fold
    to constants when the current length is compiler-known. Local `Vec`
    initialization and assignment from another local `Vec` also preserve that
-   compiler-known current length when the source binding is still precise. The
+   compiler-known current length when the source binding is still precise, and
+   assignment from another local `Vec` widens the fixed local target storage to
+   the source storage capacity before the copy. The
    shared constant
    value model,
    constant-to-IR literal

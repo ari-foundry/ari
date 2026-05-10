@@ -25,7 +25,8 @@ construction. Some helpers have already moved out to focused files:
   such as `first`, `last`, and `push`, and `VectorKnownLength`/capacity
   transition helpers used by local `len`/`is_empty`, `as_slice` length, and
   stored-vector `for` loop bound constant lowering, plus local Vec known-length
-  propagation through local-vector initialization and assignment
+  propagation and storage-capacity reads through local-vector initialization
+  and assignment
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions,
   pointer operations, direct builtin calls, match expression arms, and
