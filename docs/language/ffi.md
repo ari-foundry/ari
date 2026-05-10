@@ -267,6 +267,12 @@ compact enum      -> i64 tagged union word
 parameters. Use `ptr c_void` for C `void*`; a by-value `c_void` parameter is
 rejected.
 
+For the current LLVM host backend, `c_char` follows Ari's default
+x86-64 Linux/glibc target table and is signed (`i8`). Use `c_schar` or
+`c_uchar` when an API needs explicit signedness; future target triples will
+make plain `c_char` follow the selected target instead of this fixed host
+default.
+
 The `null` literal can initialize or be passed to any `ptr T` type. `T?` is a
 nullable raw-pointer spelling for the same type, so `c_void?` and `ptr c_void`
 are equivalent in checked executable code. It does not create an `Option[T]` or

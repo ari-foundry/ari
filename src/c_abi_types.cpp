@@ -25,6 +25,8 @@ bool alias(IrPrimitiveKind kind,
 bool c_abi_type_alias(const std::string& name, IrPrimitiveKind& primitive, std::string& canonical) {
     std::string base = unqualified_name(name);
     if (base == "c_bool") return alias(IrPrimitiveKind::Bool, "bool", primitive, canonical);
+    // Current host ABI policy is x86-64 Linux/glibc: plain C char is signed.
+    // Target triples should replace this fixed choice when Ari grows them.
     if (base == "c_char" || base == "c_schar") return alias(IrPrimitiveKind::I8, "i8", primitive, canonical);
     if (base == "c_uchar") return alias(IrPrimitiveKind::U8, "u8", primitive, canonical);
     if (base == "c_short") return alias(IrPrimitiveKind::I16, "i16", primitive, canonical);
