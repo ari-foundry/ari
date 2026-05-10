@@ -381,10 +381,13 @@ typedef named `WireStatus`. Private helpers and private `@repr(C)` aggregates
 are not emitted. Generic `@repr(C)` structs still keep the source-name opaque
 `typedef struct Name Name;` declaration for pointer-only APIs; concrete
 by-value instantiations use separate typedefs/definitions keyed by their type
-arguments. Header generation currently rejects Ari-only values such as
-`string`, ownership-qualified values, and non-`repr(C)` aggregate parameters or
-returns; expose a `ptr c_char`, `ptr c_void`, or other scalar/raw pointer C ABI
-type until those layouts are defined.
+arguments. By-value struct parameters and returns are emitted only for direct
+aggregate ABI values on 64-bit Unix targets, currently up to 16 bytes with at
+most 8-byte alignment. Larger records or non-Unix targets should expose an
+explicit pointer ABI. Header generation currently rejects Ari-only values such
+as `string`, ownership-qualified values, and non-`repr(C)` aggregate parameters
+or returns; expose a `ptr c_char`, `ptr c_void`, or other scalar/raw pointer C
+ABI type until those layouts are defined.
 
 ## Runtime Entry
 
@@ -400,6 +403,5 @@ shuts the context down afterward.
 
 ## Planned FFI Surface
 
-The next FFI pieces are ownership-qualified `repr(C)` field policy,
-payload-bearing enum layouts, target-hardened aggregate ABI rules, and non-C ABI
-adapters via explicit C-compatible shims.
+The next FFI pieces are payload-bearing enum layouts, broader target-specific
+aggregate ABI support, and non-C ABI adapters via explicit C-compatible shims.

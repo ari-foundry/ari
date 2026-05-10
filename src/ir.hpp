@@ -418,6 +418,7 @@ struct IrProgram {
     std::vector<IrTraitObjectVTable> trait_object_vtables;
     std::vector<IrFunction> functions;
     std::vector<std::string> warnings;
+    std::string target_triple;
     bool require_main = true;
 };
 

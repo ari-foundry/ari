@@ -1,0 +1,10 @@
+@repr(C)
+pub struct ApiPair {
+  left: i64,
+  right: i64,
+}
+
+@export("ari_take_pair")
+pub fn take_pair(pair: ApiPair) -> i64 {
+  return pair.left + pair.right;
+}

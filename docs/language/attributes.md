@@ -24,8 +24,9 @@ Generic structs may store generic fields by value; each concrete instantiation
 resolves those fields to concrete layout slots before IR emission. Generic
 `ptr T`, `ref T`, and `ref mut T` fields remain pointer-sized slots. C header
 emission renders `ref T` as `const T*`; `ptr T` and `ref mut T` remain mutable
-pointer spellings. `own` fields are rejected until the ownership ABI policy is
-explicit.
+pointer spellings. `own` fields are rejected because the C ABI cannot carry
+Ari ownership; expose ownership-sensitive values through an explicit `ptr` or
+`ref` ABI instead.
 `@repr(C)` enums currently must be fieldless, including generic enums; generic
 parameters are accepted only when they do not appear in payload storage.
 
@@ -100,7 +101,10 @@ emitting `typedef int64_t Name;` plus prefixed integer constants such as
 `Name_Case = 0`. The current header emitter skips private helpers, private
 structs, and private enums. Generic `@repr(C)` structs are emitted as opaque
 typedefs so pointer-only C APIs can name them; exported by-value instantiations
-also get concrete typedefs/definitions such as `GenericHandle_i64`. Header
+also get concrete typedefs/definitions such as `GenericHandle_i64`. By-value
+struct parameters and returns are emitted only for direct aggregate ABI values
+on 64-bit Unix targets, currently up to 16 bytes with at most 8-byte alignment;
+larger or target-specific cases should use an explicit pointer ABI. Header
 generation rejects Ari-only values such as `string`, owned values, and
 aggregate values whose C ABI policy is not explicit.
 Raw `--freestanding` ELF output records explicit export/no-mangle names in the

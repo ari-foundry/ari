@@ -116,10 +116,10 @@ The compiler accepts a small built-in attribute surface:
 use value, raw pointer, `ref`, or `ref mut` types. Generic structs may store
 generic fields by value, and concrete instantiations resolve those fields to
 concrete layout slots before IR emission. Generic `ptr T`, `ref T`, and
-`ref mut T` fields remain pointer-sized slots. `own` fields are rejected until
-the ownership ABI policy is explicit. `@repr(C)` enums currently must be
-fieldless, including generic enums; C tagged-union payload layout is not
-implemented yet.
+`ref mut T` fields remain pointer-sized slots. `own` fields are rejected
+because C cannot model Ari ownership; use explicit pointer or borrow slots at
+the boundary. `@repr(C)` enums currently must be fieldless, including generic
+enums; C tagged-union payload layout is not implemented yet.
 
 `@cfg(false)` prunes a declaration before name collection and type checking.
 The disabled declaration must still parse, but its names, types, and body are

@@ -1,0 +1,11 @@
+@repr(C)
+pub struct Wide {
+  a: i64,
+  b: i64,
+  c: i64,
+}
+
+@export("ari_take_wide")
+pub fn take_wide(value: Wide) -> i64 {
+  return value.a + value.b + value.c;
+}

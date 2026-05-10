@@ -295,6 +295,7 @@ public:
 
         IrProgram ir;
         ir.require_main = options_.require_main || options_.test_mode;
+        ir.target_triple = target_.triple;
         collect_ir_extern_functions(ir);
         collect_ir_c_enums(ir);
         collect_ir_c_records(ir);
@@ -1351,7 +1352,8 @@ private:
                 field.type.qualifier != TypeQualifier::Ref &&
                 field.type.qualifier != TypeQualifier::MutRef &&
                 field.type.qualifier != TypeQualifier::Ptr) {
-                fail(field.loc, "attribute '@repr(C)' fields cannot use ownership qualifiers yet");
+                fail(field.loc,
+                     "attribute '@repr(C)' fields cannot use own; expose ownership through an explicit ptr/ref ABI");
             }
         }
     }

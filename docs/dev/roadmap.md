@@ -56,32 +56,16 @@
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs
-3. Finish `repr(C)` aggregate ABI and raw-pointer FFI edges.
-   Ari-owned `extern "ari"` builtin hooks are represented as explicit
-   non-C ABI shims in IR, and scalar C aliases now follow target triples.
-   The next FFI priority is to make foreign aggregate layout and pointer
-   interop explicit enough for stable C headers. The raw-pointer helper
-   surface is implemented for nullable pointers, casts, byte/typed offsets,
-   layout queries, scalar/plain-aggregate loads and stores, dereference syntax,
-   and scalar aggregate field/element access on the supported backends.
-   Public non-generic `@repr(C)` structs can also appear by value in exported
-   C header prototypes on the LLVM/shared path, and exported by-value generic
-   `@repr(C)` struct instantiations emit concrete C typedefs such as
-   `Handle_i64`.
-   - [repr] finish `repr(C)` aggregate ABI layout policy for
-     ownership-qualified fields and harden target-specific aggregate ABI checks;
-     public non-generic `@repr(C)` struct
-     declarations with scalar/raw-pointer/borrow fields are emitted in C
-     headers with immutable `ref` slots spelled as `const` C pointers, public
-     generic `@repr(C)` structs are emitted as opaque C typedefs for
-     pointer-only APIs and as concrete typedefs/definitions for exported
-     by-value instantiations, public fieldless `@repr(C)` enums, including
-     generic fieldless enums whose type parameters do not affect layout, are
-     emitted as fixed-width tag typedefs plus prefixed constants,
-     scalar/raw-pointer exported function C headers are implemented,
-     generic value fields are accepted after concrete instantiation, generic
-     `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
-     and generic fieldless enums are accepted because their layout is payload-free
+3. Lower general `Iterator[T]`-based `for` loops.
+   Range loops, list literal loops, and stored local vector loops lower today
+   without trait dispatch; the general iterator model needs trait-bound
+   resolution plus generic `Option[T]` result lowering for `next` on every
+   backend.
+   - [trait] resolve `IntoIterator[T]`/`Iterator[T]`
+   - [loop] lower `next`-style iteration state
+   - [pattern] bind refutable enum-case loop-head patterns after the iterator
+     failure/skip semantics are designed
+
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -135,6 +119,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      after their non-local ABI/storage rules are defined
    - [payload-pointers] lower direct payload field pointer access for
      aggregate enum payloads after payload ABI and aliasing rules are explicit
+   - [repr-c-payloads] define C tagged-union layout and C header emission for
+     payload-bearing `@repr(C)` enums after aggregate enum payload ABI is stable
 5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
@@ -185,14 +171,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
     - [freestanding] lower stored local vector values in the raw backend
-8. Lower general `Iterator[T]`-based `for` loops. Range loops, list literal
-    loops, and stored local vector loops lower today without trait dispatch; the
-    general iterator model needs trait-bound resolution plus generic
-    `Option[T]` result lowering for `next` on every backend.
-    - [trait] resolve `IntoIterator[T]`/`Iterator[T]`
-    - [loop] lower `next`-style iteration state
-    - [pattern] bind refutable enum-case loop-head patterns after the iterator failure/skip semantics are designed
-9. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+8. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot

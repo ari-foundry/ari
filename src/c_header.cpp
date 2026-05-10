@@ -1,7 +1,9 @@
 #include "c_header.hpp"
 
 #include "common.hpp"
+#include "layout.hpp"
 #include "symbol_mangle.hpp"
+#include "target.hpp"
 
 #include <cstddef>
 #include <map>
@@ -121,7 +123,7 @@ std::string c_type_name(const IrType& type,
                         const CEnumNames& c_enum_names,
                         bool allow_record_values) {
     if (type.qualifier == TypeQualifier::Own) {
-        throw CompileError("C header emission does not support owning type " + type_name(type) +
+        throw CompileError("C header emission does not support ownership-qualified type " + type_name(type) +
                            "; expose an explicit raw pointer or scalar ABI instead");
     }
 
@@ -290,6 +292,46 @@ CConcreteRecordNames collect_concrete_record_names(const std::vector<CConcreteRe
     return names;
 }
 
+bool is_by_value_record_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Struct;
+}
+
+void require_direct_record_abi(SourceLocation loc,
+                               const IrType& type,
+                               const TargetInfo& target,
+                               const std::string& context) {
+    if (!is_by_value_record_type(type)) return;
+    if (!(target.pointer_bits == 64 && target.unix)) {
+        throw CompileError(where(loc) + ": C header emission for by-value " + context + " " +
+                           type_name(type) +
+                           " is currently supported only on 64-bit Unix targets; use ptr " +
+                           type.name + " for a stable ABI on target '" + target.triple + "'");
+    }
+    std::uint64_t size = 0;
+    std::uint64_t align = 0;
+    if (!ari_layout_size_bytes(type, size) || !ari_layout_align_bytes(type, align)) {
+        throw CompileError(where(loc) + ": C header emission cannot compute layout for by-value " +
+                           context + " " + type_name(type) + "; use an explicit raw pointer ABI");
+    }
+    if (size == 0) {
+        throw CompileError(where(loc) + ": C header emission does not support zero-sized by-value " +
+                           context + " " + type_name(type) + "; use ptr " + type.name);
+    }
+    if (size > 16 || align > 8) {
+        throw CompileError(where(loc) + ": C header emission for by-value " + context + " " +
+                           type_name(type) +
+                           " is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr " +
+                           type.name);
+    }
+}
+
+void require_direct_function_record_abi(const IrFunction& fn, const TargetInfo& target) {
+    require_direct_record_abi(fn.loc, fn.return_type, target, "return type");
+    for (const auto& param : fn.params) {
+        require_direct_record_abi(fn.loc, param.type, target, "parameter");
+    }
+}
+
 void require_unique_concrete_c_type_names(const IrProgram& program,
                                           const std::vector<CConcreteRecord>& concrete_records) {
     std::set<std::string> used_c_names;
@@ -362,11 +404,16 @@ std::string concrete_record_definition(const CConcreteRecord& record,
 
 std::string emit_c_header(const IrProgram& program) {
     require_unique_c_type_names(program);
+    TargetInfo target = resolve_target_info(program.target_triple);
     CRecordNames c_record_names = collect_c_record_names(program);
     CEnumNames c_enum_names = collect_c_enum_names(program);
     std::vector<CConcreteRecord> c_concrete_records = collect_concrete_records(program, c_record_names);
     require_unique_concrete_c_type_names(program, c_concrete_records);
     CConcreteRecordNames c_concrete_record_names = collect_concrete_record_names(c_concrete_records);
+    for (const auto& fn : program.functions) {
+        if (!fn.shared_export) continue;
+        require_direct_function_record_abi(fn, target);
+    }
 
     std::ostringstream out;
     out << "#pragma once\n\n";
