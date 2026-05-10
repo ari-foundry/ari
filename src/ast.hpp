@@ -243,7 +243,7 @@ struct Stmt {
     ExprPtr condition;
     bool has_condition_pattern = false;
     std::unique_ptr<Pattern> condition_pattern;
-    Pattern for_pattern;
+    std::unique_ptr<Pattern> for_pattern;
     bool for_pattern_filter = false;
     ExprPtr for_iterable;
     ExprPtr match_value;

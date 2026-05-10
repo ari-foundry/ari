@@ -142,9 +142,10 @@
    also moving out of every node: AST macro token trees now live behind a
    `MacroCall`-specific payload allocated by `ast_builders`, and IR
    format-print string parts now live behind a `FormatPrint`-specific payload
-   allocated by `ir_builders`. AST `if let`/`while let` condition patterns now
-   also live behind condition-pattern payload pointers so ordinary expressions
-   and statements no longer carry a full `Pattern` object.
+   allocated by `ir_builders`. AST `if let`/`while let` condition patterns and
+   `for` loop-head patterns now also live behind pattern payload pointers so
+   ordinary expressions and non-loop statements no longer carry a full
+   `Pattern` object.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
@@ -155,7 +156,8 @@
      receive broad parser, sema, and backend mutations
    - [stmt-payload-groups] split the remaining AST/IR statement-only fields by
      statement kind once parser and sema statement construction has enough
-     focused helpers
+     focused helpers; small next targets are block/branch/loop body vectors,
+     match-arm vectors, assignment payloads, and label/drop/break metadata
    - [expr-child-vector-payloads] split expression child/vector fields after
      builders cover the remaining parser/sema/backend mutation paths
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

@@ -9797,6 +9797,7 @@ private:
         IrExprPtr iterator,
         const IrType& item_type
     ) {
+        const Pattern& for_pattern = *stmt.for_pattern;
         IrType iterator_type = iterator->type;
         const bool borrowed_iterator = is_borrow_type(iterator_type);
         const bool owning_iterator = is_owner_type(iterator_type);
@@ -9811,15 +9812,15 @@ private:
                      type_name(iterator_type));
         }
         if (is_owner_type(item_type) || contains_borrow_type(item_type)) {
-            fail(stmt.for_pattern.loc,
+            fail(for_pattern.loc,
                  "Iterator[T] for-loop item bindings currently require copyable non-borrow items, got " +
                      type_name(item_type));
         }
         if (stmt.for_pattern_filter &&
-            (stmt.for_pattern.kind == PatternKind::Binding || stmt.for_pattern.kind == PatternKind::Wildcard)) {
-            fail(stmt.for_pattern.loc, "for-let iterator filters require a refutable item pattern");
+            (for_pattern.kind == PatternKind::Binding || for_pattern.kind == PatternKind::Wildcard)) {
+            fail(for_pattern.loc, "for-let iterator filters require a refutable item pattern");
         }
-        Pattern item_pattern = normalize_iterator_item_pattern(stmt.for_pattern, item_type);
+        Pattern item_pattern = normalize_iterator_item_pattern(for_pattern, item_type);
         if (item_pattern.kind != PatternKind::Binding && item_pattern.kind != PatternKind::Wildcard) {
             require_supported_for_iterator_pattern(item_pattern, item_type);
         }
@@ -9850,10 +9851,10 @@ private:
             coverage
         );
         if (pattern_arms.empty()) {
-            fail(stmt.for_pattern.loc, "iterator for-loop pattern did not lower to a match arm");
+            fail(for_pattern.loc, "iterator for-loop pattern did not lower to a match arm");
         }
         if (stmt.for_pattern_filter) {
-            Pattern skip_pattern = make_iterator_some_pattern(make_wildcard_pattern(stmt.for_pattern.loc));
+            Pattern skip_pattern = make_iterator_some_pattern(make_wildcard_pattern(for_pattern.loc));
             std::vector<IrMatchArm> skip_arms = lower_match_arm_patterns(
                 skip_pattern,
                 enum_info,
@@ -9861,7 +9862,7 @@ private:
                 coverage
             );
             if (skip_arms.size() != 1) {
-                fail(stmt.for_pattern.loc, "iterator for-let fallback pattern did not lower to a single match arm");
+                fail(for_pattern.loc, "iterator for-let fallback pattern did not lower to a single match arm");
             }
             pattern_arms.push_back(std::move(skip_arms.front()));
         }
@@ -9941,6 +9942,7 @@ private:
     }
 
     void check_for(const Stmt& stmt, IrStmt& lowered) {
+        const Pattern& for_pattern = *stmt.for_pattern;
         std::string range_call_name;
         bool is_range_call = false;
         if (stmt.for_iterable && stmt.for_iterable->kind == ExprKind::Call) {
@@ -9953,14 +9955,14 @@ private:
         }
         if (is_range_call) {
             if (stmt.for_pattern_filter) {
-                fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
+                fail(for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
             }
             check_for_range(stmt, lowered, range_call_name);
             return;
         }
         if (stmt.for_iterable && stmt.for_iterable->kind == ExprKind::Vector) {
             if (stmt.for_pattern_filter) {
-                fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
+                fail(for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
             }
             check_for_vector(stmt, lowered);
             return;
@@ -9968,14 +9970,14 @@ private:
         IrExprPtr iterable = check_expr(*stmt.for_iterable);
         if (is_prelude_range_type(iterable->type)) {
             if (stmt.for_pattern_filter) {
-                fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
+                fail(for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
             }
             check_for_range_value(stmt, lowered, std::move(iterable));
             return;
         }
         if (iterable->type.primitive == IrPrimitiveKind::Vector) {
             if (stmt.for_pattern_filter) {
-                fail(stmt.for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
+                fail(for_pattern.loc, "for-let filters currently require an Iterator[T] or IntoIterator[T] value");
             }
             check_for_vector_value(stmt, lowered, std::move(iterable));
             return;
@@ -10021,6 +10023,7 @@ private:
     }
 
     void finish_for_range(const Stmt& stmt, IrStmt& lowered, IrExprPtr start, IrExprPtr end, bool inclusive) {
+        const Pattern& for_pattern = *stmt.for_pattern;
         IrType bound_type = start->type;
         lowered.kind = IrStmtKind::ForRange;
         lowered.label = stmt.label;
@@ -10040,7 +10043,7 @@ private:
         push_scope();
         std::vector<IrStmtPtr> pattern_prelude;
         lower_irrefutable_non_iterator_for_head(
-            stmt.for_pattern,
+            for_pattern,
             bound_type,
             &lowered.for_binding_name,
             nullptr,
@@ -10070,6 +10073,7 @@ private:
     }
 
     void check_for_vector(const Stmt& stmt, IrStmt& lowered) {
+        const Pattern& for_pattern = *stmt.for_pattern;
         IrExprPtr iterable = check_expr(*stmt.for_iterable);
         if (iterable->kind != IrExprKind::Vector || iterable->type.args.size() != 1) {
             fail(stmt.loc, "for currently supports list literal iterator expressions");
@@ -10087,7 +10091,7 @@ private:
         push_scope();
         std::vector<IrStmtPtr> pattern_prelude;
         lower_irrefutable_non_iterator_for_head(
-            stmt.for_pattern,
+            for_pattern,
             lowered.for_binding_type,
             &lowered.for_binding_name,
             nullptr,
@@ -10117,6 +10121,7 @@ private:
     }
 
     void check_for_vector_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
+        const Pattern& for_pattern = *stmt.for_pattern;
         if (iterable->type.args.size() != 1) {
             fail(stmt.loc, "for currently supports stored local vector values with a known length");
         }
@@ -10158,7 +10163,7 @@ private:
         std::vector<IrStmtPtr> pattern_prelude;
         IrExprPtr element = make_vector_index_expr(stmt.loc, vector_name, vector_type, loop->for_index_name, i64);
         lower_irrefutable_non_iterator_for_head(
-            stmt.for_pattern,
+            for_pattern,
             element_type,
             nullptr,
             &element,

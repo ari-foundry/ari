@@ -1,0 +1,53 @@
+enum Item {
+  Empty,
+  Big(i64),
+}
+
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+struct Cursor {
+  mut step: i64,
+}
+
+impl Iterator[Item] for Cursor {
+  fn next(self: ref mut Self) -> Option[Item] {
+    if self.step == 0 {
+      self.step = 1;
+      return Some(Empty);
+    }
+    if self.step == 1 {
+      self.step = 2;
+      return Some(Big(11));
+    }
+    return None<Item>();
+  }
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  for item @ value in range(1, 4) {
+    total = total + item + value;
+  }
+
+  for (left, right) in [(2, 3), (4, 5)] {
+    total = total + left * right;
+  }
+
+  let first = Point { x: 1, y: 7 };
+  let second = Point { x: 2, y: 8 };
+  let points: Vec[Point] = [first, second];
+  for Point { x, y } in points {
+    total = total + x + y;
+  }
+
+  let cursor = Cursor { step: 0 };
+  for let Big(size) in cursor {
+    total = total + size;
+  }
+
+  return total;
+}

@@ -279,6 +279,10 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/for-range-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-alias-pattern.ll
 	grep -q "store i64 .* ptr %item" $(BUILD_DIR)/control-flow/for-range-alias-pattern.ll
 	grep -q "store i64 .* ptr %value" $(BUILD_DIR)/control-flow/for-range-alias-pattern.ll
+	$(TARGET) tests/ok/for-pattern-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/for-pattern-payloads.ll
+	grep -q "store i64 .* ptr %item" $(BUILD_DIR)/control-flow/for-pattern-payloads.ll
+	grep -q "extractvalue" $(BUILD_DIR)/control-flow/for-pattern-payloads.ll
+	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-pattern-payloads.ll
 	$(TARGET) tests/ok/range-generic-bounds.ari --emit-llvm $(BUILD_DIR)/control-flow/range-generic-bounds.ll
 	grep -q "icmp ult i8" $(BUILD_DIR)/control-flow/range-generic-bounds.ll
 	grep -q "icmp ule i8" $(BUILD_DIR)/control-flow/range-generic-bounds.ll
@@ -300,6 +304,7 @@ check-control-flow: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-alias-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-alias-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-alias-pattern.elf; code=$$?; test $$code -eq 75; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-stored.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-stored.elf; $(BUILD_DIR)/control-flow/for-vector-stored.elf; code=$$?; test $$code -eq 20; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-vector-stored-alias-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.elf; $(BUILD_DIR)/control-flow/for-vector-stored-alias-pattern.elf; code=$$?; test $$code -eq 28; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/for-pattern-payloads.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/for-pattern-payloads.elf; $(BUILD_DIR)/control-flow/for-pattern-payloads.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/while-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; $(BUILD_DIR)/control-flow/while-let-or-pattern.elf; code=$$?; test $$code -eq 55; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/if-let-or-pattern.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/if-let-or-pattern.elf; $(BUILD_DIR)/control-flow/if-let-or-pattern.elf; code=$$?; test $$code -eq 44; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/condition-pattern-payloads.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/control-flow/condition-pattern-payloads.elf; $(BUILD_DIR)/control-flow/condition-pattern-payloads.elf; code=$$?; test $$code -eq 35; fi
