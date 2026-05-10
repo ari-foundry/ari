@@ -1,0 +1,14 @@
+fn inspect(value: ref i64) -> i64 {
+  return 2;
+}
+
+fn main() -> i64 {
+  var total = 4;
+  total += 3;
+  let pair = (total, matches!(total, 7));
+  let borrowed = inspect(ref pair.0);
+  if pair.1 {
+    return total + borrowed + -4;
+  }
+  return 1;
+}

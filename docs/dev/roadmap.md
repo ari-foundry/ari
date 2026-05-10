@@ -127,13 +127,19 @@
    cloning is centralized in `pattern_semantics` for match/or-pattern and sema
    iterator-filter rewrites. IR match arms and nested enum-payload literal
    conditions share their integer and bool literal slots too, keeping match
-   lowering and both backends on one active literal payload. Broader AST/IR node
-   packing should stay incremental: `Stmt` and the large expression
+   lowering and both backends on one active literal payload. AST scalar/name,
+   tuple-index, and borrow expression construction now goes through
+   `ast_builders`, reducing parser/sema direct writes to union-backed
+   expression fields before larger payload splits. Broader AST/IR node packing
+   should stay incremental: `Stmt` and the large expression
    child/vector payloads are still widely mutated while parsing and lowering,
    so their payload split needs more constructor/builder coverage first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions once their builders and cloning paths
      can preserve today's mutation flow
+   - [ast-builder-followup] route the remaining string/null/composite AST and
+     scattered IR expression construction paths through builders before
+     splitting child/vector payload storage
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

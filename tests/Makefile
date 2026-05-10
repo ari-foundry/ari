@@ -764,6 +764,8 @@ check-operators: $(TARGET)
 	$(BUILD_DIR)/operators/operators-bitwise-not.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/operators-compound-assignment.ari -o $(BUILD_DIR)/operators/operators-compound-assignment.raw
 	$(BUILD_DIR)/operators/operators-compound-assignment.raw; code=$$?; test $$code -eq 8
+	$(TARGET) --freestanding tests/ok/ast-builder-scalar-paths.ari -o $(BUILD_DIR)/operators/ast-builder-scalar-paths.raw
+	$(BUILD_DIR)/operators/ast-builder-scalar-paths.raw; code=$$?; test $$code -eq 5
 	$(TARGET) --freestanding tests/ok/operators-try.ari -o $(BUILD_DIR)/operators/operators-try.raw
 	$(BUILD_DIR)/operators/operators-try.raw; code=$$?; test $$code -eq 52
 	$(TARGET) --freestanding tests/ok/operators-try-residual-conversion.ari -o $(BUILD_DIR)/operators/operators-try-residual-conversion.raw
@@ -830,6 +832,10 @@ check-operators: $(TARGET)
 	grep -q "and i64" $(BUILD_DIR)/operators/operators-compound-assignment.ll
 	grep -q "or i64" $(BUILD_DIR)/operators/operators-compound-assignment.ll
 	grep -q "xor i64" $(BUILD_DIR)/operators/operators-compound-assignment.ll
+	$(TARGET) tests/ok/ast-builder-scalar-paths.ari --emit-llvm $(BUILD_DIR)/operators/ast-builder-scalar-paths.ll
+	grep -q "match.expr.arm" $(BUILD_DIR)/operators/ast-builder-scalar-paths.ll
+	grep -q "getelementptr inbounds { i64, i1 }" $(BUILD_DIR)/operators/ast-builder-scalar-paths.ll
+	grep -q "call i64 @\"_ARNv7inspect\"" $(BUILD_DIR)/operators/ast-builder-scalar-paths.ll
 	$(TARGET) tests/ok/operators-try.ari --emit-llvm $(BUILD_DIR)/operators/operators-try.ll
 	grep -q "try.ok" $(BUILD_DIR)/operators/operators-try.ll
 	grep -q "try.return" $(BUILD_DIR)/operators/operators-try.ll

@@ -67,6 +67,8 @@ construction. Some helpers have already moved out to focused files:
   constructor IR node assembly after payload semantic checks
 - `ast_clone` for union-safe AST expression cloning shared by parser compound
   assignment lowering and sema borrow-receiver synthesis
+- `ast_builders` for small AST expression constructors that keep scalar/name,
+  tuple-index, and borrow payload initialization out of parser and sema
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
@@ -74,9 +76,11 @@ literal payload in a tagged union, `Expr`/`IrExpr` scalar literal and
 tuple-index payloads now share anonymous unions, and AST `Pattern` integer/bool
 literal payloads share a union-backed slot. IR match arms and nested
 enum-payload literal conditions also use one active integer-or-bool payload
-slot. Broader `Stmt` and expression child/vector payload packing remains a
-separate refactor because those nodes are mutated across parser cloning,
-semantic lowering, and IR builder paths.
+slot. Parser and sema now use `ast_builders` for the scalar/name/tuple-index
+AST expression construction paths that touch those union-backed fields. Broader
+`Stmt` and expression child/vector payload packing remains a separate refactor
+because those nodes are mutated across parser cloning, semantic lowering, and IR
+builder paths.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

@@ -404,6 +404,8 @@ Checklist:
       helper
 - [x] IR match-arm and nested enum-payload literal packing preserves scalar
       match lowering, aggregate enum nested-payload tests, and raw/LLVM backends
+- [x] AST expression builders preserve compound-assignment name cloning,
+      matches! bool arms, tuple-index borrowing, and negative scalar literals
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

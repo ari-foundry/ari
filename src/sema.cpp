@@ -1,5 +1,6 @@
 #include "sema.hpp"
 
+#include "ast_builders.hpp"
 #include "attribute_semantics.hpp"
 #include "aggregate_literal_semantics.hpp"
 #include "ast_clone.hpp"
@@ -9715,23 +9716,6 @@ private:
         return pattern;
     }
 
-    static ExprPtr make_ast_name_expr(SourceLocation loc, const std::string& name) {
-        auto expr = std::make_unique<Expr>();
-        expr->kind = ExprKind::Name;
-        expr->loc = loc;
-        expr->name = name;
-        return expr;
-    }
-
-    static ExprPtr make_ast_borrow_expr(SourceLocation loc, const Expr& operand, bool mutable_borrow) {
-        auto borrow = std::make_unique<Expr>();
-        borrow->kind = ExprKind::Borrow;
-        borrow->loc = loc;
-        borrow->mutable_borrow = mutable_borrow;
-        borrow->operand = clone_borrowable_receiver_expr(operand);
-        return borrow;
-    }
-
     bool try_find_concrete_iterator_trait_impl(
         const std::string& trait_name,
         const IrType& self_type,
@@ -9819,7 +9803,7 @@ private:
         call.name = method_name;
         if (borrow_mut_receiver) {
             ExprPtr receiver = make_ast_name_expr(loc, iterator_name);
-            call.operand = make_ast_borrow_expr(loc, *receiver, true);
+            call.operand = make_ast_borrow_expr(loc, std::move(receiver), true);
         } else {
             call.operand = make_ast_name_expr(loc, iterator_name);
         }
@@ -15400,7 +15384,10 @@ private:
         bool mutable_receiver_borrow = false;
         if (!is_borrow_type(receiver->type) &&
             borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
-            ExprPtr borrow_expr = make_ast_borrow_expr(expr.args.front()->loc, *expr.args.front(), mutable_receiver_borrow);
+            ExprPtr borrow_expr = make_ast_borrow_expr(
+                expr.args.front()->loc,
+                clone_borrowable_receiver_expr(*expr.args.front()),
+                mutable_receiver_borrow);
             if (!borrow_expr->operand) {
                 fail(expr.loc,
                      "method '" + method_name +
@@ -15831,7 +15818,10 @@ private:
         bool mutable_receiver_borrow = false;
         if (!is_borrow_type(receiver->type) &&
             borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
-            ExprPtr borrow_expr = make_ast_borrow_expr(expr.operand->loc, *expr.operand, mutable_receiver_borrow);
+            ExprPtr borrow_expr = make_ast_borrow_expr(
+                expr.operand->loc,
+                clone_borrowable_receiver_expr(*expr.operand),
+                mutable_receiver_borrow);
             if (!borrow_expr->operand) {
                 fail(expr.loc,
                      "method '" + expr.name +

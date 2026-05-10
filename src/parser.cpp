@@ -1,5 +1,6 @@
 #include "parser.hpp"
 
+#include "ast_builders.hpp"
 #include "ast_clone.hpp"
 #include "cfg_eval.hpp"
 #include "module_path.hpp"
@@ -856,7 +857,7 @@ private:
                 combined->op = compound_assignment_binary_operator(op.kind, op.loc);
                 combined->left = stmt->assign_target
                     ? clone_assignment_target(*stmt->assign_target)
-                    : make_name_expr(loc, stmt->assign_name);
+                    : make_ast_name_expr(loc, stmt->assign_name);
                 combined->right = std::move(rhs);
                 stmt->rhs = std::move(combined);
             }
@@ -1584,14 +1585,6 @@ private:
         }
     }
 
-    static ExprPtr make_name_expr(SourceLocation loc, const std::string& name) {
-        auto expr = std::make_unique<Expr>();
-        expr->kind = ExprKind::Name;
-        expr->loc = loc;
-        expr->name = name;
-        return expr;
-    }
-
     bool starts_expression(TokenKind kind) const {
         return kind == TokenKind::Integer ||
                kind == TokenKind::Float ||
@@ -1655,31 +1648,16 @@ private:
             Token minus = tokens_[pos_ - 1];
             if (check(TokenKind::Integer)) {
                 Token number = tokens_[pos_++];
-                auto expr = std::make_unique<Expr>();
-                expr->kind = ExprKind::Integer;
-                expr->int_value = number.int_value;
-                expr->int_negative = true;
-                expr->literal_suffix = number.literal_suffix;
-                expr->loc = minus.loc;
-                return expr;
+                return make_ast_integer_expr(minus.loc, number.int_value, true, number.literal_suffix);
             }
             if (check(TokenKind::Float)) {
                 Token number = tokens_[pos_++];
-                auto expr = std::make_unique<Expr>();
-                expr->kind = ExprKind::Float;
-                expr->float_value = -number.float_value;
-                expr->literal_suffix = number.literal_suffix;
-                expr->loc = minus.loc;
-                return expr;
+                return make_ast_float_expr(minus.loc, -number.float_value, number.literal_suffix);
             }
-            auto zero = std::make_unique<Expr>();
-            zero->kind = ExprKind::Integer;
-            zero->int_value = 0;
-            zero->loc = minus.loc;
             auto expr = std::make_unique<Expr>();
             expr->kind = ExprKind::Binary;
             expr->op = TokenKind::Minus;
-            expr->left = std::move(zero);
+            expr->left = make_ast_integer_expr(minus.loc, 0);
             expr->right = parse_unary();
             return expr;
         }
@@ -1713,13 +1691,7 @@ private:
         if (match(TokenKind::KwRef)) {
             Token ref = tokens_[pos_ - 1];
             bool mutable_borrow = match(TokenKind::KwMut);
-            auto expr = std::make_unique<Expr>();
-            expr->kind = ExprKind::Borrow;
-            expr->loc = ref.loc;
-            expr->operand = parse_call();
-            if (expr->operand->kind == ExprKind::Name) expr->name = expr->operand->name;
-            expr->mutable_borrow = mutable_borrow;
-            return expr;
+            return make_ast_borrow_expr(ref.loc, parse_call(), mutable_borrow);
         }
         return parse_call();
     }
@@ -1750,14 +1722,6 @@ private:
         return name.substr(split + 2);
     }
 
-    static ExprPtr make_bool_expr(SourceLocation loc, bool value) {
-        auto expr = std::make_unique<Expr>();
-        expr->kind = ExprKind::Bool;
-        expr->loc = loc;
-        expr->bool_value = value;
-        return expr;
-    }
-
     ExprPtr parse_matches_macro(SourceLocation loc) {
         auto expr = std::make_unique<Expr>();
         expr->kind = ExprKind::Match;
@@ -1769,7 +1733,7 @@ private:
         ExprMatchArm yes;
         yes.pattern = parse_pattern();
         yes.loc = yes.pattern.loc;
-        yes.value = make_bool_expr(yes.loc, true);
+        yes.value = make_ast_bool_expr(yes.loc, true);
         expr->match_arms.push_back(std::move(yes));
 
         if (match(TokenKind::Comma) && !check(TokenKind::RParen)) {
@@ -1783,7 +1747,7 @@ private:
         ExprMatchArm no;
         no.pattern = std::move(wildcard);
         no.loc = loc;
-        no.value = make_bool_expr(loc, false);
+        no.value = make_ast_bool_expr(loc, false);
         expr->match_arms.push_back(std::move(no));
         return expr;
     }
@@ -1980,12 +1944,7 @@ private:
                 SourceLocation dot_loc = tokens_[pos_ - 1].loc;
                 if (check(TokenKind::Integer)) {
                     Token index = expect(TokenKind::Integer, "expected tuple index after .");
-                    auto access = std::make_unique<Expr>();
-                    access->kind = ExprKind::TupleIndex;
-                    access->loc = dot_loc;
-                    access->operand = std::move(expr);
-                    access->tuple_index = index.int_value;
-                    expr = std::move(access);
+                    expr = make_ast_tuple_index_expr(dot_loc, std::move(expr), index.int_value);
                     continue;
                 }
                 Token field = expect_identifier_or_contextual_name_keyword("expected field name after .");
@@ -2038,27 +1997,17 @@ private:
         expr->loc = token.loc;
         switch (token.kind) {
             case TokenKind::Integer:
-                expr->kind = ExprKind::Integer;
-                expr->int_value = token.int_value;
-                expr->literal_suffix = token.literal_suffix;
-                return expr;
+                return make_ast_integer_expr(token.loc, token.int_value, false, token.literal_suffix);
             case TokenKind::Float:
-                expr->kind = ExprKind::Float;
-                expr->float_value = token.float_value;
-                expr->literal_suffix = token.literal_suffix;
-                return expr;
+                return make_ast_float_expr(token.loc, token.float_value, token.literal_suffix);
             case TokenKind::String:
                 expr->kind = ExprKind::String;
                 expr->string_value = token.text;
                 return expr;
             case TokenKind::KwTrue:
-                expr->kind = ExprKind::Bool;
-                expr->bool_value = true;
-                return expr;
+                return make_ast_bool_expr(token.loc, true);
             case TokenKind::KwFalse:
-                expr->kind = ExprKind::Bool;
-                expr->bool_value = false;
-                return expr;
+                return make_ast_bool_expr(token.loc, false);
             case TokenKind::KwNull:
                 expr->kind = ExprKind::Null;
                 return expr;
@@ -2077,8 +2026,7 @@ private:
                         block->block_body);
                     return block;
                 }
-                expr->kind = ExprKind::Name;
-                expr->name = parse_path_after_first(token);
+                expr = make_ast_name_expr(token.loc, parse_path_after_first(token));
                 if (allow_struct_literals_ && check(TokenKind::LBrace)) {
                     return parse_struct_literal(std::move(expr));
                 }
