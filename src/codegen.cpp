@@ -2878,8 +2878,12 @@ private:
     }
 
     void emit_format_print(const IrExpr& expr) {
-        for (std::size_t i = 0; i < expr.format_parts.size(); ++i) {
-            emit_format_literal(expr.format_parts[i]);
+        if (!expr.format_parts) {
+            throw CompileError(where(expr.loc) + ": format print expression is missing format payload");
+        }
+        const std::vector<std::string>& format_parts = *expr.format_parts;
+        for (std::size_t i = 0; i < format_parts.size(); ++i) {
+            emit_format_literal(format_parts[i]);
             if (i < expr.args.size()) emit_format_argument(*expr.args[i]);
         }
         if (expr.print_newline) {

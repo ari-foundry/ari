@@ -261,7 +261,7 @@ struct IrExpr {
     std::string label;
     std::string enum_name;
     std::string case_name;
-    std::vector<std::string> format_parts;
+    std::unique_ptr<std::vector<std::string>> format_parts;
     std::uint32_t enum_tag = 0;
     bool has_payload = false;
     bool print_newline = false;

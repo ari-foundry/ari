@@ -31,5 +31,6 @@ ExprPtr make_ast_block_expr(SourceLocation loc,
                             std::vector<StmtPtr> body,
                             ExprPtr value);
 ExprPtr make_ast_match_expr(SourceLocation loc, ExprPtr value, std::vector<ExprMatchArm> arms);
+ExprPtr make_ast_macro_call_expr(SourceLocation loc, std::string name, std::vector<Token> tokens);
 
 } // namespace ari

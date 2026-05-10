@@ -104,6 +104,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/prelude-macros.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_bool" $(BUILD_DIR)/prelude/prelude-macros.ll
+	$(TARGET) tests/ok/rare-payload-packing.ari --emit-llvm $(BUILD_DIR)/prelude/rare-payload-packing.ll
+	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/rare-payload-packing.ll
+	grep -q "@ari_builtin_assert_ne_bool" $(BUILD_DIR)/prelude/rare-payload-packing.ll
+	grep -q "call i64 @ari_builtin_write_i64(i64 4)" $(BUILD_DIR)/prelude/rare-payload-packing.ll
+	grep -q "@ari_builtin_write_bool" $(BUILD_DIR)/prelude/rare-payload-packing.ll
 	$(TARGET) tests/ok/prelude-input.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "@ari_builtin_read_byte" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "@ari_builtin_context_arg" $(BUILD_DIR)/prelude/prelude-input.ll

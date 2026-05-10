@@ -37,7 +37,8 @@ construction. Some helpers have already moved out to focused files:
   aggregate construction, casts, bool conditions, pointer operations, direct
   calls, generic call specializations, inherent/trait associated calls,
   trait-qualified calls, method calls, zone helper calls, builtin calls, match
-  expression arms, and block/match/if expression nodes
+  expression arms, block/match/if expression nodes, and format-print payload
+  assembly
 - `control_flow_semantics` for product-pattern if-chain assembly shared by
   aggregate match, declaration, `if let`, and `while let` lowering, while
   still routing expression blocks and conditionals through `ir_builders`
@@ -73,7 +74,8 @@ construction. Some helpers have already moved out to focused files:
   assignment lowering and sema borrow-receiver synthesis
 - `ast_builders` for small AST expression constructors that keep scalar/name,
   tuple-index, borrow, string/null, tuple/vector/struct literal, block, and
-  match payload initialization out of parser and sema
+  match payload initialization plus macro-call token payload allocation out of
+  parser and sema
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
@@ -86,7 +88,9 @@ borrow, string/null, composite literal, block, and match AST expression
 construction paths that touch those union-backed fields. Broader `Stmt` and
 expression child/vector payload packing remains a separate refactor because
 those nodes are mutated across parser cloning, semantic lowering, and IR builder
-paths.
+paths. AST macro-call token trees and IR format-print string parts are already
+lazy rare payloads, so ordinary expression nodes no longer carry those vector
+slots directly.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or
@@ -104,9 +108,11 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      bool binary conditions, pointer operation nodes, direct call nodes, generic
      call specializations, inherent/trait associated call nodes,
      trait-qualified call nodes, method call nodes, zone helper call nodes, and
-     direct builtin call nodes are already outside `sema.cpp`; enum constructor
-     IR assembly now lives with `enum_constructor_semantics` because it shares
-     enum-specific layout decisions.
+     direct builtin call nodes are already outside `sema.cpp`; format-print
+     node assembly is also centralized there so its rare string-part payload is
+     not a field on every IR expression. Enum constructor IR assembly now lives
+     with `enum_constructor_semantics` because it shares enum-specific layout
+     decisions.
    - Block, match, and if expression node assembly now also goes through
      `ir_builders`. Future builder moves should be opportunistic and tied to a
      nearby semantic extraction, rather than treated as a standalone phase.

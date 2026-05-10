@@ -138,14 +138,23 @@
    field/tuple/array/slice index access nodes, drop destructor calls, plain
    function calls, generic specializations, inherent associated calls, trait
    associated and trait-qualified calls, method calls, zone helper calls, and
-   tuple/product control-flow expression chains.
+   tuple/product control-flow expression chains. Rare expression payloads are
+   also moving out of every node: AST macro token trees now live behind a
+   `MacroCall`-specific payload allocated by `ast_builders`, and IR
+   format-print string parts now live behind a `FormatPrint`-specific payload
+   allocated by `ir_builders`.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
    first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
-     variant payload structs or unions once their builders and cloning paths
-     can preserve today's mutation flow
+     variant payload structs or unions; remaining high-value targets are the
+     statement payload groups and the expression child/vector groups that still
+     receive broad parser, sema, and backend mutations
+   - [stmt-payload-groups] split AST/IR statement-only fields by statement kind
+     once parser and sema statement construction has enough focused helpers
+   - [expr-child-vector-payloads] split expression child/vector fields after
+     builders cover the remaining parser/sema/backend mutation paths
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

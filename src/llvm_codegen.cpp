@@ -2873,10 +2873,14 @@ private:
     }
 
     Value emit_format_print(const IrExpr& expr) {
+        if (!expr.format_parts) {
+            throw CompileError(where(expr.loc) + ": format print expression is missing format payload");
+        }
+        const std::vector<std::string>& format_parts = *expr.format_parts;
         std::string fmt_string = string_ptr("%s");
-        for (std::size_t i = 0; i < expr.format_parts.size(); ++i) {
-            if (!expr.format_parts[i].empty()) {
-                line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + string_ptr(expr.format_parts[i]) + ")");
+        for (std::size_t i = 0; i < format_parts.size(); ++i) {
+            if (!format_parts[i].empty()) {
+                line("  call i32 (ptr, ...) @printf(ptr " + fmt_string + ", ptr " + string_ptr(format_parts[i]) + ")");
             }
             if (i < expr.args.size()) {
                 Value arg = emit_expr(*expr.args[i]);

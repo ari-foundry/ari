@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  assert_eq!(1 + 2, 3);
+  assert_ne!(false, true);
+  print!("payload={}", 4);
+  println!(" flag={}", true);
+  return 11;
+}

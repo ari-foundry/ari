@@ -260,6 +260,21 @@ IrExprPtr make_builtin_call(SourceLocation loc,
     return make_ir_call_expr(loc, name, result, std::move(args));
 }
 
+IrExprPtr make_format_print_expr(SourceLocation loc,
+                                 IrType result,
+                                 std::vector<std::string> format_parts,
+                                 std::vector<IrExprPtr> args,
+                                 bool print_newline) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::FormatPrint;
+    expr->loc = loc;
+    expr->type = std::move(result);
+    expr->print_newline = print_newline;
+    expr->format_parts = std::make_unique<std::vector<std::string>>(std::move(format_parts));
+    expr->args = std::move(args);
+    return expr;
+}
+
 IrMatchExprArm make_match_expr_arm(IrMatchArm arm) {
     IrMatchExprArm expr_arm;
     expr_arm.wildcard = arm.wildcard;

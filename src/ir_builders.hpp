@@ -49,6 +49,11 @@ IrExprPtr make_builtin_call(SourceLocation loc,
                             const std::string& name,
                             std::vector<IrExprPtr> args,
                             const IrType& result);
+IrExprPtr make_format_print_expr(SourceLocation loc,
+                                 IrType result,
+                                 std::vector<std::string> format_parts,
+                                 std::vector<IrExprPtr> args,
+                                 bool print_newline);
 IrMatchExprArm make_match_expr_arm(IrMatchArm arm);
 IrExprPtr make_ir_match_expr(SourceLocation loc, IrExprPtr value);
 IrExprPtr make_ir_block_expr(SourceLocation loc, std::string label = {});

@@ -194,7 +194,7 @@ struct Expr {
     std::vector<TypeRef> type_args;
     std::vector<std::string> field_names;
     std::vector<ExprMatchArm> match_arms;
-    std::vector<Token> macro_tokens;
+    std::unique_ptr<std::vector<Token>> macro_tokens;
 };
 
 struct MatchArm {

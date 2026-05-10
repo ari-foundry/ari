@@ -12573,17 +12573,16 @@ private:
     }
 
     IrExprPtr check_format_print(const Expr& expr, IrExprPtr lowered, const std::string& print_name) {
+        (void)lowered;
         if (expr.args.empty()) fail(expr.loc, "'" + expr.name + "' expects a string literal format argument");
         const Expr& format = *expr.args[0];
         if (format.kind != ExprKind::String) {
             fail(format.loc, "'" + expr.name + "' expects a string literal format argument");
         }
 
-        lowered->kind = IrExprKind::FormatPrint;
-        lowered->type = i64_type(expr.loc);
-        lowered->print_newline = is_println_name(print_name);
-        lowered->format_parts = parse_format_string(format.loc, format.string_value, expr.args.size() - 1);
-        lowered->args.reserve(expr.args.size() - 1);
+        std::vector<std::string> format_parts = parse_format_string(format.loc, format.string_value, expr.args.size() - 1);
+        std::vector<IrExprPtr> args;
+        args.reserve(expr.args.size() - 1);
 
         for (std::size_t i = 1; i < expr.args.size(); ++i) {
             IrExprPtr arg = check_expr(*expr.args[i]);
@@ -12600,9 +12599,15 @@ private:
                 !(arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool)) {
                 fail(expr.args[i]->loc, "format arguments currently support integer and bool values, got " + type_name(arg->type));
             }
-            lowered->args.push_back(std::move(arg));
+            args.push_back(std::move(arg));
         }
-        return lowered;
+        return make_format_print_expr(
+            expr.loc,
+            i64_type(expr.loc),
+            std::move(format_parts),
+            std::move(args),
+            is_println_name(print_name)
+        );
     }
 
     static bool is_generic_type_name(const std::vector<GenericParam>& generics, const std::string& name) {
@@ -13408,7 +13413,10 @@ private:
             fail(expr.loc, "prelude macro '" + expr.name + "!' is reserved but macro expansion is not supported yet");
         }
 
-        std::vector<ExprPtr> args = parse_macro_argument_expressions(expr.macro_tokens, expr.loc);
+        if (!expr.macro_tokens) {
+            fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
+        }
+        std::vector<ExprPtr> args = parse_macro_argument_expressions(*expr.macro_tokens, expr.loc);
         if (kind == PreludeMacroKind::AssertEq || kind == PreludeMacroKind::AssertNe) {
             return check_assert_compare_macro(expr, kind, std::move(args));
         }

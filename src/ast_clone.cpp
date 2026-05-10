@@ -42,6 +42,9 @@ ExprPtr make_shallow_clone(const Expr& expr) {
     clone->receiver_type_args = expr.receiver_type_args;
     clone->type_args = expr.type_args;
     clone->field_names = expr.field_names;
+    if (expr.macro_tokens) {
+        clone->macro_tokens = std::make_unique<std::vector<Token>>(*expr.macro_tokens);
+    }
     copy_scalar_payload(expr, *clone);
     return clone;
 }

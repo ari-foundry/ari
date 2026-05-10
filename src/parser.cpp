@@ -1875,12 +1875,11 @@ private:
                     expr = parse_matches_macro(expr->loc);
                     continue;
                 }
-                auto call = std::make_unique<Expr>();
-                call->kind = ExprKind::MacroCall;
-                call->loc = expr->loc;
-                call->name = expr->name;
-                call->macro_tokens = parse_macro_token_tree(bang.loc);
-                expr = std::move(call);
+                expr = make_ast_macro_call_expr(
+                    expr->loc,
+                    expr->name,
+                    parse_macro_token_tree(bang.loc)
+                );
                 continue;
             }
 

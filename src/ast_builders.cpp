@@ -111,6 +111,15 @@ ExprPtr make_ast_match_expr(SourceLocation loc, ExprPtr value, std::vector<ExprM
     return expr;
 }
 
+ExprPtr make_ast_macro_call_expr(SourceLocation loc, std::string name, std::vector<Token> tokens) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::MacroCall;
+    expr->loc = loc;
+    expr->name = std::move(name);
+    expr->macro_tokens = std::make_unique<std::vector<Token>>(std::move(tokens));
+    return expr;
+}
+
 ExprPtr make_ast_tuple_index_expr(SourceLocation loc, ExprPtr operand, std::uint64_t index) {
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::TupleIndex;
