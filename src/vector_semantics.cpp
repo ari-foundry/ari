@@ -159,46 +159,203 @@ bool vector_literal_length(const IrExpr& expr, std::uint64_t& out) {
     return true;
 }
 
+static bool merge_vector_known_length(VectorKnownLength& merged,
+                                      bool& has_merged,
+                                      const IrType& storage_type,
+                                      const IrExprPtr& value);
+
+static bool merge_labeled_break_vector_known_lengths(VectorKnownLength& merged,
+                                                     bool& has_merged,
+                                                     const IrType& storage_type,
+                                                     const std::vector<IrStmtPtr>& statements,
+                                                     const std::string& label);
+
+static bool merge_labeled_break_vector_known_lengths(VectorKnownLength& merged,
+                                                     bool& has_merged,
+                                                     const IrType& storage_type,
+                                                     const std::vector<IrMatchArm>& arms,
+                                                     const std::string& label) {
+    for (const auto& arm : arms) {
+        if (!merge_labeled_break_vector_known_lengths(
+                merged, has_merged, storage_type, arm.body, label)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool merge_labeled_break_vector_known_length(VectorKnownLength& merged,
+                                                    bool& has_merged,
+                                                    const IrType& storage_type,
+                                                    const IrStmt& statement,
+                                                    const std::string& label) {
+    if (statement.kind == IrStmtKind::Break && statement.break_label == label) {
+        return merge_vector_known_length(merged, has_merged, storage_type, statement.break_value);
+    }
+
+    switch (statement.kind) {
+        case IrStmtKind::Block:
+            return merge_labeled_break_vector_known_lengths(
+                merged, has_merged, storage_type, statement.statements, label);
+        case IrStmtKind::If:
+            return merge_labeled_break_vector_known_lengths(
+                       merged, has_merged, storage_type, statement.then_body, label) &&
+                   merge_labeled_break_vector_known_lengths(
+                       merged, has_merged, storage_type, statement.else_body, label);
+        case IrStmtKind::While:
+        case IrStmtKind::WhileLet:
+        case IrStmtKind::ForRange:
+        case IrStmtKind::ForVector:
+        case IrStmtKind::InitWhile:
+            return merge_labeled_break_vector_known_lengths(
+                merged, has_merged, storage_type, statement.loop_body, label);
+        case IrStmtKind::Match:
+            return merge_labeled_break_vector_known_lengths(
+                merged, has_merged, storage_type, statement.match_arms, label);
+        default:
+            return true;
+    }
+}
+
+static bool merge_labeled_break_vector_known_lengths(VectorKnownLength& merged,
+                                                     bool& has_merged,
+                                                     const IrType& storage_type,
+                                                     const std::vector<IrStmtPtr>& statements,
+                                                     const std::string& label) {
+    for (const auto& statement : statements) {
+        if (!merge_labeled_break_vector_known_length(
+                merged, has_merged, storage_type, *statement, label)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool merge_vector_known_length(VectorKnownLength& merged,
+                                      bool& has_merged,
+                                      const IrType& storage_type,
+                                      const IrExprPtr& value) {
+    if (!value) return false;
+    VectorKnownLength length = vector_known_length_from_expr(storage_type, *value);
+    if (!length.known) return false;
+    if (!has_merged) {
+        merged = length;
+        has_merged = true;
+        return true;
+    }
+    return merged.length == length.length;
+}
+
 VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, const IrExpr& expr) {
     if (!is_vector_storage_type(storage_type)) return {};
     std::uint64_t length = 0;
     if (vector_literal_length(expr, length)) return VectorKnownLength{true, length};
     if (expr.kind == IrExprKind::Block && expr.block_value) {
-        return vector_known_length_from_expr(storage_type, *expr.block_value);
-    }
-    auto merge_length = [&](VectorKnownLength& merged, bool& has_merged, const IrExprPtr& value) {
-        if (!value) return false;
-        VectorKnownLength length = vector_known_length_from_expr(storage_type, *value);
-        if (!length.known) return false;
-        if (!has_merged) {
-            merged = length;
-            has_merged = true;
-            return true;
+        VectorKnownLength merged;
+        bool has_merged = false;
+        if (!merge_vector_known_length(merged, has_merged, storage_type, expr.block_value)) {
+            return {};
         }
-        return merged.length == length.length;
-    };
+        if (!expr.label.empty() &&
+            !merge_labeled_break_vector_known_lengths(
+                merged, has_merged, storage_type, expr.block_body, expr.label)) {
+            return {};
+        }
+        return has_merged ? merged : VectorKnownLength{};
+    }
     if (expr.kind == IrExprKind::If) {
         VectorKnownLength merged;
         bool has_merged = false;
-        if (!merge_length(merged, has_merged, expr.then_value)) return {};
-        if (!merge_length(merged, has_merged, expr.else_value)) return {};
+        if (!merge_vector_known_length(merged, has_merged, storage_type, expr.then_value)) return {};
+        if (!merge_vector_known_length(merged, has_merged, storage_type, expr.else_value)) return {};
         return has_merged ? merged : VectorKnownLength{};
     }
     if (expr.kind == IrExprKind::Match) {
         VectorKnownLength merged;
         bool has_merged = false;
         for (const auto& arm : expr.match_arms) {
-            if (!merge_length(merged, has_merged, arm.value)) return {};
+            if (!merge_vector_known_length(merged, has_merged, storage_type, arm.value)) return {};
         }
         return has_merged ? merged : VectorKnownLength{};
     }
     return {};
 }
 
-bool merge_source_vector_known_length(VectorKnownLength& merged,
-                                      bool& has_merged,
-                                      const ExprPtr& source,
-                                      const VectorKnownLengthLookup& lookup) {
+static bool merge_source_vector_known_length(VectorKnownLength& merged,
+                                             bool& has_merged,
+                                             const ExprPtr& source,
+                                             const VectorKnownLengthLookup& lookup);
+
+static bool merge_labeled_break_source_vector_known_lengths(VectorKnownLength& merged,
+                                                            bool& has_merged,
+                                                            const VectorKnownLengthLookup& lookup,
+                                                            const std::vector<StmtPtr>& statements,
+                                                            const std::string& label);
+
+static bool merge_labeled_break_source_vector_known_lengths(VectorKnownLength& merged,
+                                                            bool& has_merged,
+                                                            const VectorKnownLengthLookup& lookup,
+                                                            const std::vector<MatchArm>& arms,
+                                                            const std::string& label) {
+    for (const auto& arm : arms) {
+        if (!merge_labeled_break_source_vector_known_lengths(
+                merged, has_merged, lookup, arm.body, label)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool merge_labeled_break_source_vector_known_length(VectorKnownLength& merged,
+                                                           bool& has_merged,
+                                                           const VectorKnownLengthLookup& lookup,
+                                                           const Stmt& statement,
+                                                           const std::string& label) {
+    if (statement.kind == StmtKind::Break && statement.break_label == label) {
+        return merge_source_vector_known_length(merged, has_merged, statement.break_value, lookup);
+    }
+
+    switch (statement.kind) {
+        case StmtKind::Block:
+            return merge_labeled_break_source_vector_known_lengths(
+                merged, has_merged, lookup, statement.statements, label);
+        case StmtKind::If:
+            return merge_labeled_break_source_vector_known_lengths(
+                       merged, has_merged, lookup, statement.then_body, label) &&
+                   merge_labeled_break_source_vector_known_lengths(
+                       merged, has_merged, lookup, statement.else_body, label);
+        case StmtKind::While:
+        case StmtKind::WhileLet:
+        case StmtKind::For:
+        case StmtKind::InitWhile:
+            return merge_labeled_break_source_vector_known_lengths(
+                merged, has_merged, lookup, statement.loop_body, label);
+        case StmtKind::Match:
+            return merge_labeled_break_source_vector_known_lengths(
+                merged, has_merged, lookup, statement.match_arms, label);
+        default:
+            return true;
+    }
+}
+
+static bool merge_labeled_break_source_vector_known_lengths(VectorKnownLength& merged,
+                                                            bool& has_merged,
+                                                            const VectorKnownLengthLookup& lookup,
+                                                            const std::vector<StmtPtr>& statements,
+                                                            const std::string& label) {
+    for (const auto& statement : statements) {
+        if (!merge_labeled_break_source_vector_known_length(
+                merged, has_merged, lookup, *statement, label)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool merge_source_vector_known_length(VectorKnownLength& merged,
+                                             bool& has_merged,
+                                             const ExprPtr& source,
+                                             const VectorKnownLengthLookup& lookup) {
     if (!source) return false;
     VectorKnownLength length = vector_known_length_from_source_tree(*source, lookup);
     if (!length.known) return false;
@@ -219,7 +376,15 @@ VectorKnownLength vector_known_length_from_source_tree(const Expr& source,
         return lookup ? lookup(source.name) : VectorKnownLength{};
     }
     if (source.kind == ExprKind::Block && source.block_value) {
-        return vector_known_length_from_source_tree(*source.block_value, lookup);
+        VectorKnownLength merged;
+        bool has_merged = false;
+        if (!merge_source_vector_known_length(merged, has_merged, source.block_value, lookup)) return {};
+        if (!source.label.empty() &&
+            !merge_labeled_break_source_vector_known_lengths(
+                merged, has_merged, lookup, source.block_body, source.label)) {
+            return {};
+        }
+        return has_merged ? merged : VectorKnownLength{};
     }
     if (source.kind == ExprKind::If) {
         VectorKnownLength merged;
@@ -239,6 +404,77 @@ VectorKnownLength vector_known_length_from_source_tree(const Expr& source,
     return {};
 }
 
+static void merge_source_vector_storage_capacity(std::uint64_t& capacity,
+                                                 const ExprPtr& value,
+                                                 const VectorStorageCapacityLookup& lookup);
+
+static void merge_labeled_break_source_vector_storage_capacity(std::uint64_t& capacity,
+                                                               const std::vector<StmtPtr>& statements,
+                                                               const std::string& label,
+                                                               const VectorStorageCapacityLookup& lookup);
+
+static void merge_labeled_break_source_vector_storage_capacity(std::uint64_t& capacity,
+                                                               const std::vector<MatchArm>& arms,
+                                                               const std::string& label,
+                                                               const VectorStorageCapacityLookup& lookup) {
+    for (const auto& arm : arms) {
+        merge_labeled_break_source_vector_storage_capacity(capacity, arm.body, label, lookup);
+    }
+}
+
+static void merge_labeled_break_source_vector_storage_capacity(std::uint64_t& capacity,
+                                                               const Stmt& statement,
+                                                               const std::string& label,
+                                                               const VectorStorageCapacityLookup& lookup) {
+    if (statement.kind == StmtKind::Break && statement.break_label == label) {
+        merge_source_vector_storage_capacity(capacity, statement.break_value, lookup);
+        return;
+    }
+
+    switch (statement.kind) {
+        case StmtKind::Block:
+            merge_labeled_break_source_vector_storage_capacity(
+                capacity, statement.statements, label, lookup);
+            break;
+        case StmtKind::If:
+            merge_labeled_break_source_vector_storage_capacity(
+                capacity, statement.then_body, label, lookup);
+            merge_labeled_break_source_vector_storage_capacity(
+                capacity, statement.else_body, label, lookup);
+            break;
+        case StmtKind::While:
+        case StmtKind::WhileLet:
+        case StmtKind::For:
+        case StmtKind::InitWhile:
+            merge_labeled_break_source_vector_storage_capacity(
+                capacity, statement.loop_body, label, lookup);
+            break;
+        case StmtKind::Match:
+            merge_labeled_break_source_vector_storage_capacity(
+                capacity, statement.match_arms, label, lookup);
+            break;
+        default:
+            break;
+    }
+}
+
+static void merge_labeled_break_source_vector_storage_capacity(std::uint64_t& capacity,
+                                                               const std::vector<StmtPtr>& statements,
+                                                               const std::string& label,
+                                                               const VectorStorageCapacityLookup& lookup) {
+    for (const auto& statement : statements) {
+        merge_labeled_break_source_vector_storage_capacity(capacity, *statement, label, lookup);
+    }
+}
+
+static void merge_source_vector_storage_capacity(std::uint64_t& capacity,
+                                                 const ExprPtr& value,
+                                                 const VectorStorageCapacityLookup& lookup) {
+    if (value) {
+        capacity = std::max(capacity, vector_storage_capacity_from_source_tree(*value, lookup));
+    }
+}
+
 std::uint64_t vector_storage_capacity_from_source_tree(const Expr& source,
                                                        const VectorStorageCapacityLookup& lookup) {
     if (source.kind == ExprKind::Vector) {
@@ -248,7 +484,13 @@ std::uint64_t vector_storage_capacity_from_source_tree(const Expr& source,
         return lookup ? lookup(source.name) : 0;
     }
     if (source.kind == ExprKind::Block && source.block_value) {
-        return vector_storage_capacity_from_source_tree(*source.block_value, lookup);
+        std::uint64_t capacity = 0;
+        merge_source_vector_storage_capacity(capacity, source.block_value, lookup);
+        if (!source.label.empty()) {
+            merge_labeled_break_source_vector_storage_capacity(
+                capacity, source.block_body, source.label, lookup);
+        }
+        return capacity;
     }
     if (source.kind == ExprKind::If) {
         std::uint64_t capacity = 0;
@@ -278,6 +520,59 @@ std::uint64_t vector_storage_capacity_from_source_tree(const Expr& source,
     return 0;
 }
 
+static void merge_labeled_break_vector_storage_capacity(std::uint64_t& capacity,
+                                                        const std::vector<IrStmtPtr>& statements,
+                                                        const std::string& label);
+
+static void merge_labeled_break_vector_storage_capacity(std::uint64_t& capacity,
+                                                        const std::vector<IrMatchArm>& arms,
+                                                        const std::string& label) {
+    for (const auto& arm : arms) {
+        merge_labeled_break_vector_storage_capacity(capacity, arm.body, label);
+    }
+}
+
+static void merge_labeled_break_vector_storage_capacity(std::uint64_t& capacity,
+                                                        const IrStmt& statement,
+                                                        const std::string& label) {
+    if (statement.kind == IrStmtKind::Break && statement.break_label == label) {
+        if (statement.break_value) {
+            capacity = std::max(capacity, vector_storage_capacity_from_expr(*statement.break_value));
+        }
+        return;
+    }
+
+    switch (statement.kind) {
+        case IrStmtKind::Block:
+            merge_labeled_break_vector_storage_capacity(capacity, statement.statements, label);
+            break;
+        case IrStmtKind::If:
+            merge_labeled_break_vector_storage_capacity(capacity, statement.then_body, label);
+            merge_labeled_break_vector_storage_capacity(capacity, statement.else_body, label);
+            break;
+        case IrStmtKind::While:
+        case IrStmtKind::WhileLet:
+        case IrStmtKind::ForRange:
+        case IrStmtKind::ForVector:
+        case IrStmtKind::InitWhile:
+            merge_labeled_break_vector_storage_capacity(capacity, statement.loop_body, label);
+            break;
+        case IrStmtKind::Match:
+            merge_labeled_break_vector_storage_capacity(capacity, statement.match_arms, label);
+            break;
+        default:
+            break;
+    }
+}
+
+static void merge_labeled_break_vector_storage_capacity(std::uint64_t& capacity,
+                                                        const std::vector<IrStmtPtr>& statements,
+                                                        const std::string& label) {
+    for (const auto& statement : statements) {
+        merge_labeled_break_vector_storage_capacity(capacity, *statement, label);
+    }
+}
+
 std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr) {
     std::uint64_t capacity = is_vector_storage_type(expr.type) ? expr.type.array_size : 0;
     auto merge_capacity = [&](const IrExprPtr& value) {
@@ -287,6 +582,9 @@ std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr) {
         capacity = std::max(capacity, static_cast<std::uint64_t>(expr.args.size()));
     } else if (expr.kind == IrExprKind::Block) {
         merge_capacity(expr.block_value);
+        if (!expr.label.empty()) {
+            merge_labeled_break_vector_storage_capacity(capacity, expr.block_body, expr.label);
+        }
     } else if (expr.kind == IrExprKind::If) {
         merge_capacity(expr.then_value);
         merge_capacity(expr.else_value);

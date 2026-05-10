@@ -436,6 +436,12 @@ If a labeled block expression has both a final-value path and one or more
 same state. For example, one path cannot drop an `own` binding while another
 typed-break path leaves it alive.
 
+When labeled block results are local `Vec[T]` values on the LLVM backend, typed
+`break label value` paths participate in the same fixed local storage sizing as
+the final block value. If every Vec result path has the same compiler-known
+length, later `len`, `is_empty`, static indexing, `as_slice`, and stored-vector
+`for` lowering can reuse that known length.
+
 ## Continue
 
 ```ari

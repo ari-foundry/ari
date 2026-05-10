@@ -414,13 +414,16 @@ current length is still compiler-known, the compiler preserves that known
 length for later `len`, `is_empty`, `as_slice`, `for`, and static-index checks.
 Assigning from another local vector also widens the target's fixed local
 storage to the source vector's current storage capacity before the copy.
-Vec-valued `if` and block expressions participate in this tracking when their
-nested results have a fixed local capacity, and same-length `if` arms preserve
-the compiler-known current length, including arms that return local vector
-bindings whose current lengths are still compiler-known.
+Vec-valued `if`, block, and labeled-block expressions participate in this
+tracking when their nested results have a fixed local capacity. Same-length
+`if` arms and same-length labeled-block final or `break label value` paths
+preserve the compiler-known current length, including paths that return local
+vector bindings whose current lengths are still compiler-known.
 Vec-valued `match` and `if let` expressions also size their expected local
 storage before branch result materialization, so same-length literal, block, or
-local-binding arms preserve the known length there too.
+local-binding arms preserve the known length there too; match arms may use
+labeled blocks whose typed Vec breaks require more storage than the final block
+value.
 `len(...)`, `.len()`, `.is_empty()`, and direct indexing of such Vec-valued
 control-flow expressions use the same source-known local lengths for constants
 and static out-of-range diagnostics.

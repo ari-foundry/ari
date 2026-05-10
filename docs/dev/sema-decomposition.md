@@ -28,8 +28,9 @@ construction. Some helpers have already moved out to focused files:
   known-length and storage-capacity merging with semantic local-name callbacks
   for direct `len`/`is_empty` folding, direct index diagnostics, local-vector
   initialization, assignment, stored-vector `for` loop bounds, local-binding
-  copies inside `if`/block/`match`/`if let` expression results, and nested
-  result storage-capacity reads
+  copies inside `if`/block/labeled-block/`match`/`if let` expression results,
+  typed labeled-block break result merging, and nested result storage-capacity
+  reads
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, literals, casts, bool conditions,
   pointer operations, direct builtin calls, match expression arms, and

@@ -1420,6 +1420,11 @@ check-variables: $(TARGET)
 	grep -q "store i64 3, ptr %assigned_len" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
 	grep -q "store i64 3, ptr %block_len" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
 	grep -q "store i64 3, ptr %locals_len" $(BUILD_DIR)/variables/vector-control-flow-capacity.ll
+	$(TARGET) tests/ok/vector-labeled-block-result.ari --emit-llvm $(BUILD_DIR)/variables/vector-labeled-block-result.ll
+	grep -q "%from_match.addr.* = alloca { i64, \\[4 x i64\\] }" $(BUILD_DIR)/variables/vector-labeled-block-result.ll
+	grep -q "%from_break.addr.* = alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-labeled-block-result.ll
+	grep -q "%same_length.addr.* = alloca { i64, \\[2 x i64\\] }" $(BUILD_DIR)/variables/vector-labeled-block-result.ll
+	grep -q "store i64 2, ptr %same_len" $(BUILD_DIR)/variables/vector-labeled-block-result.ll
 	$(TARGET) tests/ok/vector-control-flow-known-local-length.ari --emit-llvm $(BUILD_DIR)/variables/vector-control-flow-known-local-length.ll
 	grep -q "store i64 1, ptr %if_len" $(BUILD_DIR)/variables/vector-control-flow-known-local-length.ll
 	grep -q "store i64 1, ptr %match_len" $(BUILD_DIR)/variables/vector-control-flow-known-local-length.ll

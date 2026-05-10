@@ -10419,6 +10419,7 @@ private:
             fail(stmt.loc, "break value must produce a value");
         }
         if (target.has_break_result_type) {
+            widen_vector_result_storage(target.break_result_type, *value);
             coerce_expr_to_expected(*value, target.break_result_type);
             require_assignable(stmt.loc, target.break_result_type, value->type);
         } else {
@@ -12044,8 +12045,10 @@ private:
         LoopInfo block_state = loops_.back();
         loops_.pop_back();
         if (block_state.has_break_result_type) {
+            widen_vector_result_storage(block_state.break_result_type, *value);
             coerce_expr_to_expected(*value, block_state.break_result_type);
             require_assignable(expr.loc, block_state.break_result_type, value->type);
+            coerce_labeled_break_values(checked.statements, expr.label, block_state.break_result_type);
         }
         value = materialize_value_before_auto_destroy_cleanup(
             expr.loc,

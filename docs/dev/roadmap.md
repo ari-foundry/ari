@@ -59,13 +59,14 @@
    initialization and assignment from another local `Vec` also preserve that
    compiler-known current length when the source binding is still precise, and
    assignment from another local `Vec` widens the fixed local target storage to
-   the source storage capacity before the copy. Vec-valued `if` and block
-   expressions now feed their nested fixed local storage capacity and
-   same-length branch results into the same assignment/initialization tracking,
-   including branch results that copy local Vec bindings whose current lengths
-   are still compiler-known; Vec-valued `match` and `if let` expression arms do
-   the same after sema sizes their expected result storage before branch result
-   materialization.
+   the source storage capacity before the copy. Vec-valued `if`, block, and
+   labeled-block expressions now feed their nested fixed local storage capacity
+   and same-length result paths into the same assignment/initialization
+   tracking, including `break label value` paths and branch results that copy
+   local Vec bindings whose current lengths are still compiler-known;
+   Vec-valued `match` and `if let` expression arms do the same after sema sizes
+   their expected result storage before branch result materialization, including
+   arms whose result is a labeled block with typed Vec breaks.
    The
    shared constant
    value model,

@@ -212,12 +212,13 @@ Checklist:
       preserve compiler-known current length when the source length is precise
 - [x] local `Vec[T]` assignment from another local vector widens the target's
       fixed local storage to the source storage capacity
-- [x] local `Vec[T]` assignment/initialization from Vec-valued `if` and block
-      expressions preserves nested fixed storage capacity and same-length
-      literal, block, or local-binding known length
+- [x] local `Vec[T]` assignment/initialization from Vec-valued `if`, block,
+      and labeled-block expressions preserves nested fixed storage capacity and
+      same-length literal, block, typed-break, or local-binding known length
 - [x] local `Vec[T]` initialization from Vec-valued `match` and `if let`
       expressions preserves fixed storage capacity and same-length literal,
-      block, or local-binding known length across branch result materialization
+      block, labeled-block, typed-break, or local-binding known length across
+      branch result materialization
 - [x] `len(value)` and `value.len()` for local vectors, fixed arrays,
       constant-folded literal length, and compiler-known local Vec length,
       including local Vec `as_slice()` view length construction and

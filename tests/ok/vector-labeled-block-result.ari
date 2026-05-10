@@ -1,0 +1,37 @@
+enum Pick {
+  Wide,
+  Same,
+}
+
+fn main() -> i64 {
+  let pick = Wide;
+  let from_match: Vec[i64] = match pick {
+    Wide => wide_block: {
+      while true {
+        break wide_block [1, 2, 3, 4];
+      }
+      []
+    },
+    Same => [5, 6],
+  };
+  let match_capacity = from_match.capacity();
+
+  let from_break: Vec[i64] = choose_break: {
+    while true {
+      break choose_break [7, 8, 9];
+    }
+    []
+  };
+  let break_capacity = from_break.capacity();
+
+  let same_length: Vec[i64] = choose_same: {
+    while true {
+      break choose_same [10, 11];
+    }
+    [12, 13]
+  };
+  let same_len = same_length.len();
+
+  return match_capacity + break_capacity + same_len +
+         from_match[3] + from_break[2] + same_length[1];
+}
