@@ -20,27 +20,55 @@ bool alias(IrPrimitiveKind kind,
     return true;
 }
 
+bool signed_integer_alias(unsigned bits, IrPrimitiveKind& primitive, std::string& canonical) {
+    switch (bits) {
+        case 32: return alias(IrPrimitiveKind::I32, "i32", primitive, canonical);
+        case 64: return alias(IrPrimitiveKind::I64, "i64", primitive, canonical);
+    }
+    return false;
+}
+
+bool unsigned_integer_alias(unsigned bits, IrPrimitiveKind& primitive, std::string& canonical) {
+    switch (bits) {
+        case 32: return alias(IrPrimitiveKind::U32, "u32", primitive, canonical);
+        case 64: return alias(IrPrimitiveKind::U64, "u64", primitive, canonical);
+    }
+    return false;
+}
+
 } // namespace
 
-bool c_abi_type_alias(const std::string& name, IrPrimitiveKind& primitive, std::string& canonical) {
+bool c_abi_type_alias(const std::string& name,
+                      const TargetInfo& target,
+                      IrPrimitiveKind& primitive,
+                      std::string& canonical) {
     std::string base = unqualified_name(name);
     if (base == "c_bool") return alias(IrPrimitiveKind::Bool, "bool", primitive, canonical);
-    // Current host ABI policy is x86-64 Linux/glibc: plain C char is signed.
-    // Target triples should replace this fixed choice when Ari grows them.
-    if (base == "c_char" || base == "c_schar") return alias(IrPrimitiveKind::I8, "i8", primitive, canonical);
+    if (base == "c_char") {
+        return target.plain_char_signed
+                   ? alias(IrPrimitiveKind::I8, "i8", primitive, canonical)
+                   : alias(IrPrimitiveKind::U8, "u8", primitive, canonical);
+    }
+    if (base == "c_schar") return alias(IrPrimitiveKind::I8, "i8", primitive, canonical);
     if (base == "c_uchar") return alias(IrPrimitiveKind::U8, "u8", primitive, canonical);
     if (base == "c_short") return alias(IrPrimitiveKind::I16, "i16", primitive, canonical);
     if (base == "c_ushort") return alias(IrPrimitiveKind::U16, "u16", primitive, canonical);
     if (base == "c_int") return alias(IrPrimitiveKind::I32, "i32", primitive, canonical);
     if (base == "c_uint") return alias(IrPrimitiveKind::U32, "u32", primitive, canonical);
-    if (base == "c_long" || base == "c_longlong" || base == "isize" ||
+    if (base == "c_long") return signed_integer_alias(target.long_bits, primitive, canonical);
+    if (base == "c_ulong") return unsigned_integer_alias(target.long_bits, primitive, canonical);
+    if (base == "isize" ||
         base == "ssize_t" || base == "c_ssize_t" || base == "intptr_t" ||
-        base == "ptrdiff_t" || base == "intmax_t" || base == "c_intmax_t") {
+        base == "ptrdiff_t") {
+        return signed_integer_alias(target.pointer_bits, primitive, canonical);
+    }
+    if (base == "usize" || base == "size_t" || base == "c_size_t" || base == "uintptr_t") {
+        return unsigned_integer_alias(target.pointer_bits, primitive, canonical);
+    }
+    if (base == "c_longlong" || base == "intmax_t" || base == "c_intmax_t") {
         return alias(IrPrimitiveKind::I64, "i64", primitive, canonical);
     }
-    if (base == "c_ulong" || base == "c_ulonglong" || base == "usize" ||
-        base == "size_t" || base == "c_size_t" || base == "uintptr_t" ||
-        base == "uintmax_t" || base == "c_uintmax_t") {
+    if (base == "c_ulonglong" || base == "uintmax_t" || base == "c_uintmax_t") {
         return alias(IrPrimitiveKind::U64, "u64", primitive, canonical);
     }
     if (base == "c_float") return alias(IrPrimitiveKind::F32, "f32", primitive, canonical);

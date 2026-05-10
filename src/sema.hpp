@@ -13,6 +13,7 @@ struct SemaOptions {
     bool test_mode = false;
     bool implicit_std = true;
     std::set<std::string> cfg_features;
+    std::string target_triple;
 };
 
 IrProgram check_program(const Program& program, SemaOptions options = {});

@@ -229,8 +229,8 @@ backend until the raw backend has a native C ABI and link path.
 
 ## Type Mapping
 
-Current LLVM host C FFI type mapping targets the default x86-64 Linux/glibc
-backend:
+Current LLVM host C FFI type mapping follows the selected `--target` triple.
+Without `--target`, Ari uses the host default target triple.
 
 ```text
 i8/i16/i32/i64    -> i8/i16/i32/i64
@@ -267,11 +267,10 @@ compact enum      -> i64 tagged union word
 parameters. Use `ptr c_void` for C `void*`; a by-value `c_void` parameter is
 rejected.
 
-For the current LLVM host backend, `c_char` follows Ari's default
-x86-64 Linux/glibc target table and is signed (`i8`). Use `c_schar` or
-`c_uchar` when an API needs explicit signedness; future target triples will
-make plain `c_char` follow the selected target instead of this fixed host
-default.
+For the current supported target tables, `c_char` is signed (`i8`). Use
+`c_schar` or `c_uchar` when an API needs explicit signedness. Pointer-width
+aliases such as `size_t`, `ptrdiff_t`, `intptr_t`, `usize`, and `isize`, plus
+`c_long`/`c_ulong`, follow the selected target's ILP32/LP64/LLP64 layout.
 
 The `null` literal can initialize or be passed to any `ptr T` type. `T?` is a
 nullable raw-pointer spelling for the same type, so `c_void?` and `ptr c_void`

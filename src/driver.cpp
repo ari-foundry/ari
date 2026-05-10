@@ -9,6 +9,7 @@
 #include "module_metadata.hpp"
 #include "parser.hpp"
 #include "sema.hpp"
+#include "target.hpp"
 #include "toolchain.hpp"
 
 #include <cerrno>
@@ -61,6 +62,7 @@ static std::string shell_quote(const std::string& text) {
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--emit-llvm path] [--freestanding]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
+                 "           [--target triple]\n"
                  "           [--emit-module-metadata path] [--check-module-metadata path]\n"
                  "           [--emit-module-cache path] [--use-module-cache path]\n"
                  "           [--no-implicit-std]\n"
@@ -82,6 +84,7 @@ int run(int argc, char** argv) {
     std::string metadata_check;
     std::string module_cache_output;
     std::string module_cache_input;
+    std::string target_triple;
     std::vector<std::string> module_search_paths;
     std::vector<std::string> link_args;
     std::set<std::string> cfg_features;
@@ -141,6 +144,9 @@ int run(int argc, char** argv) {
         } else if (arg == "--llvm-cc") {
             if (i + 1 >= argc) throw CompileError("--llvm-cc expects a compiler path");
             llvm_compiler = argv[++i];
+        } else if (arg == "--target") {
+            if (i + 1 >= argc) throw CompileError("--target expects a target triple");
+            target_triple = argv[++i];
         } else if (arg == "-L") {
             if (i + 1 >= argc) throw CompileError("-L expects a path");
             link_args.push_back(std::string("-L") + argv[++i]);
@@ -164,10 +170,15 @@ int run(int argc, char** argv) {
     if (freestanding && (emit_llvm_only || shared_library)) {
         throw CompileError("--freestanding cannot be combined with --emit-llvm or --shared");
     }
+    TargetInfo target = resolve_target_info(target_triple);
+    if (freestanding && !target_triple.empty() && !(target.arch == "x86_64" && target.linux)) {
+        throw CompileError("--freestanding currently supports only the x86_64 Linux target");
+    }
 
     ModuleLoadOptions load_options;
     load_options.module_search_paths = std::move(module_search_paths);
     load_options.cfg_features = cfg_features;
+    load_options.target_triple = target_triple;
     load_options.implicit_std = implicit_std;
     ModuleCache input_cache;
     if (!module_cache_input.empty()) {
@@ -197,6 +208,7 @@ int run(int argc, char** argv) {
     sema_options.test_mode = test_mode;
     sema_options.implicit_std = implicit_std;
     sema_options.cfg_features = cfg_features;
+    sema_options.target_triple = target_triple;
     IrProgram ir = check_program(program, std::move(sema_options));
     for (const auto& warning : ir.warnings) {
         std::cerr << warning << "\n";
@@ -216,6 +228,7 @@ int run(int argc, char** argv) {
 
     LlvmEmitOptions llvm_options;
     llvm_options.shared_library = shared_library;
+    llvm_options.target_triple = target_triple;
     std::string llvm = emit_llvm_ir(ir, llvm_options);
     std::string llvm_path = llvm_output.empty() ? output + ".ll" : llvm_output;
     write_text_file(llvm_path, llvm);
@@ -226,6 +239,7 @@ int run(int argc, char** argv) {
 
     std::string command = shell_quote(llvm_compiler) + " ";
     if (shared_library) command += "-shared -fPIC ";
+    if (!target_triple.empty()) command += shell_quote("--target=" + target.triple) + " ";
     command += shell_quote(llvm_path) + " -o " + shell_quote(output);
     for (const auto& arg : link_args) command += " " + shell_quote(arg);
     int status = std::system(command.c_str());

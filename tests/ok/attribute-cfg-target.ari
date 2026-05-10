@@ -1,0 +1,13 @@
+@cfg(target("windows"))
+fn platform() -> i64 {
+  return 12;
+}
+
+@cfg(not(target("windows")))
+fn platform() -> i64 {
+  return missing_name();
+}
+
+fn main() -> i64 {
+  return platform();
+}

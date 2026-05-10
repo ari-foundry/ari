@@ -62,15 +62,14 @@
    for unsigned C aliases, including `c_uchar`, `c_ushort`, `c_uint`,
    `c_ulong`, `c_ulonglong`, `size_t`, `uintptr_t`, and `uintmax_t`.
    `c_bool` and signed/unsigned max-width aliases are covered by the same
-   table. Plain `c_char` is explicitly signed for the current x86-64
-   Linux/glibc host policy; portable bindings should use `c_schar` or
-   `c_uchar` until target triples select the plain-char policy. The remaining
-   work is target-layout awareness instead of more ad-hoc aliases in the
-   semantic checker.
-   - [target-triples] derive `c_long`, `c_ulong`, `size_t`, `ptrdiff_t`, and
-     pointer-width aliases from the selected target triple instead of assuming
-     the current x86-64 Linux/glibc layout
-   - [ffi-tests] add cross-target ABI fixtures once target triples exist
+   table. `--target` now selects the LLVM target triple, `@cfg(target(...))`
+   predicates, and the C scalar alias layout for ILP32, LP64, and LLP64
+   families, so `c_long`, `c_ulong`, `size_t`, `ptrdiff_t`, `intptr_t`,
+   `usize`, and `isize` are no longer hardwired to x86-64 Linux widths.
+   - [ffi-tests] add broader cross-target ABI fixtures for more triples and
+     plain-char policies as target support grows
+   - [cache-target] treat target triples as first-class module-cache inputs in
+     stale diagnostics beyond the current metadata option record
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

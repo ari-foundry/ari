@@ -423,6 +423,7 @@ private:
 
     const Program& program_;
     SemaOptions options_;
+    TargetInfo target_ = resolve_target_info(options_.target_triple);
     std::map<std::string, FunctionSig> functions_;
     std::map<std::string, const FunctionDecl*> generic_functions_;
     std::map<std::string, MetaFunctionInfo> meta_functions_;
@@ -1209,7 +1210,7 @@ private:
             return;
         }
         if (attr.name == "cfg") {
-            (void)cfg_attribute_enabled(attr, options_.cfg_features);
+            (void)cfg_attribute_enabled(attr, options_.cfg_features, options_.target_triple);
             return;
         }
         if (attr.name == "deprecated") {
@@ -2771,7 +2772,7 @@ private:
             for (const auto& arg : ast_type.args) {
                 type.args.push_back(resolve_executable_type(arg));
             }
-        } else if (c_abi_type_alias(type.name, c_primitive, c_canonical)) {
+        } else if (c_abi_type_alias(type.name, target_, c_primitive, c_canonical)) {
             reject_type_args(ast_type);
             type.primitive = c_primitive;
             type.name = c_canonical;
@@ -10289,7 +10290,7 @@ private:
 
         IrPrimitiveKind primitive = IrPrimitiveKind::Unknown;
         std::string canonical;
-        if (c_abi_type_alias(pattern.name, primitive, canonical)) {
+        if (c_abi_type_alias(pattern.name, target_, primitive, canonical)) {
             return pattern.args.empty() && actual.primitive == primitive && actual.name == canonical;
         }
 

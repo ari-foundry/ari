@@ -82,6 +82,10 @@ check-cli: $(TARGET)
 	grep -q -- "--cc was removed; use --llvm-cc" $(BUILD_DIR)/cli/missing-cc.err
 	if $(TARGET) examples/count.ari --llvm-cc >$(BUILD_DIR)/cli/missing-llvm-cc.err 2>&1; then exit 1; fi
 	grep -q -- "--llvm-cc expects a compiler path" $(BUILD_DIR)/cli/missing-llvm-cc.err
+	if $(TARGET) examples/count.ari --target >$(BUILD_DIR)/cli/missing-target.err 2>&1; then exit 1; fi
+	grep -q -- "--target expects a target triple" $(BUILD_DIR)/cli/missing-target.err
+	if $(TARGET) examples/count.ari --target mystery-cpu --emit-llvm $(BUILD_DIR)/cli/bad-target.ll >$(BUILD_DIR)/cli/bad-target.err 2>&1; then exit 1; fi
+	grep -q "unsupported target triple 'mystery-cpu'" $(BUILD_DIR)/cli/bad-target.err
 	if $(TARGET) --freestanding examples/count.ari --emit-llvm $(BUILD_DIR)/cli/bad.ll >$(BUILD_DIR)/cli/freestanding-emit-llvm.err 2>&1; then exit 1; fi
 	grep -q -- "--freestanding cannot be combined with --emit-llvm or --shared" $(BUILD_DIR)/cli/freestanding-emit-llvm.err
 	if $(TARGET) examples/count.ari extra.ari >$(BUILD_DIR)/cli/unexpected-arg.err 2>&1; then exit 1; fi
@@ -825,6 +829,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/attribute-cfg.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --cfg-feature fast --freestanding tests/ok/attribute-cfg-feature.ari -o $(BUILD_DIR)/meta/attribute-cfg-feature.raw
 	$(BUILD_DIR)/meta/attribute-cfg-feature.raw; code=$$?; test $$code -eq 13
+	$(TARGET) --target x86_64-pc-windows-msvc tests/ok/attribute-cfg-target.ari --emit-llvm $(BUILD_DIR)/meta/attribute-cfg-target.ll
+	grep -q 'target triple = "x86_64-pc-windows-msvc"' $(BUILD_DIR)/meta/attribute-cfg-target.ll
 	$(TARGET) --test --freestanding tests/ok/attribute-test-runner.ari -o $(BUILD_DIR)/meta/attribute-test-runner.raw
 	$(BUILD_DIR)/meta/attribute-test-runner.raw; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/attribute-export-symbols.ari --shared --emit-llvm $(BUILD_DIR)/meta/attribute-export-symbols.ll
@@ -1347,6 +1353,9 @@ check-ffi: $(TARGET)
 	grep -q 'alloca i16' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
 	grep -q 'alloca i32' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
 	grep -q 'alloca i64' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
+	$(TARGET) --target i686-unknown-linux-gnu tests/ok/ffi-c-target-ilp32.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-target-ilp32.ll
+	grep -q 'target triple = "i686-unknown-linux-gnu"' $(BUILD_DIR)/ffi/ffi-c-target-ilp32.ll
+	grep -q 'alloca i32' $(BUILD_DIR)/ffi/ffi-c-target-ilp32.ll
 	$(TARGET) tests/ok/ffi-c-null-pointer.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
 	grep -q 'declare i64 @"ari_test_is_null"(ptr)' $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll
 	grep -q 'store ptr null' $(BUILD_DIR)/ffi/ffi-c-null-pointer.ll

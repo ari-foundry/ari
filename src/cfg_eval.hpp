@@ -7,6 +7,8 @@
 
 namespace ari {
 
-bool cfg_attribute_enabled(const Attribute& attr, const std::set<std::string>& features = {});
+bool cfg_attribute_enabled(const Attribute& attr,
+                           const std::set<std::string>& features = {},
+                           const std::string& target_triple = {});
 
 } // namespace ari

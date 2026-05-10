@@ -229,6 +229,10 @@ std::string find_module_metadata_mismatch(const ModuleMetadata& expected,
     detail = find_cfg_mismatch(expected.cfg_features, actual.cfg_features);
     if (!detail.empty()) return detail;
 
+    if (expected.target_triple != actual.target_triple) {
+        return "target option changed from '" + expected.target_triple + "' to '" + actual.target_triple + "'";
+    }
+
     if (expected.implicit_std != actual.implicit_std) {
         return "implicit_std option changed from " + bool_key(expected.implicit_std) +
                " to " + bool_key(actual.implicit_std);
@@ -374,6 +378,9 @@ std::string serialize_module_metadata(const ModuleMetadata& metadata) {
     for (const auto& feature : metadata.cfg_features) {
         write_line(out, {"cfg", feature});
     }
+    if (!metadata.target_triple.empty()) {
+        write_line(out, {"option", "target", metadata.target_triple});
+    }
     write_line(out, {"option", "implicit_std", metadata.implicit_std ? "1" : "0"});
     for (const auto& source : metadata.sources) {
         write_line(out, {"source", source.module_name, source.path, source.is_root ? "1" : "0", source.content_hash});
@@ -439,6 +446,8 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
             }
             if (fields[1] == "implicit_std") {
                 metadata.implicit_std = parse_bool_field(fields[2], display_path, line_number);
+            } else if (fields[1] == "target") {
+                metadata.target_triple = fields[2];
             } else {
                 throw CompileError("invalid module metadata '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": unknown option");

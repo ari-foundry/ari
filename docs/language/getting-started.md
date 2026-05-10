@@ -53,6 +53,7 @@ Useful options:
 --module-path path  add a file-backed module search path
 -I path             same as --module-path
 --llvm-cc compiler  choose the LLVM IR compiler driver, usually clang
+--target triple     choose the LLVM target triple and C ABI alias layout
 -L path             add a library search path
 -l name             link a library
 --link name         same as -l name

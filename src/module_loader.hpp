@@ -19,6 +19,7 @@ struct ModuleLoadResult {
 struct ModuleLoadOptions {
     std::vector<std::string> module_search_paths;
     std::set<std::string> cfg_features;
+    std::string target_triple;
     const ModuleCache* input_cache = nullptr;
     bool implicit_std = true;
 };

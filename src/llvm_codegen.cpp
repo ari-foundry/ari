@@ -3,6 +3,7 @@
 
 #include "common.hpp"
 #include "symbol_mangle.hpp"
+#include "target.hpp"
 
 #include <cctype>
 #include <cstddef>
@@ -155,7 +156,7 @@ public:
 
         std::ostringstream out;
         out << "; Ari LLVM IR backend\n";
-        out << "target triple = \"x86_64-pc-linux-gnu\"\n\n";
+        out << "target triple = \"" << resolve_target_info(options_.target_triple).triple << "\"\n\n";
         out << "@ari_argc = internal global i32 0\n";
         out << "@ari_argv = internal global ptr null\n\n";
         out << "@ari_line_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";

@@ -18,10 +18,12 @@ public:
         : tokens_(std::move(tokens)), current_module_(std::move(module_path)) {}
     Parser(std::vector<Token> tokens,
            std::vector<std::string> module_path,
-           std::set<std::string> cfg_features)
+           std::set<std::string> cfg_features,
+           std::string target_triple = {})
         : tokens_(std::move(tokens)),
           current_module_(std::move(module_path)),
-          cfg_features_(std::move(cfg_features)) {}
+          cfg_features_(std::move(cfg_features)),
+          target_triple_(std::move(target_triple)) {}
 
     Program parse_program() {
         Program program;
@@ -48,6 +50,7 @@ private:
     std::size_t pos_ = 0;
     std::vector<std::string> current_module_;
     std::set<std::string> cfg_features_;
+    std::string target_triple_;
     bool allow_struct_literals_ = true;
 
     const Token& peek(int offset = 0) const {
@@ -134,7 +137,7 @@ private:
     bool cfg_attributes_enabled(const std::vector<Attribute>& attributes) const {
         for (const auto& attr : attributes) {
             if (!is_cfg_attribute(attr)) continue;
-            if (!cfg_attribute_enabled(attr, cfg_features_)) return false;
+            if (!cfg_attribute_enabled(attr, cfg_features_, target_triple_)) return false;
         }
         return true;
     }
@@ -2307,8 +2310,10 @@ Program parse_tokens(std::vector<Token> tokens) {
     return parser.parse_program();
 }
 
-Program parse_tokens(std::vector<Token> tokens, std::set<std::string> cfg_features) {
-    Parser parser(std::move(tokens), {}, std::move(cfg_features));
+Program parse_tokens(std::vector<Token> tokens,
+                     std::set<std::string> cfg_features,
+                     std::string target_triple) {
+    Parser parser(std::move(tokens), {}, std::move(cfg_features), std::move(target_triple));
     return parser.parse_program();
 }
 
@@ -2319,8 +2324,9 @@ Program parse_tokens_in_module(std::vector<Token> tokens, std::vector<std::strin
 
 Program parse_tokens_in_module(std::vector<Token> tokens,
                                std::vector<std::string> module_path,
-                               std::set<std::string> cfg_features) {
-    Parser parser(std::move(tokens), std::move(module_path), std::move(cfg_features));
+                               std::set<std::string> cfg_features,
+                               std::string target_triple) {
+    Parser parser(std::move(tokens), std::move(module_path), std::move(cfg_features), std::move(target_triple));
     return parser.parse_program();
 }
 

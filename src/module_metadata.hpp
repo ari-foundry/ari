@@ -34,6 +34,7 @@ struct ModuleMetadata {
     int format_version = 2;
     std::vector<std::string> module_search_paths;
     std::set<std::string> cfg_features;
+    std::string target_triple;
     bool implicit_std = true;
     std::vector<ModuleMetadataSource> sources;
     std::vector<ModuleMetadataImport> imports;

@@ -1,6 +1,7 @@
 #include "cfg_eval.hpp"
 
 #include "common.hpp"
+#include "target.hpp"
 
 #include <set>
 #include <string>
@@ -13,30 +14,13 @@ namespace {
     throw CompileError(where(loc) + ": " + message);
 }
 
-bool is_active_target(const std::string& name) {
-#if defined(_WIN32)
-    if (name == "windows") return true;
-#elif defined(__APPLE__)
-    if (name == "macos" || name == "unix") return true;
-#elif defined(__linux__)
-    if (name == "linux" || name == "unix") return true;
-#endif
-
-#if defined(__x86_64__) || defined(_M_X64)
-    if (name == "x86_64") return true;
-#elif defined(__aarch64__) || defined(_M_ARM64)
-    if (name == "aarch64") return true;
-#elif defined(__i386__) || defined(_M_IX86)
-    if (name == "x86") return true;
-#endif
-
-    return false;
-}
-
 class CfgParser {
 public:
-    CfgParser(const Attribute& attr, const std::set<std::string>& features)
-        : attr_(attr), tokens_(attr.args), features_(features) {}
+    CfgParser(const Attribute& attr, const std::set<std::string>& features, std::string target_triple)
+        : attr_(attr),
+          tokens_(attr.args),
+          features_(features),
+          target_(resolve_target_info(target_triple)) {}
 
     bool parse() {
         if (tokens_.empty()) cfg_fail(attr_.loc, "attribute '@cfg' expects arguments");
@@ -49,6 +33,7 @@ private:
     const Attribute& attr_;
     const std::vector<Token>& tokens_;
     const std::set<std::string>& features_;
+    TargetInfo target_;
     std::size_t pos_ = 0;
 
     bool at_end() const {
@@ -136,7 +121,7 @@ private:
 
     bool parse_target(SourceLocation loc) {
         std::string name = parse_name_argument(loc, "target");
-        return is_active_target(name);
+        return target_predicate_active(target_, name);
     }
 
     bool parse_feature(SourceLocation loc) {
@@ -147,9 +132,11 @@ private:
 
 } // namespace
 
-bool cfg_attribute_enabled(const Attribute& attr, const std::set<std::string>& features) {
+bool cfg_attribute_enabled(const Attribute& attr,
+                           const std::set<std::string>& features,
+                           const std::string& target_triple) {
     if (attr.name != "cfg") return true;
-    return CfgParser(attr, features).parse();
+    return CfgParser(attr, features, target_triple).parse();
 }
 
 } // namespace ari
