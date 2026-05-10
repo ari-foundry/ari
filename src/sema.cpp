@@ -11073,7 +11073,8 @@ private:
         }
 
         if (operand->type.primitive == IrPrimitiveKind::Vector) {
-            VectorKnownLength current_length = known_local_vec_length_for_expr(*expr.operand);
+            VectorKnownLength current_length =
+                vector_known_length_from_source_expr(operand->type, *expr.operand, *operand);
             if (index->kind == IrExprKind::Integer) {
                 require_vector_index_in_known_bounds(
                     expr.loc,

@@ -1,0 +1,13 @@
+fn main() -> i64 {
+  var left: Vec[i64] = [1, 2, 3];
+  left.truncate(1);
+
+  var right: Vec[i64] = [4, 5, 6];
+  right.truncate(1);
+
+  return (if true {
+    left
+  } else {
+    right
+  })[1];
+}

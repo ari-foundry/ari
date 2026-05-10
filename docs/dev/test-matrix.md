@@ -205,7 +205,8 @@ Checklist:
 - [x] typed empty local `Vec[T]` literals through annotations and assignments
 - [x] checked dynamic indexing of stored local `Vec[T]`, including
       compiler-known current-length static index diagnostics and known-empty
-      dynamic index rejection
+      dynamic index rejection, plus direct control-flow Vec expression static
+      index diagnostics from source-known local branch lengths
 - [x] local `Vec[T]` literal reassignment with changing runtime length
 - [x] local `Vec[T]` initialization and assignment from another local vector
       preserve compiler-known current length when the source length is precise

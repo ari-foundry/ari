@@ -1601,6 +1601,8 @@ check-variables: $(TARGET)
 	grep -q "vector index 1 is out of range for 1 elements" $(BUILD_DIR)/variables/vector-index-known-length-out-of-range.err
 	if $(TARGET) tests/errors/vector-index-known-length-copy-out-of-range.ari -o $(BUILD_DIR)/variables/vector-index-known-length-copy-out-of-range.elf >$(BUILD_DIR)/variables/vector-index-known-length-copy-out-of-range.err 2>&1; then exit 1; fi
 	grep -q "vector index 1 is out of range for 1 elements" $(BUILD_DIR)/variables/vector-index-known-length-copy-out-of-range.err
+	if $(TARGET) tests/errors/vector-control-flow-known-local-index.ari -o $(BUILD_DIR)/variables/vector-control-flow-known-local-index.elf >$(BUILD_DIR)/variables/vector-control-flow-known-local-index.err 2>&1; then exit 1; fi
+	grep -q "vector index 1 is out of range for 1 elements" $(BUILD_DIR)/variables/vector-control-flow-known-local-index.err
 	if $(TARGET) tests/errors/vector-index-known-empty-dynamic.ari -o $(BUILD_DIR)/variables/vector-index-known-empty-dynamic.elf >$(BUILD_DIR)/variables/vector-index-known-empty-dynamic.err 2>&1; then exit 1; fi
 	grep -q "vector index requires a non-empty Vec" $(BUILD_DIR)/variables/vector-index-known-empty-dynamic.err
 	if $(TARGET) tests/errors/vector-method-known-empty-first.ari -o $(BUILD_DIR)/variables/vector-method-known-empty-first.elf >$(BUILD_DIR)/variables/vector-method-known-empty-first.err 2>&1; then exit 1; fi

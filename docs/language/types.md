@@ -421,6 +421,8 @@ bindings whose current lengths are still compiler-known.
 Vec-valued `match` and `if let` expressions also size their expected local
 storage before branch result materialization, so same-length literal, block, or
 local-binding arms preserve the known length there too.
+Direct indexing of such Vec-valued control-flow expressions uses the same
+source-known local lengths for static out-of-range diagnostics.
 The same `len(view)`, `view.len()`, and `view.is_empty()` forms read the stored
 length from a `Slice[T]` view. `view[index]` reads or writes through the view's
 stored raw pointer with bounds checks against that stored length. Mutable local
