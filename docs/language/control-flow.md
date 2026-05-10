@@ -262,8 +262,8 @@ for whole @ (left, right) in [(1, 2), (3, 4)] {
 ```
 
 These loop heads are destructuring bindings, not filters. Literal, range,
-or-pattern, and enum-case loop heads are still rejected until the general
-`Iterator[T]` model defines how failed matches advance the iterator.
+or-pattern, and enum-case loop heads are still rejected for list/vector loops
+because those loops bind every element instead of calling `Iterator[T].next()`.
 
 Direct copyable non-borrow `Iterator[T]` values lower through the standard
 `next(self) -> Option[T]` step operation. The iterator expression is evaluated
@@ -282,13 +282,22 @@ for Ready in cursor {
 for 11 in numbers {
   total = total + 1;
 }
+
+for 11 | 12 in numbers {
+  total = total + 1;
+}
+
+for 10..=20 in scores {
+  total = total + 1;
+}
 ```
 
 These patterns use `while let Some(pattern) = iterator.next()` semantics. If an
 item does not match, the loop ends; it is not skipped. This keeps the lowering
-predictable until Ari grows a distinct filter-style loop form. Enum-case item
-patterns are currently limited to fieldless cases because payload-bearing enum
-items inside `Option[T]` still depend on broader aggregate enum payload storage.
+predictable until Ari grows a distinct filter-style loop form. Or-pattern
+alternatives must bind the same names. Enum-case item patterns are currently
+limited to fieldless cases because payload-bearing enum items inside `Option[T]`
+still depend on broader aggregate enum payload storage.
 
 The current source trait still uses a compiler-known return contract for
 `into_iter` instead of a first-class associated iterator type. Mutable/stateful

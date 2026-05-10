@@ -29,6 +29,11 @@ fn main() -> i64 {
   let off = FlagCursor { value: Off };
   let eleven = NumberCursor { value: 11 };
   let twelve = NumberCursor { value: 11 };
+  let or_flag = FlagCursor { value: Off };
+  let or_number = NumberCursor { value: 12 };
+  let or_miss = NumberCursor { value: 13 };
+  let range_number = NumberCursor { value: 12 };
+  let range_miss = NumberCursor { value: 13 };
 
   for On in on {
     total = total + 31;
@@ -45,6 +50,29 @@ fn main() -> i64 {
   }
 
   for 12 in twelve {
+    total = total + 100;
+  }
+
+  for On | Off in or_flag {
+    total = total + 2;
+    break;
+  }
+
+  for 11 | 12 in or_number {
+    total = total + 5;
+    break;
+  }
+
+  for 11 | 12 in or_miss {
+    total = total + 100;
+  }
+
+  for 10..=12 in range_number {
+    total = total + 3;
+    break;
+  }
+
+  for 10..=12 in range_miss {
     total = total + 100;
   }
 

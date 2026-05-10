@@ -9584,9 +9584,14 @@ private:
                     fail(pattern.loc, "range iterator for-loop pattern requires an integer item, got " + type_name(value_type));
                 }
                 return;
-            case PatternKind::Or:
-                fail_refutable_for_pattern(pattern.loc);
+            case PatternKind::Or: {
+                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
+                require_same_or_pattern_bindings(pattern.loc, alternatives, value_type);
+                for (const auto& alternative : alternatives) {
+                    require_supported_for_iterator_pattern(alternative, value_type);
+                }
                 return;
+            }
         }
     }
 
@@ -9625,6 +9630,45 @@ private:
             copy.elements.push_back(clone_pattern(element));
         }
         return copy;
+    }
+
+    bool iterator_binding_names_enum_case(const Pattern& pattern, const IrType& value_type) {
+        if (pattern.kind != PatternKind::Binding || !is_value_enum_type(value_type)) return false;
+        std::string case_name = resolve_enum_case_name(pattern.payload_name);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) return false;
+        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, value_type);
+        if (case_info.enum_name != value_type.name) return false;
+        require_enum_case_access(pattern.loc, case_info);
+        return true;
+    }
+
+    Pattern normalize_iterator_item_pattern(const Pattern& pattern, const IrType& value_type) {
+        if (iterator_binding_names_enum_case(pattern, value_type)) {
+            Pattern enum_pattern;
+            enum_pattern.kind = PatternKind::EnumCase;
+            enum_pattern.case_name = pattern.payload_name;
+            enum_pattern.loc = pattern.loc;
+            return enum_pattern;
+        }
+        if (pattern.kind == PatternKind::Alias) {
+            Pattern normalized = clone_pattern(pattern);
+            if (!pattern.alias_pattern) return normalized;
+            normalized.alias_pattern =
+                std::make_unique<Pattern>(normalize_iterator_item_pattern(*pattern.alias_pattern, value_type));
+            return normalized;
+        }
+        if (pattern.kind == PatternKind::Or) {
+            Pattern normalized;
+            normalized.kind = PatternKind::Or;
+            normalized.loc = pattern.loc;
+            normalized.alternatives.reserve(pattern.alternatives.size());
+            for (const auto& alternative : pattern.alternatives) {
+                normalized.alternatives.push_back(normalize_iterator_item_pattern(alternative, value_type));
+            }
+            return normalized;
+        }
+        return clone_pattern(pattern);
     }
 
     static Pattern make_iterator_some_pattern(const Pattern& item_pattern) {
@@ -9766,8 +9810,9 @@ private:
                  "Iterator[T] for-loop item bindings currently require copyable non-borrow items, got " +
                      type_name(item_type));
         }
-        if (stmt.for_pattern.kind != PatternKind::Binding && stmt.for_pattern.kind != PatternKind::Wildcard) {
-            require_supported_for_iterator_pattern(stmt.for_pattern, item_type);
+        Pattern item_pattern = normalize_iterator_item_pattern(stmt.for_pattern, item_type);
+        if (item_pattern.kind != PatternKind::Binding && item_pattern.kind != PatternKind::Wildcard) {
+            require_supported_for_iterator_pattern(item_pattern, item_type);
         }
 
         std::string iterator_name = make_hidden_local("$for_iter");
@@ -9784,7 +9829,7 @@ private:
         IrType enum_value_type = loop->match_value->type;
 
         EnumMatchCoverage coverage;
-        Pattern some_pattern = make_iterator_some_pattern(stmt.for_pattern);
+        Pattern some_pattern = make_iterator_some_pattern(item_pattern);
         std::vector<IrMatchArm> pattern_arms = lower_match_arm_patterns(
             some_pattern,
             enum_info,

@@ -72,9 +72,9 @@
    `for` lowering sites. The remaining iterator model needs a first-class
    source spelling for that iterator result and stateful/mutable iterator
    receiver policy. Iterator item patterns can now use scalar literal/range
-   tests and fieldless enum-case patterns; the current semantics are
-   `while let Some(pattern) = iterator.next()`, so the first non-matching item
-   ends the loop rather than being skipped.
+   tests, or-patterns over those tests, and fieldless enum-case patterns; the
+   current semantics are `while let Some(pattern) = iterator.next()`, so the
+   first non-matching item ends the loop rather than being skipped.
    - [contract] replace the compiler-known `into_iter` result relaxation with
      a first-class associated iterator type or equivalent Ari-specific trait
      contract
