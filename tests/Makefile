@@ -1573,6 +1573,8 @@ check-variables: $(TARGET)
 	grep -q "Vec.reserve capacity must be non-negative" $(BUILD_DIR)/variables/vector-reserve-const-negative.err
 	if $(TARGET) tests/errors/vector-reserve-static-negative.ari -o $(BUILD_DIR)/variables/vector-reserve-static-negative.elf >$(BUILD_DIR)/variables/vector-reserve-static-negative.err 2>&1; then exit 1; fi
 	grep -q "Vec.reserve capacity must be non-negative" $(BUILD_DIR)/variables/vector-reserve-static-negative.err
+	if $(TARGET) tests/errors/vector-truncate-known-static-negative.ari -o $(BUILD_DIR)/variables/vector-truncate-known-static-negative.elf >$(BUILD_DIR)/variables/vector-truncate-known-static-negative.err 2>&1; then exit 1; fi
+	grep -q "Vec.truncate length must be non-negative" $(BUILD_DIR)/variables/vector-truncate-known-static-negative.err
 	if $(TARGET) tests/errors/variables-match-binding-immutable.ari -o $(BUILD_DIR)/variables/variables-match-binding-immutable.elf >$(BUILD_DIR)/variables/variables-match-binding-immutable.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to immutable binding 'inner'" $(BUILD_DIR)/variables/variables-match-binding-immutable.err
 	if $(TARGET) tests/errors/variables-let-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-let-pattern-binding.elf >$(BUILD_DIR)/variables/variables-let-pattern-binding.err 2>&1; then exit 1; fi

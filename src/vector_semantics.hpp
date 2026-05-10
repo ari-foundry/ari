@@ -80,6 +80,9 @@ VectorKnownLength vector_known_length_after_remove(VectorKnownLength current);
 VectorKnownLength vector_known_length_after_clear();
 VectorKnownLength vector_known_length_after_truncate(VectorKnownLength current,
                                                      const StaticIntegerValue* requested_length);
+VectorKnownLength vector_known_length_after_checked_truncate(SourceLocation loc,
+                                                             VectorKnownLength current,
+                                                             const StaticIntegerValue* requested_length);
 std::uint64_t vector_required_capacity_for_append(const IrType& storage_type,
                                                   VectorKnownLength current);
 

@@ -309,6 +309,15 @@ VectorKnownLength vector_known_length_after_truncate(VectorKnownLength current,
     return VectorKnownLength{true, updated_length};
 }
 
+VectorKnownLength vector_known_length_after_checked_truncate(SourceLocation loc,
+                                                             VectorKnownLength current,
+                                                             const StaticIntegerValue* requested_length) {
+    if (requested_length) {
+        require_local_vec_non_negative_argument(loc, LocalVecMethod::Truncate, "length", *requested_length);
+    }
+    return vector_known_length_after_truncate(current, requested_length);
+}
+
 std::uint64_t vector_required_capacity_for_append(const IrType& storage_type,
                                                   VectorKnownLength current) {
     if (current.known) return current.length + 1;

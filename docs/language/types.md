@@ -487,10 +487,10 @@ current runtime length.
 than the current length, leaves it unchanged when `n` is larger, and panics for
 negative runtime lengths. Literal lengths, integer constants, static integer
 arithmetic/bitwise/shift expressions, and immutable local integers initialized
-from those expressions keep the compiler's local length tracking precise for
-later `push` and `insert` storage decisions. `set(index, value)` overwrites an
-existing element inside the current runtime length and uses the same bounds
-checks as indexing.
+from those expressions are rejected at compile time when negative; otherwise
+they keep the compiler's local length tracking precise for later `push` and
+`insert` storage decisions. `set(index, value)` overwrites an existing element
+inside the current runtime length and uses the same bounds checks as indexing.
 `swap(a, b)` exchanges two elements inside the current runtime length, with the
 same bounds checks on both indexes.
 `remove(index)` returns the removed copyable element, shifts later elements one

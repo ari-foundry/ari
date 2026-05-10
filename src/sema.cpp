@@ -13906,7 +13906,11 @@ private:
         }
         set_vector_known_length(
             local,
-            vector_known_length_after_truncate(vector_known_length_state(local), requested_known_length)
+            vector_known_length_after_checked_truncate(
+                length_expr.loc,
+                vector_known_length_state(local),
+                requested_known_length
+            )
         );
         release_temporary_borrows(borrow_mark);
 

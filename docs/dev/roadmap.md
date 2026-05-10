@@ -21,8 +21,9 @@
    are also folded into the local capacity decision. Static truncate lengths,
    including immutable locals initialized from those expressions, keep the
    compiler-known local length precise for later `push`/`insert` capacity
-   decisions. This still does not allocate or grow beyond the fixed local stack
-   storage.
+   decisions, and negative static truncate lengths now use the shared
+   non-negative operand diagnostic. This still does not allocate or grow beyond
+   the fixed local stack storage.
    This local API is now frozen as a temporary executable subset: do not add
    more compiler-known `Vec` convenience methods before the allocator-backed
    library design lands. Unsupported local `Vec` method calls now get a

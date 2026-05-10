@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  let keep = 1 - 2;
+  var values: Vec[i64] = [1, 2, 3];
+  values.truncate(keep);
+  return values.len();
+}
