@@ -99,10 +99,10 @@ for the source enum name. Enum headers use Ari's current fixed tag ABI by
 emitting `typedef int64_t Name;` plus prefixed integer constants such as
 `Name_Case = 0`. The current header emitter skips private helpers, private
 structs, and private enums. Generic `@repr(C)` structs are emitted as opaque
-typedefs so pointer-only C APIs can name them, but their concrete field
-definitions are still planned. Header generation rejects Ari-only values such
-as `string`, owned values, generic structs passed by value, and aggregate values
-whose C ABI policy is not explicit.
+typedefs so pointer-only C APIs can name them; exported by-value instantiations
+also get concrete typedefs/definitions such as `GenericHandle_i64`. Header
+generation rejects Ari-only values such as `string`, owned values, and
+aggregate values whose C ABI policy is not explicit.
 Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.

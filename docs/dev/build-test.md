@@ -80,9 +80,10 @@ deprecated use warnings, `@test` runner generation, user-defined attribute
 names reserved by `meta fn`, exported C header prototypes and public
 non-generic `@repr(C)` struct declarations with const-ref slots, by-value
 non-generic `@repr(C)` struct export prototypes, opaque generic `@repr(C)`
-struct typedefs for pointer-only APIs, plus generic/non-generic fieldless enum
-declarations, meta signatures over `token_stream`/`ast`, and planned
-Rust-style `name!(...)` macro invocation diagnostics.
+struct typedefs for pointer-only APIs, concrete generic `@repr(C)` struct
+typedefs for by-value exported instantiations, plus generic/non-generic
+fieldless enum declarations, meta signatures over `token_stream`/`ast`, and
+planned Rust-style `name!(...)` macro invocation diagnostics.
 
 `make check-prelude` runs prelude IO, formatting, input, assertion, source
 header, and builtin macro tests. It covers function and macro assertion forms,

@@ -1,9 +1,0 @@
-@repr(C)
-pub struct GenericHandle[T] {
-  raw: ptr T,
-}
-
-@export("ari_take_handle")
-pub fn take_handle(handle: GenericHandle[i64]) -> i64 {
-  return 0;
-}

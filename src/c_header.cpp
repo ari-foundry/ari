@@ -8,6 +8,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace ari {
 namespace {
@@ -23,13 +24,53 @@ struct CRecordInfo {
     bool opaque = false;
 };
 
+struct CConcreteRecord {
+    std::string key;
+    std::string c_name;
+    std::vector<IrCRecordField> fields;
+    SourceLocation loc;
+};
+
 using CRecordNames = std::map<std::string, CRecordInfo>;
+using CConcreteRecordNames = std::map<std::string, std::string>;
 using CEnumNames = std::map<std::string, std::string>;
 
 std::string c_type_name(const IrType& type,
                         const CRecordNames& c_record_names,
+                        const CConcreteRecordNames& c_concrete_record_names,
                         const CEnumNames& c_enum_names,
                         bool allow_record_values);
+std::string c_record_type_name(const IrType& type, const CRecordNames& c_record_names);
+
+std::string c_identifier_suffix(const std::string& text) {
+    std::string out;
+    for (unsigned char c : text) {
+        if ((c >= 'a' && c <= 'z') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c >= '0' && c <= '9')) {
+            out.push_back(static_cast<char>(c));
+        } else {
+            out.push_back('_');
+        }
+    }
+    while (!out.empty() && out.front() == '_') out.erase(out.begin());
+    while (!out.empty() && out.back() == '_') out.pop_back();
+    if (out.empty()) return "type";
+    return out;
+}
+
+std::string concrete_record_key(const IrType& type) {
+    return type_name(type);
+}
+
+std::string concrete_record_c_name(const IrType& type, const CRecordNames& c_record_names) {
+    std::string out = c_record_type_name(type, c_record_names);
+    for (const auto& arg : type.args) {
+        out += "_";
+        out += c_identifier_suffix(type_name(arg));
+    }
+    return out;
+}
 
 std::string c_scalar_type_name(const IrType& type) {
     switch (type.primitive) {
@@ -76,6 +117,7 @@ std::string c_enum_type_name(const IrType& type, const CEnumNames& c_enum_names)
 
 std::string c_type_name(const IrType& type,
                         const CRecordNames& c_record_names,
+                        const CConcreteRecordNames& c_concrete_record_names,
                         const CEnumNames& c_enum_names,
                         bool allow_record_values) {
     if (type.qualifier == TypeQualifier::Own) {
@@ -110,8 +152,10 @@ std::string c_type_name(const IrType& type,
         if (allow_record_values) {
             const CRecordInfo& record = c_record_info(type, c_record_names);
             if (record.opaque) {
+                auto concrete = c_concrete_record_names.find(concrete_record_key(type));
+                if (concrete != c_concrete_record_names.end()) return concrete->second;
                 throw CompileError("C header emission does not support by-value generic aggregate type " +
-                                   type_name(type) + "; use a raw pointer ABI until concrete generic C layouts are emitted");
+                                   type_name(type) + "; no concrete C layout was collected for this instantiation");
             }
             return record.c_name;
         }
@@ -130,12 +174,15 @@ std::string emitted_function_symbol(const IrFunction& fn) {
 
 std::string function_prototype(const IrFunction& fn,
                                const CRecordNames& c_record_names,
+                               const CConcreteRecordNames& c_concrete_record_names,
                                const CEnumNames& c_enum_names) {
     std::ostringstream out;
-    out << c_type_name(fn.return_type, c_record_names, c_enum_names, true) << " " << emitted_function_symbol(fn) << "(";
+    out << c_type_name(fn.return_type, c_record_names, c_concrete_record_names, c_enum_names, true)
+        << " " << emitted_function_symbol(fn) << "(";
     for (std::size_t i = 0; i < fn.params.size(); ++i) {
         if (i > 0) out << ", ";
-        out << c_type_name(fn.params[i].type, c_record_names, c_enum_names, true) << " arg" << i;
+        out << c_type_name(fn.params[i].type, c_record_names, c_concrete_record_names, c_enum_names, true)
+            << " arg" << i;
     }
     if (fn.params.empty()) out << "void";
     out << ");";
@@ -186,6 +233,81 @@ CEnumNames collect_c_enum_names(const IrProgram& program) {
     return names;
 }
 
+void collect_concrete_record_type(const IrType& type,
+                                  const CRecordNames& c_record_names,
+                                  std::map<std::string, CConcreteRecord>& records) {
+    if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Struct) return;
+    const CRecordInfo& source = c_record_info(type, c_record_names);
+    if (!source.opaque || type.args.empty()) return;
+
+    std::string key = concrete_record_key(type);
+    if (records.count(key)) return;
+    if (type.field_names.size() != type.field_types.size()) {
+        throw CompileError("C header emission cannot materialize concrete generic aggregate type " +
+                           type_name(type) + "; missing instantiated field layout");
+    }
+
+    CConcreteRecord record;
+    record.key = key;
+    record.c_name = concrete_record_c_name(type, c_record_names);
+    record.loc = type.loc;
+    for (std::size_t i = 0; i < type.field_names.size(); ++i) {
+        record.fields.push_back(IrCRecordField{
+            type.field_names[i],
+            type.field_types[i],
+            type.loc
+        });
+    }
+
+    for (const auto& field : record.fields) {
+        collect_concrete_record_type(field.type, c_record_names, records);
+    }
+    records.emplace(key, std::move(record));
+}
+
+std::vector<CConcreteRecord> collect_concrete_records(const IrProgram& program,
+                                                      const CRecordNames& c_record_names) {
+    std::map<std::string, CConcreteRecord> by_key;
+    for (const auto& fn : program.functions) {
+        if (!fn.shared_export) continue;
+        collect_concrete_record_type(fn.return_type, c_record_names, by_key);
+        for (const auto& param : fn.params) {
+            collect_concrete_record_type(param.type, c_record_names, by_key);
+        }
+    }
+
+    std::vector<CConcreteRecord> out;
+    out.reserve(by_key.size());
+    for (auto& item : by_key) out.push_back(std::move(item.second));
+    return out;
+}
+
+CConcreteRecordNames collect_concrete_record_names(const std::vector<CConcreteRecord>& records) {
+    CConcreteRecordNames names;
+    for (const auto& record : records) {
+        names.emplace(record.key, record.c_name);
+    }
+    return names;
+}
+
+void require_unique_concrete_c_type_names(const IrProgram& program,
+                                          const std::vector<CConcreteRecord>& concrete_records) {
+    std::set<std::string> used_c_names;
+    for (const auto& item : program.c_records) {
+        std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
+        used_c_names.insert(c_name);
+    }
+    for (const auto& item : program.c_enums) {
+        std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
+        used_c_names.insert(c_name);
+    }
+    for (const auto& item : concrete_records) {
+        if (!used_c_names.insert(item.c_name).second) {
+            throw CompileError("C header emission found duplicate C type name '" + item.c_name + "'");
+        }
+    }
+}
+
 std::string enum_definition(const IrCEnum& item) {
     std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
     std::ostringstream out;
@@ -203,14 +325,34 @@ std::string record_forward_declaration(const IrCRecord& record) {
     return "typedef struct " + c_name + " " + c_name + ";";
 }
 
+std::string concrete_record_forward_declaration(const CConcreteRecord& record) {
+    return "typedef struct " + record.c_name + " " + record.c_name + ";";
+}
+
 std::string record_definition(const IrCRecord& record,
                               const CRecordNames& c_record_names,
+                              const CConcreteRecordNames& c_concrete_record_names,
                               const CEnumNames& c_enum_names) {
     std::string c_name = record.c_name.empty() ? unqualified_name(record.name) : record.c_name;
     std::ostringstream out;
     out << "struct " << c_name << " {\n";
     for (const auto& field : record.fields) {
-        out << "    " << c_type_name(field.type, c_record_names, c_enum_names, false) << " " << field.name << ";\n";
+        out << "    " << c_type_name(field.type, c_record_names, c_concrete_record_names, c_enum_names, false)
+            << " " << field.name << ";\n";
+    }
+    out << "};";
+    return out.str();
+}
+
+std::string concrete_record_definition(const CConcreteRecord& record,
+                                       const CRecordNames& c_record_names,
+                                       const CConcreteRecordNames& c_concrete_record_names,
+                                       const CEnumNames& c_enum_names) {
+    std::ostringstream out;
+    out << "struct " << record.c_name << " {\n";
+    for (const auto& field : record.fields) {
+        out << "    " << c_type_name(field.type, c_record_names, c_concrete_record_names, c_enum_names, false)
+            << " " << field.name << ";\n";
     }
     out << "};";
     return out.str();
@@ -222,6 +364,9 @@ std::string emit_c_header(const IrProgram& program) {
     require_unique_c_type_names(program);
     CRecordNames c_record_names = collect_c_record_names(program);
     CEnumNames c_enum_names = collect_c_enum_names(program);
+    std::vector<CConcreteRecord> c_concrete_records = collect_concrete_records(program, c_record_names);
+    require_unique_concrete_c_type_names(program, c_concrete_records);
+    CConcreteRecordNames c_concrete_record_names = collect_concrete_record_names(c_concrete_records);
 
     std::ostringstream out;
     out << "#pragma once\n\n";
@@ -239,10 +384,16 @@ std::string emit_c_header(const IrProgram& program) {
         for (const auto& record : program.c_records) {
             out << record_forward_declaration(record) << "\n";
         }
+        for (const auto& record : c_concrete_records) {
+            out << concrete_record_forward_declaration(record) << "\n";
+        }
         out << "\n";
         for (const auto& record : program.c_records) {
             if (record.opaque) continue;
-            out << record_definition(record, c_record_names, c_enum_names) << "\n\n";
+            out << record_definition(record, c_record_names, c_concrete_record_names, c_enum_names) << "\n\n";
+        }
+        for (const auto& record : c_concrete_records) {
+            out << concrete_record_definition(record, c_record_names, c_concrete_record_names, c_enum_names) << "\n\n";
         }
     }
 
@@ -252,7 +403,7 @@ std::string emit_c_header(const IrProgram& program) {
 
     for (const auto& fn : program.functions) {
         if (!fn.shared_export) continue;
-        out << function_prototype(fn, c_record_names, c_enum_names) << "\n";
+        out << function_prototype(fn, c_record_names, c_concrete_record_names, c_enum_names) << "\n";
     }
 
     out << "\n#ifdef __cplusplus\n";

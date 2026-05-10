@@ -65,17 +65,20 @@
    layout queries, scalar/plain-aggregate loads and stores, dereference syntax,
    and scalar aggregate field/element access on the supported backends.
    Public non-generic `@repr(C)` structs can also appear by value in exported
-   C header prototypes on the LLVM/shared path.
+   C header prototypes on the LLVM/shared path, and exported by-value generic
+   `@repr(C)` struct instantiations emit concrete C typedefs such as
+   `Handle_i64`.
    - [repr] finish `repr(C)` aggregate ABI layout policy for
-     ownership-qualified fields and concrete generic struct header definitions;
+     ownership-qualified fields and harden target-specific aggregate ABI checks;
      public non-generic `@repr(C)` struct
      declarations with scalar/raw-pointer/borrow fields are emitted in C
      headers with immutable `ref` slots spelled as `const` C pointers, public
      generic `@repr(C)` structs are emitted as opaque C typedefs for
-     pointer-only APIs, public fieldless `@repr(C)` enums, including generic
-     fieldless enums whose type parameters do not affect layout, are emitted as
-     fixed-width tag typedefs plus prefixed constants, scalar/raw-pointer
-     exported function C headers are implemented,
+     pointer-only APIs and as concrete typedefs/definitions for exported
+     by-value instantiations, public fieldless `@repr(C)` enums, including
+     generic fieldless enums whose type parameters do not affect layout, are
+     emitted as fixed-width tag typedefs plus prefixed constants,
+     scalar/raw-pointer exported function C headers are implemented,
      generic value fields are accepted after concrete instantiation, generic
      `ref`/`ref mut`/`ptr` fields are accepted as pointer-sized C layout slots,
      and generic fieldless enums are accepted because their layout is payload-free
