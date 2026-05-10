@@ -57,5 +57,14 @@ fn main() -> i64 {
     total = total + 100;
   }
 
+  let fifth = Cursor { step: 0 };
+  for let Pair(chosen @ (4 | 12), seen @ (true | false)) in fifth {
+    if seen {
+      total = total + chosen;
+    } else {
+      total = total + chosen * 2;
+    }
+  }
+
   return total;
 }

@@ -83,8 +83,8 @@
    Iterator item patterns can now use scalar literal/range tests, or-patterns
    over those tests, fieldless enum-case patterns, compact enum item payload
    bindings/literal/range/or/alias tests, and nested aggregate-enum item case
-   patterns with positional multi-payload bindings, literal/range tests, and
-   aliases. Plain `for pattern in iterator` keeps
+   patterns with positional multi-payload bindings, literal/range/or tests,
+   and aliases. Plain `for pattern in iterator` keeps
    `while let Some(pattern) = iterator.next()` semantics, so the first
    non-matching item ends the loop. `for let pattern in iterator` is the
    filter-style form; non-matching `Some(_)` items continue to the next
@@ -92,8 +92,6 @@
    - [state] extend the new mutable iterator receiver support beyond copyable
      non-borrow values to owner/borrow iterator values and explicit iterator
      lifetime rules
-   - [pattern-payload-or] support or-patterns inside nested aggregate enum
-     payload slots, rather than only at the item-pattern alternative level
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
