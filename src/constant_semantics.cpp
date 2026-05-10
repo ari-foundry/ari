@@ -70,14 +70,16 @@ StaticIntegerValue static_integer_value_from_i64(std::int64_t value) {
 bool fold_static_integer_unary(TokenKind op,
                                const StaticIntegerValue& operand,
                                StaticIntegerValue& out) {
-    if (op != TokenKind::Minus) return false;
     std::int64_t value = 0;
-    if (!static_integer_value_to_i64(operand, value) ||
-        value == std::numeric_limits<std::int64_t>::min()) {
-        return false;
+    if (!static_integer_value_to_i64(operand, value)) return false;
+    switch (op) {
+        case TokenKind::Minus:
+            if (value == std::numeric_limits<std::int64_t>::min()) return false;
+            out = static_integer_value_from_i64(-value);
+            return true;
+        default:
+            return false;
     }
-    out = static_integer_value_from_i64(-value);
-    return true;
 }
 
 bool fold_static_integer_binary(TokenKind op,
@@ -90,6 +92,11 @@ bool fold_static_integer_binary(TokenKind op,
         case TokenKind::Star:
         case TokenKind::Slash:
         case TokenKind::Percent:
+        case TokenKind::Amp:
+        case TokenKind::Pipe:
+        case TokenKind::Caret:
+        case TokenKind::LessLess:
+        case TokenKind::GreaterGreater:
             break;
         default:
             return false;
@@ -127,6 +134,24 @@ bool fold_static_integer_binary(TokenKind op,
             }
             result = lhs % rhs;
             break;
+        case TokenKind::Amp:
+            result = lhs & rhs;
+            break;
+        case TokenKind::Pipe:
+            result = lhs | rhs;
+            break;
+        case TokenKind::Caret:
+            result = lhs ^ rhs;
+            break;
+        case TokenKind::LessLess:
+            if (lhs < 0 || rhs < 0 || rhs >= 64) return false;
+            if (lhs > (std::numeric_limits<std::int64_t>::max() >> rhs)) return false;
+            result = lhs << rhs;
+            break;
+        case TokenKind::GreaterGreater:
+            if (lhs < 0 || rhs < 0 || rhs >= 64) return false;
+            result = lhs >> rhs;
+            break;
         default:
             return false;
     }
@@ -151,6 +176,11 @@ bool try_fold_static_integer_value(const IrExpr& expr, StaticIntegerValue& out) 
         case IrBinaryOp::Mul:
         case IrBinaryOp::Div:
         case IrBinaryOp::Mod:
+        case IrBinaryOp::BitAnd:
+        case IrBinaryOp::BitOr:
+        case IrBinaryOp::BitXor:
+        case IrBinaryOp::Shl:
+        case IrBinaryOp::Shr:
             break;
         default:
             return false;
@@ -180,6 +210,21 @@ bool try_fold_static_integer_value(const IrExpr& expr, StaticIntegerValue& out) 
             break;
         case IrBinaryOp::Mod:
             source_op = TokenKind::Percent;
+            break;
+        case IrBinaryOp::BitAnd:
+            source_op = TokenKind::Amp;
+            break;
+        case IrBinaryOp::BitOr:
+            source_op = TokenKind::Pipe;
+            break;
+        case IrBinaryOp::BitXor:
+            source_op = TokenKind::Caret;
+            break;
+        case IrBinaryOp::Shl:
+            source_op = TokenKind::LessLess;
+            break;
+        case IrBinaryOp::Shr:
+            source_op = TokenKind::GreaterGreater;
             break;
         default:
             return false;

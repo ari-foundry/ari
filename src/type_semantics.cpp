@@ -276,6 +276,25 @@ bool is_unsigned_integer_primitive(IrPrimitiveKind primitive) {
     }
 }
 
+unsigned integer_primitive_bit_width(IrPrimitiveKind primitive) {
+    switch (primitive) {
+        case IrPrimitiveKind::I8:
+        case IrPrimitiveKind::U8:
+            return 8;
+        case IrPrimitiveKind::I16:
+        case IrPrimitiveKind::U16:
+            return 16;
+        case IrPrimitiveKind::I32:
+        case IrPrimitiveKind::U32:
+            return 32;
+        case IrPrimitiveKind::I64:
+        case IrPrimitiveKind::U64:
+            return 64;
+        default:
+            return 0;
+    }
+}
+
 std::uint64_t signed_positive_max(IrPrimitiveKind primitive) {
     switch (primitive) {
         case IrPrimitiveKind::I8: return 127;

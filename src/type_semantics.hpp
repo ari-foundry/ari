@@ -44,6 +44,7 @@ IrType float_literal_suffix_type(const std::string& suffix, SourceLocation loc);
 
 bool is_signed_integer_primitive(IrPrimitiveKind primitive);
 bool is_unsigned_integer_primitive(IrPrimitiveKind primitive);
+unsigned integer_primitive_bit_width(IrPrimitiveKind primitive);
 std::uint64_t signed_positive_max(IrPrimitiveKind primitive);
 std::uint64_t signed_negative_limit(IrPrimitiveKind primitive);
 std::uint64_t unsigned_max(IrPrimitiveKind primitive);

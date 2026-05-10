@@ -15,13 +15,14 @@
    the current length, so empty `Vec[T]` locals can grow through
    straight-line appends/inserts without an explicit `reserve`.
    Runtime `reserve(n)` values now lower to a local-capacity guard, so the
-   call no longer requires a literal. Integer constants, static signed integer
-   arithmetic over constants and literals, and immutable local integer bindings
-   initialized from those static expressions are also folded into the local
-   capacity decision. Static truncate lengths, including immutable locals
-   initialized from those expressions, keep the compiler-known local length
-   precise for later `push`/`insert` capacity decisions. This still does not
-   allocate or grow beyond the fixed local stack storage.
+   call no longer requires a literal. Integer constants, static integer
+   arithmetic/bitwise/shift expressions over constants and literals, and
+   immutable local integer bindings initialized from those static expressions
+   are also folded into the local capacity decision. Static truncate lengths,
+   including immutable locals initialized from those expressions, keep the
+   compiler-known local length precise for later `push`/`insert` capacity
+   decisions. This still does not allocate or grow beyond the fixed local stack
+   storage.
    This local API is now frozen as a temporary executable subset: do not add
    more compiler-known `Vec` convenience methods before the allocator-backed
    library design lands. Unsupported local `Vec` method calls now get a
@@ -34,7 +35,7 @@
    explicit allocation/capability path before broadening vector patterns or std
    collection APIs.
    - [allocator] thread explicit allocator/capability values through creation
-   - [capacity] replace local literal/const/static-signed-expr/known-local/runtime-checked
+   - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing `push`, `insert`, `pop`, `remove`,
      `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and

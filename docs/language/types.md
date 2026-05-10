@@ -442,10 +442,10 @@ stack-backed executable subset. Other compiler-known collection conveniences
 are reserved for the future allocator-backed std library design.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
-integer constant, static signed integer arithmetic expression over constants
-and literals, or immutable local integer binding initialized from one of those
-static expressions widens the compiler-known local storage capacity for that
-binding. Other runtime integer values lower to a bounds check against the
+integer constant, static integer arithmetic/bitwise/shift expression over
+constants and literals, or immutable local integer binding initialized from one
+of those static expressions widens the compiler-known local storage capacity
+for that binding. Other runtime integer values lower to a bounds check against the
 current reserved local capacity and panic through `panic` when the requested
 capacity is negative or larger than that fixed local storage. It does not
 allocate heap storage yet.
@@ -472,10 +472,10 @@ the first matching runtime index as `i64`, or `-1` when no element matches.
 current runtime length.
 `truncate(n)` shrinks the current runtime length to `n` when `n` is smaller
 than the current length, leaves it unchanged when `n` is larger, and panics for
-negative runtime lengths. Literal lengths, integer constants, static signed
-integer arithmetic expressions, and immutable local integers initialized from
-those expressions keep the compiler's local length tracking precise for later
-`push` and `insert` storage decisions. `set(index, value)` overwrites an
+negative runtime lengths. Literal lengths, integer constants, static integer
+arithmetic/bitwise/shift expressions, and immutable local integers initialized
+from those expressions keep the compiler's local length tracking precise for
+later `push` and `insert` storage decisions. `set(index, value)` overwrites an
 existing element inside the current runtime length and uses the same bounds
 checks as indexing.
 `swap(a, b)` exchanges two elements inside the current runtime length, with the

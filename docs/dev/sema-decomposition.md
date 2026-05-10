@@ -8,8 +8,9 @@ construction. Some helpers have already moved out to focused files:
 - `attribute_semantics` for attribute validation helpers
 - `prelude_resolver` for compiler-known standard-library spellings
 - `try_model` for `?` residual shape helpers
-- `constant_semantics` for shared static integer folding used by constant-like
-  local reasoning and local Vec capacity/length decisions
+- `constant_semantics` for shared static integer arithmetic/bitwise/shift
+  folding used by constant-like local reasoning and local Vec capacity/length
+  decisions
 - `type_semantics` for shared type predicates, raw-pointer type checks,
   literal range checks, and assignability/operand diagnostics
 - `vector_semantics` for local `Vec[T]` storage helpers and known length/capacity
@@ -44,7 +45,8 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
    - Next small targets are enum constructors and block/match/if expression
      assembly once their semantic checks have narrow inputs.
 2. Extract constant evaluation into `constant_semantics`.
-   - Static integer folding has moved into `constant_semantics`.
+   - Static integer arithmetic/bitwise/shift folding has moved into
+     `constant_semantics`.
    - Move `ConstantValue`, literal folding, constant binary evaluation,
      constant pattern conversion, cycle diagnostics, and constant-to-IR literal
      construction next.

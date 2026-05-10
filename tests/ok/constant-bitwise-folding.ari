@@ -1,0 +1,10 @@
+const OR_MASK: u8 = 0b1010u8 | 0b0101u8;
+const XOR_MASK: u8 = OR_MASK ^ 0b0011u8;
+const AND_MASK: u8 = XOR_MASK & 0b0110u8;
+const SHIFTED: i64 = (1 << 5) >> 2;
+const NOT_SIGNED: i8 = ~0i8;
+const SHIFT_WRAP: i8 = 1i8 << 7;
+
+fn main() -> i64 {
+  return (AND_MASK as i64) + SHIFTED + (NOT_SIGNED as i64) + ((SHIFT_WRAP as i64) + 128);
+}

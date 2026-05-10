@@ -56,9 +56,10 @@ const STATE: MaybeI64 = Some(5);
 Constants are module items, so `pub const`, `use`, `A::B`, `self::`, and
 `super::` follow the same visibility and path rules as other module items.
 Current constant initializers support integer literals, bool literals, other
-constants, integer arithmetic (`+`, `-`, `*`, `/`, `%`), unary `-`, bool `!`,
-`&&`, `||`, scalar comparisons, tuple literals, fixed-array literals, named
-struct literals, tuple-struct constructors, and enum case constructors.
+constants, integer arithmetic (`+`, `-`, `*`, `/`, `%`), bit operations
+(`&`, `|`, `^`, `~`, `<<`, `>>`), unary `-`, bool `!`, `&&`, `||`, scalar
+comparisons, tuple literals, fixed-array literals, named struct literals,
+tuple-struct constructors, and enum case constructors.
 Generic enum constants are specialized from the declared constant type, so
 `const VALUE: Option[i32] = Some(7i32);` and
 `const EMPTY: Option[i32] = None;` are accepted.

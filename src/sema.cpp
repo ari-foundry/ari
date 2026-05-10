@@ -4711,7 +4711,7 @@ private:
             return;
         }
         StaticIntegerValue value;
-        if (!known_integer_capacity(source, value) && !try_fold_static_integer_value(expr, value)) return;
+        if (!try_fold_static_integer_value(expr, value) && !known_integer_capacity(source, value)) return;
         local.integer_value_known = true;
         local.integer_known_value = value.value;
         local.integer_known_negative = value.negative;
@@ -6163,6 +6163,35 @@ private:
         return value.int_value;
     }
 
+    static std::uint64_t integer_bit_mask(unsigned width) {
+        if (width >= 64) return std::numeric_limits<std::uint64_t>::max();
+        return (1ULL << width) - 1ULL;
+    }
+
+    static std::uint64_t constant_integer_raw_bits(const ConstantValue& value, unsigned width) {
+        std::uint64_t raw = value.int_negative ? 0 - value.int_value : value.int_value;
+        return raw & integer_bit_mask(width);
+    }
+
+    static std::int64_t sign_extend_integer_bits(std::uint64_t raw, unsigned width) {
+        raw &= integer_bit_mask(width);
+        if (width == 0) return 0;
+        if (width < 64 && (raw & (1ULL << (width - 1)))) {
+            raw |= ~integer_bit_mask(width);
+        }
+        return static_cast<std::int64_t>(raw);
+    }
+
+    static unsigned constant_shift_amount(SourceLocation loc,
+                                          const ConstantValue& value,
+                                          unsigned width) {
+        if (value.int_negative) fail(loc, "constant shift amount must be non-negative");
+        if (width == 0 || value.int_value >= width) {
+            fail(loc, "constant shift amount must be less than " + std::to_string(width));
+        }
+        return static_cast<unsigned>(value.int_value);
+    }
+
     ConstantValue make_signed_integer_constant(SourceLocation loc, const IrType& type, std::int64_t result) {
         ConstantValue value;
         value.kind = ConstantValueKind::Integer;
@@ -6292,16 +6321,59 @@ private:
             case TokenKind::Star:
             case TokenKind::Slash:
             case TokenKind::Percent:
+            case TokenKind::Amp:
+            case TokenKind::Pipe:
+            case TokenKind::Caret:
+            case TokenKind::LessLess:
+            case TokenKind::GreaterGreater:
                 break;
             default:
-                fail(expr.loc, "constant integer expressions support +, -, *, /, and %");
+                fail(expr.loc, "constant integer expressions support +, -, *, /, %, &, |, ^, <<, and >>");
         }
 
         ConstantValue left = evaluate_constant_expr(*expr.left, expected);
         ConstantValue right = evaluate_constant_expr(*expr.right, expected);
+        const unsigned width = integer_primitive_bit_width(expected.primitive);
         if (is_signed_integer_primitive(expected.primitive)) {
             std::int64_t lhs = constant_integer_to_i64(expr.loc, left);
             std::int64_t rhs = constant_integer_to_i64(expr.loc, right);
+            if (expr.op == TokenKind::Amp ||
+                expr.op == TokenKind::Pipe ||
+                expr.op == TokenKind::Caret ||
+                expr.op == TokenKind::LessLess ||
+                expr.op == TokenKind::GreaterGreater) {
+                std::uint64_t lhs_bits = constant_integer_raw_bits(left, width);
+                std::uint64_t rhs_bits = constant_integer_raw_bits(right, width);
+                std::uint64_t result_bits = 0;
+                switch (expr.op) {
+                    case TokenKind::Amp:
+                        result_bits = lhs_bits & rhs_bits;
+                        break;
+                    case TokenKind::Pipe:
+                        result_bits = lhs_bits | rhs_bits;
+                        break;
+                    case TokenKind::Caret:
+                        result_bits = lhs_bits ^ rhs_bits;
+                        break;
+                    case TokenKind::LessLess: {
+                        unsigned shift = constant_shift_amount(expr.loc, right, width);
+                        result_bits = (lhs_bits << shift) & integer_bit_mask(width);
+                        break;
+                    }
+                    case TokenKind::GreaterGreater: {
+                        unsigned shift = constant_shift_amount(expr.loc, right, width);
+                        result_bits = static_cast<std::uint64_t>(lhs >> shift) & integer_bit_mask(width);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                return make_signed_integer_constant(
+                    expr.loc,
+                    expected,
+                    sign_extend_integer_bits(result_bits, width)
+                );
+            }
             if ((expr.op == TokenKind::Slash || expr.op == TokenKind::Percent) && rhs == 0) {
                 fail(expr.loc, "constant expression divides by zero");
             }
@@ -6328,6 +6400,37 @@ private:
 
         std::uint64_t lhs = constant_integer_to_u64(expr.loc, left);
         std::uint64_t rhs = constant_integer_to_u64(expr.loc, right);
+        if (expr.op == TokenKind::Amp ||
+            expr.op == TokenKind::Pipe ||
+            expr.op == TokenKind::Caret ||
+            expr.op == TokenKind::LessLess ||
+            expr.op == TokenKind::GreaterGreater) {
+            std::uint64_t result = 0;
+            switch (expr.op) {
+                case TokenKind::Amp:
+                    result = lhs & rhs;
+                    break;
+                case TokenKind::Pipe:
+                    result = lhs | rhs;
+                    break;
+                case TokenKind::Caret:
+                    result = lhs ^ rhs;
+                    break;
+                case TokenKind::LessLess: {
+                    unsigned shift = constant_shift_amount(expr.loc, right, width);
+                    result = (lhs << shift) & integer_bit_mask(width);
+                    break;
+                }
+                case TokenKind::GreaterGreater: {
+                    unsigned shift = constant_shift_amount(expr.loc, right, width);
+                    result = lhs >> shift;
+                    break;
+                }
+                default:
+                    break;
+            }
+            return make_unsigned_integer_constant(expr.loc, expected, result);
+        }
         if ((expr.op == TokenKind::Slash || expr.op == TokenKind::Percent) && rhs == 0) {
             fail(expr.loc, "constant expression divides by zero");
         }
@@ -6364,6 +6467,16 @@ private:
                 fail(expr.loc, "constant integer expression result is out of range for " + type_name(expected));
             }
             return make_signed_integer_constant(expr.loc, expected, -operand);
+        }
+        if (expr.op == TokenKind::Tilde) {
+            if (!is_value_integer_type(expected)) fail(expr.loc, "constant bitwise-not operand must be integer");
+            ConstantValue value = evaluate_constant_expr(*expr.operand, expected);
+            unsigned width = integer_primitive_bit_width(expected.primitive);
+            std::uint64_t result_bits = (~constant_integer_raw_bits(value, width)) & integer_bit_mask(width);
+            if (is_signed_integer_primitive(expected.primitive)) {
+                return make_signed_integer_constant(expr.loc, expected, sign_extend_integer_bits(result_bits, width));
+            }
+            return make_unsigned_integer_constant(expr.loc, expected, result_bits);
         }
         fail(expr.loc, "unsupported constant unary operator");
     }

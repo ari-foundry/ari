@@ -433,6 +433,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/constant-patterns.raw; code=$$?; test $$code -eq 61
 	$(TARGET) --freestanding tests/ok/constant-folding.ari -o $(BUILD_DIR)/match/constant-folding.raw
 	$(BUILD_DIR)/match/constant-folding.raw; code=$$?; test $$code -eq 25
+	$(TARGET) --freestanding tests/ok/constant-bitwise-folding.ari -o $(BUILD_DIR)/match/constant-bitwise-folding.raw
+	$(BUILD_DIR)/match/constant-bitwise-folding.raw; code=$$?; test $$code -eq 11
 	$(TARGET) --freestanding tests/ok/constant-aggregates.ari -o $(BUILD_DIR)/match/constant-aggregates.raw
 	$(BUILD_DIR)/match/constant-aggregates.raw; code=$$?; test $$code -eq 34
 	$(TARGET) --freestanding tests/ok/array-patterns.ari -o $(BUILD_DIR)/match/array-patterns.raw
@@ -1374,6 +1376,9 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/vector-static-folding-shared.ari --emit-llvm $(BUILD_DIR)/variables/vector-static-folding-shared.ll
 	grep -q "alloca { i64, \\[4 x i64\\] }" $(BUILD_DIR)/variables/vector-static-folding-shared.ll
 	if grep -q "alloca { i64, \\[5 x i64\\] }" $(BUILD_DIR)/variables/vector-static-folding-shared.ll; then exit 1; fi
+	$(TARGET) tests/ok/vector-reserve-bitwise-static.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-bitwise-static.ll
+	grep -q "alloca { i64, \\[5 x i64\\] }" $(BUILD_DIR)/variables/vector-reserve-bitwise-static.ll
+	if grep -q "alloca { i64, \\[6 x i64\\] }" $(BUILD_DIR)/variables/vector-reserve-bitwise-static.ll; then exit 1; fi
 	$(TARGET) tests/ok/vector-reserve-const.ari --emit-llvm $(BUILD_DIR)/variables/vector-reserve-const.ll
 	grep -q "alloca { i64, \\[3 x i64\\] }" $(BUILD_DIR)/variables/vector-reserve-const.ll
 	if grep -q "vector.reserve.fail" $(BUILD_DIR)/variables/vector-reserve-const.ll; then exit 1; fi
@@ -1439,6 +1444,7 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-known-static-local.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-known-static-local.elf; $(BUILD_DIR)/variables/vector-reserve-known-static-local.elf; code=$$?; test $$code -eq 18; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-truncate-known-static-local.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-truncate-known-static-local.elf; $(BUILD_DIR)/variables/vector-truncate-known-static-local.elf; code=$$?; test $$code -eq 14; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-static-folding-shared.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-static-folding-shared.elf; $(BUILD_DIR)/variables/vector-static-folding-shared.elf; code=$$?; test $$code -eq 17; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-bitwise-static.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-bitwise-static.elf; $(BUILD_DIR)/variables/vector-reserve-bitwise-static.elf; code=$$?; test $$code -eq 17; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-const.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-const.elf; $(BUILD_DIR)/variables/vector-reserve-const.elf; code=$$?; test $$code -eq 18; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-reserve-static-expr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-reserve-static-expr.elf; $(BUILD_DIR)/variables/vector-reserve-static-expr.elf; code=$$?; test $$code -eq 18; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-push-autogrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-push-autogrow.elf; $(BUILD_DIR)/variables/vector-push-autogrow.elf; code=$$?; test $$code -eq 23; fi

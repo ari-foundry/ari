@@ -436,12 +436,13 @@ expected type is present, and the same syntax initializes `Vec[T]` when a
 `Vec[T]` annotation or assignment target supplies that expected type. `Vec[T]`
 local storage keeps a runtime length plus a local stack capacity chosen from
 the largest vector literal assigned to the binding. Literal `reserve(n)`,
-integer constants, static signed integer arithmetic over constants and
-literals, and immutable local integer capacities initialized from those static
-expressions can raise that local capacity, while runtime `reserve(n)` checks
-that the requested capacity already fits the fixed local storage. The same
-static integer forms keep `truncate(n)` length tracking precise for later local
-`push` and `insert` storage decisions. A typed `Vec[T]` context supplies the
+integer constants, static integer arithmetic/bitwise/shift expressions over
+constants and literals, and immutable local integer capacities initialized from
+those static expressions can raise that local capacity, while runtime
+`reserve(n)` checks that the requested capacity already fits the fixed local
+storage. The same static integer forms keep `truncate(n)` length tracking
+precise for later local `push` and `insert` storage decisions. A typed `Vec[T]`
+context supplies the
 element type for empty `[]`. `len(values)` and `values.len()` read
 vector runtime length, fixed array length, or `Slice[T].len`. `view[index]`
 loads or stores a `Slice[T]` element through its raw `data` pointer after

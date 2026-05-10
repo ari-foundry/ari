@@ -1,0 +1,16 @@
+const CAP_BASE: i64 = 1 << 2;
+
+fn main() -> i64 {
+  let cap = CAP_BASE | 1;
+  let keep = cap >> 1;
+  var values: Vec[i64] = [];
+  values.reserve(cap);
+  values.push(1);
+  values.push(2);
+  values.push(3);
+  values.push(4);
+  values.push(5);
+  values.truncate(keep);
+  values.push(9);
+  return values.capacity() + values.len() + values[2];
+}
