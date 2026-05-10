@@ -1912,6 +1912,10 @@ private:
         return method_name == "next" && is_std_iterator_trait_name(trait.name);
     }
 
+    static bool is_into_iterator_receiver_contract(const TraitInfo& trait, const std::string& method_name) {
+        return method_name == "into_iter" && is_std_into_iterator_trait_name(trait.name);
+    }
+
     static bool iterator_receiver_compatible(const IrType& expected, const IrType& actual) {
         if (same_type(expected, actual)) return true;
         return (expected.qualifier == TypeQualifier::Value || is_receiver_borrow_type(expected)) &&
@@ -1994,7 +1998,8 @@ private:
                 IrType actual = resolve_impl_method_type(actual_method.params[i].type, actual_method_substitutions);
                 if (!same_type(expected, actual)) {
                     if (i == 0 &&
-                        is_iterator_next_receiver_contract(trait, item.first) &&
+                        (is_iterator_next_receiver_contract(trait, item.first) ||
+                         is_into_iterator_receiver_contract(trait, item.first)) &&
                         iterator_receiver_compatible(expected, actual)) {
                         continue;
                     }
@@ -9984,8 +9989,8 @@ private:
         }
         std::string source_name = make_hidden_local("$for_into");
         IrType source_type = iterable->type;
-        declare_local(stmt.loc, source_name, source_type, false);
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, source_name, source_type, std::move(iterable), false));
+        declare_local(stmt.loc, source_name, source_type, true);
+        lowered.statements.push_back(make_ir_var_decl(stmt.loc, source_name, source_type, std::move(iterable), true));
 
         IrExprPtr iterator = make_iterator_method_call(stmt.loc, source_name, "into_iter");
         ForIteratorTraitMatch direct_iterator;

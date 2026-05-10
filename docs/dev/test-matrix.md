@@ -240,6 +240,8 @@ Checklist:
       `into_iter` and `next`
 - [x] lower distinct-result copyable `IntoIterator[T]` for-loop values when
       `into_iter` returns another `Iterator[T]`
+- [x] lower copyable `IntoIterator[T]` for-loop values whose `into_iter`
+      receiver is `self: ref mut Self`
 - [x] lower refutable scalar literal/range, or-pattern, fieldless enum-case,
       and compact enum payload item patterns for `Iterator[T]` loops with
       stop-on-first-mismatch semantics
@@ -387,7 +389,10 @@ Checklist:
 - [x] keep value-self `next(self) -> Option[T]` impls accepted as a copyable
       compatibility subset
 - [x] lower direct copyable `Iterator[T]` `for` loops through `next`
-- [x] reserve `IntoIterator[T]` with `into_iter(self) -> Self`
+- [x] reserve `IntoIterator[T]` with
+      `into_iter(self: ref mut Self) -> Self`
+- [x] keep value-self `into_iter(self)` impls accepted as a copyable
+      compatibility subset
 - [x] lower self-returning copyable `IntoIterator[T]` `for` loops through
       `into_iter` and `next`
 - [x] allow `IntoIterator[T].into_iter` impls to return a distinct iterator

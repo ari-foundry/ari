@@ -1,0 +1,37 @@
+struct Counter {
+  mut current: i64,
+  end: i64,
+}
+
+struct Bag {
+  mut start: i64,
+  end: i64,
+}
+
+impl IntoIterator[i64] for Bag {
+  fn into_iter(self: ref mut Self) -> Counter {
+    let start = self.start;
+    self.start = self.end;
+    Counter { current: start, end: self.end }
+  }
+}
+
+impl Iterator[i64] for Counter {
+  fn next(self: ref mut Self) -> Option[i64] {
+    if self.current < self.end {
+      let value = self.current;
+      self.current = self.current + 1;
+      return Some(value);
+    }
+    return None<i64>();
+  }
+}
+
+fn main() -> i64 {
+  let bag = Bag { start: 2, end: 5 };
+  var total = 0;
+  for value in bag {
+    total = total + value;
+  }
+  total
+}

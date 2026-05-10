@@ -289,12 +289,14 @@ once and mutably borrowing that hidden iterator binding for each `next` call.
 The compiler still accepts value-self `next(self)` impls for copyable
 snapshot-style iterators while older surface tests migrate.
 
-`IntoIterator[T]` currently declares `fn into_iter(self) -> Self` as the default
-source shape. Impl methods may return a distinct iterator type; `for` lowering
-validates that the concrete `into_iter` result implements `Iterator[T]`.
-The first stateful `Iterator.next` receiver policy is implemented for copyable
-iterator values. A first-class associated iterator result spelling, owner/borrow
-iterator values, and mutable `IntoIterator` receiver policy remain planned.
+`IntoIterator[T]` currently declares `fn into_iter(self: ref mut Self) -> Self`
+as the default source shape. Impl methods may return a distinct iterator type;
+`for` lowering validates that the concrete `into_iter` result implements
+`Iterator[T]`. The compiler still accepts value-self `into_iter(self)` impls for
+copyable snapshot-style containers. The first stateful `Iterator.next` and
+`IntoIterator.into_iter` receiver policies are implemented for copyable values.
+A first-class associated iterator result spelling, owner/borrow iterator
+values, and explicit iterator lifetime rules remain planned.
 
 `Drop` is the prelude trait connected to explicit ownership destruction:
 

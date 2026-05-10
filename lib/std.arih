@@ -87,7 +87,7 @@ pub mod iter {
   }
 
   pub trait IntoIterator[T] {
-    fn into_iter(self) -> Self;
+    fn into_iter(self: ref mut Self) -> Self;
   }
 }
 

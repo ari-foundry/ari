@@ -271,9 +271,10 @@ is evaluated once into a hidden mutable iterator binding, then Ari repeats
 `iterator.next()` while it returns `std::Some(item)`. Existing value-self
 iterator impls remain accepted for copyable snapshot-style iterators, but
 stateful iterators should prefer `self: ref mut Self`.
-Copyable non-borrow `IntoIterator[T]` values also lower when `into_iter(self)`
-returns either `Self` or another copyable non-borrow value that implements
-`Iterator[T]`.
+Copyable non-borrow `IntoIterator[T]` values also lower when
+`into_iter(self: ref mut Self)` returns either `Self` or another copyable
+non-borrow value that implements `Iterator[T]`. Existing value-self
+`into_iter(self)` impls remain accepted for copyable snapshot-style containers.
 
 Iterator item patterns may be more specific than a plain binding:
 
@@ -312,9 +313,9 @@ items inside `Option[T]` still depend on broader aggregate enum payload storage.
 
 The current source trait still uses a compiler-known return contract for
 `into_iter` instead of a first-class associated iterator type. Mutable
-`Iterator.next` receivers now work for copyable non-borrow iterator values; the
-broader policy for owner/borrow iterator values and mutable `IntoIterator`
-receivers remains planned.
+`Iterator.next` and `IntoIterator.into_iter` receivers now work for copyable
+non-borrow values; the broader policy for owner/borrow iterator values and
+iterator lifetime rules remains planned.
 
 ## Break
 
