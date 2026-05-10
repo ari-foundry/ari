@@ -3230,13 +3230,6 @@ private:
         return type;
     }
 
-    static IrType vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
-        IrType type = primitive_type(IrPrimitiveKind::Vector, "Vec", loc);
-        type.args.push_back(element);
-        type.array_size = length;
-        return type;
-    }
-
     static IrType array_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
         IrType type = primitive_type(IrPrimitiveKind::Array, "Array", loc);
         type.args.push_back(element);
@@ -10437,7 +10430,7 @@ private:
         auto lowered = std::make_unique<IrExpr>();
         lowered->kind = IrExprKind::Vector;
         lowered->loc = loc;
-        lowered->type = vector_storage_type(loc, expected.args[0], 0);
+        lowered->type = make_vector_storage_type(loc, expected.args[0], 0);
         return lowered;
     }
 
@@ -11247,7 +11240,7 @@ private:
             lowered->args.push_back(std::move(value));
         }
         if (expected_vector) {
-            lowered->type = vector_storage_type(expr.loc, element_type, expr.args.size());
+            lowered->type = make_vector_storage_type(expr.loc, element_type, expr.args.size());
         } else if (expected_array) {
             lowered->type = array_storage_type(expr.loc, element_type, expr.args.size());
         } else {
@@ -15870,7 +15863,7 @@ private:
                 coerce_expr_to_expected(*item, expected.args[0]);
                 require_assignable(expr.loc, expected.args[0], item->type);
             }
-            expr.type = vector_storage_type(
+            expr.type = make_vector_storage_type(
                 expr.loc,
                 expected.args[0],
                 expected.array_size == 0 ? expr.args.size() : expected.array_size

@@ -105,6 +105,13 @@ bool is_vector_storage_type(const IrType& type) {
     return type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1;
 }
 
+IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
+    IrType type = primitive_type(IrPrimitiveKind::Vector, "Vec", loc);
+    type.args.push_back(element);
+    type.array_size = length;
+    return type;
+}
+
 void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init) {
     if (declared.primitive != IrPrimitiveKind::Vector ||
         init.type.primitive != IrPrimitiveKind::Vector ||

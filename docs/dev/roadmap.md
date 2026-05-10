@@ -29,16 +29,17 @@
    dedicated diagnostic that points users at the future allocator-backed std
    collection APIs instead of falling through to the generic unknown-method
    error. Vec storage helper logic is split out of `sema.cpp` into
-   `vector_semantics`, including the frozen temporary local method list used
-   by sema dispatch, local method shape diagnostics, and the shared `len`,
-   `is_empty`, and `as_slice` builtin/method shape checks. Shared collection
-   `len` lowering for arrays, local Vec storage, and Slice views is centralized
-   there as well, along with `as_slice` data-pointer, Vec storage view, and
-   Slice view construction. Local Vec integer and non-negative operand
-   diagnostics for index/capacity/length arguments are also centralized there.
-   Local Vec IR construction helpers include `first`, `last`, and `push`
-   alongside the other method lowerings. Known-length updates for local `push`,
-   `insert`, `pop`, `remove`, `clear`, and `truncate` now use small `vector_semantics`
+   `vector_semantics`, including local storage type construction, the frozen
+   temporary local method list used by sema dispatch, local method shape
+   diagnostics, and the shared `len`, `is_empty`, and `as_slice`
+   builtin/method shape checks. Shared collection `len` lowering for arrays,
+   local Vec storage, and Slice views is centralized there as well, along with
+   `as_slice` data-pointer, Vec storage view, and Slice view construction.
+   Local Vec integer and non-negative operand diagnostics for
+   index/capacity/length arguments are also centralized there. Local Vec IR
+   construction helpers include `first`, `last`, and `push` alongside the
+   other method lowerings. Known-length updates for local `push`, `insert`,
+   `pop`, `remove`, `clear`, and `truncate` now use small `vector_semantics`
    transition helpers. The shared constant value model, constant-to-IR literal
    construction, scalar literal folding, constant binary result evaluation, and
    static integer folding for local Vec capacity and length decisions now live in

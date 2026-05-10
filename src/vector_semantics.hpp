@@ -38,6 +38,7 @@ struct VectorKnownLength {
 };
 
 bool is_vector_storage_type(const IrType& type);
+IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length);
 void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init);
 void widen_vector_storage_type(IrType& type, std::uint64_t capacity);
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity);
