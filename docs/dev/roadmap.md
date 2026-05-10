@@ -30,8 +30,9 @@
    collection APIs instead of falling through to the generic unknown-method
    error. Vec storage helper logic is split out of `sema.cpp` into
    `vector_semantics`, while the shared constant value model, constant-to-IR
-   literal construction, scalar literal folding, and static integer folding for
-   local Vec capacity and length decisions now live in `constant_semantics`;
+   literal construction, scalar literal folding, constant binary result
+   evaluation, and static integer folding for local Vec capacity and length
+   decisions now live in `constant_semantics`;
    this keeps
    allocator-backed work from growing the main semantic checker. Introduce the
    explicit allocation/capability path before broadening vector patterns or std

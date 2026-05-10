@@ -6123,13 +6123,7 @@ private:
             if (expr.op == TokenKind::AmpAmp || expr.op == TokenKind::PipePipe) {
                 ConstantValue left = evaluate_constant_expr(*expr.left, expected);
                 ConstantValue right = evaluate_constant_expr(*expr.right, expected);
-                return make_bool_constant(
-                    expr.loc,
-                    expected,
-                    expr.op == TokenKind::AmpAmp
-                        ? left.bool_value && right.bool_value
-                        : left.bool_value || right.bool_value
-                );
+                return evaluate_constant_bool_binary(expr.loc, expr.op, expected, left, right);
             }
 
             if (expr.op == TokenKind::EqEq || expr.op == TokenKind::BangEq) {
@@ -6137,8 +6131,7 @@ private:
                 if (left_type.qualifier == TypeQualifier::Value && left_type.primitive == IrPrimitiveKind::Bool) {
                     ConstantValue left = evaluate_constant_expr(*expr.left, left_type);
                     ConstantValue right = evaluate_constant_expr(*expr.right, left_type);
-                    bool equal = left.bool_value == right.bool_value;
-                    return make_bool_constant(expr.loc, expected, expr.op == TokenKind::EqEq ? equal : !equal);
+                    return evaluate_constant_bool_comparison(expr.loc, expr.op, expected, left, right);
                 }
             }
 
@@ -6157,33 +6150,7 @@ private:
             IrType operand_type = infer_constant_binary_integer_type(expr.loc, *expr.left, *expr.right, i64_type(expr.loc));
             ConstantValue left = evaluate_constant_expr(*expr.left, operand_type);
             ConstantValue right = evaluate_constant_expr(*expr.right, operand_type);
-            bool result = false;
-            if (is_signed_integer_primitive(operand_type.primitive)) {
-                std::int64_t lhs = constant_integer_to_i64(expr.loc, left);
-                std::int64_t rhs = constant_integer_to_i64(expr.loc, right);
-                switch (expr.op) {
-                    case TokenKind::EqEq: result = lhs == rhs; break;
-                    case TokenKind::BangEq: result = lhs != rhs; break;
-                    case TokenKind::Less: result = lhs < rhs; break;
-                    case TokenKind::LessEq: result = lhs <= rhs; break;
-                    case TokenKind::Greater: result = lhs > rhs; break;
-                    case TokenKind::GreaterEq: result = lhs >= rhs; break;
-                    default: break;
-                }
-            } else {
-                std::uint64_t lhs = constant_integer_to_u64(expr.loc, left);
-                std::uint64_t rhs = constant_integer_to_u64(expr.loc, right);
-                switch (expr.op) {
-                    case TokenKind::EqEq: result = lhs == rhs; break;
-                    case TokenKind::BangEq: result = lhs != rhs; break;
-                    case TokenKind::Less: result = lhs < rhs; break;
-                    case TokenKind::LessEq: result = lhs <= rhs; break;
-                    case TokenKind::Greater: result = lhs > rhs; break;
-                    case TokenKind::GreaterEq: result = lhs >= rhs; break;
-                    default: break;
-                }
-            }
-            return make_bool_constant(expr.loc, expected, result);
+            return evaluate_constant_integer_comparison(expr.loc, expr.op, expected, operand_type, left, right);
         }
 
         if (!is_value_integer_type(expected)) {
@@ -6207,121 +6174,7 @@ private:
 
         ConstantValue left = evaluate_constant_expr(*expr.left, expected);
         ConstantValue right = evaluate_constant_expr(*expr.right, expected);
-        const unsigned width = integer_primitive_bit_width(expected.primitive);
-        if (is_signed_integer_primitive(expected.primitive)) {
-            std::int64_t lhs = constant_integer_to_i64(expr.loc, left);
-            std::int64_t rhs = constant_integer_to_i64(expr.loc, right);
-            if (expr.op == TokenKind::Amp ||
-                expr.op == TokenKind::Pipe ||
-                expr.op == TokenKind::Caret ||
-                expr.op == TokenKind::LessLess ||
-                expr.op == TokenKind::GreaterGreater) {
-                std::uint64_t lhs_bits = constant_integer_raw_bits(left, width);
-                std::uint64_t rhs_bits = constant_integer_raw_bits(right, width);
-                std::uint64_t result_bits = 0;
-                switch (expr.op) {
-                    case TokenKind::Amp:
-                        result_bits = lhs_bits & rhs_bits;
-                        break;
-                    case TokenKind::Pipe:
-                        result_bits = lhs_bits | rhs_bits;
-                        break;
-                    case TokenKind::Caret:
-                        result_bits = lhs_bits ^ rhs_bits;
-                        break;
-                    case TokenKind::LessLess: {
-                        unsigned shift = constant_shift_amount(expr.loc, right, width);
-                        result_bits = (lhs_bits << shift) & integer_bit_mask(width);
-                        break;
-                    }
-                    case TokenKind::GreaterGreater: {
-                        unsigned shift = constant_shift_amount(expr.loc, right, width);
-                        result_bits = static_cast<std::uint64_t>(lhs >> shift) & integer_bit_mask(width);
-                        break;
-                    }
-                    default:
-                        break;
-                }
-                return make_signed_integer_constant(
-                    expr.loc,
-                    expected,
-                    sign_extend_integer_bits(result_bits, width)
-                );
-            }
-            if ((expr.op == TokenKind::Slash || expr.op == TokenKind::Percent) && rhs == 0) {
-                fail(expr.loc, "constant expression divides by zero");
-            }
-            if ((expr.op == TokenKind::Slash || expr.op == TokenKind::Percent) &&
-                lhs == std::numeric_limits<std::int64_t>::min() && rhs == -1) {
-                fail(expr.loc, "constant integer expression result is out of range for " + type_name(expected));
-            }
-
-            std::int64_t result = 0;
-            bool overflow = false;
-            switch (expr.op) {
-                case TokenKind::Plus: overflow = __builtin_add_overflow(lhs, rhs, &result); break;
-                case TokenKind::Minus: overflow = __builtin_sub_overflow(lhs, rhs, &result); break;
-                case TokenKind::Star: overflow = __builtin_mul_overflow(lhs, rhs, &result); break;
-                case TokenKind::Slash: result = lhs / rhs; break;
-                case TokenKind::Percent: result = lhs % rhs; break;
-                default: break;
-            }
-            if (overflow) {
-                fail(expr.loc, "constant integer expression result is out of range for " + type_name(expected));
-            }
-            return make_signed_integer_constant(expr.loc, expected, result);
-        }
-
-        std::uint64_t lhs = constant_integer_to_u64(expr.loc, left);
-        std::uint64_t rhs = constant_integer_to_u64(expr.loc, right);
-        if (expr.op == TokenKind::Amp ||
-            expr.op == TokenKind::Pipe ||
-            expr.op == TokenKind::Caret ||
-            expr.op == TokenKind::LessLess ||
-            expr.op == TokenKind::GreaterGreater) {
-            std::uint64_t result = 0;
-            switch (expr.op) {
-                case TokenKind::Amp:
-                    result = lhs & rhs;
-                    break;
-                case TokenKind::Pipe:
-                    result = lhs | rhs;
-                    break;
-                case TokenKind::Caret:
-                    result = lhs ^ rhs;
-                    break;
-                case TokenKind::LessLess: {
-                    unsigned shift = constant_shift_amount(expr.loc, right, width);
-                    result = (lhs << shift) & integer_bit_mask(width);
-                    break;
-                }
-                case TokenKind::GreaterGreater: {
-                    unsigned shift = constant_shift_amount(expr.loc, right, width);
-                    result = lhs >> shift;
-                    break;
-                }
-                default:
-                    break;
-            }
-            return make_unsigned_integer_constant(expr.loc, expected, result);
-        }
-        if ((expr.op == TokenKind::Slash || expr.op == TokenKind::Percent) && rhs == 0) {
-            fail(expr.loc, "constant expression divides by zero");
-        }
-        std::uint64_t result = 0;
-        bool overflow = false;
-        switch (expr.op) {
-            case TokenKind::Plus: overflow = __builtin_add_overflow(lhs, rhs, &result); break;
-            case TokenKind::Minus: overflow = __builtin_sub_overflow(lhs, rhs, &result); break;
-            case TokenKind::Star: overflow = __builtin_mul_overflow(lhs, rhs, &result); break;
-            case TokenKind::Slash: result = lhs / rhs; break;
-            case TokenKind::Percent: result = lhs % rhs; break;
-            default: break;
-        }
-        if (overflow) {
-            fail(expr.loc, "constant integer expression result is out of range for " + type_name(expected));
-        }
-        return make_unsigned_integer_constant(expr.loc, expected, result);
+        return evaluate_constant_integer_binary(expr.loc, expr.op, expected, left, right);
     }
 
     ConstantValue evaluate_constant_unary_expr(const Expr& expr, const IrType& expected) {

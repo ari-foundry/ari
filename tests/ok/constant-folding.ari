@@ -4,7 +4,8 @@ const NEGATED: i64 = -SCORE + 20;
 const SMALL: u8 = 10u8 - 5u8;
 const DIRECT_BYTE: u8 = 7u8;
 const DIRECT_FLAG: bool = true;
-const READY: bool = SCORE >= 17 && NEGATED == 3 && !(BASE < 5) && DIRECT_FLAG;
+const SAME_FLAG: bool = DIRECT_FLAG == true;
+const READY: bool = SCORE >= 17 && NEGATED == 3 && !(BASE < 5) && SAME_FLAG;
 
 fn main() -> i64 {
   if READY {

@@ -215,6 +215,212 @@ ConstantValue make_bool_literal_constant(SourceLocation loc, const IrType& expec
     return make_bool_constant(loc, expected, result);
 }
 
+ConstantValue evaluate_constant_bool_binary(SourceLocation loc,
+                                            TokenKind op,
+                                            const IrType& expected,
+                                            const ConstantValue& left,
+                                            const ConstantValue& right) {
+    switch (op) {
+        case TokenKind::AmpAmp:
+            return make_bool_constant(loc, expected, left.bool_value && right.bool_value);
+        case TokenKind::PipePipe:
+            return make_bool_constant(loc, expected, left.bool_value || right.bool_value);
+        default:
+            fail(loc, "constant bool expressions support logical and comparison operators");
+    }
+}
+
+ConstantValue evaluate_constant_bool_comparison(SourceLocation loc,
+                                                TokenKind op,
+                                                const IrType& expected,
+                                                const ConstantValue& left,
+                                                const ConstantValue& right) {
+    const bool equal = left.bool_value == right.bool_value;
+    switch (op) {
+        case TokenKind::EqEq:
+            return make_bool_constant(loc, expected, equal);
+        case TokenKind::BangEq:
+            return make_bool_constant(loc, expected, !equal);
+        default:
+            fail(loc, "constant bool expressions support logical and comparison operators");
+    }
+}
+
+ConstantValue evaluate_constant_integer_comparison(SourceLocation loc,
+                                                   TokenKind op,
+                                                   const IrType& expected,
+                                                   const IrType& operand_type,
+                                                   const ConstantValue& left,
+                                                   const ConstantValue& right) {
+    bool result = false;
+    if (is_signed_integer_type(operand_type)) {
+        std::int64_t lhs = constant_integer_to_i64(loc, left);
+        std::int64_t rhs = constant_integer_to_i64(loc, right);
+        switch (op) {
+            case TokenKind::EqEq: result = lhs == rhs; break;
+            case TokenKind::BangEq: result = lhs != rhs; break;
+            case TokenKind::Less: result = lhs < rhs; break;
+            case TokenKind::LessEq: result = lhs <= rhs; break;
+            case TokenKind::Greater: result = lhs > rhs; break;
+            case TokenKind::GreaterEq: result = lhs >= rhs; break;
+            default:
+                fail(loc, "constant bool expressions support logical and comparison operators");
+        }
+    } else if (is_integer_type(operand_type)) {
+        std::uint64_t lhs = constant_integer_to_u64(loc, left);
+        std::uint64_t rhs = constant_integer_to_u64(loc, right);
+        switch (op) {
+            case TokenKind::EqEq: result = lhs == rhs; break;
+            case TokenKind::BangEq: result = lhs != rhs; break;
+            case TokenKind::Less: result = lhs < rhs; break;
+            case TokenKind::LessEq: result = lhs <= rhs; break;
+            case TokenKind::Greater: result = lhs > rhs; break;
+            case TokenKind::GreaterEq: result = lhs >= rhs; break;
+            default:
+                fail(loc, "constant bool expressions support logical and comparison operators");
+        }
+    } else {
+        fail(loc, "constant comparison operands must be integers, got " + type_name(operand_type));
+    }
+    return make_bool_constant(loc, expected, result);
+}
+
+ConstantValue evaluate_constant_integer_binary(SourceLocation loc,
+                                               TokenKind op,
+                                               const IrType& expected,
+                                               const ConstantValue& left,
+                                               const ConstantValue& right) {
+    if (!is_integer_type(expected)) {
+        fail(loc, "constant arithmetic expressions require an integer result type");
+    }
+    switch (op) {
+        case TokenKind::Plus:
+        case TokenKind::Minus:
+        case TokenKind::Star:
+        case TokenKind::Slash:
+        case TokenKind::Percent:
+        case TokenKind::Amp:
+        case TokenKind::Pipe:
+        case TokenKind::Caret:
+        case TokenKind::LessLess:
+        case TokenKind::GreaterGreater:
+            break;
+        default:
+            fail(loc, "constant integer expressions support +, -, *, /, %, &, |, ^, <<, and >>");
+    }
+
+    const unsigned width = integer_primitive_bit_width(expected.primitive);
+    if (is_signed_integer_type(expected)) {
+        std::int64_t lhs = constant_integer_to_i64(loc, left);
+        std::int64_t rhs = constant_integer_to_i64(loc, right);
+        if (op == TokenKind::Amp ||
+            op == TokenKind::Pipe ||
+            op == TokenKind::Caret ||
+            op == TokenKind::LessLess ||
+            op == TokenKind::GreaterGreater) {
+            std::uint64_t lhs_bits = constant_integer_raw_bits(left, width);
+            std::uint64_t result_bits = 0;
+            switch (op) {
+                case TokenKind::Amp:
+                    result_bits = lhs_bits & constant_integer_raw_bits(right, width);
+                    break;
+                case TokenKind::Pipe:
+                    result_bits = lhs_bits | constant_integer_raw_bits(right, width);
+                    break;
+                case TokenKind::Caret:
+                    result_bits = lhs_bits ^ constant_integer_raw_bits(right, width);
+                    break;
+                case TokenKind::LessLess: {
+                    unsigned shift = constant_shift_amount(loc, right, width);
+                    result_bits = (lhs_bits << shift) & integer_bit_mask(width);
+                    break;
+                }
+                case TokenKind::GreaterGreater: {
+                    unsigned shift = constant_shift_amount(loc, right, width);
+                    result_bits = static_cast<std::uint64_t>(lhs >> shift) & integer_bit_mask(width);
+                    break;
+                }
+                default:
+                    break;
+            }
+            return make_signed_integer_constant(loc, expected, sign_extend_integer_bits(result_bits, width));
+        }
+        if ((op == TokenKind::Slash || op == TokenKind::Percent) && rhs == 0) {
+            fail(loc, "constant expression divides by zero");
+        }
+        if ((op == TokenKind::Slash || op == TokenKind::Percent) &&
+            lhs == std::numeric_limits<std::int64_t>::min() && rhs == -1) {
+            fail(loc, "constant integer expression result is out of range for " + type_name(expected));
+        }
+
+        std::int64_t result = 0;
+        bool overflow = false;
+        switch (op) {
+            case TokenKind::Plus: overflow = __builtin_add_overflow(lhs, rhs, &result); break;
+            case TokenKind::Minus: overflow = __builtin_sub_overflow(lhs, rhs, &result); break;
+            case TokenKind::Star: overflow = __builtin_mul_overflow(lhs, rhs, &result); break;
+            case TokenKind::Slash: result = lhs / rhs; break;
+            case TokenKind::Percent: result = lhs % rhs; break;
+            default: break;
+        }
+        if (overflow) {
+            fail(loc, "constant integer expression result is out of range for " + type_name(expected));
+        }
+        return make_signed_integer_constant(loc, expected, result);
+    }
+
+    std::uint64_t lhs = constant_integer_to_u64(loc, left);
+    std::uint64_t rhs = constant_integer_to_u64(loc, right);
+    if (op == TokenKind::Amp ||
+        op == TokenKind::Pipe ||
+        op == TokenKind::Caret ||
+        op == TokenKind::LessLess ||
+        op == TokenKind::GreaterGreater) {
+        std::uint64_t result = 0;
+        switch (op) {
+            case TokenKind::Amp:
+                result = lhs & rhs;
+                break;
+            case TokenKind::Pipe:
+                result = lhs | rhs;
+                break;
+            case TokenKind::Caret:
+                result = lhs ^ rhs;
+                break;
+            case TokenKind::LessLess: {
+                unsigned shift = constant_shift_amount(loc, right, width);
+                result = (lhs << shift) & integer_bit_mask(width);
+                break;
+            }
+            case TokenKind::GreaterGreater: {
+                unsigned shift = constant_shift_amount(loc, right, width);
+                result = lhs >> shift;
+                break;
+            }
+            default:
+                break;
+        }
+        return make_unsigned_integer_constant(loc, expected, result);
+    }
+    if ((op == TokenKind::Slash || op == TokenKind::Percent) && rhs == 0) {
+        fail(loc, "constant expression divides by zero");
+    }
+    std::uint64_t result = 0;
+    bool overflow = false;
+    switch (op) {
+        case TokenKind::Plus: overflow = __builtin_add_overflow(lhs, rhs, &result); break;
+        case TokenKind::Minus: overflow = __builtin_sub_overflow(lhs, rhs, &result); break;
+        case TokenKind::Star: overflow = __builtin_mul_overflow(lhs, rhs, &result); break;
+        case TokenKind::Slash: result = lhs / rhs; break;
+        case TokenKind::Percent: result = lhs % rhs; break;
+        default: break;
+    }
+    if (overflow) {
+        fail(loc, "constant integer expression result is out of range for " + type_name(expected));
+    }
+    return make_unsigned_integer_constant(loc, expected, result);
+}
+
 IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value) {
     auto expr = std::make_unique<IrExpr>();
     expr->loc = loc;

@@ -46,11 +46,11 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      assembly once their semantic checks have narrow inputs.
 2. Extract constant evaluation into `constant_semantics`.
    - Static integer arithmetic/bitwise/shift folding, `ConstantValue`, scalar
-     constant construction/range helpers, scalar literal folding, and
-     constant-to-IR literal construction have moved into
+     constant construction/range helpers, scalar literal folding, constant
+     binary result evaluation, and constant-to-IR literal construction have
+     moved into
      `constant_semantics`.
-   - Move constant binary evaluation, constant pattern conversion, and cycle
-     diagnostics next.
+   - Move constant pattern conversion and cycle diagnostics next.
    - Keep the constant declaration table owned by `SemanticChecker` initially.
 3. Continue extracting pattern coverage helpers into `pattern_coverage`.
    - Product rectangle math now lives in `product_coverage`.

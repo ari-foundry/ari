@@ -53,6 +53,27 @@ ConstantValue make_integer_literal_constant(SourceLocation loc,
                                             bool int_negative);
 ConstantValue make_bool_constant(SourceLocation loc, const IrType& expected, bool result);
 ConstantValue make_bool_literal_constant(SourceLocation loc, const IrType& expected, bool result);
+ConstantValue evaluate_constant_bool_binary(SourceLocation loc,
+                                            TokenKind op,
+                                            const IrType& expected,
+                                            const ConstantValue& left,
+                                            const ConstantValue& right);
+ConstantValue evaluate_constant_bool_comparison(SourceLocation loc,
+                                                TokenKind op,
+                                                const IrType& expected,
+                                                const ConstantValue& left,
+                                                const ConstantValue& right);
+ConstantValue evaluate_constant_integer_comparison(SourceLocation loc,
+                                                   TokenKind op,
+                                                   const IrType& expected,
+                                                   const IrType& operand_type,
+                                                   const ConstantValue& left,
+                                                   const ConstantValue& right);
+ConstantValue evaluate_constant_integer_binary(SourceLocation loc,
+                                               TokenKind op,
+                                               const IrType& expected,
+                                               const ConstantValue& left,
+                                               const ConstantValue& right);
 IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value);
 bool fold_static_integer_unary(TokenKind op,
                                const StaticIntegerValue& operand,
