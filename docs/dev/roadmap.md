@@ -99,14 +99,14 @@
    sema still tracks the handle as tied to the source zone. The source
    `std::vec::Vec<T>` handle and `std::vec::new<T>(ref mut Zone, capacity)`
    now connect that raw seed to a public allocator/capability creation surface.
-   The source handle also has read-only `len`, `capacity`, and `is_empty`
-   metadata methods. Runtime growth and mutating/indexing method porting still
-   remain.
+   The source handle also has fixed-capacity metadata, checked read/write,
+   push/pop, insert/remove, swap, truncate/clear, and simple linear search
+   methods over its allocated buffer. Runtime heap growth and source slice-view
+   construction still remain.
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      reserve capacity with runtime heap capacity growth
-   - [ops-runtime] port the existing temporary fixed-local Vec mutating,
-     indexing, search, and slice-view API to allocator-backed storage instead
-     of fixed local-capacity traps
+   - [ops-runtime] port source `Vec.as_slice()` and the root `Vec[T]` public
+     method surface to allocator-backed storage once runtime growth is in place
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

@@ -1,0 +1,8 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var vec = std::vec::new<i64>(ref mut zone, 2);
+  zone::reset(ref mut zone);
+  vec.push(1);
+  zone::destroy(zone);
+  return 0;
+}

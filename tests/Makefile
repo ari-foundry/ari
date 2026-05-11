@@ -151,6 +151,12 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3len' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8capacity' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8is_empty' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
+	$(TARGET) tests/ok/std-vec-fixed-ops.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4push' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6insert' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6remove' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8index_of' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
 	$(TARGET) tests/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
@@ -188,6 +194,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-with-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; code=$$?; test $$code -eq 46; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-new-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-new-handle.elf; $(BUILD_DIR)/prelude/std-vec-new-handle.elf; code=$$?; test $$code -eq 40; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
 	$(TARGET) --no-implicit-std --module-path lib tests/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
@@ -211,6 +218,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.err
 	if $(TARGET) tests/errors/std-vec-metadata-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err
+	if $(TARGET) tests/errors/std-vec-push-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-push-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-push-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-push-after-reset.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
 	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/errors/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi

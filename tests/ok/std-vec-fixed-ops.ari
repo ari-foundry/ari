@@ -1,0 +1,24 @@
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var vec = std::vec::new<i64>(ref mut zone, 4);
+
+  vec.push(10);
+  vec.push(20);
+  vec.set(1, 25);
+  vec.insert(1, 15);
+  vec.swap(0, 2);
+
+  let before = vec.first() + vec.last() + vec.get(1) + vec.len() + vec.capacity();
+  let search = if vec.contains(25) { 5 } else { 0 };
+  let search_total = search + vec.index_of(15) + vec.count(25);
+  let removed = vec.remove(1);
+  let popped = vec.pop();
+  vec.push(7);
+  vec.truncate(1);
+  let after_truncate = vec.len() + vec.get(0);
+  vec.clear();
+  let empty_bonus = if vec.is_empty() { 3 } else { 0 };
+
+  zone::destroy(zone);
+  return before + search_total + removed + popped + after_truncate + empty_bonus;
+}

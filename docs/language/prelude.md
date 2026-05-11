@@ -60,12 +60,13 @@ future growable vector runtime. `std::vec::alloc_buffer<T>(ref mut zone,
 capacity)` allocates `capacity * size_of<T>()` bytes from an explicit `Zone`
 capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
-`data`, `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
+`data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
 capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed.
-The source handle currently exposes read-only metadata methods: `vec.len()`,
-`vec.capacity()`, and `vec.is_empty()`. Using any of these results after the
-zone is reset or destroyed is rejected by the checker. This is not the final
-root `Vec[T]` method API.
+The source handle currently exposes fixed-capacity element methods: `len`,
+`capacity`, `is_empty`, `first`, `last`, `get`, `set`, `swap`, `push`, `pop`,
+`insert`, `remove`, `clear`, `truncate`, `contains`, `index_of`, and `count`.
+Using any of these results after the zone is reset or destroyed is rejected by
+the checker. This is not the final root `Vec[T]` method API.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -423,10 +424,11 @@ helpers until source declarations can express their hidden lifetime cleanup.
 vector-allocation seed. `std::vec::with_capacity<T>(ref mut Zone, capacity)`
 builds a source `RawVec<T>` handle around that allocation, and
 `std::vec::new<T>(ref mut Zone, capacity)` wraps it in source
-`std::vec::Vec<T>`. The source handle has `vec.len()`, `vec.capacity()`, and
-`vec.is_empty()` metadata methods. Callers still use `vec.raw.data` with
-`ptr_store`, `ptr_load`, and `ptr_add` directly until the allocator-backed
-mutating/indexing `Vec[T]` method surface lands.
+`std::vec::Vec<T>`. The source handle has fixed-capacity methods for metadata,
+checked read/write, push/pop, insert/remove, truncate/clear, swap, and simple
+linear search. It still uses the capacity allocated by `new`; heap growth for
+`reserve` remains future work. Callers can still use `vec.raw.data` with
+`ptr_store`, `ptr_load`, and `ptr_add` directly for lower-level experiments.
 
 ## Aggregate Surfaces
 
@@ -478,10 +480,10 @@ an explicit-allocator feature for later. The lower-level
 `std::vec::with_capacity<T>(ref mut Zone, capacity)` helpers already exercise
 the explicit allocator path for future Vec storage, and
 `std::vec::new<T>(ref mut Zone, capacity)` exposes that seed as source
-`std::vec::Vec<T>`. The source handle supports read-only metadata calls
-`vec.len()`, `vec.capacity()`, and `vec.is_empty()` over the stored raw handle.
-The root `Vec[T]` type and its current local method set remain fixed-local
-until runtime growth is ported.
+`std::vec::Vec<T>`. The source handle supports fixed-capacity metadata,
+read/write, push/pop, insert/remove, swap, truncate/clear, and simple search
+calls over the stored raw handle. The root `Vec[T]` type and its current local
+method set remain fixed-local until runtime growth is ported.
 
 `Slice[T]` is a source `std` view struct:
 
