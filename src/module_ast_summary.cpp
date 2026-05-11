@@ -218,7 +218,8 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
         }
         case ExprKind::StructLiteral: {
             if (!expr_receiver_type_args(expr).empty()) return false;
-            if (expr.field_names.size() != expr.args.size()) return false;
+            const ExprFieldNames& field_names = expr_field_names(expr);
+            if (field_names.size() != expr.args.size()) return false;
             std::vector<std::ostringstream> values(expr.args.size());
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
                 if (!append_const_expr_payload(values[i], *expr.args[i])) return false;
@@ -228,7 +229,7 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             append_type_arguments(out, expr.type_args);
             append_count(out, expr.args.size());
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
-                append_field(out, expr.field_names[i]);
+                append_field(out, field_names[i]);
                 out << values[i].str();
             }
             return true;
@@ -834,10 +835,11 @@ private:
             expr->name = read_field(label + " struct name");
             expr->type_args = read_type_arguments(label + " struct type arguments");
             std::uint64_t field_count = read_count(label + " struct field count");
-            expr->field_names.reserve(static_cast<std::size_t>(field_count));
+            ExprFieldNames& field_names = ensure_expr_field_names(*expr);
+            field_names.reserve(static_cast<std::size_t>(field_count));
             expr->args.reserve(static_cast<std::size_t>(field_count));
             for (std::uint64_t i = 0; i < field_count; ++i) {
-                expr->field_names.push_back(read_field(label + " struct field name"));
+                field_names.push_back(read_field(label + " struct field name"));
                 expr->args.push_back(read_const_expr(label + " struct field value"));
             }
             return expr;

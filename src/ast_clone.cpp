@@ -40,7 +40,7 @@ ExprPtr make_shallow_clone(const Expr& expr) {
     clone->cast_type = expr.cast_type;
     set_expr_receiver_type_args(*clone, expr_receiver_type_args(expr));
     clone->type_args = expr.type_args;
-    clone->field_names = expr.field_names;
+    set_expr_field_names(*clone, expr_field_names(expr));
     if (expr.macro_tokens) {
         clone->macro_tokens = std::make_unique<std::vector<Token>>(*expr.macro_tokens);
     }

@@ -1313,6 +1313,10 @@ check-structs: $(TARGET)
 	$(TARGET) tests/ok/generic-struct-infer.ari --emit-llvm $(BUILD_DIR)/structs/generic-struct-infer.ll
 	grep -q "insertvalue { i64 }" $(BUILD_DIR)/structs/generic-struct-infer.ll
 	grep -q "insertvalue { i64, i1 }" $(BUILD_DIR)/structs/generic-struct-infer.ll
+	$(TARGET) --freestanding tests/ok/struct-literal-field-name-payloads.ari -o $(BUILD_DIR)/structs/struct-literal-field-name-payloads.raw
+	$(BUILD_DIR)/structs/struct-literal-field-name-payloads.raw; code=$$?; test $$code -eq 84
+	$(TARGET) tests/ok/struct-literal-field-name-payloads.ari --emit-llvm $(BUILD_DIR)/structs/struct-literal-field-name-payloads.ll
+	grep -q "insertvalue { i64, i64 }" $(BUILD_DIR)/structs/struct-literal-field-name-payloads.ll
 	$(TARGET) tests/ok/generic-impl-method.ari --emit-llvm $(BUILD_DIR)/structs/generic-impl-method.ll
 	grep -q "Box_i64_" $(BUILD_DIR)/structs/generic-impl-method.ll
 	grep -q "Box_bool_" $(BUILD_DIR)/structs/generic-impl-method.ll

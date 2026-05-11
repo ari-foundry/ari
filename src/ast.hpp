@@ -152,6 +152,7 @@ struct ExprMatchPayload {
 };
 
 using ExprReceiverTypeArgs = std::vector<TypeRef>;
+using ExprFieldNames = std::vector<std::string>;
 
 enum class ExprKind {
     Integer,
@@ -206,7 +207,7 @@ struct Expr {
     std::vector<std::unique_ptr<Expr>> args;
     std::unique_ptr<ExprReceiverTypeArgs> receiver_type_args;
     std::vector<TypeRef> type_args;
-    std::vector<std::string> field_names;
+    std::unique_ptr<ExprFieldNames> field_names;
     std::unique_ptr<ExprMatchPayload> match_payload;
     std::unique_ptr<std::vector<Token>> macro_tokens;
 };
@@ -310,6 +311,24 @@ inline ExprReceiverTypeArgs take_expr_receiver_type_args(Expr& expr) {
     ExprReceiverTypeArgs type_args = std::move(*expr.receiver_type_args);
     expr.receiver_type_args.reset();
     return type_args;
+}
+
+inline const ExprFieldNames& expr_field_names(const Expr& expr) {
+    static const ExprFieldNames empty;
+    return expr.field_names ? *expr.field_names : empty;
+}
+
+inline ExprFieldNames& ensure_expr_field_names(Expr& expr) {
+    if (!expr.field_names) expr.field_names = std::make_unique<ExprFieldNames>();
+    return *expr.field_names;
+}
+
+inline void set_expr_field_names(Expr& expr, ExprFieldNames field_names) {
+    if (field_names.empty()) {
+        expr.field_names.reset();
+        return;
+    }
+    ensure_expr_field_names(expr) = std::move(field_names);
 }
 
 inline const ExprIfPayload& expr_if_payload(const Expr& expr) {

@@ -112,7 +112,9 @@ backend reading it through `ir_expr_call_param_types`. AST qualified-call
 receiver type argument vectors are lazy now as well, so parser, AST clone,
 module-summary filtering, and sema trait-qualified lookup share
 `expr_receiver_type_args`/`set_expr_receiver_type_args` accessors instead of
-touching the storage directly.
+touching the storage directly. AST struct-literal field names also live behind
+a lazy vector payload, with parser/builders, AST clone, module summaries,
+constant evaluation, and sema field mapping using `expr_field_names` accessors.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

@@ -6434,7 +6434,8 @@ private:
         }
         IrType literal_type = resolve_struct_literal_type(expr.loc, expr.name, explicit_type_args);
         require_assignable(expr.loc, expected, literal_type);
-        if (literal_type.field_names.size() != expr.field_names.size()) {
+        const ExprFieldNames& field_names = expr_field_names(expr);
+        if (literal_type.field_names.size() != field_names.size()) {
             fail(expr.loc,
                  "struct literal for '" + literal_type.name + "' expects " +
                      std::to_string(literal_type.field_names.size()) + " field" +
@@ -6442,8 +6443,8 @@ private:
         }
 
         std::map<std::string, const Expr*> values;
-        for (std::size_t i = 0; i < expr.field_names.size(); ++i) {
-            const std::string& field_name = expr.field_names[i];
+        for (std::size_t i = 0; i < field_names.size(); ++i) {
+            const std::string& field_name = field_names[i];
             if (!values.emplace(field_name, expr.args[i].get()).second) {
                 fail(expr.loc, "duplicate field '" + field_name + "' in struct literal");
             }
@@ -11095,7 +11096,8 @@ private:
         if (info.deprecated) {
             warn_deprecated_use(expr.loc, "struct", info.name, info.deprecated_message);
         }
-        if (info.fields.size() != expr.field_names.size()) {
+        const ExprFieldNames& field_names = expr_field_names(expr);
+        if (info.fields.size() != field_names.size()) {
             fail(expr.loc,
                  "struct literal for '" + info.name + "' expects " +
                      std::to_string(info.fields.size()) + " field" +
@@ -11103,8 +11105,8 @@ private:
         }
 
         std::map<std::string, const Expr*> values;
-        for (std::size_t i = 0; i < expr.field_names.size(); ++i) {
-            const std::string& field_name = expr.field_names[i];
+        for (std::size_t i = 0; i < field_names.size(); ++i) {
+            const std::string& field_name = field_names[i];
             if (!values.emplace(field_name, expr.args[i].get()).second) {
                 fail(expr.loc, "duplicate field '" + field_name + "' in struct literal");
             }

@@ -84,7 +84,7 @@ ExprPtr make_ast_struct_literal_expr(SourceLocation loc,
     expr->loc = loc;
     expr->name = std::move(name);
     expr->type_args = std::move(type_args);
-    expr->field_names = std::move(field_names);
+    set_expr_field_names(*expr, std::move(field_names));
     expr->args = std::move(field_values);
     return expr;
 }

@@ -1,0 +1,11 @@
+struct Pair[T] {
+  first: T,
+  second: i64,
+}
+
+const STORED: Pair[i64] = Pair<i64> { second: 5, first: 37 };
+
+fn main() -> i64 {
+  let local = Pair<i64> { second: 4, first: 38 };
+  STORED.first + STORED.second + local.first + local.second
+}

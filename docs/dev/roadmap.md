@@ -168,7 +168,10 @@
    signature vector. AST qualified-call receiver type argument vectors now also
    live behind a lazy receiver metadata payload, with parser moves, AST clones,
    module-summary constant filtering, and sema trait-qualified call lookup using
-   shared accessors.
+   shared accessors. AST struct-literal field-name vectors now live behind a
+   lazy struct-literal metadata payload too, keeping ordinary expressions free
+   of the field-name vector while preserving parser construction, AST cloning,
+   constant summaries, constant evaluation, and sema field mapping.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
