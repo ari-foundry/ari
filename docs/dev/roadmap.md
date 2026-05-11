@@ -95,15 +95,16 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Track borrow-valued aggregate fields independently.
-   Borrow-return contracts now have an explicit `@borrow_return(source.path)`
-   form for multi-parameter functions and bodyless extern declarations, while
-   inferred single-source functions/methods still carry returned subpaths
-   through call sites. The next borrow-checking pressure point is aggregate
-   values that contain borrow fields: whole aggregate state is still too coarse
-   when only one field carries a borrow.
-   - [aggregate-borrows] track borrow-valued aggregate fields independently so
-     assigning unrelated fields or whole aggregate bindings can be checked
+2. Shorten lexical named borrows when the last use is obvious.
+   Borrow-valued aggregate bindings now retain target-field paths for each
+   borrowed source, so local whole-aggregate reassignment, borrow-field
+   reassignment, shared borrow-valued aggregate copies, and borrow-field reads
+   can release and reacquire only the affected source paths. The next
+   borrow-checking pressure point is still lifetime precision: named borrows
+   remain live until their lexical scope exits even when later code no longer
+   uses the borrow.
+   - [nll] shorten named borrows to their last use when local straight-line
+     control-flow analysis can prove it
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -152,10 +153,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 2. Refine borrow checking beyond lexical named borrows.
    Direct local reborrows, borrow-valued block, `if`, `match`, and
    labeled-block expression results, constrained single-source borrow-valued
-   function returns, and field/element reborrows through borrow bindings now use
-   `BorrowContext` source tracking. The next refinements should preserve that
-   source/path/mode model.
-   - [nll] shorten named borrows to their last use when control-flow analysis can prove it
+   function returns, field/element reborrows through borrow bindings, and
+   borrow-valued aggregate field tracking now use `BorrowContext` source
+   tracking. The next refinements should preserve that source/path/mode model.
    - [loop-state] track ownership and borrow state through loops, init-while
      updates, owning loop bindings, and owning break values instead of rejecting
      all state changes inside loops

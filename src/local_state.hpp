@@ -52,9 +52,11 @@ struct LocalInfo {
     std::uint64_t zone_generation = 0;
     std::string generic_origin;
     struct BorrowSource {
+        std::string aggregate_path;
         std::string name;
         std::string path;
         bool mutable_borrow = false;
+        bool release_source = true;
     };
     std::vector<BorrowSource> aggregate_borrow_sources;
     SourceLocation loc;
@@ -108,9 +110,11 @@ void set_local_named_borrow_source(LocalInfo& binding,
                                    const std::string& path,
                                    bool mutable_borrow);
 void add_local_aggregate_borrow_source(LocalInfo& binding,
+                                       const std::string& aggregate_path,
                                        const std::string& name,
                                        const std::string& path,
-                                       bool mutable_borrow);
+                                       bool mutable_borrow,
+                                       bool release_source = true);
 std::optional<std::string> local_assignment_target_error(const std::string& name, const LocalInfo& local);
 std::optional<std::string> local_assignment_storage_error(const std::string& name, const LocalInfo& local);
 std::optional<std::string> local_field_assignment_base_error(const std::string& name, const LocalInfo& local);
@@ -163,6 +167,7 @@ public:
     void restore_merged_zone_generations(StateSnapshot target, const StateSnapshot& source);
     void release_borrow_source(const std::string& name, const std::string& path, bool mutable_borrow);
     void release_borrow_sources(const LocalInfo& borrow);
+    void release_aggregate_borrow_sources_at(LocalInfo& binding, const std::string& aggregate_path);
 
     bool name_was_used(const std::string& name) const;
     bool reusable_pattern_binding(const std::string& name) const;

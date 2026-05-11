@@ -27,7 +27,27 @@ std::size_t BorrowContext::mark() const {
 }
 
 void BorrowContext::push_temporary(std::string name, std::string path, bool mutable_borrow) {
-    temporary_borrows_.push_back(TemporaryBorrow{std::move(name), std::move(path), mutable_borrow});
+    push_temporary("", std::move(name), std::move(path), mutable_borrow);
+}
+
+void BorrowContext::push_temporary(std::string target_path,
+                                   std::string name,
+                                   std::string path,
+                                   bool mutable_borrow) {
+    temporary_borrows_.push_back(TemporaryBorrow{
+        std::move(target_path),
+        std::move(name),
+        std::move(path),
+        mutable_borrow
+    });
+}
+
+void BorrowContext::prefix_temporary_targets(std::size_t mark, const std::string& target_path) {
+    if (target_path.empty()) return;
+    for (std::size_t i = mark; i < temporary_borrows_.size(); ++i) {
+        temporary_borrows_[i].target_path =
+            append_borrow_path(target_path, temporary_borrows_[i].target_path);
+    }
 }
 
 void BorrowContext::add_source(LocalInfo& source, const std::string& path, bool mutable_borrow) {
@@ -60,11 +80,18 @@ void BorrowContext::promote_to_named(SourceLocation loc,
     set_local_named_borrow_source(binding, source->name, source->path, source->mutable_borrow);
 }
 
-void BorrowContext::promote_to_aggregate(std::size_t mark, LocalInfo& binding) {
+void BorrowContext::promote_to_aggregate(std::size_t mark,
+                                         LocalInfo& binding,
+                                         const std::string& target_path) {
     if (temporary_borrows_.size() == mark) return;
     for (std::size_t i = mark; i < temporary_borrows_.size(); ++i) {
         const TemporaryBorrow& borrow = temporary_borrows_[i];
-        add_local_aggregate_borrow_source(binding, borrow.name, borrow.path, borrow.mutable_borrow);
+        add_local_aggregate_borrow_source(
+            binding,
+            append_borrow_path(target_path, borrow.target_path),
+            borrow.name,
+            borrow.path,
+            borrow.mutable_borrow);
     }
     temporary_borrows_.resize(mark);
 }

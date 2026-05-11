@@ -123,6 +123,10 @@ Rules currently checked:
 - a binding cannot be moved, dropped, or assigned while borrowed
 - borrowed aggregate fields and elements are tracked by path, so unrelated
   fields can still be read or assigned
+- borrow-valued aggregate fields retain their own source paths; replacing a
+  local aggregate or one borrow-valued field releases only the replaced field
+  sources after the new value has been checked
+- borrow-valued aggregate copies acquire their own source borrow records
 - fields behind a `ref mut Struct` parameter can be read and assigned through
   the borrow, subject to the struct field's own `mut` marker
 - a named borrow keeps the source borrowed until the binding's block exits
@@ -158,8 +162,7 @@ was created from borrowed until the reborrow exits scope, and that source borrow
 binding keeps its own original source borrowed until its scope exits. A
 borrow-valued function or method call keeps the caller's returned source path
 borrowed for as long as the returned borrow binding lives. Future
-borrow-checker refinement may shorten a named borrow to its last use and track
-borrow-valued aggregate fields independently.
+borrow-checker refinement may shorten a named borrow to its last use.
 
 ## Drop
 
@@ -177,10 +180,11 @@ destructor calls for owned tuple, fixed-array, vector, and struct fields that
 provide a matching `Drop` impl.
 
 Local aggregates can carry `own`, `ref`, and `ref mut` fields. Owned aggregates
-move as one value. Borrow-valued aggregate bindings keep their sources borrowed
-until the aggregate binding goes out of scope. Fields and elements can be
-borrowed directly with `ref value.field`, `ref mut value.0`, or constant
-`ref value[index]`, and those borrows block only overlapping paths. Non-owned
+move as one value. Borrow-valued aggregate bindings track source borrows per
+field path, so local aggregate reassignment and borrow-field reassignment can
+release replaced sources while keeping unrelated borrow fields live. Fields and
+elements can be borrowed directly with `ref value.field`, `ref mut value.0`, or
+constant `ref value[index]`, and those borrows block only overlapping paths. Non-owned
 fields of owning structs and tuple structs can be read or assigned without
 moving the whole aggregate. Owned struct and tuple-struct fields, nested owned
 field paths, and constant fixed-array/vector indexes can be moved independently

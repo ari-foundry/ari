@@ -1780,6 +1780,8 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-insert.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-insert.elf; $(BUILD_DIR)/variables/vector-insert.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-search.elf; $(BUILD_DIR)/variables/vector-search.elf; code=$$?; test $$code -eq 10; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/field-borrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/field-borrow.elf; $(BUILD_DIR)/variables/field-borrow.elf; code=$$?; test $$code -eq 42; fi
+	$(TARGET) --freestanding tests/ok/aggregate-borrow-field-assignment.ari -o $(BUILD_DIR)/variables/aggregate-borrow-field-assignment.raw
+	$(BUILD_DIR)/variables/aggregate-borrow-field-assignment.raw; code=$$?; test $$code -eq 32
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/array-dynamic-index-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; if $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-storage-shrink-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; if $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-enum-pattern-binding.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-enum-pattern-binding.elf; $(BUILD_DIR)/variables/variables-enum-pattern-binding.elf; code=$$?; test $$code -eq 13; fi
@@ -1795,6 +1797,8 @@ check-variables: $(TARGET)
 	grep -q "type mismatch: expected i32, got bool" $(BUILD_DIR)/variables/variables-assign-type-mismatch.err
 	if $(TARGET) tests/errors/aggregate-borrow-source-assign.ari -o $(BUILD_DIR)/variables/aggregate-borrow-source-assign.elf >$(BUILD_DIR)/variables/aggregate-borrow-source-assign.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/variables/aggregate-borrow-source-assign.err
+	if $(TARGET) tests/errors/aggregate-borrow-reassigned-source.ari -o $(BUILD_DIR)/variables/aggregate-borrow-reassigned-source.elf >$(BUILD_DIR)/variables/aggregate-borrow-reassigned-source.err 2>&1; then exit 1; fi
+	grep -q "cannot assign to borrowed binding 'second'" $(BUILD_DIR)/variables/aggregate-borrow-reassigned-source.err
 	$(TARGET) --freestanding tests/ok/aggregate-borrow-source-release.ari -o $(BUILD_DIR)/variables/aggregate-borrow-source-release.raw
 	$(BUILD_DIR)/variables/aggregate-borrow-source-release.raw; code=$$?; test $$code -eq 3
 	if $(TARGET) tests/errors/field-borrow-assign.ari -o $(BUILD_DIR)/variables/field-borrow-assign.elf >$(BUILD_DIR)/variables/field-borrow-assign.err 2>&1; then exit 1; fi

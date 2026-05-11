@@ -1,0 +1,22 @@
+fn main() -> i64 {
+  var first = 1;
+  var second = 2;
+  var third = 3;
+  var holder: (ref i64, i64) = (ref first, 10);
+
+  holder.1 = 20;
+  holder.0 = ref second;
+  first = 4;
+
+  var seen = 0;
+  {
+    let copied: (ref i64, i64) = holder;
+    let field_ref: ref i64 = copied.0;
+    let field_ptr: ptr i64 = field_ref as ptr i64;
+    seen = *field_ptr;
+  }
+
+  holder.0 = ref third;
+  second = 6;
+  return first + second + seen + holder.1;
+}

@@ -16,6 +16,7 @@ struct BorrowResultSource {
 };
 
 struct TemporaryBorrow {
+    std::string target_path;
     std::string name;
     std::string path;
     bool mutable_borrow = false;
@@ -28,6 +29,8 @@ public:
     void clear();
     std::size_t mark() const;
     void push_temporary(std::string name, std::string path, bool mutable_borrow);
+    void push_temporary(std::string target_path, std::string name, std::string path, bool mutable_borrow);
+    void prefix_temporary_targets(std::size_t mark, const std::string& target_path);
     void add_source(LocalInfo& source, const std::string& path, bool mutable_borrow);
     void release_source(const std::string& name, const std::string& path, bool mutable_borrow);
     void release_named(const LocalInfo& borrow);
@@ -35,7 +38,7 @@ public:
                           const IrExpr& init,
                           const std::string& binding_name,
                           LocalInfo& binding);
-    void promote_to_aggregate(std::size_t mark, LocalInfo& binding);
+    void promote_to_aggregate(std::size_t mark, LocalInfo& binding, const std::string& target_path);
     void release_to_mark(std::size_t mark);
 
 private:

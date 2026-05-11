@@ -3782,6 +3782,9 @@ private:
             LocalInfo& param_local = local_slot_by_name(ir_param_name);
             param_local.function_parameter = true;
             param_local.generic_origin = param.has_pattern ? "" : generic_origin_from_type_ref(param.type);
+            if (contains_borrow_type(type) && !is_borrow_type(type)) {
+                seed_parameter_aggregate_borrow_sources(param_local, ir_param_name, type, "");
+            }
             ir_fn.params.push_back(IrParam{ir_param_name, type});
             if (param.has_pattern) {
                 lower_binding_pattern_from_local(
@@ -3885,9 +3888,117 @@ private:
         borrow_context_.promote_to_named(loc, init, binding_name, binding);
     }
 
-    void promote_temporary_borrows_to_aggregate(std::size_t mark, const std::string& binding_name) {
+    void promote_temporary_borrows_to_aggregate(std::size_t mark,
+                                                const std::string& binding_name,
+                                                const std::string& target_path = "") {
         LocalInfo& binding = local_slot_by_name(binding_name);
-        borrow_context_.promote_to_aggregate(mark, binding);
+        borrow_context_.promote_to_aggregate(mark, binding, target_path);
+    }
+
+    void release_aggregate_borrow_sources_at(const std::string& binding_name,
+                                             const std::string& target_path) {
+        LocalInfo& binding = local_slot_by_name(binding_name);
+        local_scopes_.release_aggregate_borrow_sources_at(binding, target_path);
+    }
+
+    void copy_aggregate_borrow_sources_to_temporaries(SourceLocation loc,
+                                                      const std::string& binding_name,
+                                                      const LocalInfo& binding) {
+        (void)binding_name;
+        if (!contains_borrow_type(binding.type) || is_borrow_type(binding.type) || is_owner_type(binding.type)) {
+            return;
+        }
+        for (const auto& source_info : binding.aggregate_borrow_sources) {
+            LocalInfo& source = require_live_local(loc, source_info.name);
+            add_borrow_source(source, source_info.path, source_info.mutable_borrow);
+            borrow_context_.push_temporary(
+                source_info.aggregate_path,
+                source_info.name,
+                source_info.path,
+                source_info.mutable_borrow);
+        }
+    }
+
+    void seed_parameter_aggregate_borrow_sources(LocalInfo& binding,
+                                                 const std::string& binding_name,
+                                                 const IrType& type,
+                                                 const std::string& path) {
+        if (is_borrow_type(type)) {
+            add_local_aggregate_borrow_source(
+                binding,
+                path,
+                binding_name,
+                path,
+                type.qualifier == TypeQualifier::MutRef,
+                false);
+            return;
+        }
+        if (type.qualifier != TypeQualifier::Value) return;
+        if (type.primitive == IrPrimitiveKind::Tuple ||
+            type.primitive == IrPrimitiveKind::Array ||
+            type.primitive == IrPrimitiveKind::Struct) {
+            const std::vector<IrType>& fields = aggregate_field_types(type);
+            for (std::size_t i = 0; i < fields.size(); ++i) {
+                seed_parameter_aggregate_borrow_sources(
+                    binding,
+                    binding_name,
+                    fields[i],
+                    local_owned_field_path(path, i));
+            }
+            return;
+        }
+        if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size != 0) {
+            for (std::uint64_t i = 0; i < type.array_size; ++i) {
+                seed_parameter_aggregate_borrow_sources(
+                    binding,
+                    binding_name,
+                    type.args[0],
+                    local_owned_field_path(path, static_cast<std::size_t>(i)));
+            }
+        }
+    }
+
+    const LocalInfo::BorrowSource* aggregate_borrow_source_for_path(const LocalInfo& binding,
+                                                                    const std::string& target_path) const {
+        for (const auto& source_info : binding.aggregate_borrow_sources) {
+            if (source_info.aggregate_path == target_path) return &source_info;
+        }
+        return nullptr;
+    }
+
+    void activate_tracked_borrow_field_access(SourceLocation loc,
+                                              const TrackedAggregateAccess& access,
+                                              IrExpr& result) {
+        if (!is_borrow_type(access.type)) return;
+        LocalInfo& binding = local_slot_by_name(access.base_name);
+        const LocalInfo::BorrowSource* source_info =
+            aggregate_borrow_source_for_path(binding, access.path);
+        if (!source_info) {
+            fail(loc,
+                 "borrow-valued aggregate field '" +
+                     local_borrow_path_display(access.base_name, access.path) +
+                     "' has no tracked source");
+        }
+        if (source_info->mutable_borrow) {
+            require_can_borrow_path(loc, access.base_name, binding, access.path, true);
+            add_borrow_source(binding, access.path, true);
+            borrow_context_.push_temporary(access.base_name, access.path, true);
+            set_borrow_result_source(result, BorrowResultSource{
+                access.base_name,
+                access.path,
+                true
+            });
+            return;
+        }
+        LocalInfo& source = require_live_local(loc, source_info->name);
+        require_can_borrow_path(loc, source_info->name, source, source_info->path, false);
+        add_borrow_source(source, source_info->path, false);
+        borrow_context_.push_temporary(source_info->name, source_info->path, false);
+        set_borrow_result_source(result, BorrowResultSource{
+            source_info->name,
+            source_info->path,
+            false
+        });
     }
 
     void declare_local(SourceLocation loc, const std::string& name, const IrType& type, bool mutable_binding) {
@@ -4340,6 +4451,10 @@ private:
 
     void release_temporary_borrows(std::size_t mark) {
         borrow_context_.release_to_mark(mark);
+    }
+
+    void prefix_temporary_borrow_targets(std::size_t mark, const std::string& target_path) {
+        borrow_context_.prefix_temporary_targets(mark, target_path);
     }
 
     BorrowCallLocalAdapter borrow_call_locals() {
@@ -5451,17 +5566,35 @@ private:
         mark_local_owned_field_state(local, path, LocalState::Alive);
     }
 
+    void update_aggregate_borrow_sources_after_assignment(SourceLocation loc,
+                                                          const IrExpr& target,
+                                                          std::size_t borrow_mark) {
+        if (!contains_borrow_type(target.type)) {
+            release_temporary_borrows(borrow_mark);
+            return;
+        }
+        std::string base_name;
+        std::string path;
+        if (!tracked_ir_access_path(target, base_name, path)) {
+            fail(loc, "assigning borrow-valued raw pointer fields independently is planned but not supported yet");
+        }
+        release_aggregate_borrow_sources_at(base_name, path);
+        promote_temporary_borrows_to_aggregate(borrow_mark, base_name, path);
+    }
+
     void check_assign(const Stmt& stmt, IrStmt& lowered) {
         const ExprPtr& assign_target = stmt_assign_target(stmt);
         const ExprPtr& rhs = stmt_assign_rhs(stmt);
         if (assign_target) {
             IrExprPtr target = check_assignment_target(*assign_target);
             IrType target_type = target->type;
+            std::size_t borrow_mark = temporary_borrow_mark();
             IrExprPtr value = check_expr_with_expected(*rhs, target_type);
             coerce_expr_to_expected(*value, target_type);
             require_assignable(stmt.loc, target_type, value->type);
             require_no_zone_pointer_escape(rhs->loc, *value, "aggregate or raw-pointer storage");
             mark_owned_field_assigned(*target);
+            update_aggregate_borrow_sources_after_assignment(stmt.loc, *target, borrow_mark);
             set_ir_stmt_assign_target(lowered, std::move(target));
             set_ir_stmt_assign_rhs(lowered, std::move(value));
             return;
@@ -5480,7 +5613,12 @@ private:
         require_assignable(stmt.loc, target.type, value->type);
         VectorKnownLength assigned_vector_length =
             vector_known_length_from_source_expr(target.type, *rhs, *value);
-        release_temporary_borrows(borrow_mark);
+        if (contains_borrow_type(target.type)) {
+            release_aggregate_borrow_sources_at(assign_name, "");
+            promote_temporary_borrows_to_aggregate(borrow_mark, assign_name);
+        } else {
+            release_temporary_borrows(borrow_mark);
+        }
         mark_local_alive(target);
         initialize_owned_field_states(target);
         set_local_vector_known_length(target, assigned_vector_length);
@@ -5704,9 +5842,6 @@ private:
         if (is_owner_type(access.type)) {
             require_can_assign_owned_field(loc, access.base_name, access.path);
         }
-        if (contains_borrow_type(access.type)) {
-            fail(loc, "assigning borrow-valued aggregate fields independently is planned but not supported yet");
-        }
         return std::move(access.expr);
     }
 
@@ -5722,9 +5857,6 @@ private:
         const IrType& field_type = local.type.field_types[index];
         if (is_owner_type(field_type)) {
             require_can_assign_owned_field(expr.loc, base_name, std::to_string(index));
-        }
-        if (contains_borrow_type(field_type)) {
-            fail(expr.loc, "assigning borrow-valued aggregate fields independently is planned but not supported yet");
         }
         if (!local.type.field_mutable[index]) {
             fail(expr.loc, "cannot assign to immutable field '" + expr.name + "' of struct '" + local.type.name + "'");
@@ -5752,9 +5884,6 @@ private:
         const IrType& field_type = local.type.field_types[static_cast<std::size_t>(expr.tuple_index)];
         if (is_owner_type(field_type)) {
             require_can_assign_owned_field(expr.loc, base_name, std::to_string(expr.tuple_index));
-        }
-        if (contains_borrow_type(field_type)) {
-            fail(expr.loc, "assigning borrow-valued aggregate fields independently is planned but not supported yet");
         }
         if (!local.type.field_mutable[static_cast<std::size_t>(expr.tuple_index)]) {
             fail(expr.loc,
@@ -10599,6 +10728,7 @@ private:
                 if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
                 require_can_read_borrow_path(expr.loc, expr.name, local, "");
                 require_zone_pointer_valid(expr.loc, expr.name, local);
+                copy_aggregate_borrow_sources_to_temporaries(expr.loc, expr.name, local);
                 lowered->kind = IrExprKind::Local;
                 set_ir_expr_name(*lowered, expr.name);
                 lowered->type = local.type;
@@ -10876,6 +11006,7 @@ private:
             if (is_owner_type(access.type)) {
                 mark_owned_field_moved(expr.loc, access.base_name, access.path);
             }
+            activate_tracked_borrow_field_access(expr.loc, access, *access.expr);
             return std::move(access.expr);
         }
 
@@ -10911,6 +11042,7 @@ private:
             if (is_owner_type(access.type)) {
                 mark_owned_field_moved(expr.loc, access.base_name, access.path);
             }
+            activate_tracked_borrow_field_access(expr.loc, access, *access.expr);
             return std::move(access.expr);
         }
 
@@ -11030,6 +11162,7 @@ private:
             if (is_owner_type(access.type)) {
                 mark_owned_field_moved(expr.loc, access.base_name, access.path);
             }
+            activate_tracked_borrow_field_access(expr.loc, access, *access.expr);
             return std::move(access.expr);
         }
 
@@ -11060,6 +11193,7 @@ private:
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             const auto& item = expr.args[i];
             const IrType* item_expected = tuple_literal_expected_element_type(expected, expr.args.size(), i);
+            std::size_t item_borrow_mark = temporary_borrow_mark();
             IrExprPtr value = check_expr_maybe_expected(*item, item_expected);
             if (item_expected) {
                 coerce_expr_to_expected(*value, *item_expected);
@@ -11067,6 +11201,7 @@ private:
             }
             require_plain_prelude_aggregate_element(expr.loc, value->type, "tuple");
             require_no_zone_pointer_escape(item->loc, *value, "tuple literal");
+            prefix_temporary_borrow_targets(item_borrow_mark, std::to_string(i));
             tuple_type.args.push_back(value->type);
             elements.push_back(std::move(value));
         }
@@ -11133,7 +11268,9 @@ private:
                 fail(expr.loc, "missing field '" + field.name + "' in struct literal for '" + info.name + "'");
             }
             const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;
+            std::size_t field_borrow_mark = temporary_borrow_mark();
             lowered_values.push_back(check_expr_maybe_expected(*found->second, field_expected));
+            prefix_temporary_borrow_targets(field_borrow_mark, std::to_string(i));
         }
 
         if (!has_struct_type) {
@@ -11191,7 +11328,9 @@ private:
         lowered_values.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             const IrType* field_expected = has_struct_type ? &struct_type.field_types[i] : nullptr;
+            std::size_t field_borrow_mark = temporary_borrow_mark();
             lowered_values.push_back(check_expr_maybe_expected(*expr.args[i], field_expected));
+            prefix_temporary_borrow_targets(field_borrow_mark, std::to_string(i));
         }
         if (!has_struct_type) {
             explicit_type_args = infer_struct_type_args_from_values(expr.loc, info, lowered_values);
@@ -11245,6 +11384,7 @@ private:
             element_type = *expected_element;
         }
         for (const auto& item : expr.args) {
+            std::size_t item_borrow_mark = temporary_borrow_mark();
             IrExprPtr value = check_expr_maybe_expected(*item, expected_element);
             if (expected_element) {
                 coerce_expr_to_expected(*value, *expected_element);
@@ -11259,6 +11399,9 @@ private:
                 coerce_expr_to_expected(*value, element_type);
                 require_assignable(expr.loc, element_type, value->type);
             }
+            prefix_temporary_borrow_targets(
+                item_borrow_mark,
+                std::to_string(lowered->args.size()));
             lowered->args.push_back(std::move(value));
         }
         if (expected_vector) {

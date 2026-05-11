@@ -92,9 +92,11 @@ construction. Some helpers have already moved out to focused files:
   bumps, vector known-length accessors, static integer cache setters, and
   owned-field path/state helpers, plus local assignment and immutable receiver
   diagnostic helpers plus branch/loop state comparison and merged restore hooks,
-  borrow count/source helpers, and named/aggregate borrow-source release
+  borrow count/source helpers, aggregate borrow-source target paths, and
+  named/aggregate borrow-source release
 - `borrow_semantics` for the lexical temporary-borrow stack, named and aggregate
-  borrow-source promotion/release, local reborrow permission checks including
+  borrow-source promotion/release, aggregate target-path prefixing for nested
+  borrow-valued literals, local reborrow permission checks including
   field/element reborrows through borrow bindings, borrow-valued control-flow
   result provenance, and path borrow conflict diagnostics layered over
   `local_state`
@@ -303,8 +305,8 @@ pending IR.
      stage; subsequent borrow work should move into `borrow_semantics`.
 2. Extract borrow checking into `borrow_semantics`.
    - Temporary borrow stack ownership, named borrow promotion, aggregate borrow
-     source promotion, and temporary/named release now live in
-     `borrow_semantics::BorrowContext`.
+     source promotion with target-field paths, and temporary/named release now
+     live in `borrow_semantics::BorrowContext`.
    - `require_not_borrowed`, `require_can_read_borrow_path`,
      `require_can_assign_borrow_path`, and `require_can_borrow_path` now live in
      `borrow_semantics` and stay layered over `local_state` borrow-count/path
@@ -314,10 +316,11 @@ pending IR.
      `borrow_call_semantics` and reach local scope state only through a narrow
      adapter. Borrow-return signatures also carry explicit or inferred returned
      field/element subpaths so call sites do not need to borrow an entire
-     aggregate when the callee returns only `source.field`; future NLL,
-     aggregate-borrow, reborrow, and borrow-result work should build on
-     `BorrowContext` instead of adding new raw borrow-state paths in
-     `sema.cpp`.
+     aggregate when the callee returns only `source.field`; borrow-valued local
+     aggregate fields also carry target paths so field reassignment and
+     whole-local reassignment can release only replaced sources. Future NLL,
+     reborrow, and borrow-result work should build on `BorrowContext` instead
+     of adding new raw borrow-state paths in `sema.cpp`.
 3. Extract ownership/drop checking into `ownership_semantics`.
    - Move owned field state tracking, partial move/reinitialization checks,
      `drop` lowering, destructor lookup glue, and return-owner checks.

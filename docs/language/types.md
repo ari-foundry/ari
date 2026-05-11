@@ -693,13 +693,16 @@ let pair: (own i64, i64) = (make_owned(1), 2);
 An aggregate that contains an `own` field is tracked as one move-only binding,
 but owned struct fields, tuple-struct fields, nested field paths, and constant
 fixed-array/vector element paths can be moved and reinitialized independently.
-Aggregate bindings that contain `ref` or `ref mut` fields keep their borrowed
-sources borrowed until the aggregate binding leaves scope. Fields and elements
-can also be borrowed directly with `ref value.field`, `ref mut value.0`, or
-constant `ref value[index]`; unrelated field paths remain available while that
-borrow is live. Existing local borrow bindings can be reborrowed through those
-same paths, such as `ref borrowed.field` or `ref mut borrowed[0]`, when the
-borrow binding's own mutability and the selected field path allow it.
+Aggregate bindings that contain `ref` or `ref mut` fields track each borrowed
+field path independently. Reassigning a local aggregate or one of its
+borrow-valued fields releases the replaced field sources after the new value is
+checked, and shared borrow-valued aggregate copies acquire their own source
+borrow records. Fields and elements can also be borrowed directly with
+`ref value.field`, `ref mut value.0`, or constant `ref value[index]`;
+unrelated field paths remain available while that borrow is live. Existing
+local borrow bindings can be reborrowed through those same paths, such as
+`ref borrowed.field` or `ref mut borrowed[0]`, when the borrow binding's own
+mutability and the selected field path allow it.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

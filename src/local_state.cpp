@@ -249,10 +249,12 @@ void set_local_named_borrow_source(LocalInfo& binding,
 }
 
 void add_local_aggregate_borrow_source(LocalInfo& binding,
+                                       const std::string& aggregate_path,
                                        const std::string& name,
                                        const std::string& path,
-                                       bool mutable_borrow) {
-    binding.aggregate_borrow_sources.push_back({name, path, mutable_borrow});
+                                       bool mutable_borrow,
+                                       bool release_source) {
+    binding.aggregate_borrow_sources.push_back({aggregate_path, name, path, mutable_borrow, release_source});
 }
 
 std::optional<std::string> local_assignment_target_error(const std::string& name, const LocalInfo& local) {
@@ -268,9 +270,6 @@ std::optional<std::string> local_assignment_target_error(const std::string& name
 std::optional<std::string> local_assignment_storage_error(const std::string& name, const LocalInfo& local) {
     if (is_owner_type(local.type) && local_has_live_owner(local)) {
         return "cannot overwrite owning binding '" + name + "' before it is moved or dropped";
-    }
-    if (contains_borrow_type(local.type)) {
-        return "cannot assign to borrow-valued aggregate binding '" + name + "' yet";
     }
     return std::nullopt;
 }
@@ -543,7 +542,25 @@ void LocalScopeStack::release_borrow_sources(const LocalInfo& borrow) {
         release_borrow_source(borrow.borrow_source, borrow.borrow_source_path, borrow.borrow_source_mutable);
     }
     for (const auto& item : borrow.aggregate_borrow_sources) {
+        if (!item.release_source) continue;
         release_borrow_source(item.name, item.path, item.mutable_borrow);
+    }
+}
+
+void LocalScopeStack::release_aggregate_borrow_sources_at(LocalInfo& binding,
+                                                          const std::string& aggregate_path) {
+    auto& sources = binding.aggregate_borrow_sources;
+    for (auto it = sources.begin(); it != sources.end();) {
+        const bool release =
+            aggregate_path.empty() ||
+            local_owned_field_path_matches(it->aggregate_path, aggregate_path) ||
+            local_owned_field_path_matches(aggregate_path, it->aggregate_path);
+        if (!release) {
+            ++it;
+            continue;
+        }
+        if (it->release_source) release_borrow_source(it->name, it->path, it->mutable_borrow);
+        it = sources.erase(it);
     }
 }
 

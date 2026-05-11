@@ -202,8 +202,10 @@ let pair: (own i64, i64) = (make_owned(1), 2);
 consume_pair(pair);
 ```
 
-Borrow-valued aggregate bindings keep their sources borrowed for the binding's
-scope, so assigning to a borrowed source is rejected until that scope ends.
+Borrow-valued aggregate bindings keep each borrow field's source borrowed while
+that field is live. Reassigning the whole local aggregate or a borrow-valued
+field releases the old field source after the new value is checked, so a
+replaced source can be assigned again while the aggregate continues to live.
 Local aggregate fields and elements can also be borrowed directly with
 `ref aggregate.field`, `ref mut aggregate.0`, or `ref aggregate[index]` when
 the index is a constant fixed-array or local vector index. The checker tracks
