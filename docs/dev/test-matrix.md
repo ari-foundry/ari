@@ -396,7 +396,7 @@ Checklist:
 - [x] AST summary declaration payloads preserve function parameter and local
       binding patterns
 - [x] AST summary declaration payloads materialize simple executable function
-      bodies made from local declarations, local binding patterns,
+      bodies made from empty unit bodies, local declarations, local binding patterns,
       assignments, `if`/`else`, block/labeled-block statements, loops,
       `continue`, `break`, statement `match`, `drop`, return/final-expression
       statements, method calls, qualified calls with receiver type arguments,

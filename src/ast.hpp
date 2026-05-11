@@ -756,6 +756,7 @@ struct FunctionDecl {
     TypeRef return_type;
     bool has_return_type = false;
     bool has_body = false;
+    bool has_body_summary = false;
     std::vector<StmtPtr> body;
     SourceLocation loc;
     SourceLocation variadic_loc;

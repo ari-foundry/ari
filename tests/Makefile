@@ -725,6 +725,7 @@ check-modules: $(TARGET)
 	grep -q "14:qualified-call" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "5:tuple" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "5:array" $(BUILD_DIR)/modules/package-cache-body.aricache
+	grep -q "31:cache_bodies::empty_unit_cached;0;0;1;0;1:C;0:;0;1;0;0;0;1;0;" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "4:drop" $(BUILD_DIR)/modules/package-cache-body.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-body-cache.ll $(BUILD_DIR)/modules/package-cache-body-cache-use.ll

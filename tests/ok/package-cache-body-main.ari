@@ -21,5 +21,6 @@ fn main() -> i64 {
     cache_bodies::receiver_type_arg_flow() +
     cache_bodies::parameter_pattern_flow((2, 9)) +
     cache_bodies::local_binding_pattern_flow() +
-    cache_bodies::pointer_deref_flow()
+    cache_bodies::pointer_deref_flow() +
+    cache_bodies::empty_body_flow()
 }

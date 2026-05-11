@@ -183,3 +183,11 @@ pub fn pointer_deref_flow() -> i64 {
   *raw = *raw + 1;
   return *raw - 1;
 }
+
+pub fn empty_unit_cached() {
+}
+
+pub fn empty_body_flow() -> i64 {
+  empty_unit_cached();
+  return 0;
+}

@@ -739,7 +739,7 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
 }
 
 void append_function_body_summary(std::ostringstream& out, const FunctionDecl& fn) {
-    if (!fn.has_body || fn.is_extern || fn.body.empty()) {
+    if (!fn.has_body || fn.is_extern) {
         append_bool(out, false);
         return;
     }
@@ -1232,6 +1232,7 @@ private:
             bool has_body_summary = read_bool("function body summary flag");
             if (has_body_summary) {
                 if (!fn.has_body) fail("function body summary present without body flag");
+                fn.has_body_summary = true;
                 fn.body = read_body_stmt_list("function body");
             }
         }
@@ -1945,16 +1946,16 @@ bool can_load_module_cache_ast_summary_declarations(const Program& program) {
         if (!decl.init) return false;
     }
     for (const auto& fn : program.functions) {
-        if (fn.has_body && !fn.is_extern && fn.body.empty()) return false;
+        if (fn.has_body && !fn.is_extern && !fn.has_body_summary) return false;
     }
     for (const auto& trait : program.traits) {
         for (const auto& method : trait.methods) {
-            if (method.has_body && !method.is_extern && method.body.empty()) return false;
+            if (method.has_body && !method.is_extern && !method.has_body_summary) return false;
         }
     }
     for (const auto& impl : program.impls) {
         for (const auto& method : impl.methods) {
-            if (method.has_body && !method.is_extern && method.body.empty()) return false;
+            if (method.has_body && !method.is_extern && !method.has_body_summary) return false;
         }
     }
     return true;

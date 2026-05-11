@@ -345,9 +345,9 @@ accesses over materialized aggregate constants. Constants whose initializers use
 unsupported summary forms fall back to parsing the cached source snapshot.
 Executable body expression summaries preserve integer, bool, float, string, and
 null literals.
-Executable dependency functions whose bodies use summary-safe local
-declarations, local binding patterns, assignments, `if`/`else`,
-block/labeled-block statements,
+Executable dependency functions whose bodies are empty unit bodies or use
+summary-safe local declarations, local binding patterns, assignments,
+`if`/`else`, block/labeled-block statements,
 `while`/`while let`, `for`, `init ... while ... next`, `continue`, unlabeled or
 labeled `break`, statement `match`, `return` statements, `drop` statements,
 method-call expressions, qualified calls with receiver type arguments, borrow
