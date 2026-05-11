@@ -16,5 +16,6 @@ fn main() -> i64 {
     cache_bodies::drop_statement() +
     cache_bodies::expression_flow(true, 2) +
     cache_bodies::scalar_literal_flow() +
-    cache_bodies::borrow_pointer_flow()
+    cache_bodies::borrow_pointer_flow() +
+    cache_bodies::macro_flow()
 }

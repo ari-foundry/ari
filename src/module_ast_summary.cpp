@@ -83,6 +83,14 @@ void append_attributes(std::ostringstream& out, const std::vector<Attribute>& at
     }
 }
 
+void append_token_payload(std::ostringstream& out, const Token& token) {
+    append_count(out, static_cast<std::uint64_t>(token.kind));
+    append_field(out, token.text);
+    append_count(out, token.int_value);
+    append_count(out, double_bits(token.float_value));
+    append_field(out, token.literal_suffix);
+}
+
 void append_function_body_summary(std::ostringstream& out, const FunctionDecl& fn);
 
 void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) {
@@ -316,6 +324,14 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             append_field(out, expr.name);
             append_type_arguments(out, expr_type_args(expr));
             out << args.str();
+            return true;
+        }
+        case ExprKind::MacroCall: {
+            if (!expr.macro_tokens) return false;
+            append_field(out, "macro-call");
+            append_field(out, expr.name);
+            append_count(out, expr.macro_tokens->size());
+            for (const auto& token : *expr.macro_tokens) append_token_payload(out, token);
             return true;
         }
         case ExprKind::If: {
@@ -1196,6 +1212,17 @@ private:
         return static_cast<TokenKind>(read_count(label));
     }
 
+    Token read_token_payload(const std::string& label) {
+        Token token;
+        token.kind = read_token_kind(label + " kind");
+        token.text = read_field(label + " text");
+        token.int_value = read_count(label + " integer value");
+        token.float_value = double_from_bits(read_count(label + " float bits"));
+        token.literal_suffix = read_field(label + " literal suffix");
+        token.loc = default_loc();
+        return token;
+    }
+
     std::vector<TypeRef> read_type_arguments(const std::string& label) {
         std::uint64_t count = read_count(label + " count");
         std::vector<TypeRef> type_args;
@@ -1348,6 +1375,18 @@ private:
             expr->name = read_field(label + " method name");
             set_expr_type_args(*expr, read_type_arguments(label + " method type arguments"));
             expr->args = read_const_expr_list(label + " method arguments");
+            return expr;
+        }
+        if (kind == "macro-call") {
+            expr->kind = ExprKind::MacroCall;
+            expr->name = read_field(label + " macro name");
+            std::uint64_t token_count = read_count(label + " macro token count");
+            auto tokens = std::make_unique<std::vector<Token>>();
+            tokens->reserve(static_cast<std::size_t>(token_count));
+            for (std::uint64_t i = 0; i < token_count; ++i) {
+                tokens->push_back(read_token_payload(label + " macro token"));
+            }
+            expr->macro_tokens = std::move(tokens);
             return expr;
         }
         if (kind == "if-expr") {

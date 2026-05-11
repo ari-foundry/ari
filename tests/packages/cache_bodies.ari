@@ -140,3 +140,9 @@ pub fn try_cached(flag: bool) -> Option[i64] {
 pub fn coalesce_flow() -> i64 {
   return (try_cached(true) ?? 0) + (try_cached(false) ?? 5);
 }
+
+pub fn macro_flow() -> i64 {
+  assert_eq!(1 + 2, 3);
+  assert_ne!(false, true);
+  return 4;
+}
