@@ -2631,7 +2631,8 @@ private:
     }
 
     Value emit_trait_object_call(const IrExpr& expr) {
-        if (expr.call_param_types.empty()) {
+        const std::vector<IrType>& call_param_types = ir_expr_call_param_types(expr);
+        if (call_param_types.empty()) {
             throw CompileError(where(expr.loc) + ": malformed trait object call");
         }
 
@@ -2647,10 +2648,10 @@ private:
 
         std::vector<Value> args;
         args.reserve(expr.args.size() + 1);
-        args.push_back(Value{"ptr", data, expr.call_param_types[0]});
+        args.push_back(Value{"ptr", data, call_param_types[0]});
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             Value arg = emit_expr(*expr.args[i]);
-            if (i + 1 < expr.call_param_types.size()) arg = cast_value(arg, expr.call_param_types[i + 1]);
+            if (i + 1 < call_param_types.size()) arg = cast_value(arg, call_param_types[i + 1]);
             args.push_back(arg);
         }
 

@@ -106,6 +106,9 @@ expression nodes without those block-only fields. `if` expression conditions,
 condition patterns, branch bodies, and branch final values are lazy AST/IR
 payloads now as well. Match-expression subjects and expression arm vectors are
 lazy AST/IR payloads too, matching the earlier statement-match arm-vector split.
+IR trait-object call erased parameter type vectors are also behind a
+`TraitObjectCall`-only payload, with sema setting the payload once and the LLVM
+backend reading it through `ir_expr_call_param_types`.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

@@ -444,6 +444,8 @@ Checklist:
       and expression-valued `if let` lowering paths
 - [x] AST/IR match-expression payload packing preserves enum, integer, and
       bool expression-valued match lowering paths
+- [x] IR trait-object call parameter payload packing preserves multi-argument
+      LLVM dyn dispatch
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

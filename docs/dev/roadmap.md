@@ -162,18 +162,24 @@
    block expressions. AST/IR `if` expression conditions, condition patterns,
    branch bodies, and branch final values now also live behind `if` expression
    payload pointers. AST/IR match-expression subjects and expression arm
-   vectors now live behind match-expression payload pointers too.
+   vectors now live behind match-expression payload pointers too. IR dyn
+   dispatch erased parameter type vectors now live behind `TraitObjectCall`
+   payload pointers, so ordinary IR expressions no longer carry an eager call
+   signature vector.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
    first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions; remaining high-value targets are the
-     call/argument and operand child/vector expression groups that still
-     receive broad parser, sema, and backend mutations
+     AST call/type-argument vectors, general AST/IR expression argument vectors,
+     and operand child expression groups that still receive broad parser, sema,
+     and backend mutations
    - [expr-child-vector-payloads] split call/argument and operand child/vector
      expression fields after builders cover the remaining parser/sema/backend
-     mutation paths
+     mutation paths; next small slice: split the AST call/type-argument
+     metadata once parser call construction and sema generic-call rewrites share
+     one helper path
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

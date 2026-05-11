@@ -15649,7 +15649,7 @@ private:
         lowered->tuple_index = slot;
         lowered->type = result;
         lowered->operand = std::move(receiver);
-        lowered->call_param_types = std::move(erased_params);
+        set_ir_expr_call_param_types(*lowered, std::move(erased_params));
         lowered->args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = check_expr_with_expected(*expr.args[i], expected_args[i]);

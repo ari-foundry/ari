@@ -217,6 +217,10 @@ struct IrExprMatchPayload {
     std::vector<IrMatchExprArm> arms;
 };
 
+struct IrExprCallParamPayload {
+    std::vector<IrType> param_types;
+};
+
 enum class IrExprKind {
     Integer,
     Float,
@@ -292,7 +296,6 @@ struct IrExpr {
     IrBinaryOp op = IrBinaryOp::Add;
     IrType payload_type;
     IrType try_return_residual_payload_type;
-    std::vector<IrType> call_param_types;
     std::uint32_t try_return_residual_tag = 0;
     std::unique_ptr<IrExpr> operand;
     std::unique_ptr<IrExpr> payload;
@@ -300,6 +303,7 @@ struct IrExpr {
     std::unique_ptr<IrExpr> right;
     std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
+    std::unique_ptr<IrExprCallParamPayload> call_param_payload;
     std::vector<IrStmtPtr> try_residual_cleanup;
     std::unique_ptr<IrExprMatchPayload> match_payload;
     std::vector<std::unique_ptr<IrExpr>> args;
@@ -476,6 +480,20 @@ struct IrStmt {
     std::unique_ptr<std::string> label;
     std::unique_ptr<IrBreakPayload> break_payload;
 };
+
+inline const std::vector<IrType>& ir_expr_call_param_types(const IrExpr& expr) {
+    static const std::vector<IrType> empty;
+    return expr.call_param_payload ? expr.call_param_payload->param_types : empty;
+}
+
+inline std::vector<IrType>& ensure_ir_expr_call_param_types(IrExpr& expr) {
+    if (!expr.call_param_payload) expr.call_param_payload = std::make_unique<IrExprCallParamPayload>();
+    return expr.call_param_payload->param_types;
+}
+
+inline void set_ir_expr_call_param_types(IrExpr& expr, std::vector<IrType> param_types) {
+    ensure_ir_expr_call_param_types(expr) = std::move(param_types);
+}
 
 inline const IrExprIfPayload& ir_expr_if_payload(const IrExpr& expr) {
     static const IrExprIfPayload empty;

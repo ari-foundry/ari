@@ -1,0 +1,14 @@
+trait Mix[T] {
+  fn mix(self, left: T, right: T) -> i64
+}
+
+impl Mix[i64] for i64 {
+  fn mix(self, left: i64, right: i64) -> i64 {
+    self + left * 10 + right
+  }
+}
+
+fn main() -> i64 {
+  let value: dyn Mix[i64] = 2 as dyn Mix[i64];
+  value.mix(3, 4)
+}
