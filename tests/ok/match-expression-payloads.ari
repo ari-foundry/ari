@@ -1,0 +1,29 @@
+enum MaybeI64 {
+  No,
+  Yes(i64),
+  Other,
+}
+
+fn score(value: MaybeI64, tag: i64) -> i64 {
+  let enum_score = match value {
+    Yes(inner) => inner + 1,
+    No => 2,
+    Other => 3;
+  };
+
+  let scalar_score = match tag {
+    0 => 4,
+    1 => 5,
+    _ => 6;
+  };
+
+  return enum_score + scalar_score;
+}
+
+fn main() -> i64 {
+  let bool_score = match true {
+    true => 9,
+    false => 0;
+  };
+  return score(Yes(7), 3) + bool_score;
+}

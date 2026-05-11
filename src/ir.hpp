@@ -212,6 +212,11 @@ struct IrExprIfPayload {
     IrExprPtr else_value;
 };
 
+struct IrExprMatchPayload {
+    IrExprPtr value;
+    std::vector<IrMatchExprArm> arms;
+};
+
 enum class IrExprKind {
     Integer,
     Float,
@@ -296,8 +301,7 @@ struct IrExpr {
     std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
     std::vector<IrStmtPtr> try_residual_cleanup;
-    IrExprPtr match_value;
-    std::vector<IrMatchExprArm> match_arms;
+    std::unique_ptr<IrExprMatchPayload> match_payload;
     std::vector<std::unique_ptr<IrExpr>> args;
 };
 
@@ -535,6 +539,36 @@ inline void set_ir_expr_if_payload(IrExpr& expr,
     payload.then_value = std::move(then_value);
     payload.else_body = std::move(else_body);
     payload.else_value = std::move(else_value);
+}
+
+inline const IrExprMatchPayload& ir_expr_match_payload(const IrExpr& expr) {
+    static const IrExprMatchPayload empty;
+    return expr.match_payload ? *expr.match_payload : empty;
+}
+
+inline IrExprMatchPayload& ensure_ir_expr_match_payload(IrExpr& expr) {
+    if (!expr.match_payload) expr.match_payload = std::make_unique<IrExprMatchPayload>();
+    return *expr.match_payload;
+}
+
+inline const IrExprPtr& ir_expr_match_value(const IrExpr& expr) {
+    return ir_expr_match_payload(expr).value;
+}
+
+inline IrExprPtr& ir_expr_match_value(IrExpr& expr) {
+    return ensure_ir_expr_match_payload(expr).value;
+}
+
+inline const std::vector<IrMatchExprArm>& ir_expr_match_arms(const IrExpr& expr) {
+    return ir_expr_match_payload(expr).arms;
+}
+
+inline std::vector<IrMatchExprArm>& ir_expr_match_arms(IrExpr& expr) {
+    return ensure_ir_expr_match_payload(expr).arms;
+}
+
+inline void set_ir_expr_match_value(IrExpr& expr, IrExprPtr value) {
+    ensure_ir_expr_match_payload(expr).value = std::move(value);
 }
 
 inline const IrExprBlockPayload& ir_expr_block_payload(const IrExpr& expr) {

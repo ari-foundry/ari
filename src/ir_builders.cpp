@@ -314,7 +314,7 @@ IrExprPtr make_ir_match_expr(SourceLocation loc, IrExprPtr value) {
     auto expr = std::make_unique<IrExpr>();
     expr->kind = IrExprKind::Match;
     expr->loc = loc;
-    expr->match_value = std::move(value);
+    set_ir_expr_match_value(*expr, std::move(value));
     return expr;
 }
 

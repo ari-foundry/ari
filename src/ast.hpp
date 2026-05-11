@@ -146,6 +146,11 @@ struct ExprIfPayload {
     ExprPtr else_value;
 };
 
+struct ExprMatchPayload {
+    ExprPtr value;
+    std::vector<ExprMatchArm> arms;
+};
+
 enum class ExprKind {
     Integer,
     Float,
@@ -196,12 +201,11 @@ struct Expr {
     std::unique_ptr<Expr> right;
     std::unique_ptr<ExprIfPayload> if_payload;
     std::unique_ptr<ExprBlockPayload> block_payload;
-    ExprPtr match_value;
     std::vector<std::unique_ptr<Expr>> args;
     std::vector<TypeRef> receiver_type_args;
     std::vector<TypeRef> type_args;
     std::vector<std::string> field_names;
-    std::vector<ExprMatchArm> match_arms;
+    std::unique_ptr<ExprMatchPayload> match_payload;
     std::unique_ptr<std::vector<Token>> macro_tokens;
 };
 
@@ -353,6 +357,38 @@ inline void set_expr_if_payload(Expr& expr,
     payload.then_value = std::move(then_value);
     payload.else_body = std::move(else_body);
     payload.else_value = std::move(else_value);
+}
+
+inline const ExprMatchPayload& expr_match_payload(const Expr& expr) {
+    static const ExprMatchPayload empty;
+    return expr.match_payload ? *expr.match_payload : empty;
+}
+
+inline ExprMatchPayload& ensure_expr_match_payload(Expr& expr) {
+    if (!expr.match_payload) expr.match_payload = std::make_unique<ExprMatchPayload>();
+    return *expr.match_payload;
+}
+
+inline const ExprPtr& expr_match_value(const Expr& expr) {
+    return expr_match_payload(expr).value;
+}
+
+inline ExprPtr& expr_match_value(Expr& expr) {
+    return ensure_expr_match_payload(expr).value;
+}
+
+inline const std::vector<ExprMatchArm>& expr_match_arms(const Expr& expr) {
+    return expr_match_payload(expr).arms;
+}
+
+inline std::vector<ExprMatchArm>& expr_match_arms(Expr& expr) {
+    return ensure_expr_match_payload(expr).arms;
+}
+
+inline void set_expr_match_payload(Expr& expr, ExprPtr value, std::vector<ExprMatchArm> arms) {
+    ExprMatchPayload& payload = ensure_expr_match_payload(expr);
+    payload.value = std::move(value);
+    payload.arms = std::move(arms);
 }
 
 inline const ExprBlockPayload& expr_block_payload(const Expr& expr) {

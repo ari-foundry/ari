@@ -125,8 +125,7 @@ ExprPtr make_ast_match_expr(SourceLocation loc, ExprPtr value, std::vector<ExprM
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::Match;
     expr->loc = loc;
-    expr->match_value = std::move(value);
-    expr->match_arms = std::move(arms);
+    set_expr_match_payload(*expr, std::move(value), std::move(arms));
     return expr;
 }
 

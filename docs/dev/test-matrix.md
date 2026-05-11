@@ -442,6 +442,8 @@ Checklist:
       labeled block-expression breaks, and raw/LLVM lowering paths
 - [x] AST/IR if-expression payload packing preserves plain `if`, `else if`,
       and expression-valued `if let` lowering paths
+- [x] AST/IR match-expression payload packing preserves enum, integer, and
+      bool expression-valued match lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

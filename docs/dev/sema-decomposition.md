@@ -104,7 +104,8 @@ empty body vectors. AST/IR block-expression labels, statement bodies, and final
 values now live behind block-expression payloads too, leaving ordinary
 expression nodes without those block-only fields. `if` expression conditions,
 condition patterns, branch bodies, and branch final values are lazy AST/IR
-payloads now as well.
+payloads now as well. Match-expression subjects and expression arm vectors are
+lazy AST/IR payloads too, matching the earlier statement-match arm-vector split.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

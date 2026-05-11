@@ -3948,7 +3948,7 @@ private:
         if (has_temp(expr.operand) || has_temp(expr.payload) || has_temp(expr.left) ||
             has_temp(expr.right) || has_temp(ir_expr_if_condition(expr)) ||
             has_temp(ir_expr_if_then_value(expr)) || has_temp(ir_expr_if_else_value(expr)) ||
-            has_temp(ir_expr_block_value(expr)) || has_temp(expr.match_value)) {
+            has_temp(ir_expr_block_value(expr)) || has_temp(ir_expr_match_value(expr))) {
             return true;
         }
         for (const auto& arg : expr.args) {
@@ -4280,7 +4280,7 @@ private:
         }
         if (source.kind == IrExprKind::Match) {
             bool found_any = false;
-            for (const auto& arm : source.match_arms) {
+            for (const auto& arm : ir_expr_match_arms(source)) {
                 merge_source(arm.value, found_any);
             }
             return found_any;
@@ -4894,8 +4894,8 @@ private:
 
     std::vector<const Expr*> match_arm_value_exprs(const Expr& expr) const {
         std::vector<const Expr*> values;
-        values.reserve(expr.match_arms.size());
-        for (const auto& arm : expr.match_arms) values.push_back(arm.value.get());
+        values.reserve(expr_match_arms(expr).size());
+        for (const auto& arm : expr_match_arms(expr)) values.push_back(arm.value.get());
         return values;
     }
 
@@ -11276,7 +11276,7 @@ private:
     }
 
     IrExprPtr check_tuple_match_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
-        IrExprPtr subject = std::move(lowered->match_value);
+        IrExprPtr subject = std::move(ir_expr_match_value(*lowered));
         IrType subject_type = subject->type;
         if (!is_aggregate_type(subject_type)) {
             fail(expr.loc, "aggregate match requires a tuple, array, or struct value, got " + type_name(subject_type));
@@ -11304,7 +11304,7 @@ private:
             result_expected = &explicit_result_expected;
         }
 
-        for (const auto& arm : expr.match_arms) {
+        for (const auto& arm : expr_match_arms(expr)) {
             if (coverage.has_irrefutable_arm) {
                 fail(arm.pattern.loc, "unreachable match arm after irrefutable pattern");
             }
@@ -11401,9 +11401,9 @@ private:
     }
 
     IrExprPtr check_match_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
-        if (expr.match_arms.empty()) fail(expr.loc, "match must have at least one arm");
+        if (expr_match_arms(expr).empty()) fail(expr.loc, "match must have at least one arm");
 
-        IrExprPtr match_value = check_expr(*expr.match_value);
+        IrExprPtr match_value = check_expr(*expr_match_value(expr));
         if (is_borrow_type(match_value->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
@@ -11442,7 +11442,7 @@ private:
             result_expected = &explicit_result_expected;
         }
 
-        for (const auto& arm : expr.match_arms) {
+        for (const auto& arm : expr_match_arms(expr)) {
             std::set<std::string> reusable_names;
             if (pattern_contains_or(arm.pattern)) {
                 std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
@@ -11505,7 +11505,7 @@ private:
                     merge_zone_generations_into(continuing_state, branch_state);
                 }
 
-                lowered->match_arms.push_back(std::move(lowered_arm));
+                ir_expr_match_arms(*lowered).push_back(std::move(lowered_arm));
                 ++alternative_index;
             }
         }
@@ -11530,18 +11530,18 @@ private:
             result_expected = &explicit_result_expected;
         }
 
-        for (const auto& arm : expr.match_arms) {
+        for (const auto& arm : expr_match_arms(expr)) {
             std::set<std::string> reusable_names;
             if (pattern_contains_or(arm.pattern)) {
                 std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
-                    lowered->match_value->type
+                    ir_expr_match_value(*lowered)->type
                 );
             }
             std::vector<IrMatchArm> lowered_patterns = lower_scalar_match_arm_patterns(
-                arm.pattern, lowered->match_value->type, coverage);
+                arm.pattern, ir_expr_match_value(*lowered)->type, coverage);
             std::size_t alternative_index = 0;
             for (auto& pattern : lowered_patterns) {
                 IrMatchExprArm lowered_arm = make_match_expr_arm(std::move(pattern));
@@ -11589,12 +11589,12 @@ private:
                     merge_zone_generations_into(continuing_state, branch_state);
                 }
 
-                lowered->match_arms.push_back(std::move(lowered_arm));
+                ir_expr_match_arms(*lowered).push_back(std::move(lowered_arm));
                 ++alternative_index;
             }
         }
 
-        require_scalar_match_exhaustive(expr.loc, lowered->match_value->type, coverage);
+        require_scalar_match_exhaustive(expr.loc, ir_expr_match_value(*lowered)->type, coverage);
         restore_states(continuing_state);
         lowered->type = result_type;
         return lowered;
@@ -14600,8 +14600,8 @@ private:
                    is_collection_len_method_receiver(*expr_if_else_value(expr));
         }
         if (expr.kind == ExprKind::Match) {
-            if (expr.match_arms.empty()) return false;
-            for (const auto& arm : expr.match_arms) {
+            if (expr_match_arms(expr).empty()) return false;
+            for (const auto& arm : expr_match_arms(expr)) {
                 if (!arm.value || !is_collection_len_method_receiver(*arm.value)) return false;
             }
             return true;
@@ -16075,7 +16075,7 @@ private:
             return;
         }
         if (expr.kind == IrExprKind::Match) {
-            for (auto& arm : expr.match_arms) {
+            for (auto& arm : ir_expr_match_arms(expr)) {
                 coerce_expr_to_expected(*arm.value, expected);
                 require_assignable(arm.loc, expected, arm.value->type);
             }

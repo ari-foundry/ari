@@ -374,7 +374,7 @@ private:
         collect_expr_locals(ir_expr_if_else_value(expr));
         collect_locals(ir_expr_block_body(expr));
         collect_expr_locals(ir_expr_block_value(expr));
-        collect_expr_locals(expr.match_value);
+        collect_expr_locals(ir_expr_match_value(expr));
         for (const auto& arg : expr.args) collect_expr_locals(arg);
         if (expr.kind == IrExprKind::Call ||
             expr.kind == IrExprKind::IndirectCall ||
@@ -388,7 +388,7 @@ private:
                 if (is_aggregate_type(arg->type)) add_aggregate_argument_temp(*arg);
             }
         }
-        for (const auto& arm : expr.match_arms) {
+        for (const auto& arm : ir_expr_match_arms(expr)) {
             if (arm.has_value_binding) add_local(arm.value_name, arm.value_type);
             add_payload_binding_locals(arm);
             collect_locals(arm.body);
@@ -2396,23 +2396,25 @@ private:
             emit_lea_reg_local(Reg::RAX, temp_offset);
             return;
         }
-        if (expr.match_arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during codegen");
+        const auto& arms = ir_expr_match_arms(expr);
+        const IrExprPtr& match_value = ir_expr_match_value(expr);
+        if (arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during codegen");
 
-        if (expr.match_value && has_aggregate_enum_layout(expr.match_value->type)) {
+        if (match_value && has_aggregate_enum_layout(match_value->type)) {
             emit_aggregate_enum_match_expr(expr);
             return;
         }
 
-        emit_expr(*expr.match_value);
+        emit_expr(*match_value);
         emit_push(Reg::RAX);
 
         std::vector<std::size_t> end_patches;
-        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
-            const IrMatchExprArm& arm = expr.match_arms[i];
+        for (std::size_t i = 0; i < arms.size(); ++i) {
+            const IrMatchExprArm& arm = arms[i];
             bool has_next_patch = false;
             std::vector<std::size_t> next_patches;
 
-            if (!arm.wildcard && i + 1 != expr.match_arms.size()) {
+            if (!arm.wildcard && i + 1 != arms.size()) {
                 next_patches = emit_match_arm_fail_jumps(arm);
                 has_next_patch = true;
             }
@@ -2442,23 +2444,25 @@ private:
     }
 
     void emit_match_expr_to_offset(const IrExpr& expr, const IrType& target_type, int target_offset) {
-        if (expr.match_arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during codegen");
+        const auto& arms = ir_expr_match_arms(expr);
+        const IrExprPtr& match_value = ir_expr_match_value(expr);
+        if (arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during codegen");
 
-        if (expr.match_value && has_aggregate_enum_layout(expr.match_value->type)) {
+        if (match_value && has_aggregate_enum_layout(match_value->type)) {
             emit_aggregate_enum_match_expr_to_offset(expr, target_type, target_offset);
             return;
         }
 
-        emit_expr(*expr.match_value);
+        emit_expr(*match_value);
         emit_push(Reg::RAX);
 
         std::vector<std::size_t> end_patches;
-        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
-            const IrMatchExprArm& arm = expr.match_arms[i];
+        for (std::size_t i = 0; i < arms.size(); ++i) {
+            const IrMatchExprArm& arm = arms[i];
             bool has_next_patch = false;
             std::vector<std::size_t> next_patches;
 
-            if (!arm.wildcard && i + 1 != expr.match_arms.size()) {
+            if (!arm.wildcard && i + 1 != arms.size()) {
                 next_patches = emit_match_arm_fail_jumps(arm);
                 has_next_patch = true;
             }
@@ -2479,17 +2483,19 @@ private:
     }
 
     void emit_aggregate_enum_match_expr(const IrExpr& expr) {
-        if (!expr.match_value) throw CompileError(where(expr.loc) + ": match value missing during codegen");
-        int match_base_offset = aggregate_enum_match_base_offset(*expr.match_value);
-        const IrType& enum_type = expr.match_value->type;
+        const auto& arms = ir_expr_match_arms(expr);
+        const IrExprPtr& match_value = ir_expr_match_value(expr);
+        if (!match_value) throw CompileError(where(expr.loc) + ": match value missing during codegen");
+        int match_base_offset = aggregate_enum_match_base_offset(*match_value);
+        const IrType& enum_type = match_value->type;
 
         std::vector<std::size_t> end_patches;
-        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
-            const IrMatchExprArm& arm = expr.match_arms[i];
+        for (std::size_t i = 0; i < arms.size(); ++i) {
+            const IrMatchExprArm& arm = arms[i];
             bool has_next_patch = false;
             std::vector<std::size_t> next_patches;
 
-            if (!arm.wildcard && i + 1 != expr.match_arms.size()) {
+            if (!arm.wildcard && i + 1 != arms.size()) {
                 next_patches = emit_aggregate_enum_match_arm_fail_jumps(arm, match_base_offset, enum_type);
                 has_next_patch = true;
             }
@@ -2511,17 +2517,19 @@ private:
     void emit_aggregate_enum_match_expr_to_offset(const IrExpr& expr,
                                                   const IrType& target_type,
                                                   int target_offset) {
-        if (!expr.match_value) throw CompileError(where(expr.loc) + ": match value missing during codegen");
-        int match_base_offset = aggregate_enum_match_base_offset(*expr.match_value);
-        const IrType& enum_type = expr.match_value->type;
+        const auto& arms = ir_expr_match_arms(expr);
+        const IrExprPtr& match_value = ir_expr_match_value(expr);
+        if (!match_value) throw CompileError(where(expr.loc) + ": match value missing during codegen");
+        int match_base_offset = aggregate_enum_match_base_offset(*match_value);
+        const IrType& enum_type = match_value->type;
 
         std::vector<std::size_t> end_patches;
-        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
-            const IrMatchExprArm& arm = expr.match_arms[i];
+        for (std::size_t i = 0; i < arms.size(); ++i) {
+            const IrMatchExprArm& arm = arms[i];
             bool has_next_patch = false;
             std::vector<std::size_t> next_patches;
 
-            if (!arm.wildcard && i + 1 != expr.match_arms.size()) {
+            if (!arm.wildcard && i + 1 != arms.size()) {
                 next_patches = emit_aggregate_enum_match_arm_fail_jumps(arm, match_base_offset, enum_type);
                 has_next_patch = true;
             }

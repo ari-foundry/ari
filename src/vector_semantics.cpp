@@ -273,7 +273,7 @@ VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, cons
     if (expr.kind == IrExprKind::Match) {
         VectorKnownLength merged;
         bool has_merged = false;
-        for (const auto& arm : expr.match_arms) {
+        for (const auto& arm : ir_expr_match_arms(expr)) {
             if (!merge_vector_known_length(merged, has_merged, storage_type, arm.value)) return {};
         }
         return has_merged ? merged : VectorKnownLength{};
@@ -396,7 +396,7 @@ VectorKnownLength vector_known_length_from_source_tree(const Expr& source,
     if (source.kind == ExprKind::Match) {
         VectorKnownLength merged;
         bool has_merged = false;
-        for (const auto& arm : source.match_arms) {
+        for (const auto& arm : expr_match_arms(source)) {
             if (!merge_source_vector_known_length(merged, has_merged, arm.value, lookup)) return {};
         }
         return has_merged ? merged : VectorKnownLength{};
@@ -508,7 +508,7 @@ std::uint64_t vector_storage_capacity_from_source_tree(const Expr& source,
     }
     if (source.kind == ExprKind::Match) {
         std::uint64_t capacity = 0;
-        for (const auto& arm : source.match_arms) {
+        for (const auto& arm : expr_match_arms(source)) {
             if (arm.value) {
                 capacity = std::max(
                     capacity,
@@ -591,7 +591,7 @@ std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr) {
         merge_capacity(ir_expr_if_then_value(expr));
         merge_capacity(ir_expr_if_else_value(expr));
     } else if (expr.kind == IrExprKind::Match) {
-        for (const auto& arm : expr.match_arms) merge_capacity(arm.value);
+        for (const auto& arm : ir_expr_match_arms(expr)) merge_capacity(arm.value);
     }
     return capacity;
 }

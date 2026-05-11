@@ -785,9 +785,9 @@ private:
         collect_locals(ir_expr_block_body(expr), locals);
         collect_expr_locals(ir_expr_block_value(expr), locals);
         collect_locals(expr.try_residual_cleanup, locals);
-        collect_expr_locals(expr.match_value, locals);
+        collect_expr_locals(ir_expr_match_value(expr), locals);
         for (const auto& arg : expr.args) collect_expr_locals(arg, locals);
-        for (const auto& arm : expr.match_arms) {
+        for (const auto& arm : ir_expr_match_arms(expr)) {
             if (arm.has_value_binding) locals.push_back({arm.value_name, arm.value_type});
             collect_payload_binding_locals(arm, locals);
             collect_locals(arm.body, locals);
@@ -2327,8 +2327,9 @@ private:
     }
 
     Value emit_match_expr(const IrExpr& expr) {
-        if (expr.match_arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during LLVM lowering");
-        Value value = emit_expr(*expr.match_value);
+        const auto& arms = ir_expr_match_arms(expr);
+        if (arms.empty()) throw CompileError(where(expr.loc) + ": match expression has no arms during LLVM lowering");
+        Value value = emit_expr(*ir_expr_match_value(expr));
         std::string subject = value.name;
         std::string subject_type = value.type;
         if (value.ir_type.primitive == IrPrimitiveKind::Enum) {
@@ -2338,14 +2339,14 @@ private:
         }
         std::string end_label = label("match.expr.end");
         std::vector<std::string> arm_labels;
-        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) arm_labels.push_back(label("match.expr.arm"));
+        for (std::size_t i = 0; i < arms.size(); ++i) arm_labels.push_back(label("match.expr.arm"));
 
         std::string first_test = label("match.expr.test");
         line("  br label %" + first_test);
         emit_label(first_test);
-        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
-            const IrMatchExprArm& arm = expr.match_arms[i];
-            if (arm.wildcard || i + 1 == expr.match_arms.size()) {
+        for (std::size_t i = 0; i < arms.size(); ++i) {
+            const IrMatchExprArm& arm = arms[i];
+            if (arm.wildcard || i + 1 == arms.size()) {
                 line("  br label %" + arm_labels[i]);
             } else {
                 std::string next = label("match.expr.test");
@@ -2356,8 +2357,8 @@ private:
         }
 
         std::vector<std::pair<Value, std::string>> incoming;
-        for (std::size_t i = 0; i < expr.match_arms.size(); ++i) {
-            const IrMatchExprArm& arm = expr.match_arms[i];
+        for (std::size_t i = 0; i < arms.size(); ++i) {
+            const IrMatchExprArm& arm = arms[i];
             emit_label(arm_labels[i]);
             if (arm.has_value_binding) {
                 Value bound = cast_value(value, arm.value_type);

@@ -460,6 +460,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-freestanding.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/match-expression.ari -o $(BUILD_DIR)/match/match-expression.raw
 	$(BUILD_DIR)/match/match-expression.raw; code=$$?; test $$code -eq 12
+	$(TARGET) --freestanding tests/ok/match-expression-payloads.ari -o $(BUILD_DIR)/match/match-expression-payloads.raw
+	$(BUILD_DIR)/match/match-expression-payloads.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/match-literals.ari -o $(BUILD_DIR)/match/match-literals.raw
 	$(BUILD_DIR)/match/match-literals.raw; code=$$?; test $$code -eq 128
 	$(TARGET) --freestanding tests/ok/match-statement-payloads.ari -o $(BUILD_DIR)/match/match-statement-payloads.raw
@@ -520,6 +522,9 @@ check-match: $(TARGET)
 	$(TARGET) tests/ok/match-expression.ari --emit-llvm $(BUILD_DIR)/match/match-expression.ll
 	grep -q "match.expr.arm" $(BUILD_DIR)/match/match-expression.ll
 	grep -q "phi i64" $(BUILD_DIR)/match/match-expression.ll
+	$(TARGET) tests/ok/match-expression-payloads.ari --emit-llvm $(BUILD_DIR)/match/match-expression-payloads.ll
+	grep -q "match.expr.arm" $(BUILD_DIR)/match/match-expression-payloads.ll
+	grep -q "phi i64" $(BUILD_DIR)/match/match-expression-payloads.ll
 	$(TARGET) tests/ok/match-literals.ari --emit-llvm $(BUILD_DIR)/match/match-literals.ll
 	grep -q "icmp eq i64" $(BUILD_DIR)/match/match-literals.ll
 	grep -q "icmp eq i1" $(BUILD_DIR)/match/match-literals.ll
