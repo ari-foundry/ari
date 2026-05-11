@@ -95,51 +95,39 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Reuse AST/IR summary package caches for file-backed modules.
-   The source-snapshot cache goal is complete: compact module metadata and
-   source-snapshot module caches can be emitted, checked, and invalidated with
-   cfg/search-path/source/import/item-specific stale diagnostics. Source records
-   carry stable content hashes, cache validation catches body changes even when
-   declaration summaries stay the same, import resolution is rechecked against
-   the current package layout, old metadata summaries without source hashes are
-   rejected, malformed metadata with duplicate source/import/item records is
-   rejected, and malformed caches with duplicate source or AST-summary records
-   are rejected before validation. Module caches now carry v5 per-source AST
-   summary records with declaration fingerprints and declaration-summary
-   payloads, parse those payloads during cache loading, and validate their
-   internal hashes, top-level counts, scalar and aggregate constant
-   initializers, and declaration materialization round-trips before rechecking
-   them against the parsed cached source snapshot. Header-like cached
-   dependencies whose summaries contain only declaration-safe items, including
-   constants, can now feed materialized declarations directly into the loader
-   without reparsing the cached source snapshot. Const initializer summaries
-   cover scalar and aggregate literals, enum/tuple-struct constructors,
-   explicit integer casts, arithmetic, bitwise, unary bitwise-not, and shift
-   expressions, plus field, tuple-index, and fixed-array index access over
-   materialized aggregate constants. Executable body expression summaries now
-   preserve integer, bool, float, string, and null literals. Module cache v8
-   also preserves function parameter and local binding pattern payloads, empty
-   unit bodies, and simple executable AST body summaries for functions whose
-   bodies use summary-safe local declarations, assignments, `if`/`else`,
-   block/labeled-block statements, `while`/`while let`, `for`,
-   `init ... while ... next`,
-   `continue`, unlabeled/labeled `break`, statement `match`, `return`
-   statements, `drop` statements, method-call expressions, qualified calls
-   with receiver type arguments, indirect function-pointer calls, borrow
-   expressions, pointer dereferences, postfix `?`, `??`, prelude macro invocations,
-   `if`/block/`match` expressions, or final expression statements, allowing
-   those dependency bodies and summary-safe impl methods to materialize from
-   the cache after validation without reparsing the cached source snapshot. The
-   remaining package-cache work is to extend that path to future IR summaries
-   for broad executable function and impl bodies outside the AST summary subset.
-   - [ir-materialize] feed future IR-summary declarations/bodies into the
-     module loader for dependencies whose executable function or impl bodies
-     still use expression forms outside the temporary AST summary subset
-   - [cache-skip] once IR summaries exist, avoid reparsing dependencies whose
-     executable bodies remain outside the AST summary subset when metadata and
-     source hashes match the current source graph and cfg/search-path inputs
+2. Continue `sema.cpp` decomposition by extracting local state.
+   `SemanticChecker` still directly owns lexical scopes, `LocalInfo`, local
+   lookup, mutability diagnostics, state snapshots, move/drop flags, and scope
+   cleanup. Pull those mechanics into a small `local_state` subsystem before
+   starting the larger borrow-checking and ownership extractions. This should
+   be behavior-preserving and should lean on the existing ownership, borrow,
+   loop, and control-flow tests instead of adding broad duplicate coverage.
+   - [local-state] move `LocalInfo`, scope push/pop/discard, local lookup, and
+     mutable/immutable local checks behind a narrow API
+   - [state-snapshots] expose assignment, move/drop, branch-merge, and cleanup
+     hooks needed by statement/expression lowering without leaking scope internals
+   - [borrow-adapter] keep named and temporary borrow checks layered over the
+     new local-state API so later `borrow_semantics` extraction has one entry point
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
+
+## Medium-Term Compiler Work
+
+1. Promote IR package-cache summaries when future executable forms outgrow AST
+   summaries.
+   Source-snapshot module caches currently validate cfg/search-path/source
+   hashes/imports and can materialize declaration-safe headers plus
+   summary-safe executable dependency bodies from AST summaries without parsing
+   the cached source snapshot. The current source-level AST expression,
+   statement, and pattern surface is covered by that path. Add IR summaries
+   later for future executable bodies that cannot round-trip through the compact
+   AST summary format.
+   - [ir-materialize] feed future IR-summary declarations/bodies into the
+     module loader for dependencies whose executable function or impl bodies
+     use forms outside the AST summary subset
+   - [cache-skip] once IR summaries exist, avoid reparsing those dependencies
+     when metadata and source hashes match the current source graph and
+     cfg/search-path inputs
 
 ## Medium-Term Language Work
 
@@ -262,15 +250,14 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 8. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
-    with changing runtime length, typed empty local vectors, and
-    `len(value)` / `value.len()` length queries for arrays and vectors are
-    implemented on LLVM and, for stored local values without the temporary
-    mutating/search method surface, on the raw freestanding backend. Fixed-capacity
-    local `reserve(n)`/`push(value)` also lowers on LLVM for copyable element
-    vectors. The current local vector storage grows to the largest literal or
-    reserve capacity seen in the binding, while the stored length still shrinks
-    and expands per assignment. The allocator, runtime capacity, and real
-    grow-on-push behavior remain near-term.
+    with changing runtime length, typed empty local vectors, length queries,
+    stored-vector loops, and the temporary fixed-capacity local method surface
+    now lower on both LLVM and the raw freestanding backend for supported
+    element values. The current local vector storage grows to the largest
+    literal, reserve capacity, or compiler-tracked push/insert capacity seen in
+    the binding, while the stored length still shrinks and expands per
+    assignment. The allocator, runtime capacity, and real grow-on-push behavior
+    remain near-term.
     - [std-api] define ergonomic std collection methods only after generic
       impls, allocator capabilities, and runtime growth are in place, so the
       temporary compiler-known local API does not become permanent surface area

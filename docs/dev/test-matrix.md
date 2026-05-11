@@ -404,12 +404,10 @@ Checklist:
       statements, method calls, qualified calls with receiver type arguments,
       borrow expressions, pointer dereferences, postfix `?`, `??`, indirect
       function-pointer calls, prelude macro invocations, `if`/block/`match`
-      expressions, summary-safe expressions, and integer, bool, float, string,
-      and null literals
+      expressions, summary-safe tuple/vector/aggregate expressions, and
+      integer, bool, float, string, and null literals
 - [x] AST package cache summaries skip parsing summary-safe dependencies after
       validation
-- [ ] IR package cache summaries skip dependency parsing for executable bodies
-      outside the AST summary subset after validation
 - [x] AST/IR scalar payload packing preserves integer, bool, float, tuple-index,
       and indexed-assignment lowering paths
 - [x] parser and sema share union-safe AST expression clone helpers for

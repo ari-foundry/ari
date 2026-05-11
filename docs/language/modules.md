@@ -353,19 +353,19 @@ labeled `break`, statement `match`, `return` statements, `drop` statements,
 method-call expressions, qualified calls with receiver type arguments, borrow
 expressions, pointer dereferences, indirect function-pointer calls, postfix
 `?`, `??`, prelude macro invocations, `if`/block/`match` expressions, or final
-expression statements over the same expression forms can also be materialized
-from the AST summary.
-More complex executable bodies still fall back to parsing the cached source
-snapshot until the IR body-summary cache is implemented.
+expression statements over the same expression forms, including tuple, vector,
+and aggregate literals, can also be materialized from the AST summary.
+Future language forms that cannot be represented in this AST-summary format
+will need a later IR body-summary cache.
 
 This cache format skips dependency source discovery after validation and reads
 module source text from the cached snapshot. Header-like dependencies can skip
 parsing through materialized AST summaries, and simple executable dependencies
 can do the same when every body has a supported summary payload. Dependencies
-with unsupported executable bodies or unsupported constant initializer summaries
-still parse the cached source snapshot. The AST summary records are the stable
-bridge toward a future cache that can skip more dependency parsing after
-validation.
+with future unsupported executable bodies or unsupported constant initializer
+summaries still parse the cached source snapshot. The AST summary records are
+the stable bridge toward a future IR-summary cache for language forms that
+outgrow source-level body summaries.
 
 ## Nested Modules
 

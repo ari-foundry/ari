@@ -726,13 +726,14 @@ check-modules: $(TARGET)
 	grep -q "10:macro-call" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "14:qualified-call" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "5:tuple" $(BUILD_DIR)/modules/package-cache-body.aricache
+	grep -q "6:vector" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "5:array" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "31:cache_bodies::empty_unit_cached;0;0;1;0;1:C;0:;0;1;0;0;0;1;0;" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "4:drop" $(BUILD_DIR)/modules/package-cache-body.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-body-cache.ll $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.raw
-	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 255
+	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 14
 	$(TARGET) -Itests/packages tests/ok/package-cache-indirect-call-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-indirect-call.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-indirect-call-cache.ll
 	grep -q "ari-ast-decls-v5" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache
 	grep -q "13:indirect-call" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache

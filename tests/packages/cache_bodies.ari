@@ -177,6 +177,19 @@ pub fn local_binding_pattern_flow() -> i64 {
   return left + right + first + last;
 }
 
+pub fn vector_body_flow() -> i64 {
+  var values: Vec[i64] = [];
+  values.reserve(4);
+  values.push(2);
+  values.push(5);
+  values.insert(1, 3);
+  values.set(0, 4);
+  values.swap(1, 2);
+  let removed = values.remove(1);
+  let popped = values.pop();
+  return values[0] + len(values) + removed + popped + values.capacity();
+}
+
 pub fn pointer_deref_flow() -> i64 {
   var value: i64 = 2;
   let raw: ptr i64 = (ref mut value) as ptr i64;
