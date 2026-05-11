@@ -171,21 +171,23 @@
    shared accessors. AST struct-literal field-name vectors now live behind a
    lazy struct-literal metadata payload too, keeping ordinary expressions free
    of the field-name vector while preserving parser construction, AST cloning,
-   constant summaries, constant evaluation, and sema field mapping.
+   constant summaries, constant evaluation, and sema field mapping. Direct AST
+   call/struct/generic `type_args` now use a lazy type-argument payload as well,
+   with parser call construction, AST clone, module summaries, constant
+   evaluation, and sema generic-call lowering routed through shared accessors.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
    first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
-     variant payload structs or unions; remaining high-value targets are the
-     direct AST call/struct/generic `type_args`, general AST/IR expression
-     argument vectors, and operand child expression groups that still receive
-     broad parser, sema, and backend mutations
+     variant payload structs or unions; remaining high-value targets are general
+     AST/IR expression argument vectors and operand child expression groups that
+     still receive broad parser, sema, and backend mutations
    - [expr-child-vector-payloads] split call/argument and operand child/vector
      expression fields after builders cover the remaining parser/sema/backend
-     mutation paths; next small slice: split the direct AST call/struct
-     `type_args` vector once parser call construction, module summaries, and
-     sema generic-call rewrites share one helper path
+     mutation paths; next small slice: split AST/IR call argument vectors by
+     expression kind once direct call, method call, enum constructor, and zone
+     helper lowering share a single builder/update path
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

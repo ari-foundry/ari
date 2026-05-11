@@ -1803,12 +1803,13 @@ private:
 
     void parse_call_type_arguments(TokenKind open, TokenKind close, const std::string& close_message, Expr& expr) {
         expect(open, "expected generic call type argument list");
-        if (!expr.type_args.empty()) {
+        if (!expr_type_args(expr).empty()) {
             fail(tokens_[pos_ - 1].loc, "generic call type arguments were already provided");
         }
+        ExprTypeArgs& type_args = ensure_expr_type_args(expr);
         if (!check(close)) {
             do {
-                expr.type_args.push_back(parse_type());
+                type_args.push_back(parse_type());
             } while (match(TokenKind::Comma));
         }
         expect(close, close_message);
@@ -1831,7 +1832,7 @@ private:
                     if (!expr_receiver_type_args(*expr).empty()) {
                         fail(expr->loc, "qualified expression type arguments were already provided");
                     }
-                    set_expr_receiver_type_args(*expr, std::move(expr->type_args));
+                    set_expr_receiver_type_args(*expr, take_expr_type_args(*expr));
                     Token part = expect_identifier_or_contextual_name_keyword("expected name after ::");
                     expr->name += "::" + part.text;
                     continue;
@@ -1856,7 +1857,7 @@ private:
                     if (!expr_receiver_type_args(*expr).empty()) {
                         fail(expr->loc, "qualified expression type arguments were already provided");
                     }
-                    set_expr_receiver_type_args(*expr, std::move(expr->type_args));
+                    set_expr_receiver_type_args(*expr, take_expr_type_args(*expr));
                     Token part = expect_identifier_or_contextual_name_keyword("expected name after ::");
                     expr->name += "::" + part.text;
                     continue;
@@ -1891,7 +1892,7 @@ private:
                 if (expr->kind == ExprKind::Name) {
                     call->name = expr->name;
                     set_expr_receiver_type_args(*call, take_expr_receiver_type_args(*expr));
-                    call->type_args = std::move(expr->type_args);
+                    set_expr_type_args(*call, take_expr_type_args(*expr));
                 } else {
                     call->operand = std::move(expr);
                 }
@@ -1954,7 +1955,7 @@ private:
                         TokenKind::Greater,
                         "expected > after generic method type arguments",
                         type_arg_holder);
-                    method_type_args = std::move(type_arg_holder.type_args);
+                    method_type_args = take_expr_type_args(type_arg_holder);
                 }
                 if (match(TokenKind::LParen)) {
                     auto call = std::make_unique<Expr>();
@@ -1962,7 +1963,7 @@ private:
                     call->loc = dot_loc;
                     call->operand = std::move(expr);
                     call->name = field.text;
-                    call->type_args = std::move(method_type_args);
+                    set_expr_type_args(*call, std::move(method_type_args));
                     if (!check(TokenKind::RParen)) {
                         do {
                             call->args.push_back(parse_expression());
@@ -2084,7 +2085,7 @@ private:
         return make_ast_struct_literal_expr(
             name_expr->loc,
             std::move(name_expr->name),
-            std::move(name_expr->type_args),
+            take_expr_type_args(*name_expr),
             std::move(field_names),
             std::move(field_values));
     }

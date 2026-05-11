@@ -226,7 +226,7 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             }
             append_field(out, "struct");
             append_field(out, expr.name);
-            append_type_arguments(out, expr.type_args);
+            append_type_arguments(out, expr_type_args(expr));
             append_count(out, expr.args.size());
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
                 append_field(out, field_names[i]);
@@ -241,7 +241,7 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             if (!append_const_expr_list(args, expr.args)) return false;
             append_field(out, "call");
             append_field(out, expr.name);
-            append_type_arguments(out, expr.type_args);
+            append_type_arguments(out, expr_type_args(expr));
             out << args.str();
             return true;
         }
@@ -833,7 +833,7 @@ private:
         if (kind == "struct") {
             expr->kind = ExprKind::StructLiteral;
             expr->name = read_field(label + " struct name");
-            expr->type_args = read_type_arguments(label + " struct type arguments");
+            set_expr_type_args(*expr, read_type_arguments(label + " struct type arguments"));
             std::uint64_t field_count = read_count(label + " struct field count");
             ExprFieldNames& field_names = ensure_expr_field_names(*expr);
             field_names.reserve(static_cast<std::size_t>(field_count));
@@ -847,7 +847,7 @@ private:
         if (kind == "call") {
             expr->kind = ExprKind::Call;
             expr->name = read_field(label + " call name");
-            expr->type_args = read_type_arguments(label + " call type arguments");
+            set_expr_type_args(*expr, read_type_arguments(label + " call type arguments"));
             expr->args = read_const_expr_list(label + " call arguments");
             return expr;
         }

@@ -152,6 +152,7 @@ struct ExprMatchPayload {
 };
 
 using ExprReceiverTypeArgs = std::vector<TypeRef>;
+using ExprTypeArgs = std::vector<TypeRef>;
 using ExprFieldNames = std::vector<std::string>;
 
 enum class ExprKind {
@@ -206,7 +207,7 @@ struct Expr {
     std::unique_ptr<ExprBlockPayload> block_payload;
     std::vector<std::unique_ptr<Expr>> args;
     std::unique_ptr<ExprReceiverTypeArgs> receiver_type_args;
-    std::vector<TypeRef> type_args;
+    std::unique_ptr<ExprTypeArgs> type_args;
     std::unique_ptr<ExprFieldNames> field_names;
     std::unique_ptr<ExprMatchPayload> match_payload;
     std::unique_ptr<std::vector<Token>> macro_tokens;
@@ -310,6 +311,31 @@ inline ExprReceiverTypeArgs take_expr_receiver_type_args(Expr& expr) {
     if (!expr.receiver_type_args) return {};
     ExprReceiverTypeArgs type_args = std::move(*expr.receiver_type_args);
     expr.receiver_type_args.reset();
+    return type_args;
+}
+
+inline const ExprTypeArgs& expr_type_args(const Expr& expr) {
+    static const ExprTypeArgs empty;
+    return expr.type_args ? *expr.type_args : empty;
+}
+
+inline ExprTypeArgs& ensure_expr_type_args(Expr& expr) {
+    if (!expr.type_args) expr.type_args = std::make_unique<ExprTypeArgs>();
+    return *expr.type_args;
+}
+
+inline void set_expr_type_args(Expr& expr, ExprTypeArgs type_args) {
+    if (type_args.empty()) {
+        expr.type_args.reset();
+        return;
+    }
+    ensure_expr_type_args(expr) = std::move(type_args);
+}
+
+inline ExprTypeArgs take_expr_type_args(Expr& expr) {
+    if (!expr.type_args) return {};
+    ExprTypeArgs type_args = std::move(*expr.type_args);
+    expr.type_args.reset();
     return type_args;
 }
 

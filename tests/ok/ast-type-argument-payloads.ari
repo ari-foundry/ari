@@ -1,0 +1,20 @@
+fn identity[Value](value: Value) -> Value {
+  return value;
+}
+
+struct Box[Item] {
+  value: Item,
+}
+
+fn score(value: Option[i64]) -> i64 {
+  return match value {
+    Some(inner) => inner,
+    None => 0,
+  };
+}
+
+fn main() -> i64 {
+  let boxed = Box<i64> { value: identity<i64>(20) };
+  let selected = Some<i64>(21);
+  return boxed.value + score(selected);
+}

@@ -952,6 +952,11 @@ check-generics: $(TARGET)
 	$(TARGET) tests/ok/generic-explicit-type-args.ari --emit-llvm $(BUILD_DIR)/generics/generic-explicit-type-args.ll
 	grep -q "identity__G_i64" $(BUILD_DIR)/generics/generic-explicit-type-args.ll
 	grep -q "identity__G_bool" $(BUILD_DIR)/generics/generic-explicit-type-args.ll
+	$(TARGET) --freestanding tests/ok/ast-type-argument-payloads.ari -o $(BUILD_DIR)/generics/ast-type-argument-payloads.raw
+	$(BUILD_DIR)/generics/ast-type-argument-payloads.raw; code=$$?; test $$code -eq 41
+	$(TARGET) tests/ok/ast-type-argument-payloads.ari --emit-llvm $(BUILD_DIR)/generics/ast-type-argument-payloads.ll
+	grep -q "identity__G_i64" $(BUILD_DIR)/generics/ast-type-argument-payloads.ll
+	grep -q "insertvalue { i32, i64 }" $(BUILD_DIR)/generics/ast-type-argument-payloads.ll
 	$(TARGET) --freestanding tests/ok/generic-angle-call-index.ari -o $(BUILD_DIR)/generics/generic-angle-call-index.raw
 	$(BUILD_DIR)/generics/generic-angle-call-index.raw; code=$$?; test $$code -eq 22
 	$(TARGET) --freestanding tests/ok/struct-surface.ari -o $(BUILD_DIR)/generics/struct-surface.raw

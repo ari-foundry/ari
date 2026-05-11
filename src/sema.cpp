@@ -4566,33 +4566,34 @@ private:
 
     void check_zone_scratch_var_decl(const Stmt& stmt, IrStmt& lowered) {
         const Expr& call = *stmt.binding.init;
-        if (call.type_args.size() != 1) {
+        const ExprTypeArgs& type_args = expr_type_args(call);
+        if (type_args.size() != 1) {
             fail(call.loc, "zone::scratch<T> expects exactly one type argument");
         }
         if (call.args.size() != 2) {
             fail(call.loc, "zone::scratch<T> expects a capacity and a value");
         }
 
-        IrType allocated = resolve_executable_type(call.type_args[0]);
+        IrType allocated = resolve_executable_type(type_args[0]);
         if (allocated.qualifier != TypeQualifier::Value) {
-            fail(call.type_args[0].loc, "zone::scratch<T> expects a value type, got " + type_name(allocated));
+            fail(type_args[0].loc, "zone::scratch<T> expects a value type, got " + type_name(allocated));
         }
         if (is_owner_type(allocated) || contains_borrow_type(allocated)) {
-            fail(call.type_args[0].loc, "zone::scratch<T> cannot place ownership- or borrow-valued types yet");
+            fail(type_args[0].loc, "zone::scratch<T> cannot place ownership- or borrow-valued types yet");
         }
 
         std::uint64_t size_bytes = 0;
         std::uint64_t align_bytes = 0;
         if (!ari_layout_size_bytes(allocated, size_bytes) ||
             !ari_layout_align_bytes(allocated, align_bytes)) {
-            fail(call.type_args[0].loc, "zone::scratch<T> does not support " + type_name(allocated));
+            fail(type_args[0].loc, "zone::scratch<T> does not support " + type_name(allocated));
         }
         if (size_bytes == 0) {
-            fail(call.type_args[0].loc, "zone::scratch<T> requires a non-zero-sized type");
+            fail(type_args[0].loc, "zone::scratch<T> requires a non-zero-sized type");
         }
         if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
             align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(call.type_args[0].loc, "zone::scratch<T> layout is too large for i64");
+            fail(type_args[0].loc, "zone::scratch<T> layout is too large for i64");
         }
 
         IrType pointer_type = allocated;
@@ -6425,8 +6426,9 @@ private:
         }
 
         std::vector<IrType> explicit_type_args;
-        explicit_type_args.reserve(expr.type_args.size());
-        for (const auto& type_arg : expr.type_args) {
+        const ExprTypeArgs& ast_type_args = expr_type_args(expr);
+        explicit_type_args.reserve(ast_type_args.size());
+        for (const auto& type_arg : ast_type_args) {
             explicit_type_args.push_back(resolve_executable_type(type_arg));
         }
         if (explicit_type_args.empty() && !expected.args.empty()) {
@@ -6474,8 +6476,9 @@ private:
         }
 
         std::vector<IrType> explicit_type_args;
-        explicit_type_args.reserve(expr.type_args.size());
-        for (const auto& type_arg : expr.type_args) {
+        const ExprTypeArgs& ast_type_args = expr_type_args(expr);
+        explicit_type_args.reserve(ast_type_args.size());
+        for (const auto& type_arg : ast_type_args) {
             explicit_type_args.push_back(resolve_executable_type(type_arg));
         }
         if (explicit_type_args.empty() && !expected.args.empty()) {
@@ -6542,17 +6545,18 @@ private:
                                                    const EnumCaseInfo& info,
                                                    const IrType& expected) {
         EnumCaseInfo case_info = info;
+        const ExprTypeArgs& ast_type_args = expr_type_args(expr);
         if (info.is_generic) {
             std::vector<IrType> type_args;
-            type_args.reserve(expr.type_args.size());
-            for (const auto& type_arg : expr.type_args) {
+            type_args.reserve(ast_type_args.size());
+            for (const auto& type_arg : ast_type_args) {
                 type_args.push_back(resolve_executable_type(type_arg));
             }
             if (type_args.empty()) {
                 type_args = expected.args;
             }
             case_info = specialize_enum_case_info(expr.loc, info, type_args);
-        } else if (!expr.type_args.empty()) {
+        } else if (!ast_type_args.empty()) {
             fail(expr.loc, "enum case constructor '" + expr.name + "' does not take type arguments");
         }
         return make_enum_constant(
@@ -11113,8 +11117,9 @@ private:
         }
 
         std::vector<IrType> explicit_type_args;
-        explicit_type_args.reserve(expr.type_args.size());
-        for (const auto& type_arg : expr.type_args) {
+        const ExprTypeArgs& ast_type_args = expr_type_args(expr);
+        explicit_type_args.reserve(ast_type_args.size());
+        for (const auto& type_arg : ast_type_args) {
             explicit_type_args.push_back(resolve_executable_type(type_arg));
         }
 
@@ -11175,8 +11180,9 @@ private:
                      " value" + (info.fields.size() == 1 ? "" : "s"));
         }
         std::vector<IrType> explicit_type_args;
-        explicit_type_args.reserve(expr.type_args.size());
-        for (const auto& type_arg : expr.type_args) {
+        const ExprTypeArgs& ast_type_args = expr_type_args(expr);
+        explicit_type_args.reserve(ast_type_args.size());
+        for (const auto& type_arg : ast_type_args) {
             explicit_type_args.push_back(resolve_executable_type(type_arg));
         }
 
@@ -12724,7 +12730,8 @@ private:
 
     static std::vector<TypeRef> combined_associated_type_args(const Expr& expr) {
         std::vector<TypeRef> args = expr_receiver_type_args(expr);
-        args.insert(args.end(), expr.type_args.begin(), expr.type_args.end());
+        const ExprTypeArgs& type_args = expr_type_args(expr);
+        args.insert(args.end(), type_args.begin(), type_args.end());
         return args;
     }
 
@@ -13226,15 +13233,16 @@ private:
         std::map<std::string, IrType>& substitutions,
         std::string* failure
     ) {
+        const ExprTypeArgs& type_args = expr_type_args(expr);
         if (method.method_generic_names.empty()) {
-            if (!expr.type_args.empty()) {
+            if (!type_args.empty()) {
                 fail(expr.loc, "method '" + expr.name + "' does not take type arguments");
             }
             return true;
         }
 
-        if (!expr.type_args.empty()) {
-            bind_method_generic_type_args(expr.loc, method, expr.type_args, substitutions);
+        if (!type_args.empty()) {
+            bind_method_generic_type_args(expr.loc, method, type_args, substitutions);
         } else {
             for (std::size_t i = 0; i < arg_types.size(); ++i) {
                 infer_method_generic_type(
@@ -13269,26 +13277,27 @@ private:
         const std::size_t impl_count = method.generic_names.size();
         const std::size_t method_count = method.method_generic_names.size();
         const std::size_t total_count = impl_count + method_count;
-        if (expr.type_args.size() > total_count) {
+        const ExprTypeArgs& type_args = expr_type_args(expr);
+        if (type_args.size() > total_count) {
             fail(expr.loc,
                  "generic associated function expects " + std::to_string(total_count) +
                      " type argument" + (total_count == 1 ? "" : "s"));
         }
 
         std::size_t type_arg_index = 0;
-        for (; type_arg_index < expr.type_args.size() && type_arg_index < impl_count; ++type_arg_index) {
+        for (; type_arg_index < type_args.size() && type_arg_index < impl_count; ++type_arg_index) {
             bind_generic_type(
-                expr.type_args[type_arg_index].loc,
+                type_args[type_arg_index].loc,
                 method.generic_names[type_arg_index],
-                resolve_executable_type(expr.type_args[type_arg_index]),
+                resolve_executable_type(type_args[type_arg_index]),
                 substitutions);
         }
-        for (; type_arg_index < expr.type_args.size(); ++type_arg_index) {
+        for (; type_arg_index < type_args.size(); ++type_arg_index) {
             std::size_t method_index = type_arg_index - impl_count;
             bind_generic_type(
-                expr.type_args[type_arg_index].loc,
+                type_args[type_arg_index].loc,
                 method.method_generic_names[method_index],
-                resolve_executable_type(expr.type_args[type_arg_index]),
+                resolve_executable_type(type_args[type_arg_index]),
                 substitutions);
         }
 
@@ -13525,17 +13534,18 @@ private:
         for (const auto& arg_expr : expr.args) args.push_back(check_expr(*arg_expr));
 
         std::map<std::string, IrType> substitutions;
-        if (!expr.type_args.empty()) {
-            if (expr.type_args.size() != fn.generics.size()) {
+        const ExprTypeArgs& type_args = expr_type_args(expr);
+        if (!type_args.empty()) {
+            if (type_args.size() != fn.generics.size()) {
                 fail(expr.loc,
                      "generic function '" + expr.name + "' expects " + std::to_string(fn.generics.size()) +
                          " type argument" + (fn.generics.size() == 1 ? "" : "s"));
             }
-            for (std::size_t i = 0; i < expr.type_args.size(); ++i) {
+            for (std::size_t i = 0; i < type_args.size(); ++i) {
                 bind_generic_type(
-                    expr.type_args[i].loc,
+                    type_args[i].loc,
                     fn.generics[i].name,
-                    resolve_executable_type(expr.type_args[i]),
+                    resolve_executable_type(type_args[i]),
                     substitutions
                 );
             }
@@ -13683,7 +13693,7 @@ private:
                                const IrType* expected_range = nullptr,
                                const std::string& call_name = "") {
         (void)lowered;
-        if (!expr.type_args.empty()) {
+        if (!expr_type_args(expr).empty()) {
             fail(expr.loc, "range constructors do not take type arguments");
         }
         if (expr.args.size() != 2) fail(expr.loc, "range expects start and end values");
@@ -13742,7 +13752,8 @@ private:
         if (expr.args.size() != 1) {
             fail(expr.loc, std::string(helper_name) + " expects one value");
         }
-        if (expr.type_args.size() > 1) {
+        const ExprTypeArgs& type_args = expr_type_args(expr);
+        if (type_args.size() > 1) {
             fail(expr.loc, std::string(helper_name) + " expects at most one type argument");
         }
         if (require_place && !is_take_place_expression(*expr.args[0])) {
@@ -13750,8 +13761,8 @@ private:
         }
 
         std::optional<IrType> expected;
-        if (!expr.type_args.empty()) {
-            expected = resolve_executable_type(expr.type_args.front());
+        if (!type_args.empty()) {
+            expected = resolve_executable_type(type_args.front());
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();
@@ -13802,7 +13813,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_slice_view_receiver(expr.loc, name, local);
-        require_slice_view_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
+        require_slice_view_method_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
 
         const IrType& element = local.type.args[0];
         IrExprPtr data;
@@ -13836,7 +13847,7 @@ private:
 
     IrExprPtr check_vec_len_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        require_collection_len_function_shape(expr.loc, expr.type_args.size(), expr.args.size());
+        require_collection_len_function_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
         return check_collection_len_expr(expr.loc, *expr.args[0]);
     }
 
@@ -13862,7 +13873,7 @@ private:
     }
 
     IrExprPtr check_collection_is_empty_method_call(const Expr& expr) {
-        require_collection_is_empty_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
+        require_collection_is_empty_method_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
         IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
         VectorKnownLength known_vec_length =
             vector_known_length_from_source_expr(operand->type, *expr.operand, *operand);
@@ -13917,7 +13928,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "first");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::First, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::First, expr_type_args(expr).size(), expr.args.size());
         require_local_vec_known_non_empty(expr.loc, LocalVecMethod::First, vector_known_length_state(local));
         return make_vec_first_expr(expr.loc, expr.operand->loc, name, local.type);
     }
@@ -13926,7 +13937,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "last");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Last, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Last, expr_type_args(expr).size(), expr.args.size());
         require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Last, vector_known_length_state(local));
         return make_vec_last_expr(expr.loc, expr.operand->loc, name, local.type);
     }
@@ -13935,7 +13946,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "get");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Get, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Get, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
@@ -13961,7 +13972,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "reserve");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Reserve, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Reserve, expr_type_args(expr).size(), expr.args.size());
         const Expr& capacity_expr = *expr.args[0];
         StaticIntegerValue known_capacity;
         if (known_integer_capacity(capacity_expr, known_capacity)) {
@@ -14006,7 +14017,7 @@ private:
 
     IrExprPtr check_vec_capacity_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) const {
         (void)lowered;
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Capacity, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Capacity, expr_type_args(expr).size(), expr.args.size());
         return make_vec_capacity_expr(expr.loc, local.type);
     }
 
@@ -14014,7 +14025,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "pop");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Pop, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Pop, expr_type_args(expr).size(), expr.args.size());
         require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Pop, vector_known_length_state(local));
         set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));
         return make_vec_pop_expr(
@@ -14027,7 +14038,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "clear");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Clear, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Clear, expr_type_args(expr).size(), expr.args.size());
         set_vector_known_length(local, vector_known_length_after_clear());
         return make_vec_clear_expr(
             expr.loc,
@@ -14039,7 +14050,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "truncate");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Truncate, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Truncate, expr_type_args(expr).size(), expr.args.size());
 
         const Expr& length_expr = *expr.args[0];
         StaticIntegerValue source_known_length;
@@ -14075,7 +14086,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "set");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Set, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Set, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
@@ -14105,7 +14116,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "swap");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Swap, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Swap, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr first_index = check_expr(*expr.args[0]);
@@ -14151,7 +14162,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "remove");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Remove, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Remove, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
@@ -14179,7 +14190,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "insert");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Insert, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Insert, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr index = check_expr(*expr.args[0]);
@@ -14211,7 +14222,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "contains");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Contains, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Contains, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
@@ -14230,7 +14241,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "index_of");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::IndexOf, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::IndexOf, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
@@ -14249,7 +14260,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "count");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Count, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Count, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
@@ -14268,7 +14279,7 @@ private:
         (void)lowered;
         const std::string& name = expr.operand->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "push");
-        require_local_vec_method_shape(expr.loc, LocalVecMethod::Push, expr.type_args.size(), expr.args.size());
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::Push, expr_type_args(expr).size(), expr.args.size());
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*expr.args[0], local.type.args[0]);
@@ -14287,13 +14298,13 @@ private:
 
     std::optional<IrType> resolve_optional_pointer_helper_type_arg(const Expr& expr,
                                                                    const std::string& operation) {
-        if (expr.type_args.empty()) return std::nullopt;
-        if (expr.type_args.size() != 1) {
+        if (expr_type_args(expr).empty()) return std::nullopt;
+        if (expr_type_args(expr).size() != 1) {
             fail(expr.loc, operation + " expects at most one type argument");
         }
-        IrType element_type = resolve_executable_type(expr.type_args[0]);
+        IrType element_type = resolve_executable_type(expr_type_args(expr)[0]);
         if (element_type.qualifier != TypeQualifier::Value) {
-            fail(expr.type_args[0].loc, operation + "<T> expects a value type, got " + type_name(element_type));
+            fail(expr_type_args(expr)[0].loc, operation + "<T> expects a value type, got " + type_name(element_type));
         }
         element_type.qualifier = TypeQualifier::Ptr;
         return element_type;
@@ -14379,54 +14390,54 @@ private:
     IrExprPtr check_layout_query_call(const Expr& expr, IrExprPtr lowered, bool align_query) {
         (void)lowered;
         const std::string operation = align_query ? "align_of" : "size_of";
-        if (expr.type_args.size() != 1) {
+        if (expr_type_args(expr).size() != 1) {
             fail(expr.loc, operation + " expects exactly one type argument");
         }
         if (!expr.args.empty()) {
             fail(expr.loc, operation + " does not take value arguments");
         }
 
-        IrType queried = resolve_executable_type(expr.type_args[0]);
+        IrType queried = resolve_executable_type(expr_type_args(expr)[0]);
         std::uint64_t bytes = 0;
         bool supported = align_query
             ? ari_layout_align_bytes(queried, bytes)
             : ari_layout_size_bytes(queried, bytes);
         if (!supported) {
-            fail(expr.type_args[0].loc, operation + " does not support " + type_name(queried));
+            fail(expr_type_args(expr)[0].loc, operation + " does not support " + type_name(queried));
         }
         if (bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(expr.type_args[0].loc, operation + " result is too large for i64");
+            fail(expr_type_args(expr)[0].loc, operation + " result is too large for i64");
         }
         return make_integer_literal(expr.loc, i64_type(expr.loc), bytes);
     }
 
     IrExprPtr check_typed_zone_alloc_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (expr.type_args.empty()) return nullptr;
-        if (expr.type_args.size() != 1) {
+        if (expr_type_args(expr).empty()) return nullptr;
+        if (expr_type_args(expr).size() != 1) {
             fail(expr.loc, "zone::alloc<T> expects exactly one type argument");
         }
         if (expr.args.size() != 1) {
             fail(expr.loc, "zone::alloc<T> expects exactly one zone argument");
         }
 
-        IrType allocated = resolve_executable_type(expr.type_args[0]);
+        IrType allocated = resolve_executable_type(expr_type_args(expr)[0]);
         if (allocated.qualifier != TypeQualifier::Value) {
-            fail(expr.type_args[0].loc, "zone::alloc<T> expects a value type, got " + type_name(allocated));
+            fail(expr_type_args(expr)[0].loc, "zone::alloc<T> expects a value type, got " + type_name(allocated));
         }
 
         std::uint64_t size_bytes = 0;
         std::uint64_t align_bytes = 0;
         if (!ari_layout_size_bytes(allocated, size_bytes) ||
             !ari_layout_align_bytes(allocated, align_bytes)) {
-            fail(expr.type_args[0].loc, "zone::alloc<T> does not support " + type_name(allocated));
+            fail(expr_type_args(expr)[0].loc, "zone::alloc<T> does not support " + type_name(allocated));
         }
         if (size_bytes == 0) {
-            fail(expr.type_args[0].loc, "zone::alloc<T> requires a non-zero-sized type");
+            fail(expr_type_args(expr)[0].loc, "zone::alloc<T> requires a non-zero-sized type");
         }
         if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
             align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(expr.type_args[0].loc, "zone::alloc<T> layout is too large for i64");
+            fail(expr_type_args(expr)[0].loc, "zone::alloc<T> layout is too large for i64");
         }
 
         SourceLocation loc{1, 1};
@@ -14451,33 +14462,33 @@ private:
 
     IrExprPtr check_zone_new_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (expr.type_args.size() != 1) {
+        if (expr_type_args(expr).size() != 1) {
             fail(expr.loc, "zone::new<T> expects exactly one type argument");
         }
         if (expr.args.size() != 2) {
             fail(expr.loc, "zone::new<T> expects a zone and a value");
         }
 
-        IrType allocated = resolve_executable_type(expr.type_args[0]);
+        IrType allocated = resolve_executable_type(expr_type_args(expr)[0]);
         if (allocated.qualifier != TypeQualifier::Value) {
-            fail(expr.type_args[0].loc, "zone::new<T> expects a value type, got " + type_name(allocated));
+            fail(expr_type_args(expr)[0].loc, "zone::new<T> expects a value type, got " + type_name(allocated));
         }
         if (is_owner_type(allocated) || contains_borrow_type(allocated)) {
-            fail(expr.type_args[0].loc, "zone::new<T> cannot place ownership- or borrow-valued types yet");
+            fail(expr_type_args(expr)[0].loc, "zone::new<T> cannot place ownership- or borrow-valued types yet");
         }
 
         std::uint64_t size_bytes = 0;
         std::uint64_t align_bytes = 0;
         if (!ari_layout_size_bytes(allocated, size_bytes) ||
             !ari_layout_align_bytes(allocated, align_bytes)) {
-            fail(expr.type_args[0].loc, "zone::new<T> does not support " + type_name(allocated));
+            fail(expr_type_args(expr)[0].loc, "zone::new<T> does not support " + type_name(allocated));
         }
         if (size_bytes == 0) {
-            fail(expr.type_args[0].loc, "zone::new<T> requires a non-zero-sized type");
+            fail(expr_type_args(expr)[0].loc, "zone::new<T> requires a non-zero-sized type");
         }
         if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
             align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(expr.type_args[0].loc, "zone::new<T> layout is too large for i64");
+            fail(expr_type_args(expr)[0].loc, "zone::new<T> layout is too large for i64");
         }
 
         SourceLocation loc{1, 1};
@@ -14507,33 +14518,33 @@ private:
 
     IrExprPtr check_zone_promote_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (expr.type_args.size() != 1) {
+        if (expr_type_args(expr).size() != 1) {
             fail(expr.loc, "zone::promote<T> expects exactly one type argument");
         }
         if (expr.args.size() != 2) {
             fail(expr.loc, "zone::promote<T> expects a target zone and source pointer");
         }
 
-        IrType allocated = resolve_executable_type(expr.type_args[0]);
+        IrType allocated = resolve_executable_type(expr_type_args(expr)[0]);
         if (allocated.qualifier != TypeQualifier::Value) {
-            fail(expr.type_args[0].loc, "zone::promote<T> expects a value type, got " + type_name(allocated));
+            fail(expr_type_args(expr)[0].loc, "zone::promote<T> expects a value type, got " + type_name(allocated));
         }
         if (is_owner_type(allocated) || contains_borrow_type(allocated)) {
-            fail(expr.type_args[0].loc, "zone::promote<T> cannot copy ownership- or borrow-valued types yet");
+            fail(expr_type_args(expr)[0].loc, "zone::promote<T> cannot copy ownership- or borrow-valued types yet");
         }
 
         std::uint64_t size_bytes = 0;
         std::uint64_t align_bytes = 0;
         if (!ari_layout_size_bytes(allocated, size_bytes) ||
             !ari_layout_align_bytes(allocated, align_bytes)) {
-            fail(expr.type_args[0].loc, "zone::promote<T> does not support " + type_name(allocated));
+            fail(expr_type_args(expr)[0].loc, "zone::promote<T> does not support " + type_name(allocated));
         }
         if (size_bytes == 0) {
-            fail(expr.type_args[0].loc, "zone::promote<T> requires a non-zero-sized type");
+            fail(expr_type_args(expr)[0].loc, "zone::promote<T> requires a non-zero-sized type");
         }
         if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
             align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(expr.type_args[0].loc, "zone::promote<T> layout is too large for i64");
+            fail(expr_type_args(expr)[0].loc, "zone::promote<T> layout is too large for i64");
         }
 
         IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", expr.loc);
@@ -14564,7 +14575,7 @@ private:
 
     IrExprPtr check_zone_temp_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (!expr.type_args.empty()) {
+        if (!expr_type_args(expr).empty()) {
             fail(expr.loc, "zone::temp does not take type arguments");
         }
         if (expr.args.size() != 1) {
@@ -14765,26 +14776,27 @@ private:
         std::string* failure
     ) {
         const std::string method_name = basename_of_qualified_name(method.fn->name);
+        const ExprTypeArgs& type_args = expr_type_args(expr);
         if (method.method_generic_names.empty()) {
-            if (!expr.type_args.empty()) {
+            if (!type_args.empty()) {
                 fail(expr.loc, "associated function '" + method_name + "' does not take method type arguments");
             }
             return true;
         }
 
-        if (!expr.type_args.empty()) {
-            if (expr.type_args.size() != method.method_generic_names.size()) {
+        if (!type_args.empty()) {
+            if (type_args.size() != method.method_generic_names.size()) {
                 fail(expr.loc,
                      "generic associated function '" + method_name + "' expects " +
                          std::to_string(method.method_generic_names.size()) +
                          " method type argument" +
                          (method.method_generic_names.size() == 1 ? "" : "s"));
             }
-            for (std::size_t i = 0; i < expr.type_args.size(); ++i) {
+            for (std::size_t i = 0; i < type_args.size(); ++i) {
                 bind_generic_type(
-                    expr.type_args[i].loc,
+                    type_args[i].loc,
                     method.method_generic_names[i],
-                    resolve_executable_type(expr.type_args[i]),
+                    resolve_executable_type(type_args[i]),
                     substitutions);
             }
         } else {
@@ -14985,7 +14997,7 @@ private:
         if (enum_found == enums_.end()) fail(expr.loc, "unknown enum '" + info.enum_name + "'");
         const EnumInfo& enum_info = enum_found->second;
         if (!info.is_generic) {
-            if (!expr.type_args.empty()) {
+            if (!expr_type_args(expr).empty()) {
                 fail(expr.loc, "enum case constructor '" + expr.name + "' does not take type arguments");
             }
             return {};
@@ -14997,13 +15009,13 @@ private:
 
         std::vector<IrType> type_args;
         type_args.reserve(enum_info.generic_arity);
-        if (!expr.type_args.empty()) {
-            if (expr.type_args.size() != enum_info.generic_arity) {
+        if (!expr_type_args(expr).empty()) {
+            if (expr_type_args(expr).size() != enum_info.generic_arity) {
                 fail(expr.loc,
                      "enum '" + enum_info.name + "' expects " + std::to_string(enum_info.generic_arity) +
                          " type argument" + (enum_info.generic_arity == 1 ? "" : "s"));
             }
-            for (const auto& arg : expr.type_args) {
+            for (const auto& arg : expr_type_args(expr)) {
                 type_args.push_back(resolve_executable_type(arg));
             }
             return type_args;
@@ -15037,7 +15049,7 @@ private:
         if (enum_found == enums_.end()) fail(expr.loc, "unknown enum '" + info.enum_name + "'");
         const EnumInfo& enum_info = enum_found->second;
         if (!info.is_generic) {
-            if (!expr.type_args.empty()) {
+            if (!expr_type_args(expr).empty()) {
                 fail(expr.loc, "enum case constructor '" + expr.name + "' does not take type arguments");
             }
             has_type_args = true;
@@ -15046,13 +15058,13 @@ private:
 
         std::vector<IrType> type_args;
         type_args.reserve(enum_info.generic_arity);
-        if (!expr.type_args.empty()) {
-            if (expr.type_args.size() != enum_info.generic_arity) {
+        if (!expr_type_args(expr).empty()) {
+            if (expr_type_args(expr).size() != enum_info.generic_arity) {
                 fail(expr.loc,
                      "enum '" + enum_info.name + "' expects " + std::to_string(enum_info.generic_arity) +
                          " type argument" + (enum_info.generic_arity == 1 ? "" : "s"));
             }
-            for (const auto& arg : expr.type_args) {
+            for (const auto& arg : expr_type_args(expr)) {
                 type_args.push_back(resolve_executable_type(arg));
             }
             has_type_args = true;
@@ -15126,7 +15138,7 @@ private:
             can_use_prelude_special && source_std_generic_function_available(special_name);
 
         if (can_use_prelude_special && is_format_print_name(special_name)) {
-            if (!expr.type_args.empty()) {
+            if (!expr_type_args(expr).empty()) {
                 fail(expr.loc, "function '" + expr.name + "' does not take type arguments");
             }
             return check_format_print(expr, std::move(lowered), special_name);
@@ -15159,7 +15171,7 @@ private:
         if (can_use_source_declared_prelude_special && is_prelude_take_function_name(special_name)) {
             return check_explicit_move_call(expr, std::move(lowered), true);
         }
-        if (can_use_source_declared_prelude_special && is_zone_alloc_function_name(special_name) && !expr.type_args.empty()) {
+        if (can_use_source_declared_prelude_special && is_zone_alloc_function_name(special_name) && !expr_type_args(expr).empty()) {
             return check_typed_zone_alloc_call(expr, std::move(lowered));
         }
         if (can_use_source_declared_prelude_special && is_zone_new_function_name(special_name)) {
@@ -15181,7 +15193,7 @@ private:
             return check_range_call(expr, std::move(lowered), expected, special_name);
         }
 
-        if (!expr.type_args.empty()) {
+        if (!expr_type_args(expr).empty()) {
             std::string generic_name;
             if (const FunctionDecl* generic = find_generic_function(expr, generic_name)) {
                 return check_generic_call(expr, *generic, generic_name, std::move(lowered));
@@ -15224,7 +15236,7 @@ private:
         if (sig.deprecated) {
             warn_deprecated_use(expr.loc, "function", function_name, sig.deprecated_message);
         }
-        if (!expr.type_args.empty()) {
+        if (!expr_type_args(expr).empty()) {
             fail(expr.loc, "function '" + expr.name + "' does not take type arguments");
         }
         if (sig.is_variadic) {
@@ -15393,9 +15405,10 @@ private:
     ) {
         (void)lowered;
         const std::string display = trait_method_display(trait_name, trait_args, method_name);
+        const ExprTypeArgs& type_args = expr_type_args(expr);
         IrType receiver_type;
-        if (!expr.type_args.empty()) {
-            receiver_type = resolve_executable_type(expr.type_args.front());
+        if (!type_args.empty()) {
+            receiver_type = resolve_executable_type(type_args.front());
         } else if (expected && trait_expected_type_can_select_associated_self(*expected)) {
             receiver_type = *expected;
         } else {
@@ -15404,7 +15417,7 @@ private:
                      "' requires an explicit implementing type argument");
         }
         if (receiver_type.qualifier != TypeQualifier::Value) {
-            fail(expr.type_args.empty() ? expr.loc : expr.type_args.front().loc,
+            fail(type_args.empty() ? expr.loc : type_args.front().loc,
                  "trait-qualified associated function implementing type must be a value type, got " +
                      type_name(receiver_type));
         }
@@ -15421,8 +15434,9 @@ private:
         method_expr.kind = ExprKind::Call;
         method_expr.loc = expr.loc;
         method_expr.name = method_name;
-        if (!expr.type_args.empty()) {
-            method_expr.type_args.assign(expr.type_args.begin() + 1, expr.type_args.end());
+        if (!type_args.empty()) {
+            ExprTypeArgs method_type_args(type_args.begin() + 1, type_args.end());
+            set_expr_type_args(method_expr, std::move(method_type_args));
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();
@@ -15465,7 +15479,7 @@ private:
                  "trait-qualified associated function call '" + display +
                      "' has no matching impl for type " + type_name(receiver_type));
         }
-        if (selected && !method_expr.type_args.empty()) {
+        if (selected && !expr_type_args(method_expr).empty()) {
             fail(expr.loc, "associated function '" + method_name + "' does not take method type arguments");
         }
 
@@ -15542,7 +15556,7 @@ private:
         associated_expr.kind = ExprKind::Call;
         associated_expr.loc = expr.loc;
         associated_expr.name = expr.name;
-        associated_expr.type_args = combined_associated_type_args(expr);
+        set_expr_type_args(associated_expr, combined_associated_type_args(expr));
 
         ImplMethodInfo generic_selected;
         bool has_generic_selected = try_select_generic_associated_impl(
@@ -15564,7 +15578,7 @@ private:
             if (found == associated_impls_.end()) {
                 fail(expr.loc, "unknown associated function '" + method_name + "' for type " + type_name(receiver_type));
             }
-            if (!associated_expr.type_args.empty()) {
+            if (!expr_type_args(associated_expr).empty()) {
                 fail(expr.loc, "associated function '" + expr.name + "' does not take type arguments");
             }
             if (found->second.size() > 1) {
@@ -15607,7 +15621,7 @@ private:
             fail(expr.loc, "unknown method '" + expr.name + "' for type " + type_name(receiver->type));
         }
         const TraitInfo::Method& method = *method_entry->method;
-        if (!expr.type_args.empty()) {
+        if (!expr_type_args(expr).empty()) {
             fail(expr.loc, "trait object method '" + expr.name + "' does not accept type arguments under dyn dispatch");
         }
         require_trait_object_method_object_safe(expr.loc, method);
@@ -15664,7 +15678,7 @@ private:
 
     IrExprPtr check_method_call(const Expr& expr, IrExprPtr lowered) {
         if (expr.name == "len" && is_collection_len_method_receiver(*expr.operand)) {
-            require_collection_len_method_shape(expr.loc, expr.type_args.size(), expr.args.size());
+            require_collection_len_method_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
             return check_collection_len_expr(expr.loc, *expr.operand);
         }
         if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr.operand)) {
@@ -15761,7 +15775,7 @@ private:
                 fail(expr.loc, "unknown method '" + expr.name + "' for type " + type_name(receiver->type));
             }
         }
-        if (found != method_impls_.end() && !expr.type_args.empty()) {
+        if (found != method_impls_.end() && !expr_type_args(expr).empty()) {
             fail(expr.loc, "method '" + expr.name + "' does not take type arguments");
         }
         if (found != method_impls_.end() && !selected && found->second.size() > 1) {

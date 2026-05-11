@@ -115,6 +115,11 @@ module-summary filtering, and sema trait-qualified lookup share
 touching the storage directly. AST struct-literal field names also live behind
 a lazy vector payload, with parser/builders, AST clone, module summaries,
 constant evaluation, and sema field mapping using `expr_field_names` accessors.
+Direct AST expression type arguments now use the lazy `expr_type_args` payload
+as well. Parser generic-call construction, AST cloning, module-summary constant
+serialization, constant evaluation, and sema generic function/constructor lookup
+all read or move the payload through `expr_type_args`, `set_expr_type_args`, and
+`take_expr_type_args`.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

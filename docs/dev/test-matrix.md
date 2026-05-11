@@ -450,6 +450,8 @@ Checklist:
       associated calls with explicit and inferred result type arguments
 - [x] AST struct-literal field-name payload packing preserves out-of-order
       generic struct literal mapping for constants and locals
+- [x] AST direct type-argument payload packing preserves explicit generic
+      function calls, generic struct literals, and generic enum constructors
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias
