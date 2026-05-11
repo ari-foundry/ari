@@ -314,12 +314,66 @@ static LocalState snapshot_state(const StateSnapshot& snapshot, const std::strin
     return found->second.state;
 }
 
+static bool borrow_source_equal(const LocalInfo::BorrowSource& left,
+                                const LocalInfo::BorrowSource& right) {
+    return left.aggregate_path == right.aggregate_path &&
+           left.name == right.name &&
+           left.path == right.path &&
+           left.mutable_borrow == right.mutable_borrow &&
+           left.release_source == right.release_source;
+}
+
+static bool borrow_sources_equal(const std::vector<LocalInfo::BorrowSource>& left,
+                                 const std::vector<LocalInfo::BorrowSource>& right) {
+    if (left.size() != right.size()) return false;
+    for (std::size_t i = 0; i < left.size(); ++i) {
+        if (!borrow_source_equal(left[i], right[i])) return false;
+    }
+    return true;
+}
+
+static bool field_borrow_counts_equal(
+    const std::map<std::string, LocalInfo::FieldBorrowCounts>& left,
+    const std::map<std::string, LocalInfo::FieldBorrowCounts>& right
+) {
+    if (left.size() != right.size()) return false;
+    auto left_it = left.begin();
+    auto right_it = right.begin();
+    for (; left_it != left.end(); ++left_it, ++right_it) {
+        if (left_it->first != right_it->first) return false;
+        if (left_it->second.immutable != right_it->second.immutable ||
+            left_it->second.mutable_ != right_it->second.mutable_) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static bool borrow_state_equal(const StateSnapshotEntry& left,
+                               const StateSnapshotEntry& right) {
+    return left.immutable_borrows == right.immutable_borrows &&
+           left.mutable_borrows == right.mutable_borrows &&
+           field_borrow_counts_equal(left.field_borrows, right.field_borrows) &&
+           left.borrow_source == right.borrow_source &&
+           left.borrow_source_path == right.borrow_source_path &&
+           left.borrow_source_mutable == right.borrow_source_mutable &&
+           left.borrow_sources_released == right.borrow_sources_released &&
+           borrow_sources_equal(left.aggregate_borrow_sources, right.aggregate_borrow_sources);
+}
+
 std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& left,
                                                          const StateSnapshot& right,
                                                          const std::string& message) {
     for (const auto& item : left) {
         if (item.second.state != snapshot_state(right, item.first)) {
             return "binding '" + item.first + "' " + message;
+        }
+        if (state_snapshot_key_is_field(item.first)) continue;
+        auto found = right.find(item.first);
+        StateSnapshotEntry default_entry;
+        const StateSnapshotEntry& actual = found == right.end() ? default_entry : found->second;
+        if (!borrow_state_equal(item.second, actual)) {
+            return "binding '" + item.first + "' has incompatible borrow states";
         }
     }
     return std::nullopt;

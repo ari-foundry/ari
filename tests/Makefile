@@ -2321,6 +2321,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "binding 'token' has incompatible ownership states at loop continue" $(BUILD_DIR)/errors/loop-continue-owner-state.err
 	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'first'" $(BUILD_DIR)/errors/while-false-borrow-state.err
+	if $(TARGET) tests/errors/loop-borrow-state.ari -o $(BUILD_DIR)/errors/loop-borrow-state.elf >$(BUILD_DIR)/errors/loop-borrow-state.err 2>&1; then exit 1; fi
+	grep -q "binding 'first' has incompatible borrow states" $(BUILD_DIR)/errors/loop-borrow-state.err
 	if $(TARGET) tests/errors/loop-break-live-owner.ari -o $(BUILD_DIR)/errors/loop-break-live-owner.elf >$(BUILD_DIR)/errors/loop-break-live-owner.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'token' must be moved or dropped before break" $(BUILD_DIR)/errors/loop-break-live-owner.err
 	if $(TARGET) tests/errors/loop-continue-live-owner.ari -o $(BUILD_DIR)/errors/loop-continue-live-owner.elf >$(BUILD_DIR)/errors/loop-continue-live-owner.err 2>&1; then exit 1; fi

@@ -135,12 +135,14 @@
    Literal `while true` `continue` paths now merge against the next-iteration
    ownership state instead of the post-loop `break` exit state, including
    value `continue` paths in literal-true `init while` / `let while` loops.
+   Loop and branch state snapshots now also carry exact borrow counts and
+   aggregate borrow sources, so plain loop fallthrough paths reject borrow-state
+   changes that are not fixed points.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
      loop fallthrough paths beyond the literal-true next-iteration/exit splits,
      instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop
-     fallthrough/next-iteration paths beyond literal-false zero-iteration
-     borrow-state restore
+     fallthrough/next-iteration paths beyond exact snapshot equality
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
