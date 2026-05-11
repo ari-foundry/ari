@@ -296,8 +296,9 @@ Tuple, fixed-array, struct, tuple-struct, wildcard, alias, and enum-case
 parameter patterns lower at function entry. Refutable enum-case parameters
 panic if the caller passes a non-matching case. Owning and borrow-valued
 parameter patterns are still rejected until ownership behavior for parameter
-destructuring is defined. Trait and extern function signatures must keep named
-parameters.
+destructuring is defined. Parameter patterns are value-binding-only for now:
+`ref`, `ref mut`, `&`, `&mut`, and `mut` binding-mode patterns are reserved and
+rejected. Trait and extern function signatures must keep named parameters.
 
 ## Borrow Returns
 

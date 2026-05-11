@@ -2,7 +2,22 @@
 
 ## Near-Term Compiler Work
 
-1. Start allocator-backed growable `Vec[T]`.
+1. Stabilize parser-visible syntax for linting and language-server tooling.
+   Prefer one canonical spelling per feature, reserve future syntax with clear
+   diagnostics, and keep source docs aligned with parser behavior before adding
+   broader libraries. `init ... while ... next` is the only loop-state spelling;
+   the removed `let ... while ... next` form is rejected with a migration
+   diagnostic. Pattern syntax is value-binding-only for now: `ref`, `ref mut`,
+   `&`, `&mut`, and `mut` binding-mode patterns are reserved and rejected so
+   future reference/ownership binding modes do not collide with today's AST.
+   - [pattern-binding-modes] design and lower reference, mutable, and
+     ownership-aware pattern binding modes after the ownership rules are
+     explicit; the parser now reserves those spellings
+   - [tooling-diagnostics] keep removed/reserved syntax diagnostics stable
+     enough for editor integrations to surface targeted fixes
+   - [nice-to-have] expose a parse/check-only diagnostic mode once the syntax
+     surface settles enough for a language server
+2. Start allocator-backed growable `Vec[T]`.
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
    `Vec.pop()` / `Vec.first()` / `Vec.last()` / `Vec.capacity()` /
    `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` /
@@ -120,7 +135,7 @@
      root `Vec[T].reserve(capacity)` with runtime heap capacity growth
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place
-2. Prepare source `std` library foundations before broad library expansion.
+3. Prepare source `std` library foundations before broad library expansion.
    Keep the library-facing contracts near-term before adding many owned
    collection, string, or smart-pointer APIs. This keeps the source prelude from
    growing into a pile of one-off compiler hooks. The current source `std`
@@ -212,6 +227,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [generic-supertrait-inference] handle richer generic supertrait
      applications once associated types and projections exist
 2. Extend pattern binding modes beyond value bindings.
+   The parser now reserves `ref`, `ref mut`, `&`, `&mut`, and `mut`
+   binding-mode spellings as Near-Term syntax-stability work. This Medium-Term
+   item is the semantic lowering phase for those reserved forms.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share

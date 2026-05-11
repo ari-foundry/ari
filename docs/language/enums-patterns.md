@@ -607,6 +607,11 @@ match value {
 Payload cases must write a payload pattern. Use `_` to ignore a payload.
 
 Payload bindings are immutable branch-local values.
+Pattern bindings are currently value bindings only. Reference or mutable
+binding-mode spellings such as `ref name`, `ref mut name`, `&name`, `&mut name`,
+and `mut name` are reserved for the future shared binding-mode engine and are
+rejected with a dedicated diagnostic today. Borrow inside the arm or use a
+named `ref` / `ref mut` parameter instead.
 
 Expression-valued `match` currently supports enum patterns and copyable
 payloads. Borrow-valued arm results are rejected until the borrow checker grows

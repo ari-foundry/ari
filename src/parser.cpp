@@ -969,6 +969,9 @@ private:
     bool is_binding_pattern_start() const {
         if (check(TokenKind::LBracket)) return true;
         if (check(TokenKind::LParen)) return true;
+        if (check(TokenKind::KwRef)) return true;
+        if (check(TokenKind::KwMut)) return true;
+        if (check(TokenKind::Amp)) return true;
         if (!check(TokenKind::Identifier)) return false;
         if (peek().text == "_") return true;
         std::size_t look = pos_ + 1;
@@ -981,6 +984,19 @@ private:
                (tokens_[look].kind == TokenKind::At ||
                 tokens_[look].kind == TokenKind::LBrace ||
                 tokens_[look].kind == TokenKind::LParen);
+    }
+
+    void reject_pattern_binding_mode_start(const char* context) const {
+        if (check(TokenKind::KwRef) || check(TokenKind::Amp)) {
+            fail(peek().loc,
+                 std::string("reference ") + context +
+                     " binding modes are reserved but not supported yet; bind by value and borrow inside the body");
+        }
+        if (check(TokenKind::KwMut)) {
+            fail(peek().loc,
+                 std::string("mutable ") + context +
+                     " binding modes are reserved but not supported yet; use var for mutable local bindings");
+        }
     }
 
     StmtPtr parse_pattern_variable(bool mutable_binding) {
@@ -1007,6 +1023,7 @@ private:
     Pattern parse_binding_pattern() {
         Pattern pattern;
         pattern.loc = peek().loc;
+        reject_pattern_binding_mode_start("pattern");
         if (match(TokenKind::LBracket)) {
             pattern.kind = PatternKind::Array;
             pattern.loc = tokens_[pos_ - 1].loc;
@@ -1270,6 +1287,7 @@ private:
 
     Pattern parse_pattern_atom(bool bare_identifier_is_binding) {
         Pattern pattern;
+        reject_pattern_binding_mode_start("pattern");
         if (match(TokenKind::LParen)) {
             SourceLocation loc = tokens_[pos_ - 1].loc;
             if (match(TokenKind::RParen)) {

@@ -127,6 +127,11 @@ head += left
 let (Point { x: axis, y: 0 } | Point { x: 0, y: axis }) = point
 ```
 
+Declaration patterns bind by value. `let ref x`, `let ref mut x`, `let &x`,
+`let &mut x`, and `let mut x` are reserved for future binding modes and are
+rejected today; use `var x = ...` for a mutable local or create an explicit
+borrow with `let x = ref value`.
+
 Single-payload enum cases can also be used in local bindings:
 
 ```ari
