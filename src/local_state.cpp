@@ -92,6 +92,22 @@ void LocalScopeStack::pop_scope() {
     scopes_.pop_back();
 }
 
+void LocalScopeStack::end_scope(bool check_owners,
+                                const LocalReleaseCallback& release_local,
+                                const LocalOwnerCheckCallback& has_live_owner,
+                                const LocalOwnerErrorCallback& report_live_owner) {
+    for (const auto& item : current_scope()) {
+        release_local(item.second);
+    }
+    if (check_owners) {
+        for (const auto& item : current_scope()) {
+            const LocalInfo& local = item.second;
+            if (has_live_owner(local)) report_live_owner(item.first, local);
+        }
+    }
+    pop_scope();
+}
+
 bool LocalScopeStack::empty() const {
     return scopes_.empty();
 }

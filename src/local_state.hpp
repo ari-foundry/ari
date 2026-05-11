@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <set>
 #include <string>
@@ -73,10 +74,17 @@ StateSnapshot merge_zone_generations(StateSnapshot target, const StateSnapshot& 
 class LocalScopeStack {
 public:
     using Scope = std::map<std::string, LocalInfo>;
+    using LocalReleaseCallback = std::function<void(const LocalInfo&)>;
+    using LocalOwnerCheckCallback = std::function<bool(const LocalInfo&)>;
+    using LocalOwnerErrorCallback = std::function<void(const std::string&, const LocalInfo&)>;
 
     void clear();
     void push_scope();
     void pop_scope();
+    void end_scope(bool check_owners,
+                   const LocalReleaseCallback& release_local,
+                   const LocalOwnerCheckCallback& has_live_owner,
+                   const LocalOwnerErrorCallback& report_live_owner);
     bool empty() const;
     std::size_t size() const;
 

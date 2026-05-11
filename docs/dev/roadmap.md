@@ -98,17 +98,19 @@
 2. Continue `sema.cpp` decomposition by extracting local state.
    `LocalState`, `LocalInfo`, local scope storage, used-name/reusable-pattern
    binding tracking, local lookup, and ownership/vector/zone state snapshots now
-   live in `local_state`. `SemanticChecker` still coordinates scope-exit owner
-   diagnostics, named borrow release, mutability diagnostics, and most
-   assignment/move/drop state transitions. Finish those behavior-preserving
-   moves before starting the larger borrow-checking and ownership extractions,
-   leaning on the existing ownership, borrow, loop, and control-flow tests
-   instead of adding broad duplicate coverage.
-   - [scope-cleanup] move scope-exit owner checks and named-borrow release
-     through `local_state` callbacks so `push_scope`/`pop_scope`/`discard_scope`
-     no longer inspect the raw current scope in `sema.cpp`
+   live in `local_state`. Scope-exit owner checks and named-borrow release now
+   run through `LocalScopeStack::end_scope` callbacks, so `push_scope`,
+   `pop_scope`, and `discard_scope` no longer inspect the raw current scope in
+   `sema.cpp`. `SemanticChecker` still coordinates mutability diagnostics,
+   most assignment/move/drop state transitions, borrow rules, and auto-destroy
+   cleanup traversal. Finish those behavior-preserving moves before starting
+   the larger borrow-checking and ownership extractions, leaning on the existing
+   ownership, borrow, loop, and control-flow tests instead of adding broad
+   duplicate coverage.
    - [mutation-api] expose assignment, mutability, move/drop, and branch-merge
      hooks needed by statement/expression lowering without leaking scope internals
+   - [cleanup-traversal] move auto-destroy zone cleanup and escape-check scope
+     traversal behind `local_state` iterators/callbacks
    - [borrow-adapter] keep named and temporary borrow checks layered over the
      new local-state API so later `borrow_semantics` extraction has one entry point
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

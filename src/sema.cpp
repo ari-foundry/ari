@@ -3515,18 +3515,18 @@ private:
     }
 
     void end_scope(bool check_owners) {
-        for (const auto& item : local_scopes_.current_scope()) {
-            release_named_borrow(item.second);
-        }
-        if (check_owners) {
-            for (const auto& item : local_scopes_.current_scope()) {
-                const LocalInfo& local = item.second;
-                if (has_live_owner(local)) {
-                    fail(local.loc, "owning binding '" + item.first + "' must be moved or dropped before scope exit");
-                }
+        local_scopes_.end_scope(
+            check_owners,
+            [this](const LocalInfo& local) {
+                release_named_borrow(local);
+            },
+            [this](const LocalInfo& local) {
+                return has_live_owner(local);
+            },
+            [](const std::string& name, const LocalInfo& local) {
+                fail(local.loc, "owning binding '" + name + "' must be moved or dropped before scope exit");
             }
-        }
-        local_scopes_.pop_scope();
+        );
     }
 
     void pop_scope() {
