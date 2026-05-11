@@ -1,0 +1,12 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var vec = std::vec::new<i64>(ref mut zone, 0);
+
+  vec.insert_in(ref mut zone, 0, 2);
+  vec.insert_in(ref mut zone, 1, 9);
+  vec.insert_in(ref mut zone, 1, 5);
+
+  let total = vec.len() + vec.capacity() + vec.get(0) + vec.get(1) + vec.get(2);
+  zone::destroy(zone);
+  return total;
+}

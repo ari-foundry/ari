@@ -264,6 +264,8 @@ Checklist:
       calls
 - [x] source `std::vec::Vec<T>.push_in(ref mut Zone, value)` appends through the
       same explicit zone capability and grows capacity on demand
+- [x] source `std::vec::Vec<T>.insert_in(ref mut Zone, index, value)` inserts
+      through the same explicit zone capability and grows capacity on demand
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local

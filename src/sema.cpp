@@ -4581,7 +4581,10 @@ private:
                                                          const std::string& method_name,
                                                          const IrType& receiver_type,
                                                          const std::vector<IrExprPtr>& args) {
-        if ((method_name != "reserve" && method_name != "push_in") || args.size() < 2) return;
+        if ((method_name != "reserve" && method_name != "push_in" && method_name != "insert_in") ||
+            args.size() < 2) {
+            return;
+        }
         if (!is_std_vec_handle_type(value_qualified_type(receiver_type))) return;
 
         std::string vec_source;

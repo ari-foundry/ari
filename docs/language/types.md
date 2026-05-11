@@ -511,6 +511,7 @@ vec.push(20)
 vec.push_in(ref mut zone, 30)
 vec.reserve(ref mut zone, 8)
 vec.insert(1, 15)
+vec.insert_in(ref mut zone, 2, 18)
 vec.set(0, 25)
 vec.swap(0, 2)
 let empty = vec.is_empty()
@@ -530,8 +531,10 @@ is grow-only: it allocates a larger buffer from the same explicit zone, copies
 the current elements, preserves `len`, and leaves the old buffer to the zone's
 bulk lifetime. `std::vec::Vec<T>.push_in(ref mut Zone, value)` uses the same
 explicit zone capability and grows when the current capacity is full before
-appending. Passing a different zone borrow to `reserve` or `push_in` is rejected
-because the source handle remains tied to the zone that created it.
+appending. `std::vec::Vec<T>.insert_in(ref mut Zone, index, value)` follows the
+same explicit-zone growth rule before inserting and shifting later elements.
+Passing a different zone borrow to `reserve`, `push_in`, or `insert_in` is
+rejected because the source handle remains tied to the zone that created it.
 `vec.as_slice()` returns a `Slice[T]` over the same zone-backed buffer, and that
 slice is rejected after
 the source zone is reset or destroyed.
