@@ -206,6 +206,10 @@ Borrow-valued aggregate bindings keep each borrow field's source borrowed while
 that field is live. Reassigning the whole local aggregate or a borrow-valued
 field releases the old field source after the new value is checked, so a
 replaced source can be assigned again while the aggregate continues to live.
+Named borrow bindings are also shortened in straight-line statement scopes:
+after the borrow's last visible use, its source can be assigned or borrowed
+again before the block ends. Reborrow chains keep the intermediate borrow
+binding live until the dependent borrow is also dead.
 Local aggregate fields and elements can also be borrowed directly with
 `ref aggregate.field`, `ref mut aggregate.0`, or `ref aggregate[index]` when
 the index is a constant fixed-array or local vector index. The checker tracks

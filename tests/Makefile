@@ -2300,6 +2300,8 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-named.ari -o $(BUILD_DIR)/errors/borrow-named.raw
 	$(BUILD_DIR)/errors/borrow-named.raw; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-named.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-named.elf; $(BUILD_DIR)/errors/borrow-named.elf; code=$$?; test $$code -eq 12; fi
+	$(TARGET) --freestanding tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.raw
+	$(BUILD_DIR)/errors/named-borrow-last-use.raw; code=$$?; test $$code -eq 18
 	$(TARGET) --freestanding tests/ok/borrow-reborrow.ari -o $(BUILD_DIR)/errors/borrow-reborrow.raw
 	$(BUILD_DIR)/errors/borrow-reborrow.raw; code=$$?; test $$code -eq 14
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-reborrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-reborrow.elf; $(BUILD_DIR)/errors/borrow-reborrow.elf; code=$$?; test $$code -eq 14; fi

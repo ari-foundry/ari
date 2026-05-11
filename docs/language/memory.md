@@ -129,7 +129,9 @@ Rules currently checked:
 - borrow-valued aggregate copies acquire their own source borrow records
 - fields behind a `ref mut Struct` parameter can be read and assigned through
   the borrow, subject to the struct field's own `mut` marker
-- a named borrow keeps the source borrowed until the binding's block exits
+- a named borrow keeps the source borrowed until its last visible use in the
+  current straight-line statement scope, or until the binding's block exits
+  when the checker cannot shorten it
 - borrow bindings must be initialized with `ref`, `ref mut`, or a compatible
   borrow-valued block, `if`, `match`, or labeled-block expression result
 - an existing local borrow binding can be reborrowed with `ref` when the source
@@ -157,12 +159,15 @@ Rules currently checked:
 - borrow bindings cannot be reassigned
 - bare borrow expression statements are rejected
 
-Named borrow lifetimes are lexical today. A reborrow keeps the borrow binding it
-was created from borrowed until the reborrow exits scope, and that source borrow
-binding keeps its own original source borrowed until its scope exits. A
-borrow-valued function or method call keeps the caller's returned source path
-borrowed for as long as the returned borrow binding lives. Future
-borrow-checker refinement may shorten a named borrow to its last use.
+Named borrow lifetimes are shortened for local straight-line code. After the
+last visible use of a named borrow in the current statement scope, Ari releases
+that binding's source so later assignments or borrows can proceed in the same
+block. A reborrow keeps the borrow binding it was created from borrowed until
+the reborrow's own last visible use; only then can the source borrow binding
+release its original source. A borrow-valued function or method call keeps the
+caller-defined returned source path borrowed for as long as the returned borrow
+binding remains visibly live. Loops and stateful ownership changes still use the
+more conservative loop-state rules described above.
 
 ## Drop
 

@@ -46,6 +46,7 @@ struct LocalInfo {
     std::string borrow_source;
     std::string borrow_source_path;
     bool borrow_source_mutable = false;
+    bool borrow_sources_released = false;
     bool zone_pointer = false;
     std::string zone_pointer_source;
     std::uint64_t zone_pointer_generation = 0;

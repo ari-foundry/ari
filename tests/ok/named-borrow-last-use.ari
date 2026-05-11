@@ -1,0 +1,24 @@
+fn inspect(value: ref i64) -> i64 {
+  return 3;
+}
+
+fn touch(value: ref mut i64) -> i64 {
+  return 5;
+}
+
+fn main() -> i64 {
+  var number = 7;
+  let shared = ref number;
+  var total = inspect(shared);
+  number = number + 1;
+
+  let unique = ref mut number;
+  total = total + touch(unique);
+  number = number + 1;
+
+  let macro_shared = ref number;
+  assert_eq!(inspect(macro_shared), 3);
+  number = number + 1;
+
+  return number + total;
+}

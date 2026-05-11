@@ -3,9 +3,13 @@ struct Pair {
   mut right: i64,
 }
 
+fn inspect(value: ref i64) -> i64 {
+  return 0;
+}
+
 fn main() -> i64 {
   var pair = Pair { left: 1, right: 2 };
   let left_ref = ref pair.left;
   let unique = ref mut pair.left;
-  return pair.right;
+  return inspect(left_ref);
 }

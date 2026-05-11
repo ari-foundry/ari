@@ -3,10 +3,14 @@ struct Pair {
   mut right: i64,
 }
 
+fn touch(value: ref mut i64) -> i64 {
+  return 0;
+}
+
 fn main() -> i64 {
   var pair = Pair { left: 1, right: 2 };
   let unique: ref mut Pair = ref mut pair;
   let left: ref mut i64 = ref mut unique.left;
   let again: ref i64 = ref unique.left;
-  return 0;
+  return touch(left);
 }

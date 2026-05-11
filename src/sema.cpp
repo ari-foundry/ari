@@ -7,6 +7,7 @@
 #include "ast_clone.hpp"
 #include "ari_builtin.hpp"
 #include "borrow_call_semantics.hpp"
+#include "borrow_lifetime.hpp"
 #include "borrow_semantics.hpp"
 #include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
@@ -3880,7 +3881,18 @@ private:
     }
 
     void release_named_borrow(const LocalInfo& borrow) {
+        if (borrow.borrow_sources_released) return;
         borrow_context_.release_named(borrow);
+    }
+
+    void release_named_borrow_now(LocalInfo& borrow) {
+        if (borrow.borrow_sources_released) return;
+        release_named_borrow(borrow);
+        borrow.borrow_source.clear();
+        borrow.borrow_source_path.clear();
+        borrow.borrow_source_mutable = false;
+        borrow.aggregate_borrow_sources.clear();
+        borrow.borrow_sources_released = true;
     }
 
     void promote_temporary_borrow_to_named(SourceLocation loc, const IrExpr& init, const std::string& binding_name) {
@@ -4573,16 +4585,40 @@ private:
         activate_borrow_result(loc, result, source, locals);
     }
 
+    void release_dead_named_borrows(const NameUseCounts& remaining, std::size_t first_scope_index) {
+        bool released = false;
+        do {
+            released = false;
+            local_scopes_.for_each_local_from_inner_to_outer(
+                first_scope_index,
+                [&](const std::string& name, LocalInfo& local) {
+                    if (!is_borrow_type(local.type)) return;
+                    if (local.function_parameter || local.borrow_sources_released) return;
+                    if (local.borrow_source.empty() && local.aggregate_borrow_sources.empty()) return;
+                    if (has_remaining_name_use(remaining, name)) return;
+                    if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) return;
+                    release_named_borrow_now(local);
+                    released = true;
+                }
+            );
+        } while (released);
+    }
+
     CheckedStatements check_statements(const std::vector<StmtPtr>& statements, bool scoped) {
         if (scoped) push_scope();
+        std::size_t nll_scope_index = local_scopes_.empty() ? 0 : local_scopes_.size() - 1;
+        StatementNameUses name_uses = collect_statement_name_uses(statements);
 
         CheckedStatements checked;
         checked.statements.reserve(statements.size());
-        for (const auto& stmt : statements) {
+        for (std::size_t i = 0; i < statements.size(); ++i) {
+            const auto& stmt = statements[i];
             if (checked.flow == Flow::Returns) fail(stmt->loc, "unreachable statement after return");
             CheckedStatement lowered = check_statement(*stmt);
             if (lowered.flow != Flow::Continues) checked.flow = lowered.flow;
             checked.statements.push_back(std::move(lowered.statement));
+            subtract_name_uses(name_uses.remaining, name_uses.per_statement[i]);
+            release_dead_named_borrows(name_uses.remaining, nll_scope_index);
         }
 
         if (scoped) {
@@ -10726,6 +10762,9 @@ private:
                 }
                 LocalInfo& local = *local_slot;
                 if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
+                if (is_borrow_type(local.type) && local.borrow_sources_released) {
+                    fail(expr.loc, "cannot use expired borrow binding '" + expr.name + "'");
+                }
                 require_can_read_borrow_path(expr.loc, expr.name, local, "");
                 require_zone_pointer_valid(expr.loc, expr.name, local);
                 copy_aggregate_borrow_sources_to_temporaries(expr.loc, expr.name, local);

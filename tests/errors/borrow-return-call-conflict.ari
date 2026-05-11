@@ -2,9 +2,13 @@ fn identity(value: ref mut i64) -> ref mut i64 {
   return value;
 }
 
+fn touch(value: ref mut i64) -> i64 {
+  return 0;
+}
+
 fn main() -> i64 {
   var number: i64 = 1;
   let unique: ref mut i64 = identity(ref mut number);
   let shared: ref i64 = ref number;
-  return 0;
+  return touch(unique);
 }

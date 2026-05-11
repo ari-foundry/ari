@@ -95,16 +95,16 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Shorten lexical named borrows when the last use is obvious.
-   Borrow-valued aggregate bindings now retain target-field paths for each
-   borrowed source, so local whole-aggregate reassignment, borrow-field
-   reassignment, shared borrow-valued aggregate copies, and borrow-field reads
-   can release and reacquire only the affected source paths. The next
-   borrow-checking pressure point is still lifetime precision: named borrows
-   remain live until their lexical scope exits even when later code no longer
-   uses the borrow.
-   - [nll] shorten named borrows to their last use when local straight-line
-     control-flow analysis can prove it
+2. Track ownership and borrow state through loops.
+   Named borrow bindings now release their source after the last visible use in
+   the current straight-line statement scope, and dependent reborrow chains stay
+   live until the last dependent binding is also dead. The next borrow-checking
+   pressure point is loop precision: loops still reject ownership-state changes
+   and many borrow-state updates instead of proving that every iteration and
+   loop exit merges to a compatible state.
+   - [loop-state] track ownership and borrow state through loops, init-while
+     updates, owning loop bindings, and owning break values instead of rejecting
+     all state changes inside loops
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -150,16 +150,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      projection syntax for generic APIs such as iterator item types
    - [generic-supertrait-inference] handle richer generic supertrait
      applications once associated types and projections exist
-2. Refine borrow checking beyond lexical named borrows.
-   Direct local reborrows, borrow-valued block, `if`, `match`, and
-   labeled-block expression results, constrained single-source borrow-valued
-   function returns, field/element reborrows through borrow bindings, and
-   borrow-valued aggregate field tracking now use `BorrowContext` source
-   tracking. The next refinements should preserve that source/path/mode model.
-   - [loop-state] track ownership and borrow state through loops, init-while
-     updates, owning loop bindings, and owning break values instead of rejecting
-     all state changes inside loops
-3. Extend pattern binding modes beyond value bindings.
+2. Extend pattern binding modes beyond value bindings.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share
@@ -181,7 +172,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      binding modes still need shared lowering. Future `for let` filters over
      vector and slice values should reuse the same product-pattern binding path
      once vector/slice patterns have length-checked lowering.
-4. Implement user-defined compile-time meta expansion for `meta fn`.
+3. Implement user-defined compile-time meta expansion for `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
    Meta functions are intentionally non-generic; define concrete meta entry
    points over `token_stream`, `ast`, or `type` instead of instantiating them.
@@ -192,7 +183,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
-5. Expand aggregate enum payload storage beyond the nested-enum MVP.
+4. Expand aggregate enum payload storage beyond the nested-enum MVP.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values, and
    LLVM homogeneous nested aggregate-enum values today. Nested enum-case
@@ -211,7 +202,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      aggregate enum payloads after payload ABI and aliasing rules are explicit
    - [repr-c-payloads] define C tagged-union layout and C header emission for
      payload-bearing `@repr(C)` enums after aggregate enum payload ABI is stable
-6. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
+5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
     prelude and connected to
@@ -230,7 +221,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
-7. Design `std` smart-pointer and explicit move surfaces.
+6. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
     for common heap and shared-resource patterns. The explicit move surface
@@ -244,7 +235,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       ref-count increments, and deterministic release
     - [interop] decide how smart pointers expose raw pointers for FFI without
       pretending Ari has a globally safe borrow model
-8. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
+7. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, length queries,
@@ -260,7 +251,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       temporary compiler-known local API does not become permanent surface area
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
-9. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+8. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot

@@ -246,6 +246,7 @@ void set_local_named_borrow_source(LocalInfo& binding,
     binding.borrow_source = name;
     binding.borrow_source_path = path;
     binding.borrow_source_mutable = mutable_borrow;
+    binding.borrow_sources_released = false;
 }
 
 void add_local_aggregate_borrow_source(LocalInfo& binding,
@@ -255,6 +256,7 @@ void add_local_aggregate_borrow_source(LocalInfo& binding,
                                        bool mutable_borrow,
                                        bool release_source) {
     binding.aggregate_borrow_sources.push_back({aggregate_path, name, path, mutable_borrow, release_source});
+    binding.borrow_sources_released = false;
 }
 
 std::optional<std::string> local_assignment_target_error(const std::string& name, const LocalInfo& local) {

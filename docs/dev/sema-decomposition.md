@@ -100,6 +100,9 @@ construction. Some helpers have already moved out to focused files:
   field/element reborrows through borrow bindings, borrow-valued control-flow
   result provenance, and path borrow conflict diagnostics layered over
   `local_state`
+- `borrow_lifetime` for AST name-use scans that let sema release local named
+  borrow bindings after their last visible straight-line statement use without
+  mixing that traversal into expression lowering
 - `borrow_call_semantics` for borrow-valued expression provenance, root source
   tracing through borrow bindings, borrow-returning call source selection,
   returned subpath composition, result borrow-mode selection, and
@@ -318,9 +321,10 @@ pending IR.
      field/element subpaths so call sites do not need to borrow an entire
      aggregate when the callee returns only `source.field`; borrow-valued local
      aggregate fields also carry target paths so field reassignment and
-     whole-local reassignment can release only replaced sources. Future NLL,
-     reborrow, and borrow-result work should build on `BorrowContext` instead
-     of adding new raw borrow-state paths in `sema.cpp`.
+     whole-local reassignment can release only replaced sources.
+     Straight-line named-borrow last-use scans now live in `borrow_lifetime`;
+     future loop state, reborrow, and borrow-result work should build on these
+     helpers instead of adding new raw borrow-state paths in `sema.cpp`.
 3. Extract ownership/drop checking into `ownership_semantics`.
    - Move owned field state tracking, partial move/reinitialization checks,
      `drop` lowering, destructor lookup glue, and return-owner checks.

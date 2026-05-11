@@ -2,9 +2,13 @@ fn touch(value: ref mut i64) -> i64 {
   return 0;
 }
 
+fn inspect(value: ref i64) -> i64 {
+  return 0;
+}
+
 fn main() -> i64 {
   var number = 7;
   let unique: ref mut i64 = ref mut number;
   let shared: ref i64 = ref unique;
-  return touch(unique);
+  return touch(unique) + inspect(shared);
 }

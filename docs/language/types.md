@@ -702,7 +702,10 @@ borrow records. Fields and elements can also be borrowed directly with
 unrelated field paths remain available while that borrow is live. Existing
 local borrow bindings can be reborrowed through those same paths, such as
 `ref borrowed.field` or `ref mut borrowed[0]`, when the borrow binding's own
-mutability and the selected field path allow it.
+mutability and the selected field path allow it. Local named borrow bindings
+release their source after their last visible straight-line use, while
+dependent reborrows keep the intermediate borrow binding live until the
+dependent borrow is also dead.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

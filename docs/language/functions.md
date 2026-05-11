@@ -345,10 +345,11 @@ For Ari functions with bodies, the compiler checks the contract against every
 return path.
 
 When a caller binds the result, the original argument source remains borrowed
-until that result binding leaves scope. If every return path borrows the same
-field or constant element below that parameter, only that subpath stays
-borrowed at the call site, so a returned `ref pair.left` does not block an
-unrelated borrow of `pair.right`. The same rule applies to method calls whose
+until that result binding's last visible straight-line use, or until the
+binding leaves scope when the checker cannot shorten it. If every return path
+borrows the same field or constant element below that parameter, only that
+subpath stays borrowed at the call site, so a returned `ref pair.left` does not
+block an unrelated borrow of `pair.right`. The same rule applies to method calls whose
 `self` parameter is the single borrow source. Function pointer calls and
 borrow-valued aggregate returns are still rejected until Ari has explicit
 source/lifetime contracts for those shapes.
