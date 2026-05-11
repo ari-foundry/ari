@@ -64,7 +64,8 @@ zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed.
 The source handle currently exposes fixed-capacity element methods: `len`,
 `capacity`, `is_empty`, `first`, `last`, `get`, `set`, `swap`, `push`, `pop`,
-`insert`, `remove`, `clear`, `truncate`, `contains`, `index_of`, and `count`.
+`insert`, `remove`, `clear`, `truncate`, `contains`, `index_of`, `count`, and
+`as_slice`.
 Using any of these results after the zone is reset or destroyed is rejected by
 the checker. This is not the final root `Vec[T]` method API.
 
@@ -426,9 +427,11 @@ builds a source `RawVec<T>` handle around that allocation, and
 `std::vec::new<T>(ref mut Zone, capacity)` wraps it in source
 `std::vec::Vec<T>`. The source handle has fixed-capacity methods for metadata,
 checked read/write, push/pop, insert/remove, truncate/clear, swap, and simple
-linear search. It still uses the capacity allocated by `new`; heap growth for
-`reserve` remains future work. Callers can still use `vec.raw.data` with
-`ptr_store`, `ptr_load`, and `ptr_add` directly for lower-level experiments.
+linear search, and `vec.as_slice()` creates a mutable `Slice[T]` view over the
+same zone-backed buffer. It still uses the capacity allocated by `new`; heap
+growth for `reserve` remains future work. Callers can still use `vec.raw.data`
+with `ptr_store`, `ptr_load`, and `ptr_add` directly for lower-level
+experiments.
 
 ## Aggregate Surfaces
 
@@ -481,9 +484,11 @@ an explicit-allocator feature for later. The lower-level
 the explicit allocator path for future Vec storage, and
 `std::vec::new<T>(ref mut Zone, capacity)` exposes that seed as source
 `std::vec::Vec<T>`. The source handle supports fixed-capacity metadata,
-read/write, push/pop, insert/remove, swap, truncate/clear, and simple search
-calls over the stored raw handle. The root `Vec[T]` type and its current local
-method set remain fixed-local until runtime growth is ported.
+read/write, push/pop, insert/remove, swap, truncate/clear, simple search, and
+`as_slice` calls over the stored raw handle. The resulting `Slice[T]` keeps the
+same zone provenance, so using it after `zone::reset` or `zone::destroy` is
+rejected. The root `Vec[T]` type and its current local method set remain
+fixed-local until runtime growth is ported.
 
 `Slice[T]` is a source `std` view struct:
 

@@ -101,12 +101,12 @@
    now connect that raw seed to a public allocator/capability creation surface.
    The source handle also has fixed-capacity metadata, checked read/write,
    push/pop, insert/remove, swap, truncate/clear, and simple linear search
-   methods over its allocated buffer. Runtime heap growth and source slice-view
-   construction still remain.
+   methods plus tracked `as_slice` views over its allocated buffer. Runtime
+   heap growth and the root `Vec[T]` public surface still remain.
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      reserve capacity with runtime heap capacity growth
-   - [ops-runtime] port source `Vec.as_slice()` and the root `Vec[T]` public
-     method surface to allocator-backed storage once runtime growth is in place
+   - [ops-runtime] port the root `Vec[T]` public method surface to
+     allocator-backed storage once runtime growth is in place
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

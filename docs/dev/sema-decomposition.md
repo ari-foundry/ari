@@ -33,7 +33,9 @@ construction. Some helpers have already moved out to focused files:
   reads
 - `slice_semantics` for shared `Slice[T]` type recognition, source-prelude Slice
   view type construction, and the scalar/plain-aggregate element materialization
-  checks used by sema, Vec `as_slice` lowering, and both backends
+  checks used by sema, Vec `as_slice` lowering, and both backends. Zone
+  provenance for source `Slice[T]` views is tracked by sema alongside pointer
+  and source `std::vec` handles until that provenance bookkeeping is split out.
 - `std_vec_semantics` for source-prelude `std::vec::RawVec<T>` and
   `std::vec::Vec<T>` handle recognition plus their zone-backed source field
   shapes, keeping allocator-backed Vec seed checks out of the central

@@ -255,6 +255,8 @@ Checklist:
 - [x] source `std::vec::Vec<T>` exposes fixed-capacity checked read/write,
       push/pop, insert/remove, swap, truncate/clear, and linear-search methods
       over its zone-backed buffer
+- [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
+      whose zone provenance is invalidated after reset/destroy
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local
       copies, scalar indexing, the fixed-capacity method surface, and
       stored-vector `for` loops

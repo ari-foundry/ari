@@ -4432,6 +4432,17 @@ private:
         return value;
     }
 
+    static bool is_zone_pointer_trackable_type(const IrType& type) {
+        IrType value_type = type;
+        if (value_type.qualifier == TypeQualifier::Ref ||
+            value_type.qualifier == TypeQualifier::MutRef) {
+            value_type.qualifier = TypeQualifier::Value;
+        }
+        return type.qualifier == TypeQualifier::Ptr ||
+               is_std_vec_zone_handle_type(value_type) ||
+               is_prelude_slice_type(value_type);
+    }
+
     bool set_zone_pointer_source_from_single_zone_return(LocalInfo& target, const IrExpr& call) {
         if (call.kind != IrExprKind::Call) return false;
         auto found = functions_.find(ir_expr_name(call));
@@ -4446,10 +4457,7 @@ private:
     }
 
     bool zone_pointer_source_name_from_expr(const IrExpr& value, std::string& out) {
-        bool tracks_zone_source =
-            value.type.qualifier == TypeQualifier::Ptr ||
-            is_std_vec_zone_handle_type(value.type);
-        if (!tracks_zone_source) return false;
+        if (!is_zone_pointer_trackable_type(value.type)) return false;
         const IrExpr& source = zone_pointer_source_expr(value);
         auto merge_source = [&](const IrExprPtr& expr, bool& found_any) {
             if (!expr) return;
@@ -4463,22 +4471,45 @@ private:
             }
         };
 
+        if (source.kind == IrExprKind::Borrow && ir_expr_label(source).empty()) {
+            const LocalInfo* local = find_local_slot(ir_expr_name(source));
+            if (!local || !local->zone_pointer) return false;
+            out = local->zone_pointer_source;
+            return true;
+        }
         if (source.kind == IrExprKind::Tuple && is_std_vec_zone_handle_type(source.type)) {
             std::optional<std::size_t> source_index = std_vec_zone_handle_source_field_index(source.type);
             if (!source_index || *source_index >= source.args.size()) return false;
             return zone_pointer_source_name_from_expr(*source.args[*source_index], out);
         }
+        if (source.kind == IrExprKind::Tuple && is_prelude_slice_type(source.type)) {
+            if (source.args.empty()) return false;
+            return zone_pointer_source_name_from_expr(*source.args[0], out);
+        }
         if (source.kind == IrExprKind::TupleIndex && ir_expr_operand(source)) {
             const IrExpr& operand = *ir_expr_operand(source);
             std::optional<std::size_t> source_index = std_vec_zone_handle_source_field_index(operand.type);
-            if (!source_index || source.tuple_index != *source_index) return false;
-            return zone_pointer_source_name_from_expr(operand, out);
+            if (source_index && source.tuple_index == *source_index) {
+                return zone_pointer_source_name_from_expr(operand, out);
+            }
+            if (is_prelude_slice_type(operand.type) && source.tuple_index == 0) {
+                return zone_pointer_source_name_from_expr(operand, out);
+            }
+            return false;
+        }
+        if (source.kind == IrExprKind::SliceRange && ir_expr_operand(source)) {
+            return zone_pointer_source_name_from_expr(*ir_expr_operand(source), out);
         }
         if ((source.kind == IrExprKind::Call && ir_expr_name(source) == "zone::alloc") ||
             (source.kind == IrExprKind::Call && ir_expr_name(source) == "zone::new")) {
             return !source.args.empty() && zone_source_name_from_arg(*source.args[0], out);
         }
         if (source.kind == IrExprKind::Call) {
+            if (is_prelude_slice_type(source.type) &&
+                !source.args.empty() &&
+                zone_pointer_source_name_from_expr(*source.args[0], out)) {
+                return true;
+            }
             auto found = functions_.find(ir_expr_name(source));
             if (found == functions_.end()) return false;
             const FunctionSig& sig = found->second;
@@ -4532,10 +4563,7 @@ private:
 
     void set_zone_pointer_source_from_expr(LocalInfo& target, const IrExpr& value) {
         clear_zone_pointer_source(target);
-        bool tracks_zone_source =
-            target.type.qualifier == TypeQualifier::Ptr ||
-            is_std_vec_zone_handle_type(target.type);
-        if (!tracks_zone_source) return;
+        if (!is_zone_pointer_trackable_type(target.type)) return;
 
         const IrExpr& source = zone_pointer_source_expr(value);
         if (source.kind == IrExprKind::Call &&

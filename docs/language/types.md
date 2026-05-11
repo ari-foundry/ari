@@ -515,6 +515,7 @@ let empty = vec.is_empty()
 let len = vec.len()
 let cap = vec.capacity()
 let middle = vec.get(1)
+let view = vec.as_slice()
 let removed = vec.remove(1)
 let popped = vec.pop()
 vec.truncate(1)
@@ -524,7 +525,9 @@ vec.clear()
 The root `Vec[T]`/`std::Vec[T]` type is still the current local vector literal
 storage until runtime heap growth is ported. Source `std::vec::Vec<T>` methods
 currently check against the capacity allocated by `std::vec::new`; `reserve`
-growth and source slice-view construction remain future work.
+growth remains future work. `vec.as_slice()` returns a `Slice[T]` over the same
+zone-backed buffer, and that slice is rejected after the source zone is reset
+or destroyed.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over

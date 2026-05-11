@@ -214,6 +214,10 @@ pub mod vec {
       }
       return total;
     }
+
+    fn as_slice(self: ref mut Self) -> super::Slice[T] {
+      return super::Slice<T> { data: self.raw.data, len: self.raw.len };
+    }
   }
 }
 
