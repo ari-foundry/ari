@@ -298,3 +298,36 @@ panic if the caller passes a non-matching case. Owning and borrow-valued
 parameter patterns are still rejected until ownership behavior for parameter
 destructuring is defined. Trait and extern function signatures must keep named
 parameters.
+
+## Borrow Returns
+
+Functions can return a borrow when the compiler can track one source
+conservatively. The function signature must have exactly one borrow parameter,
+and every returned `ref` or `ref mut` value must trace back to that parameter.
+Local-source escapes remain rejected.
+
+```ari
+fn identity(value: ref i64) -> ref i64 {
+  return value;
+}
+
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+fn left(pair: ref Pair) -> ref i64 {
+  return ref pair.left;
+}
+
+fn bad(value: ref i64) -> ref i64 {
+  var local: i64 = 1;
+  return ref local; // rejected
+}
+```
+
+When a caller binds the result, the original argument source remains borrowed
+until that result binding leaves scope. Borrow returns through extern
+declarations, function pointer calls, borrow-valued aggregate returns, and
+functions with multiple borrow parameters are still rejected until Ari has
+explicit source/lifetime contracts for those shapes.

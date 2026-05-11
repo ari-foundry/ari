@@ -60,8 +60,8 @@ values remain copyable. `take(place)` is stricter: its argument must be a local
 binding, field, tuple index, or index expression. Use `take` when an API wants
 to make it clear that a concrete storage place is being consumed.
 
-Both helpers reject borrow-valued results, because Ari does not allow returning
-or storing temporary borrow values through these generic prelude helpers.
+Both helpers reject borrow-valued results, because Ari does not allow storing
+temporary borrow values through these generic prelude helpers.
 
 ## Borrowing
 
@@ -139,15 +139,22 @@ Rules currently checked:
   result path borrows the same source path with the same borrow mode
 - a borrow-valued control-flow expression cannot return a borrow of a binding
   declared inside that expression's arm or block
+- a function may return `ref T` or `ref mut T` only when the signature has
+  exactly one borrow parameter and the returned borrow source traces back to
+  that parameter
+- a borrow return cannot come from a local binding, a value parameter, an extern
+  declaration, a function pointer call, or a function with multiple borrow
+  parameters
 - borrow bindings cannot be reassigned
-- borrow values cannot be returned
 - bare borrow expression statements are rejected
 
 Named borrow lifetimes are lexical today. A reborrow keeps the borrow binding it
 was created from borrowed until the reborrow exits scope, and that source borrow
-binding keeps its own original source borrowed until its scope exits. Future
-borrow-checker refinement may shorten a named borrow to its last use and allow
-borrow returns once result lifetimes can be proven across function boundaries.
+binding keeps its own original source borrowed until its scope exits. A
+borrow-valued function call keeps the caller's source borrowed for as long as
+the returned borrow binding lives. Future borrow-checker refinement may shorten
+a named borrow to its last use and add explicit contracts for multi-source
+borrow-returning functions.
 
 ## Drop
 

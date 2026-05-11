@@ -2277,7 +2277,11 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/mutable-borrow-conflict.ari -o $(BUILD_DIR)/errors/mutable-borrow-conflict.elf >$(BUILD_DIR)/errors/mutable-borrow-conflict.err 2>&1; then exit 1; fi
 	grep -q "cannot immutably borrow mutably borrowed binding 'number'" $(BUILD_DIR)/errors/mutable-borrow-conflict.err
 	if $(TARGET) tests/errors/return-borrow.ari -o $(BUILD_DIR)/errors/return-borrow.elf >$(BUILD_DIR)/errors/return-borrow.err 2>&1; then exit 1; fi
-	grep -q "borrowed references cannot be returned in the executable subset yet" $(BUILD_DIR)/errors/return-borrow.err
+	grep -q "function return cannot return a borrow of local binding 'local'" $(BUILD_DIR)/errors/return-borrow.err
+	if $(TARGET) tests/errors/borrow-return-multiple-params.ari -o $(BUILD_DIR)/errors/borrow-return-multiple-params.elf >$(BUILD_DIR)/errors/borrow-return-multiple-params.err 2>&1; then exit 1; fi
+	grep -q "borrow-valued function returns currently require exactly one borrow parameter" $(BUILD_DIR)/errors/borrow-return-multiple-params.err
+	if $(TARGET) tests/errors/borrow-return-call-conflict.ari -o $(BUILD_DIR)/errors/borrow-return-call-conflict.elf >$(BUILD_DIR)/errors/borrow-return-call-conflict.err 2>&1; then exit 1; fi
+	grep -q "cannot immutably borrow mutably borrowed binding 'number'" $(BUILD_DIR)/errors/borrow-return-call-conflict.err
 	if $(TARGET) tests/errors/discard-borrow.ari -o $(BUILD_DIR)/errors/discard-borrow.elf >$(BUILD_DIR)/errors/discard-borrow.err 2>&1; then exit 1; fi
 	grep -q "borrow expression result must be passed directly to a call" $(BUILD_DIR)/errors/discard-borrow.err
 	$(TARGET) --freestanding tests/ok/borrow-call.ari -o $(BUILD_DIR)/errors/borrow-call.raw
@@ -2294,6 +2298,9 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-control-flow-result.ari -o $(BUILD_DIR)/errors/borrow-control-flow-result.raw
 	$(BUILD_DIR)/errors/borrow-control-flow-result.raw; code=$$?; test $$code -eq 4
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-control-flow-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-control-flow-result.elf; $(BUILD_DIR)/errors/borrow-control-flow-result.elf; code=$$?; test $$code -eq 4; fi
+	$(TARGET) --freestanding tests/ok/borrow-return-param.ari -o $(BUILD_DIR)/errors/borrow-return-param.raw
+	$(BUILD_DIR)/errors/borrow-return-param.raw; code=$$?; test $$code -eq 57
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-param.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-param.elf; $(BUILD_DIR)/errors/borrow-return-param.elf; code=$$?; test $$code -eq 57; fi
 	if $(TARGET) tests/errors/named-borrow-assign-source.ari -o $(BUILD_DIR)/errors/named-borrow-assign-source.elf >$(BUILD_DIR)/errors/named-borrow-assign-source.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/errors/named-borrow-assign-source.err
 	if $(TARGET) tests/errors/named-borrow-conflict.ari -o $(BUILD_DIR)/errors/named-borrow-conflict.elf >$(BUILD_DIR)/errors/named-borrow-conflict.err 2>&1; then exit 1; fi

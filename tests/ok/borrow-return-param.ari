@@ -1,0 +1,48 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+fn identity(value: ref i64) -> ref i64 {
+  return value;
+}
+
+fn through_local(value: ref i64) -> ref i64 {
+  let again: ref i64 = ref value;
+  return again;
+}
+
+fn choose_same(value: ref i64, flag: bool) -> ref i64 {
+  return if flag { ref value } else { ref value };
+}
+
+fn left(pair: ref Pair) -> ref i64 {
+  return ref pair.left;
+}
+
+fn unique(value: ref mut i64) -> ref mut i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  var number: i64 = 10;
+  let first: ref i64 = identity(ref number);
+  let first_ptr: ptr i64 = first as ptr i64;
+
+  let second: ref i64 = through_local(ref number);
+  let second_ptr: ptr i64 = second as ptr i64;
+
+  let selected: ref i64 = choose_same(ref number, true);
+  let selected_ptr: ptr i64 = selected as ptr i64;
+
+  var pair = Pair { left: 20, right: 3 };
+  let field: ref i64 = left(ref pair);
+  let field_ptr: ptr i64 = field as ptr i64;
+
+  var mutable: i64 = 5;
+  let mutable_ref: ref mut i64 = unique(ref mut mutable);
+  let mutable_ptr: ptr i64 = mutable_ref as ptr i64;
+  *mutable_ptr = 7;
+
+  return *first_ptr + *second_ptr + *selected_ptr + *field_ptr + *mutable_ptr;
+}

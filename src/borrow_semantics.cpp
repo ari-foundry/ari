@@ -165,6 +165,13 @@ void require_can_reborrow_path(SourceLocation loc,
 
 std::optional<BorrowResultSource> borrow_result_source(const IrExpr& expr) {
     if (!is_borrow_type(expr.type)) return std::nullopt;
+    if (!ir_expr_borrow_source_name(expr).empty()) {
+        return BorrowResultSource{
+            ir_expr_borrow_source_name(expr),
+            ir_expr_borrow_source_path(expr),
+            expr.mutable_borrow
+        };
+    }
     switch (expr.kind) {
         case IrExprKind::Borrow:
         case IrExprKind::If:
@@ -180,8 +187,7 @@ std::optional<BorrowResultSource> borrow_result_source(const IrExpr& expr) {
 }
 
 void set_borrow_result_source(IrExpr& expr, const BorrowResultSource& source) {
-    set_ir_expr_name(expr, source.name);
-    set_ir_expr_label(expr, source.path);
+    set_ir_expr_borrow_source(expr, source.name, source.path);
     expr.mutable_borrow = source.mutable_borrow;
 }
 

@@ -2,6 +2,7 @@
 
 #include "ast_builders.hpp"
 #include "attribute_semantics.hpp"
+#include "borrow_return_semantics.hpp"
 #include "aggregate_literal_semantics.hpp"
 #include "ast_clone.hpp"
 #include "ari_builtin.hpp"
@@ -51,6 +52,7 @@ namespace ari {
 struct FunctionSig {
     std::vector<IrType> params;
     IrType result;
+    std::optional<std::size_t> borrow_return_param_index;
     std::string module_name;
     std::string link_name;
     bool is_public = false;
@@ -61,6 +63,10 @@ struct FunctionSig {
     std::string deprecated_message;
     SourceLocation loc;
 };
+
+static void set_borrow_return_contract(FunctionSig& sig) {
+    sig.borrow_return_param_index = borrow_return_param_index(sig.params, sig.result);
+}
 
 static IrExternAbi ir_extern_abi_from_source(const std::string& abi) {
     if (abi == "ari") return IrExternAbi::AriBuiltin;
@@ -385,6 +391,8 @@ private:
     std::vector<std::string> warnings_;
     IrType current_return_;
     std::string current_module_name_;
+    std::optional<std::size_t> current_borrow_return_param_index_;
+    std::string current_borrow_return_param_name_;
     bool current_zone_pointer_return_allowed_ = false;
     std::string current_zone_pointer_return_source_;
     bool allow_zone_temp_init_ = false;
@@ -2547,6 +2555,7 @@ private:
                 sig.is_public = false;
                 for (const auto& param : method.params) sig.params.push_back(resolve_executable_type(param.type));
                 sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
+                set_borrow_return_contract(sig);
 
                 current_type_substitutions_ = std::move(previous_substitutions);
 
@@ -2870,6 +2879,7 @@ private:
             current_module_name_ = fn.module_name;
             for (const auto& param : fn.params) sig.params.push_back(resolve_executable_type(param.type));
             sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+            set_borrow_return_contract(sig);
             current_module_name_ = previous_module;
 
             auto inserted = functions_.emplace(fn.name, std::move(sig));
@@ -3430,6 +3440,8 @@ private:
         std::vector<GenericTraitBound> previous_generic_bounds = std::move(current_generic_bounds_);
         bool previous_zone_pointer_return_allowed = current_zone_pointer_return_allowed_;
         std::string previous_zone_pointer_return_source = std::move(current_zone_pointer_return_source_);
+        std::optional<std::size_t> previous_borrow_return_param_index = current_borrow_return_param_index_;
+        std::string previous_borrow_return_param_name = std::move(current_borrow_return_param_name_);
         current_module_name_ = fn.module_name;
         current_type_substitutions_ = std::move(substitutions);
         current_generic_bounds_.clear();
@@ -3438,6 +3450,8 @@ private:
         }
         current_zone_pointer_return_allowed_ = false;
         current_zone_pointer_return_source_.clear();
+        current_borrow_return_param_index_.reset();
+        current_borrow_return_param_name_.clear();
         allow_zone_temp_init_ = false;
         local_scopes_.clear();
         loops_.clear();
@@ -3476,7 +3490,9 @@ private:
                 ? make_hidden_local("$param")
                 : param.name;
             declare_local(fn.loc, ir_param_name, type, false);
-            local_slot_by_name(ir_param_name).generic_origin = param.has_pattern ? "" : generic_origin_from_type_ref(param.type);
+            LocalInfo& param_local = local_slot_by_name(ir_param_name);
+            param_local.function_parameter = true;
+            param_local.generic_origin = param.has_pattern ? "" : generic_origin_from_type_ref(param.type);
             ir_fn.params.push_back(IrParam{ir_param_name, type});
             if (is_zone_borrow_type(type)) {
                 ++zone_return_param_count;
@@ -3496,6 +3512,13 @@ private:
             current_zone_pointer_return_allowed_ = true;
             current_zone_pointer_return_source_ = zone_return_param_name;
         }
+        std::vector<IrType> current_param_types;
+        current_param_types.reserve(ir_fn.params.size());
+        for (const auto& param : ir_fn.params) current_param_types.push_back(param.type);
+        current_borrow_return_param_index_ = borrow_return_param_index(current_param_types, current_return_);
+        if (current_borrow_return_param_index_) {
+            current_borrow_return_param_name_ = ir_fn.params[*current_borrow_return_param_index_].name;
+        }
 
         CheckedStatements body = check_statements(fn.body, false);
         if (body.flow == Flow::Continues) {
@@ -3513,6 +3536,8 @@ private:
         current_generic_bounds_ = std::move(previous_generic_bounds);
         current_zone_pointer_return_allowed_ = previous_zone_pointer_return_allowed;
         current_zone_pointer_return_source_ = std::move(previous_zone_pointer_return_source);
+        current_borrow_return_param_index_ = previous_borrow_return_param_index;
+        current_borrow_return_param_name_ = std::move(previous_borrow_return_param_name);
         return ir_fn;
     }
 
@@ -4045,6 +4070,110 @@ private:
         borrow_context_.release_to_mark(mark);
     }
 
+    static std::string append_borrow_path(const std::string& base, const std::string& suffix) {
+        if (base.empty()) return suffix;
+        if (suffix.empty()) return base;
+        return base + "." + suffix;
+    }
+
+    std::optional<BorrowResultSource> expr_borrow_result_source(const IrExpr& value) {
+        std::optional<BorrowResultSource> source = borrow_result_source(value);
+        if (source) return source;
+        if (value.kind == IrExprKind::Local && is_borrow_type(value.type)) {
+            return BorrowResultSource{
+                ir_expr_name(value),
+                "",
+                value.type.qualifier == TypeQualifier::MutRef
+            };
+        }
+        return std::nullopt;
+    }
+
+    BorrowResultSource root_borrow_result_source(BorrowResultSource source) {
+        std::set<std::string> seen;
+        while (true) {
+            LocalInfo* local = find_local_slot(source.name);
+            if (!local) {
+                throw CompileError("internal error: missing borrow result source '" + source.name + "'");
+            }
+            if (!is_borrow_type(local->type) || local->borrow_source.empty()) return source;
+            if (!seen.insert(source.name).second) {
+                throw CompileError("internal error: cyclic borrow source for '" + source.name + "'");
+            }
+            source.path = append_borrow_path(local->borrow_source_path, source.path);
+            source.name = local->borrow_source;
+            source.mutable_borrow = source.mutable_borrow || local->borrow_source_mutable;
+        }
+    }
+
+    void require_borrow_return_source(SourceLocation loc, const IrExpr& value) {
+        if (!current_borrow_return_param_index_) {
+            fail(loc, "borrow-valued function returns currently require exactly one borrow parameter");
+        }
+        std::optional<BorrowResultSource> source = expr_borrow_result_source(value);
+        if (!source) {
+            fail(loc,
+                 "function return borrow result must come directly from a borrow parameter, ref, ref mut, or compatible borrow control-flow result");
+        }
+        BorrowResultSource root = root_borrow_result_source(*source);
+        if (root.name != current_borrow_return_param_name_) {
+            fail(loc, "function return cannot return a borrow of local binding '" + root.name + "'");
+        }
+    }
+
+    std::optional<BorrowResultSource> call_borrow_result_source(SourceLocation loc,
+                                                               const std::string& display_name,
+                                                               const FunctionSig& sig,
+                                                               const std::vector<IrExprPtr>& args) {
+        if (!is_borrow_type(sig.result)) return std::nullopt;
+        if (sig.is_extern) {
+            fail(loc,
+                 "extern borrow-returning function '" + display_name +
+                     "' cannot return tracked Ari borrow values yet");
+        }
+        if (!sig.borrow_return_param_index || *sig.borrow_return_param_index >= args.size()) {
+            fail(loc,
+                 "borrow-returning function '" + display_name +
+                     "' currently requires exactly one borrow parameter so the result source can be tracked");
+        }
+        std::optional<BorrowResultSource> source =
+            expr_borrow_result_source(*args[*sig.borrow_return_param_index]);
+        if (!source) {
+            fail(loc,
+                 "borrow-returning function '" + display_name +
+                     "' result source argument must be ref, ref mut, a borrow binding, or a compatible borrow control-flow result");
+        }
+        return source;
+    }
+
+    void activate_borrow_result(SourceLocation loc,
+                                IrExpr& result,
+                                const BorrowResultSource& source) {
+        LocalInfo& local = require_live_local(loc, source.name);
+        if (is_borrow_type(local.type)) {
+            require_can_reborrow_path(loc, source.name, local, source.path, source.mutable_borrow);
+        } else {
+            require_can_borrow_path(loc, source.name, local, source.path, source.mutable_borrow);
+        }
+        add_borrow_source(local, source.path, source.mutable_borrow);
+        borrow_context_.push_temporary(source.name, source.path, source.mutable_borrow);
+        set_borrow_result_source(result, source);
+    }
+
+    IrExprPtr finish_tracked_call(SourceLocation loc,
+                                  const std::string& display_name,
+                                  std::string lowered_name,
+                                  const FunctionSig& sig,
+                                  std::vector<IrExprPtr> args,
+                                  std::size_t borrow_mark) {
+        std::optional<BorrowResultSource> source =
+            call_borrow_result_source(loc, display_name, sig, args);
+        release_temporary_borrows(borrow_mark);
+        IrExprPtr call = make_ir_call_expr(loc, std::move(lowered_name), sig.result, std::move(args));
+        if (source) activate_borrow_result(loc, *call, *source);
+        return call;
+    }
+
     void require_borrow_result_source_outlives_scope(SourceLocation loc,
                                                      const BorrowResultSource& source,
                                                      std::size_t scope_index,
@@ -4067,7 +4196,7 @@ private:
         std::size_t borrow_mark
     ) {
         if (!is_borrow_type(value.type)) return std::nullopt;
-        std::optional<BorrowResultSource> source = borrow_result_source(value);
+        std::optional<BorrowResultSource> source = expr_borrow_result_source(value);
         if (!source) {
             fail(loc, context + " borrow result must come directly from ref, ref mut, or a compatible borrow control-flow result");
         }
@@ -4094,11 +4223,7 @@ private:
     void activate_control_flow_borrow_result(SourceLocation loc,
                                              IrExpr& result,
                                              const BorrowResultSource& source) {
-        LocalInfo& local = require_live_local(loc, source.name);
-        require_can_borrow_path(loc, source.name, local, source.path, source.mutable_borrow);
-        add_borrow_source(local, source.path, source.mutable_borrow);
-        borrow_context_.push_temporary(source.name, source.path, source.mutable_borrow);
-        set_borrow_result_source(result, source);
+        activate_borrow_result(loc, result, source);
     }
 
     CheckedStatements check_statements(const std::vector<StmtPtr>& statements, bool scoped) {
@@ -5549,6 +5674,7 @@ private:
     }
 
     void check_return(const Stmt& stmt, IrStmt& lowered) {
+        std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = stmt.expr ? check_expr_with_expected(*stmt.expr, current_return_) : nullptr;
         IrType actual = value ? value->type : void_type(stmt.loc);
         if (value) {
@@ -5556,8 +5682,11 @@ private:
             actual = value->type;
         }
         require_assignable(stmt.loc, current_return_, actual);
-        if (contains_borrow_type(actual)) {
-            fail(stmt.loc, "borrowed references cannot be returned in the executable subset yet");
+        if (is_borrow_type(actual)) {
+            require_borrow_return_source(stmt.loc, *value);
+            release_temporary_borrows(borrow_mark);
+        } else if (contains_borrow_type(actual)) {
+            fail(stmt.loc, "function returns cannot contain borrow-valued aggregates yet");
         }
         if (value) {
             require_zone_pointer_not_escape_temporary_scope(stmt.loc, *value, 0, "function return");
@@ -9972,7 +10101,7 @@ private:
             : check_expr(*break_value);
         std::optional<BorrowResultSource> borrow_source;
         if (is_borrow_type(value->type)) {
-            borrow_source = borrow_result_source(*value);
+            borrow_source = expr_borrow_result_source(*value);
             if (!borrow_source) {
                 fail(stmt.loc, "break value borrow result must come directly from ref, ref mut, or a compatible borrow control-flow result");
             }
@@ -12860,6 +12989,7 @@ private:
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
+        set_borrow_return_contract(sig);
 
         current_module_name_ = previous_module;
 
@@ -12897,6 +13027,7 @@ private:
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
+        set_borrow_return_contract(sig);
 
         current_module_name_ = previous_module;
 
@@ -13441,22 +13572,28 @@ private:
             param_types.push_back(param_type);
         }
         IrType result = fn.has_return_type ? resolve_type_with_substitutions(fn.return_type, substitutions) : void_type(fn.loc);
-        release_temporary_borrows(borrow_mark);
 
         std::string specialized_name = generic_specialization_name(fn, substitutions);
+        FunctionSig call_sig;
+        call_sig.params = param_types;
+        call_sig.result = result;
+        call_sig.module_name = fn.module_name;
+        call_sig.is_public = fn.is_public;
+        call_sig.loc = fn.loc;
+        set_borrow_return_contract(call_sig);
 
         if (!queued_specializations_.count(specialized_name)) {
-            FunctionSig sig;
-            sig.params = param_types;
-            sig.result = result;
-            sig.module_name = fn.module_name;
-            sig.is_public = fn.is_public;
-            sig.loc = fn.loc;
-            functions_.emplace(specialized_name, std::move(sig));
+            functions_.emplace(specialized_name, call_sig);
             pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
             queued_specializations_.insert(specialized_name);
         }
-        return make_ir_call_expr(expr.loc, std::move(specialized_name), result, std::move(args));
+        return finish_tracked_call(
+            expr.loc,
+            expr.name,
+            std::move(specialized_name),
+            call_sig,
+            std::move(args),
+            borrow_mark);
     }
 
     void queue_generic_function_specialization(
@@ -13474,6 +13611,7 @@ private:
         sig.module_name = fn.module_name;
         sig.is_public = fn.is_public;
         sig.loc = fn.loc;
+        set_borrow_return_contract(sig);
         functions_.emplace(specialized_name, std::move(sig));
         pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
         queued_specializations_.insert(specialized_name);
@@ -14843,6 +14981,9 @@ private:
             require_no_zone_pointer_escape(arg_exprs[i]->loc, *arg, "function pointer call argument");
             lowered->args.push_back(std::move(arg));
         }
+        if (is_borrow_type(lowered->type)) {
+            fail(loc, "function pointer calls cannot return tracked borrow values yet");
+        }
         release_temporary_borrows(borrow_mark);
         return lowered;
     }
@@ -15134,8 +15275,13 @@ private:
             }
             args.push_back(std::move(arg));
         }
-        release_temporary_borrows(borrow_mark);
-        IrExprPtr call = make_ir_call_expr(expr.loc, function_name, sig.result, std::move(args));
+        IrExprPtr call = finish_tracked_call(
+            expr.loc,
+            function_name,
+            function_name,
+            sig,
+            std::move(args),
+            borrow_mark);
         mark_zone_reset_call(*call);
         return call;
     }
@@ -15250,8 +15396,13 @@ private:
             require_assignable(expr.loc, sig.params[i], arg->type);
             args.push_back(std::move(arg));
         }
-        release_temporary_borrows(borrow_mark);
-        return make_ir_call_expr(expr.loc, method.lowered_name, sig.result, std::move(args));
+        return finish_tracked_call(
+            expr.loc,
+            display,
+            method.lowered_name,
+            sig,
+            std::move(args),
+            borrow_mark);
     }
 
     IrExprPtr check_trait_qualified_associated_call(
@@ -15358,8 +15509,13 @@ private:
             require_assignable(expr.loc, sig.params[i], arg->type);
             args.push_back(std::move(arg));
         }
-        release_temporary_borrows(borrow_mark);
-        return make_ir_call_expr(expr.loc, method.lowered_name, sig.result, std::move(args));
+        return finish_tracked_call(
+            expr.loc,
+            display,
+            method.lowered_name,
+            sig,
+            std::move(args),
+            borrow_mark);
     }
 
     IrExprPtr check_associated_call(
@@ -15462,8 +15618,13 @@ private:
             require_assignable(expr.loc, sig.params[i], arg->type);
             args.push_back(std::move(arg));
         }
-        release_temporary_borrows(borrow_mark);
-        return make_ir_call_expr(expr.loc, method.lowered_name, sig.result, std::move(args));
+        return finish_tracked_call(
+            expr.loc,
+            method_name,
+            method.lowered_name,
+            sig,
+            std::move(args),
+            borrow_mark);
     }
 
     IrExprPtr check_trait_object_method_call(const Expr& expr, IrExprPtr receiver, IrExprPtr lowered) {
@@ -15683,8 +15844,13 @@ private:
             require_assignable(expr.loc, sig.params[i + 1], arg->type);
             args.push_back(std::move(arg));
         }
-        release_temporary_borrows(borrow_mark);
-        return make_ir_call_expr(expr.loc, method.lowered_name, sig.result, std::move(args));
+        return finish_tracked_call(
+            expr.loc,
+            expr.name,
+            method.lowered_name,
+            sig,
+            std::move(args),
+            borrow_mark);
     }
 
     IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {

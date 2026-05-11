@@ -27,6 +27,7 @@ struct LocalInfo {
     IrType* ir_storage_type = nullptr;
     IrExpr* ir_init_expr = nullptr;
     bool mutable_binding = false;
+    bool function_parameter = false;
     bool auto_destroy_zone = false;
     bool vector_length_known = false;
     std::uint64_t vector_known_length = 0;

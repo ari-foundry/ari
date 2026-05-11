@@ -95,16 +95,17 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Allow constrained borrow-valued function returns.
-   Borrow-valued block, `if`, `match`, and labeled-block expression results now
-   preserve source/path/mode metadata, and reborrows can be taken from fields and
-   elements behind existing borrow bindings on both executable backends. The
-   next focused slice is to use that provenance for conservative function
-   returns without adopting full lifetime syntax.
-   - [borrow-returns] allow returning a borrow only when the returned source is
-     a borrow parameter or otherwise proven to outlive the function result
-   - [borrow-return-diagnostics] keep local-source escapes rejected with the same
-     source/path wording used by control-flow borrow results
+2. Continue semantic-checker decomposition around borrow and return state.
+   Borrow-return contract recognition is split into `borrow_return_semantics`,
+   while the main checker still owns call-site result activation because it
+   needs direct access to local scopes, temporary borrows, and diagnostics.
+   Keep future slices small and testable rather than moving broad ownership
+   logic all at once.
+   - [borrow-call-provenance-split] isolate tracked call-result activation once
+     `Sema` exposes a narrower local-scope adapter
+   - [zone-return-contract-split] give zone-pointer return contracts the same
+     small-helper treatment as borrow-return contracts
+
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -151,12 +152,19 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      applications once associated types and projections exist
 2. Refine borrow checking beyond lexical named borrows.
    Direct local reborrows, borrow-valued block, `if`, `match`, and
-   labeled-block expression results, and field/element reborrows through borrow
-   bindings now use `BorrowContext` source tracking. The next refinements should
-   preserve that source/path/mode model.
+   labeled-block expression results, constrained single-source borrow-valued
+   function returns, and field/element reborrows through borrow bindings now use
+   `BorrowContext` source tracking. The next refinements should preserve that
+   source/path/mode model.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
    - [aggregate-borrows] track borrow-valued aggregate fields independently so
      assigning unrelated fields or whole aggregate bindings can be checked
+   - [multi-source-borrow-returns] add explicit lifetime/source contracts for
+     borrow-returning functions with more than one borrow parameter
+   - [borrow-return-path-contracts] carry returned relative field/element paths
+     in function signatures so callers can borrow only the returned subpath
+   - [extern-borrow-return-contracts] design an explicit contract before extern
+     declarations may return tracked Ari borrow values
    - [loop-state] track ownership and borrow state through loops, init-while
      updates, owning loop bindings, and owning break values instead of rejecting
      all state changes inside loops

@@ -98,6 +98,9 @@ construction. Some helpers have already moved out to focused files:
   field/element reborrows through borrow bindings, borrow-valued control-flow
   result provenance, and path borrow conflict diagnostics layered over
   `local_state`
+- `borrow_return_semantics` for small signature-level borrow-return contracts;
+  `sema.cpp` still activates returned borrow results at call sites because that
+  path needs live local-scope and temporary-borrow state
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool

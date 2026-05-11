@@ -1,5 +1,6 @@
 fn leak(value: ref i64) -> ref i64 {
-  return value;
+  var local: i64 = 1;
+  return ref local;
 }
 
 fn main() -> i64 {

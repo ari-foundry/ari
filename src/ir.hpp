@@ -101,6 +101,8 @@ struct IrExprStringPayload {
     std::string string_value;
     std::string name;
     std::string label;
+    std::string borrow_source_name;
+    std::string borrow_source_path;
 };
 
 struct IrExprEnumResultPayload {
@@ -349,7 +351,9 @@ inline void clear_empty_ir_expr_string_payload(IrExpr& expr) {
     if (expr.string_payload &&
         expr.string_payload->string_value.empty() &&
         expr.string_payload->name.empty() &&
-        expr.string_payload->label.empty()) {
+        expr.string_payload->label.empty() &&
+        expr.string_payload->borrow_source_name.empty() &&
+        expr.string_payload->borrow_source_path.empty()) {
         expr.string_payload.reset();
     }
 }
@@ -364,6 +368,14 @@ inline const std::string& ir_expr_name(const IrExpr& expr) {
 
 inline const std::string& ir_expr_label(const IrExpr& expr) {
     return ir_expr_string_payload(expr).label;
+}
+
+inline const std::string& ir_expr_borrow_source_name(const IrExpr& expr) {
+    return ir_expr_string_payload(expr).borrow_source_name;
+}
+
+inline const std::string& ir_expr_borrow_source_path(const IrExpr& expr) {
+    return ir_expr_string_payload(expr).borrow_source_path;
 }
 
 inline void set_ir_expr_string_value(IrExpr& expr, std::string value) {
@@ -381,6 +393,14 @@ inline void set_ir_expr_name(IrExpr& expr, std::string name) {
 inline void set_ir_expr_label(IrExpr& expr, std::string label) {
     if (label.empty() && !expr.string_payload) return;
     ensure_ir_expr_string_payload(expr).label = std::move(label);
+    clear_empty_ir_expr_string_payload(expr);
+}
+
+inline void set_ir_expr_borrow_source(IrExpr& expr, std::string name, std::string path) {
+    if (name.empty() && path.empty() && !expr.string_payload) return;
+    IrExprStringPayload& payload = ensure_ir_expr_string_payload(expr);
+    payload.borrow_source_name = std::move(name);
+    payload.borrow_source_path = std::move(path);
     clear_empty_ir_expr_string_payload(expr);
 }
 
