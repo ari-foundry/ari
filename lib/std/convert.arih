@@ -1,0 +1,13 @@
+pub trait From[T] {
+  fn from(value: T) -> Self;
+}
+
+pub trait Into[T] {
+  fn into(self) -> T;
+}
+
+pub trait TryFrom[T] {
+}
+
+pub trait TryInto[T] {
+}

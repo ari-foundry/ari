@@ -1,0 +1,15 @@
+pub trait Eq[T] {
+  fn eq(self, other: T) -> bool;
+}
+
+pub trait PartialEq[T] {
+  fn eq(self, other: T) -> bool;
+}
+
+pub trait Ord[T] {
+  fn lt(self, other: T) -> bool;
+}
+
+pub trait PartialOrd[T] {
+  fn lt(self, other: T) -> bool;
+}

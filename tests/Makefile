@@ -248,6 +248,9 @@ check-prelude: $(TARGET)
 	$(TARGET) --no-implicit-std --module-path lib tests/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
 	grep -q 'option	implicit_std	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std	lib/std.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::io	lib/std/io.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::input	lib/std/input.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::context	lib/std/context.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::mem	lib/std/mem.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::mem	mem	lib/std/mem.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::zone	lib/std/zone.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
@@ -256,6 +259,10 @@ check-prelude: $(TARGET)
 	grep -q 'import	std	std::boxed	boxed	lib/std/boxed.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::vec	lib/std/vec.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::vec	vec	lib/std/vec.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::iter	lib/std/iter.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::fmt	lib/std/fmt.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::cmp	lib/std/cmp.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::convert	lib/std/convert.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'item	std::io	extern-ari-fn	std::io::write_i64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
 	if $(TARGET) --no-implicit-std tests/errors/std-use-without-implicit.ari -o $(BUILD_DIR)/prelude/std-use-without-implicit.elf >$(BUILD_DIR)/prelude/std-use-without-implicit.err 2>&1; then exit 1; fi

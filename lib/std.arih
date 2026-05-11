@@ -1,21 +1,8 @@
-pub mod io {
-  pub extern "ari" fn write_i64(value: i64) -> i64 = "ari_builtin_write_i64";
-  pub extern "ari" fn write_bool(value: bool) -> i64 = "ari_builtin_write_bool";
-  pub extern "ari" fn write_byte(value: u8) -> i64 = "ari_builtin_write_byte";
-  pub extern "ari" fn newline() -> i64 = "ari_builtin_newline";
-  pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
-  pub extern "ari" fn read_line() -> string = "ari_builtin_read_line";
-}
+pub mod io;
 
-pub mod input {
-  pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
-  pub extern "ari" fn line() -> string = "ari_builtin_read_line";
-}
+pub mod input;
 
-pub mod context {
-  pub extern "ari" fn argc() -> i64 = "ari_builtin_context_argc";
-  pub extern "ari" fn arg(index: i64) -> string = "ari_builtin_context_arg";
-}
+pub mod context;
 
 pub enum Option[T] {
   None,
@@ -57,73 +44,13 @@ pub mod boxed;
 
 pub mod vec;
 
-pub mod iter {
-  pub struct Range[T] {
-    start: T,
-    end: T,
-  }
+pub mod iter;
 
-  pub struct RangeInclusive[T] {
-    start: T,
-    end: T,
-  }
+pub mod fmt;
 
-  pub fn range[T](start: T, end: T) -> Range[T];
-  pub fn range_inclusive[T](start: T, end: T) -> RangeInclusive[T];
+pub mod cmp;
 
-  pub trait Iterable[T] {
-  }
-
-  pub trait Iterator[T] {
-    fn next(self: ref mut Self) -> Option[T];
-  }
-
-  pub trait IntoIterator[T] {
-    fn into_iter(self: ref mut Self) -> Self;
-  }
-}
-
-pub mod fmt {
-  pub trait Debug {
-  }
-
-  pub trait Display {
-  }
-}
-
-pub mod cmp {
-  pub trait Eq[T] {
-    fn eq(self, other: T) -> bool;
-  }
-
-  pub trait PartialEq[T] {
-    fn eq(self, other: T) -> bool;
-  }
-
-  pub trait Ord[T] {
-    fn lt(self, other: T) -> bool;
-  }
-
-  pub trait PartialOrd[T] {
-    fn lt(self, other: T) -> bool;
-  }
-}
-
-pub mod convert {
-  pub trait From[T] {
-    fn from(value: T) -> Self;
-  }
-
-  pub trait Into[T] {
-    fn into(self) -> T;
-  }
-
-  pub trait TryFrom[T] {
-  }
-
-  pub trait TryInto[T] {
-  }
-}
+pub mod convert;
 
 pub struct Vec[T] {
 }

@@ -1,0 +1,2 @@
+pub extern "ari" fn argc() -> i64 = "ari_builtin_context_argc";
+pub extern "ari" fn arg(index: i64) -> string = "ari_builtin_context_arg";

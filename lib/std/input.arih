@@ -1,0 +1,2 @@
+pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
+pub extern "ari" fn line() -> string = "ari_builtin_read_line";

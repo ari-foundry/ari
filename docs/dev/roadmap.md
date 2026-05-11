@@ -123,14 +123,10 @@
 2. Prepare source `std` library foundations before broad library expansion.
    Keep the library-facing contracts near-term before adding many owned
    collection, string, or smart-pointer APIs. This keeps the source prelude from
-   growing into a pile of one-off compiler hooks.
-   - [std-layout] split source `std` into file-backed module sources once the
-     implicit-std loader can treat it like a package, so future APIs do not keep
-     expanding one monolithic `lib/std.arih` header. The implicit and explicit
-     source-`std` loaders now resolve package-style child modules, and
-     `std::boxed`, `std::mem`, `std::vec`, and `std::zone` live under
-     `lib/std/`; remaining work is to move other growing child modules out of
-     the root header as they become large enough.
+   growing into a pile of one-off compiler hooks. The current source `std`
+   child modules now live as package files under `lib/std/`, so the root
+   `lib/std.arih` stays focused on root types, root traits, builtin declarations,
+   and re-exports while future child modules can start in their own files.
    - [std-provenance] keep zone-provenance rules for source handles and
      pointer-returning methods in focused helpers such as `std_box_semantics`,
      `std_vec_semantics`, `slice_semantics`, and future string/smart-pointer

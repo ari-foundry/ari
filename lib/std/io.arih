@@ -1,0 +1,6 @@
+pub extern "ari" fn write_i64(value: i64) -> i64 = "ari_builtin_write_i64";
+pub extern "ari" fn write_bool(value: bool) -> i64 = "ari_builtin_write_bool";
+pub extern "ari" fn write_byte(value: u8) -> i64 = "ari_builtin_write_byte";
+pub extern "ari" fn newline() -> i64 = "ari_builtin_newline";
+pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
+pub extern "ari" fn read_line() -> string = "ari_builtin_read_line";

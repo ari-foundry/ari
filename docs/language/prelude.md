@@ -6,10 +6,10 @@ Ari auto-loads the source `std` surface into ordinary executable modules and
 adds implicit aliases for its public prelude names. You can call those names
 without a `use`.
 
-The source declaration root lives at `lib/std.arih`, with child modules allowed
-to live beside it under `lib/std/`. The compiler auto-loads that root as the
-`std` module when the file is present, so explicit `std::...` names work
-without a `mod std;` declaration:
+The source declaration root lives at `lib/std.arih`, with child modules under
+`lib/std/`. The compiler auto-loads that package as the `std` module when the
+root is present, so explicit `std::...` names work without a `mod std;`
+declaration:
 
 ```ari
 use std::io::{write_i64, newline};
@@ -21,7 +21,7 @@ fn main() -> i64 {
 }
 ```
 
-The header exposes declaration-shaped IO, input, context, assertion, trait,
+The package exposes declaration-shaped IO, input, context, assertion, trait,
 range, pointer/memory, and zone surfaces. Ari-owned runtime hooks are declared
 with `extern "ari"` and explicit `ari_builtin_*` symbols, not `extern "C"`;
 they are compiler/runtime builtins, not libc bindings. The semantic checker
@@ -59,8 +59,8 @@ fn main() -> i64 {
 
 The `std::vec` module currently exposes allocator-seeding helpers for the
 future growable vector runtime. Its source lives in `lib/std/vec.arih`.
-`std::vec::alloc_buffer<T>(ref mut zone,
-capacity)` allocates `capacity * size_of<T>()` bytes from an explicit `Zone`
+`std::vec::alloc_buffer<T>(ref mut zone, capacity)` allocates
+`capacity * size_of<T>()` bytes from an explicit `Zone`
 capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 `data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,

@@ -78,11 +78,12 @@ and call through `core::...`. Other library modules still require normal
 `mod name;` declarations for now.
 
 The source `std` root is treated as a small package root: file-backed child
-modules declared from `lib/std.arih` may live under `lib/std/`, such as
-`lib/std/mem.arih` for `std::mem`, `lib/std/zone.arih` for `std::zone`,
+modules declared from `lib/std.arih` live under `lib/std/`, such as
+`lib/std/io.arih` for `std::io`, `lib/std/iter.arih` for `std::iter`,
 `lib/std/boxed.arih` for `std::boxed`, and `lib/std/vec.arih` for `std::vec`.
 The same package-style child lookup applies when `std` is loaded explicitly
-through `mod std;`.
+through `mod std;`. New source `std` child modules should start in their own
+`lib/std/name.arih` files.
 
 Use `--no-implicit-std` to disable that special case. Then `std` behaves like
 any other file-backed module, so code must declare `mod std;` and pass a search

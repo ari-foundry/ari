@@ -1,0 +1,23 @@
+pub struct Range[T] {
+  start: T,
+  end: T,
+}
+
+pub struct RangeInclusive[T] {
+  start: T,
+  end: T,
+}
+
+pub fn range[T](start: T, end: T) -> Range[T];
+pub fn range_inclusive[T](start: T, end: T) -> RangeInclusive[T];
+
+pub trait Iterable[T] {
+}
+
+pub trait Iterator[T] {
+  fn next(self: ref mut Self) -> std::Option[T];
+}
+
+pub trait IntoIterator[T] {
+  fn into_iter(self: ref mut Self) -> Self;
+}
