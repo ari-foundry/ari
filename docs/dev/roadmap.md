@@ -116,9 +116,10 @@
    paths still reject ownership-state changes and many borrow-state updates
    instead of proving that every iteration and loop exit merges to a compatible
    state.
-   - [loop-state] track ownership-state fixed points and borrow-state merges
-     through plain loop fallthrough/next-iteration paths instead of rejecting
-     all state changes inside loops
+   - [loop-owner-fixed-point] track ownership-state fixed points through plain
+     loop fallthrough paths instead of rejecting all state changes inside loops
+   - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop
+     fallthrough/next-iteration paths
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
