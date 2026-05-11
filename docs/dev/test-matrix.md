@@ -278,6 +278,8 @@ Checklist:
 - [x] source `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current
       elements into a new target-zone handle and invalidates with that target
       zone after reset/destroy
+- [x] source `std::vec::Vec<T>.as_ptr()` returns the stored element pointer
+      while preserving receiver-zone reset/destroy provenance
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local
       copies, scalar indexing, the fixed-capacity method surface, and
       stored-vector `for` loops

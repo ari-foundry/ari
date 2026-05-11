@@ -16,5 +16,6 @@ std::optional<std::size_t> std_vec_raw_handle_data_field_index(const IrType& typ
 std::optional<std::size_t> std_vec_zone_handle_source_field_index(const IrType& type);
 std::optional<std::vector<std::size_t>> std_vec_zone_handle_data_field_path_indices(const IrType& type);
 bool std_vec_method_requires_same_zone_argument(const std::string& method_name);
+bool std_vec_pointer_result_preserves_receiver_zone(const IrExpr& call);
 
 } // namespace ari

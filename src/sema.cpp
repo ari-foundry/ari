@@ -4521,6 +4521,10 @@ private:
                 zone_pointer_source_name_from_expr(*source.args[0], out)) {
                 return true;
             }
+            if (std_vec_pointer_result_preserves_receiver_zone(source) &&
+                zone_pointer_source_name_from_expr(*source.args[0], out)) {
+                return true;
+            }
             if (is_prelude_slice_type(source.type) &&
                 !source.args.empty() &&
                 zone_pointer_source_name_from_expr(*source.args[0], out)) {

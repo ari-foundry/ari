@@ -319,6 +319,10 @@ pub mod vec {
       return copied;
     }
 
+    fn as_ptr(self) -> ptr T {
+      return self.raw.data;
+    }
+
     fn pop(self: ref mut Self) -> T {
       std::assert(self.raw.len > 0);
       self.raw.len = self.raw.len - 1;

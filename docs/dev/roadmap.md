@@ -107,7 +107,8 @@
    `push_in(ref mut Zone, value)` and `insert_in(ref mut Zone, index, value)`,
    slice extension with `extend_from_slice_in(ref mut Zone, Slice<T>)`,
    grow-or-shrink `resize_in(ref mut Zone, length, value)`, and
-   tracked `as_slice` views over its allocated buffer. It can also
+   tracked `as_slice` views over its allocated buffer. It can also expose
+   the stored data pointer through provenance-preserving `as_ptr()` and
    `copy_to(ref mut Zone)` into a new target-zone handle. Runtime heap growth for
    root/local `Vec[T]` and the root
    `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed

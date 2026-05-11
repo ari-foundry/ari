@@ -1,0 +1,13 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var vec = std::vec::new<i64>(ref mut zone, 2);
+  vec.push(4);
+  vec.push(8);
+
+  let raw = vec.as_ptr();
+  ptr_store(ptr_add(raw, 1), 11);
+  let total = ptr_load(raw) + vec.get(1) + vec.len();
+
+  zone::destroy(zone);
+  return total;
+}

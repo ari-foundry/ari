@@ -13,6 +13,11 @@ bool is_i64_value_type(const IrType& type) {
            type.primitive == IrPrimitiveKind::I64;
 }
 
+IrType value_qualified_vec_type(IrType type) {
+    type.qualifier = TypeQualifier::Value;
+    return type;
+}
+
 } // namespace
 
 std::optional<std::size_t> std_vec_raw_handle_data_field_index(const IrType& type) {
@@ -102,6 +107,13 @@ bool std_vec_method_requires_same_zone_argument(const std::string& method_name) 
            method_name == "insert_in" ||
            method_name == "extend_from_slice_in" ||
            method_name == "resize_in";
+}
+
+bool std_vec_pointer_result_preserves_receiver_zone(const IrExpr& call) {
+    return call.kind == IrExprKind::Call &&
+           call.type.qualifier == TypeQualifier::Ptr &&
+           !call.args.empty() &&
+           is_std_vec_handle_type(value_qualified_vec_type(call.args[0]->type));
 }
 
 } // namespace ari
