@@ -277,6 +277,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-true-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/while-true-return-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-return-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-true-return-owner-state.raw; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/while-true-continue-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
+	grep -q "while.cond" $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
 	$(TARGET) --freestanding tests/ok/statement-label-payloads.ari -o $(BUILD_DIR)/control-flow/statement-label-payloads.raw
 	$(BUILD_DIR)/control-flow/statement-label-payloads.raw; code=$$?; test $$code -eq 7
 	$(TARGET) --freestanding tests/ok/labeled-block.ari -o $(BUILD_DIR)/control-flow/labeled-block.raw

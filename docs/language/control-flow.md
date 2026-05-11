@@ -398,7 +398,10 @@ after the loop.
 
 For a literal `while true` loop, there is no zero-iteration exit. In that case,
 plain `break` paths define the ownership state after the loop. If every body
-path returns, the `while true` statement itself is treated as returning.
+path returns, the `while true` statement itself is treated as returning. If the
+body can only continue the loop and has no reachable `break`, Ari treats the
+loop as non-fallthrough, so a later function return is not required for that
+path.
 
 Because `break` leaves the current nested scopes, any owning binding declared in
 those scopes must be moved or dropped before the jump.

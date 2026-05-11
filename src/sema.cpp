@@ -4312,6 +4312,10 @@ private:
         return condition.kind == IrExprKind::Bool && condition.bool_value;
     }
 
+    static bool literal_true_loop_never_falls_through(const LoopInfo& loop, Flow body_flow) {
+        return body_flow == Flow::Stops && loop.break_state_snapshots.empty();
+    }
+
     void collect_owned_field_states(const IrType& type,
                                     const std::string& path,
                                     std::map<std::string, LocalState>& states) const {
@@ -9551,6 +9555,9 @@ private:
         ));
         set_ir_stmt_label(lowered, label);
         if (literal_true_condition && body.flow == Flow::Returns) return Flow::Returns;
+        if (literal_true_condition && literal_true_loop_never_falls_through(loop_state, body.flow)) {
+            return Flow::Stops;
+        }
         return Flow::Continues;
     }
 
