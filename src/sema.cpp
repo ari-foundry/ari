@@ -3854,17 +3854,17 @@ private:
         local_scopes_.restore_states(snapshot);
     }
 
+    void restore_merged_states(StateSnapshot target, const StateSnapshot& source) {
+        local_scopes_.restore_merged_zone_generations(std::move(target), source);
+    }
+
     static void require_same_states(
         SourceLocation loc,
         const StateSnapshot& left,
         const StateSnapshot& right,
         const std::string& message
     ) {
-        for (const auto& item : left) {
-            if (item.second.state != snapshot_state(right, item.first)) {
-                fail(loc, "binding '" + item.first + "' " + message);
-            }
-        }
+        if (auto error = state_snapshot_mismatch_error(left, right, message)) fail(loc, *error);
     }
 
     void collect_owned_field_states(const IrType& type,
@@ -5705,7 +5705,7 @@ private:
         if (stmt_else_body(stmt).empty()) {
             if (then_checked.flow == Flow::Continues) {
                 require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if without else");
-                restore_states(merge_zone_generations(branch_input, then_state));
+                restore_merged_states(branch_input, then_state);
             } else {
                 restore_states(branch_input);
             }
@@ -5731,7 +5731,7 @@ private:
         }
 
         require_same_states(stmt.loc, then_state, else_state, "has incompatible ownership states after if branches");
-        restore_states(merge_zone_generations(then_state, else_state));
+        restore_merged_states(then_state, else_state);
         return Flow::Continues;
     }
 
@@ -8547,7 +8547,7 @@ private:
         if (stmt_else_body(stmt).empty()) {
             if (then_checked.flow == Flow::Continues) {
                 require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if-let without else");
-                restore_states(merge_zone_generations(branch_input, then_state));
+                restore_merged_states(branch_input, then_state);
             } else {
                 restore_states(branch_input);
             }
@@ -8576,7 +8576,7 @@ private:
         }
 
         require_same_states(stmt.loc, then_state, else_state, "has incompatible ownership states after if-let branches");
-        restore_states(merge_zone_generations(then_state, else_state));
+        restore_merged_states(then_state, else_state);
         return Flow::Continues;
     }
 
@@ -8727,7 +8727,7 @@ private:
 
         if (has_continuing_state) {
             require_same_states(stmt.loc, branch_input, continuing_state, "changes ownership state in if-let without else");
-            restore_states(merge_zone_generations(branch_input, continuing_state));
+            restore_merged_states(branch_input, continuing_state);
         } else {
             restore_states(branch_input);
         }
@@ -9017,7 +9017,7 @@ private:
 
         if (body.flow == Flow::Continues) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_states(merge_zone_generations(loop_input, loop_body_state));
+            restore_merged_states(loop_input, loop_body_state);
         } else {
             restore_states(loop_input);
         }
@@ -9073,7 +9073,7 @@ private:
 
         if (body.flow == Flow::Continues) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_states(merge_zone_generations(loop_input, loop_body_state));
+            restore_merged_states(loop_input, loop_body_state);
         } else {
             restore_states(loop_input);
         }
@@ -9166,7 +9166,7 @@ private:
                     loop_body_state,
                     "cannot change ownership state inside loop yet"
                 );
-                restore_states(merge_zone_generations(loop_input, loop_body_state));
+                restore_merged_states(loop_input, loop_body_state);
             } else {
                 restore_states(loop_input);
             }
@@ -9595,7 +9595,7 @@ private:
 
         if (body.flow == Flow::Continues) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_states(merge_zone_generations(loop_input, loop_body_state));
+            restore_merged_states(loop_input, loop_body_state);
         } else {
             restore_states(loop_input);
         }
@@ -9777,7 +9777,7 @@ private:
 
         if (body.flow == Flow::Continues) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_states(merge_zone_generations(loop_input, loop_body_state));
+            restore_merged_states(loop_input, loop_body_state);
         } else {
             restore_states(loop_input);
         }
@@ -9827,7 +9827,7 @@ private:
 
         if (body.flow == Flow::Continues) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_states(merge_zone_generations(loop_input, loop_body_state));
+            restore_merged_states(loop_input, loop_body_state);
         } else {
             restore_states(loop_input);
         }
@@ -9902,7 +9902,7 @@ private:
 
         if (body.flow == Flow::Continues) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_states(merge_zone_generations(loop_input, loop_body_state));
+            restore_merged_states(loop_input, loop_body_state);
         } else {
             restore_states(loop_input);
         }
@@ -9978,7 +9978,7 @@ private:
         StateSnapshot loop_body_state = snapshot_states();
         if (body.flow == Flow::Continues) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_states(merge_zone_generations(loop_input, loop_body_state));
+            restore_merged_states(loop_input, loop_body_state);
         } else {
             restore_states(loop_input);
         }
@@ -9997,7 +9997,7 @@ private:
             }
             StateSnapshot update_state = snapshot_states();
             require_same_states(stmt.loc, update_input, update_state, "cannot change ownership state in loop updates yet");
-            restore_states(merge_zone_generations(update_input, update_state));
+            restore_merged_states(update_input, update_state);
         }
         loops_.pop_back();
     }
@@ -11330,7 +11330,7 @@ private:
 
         require_same_states(expr.loc, then_arm.state, else_arm.state,
                             "has incompatible ownership states after if expression branches");
-        restore_states(merge_zone_generations(then_arm.state, else_arm.state));
+        restore_merged_states(then_arm.state, else_arm.state);
 
         return make_ir_if_expr(
             expr.loc,
@@ -11435,7 +11435,7 @@ private:
 
         require_same_states(expr.loc, then_state, else_checked.state,
                             "has incompatible ownership states after if-let expression branches");
-        restore_states(merge_zone_generations(then_state, else_checked.state));
+        restore_merged_states(then_state, else_checked.state);
 
         auto pattern_match = std::make_unique<IrStmt>();
         pattern_match->kind = IrStmtKind::Match;
@@ -12192,7 +12192,7 @@ private:
         require_assignable(expr.loc, shape.success_payload_type, rhs->type);
         StateSnapshot after_rhs = snapshot_states();
         require_same_states(expr.loc, after_lhs, after_rhs, "changes ownership state in ?? fallback");
-        restore_states(merge_zone_generations(after_lhs, after_rhs));
+        restore_merged_states(after_lhs, after_rhs);
 
         return make_ir_null_coalesce_expr(
             expr.loc,

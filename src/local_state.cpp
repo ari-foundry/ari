@@ -206,10 +206,21 @@ std::optional<std::string> local_method_mutability_error(const std::string& name
     return std::nullopt;
 }
 
-LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name) {
+static LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name) {
     auto found = snapshot.find(name);
     if (found == snapshot.end()) return LocalState::Alive;
     return found->second.state;
+}
+
+std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& left,
+                                                         const StateSnapshot& right,
+                                                         const std::string& message) {
+    for (const auto& item : left) {
+        if (item.second.state != snapshot_state(right, item.first)) {
+            return "binding '" + item.first + "' " + message;
+        }
+    }
+    return std::nullopt;
 }
 
 void merge_zone_generations_into(StateSnapshot& target, const StateSnapshot& source) {
@@ -414,6 +425,10 @@ void LocalScopeStack::restore_states(const StateSnapshot& snapshot) {
             local.vector_known_length = item.second.vector_known_length;
         }
     }
+}
+
+void LocalScopeStack::restore_merged_zone_generations(StateSnapshot target, const StateSnapshot& source) {
+    restore_states(merge_zone_generations(std::move(target), source));
 }
 
 bool LocalScopeStack::name_was_used(const std::string& name) const {

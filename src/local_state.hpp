@@ -100,7 +100,9 @@ std::optional<std::string> local_mutable_borrow_error(const std::string& name, c
 std::optional<std::string> local_method_mutability_error(const std::string& name,
                                                          const LocalInfo& local,
                                                          const std::string& method_display);
-LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name);
+std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& left,
+                                                         const StateSnapshot& right,
+                                                         const std::string& message);
 void merge_zone_generations_into(StateSnapshot& target, const StateSnapshot& source);
 void merge_existing_zone_generations_into(StateSnapshot& target, const StateSnapshot& source);
 StateSnapshot merge_zone_generations(StateSnapshot target, const StateSnapshot& source);
@@ -137,6 +139,7 @@ public:
     bool scope_index(const std::string& name, std::size_t& out) const;
     StateSnapshot snapshot_states() const;
     void restore_states(const StateSnapshot& snapshot);
+    void restore_merged_zone_generations(StateSnapshot target, const StateSnapshot& source);
 
     bool name_was_used(const std::string& name) const;
     bool reusable_pattern_binding(const std::string& name) const;

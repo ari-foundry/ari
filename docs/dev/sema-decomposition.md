@@ -91,7 +91,7 @@ construction. Some helpers have already moved out to focused files:
   return-owner traversal, LocalInfo construction, state setters, zone generation
   bumps, vector known-length accessors, static integer cache setters, and
   owned-field path/state helpers, plus local assignment and immutable receiver
-  diagnostic helpers
+  diagnostic helpers plus branch/loop state comparison and merged restore hooks
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
@@ -280,8 +280,8 @@ pending IR.
    - Binding assignment eligibility, field-assignment base mutability,
      immutable Vec/Slice receiver checks, and immutable mutable-borrow checks
      now use local-state diagnostic helpers.
-   - Finish moving branch/loop merge hooks behind local-state or ownership
-     adapters.
+   - Branch/loop state mismatch diagnostics and merged state restores now go
+     through local-state APIs.
 2. Extract borrow checking into `borrow_semantics`.
    - Move named borrow tracking, aggregate borrow source tracking, temporary
      borrow promotion/release, and path borrow conflicts.

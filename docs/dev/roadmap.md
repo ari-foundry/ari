@@ -111,14 +111,13 @@
    mutability, immutable Vec/Slice receiver diagnostics, and immutable
    mutable-borrow diagnostics now also route through local-state diagnostic
    helpers while `SemanticChecker` keeps source locations and borrow-conflict
-   checks. `SemanticChecker` still coordinates branch/loop state merge
-   decisions, move/drop lowering, and most borrow rules.
+   checks. Branch/loop ownership-state comparison and merged restore hooks now
+   route through `local_state` snapshot APIs. `SemanticChecker` still
+   coordinates move/drop lowering and most borrow rules.
    Finish those behavior-preserving moves before starting the larger
    borrow-checking and ownership extractions, leaning on the existing ownership,
    borrow, loop, and control-flow tests instead of adding broad duplicate
    coverage.
-   - [mutation-api] route branch/loop state merge hooks through local-state or
-     ownership adapters without leaking scope internals
    - [borrow-adapter] keep named and temporary borrow checks layered over the
      new local-state API so later `borrow_semantics` extraction has one entry point
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
