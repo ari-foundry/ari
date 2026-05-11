@@ -2280,6 +2280,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "borrowed references cannot be returned in the executable subset yet" $(BUILD_DIR)/errors/return-borrow.err
 	if $(TARGET) tests/errors/discard-borrow.ari -o $(BUILD_DIR)/errors/discard-borrow.elf >$(BUILD_DIR)/errors/discard-borrow.err 2>&1; then exit 1; fi
 	grep -q "borrow expression result must be passed directly to a call" $(BUILD_DIR)/errors/discard-borrow.err
+	$(TARGET) --freestanding tests/ok/borrow-call.ari -o $(BUILD_DIR)/errors/borrow-call.raw
+	$(BUILD_DIR)/errors/borrow-call.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/borrow-named.ari -o $(BUILD_DIR)/errors/borrow-named.raw
 	$(BUILD_DIR)/errors/borrow-named.raw; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-named.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-named.elf; $(BUILD_DIR)/errors/borrow-named.elf; code=$$?; test $$code -eq 12; fi

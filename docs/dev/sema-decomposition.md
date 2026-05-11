@@ -93,6 +93,9 @@ construction. Some helpers have already moved out to focused files:
   owned-field path/state helpers, plus local assignment and immutable receiver
   diagnostic helpers plus branch/loop state comparison and merged restore hooks,
   borrow count/source helpers, and named/aggregate borrow-source release
+- `borrow_semantics` for the lexical temporary-borrow stack, named and aggregate
+  borrow-source promotion/release, and path borrow conflict diagnostics layered
+  over `local_state`
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
@@ -287,9 +290,16 @@ pending IR.
      go through local-state APIs. This completes the local-state extraction
      stage; subsequent borrow work should move into `borrow_semantics`.
 2. Extract borrow checking into `borrow_semantics`.
-   - Move named borrow tracking, aggregate borrow source tracking, temporary
-     borrow promotion/release, and path borrow conflicts.
-   - Keep it layered over `local_state` so later NLL work has one entry point.
+   - Temporary borrow stack ownership, named borrow promotion, aggregate borrow
+     source promotion, and temporary/named release now live in
+     `borrow_semantics::BorrowContext`.
+   - `require_not_borrowed`, `require_can_read_borrow_path`,
+     `require_can_assign_borrow_path`, and `require_can_borrow_path` now live in
+     `borrow_semantics` and stay layered over `local_state` borrow-count/path
+     helpers.
+   - This completes the lexical borrow-checking extraction stage. Future NLL,
+     reborrow, and borrow-result work should build on `BorrowContext` instead
+     of adding new raw borrow-state paths in `sema.cpp`.
 3. Extract ownership/drop checking into `ownership_semantics`.
    - Move owned field state tracking, partial move/reinitialization checks,
      `drop` lowering, destructor lookup glue, and return-owner checks.

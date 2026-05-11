@@ -5,6 +5,7 @@
 #include "aggregate_literal_semantics.hpp"
 #include "ast_clone.hpp"
 #include "ari_builtin.hpp"
+#include "borrow_semantics.hpp"
 #include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
 #include "constant_semantics.hpp"
@@ -188,7 +189,8 @@ struct TrackedAggregateAccess {
 
 class SemanticChecker {
 public:
-    explicit SemanticChecker(const Program& program, SemaOptions options) : program_(program), options_(options) {}
+    explicit SemanticChecker(const Program& program, SemaOptions options)
+        : program_(program), options_(options), borrow_context_(local_scopes_) {}
 
     IrProgram check() {
         collect_module_decls();
@@ -282,12 +284,6 @@ private:
         std::vector<std::string> exit_cleanup_owner_names;
     };
 
-    struct TemporaryBorrow {
-        std::string name;
-        std::string path;
-        bool mutable_borrow = false;
-    };
-
     struct PendingSpecialization {
         const FunctionDecl* fn = nullptr;
         std::string name;
@@ -363,8 +359,8 @@ private:
     std::map<std::string, std::map<std::string, UseInfo>> uses_;
     std::set<std::string> impl_keys_;
     LocalScopeStack local_scopes_;
+    BorrowContext borrow_context_;
     std::vector<LoopInfo> loops_;
-    std::vector<TemporaryBorrow> temporary_borrows_;
     std::map<std::string, IrType> current_type_substitutions_;
     std::vector<GenericTraitBound> current_generic_bounds_;
     std::vector<IrFunction> specialized_functions_;
@@ -3435,7 +3431,7 @@ private:
         allow_zone_temp_init_ = false;
         local_scopes_.clear();
         loops_.clear();
-        temporary_borrows_.clear();
+        borrow_context_.clear();
         push_scope();
 
         current_return_ = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
@@ -3538,40 +3534,25 @@ private:
     }
 
     void add_borrow_source(LocalInfo& source, const std::string& path, bool mutable_borrow) {
-        add_local_borrow_source(source, path, mutable_borrow);
+        borrow_context_.add_source(source, path, mutable_borrow);
     }
 
     void release_borrow_source(const std::string& name, const std::string& path, bool mutable_borrow) {
-        local_scopes_.release_borrow_source(name, path, mutable_borrow);
+        borrow_context_.release_source(name, path, mutable_borrow);
     }
 
     void release_named_borrow(const LocalInfo& borrow) {
-        local_scopes_.release_borrow_sources(borrow);
+        borrow_context_.release_named(borrow);
     }
 
     void promote_temporary_borrow_to_named(SourceLocation loc, const IrExpr& init, const std::string& binding_name) {
-        if (init.kind != IrExprKind::Borrow) {
-            fail(loc, "borrow bindings must be initialized directly with ref or ref mut");
-        }
-        if (temporary_borrows_.empty() ||
-            temporary_borrows_.back().name != ir_expr_name(init) ||
-            temporary_borrows_.back().path != ir_expr_label(init) ||
-            temporary_borrows_.back().mutable_borrow != init.mutable_borrow) {
-            throw CompileError("internal error: borrow binding '" + binding_name + "' did not match the active temporary borrow");
-        }
-        temporary_borrows_.pop_back();
         LocalInfo& binding = local_slot_by_name(binding_name);
-        set_local_named_borrow_source(binding, ir_expr_name(init), ir_expr_label(init), init.mutable_borrow);
+        borrow_context_.promote_to_named(loc, init, binding_name, binding);
     }
 
     void promote_temporary_borrows_to_aggregate(std::size_t mark, const std::string& binding_name) {
-        if (temporary_borrows_.size() == mark) return;
         LocalInfo& binding = local_slot_by_name(binding_name);
-        for (std::size_t i = mark; i < temporary_borrows_.size(); ++i) {
-            const TemporaryBorrow& borrow = temporary_borrows_[i];
-            add_local_aggregate_borrow_source(binding, borrow.name, borrow.path, borrow.mutable_borrow);
-        }
-        temporary_borrows_.resize(mark);
+        borrow_context_.promote_to_aggregate(mark, binding);
     }
 
     void declare_local(SourceLocation loc, const std::string& name, const IrType& type, bool mutable_binding) {
@@ -4046,78 +4027,12 @@ private:
         );
     }
 
-    static void require_not_borrowed(SourceLocation loc, const std::string& name, const LocalInfo& local, const std::string& action) {
-        if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) {
-            fail(loc, "cannot " + action + " borrowed binding '" + name + "'");
-        }
-    }
-
-    void require_can_read_borrow_path(SourceLocation loc,
-                                      const std::string& name,
-                                      const LocalInfo& local,
-        const std::string& path) const {
-        if (path.empty()) {
-            if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
-                fail(loc, "cannot read mutably borrowed binding '" + name + "'");
-            }
-            return;
-        }
-        if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
-            fail(loc, "cannot read mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
-        }
-    }
-
-    void require_can_assign_borrow_path(SourceLocation loc,
-                                        const std::string& name,
-                                        const LocalInfo& local,
-                                        const std::string& path) const {
-        if (path.empty()) {
-            require_not_borrowed(loc, name, local, "assign to");
-            return;
-        }
-        if (local_has_active_borrows(local) || local_has_overlapping_field_borrows(local, path)) {
-            fail(loc, "cannot assign to borrowed field '" + local_borrow_path_display(name, path) + "'");
-        }
-    }
-
-    void require_can_borrow_path(SourceLocation loc,
-                                 const std::string& name,
-                                 const LocalInfo& local,
-                                 const std::string& path,
-                                 bool mutable_borrow) const {
-        if (path.empty()) {
-            if (mutable_borrow) {
-                if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) {
-                    fail(loc, "cannot mutably borrow already borrowed binding '" + name + "'");
-                }
-                return;
-            }
-            if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
-                fail(loc, "cannot immutably borrow mutably borrowed binding '" + name + "'");
-            }
-            return;
-        }
-        if (mutable_borrow) {
-            if (local_has_active_borrows(local) || local_has_overlapping_field_borrows(local, path)) {
-                fail(loc, "cannot mutably borrow already borrowed field '" + local_borrow_path_display(name, path) + "'");
-            }
-            return;
-        }
-        if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
-            fail(loc, "cannot immutably borrow mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
-        }
-    }
-
     std::size_t temporary_borrow_mark() const {
-        return temporary_borrows_.size();
+        return borrow_context_.mark();
     }
 
     void release_temporary_borrows(std::size_t mark) {
-        for (std::size_t i = temporary_borrows_.size(); i > mark; --i) {
-            const TemporaryBorrow& borrow = temporary_borrows_[i - 1];
-            release_borrow_source(borrow.name, borrow.path, borrow.mutable_borrow);
-        }
-        temporary_borrows_.resize(mark);
+        borrow_context_.release_to_mark(mark);
     }
 
     CheckedStatements check_statements(const std::vector<StmtPtr>& statements, bool scoped) {
@@ -12196,7 +12111,7 @@ private:
         require_can_borrow_path(expr.loc, access.base_name, source, access.path, expr.mutable_borrow);
         add_borrow_source(source, access.path, expr.mutable_borrow);
 
-        temporary_borrows_.push_back(TemporaryBorrow{access.base_name, access.path, expr.mutable_borrow});
+        borrow_context_.push_temporary(access.base_name, access.path, expr.mutable_borrow);
         return make_borrow_expr(
             expr.loc,
             access.base_name,

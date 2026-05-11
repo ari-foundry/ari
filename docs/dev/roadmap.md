@@ -95,18 +95,16 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Extract borrow checking into `borrow_semantics`.
-   The local-state prerequisite is complete: local scopes, state snapshots,
-   assignment/mutability diagnostics, branch/loop state merge hooks, borrow
-   count/source storage, and named/aggregate borrow-source release now route
-   through `local_state` APIs. Move the remaining borrow policy out of
-   `sema.cpp` in behavior-preserving slices before attempting NLL or richer
-   borrow-valued results.
-   - [borrow-context] introduce a small borrow context around the temporary
-     borrow stack and `LocalScopeStack` borrow-source API
-   - [borrow-diagnostics] move `require_not_borrowed`,
-     `require_can_read_borrow_path`, `require_can_assign_borrow_path`, and
-     `require_can_borrow_path` behind that context
+2. Build the first post-extraction borrow semantics on `BorrowContext`.
+   The lexical borrow checker now has a focused `borrow_semantics` module, so
+   small borrow-language improvements can land without growing `sema.cpp` again.
+   Keep the first slices conservative and diagnostic-first before attempting
+   full NLL.
+   - [reborrow-local] allow safe reborrowing from existing borrow bindings when
+     the source borrow mode permits it
+   - [borrow-result-shapes] allow borrow-valued block, `if`, `match`, and
+     labeled-block expression results only when every arm preserves the same
+     source path and borrow mode
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -153,9 +151,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      applications once associated types and projections exist
 2. Refine borrow checking beyond lexical named borrows.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
-   - [reborrow] allow safe reborrowing from existing borrow bindings
-   - [borrow-results] allow borrow-valued function returns, `if`/`match`/block
-     expression results, and labeled-block break values when lifetimes are valid
+   - [borrow-returns] allow borrow-valued function returns when lifetimes are
+     valid after the near-term expression-result shape checks land
    - [aggregate-borrows] track borrow-valued aggregate fields independently so
      assigning unrelated fields or whole aggregate bindings can be checked
    - [loop-state] track ownership and borrow state through loops, init-while

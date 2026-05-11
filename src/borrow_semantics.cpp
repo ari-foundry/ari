@@ -1,0 +1,142 @@
+#include "borrow_semantics.hpp"
+
+#include "common.hpp"
+
+#include <utility>
+
+namespace ari {
+
+namespace {
+
+[[noreturn]] void fail_borrow(SourceLocation loc, const std::string& message) {
+    throw CompileError(where(loc) + ": " + message);
+}
+
+} // namespace
+
+BorrowContext::BorrowContext(LocalScopeStack& local_scopes) : local_scopes_(local_scopes) {}
+
+void BorrowContext::clear() {
+    temporary_borrows_.clear();
+}
+
+std::size_t BorrowContext::mark() const {
+    return temporary_borrows_.size();
+}
+
+void BorrowContext::push_temporary(std::string name, std::string path, bool mutable_borrow) {
+    temporary_borrows_.push_back(TemporaryBorrow{std::move(name), std::move(path), mutable_borrow});
+}
+
+void BorrowContext::add_source(LocalInfo& source, const std::string& path, bool mutable_borrow) {
+    add_local_borrow_source(source, path, mutable_borrow);
+}
+
+void BorrowContext::release_source(const std::string& name, const std::string& path, bool mutable_borrow) {
+    local_scopes_.release_borrow_source(name, path, mutable_borrow);
+}
+
+void BorrowContext::release_named(const LocalInfo& borrow) {
+    local_scopes_.release_borrow_sources(borrow);
+}
+
+void BorrowContext::promote_to_named(SourceLocation loc,
+                                     const IrExpr& init,
+                                     const std::string& binding_name,
+                                     LocalInfo& binding) {
+    if (init.kind != IrExprKind::Borrow) {
+        fail_borrow(loc, "borrow bindings must be initialized directly with ref or ref mut");
+    }
+    if (temporary_borrows_.empty() ||
+        temporary_borrows_.back().name != ir_expr_name(init) ||
+        temporary_borrows_.back().path != ir_expr_label(init) ||
+        temporary_borrows_.back().mutable_borrow != init.mutable_borrow) {
+        throw CompileError("internal error: borrow binding '" + binding_name + "' did not match the active temporary borrow");
+    }
+    temporary_borrows_.pop_back();
+    set_local_named_borrow_source(binding, ir_expr_name(init), ir_expr_label(init), init.mutable_borrow);
+}
+
+void BorrowContext::promote_to_aggregate(std::size_t mark, LocalInfo& binding) {
+    if (temporary_borrows_.size() == mark) return;
+    for (std::size_t i = mark; i < temporary_borrows_.size(); ++i) {
+        const TemporaryBorrow& borrow = temporary_borrows_[i];
+        add_local_aggregate_borrow_source(binding, borrow.name, borrow.path, borrow.mutable_borrow);
+    }
+    temporary_borrows_.resize(mark);
+}
+
+void BorrowContext::release_to_mark(std::size_t mark) {
+    for (std::size_t i = temporary_borrows_.size(); i > mark; --i) {
+        const TemporaryBorrow& borrow = temporary_borrows_[i - 1];
+        release_source(borrow.name, borrow.path, borrow.mutable_borrow);
+    }
+    temporary_borrows_.resize(mark);
+}
+
+void require_not_borrowed(SourceLocation loc,
+                          const std::string& name,
+                          const LocalInfo& local,
+                          const std::string& action) {
+    if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) {
+        fail_borrow(loc, "cannot " + action + " borrowed binding '" + name + "'");
+    }
+}
+
+void require_can_read_borrow_path(SourceLocation loc,
+                                  const std::string& name,
+                                  const LocalInfo& local,
+                                  const std::string& path) {
+    if (path.empty()) {
+        if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
+            fail_borrow(loc, "cannot read mutably borrowed binding '" + name + "'");
+        }
+        return;
+    }
+    if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
+        fail_borrow(loc, "cannot read mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
+    }
+}
+
+void require_can_assign_borrow_path(SourceLocation loc,
+                                    const std::string& name,
+                                    const LocalInfo& local,
+                                    const std::string& path) {
+    if (path.empty()) {
+        require_not_borrowed(loc, name, local, "assign to");
+        return;
+    }
+    if (local_has_active_borrows(local) || local_has_overlapping_field_borrows(local, path)) {
+        fail_borrow(loc, "cannot assign to borrowed field '" + local_borrow_path_display(name, path) + "'");
+    }
+}
+
+void require_can_borrow_path(SourceLocation loc,
+                             const std::string& name,
+                             const LocalInfo& local,
+                             const std::string& path,
+                             bool mutable_borrow) {
+    if (path.empty()) {
+        if (mutable_borrow) {
+            if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) {
+                fail_borrow(loc, "cannot mutably borrow already borrowed binding '" + name + "'");
+            }
+            return;
+        }
+        if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
+            fail_borrow(loc, "cannot immutably borrow mutably borrowed binding '" + name + "'");
+        }
+        return;
+    }
+    if (mutable_borrow) {
+        if (local_has_active_borrows(local) || local_has_overlapping_field_borrows(local, path)) {
+            fail_borrow(loc, "cannot mutably borrow already borrowed field '" + local_borrow_path_display(name, path) + "'");
+        }
+        return;
+    }
+    if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
+        fail_borrow(loc, "cannot immutably borrow mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
+    }
+}
+
+} // namespace ari
