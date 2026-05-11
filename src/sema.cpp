@@ -6229,12 +6229,15 @@ private:
         coerce_condition_to_bool(stmt.loc, lowered.condition);
         std::optional<bool> literal_condition = literal_bool_condition_value(*lowered.condition);
         StateSnapshot branch_input = snapshot_states();
+        std::vector<LoopInfo> loop_input = loops_;
 
         CheckedStatements then_checked = check_statements(stmt_then_body(stmt), true);
         set_ir_stmt_then_body(lowered, std::move(then_checked.statements));
         StateSnapshot then_state = snapshot_states();
+        std::vector<LoopInfo> then_loops = loops_;
 
         restore_states(branch_input);
+        if (literal_condition && !*literal_condition) loops_ = loop_input;
 
         if (stmt_else_body(stmt).empty()) {
             if (literal_condition && !*literal_condition) {
@@ -6255,12 +6258,15 @@ private:
             return Flow::Continues;
         }
 
+        if (literal_condition && *literal_condition) loops_ = loop_input;
         CheckedStatements else_checked = check_statements(stmt_else_body(stmt), true);
         set_ir_stmt_else_body(lowered, std::move(else_checked.statements));
         StateSnapshot else_state = snapshot_states();
+        std::vector<LoopInfo> else_loops = loops_;
 
         if (literal_condition) {
             Flow selected_flow = *literal_condition ? then_checked.flow : else_checked.flow;
+            loops_ = *literal_condition ? std::move(then_loops) : std::move(else_loops);
             if (selected_flow == Flow::Continues) {
                 restore_states(*literal_condition ? then_state : else_state);
             } else {

@@ -27,7 +27,7 @@ as `value != 0`; ownership-qualified values are not implicitly converted.
 For statement `if`, literal `true` and `false` conditions are checked as normal,
 but flow analysis follows the selected branch. This lets ownership and
 non-returning path checks ignore statement paths that a literal condition cannot
-reach.
+reach, including unreachable `break` and `continue` paths inside loops.
 
 `if` can also be used as an expression when both arms produce a value:
 

@@ -285,6 +285,8 @@ check-control-flow: $(TARGET)
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
 	$(TARGET) tests/ok/while-true-empty-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-empty-noreturn.ll
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/while-true-empty-noreturn.ll
+	$(TARGET) tests/ok/while-true-if-false-break-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-if-false-break-noreturn.ll
+	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-true-if-false-break-noreturn.ll
 	$(TARGET) --freestanding tests/ok/statement-label-payloads.ari -o $(BUILD_DIR)/control-flow/statement-label-payloads.raw
 	$(BUILD_DIR)/control-flow/statement-label-payloads.raw; code=$$?; test $$code -eq 7
 	$(TARGET) --freestanding tests/ok/labeled-block.ari -o $(BUILD_DIR)/control-flow/labeled-block.raw
