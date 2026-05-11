@@ -103,13 +103,17 @@
    while preserving the existing cross-path ownership-state compatibility
    check. `init while` and `let while` loop bindings may now carry owning
    values through `next` and value `continue` updates when the previous owner is
-   moved or dropped before the positional update writes the replacement. The
-   next borrow-checking pressure point is loop precision: plain loops still
-   reject ownership-state changes and many borrow-state updates instead of
-   proving that every iteration and loop exit merges to a compatible state.
+   moved or dropped before the positional update writes the replacement. Plain
+   loop `break` exits now record the ownership state at the jump and require it
+   to merge with the zero-iteration exit state, so owners cannot be dropped on a
+   break path and then treated as live after the loop. The next
+   borrow-checking pressure point is loop precision: plain loop fallthrough
+   paths still reject ownership-state changes and many borrow-state updates
+   instead of proving that every iteration and loop exit merges to a compatible
+   state.
    - [loop-state] track ownership and borrow state through plain loops and
-     owning non-init loop bindings instead of rejecting all state changes inside
-     loops
+     owning non-init loop bindings on fallthrough/next-iteration paths instead
+     of rejecting all state changes inside loops
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

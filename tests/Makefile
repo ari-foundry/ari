@@ -2271,6 +2271,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "has incompatible ownership states after if branches" $(BUILD_DIR)/errors/if-branch-state-mismatch.err
 	if $(TARGET) tests/errors/loop-drop-owner.ari -o $(BUILD_DIR)/errors/loop-drop-owner.elf >$(BUILD_DIR)/errors/loop-drop-owner.err 2>&1; then exit 1; fi
 	grep -q "cannot change ownership state inside loop yet" $(BUILD_DIR)/errors/loop-drop-owner.err
+	if $(TARGET) tests/errors/loop-break-owner-state.ari -o $(BUILD_DIR)/errors/loop-break-owner-state.elf >$(BUILD_DIR)/errors/loop-break-owner-state.err 2>&1; then exit 1; fi
+	grep -q "binding 'token' has incompatible ownership states after loop exits" $(BUILD_DIR)/errors/loop-break-owner-state.err
 	if $(TARGET) tests/errors/while-non-bool.ari -o $(BUILD_DIR)/errors/while-non-bool.elf >$(BUILD_DIR)/errors/while-non-bool.err 2>&1; then exit 1; fi
 	grep -q "condition must be bool or integer-convertible, got string" $(BUILD_DIR)/errors/while-non-bool.err
 	if $(TARGET) tests/errors/break-outside-loop.ari -o $(BUILD_DIR)/errors/break-outside-loop.elf >$(BUILD_DIR)/errors/break-outside-loop.err 2>&1; then exit 1; fi

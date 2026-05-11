@@ -33,4 +33,18 @@ std::optional<std::string> loop_state_mismatch_error_ignoring_bindings(
     return std::nullopt;
 }
 
+std::optional<std::string> merge_loop_exit_states(
+    StateSnapshot& merged,
+    const std::vector<StateSnapshot>& break_states,
+    const std::string& message
+) {
+    for (const auto& break_state : break_states) {
+        if (auto error = state_snapshot_mismatch_error(merged, break_state, message)) {
+            return error;
+        }
+        merge_existing_zone_generations_into(merged, break_state);
+    }
+    return std::nullopt;
+}
+
 } // namespace ari

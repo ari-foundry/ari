@@ -4262,6 +4262,33 @@ private:
         return false;
     }
 
+    static void merge_break_exit_states(
+        SourceLocation loc,
+        StateSnapshot& exit_state,
+        const LoopInfo& loop,
+        const std::string& message
+    ) {
+        if (auto error = merge_loop_exit_states(exit_state, loop.break_state_snapshots, message)) {
+            fail(loc, *error);
+        }
+    }
+
+    static StateSnapshot checked_loop_exit_state(
+        SourceLocation loc,
+        const StateSnapshot& loop_input,
+        const StateSnapshot& loop_body_state,
+        const LoopInfo& loop,
+        Flow body_flow
+    ) {
+        StateSnapshot exit_state = loop_input;
+        if (body_flow == Flow::Continues) {
+            require_same_states(loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
+            merge_existing_zone_generations_into(exit_state, loop_body_state);
+        }
+        merge_break_exit_states(loc, exit_state, loop, "has incompatible ownership states after loop exits");
+        return exit_state;
+    }
+
     void collect_owned_field_states(const IrType& type,
                                     const std::string& path,
                                     std::map<std::string, LocalState>& states) const {
@@ -9472,14 +9499,10 @@ private:
         CheckedStatements body = check_statements(stmt_loop_body(stmt), true);
         set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
+        LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        if (body.flow == Flow::Continues) {
-            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_merged_states(loop_input, loop_body_state);
-        } else {
-            restore_states(loop_input);
-        }
+        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
         set_ir_stmt_label(lowered, label);
     }
 
@@ -9528,14 +9551,10 @@ private:
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
+        LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        if (body.flow == Flow::Continues) {
-            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_merged_states(loop_input, loop_body_state);
-        } else {
-            restore_states(loop_input);
-        }
+        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
         IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(lowered);
         for (auto& arm : pattern_arms) {
             lowered_arms.push_back(std::move(arm));
@@ -9630,6 +9649,7 @@ private:
                 restore_states(loop_input);
             }
         }
+        LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
         if (!has_irrefutable_alternative) {
@@ -9644,7 +9664,9 @@ private:
             ir_stmt_loop_body(lowered).push_back(std::move(statement));
         }
 
-        restore_states(loop_input);
+        StateSnapshot exit_state = loop_input;
+        merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
+        restore_states(exit_state);
     }
 
     void bind_irrefutable_non_iterator_for_item(SourceLocation loc,
@@ -10050,14 +10072,10 @@ private:
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
+        LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        if (body.flow == Flow::Continues) {
-            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_merged_states(loop_input, loop_body_state);
-        } else {
-            restore_states(loop_input);
-        }
+        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
         IrStmtMatchArms& loop_arms = ensure_ir_stmt_match_arms(*loop);
         for (auto& arm : pattern_arms) {
             loop_arms.push_back(std::move(arm));
@@ -10232,14 +10250,10 @@ private:
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
+        LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        if (body.flow == Flow::Continues) {
-            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_merged_states(loop_input, loop_body_state);
-        } else {
-            restore_states(loop_input);
-        }
+        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
     }
 
     void check_for_vector(const Stmt& stmt, IrStmt& lowered) {
@@ -10282,14 +10296,10 @@ private:
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
+        LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        if (body.flow == Flow::Continues) {
-            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_merged_states(loop_input, loop_body_state);
-        } else {
-            restore_states(loop_input);
-        }
+        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
     }
 
     void check_for_vector_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
@@ -10357,14 +10367,10 @@ private:
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
+        LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        if (body.flow == Flow::Continues) {
-            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_merged_states(loop_input, loop_body_state);
-        } else {
-            restore_states(loop_input);
-        }
+        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
         ir_stmt_statements(lowered).push_back(std::move(loop));
     }
 
@@ -10452,9 +10458,10 @@ private:
         CheckedStatements body = check_statements(stmt_loop_body(stmt), true);
         set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
+        StateSnapshot exit_state = loop_input;
         if (body.flow == Flow::Continues && stmt.updates.empty()) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            restore_merged_states(loop_input, loop_body_state);
+            merge_existing_zone_generations_into(exit_state, loop_body_state);
         } else if (body.flow == Flow::Continues) {
             require_same_states_except_loop_bindings(
                 stmt.loc,
@@ -10463,8 +10470,6 @@ private:
                 loop,
                 "cannot change ownership state inside loop except updated init-while bindings"
             );
-        } else {
-            restore_states(loop_input);
         }
 
         if (body.flow == Flow::Continues && !stmt.updates.empty()) {
@@ -10481,9 +10486,12 @@ private:
             apply_init_while_update_state(stmt.loc, loop);
             StateSnapshot update_state = snapshot_states();
             require_same_states(stmt.loc, loop_input, update_state, "cannot change ownership state in loop updates yet");
-            restore_merged_states(loop_input, update_state);
+            merge_existing_zone_generations_into(exit_state, update_state);
         }
+        LoopInfo loop_state = loops_.back();
         loops_.pop_back();
+        merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
+        restore_states(exit_state);
     }
 
     const LoopInfo& loop_for_break(SourceLocation loc, const std::string& label) const {
@@ -10531,6 +10539,7 @@ private:
             std::vector<IrStmtPtr> cleanup;
             append_auto_destroy_zone_cleanup(stmt.loc, cleanup, target.scope_depth);
             append_outer_loop_exit_owner_cleanup_until(stmt.loc, target, cleanup);
+            target.break_state_snapshots.push_back(snapshot_states());
             if (!cleanup.empty()) {
                 auto break_stmt = std::make_unique<IrStmt>();
                 break_stmt->kind = IrStmtKind::Break;

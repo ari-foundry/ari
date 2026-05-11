@@ -391,6 +391,11 @@ while true {
 
 `break` exits the nearest loop.
 
+When a `break` exits a loop, Ari checks that any owning bindings visible after
+the loop have the same state as they would have if the loop ran zero times. This
+keeps paths such as `drop owner; break;` from leaving the owner ambiguously live
+after the loop.
+
 Loops can be labeled, and `break label` exits the matching active loop:
 
 ```ari
