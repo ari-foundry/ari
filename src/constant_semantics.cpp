@@ -513,8 +513,7 @@ IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value) {
             return expr;
         case ConstantValueKind::Enum:
             expr->kind = IrExprKind::EnumConstruct;
-            expr->enum_name = value.enum_name;
-            expr->case_name = value.case_name;
+            set_ir_expr_enum_case(*expr, value.enum_name, value.case_name);
             expr->enum_tag = value.enum_tag;
             expr->has_payload = !value.elements.empty();
             if (has_aggregate_enum_layout(value.type)) {
@@ -524,7 +523,7 @@ IrExprPtr make_constant_expr(SourceLocation loc, const ConstantValue& value) {
                 }
             } else if (!value.elements.empty()) {
                 expr->payload_type = value.elements[0].type;
-                expr->payload = make_constant_expr(loc, value.elements[0]);
+                set_ir_expr_payload(*expr, make_constant_expr(loc, value.elements[0]));
             }
             return expr;
         case ConstantValueKind::Integer:

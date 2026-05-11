@@ -364,7 +364,7 @@ private:
 
     void collect_expr_locals(const IrExpr& expr) {
         collect_expr_locals(ir_expr_operand(expr));
-        collect_expr_locals(expr.payload);
+        collect_expr_locals(ir_expr_payload(expr));
         collect_expr_locals(ir_expr_left(expr));
         collect_expr_locals(ir_expr_right(expr));
         collect_expr_locals(ir_expr_if_condition(expr));
@@ -3155,7 +3155,7 @@ private:
             return;
         }
 
-        emit_expr(*expr.payload);
+        emit_expr(*ir_expr_payload(expr));
         emit_cast_payload_to_type(expr.loc, expr.payload_type);
         emit_shl_rax_imm8(32);
         emit_mov_reg_imm64(Reg::RCX, expr.enum_tag);

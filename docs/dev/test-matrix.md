@@ -463,6 +463,8 @@ Checklist:
 - [x] IR operand child payload packing preserves pointer casts/load/store/
       addition, pointer dereference assignment, indirect calls, and binary
       lowering on LLVM and freestanding paths
+- [x] IR rare expression payload packing preserves compact enum constructors
+      and vector set/swap/insert/search side-input lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

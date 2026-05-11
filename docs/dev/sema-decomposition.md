@@ -139,9 +139,10 @@ through the same helpers. Childless AST expressions avoid three eager
 `unique_ptr` members. IR `operand`/`left`/`right` child storage now follows the
 same shape behind `IrExprChildPayload`, with IR builders and sema construction
 writing through setters and constant folding plus both backends reading through
-accessors. `IrExpr::payload` remains separate because vector replacement and
-removal lowerings use it as a distinct rare side input rather than a common
-unary/binary child slot.
+accessors. IR enum constructor names and the distinct side-input expression used
+by compact enum payloads plus vector set/swap/insert/search helpers now share
+`IrExprRarePayload`, so ordinary IR expressions do not carry those constructor
+strings directly.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

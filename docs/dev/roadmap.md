@@ -196,13 +196,19 @@
    with `ir_expr_operand`/`ir_expr_left`/`ir_expr_right` helpers covering IR
    builders, sema, constant folding, LLVM emission, and the freestanding
    backend. The focused pointer/indirect-call test covers the backend-facing
-   child reads. The dedicated `IrExpr::payload` field stays separate for now:
-   vector replacement/removal helpers use it as a distinct rare side input
-   rather than one of the common unary/binary child slots. Broader IR node
-   packing should still move one storage group at a time.
+   child reads. IR enum constructor names and the distinct side-input expression
+   used by compact enum payloads plus vector set/swap/insert/search helpers now
+   share a lazy `IrExprRarePayload`, keeping ordinary scalar/access/control IR
+   expressions free of two eager strings while preserving the existing payload
+   expression lowering paths. Broader IR node packing should still move one
+   storage group at a time.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions; remaining high-value targets are other
-     backend-facing rare payloads
+     backend-facing rare payloads, especially IR expression string fields that
+     are specific to calls, locals, borrows, or string literals
+   - [ir-string-payloads] split the remaining eager IR expression string fields
+     only after their call/local/borrow/string-literal access paths are behind
+     small helpers
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

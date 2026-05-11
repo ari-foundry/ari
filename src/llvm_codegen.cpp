@@ -774,7 +774,7 @@ private:
 
     void collect_expr_locals(const IrExpr& expr, std::vector<std::pair<std::string, IrType>>& locals) {
         collect_expr_locals(ir_expr_operand(expr), locals);
-        collect_expr_locals(expr.payload, locals);
+        collect_expr_locals(ir_expr_payload(expr), locals);
         collect_expr_locals(ir_expr_left(expr), locals);
         collect_expr_locals(ir_expr_right(expr), locals);
         collect_expr_locals(ir_expr_if_condition(expr), locals);
@@ -1850,7 +1850,7 @@ private:
     }
 
     Value emit_vector_set(const IrExpr& expr) {
-        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !expr.payload ||
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !ir_expr_payload(expr) ||
             ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
             ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.set lowering");
@@ -1862,7 +1862,7 @@ private:
         Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
         emit_vector_bounds_check(index, vector_type, base);
 
-        Value value = cast_value(emit_expr(*expr.payload), element_type);
+        Value value = cast_value(emit_expr(*ir_expr_payload(expr)), element_type);
         std::string item_ptr = temp();
         line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
              ", ptr " + base + ", i32 0, i32 1, i64 " + index.name);
@@ -1871,7 +1871,7 @@ private:
     }
 
     Value emit_vector_swap(const IrExpr& expr) {
-        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !expr.payload ||
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !ir_expr_payload(expr) ||
             ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
             ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.swap lowering");
@@ -1882,7 +1882,7 @@ private:
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
         Value first_index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
         emit_vector_bounds_check(first_index, vector_type, base);
-        Value second_index = cast_value(emit_expr(*expr.payload), index_type);
+        Value second_index = cast_value(emit_expr(*ir_expr_payload(expr)), index_type);
         emit_vector_bounds_check(second_index, vector_type, base);
 
         std::string first_ptr = temp();
@@ -1964,7 +1964,7 @@ private:
     }
 
     Value emit_vector_insert(const IrExpr& expr) {
-        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !expr.payload ||
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !ir_expr_payload(expr) ||
             ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
             ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.insert lowering");
@@ -2004,7 +2004,7 @@ private:
         line("  unreachable");
         emit_label(full_ok_label);
 
-        Value value = cast_value(emit_expr(*expr.payload), element_type);
+        Value value = cast_value(emit_expr(*ir_expr_payload(expr)), element_type);
         std::string element_llvm = llvm_type(element_type);
         std::string entry_label = current_label_;
         std::string cond_label = label("vector.insert.cond");
@@ -2058,7 +2058,7 @@ private:
     }
 
     Value emit_vector_search(const IrExpr& expr, bool return_index) {
-        if (!ir_expr_operand(expr) || !expr.payload ||
+        if (!ir_expr_operand(expr) || !ir_expr_payload(expr) ||
             ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
             ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec search lowering");
@@ -2066,7 +2066,7 @@ private:
         const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
         std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
-        Value needle = cast_value(emit_expr(*expr.payload), element_type);
+        Value needle = cast_value(emit_expr(*ir_expr_payload(expr)), element_type);
         std::string element_llvm = llvm_type(element_type);
         std::string len_ptr = temp();
         std::string len = temp();
@@ -2124,7 +2124,7 @@ private:
     }
 
     Value emit_vector_count(const IrExpr& expr) {
-        if (!ir_expr_operand(expr) || !expr.payload ||
+        if (!ir_expr_operand(expr) || !ir_expr_payload(expr) ||
             ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
             ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.count lowering");
@@ -2132,7 +2132,7 @@ private:
         const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
         std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
-        Value needle = cast_value(emit_expr(*expr.payload), element_type);
+        Value needle = cast_value(emit_expr(*ir_expr_payload(expr)), element_type);
         std::string element_llvm = llvm_type(element_type);
         std::string len_ptr = temp();
         std::string len = temp();
@@ -2793,7 +2793,7 @@ private:
             return Value{enum_type, value, expr.type};
         }
         if (!expr.has_payload) return Value{"i64", std::to_string(expr.enum_tag), expr.type};
-        Value payload = cast_value(emit_expr(*expr.payload), expr.payload_type);
+        Value payload = cast_value(emit_expr(*ir_expr_payload(expr)), expr.payload_type);
         payload = cast_value(payload, IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, expr.loc});
         std::string shifted = temp();
         line("  " + shifted + " = shl i64 " + payload.name + ", 32");

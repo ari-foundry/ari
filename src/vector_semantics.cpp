@@ -986,7 +986,7 @@ IrExprPtr make_vec_set_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr inde
     lowered->type = void_type(loc);
     set_ir_expr_operand(*lowered, std::move(vector));
     set_ir_expr_right(*lowered, std::move(index));
-    lowered->payload = std::move(value);
+    set_ir_expr_payload(*lowered, std::move(value));
     return lowered;
 }
 
@@ -1003,7 +1003,7 @@ IrExprPtr make_vec_swap_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr fir
     lowered->type = void_type(loc);
     set_ir_expr_operand(*lowered, std::move(vector));
     set_ir_expr_right(*lowered, std::move(first_index));
-    lowered->payload = std::move(second_index);
+    set_ir_expr_payload(*lowered, std::move(second_index));
     return lowered;
 }
 
@@ -1039,7 +1039,7 @@ IrExprPtr make_vec_insert_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr i
     lowered->type = void_type(loc);
     set_ir_expr_operand(*lowered, std::move(vector));
     set_ir_expr_right(*lowered, std::move(index));
-    lowered->payload = std::move(value);
+    set_ir_expr_payload(*lowered, std::move(value));
     return lowered;
 }
 
@@ -1071,7 +1071,7 @@ IrExprPtr make_vec_contains_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr
     lowered->loc = loc;
     lowered->type = bool_type(loc);
     set_ir_expr_operand(*lowered, std::move(vector));
-    lowered->payload = std::move(value);
+    set_ir_expr_payload(*lowered, std::move(value));
     return lowered;
 }
 
@@ -1087,7 +1087,7 @@ IrExprPtr make_vec_index_of_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr
     lowered->loc = loc;
     lowered->type = i64_type(loc);
     set_ir_expr_operand(*lowered, std::move(vector));
-    lowered->payload = std::move(value);
+    set_ir_expr_payload(*lowered, std::move(value));
     return lowered;
 }
 
@@ -1103,7 +1103,7 @@ IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr va
     lowered->loc = loc;
     lowered->type = i64_type(loc);
     set_ir_expr_operand(*lowered, std::move(vector));
-    lowered->payload = std::move(value);
+    set_ir_expr_payload(*lowered, std::move(value));
     return lowered;
 }
 

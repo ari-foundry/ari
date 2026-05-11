@@ -91,6 +91,12 @@ struct IrExprChildPayload {
     IrExprPtr right;
 };
 
+struct IrExprRarePayload {
+    IrExprPtr payload;
+    std::string enum_name;
+    std::string case_name;
+};
+
 struct IrPayloadBinding {
     std::uint32_t index = 0;
     std::string name;
@@ -291,8 +297,6 @@ struct IrExpr {
     std::string string_value;
     std::string name;
     std::string label;
-    std::string enum_name;
-    std::string case_name;
     std::unique_ptr<std::vector<std::string>> format_parts;
     std::uint32_t enum_tag = 0;
     bool has_payload = false;
@@ -306,7 +310,7 @@ struct IrExpr {
     IrType try_return_residual_payload_type;
     std::uint32_t try_return_residual_tag = 0;
     std::unique_ptr<IrExprChildPayload> child_payload;
-    std::unique_ptr<IrExpr> payload;
+    std::unique_ptr<IrExprRarePayload> rare_payload;
     std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
     std::unique_ptr<IrExprCallParamPayload> call_param_payload;
@@ -383,6 +387,70 @@ inline IrExprPtr take_ir_expr_right(IrExpr& expr) {
     IrExprPtr right = std::move(expr.child_payload->right);
     clear_empty_ir_expr_child_payload(expr);
     return right;
+}
+
+inline const IrExprRarePayload& ir_expr_rare_payload(const IrExpr& expr) {
+    static const IrExprRarePayload empty;
+    return expr.rare_payload ? *expr.rare_payload : empty;
+}
+
+inline IrExprRarePayload& ensure_ir_expr_rare_payload(IrExpr& expr) {
+    if (!expr.rare_payload) expr.rare_payload = std::make_unique<IrExprRarePayload>();
+    return *expr.rare_payload;
+}
+
+inline void clear_empty_ir_expr_rare_payload(IrExpr& expr) {
+    if (expr.rare_payload &&
+        !expr.rare_payload->payload &&
+        expr.rare_payload->enum_name.empty() &&
+        expr.rare_payload->case_name.empty()) {
+        expr.rare_payload.reset();
+    }
+}
+
+inline const IrExprPtr& ir_expr_payload(const IrExpr& expr) {
+    return ir_expr_rare_payload(expr).payload;
+}
+
+inline void set_ir_expr_payload(IrExpr& expr, IrExprPtr payload) {
+    if (!payload && !expr.rare_payload) return;
+    ensure_ir_expr_rare_payload(expr).payload = std::move(payload);
+    clear_empty_ir_expr_rare_payload(expr);
+}
+
+inline IrExprPtr take_ir_expr_payload(IrExpr& expr) {
+    if (!expr.rare_payload) return nullptr;
+    IrExprPtr payload = std::move(expr.rare_payload->payload);
+    clear_empty_ir_expr_rare_payload(expr);
+    return payload;
+}
+
+inline const std::string& ir_expr_enum_name(const IrExpr& expr) {
+    return ir_expr_rare_payload(expr).enum_name;
+}
+
+inline const std::string& ir_expr_case_name(const IrExpr& expr) {
+    return ir_expr_rare_payload(expr).case_name;
+}
+
+inline void set_ir_expr_enum_name(IrExpr& expr, std::string enum_name) {
+    if (enum_name.empty() && !expr.rare_payload) return;
+    ensure_ir_expr_rare_payload(expr).enum_name = std::move(enum_name);
+    clear_empty_ir_expr_rare_payload(expr);
+}
+
+inline void set_ir_expr_case_name(IrExpr& expr, std::string case_name) {
+    if (case_name.empty() && !expr.rare_payload) return;
+    ensure_ir_expr_rare_payload(expr).case_name = std::move(case_name);
+    clear_empty_ir_expr_rare_payload(expr);
+}
+
+inline void set_ir_expr_enum_case(IrExpr& expr, std::string enum_name, std::string case_name) {
+    if (enum_name.empty() && case_name.empty() && !expr.rare_payload) return;
+    IrExprRarePayload& payload = ensure_ir_expr_rare_payload(expr);
+    payload.enum_name = std::move(enum_name);
+    payload.case_name = std::move(case_name);
+    clear_empty_ir_expr_rare_payload(expr);
 }
 
 struct IrMatchArm {

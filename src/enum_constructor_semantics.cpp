@@ -24,8 +24,7 @@ IrExprPtr make_enum_constructor_ir(SourceLocation loc,
     lowered->loc = loc;
     lowered->kind = IrExprKind::EnumConstruct;
     lowered->type = info.enum_type;
-    lowered->enum_name = info.enum_name;
-    lowered->case_name = info.case_name;
+    set_ir_expr_enum_case(*lowered, info.enum_name, info.case_name);
     lowered->enum_tag = info.tag;
     lowered->has_payload = !info.payload_types.empty();
 
@@ -36,7 +35,7 @@ IrExprPtr make_enum_constructor_ir(SourceLocation loc,
 
     if (!payloads.empty()) {
         lowered->payload_type = info.payload_types[0];
-        lowered->payload = std::move(payloads[0]);
+        set_ir_expr_payload(*lowered, std::move(payloads[0]));
     }
     return lowered;
 }

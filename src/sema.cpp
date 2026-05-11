@@ -3945,7 +3945,7 @@ private:
         auto has_temp = [](const IrExprPtr& child) {
             return child && contains_zone_temp_call(*child);
         };
-        if (has_temp(ir_expr_operand(expr)) || has_temp(expr.payload) || has_temp(ir_expr_left(expr)) ||
+        if (has_temp(ir_expr_operand(expr)) || has_temp(ir_expr_payload(expr)) || has_temp(ir_expr_left(expr)) ||
             has_temp(ir_expr_right(expr)) || has_temp(ir_expr_if_condition(expr)) ||
             has_temp(ir_expr_if_then_value(expr)) || has_temp(ir_expr_if_else_value(expr)) ||
             has_temp(ir_expr_block_value(expr)) || has_temp(ir_expr_match_value(expr))) {
@@ -8722,7 +8722,7 @@ private:
             value->kind = IrExprKind::EnumConstruct;
             value->loc = loc;
             value->type = type;
-            value->enum_name = type.name;
+            set_ir_expr_enum_name(*value, type.name);
             value->enum_tag = 0;
             value->has_payload = false;
             return value;
