@@ -834,16 +834,20 @@ private:
                 for (const auto& update : stmt.updates) collect_expr_locals(update, locals);
                 break;
             case IrStmtKind::ForRange:
-                locals.push_back({stmt.for_index_name, stmt.for_start->type});
-                locals.push_back({stmt.for_end_name, stmt.for_end->type});
-                collect_expr_locals(stmt.for_start, locals);
-                collect_expr_locals(stmt.for_end, locals);
-                if (!stmt.for_binding_name.empty()) locals.push_back({stmt.for_binding_name, stmt.for_binding_type});
+                locals.push_back({ir_stmt_for_index_name(stmt), ir_stmt_for_start(stmt)->type});
+                locals.push_back({ir_stmt_for_end_name(stmt), ir_stmt_for_end(stmt)->type});
+                collect_expr_locals(ir_stmt_for_start(stmt), locals);
+                collect_expr_locals(ir_stmt_for_end(stmt), locals);
+                if (!ir_stmt_for_binding_name(stmt).empty()) {
+                    locals.push_back({ir_stmt_for_binding_name(stmt), ir_stmt_for_binding_type(stmt)});
+                }
                 collect_locals(ir_stmt_loop_body(stmt), locals);
                 break;
             case IrStmtKind::ForVector:
-                if (!stmt.for_binding_name.empty()) locals.push_back({stmt.for_binding_name, stmt.for_binding_type});
-                for (const auto& value : stmt.for_values) collect_expr_locals(value, locals);
+                if (!ir_stmt_for_binding_name(stmt).empty()) {
+                    locals.push_back({ir_stmt_for_binding_name(stmt), ir_stmt_for_binding_type(stmt)});
+                }
+                for (const auto& value : ir_stmt_for_values(stmt)) collect_expr_locals(value, locals);
                 collect_locals(ir_stmt_loop_body(stmt), locals);
                 break;
             case IrStmtKind::Match:
@@ -1165,10 +1169,11 @@ private:
     }
 
     void emit_for_range(const IrStmt& stmt) {
-        Value start = emit_expr(*stmt.for_start);
-        Value end = emit_expr(*stmt.for_end);
-        line("  store " + start.type + " " + start.name + ", ptr " + local_slot(stmt.loc, stmt.for_index_name));
-        line("  store " + end.type + " " + end.name + ", ptr " + local_slot(stmt.loc, stmt.for_end_name));
+        const IrStmtForPayload& for_loop = ir_stmt_for_payload(stmt);
+        Value start = emit_expr(*for_loop.start);
+        Value end = emit_expr(*for_loop.end);
+        line("  store " + start.type + " " + start.name + ", ptr " + local_slot(stmt.loc, for_loop.index_name));
+        line("  store " + end.type + " " + end.name + ", ptr " + local_slot(stmt.loc, for_loop.end_name));
 
         std::string cond_label = label("for.cond");
         std::string body_label = label("for.body");
@@ -1176,11 +1181,11 @@ private:
         std::string end_label = label("for.end");
         line("  br label %" + cond_label);
         emit_label(cond_label);
-        Value index = load_local(stmt.loc, stmt.for_index_name, stmt.for_start->type);
-        Value limit = load_local(stmt.loc, stmt.for_end_name, stmt.for_end->type);
+        Value index = load_local(stmt.loc, for_loop.index_name, for_loop.start->type);
+        Value limit = load_local(stmt.loc, for_loop.end_name, for_loop.end->type);
         std::string cmp = temp();
-        bool unsigned_range = is_unsigned_integer_type(stmt.for_start->type);
-        std::string op = stmt.for_inclusive
+        bool unsigned_range = is_unsigned_integer_type(for_loop.start->type);
+        std::string op = for_loop.inclusive
             ? (unsigned_range ? "ule " : "sle ")
             : (unsigned_range ? "ult " : "slt ");
         line("  " + cmp + " = icmp " + op +
@@ -1189,17 +1194,17 @@ private:
 
         loops_.push_back(make_loop_context(end_label, step_label, cond_label, ir_stmt_label(stmt)));
         emit_label(body_label);
-        if (!stmt.for_binding_name.empty()) {
-            Value current = load_local(stmt.loc, stmt.for_index_name, stmt.for_binding_type);
-            line("  store " + current.type + " " + current.name + ", ptr " + local_slot(stmt.loc, stmt.for_binding_name));
+        if (!for_loop.binding_name.empty()) {
+            Value current = load_local(stmt.loc, for_loop.index_name, for_loop.binding_type);
+            line("  store " + current.type + " " + current.name + ", ptr " + local_slot(stmt.loc, for_loop.binding_name));
         }
         emit_statements(ir_stmt_loop_body(stmt));
         if (!block_terminated_) line("  br label %" + step_label);
 
         emit_label(step_label);
-        Value old = load_local(stmt.loc, stmt.for_index_name, stmt.for_start->type);
-        if (stmt.for_inclusive) {
-            Value step_limit = load_local(stmt.loc, stmt.for_end_name, stmt.for_end->type);
+        Value old = load_local(stmt.loc, for_loop.index_name, for_loop.start->type);
+        if (for_loop.inclusive) {
+            Value step_limit = load_local(stmt.loc, for_loop.end_name, for_loop.end->type);
             std::string done = temp();
             std::string inc_label = label("for.inc");
             line("  " + done + " = icmp eq " + old.type + " " + old.name + ", " + step_limit.name);
@@ -1208,7 +1213,7 @@ private:
         }
         std::string next = temp();
         line("  " + next + " = add " + old.type + " " + old.name + ", 1");
-        line("  store " + old.type + " " + next + ", ptr " + local_slot(stmt.loc, stmt.for_index_name));
+        line("  store " + old.type + " " + next + ", ptr " + local_slot(stmt.loc, for_loop.index_name));
         line("  br label %" + cond_label);
         loops_.pop_back();
         emit_label(end_label);
@@ -1217,13 +1222,14 @@ private:
     void emit_for_vector(const IrStmt& stmt) {
         std::string end_label = label("forvec.end");
         loops_.push_back(make_loop_context(end_label, "", "", ir_stmt_label(stmt)));
-        for (std::size_t i = 0; i < stmt.for_values.size(); ++i) {
-            std::string next_label = i + 1 == stmt.for_values.size() ? end_label : label("forvec.next");
+        const IrStmtForPayload& for_loop = ir_stmt_for_payload(stmt);
+        for (std::size_t i = 0; i < for_loop.values.size(); ++i) {
+            std::string next_label = i + 1 == for_loop.values.size() ? end_label : label("forvec.next");
             loops_.back().plain_continue_label = next_label;
             loops_.back().value_continue_label = next_label;
-            Value value = emit_expr(*stmt.for_values[i]);
-            if (!stmt.for_binding_name.empty()) {
-                line("  store " + value.type + " " + value.name + ", ptr " + local_slot(stmt.loc, stmt.for_binding_name));
+            Value value = emit_expr(*for_loop.values[i]);
+            if (!for_loop.binding_name.empty()) {
+                line("  store " + value.type + " " + value.name + ", ptr " + local_slot(stmt.loc, for_loop.binding_name));
             }
             emit_statements(ir_stmt_loop_body(stmt));
             if (!block_terminated_) line("  br label %" + next_label);

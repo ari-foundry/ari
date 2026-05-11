@@ -253,6 +253,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/for-vector-pattern.raw; code=$$?; test $$code -eq 50
 	$(TARGET) --freestanding tests/ok/for-vector-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw
 	$(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw; code=$$?; test $$code -eq 75
+	$(TARGET) --freestanding tests/ok/ir-for-loop-payloads.ari -o $(BUILD_DIR)/control-flow/ir-for-loop-payloads.raw
+	$(BUILD_DIR)/control-flow/ir-for-loop-payloads.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/if-while-let.ari -o $(BUILD_DIR)/control-flow/if-while-let.raw
 	$(BUILD_DIR)/control-flow/if-while-let.raw; code=$$?; test $$code -eq 5
 	$(TARGET) --freestanding tests/ok/while-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/while-let-or-pattern.raw
@@ -299,6 +301,9 @@ check-control-flow: $(TARGET)
 	grep -q "icmp ule i8" $(BUILD_DIR)/control-flow/range-generic-bounds.ll
 	grep -q "icmp ult i16" $(BUILD_DIR)/control-flow/range-generic-bounds.ll
 	grep -q "icmp ult i64" $(BUILD_DIR)/control-flow/range-generic-bounds.ll
+	$(TARGET) tests/ok/ir-for-loop-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/ir-for-loop-payloads.ll
+	grep -q "for.cond" $(BUILD_DIR)/control-flow/ir-for-loop-payloads.ll
+	grep -q "forvec.next" $(BUILD_DIR)/control-flow/ir-for-loop-payloads.ll
 	$(TARGET) tests/ok/for-vector-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-pattern.ll
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/for-vector-pattern.ll
 	$(TARGET) tests/ok/for-vector-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-alias-pattern.ll

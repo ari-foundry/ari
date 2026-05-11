@@ -438,16 +438,20 @@ private:
                 collect_locals(ir_stmt_loop_body(stmt));
                 break;
             case IrStmtKind::ForRange:
-                add_local(stmt.for_index_name, stmt.for_start->type);
-                add_local(stmt.for_end_name, stmt.for_end->type);
-                collect_expr_locals(stmt.for_start);
-                collect_expr_locals(stmt.for_end);
-                if (!stmt.for_binding_name.empty()) add_local(stmt.for_binding_name, stmt.for_binding_type);
+                add_local(ir_stmt_for_index_name(stmt), ir_stmt_for_start(stmt)->type);
+                add_local(ir_stmt_for_end_name(stmt), ir_stmt_for_end(stmt)->type);
+                collect_expr_locals(ir_stmt_for_start(stmt));
+                collect_expr_locals(ir_stmt_for_end(stmt));
+                if (!ir_stmt_for_binding_name(stmt).empty()) {
+                    add_local(ir_stmt_for_binding_name(stmt), ir_stmt_for_binding_type(stmt));
+                }
                 collect_locals(ir_stmt_loop_body(stmt));
                 break;
             case IrStmtKind::ForVector:
-                if (!stmt.for_binding_name.empty()) add_local(stmt.for_binding_name, stmt.for_binding_type);
-                for (const auto& value : stmt.for_values) collect_expr_locals(value);
+                if (!ir_stmt_for_binding_name(stmt).empty()) {
+                    add_local(ir_stmt_for_binding_name(stmt), ir_stmt_for_binding_type(stmt));
+                }
+                for (const auto& value : ir_stmt_for_values(stmt)) collect_expr_locals(value);
                 collect_locals(ir_stmt_loop_body(stmt));
                 break;
             case IrStmtKind::InitWhile:
@@ -1663,31 +1667,32 @@ private:
     }
 
     void emit_for_range(const IrStmt& stmt) {
-        emit_expr(*stmt.for_start);
-        emit_store_rax_to_local(local_offset(stmt.loc, stmt.for_index_name),
-                                local_type(stmt.loc, stmt.for_index_name));
-        emit_expr(*stmt.for_end);
-        emit_store_rax_to_local(local_offset(stmt.loc, stmt.for_end_name),
-                                local_type(stmt.loc, stmt.for_end_name));
+        const IrStmtForPayload& for_loop = ir_stmt_for_payload(stmt);
+        emit_expr(*for_loop.start);
+        emit_store_rax_to_local(local_offset(stmt.loc, for_loop.index_name),
+                                local_type(stmt.loc, for_loop.index_name));
+        emit_expr(*for_loop.end);
+        emit_store_rax_to_local(local_offset(stmt.loc, for_loop.end_name),
+                                local_type(stmt.loc, for_loop.end_name));
 
         std::size_t cond = out_.size();
-        emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_index_name),
-                                 local_type(stmt.loc, stmt.for_index_name));
+        emit_load_rax_from_local(local_offset(stmt.loc, for_loop.index_name),
+                                 local_type(stmt.loc, for_loop.index_name));
         emit_push(Reg::RAX);
-        emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_end_name),
-                                 local_type(stmt.loc, stmt.for_end_name));
+        emit_load_rax_from_local(local_offset(stmt.loc, for_loop.end_name),
+                                 local_type(stmt.loc, for_loop.end_name));
         emit_pop(Reg::RCX);
         emit_cmp_reg_reg(Reg::RCX, Reg::RAX);
-        bool unsigned_range = is_unsigned_integer_type(stmt.for_start->type);
-        std::size_t jump_end = emit_jcc_placeholder(stmt.for_inclusive
+        bool unsigned_range = is_unsigned_integer_type(for_loop.start->type);
+        std::size_t jump_end = emit_jcc_placeholder(for_loop.inclusive
             ? (unsigned_range ? 0x87 : 0x8F)
             : (unsigned_range ? 0x83 : 0x8D));
 
-        if (!stmt.for_binding_name.empty()) {
-            emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_index_name),
-                                     local_type(stmt.loc, stmt.for_index_name));
-            emit_store_rax_to_local(local_offset(stmt.loc, stmt.for_binding_name),
-                                    local_type(stmt.loc, stmt.for_binding_name));
+        if (!for_loop.binding_name.empty()) {
+            emit_load_rax_from_local(local_offset(stmt.loc, for_loop.index_name),
+                                     local_type(stmt.loc, for_loop.index_name));
+            emit_store_rax_to_local(local_offset(stmt.loc, for_loop.binding_name),
+                                    local_type(stmt.loc, for_loop.binding_name));
         }
 
         LoopLabels labels;
@@ -1702,22 +1707,22 @@ private:
         loops_.back().plain_continue_known = true;
         for (std::size_t patch : loops_.back().plain_continue_patches) patch_rel32(patch, update);
         std::size_t inclusive_done = 0;
-        if (stmt.for_inclusive) {
-            emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_index_name),
-                                     local_type(stmt.loc, stmt.for_index_name));
+        if (for_loop.inclusive) {
+            emit_load_rax_from_local(local_offset(stmt.loc, for_loop.index_name),
+                                     local_type(stmt.loc, for_loop.index_name));
             emit_push(Reg::RAX);
-            emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_end_name),
-                                     local_type(stmt.loc, stmt.for_end_name));
+            emit_load_rax_from_local(local_offset(stmt.loc, for_loop.end_name),
+                                     local_type(stmt.loc, for_loop.end_name));
             emit_pop(Reg::RCX);
             emit_cmp_reg_reg(Reg::RCX, Reg::RAX);
             inclusive_done = emit_jcc_placeholder(0x84);
         }
-        emit_load_rax_from_local(local_offset(stmt.loc, stmt.for_index_name),
-                                 local_type(stmt.loc, stmt.for_index_name));
+        emit_load_rax_from_local(local_offset(stmt.loc, for_loop.index_name),
+                                 local_type(stmt.loc, for_loop.index_name));
         emit_mov_reg_imm64(Reg::RCX, 1);
         emit_add_reg_reg(Reg::RAX, Reg::RCX);
-        emit_store_rax_to_local(local_offset(stmt.loc, stmt.for_index_name),
-                                local_type(stmt.loc, stmt.for_index_name));
+        emit_store_rax_to_local(local_offset(stmt.loc, for_loop.index_name),
+                                local_type(stmt.loc, for_loop.index_name));
         patch_rel32(emit_jmp_placeholder(), cond);
 
         std::size_t end = out_.size();
@@ -1732,14 +1737,15 @@ private:
         labels.source_label = ir_stmt_label(stmt);
         loops_.push_back(labels);
         std::vector<std::size_t> pending_continue;
+        const IrStmtForPayload& for_loop = ir_stmt_for_payload(stmt);
 
-        for (const auto& value : stmt.for_values) {
+        for (const auto& value : for_loop.values) {
             std::size_t iteration_start = out_.size();
             for (std::size_t patch : pending_continue) patch_rel32(patch, iteration_start);
             pending_continue.clear();
 
-            if (!stmt.for_binding_name.empty()) {
-                emit_store_value_to_offset(stmt.for_binding_type, *value, local_offset(stmt.loc, stmt.for_binding_name));
+            if (!for_loop.binding_name.empty()) {
+                emit_store_value_to_offset(for_loop.binding_type, *value, local_offset(stmt.loc, for_loop.binding_name));
             } else {
                 emit_expr(*value);
             }

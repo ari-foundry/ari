@@ -160,7 +160,11 @@ result metadata for enum constructors, postfix `?`, and `??` now lives behind
 `IrExprEnumResultPayload`; enum constructor helpers, constant materialization,
 `make_ir_try_expr`, and `make_ir_null_coalesce_expr` initialize it, while the
 backends read enum tags and payload cast types through `ir_expr_enum_*`
-helpers.
+helpers. IR `ForRange` and `ForVector` statement binding/index/value state now
+lives behind `IrStmtForPayload`, so non-loop statements no longer carry range
+bound expressions, hidden index/end local names, vector literal values, or loop
+binding metadata. Sema initializes that payload during loop lowering, and both
+backends read it through `ir_stmt_for_*` helpers.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

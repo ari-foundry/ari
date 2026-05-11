@@ -760,6 +760,17 @@ struct IrAssignPayload {
     IrExprPtr rhs;
 };
 
+struct IrStmtForPayload {
+    std::string binding_name;
+    std::string index_name;
+    std::string end_name;
+    IrType binding_type;
+    IrExprPtr start;
+    IrExprPtr end;
+    bool inclusive = false;
+    std::vector<IrExprPtr> values;
+};
+
 struct IrStmtBodyPayload {
     std::vector<std::unique_ptr<IrStmt>> statements;
     std::vector<std::unique_ptr<IrStmt>> then_body;
@@ -776,14 +787,7 @@ struct IrStmt {
     IrExprPtr expr;
     IrExprPtr condition;
     bool while_let_continue_on_mismatch = false;
-    std::string for_binding_name;
-    std::string for_index_name;
-    std::string for_end_name;
-    IrType for_binding_type;
-    IrExprPtr for_start;
-    IrExprPtr for_end;
-    bool for_inclusive = false;
-    std::vector<IrExprPtr> for_values;
+    std::unique_ptr<IrStmtForPayload> for_payload;
     IrExprPtr match_value;
     std::vector<IrBinding> init_bindings;
     std::vector<IrExprPtr> updates;
@@ -1039,6 +1043,80 @@ inline void set_ir_stmt_assign_target(IrStmt& stmt, IrExprPtr target) {
 
 inline void set_ir_stmt_assign_rhs(IrStmt& stmt, IrExprPtr rhs) {
     ensure_ir_stmt_assign_payload(stmt).rhs = std::move(rhs);
+}
+
+inline const IrStmtForPayload& ir_stmt_for_payload(const IrStmt& stmt) {
+    static const IrStmtForPayload empty;
+    return stmt.for_payload ? *stmt.for_payload : empty;
+}
+
+inline IrStmtForPayload& ensure_ir_stmt_for_payload(IrStmt& stmt) {
+    if (!stmt.for_payload) stmt.for_payload = std::make_unique<IrStmtForPayload>();
+    return *stmt.for_payload;
+}
+
+inline const std::string& ir_stmt_for_binding_name(const IrStmt& stmt) {
+    return ir_stmt_for_payload(stmt).binding_name;
+}
+
+inline std::string& ir_stmt_for_binding_name(IrStmt& stmt) {
+    return ensure_ir_stmt_for_payload(stmt).binding_name;
+}
+
+inline const std::string& ir_stmt_for_index_name(const IrStmt& stmt) {
+    return ir_stmt_for_payload(stmt).index_name;
+}
+
+inline std::string& ir_stmt_for_index_name(IrStmt& stmt) {
+    return ensure_ir_stmt_for_payload(stmt).index_name;
+}
+
+inline const std::string& ir_stmt_for_end_name(const IrStmt& stmt) {
+    return ir_stmt_for_payload(stmt).end_name;
+}
+
+inline std::string& ir_stmt_for_end_name(IrStmt& stmt) {
+    return ensure_ir_stmt_for_payload(stmt).end_name;
+}
+
+inline const IrType& ir_stmt_for_binding_type(const IrStmt& stmt) {
+    return ir_stmt_for_payload(stmt).binding_type;
+}
+
+inline IrType& ir_stmt_for_binding_type(IrStmt& stmt) {
+    return ensure_ir_stmt_for_payload(stmt).binding_type;
+}
+
+inline const IrExprPtr& ir_stmt_for_start(const IrStmt& stmt) {
+    return ir_stmt_for_payload(stmt).start;
+}
+
+inline IrExprPtr& ir_stmt_for_start(IrStmt& stmt) {
+    return ensure_ir_stmt_for_payload(stmt).start;
+}
+
+inline const IrExprPtr& ir_stmt_for_end(const IrStmt& stmt) {
+    return ir_stmt_for_payload(stmt).end;
+}
+
+inline IrExprPtr& ir_stmt_for_end(IrStmt& stmt) {
+    return ensure_ir_stmt_for_payload(stmt).end;
+}
+
+inline bool ir_stmt_for_inclusive(const IrStmt& stmt) {
+    return ir_stmt_for_payload(stmt).inclusive;
+}
+
+inline void set_ir_stmt_for_inclusive(IrStmt& stmt, bool inclusive) {
+    ensure_ir_stmt_for_payload(stmt).inclusive = inclusive;
+}
+
+inline const std::vector<IrExprPtr>& ir_stmt_for_values(const IrStmt& stmt) {
+    return ir_stmt_for_payload(stmt).values;
+}
+
+inline std::vector<IrExprPtr>& ir_stmt_for_values(IrStmt& stmt) {
+    return ensure_ir_stmt_for_payload(stmt).values;
 }
 
 inline const IrStmtMatchArms& ir_stmt_match_arms(const IrStmt& stmt) {

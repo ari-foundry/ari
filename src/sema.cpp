@@ -10057,14 +10057,15 @@ private:
         lowered.kind = IrStmtKind::ForRange;
         const std::string& label = stmt_label(stmt);
         set_ir_stmt_label(lowered, label);
-        lowered.for_inclusive = inclusive;
-        lowered.for_binding_type = bound_type;
-        lowered.for_start = std::move(start);
-        lowered.for_end = std::move(end);
-        lowered.for_index_name = make_hidden_local("$for_index");
-        lowered.for_end_name = make_hidden_local("$for_end");
-        declare_local(stmt.loc, lowered.for_index_name, bound_type, true);
-        declare_local(stmt.loc, lowered.for_end_name, bound_type, false);
+        IrStmtForPayload& for_loop = ensure_ir_stmt_for_payload(lowered);
+        for_loop.inclusive = inclusive;
+        for_loop.binding_type = bound_type;
+        for_loop.start = std::move(start);
+        for_loop.end = std::move(end);
+        for_loop.index_name = make_hidden_local("$for_index");
+        for_loop.end_name = make_hidden_local("$for_end");
+        declare_local(stmt.loc, for_loop.index_name, bound_type, true);
+        declare_local(stmt.loc, for_loop.end_name, bound_type, false);
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop;
@@ -10075,7 +10076,7 @@ private:
         lower_irrefutable_non_iterator_for_head(
             for_pattern,
             bound_type,
-            &lowered.for_binding_name,
+            &for_loop.binding_name,
             nullptr,
             pattern_prelude,
             false
@@ -10112,8 +10113,9 @@ private:
         lowered.kind = IrStmtKind::ForVector;
         const std::string& label = stmt_label(stmt);
         set_ir_stmt_label(lowered, label);
-        lowered.for_binding_type = iterable->type.args[0];
-        lowered.for_values = iterable->args.take();
+        IrStmtForPayload& for_loop = ensure_ir_stmt_for_payload(lowered);
+        for_loop.binding_type = iterable->type.args[0];
+        for_loop.values = iterable->args.take();
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop;
@@ -10123,8 +10125,8 @@ private:
         std::vector<IrStmtPtr> pattern_prelude;
         lower_irrefutable_non_iterator_for_head(
             for_pattern,
-            lowered.for_binding_type,
-            &lowered.for_binding_name,
+            for_loop.binding_type,
+            &for_loop.binding_name,
             nullptr,
             pattern_prelude,
             true
@@ -10173,18 +10175,19 @@ private:
         loop->loc = stmt.loc;
         const std::string& label = stmt_label(stmt);
         set_ir_stmt_label(*loop, label);
-        loop->for_inclusive = false;
-        loop->for_binding_type = i64;
-        loop->for_start = make_integer_literal(stmt.loc, i64, 0);
-        loop->for_end = make_local_vec_len_expr(
+        IrStmtForPayload& for_loop = ensure_ir_stmt_for_payload(*loop);
+        for_loop.inclusive = false;
+        for_loop.binding_type = i64;
+        for_loop.start = make_integer_literal(stmt.loc, i64, 0);
+        for_loop.end = make_local_vec_len_expr(
             stmt.loc,
             make_vec_local_lvalue(stmt.loc, vector_name, vector_type),
             current_length
         );
-        loop->for_index_name = make_hidden_local("$for_index");
-        loop->for_end_name = make_hidden_local("$for_end");
-        declare_local(stmt.loc, loop->for_index_name, i64, true);
-        declare_local(stmt.loc, loop->for_end_name, i64, false);
+        for_loop.index_name = make_hidden_local("$for_index");
+        for_loop.end_name = make_hidden_local("$for_end");
+        declare_local(stmt.loc, for_loop.index_name, i64, true);
+        declare_local(stmt.loc, for_loop.end_name, i64, false);
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop_info;
@@ -10193,7 +10196,7 @@ private:
         push_scope();
 
         std::vector<IrStmtPtr> pattern_prelude;
-        IrExprPtr element = make_vector_index_expr(stmt.loc, vector_name, vector_type, loop->for_index_name, i64);
+        IrExprPtr element = make_vector_index_expr(stmt.loc, vector_name, vector_type, for_loop.index_name, i64);
         lower_irrefutable_non_iterator_for_head(
             for_pattern,
             element_type,
