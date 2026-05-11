@@ -1,0 +1,45 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+struct Box {
+  value: i64,
+  ok: bool,
+}
+
+fn inspect(value: ref i64) -> i64 {
+  return 2;
+}
+
+fn bump(value: MaybeI32) -> MaybeI32 {
+  let inner = value?;
+  return Some(inner + 1i32);
+}
+
+fn score(value: MaybeI32) -> i64 {
+  match bump(value) {
+    Some(inner) => {
+      return inner as i64;
+    }
+    None => {
+      return 0;
+    }
+  }
+}
+
+fn main() -> i64 {
+  var total = 4;
+  total += 3;
+  let pair = (total, true);
+  let borrowed = inspect(ref pair.0);
+  let values = [2, 5, 8];
+  let boxed = Box { value: (pair.0 as i64) + values[1], ok: !false };
+  let mask = ~0i64;
+
+  if !boxed.ok {
+    return 1;
+  }
+
+  return boxed.value + borrowed + score(Some(6i32)) + -mask;
+}

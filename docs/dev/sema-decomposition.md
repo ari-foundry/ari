@@ -73,9 +73,9 @@ construction. Some helpers have already moved out to focused files:
 - `ast_clone` for union-safe AST expression cloning shared by parser compound
   assignment lowering and sema borrow-receiver synthesis
 - `ast_builders` for small AST expression constructors that keep scalar/name,
-  tuple-index, borrow, string/null, tuple/vector/struct literal, block, and
-  match payload initialization plus macro-call token payload allocation out of
-  parser and sema
+  unary/binary/cast/try/index/field/call child wiring, tuple-index, borrow,
+  string/null, tuple/vector/struct literal, block, and match payload
+  initialization plus macro-call token payload allocation out of parser and sema
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
@@ -127,6 +127,13 @@ expression nodes. This keeps the current parser, sema, and backend call sites
 stable while still shrinking common AST/IR nodes; stored-vector for-loop lowering
 uses `take()` when it transfers an IR vector literal's children into the lowered
 statement.
+AST operand child storage is not split yet, but the parser now builds
+unary/binary/cast/try/index/field/call/method-call nodes through `ast_builders`
+and `expr_operand`/`expr_left`/`expr_right` accessors. AST cloning, declaration
+summary materialization, compound-assignment target cloning, and sema's
+synthetic borrow-receiver cloning also use those helpers, which keeps the next
+payload move focused on sema/backend read coverage instead of parser
+construction cleanup.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

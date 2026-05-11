@@ -182,20 +182,23 @@
    `LazyVector` helper now backs IR expression argument vectors, including tuple,
    vector, aggregate-constructor, call, and stored-vector for-loop lowering
    paths, so ordinary IR scalar/access/control nodes avoid the eager argument
-   vector too.
-   Broader AST/IR node packing should stay incremental: `Stmt` and the large
-   AST/IR operand child pointers are still widely mutated while parsing,
-   lowering, and backend emission, so their payload split needs more
-   constructor/builder coverage first.
+   vector too. AST unary, binary, cast, try, index, field access, call, and
+   method-call construction now goes through operand/child accessors and
+   `ast_builders`; AST cloning, module-summary constant materialization, parser
+   compound-assignment cloning, and sema synthetic borrow-receiver cloning use
+   the same helper path.
+   Broader AST/IR node packing should stay incremental: the large AST/IR
+   operand child pointers are still read by many lowering and backend paths, so
+   their payload split needs full accessor coverage before the storage moves.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions; remaining high-value targets are AST/IR
-     operand child expression groups that still receive broad parser, sema, and
-     backend mutations
+     operand child expression groups that still receive broad sema and backend
+     reads/mutations
    - [expr-child-vector-payloads] split operand child expression fields after
-     builders cover the remaining parser/sema/backend mutation paths; next small
-     slice: split AST unary/cast/try/index/field operand children once parser
-     construction, AST clone, and sema borrow-receiver synthesis share one helper
-     path
+     accessors cover the remaining sema/backend paths; next small slice: route
+     semantic lowering and codegen reads of AST `operand`/`left`/`right` through
+     helpers, then move AST unary/cast/try/index/field child storage behind a
+     rare payload before mirroring the approach for IR child fields
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

@@ -52,9 +52,9 @@ ExprPtr make_shallow_clone(const Expr& expr) {
 
 ExprPtr clone_expression_tree(const Expr& expr) {
     ExprPtr clone = make_shallow_clone(expr);
-    if (expr.operand) clone->operand = clone_expression_tree(*expr.operand);
-    if (expr.left) clone->left = clone_expression_tree(*expr.left);
-    if (expr.right) clone->right = clone_expression_tree(*expr.right);
+    if (expr_operand(expr)) set_expr_operand(*clone, clone_expression_tree(*expr_operand(expr)));
+    if (expr_left(expr)) set_expr_left(*clone, clone_expression_tree(*expr_left(expr)));
+    if (expr_right(expr)) set_expr_right(*clone, clone_expression_tree(*expr_right(expr)));
     for (const auto& arg : expr.args) clone->args.push_back(clone_expression_tree(*arg));
     return clone;
 }
@@ -85,16 +85,16 @@ ExprPtr clone_borrowable_receiver_expr(const Expr& expr) {
             return clone;
         case ExprKind::FieldAccess:
         case ExprKind::TupleIndex:
-            if (!expr.operand) return nullptr;
-            clone->operand = clone_borrowable_receiver_expr(*expr.operand);
-            if (!clone->operand) return nullptr;
+            if (!expr_operand(expr)) return nullptr;
+            set_expr_operand(*clone, clone_borrowable_receiver_expr(*expr_operand(expr)));
+            if (!expr_operand(*clone)) return nullptr;
             return clone;
         case ExprKind::Index:
-            if (!expr.operand || !expr.right || expr.right->kind != ExprKind::Integer) return nullptr;
-            clone->operand = clone_borrowable_receiver_expr(*expr.operand);
-            if (!clone->operand) return nullptr;
-            clone->right = clone_borrowable_receiver_expr(*expr.right);
-            if (!clone->right) return nullptr;
+            if (!expr_operand(expr) || !expr_right(expr) || expr_right(expr)->kind != ExprKind::Integer) return nullptr;
+            set_expr_operand(*clone, clone_borrowable_receiver_expr(*expr_operand(expr)));
+            if (!expr_operand(*clone)) return nullptr;
+            set_expr_right(*clone, clone_borrowable_receiver_expr(*expr_right(expr)));
+            if (!expr_right(*clone)) return nullptr;
             return clone;
         default:
             return nullptr;

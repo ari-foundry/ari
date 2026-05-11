@@ -215,6 +215,54 @@ struct Expr {
     std::unique_ptr<std::vector<Token>> macro_tokens;
 };
 
+inline const ExprPtr& expr_operand(const Expr& expr) {
+    return expr.operand;
+}
+
+inline ExprPtr& mutable_expr_operand(Expr& expr) {
+    return expr.operand;
+}
+
+inline void set_expr_operand(Expr& expr, ExprPtr operand) {
+    expr.operand = std::move(operand);
+}
+
+inline ExprPtr take_expr_operand(Expr& expr) {
+    return std::move(expr.operand);
+}
+
+inline const ExprPtr& expr_left(const Expr& expr) {
+    return expr.left;
+}
+
+inline ExprPtr& mutable_expr_left(Expr& expr) {
+    return expr.left;
+}
+
+inline void set_expr_left(Expr& expr, ExprPtr left) {
+    expr.left = std::move(left);
+}
+
+inline ExprPtr take_expr_left(Expr& expr) {
+    return std::move(expr.left);
+}
+
+inline const ExprPtr& expr_right(const Expr& expr) {
+    return expr.right;
+}
+
+inline ExprPtr& mutable_expr_right(Expr& expr) {
+    return expr.right;
+}
+
+inline void set_expr_right(Expr& expr, ExprPtr right) {
+    expr.right = std::move(right);
+}
+
+inline ExprPtr take_expr_right(Expr& expr) {
+    return std::move(expr.right);
+}
+
 struct MatchArm {
     Pattern pattern;
     std::vector<StmtPtr> body;

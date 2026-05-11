@@ -58,6 +58,42 @@ ExprPtr make_ast_name_expr(SourceLocation loc, std::string name) {
     return expr;
 }
 
+ExprPtr make_ast_unary_expr(SourceLocation loc, TokenKind op, ExprPtr operand) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Unary;
+    expr->loc = loc;
+    expr->op = op;
+    set_expr_operand(*expr, std::move(operand));
+    return expr;
+}
+
+ExprPtr make_ast_binary_expr(SourceLocation loc, TokenKind op, ExprPtr left, ExprPtr right) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Binary;
+    expr->loc = loc;
+    expr->op = op;
+    set_expr_left(*expr, std::move(left));
+    set_expr_right(*expr, std::move(right));
+    return expr;
+}
+
+ExprPtr make_ast_cast_expr(SourceLocation loc, ExprPtr operand, TypeRef type) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Cast;
+    expr->loc = loc;
+    expr->cast_type = std::move(type);
+    set_expr_operand(*expr, std::move(operand));
+    return expr;
+}
+
+ExprPtr make_ast_try_expr(SourceLocation loc, ExprPtr operand) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Try;
+    expr->loc = loc;
+    set_expr_operand(*expr, std::move(operand));
+    return expr;
+}
+
 ExprPtr make_ast_tuple_expr(SourceLocation loc, std::vector<ExprPtr> elements) {
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::Tuple;
@@ -142,8 +178,26 @@ ExprPtr make_ast_tuple_index_expr(SourceLocation loc, ExprPtr operand, std::uint
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::TupleIndex;
     expr->loc = loc;
-    expr->operand = std::move(operand);
+    set_expr_operand(*expr, std::move(operand));
     expr->tuple_index = index;
+    return expr;
+}
+
+ExprPtr make_ast_index_expr(SourceLocation loc, ExprPtr operand, ExprPtr index) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Index;
+    expr->loc = loc;
+    set_expr_operand(*expr, std::move(operand));
+    set_expr_right(*expr, std::move(index));
+    return expr;
+}
+
+ExprPtr make_ast_field_access_expr(SourceLocation loc, ExprPtr operand, std::string name) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::FieldAccess;
+    expr->loc = loc;
+    expr->name = std::move(name);
+    set_expr_operand(*expr, std::move(operand));
     return expr;
 }
 
@@ -153,7 +207,32 @@ ExprPtr make_ast_borrow_expr(SourceLocation loc, ExprPtr operand, bool mutable_b
     expr->loc = loc;
     expr->mutable_borrow = mutable_borrow;
     if (operand && operand->kind == ExprKind::Name) expr->name = operand->name;
-    expr->operand = std::move(operand);
+    set_expr_operand(*expr, std::move(operand));
+    return expr;
+}
+
+ExprPtr make_ast_call_expr(SourceLocation loc, std::string name, ExprPtr operand, std::vector<ExprPtr> args) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::Call;
+    expr->loc = loc;
+    expr->name = std::move(name);
+    set_expr_operand(*expr, std::move(operand));
+    expr->args = std::move(args);
+    return expr;
+}
+
+ExprPtr make_ast_method_call_expr(SourceLocation loc,
+                                  ExprPtr operand,
+                                  std::string name,
+                                  std::vector<TypeRef> type_args,
+                                  std::vector<ExprPtr> args) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::MethodCall;
+    expr->loc = loc;
+    expr->name = std::move(name);
+    set_expr_operand(*expr, std::move(operand));
+    set_expr_type_args(*expr, std::move(type_args));
+    expr->args = std::move(args);
     return expr;
 }
 

@@ -144,20 +144,20 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             append_field(out, expr.name);
             return true;
         case ExprKind::Unary: {
-            if (!expr.operand || !is_summary_const_unary_op(expr.op)) return false;
+            if (!expr_operand(expr) || !is_summary_const_unary_op(expr.op)) return false;
             std::ostringstream operand;
-            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
             append_field(out, "unary");
             append_count(out, static_cast<std::uint64_t>(expr.op));
             out << operand.str();
             return true;
         }
         case ExprKind::Binary: {
-            if (!expr.left || !expr.right || !is_summary_const_binary_op(expr.op)) return false;
+            if (!expr_left(expr) || !expr_right(expr) || !is_summary_const_binary_op(expr.op)) return false;
             std::ostringstream left;
             std::ostringstream right;
-            if (!append_const_expr_payload(left, *expr.left)) return false;
-            if (!append_const_expr_payload(right, *expr.right)) return false;
+            if (!append_const_expr_payload(left, *expr_left(expr))) return false;
+            if (!append_const_expr_payload(right, *expr_right(expr))) return false;
             append_field(out, "binary");
             append_count(out, static_cast<std::uint64_t>(expr.op));
             out << left.str();
@@ -165,38 +165,38 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             return true;
         }
         case ExprKind::Cast: {
-            if (!expr.operand) return false;
+            if (!expr_operand(expr)) return false;
             std::ostringstream operand;
-            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
             append_field(out, "cast");
             append_type(out, expr.cast_type);
             out << operand.str();
             return true;
         }
         case ExprKind::FieldAccess: {
-            if (!expr.operand) return false;
+            if (!expr_operand(expr)) return false;
             std::ostringstream operand;
-            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
             append_field(out, "field");
             out << operand.str();
             append_field(out, expr.name);
             return true;
         }
         case ExprKind::TupleIndex: {
-            if (!expr.operand) return false;
+            if (!expr_operand(expr)) return false;
             std::ostringstream operand;
-            if (!append_const_expr_payload(operand, *expr.operand)) return false;
+            if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
             append_field(out, "tuple-index");
             out << operand.str();
             append_count(out, expr.tuple_index);
             return true;
         }
         case ExprKind::Index: {
-            if (!expr.operand || !expr.right) return false;
+            if (!expr_operand(expr) || !expr_right(expr)) return false;
             std::ostringstream operand;
             std::ostringstream index;
-            if (!append_const_expr_payload(operand, *expr.operand)) return false;
-            if (!append_const_expr_payload(index, *expr.right)) return false;
+            if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
+            if (!append_const_expr_payload(index, *expr_right(expr))) return false;
             append_field(out, "index");
             out << operand.str();
             out << index.str();
@@ -235,7 +235,7 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             return true;
         }
         case ExprKind::Call: {
-            if (expr.operand) return false;
+            if (expr_operand(expr)) return false;
             if (!expr_receiver_type_args(expr).empty()) return false;
             std::ostringstream args;
             if (!append_const_expr_list(args, expr.args)) return false;
@@ -785,39 +785,39 @@ private:
             expr->kind = ExprKind::Unary;
             expr->op = read_token_kind(label + " unary operator");
             if (!is_summary_const_unary_op(expr->op)) fail("unsupported constant summary unary operator");
-            expr->operand = read_const_expr(label + " unary operand");
+            set_expr_operand(*expr, read_const_expr(label + " unary operand"));
             return expr;
         }
         if (kind == "binary") {
             expr->kind = ExprKind::Binary;
             expr->op = read_token_kind(label + " binary operator");
             if (!is_summary_const_binary_op(expr->op)) fail("unsupported constant summary binary operator");
-            expr->left = read_const_expr(label + " binary left operand");
-            expr->right = read_const_expr(label + " binary right operand");
+            set_expr_left(*expr, read_const_expr(label + " binary left operand"));
+            set_expr_right(*expr, read_const_expr(label + " binary right operand"));
             return expr;
         }
         if (kind == "cast") {
             expr->kind = ExprKind::Cast;
             expr->cast_type = read_type(label + " cast type");
-            expr->operand = read_const_expr(label + " cast operand");
+            set_expr_operand(*expr, read_const_expr(label + " cast operand"));
             return expr;
         }
         if (kind == "field") {
             expr->kind = ExprKind::FieldAccess;
-            expr->operand = read_const_expr(label + " field operand");
+            set_expr_operand(*expr, read_const_expr(label + " field operand"));
             expr->name = read_field(label + " field name");
             return expr;
         }
         if (kind == "tuple-index") {
             expr->kind = ExprKind::TupleIndex;
-            expr->operand = read_const_expr(label + " tuple-index operand");
+            set_expr_operand(*expr, read_const_expr(label + " tuple-index operand"));
             expr->tuple_index = read_count(label + " tuple index");
             return expr;
         }
         if (kind == "index") {
             expr->kind = ExprKind::Index;
-            expr->operand = read_const_expr(label + " index operand");
-            expr->right = read_const_expr(label + " index value");
+            set_expr_operand(*expr, read_const_expr(label + " index operand"));
+            set_expr_right(*expr, read_const_expr(label + " index value"));
             return expr;
         }
         if (kind == "tuple") {

@@ -456,6 +456,9 @@ Checklist:
       literal, and call argument lowering on LLVM and freestanding paths
 - [x] IR argument-vector payload packing preserves tuple, vector, struct literal,
       call, and stored-vector for-loop lowering on LLVM and freestanding paths
+- [x] AST operand helper paths preserve unary, binary, cast, try, tuple-index,
+      field, index, call, compound-assignment clone, and synthetic borrow
+      receiver lowering on LLVM and freestanding paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

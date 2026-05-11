@@ -17,7 +17,13 @@ ExprPtr make_ast_string_expr(SourceLocation loc, std::string value);
 ExprPtr make_ast_bool_expr(SourceLocation loc, bool value);
 ExprPtr make_ast_null_expr(SourceLocation loc);
 ExprPtr make_ast_name_expr(SourceLocation loc, std::string name);
+ExprPtr make_ast_unary_expr(SourceLocation loc, TokenKind op, ExprPtr operand);
+ExprPtr make_ast_binary_expr(SourceLocation loc, TokenKind op, ExprPtr left, ExprPtr right);
+ExprPtr make_ast_cast_expr(SourceLocation loc, ExprPtr operand, TypeRef type);
+ExprPtr make_ast_try_expr(SourceLocation loc, ExprPtr operand);
 ExprPtr make_ast_tuple_index_expr(SourceLocation loc, ExprPtr operand, std::uint64_t index);
+ExprPtr make_ast_index_expr(SourceLocation loc, ExprPtr operand, ExprPtr index);
+ExprPtr make_ast_field_access_expr(SourceLocation loc, ExprPtr operand, std::string name);
 ExprPtr make_ast_borrow_expr(SourceLocation loc, ExprPtr operand, bool mutable_borrow);
 ExprPtr make_ast_tuple_expr(SourceLocation loc, std::vector<ExprPtr> elements = {});
 ExprPtr make_ast_vector_expr(SourceLocation loc, std::vector<ExprPtr> elements = {});
@@ -37,6 +43,15 @@ ExprPtr make_ast_if_expr(SourceLocation loc,
                          ExprPtr then_value,
                          std::vector<StmtPtr> else_body,
                          ExprPtr else_value);
+ExprPtr make_ast_call_expr(SourceLocation loc,
+                           std::string name,
+                           ExprPtr operand,
+                           std::vector<ExprPtr> args = {});
+ExprPtr make_ast_method_call_expr(SourceLocation loc,
+                                  ExprPtr operand,
+                                  std::string name,
+                                  std::vector<TypeRef> type_args,
+                                  std::vector<ExprPtr> args = {});
 ExprPtr make_ast_match_expr(SourceLocation loc, ExprPtr value, std::vector<ExprMatchArm> arms);
 ExprPtr make_ast_macro_call_expr(SourceLocation loc, std::string name, std::vector<Token> tokens);
 

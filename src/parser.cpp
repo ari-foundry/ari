@@ -851,16 +851,17 @@ private:
             if (op.kind == TokenKind::Equal) {
                 set_stmt_assign_rhs(*stmt, std::move(rhs));
             } else {
-                auto combined = std::make_unique<Expr>();
-                combined->kind = ExprKind::Binary;
-                combined->loc = op.loc;
-                combined->op = compound_assignment_binary_operator(op.kind, op.loc);
                 const ExprPtr& assign_target = stmt_assign_target(*stmt);
-                combined->left = assign_target
+                ExprPtr left = assign_target
                     ? clone_assignment_target(*assign_target)
                     : make_ast_name_expr(loc, stmt_assign_name(*stmt));
-                combined->right = std::move(rhs);
-                set_stmt_assign_rhs(*stmt, std::move(combined));
+                set_stmt_assign_rhs(
+                    *stmt,
+                    make_ast_binary_expr(
+                        op.loc,
+                        compound_assignment_binary_operator(op.kind, op.loc),
+                        std::move(left),
+                        std::move(rhs)));
             }
             require_semicolon("expected ; after assignment");
             return stmt;
@@ -1611,13 +1612,14 @@ private:
         for (;;) {
             if (check(TokenKind::DotDot) || check(TokenKind::DotDotEqual)) {
                 Token op = tokens_[pos_++];
-                auto call = std::make_unique<Expr>();
-                call->kind = ExprKind::Call;
-                call->loc = op.loc;
-                call->name = op.kind == TokenKind::DotDot ? "range" : "range_inclusive";
-                call->args.push_back(std::move(left));
-                call->args.push_back(parse_expression(1));
-                left = std::move(call);
+                std::vector<ExprPtr> args;
+                args.push_back(std::move(left));
+                args.push_back(parse_expression(1));
+                left = make_ast_call_expr(
+                    op.loc,
+                    op.kind == TokenKind::DotDot ? "range" : "range_inclusive",
+                    nullptr,
+                    std::move(args));
                 continue;
             }
             reject_planned_operator(peek());
@@ -1625,13 +1627,17 @@ private:
             if (prec < min_prec) break;
             Token op = tokens_[pos_++];
             ExprPtr right = parse_expression(op.kind == TokenKind::QuestionQuestion ? prec : prec + 1);
-            auto expr = std::make_unique<Expr>();
-            expr->kind = op.kind == TokenKind::QuestionQuestion ? ExprKind::NullCoalesce : ExprKind::Binary;
-            expr->loc = op.loc;
-            expr->op = op.kind;
-            expr->left = std::move(left);
-            expr->right = std::move(right);
-            left = std::move(expr);
+            if (op.kind == TokenKind::QuestionQuestion) {
+                auto expr = std::make_unique<Expr>();
+                expr->kind = ExprKind::NullCoalesce;
+                expr->loc = op.loc;
+                expr->op = op.kind;
+                set_expr_left(*expr, std::move(left));
+                set_expr_right(*expr, std::move(right));
+                left = std::move(expr);
+            } else {
+                left = make_ast_binary_expr(op.loc, op.kind, std::move(left), std::move(right));
+            }
         }
         return left;
     }
@@ -1655,39 +1661,19 @@ private:
                 Token number = tokens_[pos_++];
                 return make_ast_float_expr(minus.loc, -number.float_value, number.literal_suffix);
             }
-            auto expr = std::make_unique<Expr>();
-            expr->kind = ExprKind::Binary;
-            expr->op = TokenKind::Minus;
-            expr->left = make_ast_integer_expr(minus.loc, 0);
-            expr->right = parse_unary();
-            return expr;
+            return make_ast_binary_expr(minus.loc, TokenKind::Minus, make_ast_integer_expr(minus.loc, 0), parse_unary());
         }
         if (match(TokenKind::Bang)) {
             Token bang = tokens_[pos_ - 1];
-            auto expr = std::make_unique<Expr>();
-            expr->kind = ExprKind::Unary;
-            expr->loc = bang.loc;
-            expr->op = TokenKind::Bang;
-            expr->operand = parse_unary();
-            return expr;
+            return make_ast_unary_expr(bang.loc, TokenKind::Bang, parse_unary());
         }
         if (match(TokenKind::Tilde)) {
             Token tilde = tokens_[pos_ - 1];
-            auto expr = std::make_unique<Expr>();
-            expr->kind = ExprKind::Unary;
-            expr->loc = tilde.loc;
-            expr->op = TokenKind::Tilde;
-            expr->operand = parse_unary();
-            return expr;
+            return make_ast_unary_expr(tilde.loc, TokenKind::Tilde, parse_unary());
         }
         if (match(TokenKind::Star)) {
             Token star = tokens_[pos_ - 1];
-            auto expr = std::make_unique<Expr>();
-            expr->kind = ExprKind::Unary;
-            expr->loc = star.loc;
-            expr->op = TokenKind::Star;
-            expr->operand = parse_unary();
-            return expr;
+            return make_ast_unary_expr(star.loc, TokenKind::Star, parse_unary());
         }
         if (match(TokenKind::KwRef)) {
             Token ref = tokens_[pos_ - 1];
@@ -1886,56 +1872,49 @@ private:
             }
 
             if (match(TokenKind::LParen)) {
-                auto call = std::make_unique<Expr>();
-                call->kind = ExprKind::Call;
-                call->loc = expr->loc;
+                SourceLocation call_loc = expr->loc;
+                std::string call_name;
+                ExprReceiverTypeArgs receiver_type_args;
+                ExprTypeArgs type_args;
+                ExprPtr operand;
                 if (expr->kind == ExprKind::Name) {
-                    call->name = expr->name;
-                    set_expr_receiver_type_args(*call, take_expr_receiver_type_args(*expr));
-                    set_expr_type_args(*call, take_expr_type_args(*expr));
+                    call_name = expr->name;
+                    receiver_type_args = take_expr_receiver_type_args(*expr);
+                    type_args = take_expr_type_args(*expr);
                 } else {
-                    call->operand = std::move(expr);
+                    operand = std::move(expr);
                 }
+                std::vector<ExprPtr> args;
                 if (!check(TokenKind::RParen)) {
                     do {
-                        call->args.push_back(parse_expression());
+                        args.push_back(parse_expression());
                     } while (match(TokenKind::Comma));
                 }
                 expect(TokenKind::RParen, "expected ) after call arguments");
+                auto call = make_ast_call_expr(call_loc, std::move(call_name), std::move(operand), std::move(args));
+                set_expr_receiver_type_args(*call, std::move(receiver_type_args));
+                set_expr_type_args(*call, std::move(type_args));
                 expr = std::move(call);
                 continue;
             }
 
             if (match(TokenKind::LBracket)) {
                 Token open = tokens_[pos_ - 1];
-                auto index = std::make_unique<Expr>();
-                index->kind = ExprKind::Index;
-                index->loc = open.loc;
-                index->operand = std::move(expr);
-                index->right = parse_expression();
+                ExprPtr index = parse_expression();
                 expect(TokenKind::RBracket, "expected ] after index expression");
-                expr = std::move(index);
+                expr = make_ast_index_expr(open.loc, std::move(expr), std::move(index));
                 continue;
             }
 
             if (match(TokenKind::KwAs)) {
                 Token as = tokens_[pos_ - 1];
-                auto cast = std::make_unique<Expr>();
-                cast->kind = ExprKind::Cast;
-                cast->loc = as.loc;
-                cast->operand = std::move(expr);
-                cast->cast_type = parse_type();
-                expr = std::move(cast);
+                expr = make_ast_cast_expr(as.loc, std::move(expr), parse_type());
                 continue;
             }
 
             if (match(TokenKind::Question)) {
                 Token question = tokens_[pos_ - 1];
-                auto try_expr = std::make_unique<Expr>();
-                try_expr->kind = ExprKind::Try;
-                try_expr->loc = question.loc;
-                try_expr->operand = std::move(expr);
-                expr = std::move(try_expr);
+                expr = make_ast_try_expr(question.loc, std::move(expr));
                 continue;
             }
 
@@ -1958,30 +1937,25 @@ private:
                     method_type_args = take_expr_type_args(type_arg_holder);
                 }
                 if (match(TokenKind::LParen)) {
-                    auto call = std::make_unique<Expr>();
-                    call->kind = ExprKind::MethodCall;
-                    call->loc = dot_loc;
-                    call->operand = std::move(expr);
-                    call->name = field.text;
-                    set_expr_type_args(*call, std::move(method_type_args));
+                    std::vector<ExprPtr> args;
                     if (!check(TokenKind::RParen)) {
                         do {
-                            call->args.push_back(parse_expression());
+                            args.push_back(parse_expression());
                         } while (match(TokenKind::Comma));
                     }
                     expect(TokenKind::RParen, "expected ) after method call arguments");
-                    expr = std::move(call);
+                    expr = make_ast_method_call_expr(
+                        dot_loc,
+                        std::move(expr),
+                        field.text,
+                        std::move(method_type_args),
+                        std::move(args));
                     continue;
                 }
                 if (!method_type_args.empty()) {
                     fail(dot_loc, "generic method type arguments must be followed by a call");
                 }
-                auto access = std::make_unique<Expr>();
-                access->kind = ExprKind::FieldAccess;
-                access->loc = dot_loc;
-                access->operand = std::move(expr);
-                access->name = field.text;
-                expr = std::move(access);
+                expr = make_ast_field_access_expr(dot_loc, std::move(expr), field.text);
                 continue;
             }
 
