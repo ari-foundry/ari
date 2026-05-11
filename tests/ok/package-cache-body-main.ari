@@ -5,5 +5,7 @@ fn main() -> i64 {
     cache_bodies::final_value() +
     cache_bodies::expression_statement() +
     cache_bodies::local_flow(true) +
-    cache_bodies::local_flow(false)
+    cache_bodies::local_flow(false) +
+    cache_bodies::labeled_block(true) +
+    cache_bodies::labeled_block(false)
 }

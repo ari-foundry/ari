@@ -21,3 +21,15 @@ pub fn local_flow(flag: bool) -> i64 {
   }
   return total;
 }
+
+pub fn labeled_block(flag: bool) -> i64 {
+  var total = 1;
+  adjust: {
+    if flag {
+      total = total + 10;
+      break adjust;
+    }
+    total = total + 20;
+  }
+  return total;
+}

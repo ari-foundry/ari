@@ -108,7 +108,8 @@
    expressions, plus field, tuple-index, and fixed-array index access over
    materialized aggregate constants. Module cache v6 also carries simple
    executable AST body summaries for functions whose bodies use summary-safe
-   local declarations, assignments, `if`/`else`, `return` statements, or final
+   local declarations, assignments, `if`/`else`, block/labeled-block
+   statements, unlabeled/labeled `break`, `return` statements, or final
    expression statements, allowing those dependency bodies to materialize from
    the cache after validation. The remaining package-cache work is to extend
    that path to future IR summaries for general executable function and impl
@@ -116,9 +117,8 @@
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies with executable function or impl bodies
    - [body-summary-control-flow] either widen the temporary AST body-summary
-     subset to loops, match, and block/labeled-block statements or replace it
-     with the planned IR body summaries before depending on it for broad
-     executable packages
+     subset to loops and match statements or replace it with the planned IR
+     body summaries before depending on it for broad executable packages
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs

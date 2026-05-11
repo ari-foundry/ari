@@ -395,7 +395,8 @@ Checklist:
       summaries instead of reparsing cached source text
 - [x] AST summary declaration payloads materialize simple executable function
       bodies made from local declarations, assignments, `if`/`else`,
-      return/final-expression statements, and summary-safe expressions
+      block/labeled-block statements, `break`, return/final-expression
+      statements, and summary-safe expressions
 - [ ] AST/IR package cache summaries skip dependency parsing after validation
 - [x] AST/IR scalar payload packing preserves integer, bool, float, tuple-index,
       and indexed-assignment lowering paths

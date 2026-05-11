@@ -291,6 +291,14 @@ bool append_body_stmt_list(std::ostringstream& out, const std::vector<StmtPtr>& 
 
 bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
     switch (stmt.kind) {
+        case StmtKind::Block: {
+            std::ostringstream body;
+            if (!append_body_stmt_list(body, stmt_statements(stmt))) return false;
+            append_field(out, "block");
+            append_field(out, stmt_label(stmt));
+            out << body.str();
+            return true;
+        }
         case StmtKind::VarDecl: {
             if (stmt.binding.has_pattern) return false;
             std::ostringstream init;
@@ -347,6 +355,16 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             out << condition.str();
             out << then_body.str();
             out << else_body.str();
+            return true;
+        }
+        case StmtKind::Break: {
+            std::ostringstream value;
+            const bool has_value = static_cast<bool>(stmt_break_value(stmt));
+            if (has_value && !append_const_expr_payload(value, *stmt_break_value(stmt))) return false;
+            append_field(out, "break");
+            append_field(out, stmt_break_label(stmt));
+            append_bool(out, has_value);
+            out << value.str();
             return true;
         }
         default:
@@ -986,6 +1004,12 @@ private:
         std::string kind = read_field(label + " kind");
         auto stmt = std::make_unique<Stmt>();
         stmt->loc = default_loc();
+        if (kind == "block") {
+            stmt->kind = StmtKind::Block;
+            set_stmt_label(*stmt, read_field(label + " block label"));
+            set_stmt_statements(*stmt, read_body_stmt_list(label + " block body"));
+            return stmt;
+        }
         if (kind == "var") {
             stmt->kind = StmtKind::VarDecl;
             stmt->binding.name = read_field(label + " binding name");
@@ -1024,6 +1048,14 @@ private:
             stmt->condition = read_const_expr(label + " condition");
             set_stmt_then_body(*stmt, read_body_stmt_list(label + " then body"));
             set_stmt_else_body(*stmt, read_body_stmt_list(label + " else body"));
+            return stmt;
+        }
+        if (kind == "break") {
+            stmt->kind = StmtKind::Break;
+            set_stmt_break_label(*stmt, read_field(label + " break label"));
+            if (read_bool(label + " break value flag")) {
+                set_stmt_break_value(*stmt, read_const_expr(label + " break value"));
+            }
             return stmt;
         }
         fail("unknown function body statement summary kind '" + kind + "'");

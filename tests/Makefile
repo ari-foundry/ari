@@ -700,14 +700,16 @@ check-modules: $(TARGET)
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache.ll
 	grep -q "ari-ast-decls-v3" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "3:var" $(BUILD_DIR)/modules/package-cache-body.aricache
+	grep -q "5:block" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "6:assign" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "6:return" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "9:expr-stmt" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "2:if" $(BUILD_DIR)/modules/package-cache-body.aricache
+	grep -q "5:break" $(BUILD_DIR)/modules/package-cache-body.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-body-cache.ll $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.raw
-	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 42
+	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 74
 	$(TARGET) -Itests/packages tests/ok/package-cache-decls-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-decls.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-decls-cache.ll
 	grep -q "ari-ast-decls-v3" $(BUILD_DIR)/modules/package-cache-decls.aricache
 	grep -Eq "ast-summary.*cache_decls.*tests/packages/cache_decls.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-decls.aricache

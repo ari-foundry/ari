@@ -342,10 +342,11 @@ payloads are preserved too, as are field, tuple-index, and fixed-array index
 accesses over materialized aggregate constants. Constants whose initializers use
 unsupported summary forms fall back to parsing the cached source snapshot.
 Executable dependency functions whose bodies use summary-safe local
-declarations, assignments, `if`/`else`, `return` statements, or final
-expression statements over the same expression forms can also be materialized
-from the AST summary. More complex executable bodies still fall back to parsing
-the cached source snapshot until the IR body-summary cache is implemented.
+declarations, assignments, `if`/`else`, block/labeled-block statements,
+unlabeled or labeled `break`, `return` statements, or final expression
+statements over the same expression forms can also be materialized from the AST
+summary. More complex executable bodies still fall back to parsing the cached
+source snapshot until the IR body-summary cache is implemented.
 
 This cache format skips dependency source discovery after validation and reads
 module source text from the cached snapshot. Header-like dependencies can skip
