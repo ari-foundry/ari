@@ -24,6 +24,10 @@ if value < 10 {
 
 Conditions must be `bool` or an integer value. Integer conditions are treated
 as `value != 0`; ownership-qualified values are not implicitly converted.
+For statement `if`, literal `true` and `false` conditions are checked as normal,
+but flow analysis follows the selected branch. This lets ownership and
+non-returning path checks ignore statement paths that a literal condition cannot
+reach.
 
 `if` can also be used as an expression when both arms produce a value:
 

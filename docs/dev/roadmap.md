@@ -120,7 +120,10 @@
    `while true` bodies that return on every path now make the loop statement
    return as well. Literal `while true` bodies with no reachable `break` also
    no longer count as falling through when they continue into the next
-   iteration.
+   iteration. Statement `if true`/`if false` now feeds the selected literal
+   branch into ownership flow analysis, so loop bodies with literal
+   `if true { break; }` paths do not merge unreachable post-break owner-state
+   changes into the loop fallthrough state.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
      loop fallthrough paths instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop

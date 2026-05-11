@@ -4308,8 +4308,13 @@ private:
         return exit_state;
     }
 
+    static std::optional<bool> literal_bool_condition_value(const IrExpr& condition) {
+        if (condition.kind != IrExprKind::Bool) return std::nullopt;
+        return condition.bool_value;
+    }
+
     static bool is_literal_true_condition(const IrExpr& condition) {
-        return condition.kind == IrExprKind::Bool && condition.bool_value;
+        return literal_bool_condition_value(condition).value_or(false);
     }
 
     static bool literal_true_loop_never_falls_through(const LoopInfo& loop, Flow body_flow) {
@@ -6222,6 +6227,7 @@ private:
         if (stmt.has_condition_pattern) return check_if_let(stmt, lowered);
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
+        std::optional<bool> literal_condition = literal_bool_condition_value(*lowered.condition);
         StateSnapshot branch_input = snapshot_states();
 
         CheckedStatements then_checked = check_statements(stmt_then_body(stmt), true);
@@ -6231,6 +6237,15 @@ private:
         restore_states(branch_input);
 
         if (stmt_else_body(stmt).empty()) {
+            if (literal_condition && !*literal_condition) {
+                restore_states(branch_input);
+                return Flow::Continues;
+            }
+            if (literal_condition && *literal_condition) {
+                if (then_checked.flow == Flow::Continues) restore_states(then_state);
+                else restore_states(branch_input);
+                return then_checked.flow;
+            }
             if (then_checked.flow == Flow::Continues) {
                 require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if without else");
                 restore_merged_states(branch_input, then_state);
@@ -6243,6 +6258,16 @@ private:
         CheckedStatements else_checked = check_statements(stmt_else_body(stmt), true);
         set_ir_stmt_else_body(lowered, std::move(else_checked.statements));
         StateSnapshot else_state = snapshot_states();
+
+        if (literal_condition) {
+            Flow selected_flow = *literal_condition ? then_checked.flow : else_checked.flow;
+            if (selected_flow == Flow::Continues) {
+                restore_states(*literal_condition ? then_state : else_state);
+            } else {
+                restore_states(branch_input);
+            }
+            return selected_flow;
+        }
 
         if (then_checked.flow != Flow::Continues && else_checked.flow != Flow::Continues) {
             restore_states(branch_input);
