@@ -124,9 +124,10 @@
    branch into ownership flow analysis, so loop bodies with literal
    `if true { break; }` paths do not merge unreachable post-break owner-state
    changes into the loop fallthrough state. Literal `while false` bodies are
-   also checked without merging unreachable body ownership changes into the
-   zero-iteration loop exit state. Unselected literal `if` branches also stop
-   contributing unreachable `break`/`continue` snapshots to enclosing loops.
+   also checked without merging unreachable body ownership or borrow-source
+   changes into the zero-iteration loop exit state. Unselected literal `if`
+   branches also stop contributing unreachable `break`/`continue` snapshots to
+   enclosing loops.
    Literal-false `init while` / `let while` loops now keep their zero-iteration
    init binding state after checking the unreachable body and `next`
    expressions. Literal-true `init while` / `let while` loops now report
@@ -138,7 +139,8 @@
      loop fallthrough paths beyond the literal-true next-iteration/exit splits,
      instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop
-     fallthrough/next-iteration paths
+     fallthrough/next-iteration paths beyond literal-false zero-iteration
+     borrow-state restore
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

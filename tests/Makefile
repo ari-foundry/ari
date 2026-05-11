@@ -289,6 +289,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/while-false-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-false-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/while-false-borrow-state.ari -o $(BUILD_DIR)/control-flow/while-false-borrow-state.raw
+	$(BUILD_DIR)/control-flow/while-false-borrow-state.raw; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/while-true-continue-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
 	$(TARGET) tests/ok/while-true-empty-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-empty-noreturn.ll
@@ -408,6 +410,8 @@ check-control-flow: $(TARGET)
 	grep -q "br i1 1" $(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.ll
 	$(TARGET) tests/ok/while-false-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-false-owner-state.ll
 	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-false-owner-state.ll
+	$(TARGET) tests/ok/while-false-borrow-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-false-borrow-state.ll
+	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-false-borrow-state.ll
 	$(TARGET) tests/ok/statement-label-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/statement-label-payloads.ll
 	grep -q "block.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll
@@ -2315,6 +2319,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "binding 'token' has incompatible ownership states after loop exits" $(BUILD_DIR)/errors/loop-break-owner-state.err
 	if $(TARGET) tests/errors/loop-continue-owner-state.ari -o $(BUILD_DIR)/errors/loop-continue-owner-state.elf >$(BUILD_DIR)/errors/loop-continue-owner-state.err 2>&1; then exit 1; fi
 	grep -q "binding 'token' has incompatible ownership states at loop continue" $(BUILD_DIR)/errors/loop-continue-owner-state.err
+	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi
+	grep -q "cannot assign to borrowed binding 'first'" $(BUILD_DIR)/errors/while-false-borrow-state.err
 	if $(TARGET) tests/errors/loop-break-live-owner.ari -o $(BUILD_DIR)/errors/loop-break-live-owner.elf >$(BUILD_DIR)/errors/loop-break-live-owner.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'token' must be moved or dropped before break" $(BUILD_DIR)/errors/loop-break-live-owner.err
 	if $(TARGET) tests/errors/loop-continue-live-owner.ari -o $(BUILD_DIR)/errors/loop-continue-live-owner.elf >$(BUILD_DIR)/errors/loop-continue-live-owner.err 2>&1; then exit 1; fi

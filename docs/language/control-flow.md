@@ -178,8 +178,9 @@ when no alternative matches.
 
 Loops currently cannot change the ownership state of an outer binding. That
 rule is conservative until the checker can track loop invariants. A literal
-`while false` body is still checked for local validity, but ownership flow
-after the loop follows the zero-iteration path because the body cannot run.
+`while false` body is still checked for local validity, but ownership flow and
+borrow state after the loop follow the zero-iteration path because the body
+cannot run.
 
 ## For
 

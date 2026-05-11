@@ -68,6 +68,14 @@ struct StateSnapshotEntry {
     std::uint64_t zone_generation = 0;
     bool vector_length_known = false;
     std::uint64_t vector_known_length = 0;
+    int immutable_borrows = 0;
+    int mutable_borrows = 0;
+    std::map<std::string, LocalInfo::FieldBorrowCounts> field_borrows;
+    std::string borrow_source;
+    std::string borrow_source_path;
+    bool borrow_source_mutable = false;
+    bool borrow_sources_released = false;
+    std::vector<LocalInfo::BorrowSource> aggregate_borrow_sources;
 };
 
 using StateSnapshot = std::map<std::string, StateSnapshotEntry>;

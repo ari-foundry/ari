@@ -1,0 +1,12 @@
+fn main() -> i64 {
+  var first = 1;
+  var second = 2;
+  var holder: (ref i64, i64) = (ref first, 0);
+
+  while false {
+    holder = (ref second, 1);
+  }
+
+  second = 4;
+  return second;
+}

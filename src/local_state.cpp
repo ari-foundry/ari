@@ -503,10 +503,20 @@ StateSnapshot LocalScopeStack::snapshot_states() const {
                 item.second.state,
                 item.second.zone_generation,
                 item.second.vector_length_known,
-                item.second.vector_known_length
+                item.second.vector_known_length,
+                item.second.immutable_borrows,
+                item.second.mutable_borrows,
+                item.second.field_borrows,
+                item.second.borrow_source,
+                item.second.borrow_source_path,
+                item.second.borrow_source_mutable,
+                item.second.borrow_sources_released,
+                item.second.aggregate_borrow_sources
             };
             for (const auto& field : item.second.owned_field_states) {
-                snapshot[field_state_key(item.first, field.first)] = StateSnapshotEntry{field.second, 0};
+                StateSnapshotEntry field_entry;
+                field_entry.state = field.second;
+                snapshot[field_state_key(item.first, field.first)] = std::move(field_entry);
             }
         }
     }
@@ -525,6 +535,14 @@ void LocalScopeStack::restore_states(const StateSnapshot& snapshot) {
             local.zone_generation = item.second.zone_generation;
             local.vector_length_known = item.second.vector_length_known;
             local.vector_known_length = item.second.vector_known_length;
+            local.immutable_borrows = item.second.immutable_borrows;
+            local.mutable_borrows = item.second.mutable_borrows;
+            local.field_borrows = item.second.field_borrows;
+            local.borrow_source = item.second.borrow_source;
+            local.borrow_source_path = item.second.borrow_source_path;
+            local.borrow_source_mutable = item.second.borrow_source_mutable;
+            local.borrow_sources_released = item.second.borrow_sources_released;
+            local.aggregate_borrow_sources = item.second.aggregate_borrow_sources;
         }
     }
 }
