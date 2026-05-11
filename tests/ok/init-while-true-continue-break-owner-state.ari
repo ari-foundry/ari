@@ -1,0 +1,16 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  init token = make_owned(1), keep_going = false while true {
+    if keep_going {
+      drop token;
+      continue make_owned(2), keep_going;
+    }
+    drop token;
+    break;
+  } next make_owned(3), keep_going
+
+  return 0;
+}

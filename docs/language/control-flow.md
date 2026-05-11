@@ -567,7 +567,9 @@ checked, but ownership flow after the loop keeps the initial binding state
 because no iteration or update can execute.
 For a literal `while true` condition, `init` and `let while` report the same
 non-fallthrough and all-return flow as plain `while true`, so a later function
-return is not required when the loop cannot exit normally.
+return is not required when the loop cannot exit normally. Their value
+`continue` paths also merge with the next-iteration state rather than the
+post-loop `break` exit state.
 
 `let ... while ... next ...` is accepted as the preferred spelling for the same
 loop-state form:

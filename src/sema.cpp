@@ -4287,6 +4287,31 @@ private:
         }
     }
 
+    static StateSnapshot loop_exit_base_state(
+        const StateSnapshot& loop_input,
+        const LoopInfo& loop,
+        bool has_zero_iteration_exit
+    ) {
+        return !has_zero_iteration_exit && !loop.break_state_snapshots.empty()
+            ? project_loop_state_snapshot(loop_input, loop.break_state_snapshots.front())
+            : loop_input;
+    }
+
+    static void merge_loop_continue_snapshots(
+        SourceLocation loc,
+        StateSnapshot& exit_state,
+        StateSnapshot next_iteration_state,
+        const LoopInfo& loop,
+        bool has_zero_iteration_exit
+    ) {
+        if (has_zero_iteration_exit) {
+            merge_continue_states(loc, exit_state, loop);
+            return;
+        }
+        merge_continue_states(loc, next_iteration_state, loop);
+        merge_existing_zone_generations_into(exit_state, next_iteration_state);
+    }
+
     static StateSnapshot checked_loop_exit_state(
         SourceLocation loc,
         const StateSnapshot& loop_input,
@@ -4295,10 +4320,7 @@ private:
         Flow body_flow,
         bool has_zero_iteration_exit = true
     ) {
-        StateSnapshot exit_state =
-            !has_zero_iteration_exit && !loop.break_state_snapshots.empty()
-                ? project_loop_state_snapshot(loop_input, loop.break_state_snapshots.front())
-                : loop_input;
+        StateSnapshot exit_state = loop_exit_base_state(loop_input, loop, has_zero_iteration_exit);
         StateSnapshot next_iteration_state = loop_input;
         if (body_flow == Flow::Continues) {
             require_same_states(loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
@@ -4307,12 +4329,7 @@ private:
                 merge_existing_zone_generations_into(exit_state, loop_body_state);
             }
         }
-        if (has_zero_iteration_exit) {
-            merge_continue_states(loc, exit_state, loop);
-        } else {
-            merge_continue_states(loc, next_iteration_state, loop);
-            merge_existing_zone_generations_into(exit_state, next_iteration_state);
-        }
+        merge_loop_continue_snapshots(loc, exit_state, std::move(next_iteration_state), loop, has_zero_iteration_exit);
         merge_break_exit_states(loc, exit_state, loop, "has incompatible ownership states after loop exits");
         return exit_state;
     }
@@ -10582,7 +10599,7 @@ private:
         CheckedStatements body = check_statements(stmt_loop_body(stmt), true);
         set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
-        StateSnapshot exit_state = loop_input;
+        StateSnapshot next_iteration_state = loop_input;
         if (literal_condition && !*literal_condition) {
             restore_states(loop_input);
             if (!stmt.updates.empty()) {
@@ -10600,7 +10617,7 @@ private:
         }
         if (body.flow == Flow::Continues && stmt.updates.empty()) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            merge_existing_zone_generations_into(exit_state, loop_body_state);
+            merge_existing_zone_generations_into(next_iteration_state, loop_body_state);
         } else if (body.flow == Flow::Continues) {
             require_same_states_except_loop_bindings(
                 stmt.loc,
@@ -10616,11 +10633,22 @@ private:
             apply_init_while_update_state(stmt.loc, loop);
             StateSnapshot update_state = snapshot_states();
             require_same_states(stmt.loc, loop_input, update_state, "cannot change ownership state in loop updates yet");
-            merge_existing_zone_generations_into(exit_state, update_state);
+            merge_existing_zone_generations_into(next_iteration_state, update_state);
         }
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
-        merge_continue_states(stmt.loc, exit_state, loop_state);
+        const bool has_zero_iteration_exit = !literal_true_condition;
+        StateSnapshot exit_state = loop_exit_base_state(loop_input, loop_state, has_zero_iteration_exit);
+        if (has_zero_iteration_exit && body.flow == Flow::Continues) {
+            merge_existing_zone_generations_into(exit_state, next_iteration_state);
+        }
+        merge_loop_continue_snapshots(
+            stmt.loc,
+            exit_state,
+            std::move(next_iteration_state),
+            loop_state,
+            has_zero_iteration_exit
+        );
         merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
         restore_states(exit_state);
         if (literal_true_condition && body.flow == Flow::Returns) return Flow::Returns;

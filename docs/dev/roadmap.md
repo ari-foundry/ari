@@ -132,9 +132,10 @@
    expressions. Literal-true `init while` / `let while` loops now report
    all-return and non-fallthrough statement flow like plain `while true`.
    Literal `while true` `continue` paths now merge against the next-iteration
-   ownership state instead of the post-loop `break` exit state.
+   ownership state instead of the post-loop `break` exit state, including
+   value `continue` paths in literal-true `init while` / `let while` loops.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
-     loop fallthrough paths, beyond the literal-true next-iteration/exit split,
+     loop fallthrough paths beyond the literal-true next-iteration/exit splits,
      instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop
      fallthrough/next-iteration paths
