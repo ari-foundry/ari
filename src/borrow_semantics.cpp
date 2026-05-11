@@ -1,6 +1,7 @@
 #include "borrow_semantics.hpp"
 
 #include "common.hpp"
+#include "type_semantics.hpp"
 
 #include <utility>
 
@@ -137,6 +138,19 @@ void require_can_borrow_path(SourceLocation loc,
     if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
         fail_borrow(loc, "cannot immutably borrow mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
     }
+}
+
+void require_can_reborrow(SourceLocation loc,
+                          const std::string& name,
+                          const LocalInfo& borrow,
+                          bool mutable_borrow) {
+    if (!is_borrow_type(borrow.type)) {
+        throw CompileError("internal error: reborrow source '" + name + "' is not a borrow binding");
+    }
+    if (mutable_borrow && borrow.type.qualifier != TypeQualifier::MutRef) {
+        fail_borrow(loc, "cannot mutably reborrow immutable borrow binding '" + name + "'");
+    }
+    require_can_borrow_path(loc, name, borrow, "", mutable_borrow);
 }
 
 } // namespace ari

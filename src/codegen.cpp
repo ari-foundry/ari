@@ -2283,7 +2283,17 @@ private:
                 emit_load_rax_from_local(local_offset(expr.loc, ir_expr_name(expr)), expr.type);
                 break;
             case IrExprKind::Borrow:
-                emit_lea_reg_local(Reg::RAX, ir_expr_operand(expr) ? lvalue_offset(*ir_expr_operand(expr)) : local_offset(expr.loc, ir_expr_name(expr)));
+                if (const IrExpr* operand = ir_expr_operand(expr).get()) {
+                    if (operand->kind == IrExprKind::Local &&
+                        (operand->type.qualifier == TypeQualifier::Ref ||
+                         operand->type.qualifier == TypeQualifier::MutRef)) {
+                        emit_expr(*operand);
+                    } else {
+                        emit_lea_reg_local(Reg::RAX, lvalue_offset(*operand));
+                    }
+                } else {
+                    emit_lea_reg_local(Reg::RAX, local_offset(expr.loc, ir_expr_name(expr)));
+                }
                 break;
             case IrExprKind::Unary:
                 emit_unary(expr);

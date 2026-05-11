@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  var number = 7;
+  let shared: ref i64 = ref number;
+  let bad: ref mut i64 = ref mut shared;
+  return 0;
+}

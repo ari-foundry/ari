@@ -99,12 +99,15 @@
    The lexical borrow checker now has a focused `borrow_semantics` module, so
    small borrow-language improvements can land without growing `sema.cpp` again.
    Keep the first slices conservative and diagnostic-first before attempting
-   full NLL.
-   - [reborrow-local] allow safe reborrowing from existing borrow bindings when
-     the source borrow mode permits it
+   full NLL. Direct local reborrows such as `ref shared`, `ref unique`, and
+   `ref mut unique` now use `BorrowContext` source tracking and are lowered on
+   both executable backends.
    - [borrow-result-shapes] allow borrow-valued block, `if`, `match`, and
      labeled-block expression results only when every arm preserves the same
      source path and borrow mode
+   - [reborrow-paths] allow reborrowing fields/elements through borrow bindings
+     after path provenance and backend lvalue lowering for those forms are
+     explicit
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

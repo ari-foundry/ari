@@ -2285,12 +2285,19 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-named.ari -o $(BUILD_DIR)/errors/borrow-named.raw
 	$(BUILD_DIR)/errors/borrow-named.raw; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-named.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-named.elf; $(BUILD_DIR)/errors/borrow-named.elf; code=$$?; test $$code -eq 12; fi
+	$(TARGET) --freestanding tests/ok/borrow-reborrow.ari -o $(BUILD_DIR)/errors/borrow-reborrow.raw
+	$(BUILD_DIR)/errors/borrow-reborrow.raw; code=$$?; test $$code -eq 14
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-reborrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-reborrow.elf; $(BUILD_DIR)/errors/borrow-reborrow.elf; code=$$?; test $$code -eq 14; fi
 	if $(TARGET) tests/errors/named-borrow-assign-source.ari -o $(BUILD_DIR)/errors/named-borrow-assign-source.elf >$(BUILD_DIR)/errors/named-borrow-assign-source.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/errors/named-borrow-assign-source.err
 	if $(TARGET) tests/errors/named-borrow-conflict.ari -o $(BUILD_DIR)/errors/named-borrow-conflict.elf >$(BUILD_DIR)/errors/named-borrow-conflict.err 2>&1; then exit 1; fi
 	grep -q "cannot immutably borrow mutably borrowed binding 'number'" $(BUILD_DIR)/errors/named-borrow-conflict.err
 	if $(TARGET) tests/errors/named-borrow-reassign.ari -o $(BUILD_DIR)/errors/named-borrow-reassign.elf >$(BUILD_DIR)/errors/named-borrow-reassign.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrow binding 'shared'" $(BUILD_DIR)/errors/named-borrow-reassign.err
+	if $(TARGET) tests/errors/borrow-reborrow-mut-from-shared.ari -o $(BUILD_DIR)/errors/borrow-reborrow-mut-from-shared.elf >$(BUILD_DIR)/errors/borrow-reborrow-mut-from-shared.err 2>&1; then exit 1; fi
+	grep -q "cannot mutably reborrow immutable borrow binding 'shared'" $(BUILD_DIR)/errors/borrow-reborrow-mut-from-shared.err
+	if $(TARGET) tests/errors/borrow-reborrow-active-conflict.ari -o $(BUILD_DIR)/errors/borrow-reborrow-active-conflict.elf >$(BUILD_DIR)/errors/borrow-reborrow-active-conflict.err 2>&1; then exit 1; fi
+	grep -q "cannot mutably borrow already borrowed binding 'unique'" $(BUILD_DIR)/errors/borrow-reborrow-active-conflict.err
 	if $(TARGET) tests/errors/u8-literal-range.ari -o $(BUILD_DIR)/errors/u8-literal-range.elf >$(BUILD_DIR)/errors/u8-literal-range.err 2>&1; then exit 1; fi
 	grep -q "integer literal 256 is out of range for u8" $(BUILD_DIR)/errors/u8-literal-range.err
 	if $(TARGET) tests/errors/i8-literal-range.ari -o $(BUILD_DIR)/errors/i8-literal-range.elf >$(BUILD_DIR)/errors/i8-literal-range.err 2>&1; then exit 1; fi

@@ -53,5 +53,9 @@ void require_can_borrow_path(SourceLocation loc,
                              const LocalInfo& local,
                              const std::string& path,
                              bool mutable_borrow);
+void require_can_reborrow(SourceLocation loc,
+                          const std::string& name,
+                          const LocalInfo& borrow,
+                          bool mutable_borrow);
 
 } // namespace ari

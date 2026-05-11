@@ -94,8 +94,8 @@ construction. Some helpers have already moved out to focused files:
   diagnostic helpers plus branch/loop state comparison and merged restore hooks,
   borrow count/source helpers, and named/aggregate borrow-source release
 - `borrow_semantics` for the lexical temporary-borrow stack, named and aggregate
-  borrow-source promotion/release, and path borrow conflict diagnostics layered
-  over `local_state`
+  borrow-source promotion/release, local reborrow permission checks, and path
+  borrow conflict diagnostics layered over `local_state`
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool

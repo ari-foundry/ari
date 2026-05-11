@@ -83,7 +83,14 @@ fn main() -> i64 {
   touch(ref mut slot);
   {
     let borrowed: ref u32 = ref number;
+    let again: ref u32 = ref borrowed;
     inspect(borrowed);
+    inspect(again);
+  }
+  {
+    let borrowed: ref mut i16 = ref mut slot;
+    let again: ref mut i16 = ref mut borrowed;
+    touch(again);
   }
   return 0;
 }
@@ -100,13 +107,20 @@ Rules currently checked:
   the borrow, subject to the struct field's own `mut` marker
 - a named borrow keeps the source borrowed until the binding's block exits
 - borrow bindings must be initialized directly with `ref` or `ref mut`
+- an existing local borrow binding can be reborrowed with `ref` when the source
+  is `ref` or `ref mut`
+- an existing local `ref mut` borrow binding can be reborrowed with `ref mut`;
+  immutable borrow bindings cannot be reborrowed mutably
 - borrow bindings cannot be reassigned
 - borrow values cannot be returned
 - bare borrow expression statements are rejected
 
-Named borrow lifetimes are lexical today. Future borrow-checker refinement may
-shorten a named borrow to its last use and support reborrowing from existing
-borrow values.
+Named borrow lifetimes are lexical today. A reborrow keeps the borrow binding it
+was created from borrowed until the reborrow exits scope, and that source borrow
+binding keeps its own original source borrowed until its scope exits. Future
+borrow-checker refinement may shorten a named borrow to its last use and allow
+more borrow-valued expression result shapes once source/mode preservation is
+tracked through every arm.
 
 ## Drop
 

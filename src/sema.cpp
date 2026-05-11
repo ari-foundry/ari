@@ -10022,6 +10022,18 @@ private:
                     return ref;
                 }
             }
+            if (is_borrow_type(expected)) {
+                if (LocalInfo* local = find_local_slot(expr.name)) {
+                    if (is_borrow_type(local->type)) {
+                        require_can_borrow_path(
+                            expr.loc,
+                            expr.name,
+                            *local,
+                            "",
+                            expected.qualifier == TypeQualifier::MutRef);
+                    }
+                }
+            }
         }
         if (expr.kind == ExprKind::Call) {
             std::string range_name = resolve_use_path(expr.name);
@@ -12068,6 +12080,28 @@ private:
 
     IrExprPtr check_borrow(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
+        if (const Expr* operand = expr_operand(expr).get()) {
+            if (operand->kind == ExprKind::Name) {
+                if (LocalInfo* source = find_local_slot(operand->name)) {
+                    if (is_borrow_type(source->type)) {
+                        if (auto error = local_unavailable_binding_error(operand->name, *source)) {
+                            fail(expr.loc, *error);
+                        }
+                        require_can_reborrow(expr.loc, operand->name, *source, expr.mutable_borrow);
+                        add_borrow_source(*source, "", expr.mutable_borrow);
+                        borrow_context_.push_temporary(operand->name, "", expr.mutable_borrow);
+                        return make_borrow_expr(
+                            expr.loc,
+                            operand->name,
+                            "",
+                            make_local_lvalue_expr(operand->loc, operand->name, source->type),
+                            expr.mutable_borrow,
+                            source->type);
+                    }
+                }
+            }
+        }
+
         TrackedAggregateAccess access;
         if (expr_operand(expr)) {
             if (!try_build_tracked_aggregate_access(*expr_operand(expr), access)) {
