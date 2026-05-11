@@ -2,6 +2,8 @@
 
 #include "type_semantics.hpp"
 
+#include <string>
+
 namespace ari {
 
 namespace {
@@ -91,6 +93,14 @@ std::optional<std::vector<std::size_t>> std_vec_zone_handle_data_field_path_indi
         std_vec_raw_handle_data_field_index(type.field_types[*raw_index]);
     if (!data_index) return std::nullopt;
     return std::vector<std::size_t>{*raw_index, *data_index};
+}
+
+bool std_vec_method_requires_same_zone_argument(const std::string& method_name) {
+    return method_name == "reserve" ||
+           method_name == "push_in" ||
+           method_name == "insert_in" ||
+           method_name == "extend_from_slice_in" ||
+           method_name == "resize_in";
 }
 
 } // namespace ari

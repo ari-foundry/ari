@@ -1,0 +1,14 @@
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var vec = std::vec::new<i64>(ref mut zone, 1);
+  vec.push(2);
+
+  vec.resize_in(ref mut zone, 4, 7);
+  let grown = vec.len() + vec.capacity() + vec.get(0) + vec.get(1) + vec.get(3);
+
+  vec.resize_in(ref mut zone, 2, 99);
+  let shrunk = vec.len() + vec.capacity() + vec.get(1);
+
+  zone::destroy(zone);
+  return grown + shrunk;
+}

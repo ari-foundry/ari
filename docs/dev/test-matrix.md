@@ -268,6 +268,8 @@ Checklist:
       through the same explicit zone capability and grows capacity on demand
 - [x] source `std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)`
       appends a slice through the same explicit zone capability
+- [x] source `std::vec::Vec<T>.resize_in(ref mut Zone, length, value)` shrinks
+      by length or grows through the same explicit zone capability
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local

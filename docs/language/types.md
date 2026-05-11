@@ -512,6 +512,7 @@ vec.push_in(ref mut zone, 30)
 vec.reserve(ref mut zone, 8)
 vec.insert(1, 15)
 vec.insert_in(ref mut zone, 2, 18)
+vec.resize_in(ref mut zone, 8, 0)
 vec.set(0, 25)
 vec.swap(0, 2)
 let empty = vec.is_empty()
@@ -535,9 +536,11 @@ explicit zone capability and grows when the current capacity is full before
 appending. `std::vec::Vec<T>.insert_in(ref mut Zone, index, value)` follows the
 same explicit-zone growth rule before inserting and shifting later elements.
 `std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)` appends each
-slice element through that same growth path. Passing a different zone borrow to
-`reserve`, `push_in`, `insert_in`, or `extend_from_slice_in` is rejected because
-the source handle remains tied to the zone that created it. `vec.as_slice()`
+slice element through that same growth path. `std::vec::Vec<T>.resize_in(ref
+mut Zone, length, value)` shrinks by setting `len` or grows by appending copies
+of `value`. Passing a different zone borrow to `reserve`, `push_in`,
+`insert_in`, `extend_from_slice_in`, or `resize_in` is rejected because the
+source handle remains tied to the zone that created it. `vec.as_slice()`
 returns a `Slice[T]` over the same zone-backed buffer, and that slice is
 rejected after
 the source zone is reset or destroyed.

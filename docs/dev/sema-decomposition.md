@@ -38,8 +38,8 @@ construction. Some helpers have already moved out to focused files:
   and source `std::vec` handles until that provenance bookkeeping is split out.
 - `std_vec_semantics` for source-prelude `std::vec::RawVec<T>` and
   `std::vec::Vec<T>` handle recognition plus their zone-backed source field
-  shapes, keeping allocator-backed Vec seed checks out of the central
-  expression lowering logic
+  shapes and same-zone method list, keeping allocator-backed Vec seed checks
+  out of the central expression lowering logic
 - `std_box_semantics` for source-prelude `std::boxed::Box<T>` handle recognition
   and its zone-backed source field shape
 - `range_semantics` for shared `Range[T]` / `RangeInclusive[T]` name and type

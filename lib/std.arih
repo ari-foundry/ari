@@ -253,6 +253,31 @@ pub mod vec {
       }
     }
 
+    fn resize_in(self: ref mut Self, zone: ref mut Zone, length: i64, value: T) -> void {
+      std::assert(length >= 0);
+      if length <= self.raw.len {
+        self.raw.len = length;
+        return;
+      }
+      while self.raw.len < length {
+        if self.raw.len >= self.raw.capacity {
+          var capacity = self.raw.capacity * 2;
+          if capacity <= self.raw.len {
+            capacity = self.raw.len + 1;
+          }
+          let data = alloc_buffer<T>(zone, capacity);
+          var cursor = 0;
+          while cursor < self.raw.len {
+            ptr_store(ptr_add(data, cursor), ptr_load(ptr_add(self.raw.data, cursor)));
+            cursor = cursor + 1;
+          }
+          self.raw.data = data;
+          self.raw.capacity = capacity;
+        }
+        self.push(value);
+      }
+    }
+
     fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
       std::assert(capacity >= 0);
       if capacity <= self.raw.capacity {
