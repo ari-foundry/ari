@@ -118,15 +118,15 @@
    expressions, pointer dereferences, postfix `?`, `??`, prelude macro invocations,
    `if`/block/`match` expressions, or final expression statements, allowing
    those dependency bodies and summary-safe impl methods to materialize from
-   the cache after validation. The remaining package-cache work is to extend
-   that path to future IR summaries for broad executable function and impl
-   bodies, then skip dependency source parsing whenever validation succeeds.
+   the cache after validation without reparsing the cached source snapshot. The
+   remaining package-cache work is to extend that path to future IR summaries
+   for broad executable function and impl bodies outside the AST summary subset.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies whose executable function or impl bodies
      still use expression forms outside the temporary AST summary subset
-   - [cache-skip] avoid reparsing dependencies when the metadata summary and
-     source hashes still match the current source graph and cfg/search-path
-     inputs
+   - [cache-skip] once IR summaries exist, avoid reparsing dependencies whose
+     executable bodies remain outside the AST summary subset when metadata and
+     source hashes match the current source graph and cfg/search-path inputs
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
