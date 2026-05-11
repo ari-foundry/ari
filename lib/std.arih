@@ -92,6 +92,10 @@ pub mod boxed {
       return previous;
     }
 
+    fn copy_to(self, target: ref mut Zone) -> std::boxed::Box[T] {
+      return std::boxed::new<T>(target, self.get());
+    }
+
     fn as_ptr(self) -> ptr T {
       return self.data;
     }

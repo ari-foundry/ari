@@ -1,0 +1,16 @@
+fn main() -> i64 {
+  var source = zone::create(64);
+  var target = zone::create(64);
+  var boxed = std::boxed::new<i64>(ref mut source, 21);
+
+  let copied = boxed.copy_to(ref mut target);
+  boxed.set(9);
+  let before_reset = copied.get() + boxed.get();
+
+  zone::reset(ref mut source);
+  let after_source_reset = copied.get();
+
+  zone::destroy(source);
+  zone::destroy(target);
+  return before_reset + after_source_reset;
+}

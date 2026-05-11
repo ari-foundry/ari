@@ -106,7 +106,7 @@
    root `Vec[T]` public surface still remain. A small Medium-Term allocation ADT
    seed has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)`
    now returns a tracked source `std::boxed::Box<T>` handle with `get`, `set`,
-   `replace`, and `as_ptr` methods, while the root owning `Box[T]`
+   `replace`, `copy_to`, and `as_ptr` methods, while the root owning `Box[T]`
    smart-pointer surface remains future work.
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      root `Vec[T].reserve(capacity)` with runtime heap capacity growth
