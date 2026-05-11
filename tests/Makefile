@@ -248,6 +248,8 @@ check-prelude: $(TARGET)
 	$(TARGET) --no-implicit-std --module-path lib tests/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
 	grep -q 'option	implicit_std	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std	lib/std.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::boxed	lib/std/boxed.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::boxed	boxed	lib/std/boxed.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::vec	lib/std/vec.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::vec	vec	lib/std/vec.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'item	std::io	extern-ari-fn	std::io::write_i64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta

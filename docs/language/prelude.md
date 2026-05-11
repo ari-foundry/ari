@@ -79,10 +79,11 @@ pointer with the source zone provenance preserved. This is not the final root
 `Vec[T]` method API.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
-tracked source `std::boxed::Box<T>` handle over one value placed in a zone. The
-handle has `get()`, `set(value)`, `replace(value)`, `copy_to(ref mut zone)`,
-`swap(ref mut other)`, and `as_ptr()` methods for copyable, zone-placeable
-values. `replace(value)` stores a new value and returns the previous one.
+tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
+source lives in `lib/std/boxed.arih`. The handle has `get()`, `set(value)`,
+`replace(value)`, `copy_to(ref mut zone)`, `swap(ref mut other)`, and
+`as_ptr()` methods for copyable, zone-placeable values. `replace(value)` stores
+a new value and returns the previous one.
 `copy_to(ref mut zone)` copies the current value into another explicit zone and
 returns a new tracked `std::boxed::Box<T>` handle for that target zone.
 `swap(ref mut other)` exchanges the values stored by two boxes without changing

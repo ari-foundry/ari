@@ -68,45 +68,7 @@ pub mod zone {
   pub extern "ari" fn destroy(zone: own Zone) -> void = "ari_builtin_zone_destroy";
 }
 
-pub mod boxed {
-  pub struct Box[T] {
-    data: ptr T,
-  }
-
-  pub fn new[T](zone: ref mut Zone, value: T) -> std::boxed::Box[T] {
-    return std::boxed::Box<T> { data: std::zone::new<T>(zone, value) };
-  }
-
-  pub impl[T] std::boxed::Box[T] {
-    fn get(self) -> T {
-      return ptr_load(self.data);
-    }
-
-    fn set(self: ref mut Self, value: T) -> void {
-      ptr_store(self.data, value);
-    }
-
-    fn replace(self: ref mut Self, value: T) -> T {
-      let previous = ptr_load(self.data);
-      ptr_store(self.data, value);
-      return previous;
-    }
-
-    fn copy_to(self, target: ref mut Zone) -> std::boxed::Box[T] {
-      return std::boxed::new<T>(target, self.get());
-    }
-
-    fn swap(self: ref mut Self, other: ref mut Self) -> void {
-      let temporary = ptr_load(self.data);
-      ptr_store(self.data, ptr_load(other.data));
-      ptr_store(other.data, temporary);
-    }
-
-    fn as_ptr(self) -> ptr T {
-      return self.data;
-    }
-  }
-}
+pub mod boxed;
 
 pub mod vec;
 
