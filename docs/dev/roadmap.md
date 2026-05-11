@@ -200,15 +200,18 @@
    used by compact enum payloads plus vector set/swap/insert/search helpers now
    share a lazy `IrExprRarePayload`, keeping ordinary scalar/access/control IR
    expressions free of two eager strings while preserving the existing payload
-   expression lowering paths. Broader IR node packing should still move one
+   expression lowering paths. The remaining general-purpose IR expression
+   string slots for string literals, locals, calls, function references,
+   borrows, and trait-object vtable/call names now live behind a lazy
+   `IrExprStringPayload` with helper accessors shared by sema and both
+   backends; function-reference, borrow, trait-object cast, and trait-object
+   call construction is routed through `ir_builders` so sema does not assemble
+   those string payloads by hand. Broader IR node packing should still move one
    storage group at a time.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions; remaining high-value targets are other
-     backend-facing rare payloads, especially IR expression string fields that
-     are specific to calls, locals, borrows, or string literals
-   - [ir-string-payloads] split the remaining eager IR expression string fields
-     only after their call/local/borrow/string-literal access paths are behind
-     small helpers
+     backend-facing rare payloads that can move behind small helpers one storage
+     group at a time
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

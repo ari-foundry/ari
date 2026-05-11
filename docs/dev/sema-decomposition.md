@@ -142,7 +142,14 @@ writing through setters and constant folding plus both backends reading through
 accessors. IR enum constructor names and the distinct side-input expression used
 by compact enum payloads plus vector set/swap/insert/search helpers now share
 `IrExprRarePayload`, so ordinary IR expressions do not carry those constructor
-strings directly.
+strings directly. General-purpose IR expression strings are lazy too:
+string-literal bytes, local/function/call names, borrow source paths, and
+trait-object vtable/call names live behind `IrExprStringPayload`, with sema and
+the LLVM/freestanding backends reading and writing them through
+`ir_expr_string_value`, `ir_expr_name`, `ir_expr_label`, and setter helpers.
+`ir_builders` owns the string-payload construction paths for function
+references, borrows, trait-object casts, and trait-object calls, keeping those
+node assembly details out of the main semantic checker.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

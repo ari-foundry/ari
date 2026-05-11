@@ -824,7 +824,7 @@ IrExprPtr make_vec_local_lvalue(SourceLocation loc, std::string name, IrType typ
     auto local = std::make_unique<IrExpr>();
     local->kind = IrExprKind::Local;
     local->loc = loc;
-    local->name = std::move(name);
+    set_ir_expr_name(*local, std::move(name));
     local->type = std::move(type);
     return local;
 }

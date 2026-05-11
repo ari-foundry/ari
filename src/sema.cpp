@@ -3730,15 +3730,15 @@ private:
             fail(loc, "borrow bindings must be initialized directly with ref or ref mut");
         }
         if (temporary_borrows_.empty() ||
-            temporary_borrows_.back().name != init.name ||
-            temporary_borrows_.back().path != init.label ||
+            temporary_borrows_.back().name != ir_expr_name(init) ||
+            temporary_borrows_.back().path != ir_expr_label(init) ||
             temporary_borrows_.back().mutable_borrow != init.mutable_borrow) {
             throw CompileError("internal error: borrow binding '" + binding_name + "' did not match the active temporary borrow");
         }
         temporary_borrows_.pop_back();
         LocalInfo& binding = local_slot_by_name(binding_name);
-        binding.borrow_source = init.name;
-        binding.borrow_source_path = init.label;
+        binding.borrow_source = ir_expr_name(init);
+        binding.borrow_source_path = ir_expr_label(init);
         binding.borrow_source_mutable = init.mutable_borrow;
     }
 
@@ -3794,7 +3794,7 @@ private:
 
     std::string zone_pointer_escape_name(const IrExpr& value) const {
         const IrExpr& source = zone_pointer_source_expr(value);
-        if (source.kind == IrExprKind::Local) return source.name;
+        if (source.kind == IrExprKind::Local) return ir_expr_name(source);
         return "value";
     }
 
@@ -3937,7 +3937,7 @@ private:
     }
 
     static bool is_zone_temp_call(const IrExpr& expr) {
-        return expr.kind == IrExprKind::Call && expr.name == "zone::temp";
+        return expr.kind == IrExprKind::Call && ir_expr_name(expr) == "zone::temp";
     }
 
     static bool contains_zone_temp_call(const IrExpr& expr) {
@@ -4185,16 +4185,16 @@ private:
     }
 
     bool zone_source_name_from_arg(const IrExpr& zone_arg, std::string& out) {
-        if (zone_arg.kind == IrExprKind::Borrow && zone_arg.label.empty()) {
-            const LocalInfo* zone = find_local_slot(zone_arg.name);
+        if (zone_arg.kind == IrExprKind::Borrow && ir_expr_label(zone_arg).empty()) {
+            const LocalInfo* zone = find_local_slot(ir_expr_name(zone_arg));
             if (!zone || !is_zone_value_type(zone->type)) return false;
-            out = zone_arg.name;
+            out = ir_expr_name(zone_arg);
             return true;
         }
         if (zone_arg.kind == IrExprKind::Local) {
-            const LocalInfo* zone = find_local_slot(zone_arg.name);
+            const LocalInfo* zone = find_local_slot(ir_expr_name(zone_arg));
             if (!zone || !is_zone_borrow_type(zone->type)) return false;
-            out = zone_arg.name;
+            out = ir_expr_name(zone_arg);
             return true;
         }
         return false;
@@ -4209,7 +4209,7 @@ private:
 
     bool set_zone_pointer_source_from_single_zone_return(LocalInfo& target, const IrExpr& call) {
         if (call.kind != IrExprKind::Call) return false;
-        auto found = functions_.find(call.name);
+        auto found = functions_.find(ir_expr_name(call));
         if (found == functions_.end()) return false;
         const FunctionSig& sig = found->second;
         if (sig.result.qualifier != TypeQualifier::Ptr) return false;
@@ -4241,12 +4241,12 @@ private:
             }
         };
 
-        if ((source.kind == IrExprKind::Call && source.name == "zone::alloc") ||
-            (source.kind == IrExprKind::Call && source.name == "zone::new")) {
+        if ((source.kind == IrExprKind::Call && ir_expr_name(source) == "zone::alloc") ||
+            (source.kind == IrExprKind::Call && ir_expr_name(source) == "zone::new")) {
             return !source.args.empty() && zone_source_name_from_arg(*source.args[0], out);
         }
         if (source.kind == IrExprKind::Call) {
-            auto found = functions_.find(source.name);
+            auto found = functions_.find(ir_expr_name(source));
             if (found == functions_.end()) return false;
             const FunctionSig& sig = found->second;
             if (sig.result.qualifier != TypeQualifier::Ptr) return false;
@@ -4263,7 +4263,7 @@ private:
             return zone_source_name_from_arg(*source.args[zone_index], out);
         }
         if (source.kind == IrExprKind::Local) {
-            const LocalInfo* local = find_local_slot(source.name);
+            const LocalInfo* local = find_local_slot(ir_expr_name(source));
             if (!local || !local->zone_pointer) return false;
             out = local->zone_pointer_source;
             return true;
@@ -4309,7 +4309,7 @@ private:
 
         const IrExpr& source = zone_pointer_source_expr(value);
         if (source.kind == IrExprKind::Call &&
-            (is_zone_alloc_function_name(source.name) || is_zone_new_function_name(source.name))) {
+            (is_zone_alloc_function_name(ir_expr_name(source)) || is_zone_new_function_name(ir_expr_name(source)))) {
             if (!source.args.empty()) set_zone_pointer_source_from_zone_arg(target, *source.args[0]);
             return;
         }
@@ -4317,7 +4317,7 @@ private:
         if (set_zone_pointer_source_from_single_zone_return(target, source)) return;
 
         if (source.kind == IrExprKind::Local) {
-            LocalInfo* local = find_local_slot(source.name);
+            LocalInfo* local = find_local_slot(ir_expr_name(source));
             if (!local || !local->zone_pointer) return;
             target.zone_pointer = true;
             target.zone_pointer_source = local->zone_pointer_source;
@@ -4342,7 +4342,7 @@ private:
 
     void mark_zone_reset_call(const IrExpr& call) {
         if (call.kind != IrExprKind::Call || call.args.empty()) return;
-        std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(call.name);
+        std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(ir_expr_name(call));
         if (!builtin_symbol || *builtin_symbol != "ari_builtin_zone_reset") return;
         const IrExpr& zone_arg = *call.args[0];
         std::string source_name;
@@ -5460,7 +5460,7 @@ private:
 
     bool tracked_ir_access_path(const IrExpr& expr, std::string& base_name, std::string& path) const {
         if (expr.kind == IrExprKind::Local) {
-            base_name = expr.name;
+            base_name = ir_expr_name(expr);
             path.clear();
             return true;
         }
@@ -10598,10 +10598,7 @@ private:
                         if (sig.deprecated) {
                             warn_deprecated_use(expr.loc, "function", function_name, sig.deprecated_message);
                         }
-                        lowered->kind = IrExprKind::FunctionRef;
-                        lowered->name = function_name;
-                        lowered->type = function_pointer_type(sig, expr.loc);
-                        return lowered;
+                        return make_function_ref_expr(expr.loc, function_name, function_pointer_type(sig, expr.loc));
                     }
                     std::string generic_function_name = resolve_generic_function_name(expr.name);
                     if (generic_functions_.count(generic_function_name)) {
@@ -10616,7 +10613,7 @@ private:
                 require_can_read_borrow_path(expr.loc, expr.name, local, "");
                 require_zone_pointer_valid(expr.loc, expr.name, local);
                 lowered->kind = IrExprKind::Local;
-                lowered->name = expr.name;
+                set_ir_expr_name(*lowered, expr.name);
                 lowered->type = local.type;
                 if (is_owner_type(local.type)) {
                     if (is_auto_destroy_zone(local)) {
@@ -10912,7 +10909,7 @@ private:
             if (!operand || operand->kind != IrExprKind::Local) {
                 fail(expr.loc, "moving owned fields out of temporary aggregate values is not supported; bind the aggregate first");
             }
-            mark_owned_field_moved(expr.loc, operand->name, std::to_string(expr.tuple_index));
+            mark_owned_field_moved(expr.loc, ir_expr_name(*operand), std::to_string(expr.tuple_index));
         }
         return make_tuple_index_expr(
             expr.loc,
@@ -11060,7 +11057,7 @@ private:
             if (!operand || operand->kind != IrExprKind::Local) {
                 fail(expr.loc, "moving owned fields out of temporary aggregate values is not supported; bind the aggregate first");
             }
-            mark_owned_field_moved(expr.loc, operand->name, std::to_string(index));
+            mark_owned_field_moved(expr.loc, ir_expr_name(*operand), std::to_string(index));
         }
         return make_tuple_index_expr(expr.loc, std::move(operand), index);
     }
@@ -12192,12 +12189,12 @@ private:
         if (is_value_trait_object_type(target)) {
             TraitObjectConversion conversion =
                 require_trait_object_conversion(expr.loc, operand->type, target);
-            lowered->name = conversion.vtable_name;
-            lowered->tuple_index = conversion.vtable_offset;
-            lowered->kind = IrExprKind::Cast;
-            lowered->type = target;
-            set_ir_expr_operand(*lowered, std::move(operand));
-            return lowered;
+            return make_trait_object_cast_expr(
+                expr.loc,
+                std::move(operand),
+                std::move(target),
+                std::move(conversion.vtable_name),
+                conversion.vtable_offset);
         }
 
         bool integer_cast = is_value_integer_type(operand->type) && is_value_integer_type(target);
@@ -12552,6 +12549,7 @@ private:
     }
 
     IrExprPtr check_borrow(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
         TrackedAggregateAccess access;
         if (expr_operand(expr)) {
             if (!try_build_tracked_aggregate_access(*expr_operand(expr), access)) {
@@ -12598,14 +12596,13 @@ private:
         add_borrow_source(source, access.path, expr.mutable_borrow);
 
         temporary_borrows_.push_back(TemporaryBorrow{access.base_name, access.path, expr.mutable_borrow});
-        lowered->kind = IrExprKind::Borrow;
-        lowered->name = access.base_name;
-        lowered->label = access.path;
-        set_ir_expr_operand(*lowered, std::move(access.expr));
-        lowered->mutable_borrow = expr.mutable_borrow;
-        lowered->type = access.type;
-        lowered->type.qualifier = expr.mutable_borrow ? TypeQualifier::MutRef : TypeQualifier::Ref;
-        return lowered;
+        return make_borrow_expr(
+            expr.loc,
+            access.base_name,
+            access.path,
+            std::move(access.expr),
+            expr.mutable_borrow,
+            access.type);
     }
 
     static std::vector<std::string> parse_format_string(SourceLocation loc, const std::string& text, std::size_t arg_count) {
@@ -13679,12 +13676,7 @@ private:
         std::string specialized_name = generic_specialization_name(fn, substitutions);
         queue_generic_function_specialization(fn, specialized_name, std::move(param_types), result, substitutions);
 
-        auto lowered = std::make_unique<IrExpr>();
-        lowered->kind = IrExprKind::FunctionRef;
-        lowered->loc = expr.loc;
-        lowered->name = specialized_name;
-        lowered->type = selected_type;
-        return lowered;
+        return make_function_ref_expr(expr.loc, specialized_name, selected_type);
     }
 
     void queue_impl_method_for_lowering(const ImplMethodInfo& method) {
@@ -15614,6 +15606,7 @@ private:
     }
 
     IrExprPtr check_trait_object_method_call(const Expr& expr, IrExprPtr receiver, IrExprPtr lowered) {
+        (void)lowered;
         auto trait_found = traits_.find(receiver->type.name);
         if (trait_found == traits_.end()) {
             fail(expr.loc, "unknown trait '" + receiver->type.name + "' in trait object method call");
@@ -15665,21 +15658,22 @@ private:
             : void_type(method.loc);
         current_module_name_ = previous_module;
 
-        lowered->kind = IrExprKind::TraitObjectCall;
-        lowered->loc = expr.loc;
-        lowered->name = expr.name;
-        lowered->tuple_index = slot;
-        lowered->type = result;
-        set_ir_expr_operand(*lowered, std::move(receiver));
-        set_ir_expr_call_param_types(*lowered, std::move(erased_params));
-        lowered->args.reserve(expr.args.size());
+        std::vector<IrExprPtr> args;
+        args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = check_expr_with_expected(*expr.args[i], expected_args[i]);
             coerce_expr_to_expected(*arg, expected_args[i]);
             require_assignable(expr.args[i]->loc, expected_args[i], arg->type);
-            lowered->args.push_back(std::move(arg));
+            args.push_back(std::move(arg));
         }
-        return lowered;
+        return make_trait_object_call_expr(
+            expr.loc,
+            expr.name,
+            std::move(receiver),
+            slot,
+            std::move(result),
+            std::move(erased_params),
+            std::move(args));
     }
 
     IrExprPtr check_method_call(const Expr& expr, IrExprPtr lowered) {

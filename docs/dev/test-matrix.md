@@ -465,6 +465,10 @@ Checklist:
       lowering on LLVM and freestanding paths
 - [x] IR rare expression payload packing preserves compact enum constructors
       and vector set/swap/insert/search side-input lowering paths
+- [x] IR string payload packing preserves string literals, local loads,
+      borrows, direct calls, function pointer refs, and indirect calls through
+      `ir_builders`, sema, and LLVM lowering, plus trait-object cast/call
+      builder paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

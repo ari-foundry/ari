@@ -97,6 +97,12 @@ struct IrExprRarePayload {
     std::string case_name;
 };
 
+struct IrExprStringPayload {
+    std::string string_value;
+    std::string name;
+    std::string label;
+};
+
 struct IrPayloadBinding {
     std::uint32_t index = 0;
     std::string name;
@@ -294,9 +300,6 @@ struct IrExpr {
         std::uint64_t tuple_index;
     };
     bool int_negative = false;
-    std::string string_value;
-    std::string name;
-    std::string label;
     std::unique_ptr<std::vector<std::string>> format_parts;
     std::uint32_t enum_tag = 0;
     bool has_payload = false;
@@ -311,6 +314,7 @@ struct IrExpr {
     std::uint32_t try_return_residual_tag = 0;
     std::unique_ptr<IrExprChildPayload> child_payload;
     std::unique_ptr<IrExprRarePayload> rare_payload;
+    std::unique_ptr<IrExprStringPayload> string_payload;
     std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
     std::unique_ptr<IrExprCallParamPayload> call_param_payload;
@@ -318,6 +322,55 @@ struct IrExpr {
     std::unique_ptr<IrExprMatchPayload> match_payload;
     IrExprArgs args;
 };
+
+inline const IrExprStringPayload& ir_expr_string_payload(const IrExpr& expr) {
+    static const IrExprStringPayload empty;
+    return expr.string_payload ? *expr.string_payload : empty;
+}
+
+inline IrExprStringPayload& ensure_ir_expr_string_payload(IrExpr& expr) {
+    if (!expr.string_payload) expr.string_payload = std::make_unique<IrExprStringPayload>();
+    return *expr.string_payload;
+}
+
+inline void clear_empty_ir_expr_string_payload(IrExpr& expr) {
+    if (expr.string_payload &&
+        expr.string_payload->string_value.empty() &&
+        expr.string_payload->name.empty() &&
+        expr.string_payload->label.empty()) {
+        expr.string_payload.reset();
+    }
+}
+
+inline const std::string& ir_expr_string_value(const IrExpr& expr) {
+    return ir_expr_string_payload(expr).string_value;
+}
+
+inline const std::string& ir_expr_name(const IrExpr& expr) {
+    return ir_expr_string_payload(expr).name;
+}
+
+inline const std::string& ir_expr_label(const IrExpr& expr) {
+    return ir_expr_string_payload(expr).label;
+}
+
+inline void set_ir_expr_string_value(IrExpr& expr, std::string value) {
+    if (value.empty() && !expr.string_payload) return;
+    ensure_ir_expr_string_payload(expr).string_value = std::move(value);
+    clear_empty_ir_expr_string_payload(expr);
+}
+
+inline void set_ir_expr_name(IrExpr& expr, std::string name) {
+    if (name.empty() && !expr.string_payload) return;
+    ensure_ir_expr_string_payload(expr).name = std::move(name);
+    clear_empty_ir_expr_string_payload(expr);
+}
+
+inline void set_ir_expr_label(IrExpr& expr, std::string label) {
+    if (label.empty() && !expr.string_payload) return;
+    ensure_ir_expr_string_payload(expr).label = std::move(label);
+    clear_empty_ir_expr_string_payload(expr);
+}
 
 inline const IrExprChildPayload& ir_expr_child_payload(const IrExpr& expr) {
     static const IrExprChildPayload empty;

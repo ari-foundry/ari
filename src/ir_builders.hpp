@@ -34,9 +34,21 @@ IrExprPtr make_bool_literal_expr(SourceLocation loc, bool value);
 IrExprPtr make_float_literal_expr(SourceLocation loc, const IrType& type, double value);
 IrExprPtr make_string_literal_expr(SourceLocation loc, const IrType& type, std::string value = {});
 IrExprPtr make_null_literal_expr(SourceLocation loc, const IrType& type);
+IrExprPtr make_function_ref_expr(SourceLocation loc, std::string name, IrType type);
+IrExprPtr make_borrow_expr(SourceLocation loc,
+                           std::string source_name,
+                           std::string path,
+                           IrExprPtr source,
+                           bool mutable_borrow,
+                           IrType borrowed_type);
 IrExprPtr make_ir_tuple_expr(SourceLocation loc, IrType type, std::vector<IrExprPtr> elements = {});
 IrExprPtr make_bool_binary_expr(SourceLocation loc, IrBinaryOp op, IrExprPtr left, IrExprPtr right);
 IrExprPtr make_cast_expr(SourceLocation loc, IrExprPtr value, const IrType& target);
+IrExprPtr make_trait_object_cast_expr(SourceLocation loc,
+                                      IrExprPtr value,
+                                      IrType target,
+                                      std::string vtable_name,
+                                      std::uint64_t vtable_offset);
 IrExprPtr make_pointer_offset_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset);
 IrExprPtr make_pointer_add_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset);
 IrExprPtr make_pointer_load_expr(SourceLocation loc, IrExprPtr pointer, const IrType& result);
@@ -54,6 +66,13 @@ IrExprPtr make_format_print_expr(SourceLocation loc,
                                  std::vector<std::string> format_parts,
                                  std::vector<IrExprPtr> args,
                                  bool print_newline);
+IrExprPtr make_trait_object_call_expr(SourceLocation loc,
+                                      std::string method_name,
+                                      IrExprPtr receiver,
+                                      std::uint64_t slot,
+                                      IrType result,
+                                      std::vector<IrType> erased_params,
+                                      std::vector<IrExprPtr> args);
 IrMatchExprArm make_match_expr_arm(IrMatchArm arm);
 IrExprPtr make_ir_match_expr(SourceLocation loc, IrExprPtr value);
 IrExprPtr make_ir_block_expr(SourceLocation loc, std::string label = {});

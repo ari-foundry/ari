@@ -65,7 +65,7 @@ IrExprPtr make_local_lvalue_expr(SourceLocation loc, const std::string& name, co
     auto base = std::make_unique<IrExpr>();
     base->kind = IrExprKind::Local;
     base->loc = loc;
-    base->name = name;
+    set_ir_expr_name(*base, name);
     base->type = type;
     return base;
 }
@@ -159,7 +159,7 @@ IrExprPtr make_string_literal_expr(SourceLocation loc, const IrType& type, std::
     literal->kind = IrExprKind::String;
     literal->loc = loc;
     literal->type = type;
-    literal->string_value = std::move(value);
+    set_ir_expr_string_value(*literal, std::move(value));
     return literal;
 }
 
@@ -169,6 +169,33 @@ IrExprPtr make_null_literal_expr(SourceLocation loc, const IrType& type) {
     literal->loc = loc;
     literal->type = type;
     return literal;
+}
+
+IrExprPtr make_function_ref_expr(SourceLocation loc, std::string name, IrType type) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::FunctionRef;
+    expr->loc = loc;
+    set_ir_expr_name(*expr, std::move(name));
+    expr->type = std::move(type);
+    return expr;
+}
+
+IrExprPtr make_borrow_expr(SourceLocation loc,
+                           std::string source_name,
+                           std::string path,
+                           IrExprPtr source,
+                           bool mutable_borrow,
+                           IrType borrowed_type) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::Borrow;
+    expr->loc = loc;
+    set_ir_expr_name(*expr, std::move(source_name));
+    set_ir_expr_label(*expr, std::move(path));
+    set_ir_expr_operand(*expr, std::move(source));
+    expr->mutable_borrow = mutable_borrow;
+    expr->type = std::move(borrowed_type);
+    expr->type.qualifier = mutable_borrow ? TypeQualifier::MutRef : TypeQualifier::Ref;
+    return expr;
 }
 
 IrExprPtr make_ir_tuple_expr(SourceLocation loc, IrType type, std::vector<IrExprPtr> elements) {
@@ -197,6 +224,21 @@ IrExprPtr make_cast_expr(SourceLocation loc, IrExprPtr value, const IrType& targ
     cast->kind = IrExprKind::Cast;
     cast->loc = loc;
     cast->type = target;
+    set_ir_expr_operand(*cast, std::move(value));
+    return cast;
+}
+
+IrExprPtr make_trait_object_cast_expr(SourceLocation loc,
+                                      IrExprPtr value,
+                                      IrType target,
+                                      std::string vtable_name,
+                                      std::uint64_t vtable_offset) {
+    auto cast = std::make_unique<IrExpr>();
+    cast->kind = IrExprKind::Cast;
+    cast->loc = loc;
+    set_ir_expr_name(*cast, std::move(vtable_name));
+    cast->tuple_index = vtable_offset;
+    cast->type = std::move(target);
     set_ir_expr_operand(*cast, std::move(value));
     return cast;
 }
@@ -247,7 +289,7 @@ IrExprPtr make_ir_call_expr(SourceLocation loc,
     auto lowered = std::make_unique<IrExpr>();
     lowered->kind = IrExprKind::Call;
     lowered->loc = loc;
-    lowered->name = std::move(name);
+    set_ir_expr_name(*lowered, std::move(name));
     lowered->type = std::move(result);
     lowered->args = std::move(args);
     return lowered;
@@ -271,6 +313,25 @@ IrExprPtr make_format_print_expr(SourceLocation loc,
     expr->type = std::move(result);
     expr->print_newline = print_newline;
     expr->format_parts = std::make_unique<std::vector<std::string>>(std::move(format_parts));
+    expr->args = std::move(args);
+    return expr;
+}
+
+IrExprPtr make_trait_object_call_expr(SourceLocation loc,
+                                      std::string method_name,
+                                      IrExprPtr receiver,
+                                      std::uint64_t slot,
+                                      IrType result,
+                                      std::vector<IrType> erased_params,
+                                      std::vector<IrExprPtr> args) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::TraitObjectCall;
+    expr->loc = loc;
+    set_ir_expr_name(*expr, std::move(method_name));
+    expr->tuple_index = slot;
+    expr->type = std::move(result);
+    set_ir_expr_operand(*expr, std::move(receiver));
+    set_ir_expr_call_param_types(*expr, std::move(erased_params));
     expr->args = std::move(args);
     return expr;
 }

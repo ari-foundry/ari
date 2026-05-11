@@ -1490,6 +1490,11 @@ check-variables: $(TARGET)
 	grep -q "@.ari.str" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "ptr null" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "insertvalue { double, ptr }" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
+	$(TARGET) tests/ok/ir-string-payloads.ari --emit-llvm $(BUILD_DIR)/variables/ir-string-payloads.ll
+	grep -q "@.ari.str" $(BUILD_DIR)/variables/ir-string-payloads.ll
+	grep -q 'call i64 @"_ARNv7add_one"' $(BUILD_DIR)/variables/ir-string-payloads.ll
+	grep -q 'call i64 %' $(BUILD_DIR)/variables/ir-string-payloads.ll
+	grep -q "getelementptr inbounds { i64 }" $(BUILD_DIR)/variables/ir-string-payloads.ll
 	$(TARGET) tests/ok/ir-builder-call-paths.ari --emit-llvm $(BUILD_DIR)/variables/ir-builder-call-paths.ll
 	grep -q 'call i64 @"_ARNv3add"' $(BUILD_DIR)/variables/ir-builder-call-paths.ll
 	grep -q "_ARNv15identity__G_i64" $(BUILD_DIR)/variables/ir-builder-call-paths.ll

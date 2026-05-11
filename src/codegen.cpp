@@ -732,7 +732,7 @@ private:
             return;
         }
         if (value.kind == IrExprKind::Local && is_aggregate_type(value.type)) {
-            copy_local_bytes_to_offset(value.loc, local_offset(value.loc, value.name), target_offset, target_type);
+            copy_local_bytes_to_offset(value.loc, local_offset(value.loc, ir_expr_name(value)), target_offset, target_type);
             return;
         }
         if (value.kind == IrExprKind::TupleIndex && is_aggregate_type(value.type) &&
@@ -799,7 +799,7 @@ private:
         }
 
         if (value.kind == IrExprKind::Local && is_aggregate_type(value.type)) {
-            copy_local_bytes_to_pointer_base(value.loc, local_offset(value.loc, value.name), target_type, byte_offset);
+            copy_local_bytes_to_pointer_base(value.loc, local_offset(value.loc, ir_expr_name(value)), target_type, byte_offset);
             return;
         }
 
@@ -865,7 +865,7 @@ private:
         }
 
         if (value.kind == IrExprKind::Local && is_aggregate_type(value.type)) {
-            copy_local_bytes_to_offset(value.loc, local_offset(value.loc, value.name), target_offset, target_type);
+            copy_local_bytes_to_offset(value.loc, local_offset(value.loc, ir_expr_name(value)), target_offset, target_type);
             return;
         }
 
@@ -1883,7 +1883,7 @@ private:
     }
 
     int aggregate_enum_match_base_offset(const IrExpr& value) const {
-        if (value.kind == IrExprKind::Local) return local_offset(value.loc, value.name);
+        if (value.kind == IrExprKind::Local) return local_offset(value.loc, ir_expr_name(value));
         if (value.kind == IrExprKind::TupleIndex && ir_expr_operand(value)) return lvalue_offset(value);
         throw CompileError(where(value.loc) +
                            ": freestanding backend can only match local multi-payload enum values yet");
@@ -2188,10 +2188,10 @@ private:
                 if (is_aggregate_type(expr.type)) {
                     throw CompileError(where(expr.loc) + ": backend cannot materialize aggregate values; use field or index access");
                 }
-                emit_load_rax_from_local(local_offset(expr.loc, expr.name), expr.type);
+                emit_load_rax_from_local(local_offset(expr.loc, ir_expr_name(expr)), expr.type);
                 break;
             case IrExprKind::Borrow:
-                emit_lea_reg_local(Reg::RAX, ir_expr_operand(expr) ? lvalue_offset(*ir_expr_operand(expr)) : local_offset(expr.loc, expr.name));
+                emit_lea_reg_local(Reg::RAX, ir_expr_operand(expr) ? lvalue_offset(*ir_expr_operand(expr)) : local_offset(expr.loc, ir_expr_name(expr)));
                 break;
             case IrExprKind::Unary:
                 emit_unary(expr);
@@ -2350,7 +2350,7 @@ private:
         if (is_aggregate_type(expr.type)) {
             throw CompileError(where(expr.loc) + ": backend cannot materialize nested aggregate values; index a scalar field");
         }
-        int base = local_offset(ir_expr_operand(expr)->loc, ir_expr_operand(expr)->name);
+        int base = local_offset(ir_expr_operand(expr)->loc, ir_expr_name(*ir_expr_operand(expr)));
         int stride = layout_size_bytes(expr.loc, expr.type);
         emit_expr(*ir_expr_right(expr));
         emit_array_bounds_check(ir_expr_operand(expr)->type.array_size);
@@ -2381,7 +2381,7 @@ private:
     }
 
     int lvalue_offset(const IrExpr& expr) const {
-        if (expr.kind == IrExprKind::Local) return local_offset(expr.loc, expr.name);
+        if (expr.kind == IrExprKind::Local) return local_offset(expr.loc, ir_expr_name(expr));
         if (expr.kind == IrExprKind::TupleIndex && ir_expr_operand(expr)) {
             int base = lvalue_offset(*ir_expr_operand(expr));
             return aggregate_lvalue_field_offset(expr.loc, base, ir_expr_operand(expr)->type, expr.tuple_index);
@@ -2723,8 +2723,9 @@ private:
     }
 
     void emit_call_with_sret_to_offset(const IrExpr& expr, int target_offset) {
-        reject_c_extern_use(expr.loc, expr.name, "call");
-        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(expr.name)) {
+        const std::string& name = ir_expr_name(expr);
+        reject_c_extern_use(expr.loc, name, "call");
+        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(name)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
                                *blocked + " yet; use the LLVM host backend");
         }
@@ -2737,7 +2738,7 @@ private:
         emit_lea_reg_local(Reg::RAX, target_offset);
         emit_mov_mem_rsp_reg(0, Reg::RAX);
         emit_call_arguments_to_stack(expr, 1);
-        emit_direct_call_from_prepared_stack(expr.name, total_args);
+        emit_direct_call_from_prepared_stack(name, total_args);
     }
 
     void emit_indirect_call_with_sret_to_offset(const IrExpr& expr, int target_offset) {
@@ -2757,8 +2758,9 @@ private:
     }
 
     void emit_call_with_sret_to_pointer_base(const IrExpr& expr, int byte_offset) {
-        reject_c_extern_use(expr.loc, expr.name, "call");
-        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(expr.name)) {
+        const std::string& name = ir_expr_name(expr);
+        reject_c_extern_use(expr.loc, name, "call");
+        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(name)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
                                *blocked + " yet; use the LLVM host backend");
         }
@@ -2773,7 +2775,7 @@ private:
         emit_add_pointer_offset_reg(Reg::RAX, byte_offset);
         emit_mov_mem_rsp_reg(0, Reg::RAX);
         emit_call_arguments_to_stack(expr, 1);
-        emit_direct_call_from_prepared_stack(expr.name, total_args);
+        emit_direct_call_from_prepared_stack(name, total_args);
         emit_pop(Reg::RBX);
     }
 
@@ -2797,8 +2799,9 @@ private:
     }
 
     void emit_call(const IrExpr& expr) {
-        reject_c_extern_use(expr.loc, expr.name, "call");
-        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(expr.name)) {
+        const std::string& name = ir_expr_name(expr);
+        reject_c_extern_use(expr.loc, name, "call");
+        if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(name)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
                                *blocked + " yet; use the LLVM host backend");
         }
@@ -2820,17 +2823,18 @@ private:
         int arg_area = static_cast<int>(expr.args.size() * 8);
         if (arg_area > 0) emit_sub_rsp(arg_area);
         emit_call_arguments_to_stack(expr, 0);
-        emit_direct_call_from_prepared_stack(expr.name, expr.args.size());
+        emit_direct_call_from_prepared_stack(name, expr.args.size());
     }
 
     void emit_function_ref(const IrExpr& expr) {
-        reject_c_extern_use(expr.loc, expr.name, "take the address of");
+        const std::string& name = ir_expr_name(expr);
+        reject_c_extern_use(expr.loc, name, "take the address of");
         out_.u8(0x48);
         out_.u8(0x8D);
         out_.u8(0x05);
         std::size_t pos = out_.size();
         out_.u32(0);
-        addresses_.push_back(CallPatch{pos, expr.name});
+        addresses_.push_back(CallPatch{pos, name});
     }
 
     void reject_c_extern_use(SourceLocation loc, const std::string& name, const std::string& operation) const {

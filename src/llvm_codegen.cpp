@@ -1359,16 +1359,16 @@ private:
                 }
                 return Value{llvm_type(expr.type), std::to_string(expr.float_value), expr.type};
             case IrExprKind::String:
-                return Value{"ptr", string_ptr(expr.string_value), expr.type};
+                return Value{"ptr", string_ptr(ir_expr_string_value(expr)), expr.type};
             case IrExprKind::Null:
                 return Value{"ptr", "null", expr.type};
             case IrExprKind::FunctionRef:
                 return emit_function_ref(expr);
             case IrExprKind::Local:
-                return load_local(expr.loc, expr.name, expr.type);
+                return load_local(expr.loc, ir_expr_name(expr), expr.type);
             case IrExprKind::Borrow:
                 if (ir_expr_operand(expr)) return Value{"ptr", emit_lvalue_ptr(*ir_expr_operand(expr)), expr.type};
-                return Value{"ptr", local_slot(expr.loc, expr.name), expr.type};
+                return Value{"ptr", local_slot(expr.loc, ir_expr_name(expr)), expr.type};
             case IrExprKind::Unary: {
                 Value operand = emit_expr(*ir_expr_operand(expr));
                 std::string out = temp();
@@ -1494,7 +1494,7 @@ private:
 
     std::string emit_lvalue_ptr(const IrExpr& expr) {
         if (expr.kind == IrExprKind::Local) {
-            std::string slot = local_slot(expr.loc, expr.name);
+            std::string slot = local_slot(expr.loc, ir_expr_name(expr));
             if (!is_reference_like_lvalue_type(expr.type)) return slot;
             std::string out = temp();
             line("  " + out + " = load ptr, ptr " + slot);
@@ -1627,7 +1627,7 @@ private:
         }
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
         Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
-        std::string base = local_slot(ir_expr_operand(expr)->loc, ir_expr_operand(expr)->name);
+        std::string base = local_slot(ir_expr_operand(expr)->loc, ir_expr_name(*ir_expr_operand(expr)));
         emit_vector_bounds_check(index, ir_expr_operand(expr)->type, base);
         std::string ptr = temp();
         line("  " + ptr + " = getelementptr inbounds " + llvm_type(ir_expr_operand(expr)->type) +
@@ -2626,7 +2626,7 @@ private:
         line("  " + with_data + " = insertvalue " + object_type + " undef, ptr " + source_slot + ", 0");
         std::string with_vtable = temp();
         line("  " + with_vtable + " = insertvalue " + object_type + " " + with_data +
-             ", ptr " + quote_global(expr.name) + ", 1");
+             ", ptr " + quote_global(ir_expr_name(expr)) + ", 1");
         return Value{object_type, with_vtable, expr.type};
     }
 
@@ -2907,12 +2907,13 @@ private:
     }
 
     Value emit_function_ref(const IrExpr& expr) {
-        if (extern_symbols_.count(expr.name)) {
-            return Value{"ptr", quote_global(extern_symbols_.at(expr.name)), expr.type};
+        const std::string& name = ir_expr_name(expr);
+        if (extern_symbols_.count(name)) {
+            return Value{"ptr", quote_global(extern_symbols_.at(name)), expr.type};
         }
-        auto found = function_symbols_.find(expr.name);
+        auto found = function_symbols_.find(name);
         if (found == function_symbols_.end()) {
-            throw CompileError(where(expr.loc) + ": LLVM backend cannot find function '" + expr.name + "'");
+            throw CompileError(where(expr.loc) + ": LLVM backend cannot find function '" + name + "'");
         }
         return Value{"ptr", quote_global(found->second), expr.type};
     }
@@ -2974,26 +2975,27 @@ private:
     }
 
     Value emit_call(const IrExpr& expr) {
-        if (expr.name == "zone::new") return emit_zone_new(expr);
+        const std::string& name = ir_expr_name(expr);
+        if (name == "zone::new") return emit_zone_new(expr);
 
         std::string symbol;
         IrType result;
         std::vector<IrParam> params;
-        if (extern_symbols_.count(expr.name)) {
-            symbol = extern_symbols_.at(expr.name);
-            result = extern_results_.at(expr.name);
-            params = extern_params_.at(expr.name);
-        } else if (function_symbols_.count(expr.name)) {
-            symbol = function_symbols_.at(expr.name);
-            result = function_results_.at(expr.name);
-            params = function_params_.at(expr.name);
-        } else if (std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(expr.name)) {
+        if (extern_symbols_.count(name)) {
+            symbol = extern_symbols_.at(name);
+            result = extern_results_.at(name);
+            params = extern_params_.at(name);
+        } else if (function_symbols_.count(name)) {
+            symbol = function_symbols_.at(name);
+            result = function_results_.at(name);
+            params = function_params_.at(name);
+        } else if (std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(name)) {
             symbol = *builtin_symbol;
             result = symbol == "ari_builtin_zone_alloc" ? expr.type : builtin_result_type(symbol, expr.loc);
         } else {
-            symbol = function_symbols_.at(expr.name);
-            result = function_results_.at(expr.name);
-            params = function_params_.at(expr.name);
+            symbol = function_symbols_.at(name);
+            result = function_results_.at(name);
+            params = function_params_.at(name);
         }
 
         std::vector<Value> args;

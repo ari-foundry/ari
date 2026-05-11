@@ -1,0 +1,23 @@
+struct Cell {
+  value: i64,
+}
+
+fn add_one(value: i64) -> i64 {
+  return value + 1;
+}
+
+fn apply(op: fn(i64) -> i64, value: i64) -> i64 {
+  return op(value);
+}
+
+fn inspect(value: ref i64) -> i64 {
+  return 2;
+}
+
+fn main() -> i64 {
+  var cell = Cell { value: 10 };
+  let local = add_one(4);
+  let via_ref = inspect(ref cell.value);
+  println("payloads {}", via_ref);
+  return apply(add_one, local) + via_ref + cell.value;
+}
