@@ -254,6 +254,8 @@ Checklist:
       zone reset/destroy
 - [x] `std::vec::new<T>(ref mut Zone, capacity)` wraps `RawVec<T>` in the
       tracked source `std::vec::Vec<T>` allocator/capability creation surface
+- [x] control-flow expressions that select source `std::vec::Vec<T>` handles
+      from the same zone keep reset/destroy provenance on the selected handle
 - [x] source `std::vec::Vec<T>` exposes tracked read-only metadata methods
       `len`, `capacity`, and `is_empty`
 - [x] source `std::vec::Vec<T>` exposes fixed-capacity checked read/write,

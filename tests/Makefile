@@ -288,6 +288,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.err
 	if $(TARGET) tests/errors/std-vec-metadata-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err
+	if $(TARGET) tests/errors/std-vec-if-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'chosen' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.err
 	if $(TARGET) tests/errors/std-vec-push-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-push-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-push-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-push-after-reset.err
 	if $(TARGET) tests/errors/std-vec-slice-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-slice-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-slice-after-reset.err 2>&1; then exit 1; fi

@@ -37,6 +37,7 @@
 #include "try_model.hpp"
 #include "type_semantics.hpp"
 #include "vector_semantics.hpp"
+#include "zone_pointer_semantics.hpp"
 #include "zone_return_semantics.hpp"
 
 #include <algorithm>
@@ -4038,12 +4039,6 @@ private:
         return local_scopes_.scope_index(name, out);
     }
 
-    std::string zone_pointer_escape_name(const IrExpr& value) const {
-        const IrExpr& source = zone_pointer_source_expr(value);
-        if (source.kind == IrExprKind::Local) return ir_expr_name(source);
-        return "value";
-    }
-
     bool temporary_zone_source_from_expr(
         const IrExpr& value,
         std::string& source_name,
@@ -4394,12 +4389,6 @@ private:
         local.zone_pointer_generation = 0;
     }
 
-    bool set_zone_pointer_source_from_zone_arg(LocalInfo& target, const IrExpr& zone_arg) {
-        std::string source_name;
-        if (!zone_source_name_from_arg(zone_arg, source_name)) return false;
-        return set_zone_pointer_source_from_name(target, source_name);
-    }
-
     bool set_zone_pointer_source_from_name(LocalInfo& target, const std::string& source_name) {
         if (source_name == "<multiple zones>") return false;
         LocalInfo* zone = find_local_slot(source_name);
@@ -4426,144 +4415,27 @@ private:
         return false;
     }
 
-    const IrExpr& zone_pointer_source_expr(const IrExpr& value) const {
-        if (value.kind == IrExprKind::Cast && ir_expr_operand(value)) {
-            return zone_pointer_source_expr(*ir_expr_operand(value));
-        }
-        return value;
-    }
-
-    static bool is_zone_pointer_trackable_type(const IrType& type) {
-        IrType value_type = type;
-        if (value_type.qualifier == TypeQualifier::Ref ||
-            value_type.qualifier == TypeQualifier::MutRef) {
-            value_type.qualifier = TypeQualifier::Value;
-        }
-        return type.qualifier == TypeQualifier::Ptr ||
-               is_std_box_handle_type(value_type) ||
-               is_std_vec_zone_handle_type(value_type) ||
-               is_prelude_slice_type(value_type);
-    }
-
-    bool set_zone_pointer_source_from_single_zone_return(LocalInfo& target, const IrExpr& call) {
-        if (call.kind != IrExprKind::Call) return false;
-        auto found = functions_.find(ir_expr_name(call));
-        if (found == functions_.end()) return false;
-        const FunctionSig& sig = found->second;
-        if (!sig.zone_pointer_return_param_index ||
-            *sig.zone_pointer_return_param_index >= call.args.size()) {
-            return false;
-        }
-        std::size_t zone_index = *sig.zone_pointer_return_param_index;
-        return set_zone_pointer_source_from_zone_arg(target, *call.args[zone_index]);
+    ZonePointerSourceResolver zone_pointer_source_resolver() {
+        ZonePointerSourceResolver resolver;
+        resolver.local_zone_pointer_source = [this](const std::string& name, std::string& out) {
+            const LocalInfo* local = find_local_slot(name);
+            if (!local || !local->zone_pointer) return false;
+            out = local->zone_pointer_source;
+            return true;
+        };
+        resolver.zone_source_from_arg = [this](const IrExpr& zone_arg, std::string& out) {
+            return zone_source_name_from_arg(zone_arg, out);
+        };
+        resolver.call_zone_return_param_index = [this](const std::string& name) -> std::optional<std::size_t> {
+            auto found = functions_.find(name);
+            if (found == functions_.end()) return std::nullopt;
+            return found->second.zone_pointer_return_param_index;
+        };
+        return resolver;
     }
 
     bool zone_pointer_source_name_from_expr(const IrExpr& value, std::string& out) {
-        if (!is_zone_pointer_trackable_type(value.type)) return false;
-        const IrExpr& source = zone_pointer_source_expr(value);
-        auto merge_source = [&](const IrExprPtr& expr, bool& found_any) {
-            if (!expr) return;
-            std::string nested_source;
-            if (!zone_pointer_source_name_from_expr(*expr, nested_source)) return;
-            if (!found_any) {
-                out = nested_source;
-                found_any = true;
-            } else if (out != nested_source) {
-                out = "<multiple zones>";
-            }
-        };
-
-        if (source.kind == IrExprKind::Borrow && ir_expr_label(source).empty()) {
-            const LocalInfo* local = find_local_slot(ir_expr_name(source));
-            if (!local || !local->zone_pointer) return false;
-            out = local->zone_pointer_source;
-            return true;
-        }
-        if (source.kind == IrExprKind::Tuple && is_std_vec_zone_handle_type(source.type)) {
-            std::optional<std::size_t> source_index = std_vec_zone_handle_source_field_index(source.type);
-            if (!source_index || *source_index >= source.args.size()) return false;
-            return zone_pointer_source_name_from_expr(*source.args[*source_index], out);
-        }
-        if (source.kind == IrExprKind::Tuple && is_std_box_handle_type(source.type)) {
-            std::optional<std::size_t> source_index = std_box_zone_handle_source_field_index(source.type);
-            if (!source_index || *source_index >= source.args.size()) return false;
-            return zone_pointer_source_name_from_expr(*source.args[*source_index], out);
-        }
-        if (source.kind == IrExprKind::Tuple && is_prelude_slice_type(source.type)) {
-            if (source.args.empty()) return false;
-            return zone_pointer_source_name_from_expr(*source.args[0], out);
-        }
-        if (source.kind == IrExprKind::TupleIndex && ir_expr_operand(source)) {
-            const IrExpr& operand = *ir_expr_operand(source);
-            std::optional<std::size_t> box_source_index =
-                std_box_zone_handle_source_field_index(operand.type);
-            if (box_source_index && source.tuple_index == *box_source_index) {
-                return zone_pointer_source_name_from_expr(operand, out);
-            }
-            std::optional<std::size_t> source_index = std_vec_zone_handle_source_field_index(operand.type);
-            if (source_index && source.tuple_index == *source_index) {
-                return zone_pointer_source_name_from_expr(operand, out);
-            }
-            if (is_prelude_slice_type(operand.type) && source.tuple_index == 0) {
-                return zone_pointer_source_name_from_expr(operand, out);
-            }
-            return false;
-        }
-        if (source.kind == IrExprKind::SliceRange && ir_expr_operand(source)) {
-            return zone_pointer_source_name_from_expr(*ir_expr_operand(source), out);
-        }
-        if ((source.kind == IrExprKind::Call && ir_expr_name(source) == "zone::alloc") ||
-            (source.kind == IrExprKind::Call && ir_expr_name(source) == "zone::new")) {
-            return !source.args.empty() && zone_source_name_from_arg(*source.args[0], out);
-        }
-        if (source.kind == IrExprKind::Call) {
-            if (std_box_pointer_result_preserves_receiver_zone(source) &&
-                zone_pointer_source_name_from_expr(*source.args[0], out)) {
-                return true;
-            }
-            if (std_vec_pointer_result_preserves_receiver_zone(source) &&
-                zone_pointer_source_name_from_expr(*source.args[0], out)) {
-                return true;
-            }
-            if (is_prelude_slice_type(source.type) &&
-                !source.args.empty() &&
-                zone_pointer_source_name_from_expr(*source.args[0], out)) {
-                return true;
-            }
-            auto found = functions_.find(ir_expr_name(source));
-            if (found == functions_.end()) return false;
-            const FunctionSig& sig = found->second;
-            if (!sig.zone_pointer_return_param_index ||
-                *sig.zone_pointer_return_param_index >= source.args.size()) {
-                return false;
-            }
-            std::size_t zone_index = *sig.zone_pointer_return_param_index;
-            return zone_source_name_from_arg(*source.args[zone_index], out);
-        }
-        if (source.kind == IrExprKind::Local) {
-            const LocalInfo* local = find_local_slot(ir_expr_name(source));
-            if (!local || !local->zone_pointer) return false;
-            out = local->zone_pointer_source;
-            return true;
-        }
-        if (source.kind == IrExprKind::If) {
-            bool found_any = false;
-            merge_source(ir_expr_if_then_value(source), found_any);
-            merge_source(ir_expr_if_else_value(source), found_any);
-            return found_any;
-        }
-        if (source.kind == IrExprKind::Block) {
-            return ir_expr_block_value(source) &&
-                   zone_pointer_source_name_from_expr(*ir_expr_block_value(source), out);
-        }
-        if (source.kind == IrExprKind::Match) {
-            bool found_any = false;
-            for (const auto& arm : ir_expr_match_arms(source)) {
-                merge_source(arm.value, found_any);
-            }
-            return found_any;
-        }
-        return false;
+        return ari::zone_pointer_source_name_from_expr(value, zone_pointer_source_resolver(), out);
     }
 
     bool is_zone_pointer_expr(const IrExpr& value) {
@@ -4604,27 +4476,10 @@ private:
         clear_zone_pointer_source(target);
         if (!is_zone_pointer_trackable_type(target.type)) return;
 
-        const IrExpr& source = zone_pointer_source_expr(value);
-        if (source.kind == IrExprKind::Call &&
-            (is_zone_alloc_function_name(ir_expr_name(source)) || is_zone_new_function_name(ir_expr_name(source)))) {
-            if (!source.args.empty()) set_zone_pointer_source_from_zone_arg(target, *source.args[0]);
-            return;
-        }
-
-        if (set_zone_pointer_source_from_single_zone_return(target, source)) return;
-
         std::string source_name;
-        if (zone_pointer_source_name_from_expr(source, source_name) &&
+        if (zone_pointer_source_name_from_expr(value, source_name) &&
             set_zone_pointer_source_from_name(target, source_name)) {
             return;
-        }
-
-        if (source.kind == IrExprKind::Local) {
-            LocalInfo* local = find_local_slot(ir_expr_name(source));
-            if (!local || !local->zone_pointer) return;
-            target.zone_pointer = true;
-            target.zone_pointer_source = local->zone_pointer_source;
-            target.zone_pointer_generation = local->zone_pointer_generation;
         }
     }
 

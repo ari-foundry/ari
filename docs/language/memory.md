@@ -407,7 +407,10 @@ returned by a single-zone constructor. Raw pointers recovered from a tracked
 `std::boxed::Box<T>` or `std::vec::Vec<T>` through `as_ptr()` keep that
 provenance too. A `std::boxed::Box<T>` or `std::vec::Vec<T>` copied with
 `copy_to(ref mut Zone)` is tracked against the target zone, not the original
-source zone.
+source zone. When a control-flow expression selects tracked handles from the
+same source zone, the selected handle keeps that provenance. Different-source
+selections are not modeled as a single-source handle; keep those values local
+until APIs with explicit multi-source lifetime contracts exist.
 That single-zone wrapper rule is a signature-level contract: a pointer-returning
 function with no Zone borrow parameters or with more than one Zone borrow
 parameter cannot return a tracked zone pointer.

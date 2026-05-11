@@ -129,11 +129,14 @@
    and re-exports while future child modules can start in their own files.
    - [std-provenance] keep zone-provenance rules for source handles and
      pointer-returning methods in focused helpers such as `std_box_semantics`,
-     `std_vec_semantics`, `slice_semantics`, and future string/smart-pointer
-     helpers instead of adding more bespoke checks to `sema.cpp`. The
-     `std::vec::Vec` same-zone method contract now lives in
-     `std_vec_semantics`; remaining work is to move broader source-handle
-     lifetime bookkeeping out of `sema.cpp`.
+     `std_vec_semantics`, `slice_semantics`, `zone_pointer_semantics`, and
+     future string/smart-pointer helpers instead of adding more bespoke checks
+     to `sema.cpp`. The `std::vec::Vec` same-zone method contract now lives in
+     `std_vec_semantics`, and source-handle/pointer provenance expression
+     tracing for locals, tuple fields, calls, slices, and control-flow
+     expressions now lives in `zone_pointer_semantics`; remaining work is to
+     move source/generation storage, reset/destroy invalidation, temporary-zone
+     escape checks, and auto-cleanup out of `sema.cpp`.
    - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
      top of the existing explicit-zone `std::boxed::Box<T>` seed before std
      APIs start returning owning heap handles
