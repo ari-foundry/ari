@@ -245,10 +245,17 @@ struct StmtAssignPayload {
     ExprPtr rhs;
 };
 
+struct StmtBodyPayload {
+    std::vector<std::unique_ptr<Stmt>> statements;
+    std::vector<std::unique_ptr<Stmt>> then_body;
+    std::vector<std::unique_ptr<Stmt>> else_body;
+    std::vector<std::unique_ptr<Stmt>> loop_body;
+};
+
 struct Stmt {
     StmtKind kind = StmtKind::ExprStmt;
     SourceLocation loc;
-    std::vector<std::unique_ptr<Stmt>> statements;
+    std::unique_ptr<StmtBodyPayload> body_payload;
     Binding binding;
     std::unique_ptr<StmtAssignPayload> assign_payload;
     ExprPtr expr;
@@ -259,9 +266,6 @@ struct Stmt {
     bool for_pattern_filter = false;
     ExprPtr for_iterable;
     ExprPtr match_value;
-    std::vector<std::unique_ptr<Stmt>> then_body;
-    std::vector<std::unique_ptr<Stmt>> else_body;
-    std::vector<std::unique_ptr<Stmt>> loop_body;
     std::vector<Binding> init_bindings;
     std::vector<ExprPtr> updates;
     std::unique_ptr<StmtMatchArms> match_arms;
@@ -269,6 +273,64 @@ struct Stmt {
     std::unique_ptr<std::string> label;
     std::unique_ptr<StmtBreakPayload> break_payload;
 };
+
+inline const StmtBodyPayload& stmt_body_payload(const Stmt& stmt) {
+    static const StmtBodyPayload empty;
+    return stmt.body_payload ? *stmt.body_payload : empty;
+}
+
+inline StmtBodyPayload& ensure_stmt_body_payload(Stmt& stmt) {
+    if (!stmt.body_payload) stmt.body_payload = std::make_unique<StmtBodyPayload>();
+    return *stmt.body_payload;
+}
+
+inline const std::vector<StmtPtr>& stmt_statements(const Stmt& stmt) {
+    return stmt_body_payload(stmt).statements;
+}
+
+inline std::vector<StmtPtr>& stmt_statements(Stmt& stmt) {
+    return ensure_stmt_body_payload(stmt).statements;
+}
+
+inline const std::vector<StmtPtr>& stmt_then_body(const Stmt& stmt) {
+    return stmt_body_payload(stmt).then_body;
+}
+
+inline std::vector<StmtPtr>& stmt_then_body(Stmt& stmt) {
+    return ensure_stmt_body_payload(stmt).then_body;
+}
+
+inline const std::vector<StmtPtr>& stmt_else_body(const Stmt& stmt) {
+    return stmt_body_payload(stmt).else_body;
+}
+
+inline std::vector<StmtPtr>& stmt_else_body(Stmt& stmt) {
+    return ensure_stmt_body_payload(stmt).else_body;
+}
+
+inline const std::vector<StmtPtr>& stmt_loop_body(const Stmt& stmt) {
+    return stmt_body_payload(stmt).loop_body;
+}
+
+inline std::vector<StmtPtr>& stmt_loop_body(Stmt& stmt) {
+    return ensure_stmt_body_payload(stmt).loop_body;
+}
+
+inline void set_stmt_statements(Stmt& stmt, std::vector<StmtPtr> statements) {
+    ensure_stmt_body_payload(stmt).statements = std::move(statements);
+}
+
+inline void set_stmt_then_body(Stmt& stmt, std::vector<StmtPtr> body) {
+    ensure_stmt_body_payload(stmt).then_body = std::move(body);
+}
+
+inline void set_stmt_else_body(Stmt& stmt, std::vector<StmtPtr> body) {
+    ensure_stmt_body_payload(stmt).else_body = std::move(body);
+}
+
+inline void set_stmt_loop_body(Stmt& stmt, std::vector<StmtPtr> body) {
+    ensure_stmt_body_payload(stmt).loop_body = std::move(body);
+}
 
 inline const StmtAssignPayload& stmt_assign_payload(const Stmt& stmt) {
     static const StmtAssignPayload empty;

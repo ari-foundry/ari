@@ -196,19 +196,19 @@ static bool merge_labeled_break_vector_known_length(VectorKnownLength& merged,
     switch (statement.kind) {
         case IrStmtKind::Block:
             return merge_labeled_break_vector_known_lengths(
-                merged, has_merged, storage_type, statement.statements, label);
+                merged, has_merged, storage_type, ir_stmt_statements(statement), label);
         case IrStmtKind::If:
             return merge_labeled_break_vector_known_lengths(
-                       merged, has_merged, storage_type, statement.then_body, label) &&
+                       merged, has_merged, storage_type, ir_stmt_then_body(statement), label) &&
                    merge_labeled_break_vector_known_lengths(
-                       merged, has_merged, storage_type, statement.else_body, label);
+                       merged, has_merged, storage_type, ir_stmt_else_body(statement), label);
         case IrStmtKind::While:
         case IrStmtKind::WhileLet:
         case IrStmtKind::ForRange:
         case IrStmtKind::ForVector:
         case IrStmtKind::InitWhile:
             return merge_labeled_break_vector_known_lengths(
-                merged, has_merged, storage_type, statement.loop_body, label);
+                merged, has_merged, storage_type, ir_stmt_loop_body(statement), label);
         case IrStmtKind::Match:
             return merge_labeled_break_vector_known_lengths(
                 merged, has_merged, storage_type, ir_stmt_match_arms(statement), label);
@@ -318,18 +318,18 @@ static bool merge_labeled_break_source_vector_known_length(VectorKnownLength& me
     switch (statement.kind) {
         case StmtKind::Block:
             return merge_labeled_break_source_vector_known_lengths(
-                merged, has_merged, lookup, statement.statements, label);
+                merged, has_merged, lookup, stmt_statements(statement), label);
         case StmtKind::If:
             return merge_labeled_break_source_vector_known_lengths(
-                       merged, has_merged, lookup, statement.then_body, label) &&
+                       merged, has_merged, lookup, stmt_then_body(statement), label) &&
                    merge_labeled_break_source_vector_known_lengths(
-                       merged, has_merged, lookup, statement.else_body, label);
+                       merged, has_merged, lookup, stmt_else_body(statement), label);
         case StmtKind::While:
         case StmtKind::WhileLet:
         case StmtKind::For:
         case StmtKind::InitWhile:
             return merge_labeled_break_source_vector_known_lengths(
-                merged, has_merged, lookup, statement.loop_body, label);
+                merged, has_merged, lookup, stmt_loop_body(statement), label);
         case StmtKind::Match:
             return merge_labeled_break_source_vector_known_lengths(
                 merged, has_merged, lookup, stmt_match_arms(statement), label);
@@ -434,20 +434,20 @@ static void merge_labeled_break_source_vector_storage_capacity(std::uint64_t& ca
     switch (statement.kind) {
         case StmtKind::Block:
             merge_labeled_break_source_vector_storage_capacity(
-                capacity, statement.statements, label, lookup);
+                capacity, stmt_statements(statement), label, lookup);
             break;
         case StmtKind::If:
             merge_labeled_break_source_vector_storage_capacity(
-                capacity, statement.then_body, label, lookup);
+                capacity, stmt_then_body(statement), label, lookup);
             merge_labeled_break_source_vector_storage_capacity(
-                capacity, statement.else_body, label, lookup);
+                capacity, stmt_else_body(statement), label, lookup);
             break;
         case StmtKind::While:
         case StmtKind::WhileLet:
         case StmtKind::For:
         case StmtKind::InitWhile:
             merge_labeled_break_source_vector_storage_capacity(
-                capacity, statement.loop_body, label, lookup);
+                capacity, stmt_loop_body(statement), label, lookup);
             break;
         case StmtKind::Match:
             merge_labeled_break_source_vector_storage_capacity(
@@ -545,18 +545,18 @@ static void merge_labeled_break_vector_storage_capacity(std::uint64_t& capacity,
 
     switch (statement.kind) {
         case IrStmtKind::Block:
-            merge_labeled_break_vector_storage_capacity(capacity, statement.statements, label);
+            merge_labeled_break_vector_storage_capacity(capacity, ir_stmt_statements(statement), label);
             break;
         case IrStmtKind::If:
-            merge_labeled_break_vector_storage_capacity(capacity, statement.then_body, label);
-            merge_labeled_break_vector_storage_capacity(capacity, statement.else_body, label);
+            merge_labeled_break_vector_storage_capacity(capacity, ir_stmt_then_body(statement), label);
+            merge_labeled_break_vector_storage_capacity(capacity, ir_stmt_else_body(statement), label);
             break;
         case IrStmtKind::While:
         case IrStmtKind::WhileLet:
         case IrStmtKind::ForRange:
         case IrStmtKind::ForVector:
         case IrStmtKind::InitWhile:
-            merge_labeled_break_vector_storage_capacity(capacity, statement.loop_body, label);
+            merge_labeled_break_vector_storage_capacity(capacity, ir_stmt_loop_body(statement), label);
             break;
         case IrStmtKind::Match:
             merge_labeled_break_vector_storage_capacity(capacity, ir_stmt_match_arms(statement), label);

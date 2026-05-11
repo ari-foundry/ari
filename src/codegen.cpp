@@ -408,7 +408,7 @@ private:
     void collect_locals(const IrStmt& stmt) {
         switch (stmt.kind) {
             case IrStmtKind::Block:
-                collect_locals(stmt.statements);
+                collect_locals(ir_stmt_statements(stmt));
                 break;
             case IrStmtKind::VarDecl:
                 add_local(stmt.binding.name, stmt.binding.type);
@@ -423,8 +423,8 @@ private:
                 break;
             case IrStmtKind::If:
                 collect_expr_locals(stmt.condition);
-                collect_locals(stmt.then_body);
-                collect_locals(stmt.else_body);
+                collect_locals(ir_stmt_then_body(stmt));
+                collect_locals(ir_stmt_else_body(stmt));
                 break;
             case IrStmtKind::While:
             case IrStmtKind::WhileLet:
@@ -435,7 +435,7 @@ private:
                 if (stmt.kind == IrStmtKind::WhileLet && !ir_stmt_match_arms(stmt).empty() && ir_stmt_match_arms(stmt)[0].has_value_binding) {
                     add_local(ir_stmt_match_arms(stmt)[0].value_name, ir_stmt_match_arms(stmt)[0].value_type);
                 }
-                collect_locals(stmt.loop_body);
+                collect_locals(ir_stmt_loop_body(stmt));
                 break;
             case IrStmtKind::ForRange:
                 add_local(stmt.for_index_name, stmt.for_start->type);
@@ -443,19 +443,19 @@ private:
                 collect_expr_locals(stmt.for_start);
                 collect_expr_locals(stmt.for_end);
                 if (!stmt.for_binding_name.empty()) add_local(stmt.for_binding_name, stmt.for_binding_type);
-                collect_locals(stmt.loop_body);
+                collect_locals(ir_stmt_loop_body(stmt));
                 break;
             case IrStmtKind::ForVector:
                 if (!stmt.for_binding_name.empty()) add_local(stmt.for_binding_name, stmt.for_binding_type);
                 for (const auto& value : stmt.for_values) collect_expr_locals(value);
-                collect_locals(stmt.loop_body);
+                collect_locals(ir_stmt_loop_body(stmt));
                 break;
             case IrStmtKind::InitWhile:
                 for (const auto& binding : stmt.init_bindings) {
                     add_local(binding.name, binding.type);
                     collect_expr_locals(binding.init);
                 }
-                collect_locals(stmt.loop_body);
+                collect_locals(ir_stmt_loop_body(stmt));
                 for (const auto& update : stmt.updates) collect_expr_locals(update);
                 break;
             case IrStmtKind::Continue:
@@ -1564,21 +1564,21 @@ private:
         emit_expr(*stmt.condition);
         emit_cmp_rax_zero();
         std::size_t jump_false = emit_jcc_placeholder(0x84);
-        emit_statements(stmt.then_body);
-        if (stmt.else_body.empty()) {
+        emit_statements(ir_stmt_then_body(stmt));
+        if (ir_stmt_else_body(stmt).empty()) {
             patch_rel32(jump_false, out_.size());
             return;
         }
         std::size_t jump_end = emit_jmp_placeholder();
         patch_rel32(jump_false, out_.size());
-        emit_statements(stmt.else_body);
+        emit_statements(ir_stmt_else_body(stmt));
         patch_rel32(jump_end, out_.size());
     }
 
     void emit_block(const IrStmt& stmt) {
         const std::string& label = ir_stmt_label(stmt);
         if (label.empty()) {
-            emit_statements(stmt.statements);
+            emit_statements(ir_stmt_statements(stmt));
             return;
         }
 
@@ -1586,7 +1586,7 @@ private:
         labels.source_label = label;
         labels.is_loop = false;
         loops_.push_back(labels);
-        emit_statements(stmt.statements);
+        emit_statements(ir_stmt_statements(stmt));
 
         std::size_t end = out_.size();
         for (std::size_t patch : loops_.back().break_patches) patch_rel32(patch, end);
@@ -1611,7 +1611,7 @@ private:
         labels.value_continue_target = start;
         labels.source_label = ir_stmt_label(stmt);
         loops_.push_back(labels);
-        emit_statements(stmt.loop_body);
+        emit_statements(ir_stmt_loop_body(stmt));
         patch_rel32(emit_jmp_placeholder(), start);
         std::size_t end = out_.size();
         patch_rel32(jump_end, end);
@@ -1653,7 +1653,7 @@ private:
         labels.value_continue_target = cond;
         labels.source_label = ir_stmt_label(stmt);
         loops_.push_back(labels);
-        emit_statements(stmt.loop_body);
+        emit_statements(ir_stmt_loop_body(stmt));
         patch_rel32(emit_jmp_placeholder(), cond);
 
         std::size_t end = out_.size();
@@ -1695,7 +1695,7 @@ private:
         labels.value_continue_target = cond;
         labels.source_label = ir_stmt_label(stmt);
         loops_.push_back(labels);
-        emit_statements(stmt.loop_body);
+        emit_statements(ir_stmt_loop_body(stmt));
 
         std::size_t update = out_.size();
         loops_.back().plain_continue_target = update;
@@ -1745,7 +1745,7 @@ private:
             }
 
             std::size_t continue_start = loops_.back().plain_continue_patches.size();
-            emit_statements(stmt.loop_body);
+            emit_statements(ir_stmt_loop_body(stmt));
             auto& patches = loops_.back().plain_continue_patches;
             pending_continue.insert(pending_continue.end(), patches.begin() + static_cast<std::ptrdiff_t>(continue_start), patches.end());
             patches.erase(patches.begin() + static_cast<std::ptrdiff_t>(continue_start), patches.end());
@@ -1779,7 +1779,7 @@ private:
         labels.update_names = names;
         loops_.push_back(labels);
 
-        emit_statements(stmt.loop_body);
+        emit_statements(ir_stmt_loop_body(stmt));
         std::size_t update = out_.size();
         loops_.back().plain_continue_target = update;
         loops_.back().plain_continue_known = true;

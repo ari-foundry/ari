@@ -436,6 +436,8 @@ Checklist:
       compound, field, and indexed assignment lowering paths
 - [x] AST/IR statement label payload packing preserves labeled block, loop,
       and range-for break lowering paths
+- [x] AST/IR statement body-vector payload packing preserves block, if/else,
+      while, range-for, init-while, and tuple-match if-chain lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

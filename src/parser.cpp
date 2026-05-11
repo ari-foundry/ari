@@ -817,7 +817,7 @@ private:
             --pos_;
             auto stmt = std::make_unique<Stmt>();
             stmt->kind = StmtKind::Block;
-            stmt->statements = parse_block();
+            set_stmt_statements(*stmt, parse_block());
             return stmt;
         }
         if (check(TokenKind::Identifier) && peek(1).kind == TokenKind::Colon) return parse_labeled_statement();
@@ -948,7 +948,7 @@ private:
         }
         expect(TokenKind::KwWhile, "expected while after let-while bindings");
         stmt->condition = parse_expression_without_struct_literals();
-        stmt->loop_body = parse_block();
+        set_stmt_loop_body(*stmt, parse_block());
         if (match(TokenKind::KwNext)) {
             stmt->updates = parse_expression_list();
             if (stmt->updates.size() != stmt->init_bindings.size()) {
@@ -1155,13 +1155,13 @@ private:
         } else {
             stmt->condition = parse_expression_without_struct_literals();
         }
-        stmt->then_body = parse_block();
+        set_stmt_then_body(*stmt, parse_block());
         if (match(TokenKind::KwElse)) {
             if (match(TokenKind::KwIf)) {
                 auto nested = parse_if();
-                stmt->else_body.push_back(std::move(nested));
+                stmt_else_body(*stmt).push_back(std::move(nested));
             } else {
-                stmt->else_body = parse_block();
+                set_stmt_else_body(*stmt, parse_block());
             }
         }
         return stmt;
@@ -1180,7 +1180,7 @@ private:
         } else {
             stmt->condition = parse_expression_without_struct_literals();
         }
-        stmt->loop_body = parse_block();
+        set_stmt_loop_body(*stmt, parse_block());
         return stmt;
     }
 
@@ -1192,7 +1192,7 @@ private:
         stmt->for_pattern = std::make_unique<Pattern>(parse_for_pattern());
         expect(TokenKind::KwIn, "expected in after for pattern");
         stmt->for_iterable = parse_expression_without_struct_literals();
-        stmt->loop_body = parse_block();
+        set_stmt_loop_body(*stmt, parse_block());
         return stmt;
     }
 
@@ -1217,7 +1217,7 @@ private:
 
         expect(TokenKind::KwWhile, "expected while after init bindings");
         stmt->condition = parse_expression_without_struct_literals();
-        stmt->loop_body = parse_block();
+        set_stmt_loop_body(*stmt, parse_block());
         if (match(TokenKind::KwNext)) {
             stmt->updates = parse_expression_list();
             if (stmt->updates.size() != stmt->init_bindings.size()) {

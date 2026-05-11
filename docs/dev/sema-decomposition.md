@@ -98,7 +98,9 @@ non-match statement nodes no longer carry those vector slots directly. Explicit
 `drop` statement names, `break` labels/values, and assignment statement
 names/targets/RHS expressions are lazy payloads as well. Statement labels are
 also lazy on AST/IR statement nodes, leaving unlabeled blocks and loops without
-an eager label string.
+an eager label string. AST/IR block, branch, and loop statement bodies now share
+lazy body-vector payloads, so ordinary non-control statements no longer carry
+empty body vectors.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

@@ -4483,11 +4483,11 @@ private:
                     const std::string& label = stmt_label(stmt);
                     set_ir_stmt_label(*lowered, label);
                     if (!label.empty()) push_labeled_block(stmt.loc, label);
-                    CheckedStatements block = check_statements(stmt.statements, true);
+                    CheckedStatements block = check_statements(stmt_statements(stmt), true);
                     if (!label.empty()) loops_.pop_back();
                     flow = block.flow;
                     if (!label.empty() && flow == Flow::Stops) flow = Flow::Continues;
-                    lowered->statements = std::move(block.statements);
+                    set_ir_stmt_statements(*lowered, std::move(block.statements));
                 }
                 break;
             case StmtKind::VarDecl:
@@ -4616,7 +4616,7 @@ private:
         declare_local(call.loc, zone_name, own_zone, true);
         IrStmtPtr zone_decl = make_ir_var_decl(call.loc, zone_name, own_zone, std::move(temp_init), true);
         IrStmt* zone_decl_ptr = zone_decl.get();
-        lowered.statements.push_back(std::move(zone_decl));
+        ir_stmt_statements(lowered).push_back(std::move(zone_decl));
         LocalInfo& zone_local = local_slot_by_name(zone_name);
         zone_local.ir_storage_type = &zone_decl_ptr->binding.type;
         zone_local.ir_init_expr = zone_decl_ptr->binding.init.get();
@@ -4654,7 +4654,7 @@ private:
             stmt.binding.mutable_binding
         );
         IrStmt* value_decl_ptr = value_decl.get();
-        lowered.statements.push_back(std::move(value_decl));
+        ir_stmt_statements(lowered).push_back(std::move(value_decl));
 
         LocalInfo& local = local_slot_by_name(stmt.binding.name);
         local.ir_storage_type = &value_decl_ptr->binding.type;
@@ -4817,7 +4817,7 @@ private:
             discard->kind = IrStmtKind::ExprStmt;
             discard->loc = stmt.loc;
             discard->expr = std::move(init);
-            lowered.statements.push_back(std::move(discard));
+            ir_stmt_statements(lowered).push_back(std::move(discard));
             return;
         }
 
@@ -4827,13 +4827,13 @@ private:
 
         std::string source_name = make_hidden_local("$pattern");
         declare_local(stmt.loc, source_name, declared, false);
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, source_name, declared, std::move(init), false));
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, source_name, declared, std::move(init), false));
         lower_binding_pattern_from_local(
             stmt.binding.pattern,
             source_name,
             declared,
             stmt.binding.mutable_binding,
-            lowered.statements
+            ir_stmt_statements(lowered)
         );
     }
 
@@ -5952,7 +5952,7 @@ private:
         append_drop_stmts_for_value(stmt.loc, local.type, make_value, drop_statements, &local);
         if (!drop_statements.empty()) {
             lowered.kind = IrStmtKind::Block;
-            lowered.statements = std::move(drop_statements);
+            set_ir_stmt_statements(lowered, std::move(drop_statements));
         }
         for (auto& item : local.owned_field_states) item.second = LocalState::Dropped;
         local.state = LocalState::Dropped;
@@ -6000,7 +6000,7 @@ private:
             return_stmt->expr = std::move(value);
             block.push_back(std::move(return_stmt));
             lowered.kind = IrStmtKind::Block;
-            lowered.statements = std::move(block);
+            set_ir_stmt_statements(lowered, std::move(block));
             return;
         }
         lowered.expr = std::move(value);
@@ -6012,13 +6012,13 @@ private:
         coerce_condition_to_bool(stmt.loc, lowered.condition);
         StateSnapshot branch_input = snapshot_states();
 
-        CheckedStatements then_checked = check_statements(stmt.then_body, true);
-        lowered.then_body = std::move(then_checked.statements);
+        CheckedStatements then_checked = check_statements(stmt_then_body(stmt), true);
+        set_ir_stmt_then_body(lowered, std::move(then_checked.statements));
         StateSnapshot then_state = snapshot_states();
 
         restore_states(branch_input);
 
-        if (stmt.else_body.empty()) {
+        if (stmt_else_body(stmt).empty()) {
             if (then_checked.flow == Flow::Continues) {
                 require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if without else");
                 restore_states(merge_zone_generations(branch_input, then_state));
@@ -6028,8 +6028,8 @@ private:
             return Flow::Continues;
         }
 
-        CheckedStatements else_checked = check_statements(stmt.else_body, true);
-        lowered.else_body = std::move(else_checked.statements);
+        CheckedStatements else_checked = check_statements(stmt_else_body(stmt), true);
+        set_ir_stmt_else_body(lowered, std::move(else_checked.statements));
         StateSnapshot else_state = snapshot_states();
 
         if (then_checked.flow != Flow::Continues && else_checked.flow != Flow::Continues) {
@@ -8798,7 +8798,7 @@ private:
 
         std::string subject_name = make_hidden_local("$iflet_enum");
         declare_local(stmt.loc, subject_name, enum_value_type, false);
-        lowered.statements.push_back(make_ir_var_decl(
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(
             stmt.loc,
             subject_name,
             enum_value_type,
@@ -8809,7 +8809,7 @@ private:
         IrType matched_type = bool_type(stmt.loc);
         std::string matched_name = make_hidden_local("$iflet_matched");
         declare_local(stmt.loc, matched_name, matched_type, true);
-        lowered.statements.push_back(make_ir_var_decl(
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(
             stmt.loc,
             matched_name,
             matched_type,
@@ -8830,12 +8830,12 @@ private:
         no_match.loc = stmt.loc;
         no_match.wildcard = true;
         match_arms.push_back(std::move(no_match));
-        lowered.statements.push_back(std::move(pattern_match));
+        ir_stmt_statements(lowered).push_back(std::move(pattern_match));
 
         StateSnapshot branch_input = snapshot_states();
         push_scope();
-        declare_match_arm_bindings(ir_stmt_match_arms(*lowered.statements.back()).front());
-        CheckedStatements then_checked = check_statements(stmt.then_body, false);
+        declare_match_arm_bindings(ir_stmt_match_arms(*ir_stmt_statements(lowered).back()).front());
+        CheckedStatements then_checked = check_statements(stmt_then_body(stmt), false);
         std::vector<IrStmtPtr> then_body = std::move(then_checked.statements);
         if (then_checked.flow == Flow::Returns) discard_scope();
         else if (then_checked.flow == Flow::Stops) discard_scope();
@@ -8851,24 +8851,24 @@ private:
         if_stmt->kind = IrStmtKind::If;
         if_stmt->loc = stmt.loc;
         if_stmt->condition = make_local_lvalue_expr(stmt.loc, matched_name, matched_type);
-        if_stmt->then_body = std::move(then_body);
+        set_ir_stmt_then_body(*if_stmt, std::move(then_body));
 
-        if (stmt.else_body.empty()) {
+        if (stmt_else_body(stmt).empty()) {
             if (then_checked.flow == Flow::Continues) {
                 require_same_states(stmt.loc, branch_input, then_state, "changes ownership state in if-let without else");
                 restore_states(merge_zone_generations(branch_input, then_state));
             } else {
                 restore_states(branch_input);
             }
-            lowered.statements.push_back(std::move(if_stmt));
+            ir_stmt_statements(lowered).push_back(std::move(if_stmt));
             return Flow::Continues;
         }
 
-        CheckedStatements else_checked = check_statements(stmt.else_body, true);
-        if_stmt->else_body = std::move(else_checked.statements);
+        CheckedStatements else_checked = check_statements(stmt_else_body(stmt), true);
+        set_ir_stmt_else_body(*if_stmt, std::move(else_checked.statements));
         StateSnapshot else_state = snapshot_states();
 
-        lowered.statements.push_back(std::move(if_stmt));
+        ir_stmt_statements(lowered).push_back(std::move(if_stmt));
 
         if (then_checked.flow != Flow::Continues && else_checked.flow != Flow::Continues) {
             restore_states(branch_input);
@@ -8897,7 +8897,7 @@ private:
         std::string subject_name = make_hidden_local(
             subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple");
         declare_local(stmt.loc, subject_name, subject_type, false);
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
         std::vector<Pattern> alternatives = expand_or_pattern_alternatives(condition_pattern);
         std::set<std::string> reusable_names;
@@ -8928,12 +8928,12 @@ private:
             );
             if (!lowered_arm.condition) {
                 has_irrefutable_alternative = true;
-                if (!stmt.else_body.empty()) {
+                if (!stmt_else_body(stmt).empty()) {
                     fail(condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
                 }
             }
             for (auto& statement : condition_prelude) {
-                lowered.statements.push_back(std::move(statement));
+                ir_stmt_statements(lowered).push_back(std::move(statement));
             }
 
             restore_states(branch_input);
@@ -8941,7 +8941,7 @@ private:
             reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
             lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
             reusable_pattern_binding_names_.clear();
-            CheckedStatements then_checked = check_statements(stmt.then_body, false);
+            CheckedStatements then_checked = check_statements(stmt_then_body(stmt), false);
             for (auto& statement : then_checked.statements) {
                 lowered_arm.body.push_back(std::move(statement));
             }
@@ -8975,13 +8975,13 @@ private:
             checked_arms.push_back(std::move(lowered_arm));
         }
 
-        if (has_irrefutable_alternative && !stmt.else_body.empty()) {
+        if (has_irrefutable_alternative && !stmt_else_body(stmt).empty()) {
             fail(condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
         }
 
-        if (!stmt.else_body.empty()) {
+        if (!stmt_else_body(stmt).empty()) {
             restore_states(branch_input);
-            CheckedStatements else_checked = check_statements(stmt.else_body, true);
+            CheckedStatements else_checked = check_statements(stmt_else_body(stmt), true);
             TupleCheckedStmtArm fallback;
             fallback.loc = stmt.loc;
             fallback.body = std::move(else_checked.statements);
@@ -9009,7 +9009,7 @@ private:
 
             std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
             for (auto& statement : chain) {
-                lowered.statements.push_back(std::move(statement));
+                ir_stmt_statements(lowered).push_back(std::move(statement));
             }
 
             if (all_non_continuing) {
@@ -9022,7 +9022,7 @@ private:
 
         std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
         for (auto& statement : chain) {
-            lowered.statements.push_back(std::move(statement));
+            ir_stmt_statements(lowered).push_back(std::move(statement));
         }
 
         if (has_irrefutable_alternative) {
@@ -9054,7 +9054,7 @@ private:
         std::string subject_name = make_hidden_local(
             subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple");
         declare_local(stmt.loc, subject_name, subject_type, false);
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
@@ -9088,7 +9088,7 @@ private:
                     condition_prelude
                 );
                 for (auto& statement : condition_prelude) {
-                    lowered.statements.push_back(std::move(statement));
+                    ir_stmt_statements(lowered).push_back(std::move(statement));
                 }
                 note_product_match_coverage(pattern, subject_type, coverage);
                 if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
@@ -9133,7 +9133,7 @@ private:
         require_tuple_match_exhaustive(stmt.loc, subject_type, coverage);
         std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
         for (auto& statement : chain) {
-            lowered.statements.push_back(std::move(statement));
+            ir_stmt_statements(lowered).push_back(std::move(statement));
         }
 
         if (all_non_continuing) {
@@ -9319,8 +9319,8 @@ private:
         LoopInfo loop;
         loop.label = label;
         push_loop(stmt.loc, loop);
-        CheckedStatements body = check_statements(stmt.loop_body, true);
-        lowered.loop_body = std::move(body.statements);
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), true);
+        set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
         loops_.pop_back();
 
@@ -9369,12 +9369,12 @@ private:
         push_loop(stmt.loc, loop);
         push_scope();
         declare_match_arm_bindings(pattern_arms.front());
-        CheckedStatements body = check_statements(stmt.loop_body, false);
-        lowered.loop_body = std::move(body.statements);
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
+        set_ir_stmt_loop_body(lowered, std::move(body.statements));
         if (body.flow == Flow::Returns) discard_scope();
         else if (body.flow == Flow::Stops) discard_scope();
         else {
-            append_current_scope_auto_destroy_cleanup(stmt.loc, lowered.loop_body);
+            append_current_scope_auto_destroy_cleanup(stmt.loc, ir_stmt_loop_body(lowered));
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
@@ -9410,7 +9410,7 @@ private:
         std::string subject_name = make_hidden_local(
             subject_type.primitive == IrPrimitiveKind::Struct ? "$whilelet_struct" : "$whilelet_tuple");
         declare_local(stmt.loc, subject_name, subject_type, false);
-        lowered.loop_body.push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
+        ir_stmt_loop_body(lowered).push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
         std::vector<Pattern> alternatives = expand_or_pattern_alternatives(condition_pattern);
         std::set<std::string> reusable_names;
@@ -9434,7 +9434,7 @@ private:
             );
             if (!arm.condition) has_irrefutable_alternative = true;
             for (auto& statement : condition_prelude) {
-                lowered.loop_body.push_back(std::move(statement));
+                ir_stmt_loop_body(lowered).push_back(std::move(statement));
             }
             checked_arms.push_back(std::move(arm));
         }
@@ -9456,7 +9456,7 @@ private:
             );
             reusable_pattern_binding_names_.clear();
 
-            CheckedStatements body = check_statements(stmt.loop_body, false);
+            CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
             for (auto& statement : body.statements) {
                 checked_arms[i].body.push_back(std::move(statement));
             }
@@ -9491,7 +9491,7 @@ private:
 
         std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
         for (auto& statement : chain) {
-            lowered.loop_body.push_back(std::move(statement));
+            ir_stmt_loop_body(lowered).push_back(std::move(statement));
         }
 
         restore_states(loop_input);
@@ -9847,7 +9847,7 @@ private:
         if (borrowed_iterator && iterator->kind == IrExprKind::Borrow) {
             promote_temporary_borrow_to_named(stmt.loc, *iterator, iterator_name);
         }
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, iterator_name, iterator_type, std::move(iterator), true));
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, iterator_name, iterator_type, std::move(iterator), true));
 
         auto loop = std::make_unique<IrStmt>();
         loop->kind = IrStmtKind::WhileLet;
@@ -9891,12 +9891,12 @@ private:
         push_loop(stmt.loc, loop_info);
         push_scope();
         declare_match_arm_bindings(pattern_arms.front());
-        CheckedStatements body = check_statements(stmt.loop_body, false);
-        loop->loop_body = std::move(body.statements);
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
+        set_ir_stmt_loop_body(*loop, std::move(body.statements));
         if (body.flow == Flow::Returns) discard_scope();
         else if (body.flow == Flow::Stops) discard_scope();
         else {
-            append_current_scope_auto_destroy_cleanup(stmt.loc, loop->loop_body);
+            append_current_scope_auto_destroy_cleanup(stmt.loc, ir_stmt_loop_body(*loop));
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
@@ -9912,8 +9912,8 @@ private:
         for (auto& arm : pattern_arms) {
             loop_arms.push_back(std::move(arm));
         }
-        lowered.statements.push_back(std::move(loop));
-        append_hidden_iterator_owner_cleanup(stmt.loc, iterator_name, lowered.statements);
+        ir_stmt_statements(lowered).push_back(std::move(loop));
+        append_hidden_iterator_owner_cleanup(stmt.loc, iterator_name, ir_stmt_statements(lowered));
         pop_scope();
     }
 
@@ -9937,7 +9937,7 @@ private:
         std::string source_name = make_hidden_local("$for_into");
         IrType source_type = iterable->type;
         declare_local(stmt.loc, source_name, source_type, true);
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, source_name, source_type, std::move(iterable), true));
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, source_name, source_type, std::move(iterable), true));
 
         IrExprPtr iterator = make_iterator_method_call(stmt.loc, source_name, "into_iter");
         ForIteratorTraitMatch direct_iterator;
@@ -10030,14 +10030,14 @@ private:
         lowered.kind = IrStmtKind::Block;
         std::string range_name = make_hidden_local("$for_range");
         declare_local(stmt.loc, range_name, range_type, false);
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, range_name, range_type, std::move(iterable), false));
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, range_name, range_type, std::move(iterable), false));
 
         auto loop = std::make_unique<IrStmt>();
         loop->loc = stmt.loc;
         IrExprPtr start = make_tuple_index_expr(stmt.loc, range_name, range_type, 0);
         IrExprPtr end = make_tuple_index_expr(stmt.loc, range_name, range_type, 1);
         finish_for_range(stmt, *loop, std::move(start), std::move(end), inclusive);
-        lowered.statements.push_back(std::move(loop));
+        ir_stmt_statements(lowered).push_back(std::move(loop));
     }
 
     void finish_for_range(const Stmt& stmt, IrStmt& lowered, IrExprPtr start, IrExprPtr end, bool inclusive) {
@@ -10069,15 +10069,15 @@ private:
             pattern_prelude,
             false
         );
-        CheckedStatements body = check_statements(stmt.loop_body, false);
-        lowered.loop_body = std::move(pattern_prelude);
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
+        set_ir_stmt_loop_body(lowered, std::move(pattern_prelude));
         for (auto& body_stmt : body.statements) {
-            lowered.loop_body.push_back(std::move(body_stmt));
+            ir_stmt_loop_body(lowered).push_back(std::move(body_stmt));
         }
         if (body.flow == Flow::Returns) discard_scope();
         else if (body.flow == Flow::Stops) discard_scope();
         else {
-            append_current_scope_auto_destroy_cleanup(stmt.loc, lowered.loop_body);
+            append_current_scope_auto_destroy_cleanup(stmt.loc, ir_stmt_loop_body(lowered));
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
@@ -10118,15 +10118,15 @@ private:
             pattern_prelude,
             true
         );
-        CheckedStatements body = check_statements(stmt.loop_body, false);
-        lowered.loop_body = std::move(pattern_prelude);
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
+        set_ir_stmt_loop_body(lowered, std::move(pattern_prelude));
         for (auto& body_stmt : body.statements) {
-            lowered.loop_body.push_back(std::move(body_stmt));
+            ir_stmt_loop_body(lowered).push_back(std::move(body_stmt));
         }
         if (body.flow == Flow::Returns) discard_scope();
         else if (body.flow == Flow::Stops) discard_scope();
         else {
-            append_current_scope_auto_destroy_cleanup(stmt.loc, lowered.loop_body);
+            append_current_scope_auto_destroy_cleanup(stmt.loc, ir_stmt_loop_body(lowered));
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
@@ -10155,7 +10155,7 @@ private:
         lowered.kind = IrStmtKind::Block;
         std::string vector_name = make_hidden_local("$for_vec");
         declare_local(stmt.loc, vector_name, vector_type, false);
-        lowered.statements.push_back(make_ir_var_decl(stmt.loc, vector_name, vector_type, std::move(iterable), false));
+        ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, vector_name, vector_type, std::move(iterable), false));
 
         auto loop = std::make_unique<IrStmt>();
         loop->kind = IrStmtKind::ForRange;
@@ -10192,15 +10192,15 @@ private:
             true
         );
 
-        CheckedStatements body = check_statements(stmt.loop_body, false);
-        loop->loop_body = std::move(pattern_prelude);
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
+        set_ir_stmt_loop_body(*loop, std::move(pattern_prelude));
         for (auto& body_stmt : body.statements) {
-            loop->loop_body.push_back(std::move(body_stmt));
+            ir_stmt_loop_body(*loop).push_back(std::move(body_stmt));
         }
         if (body.flow == Flow::Returns) discard_scope();
         else if (body.flow == Flow::Stops) discard_scope();
         else {
-            append_current_scope_auto_destroy_cleanup(stmt.loc, loop->loop_body);
+            append_current_scope_auto_destroy_cleanup(stmt.loc, ir_stmt_loop_body(*loop));
             pop_scope();
         }
         StateSnapshot loop_body_state = snapshot_states();
@@ -10212,7 +10212,7 @@ private:
         } else {
             restore_states(loop_input);
         }
-        lowered.statements.push_back(std::move(loop));
+        ir_stmt_statements(lowered).push_back(std::move(loop));
     }
 
     std::string make_hidden_local(const std::string& prefix) {
@@ -10279,8 +10279,8 @@ private:
         StateSnapshot loop_input = snapshot_states();
 
         push_loop(stmt.loc, loop);
-        CheckedStatements body = check_statements(stmt.loop_body, true);
-        lowered.loop_body = std::move(body.statements);
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), true);
+        set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
         if (body.flow == Flow::Continues) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
@@ -10360,7 +10360,7 @@ private:
                 set_ir_stmt_break_label(*break_stmt, break_label);
                 cleanup.push_back(std::move(break_stmt));
                 lowered.kind = IrStmtKind::Block;
-                lowered.statements = std::move(cleanup);
+                set_ir_stmt_statements(lowered, std::move(cleanup));
             }
             return;
         }
@@ -10406,7 +10406,7 @@ private:
             set_ir_stmt_break_value(*break_stmt, std::move(value));
             cleanup.push_back(std::move(break_stmt));
             lowered.kind = IrStmtKind::Block;
-            lowered.statements = std::move(cleanup);
+            set_ir_stmt_statements(lowered, std::move(cleanup));
             return;
         }
         set_ir_stmt_break_value(lowered, std::move(value));
@@ -10423,7 +10423,7 @@ private:
                 continue_stmt->loc = stmt.loc;
                 cleanup.push_back(std::move(continue_stmt));
                 lowered.kind = IrStmtKind::Block;
-                lowered.statements = std::move(cleanup);
+                set_ir_stmt_statements(lowered, std::move(cleanup));
             }
             return;
         }
@@ -10462,7 +10462,7 @@ private:
             continue_stmt->updates = std::move(updates);
             cleanup.push_back(std::move(continue_stmt));
             lowered.kind = IrStmtKind::Block;
-            lowered.statements = std::move(cleanup);
+            set_ir_stmt_statements(lowered, std::move(cleanup));
             return;
         }
         lowered.updates = std::move(updates);
@@ -15973,18 +15973,18 @@ private:
 
         switch (stmt.kind) {
             case IrStmtKind::Block:
-                coerce_labeled_break_values(stmt.statements, label, expected);
+                coerce_labeled_break_values(ir_stmt_statements(stmt), label, expected);
                 break;
             case IrStmtKind::If:
-                coerce_labeled_break_values(stmt.then_body, label, expected);
-                coerce_labeled_break_values(stmt.else_body, label, expected);
+                coerce_labeled_break_values(ir_stmt_then_body(stmt), label, expected);
+                coerce_labeled_break_values(ir_stmt_else_body(stmt), label, expected);
                 break;
             case IrStmtKind::While:
             case IrStmtKind::WhileLet:
             case IrStmtKind::ForRange:
             case IrStmtKind::ForVector:
             case IrStmtKind::InitWhile:
-                coerce_labeled_break_values(stmt.loop_body, label, expected);
+                coerce_labeled_break_values(ir_stmt_loop_body(stmt), label, expected);
                 break;
             case IrStmtKind::Match:
                 coerce_labeled_break_values(ensure_ir_stmt_match_arms(stmt), label, expected);

@@ -27,8 +27,8 @@ std::vector<IrStmtPtr> build_tuple_match_if_chain(std::vector<TupleCheckedStmtAr
         if_stmt->kind = IrStmtKind::If;
         if_stmt->loc = arm.loc;
         if_stmt->condition = std::move(arm.condition);
-        if_stmt->then_body = std::move(arm.body);
-        if_stmt->else_body = std::move(current);
+        set_ir_stmt_then_body(*if_stmt, std::move(arm.body));
+        set_ir_stmt_else_body(*if_stmt, std::move(current));
         current.clear();
         current.push_back(std::move(if_stmt));
     }

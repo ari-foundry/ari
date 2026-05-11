@@ -431,10 +431,17 @@ struct IrAssignPayload {
     IrExprPtr rhs;
 };
 
+struct IrStmtBodyPayload {
+    std::vector<std::unique_ptr<IrStmt>> statements;
+    std::vector<std::unique_ptr<IrStmt>> then_body;
+    std::vector<std::unique_ptr<IrStmt>> else_body;
+    std::vector<std::unique_ptr<IrStmt>> loop_body;
+};
+
 struct IrStmt {
     IrStmtKind kind = IrStmtKind::ExprStmt;
     SourceLocation loc;
-    std::vector<std::unique_ptr<IrStmt>> statements;
+    std::unique_ptr<IrStmtBodyPayload> body_payload;
     IrBinding binding;
     std::unique_ptr<IrAssignPayload> assign_payload;
     IrExprPtr expr;
@@ -449,9 +456,6 @@ struct IrStmt {
     bool for_inclusive = false;
     std::vector<IrExprPtr> for_values;
     IrExprPtr match_value;
-    std::vector<std::unique_ptr<IrStmt>> then_body;
-    std::vector<std::unique_ptr<IrStmt>> else_body;
-    std::vector<std::unique_ptr<IrStmt>> loop_body;
     std::vector<IrBinding> init_bindings;
     std::vector<IrExprPtr> updates;
     std::unique_ptr<IrStmtMatchArms> match_arms;
@@ -459,6 +463,64 @@ struct IrStmt {
     std::unique_ptr<std::string> label;
     std::unique_ptr<IrBreakPayload> break_payload;
 };
+
+inline const IrStmtBodyPayload& ir_stmt_body_payload(const IrStmt& stmt) {
+    static const IrStmtBodyPayload empty;
+    return stmt.body_payload ? *stmt.body_payload : empty;
+}
+
+inline IrStmtBodyPayload& ensure_ir_stmt_body_payload(IrStmt& stmt) {
+    if (!stmt.body_payload) stmt.body_payload = std::make_unique<IrStmtBodyPayload>();
+    return *stmt.body_payload;
+}
+
+inline const std::vector<IrStmtPtr>& ir_stmt_statements(const IrStmt& stmt) {
+    return ir_stmt_body_payload(stmt).statements;
+}
+
+inline std::vector<IrStmtPtr>& ir_stmt_statements(IrStmt& stmt) {
+    return ensure_ir_stmt_body_payload(stmt).statements;
+}
+
+inline const std::vector<IrStmtPtr>& ir_stmt_then_body(const IrStmt& stmt) {
+    return ir_stmt_body_payload(stmt).then_body;
+}
+
+inline std::vector<IrStmtPtr>& ir_stmt_then_body(IrStmt& stmt) {
+    return ensure_ir_stmt_body_payload(stmt).then_body;
+}
+
+inline const std::vector<IrStmtPtr>& ir_stmt_else_body(const IrStmt& stmt) {
+    return ir_stmt_body_payload(stmt).else_body;
+}
+
+inline std::vector<IrStmtPtr>& ir_stmt_else_body(IrStmt& stmt) {
+    return ensure_ir_stmt_body_payload(stmt).else_body;
+}
+
+inline const std::vector<IrStmtPtr>& ir_stmt_loop_body(const IrStmt& stmt) {
+    return ir_stmt_body_payload(stmt).loop_body;
+}
+
+inline std::vector<IrStmtPtr>& ir_stmt_loop_body(IrStmt& stmt) {
+    return ensure_ir_stmt_body_payload(stmt).loop_body;
+}
+
+inline void set_ir_stmt_statements(IrStmt& stmt, std::vector<IrStmtPtr> statements) {
+    ensure_ir_stmt_body_payload(stmt).statements = std::move(statements);
+}
+
+inline void set_ir_stmt_then_body(IrStmt& stmt, std::vector<IrStmtPtr> body) {
+    ensure_ir_stmt_body_payload(stmt).then_body = std::move(body);
+}
+
+inline void set_ir_stmt_else_body(IrStmt& stmt, std::vector<IrStmtPtr> body) {
+    ensure_ir_stmt_body_payload(stmt).else_body = std::move(body);
+}
+
+inline void set_ir_stmt_loop_body(IrStmt& stmt, std::vector<IrStmtPtr> body) {
+    ensure_ir_stmt_body_payload(stmt).loop_body = std::move(body);
+}
 
 inline const IrAssignPayload& ir_stmt_assign_payload(const IrStmt& stmt) {
     static const IrAssignPayload empty;
