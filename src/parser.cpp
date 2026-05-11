@@ -2131,33 +2131,41 @@ private:
     }
 
     ExprPtr parse_if_expression(SourceLocation loc) {
-        auto expr = std::make_unique<Expr>();
-        expr->kind = ExprKind::If;
-        expr->loc = loc;
+        ExprPtr condition;
+        std::unique_ptr<Pattern> condition_pattern;
         if (match(TokenKind::KwLet)) {
-            expr->has_condition_pattern = true;
-            expr->condition_pattern = std::make_unique<Pattern>(parse_pattern());
+            condition_pattern = std::make_unique<Pattern>(parse_pattern());
             expect(TokenKind::Equal, "expected = after if-let pattern");
-            expr->condition = parse_expression_without_struct_literals();
+            condition = parse_expression_without_struct_literals();
         } else {
-            expr->condition = parse_expression_without_struct_literals();
+            condition = parse_expression_without_struct_literals();
         }
-        expr->then_value = parse_braced_value_block(
+        std::vector<StmtPtr> then_body;
+        ExprPtr then_value = parse_braced_value_block(
             "expected { after if expression condition",
             "if expression arm",
             "if expression arm must end with a value",
-            expr->then_body);
+            then_body);
         expect(TokenKind::KwElse, "if expression requires else");
+        std::vector<StmtPtr> else_body;
+        ExprPtr else_value;
         if (match(TokenKind::KwIf)) {
-            expr->else_value = parse_if_expression(tokens_[pos_ - 1].loc);
+            else_value = parse_if_expression(tokens_[pos_ - 1].loc);
         } else {
-            expr->else_value = parse_braced_value_block(
+            else_value = parse_braced_value_block(
                 "expected { after else in if expression",
                 "if expression arm",
                 "if expression arm must end with a value",
-                expr->else_body);
+                else_body);
         }
-        return expr;
+        return make_ast_if_expr(
+            loc,
+            std::move(condition),
+            std::move(condition_pattern),
+            std::move(then_body),
+            std::move(then_value),
+            std::move(else_body),
+            std::move(else_value));
     }
 
     ExprPtr parse_block_expression(SourceLocation loc) {

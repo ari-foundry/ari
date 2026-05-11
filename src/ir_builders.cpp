@@ -350,11 +350,13 @@ IrExprPtr make_ir_if_expr(SourceLocation loc,
     expr->kind = IrExprKind::If;
     expr->loc = loc;
     expr->type = std::move(type);
-    expr->condition = std::move(condition);
-    expr->then_body = std::move(then_body);
-    expr->then_value = std::move(then_value);
-    expr->else_body = std::move(else_body);
-    expr->else_value = std::move(else_value);
+    set_ir_expr_if_payload(
+        *expr,
+        std::move(condition),
+        std::move(then_body),
+        std::move(then_value),
+        std::move(else_body),
+        std::move(else_value));
     return expr;
 }
 

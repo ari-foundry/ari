@@ -367,11 +367,11 @@ private:
         collect_expr_locals(expr.payload);
         collect_expr_locals(expr.left);
         collect_expr_locals(expr.right);
-        collect_expr_locals(expr.condition);
-        collect_locals(expr.then_body);
-        collect_expr_locals(expr.then_value);
-        collect_locals(expr.else_body);
-        collect_expr_locals(expr.else_value);
+        collect_expr_locals(ir_expr_if_condition(expr));
+        collect_locals(ir_expr_if_then_body(expr));
+        collect_expr_locals(ir_expr_if_then_value(expr));
+        collect_locals(ir_expr_if_else_body(expr));
+        collect_expr_locals(ir_expr_if_else_value(expr));
         collect_locals(ir_expr_block_body(expr));
         collect_expr_locals(ir_expr_block_value(expr));
         collect_expr_locals(expr.match_value);
@@ -2649,28 +2649,28 @@ private:
             emit_lea_reg_local(Reg::RAX, temp_offset);
             return;
         }
-        emit_expr(*expr.condition);
+        emit_expr(*ir_expr_if_condition(expr));
         emit_cmp_rax_zero();
         std::size_t jump_else = emit_jcc_placeholder(0x84);
-        emit_statements(expr.then_body);
-        emit_expr(*expr.then_value);
+        emit_statements(ir_expr_if_then_body(expr));
+        emit_expr(*ir_expr_if_then_value(expr));
         std::size_t jump_end = emit_jmp_placeholder();
         patch_rel32(jump_else, out_.size());
-        emit_statements(expr.else_body);
-        emit_expr(*expr.else_value);
+        emit_statements(ir_expr_if_else_body(expr));
+        emit_expr(*ir_expr_if_else_value(expr));
         patch_rel32(jump_end, out_.size());
     }
 
     void emit_if_expr_to_offset(const IrExpr& expr, const IrType& target_type, int target_offset) {
-        emit_expr(*expr.condition);
+        emit_expr(*ir_expr_if_condition(expr));
         emit_cmp_rax_zero();
         std::size_t jump_else = emit_jcc_placeholder(0x84);
-        emit_statements(expr.then_body);
-        emit_store_value_to_offset(target_type, *expr.then_value, target_offset);
+        emit_statements(ir_expr_if_then_body(expr));
+        emit_store_value_to_offset(target_type, *ir_expr_if_then_value(expr), target_offset);
         std::size_t jump_end = emit_jmp_placeholder();
         patch_rel32(jump_else, out_.size());
-        emit_statements(expr.else_body);
-        emit_store_value_to_offset(target_type, *expr.else_value, target_offset);
+        emit_statements(ir_expr_if_else_body(expr));
+        emit_store_value_to_offset(target_type, *ir_expr_if_else_value(expr), target_offset);
         patch_rel32(jump_end, out_.size());
     }
 

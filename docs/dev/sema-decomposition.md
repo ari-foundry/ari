@@ -102,7 +102,9 @@ an eager label string. AST/IR block, branch, and loop statement bodies now share
 lazy body-vector payloads, so ordinary non-control statements no longer carry
 empty body vectors. AST/IR block-expression labels, statement bodies, and final
 values now live behind block-expression payloads too, leaving ordinary
-expression nodes without those block-only fields.
+expression nodes without those block-only fields. `if` expression conditions,
+condition patterns, branch bodies, and branch final values are lazy AST/IR
+payloads now as well.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

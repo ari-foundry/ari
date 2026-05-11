@@ -777,11 +777,11 @@ private:
         collect_expr_locals(expr.payload, locals);
         collect_expr_locals(expr.left, locals);
         collect_expr_locals(expr.right, locals);
-        collect_expr_locals(expr.condition, locals);
-        collect_locals(expr.then_body, locals);
-        collect_expr_locals(expr.then_value, locals);
-        collect_locals(expr.else_body, locals);
-        collect_expr_locals(expr.else_value, locals);
+        collect_expr_locals(ir_expr_if_condition(expr), locals);
+        collect_locals(ir_expr_if_then_body(expr), locals);
+        collect_expr_locals(ir_expr_if_then_value(expr), locals);
+        collect_locals(ir_expr_if_else_body(expr), locals);
+        collect_expr_locals(ir_expr_if_else_value(expr), locals);
         collect_locals(ir_expr_block_body(expr), locals);
         collect_expr_locals(ir_expr_block_value(expr), locals);
         collect_locals(expr.try_residual_cleanup, locals);
@@ -2528,21 +2528,21 @@ private:
     }
 
     Value emit_if_expr(const IrExpr& expr) {
-        Value cond = emit_expr(*expr.condition);
+        Value cond = emit_expr(*ir_expr_if_condition(expr));
         std::string then_label = label("if.expr.then");
         std::string else_label = label("if.expr.else");
         std::string end_label = label("if.expr.end");
         line("  br i1 " + cond.name + ", label %" + then_label + ", label %" + else_label);
 
         emit_label(then_label);
-        emit_statements(expr.then_body);
-        Value then_value = cast_value(emit_expr(*expr.then_value), expr.type);
+        emit_statements(ir_expr_if_then_body(expr));
+        Value then_value = cast_value(emit_expr(*ir_expr_if_then_value(expr)), expr.type);
         std::string then_incoming = current_label_;
         line("  br label %" + end_label);
 
         emit_label(else_label);
-        emit_statements(expr.else_body);
-        Value else_value = cast_value(emit_expr(*expr.else_value), expr.type);
+        emit_statements(ir_expr_if_else_body(expr));
+        Value else_value = cast_value(emit_expr(*ir_expr_if_else_value(expr)), expr.type);
         std::string else_incoming = current_label_;
         line("  br label %" + end_label);
 

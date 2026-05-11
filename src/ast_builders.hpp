@@ -30,6 +30,13 @@ ExprPtr make_ast_block_expr(SourceLocation loc,
                             std::string label,
                             std::vector<StmtPtr> body,
                             ExprPtr value);
+ExprPtr make_ast_if_expr(SourceLocation loc,
+                         ExprPtr condition,
+                         std::unique_ptr<Pattern> condition_pattern,
+                         std::vector<StmtPtr> then_body,
+                         ExprPtr then_value,
+                         std::vector<StmtPtr> else_body,
+                         ExprPtr else_value);
 ExprPtr make_ast_match_expr(SourceLocation loc, ExprPtr value, std::vector<ExprMatchArm> arms);
 ExprPtr make_ast_macro_call_expr(SourceLocation loc, std::string name, std::vector<Token> tokens);
 

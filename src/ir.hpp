@@ -204,6 +204,14 @@ struct IrExprBlockPayload {
     IrExprPtr value;
 };
 
+struct IrExprIfPayload {
+    IrExprPtr condition;
+    std::vector<IrStmtPtr> then_body;
+    IrExprPtr then_value;
+    std::vector<IrStmtPtr> else_body;
+    IrExprPtr else_value;
+};
+
 enum class IrExprKind {
     Integer,
     Float,
@@ -285,11 +293,7 @@ struct IrExpr {
     std::unique_ptr<IrExpr> payload;
     std::unique_ptr<IrExpr> left;
     std::unique_ptr<IrExpr> right;
-    IrExprPtr condition;
-    std::vector<IrStmtPtr> then_body;
-    IrExprPtr then_value;
-    std::vector<IrStmtPtr> else_body;
-    IrExprPtr else_value;
+    std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
     std::vector<IrStmtPtr> try_residual_cleanup;
     IrExprPtr match_value;
@@ -468,6 +472,70 @@ struct IrStmt {
     std::unique_ptr<std::string> label;
     std::unique_ptr<IrBreakPayload> break_payload;
 };
+
+inline const IrExprIfPayload& ir_expr_if_payload(const IrExpr& expr) {
+    static const IrExprIfPayload empty;
+    return expr.if_payload ? *expr.if_payload : empty;
+}
+
+inline IrExprIfPayload& ensure_ir_expr_if_payload(IrExpr& expr) {
+    if (!expr.if_payload) expr.if_payload = std::make_unique<IrExprIfPayload>();
+    return *expr.if_payload;
+}
+
+inline const IrExprPtr& ir_expr_if_condition(const IrExpr& expr) {
+    return ir_expr_if_payload(expr).condition;
+}
+
+inline IrExprPtr& ir_expr_if_condition(IrExpr& expr) {
+    return ensure_ir_expr_if_payload(expr).condition;
+}
+
+inline const std::vector<IrStmtPtr>& ir_expr_if_then_body(const IrExpr& expr) {
+    return ir_expr_if_payload(expr).then_body;
+}
+
+inline std::vector<IrStmtPtr>& ir_expr_if_then_body(IrExpr& expr) {
+    return ensure_ir_expr_if_payload(expr).then_body;
+}
+
+inline const IrExprPtr& ir_expr_if_then_value(const IrExpr& expr) {
+    return ir_expr_if_payload(expr).then_value;
+}
+
+inline IrExprPtr& ir_expr_if_then_value(IrExpr& expr) {
+    return ensure_ir_expr_if_payload(expr).then_value;
+}
+
+inline const std::vector<IrStmtPtr>& ir_expr_if_else_body(const IrExpr& expr) {
+    return ir_expr_if_payload(expr).else_body;
+}
+
+inline std::vector<IrStmtPtr>& ir_expr_if_else_body(IrExpr& expr) {
+    return ensure_ir_expr_if_payload(expr).else_body;
+}
+
+inline const IrExprPtr& ir_expr_if_else_value(const IrExpr& expr) {
+    return ir_expr_if_payload(expr).else_value;
+}
+
+inline IrExprPtr& ir_expr_if_else_value(IrExpr& expr) {
+    return ensure_ir_expr_if_payload(expr).else_value;
+}
+
+inline void set_ir_expr_if_payload(IrExpr& expr,
+                                   IrExprPtr condition,
+                                   std::vector<IrStmtPtr> then_body,
+                                   IrExprPtr then_value,
+                                   std::vector<IrStmtPtr> else_body,
+                                   IrExprPtr else_value) {
+    IrExprIfPayload& payload = ensure_ir_expr_if_payload(expr);
+    payload.condition = std::move(condition);
+    payload.then_body = std::move(then_body);
+    payload.then_value = std::move(then_value);
+    payload.else_body = std::move(else_body);
+    payload.else_value = std::move(else_value);
+}
 
 inline const IrExprBlockPayload& ir_expr_block_payload(const IrExpr& expr) {
     static const IrExprBlockPayload empty;

@@ -137,6 +137,15 @@ struct ExprBlockPayload {
     ExprPtr value;
 };
 
+struct ExprIfPayload {
+    ExprPtr condition;
+    std::unique_ptr<Pattern> condition_pattern;
+    std::vector<StmtPtr> then_body;
+    ExprPtr then_value;
+    std::vector<StmtPtr> else_body;
+    ExprPtr else_value;
+};
+
 enum class ExprKind {
     Integer,
     Float,
@@ -185,13 +194,7 @@ struct Expr {
     std::unique_ptr<Expr> operand;
     std::unique_ptr<Expr> left;
     std::unique_ptr<Expr> right;
-    ExprPtr condition;
-    bool has_condition_pattern = false;
-    std::unique_ptr<Pattern> condition_pattern;
-    std::vector<StmtPtr> then_body;
-    ExprPtr then_value;
-    std::vector<StmtPtr> else_body;
-    ExprPtr else_value;
+    std::unique_ptr<ExprIfPayload> if_payload;
     std::unique_ptr<ExprBlockPayload> block_payload;
     ExprPtr match_value;
     std::vector<std::unique_ptr<Expr>> args;
@@ -277,6 +280,80 @@ struct Stmt {
     std::unique_ptr<std::string> label;
     std::unique_ptr<StmtBreakPayload> break_payload;
 };
+
+inline const ExprIfPayload& expr_if_payload(const Expr& expr) {
+    static const ExprIfPayload empty;
+    return expr.if_payload ? *expr.if_payload : empty;
+}
+
+inline ExprIfPayload& ensure_expr_if_payload(Expr& expr) {
+    if (!expr.if_payload) expr.if_payload = std::make_unique<ExprIfPayload>();
+    return *expr.if_payload;
+}
+
+inline const ExprPtr& expr_if_condition(const Expr& expr) {
+    return expr_if_payload(expr).condition;
+}
+
+inline ExprPtr& expr_if_condition(Expr& expr) {
+    return ensure_expr_if_payload(expr).condition;
+}
+
+inline bool expr_if_has_condition_pattern(const Expr& expr) {
+    return static_cast<bool>(expr_if_payload(expr).condition_pattern);
+}
+
+inline const std::unique_ptr<Pattern>& expr_if_condition_pattern(const Expr& expr) {
+    return expr_if_payload(expr).condition_pattern;
+}
+
+inline const std::vector<StmtPtr>& expr_if_then_body(const Expr& expr) {
+    return expr_if_payload(expr).then_body;
+}
+
+inline std::vector<StmtPtr>& expr_if_then_body(Expr& expr) {
+    return ensure_expr_if_payload(expr).then_body;
+}
+
+inline const ExprPtr& expr_if_then_value(const Expr& expr) {
+    return expr_if_payload(expr).then_value;
+}
+
+inline ExprPtr& expr_if_then_value(Expr& expr) {
+    return ensure_expr_if_payload(expr).then_value;
+}
+
+inline const std::vector<StmtPtr>& expr_if_else_body(const Expr& expr) {
+    return expr_if_payload(expr).else_body;
+}
+
+inline std::vector<StmtPtr>& expr_if_else_body(Expr& expr) {
+    return ensure_expr_if_payload(expr).else_body;
+}
+
+inline const ExprPtr& expr_if_else_value(const Expr& expr) {
+    return expr_if_payload(expr).else_value;
+}
+
+inline ExprPtr& expr_if_else_value(Expr& expr) {
+    return ensure_expr_if_payload(expr).else_value;
+}
+
+inline void set_expr_if_payload(Expr& expr,
+                                ExprPtr condition,
+                                std::unique_ptr<Pattern> condition_pattern,
+                                std::vector<StmtPtr> then_body,
+                                ExprPtr then_value,
+                                std::vector<StmtPtr> else_body,
+                                ExprPtr else_value) {
+    ExprIfPayload& payload = ensure_expr_if_payload(expr);
+    payload.condition = std::move(condition);
+    payload.condition_pattern = std::move(condition_pattern);
+    payload.then_body = std::move(then_body);
+    payload.then_value = std::move(then_value);
+    payload.else_body = std::move(else_body);
+    payload.else_value = std::move(else_value);
+}
 
 inline const ExprBlockPayload& expr_block_payload(const Expr& expr) {
     static const ExprBlockPayload empty;

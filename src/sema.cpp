@@ -3946,8 +3946,9 @@ private:
             return child && contains_zone_temp_call(*child);
         };
         if (has_temp(expr.operand) || has_temp(expr.payload) || has_temp(expr.left) ||
-            has_temp(expr.right) || has_temp(expr.condition) || has_temp(expr.then_value) ||
-            has_temp(expr.else_value) || has_temp(ir_expr_block_value(expr)) || has_temp(expr.match_value)) {
+            has_temp(expr.right) || has_temp(ir_expr_if_condition(expr)) ||
+            has_temp(ir_expr_if_then_value(expr)) || has_temp(ir_expr_if_else_value(expr)) ||
+            has_temp(ir_expr_block_value(expr)) || has_temp(expr.match_value)) {
             return true;
         }
         for (const auto& arg : expr.args) {
@@ -4269,8 +4270,8 @@ private:
         }
         if (source.kind == IrExprKind::If) {
             bool found_any = false;
-            merge_source(source.then_value, found_any);
-            merge_source(source.else_value, found_any);
+            merge_source(ir_expr_if_then_value(source), found_any);
+            merge_source(ir_expr_if_else_value(source), found_any);
             return found_any;
         }
         if (source.kind == IrExprKind::Block) {
@@ -11600,14 +11601,19 @@ private:
     }
 
     IrExprPtr check_if_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
-        if (expr.has_condition_pattern) return check_if_let_expr(expr, std::move(lowered), expected);
+        if (expr_if_has_condition_pattern(expr)) return check_if_let_expr(expr, std::move(lowered), expected);
         (void)lowered;
 
-        IrExprPtr condition = check_expr(*expr.condition);
+        IrExprPtr condition = check_expr(*expr_if_condition(expr));
         coerce_condition_to_bool(expr.loc, condition);
 
         StateSnapshot branch_input = snapshot_states();
-        CheckedExprBlock then_arm = check_value_block(expr.loc, "if expression arm", expr.then_body, *expr.then_value, expected);
+        CheckedExprBlock then_arm = check_value_block(
+            expr.loc,
+            "if expression arm",
+            expr_if_then_body(expr),
+            *expr_if_then_value(expr),
+            expected);
         IrType result_type = expected ? *expected : then_arm.value->type;
         bool unsized_vector_expected = is_unsized_vector_storage_type(expected);
         if (unsized_vector_expected) {
@@ -11619,7 +11625,12 @@ private:
 
         restore_states(branch_input);
         const IrType* else_expected = unsized_vector_expected ? expected : &result_type;
-        CheckedExprBlock else_arm = check_value_block(expr.loc, "if expression arm", expr.else_body, *expr.else_value, else_expected);
+        CheckedExprBlock else_arm = check_value_block(
+            expr.loc,
+            "if expression arm",
+            expr_if_else_body(expr),
+            *expr_if_else_value(expr),
+            else_expected);
         if (unsized_vector_expected) {
             widen_vector_result_storage(result_type, *else_arm.value);
         }
@@ -11644,13 +11655,13 @@ private:
     }
 
     IrExprPtr check_if_let_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
-        IrExprPtr match_value = check_expr(*expr.condition);
+        IrExprPtr match_value = check_expr(*expr_if_condition(expr));
         if (is_aggregate_type(match_value->type)) {
             return check_aggregate_if_let_expr(expr, std::move(lowered), std::move(match_value), expected);
         }
 
         lowered = make_ir_block_expr(expr.loc);
-        const Pattern& condition_pattern = *expr.condition_pattern;
+        const Pattern& condition_pattern = *expr_if_condition_pattern(expr);
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(expr.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
@@ -11680,7 +11691,9 @@ private:
             true
         ));
 
-        std::vector<const Expr*> result_values{expr.then_value.get(), expr.else_value.get()};
+        std::vector<const Expr*> result_values{
+            expr_if_then_value(expr).get(),
+            expr_if_else_value(expr).get()};
         IrType explicit_result_expected;
         const IrType* result_expected = expected;
         if (expected) {
@@ -11691,12 +11704,12 @@ private:
         StateSnapshot branch_input = snapshot_states();
         push_scope();
         declare_match_arm_bindings(then_arms.front());
-        CheckedStatements then_statements = check_statements(expr.then_body, false);
+        CheckedStatements then_statements = check_statements(expr_if_then_body(expr), false);
         if (then_statements.flow == Flow::Returns) {
             discard_scope();
             fail(expr.loc, "if-let expression arm must reach its final value");
         }
-        IrExprPtr then_value = check_expr_maybe_expected(*expr.then_value, result_expected);
+        IrExprPtr then_value = check_expr_maybe_expected(*expr_if_then_value(expr), result_expected);
         if (contains_borrow_type(then_value->type)) {
             pop_scope();
             fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
@@ -11725,8 +11738,8 @@ private:
         CheckedExprBlock else_checked = check_value_block(
             expr.loc,
             "if-let expression arm",
-            expr.else_body,
-            *expr.else_value,
+            expr_if_else_body(expr),
+            *expr_if_else_value(expr),
             &result_type);
         coerce_expr_to_expected(*else_checked.value, result_type);
         require_assignable(expr.loc, result_type, else_checked.value->type);
@@ -11772,7 +11785,7 @@ private:
         const IrType* expected = nullptr
     ) {
         IrType subject_type = subject->type;
-        const Pattern& condition_pattern = *expr.condition_pattern;
+        const Pattern& condition_pattern = *expr_if_condition_pattern(expr);
         lowered = make_ir_block_expr(expr.loc);
 
         std::string subject_name = make_hidden_local(
@@ -11788,7 +11801,9 @@ private:
         bool has_irrefutable_alternative = false;
         IrType result_type;
         std::vector<TupleCheckedExprArm> checked_arms;
-        std::vector<const Expr*> result_values{expr.then_value.get(), expr.else_value.get()};
+        std::vector<const Expr*> result_values{
+            expr_if_then_value(expr).get(),
+            expr_if_else_value(expr).get()};
         IrType explicit_result_expected;
         const IrType* result_expected = expected;
         if (expected) {
@@ -11827,7 +11842,7 @@ private:
             reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
             lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
             reusable_pattern_binding_names_.clear();
-            CheckedStatements then_checked = check_statements(expr.then_body, false);
+            CheckedStatements then_checked = check_statements(expr_if_then_body(expr), false);
             if (then_checked.flow == Flow::Returns) {
                 discard_scope();
                 fail(expr.loc, "if-let expression arm must reach its final value");
@@ -11837,7 +11852,7 @@ private:
             }
 
             const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
-            IrExprPtr then_value = check_expr_maybe_expected(*expr.then_value, arm_expected);
+            IrExprPtr then_value = check_expr_maybe_expected(*expr_if_then_value(expr), arm_expected);
             if (is_borrow_type(then_value->type)) {
                 pop_scope();
                 fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
@@ -11894,8 +11909,8 @@ private:
         CheckedExprBlock else_checked = check_value_block(
             expr.loc,
             "if-let expression arm",
-            expr.else_body,
-            *expr.else_value,
+            expr_if_else_body(expr),
+            *expr_if_else_value(expr),
             &result_type);
         coerce_expr_to_expected(*else_checked.value, result_type);
         require_assignable(expr.loc, result_type, else_checked.value->type);
@@ -14580,9 +14595,9 @@ private:
             return is_collection_len_method_receiver(*expr_block_value(expr));
         }
         if (expr.kind == ExprKind::If) {
-            return expr.then_value && expr.else_value &&
-                   is_collection_len_method_receiver(*expr.then_value) &&
-                   is_collection_len_method_receiver(*expr.else_value);
+            return expr_if_then_value(expr) && expr_if_else_value(expr) &&
+                   is_collection_len_method_receiver(*expr_if_then_value(expr)) &&
+                   is_collection_len_method_receiver(*expr_if_else_value(expr));
         }
         if (expr.kind == ExprKind::Match) {
             if (expr.match_arms.empty()) return false;
@@ -16068,10 +16083,10 @@ private:
             return;
         }
         if (expr.kind == IrExprKind::If) {
-            coerce_expr_to_expected(*expr.then_value, expected);
-            require_assignable(expr.loc, expected, expr.then_value->type);
-            coerce_expr_to_expected(*expr.else_value, expected);
-            require_assignable(expr.loc, expected, expr.else_value->type);
+            coerce_expr_to_expected(*ir_expr_if_then_value(expr), expected);
+            require_assignable(expr.loc, expected, ir_expr_if_then_value(expr)->type);
+            coerce_expr_to_expected(*ir_expr_if_else_value(expr), expected);
+            require_assignable(expr.loc, expected, ir_expr_if_else_value(expr)->type);
             expr.type = expected;
             return;
         }

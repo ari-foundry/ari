@@ -1,0 +1,45 @@
+enum MaybeI64 {
+  No,
+  Yes(i64),
+}
+
+fn pick(flag: bool) -> MaybeI64 {
+  if flag {
+    return Yes(5);
+  }
+  return No();
+}
+
+fn main() -> i64 {
+  var seed = 1;
+
+  let plain = if seed == 1 {
+    seed += 2;
+    seed + 4
+  } else {
+    0
+  };
+
+  let chain = if false {
+    99
+  } else if plain == 7 {
+    let nested = if true { 2 } else { 3 };
+    nested + plain
+  } else {
+    0
+  };
+
+  let payload = if let Yes(value) = pick(true) {
+    value + chain
+  } else {
+    1
+  };
+
+  let fallback = if let Yes(other) = pick(false) {
+    other
+  } else {
+    if plain > 0 { 4 } else { 0 }
+  };
+
+  return plain + chain + payload + fallback + seed;
+}

@@ -266,8 +266,8 @@ VectorKnownLength vector_known_length_from_expr(const IrType& storage_type, cons
     if (expr.kind == IrExprKind::If) {
         VectorKnownLength merged;
         bool has_merged = false;
-        if (!merge_vector_known_length(merged, has_merged, storage_type, expr.then_value)) return {};
-        if (!merge_vector_known_length(merged, has_merged, storage_type, expr.else_value)) return {};
+        if (!merge_vector_known_length(merged, has_merged, storage_type, ir_expr_if_then_value(expr))) return {};
+        if (!merge_vector_known_length(merged, has_merged, storage_type, ir_expr_if_else_value(expr))) return {};
         return has_merged ? merged : VectorKnownLength{};
     }
     if (expr.kind == IrExprKind::Match) {
@@ -389,8 +389,8 @@ VectorKnownLength vector_known_length_from_source_tree(const Expr& source,
     if (source.kind == ExprKind::If) {
         VectorKnownLength merged;
         bool has_merged = false;
-        if (!merge_source_vector_known_length(merged, has_merged, source.then_value, lookup)) return {};
-        if (!merge_source_vector_known_length(merged, has_merged, source.else_value, lookup)) return {};
+        if (!merge_source_vector_known_length(merged, has_merged, expr_if_then_value(source), lookup)) return {};
+        if (!merge_source_vector_known_length(merged, has_merged, expr_if_else_value(source), lookup)) return {};
         return has_merged ? merged : VectorKnownLength{};
     }
     if (source.kind == ExprKind::Match) {
@@ -494,15 +494,15 @@ std::uint64_t vector_storage_capacity_from_source_tree(const Expr& source,
     }
     if (source.kind == ExprKind::If) {
         std::uint64_t capacity = 0;
-        if (source.then_value) {
+        if (expr_if_then_value(source)) {
             capacity = std::max(
                 capacity,
-                vector_storage_capacity_from_source_tree(*source.then_value, lookup));
+                vector_storage_capacity_from_source_tree(*expr_if_then_value(source), lookup));
         }
-        if (source.else_value) {
+        if (expr_if_else_value(source)) {
             capacity = std::max(
                 capacity,
-                vector_storage_capacity_from_source_tree(*source.else_value, lookup));
+                vector_storage_capacity_from_source_tree(*expr_if_else_value(source), lookup));
         }
         return capacity;
     }
@@ -588,8 +588,8 @@ std::uint64_t vector_storage_capacity_from_expr(const IrExpr& expr) {
                 capacity, ir_expr_block_body(expr), ir_expr_block_label(expr));
         }
     } else if (expr.kind == IrExprKind::If) {
-        merge_capacity(expr.then_value);
-        merge_capacity(expr.else_value);
+        merge_capacity(ir_expr_if_then_value(expr));
+        merge_capacity(ir_expr_if_else_value(expr));
     } else if (expr.kind == IrExprKind::Match) {
         for (const auto& arm : expr.match_arms) merge_capacity(arm.value);
     }

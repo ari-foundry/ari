@@ -216,6 +216,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/control-flow-boolish.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --freestanding tests/ok/if-expression.ari -o $(BUILD_DIR)/control-flow/if-expression.raw
 	$(BUILD_DIR)/control-flow/if-expression.raw; code=$$?; test $$code -eq 13
+	$(TARGET) --freestanding tests/ok/if-expression-payloads.ari -o $(BUILD_DIR)/control-flow/if-expression-payloads.raw
+	$(BUILD_DIR)/control-flow/if-expression-payloads.raw; code=$$?; test $$code -eq 37
 	$(TARGET) --freestanding tests/ok/if-let-expression.ari -o $(BUILD_DIR)/control-flow/if-let-expression.raw
 	$(BUILD_DIR)/control-flow/if-let-expression.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/if-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-or-pattern.raw
@@ -321,6 +323,9 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/if-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/if-expression.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-expression.ll
 	grep -q "if.expr.end" $(BUILD_DIR)/control-flow/if-expression.ll
+	$(TARGET) tests/ok/if-expression-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/if-expression-payloads.ll
+	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-expression-payloads.ll
+	grep -q "match.arm" $(BUILD_DIR)/control-flow/if-expression-payloads.ll
 	$(TARGET) tests/ok/if-let-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/if-let-expression.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/if-let-expression.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-let-expression.ll

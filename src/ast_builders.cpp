@@ -100,6 +100,27 @@ ExprPtr make_ast_block_expr(SourceLocation loc,
     return expr;
 }
 
+ExprPtr make_ast_if_expr(SourceLocation loc,
+                         ExprPtr condition,
+                         std::unique_ptr<Pattern> condition_pattern,
+                         std::vector<StmtPtr> then_body,
+                         ExprPtr then_value,
+                         std::vector<StmtPtr> else_body,
+                         ExprPtr else_value) {
+    auto expr = std::make_unique<Expr>();
+    expr->kind = ExprKind::If;
+    expr->loc = loc;
+    set_expr_if_payload(
+        *expr,
+        std::move(condition),
+        std::move(condition_pattern),
+        std::move(then_body),
+        std::move(then_value),
+        std::move(else_body),
+        std::move(else_value));
+    return expr;
+}
+
 ExprPtr make_ast_match_expr(SourceLocation loc, ExprPtr value, std::vector<ExprMatchArm> arms) {
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::Match;
