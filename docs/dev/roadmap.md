@@ -95,55 +95,6 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Track ownership and borrow state through loops.
-   Named borrow bindings now release their source after the last visible use in
-   the current straight-line statement scope, and dependent reborrow chains stay
-   live until the last dependent binding is also dead. Labeled block
-   `break label value` paths can now move owning values out as the block result
-   while preserving the existing cross-path ownership-state compatibility
-   check. `init while` and `let while` loop bindings may now carry owning
-   values through `next` and value `continue` updates when the previous owner is
-   moved or dropped before the positional update writes the replacement. Plain
-   loop `break` exits now record the ownership state at the jump and require it
-   to merge with the zero-iteration exit state, so owners cannot be dropped on a
-   break path and then treated as live after the loop. Plain `break` and
-   `continue` exits also reject live owning bindings in the loop-local scopes
-   they leave, so non-init loop bindings must be consumed before a jump to the
-   next iteration or out of the loop. Plain `continue` paths now also record
-   their loop-boundary ownership state and require it to match the loop entry
-   state, because the next condition check may exit the loop. The next
-   borrow-checking pressure point is loop precision: plain loop fallthrough
-   paths still reject ownership-state changes and many borrow-state updates
-   instead of proving that every iteration and loop exit merges to a compatible
-   state. Literal `while true` loops use reachable `break` states rather than a
-   zero-iteration exit state when restoring ownership after the loop, and
-   `while true` bodies that return on every path now make the loop statement
-   return as well. Literal `while true` bodies with no reachable `break` also
-   no longer count as falling through when they continue into the next
-   iteration. Statement `if true`/`if false` now feeds the selected literal
-   branch into ownership flow analysis, so loop bodies with literal
-   `if true { break; }` paths do not merge unreachable post-break owner-state
-   changes into the loop fallthrough state. Literal `while false` bodies are
-   also checked without merging unreachable body ownership or borrow-source
-   changes into the zero-iteration loop exit state. Unselected literal `if`
-   branches also stop contributing unreachable `break`/`continue` snapshots to
-   enclosing loops.
-   Literal-false `init while` / `let while` loops now keep their zero-iteration
-   init binding state after checking the unreachable body and `next`
-   expressions. Literal-true `init while` / `let while` loops now report
-   all-return and non-fallthrough statement flow like plain `while true`.
-   Literal `while true` `continue` paths now merge against the next-iteration
-   ownership state instead of the post-loop `break` exit state, including
-   value `continue` paths in literal-true `init while` / `let while` loops.
-   Loop and branch state snapshots now also carry exact borrow counts and
-   aggregate borrow sources, so plain loop fallthrough paths reject borrow-state
-   changes that are not fixed points.
-   - [loop-owner-fixed-point] track ownership-state fixed points through plain
-     loop fallthrough paths beyond the literal-true next-iteration/exit splits,
-     instead of rejecting all state changes inside loops
-   - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop
-     fallthrough/next-iteration paths beyond exact snapshot equality
-
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -164,6 +115,16 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [cache-skip] once IR summaries exist, avoid reparsing those dependencies
      when metadata and source hashes match the current source graph and
      cfg/search-path inputs
+2. Improve loop fixed-point precision beyond exact snapshots.
+   The near-term loop checker now tracks ownership and borrow state at
+   `break`, `continue`, zero-iteration, literal-true next-iteration, and
+   fallthrough merge points. It rejects incompatible ownership states, live
+   loop-local owners across jumps, and borrow-state changes that are not exact
+   fixed points. Further work is precision, not basic loop-state tracking.
+   - [owner-widen] prove non-trivial ownership fixed points where later
+     iterations intentionally start from a changed but compatible state
+   - [borrow-widen] merge compatible borrow-state transitions beyond exact
+     snapshot equality without weakening source-borrow diagnostics
 
 ## Medium-Term Language Work
 
