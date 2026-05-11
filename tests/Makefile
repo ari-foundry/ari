@@ -1601,6 +1601,9 @@ check-variables: $(TARGET)
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-moved-field.ll) -eq 2
 	$(TARGET) tests/ok/drop-statement-payloads.ari --emit-llvm $(BUILD_DIR)/variables/drop-statement-payloads.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-statement-payloads.ll) -eq 3
+	$(TARGET) tests/ok/local-state-mutation-api.ari --emit-llvm $(BUILD_DIR)/variables/local-state-mutation-api.ll
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/local-state-mutation-api.ll) -eq 3
+	grep -q "store i64 1, ptr %current_len" $(BUILD_DIR)/variables/local-state-mutation-api.ll
 	$(TARGET) tests/ok/ownership-aggregate-field-access.ari --emit-llvm $(BUILD_DIR)/variables/ownership-aggregate-field-access.ll
 	grep -q "store i64" $(BUILD_DIR)/variables/ownership-aggregate-field-access.ll
 	$(TARGET) tests/ok/ownership-aggregate-field-move.ari --emit-llvm $(BUILD_DIR)/variables/ownership-aggregate-field-move.ll

@@ -3547,7 +3547,7 @@ private:
 
     static bool borrow_paths_overlap(const std::string& left, const std::string& right) {
         if (left.empty() || right.empty()) return true;
-        return owned_field_path_matches(left, right) || owned_field_path_matches(right, left);
+        return local_owned_field_path_matches(left, right) || local_owned_field_path_matches(right, left);
     }
 
     static bool has_active_field_borrows(const LocalInfo& local) {
@@ -3652,12 +3652,8 @@ private:
             fail(loc, "local name '" + name + "' shadows or redeclares an existing local");
         }
         if (!name_was_used) local_scopes_.mark_name_used(name);
-        LocalInfo local;
-        local.type = type;
-        local.mutable_binding = mutable_binding;
-        local.state = LocalState::Alive;
+        LocalInfo local = make_local_info(loc, type, mutable_binding);
         initialize_owned_field_states(local);
-        local.loc = loc;
         local_scopes_.declare_current(name, std::move(local));
     }
 
@@ -3774,8 +3770,7 @@ private:
             [&](const std::string& name, LocalInfo& local) {
                 if (!is_auto_destroy_zone(local) || local.state != LocalState::Alive) return;
                 statements.push_back(make_zone_destroy_stmt(loc, name, local.type));
-                local.state = LocalState::Moved;
-                ++local.zone_generation;
+                mark_local_zone_destroyed(local);
             }
         );
     }
@@ -4128,14 +4123,7 @@ private:
         if (!zone_source_name_from_arg(zone_arg, source_name)) return;
         LocalInfo* zone = find_local_slot(source_name);
         if (!zone || !is_zone_source_type(zone->type)) return;
-        ++zone->zone_generation;
-    }
-
-    static bool has_moved_or_dropped_owned_fields(const LocalInfo& local) {
-        for (const auto& item : local.owned_field_states) {
-            if (item.second != LocalState::Alive) return true;
-        }
-        return false;
+        bump_local_zone_generation(*zone);
     }
 
     void require_no_live_owners_before_return(SourceLocation loc) const {
@@ -4443,22 +4431,11 @@ private:
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
 
-    static VectorKnownLength vector_known_length_state(const LocalInfo& local) {
-        if (!is_vector_storage_type(local.type)) return {};
-        return VectorKnownLength{local.vector_length_known, local.vector_known_length};
-    }
-
-    static void set_vector_known_length(LocalInfo& local, VectorKnownLength state) {
-        if (!is_vector_storage_type(local.type)) return;
-        local.vector_length_known = state.known;
-        local.vector_known_length = state.known ? state.length : 0;
-    }
-
     VectorKnownLength vector_known_length_from_source_expr(const Expr& source) {
         return vector_known_length_from_source_tree(source, [this](const std::string& name) -> VectorKnownLength {
             const LocalInfo* source_local = find_local_slot(name);
             if (!source_local || !is_vector_storage_type(source_local->type)) return {};
-            return vector_known_length_state(*source_local);
+            return local_vector_known_length(*source_local);
         });
     }
 
@@ -4472,17 +4449,13 @@ private:
     }
 
     void set_known_integer_value_from_expr(LocalInfo& local, const Expr& source, const IrExpr& expr) {
-        local.integer_value_known = false;
-        local.integer_known_value = 0;
-        local.integer_known_negative = false;
+        clear_local_integer_known_value(local);
         if (local.mutable_binding || !is_value_integer_type(local.type)) {
             return;
         }
         StaticIntegerValue value;
         if (!try_fold_static_integer_value(expr, value) && !known_integer_capacity(source, value)) return;
-        local.integer_value_known = true;
-        local.integer_known_value = value.value;
-        local.integer_known_negative = value.negative;
+        set_local_integer_known_value(local, value.value, value.negative);
     }
 
     void require_nullable_pointer_initializer(SourceLocation loc,
@@ -4561,7 +4534,7 @@ private:
         local.ir_init_expr = lowered.binding.init.get();
         local.generic_origin = std::move(generic_origin);
         local.auto_destroy_zone = is_zone_temp_call(*local.ir_init_expr);
-        set_vector_known_length(local, init_vector_length);
+        set_local_vector_known_length(local, init_vector_length);
         set_known_integer_value_from_expr(local, *stmt.binding.init, *local.ir_init_expr);
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
@@ -4631,9 +4604,9 @@ private:
 
     void widen_vector_storage_for_push(LocalInfo& local) const {
         if (!is_vector_storage_type(local.type)) return;
-        VectorKnownLength current = vector_known_length_state(local);
+        VectorKnownLength current = local_vector_known_length(local);
         widen_vector_storage(local, vector_required_capacity_for_append(local.type, current));
-        set_vector_known_length(local, vector_known_length_after_append(current));
+        set_local_vector_known_length(local, vector_known_length_after_append(current));
     }
 
     void widen_vector_storage_for_assignment(LocalInfo& local, const IrExpr& value) const {
@@ -5177,43 +5150,12 @@ private:
         statements.push_back(make_ir_var_decl(pattern.loc, pattern.payload_name, value_type, std::move(value), mutable_binding));
     }
 
-    static std::string child_field_path(const std::string& base, std::size_t index) {
-        return base.empty() ? std::to_string(index) : base + "." + std::to_string(index);
-    }
-
-    static bool owned_field_path_matches(const std::string& candidate, const std::string& selected) {
-        return candidate == selected ||
-               (candidate.size() > selected.size() &&
-                candidate.compare(0, selected.size(), selected) == 0 &&
-                candidate[selected.size()] == '.');
-    }
-
-    static bool selected_owned_field_is_live(const LocalInfo& local, const std::string& path) {
-        for (const auto& item : local.owned_field_states) {
-            if (owned_field_path_matches(item.first, path) && item.second == LocalState::Alive) return true;
-        }
-        return false;
-    }
-
-    static bool selected_owned_field_has_state(const LocalInfo& local, const std::string& path) {
-        for (const auto& item : local.owned_field_states) {
-            if (owned_field_path_matches(item.first, path)) return true;
-        }
-        return false;
-    }
-
-    static void mark_selected_owned_field_state(LocalInfo& local, const std::string& path, LocalState state) {
-        for (auto& item : local.owned_field_states) {
-            if (owned_field_path_matches(item.first, path)) item.second = state;
-        }
-    }
-
     void require_owned_field_alive(SourceLocation loc, const std::string& base_name, LocalInfo& local, const std::string& path) {
-        if (!selected_owned_field_has_state(local, path)) {
+        if (!local_owned_field_has_state(local, path)) {
             throw CompileError("internal error: missing owned field state for '" + base_name + "." + path + "'");
         }
         for (const auto& item : local.owned_field_states) {
-            if (!owned_field_path_matches(item.first, path)) continue;
+            if (!local_owned_field_path_matches(item.first, path)) continue;
             if (item.second != LocalState::Alive) {
                 fail(loc, "cannot use " + local_state_name(item.second) + " owned field '" + base_name + "." + path + "'");
             }
@@ -5224,15 +5166,15 @@ private:
         LocalInfo& local = require_live_local(loc, base_name);
         require_not_borrowed(loc, base_name, local, "move field from");
         require_owned_field_alive(loc, base_name, local, path);
-        mark_selected_owned_field_state(local, path, LocalState::Moved);
+        mark_local_owned_field_state(local, path, LocalState::Moved);
     }
 
     void require_can_assign_owned_field(SourceLocation loc, const std::string& base_name, const std::string& path) {
         LocalInfo& local = require_live_local(loc, base_name);
-        if (!selected_owned_field_has_state(local, path)) {
+        if (!local_owned_field_has_state(local, path)) {
             throw CompileError("internal error: missing owned field assignment state for '" + base_name + "." + path + "'");
         }
-        if (selected_owned_field_is_live(local, path)) {
+        if (local_owned_field_is_live(local, path)) {
             fail(loc, "cannot overwrite owning field '" + base_name + "." + path + "' before it is moved or dropped");
         }
     }
@@ -5245,13 +5187,13 @@ private:
         }
         if (expr.kind == IrExprKind::TupleIndex && ir_expr_operand(expr)) {
             if (!tracked_ir_access_path(*ir_expr_operand(expr), base_name, path)) return false;
-            path = child_field_path(path, static_cast<std::size_t>(expr.tuple_index));
+            path = local_owned_field_path(path, static_cast<std::size_t>(expr.tuple_index));
             return true;
         }
         if (expr.kind == IrExprKind::Index && ir_expr_operand(expr) && ir_expr_right(expr) &&
             ir_expr_right(expr)->kind == IrExprKind::Integer && !ir_expr_right(expr)->int_negative) {
             if (!tracked_ir_access_path(*ir_expr_operand(expr), base_name, path)) return false;
-            path = child_field_path(path, static_cast<std::size_t>(ir_expr_right(expr)->int_value));
+            path = local_owned_field_path(path, static_cast<std::size_t>(ir_expr_right(expr)->int_value));
             return true;
         }
         return false;
@@ -5263,7 +5205,7 @@ private:
         std::string path;
         if (!tracked_ir_access_path(target, base_name, path) || path.empty()) return;
         LocalInfo& local = local_slot_by_name(base_name);
-        mark_selected_owned_field_state(local, path, LocalState::Alive);
+        mark_local_owned_field_state(local, path, LocalState::Alive);
     }
 
     void check_assign(const Stmt& stmt, IrStmt& lowered) {
@@ -5304,9 +5246,9 @@ private:
         VectorKnownLength assigned_vector_length =
             vector_known_length_from_source_expr(target.type, *rhs, *value);
         release_temporary_borrows(borrow_mark);
-        target.state = LocalState::Alive;
+        mark_local_alive(target);
         initialize_owned_field_states(target);
-        set_vector_known_length(target, assigned_vector_length);
+        set_local_vector_known_length(target, assigned_vector_length);
         set_zone_pointer_source_from_expr(target, *value);
         set_ir_stmt_assign_name(lowered, assign_name);
         set_ir_stmt_assign_rhs(lowered, std::move(value));
@@ -5418,7 +5360,7 @@ private:
             out.base_name = std::move(base.base_name);
             out.base_type = std::move(base.base_type);
             out.type = field_type;
-            out.path = child_field_path(base.path, index);
+            out.path = local_owned_field_path(base.path, index);
             out.expr = make_tuple_index_expr(expr.loc, std::move(base.expr), index);
             out.has_final_field_mutability = true;
             out.final_field_mutable = base.type.field_mutable[index];
@@ -5446,7 +5388,7 @@ private:
             out.base_name = std::move(base.base_name);
             out.base_type = std::move(base.base_type);
             out.type = field_type;
-            out.path = child_field_path(base.path, field_index);
+            out.path = local_owned_field_path(base.path, field_index);
             out.expr = make_tuple_index_expr(expr.loc, std::move(base.expr), field_index);
             out.has_final_field_mutability = base.type.primitive == IrPrimitiveKind::Struct;
             out.final_field_mutable = !out.has_final_field_mutability ||
@@ -5503,7 +5445,7 @@ private:
             out.base_name = std::move(base.base_name);
             out.base_type = std::move(base.base_type);
             out.type = element_type;
-            out.path = child_field_path(base.path, static_cast<std::size_t>(index_value));
+            out.path = local_owned_field_path(base.path, static_cast<std::size_t>(index_value));
             out.expr = std::move(lowered);
             out.has_final_field_mutability = false;
             out.final_field_mutable = true;
@@ -5668,7 +5610,7 @@ private:
                                      std::vector<IrStmtPtr>& statements,
                                      const LocalInfo* tracked_local = nullptr,
                                      const std::string& path = "") {
-        if (tracked_local && !path.empty() && !selected_owned_field_is_live(*tracked_local, path)) {
+        if (tracked_local && !path.empty() && !local_owned_field_is_live(*tracked_local, path)) {
             return;
         }
 
@@ -5676,7 +5618,7 @@ private:
         dropped_type.qualifier = TypeQualifier::Value;
         auto destructor = drop_impls_.find(drop_impl_key(dropped_type));
         bool can_call_destructor = destructor != drop_impls_.end();
-        if (can_call_destructor && tracked_local && path.empty() && has_moved_or_dropped_owned_fields(*tracked_local)) {
+        if (can_call_destructor && tracked_local && path.empty() && local_has_moved_or_dropped_owned_fields(*tracked_local)) {
             can_call_destructor = false;
         }
         if (can_call_destructor) {
@@ -5690,7 +5632,7 @@ private:
             for (std::size_t i = 0; i < fields.size(); ++i) {
                 const IrType& field_type = fields[i];
                 if (!is_owner_type(field_type)) continue;
-                std::string field_path = child_field_path(path, i);
+                std::string field_path = local_owned_field_path(path, i);
                 DropValueFactory make_field = [this, loc, make_value, i, field_type]() {
                     return make_field_value_expr(loc, make_value, i, field_type);
                 };
@@ -5702,7 +5644,7 @@ private:
         if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size != 0 && is_owner_type(type.args[0])) {
             const IrType element_type = type.args[0];
             for (std::uint64_t i = 0; i < type.array_size; ++i) {
-                std::string element_path = child_field_path(path, static_cast<std::size_t>(i));
+                std::string element_path = local_owned_field_path(path, static_cast<std::size_t>(i));
                 DropValueFactory make_element = [this, loc, make_value, i, element_type]() {
                     return make_vector_element_expr(loc, make_value, i, element_type);
                 };
@@ -5727,8 +5669,8 @@ private:
             lowered.kind = IrStmtKind::Block;
             set_ir_stmt_statements(lowered, std::move(drop_statements));
         }
-        for (auto& item : local.owned_field_states) item.second = LocalState::Dropped;
-        local.state = LocalState::Dropped;
+        mark_all_local_owned_fields(local, LocalState::Dropped);
+        mark_local_dropped(local);
         set_ir_stmt_drop_name(lowered, drop_name);
     }
 
@@ -9551,8 +9493,8 @@ private:
             return make_local_lvalue_expr(loc, iterator_name, type);
         };
         append_drop_stmts_for_value(loc, local->type, make_value, statements, local);
-        for (auto& item : local->owned_field_states) item.second = LocalState::Dropped;
-        local->state = LocalState::Dropped;
+        mark_all_local_owned_fields(*local, LocalState::Dropped);
+        mark_local_dropped(*local);
     }
 
     void append_loop_exit_owner_cleanup(SourceLocation loc,
@@ -10393,10 +10335,10 @@ private:
                                  "' cannot be moved; it is destroyed automatically at function exit");
                     }
                     require_not_borrowed(expr.loc, expr.name, local, "move");
-                    if (has_moved_or_dropped_owned_fields(local)) {
+                    if (local_has_moved_or_dropped_owned_fields(local)) {
                         fail(expr.loc, "cannot move partially moved owning binding '" + expr.name + "'");
                     }
-                    local.state = LocalState::Moved;
+                    mark_local_moved(local);
                 }
                 return lowered;
             }
@@ -12356,7 +12298,7 @@ private:
         }
         if (is_owner_type(access.type)) {
             if (access.path.empty()) {
-                if (has_moved_or_dropped_owned_fields(source)) {
+                if (local_has_moved_or_dropped_owned_fields(source)) {
                     fail(expr.loc, "cannot borrow partially moved owning binding '" + access.base_name + "'");
                 }
             } else {
@@ -13604,7 +13546,7 @@ private:
             length = make_local_vec_len_expr(
                 expr.loc,
                 make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
-                vector_known_length_state(local)
+                local_vector_known_length(local)
             );
         }
         return make_slice_view_expr(
@@ -13625,14 +13567,14 @@ private:
         if (expr.kind != ExprKind::Name) return {};
         const LocalInfo* local = find_local_slot(expr.name);
         if (!local || !is_vector_storage_type(local->type)) return {};
-        return vector_known_length_state(*local);
+        return local_vector_known_length(*local);
     }
 
     VectorKnownLength known_local_vec_length_for_access(const TrackedAggregateAccess& access) {
         if (!access.path.empty()) return {};
         const LocalInfo* local = find_local_slot(access.base_name);
         if (!local || !is_vector_storage_type(local->type)) return {};
-        return vector_known_length_state(*local);
+        return local_vector_known_length(*local);
     }
 
     IrExprPtr check_collection_len_expr(SourceLocation loc, const Expr& source) {
@@ -13699,7 +13641,7 @@ private:
         const std::string& name = expr_operand(expr)->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "first");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::First, expr_type_args(expr).size(), expr.args.size());
-        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::First, vector_known_length_state(local));
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::First, local_vector_known_length(local));
         return make_vec_first_expr(expr.loc, expr_operand(expr)->loc, name, local.type);
     }
 
@@ -13708,7 +13650,7 @@ private:
         const std::string& name = expr_operand(expr)->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "last");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Last, expr_type_args(expr).size(), expr.args.size());
-        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Last, vector_known_length_state(local));
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Last, local_vector_known_length(local));
         return make_vec_last_expr(expr.loc, expr_operand(expr)->loc, name, local.type);
     }
 
@@ -13726,9 +13668,9 @@ private:
             *index,
             LocalVecMethod::Get,
             "index",
-            vector_known_length_state(local)
+            local_vector_known_length(local)
         );
-        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Get, vector_known_length_state(local));
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Get, local_vector_known_length(local));
         release_temporary_borrows(borrow_mark);
 
         return make_vec_index_expr(
@@ -13796,8 +13738,8 @@ private:
         const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "pop");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Pop, expr_type_args(expr).size(), expr.args.size());
-        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Pop, vector_known_length_state(local));
-        set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Pop, local_vector_known_length(local));
+        set_local_vector_known_length(local, vector_known_length_after_remove(local_vector_known_length(local)));
         return make_vec_pop_expr(
             expr.loc,
             make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type)
@@ -13809,7 +13751,7 @@ private:
         const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "clear");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Clear, expr_type_args(expr).size(), expr.args.size());
-        set_vector_known_length(local, vector_known_length_after_clear());
+        set_local_vector_known_length(local, vector_known_length_after_clear());
         return make_vec_clear_expr(
             expr.loc,
             make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type)
@@ -13835,11 +13777,11 @@ private:
         } else if (try_fold_static_integer_value(*new_length, folded_length)) {
             requested_known_length = &folded_length;
         }
-        set_vector_known_length(
+        set_local_vector_known_length(
             local,
             vector_known_length_after_checked_truncate(
                 length_expr.loc,
-                vector_known_length_state(local),
+                local_vector_known_length(local),
                 requested_known_length
             )
         );
@@ -13866,12 +13808,12 @@ private:
             *index,
             LocalVecMethod::Set,
             "index",
-            vector_known_length_state(local)
+            local_vector_known_length(local)
         );
         IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);
         coerce_expr_to_expected(*value, local.type.args[0]);
         require_assignable(expr.args[1]->loc, local.type.args[0], value->type);
-        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Set, vector_known_length_state(local));
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Set, local_vector_known_length(local));
         release_temporary_borrows(borrow_mark);
 
         return make_vec_set_expr(
@@ -13901,7 +13843,7 @@ private:
             *first_index,
             LocalVecMethod::Swap,
             "first index",
-            vector_known_length_state(local)
+            local_vector_known_length(local)
         );
         IrExprPtr second_index = check_expr(*expr.args[1]);
         require_local_vec_integer_argument(
@@ -13915,9 +13857,9 @@ private:
             *second_index,
             LocalVecMethod::Swap,
             "second index",
-            vector_known_length_state(local)
+            local_vector_known_length(local)
         );
-        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Swap, vector_known_length_state(local));
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Swap, local_vector_known_length(local));
         release_temporary_borrows(borrow_mark);
 
         return make_vec_swap_expr(
@@ -13942,12 +13884,12 @@ private:
             *index,
             LocalVecMethod::Remove,
             "index",
-            vector_known_length_state(local)
+            local_vector_known_length(local)
         );
-        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Remove, vector_known_length_state(local));
+        require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Remove, local_vector_known_length(local));
         release_temporary_borrows(borrow_mark);
 
-        set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));
+        set_local_vector_known_length(local, vector_known_length_after_remove(local_vector_known_length(local)));
 
         return make_vec_remove_expr(
             expr.loc,
@@ -13970,7 +13912,7 @@ private:
             *index,
             LocalVecMethod::Insert,
             "index",
-            vector_known_length_state(local),
+            local_vector_known_length(local),
             true
         );
         IrExprPtr value = check_expr_with_expected(*expr.args[1], local.type.args[0]);

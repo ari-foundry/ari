@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ir.hpp"
+#include "vector_semantics.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -66,6 +67,23 @@ struct StateSnapshotEntry {
 
 using StateSnapshot = std::map<std::string, StateSnapshotEntry>;
 
+LocalInfo make_local_info(SourceLocation loc, const IrType& type, bool mutable_binding);
+VectorKnownLength local_vector_known_length(const LocalInfo& local);
+void set_local_vector_known_length(LocalInfo& local, VectorKnownLength state);
+void clear_local_integer_known_value(LocalInfo& local);
+void set_local_integer_known_value(LocalInfo& local, std::uint64_t value, bool negative);
+void mark_local_alive(LocalInfo& local);
+void mark_local_moved(LocalInfo& local);
+void mark_local_dropped(LocalInfo& local);
+void bump_local_zone_generation(LocalInfo& local);
+void mark_local_zone_destroyed(LocalInfo& local);
+std::string local_owned_field_path(const std::string& base, std::size_t index);
+bool local_owned_field_path_matches(const std::string& candidate, const std::string& selected);
+bool local_owned_field_is_live(const LocalInfo& local, const std::string& path);
+bool local_owned_field_has_state(const LocalInfo& local, const std::string& path);
+void mark_local_owned_field_state(LocalInfo& local, const std::string& path, LocalState state);
+void mark_all_local_owned_fields(LocalInfo& local, LocalState state);
+bool local_has_moved_or_dropped_owned_fields(const LocalInfo& local);
 LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name);
 void merge_zone_generations_into(StateSnapshot& target, const StateSnapshot& source);
 void merge_existing_zone_generations_into(StateSnapshot& target, const StateSnapshot& source);

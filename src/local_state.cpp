@@ -32,6 +32,101 @@ std::string local_state_name(LocalState state) {
     return "unavailable";
 }
 
+LocalInfo make_local_info(SourceLocation loc, const IrType& type, bool mutable_binding) {
+    LocalInfo local;
+    local.type = type;
+    local.mutable_binding = mutable_binding;
+    local.state = LocalState::Alive;
+    local.loc = loc;
+    return local;
+}
+
+VectorKnownLength local_vector_known_length(const LocalInfo& local) {
+    if (!is_vector_storage_type(local.type)) return {};
+    return VectorKnownLength{local.vector_length_known, local.vector_known_length};
+}
+
+void set_local_vector_known_length(LocalInfo& local, VectorKnownLength state) {
+    if (!is_vector_storage_type(local.type)) return;
+    local.vector_length_known = state.known;
+    local.vector_known_length = state.known ? state.length : 0;
+}
+
+void clear_local_integer_known_value(LocalInfo& local) {
+    local.integer_value_known = false;
+    local.integer_known_value = 0;
+    local.integer_known_negative = false;
+}
+
+void set_local_integer_known_value(LocalInfo& local, std::uint64_t value, bool negative) {
+    local.integer_value_known = true;
+    local.integer_known_value = value;
+    local.integer_known_negative = negative;
+}
+
+void mark_local_alive(LocalInfo& local) {
+    local.state = LocalState::Alive;
+}
+
+void mark_local_moved(LocalInfo& local) {
+    local.state = LocalState::Moved;
+}
+
+void mark_local_dropped(LocalInfo& local) {
+    local.state = LocalState::Dropped;
+}
+
+void bump_local_zone_generation(LocalInfo& local) {
+    ++local.zone_generation;
+}
+
+void mark_local_zone_destroyed(LocalInfo& local) {
+    mark_local_moved(local);
+    bump_local_zone_generation(local);
+}
+
+std::string local_owned_field_path(const std::string& base, std::size_t index) {
+    return base.empty() ? std::to_string(index) : base + "." + std::to_string(index);
+}
+
+bool local_owned_field_path_matches(const std::string& candidate, const std::string& selected) {
+    return candidate == selected ||
+           (candidate.size() > selected.size() &&
+            candidate.compare(0, selected.size(), selected) == 0 &&
+            candidate[selected.size()] == '.');
+}
+
+bool local_owned_field_is_live(const LocalInfo& local, const std::string& path) {
+    for (const auto& item : local.owned_field_states) {
+        if (local_owned_field_path_matches(item.first, path) && item.second == LocalState::Alive) return true;
+    }
+    return false;
+}
+
+bool local_owned_field_has_state(const LocalInfo& local, const std::string& path) {
+    for (const auto& item : local.owned_field_states) {
+        if (local_owned_field_path_matches(item.first, path)) return true;
+    }
+    return false;
+}
+
+void mark_local_owned_field_state(LocalInfo& local, const std::string& path, LocalState state) {
+    for (auto& item : local.owned_field_states) {
+        if (local_owned_field_path_matches(item.first, path)) item.second = state;
+    }
+}
+
+void mark_all_local_owned_fields(LocalInfo& local, LocalState state) {
+    for (auto& item : local.owned_field_states) item.second = state;
+}
+
+bool local_has_moved_or_dropped_owned_fields(const LocalInfo& local) {
+    for (const auto& item : local.owned_field_states) {
+        if (item.second != LocalState::Alive) return true;
+    }
+    return false;
+}
+
 LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name) {
     auto found = snapshot.find(name);
     if (found == snapshot.end()) return LocalState::Alive;

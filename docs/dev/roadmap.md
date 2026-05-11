@@ -103,14 +103,20 @@
    `pop_scope`, and `discard_scope` no longer inspect the raw current scope in
    `sema.cpp`. Auto-destroy zone cleanup, temporary-zone escape checks, and
    return-owner checks now traverse locals through `local_state` callbacks
-   instead of raw scope maps. `SemanticChecker` still coordinates mutability
-   diagnostics, most assignment/move/drop state transitions, and borrow rules.
+   instead of raw scope maps. LocalInfo construction, local state setters,
+   zone-generation bumps, vector known-length setters/getters, static integer
+   cache setters, and owned-field path/state helpers are also exposed from
+   `local_state`, so statement/expression lowering no longer writes those raw
+   fields directly. `SemanticChecker` still coordinates mutability diagnostics,
+   assignment eligibility, branch/loop state merge decisions, move/drop
+   lowering, and borrow rules.
    Finish those behavior-preserving moves before starting the larger
    borrow-checking and ownership extractions, leaning on the existing ownership,
    borrow, loop, and control-flow tests instead of adding broad duplicate
    coverage.
-   - [mutation-api] expose assignment, mutability, move/drop, and branch-merge
-     hooks needed by statement/expression lowering without leaking scope internals
+   - [mutation-api] route mutability diagnostics, assignment eligibility, and
+     branch/loop state merge hooks through local-state or ownership adapters
+     without leaking scope internals
    - [borrow-adapter] keep named and temporary borrow checks layered over the
      new local-state API so later `borrow_semantics` extraction has one entry point
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
