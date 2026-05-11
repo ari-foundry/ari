@@ -318,6 +318,16 @@ private:
         return type;
     }
 
+    static bool is_prelude_slice_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::Struct &&
+               type.name == "std::Slice" &&
+               type.args.size() == 1 &&
+               type.field_names.size() == 2 &&
+               type.field_names[0] == "data" &&
+               type.field_names[1] == "len";
+    }
+
     void add_local(const std::string& name, const IrType& type) {
         if (locals_.count(name)) return;
         int size = local_size_bytes(type);
@@ -382,7 +392,8 @@ private:
             expr.kind == IrExprKind::IndirectCall ||
             expr.kind == IrExprKind::If ||
             expr.kind == IrExprKind::Match ||
-            expr.kind == IrExprKind::Block) {
+            expr.kind == IrExprKind::Block ||
+            expr.kind == IrExprKind::SliceRange) {
             if (is_aggregate_type(expr.type)) add_aggregate_result_temp(expr);
         }
         if (expr.kind == IrExprKind::Call || expr.kind == IrExprKind::IndirectCall) {
@@ -775,6 +786,49 @@ private:
         }
     }
 
+    void emit_store_slice_range_to_offset(const IrType& target_type,
+                                          const IrExpr& value,
+                                          int target_offset) {
+        if (!ir_expr_operand(value) ||
+            !ir_expr_left(value) ||
+            !ir_expr_right(value) ||
+            !is_prelude_slice_type(ir_expr_operand(value)->type) ||
+            !is_prelude_slice_type(target_type) ||
+            ir_expr_operand(value)->type.field_types.size() != 2 ||
+            target_type.field_types.size() != 2) {
+            throw CompileError(where(value.loc) + ": malformed Slice range during freestanding lowering");
+        }
+
+        const IrExpr& source = *ir_expr_operand(value);
+        int source_base = lvalue_offset(source);
+        int source_data_offset = aggregate_lvalue_field_offset(value.loc, source_base, source.type, 0);
+        int source_len_offset = aggregate_lvalue_field_offset(value.loc, source_base, source.type, 1);
+        int target_data_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, 0);
+        int target_len_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, 1);
+        int stride = layout_size_bytes(value.loc, target_type.args[0]);
+
+        emit_expr(*ir_expr_left(value));
+        emit_push(Reg::RAX);
+        emit_expr(*ir_expr_right(value));
+        emit_pop(Reg::RCX);
+        emit_slice_range_bounds_check(source_len_offset, value.bool_value);
+
+        emit_push(Reg::RCX);
+        emit_sub_reg_reg(Reg::RAX, Reg::RCX);
+        if (value.bool_value) {
+            emit_mov_reg_imm64(Reg::RCX, 1);
+            emit_add_reg_reg(Reg::RAX, Reg::RCX);
+        }
+        emit_store_rax_to_local(target_len_offset, target_type.field_types[1]);
+
+        emit_pop(Reg::RCX);
+        emit_mov_reg_imm64(Reg::RDX, static_cast<std::uint64_t>(stride));
+        emit_imul_reg_reg(Reg::RCX, Reg::RDX);
+        emit_load_rax_from_local(source_data_offset, source.type.field_types[0]);
+        emit_add_reg_reg(Reg::RAX, Reg::RCX);
+        emit_store_rax_to_local(target_data_offset, target_type.field_types[0]);
+    }
+
     void emit_store_value_to_pointer_base(SourceLocation loc,
                                           const IrExpr& value,
                                           const IrType& target_type,
@@ -853,6 +907,11 @@ private:
         }
         if (has_aggregate_enum_layout(target_type)) {
             emit_store_aggregate_enum_value_to_offset(target_type, value, target_offset);
+            return;
+        }
+
+        if (value.kind == IrExprKind::SliceRange && is_prelude_slice_type(target_type)) {
+            emit_store_slice_range_to_offset(target_type, value, target_offset);
             return;
         }
 
@@ -1486,8 +1545,15 @@ private:
 
     void store_params() {
         std::size_t abi_shift = has_aggregate_return() ? 1 : 0;
+        std::size_t reg_count = call_reg_count(fn_.params.size() + abi_shift);
+        if (reg_count > 0) {
+            emit_sub_rsp(static_cast<int>(reg_count * 8));
+            for (std::size_t i = 0; i < reg_count; ++i) {
+                emit_mov_mem_rsp_reg(static_cast<int>(i * 8), call_arg_reg(i));
+            }
+        }
         if (has_aggregate_return()) {
-            emit_mov_reg_reg(Reg::RAX, Reg::RDI);
+            emit_mov_reg_mem_rsp(Reg::RAX, 0);
             emit_store_rax_to_local(aggregate_return_pointer_offset_,
                                     aggregate_return_pointer_type(fn_.loc));
         }
@@ -1495,8 +1561,8 @@ private:
             if (local_slot_count(fn_.params[i].type) == 0) continue;
             int offset = local_offset(fn_.loc, fn_.params[i].name);
             std::size_t abi_index = i + abi_shift;
-            if (abi_index < 6) {
-                emit_mov_reg_reg(Reg::RAX, call_arg_reg(abi_index));
+            if (abi_index < reg_count) {
+                emit_mov_reg_mem_rsp(Reg::RAX, static_cast<int>(abi_index * 8));
             } else {
                 emit_mov_reg_stack_arg(Reg::RAX, 16 + static_cast<int>((abi_index - 6) * 8));
             }
@@ -1507,6 +1573,7 @@ private:
                 emit_store_rax_to_local(offset, fn_.params[i].type);
             }
         }
+        if (reg_count > 0) emit_add_rsp(static_cast<int>(reg_count * 8));
     }
 
     void emit_statements(const std::vector<IrStmtPtr>& statements) {
@@ -2272,9 +2339,19 @@ private:
                     emit_vector_index(expr);
                     break;
                 }
-                throw CompileError(where(expr.loc) + ": backend does not lower vector indexing yet");
+                if (ir_expr_operand(expr) && is_prelude_slice_type(ir_expr_operand(expr)->type)) {
+                    emit_slice_index(expr);
+                    break;
+                }
+                throw CompileError(where(expr.loc) + ": backend does not lower indexing for this aggregate yet");
             case IrExprKind::SliceRange:
-                throw CompileError(where(expr.loc) + ": freestanding backend does not lower Slice range expressions yet");
+                if (is_prelude_slice_type(expr.type)) {
+                    int temp_offset = aggregate_result_temp_offset(expr.loc, expr);
+                    emit_store_slice_range_to_offset(expr.type, expr, temp_offset);
+                    emit_lea_reg_local(Reg::RAX, temp_offset);
+                    break;
+                }
+                throw CompileError(where(expr.loc) + ": freestanding backend does not lower range expressions here");
             case IrExprKind::Vector:
                 if (expr.type.primitive == IrPrimitiveKind::Array) {
                     throw CompileError(where(expr.loc) + ": backend cannot materialize array values; bind the array or index it");
@@ -2418,7 +2495,7 @@ private:
         patch_rel32(jump_ok, ok);
     }
 
-    void emit_vector_bounds_check(int length_offset) {
+    void emit_length_bounds_check(int length_offset) {
         emit_mov_reg_imm64(Reg::RCX, 0);
         emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
         std::size_t fail_low = emit_jcc_placeholder(0x8C);
@@ -2433,6 +2510,36 @@ private:
         std::size_t jump_ok = emit_jmp_placeholder();
         std::size_t fail = out_.size();
         patch_rel32(fail_low, fail);
+        patch_rel32(fail_high, fail);
+        emit_direct_call("panic");
+
+        std::size_t ok = out_.size();
+        patch_rel32(jump_ok, ok);
+    }
+
+    void emit_slice_range_bounds_check(int length_offset, bool inclusive) {
+        emit_mov_reg_imm64(Reg::RDX, 0);
+        emit_cmp_reg_reg(Reg::RCX, Reg::RDX);
+        std::size_t fail_start_low = emit_jcc_placeholder(0x8C);
+        emit_cmp_reg_reg(Reg::RAX, Reg::RDX);
+        std::size_t fail_end_low = emit_jcc_placeholder(0x8C);
+        emit_cmp_reg_reg(Reg::RCX, Reg::RAX);
+        std::size_t fail_order = emit_jcc_placeholder(0x8F);
+
+        emit_push(Reg::RAX);
+        emit_push(Reg::RCX);
+        emit_load_rax_from_local(length_offset, i64_type(SourceLocation{}));
+        emit_pop(Reg::RCX);
+        emit_pop(Reg::RDX);
+        emit_cmp_reg_reg(Reg::RDX, Reg::RAX);
+        std::size_t fail_high = emit_jcc_placeholder(inclusive ? 0x8D : 0x8F);
+
+        emit_mov_reg_reg(Reg::RAX, Reg::RDX);
+        std::size_t jump_ok = emit_jmp_placeholder();
+        std::size_t fail = out_.size();
+        patch_rel32(fail_start_low, fail);
+        patch_rel32(fail_end_low, fail);
+        patch_rel32(fail_order, fail);
         patch_rel32(fail_high, fail);
         emit_direct_call("panic");
 
@@ -2457,12 +2564,41 @@ private:
         int data_offset = aggregate_lvalue_field_offset(expr.loc, base, vector_type, 1);
         int stride = layout_size_bytes(expr.loc, expr.type);
         emit_expr(*ir_expr_right(expr));
-        emit_vector_bounds_check(length_offset);
+        emit_length_bounds_check(length_offset);
         emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(stride));
         emit_imul_reg_reg(Reg::RAX, Reg::RCX);
         emit_lea_reg_local(Reg::RCX, data_offset);
         emit_add_reg_reg(Reg::RCX, Reg::RAX);
         emit_load_rax_from_ptr(Reg::RCX, expr.type);
+    }
+
+    void emit_slice_element_address(const IrExpr& expr) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) ||
+            !is_prelude_slice_type(ir_expr_operand(expr)->type)) {
+            throw CompileError(where(expr.loc) + ": malformed Slice index during freestanding lowering");
+        }
+        const IrExpr& source = *ir_expr_operand(expr);
+        int base = lvalue_offset(source);
+        int data_offset = aggregate_lvalue_field_offset(expr.loc, base, source.type, 0);
+        int length_offset = aggregate_lvalue_field_offset(expr.loc, base, source.type, 1);
+        int stride = layout_size_bytes(expr.loc, expr.type);
+
+        emit_expr(*ir_expr_right(expr));
+        emit_length_bounds_check(length_offset);
+        emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(stride));
+        emit_imul_reg_reg(Reg::RAX, Reg::RCX);
+        emit_push(Reg::RAX);
+        emit_load_rax_from_local(data_offset, source.type.field_types[0]);
+        emit_pop(Reg::RCX);
+        emit_add_reg_reg(Reg::RAX, Reg::RCX);
+    }
+
+    void emit_slice_index(const IrExpr& expr) {
+        if (is_aggregate_type(expr.type)) {
+            throw CompileError(where(expr.loc) + ": backend cannot materialize nested aggregate values; copy the Slice element into a local");
+        }
+        emit_slice_element_address(expr);
+        emit_load_rax_from_ptr(Reg::RAX, expr.type);
     }
 
     int lvalue_offset(const IrExpr& expr) const {
@@ -3148,6 +3284,11 @@ private:
 
     static bool is_pointer_backed_lvalue(const IrExpr& expr) {
         if (expr.kind == IrExprKind::PointerLoad) return true;
+        if (expr.kind == IrExprKind::Index &&
+            ir_expr_operand(expr) &&
+            is_prelude_slice_type(ir_expr_operand(expr)->type)) {
+            return true;
+        }
         if ((expr.kind == IrExprKind::TupleIndex ||
              expr.kind == IrExprKind::Index) &&
             ir_expr_operand(expr)) {
@@ -3171,6 +3312,10 @@ private:
             return;
         }
         if (expr.kind == IrExprKind::Index && ir_expr_operand(expr) && ir_expr_right(expr)) {
+            if (is_prelude_slice_type(ir_expr_operand(expr)->type)) {
+                emit_slice_element_address(expr);
+                return;
+            }
             if (ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Array) {
                 throw CompileError(where(expr.loc) + ": freestanding backend can only dynamically index raw pointers to fixed arrays yet");
             }

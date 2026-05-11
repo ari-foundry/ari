@@ -161,6 +161,8 @@ check-prelude: $(TARGET)
 	grep -q "store i64 8" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 7" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 5" $(BUILD_DIR)/prelude/prelude-slice-view.ll
+	$(TARGET) --freestanding tests/ok/prelude-slice-view.ari -o $(BUILD_DIR)/prelude/prelude-slice-view.raw
+	$(BUILD_DIR)/prelude/prelude-slice-view.raw; code=$$?; test $$code -eq 101
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \

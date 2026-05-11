@@ -435,7 +435,8 @@ view with `values.as_slice()`; local vector views store a constant length when
 the compiler knows the current local vector length. Slice views can be sliced
 again with `view[start..end]` or `view[start..=end]`; the result stores an
 adjusted raw pointer and length after checking the requested range against the
-source view.
+source view. The LLVM host backend and raw freestanding backend both lower this
+local Slice view surface for materializable element values.
 Array lengths, including direct array literal lengths, are folded directly:
 
 ```ari

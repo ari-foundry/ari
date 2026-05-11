@@ -474,8 +474,9 @@ runtime length, so later vector length changes do not update an existing view.
 `view[start..end]` and `view[start..=end]` produce another `Slice[T]` with
 bounds checks against the source view; exclusive ranges allow empty slices when
 `start == end`, while inclusive ranges require the end index to name an
-existing element. Slice patterns are still planned after the binding policy is
-nailed down.
+existing element. The raw freestanding backend uses the same pointer/length
+metadata for local Slice indexing, indexed assignment, and range slicing. Slice
+patterns are still planned after the binding policy is nailed down.
 `len(view)`, `view.len()`, and `view.is_empty()` read the stored length.
 
 Ranges are compiler-known two-field values:

@@ -70,8 +70,12 @@
    The raw freestanding backend now materializes fixed-capacity stored local
    `Vec[T]` values as Ari-layout local aggregates, so direct literals, local
    copies, checked scalar indexing, `len`/`is_empty`, and stored-vector `for`
-   loops work there. The temporary mutating/search method surface remains
-   LLVM-only until allocator-backed storage replaces the fixed local buffer.
+   loops work there. Raw `Slice[T]` views over mutable local arrays, local
+   vectors, and explicit `slice(data, len)` values also lower through their
+   stored pointer/length metadata for `len`, `is_empty`, checked scalar
+   indexing, indexed assignment, and exclusive/inclusive range slicing. The
+   temporary mutating/search method surface remains LLVM-only until
+   allocator-backed storage replaces the fixed local buffer.
    The
    shared constant
    value model,
@@ -225,12 +229,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
     prelude and connected to
-    `?`/`??` on the LLVM aggregate-enum path. `Slice[T]` is a source `std`
-    view struct with `data: ptr T` and `len: i64`; `slice(data, len)` builds
-    that view from a raw pointer and length, while `len(view)`, `view.len()`,
-    `view.is_empty()`, `view[index]`, and `view[index] = value` use the stored
-    view metadata with runtime bounds checks. It is non-owning and still relies
-    on explicit raw-pointer discipline.
+    `?`/`??` on the LLVM aggregate-enum path. `Slice[T]` is now a source `std`
+    view struct implemented on both LLVM and the raw freestanding backend for
+    `slice(data, len)`, `len(view)`, `view.len()`, `view.is_empty()`,
+    `view[index]`, `view[index] = value`, local array/Vec `as_slice()`, and
+    `view[start..end]` / `view[start..=end]` range slicing. It is non-owning
+    and still relies on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
     - [owned] `Box[T]`

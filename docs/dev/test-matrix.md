@@ -576,7 +576,9 @@ Checklist:
       pointer/length view through the source prelude, with `len(view)`,
       `view.len()`, `view.is_empty()`, `view[index]`, and `view[index] = value`
       helpers, mutable local array/Vec `as_slice()` view creation, and
-      `view[start..end]` / `view[start..=end]` range slicing
+      `view[start..end]` / `view[start..=end]` range slicing; the same positive
+      surface now runs through the raw freestanding backend to cover local Slice
+      pointer/length lowering and aggregate-argument register spills
 - [x] reject reserved `Box` surfaces with roadmap-backed diagnostics
 - [x] reject non-`i64` prelude range bounds until generic range lowering exists
 - [x] add `lib/std.arih` source declarations for the stable
