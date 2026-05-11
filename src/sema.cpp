@@ -10511,9 +10511,6 @@ private:
         } else if (contains_borrow_type(value->type)) {
             fail(stmt.loc, "break values cannot contain borrow values yet");
         }
-        if (is_owner_type(value->type)) {
-            fail(stmt.loc, "break values cannot move owning values yet");
-        }
         if (is_void_value_type(value->type)) {
             fail(stmt.loc, "break value must produce a value");
         }

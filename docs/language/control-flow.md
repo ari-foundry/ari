@@ -427,7 +427,8 @@ let result = done: {
 
 The break value and the final block value must have compatible types. Borrow
 break values are supported when every result path borrows the same source path
-with the same borrow mode. Owning break values are not supported yet. Tuple and
+with the same borrow mode. Owning break values can move an `own` value out of
+the labeled block, and the moved value becomes the block result. Tuple and
 struct results can be bound from labeled blocks:
 
 ```ari
@@ -445,7 +446,9 @@ let point = done: {
 If a labeled block expression has both a final-value path and one or more
 `break label value` paths, every path must leave outer owning bindings in the
 same state. For example, one path cannot drop an `own` binding while another
-typed-break path leaves it alive.
+typed-break path leaves it alive. Moving an outer `own` binding through a
+typed break is valid only when the reachable block-result state records that
+same move.
 
 When labeled block results are local `Vec[T]` values on the LLVM backend, typed
 `break label value` paths participate in the same fixed local storage sizing as

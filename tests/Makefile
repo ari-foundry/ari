@@ -239,6 +239,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/labeled-block-expression.raw; code=$$?; test $$code -eq 17
 	$(TARGET) --freestanding tests/ok/labeled-block-aggregate.ari -o $(BUILD_DIR)/control-flow/labeled-block-aggregate.raw
 	$(BUILD_DIR)/control-flow/labeled-block-aggregate.raw; code=$$?; test $$code -eq 9
+	$(TARGET) --freestanding tests/ok/labeled-block-own-break.ari -o $(BUILD_DIR)/control-flow/labeled-block-own-break.raw
+	$(BUILD_DIR)/control-flow/labeled-block-own-break.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --freestanding tests/ok/control-flow-aggregate-expr-freestanding.ari -o $(BUILD_DIR)/control-flow/control-flow-aggregate-expr-freestanding.raw
 	$(BUILD_DIR)/control-flow/control-flow-aggregate-expr-freestanding.raw; code=$$?; test $$code -eq 82
 	$(TARGET) --freestanding tests/ok/for-range-operator.ari -o $(BUILD_DIR)/control-flow/for-range-operator.raw
@@ -357,6 +359,8 @@ check-control-flow: $(TARGET)
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	$(TARGET) tests/ok/labeled-block-aggregate.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
 	grep -q "store { i64, i64 }" $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
+	$(TARGET) tests/ok/labeled-block-own-break.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-own-break.ll
+	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/labeled-block-own-break.ll
 	$(TARGET) tests/ok/break-statement-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/break-statement-payloads.ll
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll

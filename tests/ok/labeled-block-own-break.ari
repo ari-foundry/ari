@@ -1,0 +1,24 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume(value: own i64) -> i64 {
+  drop value;
+  return 5;
+}
+
+fn main() -> i64 {
+  let first = local_escape: {
+    let token = make_owned(4);
+    break local_escape token;
+    make_owned(0)
+  };
+
+  let seed = make_owned(7);
+  let second = outer_escape: {
+    break outer_escape seed;
+    make_owned(0)
+  };
+
+  return consume(first) + consume(second);
+}

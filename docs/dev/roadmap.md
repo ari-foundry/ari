@@ -98,13 +98,15 @@
 2. Track ownership and borrow state through loops.
    Named borrow bindings now release their source after the last visible use in
    the current straight-line statement scope, and dependent reborrow chains stay
-   live until the last dependent binding is also dead. The next borrow-checking
-   pressure point is loop precision: loops still reject ownership-state changes
-   and many borrow-state updates instead of proving that every iteration and
-   loop exit merges to a compatible state.
+   live until the last dependent binding is also dead. Labeled block
+   `break label value` paths can now move owning values out as the block result
+   while preserving the existing cross-path ownership-state compatibility
+   check. The next borrow-checking pressure point is loop precision: loops
+   still reject ownership-state changes and many borrow-state updates instead
+   of proving that every iteration and loop exit merges to a compatible state.
    - [loop-state] track ownership and borrow state through loops, init-while
-     updates, owning loop bindings, and owning break values instead of rejecting
-     all state changes inside loops
+     updates, and owning loop bindings instead of rejecting all state changes
+     inside loops
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
