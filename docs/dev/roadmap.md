@@ -103,7 +103,11 @@
    insert/remove, swap, truncate/clear, simple linear search, grow-only
    explicit `reserve(ref mut Zone, capacity)`, and tracked `as_slice` views over
    its allocated buffer. Runtime heap growth for root/local `Vec[T]` and the
-   root `Vec[T]` public surface still remain.
+   root `Vec[T]` public surface still remain. A small Medium-Term allocation ADT
+   seed has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)`
+   now returns a tracked source `std::boxed::Box<T>` handle with `get` and `set`
+   methods, while the root owning `Box[T]` smart-pointer surface remains future
+   work.
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      root `Vec[T].reserve(capacity)` with runtime heap capacity growth
    - [ops-runtime] port the root `Vec[T]` public method surface to
@@ -226,7 +230,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     and still relies on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
-    - [owned] `Box[T]`
+    - [owned] root/unique `Box[T]` ownership and drop semantics; the explicit
+      source `std::boxed::Box<T>` zone-backed seed exists for copyable
+      zone-placeable values
     - [strings] add allocator-backed owned runtime strings so APIs such as
       `read_line` can return independent buffers instead of the current host
       reusable line buffer

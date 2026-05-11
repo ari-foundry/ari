@@ -42,8 +42,9 @@ the prefix.
 The explicit paths still exist as `std::Vec`, `std::iter::range`,
 `std::mem::size_of`, and `std::zone::new`. `std::vec::Vec` names the
 source-backed allocator seed handle while the root `Vec`/`std::Vec` spelling is
-still the current compiler-known local vector type. Local declarations and
-explicit `use` aliases win over these
+still the current compiler-known local vector type. `std::boxed::Box` names the
+source zone-backed box seed; the root `Box[T]` smart-pointer spelling remains
+reserved. Local declarations and explicit `use` aliases win over these
 implicit prelude names. If you want a separate namespace handle, alias the
 module explicitly:
 
@@ -62,12 +63,18 @@ capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 `data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
 capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed.
-The source handle currently exposes fixed-capacity element methods: `len`,
-`capacity`, `is_empty`, `first`, `last`, `get`, `set`, `swap`, `push`, `pop`,
-`insert`, `remove`, `clear`, `truncate`, `contains`, `index_of`, `count`, and
-`as_slice`.
-Using any of these results after the zone is reset or destroyed is rejected by
-the checker. This is not the final root `Vec[T]` method API.
+The source handle currently exposes element methods: `len`, `capacity`,
+`is_empty`, `first`, `last`, `get`, `set`, `swap`, `push`, grow-only same-zone
+`reserve`, `pop`, `insert`, `remove`, `clear`, `truncate`, `contains`,
+`index_of`, `count`, and `as_slice`. This is not the final root `Vec[T]` method
+API.
+
+The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
+tracked source `std::boxed::Box<T>` handle over one value placed in a zone. The
+handle has `get()` and `set(value)` methods for copyable, zone-placeable values.
+Using a `std::boxed::Box<T>` after the source zone is reset or destroyed is
+rejected by the checker. This is not yet the final owning root `Box[T]` smart
+pointer surface.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -491,6 +498,22 @@ search, and `as_slice` calls over the stored raw handle. The resulting
 `zone::destroy` is rejected. The root `Vec[T]` type and its current local method
 set remain fixed-local until runtime growth is ported.
 
+`std::boxed::Box<T>` is the source `std` allocation seed for a single
+zone-backed value:
+
+```ari
+var zone = zone::create(64)
+var boxed = std::boxed::new<i64>(ref mut zone, 21)
+let before = boxed.get()
+boxed.set(9)
+let after = boxed.get()
+```
+
+The handle stores a raw pointer returned by `zone::new<T>` and keeps the same
+zone provenance, so reset/destroy invalidation applies to the handle. It does
+not run destructors or free the value independently; memory is released with the
+zone.
+
 `Slice[T]` is a source `std` view struct:
 
 ```ari
@@ -557,7 +580,7 @@ and `??` recognize the same Option/Result-style enum shapes on the LLVM
 backend path; the freestanding backend still needs the broader aggregate enum
 return/value ABI work.
 
-Additional Rust-like standard surfaces are reserved with clear diagnostics:
+Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 
 ```ari
 Box[T]

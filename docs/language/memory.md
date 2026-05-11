@@ -401,6 +401,9 @@ The checker tracks direct local pointers produced by `zone::alloc<T>` and
 `zone::new<T>`, plus calls to pointer-returning functions or associated
 constructors that take exactly one `ref Zone` or `ref mut Zone` parameter. Using
 those bindings after the source zone has been reset or destroyed is rejected.
+Source handles such as `std::boxed::Box<T>`, `std::vec::RawVec<T>`, and
+`std::vec::Vec<T>` carry the same tracked source-zone provenance when they are
+returned by a single-zone constructor.
 That single-zone wrapper rule is a signature-level contract: a pointer-returning
 function with no Zone borrow parameters or with more than one Zone borrow
 parameter cannot return a tracked zone pointer.
@@ -412,6 +415,8 @@ stored into tuple, struct, enum, or vector values, assigned into aggregate or
 raw-pointer storage, passed through extern C or function-pointer calls, or
 returned from functions unless the function has exactly one zone borrow
 parameter and returns a pointer derived from that same parameter.
+The standard source allocation handles above are explicit exceptions whose
+single data field is known to the checker.
 
 Zone-backed constructor-style APIs are ordinary associated functions. A type can
 define `T::new(ref mut Zone, ...) -> ptr T` and delegate to `zone::new<T>`:

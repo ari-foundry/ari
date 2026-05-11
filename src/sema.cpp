@@ -30,6 +30,7 @@
 #include "product_coverage.hpp"
 #include "range_semantics.hpp"
 #include "slice_semantics.hpp"
+#include "std_box_semantics.hpp"
 #include "std_vec_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "trait_semantics.hpp"
@@ -4439,6 +4440,7 @@ private:
             value_type.qualifier = TypeQualifier::Value;
         }
         return type.qualifier == TypeQualifier::Ptr ||
+               is_std_box_handle_type(value_type) ||
                is_std_vec_zone_handle_type(value_type) ||
                is_prelude_slice_type(value_type);
     }
@@ -4482,12 +4484,22 @@ private:
             if (!source_index || *source_index >= source.args.size()) return false;
             return zone_pointer_source_name_from_expr(*source.args[*source_index], out);
         }
+        if (source.kind == IrExprKind::Tuple && is_std_box_handle_type(source.type)) {
+            std::optional<std::size_t> source_index = std_box_zone_handle_source_field_index(source.type);
+            if (!source_index || *source_index >= source.args.size()) return false;
+            return zone_pointer_source_name_from_expr(*source.args[*source_index], out);
+        }
         if (source.kind == IrExprKind::Tuple && is_prelude_slice_type(source.type)) {
             if (source.args.empty()) return false;
             return zone_pointer_source_name_from_expr(*source.args[0], out);
         }
         if (source.kind == IrExprKind::TupleIndex && ir_expr_operand(source)) {
             const IrExpr& operand = *ir_expr_operand(source);
+            std::optional<std::size_t> box_source_index =
+                std_box_zone_handle_source_field_index(operand.type);
+            if (box_source_index && source.tuple_index == *box_source_index) {
+                return zone_pointer_source_name_from_expr(operand, out);
+            }
             std::optional<std::size_t> source_index = std_vec_zone_handle_source_field_index(operand.type);
             if (source_index && source.tuple_index == *source_index) {
                 return zone_pointer_source_name_from_expr(operand, out);
@@ -11652,14 +11664,17 @@ private:
 
         std::vector<IrExprPtr> elements;
         elements.reserve(struct_type.field_names.size());
-        std::optional<std::size_t> std_vec_source_field =
+        std::optional<std::size_t> std_zone_handle_source_field =
             std_vec_zone_handle_source_field_index(struct_type);
+        if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field = std_box_zone_handle_source_field_index(struct_type);
+        }
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
             IrExprPtr value = std::move(lowered_values[i]);
             coerce_expr_to_expected(*value, struct_type.field_types[i]);
             require_assignable(expr.loc, struct_type.field_types[i], value->type);
             require_plain_prelude_aggregate_element(expr.loc, value->type, "struct");
-            if (!std_vec_source_field || i != *std_vec_source_field) {
+            if (!std_zone_handle_source_field || i != *std_zone_handle_source_field) {
                 require_no_zone_pointer_escape(value->loc, *value, "struct literal");
             }
             elements.push_back(std::move(value));

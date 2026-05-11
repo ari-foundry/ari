@@ -147,6 +147,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-vec-new-handle.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-new-handle.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-new-handle.ll
 	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-vec-new-handle.ll
+	$(TARGET) tests/ok/std-boxed-box.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-box.ll
+	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-boxed-box.ll
+	grep -q '_ARNv3std5boxed10new__G_i64' $(BUILD_DIR)/prelude/std-boxed-box.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent3get' $(BUILD_DIR)/prelude/std-boxed-box.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent3set' $(BUILD_DIR)/prelude/std-boxed-box.ll
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3len' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8capacity' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
@@ -197,6 +202,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-vec-alloc-buffer.elf; code=$$?; test $$code -eq 41; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-with-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; code=$$?; test $$code -eq 46; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-new-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-new-handle.elf; $(BUILD_DIR)/prelude/std-vec-new-handle.elf; code=$$?; test $$code -eq 40; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-box.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-box.elf; $(BUILD_DIR)/prelude/std-boxed-box.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-as-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-slice.elf; $(BUILD_DIR)/prelude/std-vec-as-slice.elf; code=$$?; test $$code -eq 99; fi
@@ -230,6 +236,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'tail' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-slice-after-reset.err
 	if $(TARGET) tests/errors/std-vec-reserve-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.reserve zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err
+	if $(TARGET) tests/errors/std-boxed-box-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-box-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-box-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'boxed' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-box-after-reset.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
 	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/errors/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi

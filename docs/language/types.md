@@ -826,8 +826,9 @@ diagnostic names the pointer and the temporary zone source. Associated
 constructor spelling such as `T::new(...)` is supported by ordinary inherent
 impl methods that call `zone::new<T>` or another explicit allocator helper.
 Direct local pointers from `zone::alloc<T>` and `zone::new<T>`,
-single-zone pointer-returning calls, and source `std::vec::RawVec<T>` or
-`std::vec::Vec<T>` handles returned from a single-zone constructor are
+single-zone pointer-returning calls, source `std::boxed::Box<T>` handles, and
+source `std::vec::RawVec<T>` or `std::vec::Vec<T>` handles returned from a
+single-zone constructor are
 invalidated by `zone::reset` and `zone::destroy` in the checker, so using such
 a binding afterward is rejected.
 A pointer-returning function with no zone borrow parameter or more than one
