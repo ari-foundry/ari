@@ -397,9 +397,10 @@ Checklist:
       bodies made from local declarations, assignments, `if`/`else`,
       block/labeled-block statements, loops, `continue`, `break`, statement
       `match`, `drop`, return/final-expression statements, method calls,
-      borrow expressions, postfix `?`, `??`, prelude macro invocations,
-      `if`/block/`match` expressions, summary-safe expressions, and integer,
-      bool, float, string, and null literals
+      qualified calls with receiver type arguments, borrow expressions, postfix
+      `?`, `??`, prelude macro invocations, `if`/block/`match` expressions,
+      summary-safe expressions, and integer, bool, float, string, and null
+      literals
 - [ ] AST/IR package cache summaries skip dependency parsing after validation
 - [x] AST/IR scalar payload packing preserves integer, bool, float, tuple-index,
       and indexed-assignment lowering paths

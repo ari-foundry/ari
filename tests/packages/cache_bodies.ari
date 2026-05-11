@@ -146,3 +146,23 @@ pub fn macro_flow() -> i64 {
   assert_ne!(false, true);
   return 4;
 }
+
+trait CacheSelect[T] {
+  fn select(value: T) -> Self
+}
+
+struct CacheBox[T] {
+  value: T,
+}
+
+impl[T] CacheSelect[T] for CacheBox[T] {
+  fn select(value: T) -> CacheBox[T] {
+    CacheBox { value: value }
+  }
+}
+
+pub fn receiver_type_arg_flow() -> i64 {
+  let explicit = CacheSelect<i64>::select<CacheBox[i64]>(12);
+  let inferred: CacheBox[i64] = CacheSelect<i64>::select(30);
+  return explicit.value + inferred.value;
+}

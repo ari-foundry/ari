@@ -285,15 +285,16 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             return true;
         }
         case ExprKind::StructLiteral: {
-            if (!expr_receiver_type_args(expr).empty()) return false;
             const ExprFieldNames& field_names = expr_field_names(expr);
             if (field_names.size() != expr.args.size()) return false;
             std::vector<std::ostringstream> values(expr.args.size());
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
                 if (!append_const_expr_payload(values[i], *expr.args[i])) return false;
             }
-            append_field(out, "struct");
+            const bool has_receiver_args = !expr_receiver_type_args(expr).empty();
+            append_field(out, has_receiver_args ? "qualified-struct" : "struct");
             append_field(out, expr.name);
+            if (has_receiver_args) append_type_arguments(out, expr_receiver_type_args(expr));
             append_type_arguments(out, expr_type_args(expr));
             append_count(out, expr.args.size());
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
@@ -304,24 +305,27 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
         }
         case ExprKind::Call: {
             if (expr_operand(expr)) return false;
-            if (!expr_receiver_type_args(expr).empty()) return false;
             std::ostringstream args;
             if (!append_const_expr_list(args, expr.args)) return false;
-            append_field(out, "call");
+            const bool has_receiver_args = !expr_receiver_type_args(expr).empty();
+            append_field(out, has_receiver_args ? "qualified-call" : "call");
             append_field(out, expr.name);
+            if (has_receiver_args) append_type_arguments(out, expr_receiver_type_args(expr));
             append_type_arguments(out, expr_type_args(expr));
             out << args.str();
             return true;
         }
         case ExprKind::MethodCall: {
-            if (!expr_operand(expr) || !expr_receiver_type_args(expr).empty()) return false;
+            if (!expr_operand(expr)) return false;
             std::ostringstream operand;
             std::ostringstream args;
             if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
             if (!append_const_expr_list(args, expr.args)) return false;
-            append_field(out, "method-call");
+            const bool has_receiver_args = !expr_receiver_type_args(expr).empty();
+            append_field(out, has_receiver_args ? "qualified-method-call" : "method-call");
             out << operand.str();
             append_field(out, expr.name);
+            if (has_receiver_args) append_type_arguments(out, expr_receiver_type_args(expr));
             append_type_arguments(out, expr_type_args(expr));
             out << args.str();
             return true;
@@ -1348,9 +1352,12 @@ private:
             expr->args = read_const_expr_list(label + " vector values");
             return expr;
         }
-        if (kind == "struct") {
+        if (kind == "struct" || kind == "qualified-struct") {
             expr->kind = ExprKind::StructLiteral;
             expr->name = read_field(label + " struct name");
+            if (kind == "qualified-struct") {
+                set_expr_receiver_type_args(*expr, read_type_arguments(label + " struct receiver type arguments"));
+            }
             set_expr_type_args(*expr, read_type_arguments(label + " struct type arguments"));
             std::uint64_t field_count = read_count(label + " struct field count");
             ExprFieldNames& field_names = ensure_expr_field_names(*expr);
@@ -1362,17 +1369,23 @@ private:
             }
             return expr;
         }
-        if (kind == "call") {
+        if (kind == "call" || kind == "qualified-call") {
             expr->kind = ExprKind::Call;
             expr->name = read_field(label + " call name");
+            if (kind == "qualified-call") {
+                set_expr_receiver_type_args(*expr, read_type_arguments(label + " call receiver type arguments"));
+            }
             set_expr_type_args(*expr, read_type_arguments(label + " call type arguments"));
             expr->args = read_const_expr_list(label + " call arguments");
             return expr;
         }
-        if (kind == "method-call") {
+        if (kind == "method-call" || kind == "qualified-method-call") {
             expr->kind = ExprKind::MethodCall;
             set_expr_operand(*expr, read_const_expr(label + " method receiver"));
             expr->name = read_field(label + " method name");
+            if (kind == "qualified-method-call") {
+                set_expr_receiver_type_args(*expr, read_type_arguments(label + " method receiver type arguments"));
+            }
             set_expr_type_args(*expr, read_type_arguments(label + " method type arguments"));
             expr->args = read_const_expr_list(label + " method arguments");
             return expr;
