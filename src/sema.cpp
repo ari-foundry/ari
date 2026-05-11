@@ -4772,7 +4772,7 @@ private:
                 flow = check_if(stmt, *lowered);
                 break;
             case StmtKind::While:
-                check_while(stmt, *lowered);
+                flow = check_while(stmt, *lowered);
                 break;
             case StmtKind::WhileLet:
                 check_while_let(stmt, *lowered);
@@ -9525,9 +9525,10 @@ private:
         return Flow::Continues;
     }
 
-    void check_while(const Stmt& stmt, IrStmt& lowered) {
+    Flow check_while(const Stmt& stmt, IrStmt& lowered) {
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
+        const bool literal_true_condition = is_literal_true_condition(*lowered.condition);
         StateSnapshot loop_input = snapshot_states();
         const std::string& label = stmt_label(stmt);
 
@@ -9546,9 +9547,11 @@ private:
             loop_body_state,
             loop_state,
             body.flow,
-            !is_literal_true_condition(*lowered.condition)
+            !literal_true_condition
         ));
         set_ir_stmt_label(lowered, label);
+        if (literal_true_condition && body.flow == Flow::Returns) return Flow::Returns;
+        return Flow::Continues;
     }
 
     void check_while_let(const Stmt& stmt, IrStmt& lowered) {

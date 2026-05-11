@@ -275,6 +275,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/break-statement-payloads.raw; code=$$?; test $$code -eq 9
 	$(TARGET) --freestanding tests/ok/while-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-true-break-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/while-true-return-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-return-owner-state.raw
+	$(BUILD_DIR)/control-flow/while-true-return-owner-state.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/statement-label-payloads.ari -o $(BUILD_DIR)/control-flow/statement-label-payloads.raw
 	$(BUILD_DIR)/control-flow/statement-label-payloads.raw; code=$$?; test $$code -eq 7
 	$(TARGET) --freestanding tests/ok/labeled-block.ari -o $(BUILD_DIR)/control-flow/labeled-block.raw
@@ -372,6 +374,8 @@ check-control-flow: $(TARGET)
 	grep -q "while.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll
 	$(TARGET) tests/ok/while-true-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
+	$(TARGET) tests/ok/while-true-return-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-return-owner-state.ll
+	grep -q "ret i64 12" $(BUILD_DIR)/control-flow/while-true-return-owner-state.ll
 	$(TARGET) tests/ok/statement-label-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/statement-label-payloads.ll
 	grep -q "block.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll

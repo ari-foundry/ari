@@ -116,7 +116,9 @@
    paths still reject ownership-state changes and many borrow-state updates
    instead of proving that every iteration and loop exit merges to a compatible
    state. Literal `while true` loops use reachable `break` states rather than a
-   zero-iteration exit state when restoring ownership after the loop.
+   zero-iteration exit state when restoring ownership after the loop, and
+   `while true` bodies that return on every path now make the loop statement
+   return as well.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
      loop fallthrough paths instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop

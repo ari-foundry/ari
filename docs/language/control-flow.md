@@ -397,7 +397,8 @@ keeps paths such as `drop owner; break;` from leaving the owner ambiguously live
 after the loop.
 
 For a literal `while true` loop, there is no zero-iteration exit. In that case,
-plain `break` paths define the ownership state after the loop.
+plain `break` paths define the ownership state after the loop. If every body
+path returns, the `while true` statement itself is treated as returning.
 
 Because `break` leaves the current nested scopes, any owning binding declared in
 those scopes must be moved or dropped before the jump.
