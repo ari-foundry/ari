@@ -1,0 +1,12 @@
+pub fn return_value() -> i64 {
+  return 14 + 5;
+}
+
+pub fn final_value() -> i64 {
+  3
+}
+
+pub fn expression_statement() -> i64 {
+  1;
+  return 2;
+}

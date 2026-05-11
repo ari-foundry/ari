@@ -305,10 +305,10 @@ ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build
 
 The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, and a compact AST summary for each cached source. Current
-caches are written as `ari-module-cache-v5`; older v1/v2/v3/v4 caches are
+caches are written as `ari-module-cache-v6`; older v1/v2/v3/v4/v5 caches are
 treated as stale because they do not carry the current AST-summary declaration
-fingerprints and constant initializer payloads. A later build can validate the
-cache and parse from that snapshot:
+fingerprints, constant initializer payloads, and simple executable body
+payloads. A later build can validate the cache and parse from that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll
@@ -341,13 +341,20 @@ bitwise, unary bitwise-not, and shift expressions over supported constant
 payloads are preserved too, as are field, tuple-index, and fixed-array index
 accesses over materialized aggregate constants. Constants whose initializers use
 unsupported summary forms fall back to parsing the cached source snapshot.
+Executable dependency functions whose bodies are only `return` statements or
+final expression statements over the same summary-safe expression forms can also
+be materialized from the AST summary. More complex executable bodies still fall
+back to parsing the cached source snapshot until the IR body-summary cache is
+implemented.
 
 This cache format skips dependency source discovery after validation and reads
 module source text from the cached snapshot. Header-like dependencies can skip
-parsing through materialized AST summaries; dependencies with executable bodies
-or unsupported constant initializer summaries still parse the cached source
-snapshot. The AST summary records are the stable bridge toward a future cache
-that can skip more dependency parsing after validation.
+parsing through materialized AST summaries, and simple executable dependencies
+can do the same when every body has a supported summary payload. Dependencies
+with unsupported executable bodies or unsupported constant initializer summaries
+still parse the cached source snapshot. The AST summary records are the stable
+bridge toward a future cache that can skip more dependency parsing after
+validation.
 
 ## Nested Modules
 

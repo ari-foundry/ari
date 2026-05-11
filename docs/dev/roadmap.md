@@ -106,11 +106,18 @@
    cover scalar and aggregate literals, enum/tuple-struct constructors,
    explicit integer casts, arithmetic, bitwise, unary bitwise-not, and shift
    expressions, plus field, tuple-index, and fixed-array index access over
-   materialized aggregate constants. The remaining package-cache work is to
-   extend that path to future IR summaries for dependencies with executable
-   bodies, then skip dependency source parsing whenever validation succeeds.
+   materialized aggregate constants. Module cache v6 also carries simple
+   executable AST body summaries for functions whose bodies are only `return`
+   statements or final expression statements over the same summary-safe
+   expression forms, allowing those dependency bodies to materialize from the
+   cache after validation. The remaining package-cache work is to extend that
+   path to future IR summaries for general executable function and impl bodies,
+   then skip dependency source parsing whenever validation succeeds.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies with executable function or impl bodies
+   - [body-summary-stmts] either widen the temporary AST body-summary subset to
+     simple local declarations/control-flow or replace it with the planned IR
+     body summaries before depending on it for broad executable packages
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs

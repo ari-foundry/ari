@@ -1,0 +1,5 @@
+mod cache_bodies;
+
+fn main() -> i64 {
+  cache_bodies::return_value() + cache_bodies::final_value() + cache_bodies::expression_statement()
+}

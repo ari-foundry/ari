@@ -68,6 +68,8 @@ void append_attributes(std::ostringstream& out, const std::vector<Attribute>& at
     }
 }
 
+void append_function_body_summary(std::ostringstream& out, const FunctionDecl& fn);
+
 void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) {
     append_field(out, fn.module_name);
     append_field(out, fn.name);
@@ -88,6 +90,7 @@ void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) 
         append_type(out, param.type);
     }
     if (fn.has_return_type) append_type(out, fn.return_type);
+    append_function_body_summary(out, fn);
 }
 
 bool is_summary_const_unary_op(TokenKind op) {
@@ -272,6 +275,49 @@ void append_const_initializer(std::ostringstream& out, const ExprPtr& init) {
     }
     append_bool(out, true);
     out << payload.str();
+}
+
+bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
+    switch (stmt.kind) {
+        case StmtKind::Return: {
+            std::ostringstream value;
+            const bool has_value = static_cast<bool>(stmt.expr);
+            if (has_value && !append_const_expr_payload(value, *stmt.expr)) return false;
+            append_field(out, "return");
+            append_bool(out, has_value);
+            out << value.str();
+            return true;
+        }
+        case StmtKind::ExprStmt: {
+            if (!stmt.expr) return false;
+            std::ostringstream value;
+            if (!append_const_expr_payload(value, *stmt.expr)) return false;
+            append_field(out, "expr-stmt");
+            out << value.str();
+            return true;
+        }
+        default:
+            return false;
+    }
+}
+
+void append_function_body_summary(std::ostringstream& out, const FunctionDecl& fn) {
+    if (!fn.has_body || fn.is_extern || fn.body.empty()) {
+        append_bool(out, false);
+        return;
+    }
+
+    std::vector<std::ostringstream> statements(fn.body.size());
+    for (std::size_t i = 0; i < fn.body.size(); ++i) {
+        if (!fn.body[i] || !append_body_stmt_payload(statements[i], *fn.body[i])) {
+            append_bool(out, false);
+            return;
+        }
+    }
+
+    append_bool(out, true);
+    append_count(out, fn.body.size());
+    for (const auto& statement : statements) out << statement.str();
 }
 
 struct DeclarationSummaryCounts {
@@ -562,8 +608,14 @@ private:
     }
 
     void consume_header() {
+        const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v3.size(), v3) == 0) {
+            version_ = 3;
+            pos_ += v3.size();
+            return;
+        }
         if (text_.compare(pos_, v2.size(), v2) == 0) {
             version_ = 2;
             pos_ += v2.size();
@@ -574,7 +626,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v2;' or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -727,6 +779,17 @@ private:
             fn.params.push_back(std::move(param));
         }
         if (fn.has_return_type) fn.return_type = read_type("function return type");
+        if (version_ >= 3) {
+            bool has_body_summary = read_bool("function body summary flag");
+            if (has_body_summary) {
+                if (!fn.has_body) fail("function body summary present without body flag");
+                std::uint64_t body_count = read_count("function body statement count");
+                fn.body.reserve(static_cast<std::size_t>(body_count));
+                for (std::uint64_t i = 0; i < body_count; ++i) {
+                    fn.body.push_back(read_body_stmt("function body statement"));
+                }
+            }
+        }
         fn.loc = default_loc();
         fn.variadic_loc = default_loc();
         return fn;
@@ -862,11 +925,30 @@ private:
     void skip_const_initializer(const std::string& label) {
         (void)read_const_initializer(label);
     }
+
+    StmtPtr read_body_stmt(const std::string& label) {
+        std::string kind = read_field(label + " kind");
+        auto stmt = std::make_unique<Stmt>();
+        stmt->loc = default_loc();
+        if (kind == "return") {
+            stmt->kind = StmtKind::Return;
+            if (read_bool(label + " return value flag")) {
+                stmt->expr = read_const_expr(label + " return value");
+            }
+            return stmt;
+        }
+        if (kind == "expr-stmt") {
+            stmt->kind = StmtKind::ExprStmt;
+            stmt->expr = read_const_expr(label + " expression");
+            return stmt;
+        }
+        fail("unknown function body statement summary kind '" + kind + "'");
+    }
 };
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v2;";
+    out << "ari-ast-decls-v3;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {
@@ -1064,11 +1146,16 @@ bool can_load_module_cache_ast_summary_declarations(const Program& program) {
         if (!decl.init) return false;
     }
     for (const auto& fn : program.functions) {
-        if (fn.has_body && !fn.is_extern) return false;
+        if (fn.has_body && !fn.is_extern && fn.body.empty()) return false;
+    }
+    for (const auto& trait : program.traits) {
+        for (const auto& method : trait.methods) {
+            if (method.has_body && !method.is_extern && method.body.empty()) return false;
+        }
     }
     for (const auto& impl : program.impls) {
         for (const auto& method : impl.methods) {
-            if (method.has_body) return false;
+            if (method.has_body && !method.is_extern && method.body.empty()) return false;
         }
     }
     return true;

@@ -37,7 +37,7 @@ struct ModuleCacheAstSummary {
 };
 
 struct ModuleCache {
-    int format_version = 5;
+    int format_version = 6;
     ModuleMetadata metadata;
     std::vector<ModuleCacheSource> sources;
     std::vector<ModuleCacheAstSummary> ast_summaries;

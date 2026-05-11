@@ -18,7 +18,7 @@ namespace ari {
 
 namespace {
 
-constexpr int kModuleCacheVersion = 5;
+constexpr int kModuleCacheVersion = 6;
 
 std::string read_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -309,9 +309,11 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 cache.format_version = 4;
             } else if (line == "ari-module-cache-v5") {
                 cache.format_version = 5;
+            } else if (line == "ari-module-cache-v6") {
+                cache.format_version = 6;
             } else {
                 throw CompileError("invalid module cache '" + display_path +
-                                   "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, or ari-module-cache-v5 header");
+                                   "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, ari-module-cache-v5, or ari-module-cache-v6 header");
             }
             saw_header = true;
             continue;
@@ -405,7 +407,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
 
     if (!saw_header) {
         throw CompileError("invalid module cache '" + display_path +
-                           "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, or ari-module-cache-v5 header");
+                           "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, ari-module-cache-v5, or ari-module-cache-v6 header");
     }
     if (!saw_metadata) {
         throw CompileError("invalid module cache '" + display_path + "': missing metadata record");
