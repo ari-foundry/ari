@@ -175,19 +175,23 @@
    call/struct/generic `type_args` now use a lazy type-argument payload as well,
    with parser call construction, AST clone, module summaries, constant
    evaluation, and sema generic-call lowering routed through shared accessors.
+   AST expression argument/child vectors now use a lazy vector wrapper too, so
+   scalar/name/unary/access/control expressions no longer carry an eager
+   `std::vector<ExprPtr>` while tuple, vector, struct literal, call, and method
+   call construction keep the existing parser/sema API surface.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
-   expression child/vector payloads are still widely mutated while parsing and
-   lowering, so their payload split needs more constructor/builder coverage
-   first.
+   IR expression child/vector payloads plus AST/IR operand child pointers are
+   still widely mutated while parsing, lowering, and backend emission, so their
+   payload split needs more constructor/builder coverage first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
-     variant payload structs or unions; remaining high-value targets are general
-     AST/IR expression argument vectors and operand child expression groups that
-     still receive broad parser, sema, and backend mutations
+     variant payload structs or unions; remaining high-value targets are IR
+     expression argument vectors and AST/IR operand child expression groups that
+     still receive broad sema and backend mutations
    - [expr-child-vector-payloads] split call/argument and operand child/vector
      expression fields after builders cover the remaining parser/sema/backend
-     mutation paths; next small slice: split AST/IR call argument vectors by
-     expression kind once direct call, method call, enum constructor, and zone
-     helper lowering share a single builder/update path
+     mutation paths; next small slice: split IR expression argument vectors by
+     expression kind once direct call, aggregate construction, dyn dispatch, and
+     raw backend consumers share one helper path
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

@@ -820,6 +820,8 @@ check-operators: $(TARGET)
 	$(BUILD_DIR)/operators/operators-compound-assignment.raw; code=$$?; test $$code -eq 8
 	$(TARGET) --freestanding tests/ok/ast-builder-scalar-paths.ari -o $(BUILD_DIR)/operators/ast-builder-scalar-paths.raw
 	$(BUILD_DIR)/operators/ast-builder-scalar-paths.raw; code=$$?; test $$code -eq 5
+	$(TARGET) --freestanding tests/ok/ast-argument-payloads.ari -o $(BUILD_DIR)/operators/ast-argument-payloads.raw
+	$(BUILD_DIR)/operators/ast-argument-payloads.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/operators-try.ari -o $(BUILD_DIR)/operators/operators-try.raw
 	$(BUILD_DIR)/operators/operators-try.raw; code=$$?; test $$code -eq 52
 	$(TARGET) --freestanding tests/ok/operators-try-residual-conversion.ari -o $(BUILD_DIR)/operators/operators-try-residual-conversion.raw
@@ -895,6 +897,9 @@ check-operators: $(TARGET)
 	grep -q "ptr null" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
 	grep -q "insertvalue { i64, i1 }" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
 	grep -q "match.expr.arm" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
+	$(TARGET) tests/ok/ast-argument-payloads.ari --emit-llvm $(BUILD_DIR)/operators/ast-argument-payloads.ll
+	grep -q 'call i64 @"_ARNv3add"' $(BUILD_DIR)/operators/ast-argument-payloads.ll
+	grep -q "insertvalue { i64, i64 }" $(BUILD_DIR)/operators/ast-argument-payloads.ll
 	$(TARGET) tests/ok/operators-try.ari --emit-llvm $(BUILD_DIR)/operators/operators-try.ll
 	grep -q "try.ok" $(BUILD_DIR)/operators/operators-try.ll
 	grep -q "try.return" $(BUILD_DIR)/operators/operators-try.ll

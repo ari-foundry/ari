@@ -120,6 +120,10 @@ as well. Parser generic-call construction, AST cloning, module-summary constant
 serialization, constant evaluation, and sema generic function/constructor lookup
 all read or move the payload through `expr_type_args`, `set_expr_type_args`, and
 `take_expr_type_args`.
+AST expression argument vectors now use a lazy vector wrapper that preserves the
+existing `expr.args` API while moving empty tuple/vector/struct/call child lists
+out of ordinary scalar/name/control expression nodes. This keeps the current
+parser and sema call sites stable while still shrinking common AST nodes.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or
