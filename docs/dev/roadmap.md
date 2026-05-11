@@ -131,8 +131,11 @@
    init binding state after checking the unreachable body and `next`
    expressions. Literal-true `init while` / `let while` loops now report
    all-return and non-fallthrough statement flow like plain `while true`.
+   Literal `while true` `continue` paths now merge against the next-iteration
+   ownership state instead of the post-loop `break` exit state.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
-     loop fallthrough paths instead of rejecting all state changes inside loops
+     loop fallthrough paths, beyond the literal-true next-iteration/exit split,
+     instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop
      fallthrough/next-iteration paths
 

@@ -4299,11 +4299,20 @@ private:
             !has_zero_iteration_exit && !loop.break_state_snapshots.empty()
                 ? project_loop_state_snapshot(loop_input, loop.break_state_snapshots.front())
                 : loop_input;
+        StateSnapshot next_iteration_state = loop_input;
         if (body_flow == Flow::Continues) {
             require_same_states(loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            merge_existing_zone_generations_into(exit_state, loop_body_state);
+            merge_existing_zone_generations_into(next_iteration_state, loop_body_state);
+            if (has_zero_iteration_exit) {
+                merge_existing_zone_generations_into(exit_state, loop_body_state);
+            }
         }
-        merge_continue_states(loc, exit_state, loop);
+        if (has_zero_iteration_exit) {
+            merge_continue_states(loc, exit_state, loop);
+        } else {
+            merge_continue_states(loc, next_iteration_state, loop);
+            merge_existing_zone_generations_into(exit_state, next_iteration_state);
+        }
         merge_break_exit_states(loc, exit_state, loop, "has incompatible ownership states after loop exits");
         return exit_state;
     }

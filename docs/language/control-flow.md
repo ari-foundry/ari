@@ -407,7 +407,9 @@ plain `break` paths define the ownership state after the loop. If every body
 path returns, the `while true` statement itself is treated as returning. If the
 body has no reachable `break` and can only continue into the next iteration,
 Ari treats the loop as non-fallthrough, so a later function return is not
-required for that path.
+required for that path. `continue` paths inside such loops are checked against
+the next-iteration state instead of the post-loop `break` state, so a loop can
+continue with an owner still live and later break after consuming it.
 
 Because `break` leaves the current nested scopes, any owning binding declared in
 those scopes must be moved or dropped before the jump.
@@ -492,7 +494,9 @@ Because `continue` leaves the current iteration scopes, any owning binding
 declared in those scopes must be moved or dropped before the jump. Ari also
 checks that owning bindings visible at the loop boundary have the same state on
 `continue` paths as they had at loop entry, because the next condition check may
-exit the loop.
+exit the loop. Literal `while true` is the exception: there is no condition-exit
+path, so `continue` ownership is merged with the next iteration rather than the
+post-loop `break` exit state.
 
 `continue` with values is only valid in `init while` loops. Plain `while` and
 `for` loops reject value continues because they do not have positional loop
@@ -591,4 +595,5 @@ The older `init ... while ... next ...` form remains accepted for now.
   also support irrefutable alias, tuple, array, named struct, and tuple-struct
   product patterns. Enum-case and other refutable loop-head patterns are
   reserved for future iterator lowering.
-- Loops currently cannot change the ownership state of an outer binding.
+- General loops currently cannot change the ownership state of an outer binding
+  on a body fallthrough path.
