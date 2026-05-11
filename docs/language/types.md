@@ -480,9 +480,20 @@ capacity)` now provides the raw element-buffer seed. It takes an explicit
 `Zone` capability, checks that the requested capacity is non-negative, returns
 `null` for zero capacity, and otherwise allocates `capacity * size_of<T>()`
 bytes with `align_of<T>()`. The result is a tracked `ptr T`, so using it after
-`zone::reset` or `zone::destroy` is rejected. This is a building block for the
-future `Vec[T]` runtime handle, not a replacement for the current local vector
-literal storage.
+`zone::reset` or `zone::destroy` is rejected.
+`std::vec::with_capacity<T>(ref mut zone, capacity)` wraps the same allocation
+in a tracked `std::vec::RawVec<T>` handle:
+
+```ari
+pub struct RawVec[T] {
+  data: ptr T,
+  len: i64,
+  capacity: i64,
+}
+```
+
+`RawVec<T>` is still a building block for the future public `Vec[T]` runtime
+handle, not a replacement for the current local vector literal storage.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over
@@ -777,12 +788,13 @@ longer-lived bindings, returns, aggregates, or escape-prone call arguments; the
 diagnostic names the pointer and the temporary zone source. Associated
 constructor spelling such as `T::new(...)` is supported by ordinary inherent
 impl methods that call `zone::new<T>` or another explicit allocator helper.
-Direct local pointers from `zone::alloc<T>` and `zone::new<T>`, and
-pointer-returning calls with exactly one zone borrow parameter, are invalidated
-by `zone::reset` and `zone::destroy` in the checker, so using such a binding
-afterward is rejected. A pointer-returning function with no zone borrow
-parameter or more than one zone borrow parameter cannot return a tracked zone
-pointer because the source zone would be ambiguous to the checker. Reset
+Direct local pointers from `zone::alloc<T>` and `zone::new<T>`,
+single-zone pointer-returning calls, and source `std::vec::RawVec<T>` handles
+returned from a single-zone constructor are invalidated by `zone::reset` and
+`zone::destroy` in the checker, so using such a binding afterward is rejected.
+A pointer-returning function with no zone borrow parameter or more than one
+zone borrow parameter cannot return a tracked zone pointer because the source
+zone would be ambiguous to the checker. Reset
 invalidation is merged
 through ordinary control-flow joins such as `if`, `match`, labeled blocks, and
 loops. Zone pointers are local capabilities: aggregate storage, raw-pointer

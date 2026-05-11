@@ -1,0 +1,8 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let raw = std::vec::with_capacity<i64>(ref mut zone, 2);
+  zone::reset(ref mut zone);
+  let value = ptr_load(raw.data);
+  zone::destroy(zone);
+  return value;
+}

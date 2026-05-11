@@ -69,12 +69,22 @@ pub mod zone {
 }
 
 pub mod vec {
+  pub struct RawVec[T] {
+    data: ptr T,
+    len: i64,
+    capacity: i64,
+  }
+
   pub fn alloc_buffer[T](zone: ref mut Zone, capacity: i64) -> ptr T {
     std::assert(capacity >= 0);
     if capacity == 0 {
       return 0u64 as ptr T;
     }
     return std::zone::alloc(zone, capacity * std::mem::size_of<T>(), std::mem::align_of<T>()) as ptr T;
+  }
+
+  pub fn with_capacity[T](zone: ref mut Zone, capacity: i64) -> RawVec[T] {
+    return RawVec<T> { data: alloc_buffer<T>(zone, capacity), len: 0, capacity: capacity };
   }
 }
 

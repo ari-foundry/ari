@@ -89,14 +89,17 @@
    this keeps
    allocator-backed work from growing the main semantic checker. Introduce the
    explicit allocation/capability path before broadening vector patterns or std
-   collection APIs. The first allocator-facing seed now lives in the source
-   prelude as `std::vec::alloc_buffer<T>(ref mut Zone, capacity) -> ptr T`;
-   it validates the capacity, allocates an element buffer through the explicit
+   collection APIs. The allocator-facing seed now lives in the source prelude
+   as `std::vec::alloc_buffer<T>(ref mut Zone, capacity) -> ptr T`; it
+   validates the capacity, allocates an element buffer through the explicit
    zone capability, and keeps the returned pointer tied to zone reset/destroy
-   invalidation checks. The actual `Vec[T]` handle layout and method port
-   still remain.
-   - [allocator] wrap the tracked `std::vec::alloc_buffer<T>` seed in explicit
-     allocator/capability Vec handle creation
+   invalidation checks. `std::vec::RawVec<T>` and
+   `std::vec::with_capacity<T>(ref mut Zone, capacity)` now wrap that buffer
+   in a source-level handle with `data`, `len`, and `capacity` metadata while
+   sema still tracks the handle as tied to the source zone. The public
+   `Vec[T]` handle layout and method port still remain.
+   - [allocator] connect the tracked `std::vec::RawVec<T>` seed to the public
+     allocator/capability `Vec[T]` creation surface
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to

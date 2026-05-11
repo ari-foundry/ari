@@ -1,5 +1,7 @@
 #include "zone_return_semantics.hpp"
 
+#include "std_vec_semantics.hpp"
+
 namespace ari {
 
 bool is_zone_value_type(const IrType& type) {
@@ -20,7 +22,9 @@ bool is_zone_source_type(const IrType& type) {
 
 std::optional<std::size_t> zone_pointer_return_param_index(const std::vector<IrType>& params,
                                                            const IrType& result) {
-    if (result.qualifier != TypeQualifier::Ptr) return std::nullopt;
+    if (result.qualifier != TypeQualifier::Ptr && !is_std_vec_raw_handle_type(result)) {
+        return std::nullopt;
+    }
 
     std::optional<std::size_t> index;
     for (std::size_t i = 0; i < params.size(); ++i) {
