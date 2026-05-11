@@ -4480,12 +4480,13 @@ private:
         switch (stmt.kind) {
             case StmtKind::Block:
                 {
-                    lowered->label = stmt.label;
-                    if (!stmt.label.empty()) push_labeled_block(stmt.loc, stmt.label);
+                    const std::string& label = stmt_label(stmt);
+                    set_ir_stmt_label(*lowered, label);
+                    if (!label.empty()) push_labeled_block(stmt.loc, label);
                     CheckedStatements block = check_statements(stmt.statements, true);
-                    if (!stmt.label.empty()) loops_.pop_back();
+                    if (!label.empty()) loops_.pop_back();
                     flow = block.flow;
-                    if (!stmt.label.empty() && flow == Flow::Stops) flow = Flow::Continues;
+                    if (!label.empty() && flow == Flow::Stops) flow = Flow::Continues;
                     lowered->statements = std::move(block.statements);
                 }
                 break;
@@ -9313,9 +9314,10 @@ private:
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
         StateSnapshot loop_input = snapshot_states();
+        const std::string& label = stmt_label(stmt);
 
         LoopInfo loop;
-        loop.label = stmt.label;
+        loop.label = label;
         push_loop(stmt.loc, loop);
         CheckedStatements body = check_statements(stmt.loop_body, true);
         lowered.loop_body = std::move(body.statements);
@@ -9328,7 +9330,7 @@ private:
         } else {
             restore_states(loop_input);
         }
-        lowered.label = stmt.label;
+        set_ir_stmt_label(lowered, label);
     }
 
     void check_while_let(const Stmt& stmt, IrStmt& lowered) {
@@ -9339,7 +9341,8 @@ private:
         }
 
         lowered.kind = IrStmtKind::WhileLet;
-        lowered.label = stmt.label;
+        const std::string& label = stmt_label(stmt);
+        set_ir_stmt_label(lowered, label);
         lowered.match_value = std::move(match_value);
         const Pattern& condition_pattern = *stmt.condition_pattern;
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
@@ -9362,7 +9365,7 @@ private:
         StateSnapshot loop_input = snapshot_states();
 
         LoopInfo loop;
-        loop.label = stmt.label;
+        loop.label = label;
         push_loop(stmt.loc, loop);
         push_scope();
         declare_match_arm_bindings(pattern_arms.front());
@@ -9400,7 +9403,8 @@ private:
         IrType subject_type = subject->type;
         const Pattern& condition_pattern = *stmt.condition_pattern;
         lowered.kind = IrStmtKind::While;
-        lowered.label = stmt.label;
+        const std::string& label = stmt_label(stmt);
+        set_ir_stmt_label(lowered, label);
         lowered.condition = make_bool_literal_expr(stmt.loc, true);
 
         std::string subject_name = make_hidden_local(
@@ -9437,7 +9441,7 @@ private:
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop;
-        loop.label = stmt.label;
+        loop.label = label;
         push_loop(stmt.loc, loop);
 
         for (std::size_t i = 0; i < alternatives.size(); ++i) {
@@ -9848,7 +9852,8 @@ private:
         auto loop = std::make_unique<IrStmt>();
         loop->kind = IrStmtKind::WhileLet;
         loop->loc = stmt.loc;
-        loop->label = stmt.label;
+        const std::string& label = stmt_label(stmt);
+        set_ir_stmt_label(*loop, label);
         loop->while_let_continue_on_mismatch = stmt.for_pattern_filter;
         loop->match_value = make_iterator_method_call(stmt.loc, iterator_name, "next", owning_iterator);
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *loop->match_value);
@@ -9881,7 +9886,7 @@ private:
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop_info;
-        loop_info.label = stmt.label;
+        loop_info.label = label;
         if (owning_iterator) loop_info.exit_cleanup_owner_names.push_back(iterator_name);
         push_loop(stmt.loc, loop_info);
         push_scope();
@@ -10039,7 +10044,8 @@ private:
         const Pattern& for_pattern = *stmt.for_pattern;
         IrType bound_type = start->type;
         lowered.kind = IrStmtKind::ForRange;
-        lowered.label = stmt.label;
+        const std::string& label = stmt_label(stmt);
+        set_ir_stmt_label(lowered, label);
         lowered.for_inclusive = inclusive;
         lowered.for_binding_type = bound_type;
         lowered.for_start = std::move(start);
@@ -10051,7 +10057,7 @@ private:
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop;
-        loop.label = stmt.label;
+        loop.label = label;
         push_loop(stmt.loc, loop);
         push_scope();
         std::vector<IrStmtPtr> pattern_prelude;
@@ -10093,13 +10099,14 @@ private:
         }
 
         lowered.kind = IrStmtKind::ForVector;
-        lowered.label = stmt.label;
+        const std::string& label = stmt_label(stmt);
+        set_ir_stmt_label(lowered, label);
         lowered.for_binding_type = iterable->type.args[0];
         lowered.for_values = std::move(iterable->args);
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop;
-        loop.label = stmt.label;
+        loop.label = label;
         push_loop(stmt.loc, loop);
         push_scope();
         std::vector<IrStmtPtr> pattern_prelude;
@@ -10153,7 +10160,8 @@ private:
         auto loop = std::make_unique<IrStmt>();
         loop->kind = IrStmtKind::ForRange;
         loop->loc = stmt.loc;
-        loop->label = stmt.label;
+        const std::string& label = stmt_label(stmt);
+        set_ir_stmt_label(*loop, label);
         loop->for_inclusive = false;
         loop->for_binding_type = i64;
         loop->for_start = make_integer_literal(stmt.loc, i64, 0);
@@ -10169,7 +10177,7 @@ private:
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop_info;
-        loop_info.label = stmt.label;
+        loop_info.label = label;
         push_loop(stmt.loc, loop_info);
         push_scope();
 
@@ -10237,10 +10245,11 @@ private:
     }
 
     void check_init_while(const Stmt& stmt, IrStmt& lowered) {
+        const std::string& label = stmt_label(stmt);
         LoopInfo loop;
         loop.supports_values = true;
-        loop.label = stmt.label;
-        lowered.label = stmt.label;
+        loop.label = label;
+        set_ir_stmt_label(lowered, label);
         for (const auto& binding : stmt.init_bindings) {
             IrExprPtr init = check_expr(*binding.init);
             IrType declared = binding.has_type ? resolve_executable_type(binding.type) : init->type;

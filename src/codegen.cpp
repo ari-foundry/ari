@@ -1576,13 +1576,14 @@ private:
     }
 
     void emit_block(const IrStmt& stmt) {
-        if (stmt.label.empty()) {
+        const std::string& label = ir_stmt_label(stmt);
+        if (label.empty()) {
             emit_statements(stmt.statements);
             return;
         }
 
         LoopLabels labels;
-        labels.source_label = stmt.label;
+        labels.source_label = label;
         labels.is_loop = false;
         loops_.push_back(labels);
         emit_statements(stmt.statements);
@@ -1608,7 +1609,7 @@ private:
         labels.plain_continue_known = true;
         labels.plain_continue_target = start;
         labels.value_continue_target = start;
-        labels.source_label = stmt.label;
+        labels.source_label = ir_stmt_label(stmt);
         loops_.push_back(labels);
         emit_statements(stmt.loop_body);
         patch_rel32(emit_jmp_placeholder(), start);
@@ -1650,7 +1651,7 @@ private:
         labels.plain_continue_known = true;
         labels.plain_continue_target = cond;
         labels.value_continue_target = cond;
-        labels.source_label = stmt.label;
+        labels.source_label = ir_stmt_label(stmt);
         loops_.push_back(labels);
         emit_statements(stmt.loop_body);
         patch_rel32(emit_jmp_placeholder(), cond);
@@ -1692,7 +1693,7 @@ private:
         LoopLabels labels;
         labels.plain_continue_known = false;
         labels.value_continue_target = cond;
-        labels.source_label = stmt.label;
+        labels.source_label = ir_stmt_label(stmt);
         loops_.push_back(labels);
         emit_statements(stmt.loop_body);
 
@@ -1728,7 +1729,7 @@ private:
 
     void emit_for_vector(const IrStmt& stmt) {
         LoopLabels labels;
-        labels.source_label = stmt.label;
+        labels.source_label = ir_stmt_label(stmt);
         loops_.push_back(labels);
         std::vector<std::size_t> pending_continue;
 
@@ -1774,7 +1775,7 @@ private:
         labels.plain_continue_known = false;
         labels.plain_continue_target = 0;
         labels.value_continue_target = cond;
-        labels.source_label = stmt.label;
+        labels.source_label = ir_stmt_label(stmt);
         labels.update_names = names;
         loops_.push_back(labels);
 

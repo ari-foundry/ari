@@ -896,8 +896,8 @@ private:
             stmt->kind != StmtKind::Block) {
             fail(label.loc, "labels can only be attached to loops or blocks");
         }
-        if (!stmt->label.empty()) fail(label.loc, "statement already has a label");
-        stmt->label = label.text;
+        if (!stmt_label(*stmt).empty()) fail(label.loc, "statement already has a label");
+        set_stmt_label(*stmt, label.text);
         return stmt;
     }
 

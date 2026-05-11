@@ -434,6 +434,8 @@ Checklist:
       labeled-loop break, and labeled-block value break lowering paths
 - [x] AST/IR assignment statement payload packing preserves direct binding,
       compound, field, and indexed assignment lowering paths
+- [x] AST/IR statement label payload packing preserves labeled block, loop,
+      and range-for break lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

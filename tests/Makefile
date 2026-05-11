@@ -258,6 +258,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/labeled-break.raw; code=$$?; test $$code -eq 2
 	$(TARGET) --freestanding tests/ok/break-statement-payloads.ari -o $(BUILD_DIR)/control-flow/break-statement-payloads.raw
 	$(BUILD_DIR)/control-flow/break-statement-payloads.raw; code=$$?; test $$code -eq 9
+	$(TARGET) --freestanding tests/ok/statement-label-payloads.ari -o $(BUILD_DIR)/control-flow/statement-label-payloads.raw
+	$(BUILD_DIR)/control-flow/statement-label-payloads.raw; code=$$?; test $$code -eq 7
 	$(TARGET) --freestanding tests/ok/labeled-block.ari -o $(BUILD_DIR)/control-flow/labeled-block.raw
 	$(BUILD_DIR)/control-flow/labeled-block.raw; code=$$?; test $$code -eq 2
 	$(TARGET) tests/ok/if-while-let.ari --emit-llvm $(BUILD_DIR)/control-flow/if-while-let.ll
@@ -334,6 +336,10 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/break-statement-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/break-statement-payloads.ll
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll
+	$(TARGET) tests/ok/statement-label-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/statement-label-payloads.ll
+	grep -q "block.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll
+	grep -q "while.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll
+	grep -q "for.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll
 	$(TARGET) tests/ok/for-iterator-direct.ari --emit-llvm $(BUILD_DIR)/control-flow/for-iterator-direct.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/for-iterator-direct.ll
 	$(TARGET) tests/ok/for-generic-iterator-direct.ari --emit-llvm $(BUILD_DIR)/control-flow/for-generic-iterator-direct.ll

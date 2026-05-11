@@ -266,7 +266,7 @@ struct Stmt {
     std::vector<ExprPtr> updates;
     std::unique_ptr<StmtMatchArms> match_arms;
     std::unique_ptr<std::string> drop_name;
-    std::string label;
+    std::unique_ptr<std::string> label;
     std::unique_ptr<StmtBreakPayload> break_payload;
 };
 
@@ -321,6 +321,19 @@ inline const std::string& stmt_drop_name(const Stmt& stmt) {
 
 inline void set_stmt_drop_name(Stmt& stmt, std::string name) {
     stmt.drop_name = std::make_unique<std::string>(std::move(name));
+}
+
+inline const std::string& stmt_label(const Stmt& stmt) {
+    static const std::string empty;
+    return stmt.label ? *stmt.label : empty;
+}
+
+inline void set_stmt_label(Stmt& stmt, std::string label) {
+    if (label.empty()) {
+        stmt.label.reset();
+        return;
+    }
+    stmt.label = std::make_unique<std::string>(std::move(label));
 }
 
 inline const StmtBreakPayload& stmt_break_payload(const Stmt& stmt) {

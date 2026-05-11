@@ -151,7 +151,9 @@
    IR explicit-drop names now live behind drop-statement payload pointers too,
    break labels/values now live behind break-statement payload pointers, and
    AST/IR assignment statement names, lvalue targets, and RHS expressions now
-   live behind assignment-statement payload pointers.
+   live behind assignment-statement payload pointers. AST/IR statement labels
+   now also live behind label payload pointers, so unlabeled statements no
+   longer carry an eager source-label string.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
@@ -162,8 +164,7 @@
      receive broad parser, sema, and backend mutations
    - [stmt-payload-groups] split the remaining AST/IR statement-only fields by
      statement kind once parser and sema statement construction has enough
-     focused helpers; small next targets are block/branch/loop body vectors and
-     label metadata
+     focused helpers; small next target is block/branch/loop body vectors
    - [expr-child-vector-payloads] split expression child/vector fields after
      builders cover the remaining parser/sema/backend mutation paths
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

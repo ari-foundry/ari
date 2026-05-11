@@ -96,7 +96,9 @@ non-loop statements without embedded `Pattern` objects. AST and IR match
 statement arm vectors also live behind match-statement payload pointers, so
 non-match statement nodes no longer carry those vector slots directly. Explicit
 `drop` statement names, `break` labels/values, and assignment statement
-names/targets/RHS expressions are lazy payloads as well.
+names/targets/RHS expressions are lazy payloads as well. Statement labels are
+also lazy on AST/IR statement nodes, leaving unlabeled blocks and loops without
+an eager label string.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

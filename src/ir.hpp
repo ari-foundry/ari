@@ -456,7 +456,7 @@ struct IrStmt {
     std::vector<IrExprPtr> updates;
     std::unique_ptr<IrStmtMatchArms> match_arms;
     std::unique_ptr<std::string> drop_name;
-    std::string label;
+    std::unique_ptr<std::string> label;
     std::unique_ptr<IrBreakPayload> break_payload;
 };
 
@@ -511,6 +511,19 @@ inline const std::string& ir_stmt_drop_name(const IrStmt& stmt) {
 
 inline void set_ir_stmt_drop_name(IrStmt& stmt, std::string name) {
     stmt.drop_name = std::make_unique<std::string>(std::move(name));
+}
+
+inline const std::string& ir_stmt_label(const IrStmt& stmt) {
+    static const std::string empty;
+    return stmt.label ? *stmt.label : empty;
+}
+
+inline void set_ir_stmt_label(IrStmt& stmt, std::string label) {
+    if (label.empty()) {
+        stmt.label.reset();
+        return;
+    }
+    stmt.label = std::make_unique<std::string>(std::move(label));
 }
 
 inline const IrBreakPayload& ir_stmt_break_payload(const IrStmt& stmt) {

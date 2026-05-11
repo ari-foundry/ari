@@ -1076,13 +1076,14 @@ private:
     }
 
     void emit_block(const IrStmt& stmt) {
-        if (stmt.label.empty()) {
+        const std::string& source_label = ir_stmt_label(stmt);
+        if (source_label.empty()) {
             emit_statements(stmt.statements);
             return;
         }
 
         std::string end_label = label("block.end");
-        loops_.push_back(make_loop_context(end_label, "", "", stmt.label, {}, false));
+        loops_.push_back(make_loop_context(end_label, "", "", source_label, {}, false));
         emit_statements(stmt.statements);
 
         bool body_terminated = block_terminated_;
@@ -1102,7 +1103,7 @@ private:
         emit_label(cond_label);
         Value cond = emit_expr(*stmt.condition);
         line("  br i1 " + cond.name + ", label %" + body_label + ", label %" + end_label);
-        loops_.push_back(make_loop_context(end_label, cond_label, cond_label, stmt.label));
+        loops_.push_back(make_loop_context(end_label, cond_label, cond_label, ir_stmt_label(stmt)));
         emit_label(body_label);
         emit_statements(stmt.loop_body);
         if (!block_terminated_) line("  br label %" + cond_label);
@@ -1155,7 +1156,7 @@ private:
             }
         }
 
-        loops_.push_back(make_loop_context(end_label, cond_label, cond_label, stmt.label));
+        loops_.push_back(make_loop_context(end_label, cond_label, cond_label, ir_stmt_label(stmt)));
         emit_label(body_label);
         emit_statements(stmt.loop_body);
         if (!block_terminated_) line("  br label %" + cond_label);
@@ -1186,7 +1187,7 @@ private:
              index.type + " " + index.name + ", " + limit.name);
         line("  br i1 " + cmp + ", label %" + body_label + ", label %" + end_label);
 
-        loops_.push_back(make_loop_context(end_label, step_label, cond_label, stmt.label));
+        loops_.push_back(make_loop_context(end_label, step_label, cond_label, ir_stmt_label(stmt)));
         emit_label(body_label);
         if (!stmt.for_binding_name.empty()) {
             Value current = load_local(stmt.loc, stmt.for_index_name, stmt.for_binding_type);
@@ -1215,7 +1216,7 @@ private:
 
     void emit_for_vector(const IrStmt& stmt) {
         std::string end_label = label("forvec.end");
-        loops_.push_back(make_loop_context(end_label, "", "", stmt.label));
+        loops_.push_back(make_loop_context(end_label, "", "", ir_stmt_label(stmt)));
         for (std::size_t i = 0; i < stmt.for_values.size(); ++i) {
             std::string next_label = i + 1 == stmt.for_values.size() ? end_label : label("forvec.next");
             loops_.back().plain_continue_label = next_label;
@@ -1249,7 +1250,7 @@ private:
         Value cond = emit_expr(*stmt.condition);
         line("  br i1 " + cond.name + ", label %" + body_label + ", label %" + end_label);
 
-        loops_.push_back(make_loop_context(end_label, update_label, cond_label, stmt.label, names));
+        loops_.push_back(make_loop_context(end_label, update_label, cond_label, ir_stmt_label(stmt), names));
         emit_label(body_label);
         emit_statements(stmt.loop_body);
         if (!block_terminated_) line("  br label %" + update_label);
