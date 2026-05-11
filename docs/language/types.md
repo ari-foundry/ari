@@ -516,6 +516,7 @@ vec.insert_in(ref mut zone, 2, 18)
 vec.resize_in(ref mut zone, 8, 0)
 vec.set(0, 25)
 vec.swap(0, 2)
+let copied = vec.copy_to(ref mut other_zone)
 let empty = vec.is_empty()
 let len = vec.len()
 let cap = vec.capacity()
@@ -545,8 +546,10 @@ mut Zone, length, value)` shrinks by setting `len` or grows by appending copies
 of `value`. Passing a different zone borrow to `reserve`, `reserve_extra`,
 `push_in`, `insert_in`, `extend_from_slice_in`, or `resize_in` is rejected
 because the source handle remains tied to the zone that created it.
-`vec.as_slice()` returns a `Slice[T]` over the same zone-backed buffer, and
-that slice is
+`std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current elements into a new
+handle tied to the target zone, so resetting the source zone does not
+invalidate the copy. `vec.as_slice()` returns a `Slice[T]` over the same
+zone-backed buffer, and that slice is
 rejected after
 the source zone is reset or destroyed.
 

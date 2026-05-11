@@ -309,6 +309,16 @@ pub mod vec {
       self.raw.capacity = capacity;
     }
 
+    fn copy_to(self, target: ref mut Zone) -> std::vec::Vec[T] {
+      var copied = std::vec::new<T>(target, self.raw.len);
+      var index = 0;
+      while index < self.raw.len {
+        copied.push(ptr_load(ptr_add(self.raw.data, index)));
+        index = index + 1;
+      }
+      return copied;
+    }
+
     fn pop(self: ref mut Self) -> T {
       std::assert(self.raw.len > 0);
       self.raw.len = self.raw.len - 1;

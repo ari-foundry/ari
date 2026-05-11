@@ -275,6 +275,9 @@ Checklist:
       by length or grows through the same explicit zone capability
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy
+- [x] source `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current
+      elements into a new target-zone handle and invalidates with that target
+      zone after reset/destroy
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local
       copies, scalar indexing, the fixed-capacity method surface, and
       stored-vector `for` loops
