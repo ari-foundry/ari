@@ -14,12 +14,6 @@ namespace {
     throw CompileError(where(loc) + ": " + message);
 }
 
-std::string append_borrow_path(const std::string& base, const std::string& suffix) {
-    if (base.empty()) return suffix;
-    if (suffix.empty()) return base;
-    return base + "." + suffix;
-}
-
 } // namespace
 
 std::optional<BorrowResultSource> expr_borrow_result_source(const IrExpr& value) {
@@ -78,6 +72,8 @@ std::optional<BorrowResultSource> call_borrow_result_source(SourceLocation loc,
             "borrow-returning function '" + display_name +
                 "' result source argument must be ref, ref mut, a borrow binding, or a compatible borrow control-flow result");
     }
+    source->path = append_borrow_path(source->path, contract.return_path);
+    source->mutable_borrow = contract.result.qualifier == TypeQualifier::MutRef;
     return source;
 }
 

@@ -2305,6 +2305,11 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-return-param.ari -o $(BUILD_DIR)/errors/borrow-return-param.raw
 	$(BUILD_DIR)/errors/borrow-return-param.raw; code=$$?; test $$code -eq 57
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-param.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-param.elf; $(BUILD_DIR)/errors/borrow-return-param.elf; code=$$?; test $$code -eq 57; fi
+	$(TARGET) --freestanding tests/ok/borrow-return-subpath.ari -o $(BUILD_DIR)/errors/borrow-return-subpath.raw
+	$(BUILD_DIR)/errors/borrow-return-subpath.raw; code=$$?; test $$code -eq 182
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-subpath.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-subpath.elf; $(BUILD_DIR)/errors/borrow-return-subpath.elf; code=$$?; test $$code -eq 182; fi
+	if $(TARGET) tests/errors/borrow-return-path-mismatch.ari -o $(BUILD_DIR)/errors/borrow-return-path-mismatch.elf >$(BUILD_DIR)/errors/borrow-return-path-mismatch.err 2>&1; then exit 1; fi
+	grep -q "function return borrow result must use the same source path on every return" $(BUILD_DIR)/errors/borrow-return-path-mismatch.err
 	if $(TARGET) tests/errors/named-borrow-assign-source.ari -o $(BUILD_DIR)/errors/named-borrow-assign-source.elf >$(BUILD_DIR)/errors/named-borrow-assign-source.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/errors/named-borrow-assign-source.err
 	if $(TARGET) tests/errors/named-borrow-conflict.ari -o $(BUILD_DIR)/errors/named-borrow-conflict.elf >$(BUILD_DIR)/errors/named-borrow-conflict.err 2>&1; then exit 1; fi

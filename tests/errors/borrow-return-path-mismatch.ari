@@ -1,0 +1,18 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+fn choose(pair: ref Pair, flag: bool) -> ref i64 {
+  if flag {
+    return ref pair.left;
+  }
+  return ref pair.right;
+}
+
+fn main() -> i64 {
+  var pair = Pair { left: 1, right: 2 };
+  let item: ref i64 = choose(ref pair, true);
+  let item_ptr: ptr i64 = item as ptr i64;
+  return *item_ptr;
+}

@@ -14,6 +14,7 @@ namespace ari {
 struct BorrowCallContract {
     IrType result;
     std::optional<std::size_t> source_param_index;
+    std::string return_path;
     bool is_extern = false;
 };
 

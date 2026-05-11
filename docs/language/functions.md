@@ -327,8 +327,11 @@ fn bad(value: ref i64) -> ref i64 {
 ```
 
 When a caller binds the result, the original argument source remains borrowed
-until that result binding leaves scope. The same rule applies to method calls
-whose `self` parameter is the single borrow source. Borrow returns through
-extern declarations, function pointer calls, borrow-valued aggregate returns,
-and functions with multiple borrow parameters are still rejected until Ari has
+until that result binding leaves scope. If every return path borrows the same
+field or constant element below that parameter, only that subpath stays
+borrowed at the call site, so a returned `ref pair.left` does not block an
+unrelated borrow of `pair.right`. The same rule applies to method calls whose
+`self` parameter is the single borrow source. Borrow returns through extern
+declarations, function pointer calls, borrow-valued aggregate returns, and
+functions with multiple borrow parameters are still rejected until Ari has
 explicit source/lifetime contracts for those shapes.

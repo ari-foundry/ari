@@ -1,0 +1,55 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+fn main() -> i64 {
+  var pair = Pair { left: 10, right: 1 };
+  let left_ref: ref i64 = left(ref pair);
+  let right_ref: ref mut i64 = ref mut pair.right;
+  let left_ptr: ptr i64 = left_ref as ptr i64;
+  let right_ptr: ptr i64 = right_ref as ptr i64;
+  *right_ptr = 2;
+
+  var mutable_pair = Pair { left: 20, right: 3 };
+  let left_unique: ref mut i64 = left_mut(ref mut mutable_pair);
+  let mutable_right: ref i64 = ref mutable_pair.right;
+  let left_unique_ptr: ptr i64 = left_unique as ptr i64;
+  let mutable_right_ptr: ptr i64 = mutable_right as ptr i64;
+  *left_unique_ptr = 30;
+
+  var viewed_pair = Pair { left: 40, right: 5 };
+  let viewed_left: ref i64 = view_left_from_mut(ref mut viewed_pair);
+  let viewed_left_again: ref i64 = ref viewed_pair.left;
+  let viewed_left_ptr: ptr i64 = viewed_left as ptr i64;
+  let viewed_left_again_ptr: ptr i64 = viewed_left_again as ptr i64;
+
+  var method_pair = Pair { left: 50, right: 6 };
+  let method_left_ref: ref i64 = method_pair.method_left();
+  let method_right_ref: ref mut i64 = ref mut method_pair.right;
+  let method_left_ptr: ptr i64 = method_left_ref as ptr i64;
+  let method_right_ptr: ptr i64 = method_right_ref as ptr i64;
+  *method_right_ptr = 7;
+
+  return *left_ptr + *right_ptr + *left_unique_ptr + *mutable_right_ptr +
+         *viewed_left_ptr + *viewed_left_again_ptr + *method_left_ptr +
+         *method_right_ptr;
+}
+
+fn left(pair: ref Pair) -> ref i64 {
+  return ref pair.left;
+}
+
+fn left_mut(pair: ref mut Pair) -> ref mut i64 {
+  return ref mut pair.left;
+}
+
+fn view_left_from_mut(pair: ref mut Pair) -> ref i64 {
+  return ref pair.left;
+}
+
+impl Pair {
+  fn method_left(self: ref Self) -> ref i64 {
+    return ref self.left;
+  }
+}

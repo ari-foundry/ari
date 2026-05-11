@@ -55,6 +55,7 @@ struct FunctionSig {
     std::vector<IrType> params;
     IrType result;
     std::optional<std::size_t> borrow_return_param_index;
+    std::string borrow_return_path;
     std::optional<std::size_t> zone_pointer_return_param_index;
     std::string module_name;
     std::string link_name;
@@ -344,6 +345,16 @@ private:
         SourceLocation loc;
     };
 
+    struct BorrowReturnPathHintScan {
+        std::optional<std::string> path;
+        bool unknown = false;
+    };
+
+    struct BorrowReturnOperandPathHint {
+        std::string path;
+        IrType type;
+    };
+
     struct TraitImplCoherenceInfo {
         std::string trait_name;
         std::vector<IrType> trait_args;
@@ -405,6 +416,7 @@ private:
     std::string current_module_name_;
     std::optional<std::size_t> current_borrow_return_param_index_;
     std::string current_borrow_return_param_name_;
+    std::optional<std::string> current_borrow_return_path_;
     std::optional<std::size_t> current_zone_pointer_return_param_index_;
     std::string current_zone_pointer_return_source_;
     bool allow_zone_temp_init_ = false;
@@ -2509,6 +2521,178 @@ private:
         }
     }
 
+    std::optional<BorrowReturnOperandPathHint> borrow_return_operand_path_hint(
+        const Expr& expr,
+        const std::string& param_name,
+        const IrType& type
+    ) {
+        if (expr.kind == ExprKind::Name) {
+            if (expr.name != param_name) return std::nullopt;
+            return BorrowReturnOperandPathHint{"", type};
+        }
+
+        if (expr.kind == ExprKind::FieldAccess) {
+            std::optional<BorrowReturnOperandPathHint> base =
+                borrow_return_operand_path_hint(*expr_operand(expr), param_name, type);
+            if (!base || base->type.primitive != IrPrimitiveKind::Struct) return std::nullopt;
+            std::size_t index = struct_field_index(expr.loc, base->type, expr.name);
+            return BorrowReturnOperandPathHint{
+                local_owned_field_path(base->path, index),
+                base->type.field_types[index]
+            };
+        }
+
+        if (expr.kind == ExprKind::TupleIndex) {
+            std::optional<BorrowReturnOperandPathHint> base =
+                borrow_return_operand_path_hint(*expr_operand(expr), param_name, type);
+            if (!base ||
+                (base->type.primitive != IrPrimitiveKind::Tuple &&
+                 base->type.primitive != IrPrimitiveKind::Struct)) {
+                return std::nullopt;
+            }
+            const std::vector<IrType>& fields = aggregate_field_types(base->type);
+            if (expr.tuple_index >= fields.size()) return std::nullopt;
+            return BorrowReturnOperandPathHint{
+                local_owned_field_path(base->path, static_cast<std::size_t>(expr.tuple_index)),
+                fields[static_cast<std::size_t>(expr.tuple_index)]
+            };
+        }
+
+        if (expr.kind == ExprKind::Index) {
+            std::optional<BorrowReturnOperandPathHint> base =
+                borrow_return_operand_path_hint(*expr_operand(expr), param_name, type);
+            if (!base ||
+                (base->type.primitive != IrPrimitiveKind::Array &&
+                 base->type.primitive != IrPrimitiveKind::Vector) ||
+                base->type.args.size() != 1) {
+                return std::nullopt;
+            }
+            const ExprPtr& index = expr_right(expr);
+            if (!index || index->kind != ExprKind::Integer || index->int_negative) return std::nullopt;
+            if (index->int_value >= base->type.array_size) return std::nullopt;
+            return BorrowReturnOperandPathHint{
+                local_owned_field_path(base->path, static_cast<std::size_t>(index->int_value)),
+                base->type.args[0]
+            };
+        }
+
+        return std::nullopt;
+    }
+
+    std::optional<std::string> borrow_return_expr_path_hint(const Expr& expr,
+                                                            const std::string& param_name,
+                                                            const IrType& param_type) {
+        if (expr.kind == ExprKind::Name) {
+            if (expr.name == param_name) return "";
+            return std::nullopt;
+        }
+        if (expr.kind == ExprKind::Borrow && expr_operand(expr)) {
+            std::optional<BorrowReturnOperandPathHint> hint =
+                borrow_return_operand_path_hint(*expr_operand(expr), param_name, param_type);
+            if (hint) return hint->path;
+            return std::nullopt;
+        }
+        if (expr.kind == ExprKind::If) {
+            const ExprPtr& then_value = expr_if_then_value(expr);
+            const ExprPtr& else_value = expr_if_else_value(expr);
+            if (!then_value || !else_value) return std::nullopt;
+            std::optional<std::string> then_path =
+                borrow_return_expr_path_hint(*then_value, param_name, param_type);
+            std::optional<std::string> else_path =
+                borrow_return_expr_path_hint(*else_value, param_name, param_type);
+            if (then_path && else_path && *then_path == *else_path) return then_path;
+            return std::nullopt;
+        }
+        if (expr.kind == ExprKind::Match) {
+            std::optional<std::string> path;
+            bool saw_arm = false;
+            for (const auto& arm : expr_match_arms(expr)) {
+                if (!arm.value) return std::nullopt;
+                std::optional<std::string> arm_path =
+                    borrow_return_expr_path_hint(*arm.value, param_name, param_type);
+                if (!arm_path) return std::nullopt;
+                if (!path) path = *arm_path;
+                else if (*path != *arm_path) return std::nullopt;
+                saw_arm = true;
+            }
+            if (saw_arm) return path;
+            return std::nullopt;
+        }
+        if (expr.kind == ExprKind::Block && expr_block_body(expr).empty() && expr_block_value(expr)) {
+            return borrow_return_expr_path_hint(*expr_block_value(expr), param_name, param_type);
+        }
+        return std::nullopt;
+    }
+
+    void merge_borrow_return_path_hint(BorrowReturnPathHintScan& scan,
+                                       std::optional<std::string> path) {
+        if (!path) {
+            scan.unknown = true;
+            return;
+        }
+        if (!scan.path) {
+            scan.path = std::move(path);
+            return;
+        }
+        if (*scan.path != *path) scan.unknown = true;
+    }
+
+    void collect_borrow_return_path_hints(const std::vector<StmtPtr>& statements,
+                                          const std::string& param_name,
+                                          const IrType& param_type,
+                                          BorrowReturnPathHintScan& scan) {
+        for (const auto& stmt : statements) {
+            switch (stmt->kind) {
+                case StmtKind::Return:
+                    if (stmt->expr) {
+                        merge_borrow_return_path_hint(
+                            scan,
+                            borrow_return_expr_path_hint(*stmt->expr, param_name, param_type));
+                    }
+                    break;
+                case StmtKind::Block:
+                    collect_borrow_return_path_hints(stmt_statements(*stmt), param_name, param_type, scan);
+                    break;
+                case StmtKind::If:
+                    collect_borrow_return_path_hints(stmt_then_body(*stmt), param_name, param_type, scan);
+                    collect_borrow_return_path_hints(stmt_else_body(*stmt), param_name, param_type, scan);
+                    break;
+                case StmtKind::While:
+                case StmtKind::WhileLet:
+                case StmtKind::For:
+                    collect_borrow_return_path_hints(stmt_loop_body(*stmt), param_name, param_type, scan);
+                    break;
+                case StmtKind::InitWhile:
+                    collect_borrow_return_path_hints(stmt_loop_body(*stmt), param_name, param_type, scan);
+                    break;
+                case StmtKind::Match:
+                    for (const auto& arm : stmt_match_arms(*stmt)) {
+                        collect_borrow_return_path_hints(arm.body, param_name, param_type, scan);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    void set_function_borrow_return_path_hint(FunctionSig& sig, const FunctionDecl& fn) {
+        if (!sig.borrow_return_param_index || !fn.has_body) return;
+        if (*sig.borrow_return_param_index >= fn.params.size() ||
+            *sig.borrow_return_param_index >= sig.params.size()) {
+            return;
+        }
+        const Param& param = fn.params[*sig.borrow_return_param_index];
+        if (param.name.empty()) return;
+        BorrowReturnPathHintScan scan;
+        collect_borrow_return_path_hints(
+            fn.body,
+            param.name,
+            sig.params[*sig.borrow_return_param_index],
+            scan);
+        if (!scan.unknown && scan.path) sig.borrow_return_path = *scan.path;
+    }
+
     void collect_impl_method_signatures() {
         for (const auto& impl : program_.impls) {
             std::string previous_module = current_module_name_;
@@ -2568,6 +2752,7 @@ private:
                 for (const auto& param : method.params) sig.params.push_back(resolve_executable_type(param.type));
                 sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
                 set_function_return_contracts(sig);
+                set_function_borrow_return_path_hint(sig, method);
 
                 current_type_substitutions_ = std::move(previous_substitutions);
 
@@ -2892,6 +3077,7 @@ private:
             for (const auto& param : fn.params) sig.params.push_back(resolve_executable_type(param.type));
             sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
             set_function_return_contracts(sig);
+            set_function_borrow_return_path_hint(sig, fn);
             current_module_name_ = previous_module;
 
             auto inserted = functions_.emplace(fn.name, std::move(sig));
@@ -3455,6 +3641,7 @@ private:
         std::string previous_zone_pointer_return_source = std::move(current_zone_pointer_return_source_);
         std::optional<std::size_t> previous_borrow_return_param_index = current_borrow_return_param_index_;
         std::string previous_borrow_return_param_name = std::move(current_borrow_return_param_name_);
+        std::optional<std::string> previous_borrow_return_path = std::move(current_borrow_return_path_);
         current_module_name_ = fn.module_name;
         current_type_substitutions_ = std::move(substitutions);
         current_generic_bounds_.clear();
@@ -3465,6 +3652,7 @@ private:
         current_zone_pointer_return_source_.clear();
         current_borrow_return_param_index_.reset();
         current_borrow_return_param_name_.clear();
+        current_borrow_return_path_.reset();
         allow_zone_temp_init_ = false;
         local_scopes_.clear();
         loops_.clear();
@@ -3539,6 +3727,12 @@ private:
         }
         if (body.flow == Flow::Returns) discard_scope();
         else pop_scope();
+        if (current_borrow_return_param_index_) {
+            auto found = functions_.find(lowered_name);
+            if (found != functions_.end()) {
+                found->second.borrow_return_path = current_borrow_return_path_.value_or("");
+            }
+        }
         current_module_name_ = previous_module;
         current_type_substitutions_ = std::move(previous_substitutions);
         current_generic_bounds_ = std::move(previous_generic_bounds);
@@ -3546,6 +3740,7 @@ private:
         current_zone_pointer_return_source_ = std::move(previous_zone_pointer_return_source);
         current_borrow_return_param_index_ = previous_borrow_return_param_index;
         current_borrow_return_param_name_ = std::move(previous_borrow_return_param_name);
+        current_borrow_return_path_ = std::move(previous_borrow_return_path);
         return ir_fn;
     }
 
@@ -4082,6 +4277,11 @@ private:
         if (root.name != current_borrow_return_param_name_) {
             fail(loc, "function return cannot return a borrow of local binding '" + root.name + "'");
         }
+        if (!current_borrow_return_path_) {
+            current_borrow_return_path_ = root.path;
+        } else if (*current_borrow_return_path_ != root.path) {
+            fail(loc, "function return borrow result must use the same source path on every return");
+        }
     }
 
     IrExprPtr finish_tracked_call(SourceLocation loc,
@@ -4093,6 +4293,7 @@ private:
         BorrowCallContract contract{
             sig.result,
             sig.borrow_return_param_index,
+            sig.borrow_return_path,
             sig.is_extern
         };
         std::optional<BorrowResultSource> source =
@@ -12923,6 +13124,7 @@ private:
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
         set_function_return_contracts(sig);
+        set_function_borrow_return_path_hint(sig, *method.fn);
 
         current_module_name_ = previous_module;
 
@@ -12961,6 +13163,7 @@ private:
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
         set_function_return_contracts(sig);
+        set_function_borrow_return_path_hint(sig, *method.fn);
 
         current_module_name_ = previous_module;
 
@@ -13514,6 +13717,7 @@ private:
         call_sig.is_public = fn.is_public;
         call_sig.loc = fn.loc;
         set_function_return_contracts(call_sig);
+        set_function_borrow_return_path_hint(call_sig, fn);
 
         if (!queued_specializations_.count(specialized_name)) {
             functions_.emplace(specialized_name, call_sig);
@@ -13545,6 +13749,7 @@ private:
         sig.is_public = fn.is_public;
         sig.loc = fn.loc;
         set_function_return_contracts(sig);
+        set_function_borrow_return_path_hint(sig, fn);
         functions_.emplace(specialized_name, std::move(sig));
         pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
         queued_specializations_.insert(specialized_name);

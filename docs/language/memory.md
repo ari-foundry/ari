@@ -142,6 +142,8 @@ Rules currently checked:
 - a function may return `ref T` or `ref mut T` only when the signature has
   exactly one borrow parameter and the returned borrow source traces back to
   that parameter
+- when such a function or method always returns the same field or constant
+  element below that parameter, callers keep only that returned subpath borrowed
 - a borrow return cannot come from a local binding, a value parameter, an extern
   declaration, a function pointer call, or a function with multiple borrow
   parameters
@@ -151,10 +153,10 @@ Rules currently checked:
 Named borrow lifetimes are lexical today. A reborrow keeps the borrow binding it
 was created from borrowed until the reborrow exits scope, and that source borrow
 binding keeps its own original source borrowed until its scope exits. A
-borrow-valued function or method call keeps the caller's source borrowed for as
-long as the returned borrow binding lives. Future borrow-checker refinement may
-shorten a named borrow to its last use and add explicit contracts for
-multi-source borrow-returning functions.
+borrow-valued function or method call keeps the caller's returned source path
+borrowed for as long as the returned borrow binding lives. Future
+borrow-checker refinement may shorten a named borrow to its last use and add
+explicit contracts for multi-source borrow-returning functions.
 
 ## Drop
 

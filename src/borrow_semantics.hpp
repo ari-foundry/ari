@@ -73,5 +73,6 @@ std::optional<BorrowResultSource> borrow_result_source(const IrExpr& expr);
 void set_borrow_result_source(IrExpr& expr, const BorrowResultSource& source);
 bool same_borrow_result_source(const BorrowResultSource& left,
                                const BorrowResultSource& right);
+std::string append_borrow_path(const std::string& base, const std::string& suffix);
 
 } // namespace ari

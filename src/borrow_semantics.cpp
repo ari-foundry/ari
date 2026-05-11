@@ -198,4 +198,10 @@ bool same_borrow_result_source(const BorrowResultSource& left,
            left.mutable_borrow == right.mutable_borrow;
 }
 
+std::string append_borrow_path(const std::string& base, const std::string& suffix) {
+    if (base.empty()) return suffix;
+    if (suffix.empty()) return base;
+    return base + "." + suffix;
+}
+
 } // namespace ari

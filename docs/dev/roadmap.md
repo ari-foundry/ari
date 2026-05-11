@@ -95,15 +95,16 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Preserve returned borrow subpaths in single-source borrow-return contracts.
-   Borrow-return contract recognition and borrow-returning call activation are
-   now split across `borrow_return_semantics` and `borrow_call_semantics`.
-   Current call sites still conservatively borrow the whole caller argument
-   source when a function returns `ref source.field`; carry the returned
-   relative field/element path through the function signature so callers only
-   keep that subpath borrowed.
-   - [borrow-return-path-contracts] carry returned relative field/element paths
-     in function signatures so callers can borrow only the returned subpath
+2. Extend borrow-return contracts beyond implicit single-source inference.
+   Single-source borrow-returning functions and methods now carry the returned
+   relative field/element path through their signatures, and call sites compose
+   that path with the caller argument source. The remaining borrow-return work
+   needs explicit source contracts before Ari can accept APIs with multiple
+   possible borrow sources or foreign declarations whose body cannot be checked.
+   - [multi-source-borrow-returns] add explicit lifetime/source contracts for
+     borrow-returning functions with more than one borrow parameter
+   - [extern-borrow-return-contracts] design an explicit contract before extern
+     declarations may return tracked Ari borrow values
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -158,10 +159,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
    - [aggregate-borrows] track borrow-valued aggregate fields independently so
      assigning unrelated fields or whole aggregate bindings can be checked
-   - [multi-source-borrow-returns] add explicit lifetime/source contracts for
-     borrow-returning functions with more than one borrow parameter
-   - [extern-borrow-return-contracts] design an explicit contract before extern
-     declarations may return tracked Ari borrow values
    - [loop-state] track ownership and borrow state through loops, init-while
      updates, owning loop bindings, and owning break values instead of rejecting
      all state changes inside loops
