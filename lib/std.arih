@@ -186,6 +186,24 @@ pub mod vec {
       self.raw.len = self.raw.len + 1;
     }
 
+    fn push_in(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
+      if self.raw.len >= self.raw.capacity {
+        var capacity = self.raw.capacity * 2;
+        if capacity <= self.raw.len {
+          capacity = self.raw.len + 1;
+        }
+        let data = alloc_buffer<T>(zone, capacity);
+        var index = 0;
+        while index < self.raw.len {
+          ptr_store(ptr_add(data, index), ptr_load(ptr_add(self.raw.data, index)));
+          index = index + 1;
+        }
+        self.raw.data = data;
+        self.raw.capacity = capacity;
+      }
+      self.push(value);
+    }
+
     fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
       std::assert(capacity >= 0);
       if capacity <= self.raw.capacity {

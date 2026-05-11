@@ -64,9 +64,11 @@ zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 `data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
 capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed.
 The source handle currently exposes element methods: `len`, `capacity`,
-`is_empty`, `first`, `last`, `get`, `set`, `swap`, `push`, grow-only same-zone
-`reserve`, `pop`, `insert`, `remove`, `clear`, `truncate`, `contains`,
-`index_of`, `count`, and `as_slice`. This is not the final root `Vec[T]` method
+`is_empty`, `first`, `last`, `get`, `set`, `swap`, `push`,
+`push_in(ref mut zone, value)`, grow-only same-zone `reserve`, `pop`, `insert`,
+`remove`, `clear`, `truncate`, `contains`, `index_of`, `count`, and
+`as_slice`. `push_in` uses the same explicit zone capability to grow the buffer
+when the current capacity is full. This is not the final root `Vec[T]` method
 API.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
@@ -439,11 +441,12 @@ vector-allocation seed. `std::vec::with_capacity<T>(ref mut Zone, capacity)`
 builds a source `RawVec<T>` handle around that allocation, and
 `std::vec::new<T>(ref mut Zone, capacity)` wraps it in source
 `std::vec::Vec<T>`. The source handle has methods for metadata, checked
-read/write, push/pop, grow-only explicit `reserve(ref mut Zone, capacity)`,
-insert/remove, truncate/clear, swap, and simple linear search, and
-`vec.as_slice()` creates a mutable `Slice[T]` view over the same zone-backed
-buffer. `reserve` must receive the same zone that created the handle; it copies
-existing elements into a larger zone allocation and keeps old storage under the
+read/write, push/pop, grow-on-demand `push_in(ref mut Zone, value)`, grow-only
+explicit `reserve(ref mut Zone, capacity)`, insert/remove, truncate/clear,
+swap, and simple linear search, and `vec.as_slice()` creates a mutable
+`Slice[T]` view over the same zone-backed buffer. `reserve` and `push_in` must
+receive the same zone that created the handle; they copy existing elements into
+a larger zone allocation when growth is needed and keep old storage under the
 zone's bulk lifetime. Callers can still use `vec.raw.data` with `ptr_store`,
 `ptr_load`, and `ptr_add` directly for lower-level experiments.
 
@@ -498,11 +501,11 @@ an explicit-allocator feature for later. The lower-level
 the explicit allocator path for future Vec storage, and
 `std::vec::new<T>(ref mut Zone, capacity)` exposes that seed as source
 `std::vec::Vec<T>`. The source handle supports metadata, read/write, push/pop,
-same-zone grow-only `reserve`, insert/remove, swap, truncate/clear, simple
-search, and `as_slice` calls over the stored raw handle. The resulting
-`Slice[T]` keeps the same zone provenance, so using it after `zone::reset` or
-`zone::destroy` is rejected. The root `Vec[T]` type and its current local method
-set remain fixed-local until runtime growth is ported.
+same-zone `push_in` growth, same-zone grow-only `reserve`, insert/remove, swap,
+truncate/clear, simple search, and `as_slice` calls over the stored raw handle.
+The resulting `Slice[T]` keeps the same zone provenance, so using it after
+`zone::reset` or `zone::destroy` is rejected. The root `Vec[T]` type and its
+current local method set remain fixed-local until runtime growth is ported.
 
 `std::boxed::Box<T>` is the source `std` allocation seed for a single
 zone-backed value:

@@ -508,6 +508,7 @@ seed. It exposes checked methods over the raw handle:
 var vec = std::vec::new<i64>(ref mut zone, 4)
 vec.push(10)
 vec.push(20)
+vec.push_in(ref mut zone, 30)
 vec.reserve(ref mut zone, 8)
 vec.insert(1, 15)
 vec.set(0, 25)
@@ -527,9 +528,12 @@ The root `Vec[T]`/`std::Vec[T]` type is still the current local vector literal
 storage until runtime heap growth is ported. Source `std::vec::Vec<T>.reserve`
 is grow-only: it allocates a larger buffer from the same explicit zone, copies
 the current elements, preserves `len`, and leaves the old buffer to the zone's
-bulk lifetime. Passing a different zone borrow is rejected because the source
-handle remains tied to the zone that created it. `vec.as_slice()` returns a
-`Slice[T]` over the same zone-backed buffer, and that slice is rejected after
+bulk lifetime. `std::vec::Vec<T>.push_in(ref mut Zone, value)` uses the same
+explicit zone capability and grows when the current capacity is full before
+appending. Passing a different zone borrow to `reserve` or `push_in` is rejected
+because the source handle remains tied to the zone that created it.
+`vec.as_slice()` returns a `Slice[T]` over the same zone-backed buffer, and that
+slice is rejected after
 the source zone is reset or destroyed.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,

@@ -4577,23 +4577,23 @@ private:
         fail(loc, "zone pointer cannot escape into " + context + "; keep it in a local ptr binding");
     }
 
-    void require_std_vec_reserve_zone_matches_source(SourceLocation loc,
-                                                     const std::string& method_name,
-                                                     const IrType& receiver_type,
-                                                     const std::vector<IrExprPtr>& args) {
-        if (method_name != "reserve" || args.size() < 2) return;
+    void require_std_vec_same_zone_method_matches_source(SourceLocation loc,
+                                                         const std::string& method_name,
+                                                         const IrType& receiver_type,
+                                                         const std::vector<IrExprPtr>& args) {
+        if ((method_name != "reserve" && method_name != "push_in") || args.size() < 2) return;
         if (!is_std_vec_handle_type(value_qualified_type(receiver_type))) return;
 
         std::string vec_source;
         if (!zone_pointer_source_name_from_expr(*args[0], vec_source)) {
-            fail(loc, "std::vec::Vec.reserve receiver must come from a tracked zone allocation");
+            fail(loc, "std::vec::Vec." + method_name + " receiver must come from a tracked zone allocation");
         }
         std::string zone_source;
         if (!zone_source_name_from_arg(*args[1], zone_source)) {
-            fail(loc, "std::vec::Vec.reserve requires an explicit zone borrow argument");
+            fail(loc, "std::vec::Vec." + method_name + " requires an explicit zone borrow argument");
         }
         if (vec_source != zone_source) {
-            fail(loc, "std::vec::Vec.reserve zone argument must match the vector allocation zone");
+            fail(loc, "std::vec::Vec." + method_name + " zone argument must match the vector allocation zone");
         }
     }
 
@@ -16622,7 +16622,7 @@ private:
             require_assignable(expr.loc, sig.params[i + 1], arg->type);
             args.push_back(std::move(arg));
         }
-        require_std_vec_reserve_zone_matches_source(expr.loc, expr.name, method_receiver_type, args);
+        require_std_vec_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
         return finish_tracked_call(
             expr.loc,
             expr.name,
