@@ -2349,11 +2349,14 @@ private:
                 }
                 throw CompileError(where(expr.loc) + ": backend does not lower vector values yet");
             case IrExprKind::VectorPush:
-                throw CompileError(where(expr.loc) + ": backend does not lower Vec.push yet");
+                emit_vector_push(expr);
+                break;
             case IrExprKind::VectorPop:
-                throw CompileError(where(expr.loc) + ": backend does not lower Vec.pop yet");
+                emit_vector_pop(expr);
+                break;
             case IrExprKind::VectorReserve:
-                throw CompileError(where(expr.loc) + ": backend does not lower Vec.reserve yet");
+                emit_vector_reserve(expr);
+                break;
             case IrExprKind::VectorClear:
                 emit_vector_clear(expr);
                 break;
@@ -2367,9 +2370,11 @@ private:
                 emit_vector_swap(expr);
                 break;
             case IrExprKind::VectorRemove:
-                throw CompileError(where(expr.loc) + ": backend does not lower Vec.remove yet");
+                emit_vector_remove(expr);
+                break;
             case IrExprKind::VectorInsert:
-                throw CompileError(where(expr.loc) + ": backend does not lower Vec.insert yet");
+                emit_vector_insert(expr);
+                break;
             case IrExprKind::VectorContains:
                 emit_vector_search(expr, false);
                 break;
@@ -2575,6 +2580,7 @@ private:
         int length_offset = 0;
         int data_offset = 0;
         int stride = 0;
+        std::uint64_t capacity = 0;
     };
 
     static bool is_raw_vector_search_element_type(const IrType& type) {
@@ -2615,6 +2621,7 @@ private:
         layout.length_offset = aggregate_lvalue_field_offset(expr.loc, base, vector_type, 0);
         layout.data_offset = aggregate_lvalue_field_offset(expr.loc, base, vector_type, 1);
         layout.stride = layout_size_bytes(expr.loc, element_type);
+        layout.capacity = vector_type.array_size;
         return layout;
     }
 
@@ -2689,6 +2696,28 @@ private:
         emit_add_reg_reg(reg, Reg::RCX);
     }
 
+    void emit_decrement_reg(Reg reg) {
+        emit_mov_reg_imm64(Reg::RCX, 1);
+        emit_sub_reg_reg(reg, Reg::RCX);
+    }
+
+    std::size_t emit_vector_negative_index_fail(Reg index) {
+        emit_mov_reg_imm64(Reg::RCX, 0);
+        emit_cmp_reg_reg(index, Reg::RCX);
+        return emit_jcc_placeholder(0x8C);
+    }
+
+    std::size_t emit_vector_index_above_len_fail(Reg index, Reg len) {
+        emit_cmp_reg_reg(index, len);
+        return emit_jcc_placeholder(0x8F);
+    }
+
+    std::size_t emit_vector_full_fail(Reg len, const LocalVectorLayout& layout) {
+        emit_mov_reg_imm64(Reg::RCX, layout.capacity);
+        emit_cmp_reg_reg(len, Reg::RCX);
+        return emit_jcc_placeholder(0x8D);
+    }
+
     void emit_vector_search(const IrExpr& expr, bool return_index) {
         if (!ir_expr_payload(expr)) {
             throw CompileError(where(expr.loc) + ": malformed Vec search lowering");
@@ -2758,6 +2787,78 @@ private:
 
         patch_rel32(done, out_.size());
         emit_mov_reg_reg(Reg::RAX, Reg::R9);
+    }
+
+    void emit_vector_reserve(const IrExpr& expr) {
+        if (!ir_expr_right(expr)) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.reserve lowering");
+        }
+        LocalVectorLayout layout = local_vector_layout(expr, "Vec.reserve");
+
+        emit_expr(*ir_expr_right(expr));
+        emit_cast_to_type(expr.loc, i64_type(expr.loc));
+        std::size_t fail_negative = emit_vector_negative_index_fail(Reg::RAX);
+        emit_mov_reg_imm64(Reg::RCX, layout.capacity);
+        emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+        std::size_t fail_large = emit_jcc_placeholder(0x8F);
+        std::size_t done = emit_jmp_placeholder();
+
+        std::size_t fail = out_.size();
+        patch_rel32(fail_negative, fail);
+        patch_rel32(fail_large, fail);
+        emit_direct_call("panic");
+
+        patch_rel32(done, out_.size());
+    }
+
+    void emit_vector_push(const IrExpr& expr) {
+        if (!ir_expr_right(expr)) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.push lowering");
+        }
+        LocalVectorLayout layout = local_vector_layout(expr, "Vec.push");
+        require_raw_vector_scalar_element(expr.loc, layout, "Vec.push");
+
+        emit_load_rax_from_local(layout.length_offset, i64_type(expr.loc));
+        std::size_t fail_full = emit_vector_full_fail(Reg::RAX, layout);
+
+        emit_push(Reg::RAX);
+        emit_expr(*ir_expr_right(expr));
+        emit_normalize_vector_scalar_value(expr.loc, *layout.element_type);
+        emit_pop(Reg::RDX);
+        emit_push(Reg::RAX);
+        emit_vector_element_address_at_index(layout, Reg::RDX);
+        emit_pop(Reg::RAX);
+        emit_store_rax_to_ptr(Reg::RCX, *layout.element_type);
+        emit_increment_reg(Reg::RDX);
+        emit_mov_reg_reg(Reg::RAX, Reg::RDX);
+        emit_store_rax_to_local(layout.length_offset, i64_type(expr.loc));
+        std::size_t done = emit_jmp_placeholder();
+
+        patch_rel32(fail_full, out_.size());
+        emit_direct_call("panic");
+
+        patch_rel32(done, out_.size());
+    }
+
+    void emit_vector_pop(const IrExpr& expr) {
+        LocalVectorLayout layout = local_vector_layout(expr, "Vec.pop");
+        require_raw_vector_scalar_element(expr.loc, layout, "Vec.pop");
+
+        emit_load_rax_from_local(layout.length_offset, i64_type(expr.loc));
+        emit_mov_reg_imm64(Reg::RCX, 0);
+        emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+        std::size_t fail_empty = emit_jcc_placeholder(0x8E);
+
+        emit_decrement_reg(Reg::RAX);
+        emit_mov_reg_reg(Reg::RDX, Reg::RAX);
+        emit_store_rax_to_local(layout.length_offset, i64_type(expr.loc));
+        emit_vector_element_at_index(layout, Reg::RDX);
+        std::size_t done = emit_jmp_placeholder();
+
+        patch_rel32(fail_empty, out_.size());
+        emit_direct_call("panic");
+
+        patch_rel32(done, out_.size());
     }
 
     void emit_vector_clear(const IrExpr& expr) {
@@ -2845,6 +2946,106 @@ private:
         emit_vector_element_address_at_index(layout, Reg::R9);
         emit_pop(Reg::RAX);
         emit_store_rax_to_ptr(Reg::RCX, *layout.element_type);
+    }
+
+    void emit_vector_remove(const IrExpr& expr) {
+        if (!ir_expr_right(expr)) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.remove lowering");
+        }
+        LocalVectorLayout layout = local_vector_layout(expr, "Vec.remove");
+        require_raw_vector_scalar_element(expr.loc, layout, "Vec.remove");
+
+        emit_expr(*ir_expr_right(expr));
+        emit_cast_to_type(expr.loc, i64_type(expr.loc));
+        emit_length_bounds_check(layout.length_offset);
+        emit_mov_reg_reg(Reg::R8, Reg::RAX);
+
+        emit_load_rax_from_local(layout.length_offset, i64_type(expr.loc));
+        emit_decrement_reg(Reg::RAX);
+        emit_mov_reg_reg(Reg::R9, Reg::RAX);
+
+        emit_vector_element_at_index(layout, Reg::R8);
+        emit_push(Reg::RAX);
+        emit_mov_reg_reg(Reg::RDX, Reg::R8);
+
+        std::size_t loop = out_.size();
+        emit_cmp_reg_reg(Reg::RDX, Reg::R9);
+        std::size_t done_shift = emit_jcc_placeholder(0x8D);
+
+        emit_mov_reg_reg(Reg::R8, Reg::RDX);
+        emit_increment_reg(Reg::R8);
+        emit_vector_element_at_index(layout, Reg::R8);
+        emit_push(Reg::RAX);
+        emit_vector_element_address_at_index(layout, Reg::RDX);
+        emit_pop(Reg::RAX);
+        emit_store_rax_to_ptr(Reg::RCX, *layout.element_type);
+        emit_increment_reg(Reg::RDX);
+        std::size_t next = emit_jmp_placeholder();
+        patch_rel32(next, loop);
+
+        patch_rel32(done_shift, out_.size());
+        emit_mov_reg_reg(Reg::RAX, Reg::R9);
+        emit_store_rax_to_local(layout.length_offset, i64_type(expr.loc));
+        emit_pop(Reg::RAX);
+    }
+
+    void emit_vector_insert(const IrExpr& expr) {
+        if (!ir_expr_right(expr) || !ir_expr_payload(expr)) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.insert lowering");
+        }
+        LocalVectorLayout layout = local_vector_layout(expr, "Vec.insert");
+        require_raw_vector_scalar_element(expr.loc, layout, "Vec.insert");
+
+        emit_expr(*ir_expr_right(expr));
+        emit_cast_to_type(expr.loc, i64_type(expr.loc));
+        std::size_t fail_negative = emit_vector_negative_index_fail(Reg::RAX);
+        emit_push(Reg::RAX);
+        emit_load_rax_from_local(layout.length_offset, i64_type(expr.loc));
+        emit_mov_reg_reg(Reg::R9, Reg::RAX);
+        emit_pop(Reg::R8);
+        std::size_t fail_high = emit_vector_index_above_len_fail(Reg::R8, Reg::R9);
+        std::size_t fail_full = emit_vector_full_fail(Reg::R9, layout);
+
+        emit_push(Reg::R8);
+        emit_push(Reg::R9);
+        emit_expr(*ir_expr_payload(expr));
+        emit_normalize_vector_scalar_value(expr.loc, *layout.element_type);
+        emit_pop(Reg::R9);
+        emit_pop(Reg::R8);
+        emit_push(Reg::RAX);
+        emit_mov_reg_reg(Reg::RDX, Reg::R9);
+
+        std::size_t loop = out_.size();
+        emit_cmp_reg_reg(Reg::RDX, Reg::R8);
+        std::size_t done_shift = emit_jcc_placeholder(0x8E);
+
+        emit_mov_reg_reg(Reg::R9, Reg::RDX);
+        emit_decrement_reg(Reg::R9);
+        emit_vector_element_at_index(layout, Reg::R9);
+        emit_push(Reg::RAX);
+        emit_vector_element_address_at_index(layout, Reg::RDX);
+        emit_pop(Reg::RAX);
+        emit_store_rax_to_ptr(Reg::RCX, *layout.element_type);
+        emit_decrement_reg(Reg::RDX);
+        std::size_t next = emit_jmp_placeholder();
+        patch_rel32(next, loop);
+
+        patch_rel32(done_shift, out_.size());
+        emit_vector_element_address_at_index(layout, Reg::R8);
+        emit_pop(Reg::RAX);
+        emit_store_rax_to_ptr(Reg::RCX, *layout.element_type);
+        emit_load_rax_from_local(layout.length_offset, i64_type(expr.loc));
+        emit_increment_reg(Reg::RAX);
+        emit_store_rax_to_local(layout.length_offset, i64_type(expr.loc));
+        std::size_t done = emit_jmp_placeholder();
+
+        std::size_t fail = out_.size();
+        patch_rel32(fail_negative, fail);
+        patch_rel32(fail_high, fail);
+        patch_rel32(fail_full, fail);
+        emit_direct_call("panic");
+
+        patch_rel32(done, out_.size());
     }
 
     void emit_slice_element_address(const IrExpr& expr) {

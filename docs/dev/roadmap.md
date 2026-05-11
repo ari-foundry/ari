@@ -71,15 +71,14 @@
    `Vec[T]` values as Ari-layout local aggregates, so direct literals, local
    copies, checked scalar indexing, `len`/`is_empty`, read-only
    `capacity`/`first`/`last`/`get`, `contains`/`index_of`/`count`, and
-   non-growing `clear`/`truncate`/`set`/`swap` mutations work there, along
-   with stored-vector `for` loops. Raw `Slice[T]` views over mutable
-   local arrays, local vectors, and explicit `slice(data, len)` values also
-   lower through their stored pointer/length metadata for `len`, `is_empty`,
-   checked scalar indexing, indexed assignment, and exclusive/inclusive range
-   slicing. The
-   growing, returning, and shifting mutating method surface remains LLVM-only,
-   and fixed-local methods still need an allocator-backed runtime storage path
-   once `Vec[T]` stops being a fixed local buffer.
+   the fixed-capacity `reserve`/`push`/`insert`/`pop`/`remove`/`clear`/
+   `truncate`/`set`/`swap` method surface work there, along with
+   stored-vector `for` loops. Raw `Slice[T]` views over mutable local arrays,
+   local vectors, and explicit `slice(data, len)` values also lower through
+   their stored pointer/length metadata for `len`, `is_empty`, checked scalar
+   indexing, indexed assignment, and exclusive/inclusive range slicing. These
+   fixed-local methods still need an allocator-backed runtime storage path once
+   `Vec[T]` stops being a fixed local buffer.
    The
    shared constant
    value model,
@@ -94,10 +93,8 @@
    - [allocator] thread explicit allocator/capability values through creation
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      reserve capacity with runtime heap capacity growth
-   - [ops-runtime] port the existing `push`, `insert`, `pop`, `remove`,
-     `first`, `last`, `get`, `swap`, `contains`, `index_of`, `count`, and
-     `reserve` operations to allocator-backed storage instead of fixed
-     local-capacity traps
+   - [ops-runtime] port the existing temporary fixed-local Vec API to
+     allocator-backed storage instead of fixed local-capacity traps
 2. Reuse AST/IR summary package caches for file-backed modules.
    The source-snapshot cache goal is complete: compact module metadata and
    source-snapshot module caches can be emitted, checked, and invalidated with

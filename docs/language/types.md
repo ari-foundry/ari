@@ -541,11 +541,10 @@ storage is deliberately not heap allocation yet. Allocator-backed growth,
 slicing, and non-local vector ABI are still planned. On the raw
 `--freestanding` backend, stored local vector literals, local copies, scalar
 indexing, `len`, `is_empty`, `capacity`, `first`, `last`, `get`, `contains`,
-`index_of`, `count`, non-growing `clear`, `truncate`, `set`, `swap`, and
-stored-vector `for` loops lower through the same fixed local layout. Mutating
-fixed-capacity methods that reserve/grow, return removed elements, or shift
-storage, such as `reserve`, `push`, `insert`, `pop`, and `remove`, remain
-LLVM-only until allocator-backed vector storage exists.
+`index_of`, `count`, `reserve`, `push`, `insert`, `pop`, `remove`, `clear`,
+`truncate`, `set`, `swap`, and stored-vector `for` loops lower through the same
+fixed local layout. These methods still use local capacity traps rather than
+allocator-backed growth.
 
 Array literals support constant indexing without materializing a runtime
 aggregate:

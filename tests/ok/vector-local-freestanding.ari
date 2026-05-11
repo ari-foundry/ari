@@ -49,8 +49,19 @@ fn main() -> i64 {
   } else {
     40
   };
+  var grown: Vec[i64] = [];
+  grown.reserve(4);
+  var desired = 3;
+  grown.reserve(desired);
+  grown.push(5);
+  grown.push(6);
+  grown.insert(1, 9);
+  let removed = grown.remove(0);
+  let popped = grown.pop();
+  let grow_score = grown[0] + len(grown) + removed + popped + grown.capacity();
   return total + values[0] + values[index] + len(values) + empty_bonus +
     first + last + by_get + capacity + contains_bonus + missing_bonus +
     found_index + missing_index + target_count + missing_count +
-    float_bonus + float_index + float_count + mutated + cleared_bonus;
+    float_bonus + float_index + float_count + mutated + cleared_bonus +
+    grow_score;
 }
