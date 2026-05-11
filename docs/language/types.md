@@ -519,6 +519,7 @@ let len = vec.len()
 let cap = vec.capacity()
 let middle = vec.get(1)
 let view = vec.as_slice()
+vec.extend_from_slice_in(ref mut zone, view)
 let removed = vec.remove(1)
 let popped = vec.pop()
 vec.truncate(1)
@@ -533,10 +534,12 @@ bulk lifetime. `std::vec::Vec<T>.push_in(ref mut Zone, value)` uses the same
 explicit zone capability and grows when the current capacity is full before
 appending. `std::vec::Vec<T>.insert_in(ref mut Zone, index, value)` follows the
 same explicit-zone growth rule before inserting and shifting later elements.
-Passing a different zone borrow to `reserve`, `push_in`, or `insert_in` is
-rejected because the source handle remains tied to the zone that created it.
-`vec.as_slice()` returns a `Slice[T]` over the same zone-backed buffer, and that
-slice is rejected after
+`std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)` appends each
+slice element through that same growth path. Passing a different zone borrow to
+`reserve`, `push_in`, `insert_in`, or `extend_from_slice_in` is rejected because
+the source handle remains tied to the zone that created it. `vec.as_slice()`
+returns a `Slice[T]` over the same zone-backed buffer, and that slice is
+rejected after
 the source zone is reset or destroyed.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,

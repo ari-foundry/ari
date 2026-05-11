@@ -178,6 +178,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-push-in.ll
 	$(TARGET) tests/ok/std-vec-insert-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-insert-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9insert_in' $(BUILD_DIR)/prelude/std-vec-insert-in.ll
+	$(TARGET) tests/ok/std-vec-extend-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.ll
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
 	$(TARGET) tests/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
@@ -225,6 +227,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve.elf; $(BUILD_DIR)/prelude/std-vec-reserve.elf; code=$$?; test $$code -eq 43; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-push-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-push-in.elf; $(BUILD_DIR)/prelude/std-vec-push-in.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-insert-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-insert-in.elf; $(BUILD_DIR)/prelude/std-vec-insert-in.elf; code=$$?; test $$code -eq 23; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-extend-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; code=$$?; test $$code -eq 11; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
 	$(TARGET) --no-implicit-std --module-path lib tests/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
@@ -258,6 +261,8 @@ check-prelude: $(TARGET)
 	grep -q "std::vec::Vec.push_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-push-in-different-zone.err
 	if $(TARGET) tests/errors/std-vec-insert-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.insert_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-insert-in-different-zone.err
+	if $(TARGET) tests/errors/std-vec-extend-from-slice-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::vec::Vec.extend_from_slice_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in-different-zone.err
 	if $(TARGET) tests/errors/std-boxed-box-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-box-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-box-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'boxed' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-box-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err 2>&1; then exit 1; fi

@@ -1,0 +1,12 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var other = zone::create(64);
+  var source = std::vec::new<i64>(ref mut zone, 1);
+  source.push(3);
+  let view = source.as_slice();
+  var target = std::vec::new<i64>(ref mut zone, 0);
+  target.extend_from_slice_in(ref mut other, view);
+  zone::destroy(other);
+  zone::destroy(zone);
+  return 0;
+}

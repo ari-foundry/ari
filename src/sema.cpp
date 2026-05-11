@@ -4581,7 +4581,10 @@ private:
                                                          const std::string& method_name,
                                                          const IrType& receiver_type,
                                                          const std::vector<IrExprPtr>& args) {
-        if ((method_name != "reserve" && method_name != "push_in" && method_name != "insert_in") ||
+        if ((method_name != "reserve" &&
+             method_name != "push_in" &&
+             method_name != "insert_in" &&
+             method_name != "extend_from_slice_in") ||
             args.size() < 2) {
             return;
         }

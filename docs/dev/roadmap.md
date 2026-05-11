@@ -103,8 +103,9 @@
    insert/remove, swap, truncate/clear, simple linear search, grow-only
    explicit `reserve(ref mut Zone, capacity)`, same-zone grow-on-demand
    `push_in(ref mut Zone, value)` and `insert_in(ref mut Zone, index, value)`,
-   and tracked `as_slice` views over its allocated buffer. Runtime heap growth
-   for root/local `Vec[T]` and the root
+   slice extension with `extend_from_slice_in(ref mut Zone, Slice<T>)`, and
+   tracked `as_slice` views over its allocated buffer. Runtime heap growth for
+   root/local `Vec[T]` and the root
    `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
    returns a tracked source `std::boxed::Box<T>` handle with `get`, `set`,
