@@ -5,7 +5,7 @@
 `src/driver.cpp` implements:
 
 ```text
-ari <input.ari> [-o output.elf]
+ari <input.ari> [--check] [-o output.elf]
 ```
 
 Pipeline:
@@ -14,9 +14,10 @@ Pipeline:
 2. lex source into tokens
 3. parse tokens into AST
 4. check AST and lower into IR
-5. emit LLVM IR or freestanding x86-64 code bytes
-6. invoke the LLVM driver or wrap bytes in ELF64
-7. write the output file
+5. with `--check`, stop after diagnostics without backend output
+6. emit LLVM IR or freestanding x86-64 code bytes
+7. invoke the LLVM driver or wrap bytes in ELF64
+8. write the output file
 
 ## Lexer
 

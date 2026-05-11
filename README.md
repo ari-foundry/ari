@@ -97,6 +97,7 @@ when you want the direct-syscall raw ELF backend.
 Useful host options:
 
 ```sh
+./build/ari app.ari --check
 ./build/ari app.ari -o app
 ./build/ari app.ari --emit-llvm app.ll
 ./build/ari lib.ari --shared -o libari_app.so

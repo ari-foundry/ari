@@ -10,13 +10,14 @@
    diagnostic. Pattern syntax is value-binding-only for now: `ref`, `ref mut`,
    `&`, `&mut`, and `mut` binding-mode patterns are reserved and rejected so
    future reference/ownership binding modes do not collide with today's AST.
+   The `--check` mode now runs parsing, module loading, and semantic lowering
+   without backend emission or linking so editor tooling can surface front-end
+   diagnostics without producing backend artifacts.
    - [pattern-binding-modes] design and lower reference, mutable, and
      ownership-aware pattern binding modes after the ownership rules are
      explicit; the parser now reserves those spellings
    - [tooling-diagnostics] keep removed/reserved syntax diagnostics stable
      enough for editor integrations to surface targeted fixes
-   - [nice-to-have] expose a parse/check-only diagnostic mode once the syntax
-     surface settles enough for a language server
 2. Start allocator-backed growable `Vec[T]`.
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
    `Vec.pop()` / `Vec.first()` / `Vec.last()` / `Vec.capacity()` /

@@ -17,6 +17,7 @@ Ari IR
 Useful CLI:
 
 ```sh
+ari app.ari --check
 ari app.ari -o app
 ari app.ari --emit-llvm app.ll
 ari app.ari --llvm-cc clang -o app
@@ -25,7 +26,8 @@ ari app.ari -L ./lib -l mylib
 ```
 
 The host path does not generate C++ and never invokes `c++`. Pass `--emit-llvm`
-to stop after writing IR, or `--llvm-cc` to choose a different LLVM IR driver.
+to stop after writing IR, `--check` to stop after front-end diagnostics without
+writing backend artifacts, or `--llvm-cc` to choose a different LLVM IR driver.
 
 ## Entry Flow
 

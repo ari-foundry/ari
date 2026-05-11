@@ -46,9 +46,14 @@ If `-o` is omitted, the output path is `a.out`. By default Ari emits LLVM IR and
 invokes an LLVM driver, usually `clang`, so the output is a normal glibc-linked
 executable on Linux.
 
+Use `--check` to run parsing, module loading, and semantic checks without
+writing LLVM IR, linking, or requiring an executable `main`. This is the
+front-end-only mode intended for editor tooling and quick diagnostics.
+
 Useful options:
 
 ```sh
+--check             check source diagnostics only; do not emit or link
 --emit-llvm path    write generated LLVM IR and stop
 --module-path path  add a file-backed module search path
 -I path             same as --module-path

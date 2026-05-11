@@ -50,6 +50,11 @@ check-cli: $(TARGET)
 	grep -q 'define i64 @ari_entry(i32 %argc, ptr %argv)' $(BUILD_DIR)/cli/count.ll
 	grep -q 'call i64 @"ari::main"()' $(BUILD_DIR)/cli/count.ll
 	grep -q "define i32 @main" $(BUILD_DIR)/cli/count.ll
+	$(TARGET) tests/ok/library-export.ari --check
+	if $(TARGET) tests/errors/pattern-ref-binding-mode.ari --check >$(BUILD_DIR)/cli/check-pattern-binding-mode.err 2>&1; then exit 1; fi
+	grep -q "reference pattern binding modes are reserved but not supported yet" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
+	if $(TARGET) examples/count.ari --check --emit-llvm $(BUILD_DIR)/cli/check-bad.ll >$(BUILD_DIR)/cli/check-output-option.err 2>&1; then exit 1; fi
+	grep -q -- "--check cannot be combined with backend output or linking options" $(BUILD_DIR)/cli/check-output-option.err
 	$(TARGET) --freestanding examples/count.ari -o $(BUILD_DIR)/cli/count.raw
 	test -x $(BUILD_DIR)/cli/count.raw
 	$(BUILD_DIR)/cli/count.raw; code=$$?; test $$code -eq 5

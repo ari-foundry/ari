@@ -5,6 +5,14 @@ resolution, type resolution, trait selection, ownership and borrow state,
 pattern analysis, control-flow lowering, prelude lowering hooks, and IR
 construction. Some helpers have already moved out to focused files:
 
+Current direction: avoid further fine-grained feature-file splits while the
+language surface is still settling. New sema decomposition work should target
+large subsystems such as name resolution, type inference/checking, ownership and
+borrow checking, pattern binding/coverage, or statement/expression lowering.
+Existing small helpers can stay in place until a natural consolidation point,
+but new work should prefer merging related helpers into broader subsystems over
+adding more narrow `*_semantics` siblings.
+
 - `attribute_semantics` for attribute validation helpers
 - `prelude_resolver` for compiler-known standard-library spellings
 - `try_model` for `?` residual shape helpers

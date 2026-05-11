@@ -61,7 +61,7 @@ static std::string shell_quote(const std::string& text) {
 }
 
 static void usage() {
-    std::cerr << "usage: ari <input.ari> [-o output] [--emit-llvm path] [--freestanding]\n"
+    std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path] [--freestanding]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -92,7 +92,10 @@ int run(int argc, char** argv) {
     std::vector<std::string> link_args;
     std::set<std::string> cfg_features;
     bool freestanding = false;
+    bool check_only = false;
+    bool output_explicit = false;
     bool emit_llvm_only = false;
+    bool llvm_compiler_explicit = false;
     bool shared_library = false;
     bool test_mode = false;
     bool implicit_std = true;
@@ -101,8 +104,11 @@ int run(int argc, char** argv) {
         if (arg == "-o") {
             if (i + 1 >= argc) throw CompileError("-o expects a path");
             output = argv[++i];
+            output_explicit = true;
         } else if (arg == "--freestanding") {
             freestanding = true;
+        } else if (arg == "--check") {
+            check_only = true;
         } else if (arg == "--shared") {
             shared_library = true;
         } else if (arg == "--test") {
@@ -150,6 +156,7 @@ int run(int argc, char** argv) {
         } else if (arg == "--llvm-cc") {
             if (i + 1 >= argc) throw CompileError("--llvm-cc expects a compiler path");
             llvm_compiler = argv[++i];
+            llvm_compiler_explicit = true;
         } else if (arg == "--target") {
             if (i + 1 >= argc) throw CompileError("--target expects a target triple");
             target_triple = argv[++i];
@@ -172,6 +179,10 @@ int run(int argc, char** argv) {
     if (input.empty()) throw CompileError("missing input file");
     if (shared_library && test_mode) {
         throw CompileError("--test cannot be combined with --shared");
+    }
+    if (check_only && (output_explicit || emit_llvm_only || freestanding || shared_library ||
+                       !c_header_output.empty() || llvm_compiler_explicit || !link_args.empty())) {
+        throw CompileError("--check cannot be combined with backend output or linking options");
     }
     if (freestanding && (emit_llvm_only || shared_library)) {
         throw CompileError("--freestanding cannot be combined with --emit-llvm or --shared");
@@ -213,7 +224,7 @@ int run(int argc, char** argv) {
     }
     Program program = std::move(loaded.program);
     SemaOptions sema_options;
-    sema_options.require_main = !shared_library && !test_mode;
+    sema_options.require_main = !shared_library && !test_mode && !check_only;
     sema_options.test_mode = test_mode;
     sema_options.implicit_std = implicit_std;
     sema_options.cfg_features = cfg_features;
@@ -221,6 +232,9 @@ int run(int argc, char** argv) {
     IrProgram ir = check_program(program, std::move(sema_options));
     for (const auto& warning : ir.warnings) {
         std::cerr << warning << "\n";
+    }
+    if (check_only) {
+        return 0;
     }
     if (!c_header_output.empty()) {
         std::string header = emit_c_header(ir);
