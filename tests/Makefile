@@ -226,6 +226,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.raw; code=$$?; test $$code -eq 36
 	$(TARGET) --freestanding tests/ok/block-expression.ari -o $(BUILD_DIR)/control-flow/block-expression.raw
 	$(BUILD_DIR)/control-flow/block-expression.raw; code=$$?; test $$code -eq 27
+	$(TARGET) --freestanding tests/ok/block-expression-payloads.ari -o $(BUILD_DIR)/control-flow/block-expression-payloads.raw
+	$(BUILD_DIR)/control-flow/block-expression-payloads.raw; code=$$?; test $$code -eq 26
 	$(TARGET) --freestanding tests/ok/statement-body-payloads.ari -o $(BUILD_DIR)/control-flow/statement-body-payloads.raw
 	$(BUILD_DIR)/control-flow/statement-body-payloads.raw; code=$$?; test $$code -eq 19
 	$(TARGET) --freestanding tests/ok/labeled-block-expression.ari -o $(BUILD_DIR)/control-flow/labeled-block-expression.raw
@@ -331,6 +333,8 @@ check-control-flow: $(TARGET)
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.ll
 	$(TARGET) tests/ok/block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/block-expression.ll
 	grep -q "_ARNv4main" $(BUILD_DIR)/control-flow/block-expression.ll
+	$(TARGET) tests/ok/block-expression-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/block-expression-payloads.ll
+	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/block-expression-payloads.ll
 	$(TARGET) tests/ok/statement-body-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/statement-body-payloads.ll
 	grep -q "if.then" $(BUILD_DIR)/control-flow/statement-body-payloads.ll
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/statement-body-payloads.ll

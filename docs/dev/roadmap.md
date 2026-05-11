@@ -155,17 +155,22 @@
    now also live behind label payload pointers, so unlabeled statements no
    longer carry an eager source-label string. AST/IR block, branch, and loop
    statement body vectors now live behind body-vector payload pointers too,
-   completing the statement payload grouping pass.
+   completing the statement payload grouping pass. AST block-expression
+   labels/body/final values and IR block-expression labels/body/final values
+   now live behind block-expression payload pointers as well; the remaining
+   eager `IrExpr::label` field is reserved for borrow access paths rather than
+   block expressions.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
    first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
-     variant payload structs or unions; remaining high-value target is the
-     expression child/vector groups that still receive broad parser, sema, and
-     backend mutations
-   - [expr-child-vector-payloads] split expression child/vector fields after
-     builders cover the remaining parser/sema/backend mutation paths
+     variant payload structs or unions; remaining high-value targets are the
+     non-block expression child/vector groups that still receive broad parser,
+     sema, and backend mutations
+   - [expr-child-vector-payloads] split `if`, `match`, call/argument, and
+     operand child/vector expression fields after builders cover the remaining
+     parser/sema/backend mutation paths
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

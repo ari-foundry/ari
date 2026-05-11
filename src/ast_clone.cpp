@@ -35,7 +35,6 @@ ExprPtr make_shallow_clone(const Expr& expr) {
     clone->literal_suffix = expr.literal_suffix;
     clone->string_value = expr.string_value;
     clone->name = expr.name;
-    clone->label = expr.label;
     clone->mutable_borrow = expr.mutable_borrow;
     clone->op = expr.op;
     clone->cast_type = expr.cast_type;

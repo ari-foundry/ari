@@ -322,7 +322,7 @@ IrExprPtr make_ir_block_expr(SourceLocation loc, std::string label) {
     auto expr = std::make_unique<IrExpr>();
     expr->kind = IrExprKind::Block;
     expr->loc = loc;
-    expr->label = std::move(label);
+    set_ir_expr_block_label(*expr, std::move(label));
     return expr;
 }
 
@@ -331,10 +331,11 @@ IrExprPtr make_ir_block_expr(SourceLocation loc,
                              IrType type,
                              std::vector<IrStmtPtr> body,
                              IrExprPtr value) {
-    auto expr = make_ir_block_expr(loc, std::move(label));
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::Block;
+    expr->loc = loc;
     expr->type = std::move(type);
-    expr->block_body = std::move(body);
-    expr->block_value = std::move(value);
+    set_ir_expr_block_payload(*expr, std::move(label), std::move(body), std::move(value));
     return expr;
 }
 

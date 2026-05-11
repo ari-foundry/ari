@@ -96,9 +96,7 @@ ExprPtr make_ast_block_expr(SourceLocation loc,
     auto expr = std::make_unique<Expr>();
     expr->kind = ExprKind::Block;
     expr->loc = loc;
-    expr->label = std::move(label);
-    expr->block_body = std::move(body);
-    expr->block_value = std::move(value);
+    set_expr_block_payload(*expr, std::move(label), std::move(body), std::move(value));
     return expr;
 }
 

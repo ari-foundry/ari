@@ -372,8 +372,8 @@ private:
         collect_expr_locals(expr.then_value);
         collect_locals(expr.else_body);
         collect_expr_locals(expr.else_value);
-        collect_locals(expr.block_body);
-        collect_expr_locals(expr.block_value);
+        collect_locals(ir_expr_block_body(expr));
+        collect_expr_locals(ir_expr_block_value(expr));
         collect_expr_locals(expr.match_value);
         for (const auto& arg : expr.args) collect_expr_locals(arg);
         if (expr.kind == IrExprKind::Call ||
@@ -884,25 +884,25 @@ private:
     }
 
     void emit_block_expr_to_offset(const IrExpr& expr, const IrType& target_type, int target_offset) {
-        if (!expr.label.empty()) {
+        if (!ir_expr_block_label(expr).empty()) {
             LoopLabels labels;
-            labels.source_label = expr.label;
+            labels.source_label = ir_expr_block_label(expr);
             labels.is_loop = false;
             labels.supports_break_value = true;
             labels.has_break_value_target = true;
             labels.break_value_target_offset = target_offset;
             labels.break_value_type = target_type;
             loops_.push_back(labels);
-            emit_statements(expr.block_body);
-            emit_store_value_to_offset(target_type, *expr.block_value, target_offset);
+            emit_statements(ir_expr_block_body(expr));
+            emit_store_value_to_offset(target_type, *ir_expr_block_value(expr), target_offset);
             std::size_t end = out_.size();
             for (std::size_t patch : loops_.back().break_patches) patch_rel32(patch, end);
             loops_.pop_back();
             return;
         }
 
-        emit_statements(expr.block_body);
-        emit_store_value_to_offset(target_type, *expr.block_value, target_offset);
+        emit_statements(ir_expr_block_body(expr));
+        emit_store_value_to_offset(target_type, *ir_expr_block_value(expr), target_offset);
     }
 
     void emit_rex(bool w, int r, int b) {
@@ -2681,20 +2681,20 @@ private:
             emit_lea_reg_local(Reg::RAX, temp_offset);
             return;
         }
-        if (!expr.label.empty()) {
+        if (!ir_expr_block_label(expr).empty()) {
             LoopLabels labels;
-            labels.source_label = expr.label;
+            labels.source_label = ir_expr_block_label(expr);
             labels.is_loop = false;
             loops_.push_back(labels);
-            emit_statements(expr.block_body);
-            emit_expr(*expr.block_value);
+            emit_statements(ir_expr_block_body(expr));
+            emit_expr(*ir_expr_block_value(expr));
             std::size_t end = out_.size();
             for (std::size_t patch : loops_.back().break_patches) patch_rel32(patch, end);
             loops_.pop_back();
             return;
         }
-        emit_statements(expr.block_body);
-        emit_expr(*expr.block_value);
+        emit_statements(ir_expr_block_body(expr));
+        emit_expr(*ir_expr_block_value(expr));
     }
 
     void emit_direct_call_from_prepared_stack(const std::string& name, std::size_t total_args) {

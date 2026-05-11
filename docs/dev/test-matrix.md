@@ -438,6 +438,8 @@ Checklist:
       and range-for break lowering paths
 - [x] AST/IR statement body-vector payload packing preserves block, if/else,
       while, range-for, init-while, and tuple-match if-chain lowering paths
+- [x] AST/IR block-expression payload packing preserves nested block values,
+      labeled block-expression breaks, and raw/LLVM lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

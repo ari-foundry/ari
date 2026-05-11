@@ -198,6 +198,12 @@ struct IrMatchExprArm {
     IrExprPtr value;
 };
 
+struct IrExprBlockPayload {
+    std::string label;
+    std::vector<IrStmtPtr> body;
+    IrExprPtr value;
+};
+
 enum class IrExprKind {
     Integer,
     Float,
@@ -284,8 +290,7 @@ struct IrExpr {
     IrExprPtr then_value;
     std::vector<IrStmtPtr> else_body;
     IrExprPtr else_value;
-    std::vector<IrStmtPtr> block_body;
-    IrExprPtr block_value;
+    std::unique_ptr<IrExprBlockPayload> block_payload;
     std::vector<IrStmtPtr> try_residual_cleanup;
     IrExprPtr match_value;
     std::vector<IrMatchExprArm> match_arms;
@@ -463,6 +468,54 @@ struct IrStmt {
     std::unique_ptr<std::string> label;
     std::unique_ptr<IrBreakPayload> break_payload;
 };
+
+inline const IrExprBlockPayload& ir_expr_block_payload(const IrExpr& expr) {
+    static const IrExprBlockPayload empty;
+    return expr.block_payload ? *expr.block_payload : empty;
+}
+
+inline IrExprBlockPayload& ensure_ir_expr_block_payload(IrExpr& expr) {
+    if (!expr.block_payload) expr.block_payload = std::make_unique<IrExprBlockPayload>();
+    return *expr.block_payload;
+}
+
+inline const std::string& ir_expr_block_label(const IrExpr& expr) {
+    return ir_expr_block_payload(expr).label;
+}
+
+inline const std::vector<IrStmtPtr>& ir_expr_block_body(const IrExpr& expr) {
+    return ir_expr_block_payload(expr).body;
+}
+
+inline std::vector<IrStmtPtr>& ir_expr_block_body(IrExpr& expr) {
+    return ensure_ir_expr_block_payload(expr).body;
+}
+
+inline const IrExprPtr& ir_expr_block_value(const IrExpr& expr) {
+    return ir_expr_block_payload(expr).value;
+}
+
+inline IrExprPtr& ir_expr_block_value(IrExpr& expr) {
+    return ensure_ir_expr_block_payload(expr).value;
+}
+
+inline void set_ir_expr_block_label(IrExpr& expr, std::string label) {
+    ensure_ir_expr_block_payload(expr).label = std::move(label);
+}
+
+inline void set_ir_expr_block_value(IrExpr& expr, IrExprPtr value) {
+    ensure_ir_expr_block_payload(expr).value = std::move(value);
+}
+
+inline void set_ir_expr_block_payload(IrExpr& expr,
+                                      std::string label,
+                                      std::vector<IrStmtPtr> body,
+                                      IrExprPtr value) {
+    IrExprBlockPayload& payload = ensure_ir_expr_block_payload(expr);
+    payload.label = std::move(label);
+    payload.body = std::move(body);
+    payload.value = std::move(value);
+}
 
 inline const IrStmtBodyPayload& ir_stmt_body_payload(const IrStmt& stmt) {
     static const IrStmtBodyPayload empty;

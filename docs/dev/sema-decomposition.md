@@ -100,7 +100,9 @@ names/targets/RHS expressions are lazy payloads as well. Statement labels are
 also lazy on AST/IR statement nodes, leaving unlabeled blocks and loops without
 an eager label string. AST/IR block, branch, and loop statement bodies now share
 lazy body-vector payloads, so ordinary non-control statements no longer carry
-empty body vectors.
+empty body vectors. AST/IR block-expression labels, statement bodies, and final
+values now live behind block-expression payloads too, leaving ordinary
+expression nodes without those block-only fields.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

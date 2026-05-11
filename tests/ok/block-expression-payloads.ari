@@ -1,0 +1,20 @@
+fn main() -> i64 {
+  var total = 0;
+
+  let plain = {
+    total += 1;
+    let inner = {
+      total += 2;
+      total
+    };
+    inner + 3
+  };
+
+  let escaped = done: {
+    total += 4;
+    break done plain + total;
+    0
+  };
+
+  return plain + escaped + total;
+}

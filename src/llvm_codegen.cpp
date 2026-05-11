@@ -782,8 +782,8 @@ private:
         collect_expr_locals(expr.then_value, locals);
         collect_locals(expr.else_body, locals);
         collect_expr_locals(expr.else_value, locals);
-        collect_locals(expr.block_body, locals);
-        collect_expr_locals(expr.block_value, locals);
+        collect_locals(ir_expr_block_body(expr), locals);
+        collect_expr_locals(ir_expr_block_value(expr), locals);
         collect_locals(expr.try_residual_cleanup, locals);
         collect_expr_locals(expr.match_value, locals);
         for (const auto& arg : expr.args) collect_expr_locals(arg, locals);
@@ -2555,7 +2555,7 @@ private:
     }
 
     Value emit_block_expr(const IrExpr& expr) {
-        if (!expr.label.empty()) {
+        if (!ir_expr_block_label(expr).empty()) {
             std::string type = llvm_type(expr.type);
             std::string slot = temp();
             std::string end_label = label("block.expr.end");
@@ -2563,20 +2563,20 @@ private:
 
             LoopContext context;
             context.break_label = end_label;
-            context.source_label = expr.label;
+            context.source_label = ir_expr_block_label(expr);
             context.is_loop = false;
             context.supports_break_value = true;
             context.break_value_slot = slot;
             context.break_value_type = expr.type;
             loops_.push_back(context);
 
-            emit_statements(expr.block_body);
+            emit_statements(ir_expr_block_body(expr));
             bool body_terminated = block_terminated_;
             bool has_break = loops_.back().has_break;
             loops_.pop_back();
 
             if (!body_terminated) {
-                Value value = cast_value(emit_expr(*expr.block_value), expr.type);
+                Value value = cast_value(emit_expr(*ir_expr_block_value(expr)), expr.type);
                 line("  store " + value.type + " " + value.name + ", ptr " + slot);
                 line("  br label %" + end_label);
             } else if (!has_break) {
@@ -2588,8 +2588,8 @@ private:
             line("  " + out + " = load " + type + ", ptr " + slot);
             return Value{type, out, expr.type};
         }
-        emit_statements(expr.block_body);
-        return emit_expr(*expr.block_value);
+        emit_statements(ir_expr_block_body(expr));
+        return emit_expr(*ir_expr_block_value(expr));
     }
 
     Value emit_trait_object_cast(const IrExpr& expr) {

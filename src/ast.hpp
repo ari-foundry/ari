@@ -131,6 +131,12 @@ struct ExprMatchArm {
     SourceLocation loc;
 };
 
+struct ExprBlockPayload {
+    std::string label;
+    std::vector<StmtPtr> body;
+    ExprPtr value;
+};
+
 enum class ExprKind {
     Integer,
     Float,
@@ -173,7 +179,6 @@ struct Expr {
     std::string literal_suffix;
     std::string string_value;
     std::string name;
-    std::string label;
     bool mutable_borrow = false;
     TokenKind op = TokenKind::End;
     TypeRef cast_type;
@@ -187,8 +192,7 @@ struct Expr {
     ExprPtr then_value;
     std::vector<StmtPtr> else_body;
     ExprPtr else_value;
-    std::vector<StmtPtr> block_body;
-    ExprPtr block_value;
+    std::unique_ptr<ExprBlockPayload> block_payload;
     ExprPtr match_value;
     std::vector<std::unique_ptr<Expr>> args;
     std::vector<TypeRef> receiver_type_args;
@@ -273,6 +277,46 @@ struct Stmt {
     std::unique_ptr<std::string> label;
     std::unique_ptr<StmtBreakPayload> break_payload;
 };
+
+inline const ExprBlockPayload& expr_block_payload(const Expr& expr) {
+    static const ExprBlockPayload empty;
+    return expr.block_payload ? *expr.block_payload : empty;
+}
+
+inline ExprBlockPayload& ensure_expr_block_payload(Expr& expr) {
+    if (!expr.block_payload) expr.block_payload = std::make_unique<ExprBlockPayload>();
+    return *expr.block_payload;
+}
+
+inline const std::string& expr_block_label(const Expr& expr) {
+    return expr_block_payload(expr).label;
+}
+
+inline const std::vector<StmtPtr>& expr_block_body(const Expr& expr) {
+    return expr_block_payload(expr).body;
+}
+
+inline std::vector<StmtPtr>& expr_block_body(Expr& expr) {
+    return ensure_expr_block_payload(expr).body;
+}
+
+inline const ExprPtr& expr_block_value(const Expr& expr) {
+    return expr_block_payload(expr).value;
+}
+
+inline ExprPtr& expr_block_value(Expr& expr) {
+    return ensure_expr_block_payload(expr).value;
+}
+
+inline void set_expr_block_payload(Expr& expr,
+                                   std::string label,
+                                   std::vector<StmtPtr> body,
+                                   ExprPtr value) {
+    ExprBlockPayload& payload = ensure_expr_block_payload(expr);
+    payload.label = std::move(label);
+    payload.body = std::move(body);
+    payload.value = std::move(value);
+}
 
 inline const StmtBodyPayload& stmt_body_payload(const Stmt& stmt) {
     static const StmtBodyPayload empty;

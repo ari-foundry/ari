@@ -3947,7 +3947,7 @@ private:
         };
         if (has_temp(expr.operand) || has_temp(expr.payload) || has_temp(expr.left) ||
             has_temp(expr.right) || has_temp(expr.condition) || has_temp(expr.then_value) ||
-            has_temp(expr.else_value) || has_temp(expr.block_value) || has_temp(expr.match_value)) {
+            has_temp(expr.else_value) || has_temp(ir_expr_block_value(expr)) || has_temp(expr.match_value)) {
             return true;
         }
         for (const auto& arg : expr.args) {
@@ -4274,8 +4274,8 @@ private:
             return found_any;
         }
         if (source.kind == IrExprKind::Block) {
-            return source.block_value &&
-                   zone_pointer_source_name_from_expr(*source.block_value, out);
+            return ir_expr_block_value(source) &&
+                   zone_pointer_source_name_from_expr(*ir_expr_block_value(source), out);
         }
         if (source.kind == IrExprKind::Match) {
             bool found_any = false;
@@ -11286,7 +11286,8 @@ private:
         std::string subject_name = make_hidden_local(
             subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple");
         declare_local(expr.loc, subject_name, subject_type, false);
-        lowered->block_body.push_back(make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));
+        ir_expr_block_body(*lowered).push_back(
+            make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));
 
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
@@ -11325,7 +11326,7 @@ private:
                     condition_prelude
                 );
                 for (auto& statement : condition_prelude) {
-                    lowered->block_body.push_back(std::move(statement));
+                    ir_expr_block_body(*lowered).push_back(std::move(statement));
                 }
                 note_product_match_coverage(pattern, subject_type, coverage);
                 if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
@@ -11386,13 +11387,15 @@ private:
         require_tuple_match_exhaustive(expr.loc, subject_type, coverage);
         restore_states(continuing_state);
         lowered->type = result_type;
-        lowered->block_value = build_tuple_match_if_expr_chain(
-            checked_arms,
-            result_type,
-            [this](SourceLocation loc, const IrType& type) {
-                return make_unreachable_match_fallback_expr(loc, type);
-            }
-        );
+        set_ir_expr_block_value(
+            *lowered,
+            build_tuple_match_if_expr_chain(
+                checked_arms,
+                result_type,
+                [this](SourceLocation loc, const IrType& type) {
+                    return make_unreachable_match_fallback_expr(loc, type);
+                }
+            ));
         return lowered;
     }
 
@@ -11658,7 +11661,7 @@ private:
 
         std::string subject_name = make_hidden_local("$iflet_enum");
         declare_local(expr.loc, subject_name, enum_value_type, false);
-        lowered->block_body.push_back(make_ir_var_decl(
+        ir_expr_block_body(*lowered).push_back(make_ir_var_decl(
             expr.loc,
             subject_name,
             enum_value_type,
@@ -11669,7 +11672,7 @@ private:
         IrType matched_type = bool_type(expr.loc);
         std::string matched_name = make_hidden_local("$iflet_matched");
         declare_local(expr.loc, matched_name, matched_type, true);
-        lowered->block_body.push_back(make_ir_var_decl(
+        ir_expr_block_body(*lowered).push_back(make_ir_var_decl(
             expr.loc,
             matched_name,
             matched_type,
@@ -11745,7 +11748,7 @@ private:
         no_match.loc = expr.loc;
         no_match.wildcard = true;
         match_arms.push_back(std::move(no_match));
-        lowered->block_body.push_back(std::move(pattern_match));
+        ir_expr_block_body(*lowered).push_back(std::move(pattern_match));
 
         IrExprPtr if_expr = make_ir_if_expr(
             expr.loc,
@@ -11758,7 +11761,7 @@ private:
         );
 
         lowered->type = result_type;
-        lowered->block_value = std::move(if_expr);
+        set_ir_expr_block_value(*lowered, std::move(if_expr));
         return lowered;
     }
 
@@ -11775,7 +11778,8 @@ private:
         std::string subject_name = make_hidden_local(
             subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple");
         declare_local(expr.loc, subject_name, subject_type, false);
-        lowered->block_body.push_back(make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));
+        ir_expr_block_body(*lowered).push_back(
+            make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));
 
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
@@ -11815,7 +11819,7 @@ private:
                 fail(condition_pattern.loc, "irrefutable if-let aggregate pattern cannot have else");
             }
             for (auto& statement : condition_prelude) {
-                lowered->block_body.push_back(std::move(statement));
+                ir_expr_block_body(*lowered).push_back(std::move(statement));
             }
 
             restore_states(branch_input);
@@ -11908,31 +11912,36 @@ private:
         checked_arms.push_back(std::move(fallback));
 
         lowered->type = result_type;
-        lowered->block_value = build_tuple_match_if_expr_chain(
-            checked_arms,
-            result_type,
-            [this](SourceLocation loc, const IrType& type) {
-                return make_unreachable_match_fallback_expr(loc, type);
-            }
-        );
+        set_ir_expr_block_value(
+            *lowered,
+            build_tuple_match_if_expr_chain(
+                checked_arms,
+                result_type,
+                [this](SourceLocation loc, const IrType& type) {
+                    return make_unreachable_match_fallback_expr(loc, type);
+                }
+            ));
         return lowered;
     }
 
     IrExprPtr check_block_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         (void)lowered;
-        if (!expr.label.empty()) {
+        const std::string& label = expr_block_label(expr);
+        const ExprPtr& value = expr_block_value(expr);
+        if (!label.empty()) {
             CheckedExprBlock block = check_labeled_value_block(expr, expected);
             IrType result_type = block.value->type;
             return make_ir_block_expr(
                 expr.loc,
-                expr.label,
+                label,
                 std::move(result_type),
                 std::move(block.statements),
                 std::move(block.value)
             );
         }
 
-        CheckedExprBlock block = check_value_block(expr.loc, "block expression", expr.block_body, *expr.block_value, expected);
+        CheckedExprBlock block =
+            check_value_block(expr.loc, "block expression", expr_block_body(expr), *value, expected);
         IrType result_type = block.value->type;
         return make_ir_block_expr(
             expr.loc,
@@ -11944,15 +11953,16 @@ private:
     }
 
     CheckedExprBlock check_labeled_value_block(const Expr& expr, const IrType* expected = nullptr) {
+        const std::string& label = expr_block_label(expr);
         for (const auto& active : loops_) {
-            if (active.label == expr.label) {
-                fail(expr.loc, "duplicate active label '" + expr.label + "'");
+            if (active.label == label) {
+                fail(expr.loc, "duplicate active label '" + label + "'");
             }
         }
 
         push_scope();
         LoopInfo block;
-        block.label = expr.label;
+        block.label = label;
         block.is_loop = false;
         block.supports_break_values = true;
         block.scope_depth = scopes_.size() - 1;
@@ -11962,14 +11972,14 @@ private:
         }
         loops_.push_back(block);
 
-        CheckedStatements checked = check_statements(expr.block_body, false);
+        CheckedStatements checked = check_statements(expr_block_body(expr), false);
         if (checked.flow == Flow::Returns) {
             loops_.pop_back();
             discard_scope();
             fail(expr.loc, "block expression must reach its final value or a typed break");
         }
 
-        IrExprPtr value = check_expr_maybe_expected(*expr.block_value, expected);
+        IrExprPtr value = check_expr_maybe_expected(*expr_block_value(expr), expected);
         if (is_borrow_type(value->type)) {
             loops_.pop_back();
             pop_scope();
@@ -11987,7 +11997,7 @@ private:
             widen_vector_result_storage(block_state.break_result_type, *value);
             coerce_expr_to_expected(*value, block_state.break_result_type);
             require_assignable(expr.loc, block_state.break_result_type, value->type);
-            coerce_labeled_break_values(checked.statements, expr.label, block_state.break_result_type);
+            coerce_labeled_break_values(checked.statements, label, block_state.break_result_type);
         }
         value = materialize_value_before_auto_destroy_cleanup(
             expr.loc,
@@ -14566,8 +14576,8 @@ private:
                              local->type.primitive == IrPrimitiveKind::Array ||
                              is_prelude_slice_type(local->type));
         }
-        if (expr.kind == ExprKind::Block && expr.block_value) {
-            return is_collection_len_method_receiver(*expr.block_value);
+        if (expr.kind == ExprKind::Block && expr_block_value(expr)) {
+            return is_collection_len_method_receiver(*expr_block_value(expr));
         }
         if (expr.kind == ExprKind::If) {
             return expr.then_value && expr.else_value &&
@@ -16066,9 +16076,12 @@ private:
             return;
         }
         if (expr.kind == IrExprKind::Block) {
-            coerce_expr_to_expected(*expr.block_value, expected);
-            require_assignable(expr.loc, expected, expr.block_value->type);
-            if (!expr.label.empty()) coerce_labeled_break_values(expr.block_body, expr.label, expected);
+            coerce_expr_to_expected(*ir_expr_block_value(expr), expected);
+            require_assignable(expr.loc, expected, ir_expr_block_value(expr)->type);
+            if (!ir_expr_block_label(expr).empty()) {
+                coerce_labeled_break_values(
+                    ir_expr_block_body(expr), ir_expr_block_label(expr), expected);
+            }
             expr.type = expected;
             return;
         }
