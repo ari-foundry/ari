@@ -38,8 +38,19 @@ fn main() -> i64 {
   };
   let float_index = floats.index_of(2.5f64);
   let float_count = floats.count(2.5f64);
+  var mutable: Vec[i64] = [10, 20, 30, 40];
+  mutable.set(1, 7);
+  mutable.swap(0, 2);
+  mutable.truncate(3);
+  let mutated = mutable[0] + mutable[1] + mutable[2] + len(mutable);
+  mutable.clear();
+  let cleared_bonus = if mutable.is_empty() {
+    4
+  } else {
+    40
+  };
   return total + values[0] + values[index] + len(values) + empty_bonus +
     first + last + by_get + capacity + contains_bonus + missing_bonus +
     found_index + missing_index + target_count + missing_count +
-    float_bonus + float_index + float_count;
+    float_bonus + float_index + float_count + mutated + cleared_bonus;
 }

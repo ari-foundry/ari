@@ -71,13 +71,15 @@
    `Vec[T]` values as Ari-layout local aggregates, so direct literals, local
    copies, checked scalar indexing, `len`/`is_empty`, read-only
    `capacity`/`first`/`last`/`get`, `contains`/`index_of`/`count`, and
-   stored-vector `for` loops work there. Raw `Slice[T]` views over mutable
+   non-growing `clear`/`truncate`/`set`/`swap` mutations work there, along
+   with stored-vector `for` loops. Raw `Slice[T]` views over mutable
    local arrays, local vectors, and explicit `slice(data, len)` values also
    lower through their stored pointer/length metadata for `len`, `is_empty`,
-   checked scalar indexing, indexed assignment, and exclusive/inclusive range slicing. The
-   temporary mutating method surface remains LLVM-only, and search methods
-   still need an allocator-backed runtime storage path once `Vec[T]` stops
-   being a fixed local buffer.
+   checked scalar indexing, indexed assignment, and exclusive/inclusive range
+   slicing. The
+   growing, returning, and shifting mutating method surface remains LLVM-only,
+   and fixed-local methods still need an allocator-backed runtime storage path
+   once `Vec[T]` stops being a fixed local buffer.
    The
    shared constant
    value model,
