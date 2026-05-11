@@ -269,6 +269,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/let-while.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/init-while-owning.ari -o $(BUILD_DIR)/control-flow/init-while-owning.raw
 	$(BUILD_DIR)/control-flow/init-while-owning.raw; code=$$?; test $$code -eq 22
+	$(TARGET) --freestanding tests/ok/init-while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-false-owner-state.raw
+	$(BUILD_DIR)/control-flow/init-while-false-owner-state.raw; code=$$?; test $$code -eq 7
 	$(TARGET) --freestanding tests/ok/labeled-break.ari -o $(BUILD_DIR)/control-flow/labeled-break.raw
 	$(BUILD_DIR)/control-flow/labeled-break.raw; code=$$?; test $$code -eq 2
 	$(TARGET) --freestanding tests/ok/break-statement-payloads.ari -o $(BUILD_DIR)/control-flow/break-statement-payloads.raw
@@ -373,6 +375,8 @@ check-control-flow: $(TARGET)
 	grep -q "initwhile.cond" $(BUILD_DIR)/control-flow/statement-body-payloads.ll
 	$(TARGET) tests/ok/init-while-owning.ari --emit-llvm $(BUILD_DIR)/control-flow/init-while-owning.ll
 	grep -q "initwhile.update" $(BUILD_DIR)/control-flow/init-while-owning.ll
+	$(TARGET) tests/ok/init-while-false-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/init-while-false-owner-state.ll
+	grep -q "br i1 0" $(BUILD_DIR)/control-flow/init-while-false-owner-state.ll
 	$(TARGET) tests/ok/labeled-block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	$(TARGET) tests/ok/labeled-block-aggregate.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll

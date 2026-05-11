@@ -127,6 +127,9 @@
    also checked without merging unreachable body ownership changes into the
    zero-iteration loop exit state. Unselected literal `if` branches also stop
    contributing unreachable `break`/`continue` snapshots to enclosing loops.
+   Literal-false `init while` / `let while` loops now keep their zero-iteration
+   init binding state after checking the unreachable body and `next`
+   expressions.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
      loop fallthrough paths instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop

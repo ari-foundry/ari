@@ -10517,6 +10517,25 @@ private:
         }
     }
 
+    std::vector<IrExprPtr> check_init_while_update_exprs(
+        SourceLocation loc,
+        const LoopInfo& loop,
+        const std::vector<ExprPtr>& updates
+    ) {
+        if (updates.size() != loop.types.size()) {
+            fail(loc, "next value count must match init binding count");
+        }
+        std::vector<IrExprPtr> lowered_updates;
+        lowered_updates.reserve(updates.size());
+        for (std::size_t i = 0; i < updates.size(); ++i) {
+            IrExprPtr update = check_expr(*updates[i]);
+            coerce_expr_to_expected(*update, loop.types[i]);
+            require_assignable(loc, loop.types[i], update->type);
+            lowered_updates.push_back(std::move(update));
+        }
+        return lowered_updates;
+    }
+
     void check_init_while(const Stmt& stmt, IrStmt& lowered) {
         const std::string& label = stmt_label(stmt);
         LoopInfo loop;
@@ -10546,6 +10565,7 @@ private:
 
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
+        const std::optional<bool> literal_condition = literal_bool_condition_value(*lowered.condition);
         StateSnapshot loop_input = snapshot_states();
 
         push_loop(stmt.loc, loop);
@@ -10553,6 +10573,16 @@ private:
         set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
         StateSnapshot exit_state = loop_input;
+        if (literal_condition && !*literal_condition) {
+            restore_states(loop_input);
+            if (!stmt.updates.empty()) {
+                lowered.updates = check_init_while_update_exprs(stmt.loc, loop, stmt.updates);
+                restore_states(loop_input);
+            }
+            loops_.pop_back();
+            restore_states(loop_input);
+            return;
+        }
         if (body.flow == Flow::Continues && stmt.updates.empty()) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
             merge_existing_zone_generations_into(exit_state, loop_body_state);
@@ -10567,16 +10597,7 @@ private:
         }
 
         if (body.flow == Flow::Continues && !stmt.updates.empty()) {
-            if (stmt.updates.size() != loop.types.size()) {
-                fail(stmt.loc, "next value count must match init binding count");
-            }
-            lowered.updates.reserve(stmt.updates.size());
-            for (std::size_t i = 0; i < stmt.updates.size(); ++i) {
-                IrExprPtr update = check_expr(*stmt.updates[i]);
-                coerce_expr_to_expected(*update, loop.types[i]);
-                require_assignable(stmt.loc, loop.types[i], update->type);
-                lowered.updates.push_back(std::move(update));
-            }
+            lowered.updates = check_init_while_update_exprs(stmt.loc, loop, stmt.updates);
             apply_init_while_update_state(stmt.loc, loop);
             StateSnapshot update_state = snapshot_states();
             require_same_states(stmt.loc, loop_input, update_state, "cannot change ownership state in loop updates yet");

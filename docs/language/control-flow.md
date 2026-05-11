@@ -558,6 +558,9 @@ The update is still positional and parallel: all update expressions are
 evaluated before the loop bindings are written. In loops with owning `init`
 bindings, `continue` must provide explicit update values so the checker can
 validate the owner state at that jump.
+For a literal `while false` condition, the body and `next` expressions are
+checked, but ownership flow after the loop keeps the initial binding state
+because no iteration or update can execute.
 
 `let ... while ... next ...` is accepted as the preferred spelling for the same
 loop-state form:

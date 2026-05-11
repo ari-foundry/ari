@@ -1,0 +1,16 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume(value: own i64) -> i64 {
+  drop value;
+  return 7;
+}
+
+fn main() -> i64 {
+  init token = make_owned(3), i = 0 while false {
+    drop token;
+  } next token, i + 1
+
+  return consume(token) + i;
+}
