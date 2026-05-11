@@ -4512,6 +4512,21 @@ private:
         );
     }
 
+    void require_no_live_owners_before_scope_jump(
+        SourceLocation loc,
+        std::size_t first_scope_index,
+        const std::string& jump_name
+    ) const {
+        local_scopes_.for_each_local_from(
+            first_scope_index,
+            [&](const std::string& name, const LocalInfo& local) {
+                if (local_has_live_owner(local)) {
+                    fail(loc, "owning binding '" + name + "' must be moved or dropped before " + jump_name);
+                }
+            }
+        );
+    }
+
     std::size_t temporary_borrow_mark() const {
         return borrow_context_.mark();
     }
@@ -10539,6 +10554,7 @@ private:
             std::vector<IrStmtPtr> cleanup;
             append_auto_destroy_zone_cleanup(stmt.loc, cleanup, target.scope_depth);
             append_outer_loop_exit_owner_cleanup_until(stmt.loc, target, cleanup);
+            require_no_live_owners_before_scope_jump(stmt.loc, target.scope_depth, "break");
             target.break_state_snapshots.push_back(snapshot_states());
             if (!cleanup.empty()) {
                 auto break_stmt = std::make_unique<IrStmt>();
@@ -10610,6 +10626,7 @@ private:
             );
         }
         append_outer_loop_exit_owner_cleanup_until(stmt.loc, target, cleanup);
+        require_no_live_owners_before_scope_jump(stmt.loc, target.scope_depth, "break");
         target.break_state_snapshots.push_back(snapshot_states());
         if (!cleanup.empty()) {
             auto break_stmt = std::make_unique<IrStmt>();
@@ -10633,6 +10650,7 @@ private:
             }
             std::vector<IrStmtPtr> cleanup;
             append_auto_destroy_zone_cleanup(stmt.loc, cleanup, loop.scope_depth);
+            require_no_live_owners_before_scope_jump(stmt.loc, loop.scope_depth, "continue");
             if (!cleanup.empty()) {
                 auto continue_stmt = std::make_unique<IrStmt>();
                 continue_stmt->kind = IrStmtKind::Continue;
@@ -10672,6 +10690,7 @@ private:
             }
             append_auto_destroy_zone_cleanup(stmt.loc, cleanup, loop.scope_depth);
         }
+        require_no_live_owners_before_scope_jump(stmt.loc, loop.scope_depth, "continue");
         if (!cleanup.empty()) {
             auto continue_stmt = std::make_unique<IrStmt>();
             continue_stmt->kind = IrStmtKind::Continue;

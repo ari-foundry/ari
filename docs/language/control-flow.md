@@ -396,6 +396,9 @@ the loop have the same state as they would have if the loop ran zero times. This
 keeps paths such as `drop owner; break;` from leaving the owner ambiguously live
 after the loop.
 
+Because `break` leaves the current nested scopes, any owning binding declared in
+those scopes must be moved or dropped before the jump.
+
 Loops can be labeled, and `break label` exits the matching active loop:
 
 ```ari
@@ -471,6 +474,9 @@ while value < 10 {
 ```
 
 `continue` jumps to the next loop iteration.
+
+Because `continue` leaves the current iteration scopes, any owning binding
+declared in those scopes must be moved or dropped before the jump.
 
 `continue` with values is only valid in `init while` loops. Plain `while` and
 `for` loops reject value continues because they do not have positional loop
