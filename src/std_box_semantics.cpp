@@ -4,6 +4,15 @@
 
 namespace ari {
 
+namespace {
+
+IrType value_qualified_box_type(IrType type) {
+    type.qualifier = TypeQualifier::Value;
+    return type;
+}
+
+} // namespace
+
 bool is_std_box_handle_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Value &&
            type.primitive == IrPrimitiveKind::Struct &&
@@ -23,6 +32,13 @@ std::optional<std::size_t> std_box_zone_handle_source_field_index(const IrType& 
         if (!same_type(field_type, expected_data)) return std::nullopt;
     }
     return 0;
+}
+
+bool std_box_pointer_result_preserves_receiver_zone(const IrExpr& call) {
+    return call.kind == IrExprKind::Call &&
+           call.type.qualifier == TypeQualifier::Ptr &&
+           !call.args.empty() &&
+           is_std_box_handle_type(value_qualified_box_type(call.args[0]->type));
 }
 
 } // namespace ari

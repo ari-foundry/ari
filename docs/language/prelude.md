@@ -71,11 +71,12 @@ API.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. The
-handle has `get()`, `set(value)`, and `as_ptr()` methods for copyable,
-zone-placeable values. `as_ptr()` returns the stored `ptr T` with the same zone
-provenance as the handle, so using that pointer after the source zone is reset
-or destroyed is also rejected by the checker. This is not yet the final owning
-root `Box[T]` smart pointer surface.
+handle has `get()`, `set(value)`, `replace(value)`, and `as_ptr()` methods for
+copyable, zone-placeable values. `replace(value)` stores a new value and
+returns the previous one. `as_ptr()` returns the stored `ptr T` with the same
+zone provenance as the handle, so using that pointer after the source zone is
+reset or destroyed is also rejected by the checker. This is not yet the final
+owning root `Box[T]` smart pointer surface.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -508,6 +509,7 @@ var boxed = std::boxed::new<i64>(ref mut zone, 21)
 let before = boxed.get()
 boxed.set(9)
 let after = boxed.get()
+let replaced = boxed.replace(12)
 let raw = boxed.as_ptr()
 ```
 

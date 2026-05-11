@@ -86,6 +86,12 @@ pub mod boxed {
       ptr_store(self.data, value);
     }
 
+    fn replace(self: ref mut Self, value: T) -> T {
+      let previous = ptr_load(self.data);
+      ptr_store(self.data, value);
+      return previous;
+    }
+
     fn as_ptr(self) -> ptr T {
       return self.data;
     }
