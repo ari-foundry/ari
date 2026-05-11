@@ -118,8 +118,9 @@
    state. Literal `while true` loops use reachable `break` states rather than a
    zero-iteration exit state when restoring ownership after the loop, and
    `while true` bodies that return on every path now make the loop statement
-   return as well. Literal `while true` bodies that can only `continue` also no
-   longer count as falling through.
+   return as well. Literal `while true` bodies with no reachable `break` also
+   no longer count as falling through when they continue into the next
+   iteration.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
      loop fallthrough paths instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop

@@ -4313,7 +4313,7 @@ private:
     }
 
     static bool literal_true_loop_never_falls_through(const LoopInfo& loop, Flow body_flow) {
-        return body_flow == Flow::Stops && loop.break_state_snapshots.empty();
+        return body_flow != Flow::Returns && loop.break_state_snapshots.empty();
     }
 
     void collect_owned_field_states(const IrType& type,
