@@ -6,9 +6,9 @@ Ari auto-loads the source `std` surface into ordinary executable modules and
 adds implicit aliases for its public prelude names. You can call those names
 without a `use`.
 
-The source declaration root lives at `lib/std.arih`, with larger child modules
-allowed to live beside it under `lib/std/`. The compiler auto-loads that root
-as the `std` module when the file is present, so explicit `std::...` names work
+The source declaration root lives at `lib/std.arih`, with child modules allowed
+to live beside it under `lib/std/`. The compiler auto-loads that root as the
+`std` module when the file is present, so explicit `std::...` names work
 without a `mod std;` declaration:
 
 ```ari
@@ -58,7 +58,8 @@ fn main() -> i64 {
 ```
 
 The `std::vec` module currently exposes allocator-seeding helpers for the
-future growable vector runtime. `std::vec::alloc_buffer<T>(ref mut zone,
+future growable vector runtime. Its source lives in `lib/std/vec.arih`.
+`std::vec::alloc_buffer<T>(ref mut zone,
 capacity)` allocates `capacity * size_of<T>()` bytes from an explicit `Zone`
 capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with

@@ -248,6 +248,10 @@ check-prelude: $(TARGET)
 	$(TARGET) --no-implicit-std --module-path lib tests/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
 	grep -q 'option	implicit_std	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std	lib/std.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::mem	lib/std/mem.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::mem	mem	lib/std/mem.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::zone	lib/std/zone.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::zone	zone	lib/std/zone.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::boxed	lib/std/boxed.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::boxed	boxed	lib/std/boxed.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::vec	lib/std/vec.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta

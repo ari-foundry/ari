@@ -79,7 +79,8 @@ and call through `core::...`. Other library modules still require normal
 
 The source `std` root is treated as a small package root: file-backed child
 modules declared from `lib/std.arih` may live under `lib/std/`, such as
-`lib/std/boxed.arih` for `std::boxed` and `lib/std/vec.arih` for `std::vec`.
+`lib/std/mem.arih` for `std::mem`, `lib/std/zone.arih` for `std::zone`,
+`lib/std/boxed.arih` for `std::boxed`, and `lib/std/vec.arih` for `std::vec`.
 The same package-style child lookup applies when `std` is loaded explicitly
 through `mod std;`.
 

@@ -128,9 +128,9 @@
      implicit-std loader can treat it like a package, so future APIs do not keep
      expanding one monolithic `lib/std.arih` header. The implicit and explicit
      source-`std` loaders now resolve package-style child modules, and
-     `std::boxed` and `std::vec` live under `lib/std/`; remaining work is to
-     move other growing child modules out of the root header as they become
-     large enough.
+     `std::boxed`, `std::mem`, `std::vec`, and `std::zone` live under
+     `lib/std/`; remaining work is to move other growing child modules out of
+     the root header as they become large enough.
    - [std-provenance] keep zone-provenance rules for source handles and
      pointer-returning methods in focused helpers such as `std_box_semantics`,
      `std_vec_semantics`, `slice_semantics`, and future string/smart-pointer

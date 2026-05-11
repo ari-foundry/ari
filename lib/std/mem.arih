@@ -1,0 +1,6 @@
+pub fn size_of[T]() -> i64;
+pub fn align_of[T]() -> i64;
+pub fn ptr_offset[T](base: ptr T, bytes: i64) -> ptr T;
+pub fn ptr_add[T](base: ptr T, count: i64) -> ptr T;
+pub fn ptr_load[T](source: ptr T) -> T;
+pub fn ptr_store[T](target: ptr T, value: T) -> void;

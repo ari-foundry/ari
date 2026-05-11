@@ -1,0 +1,7 @@
+pub extern "ari" fn create(capacity: i64) -> own Zone = "ari_builtin_zone_create";
+pub extern "ari" fn alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8 = "ari_builtin_zone_alloc";
+pub fn alloc[T](zone: ref mut Zone) -> ptr T;
+pub fn new[T](zone: ref mut Zone, value: T) -> ptr T;
+pub fn promote[T](target: ref mut Zone, source: ptr T) -> ptr T;
+pub extern "ari" fn reset(zone: ref mut Zone) -> void = "ari_builtin_zone_reset";
+pub extern "ari" fn destroy(zone: own Zone) -> void = "ari_builtin_zone_destroy";
