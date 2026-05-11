@@ -178,20 +178,24 @@
    AST expression argument/child vectors now use a lazy vector wrapper too, so
    scalar/name/unary/access/control expressions no longer carry an eager
    `std::vector<ExprPtr>` while tuple, vector, struct literal, call, and method
-   call construction keep the existing parser/sema API surface.
+   call construction keep the existing parser/sema API surface. The same shared
+   `LazyVector` helper now backs IR expression argument vectors, including tuple,
+   vector, aggregate-constructor, call, and stored-vector for-loop lowering
+   paths, so ordinary IR scalar/access/control nodes avoid the eager argument
+   vector too.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
-   IR expression child/vector payloads plus AST/IR operand child pointers are
-   still widely mutated while parsing, lowering, and backend emission, so their
-   payload split needs more constructor/builder coverage first.
+   AST/IR operand child pointers are still widely mutated while parsing,
+   lowering, and backend emission, so their payload split needs more
+   constructor/builder coverage first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
-     variant payload structs or unions; remaining high-value targets are IR
-     expression argument vectors and AST/IR operand child expression groups that
-     still receive broad sema and backend mutations
-   - [expr-child-vector-payloads] split call/argument and operand child/vector
-     expression fields after builders cover the remaining parser/sema/backend
-     mutation paths; next small slice: split IR expression argument vectors by
-     expression kind once direct call, aggregate construction, dyn dispatch, and
-     raw backend consumers share one helper path
+     variant payload structs or unions; remaining high-value targets are AST/IR
+     operand child expression groups that still receive broad parser, sema, and
+     backend mutations
+   - [expr-child-vector-payloads] split operand child expression fields after
+     builders cover the remaining parser/sema/backend mutation paths; next small
+     slice: split AST unary/cast/try/index/field operand children once parser
+     construction, AST clone, and sema borrow-receiver synthesis share one helper
+     path
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

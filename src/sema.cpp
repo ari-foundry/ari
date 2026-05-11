@@ -10108,7 +10108,7 @@ private:
         const std::string& label = stmt_label(stmt);
         set_ir_stmt_label(lowered, label);
         lowered.for_binding_type = iterable->type.args[0];
-        lowered.for_values = std::move(iterable->args);
+        lowered.for_values = iterable->args.take();
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop;

@@ -120,10 +120,13 @@ as well. Parser generic-call construction, AST cloning, module-summary constant
 serialization, constant evaluation, and sema generic function/constructor lookup
 all read or move the payload through `expr_type_args`, `set_expr_type_args`, and
 `take_expr_type_args`.
-AST expression argument vectors now use a lazy vector wrapper that preserves the
-existing `expr.args` API while moving empty tuple/vector/struct/call child lists
-out of ordinary scalar/name/control expression nodes. This keeps the current
-parser and sema call sites stable while still shrinking common AST nodes.
+AST and IR expression argument vectors now use the shared `LazyVector` wrapper
+from `lazy_vector.hpp`. It preserves the existing `expr.args` API while moving
+empty tuple/vector/struct/call child lists out of ordinary scalar/name/control
+expression nodes. This keeps the current parser, sema, and backend call sites
+stable while still shrinking common AST/IR nodes; stored-vector for-loop lowering
+uses `take()` when it transfers an IR vector literal's children into the lowered
+statement.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

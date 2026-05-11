@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.hpp"
+#include "lazy_vector.hpp"
 #include "types.hpp"
 
 #include <cstdint>
@@ -80,6 +81,7 @@ enum class IrUnaryOp {
 
 struct IrExpr;
 using IrExprPtr = std::unique_ptr<IrExpr>;
+using IrExprArgs = LazyVector<IrExprPtr>;
 struct IrStmt;
 using IrStmtPtr = std::unique_ptr<IrStmt>;
 
@@ -306,7 +308,7 @@ struct IrExpr {
     std::unique_ptr<IrExprCallParamPayload> call_param_payload;
     std::vector<IrStmtPtr> try_residual_cleanup;
     std::unique_ptr<IrExprMatchPayload> match_payload;
-    std::vector<std::unique_ptr<IrExpr>> args;
+    IrExprArgs args;
 };
 
 struct IrMatchArm {
