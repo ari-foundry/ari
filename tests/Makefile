@@ -1519,7 +1519,7 @@ check-variables: $(TARGET)
 	$(TARGET) --freestanding tests/ok/array-dynamic-index.ari -o $(BUILD_DIR)/variables/array-dynamic-index.raw
 	$(BUILD_DIR)/variables/array-dynamic-index.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/vector-local-freestanding.ari -o $(BUILD_DIR)/variables/vector-local-freestanding.raw
-	$(BUILD_DIR)/variables/vector-local-freestanding.raw; code=$$?; test $$code -eq 28
+	$(BUILD_DIR)/variables/vector-local-freestanding.raw; code=$$?; test $$code -eq 73
 	$(TARGET) --freestanding tests/ok/array-len-literal.ari -o $(BUILD_DIR)/variables/array-len-literal.raw
 	$(BUILD_DIR)/variables/array-len-literal.raw; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/variables-basic.ari --emit-llvm $(BUILD_DIR)/variables/variables-basic.ll

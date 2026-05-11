@@ -11,5 +11,35 @@ fn main() -> i64 {
   } else {
     6
   };
-  return total + values[0] + values[index] + len(values) + empty_bonus;
+  let first = values.first();
+  let last = values.last();
+  let by_get = values.get(2);
+  let capacity = values.capacity();
+  let target = values[index];
+  let contains_bonus = if values.contains(target) {
+    7
+  } else {
+    70
+  };
+  let missing_bonus = if values.contains(9) {
+    80
+  } else {
+    8
+  };
+  let found_index = values.index_of(last);
+  let missing_index = values.index_of(9);
+  let target_count = values.count(target);
+  let missing_count = values.count(9);
+  let floats: Vec[f64] = [1.5f64, 0.0f64, 2.5f64];
+  let float_bonus = if floats.contains(0.0f64) {
+    9
+  } else {
+    90
+  };
+  let float_index = floats.index_of(2.5f64);
+  let float_count = floats.count(2.5f64);
+  return total + values[0] + values[index] + len(values) + empty_bonus +
+    first + last + by_get + capacity + contains_bonus + missing_bonus +
+    found_index + missing_index + target_count + missing_count +
+    float_bonus + float_index + float_count;
 }

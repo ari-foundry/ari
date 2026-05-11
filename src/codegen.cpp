@@ -1085,9 +1085,9 @@ private:
 
     void emit_ordered_float_setcc(std::uint8_t cc) {
         emit_setcc_raw(cc, 0);
-        emit_setcc_raw(0x9B, 2);
+        emit_setcc_raw(0x9B, 1);
         out_.u8(0x20);
-        out_.u8(0xD0);
+        out_.u8(0xC8);
         emit_movzx_eax_al();
     }
 
@@ -2367,11 +2367,14 @@ private:
             case IrExprKind::VectorInsert:
                 throw CompileError(where(expr.loc) + ": backend does not lower Vec.insert yet");
             case IrExprKind::VectorContains:
-                throw CompileError(where(expr.loc) + ": backend does not lower Vec.contains yet");
+                emit_vector_search(expr, false);
+                break;
             case IrExprKind::VectorIndexOf:
-                throw CompileError(where(expr.loc) + ": backend does not lower Vec.index_of yet");
+                emit_vector_search(expr, true);
+                break;
             case IrExprKind::VectorCount:
-                throw CompileError(where(expr.loc) + ": backend does not lower Vec.count yet");
+                emit_vector_count(expr);
+                break;
             case IrExprKind::Noop:
                 emit_mov_reg_imm64(Reg::RAX, 0);
                 break;
@@ -2561,6 +2564,156 @@ private:
         emit_lea_reg_local(Reg::RCX, data_offset);
         emit_add_reg_reg(Reg::RCX, Reg::RAX);
         emit_load_rax_from_ptr(Reg::RCX, expr.type);
+    }
+
+    struct LocalVectorLayout {
+        const IrType* element_type = nullptr;
+        int length_offset = 0;
+        int data_offset = 0;
+        int stride = 0;
+    };
+
+    static bool is_raw_vector_search_element_type(const IrType& type) {
+        if (type.qualifier == TypeQualifier::Ptr) return true;
+        if (type.qualifier != TypeQualifier::Value) return false;
+        if (is_integer_primitive(type.primitive) ||
+            type.primitive == IrPrimitiveKind::F32 ||
+            type.primitive == IrPrimitiveKind::F64 ||
+            type.primitive == IrPrimitiveKind::Bool ||
+            type.primitive == IrPrimitiveKind::Function) {
+            return true;
+        }
+        return type.primitive == IrPrimitiveKind::Enum && !has_aggregate_enum_layout(type);
+    }
+
+    LocalVectorLayout local_vector_layout(const IrExpr& expr, const std::string& operation) {
+        if (!ir_expr_operand(expr) || ir_expr_operand(expr)->kind != IrExprKind::Local) {
+            throw CompileError(where(expr.loc) + ": backend can only lower " + operation + " on local vectors yet");
+        }
+        const IrType& vector_type = ir_expr_operand(expr)->type;
+        if (vector_type.args.size() != 1 || vector_type.field_types.size() != 2) {
+            throw CompileError(where(expr.loc) + ": backend cannot lower " + operation + " on unsized Vec storage");
+        }
+        const IrType& element_type = vector_type.args[0];
+        if (!is_raw_vector_search_element_type(element_type)) {
+            throw CompileError(where(expr.loc) + ": freestanding backend does not lower " + operation +
+                               " for " + type_name(element_type) + " elements yet");
+        }
+
+        int base = local_offset(ir_expr_operand(expr)->loc, ir_expr_name(*ir_expr_operand(expr)));
+        LocalVectorLayout layout;
+        layout.element_type = &element_type;
+        layout.length_offset = aggregate_lvalue_field_offset(expr.loc, base, vector_type, 0);
+        layout.data_offset = aggregate_lvalue_field_offset(expr.loc, base, vector_type, 1);
+        layout.stride = layout_size_bytes(expr.loc, element_type);
+        return layout;
+    }
+
+    void emit_normalize_vector_search_value(SourceLocation loc, const IrType& type) {
+        if (type.qualifier == TypeQualifier::Value && is_integer_primitive(type.primitive)) {
+            emit_cast_to_type(loc, type);
+            return;
+        }
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+            emit_cmp_rax_zero();
+            emit_setcc(0x95);
+        }
+    }
+
+    void emit_vector_element_at_index(const LocalVectorLayout& layout, Reg index) {
+        emit_mov_reg_reg(Reg::RAX, index);
+        emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(layout.stride));
+        emit_imul_reg_reg(Reg::RAX, Reg::RCX);
+        emit_lea_reg_local(Reg::RCX, layout.data_offset);
+        emit_add_reg_reg(Reg::RCX, Reg::RAX);
+        emit_load_rax_from_ptr(Reg::RCX, *layout.element_type);
+    }
+
+    void emit_compare_vector_element_with_needle(const LocalVectorLayout& layout) {
+        if (is_raw_f32_or_f64_type(*layout.element_type)) {
+            emit_mov_gp_to_xmm(0, Reg::RAX);
+            emit_mov_gp_to_xmm(1, Reg::R8);
+            emit_sse_scalar_compare(*layout.element_type);
+            emit_ordered_float_setcc(0x94);
+            emit_mov_reg_imm64(Reg::RCX, 1);
+            emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+            return;
+        }
+        emit_cmp_reg_reg(Reg::RAX, Reg::R8);
+    }
+
+    void emit_increment_reg(Reg reg) {
+        emit_mov_reg_imm64(Reg::RCX, 1);
+        emit_add_reg_reg(reg, Reg::RCX);
+    }
+
+    void emit_vector_search(const IrExpr& expr, bool return_index) {
+        if (!ir_expr_payload(expr)) {
+            throw CompileError(where(expr.loc) + ": malformed Vec search lowering");
+        }
+        LocalVectorLayout layout = local_vector_layout(expr, return_index ? "Vec.index_of" : "Vec.contains");
+
+        emit_expr(*ir_expr_payload(expr));
+        emit_normalize_vector_search_value(expr.loc, *layout.element_type);
+        emit_mov_reg_reg(Reg::R8, Reg::RAX);
+        emit_mov_reg_imm64(Reg::RDX, 0);
+
+        std::size_t loop = out_.size();
+        emit_load_rax_from_local(layout.length_offset, i64_type(SourceLocation{}));
+        emit_cmp_reg_reg(Reg::RDX, Reg::RAX);
+        std::size_t missing = emit_jcc_placeholder(0x8D);
+
+        emit_vector_element_at_index(layout, Reg::RDX);
+        emit_compare_vector_element_with_needle(layout);
+        std::size_t found = emit_jcc_placeholder(0x84);
+        emit_increment_reg(Reg::RDX);
+        std::size_t next = emit_jmp_placeholder();
+        patch_rel32(next, loop);
+
+        std::size_t found_target = out_.size();
+        patch_rel32(found, found_target);
+        if (return_index) {
+            emit_mov_reg_reg(Reg::RAX, Reg::RDX);
+        } else {
+            emit_mov_reg_imm64(Reg::RAX, 1);
+        }
+        std::size_t done = emit_jmp_placeholder();
+
+        std::size_t missing_target = out_.size();
+        patch_rel32(missing, missing_target);
+        emit_mov_reg_imm64(Reg::RAX, return_index ? (std::uint64_t{0} - 1) : 0);
+
+        patch_rel32(done, out_.size());
+    }
+
+    void emit_vector_count(const IrExpr& expr) {
+        if (!ir_expr_payload(expr)) {
+            throw CompileError(where(expr.loc) + ": malformed Vec.count lowering");
+        }
+        LocalVectorLayout layout = local_vector_layout(expr, "Vec.count");
+
+        emit_expr(*ir_expr_payload(expr));
+        emit_normalize_vector_search_value(expr.loc, *layout.element_type);
+        emit_mov_reg_reg(Reg::R8, Reg::RAX);
+        emit_mov_reg_imm64(Reg::RDX, 0);
+        emit_mov_reg_imm64(Reg::R9, 0);
+
+        std::size_t loop = out_.size();
+        emit_load_rax_from_local(layout.length_offset, i64_type(SourceLocation{}));
+        emit_cmp_reg_reg(Reg::RDX, Reg::RAX);
+        std::size_t done = emit_jcc_placeholder(0x8D);
+
+        emit_vector_element_at_index(layout, Reg::RDX);
+        emit_compare_vector_element_with_needle(layout);
+        std::size_t skip_increment = emit_jcc_placeholder(0x85);
+        emit_increment_reg(Reg::R9);
+        patch_rel32(skip_increment, out_.size());
+        emit_increment_reg(Reg::RDX);
+        std::size_t next = emit_jmp_placeholder();
+        patch_rel32(next, loop);
+
+        patch_rel32(done, out_.size());
+        emit_mov_reg_reg(Reg::RAX, Reg::R9);
     }
 
     void emit_slice_element_address(const IrExpr& expr) {

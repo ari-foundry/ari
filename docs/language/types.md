@@ -447,7 +447,7 @@ let empty = values.is_empty()
 let literal = [10, 20, 30].len()
 ```
 
-Local vectors also support fixed-capacity methods on the LLVM backend:
+Local vectors also support fixed-capacity methods:
 
 ```ari
 var values: Vec[i64] = []
@@ -540,9 +540,11 @@ but indexing checks the current runtime length, not the reserved capacity. The
 storage is deliberately not heap allocation yet. Allocator-backed growth,
 slicing, and non-local vector ABI are still planned. On the raw
 `--freestanding` backend, stored local vector literals, local copies, scalar
-indexing, `len`, `is_empty`, and stored-vector `for` loops lower through the
-same fixed local layout; the temporary fixed-capacity methods above remain
-LLVM-only.
+indexing, `len`, `is_empty`, `capacity`, `first`, `last`, `get`, `contains`,
+`index_of`, `count`, and stored-vector `for` loops lower through the same fixed
+local layout. Mutating fixed-capacity methods such as `reserve`, `push`,
+`insert`, `pop`, `remove`, `clear`, `truncate`, `set`, and `swap` remain
+LLVM-only until allocator-backed vector storage exists.
 
 Array literals support constant indexing without materializing a runtime
 aggregate:

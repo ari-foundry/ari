@@ -244,7 +244,8 @@ Checklist:
       runtime-index rejection
 - [x] frozen local `Vec[T]` API rejects unsupported compiler-known methods with allocator-backed std guidance
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local
-      copies, scalar indexing, and stored-vector `for` loops
+      copies, scalar indexing, read-only length/capacity/get/search methods,
+      and stored-vector `for` loops
 - [x] `init ... while ... next ...` normal update path
 - [x] `let ... while ... next ...` loop-state spelling
 - [x] `continue value, ...` inside init-while
