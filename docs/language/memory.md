@@ -79,6 +79,7 @@ fn touch(value: ref mut i16) -> i64 {
 fn main() -> i64 {
   var number: u32 = 7;
   var slot: i16 = 0;
+  let pick_first = true;
   inspect(ref number);
   touch(ref mut slot);
   {
@@ -91,6 +92,14 @@ fn main() -> i64 {
     let borrowed: ref mut i16 = ref mut slot;
     let again: ref mut i16 = ref mut borrowed;
     touch(again);
+  }
+  {
+    let chosen: ref u32 = if pick_first {
+      ref number
+    } else {
+      ref number
+    };
+    inspect(chosen);
   }
   return 0;
 }
@@ -106,11 +115,16 @@ Rules currently checked:
 - fields behind a `ref mut Struct` parameter can be read and assigned through
   the borrow, subject to the struct field's own `mut` marker
 - a named borrow keeps the source borrowed until the binding's block exits
-- borrow bindings must be initialized directly with `ref` or `ref mut`
+- borrow bindings must be initialized with `ref`, `ref mut`, or a compatible
+  borrow-valued block, `if`, `match`, or labeled-block expression result
 - an existing local borrow binding can be reborrowed with `ref` when the source
   is `ref` or `ref mut`
 - an existing local `ref mut` borrow binding can be reborrowed with `ref mut`;
   immutable borrow bindings cannot be reborrowed mutably
+- borrow-valued control-flow expression results are allowed only when every
+  result path borrows the same source path with the same borrow mode
+- a borrow-valued control-flow expression cannot return a borrow of a binding
+  declared inside that expression's arm or block
 - borrow bindings cannot be reassigned
 - borrow values cannot be returned
 - bare borrow expression statements are rejected
@@ -119,8 +133,7 @@ Named borrow lifetimes are lexical today. A reborrow keeps the borrow binding it
 was created from borrowed until the reborrow exits scope, and that source borrow
 binding keeps its own original source borrowed until its scope exits. Future
 borrow-checker refinement may shorten a named borrow to its last use and allow
-more borrow-valued expression result shapes once source/mode preservation is
-tracked through every arm.
+borrow returns once result lifetimes can be proven across function boundaries.
 
 ## Drop
 

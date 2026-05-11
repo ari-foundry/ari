@@ -1,0 +1,35 @@
+fn inspect(value: ref i64) -> i64 {
+  return 1;
+}
+
+fn main() -> i64 {
+  var number = 7;
+  let cond = true;
+  var total = 0;
+
+  let from_block: ref i64 = {
+    ref number
+  };
+  total = total + inspect(from_block);
+
+  let from_if: ref i64 = if cond {
+    ref number
+  } else {
+    ref number
+  };
+  total = total + inspect(from_if);
+
+  let from_match: ref i64 = match 0 {
+    0 => ref number,
+    _ => ref number,
+  };
+  total = total + inspect(from_match);
+
+  let from_label: ref i64 = done: {
+    break done ref number;
+    ref number
+  };
+  total = total + inspect(from_label);
+
+  return total;
+}

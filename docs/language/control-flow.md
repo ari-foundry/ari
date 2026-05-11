@@ -426,8 +426,9 @@ let result = done: {
 ```
 
 The break value and the final block value must have compatible types. Borrow
-and owning break values are not supported yet. Tuple and struct results can be
-bound from labeled blocks:
+break values are supported when every result path borrows the same source path
+with the same borrow mode. Owning break values are not supported yet. Tuple and
+struct results can be bound from labeled blocks:
 
 ```ari
 struct Point {

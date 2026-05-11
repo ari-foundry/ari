@@ -2288,6 +2288,9 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-reborrow.ari -o $(BUILD_DIR)/errors/borrow-reborrow.raw
 	$(BUILD_DIR)/errors/borrow-reborrow.raw; code=$$?; test $$code -eq 14
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-reborrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-reborrow.elf; $(BUILD_DIR)/errors/borrow-reborrow.elf; code=$$?; test $$code -eq 14; fi
+	$(TARGET) --freestanding tests/ok/borrow-control-flow-result.ari -o $(BUILD_DIR)/errors/borrow-control-flow-result.raw
+	$(BUILD_DIR)/errors/borrow-control-flow-result.raw; code=$$?; test $$code -eq 4
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-control-flow-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-control-flow-result.elf; $(BUILD_DIR)/errors/borrow-control-flow-result.elf; code=$$?; test $$code -eq 4; fi
 	if $(TARGET) tests/errors/named-borrow-assign-source.ari -o $(BUILD_DIR)/errors/named-borrow-assign-source.elf >$(BUILD_DIR)/errors/named-borrow-assign-source.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/errors/named-borrow-assign-source.err
 	if $(TARGET) tests/errors/named-borrow-conflict.ari -o $(BUILD_DIR)/errors/named-borrow-conflict.elf >$(BUILD_DIR)/errors/named-borrow-conflict.err 2>&1; then exit 1; fi
@@ -2298,6 +2301,10 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot mutably reborrow immutable borrow binding 'shared'" $(BUILD_DIR)/errors/borrow-reborrow-mut-from-shared.err
 	if $(TARGET) tests/errors/borrow-reborrow-active-conflict.ari -o $(BUILD_DIR)/errors/borrow-reborrow-active-conflict.elf >$(BUILD_DIR)/errors/borrow-reborrow-active-conflict.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow already borrowed binding 'unique'" $(BUILD_DIR)/errors/borrow-reborrow-active-conflict.err
+	if $(TARGET) tests/errors/borrow-control-flow-mismatch.ari -o $(BUILD_DIR)/errors/borrow-control-flow-mismatch.elf >$(BUILD_DIR)/errors/borrow-control-flow-mismatch.err 2>&1; then exit 1; fi
+	grep -q "if expression must borrow the same source path and mode in every result arm" $(BUILD_DIR)/errors/borrow-control-flow-mismatch.err
+	if $(TARGET) tests/errors/borrow-control-flow-local-escape.ari -o $(BUILD_DIR)/errors/borrow-control-flow-local-escape.elf >$(BUILD_DIR)/errors/borrow-control-flow-local-escape.err 2>&1; then exit 1; fi
+	grep -q "block expression cannot return a borrow of local binding 'inner'" $(BUILD_DIR)/errors/borrow-control-flow-local-escape.err
 	if $(TARGET) tests/errors/u8-literal-range.ari -o $(BUILD_DIR)/errors/u8-literal-range.elf >$(BUILD_DIR)/errors/u8-literal-range.err 2>&1; then exit 1; fi
 	grep -q "integer literal 256 is out of range for u8" $(BUILD_DIR)/errors/u8-literal-range.err
 	if $(TARGET) tests/errors/i8-literal-range.ari -o $(BUILD_DIR)/errors/i8-literal-range.elf >$(BUILD_DIR)/errors/i8-literal-range.err 2>&1; then exit 1; fi

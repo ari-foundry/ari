@@ -3,10 +3,17 @@
 #include "local_state.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace ari {
+
+struct BorrowResultSource {
+    std::string name;
+    std::string path;
+    bool mutable_borrow = false;
+};
 
 struct TemporaryBorrow {
     std::string name;
@@ -57,5 +64,9 @@ void require_can_reborrow(SourceLocation loc,
                           const std::string& name,
                           const LocalInfo& borrow,
                           bool mutable_borrow);
+std::optional<BorrowResultSource> borrow_result_source(const IrExpr& expr);
+void set_borrow_result_source(IrExpr& expr, const BorrowResultSource& source);
+bool same_borrow_result_source(const BorrowResultSource& left,
+                               const BorrowResultSource& right);
 
 } // namespace ari

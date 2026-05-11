@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "type_semantics.hpp"
 
+#include <optional>
 #include <utility>
 
 namespace ari {
@@ -45,17 +46,18 @@ void BorrowContext::promote_to_named(SourceLocation loc,
                                      const IrExpr& init,
                                      const std::string& binding_name,
                                      LocalInfo& binding) {
-    if (init.kind != IrExprKind::Borrow) {
-        fail_borrow(loc, "borrow bindings must be initialized directly with ref or ref mut");
+    std::optional<BorrowResultSource> source = borrow_result_source(init);
+    if (!source) {
+        fail_borrow(loc, "borrow bindings must be initialized from ref, ref mut, or compatible borrow control-flow results");
     }
     if (temporary_borrows_.empty() ||
-        temporary_borrows_.back().name != ir_expr_name(init) ||
-        temporary_borrows_.back().path != ir_expr_label(init) ||
-        temporary_borrows_.back().mutable_borrow != init.mutable_borrow) {
+        temporary_borrows_.back().name != source->name ||
+        temporary_borrows_.back().path != source->path ||
+        temporary_borrows_.back().mutable_borrow != source->mutable_borrow) {
         throw CompileError("internal error: borrow binding '" + binding_name + "' did not match the active temporary borrow");
     }
     temporary_borrows_.pop_back();
-    set_local_named_borrow_source(binding, ir_expr_name(init), ir_expr_label(init), init.mutable_borrow);
+    set_local_named_borrow_source(binding, source->name, source->path, source->mutable_borrow);
 }
 
 void BorrowContext::promote_to_aggregate(std::size_t mark, LocalInfo& binding) {
@@ -151,6 +153,35 @@ void require_can_reborrow(SourceLocation loc,
         fail_borrow(loc, "cannot mutably reborrow immutable borrow binding '" + name + "'");
     }
     require_can_borrow_path(loc, name, borrow, "", mutable_borrow);
+}
+
+std::optional<BorrowResultSource> borrow_result_source(const IrExpr& expr) {
+    if (!is_borrow_type(expr.type)) return std::nullopt;
+    switch (expr.kind) {
+        case IrExprKind::Borrow:
+        case IrExprKind::If:
+        case IrExprKind::Match:
+        case IrExprKind::Block:
+            break;
+        default:
+            return std::nullopt;
+    }
+    const std::string& name = ir_expr_name(expr);
+    if (name.empty()) return std::nullopt;
+    return BorrowResultSource{name, ir_expr_label(expr), expr.mutable_borrow};
+}
+
+void set_borrow_result_source(IrExpr& expr, const BorrowResultSource& source) {
+    set_ir_expr_name(expr, source.name);
+    set_ir_expr_label(expr, source.path);
+    expr.mutable_borrow = source.mutable_borrow;
+}
+
+bool same_borrow_result_source(const BorrowResultSource& left,
+                               const BorrowResultSource& right) {
+    return left.name == right.name &&
+           left.path == right.path &&
+           left.mutable_borrow == right.mutable_borrow;
 }
 
 } // namespace ari

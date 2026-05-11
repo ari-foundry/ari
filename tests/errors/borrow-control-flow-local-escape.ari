@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  let bad: ref i64 = {
+    var inner = 1;
+    ref inner
+  };
+  return 0;
+}

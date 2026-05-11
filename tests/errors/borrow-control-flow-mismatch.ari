@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var left = 1;
+  var right = 2;
+  let cond = true;
+  let bad: ref i64 = if cond {
+    ref left
+  } else {
+    ref right
+  };
+  return 0;
+}

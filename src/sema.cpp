@@ -268,6 +268,7 @@ private:
         std::vector<IrStmtPtr> statements;
         IrExprPtr value;
         StateSnapshot state;
+        std::optional<BorrowResultSource> borrow_source;
     };
 
     struct LoopInfo {
@@ -281,6 +282,7 @@ private:
         bool has_break_result_type = false;
         IrType break_result_type;
         std::vector<StateSnapshot> break_state_snapshots;
+        std::optional<BorrowResultSource> break_borrow_source;
         std::vector<std::string> exit_cleanup_owner_names;
     };
 
@@ -4035,6 +4037,62 @@ private:
         borrow_context_.release_to_mark(mark);
     }
 
+    void require_borrow_result_source_outlives_scope(SourceLocation loc,
+                                                     const BorrowResultSource& source,
+                                                     std::size_t scope_index,
+                                                     const std::string& context) const {
+        std::size_t source_scope = 0;
+        if (!local_scopes_.scope_index(source.name, source_scope)) {
+            throw CompileError("internal error: missing borrow result source '" + source.name + "'");
+        }
+        if (source_scope >= scope_index) {
+            fail(loc, context + " cannot return a borrow of local binding '" + source.name + "'");
+        }
+    }
+
+    std::optional<BorrowResultSource> finish_control_flow_borrow_result(
+        SourceLocation loc,
+        const std::string& context,
+        IrExpr& value,
+        std::vector<IrStmtPtr>& statements,
+        std::size_t scope_index,
+        std::size_t borrow_mark
+    ) {
+        if (!is_borrow_type(value.type)) return std::nullopt;
+        std::optional<BorrowResultSource> source = borrow_result_source(value);
+        if (!source) {
+            fail(loc, context + " borrow result must come directly from ref, ref mut, or a compatible borrow control-flow result");
+        }
+        require_borrow_result_source_outlives_scope(loc, *source, scope_index, context);
+        require_zone_pointer_not_escape_temporary_scope(loc, value, scope_index, context + " result");
+        release_temporary_borrows(borrow_mark);
+        append_auto_destroy_zone_cleanup(loc, statements, scope_index);
+        return source;
+    }
+
+    void require_same_borrow_result_source(SourceLocation loc,
+                                           const std::string& context,
+                                           std::optional<BorrowResultSource>& expected,
+                                           const BorrowResultSource& actual) const {
+        if (!expected) {
+            expected = actual;
+            return;
+        }
+        if (!same_borrow_result_source(*expected, actual)) {
+            fail(loc, context + " must borrow the same source path and mode in every result arm");
+        }
+    }
+
+    void activate_control_flow_borrow_result(SourceLocation loc,
+                                             IrExpr& result,
+                                             const BorrowResultSource& source) {
+        LocalInfo& local = require_live_local(loc, source.name);
+        require_can_borrow_path(loc, source.name, local, source.path, source.mutable_borrow);
+        add_borrow_source(local, source.path, source.mutable_borrow);
+        borrow_context_.push_temporary(source.name, source.path, source.mutable_borrow);
+        set_borrow_result_source(result, source);
+    }
+
     CheckedStatements check_statements(const std::vector<StmtPtr>& statements, bool scoped) {
         if (scoped) push_scope();
 
@@ -4329,8 +4387,8 @@ private:
         VectorKnownLength init_vector_length =
             vector_known_length_from_source_expr(declared, *stmt.binding.init, *init);
         bool borrow_binding = is_borrow_type(declared);
-        if (borrow_binding && init->kind != IrExprKind::Borrow) {
-            fail(stmt.loc, "borrow bindings must be initialized directly with ref or ref mut");
+        if (borrow_binding && !borrow_result_source(*init)) {
+            fail(stmt.loc, "borrow bindings must be initialized from ref, ref mut, or compatible borrow control-flow results");
         }
         std::string generic_origin = stmt.binding.has_type
             ? generic_origin_from_type_ref(stmt.binding.type)
@@ -9900,11 +9958,24 @@ private:
         if (!target.supports_break_values) {
             fail(stmt.loc, "break values are only valid for labeled block expressions");
         }
+        std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = target.has_break_result_type
             ? check_expr_with_expected(*break_value, target.break_result_type)
             : check_expr(*break_value);
-        if (contains_borrow_type(value->type)) {
-            fail(stmt.loc, "break values cannot be borrow values yet");
+        std::optional<BorrowResultSource> borrow_source;
+        if (is_borrow_type(value->type)) {
+            borrow_source = borrow_result_source(*value);
+            if (!borrow_source) {
+                fail(stmt.loc, "break value borrow result must come directly from ref, ref mut, or a compatible borrow control-flow result");
+            }
+            require_borrow_result_source_outlives_scope(
+                stmt.loc,
+                *borrow_source,
+                target.scope_depth,
+                "labeled block break value");
+            release_temporary_borrows(borrow_mark);
+        } else if (contains_borrow_type(value->type)) {
+            fail(stmt.loc, "break values cannot contain borrow values yet");
         }
         if (is_owner_type(value->type)) {
             fail(stmt.loc, "break values cannot move owning values yet");
@@ -9920,15 +9991,31 @@ private:
             target.break_result_type = value->type;
             target.has_break_result_type = true;
         }
+        if (borrow_source) {
+            require_same_borrow_result_source(
+                stmt.loc,
+                "labeled block expression",
+                target.break_borrow_source,
+                *borrow_source);
+        }
         std::vector<IrStmtPtr> cleanup;
-        value = materialize_value_before_auto_destroy_cleanup(
-            stmt.loc,
-            std::move(value),
-            cleanup,
-            target.scope_depth,
-            "$break",
-            "labeled block break value"
-        );
+        if (borrow_source) {
+            require_zone_pointer_not_escape_temporary_scope(
+                stmt.loc,
+                *value,
+                target.scope_depth,
+                "labeled block break value");
+            append_auto_destroy_zone_cleanup(stmt.loc, cleanup, target.scope_depth);
+        } else {
+            value = materialize_value_before_auto_destroy_cleanup(
+                stmt.loc,
+                std::move(value),
+                cleanup,
+                target.scope_depth,
+                "$break",
+                "labeled block break value"
+            );
+        }
         append_outer_loop_exit_owner_cleanup_until(stmt.loc, target, cleanup);
         target.break_state_snapshots.push_back(snapshot_states());
         if (!cleanup.empty()) {
@@ -10835,6 +10922,7 @@ private:
         bool has_continuing_state = false;
         bool has_result = false;
         IrType result_type;
+        std::optional<BorrowResultSource> result_borrow_source;
         ProductMatchCoverage coverage;
         std::vector<TupleCheckedExprArm> checked_arms;
         IrType explicit_result_expected;
@@ -10878,8 +10966,17 @@ private:
                 lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
                 local_scopes_.clear_reusable_pattern_bindings();
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
+                std::size_t borrow_mark = temporary_borrow_mark();
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
-                if (is_borrow_type(value->type)) {
+                std::optional<BorrowResultSource> arm_borrow_source =
+                    finish_control_flow_borrow_result(
+                        arm.loc,
+                        "match expression arm",
+                        *value,
+                        lowered_arm.body,
+                        local_scopes_.size() - 1,
+                        borrow_mark);
+                if (!arm_borrow_source && is_borrow_type(value->type)) {
                     pop_scope();
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
@@ -10899,14 +10996,22 @@ private:
                     coerce_expr_to_expected(*value, result_type);
                     require_assignable(arm.loc, result_type, value->type);
                 }
-                value = materialize_value_before_auto_destroy_cleanup(
-                    arm.loc,
-                    std::move(value),
-                    lowered_arm.body,
-                    local_scopes_.size() - 1,
-                    "$match",
-                    "match expression result"
-                );
+                if (arm_borrow_source) {
+                    require_same_borrow_result_source(
+                        arm.loc,
+                        "match expression",
+                        result_borrow_source,
+                        *arm_borrow_source);
+                } else {
+                    value = materialize_value_before_auto_destroy_cleanup(
+                        arm.loc,
+                        std::move(value),
+                        lowered_arm.body,
+                        local_scopes_.size() - 1,
+                        "$match",
+                        "match expression result"
+                    );
+                }
                 lowered_arm.value = std::move(value);
                 pop_scope();
 
@@ -10937,6 +11042,9 @@ private:
                     return make_unreachable_match_fallback_expr(loc, type);
                 }
             ));
+        if (result_borrow_source) {
+            activate_control_flow_borrow_result(expr.loc, *lowered, *result_borrow_source);
+        }
         return lowered;
     }
 
@@ -10975,6 +11083,7 @@ private:
         EnumMatchCoverage coverage;
         bool has_result = false;
         IrType result_type;
+        std::optional<BorrowResultSource> result_borrow_source;
         IrType explicit_result_expected;
         const IrType* result_expected = expected;
         if (expected) {
@@ -11008,8 +11117,17 @@ private:
                 local_scopes_.clear_reusable_pattern_bindings();
 
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
+                std::size_t borrow_mark = temporary_borrow_mark();
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
-                if (is_borrow_type(value->type)) {
+                std::optional<BorrowResultSource> arm_borrow_source =
+                    finish_control_flow_borrow_result(
+                        arm.loc,
+                        "match expression arm",
+                        *value,
+                        lowered_arm.body,
+                        local_scopes_.size() - 1,
+                        borrow_mark);
+                if (!arm_borrow_source && is_borrow_type(value->type)) {
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
                 if (result_expected) {
@@ -11024,14 +11142,22 @@ private:
                     coerce_expr_to_expected(*value, result_type);
                     require_assignable(arm.loc, result_type, value->type);
                 }
-                value = materialize_value_before_auto_destroy_cleanup(
-                    arm.loc,
-                    std::move(value),
-                    lowered_arm.body,
-                    local_scopes_.size() - 1,
-                    "$match",
-                    "match expression result"
-                );
+                if (arm_borrow_source) {
+                    require_same_borrow_result_source(
+                        arm.loc,
+                        "match expression",
+                        result_borrow_source,
+                        *arm_borrow_source);
+                } else {
+                    value = materialize_value_before_auto_destroy_cleanup(
+                        arm.loc,
+                        std::move(value),
+                        lowered_arm.body,
+                        local_scopes_.size() - 1,
+                        "$match",
+                        "match expression result"
+                    );
+                }
                 lowered_arm.value = std::move(value);
                 pop_scope();
 
@@ -11053,6 +11179,9 @@ private:
         require_match_exhaustive(expr.loc, enum_info, coverage);
         restore_states(continuing_state);
         lowered->type = result_type;
+        if (result_borrow_source) {
+            activate_control_flow_borrow_result(expr.loc, *lowered, *result_borrow_source);
+        }
         return lowered;
     }
 
@@ -11063,6 +11192,7 @@ private:
         ScalarMatchCoverage coverage;
         bool has_result = false;
         IrType result_type;
+        std::optional<BorrowResultSource> result_borrow_source;
         IrType explicit_result_expected;
         const IrType* result_expected = expected;
         if (expected) {
@@ -11092,8 +11222,17 @@ private:
                 declare_match_arm_bindings(lowered_arm);
                 local_scopes_.clear_reusable_pattern_bindings();
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
+                std::size_t borrow_mark = temporary_borrow_mark();
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
-                if (is_borrow_type(value->type)) {
+                std::optional<BorrowResultSource> arm_borrow_source =
+                    finish_control_flow_borrow_result(
+                        arm.loc,
+                        "match expression arm",
+                        *value,
+                        lowered_arm.body,
+                        local_scopes_.size() - 1,
+                        borrow_mark);
+                if (!arm_borrow_source && is_borrow_type(value->type)) {
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
                 if (result_expected) {
@@ -11108,14 +11247,22 @@ private:
                     coerce_expr_to_expected(*value, result_type);
                     require_assignable(arm.loc, result_type, value->type);
                 }
-                value = materialize_value_before_auto_destroy_cleanup(
-                    arm.loc,
-                    std::move(value),
-                    lowered_arm.body,
-                    local_scopes_.size() - 1,
-                    "$match",
-                    "match expression result"
-                );
+                if (arm_borrow_source) {
+                    require_same_borrow_result_source(
+                        arm.loc,
+                        "match expression",
+                        result_borrow_source,
+                        *arm_borrow_source);
+                } else {
+                    value = materialize_value_before_auto_destroy_cleanup(
+                        arm.loc,
+                        std::move(value),
+                        lowered_arm.body,
+                        local_scopes_.size() - 1,
+                        "$match",
+                        "match expression result"
+                    );
+                }
                 lowered_arm.value = std::move(value);
                 pop_scope();
 
@@ -11137,6 +11284,9 @@ private:
         require_scalar_match_exhaustive(expr.loc, ir_expr_match_value(*lowered)->type, coverage);
         restore_states(continuing_state);
         lowered->type = result_type;
+        if (result_borrow_source) {
+            activate_control_flow_borrow_result(expr.loc, *lowered, *result_borrow_source);
+        }
         return lowered;
     }
 
@@ -11183,7 +11333,19 @@ private:
                             "has incompatible ownership states after if expression branches");
         restore_merged_states(then_arm.state, else_arm.state);
 
-        return make_ir_if_expr(
+        std::optional<BorrowResultSource> borrow_source = then_arm.borrow_source;
+        if (borrow_source || else_arm.borrow_source) {
+            if (!borrow_source || !else_arm.borrow_source) {
+                fail(expr.loc, "if expression arms must borrow the same source path and mode in every result arm");
+            }
+            require_same_borrow_result_source(
+                expr.loc,
+                "if expression",
+                borrow_source,
+                *else_arm.borrow_source);
+        }
+
+        IrExprPtr result = make_ir_if_expr(
             expr.loc,
             result_type,
             std::move(condition),
@@ -11192,6 +11354,10 @@ private:
             std::move(else_arm.statements),
             std::move(else_arm.value)
         );
+        if (borrow_source) {
+            activate_control_flow_borrow_result(expr.loc, *result, *borrow_source);
+        }
+        return result;
     }
 
     IrExprPtr check_if_let_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
@@ -11249,8 +11415,17 @@ private:
             discard_scope();
             fail(expr.loc, "if-let expression arm must reach its final value");
         }
+        std::size_t then_borrow_mark = temporary_borrow_mark();
         IrExprPtr then_value = check_expr_maybe_expected(*expr_if_then_value(expr), result_expected);
-        if (contains_borrow_type(then_value->type)) {
+        std::optional<BorrowResultSource> then_borrow_source =
+            finish_control_flow_borrow_result(
+                expr.loc,
+                "if-let expression arm",
+                *then_value,
+                then_statements.statements,
+                local_scopes_.size() - 1,
+                then_borrow_mark);
+        if (!then_borrow_source && contains_borrow_type(then_value->type)) {
             pop_scope();
             fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
         }
@@ -11263,14 +11438,16 @@ private:
             coerce_expr_to_expected(*then_value, result_type);
             require_assignable(expr.loc, result_type, then_value->type);
         }
-        then_value = materialize_value_before_auto_destroy_cleanup(
-            expr.loc,
-            std::move(then_value),
-            then_statements.statements,
-            local_scopes_.size() - 1,
-            "$block",
-            "if-let expression arm result"
-        );
+        if (!then_borrow_source) {
+            then_value = materialize_value_before_auto_destroy_cleanup(
+                expr.loc,
+                std::move(then_value),
+                then_statements.statements,
+                local_scopes_.size() - 1,
+                "$block",
+                "if-let expression arm result"
+            );
+        }
         pop_scope();
         StateSnapshot then_state = snapshot_states();
 
@@ -11287,6 +11464,18 @@ private:
         require_same_states(expr.loc, then_state, else_checked.state,
                             "has incompatible ownership states after if-let expression branches");
         restore_merged_states(then_state, else_checked.state);
+
+        std::optional<BorrowResultSource> borrow_source = then_borrow_source;
+        if (borrow_source || else_checked.borrow_source) {
+            if (!borrow_source || !else_checked.borrow_source) {
+                fail(expr.loc, "if-let expression arms must borrow the same source path and mode in every result arm");
+            }
+            require_same_borrow_result_source(
+                expr.loc,
+                "if-let expression",
+                borrow_source,
+                *else_checked.borrow_source);
+        }
 
         auto pattern_match = std::make_unique<IrStmt>();
         pattern_match->kind = IrStmtKind::Match;
@@ -11315,6 +11504,9 @@ private:
 
         lowered->type = result_type;
         set_ir_expr_block_value(*lowered, std::move(if_expr));
+        if (borrow_source) {
+            activate_control_flow_borrow_result(expr.loc, *lowered, *borrow_source);
+        }
         return lowered;
     }
 
@@ -11340,6 +11532,7 @@ private:
         bool has_result = false;
         bool has_irrefutable_alternative = false;
         IrType result_type;
+        std::optional<BorrowResultSource> result_borrow_source;
         std::vector<TupleCheckedExprArm> checked_arms;
         std::vector<const Expr*> result_values{
             expr_if_then_value(expr).get(),
@@ -11392,8 +11585,17 @@ private:
             }
 
             const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
+            std::size_t borrow_mark = temporary_borrow_mark();
             IrExprPtr then_value = check_expr_maybe_expected(*expr_if_then_value(expr), arm_expected);
-            if (is_borrow_type(then_value->type)) {
+            std::optional<BorrowResultSource> then_borrow_source =
+                finish_control_flow_borrow_result(
+                    expr.loc,
+                    "if-let expression arm",
+                    *then_value,
+                    lowered_arm.body,
+                    local_scopes_.size() - 1,
+                    borrow_mark);
+            if (!then_borrow_source && is_borrow_type(then_value->type)) {
                 pop_scope();
                 fail(expr.loc, "if-let expression arm cannot produce borrow values yet");
             }
@@ -11413,14 +11615,22 @@ private:
                 coerce_expr_to_expected(*then_value, result_type);
                 require_assignable(expr.loc, result_type, then_value->type);
             }
-            then_value = materialize_value_before_auto_destroy_cleanup(
-                expr.loc,
-                std::move(then_value),
-                lowered_arm.body,
-                local_scopes_.size() - 1,
-                "$iflet",
-                "if-let expression result"
-            );
+            if (then_borrow_source) {
+                require_same_borrow_result_source(
+                    expr.loc,
+                    "if-let expression",
+                    result_borrow_source,
+                    *then_borrow_source);
+            } else {
+                then_value = materialize_value_before_auto_destroy_cleanup(
+                    expr.loc,
+                    std::move(then_value),
+                    lowered_arm.body,
+                    local_scopes_.size() - 1,
+                    "$iflet",
+                    "if-let expression result"
+                );
+            }
             lowered_arm.value = std::move(then_value);
             pop_scope();
 
@@ -11454,6 +11664,16 @@ private:
             &result_type);
         coerce_expr_to_expected(*else_checked.value, result_type);
         require_assignable(expr.loc, result_type, else_checked.value->type);
+        if (result_borrow_source || else_checked.borrow_source) {
+            if (!result_borrow_source || !else_checked.borrow_source) {
+                fail(expr.loc, "if-let expression arms must borrow the same source path and mode in every result arm");
+            }
+            require_same_borrow_result_source(
+                expr.loc,
+                "if-let expression",
+                result_borrow_source,
+                *else_checked.borrow_source);
+        }
 
         require_same_states(expr.loc, continuing_state, else_checked.state,
                             "has incompatible ownership states after if-let expression branches");
@@ -11476,6 +11696,9 @@ private:
                     return make_unreachable_match_fallback_expr(loc, type);
                 }
             ));
+        if (result_borrow_source) {
+            activate_control_flow_borrow_result(expr.loc, *lowered, *result_borrow_source);
+        }
         return lowered;
     }
 
@@ -11486,25 +11709,33 @@ private:
         if (!label.empty()) {
             CheckedExprBlock block = check_labeled_value_block(expr, expected);
             IrType result_type = block.value->type;
-            return make_ir_block_expr(
+            IrExprPtr result = make_ir_block_expr(
                 expr.loc,
                 label,
                 std::move(result_type),
                 std::move(block.statements),
                 std::move(block.value)
             );
+            if (block.borrow_source) {
+                activate_control_flow_borrow_result(expr.loc, *result, *block.borrow_source);
+            }
+            return result;
         }
 
         CheckedExprBlock block =
             check_value_block(expr.loc, "block expression", expr_block_body(expr), *value, expected);
         IrType result_type = block.value->type;
-        return make_ir_block_expr(
+        IrExprPtr result = make_ir_block_expr(
             expr.loc,
             {},
             std::move(result_type),
             std::move(block.statements),
             std::move(block.value)
         );
+        if (block.borrow_source) {
+            activate_control_flow_borrow_result(expr.loc, *result, *block.borrow_source);
+        }
+        return result;
     }
 
     CheckedExprBlock check_labeled_value_block(const Expr& expr, const IrType* expected = nullptr) {
@@ -11534,8 +11765,17 @@ private:
             fail(expr.loc, "block expression must reach its final value or a typed break");
         }
 
+        std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_maybe_expected(*expr_block_value(expr), expected);
-        if (is_borrow_type(value->type)) {
+        std::optional<BorrowResultSource> borrow_source =
+            finish_control_flow_borrow_result(
+                expr.loc,
+                "block expression",
+                *value,
+                checked.statements,
+                local_scopes_.size() - 1,
+                borrow_mark);
+        if (!borrow_source && is_borrow_type(value->type)) {
             loops_.pop_back();
             pop_scope();
             fail(expr.loc, "block expression cannot produce borrow values yet");
@@ -11554,14 +11794,27 @@ private:
             require_assignable(expr.loc, block_state.break_result_type, value->type);
             coerce_labeled_break_values(checked.statements, label, block_state.break_result_type);
         }
-        value = materialize_value_before_auto_destroy_cleanup(
-            expr.loc,
-            std::move(value),
-            checked.statements,
-            local_scopes_.size() - 1,
-            "$block",
-            "block expression result"
-        );
+        if (borrow_source) {
+            if (block_state.break_borrow_source) {
+                require_same_borrow_result_source(
+                    expr.loc,
+                    "labeled block expression",
+                    borrow_source,
+                    *block_state.break_borrow_source);
+            }
+        } else if (block_state.break_borrow_source) {
+            fail(expr.loc, "labeled block expression must borrow the same source path and mode in every result arm");
+        }
+        if (!borrow_source) {
+            value = materialize_value_before_auto_destroy_cleanup(
+                expr.loc,
+                std::move(value),
+                checked.statements,
+                local_scopes_.size() - 1,
+                "$block",
+                "block expression result"
+            );
+        }
         pop_scope();
         StateSnapshot state = snapshot_states();
         for (const auto& break_state : block_state.break_state_snapshots) {
@@ -11573,7 +11826,12 @@ private:
             );
             merge_existing_zone_generations_into(state, break_state);
         }
-        return CheckedExprBlock{std::move(checked.statements), std::move(value), std::move(state)};
+        return CheckedExprBlock{
+            std::move(checked.statements),
+            std::move(value),
+            std::move(state),
+            std::move(borrow_source)
+        };
     }
 
     CheckedExprBlock check_value_block_with_match_payload(
@@ -11592,8 +11850,17 @@ private:
             fail(loc, context + " must reach its final value");
         }
 
+        std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_maybe_expected(value_expr, expected);
-        if (contains_borrow_type(value->type)) {
+        std::optional<BorrowResultSource> borrow_source =
+            finish_control_flow_borrow_result(
+                loc,
+                context,
+                *value,
+                checked.statements,
+                local_scopes_.size() - 1,
+                borrow_mark);
+        if (!borrow_source && contains_borrow_type(value->type)) {
             pop_scope();
             fail(loc, context + " cannot produce borrow values yet");
         }
@@ -11601,17 +11868,24 @@ private:
             pop_scope();
             fail(loc, context + " must produce a value");
         }
-        value = materialize_value_before_auto_destroy_cleanup(
-            loc,
-            std::move(value),
-            checked.statements,
-            local_scopes_.size() - 1,
-            "$block",
-            context + " result"
-        );
+        if (!borrow_source) {
+            value = materialize_value_before_auto_destroy_cleanup(
+                loc,
+                std::move(value),
+                checked.statements,
+                local_scopes_.size() - 1,
+                "$block",
+                context + " result"
+            );
+        }
         pop_scope();
         StateSnapshot state = snapshot_states();
-        return CheckedExprBlock{std::move(checked.statements), std::move(value), std::move(state)};
+        return CheckedExprBlock{
+            std::move(checked.statements),
+            std::move(value),
+            std::move(state),
+            std::move(borrow_source)
+        };
     }
 
     CheckedExprBlock check_value_block(
@@ -11628,8 +11902,17 @@ private:
             fail(loc, context + " must reach its final value");
         }
 
+        std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_maybe_expected(value_expr, expected);
-        if (is_borrow_type(value->type)) {
+        std::optional<BorrowResultSource> borrow_source =
+            finish_control_flow_borrow_result(
+                loc,
+                context,
+                *value,
+                checked.statements,
+                local_scopes_.size() - 1,
+                borrow_mark);
+        if (!borrow_source && is_borrow_type(value->type)) {
             pop_scope();
             fail(loc, context + " cannot produce borrow values yet");
         }
@@ -11637,17 +11920,24 @@ private:
             pop_scope();
             fail(loc, context + " must produce a value");
         }
-        value = materialize_value_before_auto_destroy_cleanup(
-            loc,
-            std::move(value),
-            checked.statements,
-            local_scopes_.size() - 1,
-            "$block",
-            context + " result"
-        );
+        if (!borrow_source) {
+            value = materialize_value_before_auto_destroy_cleanup(
+                loc,
+                std::move(value),
+                checked.statements,
+                local_scopes_.size() - 1,
+                "$block",
+                context + " result"
+            );
+        }
         pop_scope();
         StateSnapshot state = snapshot_states();
-        return CheckedExprBlock{std::move(checked.statements), std::move(value), std::move(state)};
+        return CheckedExprBlock{
+            std::move(checked.statements),
+            std::move(value),
+            std::move(state),
+            std::move(borrow_source)
+        };
     }
 
     IrExprPtr make_enum_construct(SourceLocation loc, const EnumCaseInfo& info, std::vector<IrExprPtr> args) {

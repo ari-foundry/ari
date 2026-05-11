@@ -95,16 +95,11 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Build the first post-extraction borrow semantics on `BorrowContext`.
-   The lexical borrow checker now has a focused `borrow_semantics` module, so
-   small borrow-language improvements can land without growing `sema.cpp` again.
-   Keep the first slices conservative and diagnostic-first before attempting
-   full NLL. Direct local reborrows such as `ref shared`, `ref unique`, and
-   `ref mut unique` now use `BorrowContext` source tracking and are lowered on
-   both executable backends.
-   - [borrow-result-shapes] allow borrow-valued block, `if`, `match`, and
-     labeled-block expression results only when every arm preserves the same
-     source path and borrow mode
+2. Extend `BorrowContext` path provenance through reborrowed places.
+   Direct local borrow bindings and borrow-valued control-flow results now
+   preserve source/path/mode metadata. The next focused borrow slice is to carry
+   that same metadata through places reached from an existing borrow binding,
+   without weakening the current field-path conflict diagnostics.
    - [reborrow-paths] allow reborrowing fields/elements through borrow bindings
      after path provenance and backend lvalue lowering for those forms are
      explicit
@@ -153,6 +148,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [generic-supertrait-inference] handle richer generic supertrait
      applications once associated types and projections exist
 2. Refine borrow checking beyond lexical named borrows.
+   Direct local reborrows and borrow-valued block, `if`, `match`, and
+   labeled-block expression results now use `BorrowContext` source tracking.
+   The next refinements should preserve that source/path/mode model.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
    - [borrow-returns] allow borrow-valued function returns when lifetimes are
      valid after the near-term expression-result shape checks land
