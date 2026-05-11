@@ -170,6 +170,14 @@ pub mod vec {
       ptr_store(ptr_add(self.raw.data, index), value);
     }
 
+    fn replace(self: ref mut Self, index: i64, value: T) -> T {
+      std::assert(index >= 0);
+      std::assert(index < self.raw.len);
+      let previous = ptr_load(ptr_add(self.raw.data, index));
+      ptr_store(ptr_add(self.raw.data, index), value);
+      return previous;
+    }
+
     fn swap(self: ref mut Self, left: i64, right: i64) -> void {
       std::assert(left >= 0);
       std::assert(left < self.raw.len);

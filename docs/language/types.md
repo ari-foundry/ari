@@ -515,6 +515,7 @@ vec.insert(1, 15)
 vec.insert_in(ref mut zone, 2, 18)
 vec.resize_in(ref mut zone, 8, 0)
 vec.set(0, 25)
+let old = vec.replace(1, 16)
 vec.swap(0, 2)
 let copied = vec.copy_to(ref mut other_zone)
 let raw = vec.as_ptr()
@@ -544,9 +545,11 @@ shifting later elements.
 `std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)` appends each
 slice element through that same growth path. `std::vec::Vec<T>.resize_in(ref
 mut Zone, length, value)` shrinks by setting `len` or grows by appending copies
-of `value`. Passing a different zone borrow to `reserve`, `reserve_extra`,
-`push_in`, `insert_in`, `extend_from_slice_in`, or `resize_in` is rejected
-because the source handle remains tied to the zone that created it.
+of `value`. `replace(index, value)` returns the previous element at `index`
+after storing the new value. Passing a different zone borrow to `reserve`,
+`reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`, or
+`resize_in` is rejected because the source handle remains tied to the zone that
+created it.
 `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current elements into a new
 handle tied to the target zone, so resetting the source zone does not
 invalidate the copy. `std::vec::Vec<T>.as_ptr()` returns the stored element

@@ -64,13 +64,13 @@ zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 `data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
 capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed.
 The source handle currently exposes element methods: `len`, `capacity`,
-`is_empty`, `first`, `last`, `get`, `set`, `swap`, `push`,
+`is_empty`, `first`, `last`, `get`, `set`, `replace`, `swap`, `push`,
 `push_in(ref mut zone, value)`, grow-only same-zone `reserve`,
 `reserve_extra(ref mut zone, additional)`, `pop`, `insert`,
 `insert_in(ref mut zone, index, value)`, `remove`, `clear`, `truncate`,
 `contains`, `index_of`, `count`, `extend_from_slice_in(ref mut zone, values)`,
 `resize_in(ref mut zone, length, value)`, `copy_to(ref mut zone)`, and
-`as_ptr()`, and `as_slice`. `reserve`, `reserve_extra`, `push_in`, `insert_in`,
+`as_ptr()` and `as_slice`. `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in` use the same explicit zone capability
 to grow the buffer. `copy_to(ref mut zone)` copies the current elements into a
 new handle tied to the target zone. `as_ptr()` returns the stored element
@@ -447,9 +447,10 @@ vector-allocation seed. `std::vec::with_capacity<T>(ref mut Zone, capacity)`
 builds a source `RawVec<T>` handle around that allocation, and
 `std::vec::new<T>(ref mut Zone, capacity)` wraps it in source
 `std::vec::Vec<T>`. The source handle has methods for metadata, checked
-read/write, push/pop, grow-on-demand `push_in(ref mut Zone, value)`, grow-only
-explicit `reserve(ref mut Zone, capacity)`, `reserve_extra(ref mut Zone,
-additional)`, grow-on-demand `insert_in(ref mut Zone, index, value)`,
+read/write/replace, push/pop, grow-on-demand
+`push_in(ref mut Zone, value)`, grow-only explicit
+`reserve(ref mut Zone, capacity)`, `reserve_extra(ref mut Zone, additional)`,
+grow-on-demand `insert_in(ref mut Zone, index, value)`,
 `resize_in(ref mut Zone, length, value)`, insert/remove, truncate/clear, swap,
 simple linear search, and
 `extend_from_slice_in(ref mut Zone, Slice<T>)`, and `vec.as_slice()` creates a
@@ -514,8 +515,9 @@ an explicit-allocator feature for later. The lower-level
 `std::vec::with_capacity<T>(ref mut Zone, capacity)` helpers already exercise
 the explicit allocator path for future Vec storage, and
 `std::vec::new<T>(ref mut Zone, capacity)` exposes that seed as source
-`std::vec::Vec<T>`. The source handle supports metadata, read/write, push/pop,
-same-zone `push_in` growth, same-zone grow-only `reserve`, insert/remove, swap,
+`std::vec::Vec<T>`. The source handle supports metadata, read/write/replace,
+push/pop, same-zone `push_in` growth, same-zone grow-only `reserve`,
+insert/remove, swap,
 same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone
 `extend_from_slice_in` growth, same-zone `resize_in` growth, truncate/clear,
 simple search, target-zone `copy_to`, and `as_slice` calls over the stored raw

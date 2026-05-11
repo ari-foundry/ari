@@ -166,6 +166,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8is_empty' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	$(TARGET) tests/ok/std-vec-fixed-ops.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4push' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	$(TARGET) tests/ok/std-vec-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-replace.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-vec-replace.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6insert' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6remove' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
@@ -231,6 +233,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-replace.elf; $(BUILD_DIR)/prelude/std-vec-replace.elf; code=$$?; test $$code -eq 22; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-as-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-slice.elf; $(BUILD_DIR)/prelude/std-vec-as-slice.elf; code=$$?; test $$code -eq 99; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve.elf; $(BUILD_DIR)/prelude/std-vec-reserve.elf; code=$$?; test $$code -eq 43; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-reserve-extra.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve-extra.elf; $(BUILD_DIR)/prelude/std-vec-reserve-extra.elf; code=$$?; test $$code -eq 41; fi

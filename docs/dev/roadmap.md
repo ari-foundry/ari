@@ -99,7 +99,7 @@
    sema still tracks the handle as tied to the source zone. The source
    `std::vec::Vec<T>` handle and `std::vec::new<T>(ref mut Zone, capacity)`
    now connect that raw seed to a public allocator/capability creation surface.
-   The source handle also has metadata, checked read/write, push/pop,
+   The source handle also has metadata, checked read/write/replace, push/pop,
    insert/remove, swap, truncate/clear, simple linear search, grow-only
    explicit `reserve(ref mut Zone, capacity)`,
    `reserve_extra(ref mut Zone, additional)` capacity growth to
@@ -120,6 +120,31 @@
      root `Vec[T].reserve(capacity)` with runtime heap capacity growth
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place
+2. Prepare source `std` library foundations before broad library expansion.
+   Keep the library-facing contracts near-term before adding many owned
+   collection, string, or smart-pointer APIs. This keeps the source prelude from
+   growing into a pile of one-off compiler hooks.
+   - [std-layout] split source `std` into file-backed module sources once the
+     implicit-std loader can treat it like a package, so future APIs do not keep
+     expanding one monolithic `lib/std.arih` header
+   - [std-provenance] keep zone-provenance rules for source handles and
+     pointer-returning methods in focused helpers such as `std_box_semantics`,
+     `std_vec_semantics`, `slice_semantics`, and future string/smart-pointer
+     helpers instead of adding more bespoke checks to `sema.cpp`
+   - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
+     top of the existing explicit-zone `std::boxed::Box<T>` seed before std
+     APIs start returning owning heap handles
+   - [owned-strings] add allocator-backed owned runtime string buffers before
+     `read_line`, `format!`, or general text APIs return independent values
+   - [smart-pointers] decide `Unique[T]` / `Box[T]`, `Shared[T]`, and `Weak[T]`
+     clone/drop/raw-pointer interop policy before library resource handles
+     depend on those names
+   - [std-vec-runtime-abi] define the runtime-capacity and non-local ABI rules
+     for root `Vec[T]` before making ergonomic std collection methods the
+     permanent public surface
+   - [std-api-tests] require every new source `std` API to land with focused
+     provenance, reset/destroy, implicit-std/module, and docs/test-matrix
+     coverage when those dimensions apply
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -238,12 +263,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     and still relies on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
-    - [owned] root/unique `Box[T]` ownership and drop semantics; the explicit
-      source `std::boxed::Box<T>` zone-backed seed exists for copyable
-      zone-placeable values
-    - [strings] add allocator-backed owned runtime strings so APIs such as
-      `read_line` can return independent buffers instead of the current host
-      reusable line buffer
+    Root/unique `Box[T]` ownership and allocator-backed owned strings have been
+    promoted into the Near-Term source-`std` library-prep checklist because
+    broad library APIs should not depend on those surfaces until their
+    ownership, provenance, and drop contracts are explicit.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
@@ -252,15 +275,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     borrow-safe, but the standard library still needs clear ownership helpers
     for common heap and shared-resource patterns. The explicit move surface
     itself is now available through prelude `move(value)` and `take(place)`;
-    remaining work is the pointer family and its clone/drop behavior.
-    - [unique] define `Unique[T]` / `Box[T]` as unique heap owners with explicit
-      zone or allocator capability construction
-    - [shared] define `Shared[T]` and `Weak[T]` reference-counted handles,
-      including whether counts are atomic or single-threaded by default
-    - [clone-drop] define `Clone`/`Drop` interaction for smart pointers,
-      ref-count increments, and deterministic release
-    - [interop] decide how smart pointers expose raw pointers for FFI without
-      pretending Ari has a globally safe borrow model
+    the pointer family and its clone/drop/raw-pointer policy are now tracked in
+    the Near-Term source-`std` library-prep checklist before broad library
+    handles depend on them.
 7. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
@@ -272,9 +289,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     the binding, while the stored length still shrinks and expands per
     assignment. The allocator, runtime capacity, and real grow-on-push behavior
     remain near-term.
-    - [std-api] define ergonomic std collection methods only after generic
-      impls, allocator capabilities, and runtime growth are in place, so the
-      temporary compiler-known local API does not become permanent surface area
+    The root runtime-capacity and permanent public API decisions are now also
+    tracked in the Near-Term source-`std` library-prep checklist, so the
+    temporary compiler-known local API does not become permanent surface area.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
 8. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
