@@ -2284,6 +2284,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "borrow-valued function returns currently require exactly one borrow parameter" $(BUILD_DIR)/errors/borrow-return-multiple-params.err
 	if $(TARGET) tests/errors/borrow-return-call-conflict.ari -o $(BUILD_DIR)/errors/borrow-return-call-conflict.elf >$(BUILD_DIR)/errors/borrow-return-call-conflict.err 2>&1; then exit 1; fi
 	grep -q "cannot immutably borrow mutably borrowed binding 'number'" $(BUILD_DIR)/errors/borrow-return-call-conflict.err
+	if $(TARGET) tests/errors/borrow-return-method-conflict.ari -o $(BUILD_DIR)/errors/borrow-return-method-conflict.elf >$(BUILD_DIR)/errors/borrow-return-method-conflict.err 2>&1; then exit 1; fi
+	grep -q "cannot immutably borrow mutably borrowed field 'cell.0'" $(BUILD_DIR)/errors/borrow-return-method-conflict.err
 	if $(TARGET) tests/errors/discard-borrow.ari -o $(BUILD_DIR)/errors/discard-borrow.elf >$(BUILD_DIR)/errors/discard-borrow.err 2>&1; then exit 1; fi
 	grep -q "borrow expression result must be passed directly to a call" $(BUILD_DIR)/errors/discard-borrow.err
 	$(TARGET) --freestanding tests/ok/borrow-call.ari -o $(BUILD_DIR)/errors/borrow-call.raw

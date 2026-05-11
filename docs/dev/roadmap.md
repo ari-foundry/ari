@@ -95,15 +95,15 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Continue semantic-checker decomposition around borrow and return state.
-   Borrow-return contract recognition is split into `borrow_return_semantics`,
-   and zone-pointer return contract recognition plus Zone source type
-   predicates are split into `zone_return_semantics`. The main checker still
-   owns call-site borrow-result activation because it needs direct access to
-   local scopes, temporary borrows, and diagnostics. Keep future slices small
-   and testable rather than moving broad ownership logic all at once.
-   - [borrow-call-provenance-split] isolate tracked call-result activation once
-     `Sema` exposes a narrower local-scope adapter
+2. Preserve returned borrow subpaths in single-source borrow-return contracts.
+   Borrow-return contract recognition and borrow-returning call activation are
+   now split across `borrow_return_semantics` and `borrow_call_semantics`.
+   Current call sites still conservatively borrow the whole caller argument
+   source when a function returns `ref source.field`; carry the returned
+   relative field/element path through the function signature so callers only
+   keep that subpath borrowed.
+   - [borrow-return-path-contracts] carry returned relative field/element paths
+     in function signatures so callers can borrow only the returned subpath
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -160,8 +160,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      assigning unrelated fields or whole aggregate bindings can be checked
    - [multi-source-borrow-returns] add explicit lifetime/source contracts for
      borrow-returning functions with more than one borrow parameter
-   - [borrow-return-path-contracts] carry returned relative field/element paths
-     in function signatures so callers can borrow only the returned subpath
    - [extern-borrow-return-contracts] design an explicit contract before extern
      declarations may return tracked Ari borrow values
    - [loop-state] track ownership and borrow state through loops, init-while

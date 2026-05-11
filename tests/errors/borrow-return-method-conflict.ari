@@ -1,0 +1,16 @@
+struct Cell {
+  mut value: i64,
+}
+
+impl Cell {
+  fn borrow_value(self: ref mut Self) -> ref mut i64 {
+    return ref mut self.value;
+  }
+}
+
+fn main() -> i64 {
+  var cell = Cell { value: 1 };
+  let value: ref mut i64 = cell.borrow_value();
+  let shared: ref i64 = ref cell.value;
+  return 0;
+}

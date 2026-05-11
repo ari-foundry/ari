@@ -98,9 +98,10 @@ construction. Some helpers have already moved out to focused files:
   field/element reborrows through borrow bindings, borrow-valued control-flow
   result provenance, and path borrow conflict diagnostics layered over
   `local_state`
-- `borrow_return_semantics` for small signature-level borrow-return contracts;
-  `sema.cpp` still activates returned borrow results at call sites because that
-  path needs live local-scope and temporary-borrow state
+- `borrow_call_semantics` for borrow-valued expression provenance, root source
+  tracing through borrow bindings, borrow-returning call source selection, and
+  call/control-flow result activation through a narrow local-scope adapter
+- `borrow_return_semantics` for small signature-level borrow-return contracts
 - `zone_return_semantics` for Zone value/borrow/source type predicates and the
   signature-level rule that only pointer-returning functions with exactly one
   Zone borrow parameter may return a tracked zone pointer
@@ -305,9 +306,12 @@ pending IR.
      `require_can_assign_borrow_path`, and `require_can_borrow_path` now live in
      `borrow_semantics` and stay layered over `local_state` borrow-count/path
      helpers.
-   - This completes the lexical borrow-checking extraction stage. Future NLL,
-     reborrow, and borrow-result work should build on `BorrowContext` instead
-     of adding new raw borrow-state paths in `sema.cpp`.
+   - This completes the lexical borrow-checking extraction stage. Borrow-valued
+     result and borrow-returning call activation now live in
+     `borrow_call_semantics` and reach local scope state only through a narrow
+     adapter; future NLL, reborrow, and borrow-result work should build on
+     `BorrowContext` instead of adding new raw borrow-state paths in
+     `sema.cpp`.
 3. Extract ownership/drop checking into `ownership_semantics`.
    - Move owned field state tracking, partial move/reinitialization checks,
      `drop` lowering, destructor lookup glue, and return-owner checks.

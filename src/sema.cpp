@@ -6,6 +6,7 @@
 #include "aggregate_literal_semantics.hpp"
 #include "ast_clone.hpp"
 #include "ari_builtin.hpp"
+#include "borrow_call_semantics.hpp"
 #include "borrow_semantics.hpp"
 #include "c_abi_types.hpp"
 #include "cfg_eval.hpp"
@@ -4049,40 +4050,22 @@ private:
         borrow_context_.release_to_mark(mark);
     }
 
-    static std::string append_borrow_path(const std::string& base, const std::string& suffix) {
-        if (base.empty()) return suffix;
-        if (suffix.empty()) return base;
-        return base + "." + suffix;
-    }
-
-    std::optional<BorrowResultSource> expr_borrow_result_source(const IrExpr& value) {
-        std::optional<BorrowResultSource> source = borrow_result_source(value);
-        if (source) return source;
-        if (value.kind == IrExprKind::Local && is_borrow_type(value.type)) {
-            return BorrowResultSource{
-                ir_expr_name(value),
-                "",
-                value.type.qualifier == TypeQualifier::MutRef
+    BorrowCallLocalAdapter borrow_call_locals() {
+        BorrowCallLocalAdapter locals;
+        locals.find_local = [this](const std::string& name) {
+            return find_local_slot(name);
+        };
+        locals.require_live_local = [this](SourceLocation loc, const std::string& name) -> LocalInfo& {
+            return require_live_local(loc, name);
+        };
+        locals.add_borrow_source = [this](LocalInfo& local, const std::string& path, bool mutable_borrow) {
+            add_borrow_source(local, path, mutable_borrow);
+        };
+        locals.push_temporary_borrow =
+            [this](std::string name, std::string path, bool mutable_borrow) {
+                borrow_context_.push_temporary(std::move(name), std::move(path), mutable_borrow);
             };
-        }
-        return std::nullopt;
-    }
-
-    BorrowResultSource root_borrow_result_source(BorrowResultSource source) {
-        std::set<std::string> seen;
-        while (true) {
-            LocalInfo* local = find_local_slot(source.name);
-            if (!local) {
-                throw CompileError("internal error: missing borrow result source '" + source.name + "'");
-            }
-            if (!is_borrow_type(local->type) || local->borrow_source.empty()) return source;
-            if (!seen.insert(source.name).second) {
-                throw CompileError("internal error: cyclic borrow source for '" + source.name + "'");
-            }
-            source.path = append_borrow_path(local->borrow_source_path, source.path);
-            source.name = local->borrow_source;
-            source.mutable_borrow = source.mutable_borrow || local->borrow_source_mutable;
-        }
+        return locals;
     }
 
     void require_borrow_return_source(SourceLocation loc, const IrExpr& value) {
@@ -4094,49 +4077,11 @@ private:
             fail(loc,
                  "function return borrow result must come directly from a borrow parameter, ref, ref mut, or compatible borrow control-flow result");
         }
-        BorrowResultSource root = root_borrow_result_source(*source);
+        BorrowCallLocalAdapter locals = borrow_call_locals();
+        BorrowResultSource root = root_borrow_result_source(*source, locals);
         if (root.name != current_borrow_return_param_name_) {
             fail(loc, "function return cannot return a borrow of local binding '" + root.name + "'");
         }
-    }
-
-    std::optional<BorrowResultSource> call_borrow_result_source(SourceLocation loc,
-                                                               const std::string& display_name,
-                                                               const FunctionSig& sig,
-                                                               const std::vector<IrExprPtr>& args) {
-        if (!is_borrow_type(sig.result)) return std::nullopt;
-        if (sig.is_extern) {
-            fail(loc,
-                 "extern borrow-returning function '" + display_name +
-                     "' cannot return tracked Ari borrow values yet");
-        }
-        if (!sig.borrow_return_param_index || *sig.borrow_return_param_index >= args.size()) {
-            fail(loc,
-                 "borrow-returning function '" + display_name +
-                     "' currently requires exactly one borrow parameter so the result source can be tracked");
-        }
-        std::optional<BorrowResultSource> source =
-            expr_borrow_result_source(*args[*sig.borrow_return_param_index]);
-        if (!source) {
-            fail(loc,
-                 "borrow-returning function '" + display_name +
-                     "' result source argument must be ref, ref mut, a borrow binding, or a compatible borrow control-flow result");
-        }
-        return source;
-    }
-
-    void activate_borrow_result(SourceLocation loc,
-                                IrExpr& result,
-                                const BorrowResultSource& source) {
-        LocalInfo& local = require_live_local(loc, source.name);
-        if (is_borrow_type(local.type)) {
-            require_can_reborrow_path(loc, source.name, local, source.path, source.mutable_borrow);
-        } else {
-            require_can_borrow_path(loc, source.name, local, source.path, source.mutable_borrow);
-        }
-        add_borrow_source(local, source.path, source.mutable_borrow);
-        borrow_context_.push_temporary(source.name, source.path, source.mutable_borrow);
-        set_borrow_result_source(result, source);
     }
 
     IrExprPtr finish_tracked_call(SourceLocation loc,
@@ -4145,11 +4090,19 @@ private:
                                   const FunctionSig& sig,
                                   std::vector<IrExprPtr> args,
                                   std::size_t borrow_mark) {
+        BorrowCallContract contract{
+            sig.result,
+            sig.borrow_return_param_index,
+            sig.is_extern
+        };
         std::optional<BorrowResultSource> source =
-            call_borrow_result_source(loc, display_name, sig, args);
+            call_borrow_result_source(loc, display_name, contract, args);
         release_temporary_borrows(borrow_mark);
         IrExprPtr call = make_ir_call_expr(loc, std::move(lowered_name), sig.result, std::move(args));
-        if (source) activate_borrow_result(loc, *call, *source);
+        if (source) {
+            BorrowCallLocalAdapter locals = borrow_call_locals();
+            activate_borrow_result(loc, *call, *source, locals);
+        }
         return call;
     }
 
@@ -4202,7 +4155,8 @@ private:
     void activate_control_flow_borrow_result(SourceLocation loc,
                                              IrExpr& result,
                                              const BorrowResultSource& source) {
-        activate_borrow_result(loc, result, source);
+        BorrowCallLocalAdapter locals = borrow_call_locals();
+        activate_borrow_result(loc, result, source, locals);
     }
 
     CheckedStatements check_statements(const std::vector<StmtPtr>& statements, bool scoped) {

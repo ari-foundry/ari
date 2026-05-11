@@ -151,10 +151,10 @@ Rules currently checked:
 Named borrow lifetimes are lexical today. A reborrow keeps the borrow binding it
 was created from borrowed until the reborrow exits scope, and that source borrow
 binding keeps its own original source borrowed until its scope exits. A
-borrow-valued function call keeps the caller's source borrowed for as long as
-the returned borrow binding lives. Future borrow-checker refinement may shorten
-a named borrow to its last use and add explicit contracts for multi-source
-borrow-returning functions.
+borrow-valued function or method call keeps the caller's source borrowed for as
+long as the returned borrow binding lives. Future borrow-checker refinement may
+shorten a named borrow to its last use and add explicit contracts for
+multi-source borrow-returning functions.
 
 ## Drop
 

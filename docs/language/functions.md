@@ -327,7 +327,8 @@ fn bad(value: ref i64) -> ref i64 {
 ```
 
 When a caller binds the result, the original argument source remains borrowed
-until that result binding leaves scope. Borrow returns through extern
-declarations, function pointer calls, borrow-valued aggregate returns, and
-functions with multiple borrow parameters are still rejected until Ari has
+until that result binding leaves scope. The same rule applies to method calls
+whose `self` parameter is the single borrow source. Borrow returns through
+extern declarations, function pointer calls, borrow-valued aggregate returns,
+and functions with multiple borrow parameters are still rejected until Ari has
 explicit source/lifetime contracts for those shapes.
