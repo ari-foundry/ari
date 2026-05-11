@@ -175,6 +175,15 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             append_field(out, "name");
             append_field(out, expr.name);
             return true;
+        case ExprKind::Borrow: {
+            if (!expr_operand(expr)) return false;
+            std::ostringstream operand;
+            if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
+            append_field(out, "borrow");
+            append_bool(out, expr.mutable_borrow);
+            out << operand.str();
+            return true;
+        }
         case ExprKind::Unary: {
             if (!expr_operand(expr) || !is_summary_const_unary_op(expr.op)) return false;
             std::ostringstream operand;
@@ -182,6 +191,25 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             append_field(out, "unary");
             append_count(out, static_cast<std::uint64_t>(expr.op));
             out << operand.str();
+            return true;
+        }
+        case ExprKind::Try: {
+            if (!expr_operand(expr)) return false;
+            std::ostringstream operand;
+            if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
+            append_field(out, "try");
+            out << operand.str();
+            return true;
+        }
+        case ExprKind::NullCoalesce: {
+            if (!expr_left(expr) || !expr_right(expr)) return false;
+            std::ostringstream left;
+            std::ostringstream right;
+            if (!append_const_expr_payload(left, *expr_left(expr))) return false;
+            if (!append_const_expr_payload(right, *expr_right(expr))) return false;
+            append_field(out, "null-coalesce");
+            out << left.str();
+            out << right.str();
             return true;
         }
         case ExprKind::Binary: {
@@ -1224,11 +1252,31 @@ private:
             expr->name = read_field(label + " name");
             return expr;
         }
+        if (kind == "borrow") {
+            expr->kind = ExprKind::Borrow;
+            expr->mutable_borrow = read_bool(label + " borrow mutability");
+            ExprPtr operand = read_const_expr(label + " borrow operand");
+            if (operand && operand->kind == ExprKind::Name) expr->name = operand->name;
+            set_expr_operand(*expr, std::move(operand));
+            return expr;
+        }
         if (kind == "unary") {
             expr->kind = ExprKind::Unary;
             expr->op = read_token_kind(label + " unary operator");
             if (!is_summary_const_unary_op(expr->op)) fail("unsupported constant summary unary operator");
             set_expr_operand(*expr, read_const_expr(label + " unary operand"));
+            return expr;
+        }
+        if (kind == "try") {
+            expr->kind = ExprKind::Try;
+            set_expr_operand(*expr, read_const_expr(label + " try operand"));
+            return expr;
+        }
+        if (kind == "null-coalesce") {
+            expr->kind = ExprKind::NullCoalesce;
+            expr->op = TokenKind::QuestionQuestion;
+            set_expr_left(*expr, read_const_expr(label + " coalesce left operand"));
+            set_expr_right(*expr, read_const_expr(label + " coalesce right operand"));
             return expr;
         }
         if (kind == "binary") {

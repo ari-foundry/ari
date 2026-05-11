@@ -117,3 +117,26 @@ pub fn scalar_literal_flow() -> i64 {
   }
   return 1;
 }
+
+pub fn borrow_pointer_flow() -> i64 {
+  var value: i64 = 3;
+  let raw: ptr i64 = (ref mut value) as ptr i64;
+  ptr_store(raw, ptr_load(raw) + 9);
+  return value;
+}
+
+pub fn maybe_cached(flag: bool) -> Option[i64] {
+  if flag {
+    return Some(9);
+  }
+  return None<i64>();
+}
+
+pub fn try_cached(flag: bool) -> Option[i64] {
+  let inner = maybe_cached(flag)?;
+  return Some(inner + 1);
+}
+
+pub fn coalesce_flow() -> i64 {
+  return (try_cached(true) ?? 0) + (try_cached(false) ?? 5);
+}
