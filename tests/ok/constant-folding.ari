@@ -10,6 +10,7 @@ const READY: bool = SCORE >= 17 && NEGATED == 3 && !(BASE < 5) && SAME_FLAG;
 fn main() -> i64 {
   if READY {
     return SCORE + NEGATED + (SMALL as i64) + (DIRECT_BYTE as i64);
+  } else {
+    return 0;
   }
-  return 0;
 }
