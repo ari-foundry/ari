@@ -4029,51 +4029,21 @@ private:
         local_scopes_.declare_current(name, std::move(local));
     }
 
-    static bool is_auto_destroy_zone(const LocalInfo& local) {
-        return local.auto_destroy_zone &&
-               local.type.qualifier == TypeQualifier::Own &&
-               local.type.primitive == IrPrimitiveKind::Zone;
-    }
-
-    bool local_scope_index(const std::string& name, std::size_t& out) const {
-        return local_scopes_.scope_index(name, out);
-    }
-
-    bool temporary_zone_source_from_expr(
-        const IrExpr& value,
-        std::string& source_name,
-        std::size_t& source_scope_index
-    ) {
-        if (!zone_pointer_source_name_from_expr(value, source_name)) return false;
-        if (source_name == "<multiple zones>") return false;
-        LocalInfo* zone = find_local_slot(source_name);
-        if (!zone || !is_auto_destroy_zone(*zone)) return false;
-        return local_scope_index(source_name, source_scope_index);
-    }
-
-    void fail_temporary_zone_pointer_escape(
-        SourceLocation loc,
-        const IrExpr& value,
-        const std::string& source_name,
-        const std::string& context
-    ) const {
-        fail(loc,
-             "zone pointer '" + zone_pointer_escape_name(value) +
-                 "' from temporary zone '" + source_name +
-                 "' cannot escape through " + context);
-    }
-
     void require_zone_pointer_not_escape_temporary_scope(
         SourceLocation loc,
         const IrExpr& value,
         std::size_t first_scope_index,
         const std::string& context
     ) {
-        std::string source_name;
-        std::size_t source_scope_index = 0;
-        if (!temporary_zone_source_from_expr(value, source_name, source_scope_index)) return;
-        if (source_scope_index < first_scope_index) return;
-        fail_temporary_zone_pointer_escape(loc, value, source_name, context);
+        if (auto error = temporary_zone_pointer_escape_error(
+                value,
+                first_scope_index,
+                context,
+                zone_pointer_source_resolver(),
+                zone_pointer_locals(),
+                local_scopes_)) {
+            fail(loc, *error);
+        }
     }
 
     IrStmtPtr make_zone_destroy_stmt(SourceLocation loc, const std::string& name, const IrType& type) const {
@@ -4099,29 +4069,9 @@ private:
         SourceLocation loc,
         std::size_t first_scope_index
     ) {
-        if (first_scope_index == 0 || !local_scopes_.contains_scope(first_scope_index)) return;
-        std::map<std::string, bool> temporary_zones;
-        local_scopes_.for_each_local_from(
-            first_scope_index,
-            [&](const std::string& name, const LocalInfo& local) {
-                if (is_auto_destroy_zone(local) && local_is_alive(local)) {
-                    temporary_zones[name] = true;
-                }
-            }
-        );
-        if (temporary_zones.empty()) return;
-
-        local_scopes_.for_each_local_before(
-            first_scope_index,
-            [&](const std::string& name, const LocalInfo& local) {
-                if (!local.zone_pointer || !local_is_alive(local)) return;
-                if (temporary_zones.find(local.zone_pointer_source) == temporary_zones.end()) return;
-                fail(loc,
-                     "zone pointer '" + name +
-                         "' from temporary zone '" + local.zone_pointer_source +
-                         "' cannot outlive the temporary zone scope");
-            }
-        );
+        if (auto error = outer_temporary_zone_pointer_escape_error(first_scope_index, local_scopes_)) {
+            fail(loc, *error);
+        }
     }
 
     void append_auto_destroy_zone_cleanup(
@@ -4424,13 +4374,14 @@ private:
     }
 
     void require_no_zone_pointer_escape(SourceLocation loc, const IrExpr& value, const std::string& context) {
-        std::string source_name;
-        if (!zone_pointer_source_name_from_expr(value, source_name)) return;
-        std::size_t source_scope_index = 0;
-        if (temporary_zone_source_from_expr(value, source_name, source_scope_index)) {
-            fail_temporary_zone_pointer_escape(loc, value, source_name, context);
+        if (auto error = zone_pointer_escape_error(
+                value,
+                context,
+                zone_pointer_source_resolver(),
+                zone_pointer_locals(),
+                local_scopes_)) {
+            fail(loc, *error);
         }
-        fail(loc, "zone pointer cannot escape into " + context + "; keep it in a local ptr binding");
     }
 
     void require_std_vec_same_zone_method_matches_source(SourceLocation loc,

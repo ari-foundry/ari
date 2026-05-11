@@ -350,9 +350,10 @@ pending IR.
      tracked zone source from local pointers, source `std::boxed` / `std::vec`
      handles, source slices, pointer-returning methods, and control-flow
      expressions. It also owns source/generation assignment helpers, reset-call
-     generation updates, and invalidation diagnostics. Move the remaining
-     temp-zone escape checks, destroy/cleanup wiring, scratch/promotion
-     validation, and automatic temporary-zone cleanup.
+     generation updates, invalidation diagnostics, and temporary-zone escape
+     diagnostics for returns, aggregate/call escapes, and outer-binding leaks.
+     Move the remaining destroy/cleanup wiring, scratch/promotion validation,
+     and automatic temporary-zone cleanup.
    - Keep actual `zone::*` call typing in expression lowering until prelude
      special calls are split.
 

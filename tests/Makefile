@@ -2290,6 +2290,9 @@ check-ffi: $(TARGET)
 	if $(TARGET) tests/errors/zone-scratch-return-escape.ari -o $(BUILD_DIR)/ffi/zone-scratch-return-escape.elf >$(BUILD_DIR)/ffi/zone-scratch-return-escape.err 2>&1; then exit 1; fi
 	grep -q "zone pointer 'item' from temporary zone" $(BUILD_DIR)/ffi/zone-scratch-return-escape.err
 	grep -q "cannot escape through function return" $(BUILD_DIR)/ffi/zone-scratch-return-escape.err
+	if $(TARGET) tests/errors/zone-scratch-outer-binding-escape.ari -o $(BUILD_DIR)/ffi/zone-scratch-outer-binding-escape.elf >$(BUILD_DIR)/ffi/zone-scratch-outer-binding-escape.err 2>&1; then exit 1; fi
+	grep -q "zone pointer 'leaked' from temporary zone" $(BUILD_DIR)/ffi/zone-scratch-outer-binding-escape.err
+	grep -q "cannot outlive the temporary zone scope" $(BUILD_DIR)/ffi/zone-scratch-outer-binding-escape.err
 	if $(TARGET) tests/errors/zone-scratch-expression.ari -o $(BUILD_DIR)/ffi/zone-scratch-expression.elf >$(BUILD_DIR)/ffi/zone-scratch-expression.err 2>&1; then exit 1; fi
 	grep -q "zone::scratch<T> can only initialize a local pointer binding" $(BUILD_DIR)/ffi/zone-scratch-expression.err
 	if $(TARGET) tests/errors/zone-promote-source-type.ari -o $(BUILD_DIR)/ffi/zone-promote-source-type.elf >$(BUILD_DIR)/ffi/zone-promote-source-type.err 2>&1; then exit 1; fi

@@ -9,6 +9,7 @@
 
 namespace ari {
 
+class LocalScopeStack;
 struct LocalInfo;
 
 struct ZonePointerSourceResolver {
@@ -27,6 +28,7 @@ struct ZonePointerLocalAdapter {
     LocalLookup find_local;
 };
 
+bool is_auto_destroy_zone(const LocalInfo& local);
 const IrExpr& zone_pointer_source_expr(const IrExpr& value);
 std::string zone_pointer_escape_name(const IrExpr& value);
 bool is_zone_pointer_trackable_type(const IrType& type);
@@ -48,5 +50,24 @@ std::optional<std::string> zone_pointer_invalid_error(const std::string& pointer
                                                       const LocalInfo& pointer,
                                                       const ZonePointerLocalAdapter& locals);
 bool mark_zone_reset_call(const IrExpr& call, const ZonePointerLocalAdapter& locals);
+bool temporary_zone_source_from_expr(const IrExpr& value,
+                                     const ZonePointerSourceResolver& resolver,
+                                     const ZonePointerLocalAdapter& locals,
+                                     const LocalScopeStack& scopes,
+                                     std::string& source_name,
+                                     std::size_t& source_scope_index);
+std::optional<std::string> temporary_zone_pointer_escape_error(const IrExpr& value,
+                                                               std::size_t first_scope_index,
+                                                               const std::string& context,
+                                                               const ZonePointerSourceResolver& resolver,
+                                                               const ZonePointerLocalAdapter& locals,
+                                                               const LocalScopeStack& scopes);
+std::optional<std::string> zone_pointer_escape_error(const IrExpr& value,
+                                                     const std::string& context,
+                                                     const ZonePointerSourceResolver& resolver,
+                                                     const ZonePointerLocalAdapter& locals,
+                                                     const LocalScopeStack& scopes);
+std::optional<std::string> outer_temporary_zone_pointer_escape_error(std::size_t first_scope_index,
+                                                                     const LocalScopeStack& scopes);
 
 } // namespace ari
