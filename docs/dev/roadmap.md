@@ -111,13 +111,15 @@
    local declarations, assignments, `if`/`else`, block/labeled-block
    statements, `while`/`while let`, `for`, `init ... while ... next`,
    `continue`, unlabeled/labeled `break`, statement `match`, `return`
-   statements, or final expression statements, allowing those dependency
-   bodies to materialize from the cache after validation. The remaining
-   package-cache work is to extend that path to future IR summaries for broad
-   executable function and impl bodies, then skip dependency source parsing
-   whenever validation succeeds.
+   statements, `drop` statements, method-call expressions, or final expression
+   statements, allowing those dependency bodies and summary-safe impl methods
+   to materialize from the cache after validation. The remaining package-cache
+   work is to extend that path to future IR summaries for broad executable
+   function and impl bodies, then skip dependency source parsing whenever
+   validation succeeds.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
-     module loader for dependencies with executable function or impl bodies
+     module loader for dependencies whose executable function or impl bodies
+     still use expression forms outside the temporary AST summary subset
    - [cache-skip] avoid reparsing dependencies when the metadata summary and
      source hashes still match the current source graph and cfg/search-path
      inputs

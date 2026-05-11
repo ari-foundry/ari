@@ -249,6 +249,19 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             out << args.str();
             return true;
         }
+        case ExprKind::MethodCall: {
+            if (!expr_operand(expr) || !expr_receiver_type_args(expr).empty()) return false;
+            std::ostringstream operand;
+            std::ostringstream args;
+            if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
+            if (!append_const_expr_list(args, expr.args)) return false;
+            append_field(out, "method-call");
+            out << operand.str();
+            append_field(out, expr.name);
+            append_type_arguments(out, expr_type_args(expr));
+            out << args.str();
+            return true;
+        }
         default:
             return false;
     }
@@ -566,6 +579,10 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             }
             return true;
         }
+        case StmtKind::Drop:
+            append_field(out, "drop");
+            append_field(out, stmt_drop_name(stmt));
+            return true;
         default:
             return false;
     }
@@ -1177,6 +1194,14 @@ private:
             expr->args = read_const_expr_list(label + " call arguments");
             return expr;
         }
+        if (kind == "method-call") {
+            expr->kind = ExprKind::MethodCall;
+            set_expr_operand(*expr, read_const_expr(label + " method receiver"));
+            expr->name = read_field(label + " method name");
+            set_expr_type_args(*expr, read_type_arguments(label + " method type arguments"));
+            expr->args = read_const_expr_list(label + " method arguments");
+            return expr;
+        }
         fail("unknown constant expression summary kind '" + kind + "'");
     }
 
@@ -1415,6 +1440,11 @@ private:
                 arm.loc = default_loc();
                 arms.push_back(std::move(arm));
             }
+            return stmt;
+        }
+        if (kind == "drop") {
+            stmt->kind = StmtKind::Drop;
+            set_stmt_drop_name(*stmt, read_field(label + " drop name"));
             return stmt;
         }
         fail("unknown function body statement summary kind '" + kind + "'");

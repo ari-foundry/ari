@@ -68,3 +68,24 @@ pub fn match_statement(value: i64) -> i64 {
   }
   return total;
 }
+
+pub struct Counter {
+  base: i64,
+}
+
+pub impl Counter {
+  fn add(self, value: i64) -> i64 {
+    self.base + value
+  }
+}
+
+pub fn method_flow() -> i64 {
+  let counter = Counter { base: 10 };
+  return counter.add(5);
+}
+
+pub fn drop_statement() -> i64 {
+  let value = 1;
+  drop value;
+  return 2;
+}
