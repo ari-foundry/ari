@@ -432,6 +432,8 @@ Checklist:
       lowering on LLVM and freestanding paths
 - [x] AST/IR break statement payload packing preserves unlabeled break,
       labeled-loop break, and labeled-block value break lowering paths
+- [x] AST/IR assignment statement payload packing preserves direct binding,
+      compound, field, and indexed assignment lowering paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

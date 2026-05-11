@@ -425,15 +425,19 @@ struct IrBreakPayload {
     IrExprPtr value;
 };
 
+struct IrAssignPayload {
+    std::string name;
+    IrExprPtr target;
+    IrExprPtr rhs;
+};
+
 struct IrStmt {
     IrStmtKind kind = IrStmtKind::ExprStmt;
     SourceLocation loc;
     std::vector<std::unique_ptr<IrStmt>> statements;
     IrBinding binding;
-    std::string assign_name;
+    std::unique_ptr<IrAssignPayload> assign_payload;
     IrExprPtr expr;
-    IrExprPtr rhs;
-    IrExprPtr assign_target;
     IrExprPtr condition;
     bool while_let_continue_on_mismatch = false;
     std::string for_binding_name;
@@ -455,6 +459,40 @@ struct IrStmt {
     std::string label;
     std::unique_ptr<IrBreakPayload> break_payload;
 };
+
+inline const IrAssignPayload& ir_stmt_assign_payload(const IrStmt& stmt) {
+    static const IrAssignPayload empty;
+    return stmt.assign_payload ? *stmt.assign_payload : empty;
+}
+
+inline IrAssignPayload& ensure_ir_stmt_assign_payload(IrStmt& stmt) {
+    if (!stmt.assign_payload) stmt.assign_payload = std::make_unique<IrAssignPayload>();
+    return *stmt.assign_payload;
+}
+
+inline const std::string& ir_stmt_assign_name(const IrStmt& stmt) {
+    return ir_stmt_assign_payload(stmt).name;
+}
+
+inline const IrExprPtr& ir_stmt_assign_target(const IrStmt& stmt) {
+    return ir_stmt_assign_payload(stmt).target;
+}
+
+inline const IrExprPtr& ir_stmt_assign_rhs(const IrStmt& stmt) {
+    return ir_stmt_assign_payload(stmt).rhs;
+}
+
+inline void set_ir_stmt_assign_name(IrStmt& stmt, std::string name) {
+    ensure_ir_stmt_assign_payload(stmt).name = std::move(name);
+}
+
+inline void set_ir_stmt_assign_target(IrStmt& stmt, IrExprPtr target) {
+    ensure_ir_stmt_assign_payload(stmt).target = std::move(target);
+}
+
+inline void set_ir_stmt_assign_rhs(IrStmt& stmt, IrExprPtr rhs) {
+    ensure_ir_stmt_assign_payload(stmt).rhs = std::move(rhs);
+}
 
 inline const IrStmtMatchArms& ir_stmt_match_arms(const IrStmt& stmt) {
     static const IrStmtMatchArms empty;

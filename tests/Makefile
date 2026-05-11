@@ -1390,6 +1390,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/ownership-array-element-move.raw; code=$$?; test $$code -eq 6
 	$(TARGET) --freestanding tests/ok/drop-statement-payloads.ari -o $(BUILD_DIR)/variables/drop-statement-payloads.raw
 	$(BUILD_DIR)/variables/drop-statement-payloads.raw; code=$$?; test $$code -eq 9
+	$(TARGET) --freestanding tests/ok/assignment-statement-payloads.ari -o $(BUILD_DIR)/variables/assignment-statement-payloads.raw
+	$(BUILD_DIR)/variables/assignment-statement-payloads.raw; code=$$?; test $$code -eq 44
 	$(TARGET) --freestanding tests/ok/array-fixed.ari -o $(BUILD_DIR)/variables/array-fixed.raw
 	$(BUILD_DIR)/variables/array-fixed.raw; code=$$?; test $$code -eq 4
 	$(TARGET) --freestanding tests/ok/scalar-payload-unions.ari -o $(BUILD_DIR)/variables/scalar-payload-unions.raw
@@ -1596,6 +1598,10 @@ check-variables: $(TARGET)
 	grep -q "ret i64 4" $(BUILD_DIR)/variables/array-len-literal.ll
 	$(TARGET) tests/ok/field-borrow.ari --emit-llvm $(BUILD_DIR)/variables/field-borrow.ll
 	grep -q "getelementptr inbounds { i64, i64 }" $(BUILD_DIR)/variables/field-borrow.ll
+	$(TARGET) tests/ok/assignment-statement-payloads.ari --emit-llvm $(BUILD_DIR)/variables/assignment-statement-payloads.ll
+	grep -q "store i64" $(BUILD_DIR)/variables/assignment-statement-payloads.ll
+	grep -q "add i64" $(BUILD_DIR)/variables/assignment-statement-payloads.ll
+	grep -q "getelementptr inbounds" $(BUILD_DIR)/variables/assignment-statement-payloads.ll
 	$(TARGET) tests/ok/array-dynamic-index-trap.ari --emit-llvm $(BUILD_DIR)/variables/array-dynamic-index-trap.ll
 	grep -q "array.bounds.fail" $(BUILD_DIR)/variables/array-dynamic-index-trap.ll
 	$(TARGET) --freestanding tests/ok/array-dynamic-index-trap.ari -o $(BUILD_DIR)/variables/array-dynamic-index-trap.raw

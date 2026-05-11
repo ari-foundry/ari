@@ -415,7 +415,7 @@ private:
                 collect_expr_locals(stmt.binding.init);
                 break;
             case IrStmtKind::Assign:
-                collect_expr_locals(stmt.rhs);
+                collect_expr_locals(ir_stmt_assign_rhs(stmt));
                 break;
             case IrStmtKind::ExprStmt:
             case IrStmtKind::Return:
@@ -1490,18 +1490,22 @@ private:
                 emit_store_value_to_offset(stmt.binding.type, *stmt.binding.init,
                                            local_offset(stmt.loc, stmt.binding.name));
                 break;
-            case IrStmtKind::Assign:
-                if (stmt.assign_target) {
-                    if (is_pointer_backed_lvalue(*stmt.assign_target)) {
-                        emit_store_to_pointer_lvalue_target(*stmt.assign_target, *stmt.rhs);
+            case IrStmtKind::Assign: {
+                const IrExprPtr& assign_target = ir_stmt_assign_target(stmt);
+                const IrExprPtr& rhs = ir_stmt_assign_rhs(stmt);
+                if (assign_target) {
+                    if (is_pointer_backed_lvalue(*assign_target)) {
+                        emit_store_to_pointer_lvalue_target(*assign_target, *rhs);
                     } else {
-                        emit_store_value_to_offset(stmt.assign_target->type, *stmt.rhs, lvalue_offset(*stmt.assign_target));
+                        emit_store_value_to_offset(assign_target->type, *rhs, lvalue_offset(*assign_target));
                     }
                 } else {
-                    emit_store_value_to_offset(local_type(stmt.loc, stmt.assign_name), *stmt.rhs,
-                                               local_offset(stmt.loc, stmt.assign_name));
+                    const std::string& assign_name = ir_stmt_assign_name(stmt);
+                    emit_store_value_to_offset(local_type(stmt.loc, assign_name), *rhs,
+                                               local_offset(stmt.loc, assign_name));
                 }
                 break;
+            }
             case IrStmtKind::ExprStmt:
                 emit_expr(*stmt.expr);
                 break;

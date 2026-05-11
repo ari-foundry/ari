@@ -855,7 +855,7 @@ private:
                 }
                 break;
             case IrStmtKind::Assign:
-                collect_expr_locals(stmt.rhs, locals);
+                collect_expr_locals(ir_stmt_assign_rhs(stmt), locals);
                 break;
             case IrStmtKind::ExprStmt:
             case IrStmtKind::Return:
@@ -982,12 +982,14 @@ private:
                 break;
             }
             case IrStmtKind::Assign: {
-                Value value = emit_expr(*stmt.rhs);
-                if (stmt.assign_target) {
-                    std::string slot = emit_lvalue_ptr(*stmt.assign_target);
+                const IrExprPtr& rhs = ir_stmt_assign_rhs(stmt);
+                const IrExprPtr& assign_target = ir_stmt_assign_target(stmt);
+                Value value = emit_expr(*rhs);
+                if (assign_target) {
+                    std::string slot = emit_lvalue_ptr(*assign_target);
                     line("  store " + value.type + " " + value.name + ", ptr " + slot);
                 } else {
-                    line("  store " + value.type + " " + value.name + ", ptr " + local_slot(stmt.loc, stmt.assign_name));
+                    line("  store " + value.type + " " + value.name + ", ptr " + local_slot(stmt.loc, ir_stmt_assign_name(stmt)));
                 }
                 break;
             }

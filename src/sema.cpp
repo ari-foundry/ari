@@ -5485,46 +5485,49 @@ private:
     }
 
     void check_assign(const Stmt& stmt, IrStmt& lowered) {
-        if (stmt.assign_target) {
-            IrExprPtr target = check_assignment_target(*stmt.assign_target);
+        const ExprPtr& assign_target = stmt_assign_target(stmt);
+        const ExprPtr& rhs = stmt_assign_rhs(stmt);
+        if (assign_target) {
+            IrExprPtr target = check_assignment_target(*assign_target);
             IrType target_type = target->type;
-            IrExprPtr value = check_expr_with_expected(*stmt.rhs, target_type);
+            IrExprPtr value = check_expr_with_expected(*rhs, target_type);
             coerce_expr_to_expected(*value, target_type);
             require_assignable(stmt.loc, target_type, value->type);
-            require_no_zone_pointer_escape(stmt.rhs->loc, *value, "aggregate or raw-pointer storage");
+            require_no_zone_pointer_escape(rhs->loc, *value, "aggregate or raw-pointer storage");
             mark_owned_field_assigned(*target);
-            lowered.assign_target = std::move(target);
-            lowered.rhs = std::move(value);
+            set_ir_stmt_assign_target(lowered, std::move(target));
+            set_ir_stmt_assign_rhs(lowered, std::move(value));
             return;
         }
 
-        LocalInfo& target = require_local_slot(stmt.loc, stmt.assign_name);
+        const std::string& assign_name = stmt_assign_name(stmt);
+        LocalInfo& target = require_local_slot(stmt.loc, assign_name);
         if (is_borrow_type(target.type)) {
-            fail(stmt.loc, "cannot assign to borrow binding '" + stmt.assign_name + "'");
+            fail(stmt.loc, "cannot assign to borrow binding '" + assign_name + "'");
         }
-        if (!target.mutable_binding) fail(stmt.loc, "cannot assign to immutable binding '" + stmt.assign_name + "'");
-        require_not_borrowed(stmt.loc, stmt.assign_name, target, "assign to");
+        if (!target.mutable_binding) fail(stmt.loc, "cannot assign to immutable binding '" + assign_name + "'");
+        require_not_borrowed(stmt.loc, assign_name, target, "assign to");
         if (is_owner_type(target.type) && has_live_owner(target)) {
-            fail(stmt.loc, "cannot overwrite owning binding '" + stmt.assign_name + "' before it is moved or dropped");
+            fail(stmt.loc, "cannot overwrite owning binding '" + assign_name + "' before it is moved or dropped");
         }
         if (contains_borrow_type(target.type)) {
-            fail(stmt.loc, "cannot assign to borrow-valued aggregate binding '" + stmt.assign_name + "' yet");
+            fail(stmt.loc, "cannot assign to borrow-valued aggregate binding '" + assign_name + "' yet");
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr value = check_expr_with_expected(*stmt.rhs, target.type);
+        IrExprPtr value = check_expr_with_expected(*rhs, target.type);
         widen_vector_storage_for_assignment(target, *value);
         coerce_expr_to_expected(*value, target.type);
         require_assignable(stmt.loc, target.type, value->type);
         VectorKnownLength assigned_vector_length =
-            vector_known_length_from_source_expr(target.type, *stmt.rhs, *value);
+            vector_known_length_from_source_expr(target.type, *rhs, *value);
         release_temporary_borrows(borrow_mark);
         target.state = LocalState::Alive;
         initialize_owned_field_states(target);
         set_vector_known_length(target, assigned_vector_length);
         set_zone_pointer_source_from_expr(target, *value);
-        lowered.assign_name = stmt.assign_name;
-        lowered.rhs = std::move(value);
+        set_ir_stmt_assign_name(lowered, assign_name);
+        set_ir_stmt_assign_rhs(lowered, std::move(value));
     }
 
     IrExprPtr check_assignment_target(const Expr& expr) {
@@ -8753,8 +8756,8 @@ private:
         auto stmt = std::make_unique<IrStmt>();
         stmt->kind = IrStmtKind::Assign;
         stmt->loc = loc;
-        stmt->assign_name = name;
-        stmt->rhs = make_bool_literal_expr(loc, value);
+        set_ir_stmt_assign_name(*stmt, name);
+        set_ir_stmt_assign_rhs(*stmt, make_bool_literal_expr(loc, value));
         return stmt;
     }
 

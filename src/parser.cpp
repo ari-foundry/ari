@@ -841,25 +841,26 @@ private:
             stmt->kind = StmtKind::Assign;
             stmt->loc = loc;
             if (target->kind == ExprKind::Name) {
-                stmt->assign_name = target->name;
+                set_stmt_assign_name(*stmt, target->name);
             } else if (is_assignment_target_expr(*target)) {
-                stmt->assign_target = std::move(target);
+                set_stmt_assign_target(*stmt, std::move(target));
             } else {
                 fail(loc, "assignment target must be a binding, field access, index access, or pointer dereference");
             }
             ExprPtr rhs = parse_expression();
             if (op.kind == TokenKind::Equal) {
-                stmt->rhs = std::move(rhs);
+                set_stmt_assign_rhs(*stmt, std::move(rhs));
             } else {
                 auto combined = std::make_unique<Expr>();
                 combined->kind = ExprKind::Binary;
                 combined->loc = op.loc;
                 combined->op = compound_assignment_binary_operator(op.kind, op.loc);
-                combined->left = stmt->assign_target
-                    ? clone_assignment_target(*stmt->assign_target)
-                    : make_ast_name_expr(loc, stmt->assign_name);
+                const ExprPtr& assign_target = stmt_assign_target(*stmt);
+                combined->left = assign_target
+                    ? clone_assignment_target(*assign_target)
+                    : make_ast_name_expr(loc, stmt_assign_name(*stmt));
                 combined->right = std::move(rhs);
-                stmt->rhs = std::move(combined);
+                set_stmt_assign_rhs(*stmt, std::move(combined));
             }
             require_semicolon("expected ; after assignment");
             return stmt;

@@ -239,15 +239,19 @@ struct Binding {
     SourceLocation loc;
 };
 
+struct StmtAssignPayload {
+    std::string name;
+    ExprPtr target;
+    ExprPtr rhs;
+};
+
 struct Stmt {
     StmtKind kind = StmtKind::ExprStmt;
     SourceLocation loc;
     std::vector<std::unique_ptr<Stmt>> statements;
     Binding binding;
-    std::string assign_name;
-    ExprPtr assign_target;
+    std::unique_ptr<StmtAssignPayload> assign_payload;
     ExprPtr expr;
-    ExprPtr rhs;
     ExprPtr condition;
     bool has_condition_pattern = false;
     std::unique_ptr<Pattern> condition_pattern;
@@ -265,6 +269,40 @@ struct Stmt {
     std::string label;
     std::unique_ptr<StmtBreakPayload> break_payload;
 };
+
+inline const StmtAssignPayload& stmt_assign_payload(const Stmt& stmt) {
+    static const StmtAssignPayload empty;
+    return stmt.assign_payload ? *stmt.assign_payload : empty;
+}
+
+inline StmtAssignPayload& ensure_stmt_assign_payload(Stmt& stmt) {
+    if (!stmt.assign_payload) stmt.assign_payload = std::make_unique<StmtAssignPayload>();
+    return *stmt.assign_payload;
+}
+
+inline const std::string& stmt_assign_name(const Stmt& stmt) {
+    return stmt_assign_payload(stmt).name;
+}
+
+inline const ExprPtr& stmt_assign_target(const Stmt& stmt) {
+    return stmt_assign_payload(stmt).target;
+}
+
+inline const ExprPtr& stmt_assign_rhs(const Stmt& stmt) {
+    return stmt_assign_payload(stmt).rhs;
+}
+
+inline void set_stmt_assign_name(Stmt& stmt, std::string name) {
+    ensure_stmt_assign_payload(stmt).name = std::move(name);
+}
+
+inline void set_stmt_assign_target(Stmt& stmt, ExprPtr target) {
+    ensure_stmt_assign_payload(stmt).target = std::move(target);
+}
+
+inline void set_stmt_assign_rhs(Stmt& stmt, ExprPtr rhs) {
+    ensure_stmt_assign_payload(stmt).rhs = std::move(rhs);
+}
 
 inline const StmtMatchArms& stmt_match_arms(const Stmt& stmt) {
     static const StmtMatchArms empty;
