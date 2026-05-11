@@ -123,7 +123,9 @@
    iteration. Statement `if true`/`if false` now feeds the selected literal
    branch into ownership flow analysis, so loop bodies with literal
    `if true { break; }` paths do not merge unreachable post-break owner-state
-   changes into the loop fallthrough state.
+   changes into the loop fallthrough state. Literal `while false` bodies are
+   also checked without merging unreachable body ownership changes into the
+   zero-iteration loop exit state.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
      loop fallthrough paths instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop

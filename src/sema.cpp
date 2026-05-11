@@ -9557,7 +9557,8 @@ private:
     Flow check_while(const Stmt& stmt, IrStmt& lowered) {
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
-        const bool literal_true_condition = is_literal_true_condition(*lowered.condition);
+        const std::optional<bool> literal_condition = literal_bool_condition_value(*lowered.condition);
+        const bool literal_true_condition = literal_condition.value_or(false);
         StateSnapshot loop_input = snapshot_states();
         const std::string& label = stmt_label(stmt);
 
@@ -9569,6 +9570,12 @@ private:
         StateSnapshot loop_body_state = snapshot_states();
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
+
+        if (literal_condition && !*literal_condition) {
+            restore_states(loop_input);
+            set_ir_stmt_label(lowered, label);
+            return Flow::Continues;
+        }
 
         restore_states(checked_loop_exit_state(
             stmt.loc,

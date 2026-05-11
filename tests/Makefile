@@ -279,6 +279,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-true-return-owner-state.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/while-true-literal-if-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/while-false-owner-state.raw
+	$(BUILD_DIR)/control-flow/while-false-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/while-true-continue-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
 	$(TARGET) tests/ok/while-true-empty-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-empty-noreturn.ll
@@ -384,6 +386,8 @@ check-control-flow: $(TARGET)
 	grep -q "ret i64 12" $(BUILD_DIR)/control-flow/while-true-return-owner-state.ll
 	$(TARGET) tests/ok/while-true-literal-if-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.ll
 	grep -q "br i1 1" $(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.ll
+	$(TARGET) tests/ok/while-false-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-false-owner-state.ll
+	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-false-owner-state.ll
 	$(TARGET) tests/ok/statement-label-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/statement-label-payloads.ll
 	grep -q "block.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/statement-label-payloads.ll
