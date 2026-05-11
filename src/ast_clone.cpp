@@ -38,7 +38,7 @@ ExprPtr make_shallow_clone(const Expr& expr) {
     clone->mutable_borrow = expr.mutable_borrow;
     clone->op = expr.op;
     clone->cast_type = expr.cast_type;
-    clone->receiver_type_args = expr.receiver_type_args;
+    set_expr_receiver_type_args(*clone, expr_receiver_type_args(expr));
     clone->type_args = expr.type_args;
     clone->field_names = expr.field_names;
     if (expr.macro_tokens) {

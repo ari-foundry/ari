@@ -217,7 +217,7 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             return true;
         }
         case ExprKind::StructLiteral: {
-            if (!expr.receiver_type_args.empty()) return false;
+            if (!expr_receiver_type_args(expr).empty()) return false;
             if (expr.field_names.size() != expr.args.size()) return false;
             std::vector<std::ostringstream> values(expr.args.size());
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
@@ -235,7 +235,7 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
         }
         case ExprKind::Call: {
             if (expr.operand) return false;
-            if (!expr.receiver_type_args.empty()) return false;
+            if (!expr_receiver_type_args(expr).empty()) return false;
             std::ostringstream args;
             if (!append_const_expr_list(args, expr.args)) return false;
             append_field(out, "call");

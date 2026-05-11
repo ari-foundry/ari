@@ -108,7 +108,11 @@ payloads now as well. Match-expression subjects and expression arm vectors are
 lazy AST/IR payloads too, matching the earlier statement-match arm-vector split.
 IR trait-object call erased parameter type vectors are also behind a
 `TraitObjectCall`-only payload, with sema setting the payload once and the LLVM
-backend reading it through `ir_expr_call_param_types`.
+backend reading it through `ir_expr_call_param_types`. AST qualified-call
+receiver type argument vectors are lazy now as well, so parser, AST clone,
+module-summary filtering, and sema trait-qualified lookup share
+`expr_receiver_type_args`/`set_expr_receiver_type_args` accessors instead of
+touching the storage directly.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

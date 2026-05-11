@@ -1183,6 +1183,10 @@ check-traits: $(TARGET)
 	$(BUILD_DIR)/traits/trait-qualified-call.raw; code=$$?; test $$code -eq 150
 	$(TARGET) --freestanding tests/ok/trait-qualified-associated-call.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-call.raw
 	$(BUILD_DIR)/traits/trait-qualified-associated-call.raw; code=$$?; test $$code -eq 96
+	$(TARGET) --freestanding tests/ok/trait-qualified-receiver-type-args.ari -o $(BUILD_DIR)/traits/trait-qualified-receiver-type-args.raw
+	$(BUILD_DIR)/traits/trait-qualified-receiver-type-args.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/trait-qualified-receiver-type-args.ari --emit-llvm $(BUILD_DIR)/traits/trait-qualified-receiver-type-args.ll
+	grep -q "Select" $(BUILD_DIR)/traits/trait-qualified-receiver-type-args.ll
 	$(TARGET) --freestanding tests/ok/trait-qualified-associated-expected-control-flow.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-expected-control-flow.raw
 	$(BUILD_DIR)/traits/trait-qualified-associated-expected-control-flow.raw; code=$$?; test $$code -eq 23
 	$(TARGET) tests/ok/trait-qualified-associated-expected-aggregates.ari --emit-llvm $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.ll

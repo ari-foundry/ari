@@ -12721,7 +12721,7 @@ private:
     }
 
     static std::vector<TypeRef> combined_associated_type_args(const Expr& expr) {
-        std::vector<TypeRef> args = expr.receiver_type_args;
+        std::vector<TypeRef> args = expr_receiver_type_args(expr);
         args.insert(args.end(), expr.type_args.begin(), expr.type_args.end());
         return args;
     }
@@ -15499,7 +15499,7 @@ private:
         if (try_resolve_trait_qualified_call_target(
                 expr.loc,
                 receiver_name,
-                expr.receiver_type_args,
+                expr_receiver_type_args(expr),
                 trait_name,
                 trait_args)) {
             const TraitInfo::Method* trait_method =

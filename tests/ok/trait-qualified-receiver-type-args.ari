@@ -1,0 +1,19 @@
+trait Select[T] {
+  fn select(value: T) -> Self
+}
+
+struct Box[T] {
+  value: T,
+}
+
+impl[T] Select[T] for Box[T] {
+  fn select(value: T) -> Box[T] {
+    Box { value: value }
+  }
+}
+
+fn main() -> i64 {
+  let explicit = Select<i64>::select<Box[i64]>(12);
+  let inferred: Box[i64] = Select<i64>::select(30);
+  explicit.value + inferred.value
+}

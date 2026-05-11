@@ -165,21 +165,24 @@
    vectors now live behind match-expression payload pointers too. IR dyn
    dispatch erased parameter type vectors now live behind `TraitObjectCall`
    payload pointers, so ordinary IR expressions no longer carry an eager call
-   signature vector.
+   signature vector. AST qualified-call receiver type argument vectors now also
+   live behind a lazy receiver metadata payload, with parser moves, AST clones,
+   module-summary constant filtering, and sema trait-qualified call lookup using
+   shared accessors.
    Broader AST/IR node packing should stay incremental: `Stmt` and the large
    expression child/vector payloads are still widely mutated while parsing and
    lowering, so their payload split needs more constructor/builder coverage
    first.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
      variant payload structs or unions; remaining high-value targets are the
-     AST call/type-argument vectors, general AST/IR expression argument vectors,
-     and operand child expression groups that still receive broad parser, sema,
-     and backend mutations
+     direct AST call/struct/generic `type_args`, general AST/IR expression
+     argument vectors, and operand child expression groups that still receive
+     broad parser, sema, and backend mutations
    - [expr-child-vector-payloads] split call/argument and operand child/vector
      expression fields after builders cover the remaining parser/sema/backend
-     mutation paths; next small slice: split the AST call/type-argument
-     metadata once parser call construction and sema generic-call rewrites share
-     one helper path
+     mutation paths; next small slice: split the direct AST call/struct
+     `type_args` vector once parser call construction, module summaries, and
+     sema generic-call rewrites share one helper path
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

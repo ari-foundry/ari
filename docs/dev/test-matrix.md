@@ -446,6 +446,8 @@ Checklist:
       bool expression-valued match lowering paths
 - [x] IR trait-object call parameter payload packing preserves multi-argument
       LLVM dyn dispatch
+- [x] AST receiver type-argument payload packing preserves trait-qualified
+      associated calls with explicit and inferred result type arguments
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias
