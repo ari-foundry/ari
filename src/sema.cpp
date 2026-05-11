@@ -4383,36 +4383,16 @@ private:
         collect_owned_field_states(local.type, "", local.owned_field_states);
     }
 
-    void clear_zone_pointer_source(LocalInfo& local) {
-        local.zone_pointer = false;
-        local.zone_pointer_source.clear();
-        local.zone_pointer_generation = 0;
-    }
-
-    bool set_zone_pointer_source_from_name(LocalInfo& target, const std::string& source_name) {
-        if (source_name == "<multiple zones>") return false;
-        LocalInfo* zone = find_local_slot(source_name);
-        if (!zone || !is_zone_source_type(zone->type)) return false;
-        target.zone_pointer = true;
-        target.zone_pointer_source = source_name;
-        target.zone_pointer_generation = zone->zone_generation;
-        return true;
+    ZonePointerLocalAdapter zone_pointer_locals() {
+        ZonePointerLocalAdapter locals;
+        locals.find_local = [this](const std::string& name) {
+            return find_local_slot(name);
+        };
+        return locals;
     }
 
     bool zone_source_name_from_arg(const IrExpr& zone_arg, std::string& out) {
-        if (zone_arg.kind == IrExprKind::Borrow && ir_expr_label(zone_arg).empty()) {
-            const LocalInfo* zone = find_local_slot(ir_expr_name(zone_arg));
-            if (!zone || !is_zone_value_type(zone->type)) return false;
-            out = ir_expr_name(zone_arg);
-            return true;
-        }
-        if (zone_arg.kind == IrExprKind::Local) {
-            const LocalInfo* zone = find_local_slot(ir_expr_name(zone_arg));
-            if (!zone || !is_zone_borrow_type(zone->type)) return false;
-            out = ir_expr_name(zone_arg);
-            return true;
-        }
-        return false;
+        return ari::zone_source_name_from_arg(zone_arg, zone_pointer_locals(), out);
     }
 
     ZonePointerSourceResolver zone_pointer_source_resolver() {
@@ -4473,41 +4453,24 @@ private:
     }
 
     void set_zone_pointer_source_from_expr(LocalInfo& target, const IrExpr& value) {
-        clear_zone_pointer_source(target);
-        if (!is_zone_pointer_trackable_type(target.type)) return;
-
-        std::string source_name;
-        if (zone_pointer_source_name_from_expr(value, source_name) &&
-            set_zone_pointer_source_from_name(target, source_name)) {
-            return;
-        }
+        ari::set_zone_pointer_source_from_expr(
+            target,
+            value,
+            zone_pointer_source_resolver(),
+            zone_pointer_locals());
     }
 
     void require_zone_pointer_valid(SourceLocation loc,
                                     const std::string& pointer_name,
                                     const LocalInfo& pointer) {
-        if (!pointer.zone_pointer) return;
-        LocalInfo* zone = find_local_slot(pointer.zone_pointer_source);
-        if (!zone ||
-            !is_zone_source_type(zone->type) ||
-            !local_is_alive(*zone) ||
-            zone->zone_generation != pointer.zone_pointer_generation) {
-            fail(loc,
-                 "cannot use zone pointer '" + pointer_name + "' after zone '" +
-                     pointer.zone_pointer_source + "' was reset or destroyed");
+        if (std::optional<std::string> error =
+                zone_pointer_invalid_error(pointer_name, pointer, zone_pointer_locals())) {
+            fail(loc, *error);
         }
     }
 
     void mark_zone_reset_call(const IrExpr& call) {
-        if (call.kind != IrExprKind::Call || call.args.empty()) return;
-        std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(ir_expr_name(call));
-        if (!builtin_symbol || *builtin_symbol != "ari_builtin_zone_reset") return;
-        const IrExpr& zone_arg = *call.args[0];
-        std::string source_name;
-        if (!zone_source_name_from_arg(zone_arg, source_name)) return;
-        LocalInfo* zone = find_local_slot(source_name);
-        if (!zone || !is_zone_source_type(zone->type)) return;
-        bump_local_zone_generation(*zone);
+        ari::mark_zone_reset_call(call, zone_pointer_locals());
     }
 
     void require_no_live_owners_before_return(SourceLocation loc) const {

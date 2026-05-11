@@ -254,6 +254,8 @@ Checklist:
       zone reset/destroy
 - [x] `std::vec::new<T>(ref mut Zone, capacity)` wraps `RawVec<T>` in the
       tracked source `std::vec::Vec<T>` allocator/capability creation surface
+- [x] zone pointer reset invalidation also recognizes `zone::reset` through a
+      named `ref mut Zone` binding
 - [x] control-flow expressions that select source `std::vec::Vec<T>` handles
       from the same zone keep reset/destroy provenance on the selected handle
 - [x] source `std::vec::Vec<T>` exposes tracked read-only metadata methods

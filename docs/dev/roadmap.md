@@ -134,9 +134,11 @@
      to `sema.cpp`. The `std::vec::Vec` same-zone method contract now lives in
      `std_vec_semantics`, and source-handle/pointer provenance expression
      tracing for locals, tuple fields, calls, slices, and control-flow
-     expressions now lives in `zone_pointer_semantics`; remaining work is to
-     move source/generation storage, reset/destroy invalidation, temporary-zone
-     escape checks, and auto-cleanup out of `sema.cpp`.
+     expressions now lives in `zone_pointer_semantics`. Zone source/generation
+     assignment, named zone-borrow reset recognition, reset invalidation, and
+     validity diagnostics also route through `zone_pointer_semantics`; remaining
+     work is to move temporary-zone escape checks, destroy/cleanup wiring, and
+     automatic temporary-zone cleanup out of `sema.cpp`.
    - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
      top of the existing explicit-zone `std::boxed::Box<T>` seed before std
      APIs start returning owning heap handles

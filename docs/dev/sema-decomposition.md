@@ -36,8 +36,8 @@ construction. Some helpers have already moved out to focused files:
   checks used by sema, Vec `as_slice` lowering, and both backends. Zone
   provenance for source `Slice[T]` views is tracked through
   `zone_pointer_semantics` alongside pointer and source `std::vec` handles,
-  while sema still owns the local state updates that store and invalidate that
-  provenance.
+  including the helper code that stores source/generation state, recognizes
+  reset through named zone borrows, and reports reset/destroy invalidation.
 - `std_vec_semantics` for source-prelude `std::vec::RawVec<T>` and
   `std::vec::Vec<T>` handle recognition plus their zone-backed source field
   shapes, same-zone method list and diagnostics, and provenance-preserving
@@ -347,12 +347,13 @@ pending IR.
    - Keep trait lookup calls injected from `SemanticChecker` until trait tables
      move.
 4. Extract zone pointer provenance into `zone_semantics`.
-   - `zone_pointer_semantics` now owns the pure expression walk that recovers
-     a tracked zone source from local pointers, source `std::boxed` /
-     `std::vec` handles, source slices, pointer-returning methods, and
-     control-flow expressions. Move the remaining source/generation local-state
-     updates, temp-zone escape checks, reset/destroy invalidation,
-     scratch/promotion validation, and automatic temporary-zone cleanup.
+   - `zone_pointer_semantics` now owns the expression walk that recovers a
+     tracked zone source from local pointers, source `std::boxed` / `std::vec`
+     handles, source slices, pointer-returning methods, and control-flow
+     expressions. It also owns source/generation assignment helpers, reset-call
+     generation updates, and invalidation diagnostics. Move the remaining
+     temp-zone escape checks, destroy/cleanup wiring, scratch/promotion
+     validation, and automatic temporary-zone cleanup.
    - Keep actual `zone::*` call typing in expression lowering until prelude
      special calls are split.
 

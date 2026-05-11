@@ -2306,6 +2306,8 @@ check-ffi: $(TARGET)
 	grep -q "zone::new<T> cannot place ownership- or borrow-valued types yet" $(BUILD_DIR)/ffi/zone-new-own-aggregate.err
 	if $(TARGET) tests/errors/zone-pointer-after-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-after-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'item' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-after-reset.err
+	if $(TARGET) tests/errors/zone-pointer-after-borrowed-reset.ari -o $(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.elf >$(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'item' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-after-borrowed-reset.err
 	if $(TARGET) tests/errors/zone-pointer-after-destroy.ari -o $(BUILD_DIR)/ffi/zone-pointer-after-destroy.elf >$(BUILD_DIR)/ffi/zone-pointer-after-destroy.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'item' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/ffi/zone-pointer-after-destroy.err
 	if $(TARGET) tests/errors/zone-wrapper-pointer-after-reset.ari -o $(BUILD_DIR)/ffi/zone-wrapper-pointer-after-reset.elf >$(BUILD_DIR)/ffi/zone-wrapper-pointer-after-reset.err 2>&1; then exit 1; fi

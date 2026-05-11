@@ -1,9 +1,12 @@
 #include "zone_pointer_semantics.hpp"
 
+#include "ari_builtin.hpp"
+#include "local_state.hpp"
 #include "prelude_resolver.hpp"
 #include "slice_semantics.hpp"
 #include "std_box_semantics.hpp"
 #include "std_vec_semantics.hpp"
+#include "zone_return_semantics.hpp"
 
 namespace ari {
 
@@ -30,6 +33,31 @@ bool is_zone_pointer_trackable_type(const IrType& type) {
            is_std_box_handle_type(value_type) ||
            is_std_vec_zone_handle_type(value_type) ||
            is_prelude_slice_type(value_type);
+}
+
+bool zone_source_name_from_arg(const IrExpr& zone_arg,
+                               const ZonePointerLocalAdapter& locals,
+                               std::string& out) {
+    if (zone_arg.kind == IrExprKind::Borrow && ir_expr_label(zone_arg).empty()) {
+        const LocalInfo* zone = locals.find_local(ir_expr_name(zone_arg));
+        if (!zone || !is_zone_value_type(zone->type)) return false;
+        out = ir_expr_name(zone_arg);
+        return true;
+    }
+    if (zone_arg.kind == IrExprKind::Local) {
+        const LocalInfo* zone = locals.find_local(ir_expr_name(zone_arg));
+        if (!zone || !is_zone_borrow_type(zone->type)) return false;
+        if (!zone->borrow_source.empty()) {
+            const LocalInfo* source = locals.find_local(zone->borrow_source);
+            if (source && is_zone_source_type(source->type)) {
+                out = zone->borrow_source;
+                return true;
+            }
+        }
+        out = ir_expr_name(zone_arg);
+        return true;
+    }
+    return false;
 }
 
 bool zone_pointer_source_name_from_expr(const IrExpr& value,
@@ -133,6 +161,63 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
         return found_any;
     }
     return false;
+}
+
+void clear_zone_pointer_source(LocalInfo& local) {
+    local.zone_pointer = false;
+    local.zone_pointer_source.clear();
+    local.zone_pointer_generation = 0;
+}
+
+bool set_zone_pointer_source_from_name(LocalInfo& target,
+                                       const std::string& source_name,
+                                       const ZonePointerLocalAdapter& locals) {
+    if (source_name == "<multiple zones>") return false;
+    LocalInfo* zone = locals.find_local(source_name);
+    if (!zone || !is_zone_source_type(zone->type)) return false;
+    target.zone_pointer = true;
+    target.zone_pointer_source = source_name;
+    target.zone_pointer_generation = zone->zone_generation;
+    return true;
+}
+
+bool set_zone_pointer_source_from_expr(LocalInfo& target,
+                                       const IrExpr& value,
+                                       const ZonePointerSourceResolver& resolver,
+                                       const ZonePointerLocalAdapter& locals) {
+    clear_zone_pointer_source(target);
+    if (!is_zone_pointer_trackable_type(target.type)) return false;
+
+    std::string source_name;
+    if (!zone_pointer_source_name_from_expr(value, resolver, source_name)) return false;
+    return set_zone_pointer_source_from_name(target, source_name, locals);
+}
+
+std::optional<std::string> zone_pointer_invalid_error(const std::string& pointer_name,
+                                                      const LocalInfo& pointer,
+                                                      const ZonePointerLocalAdapter& locals) {
+    if (!pointer.zone_pointer) return std::nullopt;
+    const LocalInfo* zone = locals.find_local(pointer.zone_pointer_source);
+    if (zone &&
+        is_zone_source_type(zone->type) &&
+        local_is_alive(*zone) &&
+        zone->zone_generation == pointer.zone_pointer_generation) {
+        return std::nullopt;
+    }
+    return "cannot use zone pointer '" + pointer_name + "' after zone '" +
+           pointer.zone_pointer_source + "' was reset or destroyed";
+}
+
+bool mark_zone_reset_call(const IrExpr& call, const ZonePointerLocalAdapter& locals) {
+    if (call.kind != IrExprKind::Call || call.args.empty()) return false;
+    std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(ir_expr_name(call));
+    if (!builtin_symbol || *builtin_symbol != "ari_builtin_zone_reset") return false;
+    std::string source_name;
+    if (!zone_source_name_from_arg(*call.args[0], locals, source_name)) return false;
+    LocalInfo* zone = locals.find_local(source_name);
+    if (!zone || !is_zone_source_type(zone->type)) return false;
+    bump_local_zone_generation(*zone);
+    return true;
 }
 
 } // namespace ari

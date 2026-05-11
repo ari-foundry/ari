@@ -416,7 +416,9 @@ function with no Zone borrow parameters or with more than one Zone borrow
 parameter cannot return a tracked zone pointer.
 Reset invalidation is merged conservatively through `if`, `match`, `??`
 fallbacks, labeled-block exits, and loops, so a pointer is considered invalid
-after control flow if any continuing path may have reset its zone.
+after control flow if any continuing path may have reset its zone. Calling
+`zone::reset` through a named `ref mut Zone` binding invalidates the same source
+zone as calling it through `ref mut zone` directly.
 This is a diagnostic aid, not a full lifetime proof. Zone pointers cannot be
 stored into tuple, struct, enum, or vector values, assigned into aggregate or
 raw-pointer storage, passed through extern C or function-pointer calls, or
