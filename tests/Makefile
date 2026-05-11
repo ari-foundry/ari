@@ -156,6 +156,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-boxed-replace.ll
 	$(TARGET) tests/ok/std-boxed-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-copy-to.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent7copy_to' $(BUILD_DIR)/prelude/std-boxed-copy-to.ll
+	$(TARGET) tests/ok/std-boxed-swap.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-swap.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-boxed-swap.ll
 	$(TARGET) tests/ok/std-boxed-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent6as_ptr' $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
@@ -211,6 +213,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-box.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-box.elf; $(BUILD_DIR)/prelude/std-boxed-box.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-replace.elf; $(BUILD_DIR)/prelude/std-boxed-replace.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; code=$$?; test $$code -eq 51; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi

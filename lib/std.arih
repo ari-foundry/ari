@@ -96,6 +96,12 @@ pub mod boxed {
       return std::boxed::new<T>(target, self.get());
     }
 
+    fn swap(self: ref mut Self, other: ref mut Self) -> void {
+      let temporary = ptr_load(self.data);
+      ptr_store(self.data, ptr_load(other.data));
+      ptr_store(other.data, temporary);
+    }
+
     fn as_ptr(self) -> ptr T {
       return self.data;
     }

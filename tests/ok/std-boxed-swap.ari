@@ -1,0 +1,13 @@
+fn main() -> i64 {
+  var left_zone = zone::create(64);
+  var right_zone = zone::create(64);
+  var left = std::boxed::new<i64>(ref mut left_zone, 5);
+  var right = std::boxed::new<i64>(ref mut right_zone, 8);
+
+  left.swap(ref mut right);
+  let total = left.get() * 10 + right.get();
+
+  zone::destroy(left_zone);
+  zone::destroy(right_zone);
+  return total;
+}
