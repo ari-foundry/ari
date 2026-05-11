@@ -712,11 +712,14 @@ check-modules: $(TARGET)
 	grep -q "8:continue" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "5:match" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "11:method-call" $(BUILD_DIR)/modules/package-cache-body.aricache
+	grep -q "7:if-expr" $(BUILD_DIR)/modules/package-cache-body.aricache
+	grep -q "10:block-expr" $(BUILD_DIR)/modules/package-cache-body.aricache
+	grep -q "10:match-expr" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "4:drop" $(BUILD_DIR)/modules/package-cache-body.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-body-cache.ll $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.raw
-	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 149
+	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 157
 	$(TARGET) -Itests/packages tests/ok/package-cache-decls-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-decls.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-decls-cache.ll
 	grep -q "ari-ast-decls-v3" $(BUILD_DIR)/modules/package-cache-decls.aricache
 	grep -Eq "ast-summary.*cache_decls.*tests/packages/cache_decls.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-decls.aricache

@@ -89,3 +89,22 @@ pub fn drop_statement() -> i64 {
   drop value;
   return 2;
 }
+
+pub fn expression_flow(flag: bool, value: i64) -> i64 {
+  let base = if flag {
+    let left = 4;
+    left
+  } else {
+    6
+  };
+  let from_block = {
+    let bonus = base + value;
+    bonus
+  };
+  let from_match = match value {
+    0 => 1,
+    1..=2 => 2,
+    _ => 3,
+  };
+  return from_block + from_match;
+}

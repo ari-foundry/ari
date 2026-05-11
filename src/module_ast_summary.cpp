@@ -124,6 +124,7 @@ bool is_summary_const_binary_op(TokenKind op) {
 }
 
 bool append_const_expr_list(std::ostringstream& out, const std::vector<ExprPtr>& args);
+bool append_body_stmt_list(std::ostringstream& out, const std::vector<StmtPtr>& statements);
 bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern);
 
 void append_type_arguments(std::ostringstream& out, const std::vector<TypeRef>& type_args) {
@@ -260,6 +261,63 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             append_field(out, expr.name);
             append_type_arguments(out, expr_type_args(expr));
             out << args.str();
+            return true;
+        }
+        case ExprKind::If: {
+            if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) return false;
+            std::ostringstream pattern;
+            std::ostringstream condition;
+            std::ostringstream then_body;
+            std::ostringstream then_value;
+            std::ostringstream else_body;
+            std::ostringstream else_value;
+            const bool has_pattern = expr_if_has_condition_pattern(expr);
+            if (has_pattern && !append_pattern_payload(pattern, *expr_if_condition_pattern(expr))) return false;
+            if (!append_const_expr_payload(condition, *expr_if_condition(expr))) return false;
+            if (!append_body_stmt_list(then_body, expr_if_then_body(expr))) return false;
+            if (!append_const_expr_payload(then_value, *expr_if_then_value(expr))) return false;
+            if (!append_body_stmt_list(else_body, expr_if_else_body(expr))) return false;
+            if (!append_const_expr_payload(else_value, *expr_if_else_value(expr))) return false;
+            append_field(out, "if-expr");
+            append_bool(out, has_pattern);
+            out << pattern.str();
+            out << condition.str();
+            out << then_body.str();
+            out << then_value.str();
+            out << else_body.str();
+            out << else_value.str();
+            return true;
+        }
+        case ExprKind::Block: {
+            if (!expr_block_value(expr)) return false;
+            std::ostringstream body;
+            std::ostringstream value;
+            if (!append_body_stmt_list(body, expr_block_body(expr))) return false;
+            if (!append_const_expr_payload(value, *expr_block_value(expr))) return false;
+            append_field(out, "block-expr");
+            append_field(out, expr_block_label(expr));
+            out << body.str();
+            out << value.str();
+            return true;
+        }
+        case ExprKind::Match: {
+            if (!expr_match_value(expr)) return false;
+            std::ostringstream value;
+            if (!append_const_expr_payload(value, *expr_match_value(expr))) return false;
+            std::vector<std::ostringstream> arm_patterns(expr_match_arms(expr).size());
+            std::vector<std::ostringstream> arm_values(expr_match_arms(expr).size());
+            for (std::size_t i = 0; i < expr_match_arms(expr).size(); ++i) {
+                const ExprMatchArm& arm = expr_match_arms(expr)[i];
+                if (!append_pattern_payload(arm_patterns[i], arm.pattern)) return false;
+                if (!arm.value || !append_const_expr_payload(arm_values[i], *arm.value)) return false;
+            }
+            append_field(out, "match-expr");
+            out << value.str();
+            append_count(out, expr_match_arms(expr).size());
+            for (std::size_t i = 0; i < expr_match_arms(expr).size(); ++i) {
+                out << arm_patterns[i].str();
+                out << arm_values[i].str();
+            }
             return true;
         }
         default:
@@ -1200,6 +1258,50 @@ private:
             expr->name = read_field(label + " method name");
             set_expr_type_args(*expr, read_type_arguments(label + " method type arguments"));
             expr->args = read_const_expr_list(label + " method arguments");
+            return expr;
+        }
+        if (kind == "if-expr") {
+            expr->kind = ExprKind::If;
+            std::unique_ptr<Pattern> pattern;
+            if (read_bool(label + " condition pattern flag")) {
+                pattern = std::make_unique<Pattern>(read_pattern(label + " condition pattern"));
+            }
+            ExprPtr condition = read_const_expr(label + " condition");
+            std::vector<StmtPtr> then_body = read_body_stmt_list(label + " then body");
+            ExprPtr then_value = read_const_expr(label + " then value");
+            std::vector<StmtPtr> else_body = read_body_stmt_list(label + " else body");
+            ExprPtr else_value = read_const_expr(label + " else value");
+            set_expr_if_payload(*expr,
+                                std::move(condition),
+                                std::move(pattern),
+                                std::move(then_body),
+                                std::move(then_value),
+                                std::move(else_body),
+                                std::move(else_value));
+            return expr;
+        }
+        if (kind == "block-expr") {
+            expr->kind = ExprKind::Block;
+            std::string block_label = read_field(label + " block label");
+            std::vector<StmtPtr> body = read_body_stmt_list(label + " block body");
+            ExprPtr value = read_const_expr(label + " block value");
+            set_expr_block_payload(*expr, std::move(block_label), std::move(body), std::move(value));
+            return expr;
+        }
+        if (kind == "match-expr") {
+            expr->kind = ExprKind::Match;
+            ExprPtr value = read_const_expr(label + " match value");
+            std::uint64_t arm_count = read_count(label + " match arm count");
+            std::vector<ExprMatchArm> arms;
+            arms.reserve(static_cast<std::size_t>(arm_count));
+            for (std::uint64_t i = 0; i < arm_count; ++i) {
+                ExprMatchArm arm;
+                arm.pattern = read_pattern(label + " match arm pattern");
+                arm.value = read_const_expr(label + " match arm value");
+                arm.loc = default_loc();
+                arms.push_back(std::move(arm));
+            }
+            set_expr_match_payload(*expr, std::move(value), std::move(arms));
             return expr;
         }
         fail("unknown constant expression summary kind '" + kind + "'");
