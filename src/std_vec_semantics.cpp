@@ -77,4 +77,20 @@ std::optional<std::size_t> std_vec_zone_handle_source_field_index(const IrType& 
     return 0;
 }
 
+std::optional<std::vector<std::size_t>> std_vec_zone_handle_data_field_path_indices(const IrType& type) {
+    if (is_std_vec_raw_handle_type(type)) {
+        std::optional<std::size_t> data_index = std_vec_raw_handle_data_field_index(type);
+        if (!data_index) return std::nullopt;
+        return std::vector<std::size_t>{*data_index};
+    }
+    if (!is_std_vec_handle_type(type)) return std::nullopt;
+
+    std::optional<std::size_t> raw_index = std_vec_zone_handle_source_field_index(type);
+    if (!raw_index || *raw_index >= type.field_types.size()) return std::nullopt;
+    std::optional<std::size_t> data_index =
+        std_vec_raw_handle_data_field_index(type.field_types[*raw_index]);
+    if (!data_index) return std::nullopt;
+    return std::vector<std::size_t>{*raw_index, *data_index};
+}
+
 } // namespace ari

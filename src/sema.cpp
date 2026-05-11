@@ -4561,6 +4561,26 @@ private:
         fail(loc, "zone pointer cannot escape into " + context + "; keep it in a local ptr binding");
     }
 
+    void require_std_vec_reserve_zone_matches_source(SourceLocation loc,
+                                                     const std::string& method_name,
+                                                     const IrType& receiver_type,
+                                                     const std::vector<IrExprPtr>& args) {
+        if (method_name != "reserve" || args.size() < 2) return;
+        if (!is_std_vec_handle_type(value_qualified_type(receiver_type))) return;
+
+        std::string vec_source;
+        if (!zone_pointer_source_name_from_expr(*args[0], vec_source)) {
+            fail(loc, "std::vec::Vec.reserve receiver must come from a tracked zone allocation");
+        }
+        std::string zone_source;
+        if (!zone_source_name_from_arg(*args[1], zone_source)) {
+            fail(loc, "std::vec::Vec.reserve requires an explicit zone borrow argument");
+        }
+        if (vec_source != zone_source) {
+            fail(loc, "std::vec::Vec.reserve zone argument must match the vector allocation zone");
+        }
+    }
+
     void set_zone_pointer_source_from_expr(LocalInfo& target, const IrExpr& value) {
         clear_zone_pointer_source(target);
         if (!is_zone_pointer_trackable_type(target.type)) return;
@@ -5778,6 +5798,26 @@ private:
         return false;
     }
 
+    static std::string local_owned_field_path_from_indices(const std::vector<std::size_t>& indices) {
+        std::string path;
+        for (std::size_t index : indices) {
+            path = local_owned_field_path(path, index);
+        }
+        return path;
+    }
+
+    bool assignment_target_allows_zone_pointer_storage(const IrExpr& target) {
+        if (current_module_name_ != "std::vec") return false;
+        std::string base_name;
+        std::string path;
+        if (!tracked_ir_access_path(target, base_name, path) || base_name != "self") return false;
+        const LocalInfo* local = find_local_slot(base_name);
+        if (!local) return false;
+        std::optional<std::vector<std::size_t>> data_path =
+            std_vec_zone_handle_data_field_path_indices(value_qualified_type(local->type));
+        return data_path && path == local_owned_field_path_from_indices(*data_path);
+    }
+
     void mark_owned_field_assigned(const IrExpr& target) {
         if (!is_owner_type(target.type)) return;
         std::string base_name;
@@ -5813,7 +5853,9 @@ private:
             IrExprPtr value = check_expr_with_expected(*rhs, target_type);
             coerce_expr_to_expected(*value, target_type);
             require_assignable(stmt.loc, target_type, value->type);
-            require_no_zone_pointer_escape(rhs->loc, *value, "aggregate or raw-pointer storage");
+            if (!assignment_target_allows_zone_pointer_storage(*target)) {
+                require_no_zone_pointer_escape(rhs->loc, *value, "aggregate or raw-pointer storage");
+            }
             mark_owned_field_assigned(*target);
             update_aggregate_borrow_sources_after_assignment(stmt.loc, *target, borrow_mark);
             set_ir_stmt_assign_target(lowered, std::move(target));
@@ -16561,6 +16603,7 @@ private:
             require_assignable(expr.loc, sig.params[i + 1], arg->type);
             args.push_back(std::move(arg));
         }
+        require_std_vec_reserve_zone_matches_source(expr.loc, expr.name, method_receiver_type, args);
         return finish_tracked_call(
             expr.loc,
             expr.name,

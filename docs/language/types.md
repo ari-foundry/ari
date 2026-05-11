@@ -502,12 +502,13 @@ pub struct Vec[T] {
 ```
 
 This source `std::vec::Vec<T>` handle is the allocator-backed construction
-seed. It exposes fixed-capacity methods over the raw handle:
+seed. It exposes checked methods over the raw handle:
 
 ```ari
 var vec = std::vec::new<i64>(ref mut zone, 4)
 vec.push(10)
 vec.push(20)
+vec.reserve(ref mut zone, 8)
 vec.insert(1, 15)
 vec.set(0, 25)
 vec.swap(0, 2)
@@ -523,11 +524,13 @@ vec.clear()
 ```
 
 The root `Vec[T]`/`std::Vec[T]` type is still the current local vector literal
-storage until runtime heap growth is ported. Source `std::vec::Vec<T>` methods
-currently check against the capacity allocated by `std::vec::new`; `reserve`
-growth remains future work. `vec.as_slice()` returns a `Slice[T]` over the same
-zone-backed buffer, and that slice is rejected after the source zone is reset
-or destroyed.
+storage until runtime heap growth is ported. Source `std::vec::Vec<T>.reserve`
+is grow-only: it allocates a larger buffer from the same explicit zone, copies
+the current elements, preserves `len`, and leaves the old buffer to the zone's
+bulk lifetime. Passing a different zone borrow is rejected because the source
+handle remains tied to the zone that created it. `vec.as_slice()` returns a
+`Slice[T]` over the same zone-backed buffer, and that slice is rejected after
+the source zone is reset or destroyed.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over
