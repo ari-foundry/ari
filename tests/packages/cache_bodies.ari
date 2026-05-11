@@ -166,3 +166,7 @@ pub fn receiver_type_arg_flow() -> i64 {
   let inferred: CacheBox[i64] = CacheSelect<i64>::select(30);
   return explicit.value + inferred.value;
 }
+
+pub fn parameter_pattern_flow((left, right): (i64, i64)) -> i64 {
+  return left * 10 + right;
+}

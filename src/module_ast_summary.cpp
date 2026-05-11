@@ -92,6 +92,7 @@ void append_token_payload(std::ostringstream& out, const Token& token) {
 }
 
 void append_function_body_summary(std::ostringstream& out, const FunctionDecl& fn);
+bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern);
 
 void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) {
     append_field(out, fn.module_name);
@@ -110,6 +111,7 @@ void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) 
     for (const auto& param : fn.params) {
         append_field(out, param.name);
         append_bool(out, param.has_pattern);
+        if (param.has_pattern) append_pattern_payload(out, param.pattern);
         append_type(out, param.type);
     }
     if (fn.has_return_type) append_type(out, fn.return_type);
@@ -148,7 +150,6 @@ bool is_summary_const_binary_op(TokenKind op) {
 
 bool append_const_expr_list(std::ostringstream& out, const std::vector<ExprPtr>& args);
 bool append_body_stmt_list(std::ostringstream& out, const std::vector<StmtPtr>& statements);
-bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern);
 
 void append_type_arguments(std::ostringstream& out, const std::vector<TypeRef>& type_args) {
     append_count(out, type_args.size());
@@ -1035,9 +1036,15 @@ private:
     }
 
     void consume_header() {
+        const std::string v4 = "ari-ast-decls-v4;";
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v4.size(), v4) == 0) {
+            version_ = 4;
+            pos_ += v4.size();
+            return;
+        }
         if (text_.compare(pos_, v3.size(), v3) == 0) {
             version_ = 3;
             pos_ += v3.size();
@@ -1053,7 +1060,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1202,6 +1209,9 @@ private:
             Param param;
             param.name = read_field("function parameter name");
             param.has_pattern = read_bool("function parameter pattern flag");
+            if (param.has_pattern && version_ >= 4) {
+                param.pattern = read_pattern("function parameter pattern");
+            }
             param.type = read_type("function parameter type");
             fn.params.push_back(std::move(param));
         }
@@ -1713,7 +1723,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v3;";
+    out << "ari-ast-decls-v4;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {

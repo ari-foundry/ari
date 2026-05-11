@@ -305,10 +305,11 @@ ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build
 
 The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, and a compact AST summary for each cached source. Current
-caches are written as `ari-module-cache-v6`; older v1/v2/v3/v4/v5 caches are
-treated as stale because they do not carry the current AST-summary declaration
-fingerprints, constant initializer payloads, and simple executable body
-payloads. A later build can validate the cache and parse from that snapshot:
+caches are written as `ari-module-cache-v7`; older v1/v2/v3/v4/v5/v6 caches
+are treated as stale because they do not carry the current AST-summary
+declaration fingerprints, parameter pattern payloads, constant initializer
+payloads, and simple executable body payloads. A later build can validate the
+cache and parse from that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll
@@ -328,9 +329,10 @@ validated cache import table instead of searching candidate paths again.
 After reading from the cached source snapshot, Ari also rebuilds the module
 metadata and per-source AST summaries, then compares them with the data embedded
 in the cache. AST summaries include counts, declaration fingerprints, and a
-compact declaration payload for the source-level item surface. Cache loading
-parses that payload and checks its hash and counts, so edited or corrupted
-summaries are caught before semantic checking relies on them.
+compact declaration payload for the source-level item surface, including
+function parameter patterns. Cache loading parses that payload and checks its
+hash and counts, so edited or corrupted summaries are caught before semantic
+checking relies on them.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant

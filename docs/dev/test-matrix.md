@@ -393,6 +393,7 @@ Checklist:
       fixed-array index access over materialized aggregate constants
 - [x] cached header-like dependencies can load declaration-safe materialized
       summaries instead of reparsing cached source text
+- [x] AST summary declaration payloads preserve function parameter patterns
 - [x] AST summary declaration payloads materialize simple executable function
       bodies made from local declarations, assignments, `if`/`else`,
       block/labeled-block statements, loops, `continue`, `break`, statement

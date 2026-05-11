@@ -18,5 +18,6 @@ fn main() -> i64 {
     cache_bodies::scalar_literal_flow() +
     cache_bodies::borrow_pointer_flow() +
     cache_bodies::macro_flow() +
-    cache_bodies::receiver_type_arg_flow()
+    cache_bodies::receiver_type_arg_flow() +
+    cache_bodies::parameter_pattern_flow((2, 9))
 }
