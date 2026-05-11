@@ -90,7 +90,7 @@ IrExprPtr make_tuple_index_expr(SourceLocation loc, IrExprPtr source, std::size_
     expr->loc = loc;
     expr->tuple_index = index;
     expr->type = fields[index];
-    expr->operand = std::move(source);
+    ir_expr_operand(*expr) = std::move(source);
     return expr;
 }
 
@@ -117,8 +117,8 @@ IrExprPtr make_ir_index_expr(SourceLocation loc, IrExprPtr source, IrExprPtr ind
     expr->kind = IrExprKind::Index;
     expr->loc = loc;
     expr->type = source->type.args[0];
-    expr->operand = std::move(source);
-    expr->right = std::move(index);
+    ir_expr_operand(*expr) = std::move(source);
+    ir_expr_right(*expr) = std::move(index);
     return expr;
 }
 
@@ -186,8 +186,8 @@ IrExprPtr make_bool_binary_expr(SourceLocation loc, IrBinaryOp op, IrExprPtr lef
     expr->loc = loc;
     expr->op = op;
     expr->type = bool_type(loc);
-    expr->left = std::move(left);
-    expr->right = std::move(right);
+    ir_expr_left(*expr) = std::move(left);
+    ir_expr_right(*expr) = std::move(right);
     return expr;
 }
 
@@ -197,7 +197,7 @@ IrExprPtr make_cast_expr(SourceLocation loc, IrExprPtr value, const IrType& targ
     cast->kind = IrExprKind::Cast;
     cast->loc = loc;
     cast->type = target;
-    cast->operand = std::move(value);
+    ir_expr_operand(*cast) = std::move(value);
     return cast;
 }
 
@@ -206,8 +206,8 @@ IrExprPtr make_pointer_offset_expr(SourceLocation loc, IrExprPtr pointer, IrExpr
     expr->kind = IrExprKind::PointerOffset;
     expr->loc = loc;
     expr->type = pointer->type;
-    expr->operand = std::move(pointer);
-    expr->right = std::move(offset);
+    ir_expr_operand(*expr) = std::move(pointer);
+    ir_expr_right(*expr) = std::move(offset);
     return expr;
 }
 
@@ -216,8 +216,8 @@ IrExprPtr make_pointer_add_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr
     expr->kind = IrExprKind::PointerAdd;
     expr->loc = loc;
     expr->type = pointer->type;
-    expr->operand = std::move(pointer);
-    expr->right = std::move(offset);
+    ir_expr_operand(*expr) = std::move(pointer);
+    ir_expr_right(*expr) = std::move(offset);
     return expr;
 }
 
@@ -226,7 +226,7 @@ IrExprPtr make_pointer_load_expr(SourceLocation loc, IrExprPtr pointer, const Ir
     expr->kind = IrExprKind::PointerLoad;
     expr->loc = loc;
     expr->type = result;
-    expr->operand = std::move(pointer);
+    ir_expr_operand(*expr) = std::move(pointer);
     return expr;
 }
 
@@ -235,8 +235,8 @@ IrExprPtr make_pointer_store_expr(SourceLocation loc, IrExprPtr pointer, IrExprP
     expr->kind = IrExprKind::PointerStore;
     expr->loc = loc;
     expr->type = void_type(loc);
-    expr->operand = std::move(pointer);
-    expr->right = std::move(value);
+    ir_expr_operand(*expr) = std::move(pointer);
+    ir_expr_right(*expr) = std::move(value);
     return expr;
 }
 

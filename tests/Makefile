@@ -1913,6 +1913,12 @@ check-ffi: $(TARGET)
 	grep -q 'store i64' $(BUILD_DIR)/ffi/pointer-load-store.ll
 	$(TARGET) --freestanding tests/ok/pointer-load-store.ari -o $(BUILD_DIR)/ffi/pointer-load-store.raw
 	$(BUILD_DIR)/ffi/pointer-load-store.raw; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/ir-operand-helper-paths.ari --emit-llvm $(BUILD_DIR)/ffi/ir-operand-helper-paths.ll
+	grep -q 'call i64 %' $(BUILD_DIR)/ffi/ir-operand-helper-paths.ll
+	grep -q 'getelementptr i64, ptr' $(BUILD_DIR)/ffi/ir-operand-helper-paths.ll
+	grep -q 'store i64' $(BUILD_DIR)/ffi/ir-operand-helper-paths.ll
+	$(TARGET) --freestanding tests/ok/ir-operand-helper-paths.ari -o $(BUILD_DIR)/ffi/ir-operand-helper-paths.raw
+	$(BUILD_DIR)/ffi/ir-operand-helper-paths.raw; code=$$?; test $$code -eq 16
 	$(TARGET) tests/ok/pointer-float-load-store.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-float-load-store.ll
 	grep -q 'load float, ptr' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
 	grep -q 'store float' $(BUILD_DIR)/ffi/pointer-float-load-store.ll

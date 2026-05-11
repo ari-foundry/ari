@@ -773,10 +773,10 @@ private:
     }
 
     void collect_expr_locals(const IrExpr& expr, std::vector<std::pair<std::string, IrType>>& locals) {
-        collect_expr_locals(expr.operand, locals);
+        collect_expr_locals(ir_expr_operand(expr), locals);
         collect_expr_locals(expr.payload, locals);
-        collect_expr_locals(expr.left, locals);
-        collect_expr_locals(expr.right, locals);
+        collect_expr_locals(ir_expr_left(expr), locals);
+        collect_expr_locals(ir_expr_right(expr), locals);
         collect_expr_locals(ir_expr_if_condition(expr), locals);
         collect_locals(ir_expr_if_then_body(expr), locals);
         collect_expr_locals(ir_expr_if_then_value(expr), locals);
@@ -1367,10 +1367,10 @@ private:
             case IrExprKind::Local:
                 return load_local(expr.loc, expr.name, expr.type);
             case IrExprKind::Borrow:
-                if (expr.operand) return Value{"ptr", emit_lvalue_ptr(*expr.operand), expr.type};
+                if (ir_expr_operand(expr)) return Value{"ptr", emit_lvalue_ptr(*ir_expr_operand(expr)), expr.type};
                 return Value{"ptr", local_slot(expr.loc, expr.name), expr.type};
             case IrExprKind::Unary: {
-                Value operand = emit_expr(*expr.operand);
+                Value operand = emit_expr(*ir_expr_operand(expr));
                 std::string out = temp();
                 switch (expr.unary_op) {
                     case IrUnaryOp::Not:
@@ -1384,7 +1384,7 @@ private:
             }
             case IrExprKind::Cast:
                 if (expr.type.primitive == IrPrimitiveKind::TraitObject) return emit_trait_object_cast(expr);
-                return cast_value(emit_expr(*expr.operand), expr.type);
+                return cast_value(emit_expr(*ir_expr_operand(expr)), expr.type);
             case IrExprKind::PointerOffset:
                 return emit_pointer_offset(expr);
             case IrExprKind::PointerAdd:
@@ -1404,13 +1404,13 @@ private:
             case IrExprKind::TupleIndex:
                 return emit_tuple_index(expr);
             case IrExprKind::Index:
-                if (expr.operand && expr.operand->type.primitive == IrPrimitiveKind::Array) {
+                if (ir_expr_operand(expr) && ir_expr_operand(expr)->type.primitive == IrPrimitiveKind::Array) {
                     return emit_array_index(expr);
                 }
-                if (expr.operand && expr.operand->type.primitive == IrPrimitiveKind::Vector) {
+                if (ir_expr_operand(expr) && ir_expr_operand(expr)->type.primitive == IrPrimitiveKind::Vector) {
                     return emit_vector_index(expr);
                 }
-                if (expr.operand && is_prelude_slice_type(expr.operand->type)) {
+                if (ir_expr_operand(expr) && is_prelude_slice_type(ir_expr_operand(expr)->type)) {
                     return emit_slice_index(expr);
                 }
                 throw CompileError(where(expr.loc) + ": LLVM backend can only lower array, vector, and Slice indexing yet");
@@ -1500,37 +1500,37 @@ private:
             line("  " + out + " = load ptr, ptr " + slot);
             return out;
         }
-        if (expr.kind == IrExprKind::PointerLoad && expr.operand) {
-            return emit_expr(*expr.operand).name;
+        if (expr.kind == IrExprKind::PointerLoad && ir_expr_operand(expr)) {
+            return emit_expr(*ir_expr_operand(expr)).name;
         }
-        if (expr.kind == IrExprKind::TupleIndex && expr.operand) {
-            std::string base = emit_lvalue_ptr(*expr.operand);
+        if (expr.kind == IrExprKind::TupleIndex && ir_expr_operand(expr)) {
+            std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
             std::string ptr = temp();
             IrType base_type;
-            line("  " + ptr + " = getelementptr inbounds " + llvm_type(gep_base_type(*expr.operand, base_type)) +
+            line("  " + ptr + " = getelementptr inbounds " + llvm_type(gep_base_type(*ir_expr_operand(expr), base_type)) +
                  ", ptr " + base + ", i32 0, i32 " + std::to_string(expr.tuple_index));
             return ptr;
         }
-        if (expr.kind == IrExprKind::Index && expr.operand && expr.right) {
-            if (is_prelude_slice_type(expr.operand->type)) {
+        if (expr.kind == IrExprKind::Index && ir_expr_operand(expr) && ir_expr_right(expr)) {
+            if (is_prelude_slice_type(ir_expr_operand(expr)->type)) {
                 return emit_slice_element_ptr(expr);
             }
-            if (expr.operand->type.primitive != IrPrimitiveKind::Array &&
-                expr.operand->type.primitive != IrPrimitiveKind::Vector) {
+            if (ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Array &&
+                ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector) {
                 throw CompileError(where(expr.loc) + ": LLVM backend can only index array, vector, or Slice lvalues");
             }
-            std::string base = emit_lvalue_ptr(*expr.operand);
+            std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
             IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-            Value index = cast_value(emit_expr(*expr.right), index_type);
+            Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
             std::string ptr = temp();
             IrType base_type;
-            const IrType& storage_type = gep_base_type(*expr.operand, base_type);
-            if (expr.operand->type.primitive == IrPrimitiveKind::Array) {
-                emit_array_bounds_check(index, expr.operand->type.array_size);
+            const IrType& storage_type = gep_base_type(*ir_expr_operand(expr), base_type);
+            if (ir_expr_operand(expr)->type.primitive == IrPrimitiveKind::Array) {
+                emit_array_bounds_check(index, ir_expr_operand(expr)->type.array_size);
                 line("  " + ptr + " = getelementptr inbounds " + llvm_type(storage_type) +
                      ", ptr " + base + ", i64 0, i64 " + index.name);
             } else {
-                emit_vector_bounds_check(index, expr.operand->type, base);
+                emit_vector_bounds_check(index, ir_expr_operand(expr)->type, base);
                 line("  " + ptr + " = getelementptr inbounds " + llvm_type(storage_type) +
                      ", ptr " + base + ", i32 0, i32 1, i64 " + index.name);
             }
@@ -1548,8 +1548,8 @@ private:
         }
         if ((expr.kind == IrExprKind::TupleIndex ||
              expr.kind == IrExprKind::Index) &&
-            expr.operand) {
-            return is_pointer_backed_lvalue(*expr.operand);
+            ir_expr_operand(expr)) {
+            return is_pointer_backed_lvalue(*ir_expr_operand(expr));
         }
         return false;
     }
@@ -1579,7 +1579,7 @@ private:
             line("  " + out + " = load " + llvm_type(expr.type) + ", ptr " + ptr);
             return Value{llvm_type(expr.type), out, expr.type};
         }
-        Value tuple = emit_expr(*expr.operand);
+        Value tuple = emit_expr(*ir_expr_operand(expr));
         const IrType& result = expr.type;
         std::string out = temp();
         line("  " + out + " = extractvalue " + tuple.type + " " + tuple.name +
@@ -1619,18 +1619,18 @@ private:
     }
 
     Value emit_vector_index(const IrExpr& expr) {
-        if (!expr.operand || expr.operand->kind != IrExprKind::Local) {
+        if (!ir_expr_operand(expr) || ir_expr_operand(expr)->kind != IrExprKind::Local) {
             throw CompileError(where(expr.loc) + ": LLVM backend can only dynamically index local vectors yet");
         }
-        if (expr.operand->type.args.size() != 1) {
+        if (ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": LLVM backend cannot index unsized Vec storage");
         }
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value index = cast_value(emit_expr(*expr.right), index_type);
-        std::string base = local_slot(expr.operand->loc, expr.operand->name);
-        emit_vector_bounds_check(index, expr.operand->type, base);
+        Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
+        std::string base = local_slot(ir_expr_operand(expr)->loc, ir_expr_operand(expr)->name);
+        emit_vector_bounds_check(index, ir_expr_operand(expr)->type, base);
         std::string ptr = temp();
-        line("  " + ptr + " = getelementptr inbounds " + llvm_type(expr.operand->type) +
+        line("  " + ptr + " = getelementptr inbounds " + llvm_type(ir_expr_operand(expr)->type) +
              ", ptr " + base +
              ", i64 0, i32 1, i64 " + index.name);
         std::string out = temp();
@@ -1646,17 +1646,17 @@ private:
     }
 
     Value emit_slice_range(const IrExpr& expr) {
-        if (!expr.operand || !expr.left || !expr.right || !is_prelude_slice_type(expr.operand->type)) {
+        if (!ir_expr_operand(expr) || !ir_expr_left(expr) || !ir_expr_right(expr) || !is_prelude_slice_type(ir_expr_operand(expr)->type)) {
             throw CompileError(where(expr.loc) + ": malformed Slice range during LLVM lowering");
         }
         if (expr.type.args.empty()) {
             throw CompileError(where(expr.loc) + ": malformed Slice range result type");
         }
 
-        Value slice = emit_expr(*expr.operand);
+        Value slice = emit_expr(*ir_expr_operand(expr));
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value start = cast_value(emit_expr(*expr.left), index_type);
-        Value end = cast_value(emit_expr(*expr.right), index_type);
+        Value start = cast_value(emit_expr(*ir_expr_left(expr)), index_type);
+        Value end = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
 
         std::string data = temp();
         std::string len = temp();
@@ -1688,12 +1688,12 @@ private:
     }
 
     std::string emit_slice_element_ptr(const IrExpr& expr) {
-        if (!expr.operand || !expr.right || !is_prelude_slice_type(expr.operand->type)) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !is_prelude_slice_type(ir_expr_operand(expr)->type)) {
             throw CompileError(where(expr.loc) + ": malformed Slice index during LLVM lowering");
         }
-        Value slice = emit_expr(*expr.operand);
+        Value slice = emit_expr(*ir_expr_operand(expr));
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value index = cast_value(emit_expr(*expr.right), index_type);
+        Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
         std::string data = temp();
         std::string len = temp();
         line("  " + data + " = extractvalue " + slice.type + " " + slice.name + ", 0");
@@ -1706,13 +1706,13 @@ private:
     }
 
     Value emit_vector_push(const IrExpr& expr) {
-        if (!expr.operand || !expr.right || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.push lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         std::string len_ptr = temp();
         std::string len = temp();
         std::string full = temp();
@@ -1729,7 +1729,7 @@ private:
         line("  unreachable");
         emit_label(ok_label);
 
-        Value value = cast_value(emit_expr(*expr.right), element_type);
+        Value value = cast_value(emit_expr(*ir_expr_right(expr)), element_type);
         std::string item_ptr = temp();
         std::string next_len = temp();
         line("  " + item_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
@@ -1741,13 +1741,13 @@ private:
     }
 
     Value emit_vector_pop(const IrExpr& expr) {
-        if (!expr.operand || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.pop lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         std::string len_ptr = temp();
         std::string len = temp();
         std::string empty = temp();
@@ -1776,13 +1776,13 @@ private:
     }
 
     Value emit_vector_reserve(const IrExpr& expr) {
-        if (!expr.operand || !expr.right || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.reserve lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value requested = cast_value(emit_expr(*expr.right), index_type);
+        Value requested = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
 
         std::string negative = temp();
         std::string too_large = temp();
@@ -1802,12 +1802,12 @@ private:
     }
 
     Value emit_vector_clear(const IrExpr& expr) {
-        if (!expr.operand || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.clear lowering");
         }
-        const IrType& vector_type = expr.operand->type;
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        const IrType& vector_type = ir_expr_operand(expr)->type;
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         std::string len_ptr = temp();
         line("  " + len_ptr + " = getelementptr inbounds " + llvm_type(vector_type) +
              ", ptr " + base + ", i32 0, i32 0");
@@ -1816,14 +1816,14 @@ private:
     }
 
     Value emit_vector_truncate(const IrExpr& expr) {
-        if (!expr.operand || !expr.right || expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.truncate lowering");
         }
-        const IrType& vector_type = expr.operand->type;
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        const IrType& vector_type = ir_expr_operand(expr)->type;
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value new_len = cast_value(emit_expr(*expr.right), index_type);
+        Value new_len = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
 
         std::string negative = temp();
         std::string trap_label = label("vector.truncate.negative");
@@ -1850,16 +1850,16 @@ private:
     }
 
     Value emit_vector_set(const IrExpr& expr) {
-        if (!expr.operand || !expr.right || !expr.payload ||
-            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !expr.payload ||
+            ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.set lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value index = cast_value(emit_expr(*expr.right), index_type);
+        Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
         emit_vector_bounds_check(index, vector_type, base);
 
         Value value = cast_value(emit_expr(*expr.payload), element_type);
@@ -1871,16 +1871,16 @@ private:
     }
 
     Value emit_vector_swap(const IrExpr& expr) {
-        if (!expr.operand || !expr.right || !expr.payload ||
-            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !expr.payload ||
+            ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.swap lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value first_index = cast_value(emit_expr(*expr.right), index_type);
+        Value first_index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
         emit_vector_bounds_check(first_index, vector_type, base);
         Value second_index = cast_value(emit_expr(*expr.payload), index_type);
         emit_vector_bounds_check(second_index, vector_type, base);
@@ -1902,16 +1902,16 @@ private:
     }
 
     Value emit_vector_remove(const IrExpr& expr) {
-        if (!expr.operand || !expr.right ||
-            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) ||
+            ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.remove lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value index = cast_value(emit_expr(*expr.right), index_type);
+        Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
         emit_vector_bounds_check(index, vector_type, base);
 
         std::string element_llvm = llvm_type(element_type);
@@ -1964,16 +1964,16 @@ private:
     }
 
     Value emit_vector_insert(const IrExpr& expr) {
-        if (!expr.operand || !expr.right || !expr.payload ||
-            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !ir_expr_right(expr) || !expr.payload ||
+            ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.insert lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value index = cast_value(emit_expr(*expr.right), index_type);
+        Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
 
         std::string len_ptr = temp();
         std::string len = temp();
@@ -2058,14 +2058,14 @@ private:
     }
 
     Value emit_vector_search(const IrExpr& expr, bool return_index) {
-        if (!expr.operand || !expr.payload ||
-            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !expr.payload ||
+            ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec search lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         Value needle = cast_value(emit_expr(*expr.payload), element_type);
         std::string element_llvm = llvm_type(element_type);
         std::string len_ptr = temp();
@@ -2124,14 +2124,14 @@ private:
     }
 
     Value emit_vector_count(const IrExpr& expr) {
-        if (!expr.operand || !expr.payload ||
-            expr.operand->type.primitive != IrPrimitiveKind::Vector ||
-            expr.operand->type.args.size() != 1) {
+        if (!ir_expr_operand(expr) || !expr.payload ||
+            ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Vector ||
+            ir_expr_operand(expr)->type.args.size() != 1) {
             throw CompileError(where(expr.loc) + ": malformed Vec.count lowering");
         }
-        const IrType& vector_type = expr.operand->type;
+        const IrType& vector_type = ir_expr_operand(expr)->type;
         const IrType& element_type = vector_type.args[0];
-        std::string base = emit_lvalue_ptr(*expr.operand);
+        std::string base = emit_lvalue_ptr(*ir_expr_operand(expr));
         Value needle = cast_value(emit_expr(*expr.payload), element_type);
         std::string element_llvm = llvm_type(element_type);
         std::string len_ptr = temp();
@@ -2594,8 +2594,8 @@ private:
     }
 
     Value emit_trait_object_cast(const IrExpr& expr) {
-        Value source = emit_expr(*expr.operand);
-        if (expr.operand->type.primitive == IrPrimitiveKind::TraitObject) {
+        Value source = emit_expr(*ir_expr_operand(expr));
+        if (ir_expr_operand(expr)->type.primitive == IrPrimitiveKind::TraitObject) {
             std::string data = temp();
             line("  " + data + " = extractvalue " + source.type + " " + source.name + ", 0");
             std::string source_vtable = temp();
@@ -2636,7 +2636,7 @@ private:
             throw CompileError(where(expr.loc) + ": malformed trait object call");
         }
 
-        Value object = emit_expr(*expr.operand);
+        Value object = emit_expr(*ir_expr_operand(expr));
         std::string data = temp();
         line("  " + data + " = extractvalue " + object.type + " " + object.name + ", 0");
         std::string vtable = temp();
@@ -2736,18 +2736,18 @@ private:
     }
 
     Value emit_pointer_offset(const IrExpr& expr) {
-        Value pointer = cast_value(emit_expr(*expr.operand), expr.type);
+        Value pointer = cast_value(emit_expr(*ir_expr_operand(expr)), expr.type);
         IrType offset_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value offset = cast_value(emit_expr(*expr.right), offset_type);
+        Value offset = cast_value(emit_expr(*ir_expr_right(expr)), offset_type);
         std::string out = temp();
         line("  " + out + " = getelementptr i8, ptr " + pointer.name + ", i64 " + offset.name);
         return Value{"ptr", out, expr.type};
     }
 
     Value emit_pointer_add(const IrExpr& expr) {
-        Value pointer = cast_value(emit_expr(*expr.operand), expr.type);
+        Value pointer = cast_value(emit_expr(*ir_expr_operand(expr)), expr.type);
         IrType index_type{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc};
-        Value index = cast_value(emit_expr(*expr.right), index_type);
+        Value index = cast_value(emit_expr(*ir_expr_right(expr)), index_type);
         IrType element_type = expr.type;
         element_type.qualifier = TypeQualifier::Value;
         std::string out = temp();
@@ -2757,7 +2757,7 @@ private:
     }
 
     Value emit_pointer_load(const IrExpr& expr) {
-        Value pointer = emit_expr(*expr.operand);
+        Value pointer = emit_expr(*ir_expr_operand(expr));
         std::string out = temp();
         std::string element_type = llvm_type(expr.type);
         line("  " + out + " = load " + element_type + ", ptr " + pointer.name);
@@ -2765,11 +2765,11 @@ private:
     }
 
     Value emit_pointer_store(const IrExpr& expr) {
-        if (!expr.right) {
+        if (!ir_expr_right(expr)) {
             throw CompileError(where(expr.loc) + ": malformed pointer store expression");
         }
-        Value pointer = emit_expr(*expr.operand);
-        Value value = cast_value(emit_expr(*expr.right), expr.right->type);
+        Value pointer = emit_expr(*ir_expr_operand(expr));
+        Value value = cast_value(emit_expr(*ir_expr_right(expr)), ir_expr_right(expr)->type);
         line("  store " + value.type + " " + value.name + ", ptr " + pointer.name);
         return Value{llvm_type(expr.type), "", expr.type};
     }
@@ -2825,7 +2825,7 @@ private:
     }
 
     Value emit_try(const IrExpr& expr) {
-        Value value = emit_expr(*expr.operand);
+        Value value = emit_expr(*ir_expr_operand(expr));
         Value tag = emit_enum_tag_value(expr.loc, value);
         std::string ok = label("try.ok");
         std::string fail = label("try.return");
@@ -2851,7 +2851,7 @@ private:
     }
 
     Value emit_null_coalesce(const IrExpr& expr) {
-        Value value = emit_expr(*expr.left);
+        Value value = emit_expr(*ir_expr_left(expr));
         Value tag = emit_enum_tag_value(expr.loc, value);
         std::string ok = label("coalesce.ok");
         std::string fallback = label("coalesce.fallback");
@@ -2867,7 +2867,7 @@ private:
         line("  br label %" + end);
 
         emit_label(fallback);
-        Value fallback_value = cast_value(emit_expr(*expr.right), expr.type);
+        Value fallback_value = cast_value(emit_expr(*ir_expr_right(expr)), expr.type);
         std::string fallback_label = current_label_;
         line("  br label %" + end);
 
@@ -2918,8 +2918,8 @@ private:
     }
 
     Value emit_indirect_call(const IrExpr& expr) {
-        Value callee = emit_expr(*expr.operand);
-        const IrType& callee_type = expr.operand->type;
+        Value callee = emit_expr(*ir_expr_operand(expr));
+        const IrType& callee_type = ir_expr_operand(expr)->type;
         if (callee_type.primitive != IrPrimitiveKind::Function ||
             callee_type.args.empty() ||
             callee_type.array_size + 1 != callee_type.args.size()) {
@@ -3020,8 +3020,8 @@ private:
     }
 
     Value emit_binary(const IrExpr& expr) {
-        Value left = emit_expr(*expr.left);
-        Value right = cast_value(emit_expr(*expr.right), left.ir_type);
+        Value left = emit_expr(*ir_expr_left(expr));
+        Value right = cast_value(emit_expr(*ir_expr_right(expr)), left.ir_type);
         std::string out = temp();
         bool is_unsigned = is_unsigned_integer_type(left.ir_type);
         bool is_float = is_llvm_float_type(left.ir_type);

@@ -311,6 +311,54 @@ struct IrExpr {
     IrExprArgs args;
 };
 
+inline const IrExprPtr& ir_expr_operand(const IrExpr& expr) {
+    return expr.operand;
+}
+
+inline IrExprPtr& ir_expr_operand(IrExpr& expr) {
+    return expr.operand;
+}
+
+inline void set_ir_expr_operand(IrExpr& expr, IrExprPtr operand) {
+    expr.operand = std::move(operand);
+}
+
+inline IrExprPtr take_ir_expr_operand(IrExpr& expr) {
+    return std::move(expr.operand);
+}
+
+inline const IrExprPtr& ir_expr_left(const IrExpr& expr) {
+    return expr.left;
+}
+
+inline IrExprPtr& ir_expr_left(IrExpr& expr) {
+    return expr.left;
+}
+
+inline void set_ir_expr_left(IrExpr& expr, IrExprPtr left) {
+    expr.left = std::move(left);
+}
+
+inline IrExprPtr take_ir_expr_left(IrExpr& expr) {
+    return std::move(expr.left);
+}
+
+inline const IrExprPtr& ir_expr_right(const IrExpr& expr) {
+    return expr.right;
+}
+
+inline IrExprPtr& ir_expr_right(IrExpr& expr) {
+    return expr.right;
+}
+
+inline void set_ir_expr_right(IrExpr& expr, IrExprPtr right) {
+    expr.right = std::move(right);
+}
+
+inline IrExprPtr take_ir_expr_right(IrExpr& expr) {
+    return std::move(expr.right);
+}
+
 struct IrMatchArm {
     IrMatchArm() : literal_int(0) {}
 

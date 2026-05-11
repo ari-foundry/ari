@@ -363,10 +363,10 @@ private:
     }
 
     void collect_expr_locals(const IrExpr& expr) {
-        collect_expr_locals(expr.operand);
+        collect_expr_locals(ir_expr_operand(expr));
         collect_expr_locals(expr.payload);
-        collect_expr_locals(expr.left);
-        collect_expr_locals(expr.right);
+        collect_expr_locals(ir_expr_left(expr));
+        collect_expr_locals(ir_expr_right(expr));
         collect_expr_locals(ir_expr_if_condition(expr));
         collect_locals(ir_expr_if_then_body(expr));
         collect_expr_locals(ir_expr_if_then_value(expr));
@@ -736,7 +736,7 @@ private:
             return;
         }
         if (value.kind == IrExprKind::TupleIndex && is_aggregate_type(value.type) &&
-            value.operand && value.operand->kind == IrExprKind::Local) {
+            ir_expr_operand(value) && ir_expr_operand(value)->kind == IrExprKind::Local) {
             copy_local_bytes_to_offset(value.loc, lvalue_offset(value), target_offset, target_type);
             return;
         }
@@ -804,7 +804,7 @@ private:
         }
 
         if (value.kind == IrExprKind::TupleIndex && is_aggregate_type(value.type) &&
-            value.operand && value.operand->kind == IrExprKind::Local) {
+            ir_expr_operand(value) && ir_expr_operand(value)->kind == IrExprKind::Local) {
             copy_local_bytes_to_pointer_base(value.loc, lvalue_offset(value), target_type, byte_offset);
             return;
         }
@@ -870,7 +870,7 @@ private:
         }
 
         if (value.kind == IrExprKind::TupleIndex && is_aggregate_type(value.type) &&
-            value.operand && value.operand->kind == IrExprKind::Local) {
+            ir_expr_operand(value) && ir_expr_operand(value)->kind == IrExprKind::Local) {
             copy_local_bytes_to_offset(value.loc, lvalue_offset(value), target_offset, target_type);
             return;
         }
@@ -1884,7 +1884,7 @@ private:
 
     int aggregate_enum_match_base_offset(const IrExpr& value) const {
         if (value.kind == IrExprKind::Local) return local_offset(value.loc, value.name);
-        if (value.kind == IrExprKind::TupleIndex && value.operand) return lvalue_offset(value);
+        if (value.kind == IrExprKind::TupleIndex && ir_expr_operand(value)) return lvalue_offset(value);
         throw CompileError(where(value.loc) +
                            ": freestanding backend can only match local multi-payload enum values yet");
     }
@@ -2191,7 +2191,7 @@ private:
                 emit_load_rax_from_local(local_offset(expr.loc, expr.name), expr.type);
                 break;
             case IrExprKind::Borrow:
-                emit_lea_reg_local(Reg::RAX, expr.operand ? lvalue_offset(*expr.operand) : local_offset(expr.loc, expr.name));
+                emit_lea_reg_local(Reg::RAX, ir_expr_operand(expr) ? lvalue_offset(*ir_expr_operand(expr)) : local_offset(expr.loc, expr.name));
                 break;
             case IrExprKind::Unary:
                 emit_unary(expr);
@@ -2230,7 +2230,7 @@ private:
                 emit_tuple_index(expr);
                 break;
             case IrExprKind::Index:
-                if (expr.operand && expr.operand->type.primitive == IrPrimitiveKind::Array) {
+                if (ir_expr_operand(expr) && ir_expr_operand(expr)->type.primitive == IrPrimitiveKind::Array) {
                     emit_array_index(expr);
                     break;
                 }
@@ -2306,7 +2306,7 @@ private:
             return;
         }
 
-        const IrExpr& operand = *expr.operand;
+        const IrExpr& operand = *ir_expr_operand(expr);
         if (operand.kind == IrExprKind::Local || operand.kind == IrExprKind::TupleIndex) {
             int base = lvalue_offset(operand);
             int offset = aggregate_lvalue_field_offset(expr.loc, base, operand.type, expr.tuple_index);
@@ -2344,16 +2344,16 @@ private:
             return;
         }
 
-        if (!expr.operand || expr.operand->kind != IrExprKind::Local) {
+        if (!ir_expr_operand(expr) || ir_expr_operand(expr)->kind != IrExprKind::Local) {
             throw CompileError(where(expr.loc) + ": backend can only dynamically index local arrays yet");
         }
         if (is_aggregate_type(expr.type)) {
             throw CompileError(where(expr.loc) + ": backend cannot materialize nested aggregate values; index a scalar field");
         }
-        int base = local_offset(expr.operand->loc, expr.operand->name);
+        int base = local_offset(ir_expr_operand(expr)->loc, ir_expr_operand(expr)->name);
         int stride = layout_size_bytes(expr.loc, expr.type);
-        emit_expr(*expr.right);
-        emit_array_bounds_check(expr.operand->type.array_size);
+        emit_expr(*ir_expr_right(expr));
+        emit_array_bounds_check(ir_expr_operand(expr)->type.array_size);
         emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(stride));
         emit_imul_reg_reg(Reg::RAX, Reg::RCX);
         emit_lea_reg_local(Reg::RCX, base);
@@ -2382,9 +2382,9 @@ private:
 
     int lvalue_offset(const IrExpr& expr) const {
         if (expr.kind == IrExprKind::Local) return local_offset(expr.loc, expr.name);
-        if (expr.kind == IrExprKind::TupleIndex && expr.operand) {
-            int base = lvalue_offset(*expr.operand);
-            return aggregate_lvalue_field_offset(expr.loc, base, expr.operand->type, expr.tuple_index);
+        if (expr.kind == IrExprKind::TupleIndex && ir_expr_operand(expr)) {
+            int base = lvalue_offset(*ir_expr_operand(expr));
+            return aggregate_lvalue_field_offset(expr.loc, base, ir_expr_operand(expr)->type, expr.tuple_index);
         }
         throw CompileError(where(expr.loc) + ": backend can only assign to local fields yet");
     }
@@ -2716,7 +2716,7 @@ private:
 
     void emit_indirect_call_from_prepared_stack(const IrExpr& expr, std::size_t total_args) {
         emit_prepare_call_from_stack(total_args);
-        emit_expr(*expr.operand);
+        emit_expr(*ir_expr_operand(expr));
         out_.u8(0xFF);
         out_.u8(0xD0);
         emit_cleanup_call_stack(total_args);
@@ -2741,7 +2741,7 @@ private:
     }
 
     void emit_indirect_call_with_sret_to_offset(const IrExpr& expr, int target_offset) {
-        if (expr.operand->kind != IrExprKind::Local && expr.operand->kind != IrExprKind::FunctionRef) {
+        if (ir_expr_operand(expr)->kind != IrExprKind::Local && ir_expr_operand(expr)->kind != IrExprKind::FunctionRef) {
             throw CompileError(where(expr.loc) + ": freestanding backend only lowers direct function pointer calls yet");
         }
         std::size_t total_args = expr.args.size() + 1;
@@ -2778,7 +2778,7 @@ private:
     }
 
     void emit_indirect_call_with_sret_to_pointer_base(const IrExpr& expr, int byte_offset) {
-        if (expr.operand->kind != IrExprKind::Local && expr.operand->kind != IrExprKind::FunctionRef) {
+        if (ir_expr_operand(expr)->kind != IrExprKind::Local && ir_expr_operand(expr)->kind != IrExprKind::FunctionRef) {
             throw CompileError(where(expr.loc) + ": freestanding backend only lowers direct function pointer calls yet");
         }
         std::size_t total_args = expr.args.size() + 1;
@@ -2842,7 +2842,7 @@ private:
     }
 
     void emit_indirect_call(const IrExpr& expr) {
-        if (expr.operand->kind != IrExprKind::Local && expr.operand->kind != IrExprKind::FunctionRef) {
+        if (ir_expr_operand(expr)->kind != IrExprKind::Local && ir_expr_operand(expr)->kind != IrExprKind::FunctionRef) {
             throw CompileError(where(expr.loc) + ": freestanding backend only lowers direct function pointer calls yet");
         }
         if (is_aggregate_type(expr.type)) {
@@ -2910,12 +2910,12 @@ private:
     void emit_unary(const IrExpr& expr) {
         switch (expr.unary_op) {
             case IrUnaryOp::Not:
-                emit_expr(*expr.operand);
+                emit_expr(*ir_expr_operand(expr));
                 emit_cmp_rax_zero();
                 emit_setcc(0x94);
                 break;
             case IrUnaryOp::BitNot:
-                emit_expr(*expr.operand);
+                emit_expr(*ir_expr_operand(expr));
                 out_.u8(0x48);
                 out_.u8(0xF7);
                 out_.u8(0xD0);
@@ -2925,42 +2925,42 @@ private:
     }
 
     void emit_cast(const IrExpr& expr) {
-        if ((expr.operand && is_raw_float_type(expr.operand->type)) || is_raw_float_type(expr.type)) {
-            if (!expr.operand) {
+        if ((ir_expr_operand(expr) && is_raw_float_type(ir_expr_operand(expr)->type)) || is_raw_float_type(expr.type)) {
+            if (!ir_expr_operand(expr)) {
                 throw CompileError(where(expr.loc) +
                                    ": malformed cast during freestanding lowering");
             }
-            if (is_raw_f32_or_f64_type(expr.operand->type) && is_raw_f32_or_f64_type(expr.type)) {
-                emit_expr(*expr.operand);
+            if (is_raw_f32_or_f64_type(ir_expr_operand(expr)->type) && is_raw_f32_or_f64_type(expr.type)) {
+                emit_expr(*ir_expr_operand(expr));
                 emit_mov_gp_to_xmm(0, Reg::RAX);
-                emit_sse_float_width_cast(expr.operand->type, expr.type);
+                emit_sse_float_width_cast(ir_expr_operand(expr)->type, expr.type);
                 emit_mov_xmm_to_gp(Reg::RAX, 0);
                 return;
             }
-            if (is_raw_integer_type(expr.operand->type) && is_raw_f32_or_f64_type(expr.type)) {
-                emit_expr(*expr.operand);
+            if (is_raw_integer_type(ir_expr_operand(expr)->type) && is_raw_f32_or_f64_type(expr.type)) {
+                emit_expr(*ir_expr_operand(expr));
                 emit_sse_int_to_float_cast(expr.type);
                 emit_mov_xmm_to_gp(Reg::RAX, 0);
                 return;
             }
-            if (is_raw_f32_or_f64_type(expr.operand->type) && is_raw_integer_type(expr.type)) {
-                emit_expr(*expr.operand);
+            if (is_raw_f32_or_f64_type(ir_expr_operand(expr)->type) && is_raw_integer_type(expr.type)) {
+                emit_expr(*ir_expr_operand(expr));
                 emit_mov_gp_to_xmm(0, Reg::RAX);
-                emit_sse_float_to_int_cast(expr.operand->type);
+                emit_sse_float_to_int_cast(ir_expr_operand(expr)->type);
                 emit_cast_to_type(expr.loc, expr.type);
                 return;
             }
             throw CompileError(where(expr.loc) +
                                ": freestanding backend does not lower f128 float casts yet");
         }
-        emit_expr(*expr.operand);
+        emit_expr(*ir_expr_operand(expr));
         emit_cast_to_type(expr.loc, expr.type);
     }
 
     void emit_pointer_offset(const IrExpr& expr) {
-        emit_expr(*expr.operand);
+        emit_expr(*ir_expr_operand(expr));
         emit_push(Reg::RAX);
-        emit_expr(*expr.right);
+        emit_expr(*ir_expr_right(expr));
         emit_pop(Reg::RCX);
         emit_add_reg_reg(Reg::RAX, Reg::RCX);
     }
@@ -2968,9 +2968,9 @@ private:
     void emit_pointer_add(const IrExpr& expr) {
         IrType element_type = expr.type;
         element_type.qualifier = TypeQualifier::Value;
-        emit_expr(*expr.operand);
+        emit_expr(*ir_expr_operand(expr));
         emit_push(Reg::RAX);
-        emit_expr(*expr.right);
+        emit_expr(*ir_expr_right(expr));
         emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(raw_pointer_stride_bytes(element_type)));
         emit_imul_reg_reg(Reg::RAX, Reg::RCX);
         emit_pop(Reg::RCX);
@@ -2979,22 +2979,22 @@ private:
 
     void emit_pointer_load(const IrExpr& expr) {
         require_pointer_scalar_codegen(expr.loc, expr.type, "pointer loads");
-        emit_expr(*expr.operand);
+        emit_expr(*ir_expr_operand(expr));
         emit_load_rax_from_ptr(Reg::RAX, expr.type);
     }
 
     void emit_pointer_store(const IrExpr& expr) {
-        if (!expr.right) {
+        if (!ir_expr_right(expr)) {
             throw CompileError(where(expr.loc) + ": malformed pointer store expression");
         }
-        emit_store_to_pointer(expr.loc, *expr.operand, *expr.right, expr.right->type);
+        emit_store_to_pointer(expr.loc, *ir_expr_operand(expr), *ir_expr_right(expr), ir_expr_right(expr)->type);
     }
 
     void emit_store_to_pointer_target(const IrExpr& target, const IrExpr& value) {
-        if (!target.operand) {
+        if (!ir_expr_operand(target)) {
             throw CompileError(where(target.loc) + ": malformed pointer dereference assignment target");
         }
-        emit_store_to_pointer(target.loc, *target.operand, value, target.type);
+        emit_store_to_pointer(target.loc, *ir_expr_operand(target), value, target.type);
     }
 
     void emit_store_to_pointer_lvalue_target(const IrExpr& target, const IrExpr& value) {
@@ -3061,34 +3061,34 @@ private:
         if (expr.kind == IrExprKind::PointerLoad) return true;
         if ((expr.kind == IrExprKind::TupleIndex ||
              expr.kind == IrExprKind::Index) &&
-            expr.operand) {
-            return is_pointer_backed_lvalue(*expr.operand);
+            ir_expr_operand(expr)) {
+            return is_pointer_backed_lvalue(*ir_expr_operand(expr));
         }
         return false;
     }
 
     void emit_pointer_lvalue_address(const IrExpr& expr) {
-        if (expr.kind == IrExprKind::PointerLoad && expr.operand) {
-            emit_expr(*expr.operand);
+        if (expr.kind == IrExprKind::PointerLoad && ir_expr_operand(expr)) {
+            emit_expr(*ir_expr_operand(expr));
             return;
         }
-        if (expr.kind == IrExprKind::TupleIndex && expr.operand) {
-            emit_pointer_lvalue_address(*expr.operand);
-            int offset = field_offset_bytes(expr.loc, expr.operand->type, expr.tuple_index);
+        if (expr.kind == IrExprKind::TupleIndex && ir_expr_operand(expr)) {
+            emit_pointer_lvalue_address(*ir_expr_operand(expr));
+            int offset = field_offset_bytes(expr.loc, ir_expr_operand(expr)->type, expr.tuple_index);
             if (offset != 0) {
                 emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(offset));
                 emit_add_reg_reg(Reg::RAX, Reg::RCX);
             }
             return;
         }
-        if (expr.kind == IrExprKind::Index && expr.operand && expr.right) {
-            if (expr.operand->type.primitive != IrPrimitiveKind::Array) {
+        if (expr.kind == IrExprKind::Index && ir_expr_operand(expr) && ir_expr_right(expr)) {
+            if (ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Array) {
                 throw CompileError(where(expr.loc) + ": freestanding backend can only dynamically index raw pointers to fixed arrays yet");
             }
-            emit_pointer_lvalue_address(*expr.operand);
+            emit_pointer_lvalue_address(*ir_expr_operand(expr));
             emit_push(Reg::RAX);
-            emit_expr(*expr.right);
-            emit_array_bounds_check(expr.operand->type.array_size);
+            emit_expr(*ir_expr_right(expr));
+            emit_array_bounds_check(ir_expr_operand(expr)->type.array_size);
             emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(layout_size_bytes(expr.loc, expr.type)));
             emit_imul_reg_reg(Reg::RAX, Reg::RCX);
             emit_pop(Reg::RCX);
@@ -3163,7 +3163,7 @@ private:
     }
 
     void emit_try(const IrExpr& expr) {
-        emit_expr(*expr.operand);
+        emit_expr(*ir_expr_operand(expr));
         emit_push(Reg::RAX);
         emit_mov_reg_rsp(Reg::RAX);
         emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
@@ -3201,7 +3201,7 @@ private:
     }
 
     void emit_null_coalesce(const IrExpr& expr) {
-        emit_expr(*expr.left);
+        emit_expr(*ir_expr_left(expr));
         emit_push(Reg::RAX);
         emit_mov_reg_rsp(Reg::RAX);
         emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
@@ -3218,64 +3218,64 @@ private:
 
         patch_rel32(jump_fallback, out_.size());
         emit_pop(Reg::RCX);
-        emit_expr(*expr.right);
+        emit_expr(*ir_expr_right(expr));
         emit_cast_payload_to_type(expr.loc, expr.type);
 
         patch_rel32(jump_end, out_.size());
     }
 
     void emit_float_binary(const IrExpr& expr) {
-        if (!expr.left || !expr.right || !is_raw_f32_or_f64_type(expr.left->type)) {
+        if (!ir_expr_left(expr) || !ir_expr_right(expr) || !is_raw_f32_or_f64_type(ir_expr_left(expr)->type)) {
             throw CompileError(where(expr.loc) +
                                ": freestanding backend does not lower this float operator yet");
         }
 
-        emit_expr(*expr.left);
+        emit_expr(*ir_expr_left(expr));
         emit_push(Reg::RAX);
-        emit_expr(*expr.right);
+        emit_expr(*ir_expr_right(expr));
         emit_mov_gp_to_xmm(1, Reg::RAX);
         emit_pop(Reg::RCX);
         emit_mov_gp_to_xmm(0, Reg::RCX);
 
         switch (expr.op) {
             case IrBinaryOp::Add:
-                emit_sse_scalar_binary(expr.left->type, 0x58);
+                emit_sse_scalar_binary(ir_expr_left(expr)->type, 0x58);
                 emit_mov_xmm_to_gp(Reg::RAX, 0);
                 return;
             case IrBinaryOp::Sub:
-                emit_sse_scalar_binary(expr.left->type, 0x5C);
+                emit_sse_scalar_binary(ir_expr_left(expr)->type, 0x5C);
                 emit_mov_xmm_to_gp(Reg::RAX, 0);
                 return;
             case IrBinaryOp::Mul:
-                emit_sse_scalar_binary(expr.left->type, 0x59);
+                emit_sse_scalar_binary(ir_expr_left(expr)->type, 0x59);
                 emit_mov_xmm_to_gp(Reg::RAX, 0);
                 return;
             case IrBinaryOp::Div:
-                emit_sse_scalar_binary(expr.left->type, 0x5E);
+                emit_sse_scalar_binary(ir_expr_left(expr)->type, 0x5E);
                 emit_mov_xmm_to_gp(Reg::RAX, 0);
                 return;
             case IrBinaryOp::Eq:
-                emit_sse_scalar_compare(expr.left->type);
+                emit_sse_scalar_compare(ir_expr_left(expr)->type);
                 emit_ordered_float_setcc(0x94);
                 return;
             case IrBinaryOp::Ne:
-                emit_sse_scalar_compare(expr.left->type);
+                emit_sse_scalar_compare(ir_expr_left(expr)->type);
                 emit_ordered_float_setcc(0x95);
                 return;
             case IrBinaryOp::Lt:
-                emit_sse_scalar_compare(expr.left->type);
+                emit_sse_scalar_compare(ir_expr_left(expr)->type);
                 emit_ordered_float_setcc(0x92);
                 return;
             case IrBinaryOp::Le:
-                emit_sse_scalar_compare(expr.left->type);
+                emit_sse_scalar_compare(ir_expr_left(expr)->type);
                 emit_ordered_float_setcc(0x96);
                 return;
             case IrBinaryOp::Gt:
-                emit_sse_scalar_compare(expr.left->type);
+                emit_sse_scalar_compare(ir_expr_left(expr)->type);
                 emit_ordered_float_setcc(0x97);
                 return;
             case IrBinaryOp::Ge:
-                emit_sse_scalar_compare(expr.left->type);
+                emit_sse_scalar_compare(ir_expr_left(expr)->type);
                 emit_ordered_float_setcc(0x93);
                 return;
             case IrBinaryOp::Mod:
@@ -3299,22 +3299,22 @@ private:
             return;
         }
 
-        if ((expr.left && is_raw_f32_or_f64_type(expr.left->type)) ||
-            (expr.right && is_raw_f32_or_f64_type(expr.right->type))) {
+        if ((ir_expr_left(expr) && is_raw_f32_or_f64_type(ir_expr_left(expr)->type)) ||
+            (ir_expr_right(expr) && is_raw_f32_or_f64_type(ir_expr_right(expr)->type))) {
             emit_float_binary(expr);
             return;
         }
 
-        if ((expr.left && is_raw_float_type(expr.left->type)) ||
-            (expr.right && is_raw_float_type(expr.right->type)) ||
+        if ((ir_expr_left(expr) && is_raw_float_type(ir_expr_left(expr)->type)) ||
+            (ir_expr_right(expr) && is_raw_float_type(ir_expr_right(expr)->type)) ||
             is_raw_float_type(expr.type)) {
             throw CompileError(where(expr.loc) +
                                ": freestanding backend does not lower f128 float operators yet");
         }
 
-        emit_expr(*expr.left);
+        emit_expr(*ir_expr_left(expr));
         emit_push(Reg::RAX);
-        emit_expr(*expr.right);
+        emit_expr(*ir_expr_right(expr));
         emit_pop(Reg::RCX);
 
         switch (expr.op) {
@@ -3333,7 +3333,7 @@ private:
             case IrBinaryOp::Mod:
                 emit_mov_reg_reg(Reg::RBX, Reg::RAX);
                 emit_mov_reg_reg(Reg::RAX, Reg::RCX);
-                if (is_unsigned_integer_type(expr.left->type)) {
+                if (is_unsigned_integer_type(ir_expr_left(expr)->type)) {
                     emit_xor_reg_reg(Reg::RDX, Reg::RDX);
                     out_.u8(0x48);
                     out_.u8(0xF7);
@@ -3366,7 +3366,7 @@ private:
                 emit_mov_reg_reg(Reg::RDX, Reg::RAX);
                 emit_mov_reg_reg(Reg::RAX, Reg::RCX);
                 emit_mov_reg_reg(Reg::RCX, Reg::RDX);
-                emit_shift_rax_cl(is_unsigned_integer_type(expr.left->type) ? 0xE8 : 0xF8);
+                emit_shift_rax_cl(is_unsigned_integer_type(ir_expr_left(expr)->type) ? 0xE8 : 0xF8);
                 break;
             case IrBinaryOp::Eq:
                 emit_cmp_reg_reg(Reg::RCX, Reg::RAX);
@@ -3400,10 +3400,10 @@ private:
 
     void emit_logical(const IrExpr& expr) {
         if (expr.op == IrBinaryOp::LogicalAnd) {
-            emit_expr(*expr.left);
+            emit_expr(*ir_expr_left(expr));
             emit_cmp_rax_zero();
             std::size_t jump_false_left = emit_jcc_placeholder(0x84);
-            emit_expr(*expr.right);
+            emit_expr(*ir_expr_right(expr));
             emit_cmp_rax_zero();
             std::size_t jump_false_right = emit_jcc_placeholder(0x84);
             emit_mov_reg_imm64(Reg::RAX, 1);
@@ -3416,10 +3416,10 @@ private:
             return;
         }
 
-        emit_expr(*expr.left);
+        emit_expr(*ir_expr_left(expr));
         emit_cmp_rax_zero();
         std::size_t jump_true_left = emit_jcc_placeholder(0x85);
-        emit_expr(*expr.right);
+        emit_expr(*ir_expr_right(expr));
         emit_cmp_rax_zero();
         std::size_t jump_true_right = emit_jcc_placeholder(0x85);
         emit_mov_reg_imm64(Reg::RAX, 0);

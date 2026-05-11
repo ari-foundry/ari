@@ -767,9 +767,9 @@ bool try_fold_static_integer_value(const IrExpr& expr, StaticIntegerValue& out) 
 
     StaticIntegerValue left;
     StaticIntegerValue right;
-    if (!expr.left || !expr.right ||
-        !try_fold_static_integer_value(*expr.left, left) ||
-        !try_fold_static_integer_value(*expr.right, right)) {
+    if (!ir_expr_left(expr) || !ir_expr_right(expr) ||
+        !try_fold_static_integer_value(*ir_expr_left(expr), left) ||
+        !try_fold_static_integer_value(*ir_expr_right(expr), right)) {
         return false;
     }
 

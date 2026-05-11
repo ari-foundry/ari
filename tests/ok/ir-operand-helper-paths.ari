@@ -1,0 +1,16 @@
+fn add_four(value: i64) -> i64 {
+  return value + 4;
+}
+
+fn apply(op: fn(i64) -> i64, value: i64) -> i64 {
+  return op(value);
+}
+
+fn main() -> i64 {
+  var value = 7;
+  let raw: ptr i64 = (ref mut value) as ptr i64;
+  ptr_store(raw, ptr_load(raw) + 3);
+  *raw = *raw + 2;
+  let shifted: ptr i64 = ptr_add(raw, 0);
+  return apply(add_four, ptr_load(shifted));
+}
