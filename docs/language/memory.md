@@ -387,6 +387,9 @@ The checker tracks direct local pointers produced by `zone::alloc<T>` and
 `zone::new<T>`, plus calls to pointer-returning functions or associated
 constructors that take exactly one `ref Zone` or `ref mut Zone` parameter. Using
 those bindings after the source zone has been reset or destroyed is rejected.
+That single-zone wrapper rule is a signature-level contract: a pointer-returning
+function with no Zone borrow parameters or with more than one Zone borrow
+parameter cannot return a tracked zone pointer.
 Reset invalidation is merged conservatively through `if`, `match`, `??`
 fallbacks, labeled-block exits, and loops, so a pointer is considered invalid
 after control flow if any continuing path may have reset its zone.

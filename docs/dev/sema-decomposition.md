@@ -101,6 +101,9 @@ construction. Some helpers have already moved out to focused files:
 - `borrow_return_semantics` for small signature-level borrow-return contracts;
   `sema.cpp` still activates returned borrow results at call sites because that
   path needs live local-scope and temporary-borrow state
+- `zone_return_semantics` for Zone value/borrow/source type predicates and the
+  signature-level rule that only pointer-returning functions with exactly one
+  Zone borrow parameter may return a tracked zone pointer
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool

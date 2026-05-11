@@ -2129,6 +2129,8 @@ check-ffi: $(TARGET)
 	grep -q "zone pointer cannot escape into extern C call argument" $(BUILD_DIR)/ffi/zone-pointer-ffi-escape.err
 	if $(TARGET) tests/errors/zone-pointer-multizone-return.ari -o $(BUILD_DIR)/ffi/zone-pointer-multizone-return.elf >$(BUILD_DIR)/ffi/zone-pointer-multizone-return.err 2>&1; then exit 1; fi
 	grep -q "zone pointer returns must come from the function's single zone borrow parameter" $(BUILD_DIR)/ffi/zone-pointer-multizone-return.err
+	if $(TARGET) tests/errors/zone-pointer-no-zone-return.ari -o $(BUILD_DIR)/ffi/zone-pointer-no-zone-return.elf >$(BUILD_DIR)/ffi/zone-pointer-no-zone-return.err 2>&1; then exit 1; fi
+	grep -q "zone pointer returns must come from the function's single zone borrow parameter" $(BUILD_DIR)/ffi/zone-pointer-no-zone-return.err
 	if $(TARGET) --freestanding tests/errors/zone-freestanding.ari -o $(BUILD_DIR)/ffi/zone-freestanding.raw >$(BUILD_DIR)/ffi/zone-freestanding.err 2>&1; then exit 1; fi
 	grep -q "freestanding backend does not lower zone allocation yet" $(BUILD_DIR)/ffi/zone-freestanding.err
 	if $(TARGET) tests/errors/pointer-deref-aggregate.ari -o $(BUILD_DIR)/ffi/pointer-deref-aggregate.elf >$(BUILD_DIR)/ffi/pointer-deref-aggregate.err 2>&1; then exit 1; fi

@@ -97,14 +97,13 @@
      allocator-backed storage instead of fixed local-capacity traps
 2. Continue semantic-checker decomposition around borrow and return state.
    Borrow-return contract recognition is split into `borrow_return_semantics`,
-   while the main checker still owns call-site result activation because it
-   needs direct access to local scopes, temporary borrows, and diagnostics.
-   Keep future slices small and testable rather than moving broad ownership
-   logic all at once.
+   and zone-pointer return contract recognition plus Zone source type
+   predicates are split into `zone_return_semantics`. The main checker still
+   owns call-site borrow-result activation because it needs direct access to
+   local scopes, temporary borrows, and diagnostics. Keep future slices small
+   and testable rather than moving broad ownership logic all at once.
    - [borrow-call-provenance-split] isolate tracked call-result activation once
      `Sema` exposes a narrower local-scope adapter
-   - [zone-return-contract-split] give zone-pointer return contracts the same
-     small-helper treatment as borrow-return contracts
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

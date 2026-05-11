@@ -765,7 +765,10 @@ impl methods that call `zone::new<T>` or another explicit allocator helper.
 Direct local pointers from `zone::alloc<T>` and `zone::new<T>`, and
 pointer-returning calls with exactly one zone borrow parameter, are invalidated
 by `zone::reset` and `zone::destroy` in the checker, so using such a binding
-afterward is rejected. Reset invalidation is merged
+afterward is rejected. A pointer-returning function with no zone borrow
+parameter or more than one zone borrow parameter cannot return a tracked zone
+pointer because the source zone would be ambiguous to the checker. Reset
+invalidation is merged
 through ordinary control-flow joins such as `if`, `match`, labeled blocks, and
 loops. Zone pointers are local capabilities: aggregate storage, raw-pointer
 storage, extern C/function-pointer call arguments, and multi-zone pointer

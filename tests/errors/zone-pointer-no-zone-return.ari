@@ -1,0 +1,9 @@
+fn make_number() -> ptr i64 {
+  var zone = zone::create(64);
+  let item = zone::new<i64>(ref mut zone, 9);
+  return item;
+}
+
+fn main() -> i64 {
+  return 0;
+}

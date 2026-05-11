@@ -32,6 +32,7 @@
 #include "try_model.hpp"
 #include "type_semantics.hpp"
 #include "vector_semantics.hpp"
+#include "zone_return_semantics.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -53,6 +54,7 @@ struct FunctionSig {
     std::vector<IrType> params;
     IrType result;
     std::optional<std::size_t> borrow_return_param_index;
+    std::optional<std::size_t> zone_pointer_return_param_index;
     std::string module_name;
     std::string link_name;
     bool is_public = false;
@@ -66,6 +68,15 @@ struct FunctionSig {
 
 static void set_borrow_return_contract(FunctionSig& sig) {
     sig.borrow_return_param_index = borrow_return_param_index(sig.params, sig.result);
+}
+
+static void set_zone_pointer_return_contract(FunctionSig& sig) {
+    sig.zone_pointer_return_param_index = zone_pointer_return_param_index(sig.params, sig.result);
+}
+
+static void set_function_return_contracts(FunctionSig& sig) {
+    set_borrow_return_contract(sig);
+    set_zone_pointer_return_contract(sig);
 }
 
 static IrExternAbi ir_extern_abi_from_source(const std::string& abi) {
@@ -393,7 +404,7 @@ private:
     std::string current_module_name_;
     std::optional<std::size_t> current_borrow_return_param_index_;
     std::string current_borrow_return_param_name_;
-    bool current_zone_pointer_return_allowed_ = false;
+    std::optional<std::size_t> current_zone_pointer_return_param_index_;
     std::string current_zone_pointer_return_source_;
     bool allow_zone_temp_init_ = false;
     int hidden_local_counter_ = 0;
@@ -2555,7 +2566,7 @@ private:
                 sig.is_public = false;
                 for (const auto& param : method.params) sig.params.push_back(resolve_executable_type(param.type));
                 sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
-                set_borrow_return_contract(sig);
+                set_function_return_contracts(sig);
 
                 current_type_substitutions_ = std::move(previous_substitutions);
 
@@ -2879,7 +2890,7 @@ private:
             current_module_name_ = fn.module_name;
             for (const auto& param : fn.params) sig.params.push_back(resolve_executable_type(param.type));
             sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
-            set_borrow_return_contract(sig);
+            set_function_return_contracts(sig);
             current_module_name_ = previous_module;
 
             auto inserted = functions_.emplace(fn.name, std::move(sig));
@@ -2947,6 +2958,7 @@ private:
             sig.params.push_back(param_type);
         }
         sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+        set_function_return_contracts(sig);
         current_module_name_ = previous_module;
 
         auto inserted = functions_.emplace(fn.name, std::move(sig));
@@ -3438,7 +3450,7 @@ private:
         std::string previous_module = current_module_name_;
         std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
         std::vector<GenericTraitBound> previous_generic_bounds = std::move(current_generic_bounds_);
-        bool previous_zone_pointer_return_allowed = current_zone_pointer_return_allowed_;
+        std::optional<std::size_t> previous_zone_pointer_return_param_index = current_zone_pointer_return_param_index_;
         std::string previous_zone_pointer_return_source = std::move(current_zone_pointer_return_source_);
         std::optional<std::size_t> previous_borrow_return_param_index = current_borrow_return_param_index_;
         std::string previous_borrow_return_param_name = std::move(current_borrow_return_param_name_);
@@ -3448,7 +3460,7 @@ private:
         for (const auto& generic : fn.generics) {
             if (generic.has_constraint) current_generic_bounds_.push_back(resolve_generic_trait_bound(generic));
         }
-        current_zone_pointer_return_allowed_ = false;
+        current_zone_pointer_return_param_index_.reset();
         current_zone_pointer_return_source_.clear();
         current_borrow_return_param_index_.reset();
         current_borrow_return_param_name_.clear();
@@ -3471,8 +3483,6 @@ private:
         }
 
         std::vector<IrStmtPtr> parameter_pattern_prelude;
-        std::size_t zone_return_param_count = 0;
-        std::string zone_return_param_name;
         for (const auto& param : fn.params) {
             IrType type = resolve_executable_type(param.type);
             if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Void) {
@@ -3494,10 +3504,6 @@ private:
             param_local.function_parameter = true;
             param_local.generic_origin = param.has_pattern ? "" : generic_origin_from_type_ref(param.type);
             ir_fn.params.push_back(IrParam{ir_param_name, type});
-            if (is_zone_borrow_type(type)) {
-                ++zone_return_param_count;
-                zone_return_param_name = ir_param_name;
-            }
             if (param.has_pattern) {
                 lower_binding_pattern_from_local(
                     param.pattern,
@@ -3508,13 +3514,14 @@ private:
                 );
             }
         }
-        if (current_return_.qualifier == TypeQualifier::Ptr && zone_return_param_count == 1) {
-            current_zone_pointer_return_allowed_ = true;
-            current_zone_pointer_return_source_ = zone_return_param_name;
-        }
         std::vector<IrType> current_param_types;
         current_param_types.reserve(ir_fn.params.size());
         for (const auto& param : ir_fn.params) current_param_types.push_back(param.type);
+        current_zone_pointer_return_param_index_ =
+            zone_pointer_return_param_index(current_param_types, current_return_);
+        if (current_zone_pointer_return_param_index_) {
+            current_zone_pointer_return_source_ = ir_fn.params[*current_zone_pointer_return_param_index_].name;
+        }
         current_borrow_return_param_index_ = borrow_return_param_index(current_param_types, current_return_);
         if (current_borrow_return_param_index_) {
             current_borrow_return_param_name_ = ir_fn.params[*current_borrow_return_param_index_].name;
@@ -3534,7 +3541,7 @@ private:
         current_module_name_ = previous_module;
         current_type_substitutions_ = std::move(previous_substitutions);
         current_generic_bounds_ = std::move(previous_generic_bounds);
-        current_zone_pointer_return_allowed_ = previous_zone_pointer_return_allowed;
+        current_zone_pointer_return_param_index_ = previous_zone_pointer_return_param_index;
         current_zone_pointer_return_source_ = std::move(previous_zone_pointer_return_source);
         current_borrow_return_param_index_ = previous_borrow_return_param_index;
         current_borrow_return_param_name_ = std::move(previous_borrow_return_param_name);
@@ -3850,22 +3857,6 @@ private:
         collect_owned_field_states(local.type, "", local.owned_field_states);
     }
 
-    static bool is_zone_value_type(const IrType& type) {
-        return type.primitive == IrPrimitiveKind::Zone &&
-               (type.qualifier == TypeQualifier::Value ||
-                type.qualifier == TypeQualifier::Own);
-    }
-
-    static bool is_zone_borrow_type(const IrType& type) {
-        return type.primitive == IrPrimitiveKind::Zone &&
-               (type.qualifier == TypeQualifier::Ref ||
-                type.qualifier == TypeQualifier::MutRef);
-    }
-
-    static bool is_zone_source_type(const IrType& type) {
-        return is_zone_value_type(type) || is_zone_borrow_type(type);
-    }
-
     void clear_zone_pointer_source(LocalInfo& local) {
         local.zone_pointer = false;
         local.zone_pointer_source.clear();
@@ -3911,17 +3902,11 @@ private:
         auto found = functions_.find(ir_expr_name(call));
         if (found == functions_.end()) return false;
         const FunctionSig& sig = found->second;
-        if (sig.result.qualifier != TypeQualifier::Ptr) return false;
-
-        std::size_t zone_index = 0;
-        bool has_zone_param = false;
-        for (std::size_t i = 0; i < sig.params.size(); ++i) {
-            if (!is_zone_borrow_type(sig.params[i])) continue;
-            if (has_zone_param) return false;
-            has_zone_param = true;
-            zone_index = i;
+        if (!sig.zone_pointer_return_param_index ||
+            *sig.zone_pointer_return_param_index >= call.args.size()) {
+            return false;
         }
-        if (!has_zone_param || zone_index >= call.args.size()) return false;
+        std::size_t zone_index = *sig.zone_pointer_return_param_index;
         return set_zone_pointer_source_from_zone_arg(target, *call.args[zone_index]);
     }
 
@@ -3948,17 +3933,11 @@ private:
             auto found = functions_.find(ir_expr_name(source));
             if (found == functions_.end()) return false;
             const FunctionSig& sig = found->second;
-            if (sig.result.qualifier != TypeQualifier::Ptr) return false;
-
-            std::size_t zone_index = 0;
-            bool has_zone_param = false;
-            for (std::size_t i = 0; i < sig.params.size(); ++i) {
-                if (!is_zone_borrow_type(sig.params[i])) continue;
-                if (has_zone_param) return false;
-                has_zone_param = true;
-                zone_index = i;
+            if (!sig.zone_pointer_return_param_index ||
+                *sig.zone_pointer_return_param_index >= source.args.size()) {
+                return false;
             }
-            if (!has_zone_param || zone_index >= source.args.size()) return false;
+            std::size_t zone_index = *sig.zone_pointer_return_param_index;
             return zone_source_name_from_arg(*source.args[zone_index], out);
         }
         if (source.kind == IrExprKind::Local) {
@@ -5692,7 +5671,7 @@ private:
             require_zone_pointer_not_escape_temporary_scope(stmt.loc, *value, 0, "function return");
             std::string zone_source;
             if (zone_pointer_source_name_from_expr(*value, zone_source) &&
-                (!current_zone_pointer_return_allowed_ ||
+                (!current_zone_pointer_return_param_index_ ||
                  zone_source != current_zone_pointer_return_source_)) {
                 fail(stmt.loc,
                      "zone pointer returns must come from the function's single zone borrow parameter");
@@ -12989,7 +12968,7 @@ private:
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
-        set_borrow_return_contract(sig);
+        set_function_return_contracts(sig);
 
         current_module_name_ = previous_module;
 
@@ -13027,7 +13006,7 @@ private:
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
-        set_borrow_return_contract(sig);
+        set_function_return_contracts(sig);
 
         current_module_name_ = previous_module;
 
@@ -13580,7 +13559,7 @@ private:
         call_sig.module_name = fn.module_name;
         call_sig.is_public = fn.is_public;
         call_sig.loc = fn.loc;
-        set_borrow_return_contract(call_sig);
+        set_function_return_contracts(call_sig);
 
         if (!queued_specializations_.count(specialized_name)) {
             functions_.emplace(specialized_name, call_sig);
@@ -13611,7 +13590,7 @@ private:
         sig.module_name = fn.module_name;
         sig.is_public = fn.is_public;
         sig.loc = fn.loc;
-        set_borrow_return_contract(sig);
+        set_function_return_contracts(sig);
         functions_.emplace(specialized_name, std::move(sig));
         pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
         queued_specializations_.insert(specialized_name);
