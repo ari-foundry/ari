@@ -19,8 +19,8 @@ fn run_next() -> i64 {
   return consume(token) + i;
 }
 
-fn run_let_while() -> i64 {
-  let token = make_owned(4), i = 0 while i < 2 {
+fn run_second_init_while() -> i64 {
+  init token = make_owned(4), i = 0 while i < 2 {
     drop token;
   } next make_owned(i + 2), i + 1
 
@@ -35,5 +35,5 @@ fn run_self_move() -> i64 {
 }
 
 fn main() -> i64 {
-  return run_next() + run_let_while() + run_self_move();
+  return run_next() + run_second_init_while() + run_self_move();
 }

@@ -397,8 +397,6 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-let-or-pattern.raw; code=$$?; test $$code -eq 55
 	$(TARGET) --freestanding tests/ok/while-let-aggregate-or-pattern.ari -o $(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.raw
 	$(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.raw; code=$$?; test $$code -eq 36
-	$(TARGET) --freestanding tests/ok/let-while.ari -o $(BUILD_DIR)/control-flow/let-while.raw
-	$(BUILD_DIR)/control-flow/let-while.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/init-while-owning.ari -o $(BUILD_DIR)/control-flow/init-while-owning.raw
 	$(BUILD_DIR)/control-flow/init-while-owning.raw; code=$$?; test $$code -eq 22
 	$(TARGET) --freestanding tests/ok/init-while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-false-owner-state.raw
@@ -2479,6 +2477,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/errors/for-vector-mixed-types.err
 	if $(TARGET) tests/errors/init-while-next-count.ari -o $(BUILD_DIR)/errors/init-while-next-count.elf >$(BUILD_DIR)/errors/init-while-next-count.err 2>&1; then exit 1; fi
 	grep -q "next value count must match init binding count" $(BUILD_DIR)/errors/init-while-next-count.err
+	if $(TARGET) tests/errors/let-while-removed.ari -o $(BUILD_DIR)/errors/let-while-removed.elf >$(BUILD_DIR)/errors/let-while-removed.err 2>&1; then exit 1; fi
+	grep -q "let-while loop state was removed; use init ... while ... next" $(BUILD_DIR)/errors/let-while-removed.err
 	if $(TARGET) tests/errors/init-while-continue-count.ari -o $(BUILD_DIR)/errors/init-while-continue-count.elf >$(BUILD_DIR)/errors/init-while-continue-count.err 2>&1; then exit 1; fi
 	grep -q "continue value count must match init binding count" $(BUILD_DIR)/errors/init-while-continue-count.err
 	if $(TARGET) tests/errors/mutable-borrow-immutable.ari -o $(BUILD_DIR)/errors/mutable-borrow-immutable.elf >$(BUILD_DIR)/errors/mutable-borrow-immutable.err 2>&1; then exit 1; fi

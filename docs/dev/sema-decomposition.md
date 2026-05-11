@@ -107,8 +107,7 @@ construction. Some helpers have already moved out to focused files:
   named/aggregate borrow-source release
 - `loop_state_semantics` for loop-carried state comparison helpers that let
   sema ignore the bindings intentionally reinitialized by positional
-  `init while` / `let while` updates while still checking the surrounding
-  ownership state
+  `init while` updates while still checking the surrounding ownership state
 - `borrow_semantics` for the lexical temporary-borrow stack, named and aggregate
   borrow-source promotion/release, aggregate target-path prefixing for nested
   borrow-valued literals, local reborrow permission checks including

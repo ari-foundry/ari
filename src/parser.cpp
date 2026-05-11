@@ -879,7 +879,6 @@ private:
         return kind == TokenKind::KwWhile ||
                kind == TokenKind::KwFor ||
                kind == TokenKind::KwInit ||
-               kind == TokenKind::KwLet ||
                kind == TokenKind::LBrace;
     }
 
@@ -902,7 +901,7 @@ private:
         return stmt;
     }
 
-    Binding parse_loop_binding(SourceLocation loc, bool mutable_binding) {
+    Binding parse_named_binding(SourceLocation loc, bool mutable_binding) {
         Token name = expect(TokenKind::Identifier, "expected binding name");
         if (check(TokenKind::LParen)) {
             fail(peek().loc, "let/var pattern bindings are not supported yet; bind a name and use match for enum payloads");
@@ -926,36 +925,17 @@ private:
             return parse_pattern_variable(false);
         }
 
-        Binding first = parse_loop_binding(peek().loc, false);
-        bool same_line_continuation =
-            (check(TokenKind::Comma) || check(TokenKind::KwWhile)) &&
-            first.init && peek().loc.line == first.init->loc.line;
-        if (!same_line_continuation) {
-            require_semicolon("expected ; after binding");
-            auto stmt = std::make_unique<Stmt>();
-            stmt->kind = StmtKind::VarDecl;
-            stmt->loc = first.loc;
-            stmt->binding = std::move(first);
-            return stmt;
+        Binding first = parse_named_binding(peek().loc, false);
+        if ((check(TokenKind::Comma) || check(TokenKind::KwWhile)) &&
+            first.init && peek().loc.line == first.init->loc.line) {
+            fail(peek().loc, "let-while loop state was removed; use init ... while ... next");
         }
 
+        require_semicolon("expected ; after binding");
         auto stmt = std::make_unique<Stmt>();
-        stmt->kind = StmtKind::InitWhile;
+        stmt->kind = StmtKind::VarDecl;
         stmt->loc = first.loc;
-        first.mutable_binding = true;
-        stmt->init_bindings.push_back(std::move(first));
-        while (match(TokenKind::Comma)) {
-            stmt->init_bindings.push_back(parse_loop_binding(stmt->loc, true));
-        }
-        expect(TokenKind::KwWhile, "expected while after let-while bindings");
-        stmt->condition = parse_expression_without_struct_literals();
-        set_stmt_loop_body(*stmt, parse_block());
-        if (match(TokenKind::KwNext)) {
-            stmt->updates = parse_expression_list();
-            if (stmt->updates.size() != stmt->init_bindings.size()) {
-                fail(stmt->loc, "next value count must match let-while binding count");
-            }
-        }
+        stmt->binding = std::move(first);
         return stmt;
     }
 

@@ -568,26 +568,19 @@ validate the owner state at that jump.
 For a literal `while false` condition, the body and `next` expressions are
 checked, but ownership flow after the loop keeps the initial binding state
 because no iteration or update can execute.
-For a literal `while true` condition, `init` and `let while` report the same
+For a literal `while true` condition, `init while` reports the same
 non-fallthrough and all-return flow as plain `while true`, so a later function
-return is not required when the loop cannot exit normally. Their value
+return is not required when the loop cannot exit normally. Its value
 `continue` paths also merge with the next-iteration state rather than the
 post-loop `break` exit state.
 
-`let ... while ... next ...` is accepted as the preferred spelling for the same
-loop-state form:
-
-```ari
-let a = 1, b = 5 while a < b {
-  continue a + 1, b
-} next a + 1, b
-```
-
-The older `init ... while ... next ...` form remains accepted for now.
+`let ... while ... next ...` is no longer accepted. Use the single loop-state
+spelling `init ... while ... next ...` so `let` stays reserved for ordinary
+bindings.
 
 ## Limits And Diagnostics
 
-- `if`, `while`, `while let`, `init while`, and `let while` conditions must be
+- `if`, `while`, `while let`, and `init while` conditions must be
   `bool` or integer-convertible.
 - Plain `break` and `continue` must appear inside a loop.
 - `break label` must name an active loop or block label.
