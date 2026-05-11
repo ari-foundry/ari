@@ -124,6 +124,7 @@ bool is_summary_const_binary_op(TokenKind op) {
 }
 
 bool append_const_expr_list(std::ostringstream& out, const std::vector<ExprPtr>& args);
+bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern);
 
 void append_type_arguments(std::ostringstream& out, const std::vector<TypeRef>& type_args) {
     append_count(out, type_args.size());
@@ -263,6 +264,86 @@ bool append_const_expr_list(std::ostringstream& out, const std::vector<ExprPtr>&
     return true;
 }
 
+bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
+    switch (pattern.kind) {
+        case PatternKind::Wildcard:
+            append_field(out, "wildcard");
+            return true;
+        case PatternKind::Binding:
+            append_field(out, "binding");
+            append_field(out, pattern.payload_name);
+            return true;
+        case PatternKind::IntegerLiteral:
+            append_field(out, "integer");
+            append_bool(out, pattern.int_negative);
+            append_count(out, pattern.int_value);
+            append_field(out, pattern.literal_suffix);
+            return true;
+        case PatternKind::BoolLiteral:
+            append_field(out, "bool");
+            append_bool(out, pattern.bool_value);
+            return true;
+        case PatternKind::Range:
+            append_field(out, "range");
+            append_bool(out, pattern.int_negative);
+            append_count(out, pattern.int_value);
+            append_field(out, pattern.literal_suffix);
+            append_bool(out, pattern.range_inclusive);
+            append_bool(out, pattern.range_end_negative);
+            append_count(out, pattern.range_end_value);
+            append_field(out, pattern.range_end_suffix);
+            return true;
+        case PatternKind::EnumCase: {
+            append_field(out, "enum");
+            append_field(out, pattern.case_name);
+            append_bool(out, pattern.has_payload_pattern);
+            append_bool(out, pattern.has_payload_binding);
+            append_field(out, pattern.payload_name);
+            if (pattern.has_payload_pattern) {
+                if (!pattern.payload_pattern) return false;
+                if (!append_pattern_payload(out, *pattern.payload_pattern)) return false;
+            }
+            return true;
+        }
+        case PatternKind::Or:
+            append_field(out, "or");
+            append_count(out, pattern.alternatives.size());
+            for (const auto& alternative : pattern.alternatives) {
+                if (!append_pattern_payload(out, alternative)) return false;
+            }
+            return true;
+        case PatternKind::Alias:
+            if (!pattern.alias_pattern) return false;
+            append_field(out, "alias");
+            append_field(out, pattern.alias_name);
+            return append_pattern_payload(out, *pattern.alias_pattern);
+        case PatternKind::Tuple:
+        case PatternKind::Array: {
+            append_field(out, pattern.kind == PatternKind::Tuple ? "tuple" : "array");
+            append_bool(out, pattern.has_rest);
+            append_count(out, pattern.rest_index);
+            append_count(out, pattern.elements.size());
+            for (const auto& element : pattern.elements) {
+                if (!append_pattern_payload(out, element)) return false;
+            }
+            return true;
+        }
+        case PatternKind::Struct:
+            if (pattern.field_names.size() != pattern.elements.size()) return false;
+            append_field(out, "struct");
+            append_field(out, pattern.case_name);
+            append_bool(out, pattern.has_rest);
+            append_count(out, pattern.rest_index);
+            append_count(out, pattern.elements.size());
+            for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+                append_field(out, pattern.field_names[i]);
+                if (!append_pattern_payload(out, pattern.elements[i])) return false;
+            }
+            return true;
+    }
+    return false;
+}
+
 void append_const_initializer(std::ostringstream& out, const ExprPtr& init) {
     if (!init) {
         append_bool(out, false);
@@ -344,7 +425,24 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             return true;
         }
         case StmtKind::If: {
-            if (!stmt.condition || stmt.has_condition_pattern || stmt.condition_pattern) return false;
+            if (!stmt.condition) return false;
+            if (stmt.has_condition_pattern || stmt.condition_pattern) {
+                if (!stmt.has_condition_pattern || !stmt.condition_pattern) return false;
+                std::ostringstream pattern;
+                std::ostringstream condition;
+                std::ostringstream then_body;
+                std::ostringstream else_body;
+                if (!append_pattern_payload(pattern, *stmt.condition_pattern)) return false;
+                if (!append_const_expr_payload(condition, *stmt.condition)) return false;
+                if (!append_body_stmt_list(then_body, stmt_then_body(stmt))) return false;
+                if (!append_body_stmt_list(else_body, stmt_else_body(stmt))) return false;
+                append_field(out, "if-let");
+                out << pattern.str();
+                out << condition.str();
+                out << then_body.str();
+                out << else_body.str();
+                return true;
+            }
             std::ostringstream condition;
             std::ostringstream then_body;
             std::ostringstream else_body;
@@ -365,6 +463,107 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             append_field(out, stmt_break_label(stmt));
             append_bool(out, has_value);
             out << value.str();
+            return true;
+        }
+        case StmtKind::While: {
+            if (!stmt.condition || stmt.has_condition_pattern || stmt.condition_pattern) return false;
+            std::ostringstream condition;
+            std::ostringstream body;
+            if (!append_const_expr_payload(condition, *stmt.condition)) return false;
+            if (!append_body_stmt_list(body, stmt_loop_body(stmt))) return false;
+            append_field(out, "while");
+            out << condition.str();
+            out << body.str();
+            return true;
+        }
+        case StmtKind::WhileLet: {
+            if (!stmt.condition || !stmt.has_condition_pattern || !stmt.condition_pattern) return false;
+            std::ostringstream pattern;
+            std::ostringstream condition;
+            std::ostringstream body;
+            if (!append_pattern_payload(pattern, *stmt.condition_pattern)) return false;
+            if (!append_const_expr_payload(condition, *stmt.condition)) return false;
+            if (!append_body_stmt_list(body, stmt_loop_body(stmt))) return false;
+            append_field(out, "while-let");
+            out << pattern.str();
+            out << condition.str();
+            out << body.str();
+            return true;
+        }
+        case StmtKind::For: {
+            if (!stmt.for_pattern || !stmt.for_iterable) return false;
+            std::ostringstream pattern;
+            std::ostringstream iterable;
+            std::ostringstream body;
+            if (!append_pattern_payload(pattern, *stmt.for_pattern)) return false;
+            if (!append_const_expr_payload(iterable, *stmt.for_iterable)) return false;
+            if (!append_body_stmt_list(body, stmt_loop_body(stmt))) return false;
+            append_field(out, "for");
+            append_bool(out, stmt.for_pattern_filter);
+            out << pattern.str();
+            out << iterable.str();
+            out << body.str();
+            return true;
+        }
+        case StmtKind::InitWhile: {
+            std::vector<std::ostringstream> initializers(stmt.init_bindings.size());
+            std::vector<std::ostringstream> updates(stmt.updates.size());
+            for (std::size_t i = 0; i < stmt.init_bindings.size(); ++i) {
+                if (!stmt.init_bindings[i].init ||
+                    !append_const_expr_payload(initializers[i], *stmt.init_bindings[i].init)) {
+                    return false;
+                }
+            }
+            for (std::size_t i = 0; i < stmt.updates.size(); ++i) {
+                if (!stmt.updates[i] || !append_const_expr_payload(updates[i], *stmt.updates[i])) return false;
+            }
+            if (!stmt.condition) return false;
+            std::ostringstream condition;
+            std::ostringstream body;
+            if (!append_const_expr_payload(condition, *stmt.condition)) return false;
+            if (!append_body_stmt_list(body, stmt_loop_body(stmt))) return false;
+            append_field(out, "init-while");
+            append_count(out, stmt.init_bindings.size());
+            for (std::size_t i = 0; i < stmt.init_bindings.size(); ++i) {
+                const Binding& binding = stmt.init_bindings[i];
+                if (binding.has_pattern) return false;
+                append_field(out, binding.name);
+                append_bool(out, binding.mutable_binding);
+                append_bool(out, binding.has_type);
+                if (binding.has_type) append_type(out, binding.type);
+                out << initializers[i].str();
+            }
+            out << condition.str();
+            out << body.str();
+            append_count(out, updates.size());
+            for (const auto& update : updates) out << update.str();
+            return true;
+        }
+        case StmtKind::Continue: {
+            std::ostringstream updates;
+            if (!append_const_expr_list(updates, stmt.updates)) return false;
+            append_field(out, "continue");
+            out << updates.str();
+            return true;
+        }
+        case StmtKind::Match: {
+            if (!stmt.match_value) return false;
+            std::ostringstream value;
+            if (!append_const_expr_payload(value, *stmt.match_value)) return false;
+            std::vector<std::ostringstream> arm_patterns(stmt_match_arms(stmt).size());
+            std::vector<std::ostringstream> arm_bodies(stmt_match_arms(stmt).size());
+            for (std::size_t i = 0; i < stmt_match_arms(stmt).size(); ++i) {
+                const MatchArm& arm = stmt_match_arms(stmt)[i];
+                if (!append_pattern_payload(arm_patterns[i], arm.pattern)) return false;
+                if (!append_body_stmt_list(arm_bodies[i], arm.body)) return false;
+            }
+            append_field(out, "match");
+            out << value.str();
+            append_count(out, stmt_match_arms(stmt).size());
+            for (std::size_t i = 0; i < stmt_match_arms(stmt).size(); ++i) {
+                out << arm_patterns[i].str();
+                out << arm_bodies[i].str();
+            }
             return true;
         }
         default:
@@ -981,6 +1180,96 @@ private:
         fail("unknown constant expression summary kind '" + kind + "'");
     }
 
+    Pattern read_pattern(const std::string& label) {
+        std::string kind = read_field(label + " kind");
+        Pattern pattern;
+        pattern.loc = default_loc();
+        if (kind == "wildcard") {
+            pattern.kind = PatternKind::Wildcard;
+            return pattern;
+        }
+        if (kind == "binding") {
+            pattern.kind = PatternKind::Binding;
+            pattern.payload_name = read_field(label + " binding name");
+            return pattern;
+        }
+        if (kind == "integer") {
+            pattern.kind = PatternKind::IntegerLiteral;
+            pattern.int_negative = read_bool(label + " integer sign");
+            pattern.int_value = read_count(label + " integer value");
+            pattern.literal_suffix = read_field(label + " integer suffix");
+            return pattern;
+        }
+        if (kind == "bool") {
+            pattern.kind = PatternKind::BoolLiteral;
+            pattern.bool_value = read_bool(label + " bool value");
+            return pattern;
+        }
+        if (kind == "range") {
+            pattern.kind = PatternKind::Range;
+            pattern.int_negative = read_bool(label + " range start sign");
+            pattern.int_value = read_count(label + " range start value");
+            pattern.literal_suffix = read_field(label + " range start suffix");
+            pattern.range_inclusive = read_bool(label + " range inclusivity");
+            pattern.range_end_negative = read_bool(label + " range end sign");
+            pattern.range_end_value = read_count(label + " range end value");
+            pattern.range_end_suffix = read_field(label + " range end suffix");
+            return pattern;
+        }
+        if (kind == "enum") {
+            pattern.kind = PatternKind::EnumCase;
+            pattern.case_name = read_field(label + " enum case name");
+            pattern.has_payload_pattern = read_bool(label + " enum payload pattern flag");
+            pattern.has_payload_binding = read_bool(label + " enum payload binding flag");
+            pattern.payload_name = read_field(label + " enum payload binding name");
+            if (pattern.has_payload_pattern) {
+                pattern.payload_pattern = std::make_unique<Pattern>(read_pattern(label + " enum payload pattern"));
+            }
+            return pattern;
+        }
+        if (kind == "or") {
+            pattern.kind = PatternKind::Or;
+            std::uint64_t count = read_count(label + " alternative count");
+            pattern.alternatives.reserve(static_cast<std::size_t>(count));
+            for (std::uint64_t i = 0; i < count; ++i) {
+                pattern.alternatives.push_back(read_pattern(label + " alternative"));
+            }
+            return pattern;
+        }
+        if (kind == "alias") {
+            pattern.kind = PatternKind::Alias;
+            pattern.alias_name = read_field(label + " alias name");
+            pattern.alias_pattern = std::make_unique<Pattern>(read_pattern(label + " alias pattern"));
+            return pattern;
+        }
+        if (kind == "tuple" || kind == "array") {
+            pattern.kind = kind == "tuple" ? PatternKind::Tuple : PatternKind::Array;
+            pattern.has_rest = read_bool(label + " rest flag");
+            pattern.rest_index = static_cast<std::size_t>(read_count(label + " rest index"));
+            std::uint64_t count = read_count(label + " element count");
+            pattern.elements.reserve(static_cast<std::size_t>(count));
+            for (std::uint64_t i = 0; i < count; ++i) {
+                pattern.elements.push_back(read_pattern(label + " element"));
+            }
+            return pattern;
+        }
+        if (kind == "struct") {
+            pattern.kind = PatternKind::Struct;
+            pattern.case_name = read_field(label + " struct name");
+            pattern.has_rest = read_bool(label + " struct rest flag");
+            pattern.rest_index = static_cast<std::size_t>(read_count(label + " struct rest index"));
+            std::uint64_t count = read_count(label + " struct field count");
+            pattern.field_names.reserve(static_cast<std::size_t>(count));
+            pattern.elements.reserve(static_cast<std::size_t>(count));
+            for (std::uint64_t i = 0; i < count; ++i) {
+                pattern.field_names.push_back(read_field(label + " struct field name"));
+                pattern.elements.push_back(read_pattern(label + " struct field pattern"));
+            }
+            return pattern;
+        }
+        fail("unknown pattern summary kind '" + kind + "'");
+    }
+
     ExprPtr read_const_initializer(const std::string& label) {
         if (!read_bool(label + " flag")) return nullptr;
         return read_const_expr(label);
@@ -1050,11 +1339,81 @@ private:
             set_stmt_else_body(*stmt, read_body_stmt_list(label + " else body"));
             return stmt;
         }
+        if (kind == "if-let") {
+            stmt->kind = StmtKind::If;
+            stmt->has_condition_pattern = true;
+            stmt->condition_pattern = std::make_unique<Pattern>(read_pattern(label + " condition pattern"));
+            stmt->condition = read_const_expr(label + " condition");
+            set_stmt_then_body(*stmt, read_body_stmt_list(label + " then body"));
+            set_stmt_else_body(*stmt, read_body_stmt_list(label + " else body"));
+            return stmt;
+        }
         if (kind == "break") {
             stmt->kind = StmtKind::Break;
             set_stmt_break_label(*stmt, read_field(label + " break label"));
             if (read_bool(label + " break value flag")) {
                 set_stmt_break_value(*stmt, read_const_expr(label + " break value"));
+            }
+            return stmt;
+        }
+        if (kind == "while") {
+            stmt->kind = StmtKind::While;
+            stmt->condition = read_const_expr(label + " condition");
+            set_stmt_loop_body(*stmt, read_body_stmt_list(label + " loop body"));
+            return stmt;
+        }
+        if (kind == "while-let") {
+            stmt->kind = StmtKind::WhileLet;
+            stmt->has_condition_pattern = true;
+            stmt->condition_pattern = std::make_unique<Pattern>(read_pattern(label + " condition pattern"));
+            stmt->condition = read_const_expr(label + " condition");
+            set_stmt_loop_body(*stmt, read_body_stmt_list(label + " loop body"));
+            return stmt;
+        }
+        if (kind == "for") {
+            stmt->kind = StmtKind::For;
+            stmt->for_pattern_filter = read_bool(label + " for pattern filter flag");
+            stmt->for_pattern = std::make_unique<Pattern>(read_pattern(label + " for pattern"));
+            stmt->for_iterable = read_const_expr(label + " for iterable");
+            set_stmt_loop_body(*stmt, read_body_stmt_list(label + " loop body"));
+            return stmt;
+        }
+        if (kind == "init-while") {
+            stmt->kind = StmtKind::InitWhile;
+            std::uint64_t binding_count = read_count(label + " init binding count");
+            stmt->init_bindings.reserve(static_cast<std::size_t>(binding_count));
+            for (std::uint64_t i = 0; i < binding_count; ++i) {
+                Binding binding;
+                binding.loc = default_loc();
+                binding.name = read_field(label + " init binding name");
+                binding.mutable_binding = read_bool(label + " init binding mutability");
+                binding.has_type = read_bool(label + " init binding type flag");
+                if (binding.has_type) binding.type = read_type(label + " init binding type");
+                binding.init = read_const_expr(label + " init binding initializer");
+                stmt->init_bindings.push_back(std::move(binding));
+            }
+            stmt->condition = read_const_expr(label + " condition");
+            set_stmt_loop_body(*stmt, read_body_stmt_list(label + " loop body"));
+            stmt->updates = read_const_expr_list(label + " updates");
+            return stmt;
+        }
+        if (kind == "continue") {
+            stmt->kind = StmtKind::Continue;
+            stmt->updates = read_const_expr_list(label + " updates");
+            return stmt;
+        }
+        if (kind == "match") {
+            stmt->kind = StmtKind::Match;
+            stmt->match_value = read_const_expr(label + " match value");
+            std::uint64_t arm_count = read_count(label + " match arm count");
+            StmtMatchArms& arms = ensure_stmt_match_arms(*stmt);
+            arms.reserve(static_cast<std::size_t>(arm_count));
+            for (std::uint64_t i = 0; i < arm_count; ++i) {
+                MatchArm arm;
+                arm.pattern = read_pattern(label + " match arm pattern");
+                arm.body = read_body_stmt_list(label + " match arm body");
+                arm.loc = default_loc();
+                arms.push_back(std::move(arm));
             }
             return stmt;
         }
