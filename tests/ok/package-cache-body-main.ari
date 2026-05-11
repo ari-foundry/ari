@@ -14,5 +14,6 @@ fn main() -> i64 {
     cache_bodies::match_statement(4) +
     cache_bodies::method_flow() +
     cache_bodies::drop_statement() +
-    cache_bodies::expression_flow(true, 2)
+    cache_bodies::expression_flow(true, 2) +
+    cache_bodies::scalar_literal_flow()
 }

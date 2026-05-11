@@ -106,7 +106,9 @@
    cover scalar and aggregate literals, enum/tuple-struct constructors,
    explicit integer casts, arithmetic, bitwise, unary bitwise-not, and shift
    expressions, plus field, tuple-index, and fixed-array index access over
-   materialized aggregate constants. Module cache v6 also carries simple
+   materialized aggregate constants. Executable body expression summaries now
+   preserve integer, bool, float, string, and null literals. Module cache v6
+   also carries simple
    executable AST body summaries for functions whose bodies use summary-safe
    local declarations, assignments, `if`/`else`, block/labeled-block
    statements, `while`/`while let`, `for`, `init ... while ... next`,

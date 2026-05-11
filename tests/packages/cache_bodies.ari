@@ -108,3 +108,12 @@ pub fn expression_flow(flag: bool, value: i64) -> i64 {
   };
   return from_block + from_match;
 }
+
+pub fn scalar_literal_flow() -> i64 {
+  let raw: ptr c_void = null;
+  let value: f64 = 1.5f64 + 2.0f64;
+  if value == 3.5f64 {
+    return 6;
+  }
+  return 1;
+}

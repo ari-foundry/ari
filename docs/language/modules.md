@@ -341,6 +341,8 @@ bitwise, unary bitwise-not, and shift expressions over supported constant
 payloads are preserved too, as are field, tuple-index, and fixed-array index
 accesses over materialized aggregate constants. Constants whose initializers use
 unsupported summary forms fall back to parsing the cached source snapshot.
+Executable body expression summaries preserve integer, bool, float, string, and
+null literals.
 Executable dependency functions whose bodies use summary-safe local
 declarations, assignments, `if`/`else`, block/labeled-block statements,
 `while`/`while let`, `for`, `init ... while ... next`, `continue`, unlabeled or

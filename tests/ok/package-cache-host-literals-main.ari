@@ -1,0 +1,5 @@
+mod cache_host_literals;
+
+fn main() -> i64 {
+  cache_host_literals::string_score()
+}

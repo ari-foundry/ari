@@ -5,6 +5,7 @@
 #include "module_path.hpp"
 
 #include <cstdint>
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <sstream>
@@ -24,6 +25,20 @@ void append_bool(std::ostringstream& out, bool value) {
 
 void append_count(std::ostringstream& out, std::uint64_t value) {
     out << value << ';';
+}
+
+std::uint64_t double_bits(double value) {
+    static_assert(sizeof(double) == sizeof(std::uint64_t), "double payload must fit in a u64");
+    std::uint64_t bits = 0;
+    std::memcpy(&bits, &value, sizeof(bits));
+    return bits;
+}
+
+double double_from_bits(std::uint64_t bits) {
+    static_assert(sizeof(double) == sizeof(std::uint64_t), "double payload must fit in a u64");
+    double value = 0.0;
+    std::memcpy(&value, &bits, sizeof(value));
+    return value;
 }
 
 void append_qualifier(std::ostringstream& out, TypeQualifier qualifier) {
@@ -140,9 +155,21 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             append_count(out, expr.int_value);
             append_field(out, expr.literal_suffix);
             return true;
+        case ExprKind::Float:
+            append_field(out, "float");
+            append_count(out, double_bits(expr.float_value));
+            append_field(out, expr.literal_suffix);
+            return true;
+        case ExprKind::String:
+            append_field(out, "string");
+            append_field(out, expr.string_value);
+            return true;
         case ExprKind::Bool:
             append_field(out, "bool");
             append_bool(out, expr.bool_value);
+            return true;
+        case ExprKind::Null:
+            append_field(out, "null");
             return true;
         case ExprKind::Name:
             append_field(out, "name");
@@ -1172,9 +1199,24 @@ private:
             expr->literal_suffix = read_field(label + " integer suffix");
             return expr;
         }
+        if (kind == "float") {
+            expr->kind = ExprKind::Float;
+            expr->float_value = double_from_bits(read_count(label + " float bits"));
+            expr->literal_suffix = read_field(label + " float suffix");
+            return expr;
+        }
+        if (kind == "string") {
+            expr->kind = ExprKind::String;
+            expr->string_value = read_field(label + " string value");
+            return expr;
+        }
         if (kind == "bool") {
             expr->kind = ExprKind::Bool;
             expr->bool_value = read_bool(label + " bool value");
+            return expr;
+        }
+        if (kind == "null") {
+            expr->kind = ExprKind::Null;
             return expr;
         }
         if (kind == "name") {
