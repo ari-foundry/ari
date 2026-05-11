@@ -1,6 +1,7 @@
 #include "local_state.hpp"
 
 #include "common.hpp"
+#include "type_semantics.hpp"
 
 #include <algorithm>
 #include <utility>
@@ -39,6 +40,15 @@ LocalInfo make_local_info(SourceLocation loc, const IrType& type, bool mutable_b
     local.state = LocalState::Alive;
     local.loc = loc;
     return local;
+}
+
+bool local_is_alive(const LocalInfo& local) {
+    return local.state == LocalState::Alive;
+}
+
+std::optional<std::string> local_unavailable_binding_error(const std::string& name, const LocalInfo& local) {
+    if (local_is_alive(local)) return std::nullopt;
+    return "cannot use " + local_state_name(local.state) + " binding '" + name + "'";
 }
 
 VectorKnownLength local_vector_known_length(const LocalInfo& local) {
@@ -125,6 +135,75 @@ bool local_has_moved_or_dropped_owned_fields(const LocalInfo& local) {
         if (item.second != LocalState::Alive) return true;
     }
     return false;
+}
+
+bool local_has_tracked_owned_fields(const LocalInfo& local) {
+    return !local.owned_field_states.empty();
+}
+
+bool local_has_live_owned_fields(const LocalInfo& local) {
+    if (!local_is_alive(local)) return false;
+    for (const auto& item : local.owned_field_states) {
+        if (item.second == LocalState::Alive) return true;
+    }
+    return false;
+}
+
+bool local_has_live_owner(const LocalInfo& local) {
+    if (local_has_tracked_owned_fields(local)) return local_has_live_owned_fields(local);
+    return is_owner_type(local.type) && local_is_alive(local);
+}
+
+std::optional<std::string> local_assignment_target_error(const std::string& name, const LocalInfo& local) {
+    if (is_borrow_type(local.type)) {
+        return "cannot assign to borrow binding '" + name + "'";
+    }
+    if (!local.mutable_binding) {
+        return "cannot assign to immutable binding '" + name + "'";
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> local_assignment_storage_error(const std::string& name, const LocalInfo& local) {
+    if (is_owner_type(local.type) && local_has_live_owner(local)) {
+        return "cannot overwrite owning binding '" + name + "' before it is moved or dropped";
+    }
+    if (contains_borrow_type(local.type)) {
+        return "cannot assign to borrow-valued aggregate binding '" + name + "' yet";
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> local_field_assignment_base_error(const std::string& name, const LocalInfo& local) {
+    if (!local.mutable_binding) {
+        return "cannot assign to field of immutable binding '" + name + "'";
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> local_aggregate_assignment_base_error(const std::string& name,
+                                                                 const LocalInfo& local,
+                                                                 const IrType& base_type) {
+    if (!local.mutable_binding && base_type.qualifier != TypeQualifier::MutRef) {
+        return "cannot assign to field of immutable binding '" + name + "'";
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> local_mutable_borrow_error(const std::string& name, const LocalInfo& local) {
+    if (!local.mutable_binding) {
+        return "cannot mutably borrow immutable binding '" + name + "'";
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> local_method_mutability_error(const std::string& name,
+                                                         const LocalInfo& local,
+                                                         const std::string& method_display) {
+    if (!local.mutable_binding) {
+        return "cannot call " + method_display + " on immutable binding '" + name + "'";
+    }
+    return std::nullopt;
 }
 
 LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name) {

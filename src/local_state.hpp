@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <functional>
 #include <map>
+#include <optional>
 #include <set>
 #include <string>
 #include <vector>
@@ -68,6 +69,8 @@ struct StateSnapshotEntry {
 using StateSnapshot = std::map<std::string, StateSnapshotEntry>;
 
 LocalInfo make_local_info(SourceLocation loc, const IrType& type, bool mutable_binding);
+bool local_is_alive(const LocalInfo& local);
+std::optional<std::string> local_unavailable_binding_error(const std::string& name, const LocalInfo& local);
 VectorKnownLength local_vector_known_length(const LocalInfo& local);
 void set_local_vector_known_length(LocalInfo& local, VectorKnownLength state);
 void clear_local_integer_known_value(LocalInfo& local);
@@ -84,6 +87,19 @@ bool local_owned_field_has_state(const LocalInfo& local, const std::string& path
 void mark_local_owned_field_state(LocalInfo& local, const std::string& path, LocalState state);
 void mark_all_local_owned_fields(LocalInfo& local, LocalState state);
 bool local_has_moved_or_dropped_owned_fields(const LocalInfo& local);
+bool local_has_tracked_owned_fields(const LocalInfo& local);
+bool local_has_live_owned_fields(const LocalInfo& local);
+bool local_has_live_owner(const LocalInfo& local);
+std::optional<std::string> local_assignment_target_error(const std::string& name, const LocalInfo& local);
+std::optional<std::string> local_assignment_storage_error(const std::string& name, const LocalInfo& local);
+std::optional<std::string> local_field_assignment_base_error(const std::string& name, const LocalInfo& local);
+std::optional<std::string> local_aggregate_assignment_base_error(const std::string& name,
+                                                                 const LocalInfo& local,
+                                                                 const IrType& base_type);
+std::optional<std::string> local_mutable_borrow_error(const std::string& name, const LocalInfo& local);
+std::optional<std::string> local_method_mutability_error(const std::string& name,
+                                                         const LocalInfo& local,
+                                                         const std::string& method_display);
 LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name);
 void merge_zone_generations_into(StateSnapshot& target, const StateSnapshot& source);
 void merge_existing_zone_generations_into(StateSnapshot& target, const StateSnapshot& source);

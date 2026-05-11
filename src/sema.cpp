@@ -3521,7 +3521,7 @@ private:
                 release_named_borrow(local);
             },
             [this](const LocalInfo& local) {
-                return has_live_owner(local);
+                return local_has_live_owner(local);
             },
             [](const std::string& name, const LocalInfo& local) {
                 fail(local.loc, "owning binding '" + name + "' must be moved or dropped before scope exit");
@@ -3724,7 +3724,7 @@ private:
         return local_scopes_.any_local_from(
             first_scope_index,
             [](const std::string&, const LocalInfo& local) {
-                return is_auto_destroy_zone(local) && local.state == LocalState::Alive;
+                return is_auto_destroy_zone(local) && local_is_alive(local);
             }
         );
     }
@@ -3738,7 +3738,7 @@ private:
         local_scopes_.for_each_local_from(
             first_scope_index,
             [&](const std::string& name, const LocalInfo& local) {
-                if (is_auto_destroy_zone(local) && local.state == LocalState::Alive) {
+                if (is_auto_destroy_zone(local) && local_is_alive(local)) {
                     temporary_zones[name] = true;
                 }
             }
@@ -3748,7 +3748,7 @@ private:
         local_scopes_.for_each_local_before(
             first_scope_index,
             [&](const std::string& name, const LocalInfo& local) {
-                if (!local.zone_pointer || local.state != LocalState::Alive) return;
+                if (!local.zone_pointer || !local_is_alive(local)) return;
                 if (temporary_zones.find(local.zone_pointer_source) == temporary_zones.end()) return;
                 fail(loc,
                      "zone pointer '" + name +
@@ -3768,7 +3768,7 @@ private:
         local_scopes_.for_each_local_from_inner_to_outer(
             first_scope_index,
             [&](const std::string& name, LocalInfo& local) {
-                if (!is_auto_destroy_zone(local) || local.state != LocalState::Alive) return;
+                if (!is_auto_destroy_zone(local) || !local_is_alive(local)) return;
                 statements.push_back(make_zone_destroy_stmt(loc, name, local.type));
                 mark_local_zone_destroyed(local);
             }
@@ -3842,9 +3842,7 @@ private:
 
     LocalInfo& require_live_local(SourceLocation loc, const std::string& name) {
         LocalInfo& local = require_local_slot(loc, name);
-        if (local.state != LocalState::Alive) {
-            fail(loc, "cannot use " + local_state_name(local.state) + " binding '" + name + "'");
-        }
+        if (auto error = local_unavailable_binding_error(name, local)) fail(loc, *error);
         return local;
     }
 
@@ -3906,23 +3904,6 @@ private:
     void initialize_owned_field_states(LocalInfo& local) const {
         local.owned_field_states.clear();
         collect_owned_field_states(local.type, "", local.owned_field_states);
-    }
-
-    static bool has_tracked_owned_fields(const LocalInfo& local) {
-        return !local.owned_field_states.empty();
-    }
-
-    static bool has_live_owned_fields(const LocalInfo& local) {
-        if (local.state != LocalState::Alive) return false;
-        for (const auto& item : local.owned_field_states) {
-            if (item.second == LocalState::Alive) return true;
-        }
-        return false;
-    }
-
-    static bool has_live_owner(const LocalInfo& local) {
-        if (has_tracked_owned_fields(local)) return has_live_owned_fields(local);
-        return is_owner_type(local.type) && local.state == LocalState::Alive;
     }
 
     static bool is_zone_value_type(const IrType& type) {
@@ -4106,7 +4087,7 @@ private:
         LocalInfo* zone = find_local_slot(pointer.zone_pointer_source);
         if (!zone ||
             !is_zone_source_type(zone->type) ||
-            zone->state != LocalState::Alive ||
+            !local_is_alive(*zone) ||
             zone->zone_generation != pointer.zone_pointer_generation) {
             fail(loc,
                  "cannot use zone pointer '" + pointer_name + "' after zone '" +
@@ -4130,7 +4111,7 @@ private:
         local_scopes_.for_each_local_from(
             0,
             [&](const std::string& name, const LocalInfo& local) {
-                if (has_live_owner(local)) {
+                if (local_has_live_owner(local)) {
                     fail(loc, "owning binding '" + name + "' must be moved or dropped before return");
                 }
             }
@@ -5226,17 +5207,9 @@ private:
 
         const std::string& assign_name = stmt_assign_name(stmt);
         LocalInfo& target = require_local_slot(stmt.loc, assign_name);
-        if (is_borrow_type(target.type)) {
-            fail(stmt.loc, "cannot assign to borrow binding '" + assign_name + "'");
-        }
-        if (!target.mutable_binding) fail(stmt.loc, "cannot assign to immutable binding '" + assign_name + "'");
+        if (auto error = local_assignment_target_error(assign_name, target)) fail(stmt.loc, *error);
         require_not_borrowed(stmt.loc, assign_name, target, "assign to");
-        if (is_owner_type(target.type) && has_live_owner(target)) {
-            fail(stmt.loc, "cannot overwrite owning binding '" + assign_name + "' before it is moved or dropped");
-        }
-        if (contains_borrow_type(target.type)) {
-            fail(stmt.loc, "cannot assign to borrow-valued aggregate binding '" + assign_name + "' yet");
-        }
+        if (auto error = local_assignment_storage_error(assign_name, target)) fail(stmt.loc, *error);
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr value = check_expr_with_expected(*rhs, target.type);
@@ -5323,7 +5296,7 @@ private:
         }
         base_name = expr.name;
         LocalInfo& local = require_live_local(loc, expr.name);
-        if (!local.mutable_binding) fail(loc, "cannot assign to field of immutable binding '" + expr.name + "'");
+        if (auto error = local_field_assignment_base_error(expr.name, local)) fail(loc, *error);
         require_not_borrowed(loc, expr.name, local, "assign to");
         return local;
     }
@@ -5333,9 +5306,7 @@ private:
             LocalInfo* local_slot = find_local_slot(expr.name);
             if (!local_slot) return false;
             LocalInfo& local = *local_slot;
-            if (local.state != LocalState::Alive) {
-                fail(expr.loc, "cannot use " + local_state_name(local.state) + " binding '" + expr.name + "'");
-            }
+            if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
             out.base_name = expr.name;
             out.base_type = local.type;
             out.type = local.type;
@@ -5459,10 +5430,8 @@ private:
 
     IrExprPtr check_tracked_assignment_target(SourceLocation loc, TrackedAggregateAccess access) {
         LocalInfo& local = require_live_local(loc, access.base_name);
-        bool can_assign_through_base =
-            local.mutable_binding || access.base_type.qualifier == TypeQualifier::MutRef;
-        if (!can_assign_through_base) {
-            fail(loc, "cannot assign to field of immutable binding '" + access.base_name + "'");
+        if (auto error = local_aggregate_assignment_base_error(access.base_name, local, access.base_type)) {
+            fail(loc, *error);
         }
         require_can_assign_borrow_path(loc, access.base_name, local, access.path);
         if (access.has_final_field_mutability && !access.final_field_mutable) {
@@ -9487,7 +9456,7 @@ private:
                                               const std::string& iterator_name,
                                               std::vector<IrStmtPtr>& statements) {
         LocalInfo* local = find_local_slot(iterator_name);
-        if (!local || !has_live_owner(*local)) return;
+        if (!local || !local_has_live_owner(*local)) return;
         require_not_borrowed(loc, iterator_name, *local, "drop");
         DropValueFactory make_value = [this, loc, iterator_name, type = local->type]() {
             return make_local_lvalue_expr(loc, iterator_name, type);
@@ -10320,9 +10289,7 @@ private:
                     fail(expr.loc, "unknown name '" + expr.name + "'");
                 }
                 LocalInfo& local = *local_slot;
-                if (local.state != LocalState::Alive) {
-                    fail(expr.loc, "cannot use " + local_state_name(local.state) + " binding '" + expr.name + "'");
-                }
+                if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
                 require_can_read_borrow_path(expr.loc, expr.name, local, "");
                 require_zone_pointer_valid(expr.loc, expr.name, local);
                 lowered->kind = IrExprKind::Local;
@@ -10585,9 +10552,7 @@ private:
             LocalInfo* local_slot = find_local_slot(expr.name);
             if (local_slot && is_owner_type(local_slot->type)) {
                 LocalInfo& local = *local_slot;
-                if (local.state != LocalState::Alive) {
-                    fail(expr.loc, "cannot use " + local_state_name(local.state) + " binding '" + expr.name + "'");
-                }
+                if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
                 require_can_read_borrow_path(expr.loc, expr.name, local, "");
                 return make_local_lvalue_expr(expr.loc, expr.name, local.type);
             }
@@ -12287,9 +12252,7 @@ private:
         }
 
         if (expr.mutable_borrow) {
-            if (!source.mutable_binding) {
-                fail(expr.loc, "cannot mutably borrow immutable binding '" + access.base_name + "'");
-            }
+            if (auto error = local_mutable_borrow_error(access.base_name, source)) fail(expr.loc, *error);
             if (access.has_final_field_mutability && !access.final_field_mutable) {
                 fail(expr.loc,
                      "cannot mutably borrow immutable field '" + access.final_field_label +
@@ -13508,12 +13471,8 @@ private:
     void require_slice_view_receiver(SourceLocation loc,
                                      const std::string& name,
                                      const LocalInfo& local) const {
-        if (local.state != LocalState::Alive) {
-            fail(loc, "cannot use " + local_state_name(local.state) + " binding '" + name + "'");
-        }
-        if (!local.mutable_binding) {
-            fail(loc, "cannot call as_slice on immutable binding '" + name + "'");
-        }
+        if (auto error = local_unavailable_binding_error(name, local)) fail(loc, *error);
+        if (auto error = local_method_mutability_error(name, local, "as_slice")) fail(loc, *error);
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "as_slice currently supports copyable element arrays and vectors only");
         }
@@ -13611,10 +13570,8 @@ private:
                                              const std::string& name,
                                              LocalInfo& local,
                                              const std::string& method_name) {
-        if (local.state != LocalState::Alive) {
-            fail(loc, "cannot use " + local_state_name(local.state) + " binding '" + name + "'");
-        }
-        if (!local.mutable_binding) fail(loc, "cannot call Vec." + method_name + " on immutable binding '" + name + "'");
+        if (auto error = local_unavailable_binding_error(name, local)) fail(loc, *error);
+        if (auto error = local_method_mutability_error(name, local, "Vec." + method_name)) fail(loc, *error);
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
         }
@@ -13625,9 +13582,7 @@ private:
                                               const std::string& name,
                                               const LocalInfo& local,
                                               const std::string& method_name) const {
-        if (local.state != LocalState::Alive) {
-            fail(loc, "cannot use " + local_state_name(local.state) + " binding '" + name + "'");
-        }
+        if (auto error = local_unavailable_binding_error(name, local)) fail(loc, *error);
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
         }

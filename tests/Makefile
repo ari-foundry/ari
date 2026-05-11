@@ -1833,6 +1833,8 @@ check-variables: $(TARGET)
 	grep -Fq "local Vec method 'map' is reserved for allocator-backed std collection APIs" $(BUILD_DIR)/variables/vector-api-freeze.err
 	if $(TARGET) tests/errors/vector-method-shape.ari -o $(BUILD_DIR)/variables/vector-method-shape.elf >$(BUILD_DIR)/variables/vector-method-shape.err 2>&1; then exit 1; fi
 	grep -q "Vec.push expects one value argument" $(BUILD_DIR)/variables/vector-method-shape.err
+	if $(TARGET) tests/errors/vector-method-immutable.ari -o $(BUILD_DIR)/variables/vector-method-immutable.elf >$(BUILD_DIR)/variables/vector-method-immutable.err 2>&1; then exit 1; fi
+	grep -q "cannot call Vec.push on immutable binding 'values'" $(BUILD_DIR)/variables/vector-method-immutable.err
 	if $(TARGET) tests/errors/vector-method-index-type.ari -o $(BUILD_DIR)/variables/vector-method-index-type.elf >$(BUILD_DIR)/variables/vector-method-index-type.err 2>&1; then exit 1; fi
 	grep -q "Vec.get index must be an integer, got bool" $(BUILD_DIR)/variables/vector-method-index-type.err
 	if $(TARGET) tests/errors/vector-method-static-negative-index.ari -o $(BUILD_DIR)/variables/vector-method-static-negative-index.elf >$(BUILD_DIR)/variables/vector-method-static-negative-index.err 2>&1; then exit 1; fi

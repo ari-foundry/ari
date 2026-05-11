@@ -107,16 +107,18 @@
    zone-generation bumps, vector known-length setters/getters, static integer
    cache setters, and owned-field path/state helpers are also exposed from
    `local_state`, so statement/expression lowering no longer writes those raw
-   fields directly. `SemanticChecker` still coordinates mutability diagnostics,
-   assignment eligibility, branch/loop state merge decisions, move/drop
-   lowering, and borrow rules.
+   fields directly. Local binding assignment eligibility, field-assignment base
+   mutability, immutable Vec/Slice receiver diagnostics, and immutable
+   mutable-borrow diagnostics now also route through local-state diagnostic
+   helpers while `SemanticChecker` keeps source locations and borrow-conflict
+   checks. `SemanticChecker` still coordinates branch/loop state merge
+   decisions, move/drop lowering, and most borrow rules.
    Finish those behavior-preserving moves before starting the larger
    borrow-checking and ownership extractions, leaning on the existing ownership,
    borrow, loop, and control-flow tests instead of adding broad duplicate
    coverage.
-   - [mutation-api] route mutability diagnostics, assignment eligibility, and
-     branch/loop state merge hooks through local-state or ownership adapters
-     without leaking scope internals
+   - [mutation-api] route branch/loop state merge hooks through local-state or
+     ownership adapters without leaking scope internals
    - [borrow-adapter] keep named and temporary borrow checks layered over the
      new local-state API so later `borrow_semantics` extraction has one entry point
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
