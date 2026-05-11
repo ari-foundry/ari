@@ -22,6 +22,7 @@
 #include "prelude_macros.hpp"
 #include "prelude_resolver.hpp"
 #include "product_coverage.hpp"
+#include "range_semantics.hpp"
 #include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "trait_semantics.hpp"
@@ -456,17 +457,6 @@ private:
 
     static bool is_planned_prelude_macro_name(const std::string& name) {
         return is_prelude_macro_name(unqualified_name(name));
-    }
-
-    static bool is_prelude_range_type_name(const std::string& name) {
-        std::string base = unqualified_name(name);
-        return base == "Range" || base == "RangeInclusive";
-    }
-
-    static bool is_prelude_range_type(const IrType& type) {
-        return type.primitive == IrPrimitiveKind::Struct &&
-               (type.name == "Range" || type.name == "RangeInclusive") &&
-               type.args.size() == 1;
     }
 
     static bool is_qualified_name(const std::string& name) {
@@ -3179,26 +3169,6 @@ private:
         return primitive_type(IrPrimitiveKind::Bool, "bool", loc);
     }
 
-    static IrType prelude_range_type(SourceLocation loc, bool inclusive, IrType bound) {
-        IrType type = primitive_type(
-            IrPrimitiveKind::Struct,
-            inclusive ? "RangeInclusive" : "Range",
-            loc
-        );
-        type.args.push_back(bound);
-        type.field_names.push_back("start");
-        type.field_types.push_back(bound);
-        type.field_mutable.push_back(false);
-        type.field_names.push_back("end");
-        type.field_types.push_back(bound);
-        type.field_mutable.push_back(false);
-        return type;
-    }
-
-    static IrType prelude_range_type(SourceLocation loc, bool inclusive) {
-        return prelude_range_type(loc, inclusive, i64_type(loc));
-    }
-
     static IrType array_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
         IrType type = primitive_type(IrPrimitiveKind::Array, "Array", loc);
         type.args.push_back(element);
@@ -3395,7 +3365,7 @@ private:
             if (!is_value_integer_type(bound)) {
                 fail(type.loc, "prelude range types require integer bounds");
             }
-            type = prelude_range_type(type.loc, unqualified_name(type.name) == "RangeInclusive", bound);
+            type = make_prelude_range_type(type.loc, unqualified_name(type.name) == "RangeInclusive", bound);
         } else {
             std::string resolved_struct_name = resolve_struct_type_name(type.name);
             auto struct_found = structs_.find(resolved_struct_name);
@@ -13682,7 +13652,7 @@ private:
             has_bound = true;
         }
 
-        IrType range_type = prelude_range_type(
+        IrType range_type = make_prelude_range_type(
             expr.loc,
             is_prelude_inclusive_range_function_name(range_name),
             bound
@@ -13695,7 +13665,7 @@ private:
                 fail(expr.args[0]->loc, "range bounds must be integers");
             }
             bound = start->type;
-            range_type = prelude_range_type(
+            range_type = make_prelude_range_type(
                 expr.loc,
                 is_prelude_inclusive_range_function_name(range_name),
                 bound
