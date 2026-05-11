@@ -829,6 +829,8 @@ check-operators: $(TARGET)
 	$(BUILD_DIR)/operators/operators-try.raw; code=$$?; test $$code -eq 52
 	$(TARGET) --freestanding tests/ok/operators-try-residual-conversion.ari -o $(BUILD_DIR)/operators/operators-try-residual-conversion.raw
 	$(BUILD_DIR)/operators/operators-try-residual-conversion.raw; code=$$?; test $$code -eq 65
+	$(TARGET) --freestanding tests/ok/ir-try-payloads.ari -o $(BUILD_DIR)/operators/ir-try-payloads.raw
+	$(BUILD_DIR)/operators/ir-try-payloads.raw; code=$$?; test $$code -eq 37
 	$(TARGET) --freestanding tests/ok/operators-null-coalescing.ari -o $(BUILD_DIR)/operators/operators-null-coalescing.raw
 	$(BUILD_DIR)/operators/operators-null-coalescing.raw; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/operators-numeric-suffixes.ari --emit-llvm $(BUILD_DIR)/operators/operators-numeric-suffixes.ll
@@ -915,6 +917,9 @@ check-operators: $(TARGET)
 	grep -q "try.return" $(BUILD_DIR)/operators/operators-try-residual-conversion.ll
 	grep -q "shl i64" $(BUILD_DIR)/operators/operators-try-residual-conversion.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/operators-try-residual-conversion.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/operators/operators-try-residual-conversion.elf; $(BUILD_DIR)/operators/operators-try-residual-conversion.elf; code=$$?; test $$code -eq 65; fi
+	$(TARGET) tests/ok/ir-try-payloads.ari --emit-llvm $(BUILD_DIR)/operators/ir-try-payloads.ll
+	grep -q "try.ok" $(BUILD_DIR)/operators/ir-try-payloads.ll
+	grep -q "try.return" $(BUILD_DIR)/operators/ir-try-payloads.ll
 	$(TARGET) tests/ok/operators-try-aggregate.ari --emit-llvm $(BUILD_DIR)/operators/operators-try-aggregate.ll
 	grep -q "extractvalue { i32, i64 }" $(BUILD_DIR)/operators/operators-try-aggregate.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/operators-try-aggregate.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/operators/operators-try-aggregate.elf; $(BUILD_DIR)/operators/operators-try-aggregate.elf; code=$$?; test $$code -eq 42; fi

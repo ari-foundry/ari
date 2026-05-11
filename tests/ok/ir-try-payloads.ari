@@ -1,0 +1,55 @@
+mod IntResult {
+  pub enum ResultI32 {
+    Err(i32),
+    Ok(i32),
+  }
+}
+
+mod BoolResult {
+  pub enum ResultBool {
+    Err(i32),
+    Ok(bool),
+  }
+}
+
+fn convert(value: IntResult::ResultI32) -> BoolResult::ResultBool {
+  let inner = value?;
+  return BoolResult::Ok(inner > 3i32);
+}
+
+fn passthrough(value: IntResult::ResultI32) -> IntResult::ResultI32 {
+  let inner = value?;
+  return IntResult::Ok(inner + 1i32);
+}
+
+fn score_bool(value: BoolResult::ResultBool) -> i64 {
+  match value {
+    BoolResult::Ok(flag) => {
+      if flag {
+        return 1;
+      }
+      return 2;
+    }
+    BoolResult::Err(code) => {
+      return code as i64;
+    }
+  }
+}
+
+fn score_int(value: IntResult::ResultI32) -> i64 {
+  match value {
+    IntResult::Ok(inner) => {
+      return inner as i64;
+    }
+    IntResult::Err(code) => {
+      return code as i64;
+    }
+  }
+}
+
+fn main() -> i64 {
+  return score_bool(convert(IntResult::Ok(4i32))) +
+         score_bool(convert(IntResult::Err(20i32))) +
+         score_int(passthrough(IntResult::Ok(6i32))) +
+         score_int(passthrough(IntResult::Err(9i32)));
+}

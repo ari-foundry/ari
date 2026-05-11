@@ -242,6 +242,14 @@ struct IrExprFormatPrintPayload {
     bool print_newline = false;
 };
 
+struct IrExprTryPayload {
+    bool converts_residual = false;
+    bool residual_has_payload = false;
+    IrType return_residual_payload_type;
+    std::uint32_t return_residual_tag = 0;
+    std::vector<IrStmtPtr> residual_cleanup;
+};
+
 struct IrExprCallParamPayload {
     std::vector<IrType> param_types;
 };
@@ -308,21 +316,17 @@ struct IrExpr {
     std::uint32_t enum_tag = 0;
     bool has_payload = false;
     bool mutable_borrow = false;
-    bool try_converts_residual = false;
-    bool try_residual_has_payload = false;
     IrUnaryOp unary_op = IrUnaryOp::Not;
     IrBinaryOp op = IrBinaryOp::Add;
     IrType payload_type;
-    IrType try_return_residual_payload_type;
-    std::uint32_t try_return_residual_tag = 0;
     std::unique_ptr<IrExprChildPayload> child_payload;
     std::unique_ptr<IrExprRarePayload> rare_payload;
     std::unique_ptr<IrExprStringPayload> string_payload;
     std::unique_ptr<IrExprFormatPrintPayload> format_print_payload;
     std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
+    std::unique_ptr<IrExprTryPayload> try_payload;
     std::unique_ptr<IrExprCallParamPayload> call_param_payload;
-    std::vector<IrStmtPtr> try_residual_cleanup;
     std::unique_ptr<IrExprMatchPayload> match_payload;
     IrExprArgs args;
 };
@@ -399,6 +403,50 @@ inline void set_ir_expr_format_print_payload(IrExpr& expr,
     expr.format_print_payload = std::make_unique<IrExprFormatPrintPayload>();
     expr.format_print_payload->parts = std::move(parts);
     expr.format_print_payload->print_newline = print_newline;
+}
+
+inline const IrExprTryPayload& ir_expr_try_payload(const IrExpr& expr) {
+    static const IrExprTryPayload empty;
+    return expr.try_payload ? *expr.try_payload : empty;
+}
+
+inline IrExprTryPayload& ensure_ir_expr_try_payload(IrExpr& expr) {
+    if (!expr.try_payload) expr.try_payload = std::make_unique<IrExprTryPayload>();
+    return *expr.try_payload;
+}
+
+inline bool ir_expr_try_converts_residual(const IrExpr& expr) {
+    return ir_expr_try_payload(expr).converts_residual;
+}
+
+inline bool ir_expr_try_residual_has_payload(const IrExpr& expr) {
+    return ir_expr_try_payload(expr).residual_has_payload;
+}
+
+inline std::uint32_t ir_expr_try_return_residual_tag(const IrExpr& expr) {
+    return ir_expr_try_payload(expr).return_residual_tag;
+}
+
+inline const IrType& ir_expr_try_return_residual_payload_type(const IrExpr& expr) {
+    return ir_expr_try_payload(expr).return_residual_payload_type;
+}
+
+inline const std::vector<IrStmtPtr>& ir_expr_try_residual_cleanup(const IrExpr& expr) {
+    return ir_expr_try_payload(expr).residual_cleanup;
+}
+
+inline void set_ir_expr_try_payload(IrExpr& expr,
+                                    bool converts_residual,
+                                    std::uint32_t return_residual_tag,
+                                    bool residual_has_payload,
+                                    IrType return_residual_payload_type,
+                                    std::vector<IrStmtPtr> residual_cleanup) {
+    IrExprTryPayload& payload = ensure_ir_expr_try_payload(expr);
+    payload.converts_residual = converts_residual;
+    payload.return_residual_tag = return_residual_tag;
+    payload.residual_has_payload = residual_has_payload;
+    payload.return_residual_payload_type = std::move(return_residual_payload_type);
+    payload.residual_cleanup = std::move(residual_cleanup);
 }
 
 inline const IrExprChildPayload& ir_expr_child_payload(const IrExpr& expr) {

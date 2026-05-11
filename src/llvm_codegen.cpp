@@ -784,7 +784,7 @@ private:
         collect_expr_locals(ir_expr_if_else_value(expr), locals);
         collect_locals(ir_expr_block_body(expr), locals);
         collect_expr_locals(ir_expr_block_value(expr), locals);
-        collect_locals(expr.try_residual_cleanup, locals);
+        collect_locals(ir_expr_try_residual_cleanup(expr), locals);
         collect_expr_locals(ir_expr_match_value(expr), locals);
         for (const auto& arg : expr.args) collect_expr_locals(arg, locals);
         for (const auto& arm : ir_expr_match_arms(expr)) {
@@ -2803,9 +2803,13 @@ private:
     }
 
     Value emit_try_residual_return_value(const IrExpr& expr, const Value& value) {
-        if (!expr.try_converts_residual) return cast_value(value, current_return_);
-        if (!expr.try_residual_has_payload) {
-            return Value{llvm_type(current_return_), std::to_string(expr.try_return_residual_tag), current_return_};
+        if (!ir_expr_try_converts_residual(expr)) return cast_value(value, current_return_);
+        if (!ir_expr_try_residual_has_payload(expr)) {
+            return Value{
+                llvm_type(current_return_),
+                std::to_string(ir_expr_try_return_residual_tag(expr)),
+                current_return_
+            };
         }
 
         std::string shifted_down = temp();
@@ -2815,12 +2819,13 @@ private:
             shifted_down,
             IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, expr.loc}
         };
-        payload = cast_value(payload, expr.try_return_residual_payload_type);
+        payload = cast_value(payload, ir_expr_try_return_residual_payload_type(expr));
         payload = cast_value(payload, IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, expr.loc});
         std::string shifted_up = temp();
         line("  " + shifted_up + " = shl i64 " + payload.name + ", 32");
         std::string out = temp();
-        line("  " + out + " = or i64 " + shifted_up + ", " + std::to_string(expr.try_return_residual_tag));
+        line("  " + out + " = or i64 " + shifted_up + ", " +
+             std::to_string(ir_expr_try_return_residual_tag(expr)));
         return Value{llvm_type(current_return_), out, current_return_};
     }
 
@@ -2836,7 +2841,7 @@ private:
 
         emit_label(fail);
         Value residual = emit_try_residual_return_value(expr, value);
-        emit_statements(expr.try_residual_cleanup);
+        emit_statements(ir_expr_try_residual_cleanup(expr));
         line("  ret " + residual.type + " " + residual.name);
 
         emit_label(ok);

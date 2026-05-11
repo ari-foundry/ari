@@ -3183,18 +3183,18 @@ private:
         std::size_t jump_end = emit_jmp_placeholder();
 
         patch_rel32(jump_fail, out_.size());
-        if (expr.try_converts_residual) {
-            if (expr.try_residual_has_payload) {
+        if (ir_expr_try_converts_residual(expr)) {
+            if (ir_expr_try_residual_has_payload(expr)) {
                 emit_mov_reg_rsp(Reg::RAX);
                 emit_shr_rax_imm8(32);
-                emit_cast_payload_to_type(expr.loc, expr.try_return_residual_payload_type);
+                emit_cast_payload_to_type(expr.loc, ir_expr_try_return_residual_payload_type(expr));
                 emit_shl_rax_imm8(32);
-                emit_mov_reg_imm64(Reg::RCX, expr.try_return_residual_tag);
+                emit_mov_reg_imm64(Reg::RCX, ir_expr_try_return_residual_tag(expr));
                 emit_or_reg_reg(Reg::RAX, Reg::RCX);
                 emit_pop(Reg::RCX);
             } else {
                 emit_pop(Reg::RCX);
-                emit_mov_reg_imm64(Reg::RAX, expr.try_return_residual_tag);
+                emit_mov_reg_imm64(Reg::RAX, ir_expr_try_return_residual_tag(expr));
             }
         } else {
             emit_pop(Reg::RAX);

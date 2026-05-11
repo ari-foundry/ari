@@ -282,6 +282,32 @@ IrExprPtr make_pointer_store_expr(SourceLocation loc, IrExprPtr pointer, IrExprP
     return expr;
 }
 
+IrExprPtr make_ir_try_expr(SourceLocation loc,
+                           IrExprPtr operand,
+                           IrType success_payload_type,
+                           std::uint32_t success_tag,
+                           bool converts_residual,
+                           std::uint32_t return_residual_tag,
+                           bool residual_has_payload,
+                           IrType return_residual_payload_type,
+                           std::vector<IrStmtPtr> residual_cleanup) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::Try;
+    expr->loc = loc;
+    expr->type = success_payload_type;
+    expr->payload_type = std::move(success_payload_type);
+    expr->enum_tag = success_tag;
+    set_ir_expr_operand(*expr, std::move(operand));
+    set_ir_expr_try_payload(
+        *expr,
+        converts_residual,
+        return_residual_tag,
+        residual_has_payload,
+        std::move(return_residual_payload_type),
+        std::move(residual_cleanup));
+    return expr;
+}
+
 IrExprPtr make_ir_call_expr(SourceLocation loc,
                             std::string name,
                             IrType result,

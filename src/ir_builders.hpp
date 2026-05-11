@@ -53,6 +53,15 @@ IrExprPtr make_pointer_offset_expr(SourceLocation loc, IrExprPtr pointer, IrExpr
 IrExprPtr make_pointer_add_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset);
 IrExprPtr make_pointer_load_expr(SourceLocation loc, IrExprPtr pointer, const IrType& result);
 IrExprPtr make_pointer_store_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr value);
+IrExprPtr make_ir_try_expr(SourceLocation loc,
+                           IrExprPtr operand,
+                           IrType success_payload_type,
+                           std::uint32_t success_tag,
+                           bool converts_residual,
+                           std::uint32_t return_residual_tag,
+                           bool residual_has_payload,
+                           IrType return_residual_payload_type,
+                           std::vector<IrStmtPtr> residual_cleanup);
 IrExprPtr make_ir_call_expr(SourceLocation loc,
                             std::string name,
                             IrType result,

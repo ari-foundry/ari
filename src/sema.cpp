@@ -10636,7 +10636,7 @@ private:
             case ExprKind::Cast:
                 return check_cast(expr, std::move(lowered));
             case ExprKind::Try:
-                return check_try(expr, std::move(lowered));
+                return check_try(expr);
             case ExprKind::NullCoalesce:
                 return check_null_coalesce(expr, std::move(lowered));
             case ExprKind::Tuple:
@@ -12412,7 +12412,7 @@ private:
         return name;
     }
 
-    IrExprPtr check_try(const Expr& expr, IrExprPtr lowered) {
+    IrExprPtr check_try(const Expr& expr) {
         IrExprPtr operand = check_expr(*expr_operand(expr));
         if (is_borrow_type(operand->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
@@ -12454,19 +12454,21 @@ private:
             require_try_residual_compatible(expr.loc, operand->type, current_return_, shape, return_shape);
         }
 
-        lowered->kind = IrExprKind::Try;
-        lowered->type = shape.success_payload_type;
-        lowered->payload_type = shape.success_payload_type;
-        lowered->enum_tag = shape.success_tag;
-        lowered->try_converts_residual = converts_residual;
-        lowered->try_return_residual_tag = return_shape.residual_tag;
-        lowered->try_residual_has_payload = !return_shape.residual_payloads.empty();
-        if (lowered->try_residual_has_payload) {
-            lowered->try_return_residual_payload_type = return_shape.residual_payloads[0];
+        bool residual_has_payload = !return_shape.residual_payloads.empty();
+        IrType residual_payload_type;
+        if (residual_has_payload) {
+            residual_payload_type = return_shape.residual_payloads[0];
         }
-        lowered->try_residual_cleanup = make_active_loop_exit_owner_cleanup_for_branch(expr.loc);
-        set_ir_expr_operand(*lowered, std::move(operand));
-        return lowered;
+        return make_ir_try_expr(
+            expr.loc,
+            std::move(operand),
+            shape.success_payload_type,
+            shape.success_tag,
+            converts_residual,
+            return_shape.residual_tag,
+            residual_has_payload,
+            std::move(residual_payload_type),
+            make_active_loop_exit_owner_cleanup_for_branch(expr.loc));
     }
 
     void require_try_residual_compatible(SourceLocation loc,
