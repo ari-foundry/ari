@@ -12,6 +12,7 @@ bool is_aggregate_layout_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Value &&
            (type.primitive == IrPrimitiveKind::Tuple ||
             type.primitive == IrPrimitiveKind::Array ||
+            (type.primitive == IrPrimitiveKind::Vector && type.field_types.size() == 2) ||
             type.primitive == IrPrimitiveKind::Struct ||
             (type.primitive == IrPrimitiveKind::Enum && !type.field_types.empty()));
 }

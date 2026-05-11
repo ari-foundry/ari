@@ -1516,6 +1516,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/array-literal-default.raw; code=$$?; test $$code -eq 14
 	$(TARGET) --freestanding tests/ok/array-dynamic-index.ari -o $(BUILD_DIR)/variables/array-dynamic-index.raw
 	$(BUILD_DIR)/variables/array-dynamic-index.raw; code=$$?; test $$code -eq 12
+	$(TARGET) --freestanding tests/ok/vector-local-freestanding.ari -o $(BUILD_DIR)/variables/vector-local-freestanding.raw
+	$(BUILD_DIR)/variables/vector-local-freestanding.raw; code=$$?; test $$code -eq 28
 	$(TARGET) --freestanding tests/ok/array-len-literal.ari -o $(BUILD_DIR)/variables/array-len-literal.raw
 	$(BUILD_DIR)/variables/array-len-literal.raw; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/variables-basic.ari --emit-llvm $(BUILD_DIR)/variables/variables-basic.ll
@@ -2338,7 +2340,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/missing-module.ari -o $(BUILD_DIR)/errors/missing-module.elf >$(BUILD_DIR)/errors/missing-module.err 2>&1; then exit 1; fi
 	grep -q "cannot find module file for 'definitely_missing_module'" $(BUILD_DIR)/errors/missing-module.err
 	if $(TARGET) --freestanding tests/errors/vector-backend.ari -o $(BUILD_DIR)/errors/vector-backend.elf >$(BUILD_DIR)/errors/vector-backend.err 2>&1; then exit 1; fi
-	grep -q "backend does not lower vector values yet" $(BUILD_DIR)/errors/vector-backend.err
+	grep -q "backend does not lower Vec.push yet" $(BUILD_DIR)/errors/vector-backend.err
 	if $(TARGET) tests/errors/format-placeholder-count.ari -o $(BUILD_DIR)/errors/format-placeholder-count.elf >$(BUILD_DIR)/errors/format-placeholder-count.err 2>&1; then exit 1; fi
 	grep -q "format string has 2 placeholders but 1 values were provided" $(BUILD_DIR)/errors/format-placeholder-count.err
 	if $(TARGET) tests/errors/format-nonliteral.ari -o $(BUILD_DIR)/errors/format-nonliteral.elf >$(BUILD_DIR)/errors/format-nonliteral.err 2>&1; then exit 1; fi

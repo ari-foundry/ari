@@ -44,6 +44,20 @@ IrType array_storage_type(SourceLocation loc, const IrType& element, std::uint64
     return type;
 }
 
+void refresh_vector_storage_fields(IrType& type) {
+    type.field_names.clear();
+    type.field_types.clear();
+    type.field_mutable.clear();
+    if (type.primitive != IrPrimitiveKind::Vector || type.args.size() != 1) return;
+
+    type.field_names.push_back("len");
+    type.field_types.push_back(i64_type(type.loc));
+    type.field_mutable.push_back(true);
+    type.field_names.push_back("data");
+    type.field_types.push_back(array_storage_type(type.loc, type.args[0], type.array_size));
+    type.field_mutable.push_back(true);
+}
+
 IrExprPtr make_i64_literal(SourceLocation loc, std::uint64_t value) {
     auto expr = std::make_unique<IrExpr>();
     expr->kind = IrExprKind::Integer;
@@ -119,6 +133,7 @@ IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::
     IrType type = primitive_type(IrPrimitiveKind::Vector, "Vec", loc);
     type.args.push_back(element);
     type.array_size = length;
+    refresh_vector_storage_fields(type);
     return type;
 }
 
@@ -135,16 +150,17 @@ void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init) {
     std::uint64_t capacity = vector_storage_capacity_from_expr(init);
     if (declared.primitive != IrPrimitiveKind::Vector ||
         declared.args.size() != 1 ||
-        declared.array_size != 0 ||
-        capacity == 0) {
+        declared.array_size != 0) {
         return;
     }
     declared.array_size = capacity;
+    refresh_vector_storage_fields(declared);
 }
 
 void widen_vector_storage_type(IrType& type, std::uint64_t capacity) {
     if (!is_vector_storage_type(type) || capacity <= type.array_size) return;
     type.array_size = capacity;
+    refresh_vector_storage_fields(type);
 }
 
 void widen_vector_storage_literal(IrExpr& expr, std::uint64_t capacity) {

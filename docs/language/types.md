@@ -537,7 +537,11 @@ The compiler reserves enough local storage for the largest vector literal,
 explicit `reserve` capacity, or tracked `push` growth seen for that binding,
 but indexing checks the current runtime length, not the reserved capacity. The
 storage is deliberately not heap allocation yet. Allocator-backed growth,
-slicing, and non-local vector ABI are still planned.
+slicing, and non-local vector ABI are still planned. On the raw
+`--freestanding` backend, stored local vector literals, local copies, scalar
+indexing, `len`, `is_empty`, and stored-vector `for` loops lower through the
+same fixed local layout; the temporary fixed-capacity methods above remain
+LLVM-only.
 
 Array literals support constant indexing without materializing a runtime
 aggregate:
@@ -559,7 +563,8 @@ let second = values[index]
 let first = [10, 20, 30][0]
 ```
 
-Stored local vectors can be used as `for` loop iterables on the LLVM backend:
+Stored local vectors can be used as `for` loop iterables on the LLVM and raw
+freestanding backends:
 
 ```ari
 let values: Vec[i64] = [1, 2, 3]
@@ -578,10 +583,6 @@ for value in [1, 2, 3] {
   println("{}", value)
 }
 ```
-
-The raw freestanding backend still does not lower stored vector values. Use the
-LLVM backend for local vector storage until the native backend gains the same
-aggregate lowering.
 
 ## Fixed Arrays
 
@@ -713,8 +714,9 @@ element stride padding, and final aggregate padding to the maximum field
 alignment. They are Ari layout queries, not a C ABI promise; use `@repr(C)`
 surfaces for foreign layout once that ABI is fully specified. The raw
 `--freestanding` backend uses this Ari layout for local tuple, struct,
-tuple-struct, and fixed-array storage, whole plain aggregate copies, and scalar
-field or element access through raw aggregate pointers. Local and
+tuple-struct, fixed-array, and fixed-capacity local vector storage, whole plain
+aggregate copies, and scalar field or element access through raw aggregate
+pointers. Local and
 pointer-backed aggregate enum storage works for the currently supported payload
 slot types. Direct raw calls can pass and return aggregate enum values through
 hidden pointer slots; aggregate enum external ABI classification remains

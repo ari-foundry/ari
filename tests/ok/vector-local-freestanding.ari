@@ -1,0 +1,15 @@
+fn main() -> i64 {
+  let values: Vec[i64] = [3, 4, 5];
+  var total = 0;
+  for value in values {
+    total = total + value;
+  }
+
+  let index = 1;
+  let empty_bonus = if values.is_empty() {
+    50
+  } else {
+    6
+  };
+  return total + values[0] + values[index] + len(values) + empty_bonus;
+}

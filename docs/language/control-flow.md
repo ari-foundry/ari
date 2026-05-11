@@ -262,8 +262,8 @@ for item @ value in range(1, 4) {
 Bare empty `[]` cannot be iterated directly because it has no element type by
 itself. Give the value a typed local binding first, such as
 `let values: Vec[i64] = []`, when an empty vector should participate in normal
-stored-vector control flow. Stored local vector loops currently lower on the
-LLVM backend; the raw freestanding backend still rejects stored vector values.
+stored-vector control flow. Stored local vector loops lower on the LLVM and raw
+freestanding backends.
 
 List-literal and stored-vector loops can additionally destructure irrefutable
 aggregate element patterns:

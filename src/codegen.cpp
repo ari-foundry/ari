@@ -163,6 +163,7 @@ private:
         return type.qualifier == TypeQualifier::Value &&
                (type.primitive == IrPrimitiveKind::Tuple ||
                 type.primitive == IrPrimitiveKind::Array ||
+                (type.primitive == IrPrimitiveKind::Vector && type.field_types.size() == 2) ||
                 type.primitive == IrPrimitiveKind::Struct ||
                 has_aggregate_enum_layout(type));
     }
@@ -213,6 +214,7 @@ private:
     static const std::vector<IrType>& aggregate_field_types(const IrType& type) {
         if (type.primitive == IrPrimitiveKind::Struct ||
             type.primitive == IrPrimitiveKind::Array ||
+            type.primitive == IrPrimitiveKind::Vector ||
             has_aggregate_enum_layout(type)) return type.field_types;
         return type.args;
     }
@@ -752,6 +754,27 @@ private:
                            ": freestanding backend can only store local multi-payload enum values or constructors yet");
     }
 
+    void emit_store_vector_literal_to_offset(const IrType& target_type,
+                                             const IrExpr& value,
+                                             int target_offset) {
+        if (target_type.args.size() != 1 ||
+            target_type.field_types.size() != 2 ||
+            value.args.size() > target_type.array_size) {
+            throw CompileError(where(value.loc) + ": malformed vector literal during freestanding lowering");
+        }
+
+        int length_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, 0);
+        emit_mov_reg_imm64(Reg::RAX, static_cast<std::uint64_t>(value.args.size()));
+        emit_store_rax_to_local(length_offset, target_type.field_types[0]);
+
+        const IrType& data_type = target_type.field_types[1];
+        int data_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, 1);
+        for (std::size_t i = 0; i < value.args.size(); ++i) {
+            int element_offset = aggregate_lvalue_field_offset(value.loc, data_offset, data_type, i);
+            emit_store_value_to_offset(target_type.args[0], *value.args[i], element_offset);
+        }
+    }
+
     void emit_store_value_to_pointer_base(SourceLocation loc,
                                           const IrExpr& value,
                                           const IrType& target_type,
@@ -865,6 +888,11 @@ private:
                 int offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, i);
                 emit_store_value_to_offset(fields[i], *value.args[i], offset);
             }
+            return;
+        }
+
+        if (value.kind == IrExprKind::Vector && target_type.primitive == IrPrimitiveKind::Vector) {
+            emit_store_vector_literal_to_offset(target_type, value, target_offset);
             return;
         }
 
@@ -2240,6 +2268,10 @@ private:
                     emit_array_index(expr);
                     break;
                 }
+                if (ir_expr_operand(expr) && ir_expr_operand(expr)->type.primitive == IrPrimitiveKind::Vector) {
+                    emit_vector_index(expr);
+                    break;
+                }
                 throw CompileError(where(expr.loc) + ": backend does not lower vector indexing yet");
             case IrExprKind::SliceRange:
                 throw CompileError(where(expr.loc) + ": freestanding backend does not lower Slice range expressions yet");
@@ -2384,6 +2416,53 @@ private:
 
         std::size_t ok = out_.size();
         patch_rel32(jump_ok, ok);
+    }
+
+    void emit_vector_bounds_check(int length_offset) {
+        emit_mov_reg_imm64(Reg::RCX, 0);
+        emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+        std::size_t fail_low = emit_jcc_placeholder(0x8C);
+
+        emit_push(Reg::RAX);
+        emit_load_rax_from_local(length_offset, i64_type(SourceLocation{}));
+        emit_pop(Reg::RCX);
+        emit_cmp_reg_reg(Reg::RCX, Reg::RAX);
+        std::size_t fail_high = emit_jcc_placeholder(0x8D);
+
+        emit_mov_reg_reg(Reg::RAX, Reg::RCX);
+        std::size_t jump_ok = emit_jmp_placeholder();
+        std::size_t fail = out_.size();
+        patch_rel32(fail_low, fail);
+        patch_rel32(fail_high, fail);
+        emit_direct_call("panic");
+
+        std::size_t ok = out_.size();
+        patch_rel32(jump_ok, ok);
+    }
+
+    void emit_vector_index(const IrExpr& expr) {
+        if (!ir_expr_operand(expr) || ir_expr_operand(expr)->kind != IrExprKind::Local) {
+            throw CompileError(where(expr.loc) + ": backend can only dynamically index local vectors yet");
+        }
+        if (ir_expr_operand(expr)->type.args.size() != 1 ||
+            ir_expr_operand(expr)->type.field_types.size() != 2) {
+            throw CompileError(where(expr.loc) + ": backend cannot index unsized Vec storage");
+        }
+        if (is_aggregate_type(expr.type)) {
+            throw CompileError(where(expr.loc) + ": backend cannot materialize nested aggregate values; index a scalar field");
+        }
+        const IrType& vector_type = ir_expr_operand(expr)->type;
+        int base = local_offset(ir_expr_operand(expr)->loc, ir_expr_name(*ir_expr_operand(expr)));
+        int length_offset = aggregate_lvalue_field_offset(expr.loc, base, vector_type, 0);
+        int data_offset = aggregate_lvalue_field_offset(expr.loc, base, vector_type, 1);
+        int stride = layout_size_bytes(expr.loc, expr.type);
+        emit_expr(*ir_expr_right(expr));
+        emit_vector_bounds_check(length_offset);
+        emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(stride));
+        emit_imul_reg_reg(Reg::RAX, Reg::RCX);
+        emit_lea_reg_local(Reg::RCX, data_offset);
+        emit_add_reg_reg(Reg::RCX, Reg::RAX);
+        emit_load_rax_from_ptr(Reg::RCX, expr.type);
     }
 
     int lvalue_offset(const IrExpr& expr) const {

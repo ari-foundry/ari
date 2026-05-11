@@ -67,6 +67,11 @@
    Vec-valued `match` and `if let` expression arms do the same after sema sizes
    their expected result storage before branch result materialization, including
    arms whose result is a labeled block with typed Vec breaks.
+   The raw freestanding backend now materializes fixed-capacity stored local
+   `Vec[T]` values as Ari-layout local aggregates, so direct literals, local
+   copies, checked scalar indexing, `len`/`is_empty`, and stored-vector `for`
+   loops work there. The temporary mutating/search method surface remains
+   LLVM-only until allocator-backed storage replaces the fixed local buffer.
    The
    shared constant
    value model,
@@ -254,8 +259,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, and
     `len(value)` / `value.len()` length queries for arrays and vectors are
-    implemented on the LLVM backend today. Fixed-capacity local
-    `reserve(n)`/`push(value)` also lowers on LLVM for copyable element
+    implemented on LLVM and, for stored local values without the temporary
+    mutating/search method surface, on the raw freestanding backend. Fixed-capacity
+    local `reserve(n)`/`push(value)` also lowers on LLVM for copyable element
     vectors. The current local vector storage grows to the largest literal or
     reserve capacity seen in the binding, while the stored length still shrinks
     and expands per assignment. The allocator, runtime capacity, and real
@@ -265,7 +271,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
       temporary compiler-known local API does not become permanent surface area
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
-    - [freestanding] lower stored local vector values in the raw backend
 9. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
