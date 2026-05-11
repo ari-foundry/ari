@@ -10,3 +10,14 @@ pub fn expression_statement() -> i64 {
   1;
   return 2;
 }
+
+pub fn local_flow(flag: bool) -> i64 {
+  let base: i64 = 6;
+  var total = base;
+  if flag {
+    total = total + 2;
+  } else {
+    total = total + 4;
+  }
+  return total;
+}

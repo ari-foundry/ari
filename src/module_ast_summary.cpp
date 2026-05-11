@@ -277,8 +277,47 @@ void append_const_initializer(std::ostringstream& out, const ExprPtr& init) {
     out << payload.str();
 }
 
+bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt);
+
+bool append_body_stmt_list(std::ostringstream& out, const std::vector<StmtPtr>& statements) {
+    std::vector<std::ostringstream> payloads(statements.size());
+    for (std::size_t i = 0; i < statements.size(); ++i) {
+        if (!statements[i] || !append_body_stmt_payload(payloads[i], *statements[i])) return false;
+    }
+    append_count(out, statements.size());
+    for (const auto& payload : payloads) out << payload.str();
+    return true;
+}
+
 bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
     switch (stmt.kind) {
+        case StmtKind::VarDecl: {
+            if (stmt.binding.has_pattern) return false;
+            std::ostringstream init;
+            if (stmt.binding.init && !append_const_expr_payload(init, *stmt.binding.init)) return false;
+            append_field(out, "var");
+            append_field(out, stmt.binding.name);
+            append_bool(out, stmt.binding.mutable_binding);
+            append_bool(out, stmt.binding.has_type);
+            if (stmt.binding.has_type) append_type(out, stmt.binding.type);
+            append_bool(out, static_cast<bool>(stmt.binding.init));
+            out << init.str();
+            return true;
+        }
+        case StmtKind::Assign: {
+            const bool has_target = static_cast<bool>(stmt_assign_target(stmt));
+            if (!stmt_assign_rhs(stmt)) return false;
+            std::ostringstream target;
+            std::ostringstream rhs;
+            if (has_target && !append_const_expr_payload(target, *stmt_assign_target(stmt))) return false;
+            if (!append_const_expr_payload(rhs, *stmt_assign_rhs(stmt))) return false;
+            append_field(out, "assign");
+            append_field(out, stmt_assign_name(stmt));
+            append_bool(out, has_target);
+            out << target.str();
+            out << rhs.str();
+            return true;
+        }
         case StmtKind::Return: {
             std::ostringstream value;
             const bool has_value = static_cast<bool>(stmt.expr);
@@ -296,6 +335,20 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             out << value.str();
             return true;
         }
+        case StmtKind::If: {
+            if (!stmt.condition || stmt.has_condition_pattern || stmt.condition_pattern) return false;
+            std::ostringstream condition;
+            std::ostringstream then_body;
+            std::ostringstream else_body;
+            if (!append_const_expr_payload(condition, *stmt.condition)) return false;
+            if (!append_body_stmt_list(then_body, stmt_then_body(stmt))) return false;
+            if (!append_body_stmt_list(else_body, stmt_else_body(stmt))) return false;
+            append_field(out, "if");
+            out << condition.str();
+            out << then_body.str();
+            out << else_body.str();
+            return true;
+        }
         default:
             return false;
     }
@@ -307,17 +360,14 @@ void append_function_body_summary(std::ostringstream& out, const FunctionDecl& f
         return;
     }
 
-    std::vector<std::ostringstream> statements(fn.body.size());
-    for (std::size_t i = 0; i < fn.body.size(); ++i) {
-        if (!fn.body[i] || !append_body_stmt_payload(statements[i], *fn.body[i])) {
-            append_bool(out, false);
-            return;
-        }
+    std::ostringstream body;
+    if (!append_body_stmt_list(body, fn.body)) {
+        append_bool(out, false);
+        return;
     }
 
     append_bool(out, true);
-    append_count(out, fn.body.size());
-    for (const auto& statement : statements) out << statement.str();
+    out << body.str();
 }
 
 struct DeclarationSummaryCounts {
@@ -783,11 +833,7 @@ private:
             bool has_body_summary = read_bool("function body summary flag");
             if (has_body_summary) {
                 if (!fn.has_body) fail("function body summary present without body flag");
-                std::uint64_t body_count = read_count("function body statement count");
-                fn.body.reserve(static_cast<std::size_t>(body_count));
-                for (std::uint64_t i = 0; i < body_count; ++i) {
-                    fn.body.push_back(read_body_stmt("function body statement"));
-                }
+                fn.body = read_body_stmt_list("function body");
             }
         }
         fn.loc = default_loc();
@@ -926,10 +972,41 @@ private:
         (void)read_const_initializer(label);
     }
 
+    std::vector<StmtPtr> read_body_stmt_list(const std::string& label) {
+        std::uint64_t count = read_count(label + " statement count");
+        std::vector<StmtPtr> statements;
+        statements.reserve(static_cast<std::size_t>(count));
+        for (std::uint64_t i = 0; i < count; ++i) {
+            statements.push_back(read_body_stmt(label + " statement"));
+        }
+        return statements;
+    }
+
     StmtPtr read_body_stmt(const std::string& label) {
         std::string kind = read_field(label + " kind");
         auto stmt = std::make_unique<Stmt>();
         stmt->loc = default_loc();
+        if (kind == "var") {
+            stmt->kind = StmtKind::VarDecl;
+            stmt->binding.name = read_field(label + " binding name");
+            stmt->binding.mutable_binding = read_bool(label + " binding mutability");
+            stmt->binding.has_type = read_bool(label + " binding type flag");
+            if (stmt->binding.has_type) stmt->binding.type = read_type(label + " binding type");
+            if (read_bool(label + " binding initializer flag")) {
+                stmt->binding.init = read_const_expr(label + " binding initializer");
+            }
+            stmt->binding.loc = default_loc();
+            return stmt;
+        }
+        if (kind == "assign") {
+            stmt->kind = StmtKind::Assign;
+            set_stmt_assign_name(*stmt, read_field(label + " assignment name"));
+            if (read_bool(label + " assignment target flag")) {
+                set_stmt_assign_target(*stmt, read_const_expr(label + " assignment target"));
+            }
+            set_stmt_assign_rhs(*stmt, read_const_expr(label + " assignment value"));
+            return stmt;
+        }
         if (kind == "return") {
             stmt->kind = StmtKind::Return;
             if (read_bool(label + " return value flag")) {
@@ -940,6 +1017,13 @@ private:
         if (kind == "expr-stmt") {
             stmt->kind = StmtKind::ExprStmt;
             stmt->expr = read_const_expr(label + " expression");
+            return stmt;
+        }
+        if (kind == "if") {
+            stmt->kind = StmtKind::If;
+            stmt->condition = read_const_expr(label + " condition");
+            set_stmt_then_body(*stmt, read_body_stmt_list(label + " then body"));
+            set_stmt_else_body(*stmt, read_body_stmt_list(label + " else body"));
             return stmt;
         }
         fail("unknown function body statement summary kind '" + kind + "'");
