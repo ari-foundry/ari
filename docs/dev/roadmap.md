@@ -101,7 +101,9 @@
    now connect that raw seed to a public allocator/capability creation surface.
    The source handle also has metadata, checked read/write, push/pop,
    insert/remove, swap, truncate/clear, simple linear search, grow-only
-   explicit `reserve(ref mut Zone, capacity)`, same-zone grow-on-demand
+   explicit `reserve(ref mut Zone, capacity)`,
+   `reserve_extra(ref mut Zone, additional)` capacity growth to
+   `len + additional`, same-zone grow-on-demand
    `push_in(ref mut Zone, value)` and `insert_in(ref mut Zone, index, value)`,
    slice extension with `extend_from_slice_in(ref mut Zone, Slice<T>)`,
    grow-or-shrink `resize_in(ref mut Zone, length, value)`, and

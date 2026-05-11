@@ -97,6 +97,7 @@ std::optional<std::vector<std::size_t>> std_vec_zone_handle_data_field_path_indi
 
 bool std_vec_method_requires_same_zone_argument(const std::string& method_name) {
     return method_name == "reserve" ||
+           method_name == "reserve_extra" ||
            method_name == "push_in" ||
            method_name == "insert_in" ||
            method_name == "extend_from_slice_in" ||

@@ -293,6 +293,22 @@ pub mod vec {
       self.raw.capacity = capacity;
     }
 
+    fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+      std::assert(additional >= 0);
+      let capacity = self.raw.len + additional;
+      if capacity <= self.raw.capacity {
+        return;
+      }
+      let data = alloc_buffer<T>(zone, capacity);
+      var index = 0;
+      while index < self.raw.len {
+        ptr_store(ptr_add(data, index), ptr_load(ptr_add(self.raw.data, index)));
+        index = index + 1;
+      }
+      self.raw.data = data;
+      self.raw.capacity = capacity;
+    }
+
     fn pop(self: ref mut Self) -> T {
       std::assert(self.raw.len > 0);
       self.raw.len = self.raw.len - 1;

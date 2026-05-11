@@ -510,6 +510,7 @@ vec.push(10)
 vec.push(20)
 vec.push_in(ref mut zone, 30)
 vec.reserve(ref mut zone, 8)
+vec.reserve_extra(ref mut zone, 2)
 vec.insert(1, 15)
 vec.insert_in(ref mut zone, 2, 18)
 vec.resize_in(ref mut zone, 8, 0)
@@ -531,17 +532,21 @@ The root `Vec[T]`/`std::Vec[T]` type is still the current local vector literal
 storage until runtime heap growth is ported. Source `std::vec::Vec<T>.reserve`
 is grow-only: it allocates a larger buffer from the same explicit zone, copies
 the current elements, preserves `len`, and leaves the old buffer to the zone's
-bulk lifetime. `std::vec::Vec<T>.push_in(ref mut Zone, value)` uses the same
-explicit zone capability and grows when the current capacity is full before
-appending. `std::vec::Vec<T>.insert_in(ref mut Zone, index, value)` follows the
-same explicit-zone growth rule before inserting and shifting later elements.
+bulk lifetime. `std::vec::Vec<T>.reserve_extra(ref mut Zone, additional)`
+grows to at least `len + additional`, which lets callers reserve append room
+without recomputing the current length. `std::vec::Vec<T>.push_in(ref mut Zone,
+value)` uses the same explicit zone capability and grows when the current
+capacity is full before appending. `std::vec::Vec<T>.insert_in(ref mut Zone,
+index, value)` follows the same explicit-zone growth rule before inserting and
+shifting later elements.
 `std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)` appends each
 slice element through that same growth path. `std::vec::Vec<T>.resize_in(ref
 mut Zone, length, value)` shrinks by setting `len` or grows by appending copies
-of `value`. Passing a different zone borrow to `reserve`, `push_in`,
-`insert_in`, `extend_from_slice_in`, or `resize_in` is rejected because the
-source handle remains tied to the zone that created it. `vec.as_slice()`
-returns a `Slice[T]` over the same zone-backed buffer, and that slice is
+of `value`. Passing a different zone borrow to `reserve`, `reserve_extra`,
+`push_in`, `insert_in`, `extend_from_slice_in`, or `resize_in` is rejected
+because the source handle remains tied to the zone that created it.
+`vec.as_slice()` returns a `Slice[T]` over the same zone-backed buffer, and
+that slice is
 rejected after
 the source zone is reset or destroyed.
 
