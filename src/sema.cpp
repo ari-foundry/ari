@@ -4790,7 +4790,7 @@ private:
                 check_for(stmt, *lowered);
                 break;
             case StmtKind::InitWhile:
-                check_init_while(stmt, *lowered);
+                flow = check_init_while(stmt, *lowered);
                 break;
             case StmtKind::Continue:
                 check_continue(stmt, *lowered);
@@ -10536,7 +10536,7 @@ private:
         return lowered_updates;
     }
 
-    void check_init_while(const Stmt& stmt, IrStmt& lowered) {
+    Flow check_init_while(const Stmt& stmt, IrStmt& lowered) {
         const std::string& label = stmt_label(stmt);
         LoopInfo loop;
         loop.supports_values = true;
@@ -10566,6 +10566,7 @@ private:
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
         const std::optional<bool> literal_condition = literal_bool_condition_value(*lowered.condition);
+        const bool literal_true_condition = literal_condition.value_or(false);
         StateSnapshot loop_input = snapshot_states();
 
         push_loop(stmt.loc, loop);
@@ -10581,7 +10582,12 @@ private:
             }
             loops_.pop_back();
             restore_states(loop_input);
-            return;
+            return Flow::Continues;
+        }
+        if (body.flow != Flow::Continues && !stmt.updates.empty()) {
+            restore_states(loop_input);
+            lowered.updates = check_init_while_update_exprs(stmt.loc, loop, stmt.updates);
+            restore_states(loop_input);
         }
         if (body.flow == Flow::Continues && stmt.updates.empty()) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
@@ -10608,6 +10614,11 @@ private:
         merge_continue_states(stmt.loc, exit_state, loop_state);
         merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
         restore_states(exit_state);
+        if (literal_true_condition && body.flow == Flow::Returns) return Flow::Returns;
+        if (literal_true_condition && literal_true_loop_never_falls_through(loop_state, body.flow)) {
+            return Flow::Stops;
+        }
+        return Flow::Continues;
     }
 
     const LoopInfo& loop_for_break(SourceLocation loc, const std::string& label) const {

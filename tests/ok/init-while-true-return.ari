@@ -1,0 +1,5 @@
+fn main() -> i64 {
+  init i = 0 while true {
+    return i + 9;
+  } next i + 1
+}

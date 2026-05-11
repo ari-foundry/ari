@@ -129,7 +129,8 @@
    contributing unreachable `break`/`continue` snapshots to enclosing loops.
    Literal-false `init while` / `let while` loops now keep their zero-iteration
    init binding state after checking the unreachable body and `next`
-   expressions.
+   expressions. Literal-true `init while` / `let while` loops now report
+   all-return and non-fallthrough statement flow like plain `while true`.
    - [loop-owner-fixed-point] track ownership-state fixed points through plain
      loop fallthrough paths instead of rejecting all state changes inside loops
    - [loop-borrow-merge] add borrow-state snapshots and merges for plain loop
