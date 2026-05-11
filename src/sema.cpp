@@ -4585,19 +4585,18 @@ private:
                                                          const std::string& method_name,
                                                          const IrType& receiver_type,
                                                          const std::vector<IrExprPtr>& args) {
-        if (!std_vec_method_requires_same_zone_argument(method_name) || args.size() < 2) return;
-        if (!is_std_vec_handle_type(value_qualified_type(receiver_type))) return;
-
-        std::string vec_source;
-        if (!zone_pointer_source_name_from_expr(*args[0], vec_source)) {
-            fail(loc, "std::vec::Vec." + method_name + " receiver must come from a tracked zone allocation");
-        }
-        std::string zone_source;
-        if (!zone_source_name_from_arg(*args[1], zone_source)) {
-            fail(loc, "std::vec::Vec." + method_name + " requires an explicit zone borrow argument");
-        }
-        if (vec_source != zone_source) {
-            fail(loc, "std::vec::Vec." + method_name + " zone argument must match the vector allocation zone");
+        std::optional<std::string> violation = std_vec_same_zone_method_violation(
+            method_name,
+            receiver_type,
+            args,
+            [this](const IrExpr& value, std::string& out) {
+                return zone_pointer_source_name_from_expr(value, out);
+            },
+            [this](const IrExpr& value, std::string& out) {
+                return zone_source_name_from_arg(value, out);
+            });
+        if (violation) {
+            fail(loc, *violation);
         }
     }
 

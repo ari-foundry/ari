@@ -130,7 +130,10 @@
    - [std-provenance] keep zone-provenance rules for source handles and
      pointer-returning methods in focused helpers such as `std_box_semantics`,
      `std_vec_semantics`, `slice_semantics`, and future string/smart-pointer
-     helpers instead of adding more bespoke checks to `sema.cpp`
+     helpers instead of adding more bespoke checks to `sema.cpp`. The
+     `std::vec::Vec` same-zone method contract now lives in
+     `std_vec_semantics`; remaining work is to move broader source-handle
+     lifetime bookkeeping out of `sema.cpp`.
    - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
      top of the existing explicit-zone `std::boxed::Box<T>` seed before std
      APIs start returning owning heap handles

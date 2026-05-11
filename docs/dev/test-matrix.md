@@ -262,6 +262,8 @@ Checklist:
 - [x] source `std::vec::Vec<T>.reserve(ref mut Zone, capacity)` grows the handle
       with a larger same-zone allocation and rejects different-zone reserve
       calls
+- [x] source `std::vec::Vec<T>` same-zone growth methods reject manually
+      constructed receivers that are not tied to a tracked zone allocation
 - [x] source `std::vec::Vec<T>.reserve_extra(ref mut Zone, additional)` grows
       capacity to at least `len + additional` through the same explicit zone
       capability and rejects different-zone reserve calls

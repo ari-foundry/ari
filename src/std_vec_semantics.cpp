@@ -116,4 +116,30 @@ bool std_vec_pointer_result_preserves_receiver_zone(const IrExpr& call) {
            is_std_vec_handle_type(value_qualified_vec_type(call.args[0]->type));
 }
 
+std::optional<std::string> std_vec_same_zone_method_violation(
+    const std::string& method_name,
+    const IrType& receiver_type,
+    const std::vector<IrExprPtr>& args,
+    const StdVecZoneSourceLookup& receiver_zone_source,
+    const StdVecZoneSourceLookup& argument_zone_source) {
+    if (!std_vec_method_requires_same_zone_argument(method_name) || args.size() < 2) return std::nullopt;
+    if (!is_std_vec_handle_type(value_qualified_vec_type(receiver_type))) return std::nullopt;
+
+    std::string vec_source;
+    if (!receiver_zone_source(*args[0], vec_source)) {
+        return "std::vec::Vec." + method_name + " receiver must come from a tracked zone allocation";
+    }
+
+    std::string zone_source;
+    if (!argument_zone_source(*args[1], zone_source)) {
+        return "std::vec::Vec." + method_name + " requires an explicit zone borrow argument";
+    }
+
+    if (vec_source != zone_source) {
+        return "std::vec::Vec." + method_name + " zone argument must match the vector allocation zone";
+    }
+
+    return std::nullopt;
+}
+
 } // namespace ari
