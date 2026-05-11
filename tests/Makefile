@@ -1795,6 +1795,8 @@ check-variables: $(TARGET)
 	grep -q "type mismatch: expected i32, got bool" $(BUILD_DIR)/variables/variables-assign-type-mismatch.err
 	if $(TARGET) tests/errors/aggregate-borrow-source-assign.ari -o $(BUILD_DIR)/variables/aggregate-borrow-source-assign.elf >$(BUILD_DIR)/variables/aggregate-borrow-source-assign.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/variables/aggregate-borrow-source-assign.err
+	$(TARGET) --freestanding tests/ok/aggregate-borrow-source-release.ari -o $(BUILD_DIR)/variables/aggregate-borrow-source-release.raw
+	$(BUILD_DIR)/variables/aggregate-borrow-source-release.raw; code=$$?; test $$code -eq 3
 	if $(TARGET) tests/errors/field-borrow-assign.ari -o $(BUILD_DIR)/variables/field-borrow-assign.elf >$(BUILD_DIR)/variables/field-borrow-assign.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed field 'pair.0'" $(BUILD_DIR)/variables/field-borrow-assign.err
 	if $(TARGET) tests/errors/field-borrow-conflict.ari -o $(BUILD_DIR)/variables/field-borrow-conflict.elf >$(BUILD_DIR)/variables/field-borrow-conflict.err 2>&1; then exit 1; fi

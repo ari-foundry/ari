@@ -3537,86 +3537,16 @@ private:
         end_scope(false);
     }
 
-    static std::string borrow_path_display(const std::string& name, const std::string& path) {
-        return path.empty() ? name : name + "." + path;
-    }
-
-    static bool field_borrow_counts_active(const LocalInfo::FieldBorrowCounts& counts) {
-        return counts.immutable > 0 || counts.mutable_ > 0;
-    }
-
-    static bool borrow_paths_overlap(const std::string& left, const std::string& right) {
-        if (left.empty() || right.empty()) return true;
-        return local_owned_field_path_matches(left, right) || local_owned_field_path_matches(right, left);
-    }
-
-    static bool has_active_field_borrows(const LocalInfo& local) {
-        for (const auto& item : local.field_borrows) {
-            if (field_borrow_counts_active(item.second)) return true;
-        }
-        return false;
-    }
-
-    static bool has_mutable_field_borrows(const LocalInfo& local) {
-        for (const auto& item : local.field_borrows) {
-            if (item.second.mutable_ > 0) return true;
-        }
-        return false;
-    }
-
-    static bool has_overlapping_field_borrows(const LocalInfo& local, const std::string& path) {
-        for (const auto& item : local.field_borrows) {
-            if (field_borrow_counts_active(item.second) && borrow_paths_overlap(item.first, path)) return true;
-        }
-        return false;
-    }
-
-    static bool has_overlapping_mutable_field_borrows(const LocalInfo& local, const std::string& path) {
-        for (const auto& item : local.field_borrows) {
-            if (item.second.mutable_ > 0 && borrow_paths_overlap(item.first, path)) return true;
-        }
-        return false;
-    }
-
     void add_borrow_source(LocalInfo& source, const std::string& path, bool mutable_borrow) {
-        if (path.empty()) {
-            int& count = mutable_borrow ? source.mutable_borrows : source.immutable_borrows;
-            ++count;
-            return;
-        }
-        LocalInfo::FieldBorrowCounts& counts = source.field_borrows[path];
-        int& count = mutable_borrow ? counts.mutable_ : counts.immutable;
-        ++count;
+        add_local_borrow_source(source, path, mutable_borrow);
     }
 
     void release_borrow_source(const std::string& name, const std::string& path, bool mutable_borrow) {
-        LocalInfo& source = local_slot_by_name(name);
-        if (path.empty()) {
-            int& count = mutable_borrow ? source.mutable_borrows : source.immutable_borrows;
-            if (count <= 0) throw CompileError("internal error: named borrow count underflow for '" + name + "'");
-            --count;
-            return;
-        }
-
-        auto found = source.field_borrows.find(path);
-        if (found == source.field_borrows.end()) {
-            throw CompileError("internal error: field borrow count underflow for '" + borrow_path_display(name, path) + "'");
-        }
-        int& count = mutable_borrow ? found->second.mutable_ : found->second.immutable;
-        if (count <= 0) {
-            throw CompileError("internal error: field borrow count underflow for '" + borrow_path_display(name, path) + "'");
-        }
-        --count;
-        if (!field_borrow_counts_active(found->second)) source.field_borrows.erase(found);
+        local_scopes_.release_borrow_source(name, path, mutable_borrow);
     }
 
     void release_named_borrow(const LocalInfo& borrow) {
-        if (!borrow.borrow_source.empty()) {
-            release_borrow_source(borrow.borrow_source, borrow.borrow_source_path, borrow.borrow_source_mutable);
-        }
-        for (const auto& item : borrow.aggregate_borrow_sources) {
-            release_borrow_source(item.name, item.path, item.mutable_borrow);
-        }
+        local_scopes_.release_borrow_sources(borrow);
     }
 
     void promote_temporary_borrow_to_named(SourceLocation loc, const IrExpr& init, const std::string& binding_name) {
@@ -3631,9 +3561,7 @@ private:
         }
         temporary_borrows_.pop_back();
         LocalInfo& binding = local_slot_by_name(binding_name);
-        binding.borrow_source = ir_expr_name(init);
-        binding.borrow_source_path = ir_expr_label(init);
-        binding.borrow_source_mutable = init.mutable_borrow;
+        set_local_named_borrow_source(binding, ir_expr_name(init), ir_expr_label(init), init.mutable_borrow);
     }
 
     void promote_temporary_borrows_to_aggregate(std::size_t mark, const std::string& binding_name) {
@@ -3641,7 +3569,7 @@ private:
         LocalInfo& binding = local_slot_by_name(binding_name);
         for (std::size_t i = mark; i < temporary_borrows_.size(); ++i) {
             const TemporaryBorrow& borrow = temporary_borrows_[i];
-            binding.aggregate_borrow_sources.push_back({borrow.name, borrow.path, borrow.mutable_borrow});
+            add_local_aggregate_borrow_source(binding, borrow.name, borrow.path, borrow.mutable_borrow);
         }
         temporary_borrows_.resize(mark);
     }
@@ -4118,12 +4046,8 @@ private:
         );
     }
 
-    static bool has_active_borrows(const LocalInfo& local) {
-        return local.immutable_borrows > 0 || local.mutable_borrows > 0;
-    }
-
     static void require_not_borrowed(SourceLocation loc, const std::string& name, const LocalInfo& local, const std::string& action) {
-        if (has_active_borrows(local) || has_active_field_borrows(local)) {
+        if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) {
             fail(loc, "cannot " + action + " borrowed binding '" + name + "'");
         }
     }
@@ -4131,15 +4055,15 @@ private:
     void require_can_read_borrow_path(SourceLocation loc,
                                       const std::string& name,
                                       const LocalInfo& local,
-                                      const std::string& path) const {
+        const std::string& path) const {
         if (path.empty()) {
-            if (local.mutable_borrows > 0 || has_mutable_field_borrows(local)) {
+            if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
                 fail(loc, "cannot read mutably borrowed binding '" + name + "'");
             }
             return;
         }
-        if (local.mutable_borrows > 0 || has_overlapping_mutable_field_borrows(local, path)) {
-            fail(loc, "cannot read mutably borrowed field '" + borrow_path_display(name, path) + "'");
+        if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
+            fail(loc, "cannot read mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
         }
     }
 
@@ -4151,8 +4075,8 @@ private:
             require_not_borrowed(loc, name, local, "assign to");
             return;
         }
-        if (has_active_borrows(local) || has_overlapping_field_borrows(local, path)) {
-            fail(loc, "cannot assign to borrowed field '" + borrow_path_display(name, path) + "'");
+        if (local_has_active_borrows(local) || local_has_overlapping_field_borrows(local, path)) {
+            fail(loc, "cannot assign to borrowed field '" + local_borrow_path_display(name, path) + "'");
         }
     }
 
@@ -4163,24 +4087,24 @@ private:
                                  bool mutable_borrow) const {
         if (path.empty()) {
             if (mutable_borrow) {
-                if (has_active_borrows(local) || has_active_field_borrows(local)) {
+                if (local_has_active_borrows(local) || local_has_active_field_borrows(local)) {
                     fail(loc, "cannot mutably borrow already borrowed binding '" + name + "'");
                 }
                 return;
             }
-            if (local.mutable_borrows > 0 || has_mutable_field_borrows(local)) {
+            if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
                 fail(loc, "cannot immutably borrow mutably borrowed binding '" + name + "'");
             }
             return;
         }
         if (mutable_borrow) {
-            if (has_active_borrows(local) || has_overlapping_field_borrows(local, path)) {
-                fail(loc, "cannot mutably borrow already borrowed field '" + borrow_path_display(name, path) + "'");
+            if (local_has_active_borrows(local) || local_has_overlapping_field_borrows(local, path)) {
+                fail(loc, "cannot mutably borrow already borrowed field '" + local_borrow_path_display(name, path) + "'");
             }
             return;
         }
-        if (local.mutable_borrows > 0 || has_overlapping_mutable_field_borrows(local, path)) {
-            fail(loc, "cannot immutably borrow mutably borrowed field '" + borrow_path_display(name, path) + "'");
+        if (local_has_mutable_borrows(local) || local_has_overlapping_mutable_field_borrows(local, path)) {
+            fail(loc, "cannot immutably borrow mutably borrowed field '" + local_borrow_path_display(name, path) + "'");
         }
     }
 
@@ -12245,10 +12169,10 @@ private:
 
         LocalInfo& source = require_live_local(expr.loc, access.base_name);
         if (is_borrow_type(access.type) || access.type.qualifier == TypeQualifier::Ptr) {
-            fail(expr.loc, "cannot borrow reference-like value '" + borrow_path_display(access.base_name, access.path) + "'");
+            fail(expr.loc, "cannot borrow reference-like value '" + local_borrow_path_display(access.base_name, access.path) + "'");
         }
         if (is_void_value_type(access.type)) {
-            fail(expr.loc, "cannot borrow void value '" + borrow_path_display(access.base_name, access.path) + "'");
+            fail(expr.loc, "cannot borrow void value '" + local_borrow_path_display(access.base_name, access.path) + "'");
         }
 
         if (expr.mutable_borrow) {
@@ -13586,7 +13510,7 @@ private:
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
         }
-        if (local.mutable_borrows > 0 || has_mutable_field_borrows(local)) {
+        if (local_has_mutable_borrows(local) || local_has_mutable_field_borrows(local)) {
             fail(loc, "cannot read mutably borrowed Vec binding '" + name + "'");
         }
     }

@@ -95,31 +95,18 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Continue `sema.cpp` decomposition by extracting local state.
-   `LocalState`, `LocalInfo`, local scope storage, used-name/reusable-pattern
-   binding tracking, local lookup, and ownership/vector/zone state snapshots now
-   live in `local_state`. Scope-exit owner checks and named-borrow release now
-   run through `LocalScopeStack::end_scope` callbacks, so `push_scope`,
-   `pop_scope`, and `discard_scope` no longer inspect the raw current scope in
-   `sema.cpp`. Auto-destroy zone cleanup, temporary-zone escape checks, and
-   return-owner checks now traverse locals through `local_state` callbacks
-   instead of raw scope maps. LocalInfo construction, local state setters,
-   zone-generation bumps, vector known-length setters/getters, static integer
-   cache setters, and owned-field path/state helpers are also exposed from
-   `local_state`, so statement/expression lowering no longer writes those raw
-   fields directly. Local binding assignment eligibility, field-assignment base
-   mutability, immutable Vec/Slice receiver diagnostics, and immutable
-   mutable-borrow diagnostics now also route through local-state diagnostic
-   helpers while `SemanticChecker` keeps source locations and borrow-conflict
-   checks. Branch/loop ownership-state comparison and merged restore hooks now
-   route through `local_state` snapshot APIs. `SemanticChecker` still
-   coordinates move/drop lowering and most borrow rules.
-   Finish those behavior-preserving moves before starting the larger
-   borrow-checking and ownership extractions, leaning on the existing ownership,
-   borrow, loop, and control-flow tests instead of adding broad duplicate
-   coverage.
-   - [borrow-adapter] keep named and temporary borrow checks layered over the
-     new local-state API so later `borrow_semantics` extraction has one entry point
+2. Extract borrow checking into `borrow_semantics`.
+   The local-state prerequisite is complete: local scopes, state snapshots,
+   assignment/mutability diagnostics, branch/loop state merge hooks, borrow
+   count/source storage, and named/aggregate borrow-source release now route
+   through `local_state` APIs. Move the remaining borrow policy out of
+   `sema.cpp` in behavior-preserving slices before attempting NLL or richer
+   borrow-valued results.
+   - [borrow-context] introduce a small borrow context around the temporary
+     borrow stack and `LocalScopeStack` borrow-source API
+   - [borrow-diagnostics] move `require_not_borrowed`,
+     `require_can_read_borrow_path`, `require_can_assign_borrow_path`, and
+     `require_can_borrow_path` behind that context
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

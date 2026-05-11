@@ -154,6 +154,107 @@ bool local_has_live_owner(const LocalInfo& local) {
     return is_owner_type(local.type) && local_is_alive(local);
 }
 
+std::string local_borrow_path_display(const std::string& name, const std::string& path) {
+    return path.empty() ? name : name + "." + path;
+}
+
+static bool field_borrow_counts_active(const LocalInfo::FieldBorrowCounts& counts) {
+    return counts.immutable > 0 || counts.mutable_ > 0;
+}
+
+static bool borrow_paths_overlap(const std::string& left, const std::string& right) {
+    if (left.empty() || right.empty()) return true;
+    return local_owned_field_path_matches(left, right) || local_owned_field_path_matches(right, left);
+}
+
+bool local_has_active_borrows(const LocalInfo& local) {
+    return local.immutable_borrows > 0 || local.mutable_borrows > 0;
+}
+
+bool local_has_mutable_borrows(const LocalInfo& local) {
+    return local.mutable_borrows > 0;
+}
+
+bool local_has_active_field_borrows(const LocalInfo& local) {
+    for (const auto& item : local.field_borrows) {
+        if (field_borrow_counts_active(item.second)) return true;
+    }
+    return false;
+}
+
+bool local_has_mutable_field_borrows(const LocalInfo& local) {
+    for (const auto& item : local.field_borrows) {
+        if (item.second.mutable_ > 0) return true;
+    }
+    return false;
+}
+
+bool local_has_overlapping_field_borrows(const LocalInfo& local, const std::string& path) {
+    for (const auto& item : local.field_borrows) {
+        if (field_borrow_counts_active(item.second) && borrow_paths_overlap(item.first, path)) return true;
+    }
+    return false;
+}
+
+bool local_has_overlapping_mutable_field_borrows(const LocalInfo& local, const std::string& path) {
+    for (const auto& item : local.field_borrows) {
+        if (item.second.mutable_ > 0 && borrow_paths_overlap(item.first, path)) return true;
+    }
+    return false;
+}
+
+void add_local_borrow_source(LocalInfo& source, const std::string& path, bool mutable_borrow) {
+    if (path.empty()) {
+        int& count = mutable_borrow ? source.mutable_borrows : source.immutable_borrows;
+        ++count;
+        return;
+    }
+    LocalInfo::FieldBorrowCounts& counts = source.field_borrows[path];
+    int& count = mutable_borrow ? counts.mutable_ : counts.immutable;
+    ++count;
+}
+
+void release_local_borrow_source(const std::string& name,
+                                 LocalInfo& source,
+                                 const std::string& path,
+                                 bool mutable_borrow) {
+    if (path.empty()) {
+        int& count = mutable_borrow ? source.mutable_borrows : source.immutable_borrows;
+        if (count <= 0) throw CompileError("internal error: named borrow count underflow for '" + name + "'");
+        --count;
+        return;
+    }
+
+    auto found = source.field_borrows.find(path);
+    if (found == source.field_borrows.end()) {
+        throw CompileError("internal error: field borrow count underflow for '" +
+                           local_borrow_path_display(name, path) + "'");
+    }
+    int& count = mutable_borrow ? found->second.mutable_ : found->second.immutable;
+    if (count <= 0) {
+        throw CompileError("internal error: field borrow count underflow for '" +
+                           local_borrow_path_display(name, path) + "'");
+    }
+    --count;
+    if (!field_borrow_counts_active(found->second)) source.field_borrows.erase(found);
+}
+
+void set_local_named_borrow_source(LocalInfo& binding,
+                                   const std::string& name,
+                                   const std::string& path,
+                                   bool mutable_borrow) {
+    binding.borrow_source = name;
+    binding.borrow_source_path = path;
+    binding.borrow_source_mutable = mutable_borrow;
+}
+
+void add_local_aggregate_borrow_source(LocalInfo& binding,
+                                       const std::string& name,
+                                       const std::string& path,
+                                       bool mutable_borrow) {
+    binding.aggregate_borrow_sources.push_back({name, path, mutable_borrow});
+}
+
 std::optional<std::string> local_assignment_target_error(const std::string& name, const LocalInfo& local) {
     if (is_borrow_type(local.type)) {
         return "cannot assign to borrow binding '" + name + "'";
@@ -429,6 +530,21 @@ void LocalScopeStack::restore_states(const StateSnapshot& snapshot) {
 
 void LocalScopeStack::restore_merged_zone_generations(StateSnapshot target, const StateSnapshot& source) {
     restore_states(merge_zone_generations(std::move(target), source));
+}
+
+void LocalScopeStack::release_borrow_source(const std::string& name,
+                                            const std::string& path,
+                                            bool mutable_borrow) {
+    release_local_borrow_source(name, require_for_restore(name), path, mutable_borrow);
+}
+
+void LocalScopeStack::release_borrow_sources(const LocalInfo& borrow) {
+    if (!borrow.borrow_source.empty()) {
+        release_borrow_source(borrow.borrow_source, borrow.borrow_source_path, borrow.borrow_source_mutable);
+    }
+    for (const auto& item : borrow.aggregate_borrow_sources) {
+        release_borrow_source(item.name, item.path, item.mutable_borrow);
+    }
 }
 
 bool LocalScopeStack::name_was_used(const std::string& name) const {

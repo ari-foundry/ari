@@ -90,6 +90,26 @@ bool local_has_moved_or_dropped_owned_fields(const LocalInfo& local);
 bool local_has_tracked_owned_fields(const LocalInfo& local);
 bool local_has_live_owned_fields(const LocalInfo& local);
 bool local_has_live_owner(const LocalInfo& local);
+std::string local_borrow_path_display(const std::string& name, const std::string& path);
+bool local_has_active_borrows(const LocalInfo& local);
+bool local_has_mutable_borrows(const LocalInfo& local);
+bool local_has_active_field_borrows(const LocalInfo& local);
+bool local_has_mutable_field_borrows(const LocalInfo& local);
+bool local_has_overlapping_field_borrows(const LocalInfo& local, const std::string& path);
+bool local_has_overlapping_mutable_field_borrows(const LocalInfo& local, const std::string& path);
+void add_local_borrow_source(LocalInfo& source, const std::string& path, bool mutable_borrow);
+void release_local_borrow_source(const std::string& name,
+                                 LocalInfo& source,
+                                 const std::string& path,
+                                 bool mutable_borrow);
+void set_local_named_borrow_source(LocalInfo& binding,
+                                   const std::string& name,
+                                   const std::string& path,
+                                   bool mutable_borrow);
+void add_local_aggregate_borrow_source(LocalInfo& binding,
+                                       const std::string& name,
+                                       const std::string& path,
+                                       bool mutable_borrow);
 std::optional<std::string> local_assignment_target_error(const std::string& name, const LocalInfo& local);
 std::optional<std::string> local_assignment_storage_error(const std::string& name, const LocalInfo& local);
 std::optional<std::string> local_field_assignment_base_error(const std::string& name, const LocalInfo& local);
@@ -140,6 +160,8 @@ public:
     StateSnapshot snapshot_states() const;
     void restore_states(const StateSnapshot& snapshot);
     void restore_merged_zone_generations(StateSnapshot target, const StateSnapshot& source);
+    void release_borrow_source(const std::string& name, const std::string& path, bool mutable_borrow);
+    void release_borrow_sources(const LocalInfo& borrow);
 
     bool name_was_used(const std::string& name) const;
     bool reusable_pattern_binding(const std::string& name) const;
