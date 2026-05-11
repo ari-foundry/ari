@@ -630,7 +630,7 @@ private:
         }
 
         int tag_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, 0);
-        emit_mov_reg_imm64(Reg::RAX, value.enum_tag);
+        emit_mov_reg_imm64(Reg::RAX, ir_expr_enum_tag(value));
         emit_store_rax_to_local(tag_offset, target_type.field_types[0]);
 
         for (std::size_t i = 1; i < target_type.field_types.size(); ++i) {
@@ -667,7 +667,7 @@ private:
         }
 
         int tag_offset = byte_offset + field_offset_bytes(value.loc, target_type, 0);
-        emit_mov_reg_imm64(Reg::RAX, value.enum_tag);
+        emit_mov_reg_imm64(Reg::RAX, ir_expr_enum_tag(value));
         emit_mov_reg_reg(Reg::RCX, Reg::RBX);
         emit_add_pointer_offset_reg(Reg::RCX, tag_offset);
         emit_store_rax_to_ptr(Reg::RCX, target_type.field_types[0]);
@@ -3154,15 +3154,15 @@ private:
         if (has_aggregate_enum_layout(expr.type)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower multi-payload enum values yet");
         }
-        if (!expr.has_payload) {
-            emit_mov_reg_imm64(Reg::RAX, expr.enum_tag);
+        if (!ir_expr_has_enum_payload(expr)) {
+            emit_mov_reg_imm64(Reg::RAX, ir_expr_enum_tag(expr));
             return;
         }
 
         emit_expr(*ir_expr_payload(expr));
-        emit_cast_payload_to_type(expr.loc, expr.payload_type);
+        emit_cast_payload_to_type(expr.loc, ir_expr_enum_payload_type(expr));
         emit_shl_rax_imm8(32);
-        emit_mov_reg_imm64(Reg::RCX, expr.enum_tag);
+        emit_mov_reg_imm64(Reg::RCX, ir_expr_enum_tag(expr));
         emit_or_reg_reg(Reg::RAX, Reg::RCX);
     }
 
@@ -3172,13 +3172,13 @@ private:
         emit_mov_reg_rsp(Reg::RAX);
         emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
         emit_and_reg_reg(Reg::RAX, Reg::RCX);
-        emit_mov_reg_imm64(Reg::RCX, expr.enum_tag);
+        emit_mov_reg_imm64(Reg::RCX, ir_expr_enum_tag(expr));
         emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
         std::size_t jump_fail = emit_jcc_placeholder(0x85);
 
         emit_mov_reg_rsp(Reg::RAX);
         emit_shr_rax_imm8(32);
-        emit_cast_payload_to_type(expr.loc, expr.payload_type);
+        emit_cast_payload_to_type(expr.loc, ir_expr_enum_payload_type(expr));
         emit_pop(Reg::RCX);
         std::size_t jump_end = emit_jmp_placeholder();
 
@@ -3210,13 +3210,13 @@ private:
         emit_mov_reg_rsp(Reg::RAX);
         emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
         emit_and_reg_reg(Reg::RAX, Reg::RCX);
-        emit_mov_reg_imm64(Reg::RCX, expr.enum_tag);
+        emit_mov_reg_imm64(Reg::RCX, ir_expr_enum_tag(expr));
         emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
         std::size_t jump_fallback = emit_jcc_placeholder(0x85);
 
         emit_mov_reg_rsp(Reg::RAX);
         emit_shr_rax_imm8(32);
-        emit_cast_payload_to_type(expr.loc, expr.payload_type);
+        emit_cast_payload_to_type(expr.loc, ir_expr_enum_payload_type(expr));
         emit_pop(Reg::RCX);
         std::size_t jump_end = emit_jmp_placeholder();
 

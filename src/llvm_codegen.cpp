@@ -2780,7 +2780,7 @@ private:
             std::string value = "zeroinitializer";
             std::string with_tag = temp();
             line("  " + with_tag + " = insertvalue " + enum_type + " " + value +
-                 ", i32 " + std::to_string(expr.enum_tag) + ", 0");
+                 ", i32 " + std::to_string(ir_expr_enum_tag(expr)) + ", 0");
             value = with_tag;
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
                 IrType slot_type = expr.type.field_types.at(i + 1);
@@ -2792,13 +2792,15 @@ private:
             }
             return Value{enum_type, value, expr.type};
         }
-        if (!expr.has_payload) return Value{"i64", std::to_string(expr.enum_tag), expr.type};
-        Value payload = cast_value(emit_expr(*ir_expr_payload(expr)), expr.payload_type);
+        if (!ir_expr_has_enum_payload(expr)) {
+            return Value{"i64", std::to_string(ir_expr_enum_tag(expr)), expr.type};
+        }
+        Value payload = cast_value(emit_expr(*ir_expr_payload(expr)), ir_expr_enum_payload_type(expr));
         payload = cast_value(payload, IrType{TypeQualifier::Value, IrPrimitiveKind::U64, "u64", {}, {}, {}, {}, expr.loc});
         std::string shifted = temp();
         line("  " + shifted + " = shl i64 " + payload.name + ", 32");
         std::string out = temp();
-        line("  " + out + " = or i64 " + shifted + ", " + std::to_string(expr.enum_tag));
+        line("  " + out + " = or i64 " + shifted + ", " + std::to_string(ir_expr_enum_tag(expr)));
         return Value{"i64", out, expr.type};
     }
 
@@ -2836,7 +2838,7 @@ private:
         std::string fail = label("try.return");
         std::string cont = label("try.cont");
         std::string cmp = temp();
-        line("  " + cmp + " = icmp eq i32 " + tag.name + ", " + std::to_string(expr.enum_tag));
+        line("  " + cmp + " = icmp eq i32 " + tag.name + ", " + std::to_string(ir_expr_enum_tag(expr)));
         line("  br i1 " + cmp + ", label %" + ok + ", label %" + fail);
 
         emit_label(fail);
@@ -2846,7 +2848,7 @@ private:
 
         emit_label(ok);
         Value payload = emit_enum_payload_slot(expr.loc, value, 0);
-        payload = cast_value(payload, expr.payload_type);
+        payload = cast_value(payload, ir_expr_enum_payload_type(expr));
         line("  br label %" + cont);
 
         emit_label(cont);
@@ -2862,12 +2864,12 @@ private:
         std::string fallback = label("coalesce.fallback");
         std::string end = label("coalesce.end");
         std::string cmp = temp();
-        line("  " + cmp + " = icmp eq i32 " + tag.name + ", " + std::to_string(expr.enum_tag));
+        line("  " + cmp + " = icmp eq i32 " + tag.name + ", " + std::to_string(ir_expr_enum_tag(expr)));
         line("  br i1 " + cmp + ", label %" + ok + ", label %" + fallback);
 
         emit_label(ok);
         Value payload = emit_enum_payload_slot(expr.loc, value, 0);
-        payload = cast_value(payload, expr.payload_type);
+        payload = cast_value(payload, ir_expr_enum_payload_type(expr));
         std::string ok_label = current_label_;
         line("  br label %" + end);
 

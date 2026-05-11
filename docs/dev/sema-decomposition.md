@@ -38,7 +38,8 @@ construction. Some helpers have already moved out to focused files:
   calls, generic call specializations, inherent/trait associated calls,
   trait-qualified calls, method calls, zone helper calls, builtin calls, match
   expression arms, block/match/if expression nodes, postfix `?` IR node
-  assembly, and format-print payload assembly
+  assembly, Option/Result-style `??` IR node assembly, and format-print payload
+  assembly
 - `control_flow_semantics` for product-pattern if-chain assembly shared by
   aggregate match, declaration, `if let`, and `while let` lowering, while
   still routing expression blocks and conditionals through `ir_builders`
@@ -154,7 +155,12 @@ node assembly details out of the main semantic checker. Postfix `?`
 residual-conversion flags, residual return payload type/tag metadata, and
 hidden branch cleanup statements now live behind `IrExprTryPayload`; sema calls
 `make_ir_try_expr` after validating the enum shape, and the LLVM/freestanding
-backends read that rare payload through `ir_expr_try_*` helpers.
+backends read that rare payload through `ir_expr_try_*` helpers. Shared enum
+result metadata for enum constructors, postfix `?`, and `??` now lives behind
+`IrExprEnumResultPayload`; enum constructor helpers, constant materialization,
+`make_ir_try_expr`, and `make_ir_null_coalesce_expr` initialize it, while the
+backends read enum tags and payload cast types through `ir_expr_enum_*`
+helpers.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

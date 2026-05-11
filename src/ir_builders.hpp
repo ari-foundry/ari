@@ -62,6 +62,11 @@ IrExprPtr make_ir_try_expr(SourceLocation loc,
                            bool residual_has_payload,
                            IrType return_residual_payload_type,
                            std::vector<IrStmtPtr> residual_cleanup);
+IrExprPtr make_ir_null_coalesce_expr(SourceLocation loc,
+                                     IrExprPtr value,
+                                     IrExprPtr fallback,
+                                     IrType success_payload_type,
+                                     std::uint32_t success_tag);
 IrExprPtr make_ir_call_expr(SourceLocation loc,
                             std::string name,
                             IrType result,

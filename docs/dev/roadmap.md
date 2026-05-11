@@ -210,16 +210,15 @@
    those string payloads by hand. IR `?` residual-conversion metadata and
    hidden branch cleanup statements now live behind an `IrExprTryPayload`, with
    sema routing `Try` node assembly through `ir_builders` and both backends
-   reading the payload through helper accessors. Broader IR node packing should
-   still move one storage group at a time.
+   reading the payload through helper accessors. Shared enum tag/payload-result
+   metadata used by enum construction, postfix `?`, and `??` now lives behind
+   `IrExprEnumResultPayload`, with `??` node assembly also routed through
+   `ir_builders`. Broader IR node packing should still move one storage group
+   at a time.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
-     variant payload structs or unions; remaining high-value targets are the
-     shared enum success tag/payload-type metadata used by enum construction,
-     `?`, and `??`, plus statement-loop payload groups that can move behind
-     small helpers one storage group at a time
-   - [small-follow-up:enum-result-payload] move the shared enum tag/payload
-     result metadata for enum construction, postfix `?`, and `??` behind an
-     expression payload and helper API
+     variant payload structs or unions; remaining high-value targets are
+     statement-loop payload groups and other backend-facing rare storage groups
+     that can move behind small helpers one storage group at a time
    - [small-follow-up:ir-loop-stmts] move `ForRange`/`ForVector` statement
      binding/index/value state behind loop-specific IR statement payloads
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

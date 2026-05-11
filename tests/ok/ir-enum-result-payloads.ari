@@ -1,0 +1,44 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+enum Flag {
+  Off,
+  On,
+}
+
+fn maybe(flag: Flag) -> MaybeI32 {
+  match flag {
+    On => {
+      return Some(5i32);
+    }
+    Off => {
+      return None;
+    }
+  }
+}
+
+fn bump(value: MaybeI32) -> MaybeI32 {
+  let inner = value?;
+  return Some(inner + 2i32);
+}
+
+fn main() -> i64 {
+  let on = maybe(On) ?? 1i32;
+  let off = maybe(Off) ?? 7i32;
+  let pass = bump(Some(8i32)) ?? 0i32;
+  let fail = bump(None) ?? 11i32;
+
+  var flag_score = 0;
+  match Off {
+    Off => {
+      flag_score = 2;
+    }
+    On => {
+      flag_score = 4;
+    }
+  }
+
+  return (on as i64) + (off as i64) + (pass as i64) + (fail as i64) + flag_score;
+}

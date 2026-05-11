@@ -8723,8 +8723,7 @@ private:
             value->loc = loc;
             value->type = type;
             set_ir_expr_enum_name(*value, type.name);
-            value->enum_tag = 0;
-            value->has_payload = false;
+            set_ir_expr_enum_result_payload(*value, 0, false);
             return value;
         }
         if (is_value_integer_type(type) ||
@@ -10638,7 +10637,7 @@ private:
             case ExprKind::Try:
                 return check_try(expr);
             case ExprKind::NullCoalesce:
-                return check_null_coalesce(expr, std::move(lowered));
+                return check_null_coalesce(expr);
             case ExprKind::Tuple:
                 return check_tuple(expr, std::move(lowered));
             case ExprKind::TupleIndex:
@@ -12485,7 +12484,7 @@ private:
         require_assignable(loc, return_shape.residual_payloads[0], operand_shape.residual_payloads[0]);
     }
 
-    IrExprPtr check_null_coalesce(const Expr& expr, IrExprPtr lowered) {
+    IrExprPtr check_null_coalesce(const Expr& expr) {
         IrExprPtr lhs = check_expr(*expr_left(expr));
         if (is_borrow_type(lhs->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
@@ -12516,13 +12515,12 @@ private:
         require_same_states(expr.loc, after_lhs, after_rhs, "changes ownership state in ?? fallback");
         restore_states(merge_zone_generations(after_lhs, after_rhs));
 
-        lowered->kind = IrExprKind::NullCoalesce;
-        lowered->type = shape.success_payload_type;
-        lowered->payload_type = shape.success_payload_type;
-        lowered->enum_tag = shape.success_tag;
-        set_ir_expr_left(*lowered, std::move(lhs));
-        set_ir_expr_right(*lowered, std::move(rhs));
-        return lowered;
+        return make_ir_null_coalesce_expr(
+            expr.loc,
+            std::move(lhs),
+            std::move(rhs),
+            shape.success_payload_type,
+            shape.success_tag);
     }
 
     std::vector<TryEnumCaseShape> try_cases_for_enum(

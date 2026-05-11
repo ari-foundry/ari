@@ -295,8 +295,7 @@ IrExprPtr make_ir_try_expr(SourceLocation loc,
     expr->kind = IrExprKind::Try;
     expr->loc = loc;
     expr->type = success_payload_type;
-    expr->payload_type = std::move(success_payload_type);
-    expr->enum_tag = success_tag;
+    set_ir_expr_enum_result_payload(*expr, success_tag, true, std::move(success_payload_type));
     set_ir_expr_operand(*expr, std::move(operand));
     set_ir_expr_try_payload(
         *expr,
@@ -305,6 +304,21 @@ IrExprPtr make_ir_try_expr(SourceLocation loc,
         residual_has_payload,
         std::move(return_residual_payload_type),
         std::move(residual_cleanup));
+    return expr;
+}
+
+IrExprPtr make_ir_null_coalesce_expr(SourceLocation loc,
+                                     IrExprPtr value,
+                                     IrExprPtr fallback,
+                                     IrType success_payload_type,
+                                     std::uint32_t success_tag) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::NullCoalesce;
+    expr->loc = loc;
+    expr->type = success_payload_type;
+    set_ir_expr_enum_result_payload(*expr, success_tag, true, std::move(success_payload_type));
+    set_ir_expr_left(*expr, std::move(value));
+    set_ir_expr_right(*expr, std::move(fallback));
     return expr;
 }
 

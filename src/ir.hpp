@@ -103,6 +103,12 @@ struct IrExprStringPayload {
     std::string label;
 };
 
+struct IrExprEnumResultPayload {
+    std::uint32_t tag = 0;
+    bool has_payload = false;
+    IrType payload_type;
+};
+
 struct IrPayloadBinding {
     std::uint32_t index = 0;
     std::string name;
@@ -313,15 +319,13 @@ struct IrExpr {
         std::uint64_t tuple_index;
     };
     bool int_negative = false;
-    std::uint32_t enum_tag = 0;
-    bool has_payload = false;
     bool mutable_borrow = false;
     IrUnaryOp unary_op = IrUnaryOp::Not;
     IrBinaryOp op = IrBinaryOp::Add;
-    IrType payload_type;
     std::unique_ptr<IrExprChildPayload> child_payload;
     std::unique_ptr<IrExprRarePayload> rare_payload;
     std::unique_ptr<IrExprStringPayload> string_payload;
+    std::unique_ptr<IrExprEnumResultPayload> enum_result_payload;
     std::unique_ptr<IrExprFormatPrintPayload> format_print_payload;
     std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
@@ -581,6 +585,40 @@ inline void set_ir_expr_enum_case(IrExpr& expr, std::string enum_name, std::stri
     payload.enum_name = std::move(enum_name);
     payload.case_name = std::move(case_name);
     clear_empty_ir_expr_rare_payload(expr);
+}
+
+inline const IrExprEnumResultPayload& ir_expr_enum_result_payload(const IrExpr& expr) {
+    static const IrExprEnumResultPayload empty;
+    return expr.enum_result_payload ? *expr.enum_result_payload : empty;
+}
+
+inline IrExprEnumResultPayload& ensure_ir_expr_enum_result_payload(IrExpr& expr) {
+    if (!expr.enum_result_payload) {
+        expr.enum_result_payload = std::make_unique<IrExprEnumResultPayload>();
+    }
+    return *expr.enum_result_payload;
+}
+
+inline std::uint32_t ir_expr_enum_tag(const IrExpr& expr) {
+    return ir_expr_enum_result_payload(expr).tag;
+}
+
+inline bool ir_expr_has_enum_payload(const IrExpr& expr) {
+    return ir_expr_enum_result_payload(expr).has_payload;
+}
+
+inline const IrType& ir_expr_enum_payload_type(const IrExpr& expr) {
+    return ir_expr_enum_result_payload(expr).payload_type;
+}
+
+inline void set_ir_expr_enum_result_payload(IrExpr& expr,
+                                            std::uint32_t tag,
+                                            bool has_payload,
+                                            IrType payload_type = {}) {
+    IrExprEnumResultPayload& payload = ensure_ir_expr_enum_result_payload(expr);
+    payload.tag = tag;
+    payload.has_payload = has_payload;
+    payload.payload_type = std::move(payload_type);
 }
 
 struct IrMatchArm {
