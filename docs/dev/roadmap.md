@@ -96,15 +96,18 @@
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
 2. Continue `sema.cpp` decomposition by extracting local state.
-   `SemanticChecker` still directly owns lexical scopes, `LocalInfo`, local
-   lookup, mutability diagnostics, state snapshots, move/drop flags, and scope
-   cleanup. Pull those mechanics into a small `local_state` subsystem before
-   starting the larger borrow-checking and ownership extractions. This should
-   be behavior-preserving and should lean on the existing ownership, borrow,
-   loop, and control-flow tests instead of adding broad duplicate coverage.
-   - [local-state] move `LocalInfo`, scope push/pop/discard, local lookup, and
-     mutable/immutable local checks behind a narrow API
-   - [state-snapshots] expose assignment, move/drop, branch-merge, and cleanup
+   `LocalState`, `LocalInfo`, local scope storage, used-name/reusable-pattern
+   binding tracking, local lookup, and ownership/vector/zone state snapshots now
+   live in `local_state`. `SemanticChecker` still coordinates scope-exit owner
+   diagnostics, named borrow release, mutability diagnostics, and most
+   assignment/move/drop state transitions. Finish those behavior-preserving
+   moves before starting the larger borrow-checking and ownership extractions,
+   leaning on the existing ownership, borrow, loop, and control-flow tests
+   instead of adding broad duplicate coverage.
+   - [scope-cleanup] move scope-exit owner checks and named-borrow release
+     through `local_state` callbacks so `push_scope`/`pop_scope`/`discard_scope`
+     no longer inspect the raw current scope in `sema.cpp`
+   - [mutation-api] expose assignment, mutability, move/drop, and branch-merge
      hooks needed by statement/expression lowering without leaking scope internals
    - [borrow-adapter] keep named and temporary borrow checks layered over the
      new local-state API so later `borrow_semantics` extraction has one entry point

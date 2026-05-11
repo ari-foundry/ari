@@ -14,6 +14,7 @@
 #include "ir_builders.hpp"
 #include "iterator_semantics.hpp"
 #include "layout.hpp"
+#include "local_state.hpp"
 #include "module_path.hpp"
 #include "move_semantics.hpp"
 #include "parser.hpp"
@@ -173,49 +174,6 @@ struct ConstantInfo {
     ConstantValue value;
 };
 
-enum class LocalState {
-    Alive,
-    Moved,
-    Dropped
-};
-
-struct LocalInfo {
-    IrType type;
-    IrType* ir_storage_type = nullptr;
-    IrExpr* ir_init_expr = nullptr;
-    bool mutable_binding = false;
-    bool auto_destroy_zone = false;
-    bool vector_length_known = false;
-    std::uint64_t vector_known_length = 0;
-    bool integer_value_known = false;
-    std::uint64_t integer_known_value = 0;
-    bool integer_known_negative = false;
-    LocalState state = LocalState::Alive;
-    std::map<std::string, LocalState> owned_field_states;
-    int immutable_borrows = 0;
-    int mutable_borrows = 0;
-    struct FieldBorrowCounts {
-        int immutable = 0;
-        int mutable_ = 0;
-    };
-    std::map<std::string, FieldBorrowCounts> field_borrows;
-    std::string borrow_source;
-    std::string borrow_source_path;
-    bool borrow_source_mutable = false;
-    bool zone_pointer = false;
-    std::string zone_pointer_source;
-    std::uint64_t zone_pointer_generation = 0;
-    std::uint64_t zone_generation = 0;
-    std::string generic_origin;
-    struct BorrowSource {
-        std::string name;
-        std::string path;
-        bool mutable_borrow = false;
-    };
-    std::vector<BorrowSource> aggregate_borrow_sources;
-    SourceLocation loc;
-};
-
 struct TrackedAggregateAccess {
     std::string base_name;
     IrType base_type;
@@ -288,15 +246,6 @@ public:
     }
 
 private:
-    struct StateSnapshotEntry {
-        LocalState state = LocalState::Alive;
-        std::uint64_t zone_generation = 0;
-        bool vector_length_known = false;
-        std::uint64_t vector_known_length = 0;
-    };
-
-    using StateSnapshot = std::map<std::string, StateSnapshotEntry>;
-
     enum class Flow {
         Continues,
         Stops,
@@ -413,11 +362,9 @@ private:
     std::map<std::string, ModuleInfo> modules_;
     std::map<std::string, std::map<std::string, UseInfo>> uses_;
     std::set<std::string> impl_keys_;
-    std::vector<std::map<std::string, LocalInfo>> scopes_;
-    std::set<std::string> used_local_names_;
+    LocalScopeStack local_scopes_;
     std::vector<LoopInfo> loops_;
     std::vector<TemporaryBorrow> temporary_borrows_;
-    std::set<std::string> reusable_pattern_binding_names_;
     std::map<std::string, IrType> current_type_substitutions_;
     std::vector<GenericTraitBound> current_generic_bounds_;
     std::vector<IrFunction> specialized_functions_;
@@ -3486,8 +3433,7 @@ private:
         current_zone_pointer_return_allowed_ = false;
         current_zone_pointer_return_source_.clear();
         allow_zone_temp_init_ = false;
-        scopes_.clear();
-        used_local_names_.clear();
+        local_scopes_.clear();
         loops_.clear();
         temporary_borrows_.clear();
         push_scope();
@@ -3565,22 +3511,22 @@ private:
     }
 
     void push_scope() {
-        scopes_.push_back({});
+        local_scopes_.push_scope();
     }
 
     void end_scope(bool check_owners) {
-        for (const auto& item : scopes_.back()) {
+        for (const auto& item : local_scopes_.current_scope()) {
             release_named_borrow(item.second);
         }
         if (check_owners) {
-            for (const auto& item : scopes_.back()) {
+            for (const auto& item : local_scopes_.current_scope()) {
                 const LocalInfo& local = item.second;
                 if (has_live_owner(local)) {
                     fail(local.loc, "owning binding '" + item.first + "' must be moved or dropped before scope exit");
                 }
             }
         }
-        scopes_.pop_back();
+        local_scopes_.pop_scope();
     }
 
     void pop_scope() {
@@ -3701,27 +3647,18 @@ private:
     }
 
     void declare_local(SourceLocation loc, const std::string& name, const IrType& type, bool mutable_binding) {
-        if (used_local_names_.count(name)) {
-            if (reusable_pattern_binding_names_.count(name)) {
-                LocalInfo local;
-                local.type = type;
-                local.mutable_binding = mutable_binding;
-                local.state = LocalState::Alive;
-                initialize_owned_field_states(local);
-                local.loc = loc;
-                scopes_.back()[name] = local;
-                return;
-            }
+        bool name_was_used = local_scopes_.name_was_used(name);
+        if (name_was_used && !local_scopes_.reusable_pattern_binding(name)) {
             fail(loc, "local name '" + name + "' shadows or redeclares an existing local");
         }
-        used_local_names_.insert(name);
+        if (!name_was_used) local_scopes_.mark_name_used(name);
         LocalInfo local;
         local.type = type;
         local.mutable_binding = mutable_binding;
         local.state = LocalState::Alive;
         initialize_owned_field_states(local);
         local.loc = loc;
-        scopes_.back()[name] = local;
+        local_scopes_.declare_current(name, std::move(local));
     }
 
     static bool is_auto_destroy_zone(const LocalInfo& local) {
@@ -3731,13 +3668,7 @@ private:
     }
 
     bool local_scope_index(const std::string& name, std::size_t& out) const {
-        for (std::size_t index = scopes_.size(); index > 0; --index) {
-            if (scopes_[index - 1].find(name) != scopes_[index - 1].end()) {
-                out = index - 1;
-                return true;
-            }
-        }
-        return false;
+        return local_scopes_.scope_index(name, out);
     }
 
     std::string zone_pointer_escape_name(const IrExpr& value) const {
@@ -3794,9 +3725,9 @@ private:
     }
 
     bool has_auto_destroy_zone_cleanup(std::size_t first_scope_index) const {
-        if (first_scope_index >= scopes_.size()) return false;
-        for (std::size_t scope_index = first_scope_index; scope_index < scopes_.size(); ++scope_index) {
-            const auto& scope = scopes_[scope_index];
+        if (first_scope_index >= local_scopes_.size()) return false;
+        for (std::size_t scope_index = first_scope_index; scope_index < local_scopes_.size(); ++scope_index) {
+            const auto& scope = local_scopes_.scope_at(scope_index);
             for (const auto& item : scope) {
                 const LocalInfo& local = item.second;
                 if (is_auto_destroy_zone(local) && local.state == LocalState::Alive) return true;
@@ -3809,10 +3740,10 @@ private:
         SourceLocation loc,
         std::size_t first_scope_index
     ) {
-        if (first_scope_index == 0 || first_scope_index >= scopes_.size()) return;
+        if (first_scope_index == 0 || first_scope_index >= local_scopes_.size()) return;
         std::map<std::string, bool> temporary_zones;
-        for (std::size_t scope_index = first_scope_index; scope_index < scopes_.size(); ++scope_index) {
-            for (const auto& item : scopes_[scope_index]) {
+        for (std::size_t scope_index = first_scope_index; scope_index < local_scopes_.size(); ++scope_index) {
+            for (const auto& item : local_scopes_.scope_at(scope_index)) {
                 const LocalInfo& local = item.second;
                 if (is_auto_destroy_zone(local) && local.state == LocalState::Alive) {
                     temporary_zones[item.first] = true;
@@ -3822,7 +3753,7 @@ private:
         if (temporary_zones.empty()) return;
 
         for (std::size_t scope_index = 0; scope_index < first_scope_index; ++scope_index) {
-            for (const auto& item : scopes_[scope_index]) {
+            for (const auto& item : local_scopes_.scope_at(scope_index)) {
                 const LocalInfo& local = item.second;
                 if (!local.zone_pointer || local.state != LocalState::Alive) continue;
                 if (temporary_zones.find(local.zone_pointer_source) == temporary_zones.end()) continue;
@@ -3839,10 +3770,10 @@ private:
         std::vector<IrStmtPtr>& statements,
         std::size_t first_scope_index
     ) {
-        if (first_scope_index >= scopes_.size()) return;
+        if (first_scope_index >= local_scopes_.size()) return;
         require_no_outer_zone_pointer_escape_from_cleanup(loc, first_scope_index);
-        for (std::size_t offset = scopes_.size(); offset > first_scope_index; --offset) {
-            auto& scope = scopes_[offset - 1];
+        for (std::size_t offset = local_scopes_.size(); offset > first_scope_index; --offset) {
+            auto& scope = local_scopes_.scope_at(offset - 1);
             for (auto& item : scope) {
                 LocalInfo& local = item.second;
                 if (!is_auto_destroy_zone(local) || local.state != LocalState::Alive) continue;
@@ -3858,8 +3789,8 @@ private:
     }
 
     void append_current_scope_auto_destroy_cleanup(SourceLocation loc, std::vector<IrStmtPtr>& statements) {
-        if (scopes_.empty()) return;
-        append_auto_destroy_zone_cleanup(loc, statements, scopes_.size() - 1);
+        if (local_scopes_.empty()) return;
+        append_auto_destroy_zone_cleanup(loc, statements, local_scopes_.size() - 1);
     }
 
     IrExprPtr materialize_value_before_auto_destroy_cleanup(
@@ -3906,11 +3837,7 @@ private:
     }
 
     LocalInfo* find_local_slot(const std::string& name) {
-        for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
-            auto found = scope->find(name);
-            if (found != scope->end()) return &found->second;
-        }
-        return nullptr;
+        return local_scopes_.find(name);
     }
 
     LocalInfo& require_local_slot(SourceLocation loc, const std::string& name) {
@@ -3919,115 +3846,23 @@ private:
     }
 
     LocalInfo& local_slot_by_name(const std::string& name) {
-        for (auto scope = scopes_.rbegin(); scope != scopes_.rend(); ++scope) {
-            auto found = scope->find(name);
-            if (found != scope->end()) return found->second;
-        }
-        throw CompileError("internal error: missing local '" + name + "' while restoring state");
+        return local_scopes_.require_for_restore(name);
     }
 
     LocalInfo& require_live_local(SourceLocation loc, const std::string& name) {
         LocalInfo& local = require_local_slot(loc, name);
         if (local.state != LocalState::Alive) {
-            fail(loc, "cannot use " + state_name(local.state) + " binding '" + name + "'");
+            fail(loc, "cannot use " + local_state_name(local.state) + " binding '" + name + "'");
         }
         return local;
     }
 
-    static std::string field_state_key(const std::string& name, const std::string& path) {
-        return name + "#field:" + path;
-    }
-
-    static bool split_field_state_key(const std::string& key, std::string& name, std::string& path) {
-        std::size_t split = key.find("#field:");
-        if (split == std::string::npos) return false;
-        name = key.substr(0, split);
-        path = key.substr(split + 7);
-        return true;
-    }
-
     StateSnapshot snapshot_states() const {
-        StateSnapshot snapshot;
-        for (const auto& scope : scopes_) {
-            for (const auto& item : scope) {
-                snapshot[item.first] = StateSnapshotEntry{
-                    item.second.state,
-                    item.second.zone_generation,
-                    item.second.vector_length_known,
-                    item.second.vector_known_length
-                };
-                for (const auto& field : item.second.owned_field_states) {
-                    snapshot[field_state_key(item.first, field.first)] = StateSnapshotEntry{field.second, 0};
-                }
-            }
-        }
-        return snapshot;
+        return local_scopes_.snapshot_states();
     }
 
     void restore_states(const StateSnapshot& snapshot) {
-        for (const auto& item : snapshot) {
-            std::string local_name;
-            std::string field_path;
-            if (split_field_state_key(item.first, local_name, field_path)) {
-                local_slot_by_name(local_name).owned_field_states[field_path] = item.second.state;
-            } else {
-                LocalInfo& local = local_slot_by_name(item.first);
-                local.state = item.second.state;
-                local.zone_generation = item.second.zone_generation;
-                local.vector_length_known = item.second.vector_length_known;
-                local.vector_known_length = item.second.vector_known_length;
-            }
-        }
-    }
-
-    static LocalState snapshot_state(const StateSnapshot& snapshot, const std::string& name) {
-        auto found = snapshot.find(name);
-        if (found == snapshot.end()) return LocalState::Alive;
-        return found->second.state;
-    }
-
-    static void merge_zone_generations_into(StateSnapshot& target, const StateSnapshot& source) {
-        for (const auto& item : source) {
-            std::string local_name;
-            std::string field_path;
-            if (split_field_state_key(item.first, local_name, field_path)) continue;
-            auto found = target.find(item.first);
-            if (found == target.end()) {
-                target.emplace(item.first, item.second);
-                continue;
-            }
-            found->second.zone_generation = std::max(found->second.zone_generation, item.second.zone_generation);
-            if (found->second.vector_length_known &&
-                item.second.vector_length_known &&
-                found->second.vector_known_length == item.second.vector_known_length) {
-                continue;
-            }
-            found->second.vector_length_known = false;
-            found->second.vector_known_length = 0;
-        }
-    }
-
-    static void merge_existing_zone_generations_into(StateSnapshot& target, const StateSnapshot& source) {
-        for (auto& item : target) {
-            std::string local_name;
-            std::string field_path;
-            if (split_field_state_key(item.first, local_name, field_path)) continue;
-            auto found = source.find(item.first);
-            if (found == source.end()) continue;
-            item.second.zone_generation = std::max(item.second.zone_generation, found->second.zone_generation);
-            if (item.second.vector_length_known &&
-                found->second.vector_length_known &&
-                item.second.vector_known_length == found->second.vector_known_length) {
-                continue;
-            }
-            item.second.vector_length_known = false;
-            item.second.vector_known_length = 0;
-        }
-    }
-
-    static StateSnapshot merge_zone_generations(StateSnapshot target, const StateSnapshot& source) {
-        merge_zone_generations_into(target, source);
-        return target;
+        local_scopes_.restore_states(snapshot);
     }
 
     static void require_same_states(
@@ -4308,7 +4143,8 @@ private:
     }
 
     void require_no_live_owners_before_return(SourceLocation loc) const {
-        for (const auto& scope : scopes_) {
+        for (std::size_t scope_index = 0; scope_index < local_scopes_.size(); ++scope_index) {
+            const auto& scope = local_scopes_.scope_at(scope_index);
             for (const auto& item : scope) {
                 const LocalInfo& local = item.second;
                 if (has_live_owner(local)) {
@@ -5171,7 +5007,7 @@ private:
                 statements.push_back(std::move(statement));
             }
 
-            reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
+            local_scopes_.set_reusable_pattern_bindings(i == 0 ? std::set<std::string>{} : reusable_names);
             lower_product_match_pattern_bindings_from_local(
                 alternative,
                 source_name,
@@ -5179,7 +5015,7 @@ private:
                 arm.body,
                 mutable_binding
             );
-            reusable_pattern_binding_names_.clear();
+            local_scopes_.clear_reusable_pattern_bindings();
             checked_arms.push_back(std::move(arm));
         }
 
@@ -5384,7 +5220,7 @@ private:
         for (const auto& item : local.owned_field_states) {
             if (!owned_field_path_matches(item.first, path)) continue;
             if (item.second != LocalState::Alive) {
-                fail(loc, "cannot use " + state_name(item.second) + " owned field '" + base_name + "." + path + "'");
+                fail(loc, "cannot use " + local_state_name(item.second) + " owned field '" + base_name + "." + path + "'");
             }
         }
     }
@@ -5561,7 +5397,7 @@ private:
             if (!local_slot) return false;
             LocalInfo& local = *local_slot;
             if (local.state != LocalState::Alive) {
-                fail(expr.loc, "cannot use " + state_name(local.state) + " binding '" + expr.name + "'");
+                fail(expr.loc, "cannot use " + local_state_name(local.state) + " binding '" + expr.name + "'");
             }
             out.base_name = expr.name;
             out.base_type = local.type;
@@ -8887,9 +8723,9 @@ private:
 
             restore_states(branch_input);
             push_scope();
-            reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
+            local_scopes_.set_reusable_pattern_bindings(i == 0 ? std::set<std::string>{} : reusable_names);
             lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
-            reusable_pattern_binding_names_.clear();
+            local_scopes_.clear_reusable_pattern_bindings();
             CheckedStatements then_checked = check_statements(stmt_then_body(stmt), false);
             for (auto& statement : then_checked.statements) {
                 lowered_arm.body.push_back(std::move(statement));
@@ -9044,9 +8880,9 @@ private:
 
                 restore_states(branch_input);
                 push_scope();
-                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
-                reusable_pattern_binding_names_.clear();
+                local_scopes_.clear_reusable_pattern_bindings();
                 CheckedStatements checked = check_statements(arm.body, false);
                 for (auto& statement : checked.statements) {
                     lowered_arm.body.push_back(std::move(statement));
@@ -9147,9 +8983,9 @@ private:
             for (auto& lowered_arm : lowered_patterns) {
                 restore_states(branch_input);
                 push_scope();
-                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
-                reusable_pattern_binding_names_.clear();
+                local_scopes_.clear_reusable_pattern_bindings();
 
                 CheckedStatements checked = check_statements(arm.body, false);
                 lowered_arm.body = std::move(checked.statements);
@@ -9217,9 +9053,9 @@ private:
             for (auto& lowered_arm : lowered_patterns) {
                 restore_states(branch_input);
                 push_scope();
-                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
-                reusable_pattern_binding_names_.clear();
+                local_scopes_.clear_reusable_pattern_bindings();
                 CheckedStatements checked = check_statements(arm.body, false);
                 lowered_arm.body = std::move(checked.statements);
                 if (checked.flow == Flow::Returns) discard_scope();
@@ -9396,14 +9232,14 @@ private:
         for (std::size_t i = 0; i < alternatives.size(); ++i) {
             restore_states(loop_input);
             push_scope();
-            reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
+            local_scopes_.set_reusable_pattern_bindings(i == 0 ? std::set<std::string>{} : reusable_names);
             lower_product_match_pattern_bindings_from_local(
                 alternatives[i],
                 subject_name,
                 subject_type,
                 checked_arms[i].body
             );
-            reusable_pattern_binding_names_.clear();
+            local_scopes_.clear_reusable_pattern_bindings();
 
             CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
             for (auto& statement : body.statements) {
@@ -10179,7 +10015,7 @@ private:
                 }
             }
         }
-        loop.scope_depth = scopes_.size();
+        loop.scope_depth = local_scopes_.size();
         loops_.push_back(loop);
     }
 
@@ -10192,7 +10028,7 @@ private:
         LoopInfo block;
         block.label = label;
         block.is_loop = false;
-        block.scope_depth = scopes_.size();
+        block.scope_depth = local_scopes_.size();
         loops_.push_back(block);
     }
 
@@ -10548,7 +10384,7 @@ private:
                 }
                 LocalInfo& local = *local_slot;
                 if (local.state != LocalState::Alive) {
-                    fail(expr.loc, "cannot use " + state_name(local.state) + " binding '" + expr.name + "'");
+                    fail(expr.loc, "cannot use " + local_state_name(local.state) + " binding '" + expr.name + "'");
                 }
                 require_can_read_borrow_path(expr.loc, expr.name, local, "");
                 require_zone_pointer_valid(expr.loc, expr.name, local);
@@ -10813,7 +10649,7 @@ private:
             if (local_slot && is_owner_type(local_slot->type)) {
                 LocalInfo& local = *local_slot;
                 if (local.state != LocalState::Alive) {
-                    fail(expr.loc, "cannot use " + state_name(local.state) + " binding '" + expr.name + "'");
+                    fail(expr.loc, "cannot use " + local_state_name(local.state) + " binding '" + expr.name + "'");
                 }
                 require_can_read_borrow_path(expr.loc, expr.name, local, "");
                 return make_local_lvalue_expr(expr.loc, expr.name, local.type);
@@ -11285,9 +11121,9 @@ private:
 
                 restore_states(branch_input);
                 push_scope();
-                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
-                reusable_pattern_binding_names_.clear();
+                local_scopes_.clear_reusable_pattern_bindings();
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
                 if (is_borrow_type(value->type)) {
@@ -11314,7 +11150,7 @@ private:
                     arm.loc,
                     std::move(value),
                     lowered_arm.body,
-                    scopes_.size() - 1,
+                    local_scopes_.size() - 1,
                     "$match",
                     "match expression result"
                 );
@@ -11414,9 +11250,9 @@ private:
 
                 restore_states(branch_input);
                 push_scope();
-                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
-                reusable_pattern_binding_names_.clear();
+                local_scopes_.clear_reusable_pattern_bindings();
 
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
@@ -11439,7 +11275,7 @@ private:
                     arm.loc,
                     std::move(value),
                     lowered_arm.body,
-                    scopes_.size() - 1,
+                    local_scopes_.size() - 1,
                     "$match",
                     "match expression result"
                 );
@@ -11499,9 +11335,9 @@ private:
 
                 restore_states(branch_input);
                 push_scope();
-                reusable_pattern_binding_names_ = alternative_index == 0 ? std::set<std::string>{} : reusable_names;
+                local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
-                reusable_pattern_binding_names_.clear();
+                local_scopes_.clear_reusable_pattern_bindings();
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
                 if (is_borrow_type(value->type)) {
@@ -11523,7 +11359,7 @@ private:
                     arm.loc,
                     std::move(value),
                     lowered_arm.body,
-                    scopes_.size() - 1,
+                    local_scopes_.size() - 1,
                     "$match",
                     "match expression result"
                 );
@@ -11678,7 +11514,7 @@ private:
             expr.loc,
             std::move(then_value),
             then_statements.statements,
-            scopes_.size() - 1,
+            local_scopes_.size() - 1,
             "$block",
             "if-let expression arm result"
         );
@@ -11790,9 +11626,9 @@ private:
 
             restore_states(branch_input);
             push_scope();
-            reusable_pattern_binding_names_ = i == 0 ? std::set<std::string>{} : reusable_names;
+            local_scopes_.set_reusable_pattern_bindings(i == 0 ? std::set<std::string>{} : reusable_names);
             lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
-            reusable_pattern_binding_names_.clear();
+            local_scopes_.clear_reusable_pattern_bindings();
             CheckedStatements then_checked = check_statements(expr_if_then_body(expr), false);
             if (then_checked.flow == Flow::Returns) {
                 discard_scope();
@@ -11828,7 +11664,7 @@ private:
                 expr.loc,
                 std::move(then_value),
                 lowered_arm.body,
-                scopes_.size() - 1,
+                local_scopes_.size() - 1,
                 "$iflet",
                 "if-let expression result"
             );
@@ -11931,7 +11767,7 @@ private:
         block.label = label;
         block.is_loop = false;
         block.supports_break_values = true;
-        block.scope_depth = scopes_.size() - 1;
+        block.scope_depth = local_scopes_.size() - 1;
         if (expected) {
             block.has_break_result_type = true;
             block.break_result_type = *expected;
@@ -11969,7 +11805,7 @@ private:
             expr.loc,
             std::move(value),
             checked.statements,
-            scopes_.size() - 1,
+            local_scopes_.size() - 1,
             "$block",
             "block expression result"
         );
@@ -12016,7 +11852,7 @@ private:
             loc,
             std::move(value),
             checked.statements,
-            scopes_.size() - 1,
+            local_scopes_.size() - 1,
             "$block",
             context + " result"
         );
@@ -12052,7 +11888,7 @@ private:
             loc,
             std::move(value),
             checked.statements,
-            scopes_.size() - 1,
+            local_scopes_.size() - 1,
             "$block",
             context + " result"
         );
@@ -13736,7 +13572,7 @@ private:
                                      const std::string& name,
                                      const LocalInfo& local) const {
         if (local.state != LocalState::Alive) {
-            fail(loc, "cannot use " + state_name(local.state) + " binding '" + name + "'");
+            fail(loc, "cannot use " + local_state_name(local.state) + " binding '" + name + "'");
         }
         if (!local.mutable_binding) {
             fail(loc, "cannot call as_slice on immutable binding '" + name + "'");
@@ -13839,7 +13675,7 @@ private:
                                              LocalInfo& local,
                                              const std::string& method_name) {
         if (local.state != LocalState::Alive) {
-            fail(loc, "cannot use " + state_name(local.state) + " binding '" + name + "'");
+            fail(loc, "cannot use " + local_state_name(local.state) + " binding '" + name + "'");
         }
         if (!local.mutable_binding) fail(loc, "cannot call Vec." + method_name + " on immutable binding '" + name + "'");
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
@@ -13853,7 +13689,7 @@ private:
                                               const LocalInfo& local,
                                               const std::string& method_name) const {
         if (local.state != LocalState::Alive) {
-            fail(loc, "cannot use " + state_name(local.state) + " binding '" + name + "'");
+            fail(loc, "cannot use " + local_state_name(local.state) + " binding '" + name + "'");
         }
         if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
             fail(loc, "Vec." + method_name + " currently supports copyable element vectors only");
@@ -16099,15 +15935,6 @@ private:
         } else if (!is_float_literal(lhs) && is_float_literal(rhs)) {
             coerce_float_expr_to_expected(rhs, lhs.type);
         }
-    }
-
-    static std::string state_name(LocalState state) {
-        switch (state) {
-            case LocalState::Alive: return "live";
-            case LocalState::Moved: return "moved";
-            case LocalState::Dropped: return "dropped";
-        }
-        return "unavailable";
     }
 
     static void coerce_condition_to_bool(SourceLocation loc, IrExprPtr& expr) {

@@ -83,6 +83,10 @@ construction. Some helpers have already moved out to focused files:
   unary/binary/cast/try/index/field/call child wiring, tuple-index, borrow,
   string/null, tuple/vector/struct literal, block, and match payload
   initialization plus macro-call token payload allocation out of parser and sema
+- `local_state` for `LocalState`, `LocalInfo`, local scope storage, used-name
+  and reusable-pattern binding tracking, local lookup/scope-index queries, local
+  state display, and branch/loop state snapshot save/restore plus zone/vector
+  state snapshot merging
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
@@ -257,10 +261,12 @@ These need a narrow context object because they mutate scopes, locals, or
 pending IR.
 
 1. Extract lexical scopes and local state into `local_state`.
-   - Own `LocalInfo`, scope push/pop/discard, state snapshots, local lookup,
-     and mutable/immutable local checks.
-   - Expose a small API for declaration, assignment, move/drop, and scope
-     cleanup.
+   - `LocalInfo`, local scope storage, used-name/reusable-pattern binding
+     tracking, local lookup, scope-index queries, local state display, and
+     branch/loop state snapshots now live in `local_state`.
+   - Finish moving scope-exit owner checks, named borrow release, mutability
+     checks, assignment state changes, move/drop state changes, and cleanup
+     traversal behind small APIs.
 2. Extract borrow checking into `borrow_semantics`.
    - Move named borrow tracking, aggregate borrow source tracking, temporary
      borrow promotion/release, and path borrow conflicts.
