@@ -624,6 +624,8 @@ Checklist:
       explicit `std::...` calls through the LLVM backend
 - [x] support `--no-implicit-std` so the same header can be tested only through
       ordinary `mod std;` file-backed module loading
+- [x] resolve source `std` child modules as package files under `lib/std/` for
+      both implicit `std` loading and explicit `mod std;` loading
 - [x] reject compiler-known prelude helpers under `--no-implicit-std` until a
       real source `std` module is loaded
 - [x] reject bare and prelude-path compiler-known function signatures such as

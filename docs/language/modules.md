@@ -77,6 +77,11 @@ namespace handle for clarity or collision management, write `use std as core`
 and call through `core::...`. Other library modules still require normal
 `mod name;` declarations for now.
 
+The source `std` root is treated as a small package root: file-backed child
+modules declared from `lib/std.arih` may live under `lib/std/`, such as
+`lib/std/vec.arih` for `std::vec`. The same package-style child lookup applies
+when `std` is loaded explicitly through `mod std;`.
+
 Use `--no-implicit-std` to disable that special case. Then `std` behaves like
 any other file-backed module, so code must declare `mod std;` and pass a search
 path such as `--module-path lib` if it wants the repository `lib/std.arih`

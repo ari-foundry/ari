@@ -83,6 +83,12 @@ ModuleFileSearch find_module_file(const ModuleImport& import,
                                   const std::vector<std::string>& module_search_paths) {
     ModuleFileSearch result;
     add_module_candidates(base_dir, import.local_name, result.searched);
+    if (!import.module_name.empty()) {
+        add_module_candidates(
+            path_join(base_dir, qualified_basename(import.module_name)),
+            import.local_name,
+            result.searched);
+    }
     for (const auto& search_path : module_search_paths) {
         if (!search_path.empty()) add_module_candidates(search_path, import.local_name, result.searched);
     }
@@ -247,6 +253,7 @@ private:
         Program standard = std::move(standard_file.program);
         collect_source(*path, standard_file, module_path, standard, false);
         loaded_modules_.emplace(name, *path);
+        resolve_imports(standard, dirname(*path));
         append_program(program, std::move(standard));
     }
 

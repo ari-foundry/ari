@@ -6,9 +6,10 @@ Ari auto-loads the source `std` surface into ordinary executable modules and
 adds implicit aliases for its public prelude names. You can call those names
 without a `use`.
 
-The source declaration header lives at `lib/std.arih`. The compiler auto-loads
-it as the `std` module when the file is present, so explicit `std::...` names
-work without a `mod std;` declaration:
+The source declaration root lives at `lib/std.arih`, with larger child modules
+allowed to live beside it under `lib/std/`. The compiler auto-loads that root
+as the `std` module when the file is present, so explicit `std::...` names work
+without a `mod std;` declaration:
 
 ```ari
 use std::io::{write_i64, newline};
@@ -30,9 +31,9 @@ helpers, and lexical temporary-zone helpers still lower through compiler hooks
 after the matching source `std` surface is visible.
 
 Like Rust, public standard names are imported by the implicit prelude when
-`std` is auto-loaded. The source header decides this surface: public root items,
-root `pub use` re-exports, and public `std` child modules from `lib/std.arih`
-become visible in ordinary code. Write `Vec[T]`, `Option[T]`,
+`std` is auto-loaded. The source header and its file-backed child modules decide
+this surface: public root items, root `pub use` re-exports, and public `std`
+child modules become visible in ordinary code. Write `Vec[T]`, `Option[T]`,
 `Range[T]`, `Iterator[T]`, `range(...)`, `size_of<T>()`,
 `write_i64(...)`, `create(...)`, `new<T>(...)`, and pointer helpers directly.
 Nested forms such as `fmt::Display`, `iter::Iterator[T]`, `mem::size_of<T>()`,
@@ -102,9 +103,9 @@ Source function signatures such as `write_i64(...)`, `io::write_i64(...)`,
 `std` or an explicit `mod std;`, they are ordinary unknown calls. Prelude trait
 names such as `Debug`, `Drop`, and `Iterable[T]` also come from source `std`,
 so they are unavailable in that mode unless the source `std` module is loaded.
-For helper surfaces that `lib/std.arih` can describe as generic function
-declarations, the declaration must actually exist; a partial custom `std`
-header does not silently inherit those compiler-known names:
+For helper surfaces that the source `std` package can describe as generic
+function declarations, the declaration must actually exist; a partial custom
+`std` header does not silently inherit those compiler-known names:
 
 ```ari
 mod std;

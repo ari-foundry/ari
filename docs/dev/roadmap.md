@@ -126,7 +126,10 @@
    growing into a pile of one-off compiler hooks.
    - [std-layout] split source `std` into file-backed module sources once the
      implicit-std loader can treat it like a package, so future APIs do not keep
-     expanding one monolithic `lib/std.arih` header
+     expanding one monolithic `lib/std.arih` header. The implicit and explicit
+     source-`std` loaders now resolve package-style child modules, and
+     `std::vec` lives in `lib/std/vec.arih`; remaining work is to move other
+     growing child modules out of the root header as they become large enough.
    - [std-provenance] keep zone-provenance rules for source handles and
      pointer-returning methods in focused helpers such as `std_box_semantics`,
      `std_vec_semantics`, `slice_semantics`, and future string/smart-pointer
