@@ -19,6 +19,7 @@
 #include "iterator_semantics.hpp"
 #include "layout.hpp"
 #include "local_state.hpp"
+#include "loop_state_semantics.hpp"
 #include "module_path.hpp"
 #include "move_semantics.hpp"
 #include "parser.hpp"
@@ -4232,6 +4233,33 @@ private:
         const std::string& message
     ) {
         if (auto error = state_snapshot_mismatch_error(left, right, message)) fail(loc, *error);
+    }
+
+    static std::set<std::string> loop_binding_name_set(const LoopInfo& loop) {
+        return std::set<std::string>(loop.names.begin(), loop.names.end());
+    }
+
+    static void require_same_states_except_loop_bindings(
+        SourceLocation loc,
+        const StateSnapshot& left,
+        const StateSnapshot& right,
+        const LoopInfo& loop,
+        const std::string& message
+    ) {
+        if (auto error = loop_state_mismatch_error_ignoring_bindings(
+                left,
+                right,
+                loop_binding_name_set(loop),
+                message)) {
+            fail(loc, *error);
+        }
+    }
+
+    static bool loop_has_owner_bindings(const LoopInfo& loop) {
+        for (const auto& type : loop.types) {
+            if (is_owner_type(type)) return true;
+        }
+        return false;
     }
 
     void collect_owned_field_states(const IrType& type,
@@ -10369,6 +10397,26 @@ private:
         loops_.push_back(block);
     }
 
+    void apply_init_while_update_state(SourceLocation loc, const LoopInfo& loop) {
+        for (std::size_t i = 0; i < loop.names.size(); ++i) {
+            const std::string& name = loop.names[i];
+            LocalInfo& target = require_local_slot(loc, name);
+            require_not_borrowed(loc, name, target, "assign to");
+            if (is_owner_type(loop.types[i]) && local_has_live_owner(target)) {
+                fail(loc,
+                     "cannot overwrite owning init-while binding '" + name +
+                         "' before it is moved or dropped");
+            }
+        }
+
+        for (std::size_t i = 0; i < loop.names.size(); ++i) {
+            if (!is_owner_type(loop.types[i])) continue;
+            LocalInfo& target = local_slot_by_name(loop.names[i]);
+            mark_local_alive(target);
+            initialize_owned_field_states(target);
+        }
+    }
+
     void check_init_while(const Stmt& stmt, IrStmt& lowered) {
         const std::string& label = stmt_label(stmt);
         LoopInfo loop;
@@ -10380,9 +10428,6 @@ private:
             IrType declared = binding.has_type ? resolve_executable_type(binding.type) : init->type;
             coerce_expr_to_expected(*init, declared);
             require_assignable(binding.loc, declared, init->type);
-            if (is_owner_type(declared)) {
-                fail(binding.loc, "owning init-while bindings are not supported yet");
-            }
             if (is_borrow_type(declared)) {
                 fail(binding.loc, "borrow bindings are not supported in init-while yet");
             }
@@ -10407,9 +10452,17 @@ private:
         CheckedStatements body = check_statements(stmt_loop_body(stmt), true);
         set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
-        if (body.flow == Flow::Continues) {
+        if (body.flow == Flow::Continues && stmt.updates.empty()) {
             require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
             restore_merged_states(loop_input, loop_body_state);
+        } else if (body.flow == Flow::Continues) {
+            require_same_states_except_loop_bindings(
+                stmt.loc,
+                loop_input,
+                loop_body_state,
+                loop,
+                "cannot change ownership state inside loop except updated init-while bindings"
+            );
         } else {
             restore_states(loop_input);
         }
@@ -10418,7 +10471,6 @@ private:
             if (stmt.updates.size() != loop.types.size()) {
                 fail(stmt.loc, "next value count must match init binding count");
             }
-            StateSnapshot update_input = snapshot_states();
             lowered.updates.reserve(stmt.updates.size());
             for (std::size_t i = 0; i < stmt.updates.size(); ++i) {
                 IrExprPtr update = check_expr(*stmt.updates[i]);
@@ -10426,9 +10478,10 @@ private:
                 require_assignable(stmt.loc, loop.types[i], update->type);
                 lowered.updates.push_back(std::move(update));
             }
+            apply_init_while_update_state(stmt.loc, loop);
             StateSnapshot update_state = snapshot_states();
-            require_same_states(stmt.loc, update_input, update_state, "cannot change ownership state in loop updates yet");
-            restore_merged_states(update_input, update_state);
+            require_same_states(stmt.loc, loop_input, update_state, "cannot change ownership state in loop updates yet");
+            restore_merged_states(loop_input, update_state);
         }
         loops_.pop_back();
     }
@@ -10566,6 +10619,9 @@ private:
     void check_continue(const Stmt& stmt, IrStmt& lowered) {
         const LoopInfo& loop = loop_for_continue(stmt.loc);
         if (stmt.updates.empty()) {
+            if (loop.supports_values && loop_has_owner_bindings(loop)) {
+                fail(stmt.loc, "plain continue in owning init-while loops must provide update values");
+            }
             std::vector<IrStmtPtr> cleanup;
             append_auto_destroy_zone_cleanup(stmt.loc, cleanup, loop.scope_depth);
             if (!cleanup.empty()) {
@@ -10590,6 +10646,7 @@ private:
             require_assignable(stmt.loc, loop.types[i], update->type);
             updates.push_back(std::move(update));
         }
+        apply_init_while_update_state(stmt.loc, loop);
         std::vector<IrStmtPtr> cleanup;
         if (has_auto_destroy_zone_cleanup(loop.scope_depth)) {
             for (auto& update : updates) {

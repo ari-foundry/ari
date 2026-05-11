@@ -101,12 +101,15 @@
    live until the last dependent binding is also dead. Labeled block
    `break label value` paths can now move owning values out as the block result
    while preserving the existing cross-path ownership-state compatibility
-   check. The next borrow-checking pressure point is loop precision: loops
-   still reject ownership-state changes and many borrow-state updates instead
-   of proving that every iteration and loop exit merges to a compatible state.
-   - [loop-state] track ownership and borrow state through loops, init-while
-     updates, and owning loop bindings instead of rejecting all state changes
-     inside loops
+   check. `init while` and `let while` loop bindings may now carry owning
+   values through `next` and value `continue` updates when the previous owner is
+   moved or dropped before the positional update writes the replacement. The
+   next borrow-checking pressure point is loop precision: plain loops still
+   reject ownership-state changes and many borrow-state updates instead of
+   proving that every iteration and loop exit merges to a compatible state.
+   - [loop-state] track ownership and borrow state through plain loops and
+     owning non-init loop bindings instead of rejecting all state changes inside
+     loops
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

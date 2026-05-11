@@ -267,6 +267,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.raw; code=$$?; test $$code -eq 36
 	$(TARGET) --freestanding tests/ok/let-while.ari -o $(BUILD_DIR)/control-flow/let-while.raw
 	$(BUILD_DIR)/control-flow/let-while.raw; code=$$?; test $$code -eq 12
+	$(TARGET) --freestanding tests/ok/init-while-owning.ari -o $(BUILD_DIR)/control-flow/init-while-owning.raw
+	$(BUILD_DIR)/control-flow/init-while-owning.raw; code=$$?; test $$code -eq 22
 	$(TARGET) --freestanding tests/ok/labeled-break.ari -o $(BUILD_DIR)/control-flow/labeled-break.raw
 	$(BUILD_DIR)/control-flow/labeled-break.raw; code=$$?; test $$code -eq 2
 	$(TARGET) --freestanding tests/ok/break-statement-payloads.ari -o $(BUILD_DIR)/control-flow/break-statement-payloads.raw
@@ -355,6 +357,8 @@ check-control-flow: $(TARGET)
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/statement-body-payloads.ll
 	grep -q "for.cond" $(BUILD_DIR)/control-flow/statement-body-payloads.ll
 	grep -q "initwhile.cond" $(BUILD_DIR)/control-flow/statement-body-payloads.ll
+	$(TARGET) tests/ok/init-while-owning.ari --emit-llvm $(BUILD_DIR)/control-flow/init-while-owning.ll
+	grep -q "initwhile.update" $(BUILD_DIR)/control-flow/init-while-owning.ll
 	$(TARGET) tests/ok/labeled-block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	$(TARGET) tests/ok/labeled-block-aggregate.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
@@ -457,6 +461,10 @@ check-control-flow: $(TARGET)
 	grep -q "expected ; after non-final expression statement" $(BUILD_DIR)/control-flow/block-expression-nonfinal-missing-semicolon.err
 	if $(TARGET) tests/errors/nonblock-statement-missing-semicolon.ari -o $(BUILD_DIR)/control-flow/nonblock-statement-missing-semicolon.elf >$(BUILD_DIR)/control-flow/nonblock-statement-missing-semicolon.err 2>&1; then exit 1; fi
 	grep -q "expected ; after binding" $(BUILD_DIR)/control-flow/nonblock-statement-missing-semicolon.err
+	if $(TARGET) tests/errors/init-while-own-overwrite.ari -o $(BUILD_DIR)/control-flow/init-while-own-overwrite.elf >$(BUILD_DIR)/control-flow/init-while-own-overwrite.err 2>&1; then exit 1; fi
+	grep -q "cannot overwrite owning init-while binding 'token' before it is moved or dropped" $(BUILD_DIR)/control-flow/init-while-own-overwrite.err
+	if $(TARGET) tests/errors/init-while-own-plain-continue.ari -o $(BUILD_DIR)/control-flow/init-while-own-plain-continue.elf >$(BUILD_DIR)/control-flow/init-while-own-plain-continue.err 2>&1; then exit 1; fi
+	grep -q "plain continue in owning init-while loops must provide update values" $(BUILD_DIR)/control-flow/init-while-own-plain-continue.err
 
 check-match: $(TARGET)
 	mkdir -p $(BUILD_DIR)/match

@@ -517,6 +517,21 @@ continue
 The number of values in `continue` and `next` must match the number of `init`
 bindings.
 
+Owning `init` bindings are allowed when every executed `next` or value
+`continue` reinitializes that binding only after the old owner has been moved
+or dropped. For example, this loop drops the current owner before replacing it:
+
+```ari
+init token = make_token(), i = 0 while i < 3 {
+  drop token;
+} next make_token(), i + 1
+```
+
+The update is still positional and parallel: all update expressions are
+evaluated before the loop bindings are written. In loops with owning `init`
+bindings, `continue` must provide explicit update values so the checker can
+validate the owner state at that jump.
+
 `let ... while ... next ...` is accepted as the preferred spelling for the same
 loop-state form:
 

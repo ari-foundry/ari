@@ -1,0 +1,39 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume(value: own i64) -> i64 {
+  drop value;
+  return 5;
+}
+
+fn run_next() -> i64 {
+  init token = make_owned(1), i = 0 while i < 3 {
+    if i == 1 {
+      drop token;
+      continue make_owned(20), i + 1;
+    }
+    drop token;
+  } next make_owned(i + 1), i + 1
+
+  return consume(token) + i;
+}
+
+fn run_let_while() -> i64 {
+  let token = make_owned(4), i = 0 while i < 2 {
+    drop token;
+  } next make_owned(i + 2), i + 1
+
+  return consume(token) + i;
+}
+
+fn run_self_move() -> i64 {
+  init token = make_owned(9), i = 0 while i < 2 {
+  } next token, i + 1
+
+  return consume(token) + i;
+}
+
+fn main() -> i64 {
+  return run_next() + run_let_while() + run_self_move();
+}
