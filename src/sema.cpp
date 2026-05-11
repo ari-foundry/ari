@@ -22,6 +22,7 @@
 #include "prelude_macros.hpp"
 #include "prelude_resolver.hpp"
 #include "product_coverage.hpp"
+#include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "trait_semantics.hpp"
 #include "try_model.hpp"
@@ -466,15 +467,6 @@ private:
         return type.primitive == IrPrimitiveKind::Struct &&
                (type.name == "Range" || type.name == "RangeInclusive") &&
                type.args.size() == 1;
-    }
-
-    static bool is_prelude_slice_type(const IrType& type) {
-        return type.primitive == IrPrimitiveKind::Struct &&
-               type.name == "std::Slice" &&
-               type.args.size() == 1 &&
-               type.field_names.size() == 2 &&
-               type.field_names[0] == "data" &&
-               type.field_names[1] == "len";
     }
 
     static bool is_qualified_name(const std::string& name) {
@@ -3207,20 +3199,6 @@ private:
         return prelude_range_type(loc, inclusive, i64_type(loc));
     }
 
-    static IrType prelude_slice_type(SourceLocation loc, const IrType& element) {
-        IrType type = primitive_type(IrPrimitiveKind::Struct, "std::Slice", loc);
-        IrType data = element;
-        data.qualifier = TypeQualifier::Ptr;
-        type.args.push_back(element);
-        type.field_names.push_back("data");
-        type.field_types.push_back(data);
-        type.field_mutable.push_back(false);
-        type.field_names.push_back("len");
-        type.field_types.push_back(i64_type(loc));
-        type.field_mutable.push_back(false);
-        return type;
-    }
-
     static IrType array_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
         IrType type = primitive_type(IrPrimitiveKind::Array, "Array", loc);
         type.args.push_back(element);
@@ -5815,16 +5793,6 @@ private:
             make_local_lvalue_expr(operand_expr.loc, base_name, local.type),
             static_cast<std::size_t>(expr.tuple_index)
         );
-    }
-
-    void require_slice_element_materializable(SourceLocation loc, const IrType& element_type, const std::string& operation) const {
-        if (!is_raw_pointer_deref_value_type(element_type)) {
-            fail(loc, operation + " currently supports scalar or aggregate element types, got " + type_name(element_type));
-        }
-        if (is_aggregate_type(element_type) &&
-            (is_owner_type(element_type) || contains_borrow_type(element_type))) {
-            fail(loc, operation + " cannot copy ownership- or borrow-valued aggregate elements yet");
-        }
     }
 
     IrExprPtr check_slice_index_assignment_target(const Expr& expr) {
@@ -13842,7 +13810,7 @@ private:
             expr.loc,
             std::move(data),
             std::move(length),
-            prelude_slice_type(expr.loc, element)
+            make_prelude_slice_type(expr.loc, element)
         );
     }
 

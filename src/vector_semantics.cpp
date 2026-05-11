@@ -2,6 +2,7 @@
 
 #include "ast.hpp"
 #include "common.hpp"
+#include "slice_semantics.hpp"
 #include "type_semantics.hpp"
 
 #include <algorithm>
@@ -112,15 +113,6 @@ const char* local_vec_method_name(LocalVecMethod method) {
         if (info.method == method) return info.name;
     }
     return "<unknown>";
-}
-
-bool is_prelude_slice_type(const IrType& type) {
-    return type.primitive == IrPrimitiveKind::Struct &&
-           type.name == "std::Slice" &&
-           type.args.size() == 1 &&
-           type.field_names.size() == 2 &&
-           type.field_names[0] == "data" &&
-           type.field_names[1] == "len";
 }
 
 } // namespace

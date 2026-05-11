@@ -31,6 +31,9 @@ construction. Some helpers have already moved out to focused files:
   copies inside `if`/block/labeled-block/`match`/`if let` expression results,
   typed labeled-block break result merging, and nested result storage-capacity
   reads
+- `slice_semantics` for shared `Slice[T]` type recognition, source-prelude Slice
+  view type construction, and the scalar/plain-aggregate element materialization
+  checks used by sema, Vec `as_slice` lowering, and both backends
 - `ir_builders` for basic IR node construction helpers such as local lvalues,
   var declarations, tuple/vector indexes, arbitrary-operand tuple/index access
   nodes, scalar/string/null literals, tuple/struct/tuple-struct/range

@@ -2,6 +2,7 @@
 #include "llvm_codegen.hpp"
 
 #include "common.hpp"
+#include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "target.hpp"
 
@@ -129,16 +130,6 @@ static bool has_aggregate_enum_layout(const IrType& type) {
     return type.qualifier == TypeQualifier::Value &&
            type.primitive == IrPrimitiveKind::Enum &&
            !type.field_types.empty();
-}
-
-static bool is_prelude_slice_type(const IrType& type) {
-    return type.qualifier == TypeQualifier::Value &&
-           type.primitive == IrPrimitiveKind::Struct &&
-           type.name == "std::Slice" &&
-           type.args.size() == 1 &&
-           type.field_names.size() == 2 &&
-           type.field_names[0] == "data" &&
-           type.field_names[1] == "len";
 }
 
 class LlvmEmitter {

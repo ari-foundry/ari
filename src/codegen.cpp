@@ -2,6 +2,7 @@
 
 #include "ari_builtin.hpp"
 #include "layout.hpp"
+#include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 
 #include <cstddef>
@@ -316,16 +317,6 @@ private:
         type.name = "u8";
         type.loc = loc;
         return type;
-    }
-
-    static bool is_prelude_slice_type(const IrType& type) {
-        return type.qualifier == TypeQualifier::Value &&
-               type.primitive == IrPrimitiveKind::Struct &&
-               type.name == "std::Slice" &&
-               type.args.size() == 1 &&
-               type.field_names.size() == 2 &&
-               type.field_names[0] == "data" &&
-               type.field_names[1] == "len";
     }
 
     void add_local(const std::string& name, const IrType& type) {
