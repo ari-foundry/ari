@@ -68,6 +68,16 @@ pub mod zone {
   pub extern "ari" fn destroy(zone: own Zone) -> void = "ari_builtin_zone_destroy";
 }
 
+pub mod vec {
+  pub fn alloc_buffer[T](zone: ref mut Zone, capacity: i64) -> ptr T {
+    std::assert(capacity >= 0);
+    if capacity == 0 {
+      return 0u64 as ptr T;
+    }
+    return std::zone::alloc(zone, capacity * std::mem::size_of<T>(), std::mem::align_of<T>()) as ptr T;
+  }
+}
+
 pub mod iter {
   pub struct Range[T] {
     start: T,

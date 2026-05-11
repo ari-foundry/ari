@@ -53,6 +53,13 @@ fn main() -> i64 {
 }
 ```
 
+The `std::vec` module currently exposes only allocator-seeding helpers for the
+future growable vector runtime. `std::vec::alloc_buffer<T>(ref mut zone,
+capacity)` allocates `capacity * size_of<T>()` bytes from an explicit `Zone`
+capability and returns a tracked `ptr T`; using that pointer after the zone is
+reset or destroyed is rejected by the checker. It is not the final `Vec[T]`
+handle API.
+
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
 the header through the normal module system instead. Compiler-known helper
@@ -405,6 +412,10 @@ The source header `lib/std.arih` exposes the declaration-shaped zone API:
 `std::zone::create`, raw and typed `alloc`, `new`, `promote`, `reset`, and
 `destroy`. `zone::temp` and `zone::scratch` remain compiler-known lexical
 helpers until source declarations can express their hidden lifetime cleanup.
+`std::vec::alloc_buffer<T>(ref mut Zone, capacity)` is the first
+vector-allocation seed: it still returns only a raw tracked element pointer, so
+callers use `ptr_store`, `ptr_load`, and `ptr_add` directly until the
+allocator-backed `Vec[T]` handle layout lands.
 
 ## Aggregate Surfaces
 
@@ -451,7 +462,10 @@ loads or stores a `Slice[T]` element through its raw `data` pointer after
 checking the stored length. The temporary compiler-known local `Vec[T]` method
 set is intentionally frozen; methods outside the documented local subset are
 reserved for allocator-backed std collection APIs. Growable heap vectors remain
-an explicit-allocator feature for later.
+an explicit-allocator feature for later. The lower-level
+`std::vec::alloc_buffer<T>(ref mut Zone, capacity)` helper already exercises
+the explicit allocator path for future Vec storage, but it returns only a raw
+tracked element pointer rather than a `Vec[T]` value.
 
 `Slice[T]` is a source `std` view struct:
 

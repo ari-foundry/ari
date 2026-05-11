@@ -475,6 +475,15 @@ That local method list is intentionally frozen while `Vec[T]` is still a
 stack-backed executable subset. Other compiler-known collection conveniences
 are reserved for the future allocator-backed std library design.
 
+For the allocator-backed path, `std::vec::alloc_buffer<T>(ref mut zone,
+capacity)` now provides the raw element-buffer seed. It takes an explicit
+`Zone` capability, checks that the requested capacity is non-negative, returns
+`null` for zero capacity, and otherwise allocates `capacity * size_of<T>()`
+bytes with `align_of<T>()`. The result is a tracked `ptr T`, so using it after
+`zone::reset` or `zone::destroy` is rejected. This is a building block for the
+future `Vec[T]` runtime handle, not a replacement for the current local vector
+literal storage.
+
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over
 constants and literals, or immutable local integer binding initialized from one

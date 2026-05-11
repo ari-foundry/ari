@@ -243,6 +243,8 @@ Checklist:
 - [x] checked local `Vec.swap(a, b)` on the LLVM backend, including known-empty
       runtime-index rejection
 - [x] frozen local `Vec[T]` API rejects unsupported compiler-known methods with allocator-backed std guidance
+- [x] `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` seeds future
+      allocator-backed Vec storage with a tracked zone-backed element pointer
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local
       copies, scalar indexing, the fixed-capacity method surface, and
       stored-vector `for` loops
