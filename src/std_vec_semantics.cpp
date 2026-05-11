@@ -55,4 +55,26 @@ bool is_std_vec_raw_handle_type(const IrType& type) {
            type.name == "std::vec::RawVec";
 }
 
+bool is_std_vec_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::vec::Vec";
+}
+
+bool is_std_vec_zone_handle_type(const IrType& type) {
+    return is_std_vec_raw_handle_type(type) || is_std_vec_handle_type(type);
+}
+
+std::optional<std::size_t> std_vec_zone_handle_source_field_index(const IrType& type) {
+    if (is_std_vec_raw_handle_type(type)) {
+        return std_vec_raw_handle_data_field_index(type);
+    }
+    if (!is_std_vec_handle_type(type)) return std::nullopt;
+    if (type.field_names.empty() && type.field_types.empty()) return 0;
+    if (type.field_names.size() != 1 || type.field_types.size() != 1) return std::nullopt;
+    if (type.field_names[0] != "raw") return std::nullopt;
+    if (!is_std_vec_raw_handle_type(type.field_types[0])) return std::nullopt;
+    return 0;
+}
+
 } // namespace ari

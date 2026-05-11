@@ -492,8 +492,18 @@ pub struct RawVec[T] {
 }
 ```
 
-`RawVec<T>` is still a building block for the future public `Vec[T]` runtime
-handle, not a replacement for the current local vector literal storage.
+`std::vec::new<T>(ref mut zone, capacity)` wraps that raw handle in a tracked
+source `std::vec::Vec<T>` seed:
+
+```ari
+pub struct Vec[T] {
+  raw: RawVec[T],
+}
+```
+
+This source `std::vec::Vec<T>` handle is the allocator-backed construction
+seed. The root `Vec[T]`/`std::Vec[T]` type is still the current local vector
+literal storage until runtime growth and methods are ported.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over
@@ -789,9 +799,10 @@ diagnostic names the pointer and the temporary zone source. Associated
 constructor spelling such as `T::new(...)` is supported by ordinary inherent
 impl methods that call `zone::new<T>` or another explicit allocator helper.
 Direct local pointers from `zone::alloc<T>` and `zone::new<T>`,
-single-zone pointer-returning calls, and source `std::vec::RawVec<T>` handles
-returned from a single-zone constructor are invalidated by `zone::reset` and
-`zone::destroy` in the checker, so using such a binding afterward is rejected.
+single-zone pointer-returning calls, and source `std::vec::RawVec<T>` or
+`std::vec::Vec<T>` handles returned from a single-zone constructor are
+invalidated by `zone::reset` and `zone::destroy` in the checker, so using such
+a binding afterward is rejected.
 A pointer-returning function with no zone borrow parameter or more than one
 zone borrow parameter cannot return a tracked zone pointer because the source
 zone would be ambiguous to the checker. Reset

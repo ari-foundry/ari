@@ -96,10 +96,10 @@
    invalidation checks. `std::vec::RawVec<T>` and
    `std::vec::with_capacity<T>(ref mut Zone, capacity)` now wrap that buffer
    in a source-level handle with `data`, `len`, and `capacity` metadata while
-   sema still tracks the handle as tied to the source zone. The public
-   `Vec[T]` handle layout and method port still remain.
-   - [allocator] connect the tracked `std::vec::RawVec<T>` seed to the public
-     allocator/capability `Vec[T]` creation surface
+   sema still tracks the handle as tied to the source zone. The source
+   `std::vec::Vec<T>` handle and `std::vec::new<T>(ref mut Zone, capacity)`
+   now connect that raw seed to a public allocator/capability creation surface.
+   Runtime growth and method porting still remain.
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to

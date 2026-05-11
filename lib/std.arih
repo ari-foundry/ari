@@ -75,6 +75,10 @@ pub mod vec {
     capacity: i64,
   }
 
+  pub struct Vec[T] {
+    raw: RawVec[T],
+  }
+
   pub fn alloc_buffer[T](zone: ref mut Zone, capacity: i64) -> ptr T {
     std::assert(capacity >= 0);
     if capacity == 0 {
@@ -85,6 +89,10 @@ pub mod vec {
 
   pub fn with_capacity[T](zone: ref mut Zone, capacity: i64) -> RawVec[T] {
     return RawVec<T> { data: alloc_buffer<T>(zone, capacity), len: 0, capacity: capacity };
+  }
+
+  pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::vec::Vec[T] {
+    return std::vec::Vec<T> { raw: with_capacity<T>(zone, capacity) };
   }
 }
 

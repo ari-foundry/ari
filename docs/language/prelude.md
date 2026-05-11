@@ -40,8 +40,10 @@ Nested forms such as `fmt::Display`, `iter::Iterator[T]`, `mem::size_of<T>()`,
 to the source `std` module, even when a root re-export such as `input()` shares
 the prefix.
 The explicit paths still exist as `std::Vec`, `std::iter::range`,
-`std::mem::size_of`, and `std::zone::new`; `std::vec::Vec` is not the normal
-spelling. Local declarations and explicit `use` aliases win over these
+`std::mem::size_of`, and `std::zone::new`. `std::vec::Vec` names the
+source-backed allocator seed handle while the root `Vec`/`std::Vec` spelling is
+still the current compiler-known local vector type. Local declarations and
+explicit `use` aliases win over these
 implicit prelude names. If you want a separate namespace handle, alias the
 module explicitly:
 
@@ -58,9 +60,10 @@ future growable vector runtime. `std::vec::alloc_buffer<T>(ref mut zone,
 capacity)` allocates `capacity * size_of<T>()` bytes from an explicit `Zone`
 capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
-`data`, `len`, and `capacity` fields. Using either result after the zone is
-reset or destroyed is rejected by the checker. This is not the final public
-`Vec[T]` handle API.
+`data`, `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
+capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed.
+Using any of these results after the zone is reset or destroyed is rejected by
+the checker. This is not the final root `Vec[T]` method API.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -416,9 +419,11 @@ The source header `lib/std.arih` exposes the declaration-shaped zone API:
 helpers until source declarations can express their hidden lifetime cleanup.
 `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` is the raw
 vector-allocation seed. `std::vec::with_capacity<T>(ref mut Zone, capacity)`
-builds a source `RawVec<T>` handle around that allocation; callers still use
-`raw.data` with `ptr_store`, `ptr_load`, and `ptr_add` directly until the
-allocator-backed public `Vec[T]` method surface lands.
+builds a source `RawVec<T>` handle around that allocation, and
+`std::vec::new<T>(ref mut Zone, capacity)` wraps it in source
+`std::vec::Vec<T>`. Callers still use `vec.raw.data` with `ptr_store`,
+`ptr_load`, and `ptr_add` directly until the allocator-backed public `Vec[T]`
+method surface lands.
 
 ## Aggregate Surfaces
 
@@ -468,8 +473,10 @@ reserved for allocator-backed std collection APIs. Growable heap vectors remain
 an explicit-allocator feature for later. The lower-level
 `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` and
 `std::vec::with_capacity<T>(ref mut Zone, capacity)` helpers already exercise
-the explicit allocator path for future Vec storage, but they expose only a raw
-tracked buffer or `RawVec<T>` seed rather than a public `Vec[T]` value.
+the explicit allocator path for future Vec storage, and
+`std::vec::new<T>(ref mut Zone, capacity)` exposes that seed as source
+`std::vec::Vec<T>`. The root `Vec[T]` type and its current local method set
+remain fixed-local until runtime growth is ported.
 
 `Slice[T]` is a source `std` view struct:
 

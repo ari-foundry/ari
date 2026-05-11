@@ -4448,7 +4448,7 @@ private:
     bool zone_pointer_source_name_from_expr(const IrExpr& value, std::string& out) {
         bool tracks_zone_source =
             value.type.qualifier == TypeQualifier::Ptr ||
-            is_std_vec_raw_handle_type(value.type);
+            is_std_vec_zone_handle_type(value.type);
         if (!tracks_zone_source) return false;
         const IrExpr& source = zone_pointer_source_expr(value);
         auto merge_source = [&](const IrExprPtr& expr, bool& found_any) {
@@ -4463,15 +4463,15 @@ private:
             }
         };
 
-        if (source.kind == IrExprKind::Tuple && is_std_vec_raw_handle_type(source.type)) {
-            std::optional<std::size_t> data_index = std_vec_raw_handle_data_field_index(source.type);
-            if (!data_index || *data_index >= source.args.size()) return false;
-            return zone_pointer_source_name_from_expr(*source.args[*data_index], out);
+        if (source.kind == IrExprKind::Tuple && is_std_vec_zone_handle_type(source.type)) {
+            std::optional<std::size_t> source_index = std_vec_zone_handle_source_field_index(source.type);
+            if (!source_index || *source_index >= source.args.size()) return false;
+            return zone_pointer_source_name_from_expr(*source.args[*source_index], out);
         }
         if (source.kind == IrExprKind::TupleIndex && ir_expr_operand(source)) {
             const IrExpr& operand = *ir_expr_operand(source);
-            std::optional<std::size_t> data_index = std_vec_raw_handle_data_field_index(operand.type);
-            if (!data_index || source.tuple_index != *data_index) return false;
+            std::optional<std::size_t> source_index = std_vec_zone_handle_source_field_index(operand.type);
+            if (!source_index || source.tuple_index != *source_index) return false;
             return zone_pointer_source_name_from_expr(operand, out);
         }
         if ((source.kind == IrExprKind::Call && ir_expr_name(source) == "zone::alloc") ||
@@ -4534,7 +4534,7 @@ private:
         clear_zone_pointer_source(target);
         bool tracks_zone_source =
             target.type.qualifier == TypeQualifier::Ptr ||
-            is_std_vec_raw_handle_type(target.type);
+            is_std_vec_zone_handle_type(target.type);
         if (!tracks_zone_source) return;
 
         const IrExpr& source = zone_pointer_source_expr(value);
@@ -11582,14 +11582,14 @@ private:
 
         std::vector<IrExprPtr> elements;
         elements.reserve(struct_type.field_names.size());
-        std::optional<std::size_t> raw_vec_data_field =
-            std_vec_raw_handle_data_field_index(struct_type);
+        std::optional<std::size_t> std_vec_source_field =
+            std_vec_zone_handle_source_field_index(struct_type);
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
             IrExprPtr value = std::move(lowered_values[i]);
             coerce_expr_to_expected(*value, struct_type.field_types[i]);
             require_assignable(expr.loc, struct_type.field_types[i], value->type);
             require_plain_prelude_aggregate_element(expr.loc, value->type, "struct");
-            if (!raw_vec_data_field || i != *raw_vec_data_field) {
+            if (!std_vec_source_field || i != *std_vec_source_field) {
                 require_no_zone_pointer_escape(value->loc, *value, "struct literal");
             }
             elements.push_back(std::move(value));

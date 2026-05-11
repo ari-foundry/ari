@@ -34,9 +34,10 @@ construction. Some helpers have already moved out to focused files:
 - `slice_semantics` for shared `Slice[T]` type recognition, source-prelude Slice
   view type construction, and the scalar/plain-aggregate element materialization
   checks used by sema, Vec `as_slice` lowering, and both backends
-- `std_vec_semantics` for source-prelude `std::vec::RawVec<T>` handle
-  recognition and its `data` field shape, keeping allocator-backed Vec seed
-  checks out of the central expression lowering logic
+- `std_vec_semantics` for source-prelude `std::vec::RawVec<T>` and
+  `std::vec::Vec<T>` handle recognition plus their zone-backed source field
+  shapes, keeping allocator-backed Vec seed checks out of the central
+  expression lowering logic
 - `range_semantics` for shared `Range[T]` / `RangeInclusive[T]` name and type
   recognition plus source-prelude range value type construction used by sema's
   type resolver, range constructors, stored-range loops, and Slice range checks
@@ -119,8 +120,8 @@ construction. Some helpers have already moved out to focused files:
   attribute parsing that those call-site contracts build on
 - `zone_return_semantics` for Zone value/borrow/source type predicates and the
   signature-level rule that only pointer-returning functions, or tracked
-  `std::vec::RawVec<T>` handle-returning functions, with exactly one Zone
-  borrow parameter may return zone-backed storage
+  source `std::vec` handle-returning functions, with exactly one Zone borrow
+  parameter may return zone-backed storage
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
