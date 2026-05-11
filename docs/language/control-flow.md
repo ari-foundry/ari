@@ -476,7 +476,10 @@ while value < 10 {
 `continue` jumps to the next loop iteration.
 
 Because `continue` leaves the current iteration scopes, any owning binding
-declared in those scopes must be moved or dropped before the jump.
+declared in those scopes must be moved or dropped before the jump. Ari also
+checks that owning bindings visible at the loop boundary have the same state on
+`continue` paths as they had at loop entry, because the next condition check may
+exit the loop.
 
 `continue` with values is only valid in `init while` loops. Plain `while` and
 `for` loops reject value continues because they do not have positional loop

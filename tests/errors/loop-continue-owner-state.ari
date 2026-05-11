@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var keep_running = true;
+  let token: own i64 = 5;
+  while keep_running {
+    drop token;
+    keep_running = false;
+    continue;
+  }
+  drop token;
+  return 0;
+}

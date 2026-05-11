@@ -109,10 +109,13 @@
    break path and then treated as live after the loop. Plain `break` and
    `continue` exits also reject live owning bindings in the loop-local scopes
    they leave, so non-init loop bindings must be consumed before a jump to the
-   next iteration or out of the loop. The next borrow-checking pressure point is
-   loop precision: plain loop fallthrough paths still reject ownership-state
-   changes and many borrow-state updates instead of proving that every
-   iteration and loop exit merges to a compatible state.
+   next iteration or out of the loop. Plain `continue` paths now also record
+   their loop-boundary ownership state and require it to match the loop entry
+   state, because the next condition check may exit the loop. The next
+   borrow-checking pressure point is loop precision: plain loop fallthrough
+   paths still reject ownership-state changes and many borrow-state updates
+   instead of proving that every iteration and loop exit merges to a compatible
+   state.
    - [loop-state] track ownership-state fixed points and borrow-state merges
      through plain loop fallthrough/next-iteration paths instead of rejecting
      all state changes inside loops

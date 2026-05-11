@@ -2273,6 +2273,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot change ownership state inside loop yet" $(BUILD_DIR)/errors/loop-drop-owner.err
 	if $(TARGET) tests/errors/loop-break-owner-state.ari -o $(BUILD_DIR)/errors/loop-break-owner-state.elf >$(BUILD_DIR)/errors/loop-break-owner-state.err 2>&1; then exit 1; fi
 	grep -q "binding 'token' has incompatible ownership states after loop exits" $(BUILD_DIR)/errors/loop-break-owner-state.err
+	if $(TARGET) tests/errors/loop-continue-owner-state.ari -o $(BUILD_DIR)/errors/loop-continue-owner-state.elf >$(BUILD_DIR)/errors/loop-continue-owner-state.err 2>&1; then exit 1; fi
+	grep -q "binding 'token' has incompatible ownership states at loop continue" $(BUILD_DIR)/errors/loop-continue-owner-state.err
 	if $(TARGET) tests/errors/loop-break-live-owner.ari -o $(BUILD_DIR)/errors/loop-break-live-owner.elf >$(BUILD_DIR)/errors/loop-break-live-owner.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'token' must be moved or dropped before break" $(BUILD_DIR)/errors/loop-break-live-owner.err
 	if $(TARGET) tests/errors/loop-continue-live-owner.ari -o $(BUILD_DIR)/errors/loop-continue-live-owner.elf >$(BUILD_DIR)/errors/loop-continue-live-owner.err 2>&1; then exit 1; fi

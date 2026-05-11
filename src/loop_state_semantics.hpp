@@ -16,6 +16,12 @@ std::optional<std::string> loop_state_mismatch_error_ignoring_bindings(
     const std::string& message
 );
 
+std::optional<std::string> merge_loop_state_snapshots(
+    StateSnapshot& merged,
+    const std::vector<StateSnapshot>& snapshots,
+    const std::string& message
+);
+
 std::optional<std::string> merge_loop_exit_states(
     StateSnapshot& merged,
     const std::vector<StateSnapshot>& break_states,
