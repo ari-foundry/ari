@@ -4292,9 +4292,13 @@ private:
         const StateSnapshot& loop_input,
         const StateSnapshot& loop_body_state,
         const LoopInfo& loop,
-        Flow body_flow
+        Flow body_flow,
+        bool has_zero_iteration_exit = true
     ) {
-        StateSnapshot exit_state = loop_input;
+        StateSnapshot exit_state =
+            !has_zero_iteration_exit && !loop.break_state_snapshots.empty()
+                ? project_loop_state_snapshot(loop_input, loop.break_state_snapshots.front())
+                : loop_input;
         if (body_flow == Flow::Continues) {
             require_same_states(loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
             merge_existing_zone_generations_into(exit_state, loop_body_state);
@@ -4302,6 +4306,10 @@ private:
         merge_continue_states(loc, exit_state, loop);
         merge_break_exit_states(loc, exit_state, loop, "has incompatible ownership states after loop exits");
         return exit_state;
+    }
+
+    static bool is_literal_true_condition(const IrExpr& condition) {
+        return condition.kind == IrExprKind::Bool && condition.bool_value;
     }
 
     void collect_owned_field_states(const IrType& type,
@@ -9532,7 +9540,14 @@ private:
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
+        restore_states(checked_loop_exit_state(
+            stmt.loc,
+            loop_input,
+            loop_body_state,
+            loop_state,
+            body.flow,
+            !is_literal_true_condition(*lowered.condition)
+        ));
         set_ir_stmt_label(lowered, label);
     }
 

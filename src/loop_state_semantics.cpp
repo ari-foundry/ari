@@ -55,4 +55,16 @@ std::optional<std::string> merge_loop_state_snapshots(
     return std::nullopt;
 }
 
+StateSnapshot project_loop_state_snapshot(
+    const StateSnapshot& base,
+    const StateSnapshot& snapshot
+) {
+    StateSnapshot projected = base;
+    for (auto& item : projected) {
+        auto found = snapshot.find(item.first);
+        if (found != snapshot.end()) item.second = found->second;
+    }
+    return projected;
+}
+
 } // namespace ari

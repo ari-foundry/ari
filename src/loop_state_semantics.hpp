@@ -22,6 +22,11 @@ std::optional<std::string> merge_loop_state_snapshots(
     const std::string& message
 );
 
+StateSnapshot project_loop_state_snapshot(
+    const StateSnapshot& base,
+    const StateSnapshot& snapshot
+);
+
 std::optional<std::string> merge_loop_exit_states(
     StateSnapshot& merged,
     const std::vector<StateSnapshot>& break_states,

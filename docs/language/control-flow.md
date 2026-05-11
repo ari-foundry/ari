@@ -396,6 +396,9 @@ the loop have the same state as they would have if the loop ran zero times. This
 keeps paths such as `drop owner; break;` from leaving the owner ambiguously live
 after the loop.
 
+For a literal `while true` loop, there is no zero-iteration exit. In that case,
+plain `break` paths define the ownership state after the loop.
+
 Because `break` leaves the current nested scopes, any owning binding declared in
 those scopes must be moved or dropped before the jump.
 
