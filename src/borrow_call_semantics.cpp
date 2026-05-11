@@ -52,11 +52,11 @@ std::optional<BorrowResultSource> call_borrow_result_source(SourceLocation loc,
                                                            const BorrowCallContract& contract,
                                                            const std::vector<IrExprPtr>& args) {
     if (!is_borrow_type(contract.result)) return std::nullopt;
-    if (contract.is_extern) {
+    if (contract.is_extern && !contract.explicit_contract) {
         fail_borrow_call(
             loc,
             "extern borrow-returning function '" + display_name +
-                "' cannot return tracked Ari borrow values yet");
+                "' needs an explicit @borrow_return(source) contract");
     }
     if (!contract.source_param_index || *contract.source_param_index >= args.size()) {
         fail_borrow_call(

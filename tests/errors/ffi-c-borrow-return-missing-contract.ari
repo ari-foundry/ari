@@ -1,0 +1,8 @@
+extern "C" fn ari_test_identity_i64_ref(value: ref i64) -> ref i64;
+
+fn main() -> i64 {
+  var value = 1;
+  let item: ref i64 = ari_test_identity_i64_ref(ref value);
+  let item_ptr: ptr i64 = item as ptr i64;
+  return *item_ptr;
+}

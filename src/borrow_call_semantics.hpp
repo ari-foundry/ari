@@ -16,6 +16,7 @@ struct BorrowCallContract {
     std::optional<std::size_t> source_param_index;
     std::string return_path;
     bool is_extern = false;
+    bool explicit_contract = false;
 };
 
 struct BorrowCallLocalAdapter {

@@ -1,0 +1,32 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+fn main() -> i64 {
+  var pair = Pair { left: 11, right: 2 };
+  let left_ref: ref i64 = pick_left(ref pair.left, ref pair.right);
+  let right_ref: ref mut i64 = ref mut pair.right;
+  let left_ptr: ptr i64 = left_ref as ptr i64;
+  let right_ptr: ptr i64 = right_ref as ptr i64;
+  *right_ptr = 3;
+
+  var tuple = (20, 4);
+  let tuple_left_ref: ref i64 = tuple_left(ref tuple);
+  let tuple_right_ref: ref mut i64 = ref mut tuple.1;
+  let tuple_left_ptr: ptr i64 = tuple_left_ref as ptr i64;
+  let tuple_right_ptr: ptr i64 = tuple_right_ref as ptr i64;
+  *tuple_right_ptr = 5;
+
+  return *left_ptr + *right_ptr + *tuple_left_ptr + *tuple_right_ptr;
+}
+
+@borrow_return(left)
+fn pick_left(left: ref i64, right: ref i64) -> ref i64 {
+  return ref left;
+}
+
+@borrow_return(pair.0)
+fn tuple_left(pair: ref (i64, i64)) -> ref i64 {
+  return ref pair.0;
+}

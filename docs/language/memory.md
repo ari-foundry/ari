@@ -139,14 +139,17 @@ Rules currently checked:
   result path borrows the same source path with the same borrow mode
 - a borrow-valued control-flow expression cannot return a borrow of a binding
   declared inside that expression's arm or block
-- a function may return `ref T` or `ref mut T` only when the signature has
-  exactly one borrow parameter and the returned borrow source traces back to
-  that parameter
+- a function may return `ref T` or `ref mut T` when the signature has exactly
+  one borrow parameter and the returned borrow source traces back to that
+  parameter, or when `@borrow_return(source.path)` names the tracked source
+  explicitly
 - when such a function or method always returns the same field or constant
   element below that parameter, callers keep only that returned subpath borrowed
-- a borrow return cannot come from a local binding, a value parameter, an extern
-  declaration, a function pointer call, or a function with multiple borrow
-  parameters
+- an extern borrow-returning declaration must use `@borrow_return(...)`; Ari
+  cannot infer a source from a bodyless declaration
+- a borrow return cannot come from a local binding, a value parameter, a
+  function pointer call, or a function with multiple borrow parameters but no
+  explicit source contract
 - borrow bindings cannot be reassigned
 - bare borrow expression statements are rejected
 
@@ -155,8 +158,8 @@ was created from borrowed until the reborrow exits scope, and that source borrow
 binding keeps its own original source borrowed until its scope exits. A
 borrow-valued function or method call keeps the caller's returned source path
 borrowed for as long as the returned borrow binding lives. Future
-borrow-checker refinement may shorten a named borrow to its last use and add
-explicit contracts for multi-source borrow-returning functions.
+borrow-checker refinement may shorten a named borrow to its last use and track
+borrow-valued aggregate fields independently.
 
 ## Drop
 

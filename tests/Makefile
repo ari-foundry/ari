@@ -2036,6 +2036,7 @@ check-ffi: $(TARGET)
 	grep -q 'call i64 @"ari_test_apply_i64"(ptr @"_ARNv7add_ten", i64 5)' $(BUILD_DIR)/ffi/ffi-c-callback.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(LLVM_CC) -c tests/ffi/c_helpers.c -o $(BUILD_DIR)/ffi/c_helpers.o; ar rcs $(BUILD_DIR)/ffi/libari_testffi.a $(BUILD_DIR)/ffi/c_helpers.o; $(TARGET) tests/ok/ffi-c-types.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-types.elf; $(BUILD_DIR)/ffi/ffi-c-types.elf; code=$$?; test $$code -eq 36; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-null-pointer.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-null-pointer.elf; $(BUILD_DIR)/ffi/ffi-c-null-pointer.elf; code=$$?; test $$code -eq 3; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-borrow-return.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-borrow-return.elf; $(BUILD_DIR)/ffi/ffi-c-borrow-return.elf; code=$$?; test $$code -eq 33; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-casts.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/pointer-casts.elf; $(BUILD_DIR)/ffi/pointer-casts.elf; code=$$?; test $$code -eq 1; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-offset.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-offset.elf; $(BUILD_DIR)/ffi/pointer-offset.elf; code=$$?; test $$code -eq 8; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/layout-query.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/layout-query.elf; $(BUILD_DIR)/ffi/layout-query.elf; code=$$?; test $$code -eq 35; fi
@@ -2070,6 +2071,8 @@ check-ffi: $(TARGET)
 	grep -q "variadic extern function 'printf' cannot be used as a function pointer value" $(BUILD_DIR)/ffi/extern-varargs-function-pointer.err
 	if $(TARGET) tests/errors/extern-generic.ari -o $(BUILD_DIR)/ffi/extern-generic.elf >$(BUILD_DIR)/ffi/extern-generic.err 2>&1; then exit 1; fi
 	grep -q "extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C" $(BUILD_DIR)/ffi/extern-generic.err
+	if $(TARGET) tests/errors/ffi-c-borrow-return-missing-contract.ari -o $(BUILD_DIR)/ffi/ffi-c-borrow-return-missing-contract.elf >$(BUILD_DIR)/ffi/ffi-c-borrow-return-missing-contract.err 2>&1; then exit 1; fi
+	grep -q "extern borrow-returning function 'ari_test_identity_i64_ref' needs an explicit @borrow_return(source) contract" $(BUILD_DIR)/ffi/ffi-c-borrow-return-missing-contract.err
 	if $(TARGET) --freestanding tests/errors/freestanding-extern-c-call.ari -o $(BUILD_DIR)/ffi/freestanding-extern-c-call.raw >$(BUILD_DIR)/ffi/freestanding-extern-c-call.err 2>&1; then exit 1; fi
 	grep -q 'freestanding backend cannot call extern "C" function' $(BUILD_DIR)/ffi/freestanding-extern-c-call.err
 	if $(TARGET) tests/errors/null-non-pointer.ari -o $(BUILD_DIR)/ffi/null-non-pointer.elf >$(BUILD_DIR)/ffi/null-non-pointer.err 2>&1; then exit 1; fi
@@ -2308,8 +2311,13 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-return-subpath.ari -o $(BUILD_DIR)/errors/borrow-return-subpath.raw
 	$(BUILD_DIR)/errors/borrow-return-subpath.raw; code=$$?; test $$code -eq 182
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-subpath.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-subpath.elf; $(BUILD_DIR)/errors/borrow-return-subpath.elf; code=$$?; test $$code -eq 182; fi
+	$(TARGET) --freestanding tests/ok/borrow-return-explicit-source.ari -o $(BUILD_DIR)/errors/borrow-return-explicit-source.raw
+	$(BUILD_DIR)/errors/borrow-return-explicit-source.raw; code=$$?; test $$code -eq 39
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-explicit-source.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-explicit-source.elf; $(BUILD_DIR)/errors/borrow-return-explicit-source.elf; code=$$?; test $$code -eq 39; fi
 	if $(TARGET) tests/errors/borrow-return-path-mismatch.ari -o $(BUILD_DIR)/errors/borrow-return-path-mismatch.elf >$(BUILD_DIR)/errors/borrow-return-path-mismatch.err 2>&1; then exit 1; fi
 	grep -q "function return borrow result must use the same source path on every return" $(BUILD_DIR)/errors/borrow-return-path-mismatch.err
+	if $(TARGET) tests/errors/borrow-return-explicit-path-mismatch.ari -o $(BUILD_DIR)/errors/borrow-return-explicit-path-mismatch.elf >$(BUILD_DIR)/errors/borrow-return-explicit-path-mismatch.err 2>&1; then exit 1; fi
+	grep -q "function return borrow result must use the same source path on every return" $(BUILD_DIR)/errors/borrow-return-explicit-path-mismatch.err
 	if $(TARGET) tests/errors/named-borrow-assign-source.ari -o $(BUILD_DIR)/errors/named-borrow-assign-source.elf >$(BUILD_DIR)/errors/named-borrow-assign-source.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/errors/named-borrow-assign-source.err
 	if $(TARGET) tests/errors/named-borrow-conflict.ari -o $(BUILD_DIR)/errors/named-borrow-conflict.elf >$(BUILD_DIR)/errors/named-borrow-conflict.err 2>&1; then exit 1; fi

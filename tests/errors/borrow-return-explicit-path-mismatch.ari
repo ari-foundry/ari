@@ -1,0 +1,16 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+@borrow_return(pair.left)
+fn wrong_path(pair: ref Pair) -> ref i64 {
+  return ref pair.right;
+}
+
+fn main() -> i64 {
+  var pair = Pair { left: 1, right: 2 };
+  let item: ref i64 = wrong_path(ref pair);
+  let item_ptr: ptr i64 = item as ptr i64;
+  return *item_ptr;
+}

@@ -302,9 +302,9 @@ parameters.
 ## Borrow Returns
 
 Functions can return a borrow when the compiler can track one source
-conservatively. The function signature must have exactly one borrow parameter,
-and every returned `ref` or `ref mut` value must trace back to that parameter.
-Local-source escapes remain rejected.
+conservatively. Without an explicit contract, the function signature must have
+exactly one borrow parameter, and every returned `ref` or `ref mut` value must
+trace back to that parameter. Local-source escapes remain rejected.
 
 ```ari
 fn identity(value: ref i64) -> ref i64 {
@@ -326,12 +326,29 @@ fn bad(value: ref i64) -> ref i64 {
 }
 ```
 
+Use `@borrow_return(source)` when a borrow-returning function has more than one
+borrow parameter, or when an extern declaration has no body for Ari to inspect.
+The source path can include struct fields or constant tuple/array/vector
+indexes:
+
+```ari
+@borrow_return(left)
+fn pick_left(left: ref i64, right: ref i64) -> ref i64 {
+  return ref left;
+}
+
+@borrow_return(pair.left)
+extern "C" fn pair_left(pair: ref Pair) -> ref i64;
+```
+
+For Ari functions with bodies, the compiler checks the contract against every
+return path.
+
 When a caller binds the result, the original argument source remains borrowed
 until that result binding leaves scope. If every return path borrows the same
 field or constant element below that parameter, only that subpath stays
 borrowed at the call site, so a returned `ref pair.left` does not block an
 unrelated borrow of `pair.right`. The same rule applies to method calls whose
-`self` parameter is the single borrow source. Borrow returns through extern
-declarations, function pointer calls, borrow-valued aggregate returns, and
-functions with multiple borrow parameters are still rejected until Ari has
-explicit source/lifetime contracts for those shapes.
+`self` parameter is the single borrow source. Function pointer calls and
+borrow-valued aggregate returns are still rejected until Ari has explicit
+source/lifetime contracts for those shapes.

@@ -1,0 +1,26 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+@borrow_return(value)
+extern "C" fn ari_test_identity_i64_ref(value: ref i64) -> ref i64;
+
+@borrow_return(value)
+extern "C" fn ari_test_identity_i64_mut_ref(value: ref mut i64) -> ref mut i64;
+
+fn main() -> i64 {
+  var pair = Pair { left: 5, right: 7 };
+  let left_ref: ref i64 = ari_test_identity_i64_ref(ref pair.left);
+  let right_ref: ref mut i64 = ref mut pair.right;
+  let left_ptr: ptr i64 = left_ref as ptr i64;
+  let right_ptr: ptr i64 = right_ref as ptr i64;
+  *right_ptr = 8;
+
+  var number = 10;
+  let unique: ref mut i64 = ari_test_identity_i64_mut_ref(ref mut number);
+  let unique_ptr: ptr i64 = unique as ptr i64;
+  *unique_ptr = 20;
+
+  return *left_ptr + *right_ptr + *unique_ptr;
+}

@@ -56,6 +56,7 @@ struct FunctionSig {
     IrType result;
     std::optional<std::size_t> borrow_return_param_index;
     std::string borrow_return_path;
+    bool borrow_return_contract_explicit = false;
     std::optional<std::size_t> zone_pointer_return_param_index;
     std::string module_name;
     std::string link_name;
@@ -1085,6 +1086,7 @@ private:
                name == "deprecated" ||
                name == "export" ||
                name == "no_mangle" ||
+               name == "borrow_return" ||
                name == "repr" ||
                name == "test" ||
                name == "cfg";
@@ -1142,6 +1144,13 @@ private:
                 fail(attr.loc, "attribute '@no_mangle' is only supported on functions");
             }
             reject_attribute_args(attr);
+            return;
+        }
+        if (attr.name == "borrow_return") {
+            if (target_kind != "function") {
+                fail(attr.loc, "attribute '@borrow_return' is only supported on functions");
+            }
+            (void)explicit_borrow_return_contract({attr});
             return;
         }
         if (attr.name == "cfg") {
@@ -2676,7 +2685,85 @@ private:
         }
     }
 
+    std::string resolve_explicit_borrow_return_path(
+        const ExplicitBorrowReturnContract& contract,
+        const IrType& source_type
+    ) {
+        std::string path;
+        IrType current = value_qualified_type(source_type);
+        for (const auto& component : contract.path) {
+            if (component.kind == BorrowReturnPathComponent::Kind::Field) {
+                if (current.primitive != IrPrimitiveKind::Struct) {
+                    fail(component.loc,
+                         "attribute '@borrow_return' field path requires a struct source before '" +
+                             component.text + "'");
+                }
+                std::size_t index = struct_field_index(component.loc, current, component.text);
+                path = local_owned_field_path(path, index);
+                current = current.field_types[index];
+                continue;
+            }
+
+            if (current.primitive == IrPrimitiveKind::Tuple ||
+                current.primitive == IrPrimitiveKind::Struct ||
+                current.primitive == IrPrimitiveKind::Array) {
+                const std::vector<IrType>& fields = aggregate_field_types(current);
+                if (component.index >= fields.size()) {
+                    fail(component.loc,
+                         "attribute '@borrow_return' index " +
+                             std::to_string(component.index) +
+                             " is out of range for source path");
+                }
+                path = local_owned_field_path(path, static_cast<std::size_t>(component.index));
+                current = fields[static_cast<std::size_t>(component.index)];
+                continue;
+            }
+
+            if (current.primitive == IrPrimitiveKind::Vector && current.args.size() == 1) {
+                path = local_owned_field_path(path, static_cast<std::size_t>(component.index));
+                current = current.args[0];
+                continue;
+            }
+
+            fail(component.loc,
+                 "attribute '@borrow_return' indexed path requires an aggregate source");
+        }
+        return path;
+    }
+
+    void apply_explicit_borrow_return_contract(FunctionSig& sig, const FunctionDecl& fn) {
+        std::optional<ExplicitBorrowReturnContract> contract =
+            explicit_borrow_return_contract(fn.attributes);
+        if (!contract) return;
+        if (!is_borrow_type(sig.result)) {
+            fail(contract->loc, "attribute '@borrow_return' requires a borrow return type");
+        }
+
+        std::optional<std::size_t> source_index;
+        for (std::size_t i = 0; i < fn.params.size(); ++i) {
+            if (fn.params[i].name != contract->param_name) continue;
+            source_index = i;
+            break;
+        }
+        if (!source_index || *source_index >= sig.params.size()) {
+            fail(contract->loc,
+                 "attribute '@borrow_return' references unknown parameter '" +
+                     contract->param_name + "'");
+        }
+        if (!is_borrow_type(sig.params[*source_index])) {
+            fail(contract->loc,
+                 "attribute '@borrow_return' source parameter '" +
+                     contract->param_name + "' must have ref or ref mut type");
+        }
+
+        sig.borrow_return_param_index = source_index;
+        sig.borrow_return_path =
+            resolve_explicit_borrow_return_path(*contract, sig.params[*source_index]);
+        sig.borrow_return_contract_explicit = true;
+    }
+
     void set_function_borrow_return_path_hint(FunctionSig& sig, const FunctionDecl& fn) {
+        if (sig.borrow_return_contract_explicit) return;
         if (!sig.borrow_return_param_index || !fn.has_body) return;
         if (*sig.borrow_return_param_index >= fn.params.size() ||
             *sig.borrow_return_param_index >= sig.params.size()) {
@@ -2752,6 +2839,7 @@ private:
                 for (const auto& param : method.params) sig.params.push_back(resolve_executable_type(param.type));
                 sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
                 set_function_return_contracts(sig);
+                apply_explicit_borrow_return_contract(sig, method);
                 set_function_borrow_return_path_hint(sig, method);
 
                 current_type_substitutions_ = std::move(previous_substitutions);
@@ -3077,6 +3165,7 @@ private:
             for (const auto& param : fn.params) sig.params.push_back(resolve_executable_type(param.type));
             sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
             set_function_return_contracts(sig);
+            apply_explicit_borrow_return_contract(sig, fn);
             set_function_borrow_return_path_hint(sig, fn);
             current_module_name_ = previous_module;
 
@@ -3146,6 +3235,7 @@ private:
         }
         sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
         set_function_return_contracts(sig);
+        apply_explicit_borrow_return_contract(sig, fn);
         current_module_name_ = previous_module;
 
         auto inserted = functions_.emplace(fn.name, std::move(sig));
@@ -3711,9 +3801,16 @@ private:
         if (current_zone_pointer_return_param_index_) {
             current_zone_pointer_return_source_ = ir_fn.params[*current_zone_pointer_return_param_index_].name;
         }
-        current_borrow_return_param_index_ = borrow_return_param_index(current_param_types, current_return_);
+        current_borrow_return_param_index_ =
+            sig_found != functions_.end()
+                ? sig_found->second.borrow_return_param_index
+                : borrow_return_param_index(current_param_types, current_return_);
         if (current_borrow_return_param_index_) {
             current_borrow_return_param_name_ = ir_fn.params[*current_borrow_return_param_index_].name;
+            if (sig_found != functions_.end() &&
+                sig_found->second.borrow_return_contract_explicit) {
+                current_borrow_return_path_ = sig_found->second.borrow_return_path;
+            }
         }
 
         CheckedStatements body = check_statements(fn.body, false);
@@ -4294,7 +4391,8 @@ private:
             sig.result,
             sig.borrow_return_param_index,
             sig.borrow_return_path,
-            sig.is_extern
+            sig.is_extern,
+            sig.borrow_return_contract_explicit
         };
         std::optional<BorrowResultSource> source =
             call_borrow_result_source(loc, display_name, contract, args);
@@ -13124,6 +13222,7 @@ private:
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
         set_function_return_contracts(sig);
+        apply_explicit_borrow_return_contract(sig, *method.fn);
         set_function_borrow_return_path_hint(sig, *method.fn);
 
         current_module_name_ = previous_module;
@@ -13163,6 +13262,7 @@ private:
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
         set_function_return_contracts(sig);
+        apply_explicit_borrow_return_contract(sig, *method.fn);
         set_function_borrow_return_path_hint(sig, *method.fn);
 
         current_module_name_ = previous_module;
@@ -13717,6 +13817,7 @@ private:
         call_sig.is_public = fn.is_public;
         call_sig.loc = fn.loc;
         set_function_return_contracts(call_sig);
+        apply_explicit_borrow_return_contract(call_sig, fn);
         set_function_borrow_return_path_hint(call_sig, fn);
 
         if (!queued_specializations_.count(specialized_name)) {
@@ -13749,6 +13850,7 @@ private:
         sig.is_public = fn.is_public;
         sig.loc = fn.loc;
         set_function_return_contracts(sig);
+        apply_explicit_borrow_return_contract(sig, fn);
         set_function_borrow_return_path_hint(sig, fn);
         functions_.emplace(specialized_name, std::move(sig));
         pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});

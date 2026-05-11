@@ -103,8 +103,8 @@ construction. Some helpers have already moved out to focused files:
   returned subpath composition, result borrow-mode selection, and
   call/control-flow result activation through a narrow local-scope adapter
 - `borrow_return_semantics` for small signature-level borrow-return contracts,
-  including the single-source parameter rule that those call-site contracts
-  build on
+  including the single-source parameter rule and `@borrow_return(source.path)`
+  attribute parsing that those call-site contracts build on
 - `zone_return_semantics` for Zone value/borrow/source type predicates and the
   signature-level rule that only pointer-returning functions with exactly one
   Zone borrow parameter may return a tracked zone pointer
@@ -312,11 +312,12 @@ pending IR.
    - This completes the lexical borrow-checking extraction stage. Borrow-valued
      result and borrow-returning call activation now live in
      `borrow_call_semantics` and reach local scope state only through a narrow
-     adapter. Single-source borrow-return signatures also carry returned
+     adapter. Borrow-return signatures also carry explicit or inferred returned
      field/element subpaths so call sites do not need to borrow an entire
      aggregate when the callee returns only `source.field`; future NLL,
-     reborrow, and borrow-result work should build on `BorrowContext` instead
-     of adding new raw borrow-state paths in `sema.cpp`.
+     aggregate-borrow, reborrow, and borrow-result work should build on
+     `BorrowContext` instead of adding new raw borrow-state paths in
+     `sema.cpp`.
 3. Extract ownership/drop checking into `ownership_semantics`.
    - Move owned field state tracking, partial move/reinitialization checks,
      `drop` lowering, destructor lookup glue, and return-owner checks.

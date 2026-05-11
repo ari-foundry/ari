@@ -16,6 +16,14 @@ void ari_test_inc_i64(int64_t* value) {
     *value += 1;
 }
 
+int64_t* ari_test_identity_i64_ref(int64_t* value) {
+    return value;
+}
+
+int64_t* ari_test_identity_i64_mut_ref(int64_t* value) {
+    return value;
+}
+
 int64_t ari_test_is_null(const void* value) {
     return value == 0 ? 1 : 0;
 }

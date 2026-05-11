@@ -54,6 +54,25 @@ Enable feature predicates from the command line with `--cfg-feature name` or
 of deprecated functions, structs, and enums emit warnings but do not stop
 compilation.
 
+`@borrow_return(source)` may be used on borrow-returning functions and extern
+declarations to name the parameter that the returned `ref` or `ref mut` comes
+from. Add `.field` or `.0`-style components when the returned borrow is a
+known subpath:
+
+```ari
+@borrow_return(left)
+fn pick_left(left: ref i64, right: ref i64) -> ref i64 {
+  return ref left;
+}
+
+@borrow_return(value)
+extern "C" fn identity_ref(value: ref i64) -> ref i64;
+```
+
+For Ari functions with bodies, the checker verifies that every return follows
+the declared source path. Extern declarations must use this attribute before
+they may return tracked Ari borrow values.
+
 `@test` marks a function for the compiler test runner. Run tests with:
 
 ```sh

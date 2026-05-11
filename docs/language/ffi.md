@@ -32,6 +32,24 @@ extern fn puts(text: string) -> i32;
 Other foreign ABI strings, including `extern "C++"`, are rejected. C++ interop
 should go through an explicit `extern "C"` wrapper function.
 
+## Borrow-Returning Externs
+
+Extern declarations that return `ref T` or `ref mut T` must state where the
+borrow comes from with `@borrow_return(source)`. Ari cannot inspect a C body,
+so an unannotated borrow-returning extern is rejected when called.
+
+```ari
+@borrow_return(value)
+extern "C" fn identity_ref(value: ref i64) -> ref i64;
+
+@borrow_return(value)
+extern "C" fn identity_mut_ref(value: ref mut i64) -> ref mut i64;
+```
+
+The contract keeps the caller's source borrowed for as long as the result
+binding lives. If the call passes `ref pair.left`, only `pair.left` remains
+borrowed, so unrelated fields can still be borrowed or assigned normally.
+
 ## Ari Builtin ABI
 
 `extern "ari"` is not C FFI. It is reserved for compiler/runtime builtins that
