@@ -311,8 +311,7 @@ IrExprPtr make_format_print_expr(SourceLocation loc,
     expr->kind = IrExprKind::FormatPrint;
     expr->loc = loc;
     expr->type = std::move(result);
-    expr->print_newline = print_newline;
-    expr->format_parts = std::make_unique<std::vector<std::string>>(std::move(format_parts));
+    set_ir_expr_format_print_payload(*expr, std::move(format_parts), print_newline);
     expr->args = std::move(args);
     return expr;
 }

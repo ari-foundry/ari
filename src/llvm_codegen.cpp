@@ -2880,10 +2880,10 @@ private:
     }
 
     Value emit_format_print(const IrExpr& expr) {
-        if (!expr.format_parts) {
+        if (!ir_expr_has_format_print_payload(expr)) {
             throw CompileError(where(expr.loc) + ": format print expression is missing format payload");
         }
-        const std::vector<std::string>& format_parts = *expr.format_parts;
+        const std::vector<std::string>& format_parts = ir_expr_format_parts(expr);
         std::string fmt_string = string_ptr("%s");
         for (std::size_t i = 0; i < format_parts.size(); ++i) {
             if (!format_parts[i].empty()) {
@@ -2902,7 +2902,7 @@ private:
                 }
             }
         }
-        if (expr.print_newline) line("  call i64 @ari_builtin_newline()");
+        if (ir_expr_format_print_newline(expr)) line("  call i64 @ari_builtin_newline()");
         return Value{"i64", "0", expr.type};
     }
 

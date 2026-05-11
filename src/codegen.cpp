@@ -2897,15 +2897,15 @@ private:
     }
 
     void emit_format_print(const IrExpr& expr) {
-        if (!expr.format_parts) {
+        if (!ir_expr_has_format_print_payload(expr)) {
             throw CompileError(where(expr.loc) + ": format print expression is missing format payload");
         }
-        const std::vector<std::string>& format_parts = *expr.format_parts;
+        const std::vector<std::string>& format_parts = ir_expr_format_parts(expr);
         for (std::size_t i = 0; i < format_parts.size(); ++i) {
             emit_format_literal(format_parts[i]);
             if (i < expr.args.size()) emit_format_argument(*expr.args[i]);
         }
-        if (expr.print_newline) {
+        if (ir_expr_format_print_newline(expr)) {
             emit_direct_call("newline");
         }
         emit_mov_reg_imm64(Reg::RAX, 0);

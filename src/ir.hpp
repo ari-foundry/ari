@@ -237,6 +237,11 @@ struct IrExprMatchPayload {
     std::vector<IrMatchExprArm> arms;
 };
 
+struct IrExprFormatPrintPayload {
+    std::vector<std::string> parts;
+    bool print_newline = false;
+};
+
 struct IrExprCallParamPayload {
     std::vector<IrType> param_types;
 };
@@ -300,10 +305,8 @@ struct IrExpr {
         std::uint64_t tuple_index;
     };
     bool int_negative = false;
-    std::unique_ptr<std::vector<std::string>> format_parts;
     std::uint32_t enum_tag = 0;
     bool has_payload = false;
-    bool print_newline = false;
     bool mutable_borrow = false;
     bool try_converts_residual = false;
     bool try_residual_has_payload = false;
@@ -315,6 +318,7 @@ struct IrExpr {
     std::unique_ptr<IrExprChildPayload> child_payload;
     std::unique_ptr<IrExprRarePayload> rare_payload;
     std::unique_ptr<IrExprStringPayload> string_payload;
+    std::unique_ptr<IrExprFormatPrintPayload> format_print_payload;
     std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
     std::unique_ptr<IrExprCallParamPayload> call_param_payload;
@@ -370,6 +374,31 @@ inline void set_ir_expr_label(IrExpr& expr, std::string label) {
     if (label.empty() && !expr.string_payload) return;
     ensure_ir_expr_string_payload(expr).label = std::move(label);
     clear_empty_ir_expr_string_payload(expr);
+}
+
+inline bool ir_expr_has_format_print_payload(const IrExpr& expr) {
+    return static_cast<bool>(expr.format_print_payload);
+}
+
+inline const IrExprFormatPrintPayload& ir_expr_format_print_payload(const IrExpr& expr) {
+    static const IrExprFormatPrintPayload empty;
+    return expr.format_print_payload ? *expr.format_print_payload : empty;
+}
+
+inline const std::vector<std::string>& ir_expr_format_parts(const IrExpr& expr) {
+    return ir_expr_format_print_payload(expr).parts;
+}
+
+inline bool ir_expr_format_print_newline(const IrExpr& expr) {
+    return ir_expr_format_print_payload(expr).print_newline;
+}
+
+inline void set_ir_expr_format_print_payload(IrExpr& expr,
+                                             std::vector<std::string> parts,
+                                             bool print_newline) {
+    expr.format_print_payload = std::make_unique<IrExprFormatPrintPayload>();
+    expr.format_print_payload->parts = std::move(parts);
+    expr.format_print_payload->print_newline = print_newline;
 }
 
 inline const IrExprChildPayload& ir_expr_child_payload(const IrExpr& expr) {

@@ -88,11 +88,12 @@ borrow, string/null, composite literal, block, and match AST expression
 construction paths that touch those union-backed fields. Broader `Stmt` and
 expression child/vector payload packing remains a separate refactor because
 those nodes are mutated across parser cloning, semantic lowering, and IR builder
-paths. AST macro-call token trees and IR format-print string parts are already
-lazy rare payloads, so ordinary expression nodes no longer carry those vector
-slots directly. AST `if let`/`while let` condition patterns and `for` loop-head
-patterns are lazy payloads too, leaving normal condition expressions and
-non-loop statements without embedded `Pattern` objects. AST and IR match
+paths. AST macro-call token trees and IR format-print string parts plus the
+newline flag are already lazy rare payloads, so ordinary expression nodes no
+longer carry those vector slots or the print-only flag directly. AST
+`if let`/`while let` condition patterns and `for` loop-head patterns are lazy
+payloads too, leaving normal condition expressions and non-loop statements
+without embedded `Pattern` objects. AST and IR match
 statement arm vectors also live behind match-statement payload pointers, so
 non-match statement nodes no longer carry those vector slots directly. Explicit
 `drop` statement names, `break` labels/values, and assignment statement

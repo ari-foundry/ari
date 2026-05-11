@@ -15,6 +15,7 @@ check: $(TARGET) check-cli check-prelude check-control-flow check-match check-mo
 	grep -q "declare i32 @printf" $(BUILD_DIR)/ir/prelude-io.ll
 	$(TARGET) tests/ok/format-print.ari --emit-llvm $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_write_i64" $(BUILD_DIR)/ir/format-print.ll
+	grep -q "@ari_builtin_newline" $(BUILD_DIR)/ir/format-print.ll
 	$(TARGET) tests/ok/context-arg.ari --emit-llvm $(BUILD_DIR)/ir/context-arg.ll
 	grep -q "@ari_builtin_context_arg" $(BUILD_DIR)/ir/context-arg.ll
 	$(TARGET) tests/ok/ffi-c-puts.ari --emit-llvm $(BUILD_DIR)/ir/ffi-c-puts.ll

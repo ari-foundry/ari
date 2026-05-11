@@ -141,9 +141,10 @@
    tuple/product control-flow expression chains. Rare expression payloads are
    also moving out of every node: AST macro token trees now live behind a
    `MacroCall`-specific payload allocated by `ast_builders`, and IR
-   format-print string parts now live behind a `FormatPrint`-specific payload
-   allocated by `ir_builders`. AST `if let`/`while let` condition patterns and
-   `for` loop-head patterns now also live behind pattern payload pointers so
+   format-print string parts plus the newline flag now live behind a
+   `FormatPrint`-specific payload allocated by `ir_builders`. AST
+   `if let`/`while let` condition patterns and `for` loop-head patterns now
+   also live behind pattern payload pointers so
    ordinary expressions and non-loop statements no longer carry a full
    `Pattern` object. AST and IR match statement arm vectors now live behind
    match-statement payload pointers, covering parser match statements, sema

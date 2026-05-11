@@ -421,7 +421,7 @@ Checklist:
 - [x] IR control-flow builders preserve aggregate/product if-let and match
       expression chain lowering paths
 - [x] rare AST/IR vector payload packing preserves macro token parsing and
-      format-print string-part lowering paths
+      format-print string-part and newline lowering paths
 - [x] AST condition-pattern payload packing preserves enum and aggregate
       if-let/while-let statement and expression lowering paths
 - [x] AST for-loop pattern payload packing preserves range, list literal,
