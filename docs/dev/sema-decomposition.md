@@ -131,9 +131,13 @@ AST operand child storage is not split yet, but the parser now builds
 unary/binary/cast/try/index/field/call/method-call nodes through `ast_builders`
 and `expr_operand`/`expr_left`/`expr_right` accessors. AST cloning, declaration
 summary materialization, compound-assignment target cloning, and sema's
-synthetic borrow-receiver cloning also use those helpers, which keeps the next
-payload move focused on sema/backend read coverage instead of parser
-construction cleanup.
+synthetic borrow-receiver cloning also use those helpers. Semantic AST lowering,
+constant folding/evaluation, explicit move-place validation, local Vec method
+receiver handling, indirect calls, borrowed method receivers, and binary/try/
+coalesce lowering now read AST child expressions through the same helpers. The
+AST child pointers now live behind `ExprChildPayload`, so childless expressions
+avoid three eager `unique_ptr` members. The next payload move can focus on IR
+backend read coverage, rather than parser or semantic construction cleanup.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

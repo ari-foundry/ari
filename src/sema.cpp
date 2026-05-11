@@ -4924,16 +4924,16 @@ private:
             out.negative = constant.int_negative;
             return true;
         }
-        if (expr.kind == ExprKind::Unary && expr.operand) {
+        if (expr.kind == ExprKind::Unary && expr_operand(expr)) {
             StaticIntegerValue operand;
-            return known_integer_capacity(*expr.operand, operand) &&
+            return known_integer_capacity(*expr_operand(expr), operand) &&
                    fold_static_integer_unary(expr.op, operand, out);
         }
-        if (expr.kind == ExprKind::Binary && expr.left && expr.right) {
+        if (expr.kind == ExprKind::Binary && expr_left(expr) && expr_right(expr)) {
             StaticIntegerValue left;
             StaticIntegerValue right;
-            return known_integer_capacity(*expr.left, left) &&
-                   known_integer_capacity(*expr.right, right) &&
+            return known_integer_capacity(*expr_left(expr), left) &&
+                   known_integer_capacity(*expr_right(expr), right) &&
                    fold_static_integer_binary(expr.op, left, right, out);
         }
         return false;
@@ -5563,10 +5563,10 @@ private:
     bool has_raw_pointer_deref_base(const Expr& expr) const {
         if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) return true;
         if ((expr.kind == ExprKind::FieldAccess ||
-             expr.kind == ExprKind::TupleIndex ||
+            expr.kind == ExprKind::TupleIndex ||
              expr.kind == ExprKind::Index) &&
-            expr.operand) {
-            return has_raw_pointer_deref_base(*expr.operand);
+            expr_operand(expr)) {
+            return has_raw_pointer_deref_base(*expr_operand(expr));
         }
         return false;
     }
@@ -5629,7 +5629,7 @@ private:
 
         if (expr.kind == ExprKind::FieldAccess) {
             TrackedAggregateAccess base;
-            if (!try_build_tracked_aggregate_access(*expr.operand, base)) return false;
+            if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
             if (base.type.primitive != IrPrimitiveKind::Struct) {
                 fail(expr.loc, "field access requires a struct value, got " + type_name(base.type));
             }
@@ -5650,7 +5650,7 @@ private:
 
         if (expr.kind == ExprKind::TupleIndex) {
             TrackedAggregateAccess base;
-            if (!try_build_tracked_aggregate_access(*expr.operand, base)) return false;
+            if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
             if (base.type.primitive != IrPrimitiveKind::Tuple &&
                 base.type.primitive != IrPrimitiveKind::Struct) {
                 fail(expr.loc, "tuple index access requires tuple or tuple struct value, got " + type_name(base.type));
@@ -5679,7 +5679,7 @@ private:
 
         if (expr.kind == ExprKind::Index) {
             TrackedAggregateAccess base;
-            if (!try_build_tracked_aggregate_access(*expr.operand, base)) return false;
+            if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
             if (is_prelude_slice_type(base.type)) return false;
             if (base.type.primitive != IrPrimitiveKind::Array &&
                 base.type.primitive != IrPrimitiveKind::Vector) {
@@ -5688,7 +5688,7 @@ private:
             if (base.type.args.size() != 1) {
                 throw CompileError("internal error: aggregate index without element type");
             }
-            IrExprPtr index = check_expr(*expr.right);
+            IrExprPtr index = check_expr(*expr_right(expr));
             if (!is_value_integer_type(index->type)) {
                 fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
             }
@@ -5760,7 +5760,8 @@ private:
 
     IrExprPtr check_field_assignment_target(const Expr& expr) {
         std::string base_name;
-        LocalInfo& local = require_mutable_base_local(expr.loc, *expr.operand, base_name);
+        const Expr& operand_expr = *expr_operand(expr);
+        LocalInfo& local = require_mutable_base_local(expr.loc, operand_expr, base_name);
         if (local.type.primitive != IrPrimitiveKind::Struct) {
             fail(expr.loc, "field assignment requires a struct value, got " + type_name(local.type));
         }
@@ -5779,14 +5780,15 @@ private:
 
         return make_tuple_index_expr(
             expr.loc,
-            make_local_lvalue_expr(expr.operand->loc, base_name, local.type),
+            make_local_lvalue_expr(operand_expr.loc, base_name, local.type),
             index
         );
     }
 
     IrExprPtr check_tuple_field_assignment_target(const Expr& expr) {
         std::string base_name;
-        LocalInfo& local = require_mutable_base_local(expr.loc, *expr.operand, base_name);
+        const Expr& operand_expr = *expr_operand(expr);
+        LocalInfo& local = require_mutable_base_local(expr.loc, operand_expr, base_name);
         if (local.type.primitive != IrPrimitiveKind::Struct) {
             fail(expr.loc, "tuple-field assignment requires a tuple struct value, got " + type_name(local.type));
         }
@@ -5810,7 +5812,7 @@ private:
 
         return make_tuple_index_expr(
             expr.loc,
-            make_local_lvalue_expr(expr.operand->loc, base_name, local.type),
+            make_local_lvalue_expr(operand_expr.loc, base_name, local.type),
             static_cast<std::size_t>(expr.tuple_index)
         );
     }
@@ -5826,13 +5828,13 @@ private:
     }
 
     IrExprPtr check_slice_index_assignment_target(const Expr& expr) {
-        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        IrExprPtr operand = check_aggregate_access_operand(*expr_operand(expr));
         if (!is_prelude_slice_type(operand->type)) {
             fail(expr.loc,
                  "dynamic index assignment currently supports Slice values; "
                  "use Vec.set(...) for local Vec values or a constant index for local arrays/vectors");
         }
-        IrExprPtr index = check_expr(*expr.right);
+        IrExprPtr index = check_expr(*expr_right(expr));
         if (!is_value_integer_type(index->type)) {
             fail(expr.loc, "index expression must be an integer, got " + type_name(index->type));
         }
@@ -5847,7 +5849,7 @@ private:
 
     IrExprPtr check_pointer_deref_assignment_target(const Expr& expr) {
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_expr(*expr.operand);
+        IrExprPtr pointer = check_expr(*expr_operand(expr));
         release_temporary_borrows(borrow_mark);
 
         IrType element_type = require_raw_pointer_materializable_type(expr.loc, pointer->type, "pointer dereference");
@@ -5856,7 +5858,7 @@ private:
 
     IrExprPtr check_pointer_deref_access_operand(const Expr& expr) {
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_expr(*expr.operand);
+        IrExprPtr pointer = check_expr(*expr_operand(expr));
         release_temporary_borrows(borrow_mark);
 
         IrType element_type = require_raw_pointer_deref_type(expr.loc, pointer->type, "pointer dereference");
@@ -6098,7 +6100,7 @@ private:
         }
         if (expr.kind == ExprKind::Unary) {
             if (expr.op == TokenKind::Bang) return bool_type(expr.loc);
-            return infer_constant_expr_type(*expr.operand, fallback);
+            return infer_constant_expr_type(*expr_operand(expr), fallback);
         }
         if (expr.kind == ExprKind::Cast) {
             return resolve_executable_type(expr.cast_type);
@@ -6114,19 +6116,19 @@ private:
                 expr.op == TokenKind::GreaterEq) {
                 return bool_type(expr.loc);
             }
-            return infer_constant_binary_integer_type(expr.loc, *expr.left, *expr.right, fallback);
+            return infer_constant_binary_integer_type(expr.loc, *expr_left(expr), *expr_right(expr), fallback);
         }
         if (expr.kind == ExprKind::FieldAccess) {
-            if (!expr.operand) fail(expr.loc, "missing constant field operand");
-            IrType operand_type = infer_constant_expr_type(*expr.operand, fallback);
+            if (!expr_operand(expr)) fail(expr.loc, "missing constant field operand");
+            IrType operand_type = infer_constant_expr_type(*expr_operand(expr), fallback);
             if (operand_type.primitive != IrPrimitiveKind::Struct) {
                 fail(expr.loc, "constant field access requires a struct value, got " + type_name(operand_type));
             }
             return operand_type.field_types[struct_field_index(expr.loc, operand_type, expr.name)];
         }
         if (expr.kind == ExprKind::TupleIndex) {
-            if (!expr.operand) fail(expr.loc, "missing constant tuple index operand");
-            IrType operand_type = infer_constant_expr_type(*expr.operand, fallback);
+            if (!expr_operand(expr)) fail(expr.loc, "missing constant tuple index operand");
+            IrType operand_type = infer_constant_expr_type(*expr_operand(expr), fallback);
             if (operand_type.primitive != IrPrimitiveKind::Tuple &&
                 operand_type.primitive != IrPrimitiveKind::Struct) {
                 fail(expr.loc, "constant tuple index access requires tuple or tuple struct value, got " +
@@ -6141,8 +6143,8 @@ private:
             return fields[static_cast<std::size_t>(expr.tuple_index)];
         }
         if (expr.kind == ExprKind::Index) {
-            if (!expr.operand) fail(expr.loc, "missing constant index operand");
-            IrType operand_type = infer_constant_expr_type(*expr.operand, fallback);
+            if (!expr_operand(expr)) fail(expr.loc, "missing constant index operand");
+            IrType operand_type = infer_constant_expr_type(*expr_operand(expr), fallback);
             if (operand_type.primitive != IrPrimitiveKind::Array || operand_type.args.size() != 1) {
                 fail(expr.loc, "constant index access requires a fixed-array value, got " + type_name(operand_type));
             }
@@ -6176,16 +6178,16 @@ private:
     ConstantValue evaluate_constant_binary_expr(const Expr& expr, const IrType& expected) {
         if (expected.qualifier == TypeQualifier::Value && expected.primitive == IrPrimitiveKind::Bool) {
             if (expr.op == TokenKind::AmpAmp || expr.op == TokenKind::PipePipe) {
-                ConstantValue left = evaluate_constant_expr(*expr.left, expected);
-                ConstantValue right = evaluate_constant_expr(*expr.right, expected);
+                ConstantValue left = evaluate_constant_expr(*expr_left(expr), expected);
+                ConstantValue right = evaluate_constant_expr(*expr_right(expr), expected);
                 return evaluate_constant_bool_binary(expr.loc, expr.op, expected, left, right);
             }
 
             if (expr.op == TokenKind::EqEq || expr.op == TokenKind::BangEq) {
-                IrType left_type = infer_constant_expr_type(*expr.left, i64_type(expr.loc));
+                IrType left_type = infer_constant_expr_type(*expr_left(expr), i64_type(expr.loc));
                 if (left_type.qualifier == TypeQualifier::Value && left_type.primitive == IrPrimitiveKind::Bool) {
-                    ConstantValue left = evaluate_constant_expr(*expr.left, left_type);
-                    ConstantValue right = evaluate_constant_expr(*expr.right, left_type);
+                    ConstantValue left = evaluate_constant_expr(*expr_left(expr), left_type);
+                    ConstantValue right = evaluate_constant_expr(*expr_right(expr), left_type);
                     return evaluate_constant_bool_comparison(expr.loc, expr.op, expected, left, right);
                 }
             }
@@ -6202,9 +6204,13 @@ private:
                     fail(expr.loc, "constant bool expressions support logical and comparison operators");
             }
 
-            IrType operand_type = infer_constant_binary_integer_type(expr.loc, *expr.left, *expr.right, i64_type(expr.loc));
-            ConstantValue left = evaluate_constant_expr(*expr.left, operand_type);
-            ConstantValue right = evaluate_constant_expr(*expr.right, operand_type);
+            IrType operand_type = infer_constant_binary_integer_type(
+                expr.loc,
+                *expr_left(expr),
+                *expr_right(expr),
+                i64_type(expr.loc));
+            ConstantValue left = evaluate_constant_expr(*expr_left(expr), operand_type);
+            ConstantValue right = evaluate_constant_expr(*expr_right(expr), operand_type);
             return evaluate_constant_integer_comparison(expr.loc, expr.op, expected, operand_type, left, right);
         }
 
@@ -6227,20 +6233,20 @@ private:
                 fail(expr.loc, "constant integer expressions support +, -, *, /, %, &, |, ^, <<, and >>");
         }
 
-        ConstantValue left = evaluate_constant_expr(*expr.left, expected);
-        ConstantValue right = evaluate_constant_expr(*expr.right, expected);
+        ConstantValue left = evaluate_constant_expr(*expr_left(expr), expected);
+        ConstantValue right = evaluate_constant_expr(*expr_right(expr), expected);
         return evaluate_constant_integer_binary(expr.loc, expr.op, expected, left, right);
     }
 
     ConstantValue evaluate_constant_unary_expr(const Expr& expr, const IrType& expected) {
         if (expr.op == TokenKind::Bang) {
-            ConstantValue value = evaluate_constant_expr(*expr.operand, expected);
+            ConstantValue value = evaluate_constant_expr(*expr_operand(expr), expected);
             if (!value.is_bool) fail(expr.loc, "constant ! operand must be bool");
             return make_bool_constant(expr.loc, expected, !value.bool_value);
         }
         if (expr.op == TokenKind::Minus) {
             if (!is_value_integer_type(expected)) fail(expr.loc, "constant unary - operand must be integer");
-            ConstantValue value = evaluate_constant_expr(*expr.operand, expected);
+            ConstantValue value = evaluate_constant_expr(*expr_operand(expr), expected);
             if (!is_signed_integer_primitive(expected.primitive)) {
                 fail(expr.loc, "constant unary - requires a signed integer result type");
             }
@@ -6252,7 +6258,7 @@ private:
         }
         if (expr.op == TokenKind::Tilde) {
             if (!is_value_integer_type(expected)) fail(expr.loc, "constant bitwise-not operand must be integer");
-            ConstantValue value = evaluate_constant_expr(*expr.operand, expected);
+            ConstantValue value = evaluate_constant_expr(*expr_operand(expr), expected);
             unsigned width = integer_primitive_bit_width(expected.primitive);
             std::uint64_t result_bits = (~constant_integer_raw_bits(value, width)) & integer_bit_mask(width);
             if (is_signed_integer_primitive(expected.primitive)) {
@@ -6264,11 +6270,11 @@ private:
     }
 
     ConstantValue evaluate_constant_cast_expr(const Expr& expr, const IrType& expected) {
-        if (!expr.operand) fail(expr.loc, "missing constant cast operand");
+        if (!expr_operand(expr)) fail(expr.loc, "missing constant cast operand");
         IrType target = resolve_executable_type(expr.cast_type);
         require_assignable(expr.loc, expected, target);
-        IrType source_type = infer_constant_expr_type(*expr.operand, target);
-        ConstantValue value = evaluate_constant_expr(*expr.operand, source_type);
+        IrType source_type = infer_constant_expr_type(*expr_operand(expr), target);
+        ConstantValue value = evaluate_constant_expr(*expr_operand(expr), source_type);
         return cast_integer_constant(expr.loc, value, target);
     }
 
@@ -6279,12 +6285,12 @@ private:
     }
 
     ConstantValue evaluate_constant_field_access_expr(const Expr& expr, const IrType& expected) {
-        if (!expr.operand) fail(expr.loc, "missing constant field operand");
-        IrType operand_type = infer_constant_expr_type(*expr.operand, expected);
+        if (!expr_operand(expr)) fail(expr.loc, "missing constant field operand");
+        IrType operand_type = infer_constant_expr_type(*expr_operand(expr), expected);
         if (operand_type.primitive != IrPrimitiveKind::Struct) {
             fail(expr.loc, "constant field access requires a struct value, got " + type_name(operand_type));
         }
-        ConstantValue value = evaluate_constant_expr(*expr.operand, operand_type);
+        ConstantValue value = evaluate_constant_expr(*expr_operand(expr), operand_type);
         if (value.kind != ConstantValueKind::Struct) {
             fail(expr.loc, "constant field access requires a struct value");
         }
@@ -6296,14 +6302,14 @@ private:
     }
 
     ConstantValue evaluate_constant_tuple_index_expr(const Expr& expr, const IrType& expected) {
-        if (!expr.operand) fail(expr.loc, "missing constant tuple index operand");
-        IrType operand_type = infer_constant_expr_type(*expr.operand, expected);
+        if (!expr_operand(expr)) fail(expr.loc, "missing constant tuple index operand");
+        IrType operand_type = infer_constant_expr_type(*expr_operand(expr), expected);
         if (operand_type.primitive != IrPrimitiveKind::Tuple &&
             operand_type.primitive != IrPrimitiveKind::Struct) {
             fail(expr.loc, "constant tuple index access requires tuple or tuple struct value, got " +
                            type_name(operand_type));
         }
-        ConstantValue value = evaluate_constant_expr(*expr.operand, operand_type);
+        ConstantValue value = evaluate_constant_expr(*expr_operand(expr), operand_type);
         if (value.kind != ConstantValueKind::Tuple && value.kind != ConstantValueKind::Struct) {
             fail(expr.loc, "constant tuple index access requires tuple or tuple struct value");
         }
@@ -6321,22 +6327,22 @@ private:
     }
 
     ConstantValue evaluate_constant_index_expr(const Expr& expr, const IrType& expected) {
-        if (!expr.operand || !expr.right) fail(expr.loc, "missing constant index operand");
-        IrType operand_type = infer_constant_expr_type(*expr.operand, expected);
+        if (!expr_operand(expr) || !expr_right(expr)) fail(expr.loc, "missing constant index operand");
+        IrType operand_type = infer_constant_expr_type(*expr_operand(expr), expected);
         if (operand_type.primitive != IrPrimitiveKind::Array || operand_type.args.size() != 1) {
             fail(expr.loc, "constant index access requires a fixed-array value, got " + type_name(operand_type));
         }
-        ConstantValue value = evaluate_constant_expr(*expr.operand, operand_type);
+        ConstantValue value = evaluate_constant_expr(*expr_operand(expr), operand_type);
         if (value.kind != ConstantValueKind::Array) {
             fail(expr.loc, "constant index access requires a fixed-array value");
         }
-        IrType index_type = infer_constant_expr_type(*expr.right, i64_type(expr.loc));
-        ConstantValue index_value = evaluate_constant_expr(*expr.right, index_type);
+        IrType index_type = infer_constant_expr_type(*expr_right(expr), i64_type(expr.loc));
+        ConstantValue index_value = evaluate_constant_expr(*expr_right(expr), index_type);
         if (index_value.kind != ConstantValueKind::Integer) {
-            fail(expr.right->loc, "array index must be an integer");
+            fail(expr_right(expr)->loc, "array index must be an integer");
         }
-        if (index_value.int_negative) fail(expr.right->loc, "array index must be non-negative");
-        std::uint64_t index = constant_integer_to_u64(expr.right->loc, index_value);
+        if (index_value.int_negative) fail(expr_right(expr)->loc, "array index must be non-negative");
+        std::uint64_t index = constant_integer_to_u64(expr_right(expr)->loc, index_value);
         if (index >= value.elements.size()) {
             fail(expr.loc,
                  "array index " + std::to_string(index) +
@@ -9760,9 +9766,9 @@ private:
         call.name = method_name;
         if (borrow_mut_receiver) {
             ExprPtr receiver = make_ast_name_expr(loc, iterator_name);
-            call.operand = make_ast_borrow_expr(loc, std::move(receiver), true);
+            set_expr_operand(call, make_ast_borrow_expr(loc, std::move(receiver), true));
         } else {
-            call.operand = make_ast_name_expr(loc, iterator_name);
+            set_expr_operand(call, make_ast_name_expr(loc, iterator_name));
         }
         return check_expr(call);
     }
@@ -10891,7 +10897,7 @@ private:
             return std::move(access.expr);
         }
 
-        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        IrExprPtr operand = check_aggregate_access_operand(*expr_operand(expr));
         if (operand->type.primitive != IrPrimitiveKind::Tuple &&
             operand->type.primitive != IrPrimitiveKind::Struct) {
             fail(expr.loc, "tuple index access requires tuple or tuple struct value, got " + type_name(operand->type));
@@ -10926,8 +10932,8 @@ private:
             return std::move(access.expr);
         }
 
-        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
-        IrExprPtr index = check_expr(*expr.right);
+        IrExprPtr operand = check_aggregate_access_operand(*expr_operand(expr));
+        IrExprPtr index = check_expr(*expr_right(expr));
         const bool slice_index = is_prelude_slice_type(operand->type);
         if (slice_index && is_prelude_range_type(index->type)) {
             return check_slice_range_index(expr, std::move(lowered), std::move(operand), std::move(index));
@@ -10970,7 +10976,7 @@ private:
 
         if (operand->type.primitive == IrPrimitiveKind::Vector) {
             VectorKnownLength current_length =
-                vector_known_length_from_source_expr(operand->type, *expr.operand, *operand);
+                vector_known_length_from_source_expr(operand->type, *expr_operand(expr), *operand);
             if (index->kind == IrExprKind::Integer) {
                 require_vector_index_in_known_bounds(
                     expr.loc,
@@ -11045,7 +11051,7 @@ private:
             return std::move(access.expr);
         }
 
-        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        IrExprPtr operand = check_aggregate_access_operand(*expr_operand(expr));
         if (operand->type.primitive != IrPrimitiveKind::Struct) {
             fail(expr.loc, "field access requires a struct value, got " + type_name(operand->type));
         }
@@ -12145,14 +12151,14 @@ private:
     IrExprPtr check_unary(const Expr& expr, IrExprPtr lowered) {
         if (expr.op == TokenKind::Star) {
             std::size_t borrow_mark = temporary_borrow_mark();
-            IrExprPtr pointer = check_expr(*expr.operand);
+            IrExprPtr pointer = check_expr(*expr_operand(expr));
             release_temporary_borrows(borrow_mark);
 
             IrType element_type = require_raw_pointer_materializable_type(expr.loc, pointer->type, "pointer dereference");
             return make_pointer_load_expr(expr.loc, std::move(pointer), element_type);
         }
 
-        IrExprPtr operand = check_expr(*expr.operand);
+        IrExprPtr operand = check_expr(*expr_operand(expr));
         if (is_borrow_type(operand->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
@@ -12177,7 +12183,7 @@ private:
     }
 
     IrExprPtr check_cast(const Expr& expr, IrExprPtr lowered) {
-        IrExprPtr operand = check_expr(*expr.operand);
+        IrExprPtr operand = check_expr(*expr_operand(expr));
         IrType target = resolve_executable_type(expr.cast_type);
         if (is_borrow_type(operand->type) && !is_raw_pointer_type(target)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
@@ -12410,7 +12416,7 @@ private:
     }
 
     IrExprPtr check_try(const Expr& expr, IrExprPtr lowered) {
-        IrExprPtr operand = check_expr(*expr.operand);
+        IrExprPtr operand = check_expr(*expr_operand(expr));
         if (is_borrow_type(operand->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
@@ -12481,7 +12487,7 @@ private:
     }
 
     IrExprPtr check_null_coalesce(const Expr& expr, IrExprPtr lowered) {
-        IrExprPtr lhs = check_expr(*expr.left);
+        IrExprPtr lhs = check_expr(*expr_left(expr));
         if (is_borrow_type(lhs->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
@@ -12501,7 +12507,7 @@ private:
         if (!shape.supported) fail(expr.loc, shape.diagnostic);
 
         StateSnapshot after_lhs = snapshot_states();
-        IrExprPtr rhs = check_expr(*expr.right);
+        IrExprPtr rhs = check_expr(*expr_right(expr));
         if (is_borrow_type(rhs->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
@@ -12547,8 +12553,8 @@ private:
 
     IrExprPtr check_borrow(const Expr& expr, IrExprPtr lowered) {
         TrackedAggregateAccess access;
-        if (expr.operand) {
-            if (!try_build_tracked_aggregate_access(*expr.operand, access)) {
+        if (expr_operand(expr)) {
+            if (!try_build_tracked_aggregate_access(*expr_operand(expr), access)) {
                 fail(expr.loc, "borrow expression requires a local binding, field access, tuple index, or constant aggregate index");
             }
         } else {
@@ -13782,8 +13788,8 @@ private:
     }
 
     LocalInfo* slice_view_local_method_receiver(const Expr& method_expr) {
-        if (!method_expr.operand || method_expr.operand->kind != ExprKind::Name) return nullptr;
-        LocalInfo* local = find_local_slot(method_expr.operand->name);
+        if (!expr_operand(method_expr) || expr_operand(method_expr)->kind != ExprKind::Name) return nullptr;
+        LocalInfo* local = find_local_slot(expr_operand(method_expr)->name);
         if (!local) return nullptr;
         if (local->type.primitive != IrPrimitiveKind::Array &&
             local->type.primitive != IrPrimitiveKind::Vector) {
@@ -13811,7 +13817,7 @@ private:
 
     IrExprPtr check_slice_view_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_slice_view_receiver(expr.loc, name, local);
         require_slice_view_method_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
 
@@ -13821,19 +13827,19 @@ private:
         if (local.type.primitive == IrPrimitiveKind::Array) {
             data = make_slice_data_pointer_expr(
                 expr.loc,
-                make_local_lvalue_expr(expr.operand->loc, name, local.type),
+                make_local_lvalue_expr(expr_operand(expr)->loc, name, local.type),
                 element
             );
             length = make_integer_literal(expr.loc, i64_type(expr.loc), local.type.array_size);
         } else {
             data = make_slice_data_pointer_expr(
                 expr.loc,
-                make_vec_storage_lvalue_expr(expr.operand->loc, name, local.type),
+                make_vec_storage_lvalue_expr(expr_operand(expr)->loc, name, local.type),
                 element
             );
             length = make_local_vec_len_expr(
                 expr.loc,
-                make_vec_local_lvalue(expr.operand->loc, name, local.type),
+                make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
                 vector_known_length_state(local)
             );
         }
@@ -13874,15 +13880,15 @@ private:
 
     IrExprPtr check_collection_is_empty_method_call(const Expr& expr) {
         require_collection_is_empty_method_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
-        IrExprPtr operand = check_aggregate_access_operand(*expr.operand);
+        IrExprPtr operand = check_aggregate_access_operand(*expr_operand(expr));
         VectorKnownLength known_vec_length =
-            vector_known_length_from_source_expr(operand->type, *expr.operand, *operand);
+            vector_known_length_from_source_expr(operand->type, *expr_operand(expr), *operand);
         return make_local_vec_is_empty_expr(expr.loc, std::move(operand), known_vec_length);
     }
 
     LocalInfo* vec_local_method_receiver(const Expr& method_expr) {
-        if (!method_expr.operand || method_expr.operand->kind != ExprKind::Name) return nullptr;
-        LocalInfo* local = find_local_slot(method_expr.operand->name);
+        if (!expr_operand(method_expr) || expr_operand(method_expr)->kind != ExprKind::Name) return nullptr;
+        LocalInfo* local = find_local_slot(expr_operand(method_expr)->name);
         if (!local || !is_vector_storage_type(local->type)) {
             return nullptr;
         }
@@ -13890,8 +13896,8 @@ private:
     }
 
     bool is_local_vec_method_receiver(const Expr& method_expr) {
-        if (!method_expr.operand || method_expr.operand->kind != ExprKind::Name) return false;
-        LocalInfo* local = find_local_slot(method_expr.operand->name);
+        if (!expr_operand(method_expr) || expr_operand(method_expr)->kind != ExprKind::Name) return false;
+        LocalInfo* local = find_local_slot(expr_operand(method_expr)->name);
         return local && is_vector_storage_type(local->type);
     }
 
@@ -13926,25 +13932,25 @@ private:
 
     IrExprPtr check_vec_first_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) const {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "first");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::First, expr_type_args(expr).size(), expr.args.size());
         require_local_vec_known_non_empty(expr.loc, LocalVecMethod::First, vector_known_length_state(local));
-        return make_vec_first_expr(expr.loc, expr.operand->loc, name, local.type);
+        return make_vec_first_expr(expr.loc, expr_operand(expr)->loc, name, local.type);
     }
 
     IrExprPtr check_vec_last_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "last");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Last, expr_type_args(expr).size(), expr.args.size());
         require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Last, vector_known_length_state(local));
-        return make_vec_last_expr(expr.loc, expr.operand->loc, name, local.type);
+        return make_vec_last_expr(expr.loc, expr_operand(expr)->loc, name, local.type);
     }
 
     IrExprPtr check_vec_get_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "get");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Get, expr_type_args(expr).size(), expr.args.size());
 
@@ -13963,14 +13969,14 @@ private:
 
         return make_vec_index_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(index)
         );
     }
 
     IrExprPtr check_vec_reserve_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "reserve");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Reserve, expr_type_args(expr).size(), expr.args.size());
         const Expr& capacity_expr = *expr.args[0];
@@ -14010,7 +14016,7 @@ private:
 
         return make_vec_reserve_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(requested_capacity)
         );
     }
@@ -14023,32 +14029,32 @@ private:
 
     IrExprPtr check_vec_pop_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "pop");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Pop, expr_type_args(expr).size(), expr.args.size());
         require_local_vec_known_non_empty(expr.loc, LocalVecMethod::Pop, vector_known_length_state(local));
         set_vector_known_length(local, vector_known_length_after_remove(vector_known_length_state(local)));
         return make_vec_pop_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type)
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type)
         );
     }
 
     IrExprPtr check_vec_clear_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "clear");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Clear, expr_type_args(expr).size(), expr.args.size());
         set_vector_known_length(local, vector_known_length_after_clear());
         return make_vec_clear_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type)
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type)
         );
     }
 
     IrExprPtr check_vec_truncate_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "truncate");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Truncate, expr_type_args(expr).size(), expr.args.size());
 
@@ -14077,14 +14083,14 @@ private:
 
         return make_vec_truncate_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(new_length)
         );
     }
 
     IrExprPtr check_vec_set_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "set");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Set, expr_type_args(expr).size(), expr.args.size());
 
@@ -14106,7 +14112,7 @@ private:
 
         return make_vec_set_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(index),
             std::move(value)
         );
@@ -14114,7 +14120,7 @@ private:
 
     IrExprPtr check_vec_swap_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "swap");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Swap, expr_type_args(expr).size(), expr.args.size());
 
@@ -14152,7 +14158,7 @@ private:
 
         return make_vec_swap_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(first_index),
             std::move(second_index)
         );
@@ -14160,7 +14166,7 @@ private:
 
     IrExprPtr check_vec_remove_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "remove");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Remove, expr_type_args(expr).size(), expr.args.size());
 
@@ -14181,14 +14187,14 @@ private:
 
         return make_vec_remove_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(index)
         );
     }
 
     IrExprPtr check_vec_insert_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "insert");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Insert, expr_type_args(expr).size(), expr.args.size());
 
@@ -14212,7 +14218,7 @@ private:
 
         return make_vec_insert_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(index),
             std::move(value)
         );
@@ -14220,7 +14226,7 @@ private:
 
     IrExprPtr check_vec_contains_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "contains");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Contains, expr_type_args(expr).size(), expr.args.size());
 
@@ -14232,14 +14238,14 @@ private:
 
         return make_vec_contains_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(value)
         );
     }
 
     IrExprPtr check_vec_index_of_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "index_of");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::IndexOf, expr_type_args(expr).size(), expr.args.size());
 
@@ -14251,14 +14257,14 @@ private:
 
         return make_vec_index_of_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(value)
         );
     }
 
     IrExprPtr check_vec_count_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_readable_vec_method_receiver(expr.loc, name, local, "count");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Count, expr_type_args(expr).size(), expr.args.size());
 
@@ -14270,14 +14276,14 @@ private:
 
         return make_vec_count_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(value)
         );
     }
 
     IrExprPtr check_vec_push_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
-        const std::string& name = expr.operand->name;
+        const std::string& name = expr_operand(expr)->name;
         require_mutable_vec_method_receiver(expr.loc, name, local, "push");
         require_local_vec_method_shape(expr.loc, LocalVecMethod::Push, expr_type_args(expr).size(), expr.args.size());
 
@@ -14291,7 +14297,7 @@ private:
 
         return make_vec_push_expr(
             expr.loc,
-            make_vec_local_lvalue(expr.operand->loc, name, local.type),
+            make_vec_local_lvalue(expr_operand(expr)->loc, name, local.type),
             std::move(value)
         );
     }
@@ -14931,7 +14937,7 @@ private:
         const IrType& receiver_type,
         const std::vector<ImplMethodInfo>& candidates
     ) {
-        std::string generic_name = generic_origin_from_expr(*method_expr.operand);
+        std::string generic_name = generic_origin_from_expr(*expr_operand(method_expr));
         if (generic_name.empty()) return nullptr;
 
         const ImplMethodInfo* selected = nullptr;
@@ -15117,8 +15123,8 @@ private:
     }
 
     IrExprPtr check_call(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
-        if (expr.operand) {
-            return check_indirect_call(expr.loc, check_expr(*expr.operand), expr.args, std::move(lowered));
+        if (expr_operand(expr)) {
+            return check_indirect_call(expr.loc, check_expr(*expr_operand(expr)), expr.args, std::move(lowered));
         }
         if (LocalInfo* local = find_local_slot(expr.name)) {
             if (local->type.primitive != IrPrimitiveKind::Function || local->type.qualifier != TypeQualifier::Value) {
@@ -15369,7 +15375,7 @@ private:
                 expr.args.front()->loc,
                 clone_borrowable_receiver_expr(*expr.args.front()),
                 mutable_receiver_borrow);
-            if (!borrow_expr->operand) {
+            if (!expr_operand(*borrow_expr)) {
                 fail(expr.loc,
                      "method '" + method_name +
                          "' with borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
@@ -15677,11 +15683,11 @@ private:
     }
 
     IrExprPtr check_method_call(const Expr& expr, IrExprPtr lowered) {
-        if (expr.name == "len" && is_collection_len_method_receiver(*expr.operand)) {
+        if (expr.name == "len" && is_collection_len_method_receiver(*expr_operand(expr))) {
             require_collection_len_method_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
-            return check_collection_len_expr(expr.loc, *expr.operand);
+            return check_collection_len_expr(expr.loc, *expr_operand(expr));
         }
-        if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr.operand)) {
+        if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr_operand(expr))) {
             return check_collection_is_empty_method_call(expr);
         }
         if (expr.name == "as_slice") {
@@ -15732,7 +15738,7 @@ private:
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr receiver = check_expr(*expr.operand);
+        IrExprPtr receiver = check_expr(*expr_operand(expr));
         if (is_value_trait_object_type(receiver->type)) {
             IrExprPtr out = check_trait_object_method_call(expr, std::move(receiver), std::move(lowered));
             release_temporary_borrows(borrow_mark);
@@ -15748,7 +15754,7 @@ private:
         const ImplMethodInfo* selected = nullptr;
         ImplMethodInfo generic_selected;
         bool has_generic_selected = false;
-        std::string generic_origin = generic_origin_from_expr(*expr.operand);
+        std::string generic_origin = generic_origin_from_expr(*expr_operand(expr));
         std::vector<IrExprPtr> generic_args;
         std::vector<IrType> generic_arg_types;
         if (found != method_impls_.end()) {
@@ -15797,10 +15803,10 @@ private:
         if (!is_borrow_type(receiver->type) &&
             borrowed_receiver_matches_value(sig.params[0], receiver->type, mutable_receiver_borrow)) {
             ExprPtr borrow_expr = make_ast_borrow_expr(
-                expr.operand->loc,
-                clone_borrowable_receiver_expr(*expr.operand),
+                expr_operand(expr)->loc,
+                clone_borrowable_receiver_expr(*expr_operand(expr)),
                 mutable_receiver_borrow);
-            if (!borrow_expr->operand) {
+            if (!expr_operand(*borrow_expr)) {
                 fail(expr.loc,
                      "method '" + expr.name +
                          "' with borrowed receiver requires a local binding, field access, tuple index, or constant aggregate index");
@@ -15827,8 +15833,8 @@ private:
     }
 
     IrExprPtr check_binary(const Expr& expr, IrExprPtr lowered) {
-        IrExprPtr lhs = check_expr(*expr.left);
-        IrExprPtr rhs = check_expr(*expr.right);
+        IrExprPtr lhs = check_expr(*expr_left(expr));
+        IrExprPtr rhs = check_expr(*expr_right(expr));
         if (is_borrow_type(lhs->type) || is_borrow_type(rhs->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }

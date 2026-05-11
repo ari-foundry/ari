@@ -8,9 +8,9 @@ bool is_take_place_expression(const Expr& expr) {
             return true;
         case ExprKind::FieldAccess:
         case ExprKind::TupleIndex:
-            return expr.operand && is_take_place_expression(*expr.operand);
+            return expr_operand(expr) && is_take_place_expression(*expr_operand(expr));
         case ExprKind::Index:
-            return expr.operand && is_take_place_expression(*expr.operand);
+            return expr_operand(expr) && is_take_place_expression(*expr_operand(expr));
         default:
             return false;
     }

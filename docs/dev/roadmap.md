@@ -186,19 +186,22 @@
    method-call construction now goes through operand/child accessors and
    `ast_builders`; AST cloning, module-summary constant materialization, parser
    compound-assignment cloning, and sema synthetic borrow-receiver cloning use
-   the same helper path.
-   Broader AST/IR node packing should stay incremental: the large AST/IR
-   operand child pointers are still read by many lowering and backend paths, so
-   their payload split needs full accessor coverage before the storage moves.
+   the same helper path. Semantic AST lowering, constant folding/evaluation,
+   explicit move-place validation, local Vec method receivers, indirect calls,
+   borrowed method receivers, and binary/try/coalesce lowering now read AST
+   `operand`/`left`/`right` through those helpers as well. Those AST child
+   fields now live behind a lazy `ExprChildPayload`, so scalar/name/literal and
+   other childless expression nodes no longer carry three eager child pointers.
+   Broader IR node packing should stay incremental: IR operand child pointers
+   are still read by lowering and backend paths, so their payload split needs
+   full accessor coverage before the storage moves.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
-     variant payload structs or unions; remaining high-value targets are AST/IR
-     operand child expression groups that still receive broad sema and backend
-     reads/mutations
+     variant payload structs or unions; remaining high-value targets are IR
+     operand child expression groups and other backend-facing rare payloads
    - [expr-child-vector-payloads] split operand child expression fields after
-     accessors cover the remaining sema/backend paths; next small slice: route
-     semantic lowering and codegen reads of AST `operand`/`left`/`right` through
-     helpers, then move AST unary/cast/try/index/field child storage behind a
-     rare payload before mirroring the approach for IR child fields
+     accessors cover the remaining IR/backend paths; next small slice:
+     introduce IR `operand`/`left`/`right` accessors and route sema/codegen/
+     LLVM reads through them before changing IR child storage
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

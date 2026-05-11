@@ -152,6 +152,12 @@ struct ExprMatchPayload {
     std::vector<ExprMatchArm> arms;
 };
 
+struct ExprChildPayload {
+    ExprPtr operand;
+    ExprPtr left;
+    ExprPtr right;
+};
+
 using ExprReceiverTypeArgs = std::vector<TypeRef>;
 using ExprTypeArgs = std::vector<TypeRef>;
 using ExprFieldNames = std::vector<std::string>;
@@ -202,9 +208,7 @@ struct Expr {
     bool mutable_borrow = false;
     TokenKind op = TokenKind::End;
     TypeRef cast_type;
-    std::unique_ptr<Expr> operand;
-    std::unique_ptr<Expr> left;
-    std::unique_ptr<Expr> right;
+    std::unique_ptr<ExprChildPayload> child_payload;
     std::unique_ptr<ExprIfPayload> if_payload;
     std::unique_ptr<ExprBlockPayload> block_payload;
     ExprArgs args;
@@ -215,52 +219,86 @@ struct Expr {
     std::unique_ptr<std::vector<Token>> macro_tokens;
 };
 
+inline const ExprChildPayload& expr_child_payload(const Expr& expr) {
+    static const ExprChildPayload empty;
+    return expr.child_payload ? *expr.child_payload : empty;
+}
+
+inline ExprChildPayload& ensure_expr_child_payload(Expr& expr) {
+    if (!expr.child_payload) expr.child_payload = std::make_unique<ExprChildPayload>();
+    return *expr.child_payload;
+}
+
+inline void clear_empty_expr_child_payload(Expr& expr) {
+    if (expr.child_payload &&
+        !expr.child_payload->operand &&
+        !expr.child_payload->left &&
+        !expr.child_payload->right) {
+        expr.child_payload.reset();
+    }
+}
+
 inline const ExprPtr& expr_operand(const Expr& expr) {
-    return expr.operand;
+    return expr_child_payload(expr).operand;
 }
 
 inline ExprPtr& mutable_expr_operand(Expr& expr) {
-    return expr.operand;
+    return ensure_expr_child_payload(expr).operand;
 }
 
 inline void set_expr_operand(Expr& expr, ExprPtr operand) {
-    expr.operand = std::move(operand);
+    if (!operand && !expr.child_payload) return;
+    ensure_expr_child_payload(expr).operand = std::move(operand);
+    clear_empty_expr_child_payload(expr);
 }
 
 inline ExprPtr take_expr_operand(Expr& expr) {
-    return std::move(expr.operand);
+    if (!expr.child_payload) return nullptr;
+    ExprPtr operand = std::move(expr.child_payload->operand);
+    clear_empty_expr_child_payload(expr);
+    return operand;
 }
 
 inline const ExprPtr& expr_left(const Expr& expr) {
-    return expr.left;
+    return expr_child_payload(expr).left;
 }
 
 inline ExprPtr& mutable_expr_left(Expr& expr) {
-    return expr.left;
+    return ensure_expr_child_payload(expr).left;
 }
 
 inline void set_expr_left(Expr& expr, ExprPtr left) {
-    expr.left = std::move(left);
+    if (!left && !expr.child_payload) return;
+    ensure_expr_child_payload(expr).left = std::move(left);
+    clear_empty_expr_child_payload(expr);
 }
 
 inline ExprPtr take_expr_left(Expr& expr) {
-    return std::move(expr.left);
+    if (!expr.child_payload) return nullptr;
+    ExprPtr left = std::move(expr.child_payload->left);
+    clear_empty_expr_child_payload(expr);
+    return left;
 }
 
 inline const ExprPtr& expr_right(const Expr& expr) {
-    return expr.right;
+    return expr_child_payload(expr).right;
 }
 
 inline ExprPtr& mutable_expr_right(Expr& expr) {
-    return expr.right;
+    return ensure_expr_child_payload(expr).right;
 }
 
 inline void set_expr_right(Expr& expr, ExprPtr right) {
-    expr.right = std::move(right);
+    if (!right && !expr.child_payload) return;
+    ensure_expr_child_payload(expr).right = std::move(right);
+    clear_empty_expr_child_payload(expr);
 }
 
 inline ExprPtr take_expr_right(Expr& expr) {
-    return std::move(expr.right);
+    if (!expr.child_payload) return nullptr;
+    ExprPtr right = std::move(expr.child_payload->right);
+    clear_empty_expr_child_payload(expr);
+    return right;
 }
 
 struct MatchArm {

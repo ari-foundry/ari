@@ -3,6 +3,16 @@ enum MaybeI32 {
   Some(i32),
 }
 
+trait Bonus {
+  fn bonus(self) -> i64
+}
+
+impl Bonus for i64 {
+  fn bonus(self) -> i64 {
+    self + 12
+  }
+}
+
 struct Box {
   value: i64,
   ok: bool,
@@ -41,5 +51,5 @@ fn main() -> i64 {
     return 1;
   }
 
-  return boxed.value + borrowed + score(Some(6i32)) + -mask;
+  return boxed.value + borrowed.bonus() + score(Some(6i32)) + -mask;
 }

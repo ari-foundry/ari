@@ -821,7 +821,7 @@ check-operators: $(TARGET)
 	$(TARGET) --freestanding tests/ok/ast-builder-scalar-paths.ari -o $(BUILD_DIR)/operators/ast-builder-scalar-paths.raw
 	$(BUILD_DIR)/operators/ast-builder-scalar-paths.raw; code=$$?; test $$code -eq 5
 	$(TARGET) --freestanding tests/ok/ast-operand-helper-paths.ari -o $(BUILD_DIR)/operators/ast-operand-helper-paths.raw
-	$(BUILD_DIR)/operators/ast-operand-helper-paths.raw; code=$$?; test $$code -eq 22
+	$(BUILD_DIR)/operators/ast-operand-helper-paths.raw; code=$$?; test $$code -eq 34
 	$(TARGET) --freestanding tests/ok/ast-argument-payloads.ari -o $(BUILD_DIR)/operators/ast-argument-payloads.raw
 	$(BUILD_DIR)/operators/ast-argument-payloads.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/operators-try.ari -o $(BUILD_DIR)/operators/operators-try.raw
@@ -898,6 +898,7 @@ check-operators: $(TARGET)
 	grep -q "try.ok" $(BUILD_DIR)/operators/ast-operand-helper-paths.ll
 	grep -q "getelementptr inbounds" $(BUILD_DIR)/operators/ast-operand-helper-paths.ll
 	grep -q "call i64 @\"_ARNv7inspect\"" $(BUILD_DIR)/operators/ast-operand-helper-paths.ll
+	grep -q "bonus" $(BUILD_DIR)/operators/ast-operand-helper-paths.ll
 	$(TARGET) tests/ok/ast-builder-composite-paths.ari --emit-llvm $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
 	grep -q "@.ari.str" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
 	grep -q "ptr null" $(BUILD_DIR)/operators/ast-builder-composite-paths.ll
