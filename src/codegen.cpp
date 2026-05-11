@@ -278,6 +278,17 @@ private:
         return static_cast<int>(raw_memory_bits(type) / 8);
     }
 
+    static bool is_reference_like_lvalue_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Ref ||
+               type.qualifier == TypeQualifier::MutRef ||
+               type.qualifier == TypeQualifier::Ptr;
+    }
+
+    static IrType lvalue_storage_type(IrType type) {
+        type.qualifier = TypeQualifier::Value;
+        return type;
+    }
+
     static int layout_size_bytes(SourceLocation loc, const IrType& type) {
         std::uint64_t size = 0;
         if (!ari_layout_size_bytes(type, size) ||
@@ -2284,10 +2295,8 @@ private:
                 break;
             case IrExprKind::Borrow:
                 if (const IrExpr* operand = ir_expr_operand(expr).get()) {
-                    if (operand->kind == IrExprKind::Local &&
-                        (operand->type.qualifier == TypeQualifier::Ref ||
-                         operand->type.qualifier == TypeQualifier::MutRef)) {
-                        emit_expr(*operand);
+                    if (is_pointer_backed_lvalue(*operand)) {
+                        emit_pointer_lvalue_address(*operand);
                     } else {
                         emit_lea_reg_local(Reg::RAX, lvalue_offset(*operand));
                     }
@@ -3770,6 +3779,7 @@ private:
 
     static bool is_pointer_backed_lvalue(const IrExpr& expr) {
         if (expr.kind == IrExprKind::PointerLoad) return true;
+        if (expr.kind == IrExprKind::Local) return is_reference_like_lvalue_type(expr.type);
         if (expr.kind == IrExprKind::Index &&
             ir_expr_operand(expr) &&
             is_prelude_slice_type(ir_expr_operand(expr)->type)) {
@@ -3783,14 +3793,45 @@ private:
         return false;
     }
 
+    void emit_length_bounds_check_from_pointer(Reg base, int length_offset) {
+        emit_mov_reg_imm64(Reg::RCX, 0);
+        emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
+        std::size_t fail_low = emit_jcc_placeholder(0x8C);
+
+        emit_push(base);
+        emit_push(Reg::RAX);
+        emit_mov_reg_reg(Reg::RCX, base);
+        emit_add_pointer_offset_reg(Reg::RCX, length_offset);
+        emit_load_rax_from_ptr(Reg::RCX, i64_type(SourceLocation{}));
+        emit_pop(Reg::RCX);
+        emit_cmp_reg_reg(Reg::RCX, Reg::RAX);
+        std::size_t fail_high = emit_jcc_placeholder(0x8D);
+
+        emit_mov_reg_reg(Reg::RAX, Reg::RCX);
+        std::size_t jump_ok = emit_jmp_placeholder();
+        std::size_t fail = out_.size();
+        patch_rel32(fail_low, fail);
+        patch_rel32(fail_high, fail);
+        emit_direct_call("panic");
+
+        std::size_t ok = out_.size();
+        patch_rel32(jump_ok, ok);
+        emit_pop(base);
+    }
+
     void emit_pointer_lvalue_address(const IrExpr& expr) {
+        if (expr.kind == IrExprKind::Local && is_reference_like_lvalue_type(expr.type)) {
+            emit_expr(expr);
+            return;
+        }
         if (expr.kind == IrExprKind::PointerLoad && ir_expr_operand(expr)) {
             emit_expr(*ir_expr_operand(expr));
             return;
         }
         if (expr.kind == IrExprKind::TupleIndex && ir_expr_operand(expr)) {
             emit_pointer_lvalue_address(*ir_expr_operand(expr));
-            int offset = field_offset_bytes(expr.loc, ir_expr_operand(expr)->type, expr.tuple_index);
+            IrType storage_type = lvalue_storage_type(ir_expr_operand(expr)->type);
+            int offset = field_offset_bytes(expr.loc, storage_type, expr.tuple_index);
             if (offset != 0) {
                 emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(offset));
                 emit_add_reg_reg(Reg::RAX, Reg::RCX);
@@ -3802,16 +3843,28 @@ private:
                 emit_slice_element_address(expr);
                 return;
             }
-            if (ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::Array) {
-                throw CompileError(where(expr.loc) + ": freestanding backend can only dynamically index raw pointers to fixed arrays yet");
+            IrType storage_type = lvalue_storage_type(ir_expr_operand(expr)->type);
+            if (storage_type.primitive != IrPrimitiveKind::Array &&
+                storage_type.primitive != IrPrimitiveKind::Vector) {
+                throw CompileError(where(expr.loc) + ": freestanding backend can only dynamically index raw pointers to fixed arrays or Vec values yet");
             }
             emit_pointer_lvalue_address(*ir_expr_operand(expr));
             emit_push(Reg::RAX);
             emit_expr(*ir_expr_right(expr));
-            emit_array_bounds_check(ir_expr_operand(expr)->type.array_size);
+            if (storage_type.primitive == IrPrimitiveKind::Array) {
+                emit_array_bounds_check(storage_type.array_size);
+            } else {
+                emit_pop(Reg::RDX);
+                int length_offset = field_offset_bytes(expr.loc, storage_type, 0);
+                emit_length_bounds_check_from_pointer(Reg::RDX, length_offset);
+                emit_push(Reg::RDX);
+            }
             emit_mov_reg_imm64(Reg::RCX, static_cast<std::uint64_t>(layout_size_bytes(expr.loc, expr.type)));
             emit_imul_reg_reg(Reg::RAX, Reg::RCX);
             emit_pop(Reg::RCX);
+            if (storage_type.primitive == IrPrimitiveKind::Vector) {
+                emit_add_pointer_offset_reg(Reg::RCX, field_offset_bytes(expr.loc, storage_type, 1));
+            }
             emit_add_reg_reg(Reg::RCX, Reg::RAX);
             emit_mov_reg_reg(Reg::RAX, Reg::RCX);
             return;

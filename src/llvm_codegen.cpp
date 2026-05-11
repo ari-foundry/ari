@@ -1527,7 +1527,7 @@ private:
                 line("  " + ptr + " = getelementptr inbounds " + llvm_type(storage_type) +
                      ", ptr " + base + ", i64 0, i64 " + index.name);
             } else {
-                emit_vector_bounds_check(index, ir_expr_operand(expr)->type, base);
+                emit_vector_bounds_check(index, storage_type, base);
                 line("  " + ptr + " = getelementptr inbounds " + llvm_type(storage_type) +
                      ", ptr " + base + ", i32 0, i32 1, i64 " + index.name);
             }

@@ -3280,7 +3280,10 @@ private:
             if (ast_type.args.size() != 1 || ast_type.array_size == 0) {
                 fail(type.loc, "array types use [element_type, size]");
             }
-            if (type.qualifier != TypeQualifier::Value && type.qualifier != TypeQualifier::Ptr) {
+            if (type.qualifier != TypeQualifier::Value &&
+                type.qualifier != TypeQualifier::Ptr &&
+                type.qualifier != TypeQualifier::Ref &&
+                type.qualifier != TypeQualifier::MutRef) {
                 fail(type.loc, "array ownership qualifiers are not supported in the executable subset yet");
             }
             type.primitive = IrPrimitiveKind::Array;
@@ -3325,7 +3328,10 @@ private:
                          "struct '" + info.name + "' expects " + std::to_string(info.generic_arity) +
                              " type argument" + (info.generic_arity == 1 ? "" : "s"));
                 }
-                if (type.qualifier != TypeQualifier::Value && type.qualifier != TypeQualifier::Ptr) {
+                if (type.qualifier != TypeQualifier::Value &&
+                    type.qualifier != TypeQualifier::Ptr &&
+                    type.qualifier != TypeQualifier::Ref &&
+                    type.qualifier != TypeQualifier::MutRef) {
                     fail(type.loc, "struct ownership qualifiers are not supported in the executable subset yet");
                 }
                 type.primitive = IrPrimitiveKind::Struct;
@@ -3352,7 +3358,9 @@ private:
                 if (enum_found != enums_.end()) {
                     TypeQualifier requested_qualifier = type.qualifier;
                     if (requested_qualifier != TypeQualifier::Value &&
-                        requested_qualifier != TypeQualifier::Ptr) {
+                        requested_qualifier != TypeQualifier::Ptr &&
+                        requested_qualifier != TypeQualifier::Ref &&
+                        requested_qualifier != TypeQualifier::MutRef) {
                         fail(type.loc, "enum ownership qualifiers are not supported in the executable subset yet");
                     }
                     require_module_path_access(type.loc, enum_found->second.module_name);
@@ -3394,7 +3402,7 @@ private:
             fail(type.loc, "own is not supported for " + type_name(type) + " in the executable subset yet");
         }
         if ((type.qualifier == TypeQualifier::Ref || type.qualifier == TypeQualifier::MutRef) &&
-            !is_owned_executable_primitive(type.primitive)) {
+            !is_borrowable_executable_primitive(type.primitive)) {
             fail(type.loc, "borrowed references are not supported for " + type_name(type) + " in the executable subset yet");
         }
         return type;
@@ -12412,6 +12420,27 @@ private:
         }
         if (is_void_value_type(access.type)) {
             fail(expr.loc, "cannot borrow void value '" + local_borrow_path_display(access.base_name, access.path) + "'");
+        }
+
+        const bool base_is_borrow_binding = is_borrow_type(source.type);
+        if (base_is_borrow_binding) {
+            if (expr.mutable_borrow &&
+                access.has_final_field_mutability &&
+                !access.final_field_mutable) {
+                fail(expr.loc,
+                     "cannot mutably borrow immutable field '" + access.final_field_label +
+                         "' of struct '" + access.final_container_name + "'");
+            }
+            require_can_reborrow_path(expr.loc, access.base_name, source, access.path, expr.mutable_borrow);
+            add_borrow_source(source, access.path, expr.mutable_borrow);
+            borrow_context_.push_temporary(access.base_name, access.path, expr.mutable_borrow);
+            return make_borrow_expr(
+                expr.loc,
+                access.base_name,
+                access.path,
+                std::move(access.expr),
+                expr.mutable_borrow,
+                access.type);
         }
 
         if (expr.mutable_borrow) {

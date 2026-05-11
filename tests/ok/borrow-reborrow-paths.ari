@@ -1,0 +1,48 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+fn main() -> i64 {
+  var pair = Pair { left: 10, right: 20 };
+  var values: [i64, 2] = [4, 5];
+  var vector: Vec[i64] = [6, 7];
+  var total = 0;
+
+  {
+    let shared: ref Pair = ref pair;
+    let left_ref: ref i64 = ref shared.left;
+    let left_ptr: ptr i64 = left_ref as ptr i64;
+    total = total + *left_ptr;
+  }
+
+  {
+    let unique: ref mut Pair = ref mut pair;
+    let right_ref: ref mut i64 = ref mut unique.right;
+    let right_ptr: ptr i64 = right_ref as ptr i64;
+    *right_ptr = *right_ptr + 7;
+  }
+
+  {
+    let shared_values: ref [i64, 2] = ref values;
+    let first_ref: ref i64 = ref shared_values[0];
+    let first_ptr: ptr i64 = first_ref as ptr i64;
+    total = total + *first_ptr;
+  }
+
+  {
+    let unique_values: ref mut [i64, 2] = ref mut values;
+    let array_second_ref: ref mut i64 = ref mut unique_values[1];
+    let array_second_ptr: ptr i64 = array_second_ref as ptr i64;
+    *array_second_ptr = *array_second_ptr + 3;
+  }
+
+  {
+    let unique_vector: ref mut Vec[i64] = ref mut vector;
+    let vector_second_ref: ref mut i64 = ref mut unique_vector[1];
+    let vector_second_ptr: ptr i64 = vector_second_ref as ptr i64;
+    *vector_second_ptr = *vector_second_ptr + 5;
+  }
+
+  return total + pair.right + values[1] + vector[1];
+}

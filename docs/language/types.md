@@ -677,9 +677,9 @@ Meanings:
   dispatched. Dyn-to-dyn upcasts are rejected; non-copy dyn data ownership and
   raw backend lowering are still planned.
 
-The executable subset supports scalar `own`, `ref`, and `ref mut` values and
-can preserve those qualifiers inside local tuple, fixed-array, vector, and
-struct fields:
+The executable subset supports scalar `own` values, scalar and aggregate `ref`
+/ `ref mut` values, and can preserve borrow qualifiers inside local tuple,
+fixed-array, vector, and struct fields:
 
 ```ari
 struct TokenBox {
@@ -697,7 +697,9 @@ Aggregate bindings that contain `ref` or `ref mut` fields keep their borrowed
 sources borrowed until the aggregate binding leaves scope. Fields and elements
 can also be borrowed directly with `ref value.field`, `ref mut value.0`, or
 constant `ref value[index]`; unrelated field paths remain available while that
-borrow is live.
+borrow is live. Existing local borrow bindings can be reborrowed through those
+same paths, such as `ref borrowed.field` or `ref mut borrowed[0]`, when the
+borrow binding's own mutability and the selected field path allow it.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

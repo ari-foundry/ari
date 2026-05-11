@@ -2288,6 +2288,9 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-reborrow.ari -o $(BUILD_DIR)/errors/borrow-reborrow.raw
 	$(BUILD_DIR)/errors/borrow-reborrow.raw; code=$$?; test $$code -eq 14
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-reborrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-reborrow.elf; $(BUILD_DIR)/errors/borrow-reborrow.elf; code=$$?; test $$code -eq 14; fi
+	$(TARGET) --freestanding tests/ok/borrow-reborrow-paths.ari -o $(BUILD_DIR)/errors/borrow-reborrow-paths.raw
+	$(BUILD_DIR)/errors/borrow-reborrow-paths.raw; code=$$?; test $$code -eq 61
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-reborrow-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-reborrow-paths.elf; $(BUILD_DIR)/errors/borrow-reborrow-paths.elf; code=$$?; test $$code -eq 61; fi
 	$(TARGET) --freestanding tests/ok/borrow-control-flow-result.ari -o $(BUILD_DIR)/errors/borrow-control-flow-result.raw
 	$(BUILD_DIR)/errors/borrow-control-flow-result.raw; code=$$?; test $$code -eq 4
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-control-flow-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-control-flow-result.elf; $(BUILD_DIR)/errors/borrow-control-flow-result.elf; code=$$?; test $$code -eq 4; fi
@@ -2301,6 +2304,10 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot mutably reborrow immutable borrow binding 'shared'" $(BUILD_DIR)/errors/borrow-reborrow-mut-from-shared.err
 	if $(TARGET) tests/errors/borrow-reborrow-active-conflict.ari -o $(BUILD_DIR)/errors/borrow-reborrow-active-conflict.elf >$(BUILD_DIR)/errors/borrow-reborrow-active-conflict.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow already borrowed binding 'unique'" $(BUILD_DIR)/errors/borrow-reborrow-active-conflict.err
+	if $(TARGET) tests/errors/borrow-reborrow-path-mut-from-shared.ari -o $(BUILD_DIR)/errors/borrow-reborrow-path-mut-from-shared.elf >$(BUILD_DIR)/errors/borrow-reborrow-path-mut-from-shared.err 2>&1; then exit 1; fi
+	grep -q "cannot mutably reborrow immutable borrow binding 'shared'" $(BUILD_DIR)/errors/borrow-reborrow-path-mut-from-shared.err
+	if $(TARGET) tests/errors/borrow-reborrow-path-active-conflict.ari -o $(BUILD_DIR)/errors/borrow-reborrow-path-active-conflict.elf >$(BUILD_DIR)/errors/borrow-reborrow-path-active-conflict.err 2>&1; then exit 1; fi
+	grep -q "cannot immutably borrow mutably borrowed field 'unique.0'" $(BUILD_DIR)/errors/borrow-reborrow-path-active-conflict.err
 	if $(TARGET) tests/errors/borrow-control-flow-mismatch.ari -o $(BUILD_DIR)/errors/borrow-control-flow-mismatch.elf >$(BUILD_DIR)/errors/borrow-control-flow-mismatch.err 2>&1; then exit 1; fi
 	grep -q "if expression must borrow the same source path and mode in every result arm" $(BUILD_DIR)/errors/borrow-control-flow-mismatch.err
 	if $(TARGET) tests/errors/borrow-control-flow-local-escape.ari -o $(BUILD_DIR)/errors/borrow-control-flow-local-escape.elf >$(BUILD_DIR)/errors/borrow-control-flow-local-escape.err 2>&1; then exit 1; fi

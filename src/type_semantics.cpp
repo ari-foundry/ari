@@ -176,6 +176,15 @@ bool is_owned_executable_primitive(IrPrimitiveKind primitive) {
            primitive == IrPrimitiveKind::Zone;
 }
 
+bool is_borrowable_executable_primitive(IrPrimitiveKind primitive) {
+    return is_owned_executable_primitive(primitive) ||
+           primitive == IrPrimitiveKind::Tuple ||
+           primitive == IrPrimitiveKind::Array ||
+           primitive == IrPrimitiveKind::Vector ||
+           primitive == IrPrimitiveKind::Struct ||
+           primitive == IrPrimitiveKind::Enum;
+}
+
 bool is_legacy_enum_payload_type(const IrType& type) {
     if (type.qualifier != TypeQualifier::Value) return false;
     if (type.primitive == IrPrimitiveKind::Bool) return true;

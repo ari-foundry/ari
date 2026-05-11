@@ -95,14 +95,16 @@
      reserve capacity with runtime heap capacity growth
    - [ops-runtime] port the existing temporary fixed-local Vec API to
      allocator-backed storage instead of fixed local-capacity traps
-2. Extend `BorrowContext` path provenance through reborrowed places.
-   Direct local borrow bindings and borrow-valued control-flow results now
-   preserve source/path/mode metadata. The next focused borrow slice is to carry
-   that same metadata through places reached from an existing borrow binding,
-   without weakening the current field-path conflict diagnostics.
-   - [reborrow-paths] allow reborrowing fields/elements through borrow bindings
-     after path provenance and backend lvalue lowering for those forms are
-     explicit
+2. Allow constrained borrow-valued function returns.
+   Borrow-valued block, `if`, `match`, and labeled-block expression results now
+   preserve source/path/mode metadata, and reborrows can be taken from fields and
+   elements behind existing borrow bindings on both executable backends. The
+   next focused slice is to use that provenance for conservative function
+   returns without adopting full lifetime syntax.
+   - [borrow-returns] allow returning a borrow only when the returned source is
+     a borrow parameter or otherwise proven to outlive the function result
+   - [borrow-return-diagnostics] keep local-source escapes rejected with the same
+     source/path wording used by control-flow borrow results
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -148,12 +150,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [generic-supertrait-inference] handle richer generic supertrait
      applications once associated types and projections exist
 2. Refine borrow checking beyond lexical named borrows.
-   Direct local reborrows and borrow-valued block, `if`, `match`, and
-   labeled-block expression results now use `BorrowContext` source tracking.
-   The next refinements should preserve that source/path/mode model.
+   Direct local reborrows, borrow-valued block, `if`, `match`, and
+   labeled-block expression results, and field/element reborrows through borrow
+   bindings now use `BorrowContext` source tracking. The next refinements should
+   preserve that source/path/mode model.
    - [nll] shorten named borrows to their last use when control-flow analysis can prove it
-   - [borrow-returns] allow borrow-valued function returns when lifetimes are
-     valid after the near-term expression-result shape checks land
    - [aggregate-borrows] track borrow-valued aggregate fields independently so
      assigning unrelated fields or whole aggregate bindings can be checked
    - [loop-state] track ownership and borrow state through loops, init-while

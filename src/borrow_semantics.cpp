@@ -146,13 +146,21 @@ void require_can_reborrow(SourceLocation loc,
                           const std::string& name,
                           const LocalInfo& borrow,
                           bool mutable_borrow) {
+    require_can_reborrow_path(loc, name, borrow, "", mutable_borrow);
+}
+
+void require_can_reborrow_path(SourceLocation loc,
+                               const std::string& name,
+                               const LocalInfo& borrow,
+                               const std::string& path,
+                               bool mutable_borrow) {
     if (!is_borrow_type(borrow.type)) {
         throw CompileError("internal error: reborrow source '" + name + "' is not a borrow binding");
     }
     if (mutable_borrow && borrow.type.qualifier != TypeQualifier::MutRef) {
         fail_borrow(loc, "cannot mutably reborrow immutable borrow binding '" + name + "'");
     }
-    require_can_borrow_path(loc, name, borrow, "", mutable_borrow);
+    require_can_borrow_path(loc, name, borrow, path, mutable_borrow);
 }
 
 std::optional<BorrowResultSource> borrow_result_source(const IrExpr& expr) {

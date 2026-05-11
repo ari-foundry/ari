@@ -1,0 +1,11 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+fn main() -> i64 {
+  var pair = Pair { left: 1, right: 2 };
+  let shared: ref Pair = ref pair;
+  let bad: ref mut i64 = ref mut shared.left;
+  return 0;
+}

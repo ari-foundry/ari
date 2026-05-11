@@ -72,13 +72,19 @@ fn inspect(value: ref u32) -> i64 {
   return 0;
 }
 
-fn touch(value: ref mut i16) -> i64 {
+fn touch(value: ref mut i64) -> i64 {
   return 0;
+}
+
+struct Pair {
+  mut left: i64,
+  mut right: i64,
 }
 
 fn main() -> i64 {
   var number: u32 = 7;
-  var slot: i16 = 0;
+  var slot: i64 = 0;
+  var pair = Pair { left: 10, right: 20 };
   let pick_first = true;
   inspect(ref number);
   touch(ref mut slot);
@@ -89,9 +95,14 @@ fn main() -> i64 {
     inspect(again);
   }
   {
-    let borrowed: ref mut i16 = ref mut slot;
-    let again: ref mut i16 = ref mut borrowed;
+    let borrowed: ref mut i64 = ref mut slot;
+    let again: ref mut i64 = ref mut borrowed;
     touch(again);
+  }
+  {
+    let borrowed: ref mut Pair = ref mut pair;
+    let right: ref mut i64 = ref mut borrowed.right;
+    touch(right);
   }
   {
     let chosen: ref u32 = if pick_first {
@@ -121,6 +132,9 @@ Rules currently checked:
   is `ref` or `ref mut`
 - an existing local `ref mut` borrow binding can be reborrowed with `ref mut`;
   immutable borrow bindings cannot be reborrowed mutably
+- fields and constant-index elements behind an existing local borrow binding can
+  also be reborrowed, so `ref borrowed.field`, `ref mut borrowed.0`, and
+  `ref borrowed[0]` keep path-level conflict diagnostics
 - borrow-valued control-flow expression results are allowed only when every
   result path borrows the same source path with the same borrow mode
 - a borrow-valued control-flow expression cannot return a borrow of a binding
