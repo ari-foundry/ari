@@ -6,6 +6,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace ari {
 
@@ -69,5 +70,11 @@ std::optional<std::string> zone_pointer_escape_error(const IrExpr& value,
                                                      const LocalScopeStack& scopes);
 std::optional<std::string> outer_temporary_zone_pointer_escape_error(std::size_t first_scope_index,
                                                                      const LocalScopeStack& scopes);
+IrStmtPtr make_zone_destroy_stmt(SourceLocation loc, const std::string& name, const IrType& type);
+bool has_auto_destroy_zone_cleanup(const LocalScopeStack& scopes, std::size_t first_scope_index);
+std::optional<std::string> append_auto_destroy_zone_cleanup(SourceLocation loc,
+                                                            std::vector<IrStmtPtr>& statements,
+                                                            LocalScopeStack& scopes,
+                                                            std::size_t first_scope_index);
 
 } // namespace ari

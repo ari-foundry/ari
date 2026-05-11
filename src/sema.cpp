@@ -4046,32 +4046,8 @@ private:
         }
     }
 
-    IrStmtPtr make_zone_destroy_stmt(SourceLocation loc, const std::string& name, const IrType& type) const {
-        std::vector<IrExprPtr> args;
-        args.push_back(make_local_lvalue_expr(loc, name, type));
-        auto stmt = std::make_unique<IrStmt>();
-        stmt->kind = IrStmtKind::ExprStmt;
-        stmt->loc = loc;
-        stmt->expr = make_builtin_call(loc, "zone::destroy", std::move(args), void_type(loc));
-        return stmt;
-    }
-
     bool has_auto_destroy_zone_cleanup(std::size_t first_scope_index) const {
-        return local_scopes_.any_local_from(
-            first_scope_index,
-            [](const std::string&, const LocalInfo& local) {
-                return is_auto_destroy_zone(local) && local_is_alive(local);
-            }
-        );
-    }
-
-    void require_no_outer_zone_pointer_escape_from_cleanup(
-        SourceLocation loc,
-        std::size_t first_scope_index
-    ) {
-        if (auto error = outer_temporary_zone_pointer_escape_error(first_scope_index, local_scopes_)) {
-            fail(loc, *error);
-        }
+        return ari::has_auto_destroy_zone_cleanup(local_scopes_, first_scope_index);
     }
 
     void append_auto_destroy_zone_cleanup(
@@ -4079,16 +4055,13 @@ private:
         std::vector<IrStmtPtr>& statements,
         std::size_t first_scope_index
     ) {
-        if (!local_scopes_.contains_scope(first_scope_index)) return;
-        require_no_outer_zone_pointer_escape_from_cleanup(loc, first_scope_index);
-        local_scopes_.for_each_local_from_inner_to_outer(
-            first_scope_index,
-            [&](const std::string& name, LocalInfo& local) {
-                if (!is_auto_destroy_zone(local) || !local_is_alive(local)) return;
-                statements.push_back(make_zone_destroy_stmt(loc, name, local.type));
-                mark_local_zone_destroyed(local);
-            }
-        );
+        if (auto error = ari::append_auto_destroy_zone_cleanup(
+                loc,
+                statements,
+                local_scopes_,
+                first_scope_index)) {
+            fail(loc, *error);
+        }
     }
 
     void append_auto_destroy_zone_cleanup(SourceLocation loc, std::vector<IrStmtPtr>& statements) {

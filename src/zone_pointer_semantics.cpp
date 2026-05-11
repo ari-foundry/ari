@@ -1,6 +1,7 @@
 #include "zone_pointer_semantics.hpp"
 
 #include "ari_builtin.hpp"
+#include "ir_builders.hpp"
 #include "local_state.hpp"
 #include "prelude_resolver.hpp"
 #include "slice_semantics.hpp"
@@ -9,6 +10,7 @@
 #include "zone_return_semantics.hpp"
 
 #include <map>
+#include <utility>
 
 namespace ari {
 
@@ -249,6 +251,14 @@ static std::string temporary_zone_pointer_escape_message(const IrExpr& value,
            "' cannot escape through " + context;
 }
 
+static IrType zone_cleanup_void_type(SourceLocation loc) {
+    IrType type;
+    type.primitive = IrPrimitiveKind::Void;
+    type.name = "void";
+    type.loc = loc;
+    return type;
+}
+
 std::optional<std::string> temporary_zone_pointer_escape_error(const IrExpr& value,
                                                                std::size_t first_scope_index,
                                                                const std::string& context,
@@ -303,6 +313,42 @@ std::optional<std::string> outer_temporary_zone_pointer_escape_error(std::size_t
                     "' cannot outlive the temporary zone scope";
         });
     return error;
+}
+
+IrStmtPtr make_zone_destroy_stmt(SourceLocation loc, const std::string& name, const IrType& type) {
+    std::vector<IrExprPtr> args;
+    args.push_back(make_local_lvalue_expr(loc, name, type));
+    auto stmt = std::make_unique<IrStmt>();
+    stmt->kind = IrStmtKind::ExprStmt;
+    stmt->loc = loc;
+    stmt->expr = make_builtin_call(loc, "zone::destroy", std::move(args), zone_cleanup_void_type(loc));
+    return stmt;
+}
+
+bool has_auto_destroy_zone_cleanup(const LocalScopeStack& scopes, std::size_t first_scope_index) {
+    return scopes.any_local_from(
+        first_scope_index,
+        [](const std::string&, const LocalInfo& local) {
+            return is_auto_destroy_zone(local) && local_is_alive(local);
+        });
+}
+
+std::optional<std::string> append_auto_destroy_zone_cleanup(SourceLocation loc,
+                                                            std::vector<IrStmtPtr>& statements,
+                                                            LocalScopeStack& scopes,
+                                                            std::size_t first_scope_index) {
+    if (!scopes.contains_scope(first_scope_index)) return std::nullopt;
+    if (auto error = outer_temporary_zone_pointer_escape_error(first_scope_index, scopes)) {
+        return error;
+    }
+    scopes.for_each_local_from_inner_to_outer(
+        first_scope_index,
+        [&](const std::string& name, LocalInfo& local) {
+            if (!is_auto_destroy_zone(local) || !local_is_alive(local)) return;
+            statements.push_back(make_zone_destroy_stmt(loc, name, local.type));
+            mark_local_zone_destroyed(local);
+        });
+    return std::nullopt;
 }
 
 } // namespace ari

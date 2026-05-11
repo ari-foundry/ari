@@ -138,9 +138,11 @@
      assignment, named zone-borrow reset recognition, reset invalidation, and
      validity diagnostics also route through `zone_pointer_semantics`. Temporary
      zone escape diagnostics for returns, aggregate/call escapes, and
-     outer-binding leaks are shared there as well; remaining work is to move
-     destroy/cleanup wiring and automatic temporary-zone cleanup out of
-     `sema.cpp`.
+     outer-binding leaks are shared there as well, and temporary-zone
+     `zone::destroy` IR cleanup construction is centralized there. Remaining
+     work is to move the automatic cleanup call-site orchestration out of
+     `sema.cpp` once statement/control-flow lowering has a smaller context
+     object.
    - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
      top of the existing explicit-zone `std::boxed::Box<T>` seed before std
      APIs start returning owning heap handles

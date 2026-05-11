@@ -351,9 +351,9 @@ pending IR.
      handles, source slices, pointer-returning methods, and control-flow
      expressions. It also owns source/generation assignment helpers, reset-call
      generation updates, invalidation diagnostics, and temporary-zone escape
-     diagnostics for returns, aggregate/call escapes, and outer-binding leaks.
-     Move the remaining destroy/cleanup wiring, scratch/promotion validation,
-     and automatic temporary-zone cleanup.
+     diagnostics for returns, aggregate/call escapes, and outer-binding leaks,
+     plus temporary-zone `zone::destroy` IR cleanup construction. Move the
+     remaining cleanup call-site orchestration and scratch/promotion validation.
    - Keep actual `zone::*` call typing in expression lowering until prelude
      special calls are split.
 
