@@ -1,0 +1,8 @@
+pub fn add_cached(value: i64) -> i64 {
+  return value + 4;
+}
+
+pub fn indirect_call_flow() -> i64 {
+  let op: fn(i64) -> i64 = add_cached;
+  return (if true { op } else { op })(3);
+}

@@ -1,0 +1,5 @@
+mod cache_indirect_calls;
+
+fn main() -> i64 {
+  cache_indirect_calls::indirect_call_flow()
+}

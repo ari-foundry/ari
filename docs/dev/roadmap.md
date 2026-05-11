@@ -114,13 +114,13 @@
    statements, `while`/`while let`, `for`, `init ... while ... next`,
    `continue`, unlabeled/labeled `break`, statement `match`, `return`
    statements, `drop` statements, method-call expressions, qualified calls
-   with receiver type arguments, borrow expressions, postfix `?`, `??`, prelude
-   macro invocations, `if`/block/`match` expressions, or final expression
-   statements, allowing those dependency bodies and summary-safe impl methods
-   to materialize from the cache after validation. The remaining package-cache
-   work is to extend that path to future IR summaries for broad executable
-   function and impl bodies, then skip dependency source parsing whenever
-   validation succeeds.
+   with receiver type arguments, indirect function-pointer calls, borrow
+   expressions, postfix `?`, `??`, prelude macro invocations,
+   `if`/block/`match` expressions, or final expression statements, allowing
+   those dependency bodies and summary-safe impl methods to materialize from
+   the cache after validation. The remaining package-cache work is to extend
+   that path to future IR summaries for broad executable function and impl
+   bodies, then skip dependency source parsing whenever validation succeeds.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies whose executable function or impl bodies
      still use expression forms outside the temporary AST summary subset

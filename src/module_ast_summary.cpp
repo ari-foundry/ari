@@ -304,7 +304,17 @@ bool append_const_expr_payload(std::ostringstream& out, const Expr& expr) {
             return true;
         }
         case ExprKind::Call: {
-            if (expr_operand(expr)) return false;
+            if (expr_operand(expr)) {
+                if (!expr_receiver_type_args(expr).empty() || !expr_type_args(expr).empty()) return false;
+                std::ostringstream operand;
+                std::ostringstream args;
+                if (!append_const_expr_payload(operand, *expr_operand(expr))) return false;
+                if (!append_const_expr_list(args, expr.args)) return false;
+                append_field(out, "indirect-call");
+                out << operand.str();
+                out << args.str();
+                return true;
+            }
             std::ostringstream args;
             if (!append_const_expr_list(args, expr.args)) return false;
             const bool has_receiver_args = !expr_receiver_type_args(expr).empty();
@@ -1377,6 +1387,12 @@ private:
             }
             set_expr_type_args(*expr, read_type_arguments(label + " call type arguments"));
             expr->args = read_const_expr_list(label + " call arguments");
+            return expr;
+        }
+        if (kind == "indirect-call") {
+            expr->kind = ExprKind::Call;
+            set_expr_operand(*expr, read_const_expr(label + " indirect callee"));
+            expr->args = read_const_expr_list(label + " indirect arguments");
             return expr;
         }
         if (kind == "method-call" || kind == "qualified-method-call") {
