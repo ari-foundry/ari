@@ -119,7 +119,7 @@ void append_function_signature(std::ostringstream& out, const FunctionDecl& fn) 
 }
 
 bool is_summary_const_unary_op(TokenKind op) {
-    return op == TokenKind::Bang || op == TokenKind::Minus || op == TokenKind::Tilde;
+    return op == TokenKind::Bang || op == TokenKind::Minus || op == TokenKind::Star || op == TokenKind::Tilde;
 }
 
 bool is_summary_const_binary_op(TokenKind op) {
@@ -538,12 +538,15 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             return true;
         }
         case StmtKind::VarDecl: {
-            if (stmt.binding.has_pattern) return false;
+            std::ostringstream pattern;
+            if (stmt.binding.has_pattern && !append_pattern_payload(pattern, stmt.binding.pattern)) return false;
             std::ostringstream init;
             if (stmt.binding.init && !append_const_expr_payload(init, *stmt.binding.init)) return false;
             append_field(out, "var");
             append_field(out, stmt.binding.name);
             append_bool(out, stmt.binding.mutable_binding);
+            append_bool(out, stmt.binding.has_pattern);
+            out << pattern.str();
             append_bool(out, stmt.binding.has_type);
             if (stmt.binding.has_type) append_type(out, stmt.binding.type);
             append_bool(out, static_cast<bool>(stmt.binding.init));
@@ -683,9 +686,12 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             append_count(out, stmt.init_bindings.size());
             for (std::size_t i = 0; i < stmt.init_bindings.size(); ++i) {
                 const Binding& binding = stmt.init_bindings[i];
-                if (binding.has_pattern) return false;
+                std::ostringstream pattern;
+                if (binding.has_pattern && !append_pattern_payload(pattern, binding.pattern)) return false;
                 append_field(out, binding.name);
                 append_bool(out, binding.mutable_binding);
+                append_bool(out, binding.has_pattern);
+                out << pattern.str();
                 append_bool(out, binding.has_type);
                 if (binding.has_type) append_type(out, binding.type);
                 out << initializers[i].str();
@@ -1036,10 +1042,16 @@ private:
     }
 
     void consume_header() {
+        const std::string v5 = "ari-ast-decls-v5;";
         const std::string v4 = "ari-ast-decls-v4;";
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v5.size(), v5) == 0) {
+            version_ = 5;
+            pos_ += v5.size();
+            return;
+        }
         if (text_.compare(pos_, v4.size(), v4) == 0) {
             version_ = 4;
             pos_ += v4.size();
@@ -1060,7 +1072,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1598,6 +1610,12 @@ private:
             stmt->kind = StmtKind::VarDecl;
             stmt->binding.name = read_field(label + " binding name");
             stmt->binding.mutable_binding = read_bool(label + " binding mutability");
+            if (version_ >= 5) {
+                stmt->binding.has_pattern = read_bool(label + " binding pattern flag");
+                if (stmt->binding.has_pattern) {
+                    stmt->binding.pattern = read_pattern(label + " binding pattern");
+                }
+            }
             stmt->binding.has_type = read_bool(label + " binding type flag");
             if (stmt->binding.has_type) stmt->binding.type = read_type(label + " binding type");
             if (read_bool(label + " binding initializer flag")) {
@@ -1682,6 +1700,12 @@ private:
                 binding.loc = default_loc();
                 binding.name = read_field(label + " init binding name");
                 binding.mutable_binding = read_bool(label + " init binding mutability");
+                if (version_ >= 5) {
+                    binding.has_pattern = read_bool(label + " init binding pattern flag");
+                    if (binding.has_pattern) {
+                        binding.pattern = read_pattern(label + " init binding pattern");
+                    }
+                }
                 binding.has_type = read_bool(label + " init binding type flag");
                 if (binding.has_type) binding.type = read_type(label + " init binding type");
                 binding.init = read_const_expr(label + " init binding initializer");
@@ -1723,7 +1747,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v4;";
+    out << "ari-ast-decls-v5;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {

@@ -393,15 +393,17 @@ Checklist:
       fixed-array index access over materialized aggregate constants
 - [x] cached header-like dependencies can load declaration-safe materialized
       summaries instead of reparsing cached source text
-- [x] AST summary declaration payloads preserve function parameter patterns
+- [x] AST summary declaration payloads preserve function parameter and local
+      binding patterns
 - [x] AST summary declaration payloads materialize simple executable function
-      bodies made from local declarations, assignments, `if`/`else`,
-      block/labeled-block statements, loops, `continue`, `break`, statement
-      `match`, `drop`, return/final-expression statements, method calls,
-      qualified calls with receiver type arguments, borrow expressions, postfix
-      `?`, `??`, indirect function-pointer calls, prelude macro invocations,
-      `if`/block/`match` expressions, summary-safe expressions, and integer,
-      bool, float, string, and null literals
+      bodies made from local declarations, local binding patterns,
+      assignments, `if`/`else`, block/labeled-block statements, loops,
+      `continue`, `break`, statement `match`, `drop`, return/final-expression
+      statements, method calls, qualified calls with receiver type arguments,
+      borrow expressions, pointer dereferences, postfix `?`, `??`, indirect
+      function-pointer calls, prelude macro invocations, `if`/block/`match`
+      expressions, summary-safe expressions, and integer, bool, float, string,
+      and null literals
 - [ ] AST/IR package cache summaries skip dependency parsing after validation
 - [x] AST/IR scalar payload packing preserves integer, bool, float, tuple-index,
       and indexed-assignment lowering paths

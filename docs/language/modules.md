@@ -305,11 +305,11 @@ ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build
 
 The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, and a compact AST summary for each cached source. Current
-caches are written as `ari-module-cache-v7`; older v1/v2/v3/v4/v5/v6 caches
+caches are written as `ari-module-cache-v8`; older v1/v2/v3/v4/v5/v6/v7 caches
 are treated as stale because they do not carry the current AST-summary
-declaration fingerprints, parameter pattern payloads, constant initializer
-payloads, and simple executable body payloads. A later build can validate the
-cache and parse from that snapshot:
+declaration fingerprints, function and local binding pattern payloads,
+constant initializer payloads, and simple executable body payloads. A later
+build can validate the cache and parse from that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll
@@ -330,9 +330,9 @@ After reading from the cached source snapshot, Ari also rebuilds the module
 metadata and per-source AST summaries, then compares them with the data embedded
 in the cache. AST summaries include counts, declaration fingerprints, and a
 compact declaration payload for the source-level item surface, including
-function parameter patterns. Cache loading parses that payload and checks its
-hash and counts, so edited or corrupted summaries are caught before semantic
-checking relies on them.
+function parameter patterns and local binding patterns in summary-safe bodies.
+Cache loading parses that payload and checks its hash and counts, so edited or
+corrupted summaries are caught before semantic checking relies on them.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant
@@ -346,13 +346,15 @@ unsupported summary forms fall back to parsing the cached source snapshot.
 Executable body expression summaries preserve integer, bool, float, string, and
 null literals.
 Executable dependency functions whose bodies use summary-safe local
-declarations, assignments, `if`/`else`, block/labeled-block statements,
+declarations, local binding patterns, assignments, `if`/`else`,
+block/labeled-block statements,
 `while`/`while let`, `for`, `init ... while ... next`, `continue`, unlabeled or
 labeled `break`, statement `match`, `return` statements, `drop` statements,
 method-call expressions, qualified calls with receiver type arguments, borrow
-expressions, indirect function-pointer calls, postfix `?`, `??`, prelude macro
-invocations, `if`/block/`match` expressions, or final expression statements
-over the same expression forms can also be materialized from the AST summary.
+expressions, pointer dereferences, indirect function-pointer calls, postfix
+`?`, `??`, prelude macro invocations, `if`/block/`match` expressions, or final
+expression statements over the same expression forms can also be materialized
+from the AST summary.
 More complex executable bodies still fall back to parsing the cached source
 snapshot until the IR body-summary cache is implemented.
 
