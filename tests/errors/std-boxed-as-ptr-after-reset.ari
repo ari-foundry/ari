@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let boxed = std::boxed::new<i64>(ref mut zone, 11);
+  let raw = boxed.as_ptr();
+  zone::reset(ref mut zone);
+  return ptr_load(raw);
+}

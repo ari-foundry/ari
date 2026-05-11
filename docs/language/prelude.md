@@ -71,10 +71,11 @@ API.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. The
-handle has `get()` and `set(value)` methods for copyable, zone-placeable values.
-Using a `std::boxed::Box<T>` after the source zone is reset or destroyed is
-rejected by the checker. This is not yet the final owning root `Box[T]` smart
-pointer surface.
+handle has `get()`, `set(value)`, and `as_ptr()` methods for copyable,
+zone-placeable values. `as_ptr()` returns the stored `ptr T` with the same zone
+provenance as the handle, so using that pointer after the source zone is reset
+or destroyed is also rejected by the checker. This is not yet the final owning
+root `Box[T]` smart pointer surface.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -507,12 +508,13 @@ var boxed = std::boxed::new<i64>(ref mut zone, 21)
 let before = boxed.get()
 boxed.set(9)
 let after = boxed.get()
+let raw = boxed.as_ptr()
 ```
 
 The handle stores a raw pointer returned by `zone::new<T>` and keeps the same
-zone provenance, so reset/destroy invalidation applies to the handle. It does
-not run destructors or free the value independently; memory is released with the
-zone.
+zone provenance, so reset/destroy invalidation applies to the handle and to raw
+pointers recovered through `as_ptr()`. It does not run destructors or free the
+value independently; memory is released with the zone.
 
 `Slice[T]` is a source `std` view struct:
 

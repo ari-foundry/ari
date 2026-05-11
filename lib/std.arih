@@ -85,6 +85,10 @@ pub mod boxed {
     fn set(self: ref mut Self, value: T) -> void {
       ptr_store(self.data, value);
     }
+
+    fn as_ptr(self) -> ptr T {
+      return self.data;
+    }
   }
 }
 

@@ -4517,6 +4517,12 @@ private:
             return !source.args.empty() && zone_source_name_from_arg(*source.args[0], out);
         }
         if (source.kind == IrExprKind::Call) {
+            if (source.type.qualifier == TypeQualifier::Ptr &&
+                !source.args.empty() &&
+                is_std_box_handle_type(value_qualified_type(source.args[0]->type)) &&
+                zone_pointer_source_name_from_expr(*source.args[0], out)) {
+                return true;
+            }
             if (is_prelude_slice_type(source.type) &&
                 !source.args.empty() &&
                 zone_pointer_source_name_from_expr(*source.args[0], out)) {

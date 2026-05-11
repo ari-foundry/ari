@@ -246,8 +246,8 @@ Checklist:
 - [x] `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` seeds future
       allocator-backed Vec storage with a tracked zone-backed element pointer
 - [x] `std::boxed::new<T>(ref mut Zone, value)` wraps placement construction in
-      a tracked source `std::boxed::Box<T>` handle with `get`/`set` methods and
-      reset/destroy invalidation
+      a tracked source `std::boxed::Box<T>` handle with `get`/`set`/`as_ptr`
+      methods and reset/destroy invalidation
 - [x] `std::vec::with_capacity<T>(ref mut Zone, capacity)` wraps that pointer
       in a tracked `RawVec<T>` handle whose field access is invalidated after
       zone reset/destroy

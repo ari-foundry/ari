@@ -403,7 +403,8 @@ constructors that take exactly one `ref Zone` or `ref mut Zone` parameter. Using
 those bindings after the source zone has been reset or destroyed is rejected.
 Source handles such as `std::boxed::Box<T>`, `std::vec::RawVec<T>`, and
 `std::vec::Vec<T>` carry the same tracked source-zone provenance when they are
-returned by a single-zone constructor.
+returned by a single-zone constructor. Raw pointers recovered from a tracked
+`std::boxed::Box<T>` through `as_ptr()` keep that provenance too.
 That single-zone wrapper rule is a signature-level contract: a pointer-returning
 function with no Zone borrow parameters or with more than one Zone borrow
 parameter cannot return a tracked zone pointer.
