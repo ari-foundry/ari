@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  var zone = zone::create(96);
+  let vec = std::vec::new<i64>(ref mut zone, 5);
+
+  let empty_bonus = if vec.is_empty() { 7 } else { 0 };
+  let total = vec.len() + vec.capacity() + empty_bonus;
+  zone::destroy(zone);
+  return total;
+}

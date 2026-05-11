@@ -502,8 +502,17 @@ pub struct Vec[T] {
 ```
 
 This source `std::vec::Vec<T>` handle is the allocator-backed construction
-seed. The root `Vec[T]`/`std::Vec[T]` type is still the current local vector
-literal storage until runtime growth and methods are ported.
+seed. It exposes read-only metadata methods over the raw handle:
+
+```ari
+let vec = std::vec::new<i64>(ref mut zone, 4)
+let empty = vec.is_empty()
+let len = vec.len()
+let cap = vec.capacity()
+```
+
+The root `Vec[T]`/`std::Vec[T]` type is still the current local vector literal
+storage until runtime growth and mutating/indexing methods are ported.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over

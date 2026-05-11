@@ -94,6 +94,20 @@ pub mod vec {
   pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::vec::Vec[T] {
     return std::vec::Vec<T> { raw: with_capacity<T>(zone, capacity) };
   }
+
+  pub impl[T] std::vec::Vec[T] {
+    fn len(self) -> i64 {
+      return self.raw.len;
+    }
+
+    fn capacity(self) -> i64 {
+      return self.raw.capacity;
+    }
+
+    fn is_empty(self) -> bool {
+      return self.raw.len == 0;
+    }
+  }
 }
 
 pub mod iter {

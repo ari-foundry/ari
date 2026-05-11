@@ -250,6 +250,8 @@ Checklist:
       zone reset/destroy
 - [x] `std::vec::new<T>(ref mut Zone, capacity)` wraps `RawVec<T>` in the
       tracked source `std::vec::Vec<T>` allocator/capability creation surface
+- [x] source `std::vec::Vec<T>` exposes tracked read-only metadata methods
+      `len`, `capacity`, and `is_empty`
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local
       copies, scalar indexing, the fixed-capacity method surface, and
       stored-vector `for` loops
