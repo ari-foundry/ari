@@ -3725,44 +3725,41 @@ private:
     }
 
     bool has_auto_destroy_zone_cleanup(std::size_t first_scope_index) const {
-        if (first_scope_index >= local_scopes_.size()) return false;
-        for (std::size_t scope_index = first_scope_index; scope_index < local_scopes_.size(); ++scope_index) {
-            const auto& scope = local_scopes_.scope_at(scope_index);
-            for (const auto& item : scope) {
-                const LocalInfo& local = item.second;
-                if (is_auto_destroy_zone(local) && local.state == LocalState::Alive) return true;
+        return local_scopes_.any_local_from(
+            first_scope_index,
+            [](const std::string&, const LocalInfo& local) {
+                return is_auto_destroy_zone(local) && local.state == LocalState::Alive;
             }
-        }
-        return false;
+        );
     }
 
     void require_no_outer_zone_pointer_escape_from_cleanup(
         SourceLocation loc,
         std::size_t first_scope_index
     ) {
-        if (first_scope_index == 0 || first_scope_index >= local_scopes_.size()) return;
+        if (first_scope_index == 0 || !local_scopes_.contains_scope(first_scope_index)) return;
         std::map<std::string, bool> temporary_zones;
-        for (std::size_t scope_index = first_scope_index; scope_index < local_scopes_.size(); ++scope_index) {
-            for (const auto& item : local_scopes_.scope_at(scope_index)) {
-                const LocalInfo& local = item.second;
+        local_scopes_.for_each_local_from(
+            first_scope_index,
+            [&](const std::string& name, const LocalInfo& local) {
                 if (is_auto_destroy_zone(local) && local.state == LocalState::Alive) {
-                    temporary_zones[item.first] = true;
+                    temporary_zones[name] = true;
                 }
             }
-        }
+        );
         if (temporary_zones.empty()) return;
 
-        for (std::size_t scope_index = 0; scope_index < first_scope_index; ++scope_index) {
-            for (const auto& item : local_scopes_.scope_at(scope_index)) {
-                const LocalInfo& local = item.second;
-                if (!local.zone_pointer || local.state != LocalState::Alive) continue;
-                if (temporary_zones.find(local.zone_pointer_source) == temporary_zones.end()) continue;
+        local_scopes_.for_each_local_before(
+            first_scope_index,
+            [&](const std::string& name, const LocalInfo& local) {
+                if (!local.zone_pointer || local.state != LocalState::Alive) return;
+                if (temporary_zones.find(local.zone_pointer_source) == temporary_zones.end()) return;
                 fail(loc,
-                     "zone pointer '" + item.first +
+                     "zone pointer '" + name +
                          "' from temporary zone '" + local.zone_pointer_source +
                          "' cannot outlive the temporary zone scope");
             }
-        }
+        );
     }
 
     void append_auto_destroy_zone_cleanup(
@@ -3770,18 +3767,17 @@ private:
         std::vector<IrStmtPtr>& statements,
         std::size_t first_scope_index
     ) {
-        if (first_scope_index >= local_scopes_.size()) return;
+        if (!local_scopes_.contains_scope(first_scope_index)) return;
         require_no_outer_zone_pointer_escape_from_cleanup(loc, first_scope_index);
-        for (std::size_t offset = local_scopes_.size(); offset > first_scope_index; --offset) {
-            auto& scope = local_scopes_.scope_at(offset - 1);
-            for (auto& item : scope) {
-                LocalInfo& local = item.second;
-                if (!is_auto_destroy_zone(local) || local.state != LocalState::Alive) continue;
-                statements.push_back(make_zone_destroy_stmt(loc, item.first, local.type));
+        local_scopes_.for_each_local_from_inner_to_outer(
+            first_scope_index,
+            [&](const std::string& name, LocalInfo& local) {
+                if (!is_auto_destroy_zone(local) || local.state != LocalState::Alive) return;
+                statements.push_back(make_zone_destroy_stmt(loc, name, local.type));
                 local.state = LocalState::Moved;
                 ++local.zone_generation;
             }
-        }
+        );
     }
 
     void append_auto_destroy_zone_cleanup(SourceLocation loc, std::vector<IrStmtPtr>& statements) {
@@ -4143,15 +4139,14 @@ private:
     }
 
     void require_no_live_owners_before_return(SourceLocation loc) const {
-        for (std::size_t scope_index = 0; scope_index < local_scopes_.size(); ++scope_index) {
-            const auto& scope = local_scopes_.scope_at(scope_index);
-            for (const auto& item : scope) {
-                const LocalInfo& local = item.second;
+        local_scopes_.for_each_local_from(
+            0,
+            [&](const std::string& name, const LocalInfo& local) {
                 if (has_live_owner(local)) {
-                    fail(loc, "owning binding '" + item.first + "' must be moved or dropped before return");
+                    fail(loc, "owning binding '" + name + "' must be moved or dropped before return");
                 }
             }
-        }
+        );
     }
 
     static bool has_active_borrows(const LocalInfo& local) {

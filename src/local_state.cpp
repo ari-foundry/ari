@@ -116,6 +116,51 @@ std::size_t LocalScopeStack::size() const {
     return scopes_.size();
 }
 
+bool LocalScopeStack::contains_scope(std::size_t index) const {
+    return index < scopes_.size();
+}
+
+bool LocalScopeStack::any_local_from(std::size_t first_scope_index,
+                                     const LocalConstPredicate& predicate) const {
+    if (!contains_scope(first_scope_index)) return false;
+    for (std::size_t scope_index = first_scope_index; scope_index < scopes_.size(); ++scope_index) {
+        for (const auto& item : scope_at(scope_index)) {
+            if (predicate(item.first, item.second)) return true;
+        }
+    }
+    return false;
+}
+
+void LocalScopeStack::for_each_local_from(std::size_t first_scope_index,
+                                          const LocalConstVisitor& visitor) const {
+    if (!contains_scope(first_scope_index)) return;
+    for (std::size_t scope_index = first_scope_index; scope_index < scopes_.size(); ++scope_index) {
+        for (const auto& item : scope_at(scope_index)) {
+            visitor(item.first, item.second);
+        }
+    }
+}
+
+void LocalScopeStack::for_each_local_before(std::size_t end_scope_index,
+                                            const LocalConstVisitor& visitor) const {
+    std::size_t capped_end = std::min(end_scope_index, scopes_.size());
+    for (std::size_t scope_index = 0; scope_index < capped_end; ++scope_index) {
+        for (const auto& item : scope_at(scope_index)) {
+            visitor(item.first, item.second);
+        }
+    }
+}
+
+void LocalScopeStack::for_each_local_from_inner_to_outer(std::size_t first_scope_index,
+                                                        const LocalMutableVisitor& visitor) {
+    if (!contains_scope(first_scope_index)) return;
+    for (std::size_t offset = scopes_.size(); offset > first_scope_index; --offset) {
+        for (auto& item : scope_at(offset - 1)) {
+            visitor(item.first, item.second);
+        }
+    }
+}
+
 LocalScopeStack::Scope& LocalScopeStack::current_scope() {
     return scopes_.back();
 }

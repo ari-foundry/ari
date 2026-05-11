@@ -87,7 +87,8 @@ construction. Some helpers have already moved out to focused files:
   and reusable-pattern binding tracking, local lookup/scope-index queries, local
   state display, and branch/loop state snapshot save/restore plus zone/vector
   state snapshot merging, plus scope-exit owner and named-borrow release
-  callbacks
+  callbacks, scoped local iteration, auto-destroy cleanup traversal, and
+  return-owner traversal
 
 IR payload records should also stay compact as more pattern metadata moves out
 of `sema.cpp`. `IrPayloadLiteralCondition` now stores its integer-or-bool
@@ -267,8 +268,11 @@ pending IR.
      branch/loop state snapshots now live in `local_state`.
    - Scope-exit owner checks and named borrow release now run through
      `LocalScopeStack::end_scope` callbacks.
-   - Finish moving mutability checks, assignment state changes, move/drop state
-     changes, and auto-destroy cleanup traversal behind small APIs.
+   - Auto-destroy cleanup traversal, temporary-zone escape traversal, and
+     return-owner traversal now use local-state callbacks instead of raw scope
+     maps in `sema.cpp`.
+   - Finish moving mutability checks, assignment state changes, and move/drop
+     state changes behind small APIs.
 2. Extract borrow checking into `borrow_semantics`.
    - Move named borrow tracking, aggregate borrow source tracking, temporary
      borrow promotion/release, and path borrow conflicts.

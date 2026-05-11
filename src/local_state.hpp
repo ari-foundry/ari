@@ -77,6 +77,9 @@ public:
     using LocalReleaseCallback = std::function<void(const LocalInfo&)>;
     using LocalOwnerCheckCallback = std::function<bool(const LocalInfo&)>;
     using LocalOwnerErrorCallback = std::function<void(const std::string&, const LocalInfo&)>;
+    using LocalConstVisitor = std::function<void(const std::string&, const LocalInfo&)>;
+    using LocalMutableVisitor = std::function<void(const std::string&, LocalInfo&)>;
+    using LocalConstPredicate = std::function<bool(const std::string&, const LocalInfo&)>;
 
     void clear();
     void push_scope();
@@ -88,10 +91,11 @@ public:
     bool empty() const;
     std::size_t size() const;
 
-    Scope& current_scope();
-    const Scope& current_scope() const;
-    Scope& scope_at(std::size_t index);
-    const Scope& scope_at(std::size_t index) const;
+    bool contains_scope(std::size_t index) const;
+    bool any_local_from(std::size_t first_scope_index, const LocalConstPredicate& predicate) const;
+    void for_each_local_from(std::size_t first_scope_index, const LocalConstVisitor& visitor) const;
+    void for_each_local_before(std::size_t end_scope_index, const LocalConstVisitor& visitor) const;
+    void for_each_local_from_inner_to_outer(std::size_t first_scope_index, const LocalMutableVisitor& visitor);
 
     LocalInfo* find(const std::string& name);
     const LocalInfo* find(const std::string& name) const;
@@ -109,6 +113,11 @@ public:
     void declare_current(std::string name, LocalInfo local);
 
 private:
+    Scope& current_scope();
+    const Scope& current_scope() const;
+    Scope& scope_at(std::size_t index);
+    const Scope& scope_at(std::size_t index) const;
+
     std::vector<Scope> scopes_;
     std::set<std::string> used_names_;
     std::set<std::string> reusable_pattern_binding_names_;
