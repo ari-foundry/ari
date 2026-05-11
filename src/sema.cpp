@@ -11033,9 +11033,9 @@ private:
         lowered->loc = expr.loc;
         lowered->type = operand->type;
         lowered->bool_value = range->type.name == "RangeInclusive";
-        ir_expr_operand(*lowered) = std::move(operand);
-        ir_expr_left(*lowered) = std::move(range->args[0]);
-        ir_expr_right(*lowered) = std::move(range->args[1]);
+        set_ir_expr_operand(*lowered, std::move(operand));
+        set_ir_expr_left(*lowered, std::move(range->args[0]));
+        set_ir_expr_right(*lowered, std::move(range->args[1]));
         return lowered;
     }
 
@@ -12168,14 +12168,14 @@ private:
                 lowered->kind = IrExprKind::Unary;
                 lowered->unary_op = IrUnaryOp::Not;
                 lowered->type = bool_type(expr.loc);
-                ir_expr_operand(*lowered) = std::move(operand);
+                set_ir_expr_operand(*lowered, std::move(operand));
                 return lowered;
             case TokenKind::Tilde:
                 require_bitwise_not_operand(expr.loc, operand->type);
                 lowered->kind = IrExprKind::Unary;
                 lowered->unary_op = IrUnaryOp::BitNot;
                 lowered->type = operand->type;
-                ir_expr_operand(*lowered) = std::move(operand);
+                set_ir_expr_operand(*lowered, std::move(operand));
                 return lowered;
             default:
                 fail(expr.loc, "unsupported unary operator");
@@ -12196,7 +12196,7 @@ private:
             lowered->tuple_index = conversion.vtable_offset;
             lowered->kind = IrExprKind::Cast;
             lowered->type = target;
-            ir_expr_operand(*lowered) = std::move(operand);
+            set_ir_expr_operand(*lowered, std::move(operand));
             return lowered;
         }
 
@@ -12213,7 +12213,7 @@ private:
 
         lowered->kind = IrExprKind::Cast;
         lowered->type = target;
-        ir_expr_operand(*lowered) = std::move(operand);
+        set_ir_expr_operand(*lowered, std::move(operand));
         return lowered;
     }
 
@@ -12468,7 +12468,7 @@ private:
             lowered->try_return_residual_payload_type = return_shape.residual_payloads[0];
         }
         lowered->try_residual_cleanup = make_active_loop_exit_owner_cleanup_for_branch(expr.loc);
-        ir_expr_operand(*lowered) = std::move(operand);
+        set_ir_expr_operand(*lowered, std::move(operand));
         return lowered;
     }
 
@@ -12521,8 +12521,8 @@ private:
         lowered->type = shape.success_payload_type;
         lowered->payload_type = shape.success_payload_type;
         lowered->enum_tag = shape.success_tag;
-        ir_expr_left(*lowered) = std::move(lhs);
-        ir_expr_right(*lowered) = std::move(rhs);
+        set_ir_expr_left(*lowered, std::move(lhs));
+        set_ir_expr_right(*lowered, std::move(rhs));
         return lowered;
     }
 
@@ -12601,7 +12601,7 @@ private:
         lowered->kind = IrExprKind::Borrow;
         lowered->name = access.base_name;
         lowered->label = access.path;
-        ir_expr_operand(*lowered) = std::move(access.expr);
+        set_ir_expr_operand(*lowered, std::move(access.expr));
         lowered->mutable_borrow = expr.mutable_borrow;
         lowered->type = access.type;
         lowered->type.qualifier = expr.mutable_borrow ? TypeQualifier::MutRef : TypeQualifier::Ref;
@@ -14980,7 +14980,7 @@ private:
         lowered->kind = IrExprKind::IndirectCall;
         lowered->loc = loc;
         lowered->type = function_pointer_result_type(callee->type);
-        ir_expr_operand(*lowered) = std::move(callee);
+        set_ir_expr_operand(*lowered, std::move(callee));
         lowered->args.reserve(arg_exprs.size());
         std::size_t borrow_mark = temporary_borrow_mark();
         for (std::size_t i = 0; i < arg_exprs.size(); ++i) {
@@ -15670,7 +15670,7 @@ private:
         lowered->name = expr.name;
         lowered->tuple_index = slot;
         lowered->type = result;
-        ir_expr_operand(*lowered) = std::move(receiver);
+        set_ir_expr_operand(*lowered, std::move(receiver));
         set_ir_expr_call_param_types(*lowered, std::move(erased_params));
         lowered->args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
@@ -15884,8 +15884,8 @@ private:
                 break;
         }
 
-        ir_expr_left(*lowered) = std::move(lhs);
-        ir_expr_right(*lowered) = std::move(rhs);
+        set_ir_expr_left(*lowered, std::move(lhs));
+        set_ir_expr_right(*lowered, std::move(rhs));
         return lowered;
     }
 
@@ -16186,8 +16186,8 @@ private:
         condition->loc = loc;
         condition->op = IrBinaryOp::Ne;
         condition->type = bool_type(loc);
-        ir_expr_right(*condition) = make_integer_zero(loc, expr->type);
-        ir_expr_left(*condition) = std::move(expr);
+        set_ir_expr_right(*condition, make_integer_zero(loc, expr->type));
+        set_ir_expr_left(*condition, std::move(expr));
         expr = std::move(condition);
     }
 

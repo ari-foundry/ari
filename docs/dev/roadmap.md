@@ -192,19 +192,17 @@
    `operand`/`left`/`right` through those helpers as well. Those AST child
    fields now live behind a lazy `ExprChildPayload`, so scalar/name/literal and
    other childless expression nodes no longer carry three eager child pointers.
-   IR operand child pointer reads and writes now route through
-   `ir_expr_operand`/`ir_expr_left`/`ir_expr_right` helpers across IR builders,
-   sema, constant folding, LLVM emission, and the freestanding backend, with a
-   focused pointer/indirect-call test covering backend reads. Broader IR node
+   IR operand child pointers now live behind a lazy `IrExprChildPayload` too,
+   with `ir_expr_operand`/`ir_expr_left`/`ir_expr_right` helpers covering IR
+   builders, sema, constant folding, LLVM emission, and the freestanding
+   backend. The focused pointer/indirect-call test covers the backend-facing
+   child reads. The dedicated `IrExpr::payload` field stays separate for now:
+   vector replacement/removal helpers use it as a distinct rare side input
+   rather than one of the common unary/binary child slots. Broader IR node
    packing should still move one storage group at a time.
    - [ast-ir-unions] move large mutually exclusive AST/IR node fields into
-     variant payload structs or unions; remaining high-value targets are IR
-     operand child expression groups and other backend-facing rare payloads
-   - [expr-child-vector-payloads] split operand child expression fields after
-     accessors cover the remaining IR/backend paths; next small slice: move IR
-     `operand`/`left`/`right` storage behind a lazy child payload, then decide
-     whether `payload` should join the same group or remain a dedicated rare
-     field
+     variant payload structs or unions; remaining high-value targets are other
+     backend-facing rare payloads
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

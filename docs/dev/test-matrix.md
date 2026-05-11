@@ -460,9 +460,9 @@ Checklist:
       tuple-index, field, index, call, compound-assignment clone, and synthetic
       borrow receiver lowering on LLVM and freestanding paths, including
       method-call receiver lowering through sema helper accessors
-- [x] IR operand helper paths preserve pointer casts/load/store/addition,
-      pointer dereference assignment, indirect calls, and binary lowering on
-      LLVM and freestanding paths
+- [x] IR operand child payload packing preserves pointer casts/load/store/
+      addition, pointer dereference assignment, indirect calls, and binary
+      lowering on LLVM and freestanding paths
 - [x] reject duplicate `use` aliases in one module scope
 - [x] reject duplicate aliases introduced by glob imports
 - [x] reject private function access through a `use` alias

@@ -850,8 +850,8 @@ IrExprPtr make_vec_index_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr in
     out->kind = IrExprKind::Index;
     out->loc = loc;
     out->type = vector->type.args[0];
-    out->operand = std::move(vector);
-    out->right = std::move(index);
+    set_ir_expr_operand(*out, std::move(vector));
+    set_ir_expr_right(*out, std::move(index));
     return out;
 }
 
@@ -875,8 +875,11 @@ IrExprPtr make_vec_last_expr(SourceLocation loc,
     index->loc = loc;
     index->op = IrBinaryOp::Sub;
     index->type = i64_type(loc);
-    index->left = make_collection_len_expr(loc, make_vec_local_lvalue(receiver_loc, name, type));
-    index->right = make_i64_literal(loc, 1);
+    set_ir_expr_left(
+        *index,
+        make_collection_len_expr(loc, make_vec_local_lvalue(receiver_loc, name, type))
+    );
+    set_ir_expr_right(*index, make_i64_literal(loc, 1));
     return make_vec_index_expr(
         loc,
         make_vec_local_lvalue(receiver_loc, name, type),
@@ -895,7 +898,7 @@ IrExprPtr make_vec_pop_expr(SourceLocation loc, IrExprPtr vector) {
     lowered->kind = IrExprKind::VectorPop;
     lowered->loc = loc;
     lowered->type = vector->type.args[0];
-    lowered->operand = std::move(vector);
+    set_ir_expr_operand(*lowered, std::move(vector));
     return lowered;
 }
 
@@ -924,8 +927,8 @@ IrExprPtr make_vec_reserve_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr 
     lowered->kind = IrExprKind::VectorReserve;
     lowered->loc = loc;
     lowered->type = void_type(loc);
-    lowered->operand = std::move(vector);
-    lowered->right = std::move(requested_capacity);
+    set_ir_expr_operand(*lowered, std::move(vector));
+    set_ir_expr_right(*lowered, std::move(requested_capacity));
     return lowered;
 }
 
@@ -937,7 +940,7 @@ IrExprPtr make_vec_clear_expr(SourceLocation loc, IrExprPtr vector) {
     lowered->kind = IrExprKind::VectorClear;
     lowered->loc = loc;
     lowered->type = void_type(loc);
-    lowered->operand = std::move(vector);
+    set_ir_expr_operand(*lowered, std::move(vector));
     return lowered;
 }
 
@@ -965,8 +968,8 @@ IrExprPtr make_vec_truncate_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr
     lowered->kind = IrExprKind::VectorTruncate;
     lowered->loc = loc;
     lowered->type = void_type(loc);
-    lowered->operand = std::move(vector);
-    lowered->right = std::move(new_length);
+    set_ir_expr_operand(*lowered, std::move(vector));
+    set_ir_expr_right(*lowered, std::move(new_length));
     return lowered;
 }
 
@@ -981,8 +984,8 @@ IrExprPtr make_vec_set_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr inde
     lowered->kind = IrExprKind::VectorSet;
     lowered->loc = loc;
     lowered->type = void_type(loc);
-    lowered->operand = std::move(vector);
-    lowered->right = std::move(index);
+    set_ir_expr_operand(*lowered, std::move(vector));
+    set_ir_expr_right(*lowered, std::move(index));
     lowered->payload = std::move(value);
     return lowered;
 }
@@ -998,8 +1001,8 @@ IrExprPtr make_vec_swap_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr fir
     lowered->kind = IrExprKind::VectorSwap;
     lowered->loc = loc;
     lowered->type = void_type(loc);
-    lowered->operand = std::move(vector);
-    lowered->right = std::move(first_index);
+    set_ir_expr_operand(*lowered, std::move(vector));
+    set_ir_expr_right(*lowered, std::move(first_index));
     lowered->payload = std::move(second_index);
     return lowered;
 }
@@ -1018,8 +1021,8 @@ IrExprPtr make_vec_remove_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr i
     lowered->kind = IrExprKind::VectorRemove;
     lowered->loc = loc;
     lowered->type = vector->type.args[0];
-    lowered->operand = std::move(vector);
-    lowered->right = std::move(index);
+    set_ir_expr_operand(*lowered, std::move(vector));
+    set_ir_expr_right(*lowered, std::move(index));
     return lowered;
 }
 
@@ -1034,8 +1037,8 @@ IrExprPtr make_vec_insert_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr i
     lowered->kind = IrExprKind::VectorInsert;
     lowered->loc = loc;
     lowered->type = void_type(loc);
-    lowered->operand = std::move(vector);
-    lowered->right = std::move(index);
+    set_ir_expr_operand(*lowered, std::move(vector));
+    set_ir_expr_right(*lowered, std::move(index));
     lowered->payload = std::move(value);
     return lowered;
 }
@@ -1051,8 +1054,8 @@ IrExprPtr make_vec_push_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr val
     lowered->kind = IrExprKind::VectorPush;
     lowered->loc = loc;
     lowered->type = void_type(loc);
-    lowered->operand = std::move(vector);
-    lowered->right = std::move(value);
+    set_ir_expr_operand(*lowered, std::move(vector));
+    set_ir_expr_right(*lowered, std::move(value));
     return lowered;
 }
 
@@ -1067,7 +1070,7 @@ IrExprPtr make_vec_contains_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr
     lowered->kind = IrExprKind::VectorContains;
     lowered->loc = loc;
     lowered->type = bool_type(loc);
-    lowered->operand = std::move(vector);
+    set_ir_expr_operand(*lowered, std::move(vector));
     lowered->payload = std::move(value);
     return lowered;
 }
@@ -1083,7 +1086,7 @@ IrExprPtr make_vec_index_of_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr
     lowered->kind = IrExprKind::VectorIndexOf;
     lowered->loc = loc;
     lowered->type = i64_type(loc);
-    lowered->operand = std::move(vector);
+    set_ir_expr_operand(*lowered, std::move(vector));
     lowered->payload = std::move(value);
     return lowered;
 }
@@ -1099,7 +1102,7 @@ IrExprPtr make_vec_count_expr(SourceLocation loc, IrExprPtr vector, IrExprPtr va
     lowered->kind = IrExprKind::VectorCount;
     lowered->loc = loc;
     lowered->type = i64_type(loc);
-    lowered->operand = std::move(vector);
+    set_ir_expr_operand(*lowered, std::move(vector));
     lowered->payload = std::move(value);
     return lowered;
 }
@@ -1146,7 +1149,7 @@ IrExprPtr make_collection_len_expr(SourceLocation loc, IrExprPtr value) {
     lowered->loc = loc;
     lowered->tuple_index = is_prelude_slice_type(value->type) ? 1 : 0;
     lowered->type = i64_type(loc);
-    lowered->operand = std::move(value);
+    set_ir_expr_operand(*lowered, std::move(value));
     return lowered;
 }
 
@@ -1156,8 +1159,8 @@ IrExprPtr make_collection_is_empty_expr(SourceLocation loc, IrExprPtr length) {
     empty->loc = loc;
     empty->op = IrBinaryOp::Eq;
     empty->type = bool_type(loc);
-    empty->left = std::move(length);
-    empty->right = make_i64_literal(loc, 0);
+    set_ir_expr_left(*empty, std::move(length));
+    set_ir_expr_right(*empty, make_i64_literal(loc, 0));
     return empty;
 }
 
@@ -1169,7 +1172,7 @@ IrExprPtr make_slice_data_pointer_expr(SourceLocation loc, IrExprPtr lvalue, con
     lowered->kind = IrExprKind::Borrow;
     lowered->loc = loc;
     lowered->type = std::move(pointer);
-    lowered->operand = std::move(lvalue);
+    set_ir_expr_operand(*lowered, std::move(lvalue));
     return lowered;
 }
 
@@ -1197,7 +1200,10 @@ IrExprPtr make_vec_storage_lvalue_expr(SourceLocation loc, std::string name, con
     storage->loc = loc;
     storage->tuple_index = 1;
     storage->type = array_storage_type(loc, type.args[0], type.array_size);
-    storage->operand = make_vec_local_lvalue(loc, std::move(name), type);
+    set_ir_expr_operand(
+        *storage,
+        make_vec_local_lvalue(loc, std::move(name), type)
+    );
     return storage;
 }
 

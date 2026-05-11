@@ -136,11 +136,12 @@ Semantic AST lowering, constant folding/evaluation, explicit move-place
 validation, local Vec method receiver handling, indirect calls, borrowed method
 receivers, and binary/try/coalesce lowering now read AST child expressions
 through the same helpers. Childless AST expressions avoid three eager
-`unique_ptr` members. The next payload move can focus on IR backend storage. IR
-`operand`/`left`/`right` accessors now cover IR builders,
-sema, constant folding, LLVM emission, and the freestanding backend; the actual
-IR child storage split can reuse those helpers without another broad call-site
-cleanup pass.
+`unique_ptr` members. IR `operand`/`left`/`right` child storage now follows the
+same shape behind `IrExprChildPayload`, with IR builders and sema construction
+writing through setters and constant folding plus both backends reading through
+accessors. `IrExpr::payload` remains separate because vector replacement and
+removal lowerings use it as a distinct rare side input rather than a common
+unary/binary child slot.
 
 The next refactors should keep behavior unchanged and move one responsibility at
 a time behind small data-oriented APIs. Prefer patches that add focused tests or

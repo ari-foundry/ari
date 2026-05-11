@@ -85,6 +85,12 @@ using IrExprArgs = LazyVector<IrExprPtr>;
 struct IrStmt;
 using IrStmtPtr = std::unique_ptr<IrStmt>;
 
+struct IrExprChildPayload {
+    IrExprPtr operand;
+    IrExprPtr left;
+    IrExprPtr right;
+};
+
 struct IrPayloadBinding {
     std::uint32_t index = 0;
     std::string name;
@@ -299,10 +305,8 @@ struct IrExpr {
     IrType payload_type;
     IrType try_return_residual_payload_type;
     std::uint32_t try_return_residual_tag = 0;
-    std::unique_ptr<IrExpr> operand;
+    std::unique_ptr<IrExprChildPayload> child_payload;
     std::unique_ptr<IrExpr> payload;
-    std::unique_ptr<IrExpr> left;
-    std::unique_ptr<IrExpr> right;
     std::unique_ptr<IrExprIfPayload> if_payload;
     std::unique_ptr<IrExprBlockPayload> block_payload;
     std::unique_ptr<IrExprCallParamPayload> call_param_payload;
@@ -311,52 +315,74 @@ struct IrExpr {
     IrExprArgs args;
 };
 
-inline const IrExprPtr& ir_expr_operand(const IrExpr& expr) {
-    return expr.operand;
+inline const IrExprChildPayload& ir_expr_child_payload(const IrExpr& expr) {
+    static const IrExprChildPayload empty;
+    return expr.child_payload ? *expr.child_payload : empty;
 }
 
-inline IrExprPtr& ir_expr_operand(IrExpr& expr) {
-    return expr.operand;
+inline IrExprChildPayload& ensure_ir_expr_child_payload(IrExpr& expr) {
+    if (!expr.child_payload) expr.child_payload = std::make_unique<IrExprChildPayload>();
+    return *expr.child_payload;
+}
+
+inline void clear_empty_ir_expr_child_payload(IrExpr& expr) {
+    if (expr.child_payload &&
+        !expr.child_payload->operand &&
+        !expr.child_payload->left &&
+        !expr.child_payload->right) {
+        expr.child_payload.reset();
+    }
+}
+
+inline const IrExprPtr& ir_expr_operand(const IrExpr& expr) {
+    return ir_expr_child_payload(expr).operand;
 }
 
 inline void set_ir_expr_operand(IrExpr& expr, IrExprPtr operand) {
-    expr.operand = std::move(operand);
+    if (!operand && !expr.child_payload) return;
+    ensure_ir_expr_child_payload(expr).operand = std::move(operand);
+    clear_empty_ir_expr_child_payload(expr);
 }
 
 inline IrExprPtr take_ir_expr_operand(IrExpr& expr) {
-    return std::move(expr.operand);
+    if (!expr.child_payload) return nullptr;
+    IrExprPtr operand = std::move(expr.child_payload->operand);
+    clear_empty_ir_expr_child_payload(expr);
+    return operand;
 }
 
 inline const IrExprPtr& ir_expr_left(const IrExpr& expr) {
-    return expr.left;
-}
-
-inline IrExprPtr& ir_expr_left(IrExpr& expr) {
-    return expr.left;
+    return ir_expr_child_payload(expr).left;
 }
 
 inline void set_ir_expr_left(IrExpr& expr, IrExprPtr left) {
-    expr.left = std::move(left);
+    if (!left && !expr.child_payload) return;
+    ensure_ir_expr_child_payload(expr).left = std::move(left);
+    clear_empty_ir_expr_child_payload(expr);
 }
 
 inline IrExprPtr take_ir_expr_left(IrExpr& expr) {
-    return std::move(expr.left);
+    if (!expr.child_payload) return nullptr;
+    IrExprPtr left = std::move(expr.child_payload->left);
+    clear_empty_ir_expr_child_payload(expr);
+    return left;
 }
 
 inline const IrExprPtr& ir_expr_right(const IrExpr& expr) {
-    return expr.right;
-}
-
-inline IrExprPtr& ir_expr_right(IrExpr& expr) {
-    return expr.right;
+    return ir_expr_child_payload(expr).right;
 }
 
 inline void set_ir_expr_right(IrExpr& expr, IrExprPtr right) {
-    expr.right = std::move(right);
+    if (!right && !expr.child_payload) return;
+    ensure_ir_expr_child_payload(expr).right = std::move(right);
+    clear_empty_ir_expr_child_payload(expr);
 }
 
 inline IrExprPtr take_ir_expr_right(IrExpr& expr) {
-    return std::move(expr.right);
+    if (!expr.child_payload) return nullptr;
+    IrExprPtr right = std::move(expr.child_payload->right);
+    clear_empty_ir_expr_child_payload(expr);
+    return right;
 }
 
 struct IrMatchArm {
