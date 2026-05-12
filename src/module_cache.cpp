@@ -61,6 +61,12 @@ std::string find_module_file_for_cache(const ModuleMetadataImport& import,
                                        const std::vector<std::string>& module_search_paths) {
     std::vector<std::string> candidates;
     add_module_candidates(base_dir, import.local_name, candidates);
+    if (!import.owner_module.empty()) {
+        add_module_candidates(
+            path_join(base_dir, qualified_basename(import.owner_module)),
+            import.local_name,
+            candidates);
+    }
     for (const auto& search_path : module_search_paths) {
         if (!search_path.empty()) add_module_candidates(search_path, import.local_name, candidates);
     }

@@ -2,23 +2,16 @@
 
 ## Near-Term Compiler Work
 
-1. Stabilize parser-visible syntax for linting and language-server tooling.
-   Prefer one canonical spelling per feature, reserve future syntax with clear
-   diagnostics, and keep source docs aligned with parser behavior before adding
-   broader libraries. `init ... while ... next` is the only loop-state spelling;
-   the removed `let ... while ... next` form is rejected with a migration
-   diagnostic. Pattern syntax is value-binding-only for now: `ref`, `ref mut`,
-   `&`, `&mut`, and `mut` binding-mode patterns are reserved and rejected so
-   future reference/ownership binding modes do not collide with today's AST.
-   The `--check` mode now runs parsing, module loading, and semantic lowering
-   without backend emission or linking so editor tooling can surface front-end
-   diagnostics without producing backend artifacts.
-   - [pattern-binding-modes] design and lower reference, mutable, and
-     ownership-aware pattern binding modes after the ownership rules are
-     explicit; the parser now reserves those spellings
-   - [tooling-diagnostics] keep removed/reserved syntax diagnostics stable
-     enough for editor integrations to surface targeted fixes
-2. Start allocator-backed growable `Vec[T]`.
+Parser-visible syntax is now stable for linting and language-server tooling.
+`init ... while ... next` is the only loop-state spelling; `let ... while` is
+rejected with a migration diagnostic. Pattern binding modes (`ref`, `ref mut`,
+`&`, `&mut`, `mut` in patterns) are reserved and rejected with diagnostics so
+future reference/ownership binding modes do not collide with the current AST.
+Both `ref mut T` and `mut ref T` are accepted as equivalent mutable borrow
+spellings. `--check` runs parsing, module loading, and semantic lowering
+without backend emission for editor tooling.
+
+1. Start allocator-backed growable `Vec[T]`.
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
    `Vec.pop()` / `Vec.first()` / `Vec.last()` / `Vec.capacity()` /
    `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` /
@@ -136,7 +129,7 @@
      root `Vec[T].reserve(capacity)` with runtime heap capacity growth
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place
-3. Prepare source `std` library foundations before broad library expansion.
+2. Prepare source `std` library foundations before broad library expansion.
    Keep the library-facing contracts near-term before adding many owned
    collection, string, or smart-pointer APIs. This keeps the source prelude from
    growing into a pile of one-off compiler hooks. The current source `std`

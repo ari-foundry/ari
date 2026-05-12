@@ -13,7 +13,7 @@ trait Sink[T] {
   fn push(self: ref mut Sink[T], value: own T) -> bool
 }
 
-fn borrow_demo[T](input: ref T, output: mut ref Buffer[T], owned: own T) -> bool {
+fn borrow_demo[T](input: ref T, output: ref mut Buffer[T], owned: own T) -> bool {
   return true;
 }
 
