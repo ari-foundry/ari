@@ -284,6 +284,13 @@ bool generic_is_used_in_types(const std::vector<TypeRef>& types, const std::stri
     return false;
 }
 
+bool generic_is_used_in_enum_payloads(const EnumDecl& decl, const std::string& generic_name) {
+    for (const auto& item : decl.cases) {
+        if (generic_is_used_in_types(item.payloads, generic_name)) return true;
+    }
+    return false;
+}
+
 TypeRef trait_self_constraint(const std::string& trait_name, const GenericParam& generic) {
     TypeRef constraint = simple_type_ref("std::" + trait_name, generic.loc);
     constraint.args.push_back(simple_type_ref(generic.name, generic.loc));
@@ -329,6 +336,28 @@ std::vector<GenericParam> field_trait_impl_generics(const StructDecl& decl,
     std::vector<GenericParam> generics = decl.generics;
     for (auto& generic : generics) {
         if (!generic_is_used_in_fields(decl.fields, generic.name)) continue;
+        if (!generic.has_constraint) {
+            generic.constraint = trait_self_constraint(trait_name, generic);
+            generic.has_constraint = true;
+            continue;
+        }
+        if (!is_matching_trait_ref(generic.constraint, trait_name, generic.name)) {
+            fail_derive_expansion(
+                generic.loc,
+                derive_name + " derive cannot add the required std::" + trait_name +
+                    " bound to generic parameter '" + generic.name +
+                    "' because it already has a constraint");
+        }
+    }
+    return generics;
+}
+
+std::vector<GenericParam> enum_payload_trait_impl_generics(const EnumDecl& decl,
+                                                           const std::string& trait_name,
+                                                           const std::string& derive_name) {
+    std::vector<GenericParam> generics = decl.generics;
+    for (auto& generic : generics) {
+        if (!generic_is_used_in_enum_payloads(decl, generic.name)) continue;
         if (!generic.has_constraint) {
             generic.constraint = trait_self_constraint(trait_name, generic);
             generic.has_constraint = true;
@@ -526,29 +555,150 @@ ExprPtr make_equality_enum_value(SourceLocation loc) {
         make_ast_name_expr(loc, "other"));
 }
 
-FunctionDecl make_equality_method(const EnumDecl& decl) {
+bool enum_has_payloads(const EnumDecl& decl) {
+    for (const auto& item : decl.cases) {
+        if (!item.payloads.empty()) return true;
+    }
+    return false;
+}
+
+std::string enum_payload_binding_name(const std::string& prefix, std::size_t index) {
+    return "__ari_derive_" + prefix + "_" + std::to_string(index);
+}
+
+Pattern make_binding_pattern(SourceLocation loc, std::string name) {
+    Pattern pattern;
+    pattern.kind = PatternKind::Binding;
+    pattern.loc = loc;
+    pattern.payload_name = std::move(name);
+    return pattern;
+}
+
+Pattern make_wildcard_pattern(SourceLocation loc) {
+    Pattern pattern;
+    pattern.kind = PatternKind::Wildcard;
+    pattern.loc = loc;
+    return pattern;
+}
+
+Pattern make_enum_case_pattern(const EnumCase& item, const std::string& binding_prefix) {
+    Pattern pattern;
+    pattern.kind = PatternKind::EnumCase;
+    pattern.case_name = item.name;
+    pattern.loc = item.loc;
+    if (item.payloads.empty()) return pattern;
+
+    pattern.has_payload_pattern = true;
+    if (item.payloads.size() == 1) {
+        std::string name = enum_payload_binding_name(binding_prefix, 0);
+        pattern.has_payload_binding = true;
+        pattern.payload_name = name;
+        pattern.payload_pattern = std::make_unique<Pattern>(make_binding_pattern(item.loc, std::move(name)));
+        return pattern;
+    }
+
+    Pattern tuple;
+    tuple.kind = PatternKind::Tuple;
+    tuple.loc = item.loc;
+    tuple.elements.reserve(item.payloads.size());
+    for (std::size_t i = 0; i < item.payloads.size(); ++i) {
+        tuple.elements.push_back(make_binding_pattern(item.loc, enum_payload_binding_name(binding_prefix, i)));
+    }
+    pattern.payload_pattern = std::make_unique<Pattern>(std::move(tuple));
+    return pattern;
+}
+
+ExprPtr make_named_equality_call(const std::string& trait_name,
+                                 TypeRef type,
+                                 SourceLocation loc,
+                                 const std::string& left_name,
+                                 const std::string& right_name) {
+    std::vector<ExprPtr> args;
+    args.push_back(make_ast_name_expr(loc, left_name));
+    args.push_back(make_ast_name_expr(loc, right_name));
+
+    ExprPtr call = make_ast_call_expr(loc, "std::" + trait_name + "::eq", nullptr, std::move(args));
+    std::vector<TypeRef> trait_args;
+    trait_args.push_back(std::move(type));
+    set_expr_receiver_type_args(*call, std::move(trait_args));
+    return call;
+}
+
+ExprPtr make_equality_enum_payload_value(const EnumCase& item,
+                                         const std::string& trait_name,
+                                         const std::string& left_prefix,
+                                         const std::string& right_prefix) {
+    ExprPtr value = make_ast_bool_expr(item.loc, true);
+    for (std::size_t i = 0; i < item.payloads.size(); ++i) {
+        value = make_ast_binary_expr(
+            item.loc,
+            TokenKind::AmpAmp,
+            std::move(value),
+            make_named_equality_call(
+                trait_name,
+                item.payloads[i],
+                item.loc,
+                enum_payload_binding_name(left_prefix, i),
+                enum_payload_binding_name(right_prefix, i)));
+    }
+    return value;
+}
+
+ExprPtr make_equality_enum_other_match(const EnumCase& item,
+                                       const std::string& trait_name,
+                                       const std::string& left_prefix,
+                                       const std::string& right_prefix) {
+    std::vector<ExprMatchArm> arms;
+    ExprMatchArm same_case;
+    same_case.pattern = make_enum_case_pattern(item, right_prefix);
+    same_case.loc = item.loc;
+    same_case.value = make_equality_enum_payload_value(item, trait_name, left_prefix, right_prefix);
+    arms.push_back(std::move(same_case));
+
+    ExprMatchArm different_case;
+    different_case.pattern = make_wildcard_pattern(item.loc);
+    different_case.loc = item.loc;
+    different_case.value = make_ast_bool_expr(item.loc, false);
+    arms.push_back(std::move(different_case));
+    return make_ast_match_expr(item.loc, make_ast_name_expr(item.loc, "other"), std::move(arms));
+}
+
+ExprPtr make_equality_enum_match_value(const EnumDecl& decl, const std::string& trait_name) {
+    std::vector<ExprMatchArm> arms;
+    arms.reserve(decl.cases.size());
+    for (std::size_t i = 0; i < decl.cases.size(); ++i) {
+        const auto& item = decl.cases[i];
+        std::string left_prefix = "left_" + std::to_string(i);
+        std::string right_prefix = "right_" + std::to_string(i);
+        ExprMatchArm arm;
+        arm.pattern = make_enum_case_pattern(item, left_prefix);
+        arm.loc = item.loc;
+        arm.value = make_equality_enum_other_match(item, trait_name, left_prefix, right_prefix);
+        arms.push_back(std::move(arm));
+    }
+    return make_ast_match_expr(decl.loc, make_ast_name_expr(decl.loc, "self"), std::move(arms));
+}
+
+FunctionDecl make_equality_method(const EnumDecl& decl, const std::string& trait_name) {
+    ExprPtr return_value = enum_has_payloads(decl)
+                               ? make_equality_enum_match_value(decl, trait_name)
+                               : make_equality_enum_value(decl.loc);
     return make_derived_method(
         decl.module_name,
         "eq",
         binary_self_params(decl.loc),
         bool_type_ref(decl.loc),
-        make_equality_enum_value(decl.loc),
+        std::move(return_value),
         decl.loc);
 }
 
 ImplDecl make_equality_derive_impl(const EnumDecl& decl, const std::string& trait_name) {
-    for (const auto& item : decl.cases) {
-        if (!item.payloads.empty()) {
-            fail_derive_expansion(
-                item.loc,
-                trait_name + " derive for enums currently requires all cases to be fieldless");
-        }
-    }
+    std::vector<GenericParam> generics = enum_payload_trait_impl_generics(decl, trait_name, trait_name);
     std::vector<TypeRef> trait_args;
     trait_args.push_back(declared_type_ref(decl.name, decl.generics, decl.loc));
     ImplDecl impl =
-        make_trait_derive_impl(trait_name, decl.name, decl.module_name, decl.generics, decl.loc, std::move(trait_args));
-    impl.methods.push_back(make_equality_method(decl));
+        make_trait_derive_impl(trait_name, decl.name, decl.module_name, generics, decl.loc, std::move(trait_args));
+    impl.methods.push_back(make_equality_method(decl, trait_name));
     return impl;
 }
 

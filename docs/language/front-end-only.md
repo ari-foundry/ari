@@ -144,11 +144,11 @@ expands for enums. `Debug` and `Copy` generate empty trait impls, `Clone`
 generates `fn clone(self) -> Self { return self; }`, struct `Default`
 generates a `default` associated function that defaults each field, enum
 `Default(CaseName)` returns the named case with defaulted payloads,
-`Eq`/`PartialEq` generate value-self `eq` methods for structs plus fieldless
-enums, and `Ord`/`PartialOrd` generate lexicographic value-self `lt` methods
-for structs. `Copy` derive is only a marker-trait impl and does not change
-structural copyability. Other derive names remain reserved until their trait
-method surfaces are implemented.
+`Eq`/`PartialEq` generate value-self `eq` methods for structs and enums,
+including matching enum payload comparison, and `Ord`/`PartialOrd` generate
+lexicographic value-self `lt` methods for structs. `Copy` derive is only a
+marker-trait impl and does not change structural copyability. Other derive
+names remain reserved until their trait method surfaces are implemented.
 
 User-defined attributes can be reserved by declaring a matching `meta fn`:
 

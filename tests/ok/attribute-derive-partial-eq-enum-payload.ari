@@ -1,0 +1,42 @@
+impl PartialEq[i64] for i64 {
+  fn eq(self, other: i64) -> bool {
+    return self == other;
+  }
+}
+
+impl PartialEq[bool] for bool {
+  fn eq(self, other: bool) -> bool {
+    return self == other;
+  }
+}
+
+@derive(PartialEq)
+enum Value {
+  Empty,
+  Number(i64),
+  Pair(i64, bool),
+}
+
+@derive(PartialEq)
+enum Boxed[T] {
+  Missing,
+  Full(T),
+}
+
+fn same[T: PartialEq[T]](left: T, right: T) -> i64 {
+  if left.eq(right) {
+    return 11;
+  }
+  return 3;
+}
+
+fn main() -> i64 {
+  return same<Value>(Empty, Empty) +
+         same<Value>(Empty, Number(1)) +
+         same<Value>(Number(7), Number(7)) +
+         same<Value>(Number(7), Number(8)) +
+         same<Value>(Pair(5, true), Pair(5, true)) +
+         same<Value>(Pair(5, true), Pair(5, false)) +
+         same<Boxed[i64]>(Full<i64>(4), Full<i64>(4)) +
+         same<Boxed[i64]>(Full<i64>(4), Missing<i64>());
+}

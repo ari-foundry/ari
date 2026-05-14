@@ -146,17 +146,17 @@ return the named case from `default`; payload values for that case are built
 with `Default::default<PayloadType>()`. Struct `Eq` and `PartialEq` derives
 expand to `fn eq(self, other: Self) -> bool` by comparing every field with the
 matching `Eq[FieldType]::eq` or `PartialEq[FieldType]::eq` trait-qualified
-call. Struct `Ord` and `PartialOrd` derives expand to lexicographic
+call. Enum `Eq` and `PartialEq` derive methods compare cases first, then compare
+matching payload slots with the matching payload `eq` trait method. Struct
+`Ord` and `PartialOrd` derives expand to lexicographic
 `fn lt(self, other: Self) -> bool` methods that call the matching field `lt`
 trait method, returning on the first unequal field and `false` when all fields
-compare equal. Fieldless enum `Eq` and `PartialEq` derives compare the enum
-tags directly; payload-bearing enum equality derives are reserved until payload
-comparison policy is defined. Enum `Ord` and `PartialOrd` derives are reserved
-until Ari has an explicit enum ordering policy. Generic `Default`, `Eq`,
-`PartialEq`, `Ord`, and `PartialOrd` derives add the matching std trait bounds
-for generic parameters that appear in generated field or payload construction
-when those parameters do not already have another constraint. `Copy` derive is
-a marker-trait impl only; it does not change Ari's structural copyability rules
+compare equal. Enum `Ord` and `PartialOrd` derives are reserved until Ari has
+an explicit enum ordering policy. Generic `Default`, `Eq`, `PartialEq`, `Ord`,
+and `PartialOrd` derives add the matching std trait bounds for generic
+parameters that appear in generated field or payload construction when those
+parameters do not already have another constraint. `Copy` derive is a
+marker-trait impl only; it does not change Ari's structural copyability rules
 for values. Other derive names are rejected until their trait method surfaces
 and expansion contracts are defined.
 

@@ -234,20 +234,18 @@ stages rather than one file per syntax feature.
    `Default::default<FieldType>()`; struct `Eq` and `PartialEq` compare every
    field through the matching trait-qualified `eq`; struct `Ord` and
    `PartialOrd` compare fields lexicographically through the matching
-   trait-qualified `lt`; and fieldless enum `Eq` and `PartialEq` compare tags
-   directly. `Copy` derive remains a marker-trait impl and does not change
-   Ari's structural copyability rules. Unsupported or duplicate derive names
-   are rejected before impl validation, enum `Default` derives without a case
-   marker are rejected, enum ordering derives are reserved until enum ordering
-   policy is defined, and payload-bearing enum equality derives are reserved
-   until payload comparison policy is defined.
+   trait-qualified `lt`; and enum `Eq` and `PartialEq` compare matching cases
+   and payload slots through the matching trait-qualified `eq`. `Copy` derive
+   remains a marker-trait impl and does not change Ari's structural copyability
+   rules. Unsupported or duplicate derive names are rejected before impl
+   validation, enum `Default` derives without a case marker are rejected, and
+   enum ordering derives are reserved until enum ordering policy is defined.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [derive-methods] extend enum equality/order derives to payload-bearing or
-     explicitly ordered cases once comparison policy is defined, and revisit
-     ownership-aware `Clone` bodies if `Clone` later gains a non-consuming or
-     allocator-aware contract
+   - [derive-methods] extend enum ordering derives to explicitly ordered cases
+     once ordering policy is defined, and revisit ownership-aware `Clone`
+     bodies if `Clone` later gains a non-consuming or allocator-aware contract
    - [format] lower `format!` after owned runtime strings exist
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
