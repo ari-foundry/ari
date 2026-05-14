@@ -251,8 +251,6 @@ stages rather than one file per syntax feature.
      empty/`return input;` identity bodies
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [format] lower `format!` after owned runtime strings exist
-   - [future-clone-contract] revisit derived `Clone` bodies only if `Clone`
-     later gains a non-consuming or allocator-aware contract
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

@@ -1306,7 +1306,7 @@ check-meta: $(TARGET)
 	$(TARGET) --freestanding tests/ok/attribute-derive-copy.ari -o $(BUILD_DIR)/meta/attribute-derive-copy.raw
 	$(BUILD_DIR)/meta/attribute-derive-copy.raw; code=$$?; test $$code -eq 4
 	$(TARGET) --freestanding tests/ok/attribute-derive-clone.ari -o $(BUILD_DIR)/meta/attribute-derive-clone.raw
-	$(BUILD_DIR)/meta/attribute-derive-clone.raw; code=$$?; test $$code -eq 16
+	$(BUILD_DIR)/meta/attribute-derive-clone.raw; code=$$?; test $$code -eq 22
 	$(TARGET) --freestanding tests/ok/attribute-derive-default.ari -o $(BUILD_DIR)/meta/attribute-derive-default.raw
 	$(BUILD_DIR)/meta/attribute-derive-default.raw; code=$$?; test $$code -eq 28
 	$(TARGET) --freestanding tests/ok/attribute-derive-enum-default.ari -o $(BUILD_DIR)/meta/attribute-derive-enum-default.raw

@@ -10,6 +10,12 @@ enum Flag {
   On,
 }
 
+@derive(Clone)
+enum Payload {
+  Empty,
+  Value(i64),
+}
+
 @derive(Debug, Copy, Clone)
 struct Box[T] {
   value: T,
@@ -30,12 +36,25 @@ fn flag_score(flag: Flag) -> i64 {
   }
 }
 
+fn payload_score(payload: Payload) -> i64 {
+  match payload {
+    Empty => {
+      return 0;
+    }
+    Value(value) => {
+      return value;
+    }
+  }
+}
+
 fn main() -> i64 {
   let point = Point { x: 1, y: 2 };
   let flag: Flag = On;
+  let payload: Payload = Value(6);
   let boxed = Box { value: 9 };
   let cloned_point = clone_value<Point>(point);
   let cloned_flag = clone_value<Flag>(flag);
+  let cloned_payload = clone_value<Payload>(payload);
   let cloned_box = clone_value<Box[i64]>(boxed);
-  return cloned_point.x + cloned_point.y + flag_score(cloned_flag) + cloned_box.value;
+  return cloned_point.x + cloned_point.y + flag_score(cloned_flag) + payload_score(cloned_payload) + cloned_box.value;
 }
