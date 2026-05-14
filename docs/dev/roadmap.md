@@ -190,10 +190,11 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    non-generic, one-parameter transforms over exactly one meta domain:
    `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Bodies
    may be empty, use a single `return input;` identity body, or, for
-   expression-position `ast -> ast` macros, return a closed expression AST such
-   as `return 40 + 2;` without quote/eval syntax. Meta bodies still cannot
-   reference the input inside constructed expressions, and non-expression
-   construction remains reserved until evaluation exists. Attribute,
+   expression-position `ast -> ast` macros, return an expression AST such as
+   `return input + 1;` or `return 40 + 2;` without quote/eval syntax. The
+   meta input parameter is substituted with the parsed invocation expression;
+   other name references are rejected, and non-expression construction remains
+   reserved until evaluation exists. Attribute,
    expression-macro, and active
    item-macro sites now reject `type -> type` transforms and accept only
    syntax-rewriting `token_stream -> token_stream` or `ast -> ast` domains;
@@ -202,13 +203,17 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    parser surface for token-tree expressions and type positions; there is no
    separate anonymous macro grammar. User macro calls capture balanced token
    trees, and the selected `meta fn` parameter domain determines whether the
-   future evaluator receives `token_stream`, `ast`, or `type` input. Active
-   expansion still needs compile-time `token_stream`/`ast`
-   construction before it can rewrite values or syntax. Expression-position
+   future evaluator receives `token_stream`, `ast`, or `type` input. Full
+   active expansion still needs compile-time `token_stream` construction and
+   broader `ast` construction before it can rewrite general values or syntax.
+   Expression-position
    `token_stream -> token_stream` and `ast -> ast` meta invocations now parse
-   their token-tree input as a single expression and lower as an identity
-   expansion while meta bodies stay empty; invalid extra tokens are rejected
-   before semantic expression lowering. Type-position `type -> type` meta
+   their token-tree input as a single expression. Empty bodies and
+   `return input;` lower as identity expansion; non-identity expression
+   returns from `ast -> ast` bodies clone the returned AST and substitute that
+   parsed input expression wherever the meta parameter name appears. Invalid
+   extra tokens are rejected before semantic expression lowering.
+   Type-position `type -> type` meta
    invocations now parse their token-tree input as a type ref and lower as an
    identity expansion while meta bodies stay empty; invalid extra tokens are
    rejected before semantic type lowering. Item-position `token_stream ->
@@ -257,9 +262,9 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    validation, and enum `Default` derives without a case marker are rejected.
    - [tokens] support non-identity `token_stream` construction and rewrites
      beyond empty/`return input;` identity bodies
-   - [ast] extend non-identity `ast` construction beyond closed expression
-     returns: add input substitution, pattern/type/item AST output, and richer
-     expression trees once evaluator policy is defined
+   - [ast] extend non-identity `ast` construction beyond expression-position
+     expression returns with input substitution: add pattern/type/item AST
+     output and richer expression trees once evaluator policy is defined
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    Formatting syntax for `print`/`println` is fixed for linting: `{}`,
    escaped braces, and `{:.N}` fixed decimal precision for `f32`/`f64` now

@@ -39,23 +39,23 @@ const Expr* return_expression(const FunctionDecl& fn) {
     return stmt.expr.get();
 }
 
-bool supported_closed_ast_return_expr(const Expr& expr,
-                                      const std::string& input_name,
-                                      std::string& reason) {
+bool supported_ast_return_expr(const Expr& expr,
+                               const std::string& input_name,
+                               std::string& reason) {
     auto require_operand = [&](const ExprPtr& operand) {
         if (!operand) {
             reason = "malformed ast meta return expression";
             return false;
         }
-        return supported_closed_ast_return_expr(*operand, input_name, reason);
+        return supported_ast_return_expr(*operand, input_name, reason);
     };
     auto require_binary = [&]() {
         if (!expr_left(expr) || !expr_right(expr)) {
             reason = "malformed ast meta return expression";
             return false;
         }
-        return supported_closed_ast_return_expr(*expr_left(expr), input_name, reason) &&
-               supported_closed_ast_return_expr(*expr_right(expr), input_name, reason);
+        return supported_ast_return_expr(*expr_left(expr), input_name, reason) &&
+               supported_ast_return_expr(*expr_right(expr), input_name, reason);
     };
 
     switch (expr.kind) {
@@ -68,7 +68,7 @@ bool supported_closed_ast_return_expr(const Expr& expr,
         case ExprKind::Tuple:
         case ExprKind::Vector:
             for (const auto& arg : expr.args) {
-                if (!supported_closed_ast_return_expr(*arg, input_name, reason)) return false;
+                if (!supported_ast_return_expr(*arg, input_name, reason)) return false;
             }
             return true;
         case ExprKind::Unary:
@@ -78,9 +78,9 @@ bool supported_closed_ast_return_expr(const Expr& expr,
             return require_binary();
         case ExprKind::Name:
             if (expr.name == input_name) {
-                reason = "ast meta expression returns cannot reference the meta input yet";
+                return true;
             } else {
-                reason = "ast meta expression returns cannot reference names yet";
+                reason = "ast meta expression returns cannot reference names other than the meta input yet";
             }
             return false;
         case ExprKind::Borrow:
@@ -97,7 +97,7 @@ bool supported_closed_ast_return_expr(const Expr& expr,
         case ExprKind::Block:
         case ExprKind::Call:
             reason =
-                "ast meta expression returns currently support only closed literal, tuple, vector, unary, binary, and cast expression trees";
+                "ast meta expression returns currently support only literal, input, tuple, vector, unary, binary, and cast expression trees";
             return false;
     }
     reason = "unsupported ast meta return expression";
@@ -238,7 +238,7 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
         const Expr* returned = return_expression(fn);
         if (input_kind == MetaTransformKind::Ast && returned) {
             std::string reason;
-            if (supported_closed_ast_return_expr(*returned, param.name, reason)) {
+            if (supported_ast_return_expr(*returned, param.name, reason)) {
                 return input_kind;
             }
             fail(returned->loc, reason);
@@ -246,7 +246,7 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
         if (input_kind == MetaTransformKind::Ast) {
             fail(fn.body.front()->loc,
                  "meta function bodies currently allow only an empty body, `return " + param.name +
-                     ";` identity body, or a closed expression return for ast -> ast expression macros");
+                     ";` identity body, or an expression return using literals and the meta input for ast -> ast expression macros");
         }
         fail(fn.body.front()->loc,
              "meta function bodies currently allow only an empty body or `return " + param.name +

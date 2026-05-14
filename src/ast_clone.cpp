@@ -3,6 +3,7 @@
 #include "common.hpp"
 
 #include <memory>
+#include <string>
 
 namespace ari {
 
@@ -56,6 +57,29 @@ ExprPtr clone_expression_tree(const Expr& expr) {
     if (expr_left(expr)) set_expr_left(*clone, clone_expression_tree(*expr_left(expr)));
     if (expr_right(expr)) set_expr_right(*clone, clone_expression_tree(*expr_right(expr)));
     for (const auto& arg : expr.args) clone->args.push_back(clone_expression_tree(*arg));
+    return clone;
+}
+
+ExprPtr clone_expression_tree_substituting_name(const Expr& expr,
+                                                const std::string& name,
+                                                const Expr& replacement) {
+    if (expr.kind == ExprKind::Name && expr.name == name) {
+        return clone_expression_tree(replacement);
+    }
+
+    ExprPtr clone = make_shallow_clone(expr);
+    if (expr_operand(expr)) {
+        set_expr_operand(*clone, clone_expression_tree_substituting_name(*expr_operand(expr), name, replacement));
+    }
+    if (expr_left(expr)) {
+        set_expr_left(*clone, clone_expression_tree_substituting_name(*expr_left(expr), name, replacement));
+    }
+    if (expr_right(expr)) {
+        set_expr_right(*clone, clone_expression_tree_substituting_name(*expr_right(expr), name, replacement));
+    }
+    for (const auto& arg : expr.args) {
+        clone->args.push_back(clone_expression_tree_substituting_name(*arg, name, replacement));
+    }
     return clone;
 }
 

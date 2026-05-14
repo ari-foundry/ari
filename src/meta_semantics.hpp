@@ -27,6 +27,7 @@ struct MetaFunctionInfo {
     std::string module_name;
     MetaTransformKind transform_kind = MetaTransformKind::None;
     SourceLocation loc;
+    std::string parameter_name;
     const Expr* ast_expression_return = nullptr;
 };
 

@@ -186,5 +186,6 @@ written as either `token_stream -> token_stream` or `ast -> ast`; `type -> type`
 meta functions are accepted only at type-position macro sites and cannot
 reserve attributes. Attribute macros remain identity/reservation-only today:
 non-identity `ast -> ast` bodies are currently executable only at expression
-macro sites, where a body can return a closed expression AST without quote/eval
-syntax. Attribute macros that rewrite or insert AST nodes are planned.
+macro sites, where a body can return an expression AST and substitute the meta
+input parameter without quote/eval syntax. Attribute macros that rewrite or
+insert AST nodes are planned.

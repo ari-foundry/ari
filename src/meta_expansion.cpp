@@ -1,5 +1,6 @@
 #include "meta_expansion.hpp"
 
+#include "ast_clone.hpp"
 #include "common.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
@@ -96,6 +97,12 @@ Pattern expand_pattern_macro_invocation(const Pattern& invocation) {
         fail_expansion(invocation.loc, "internal error: expected pattern macro invocation");
     }
     return parse_macro_pattern(invocation.macro_tokens, invocation.loc);
+}
+
+ExprPtr expand_ast_expression_return(const Expr& returned_ast,
+                                      const std::string& input_name,
+                                      const Expr& input_ast) {
+    return clone_expression_tree_substituting_name(returned_ast, input_name, input_ast);
 }
 
 } // namespace ari

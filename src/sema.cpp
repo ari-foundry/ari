@@ -1186,6 +1186,7 @@ private:
                     fn.module_name,
                     transform_kind,
                     fn.loc,
+                    fn.params[0].name,
                     meta_function_ast_expression_return(fn),
                 }
             );
@@ -15170,7 +15171,7 @@ private:
         }
         ExprPtr expanded = parse_macro_expression(*expr.macro_tokens, expr.loc);
         if (meta.ast_expression_return) {
-            expanded = clone_expression_tree(*meta.ast_expression_return);
+            expanded = expand_ast_expression_return(*meta.ast_expression_return, meta.parameter_name, *expanded);
         }
         return check_expr(*expanded);
     }

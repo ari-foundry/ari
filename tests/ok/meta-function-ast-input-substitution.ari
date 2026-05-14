@@ -1,0 +1,7 @@
+meta fn add_one(input: ast) -> ast {
+  return input + 1;
+}
+
+fn main() -> i64 {
+  return add_one!(40 + 1);
+}

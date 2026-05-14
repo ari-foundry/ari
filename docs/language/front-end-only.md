@@ -193,24 +193,27 @@ functions are intentionally non-generic; define one concrete entry point for
 each transform shape instead of a `[T]`-generic meta function. Bodies may be
 empty or contain a single `return input;` identity return, where `input` is the
 meta function parameter. Expression-position `ast -> ast` macros may also
-return a closed expression AST directly:
+return an expression AST directly and use the meta input parameter as a
+substitution point:
 
 ```ari
-meta fn answer(input: ast) -> ast {
-  return 40 + 2;
+meta fn add_one(input: ast) -> ast {
+  return input + 1;
 }
 
 fn main() -> i64 {
-  return answer!(ignored_input())
+  return add_one!(40 + 1)
 }
 ```
 
 The invocation input is still parsed as one expression to validate the macro
-argument domain, but the output expression is the returned AST. This first
-non-identity AST step has no quote/eval syntax and cannot reference `input`
-inside the constructed expression yet. Non-identity token construction,
-attribute rewrites, and item/type/pattern AST construction remain reserved
-until Ari has a broader compile-time evaluator.
+argument domain. When the returned AST contains the meta parameter name as a
+bare expression, Ari substitutes that node with the parsed invocation
+expression. This first non-identity AST step has no quote/eval syntax, and
+names other than the meta input parameter are rejected in returned expression
+ASTs. Non-identity token construction, attribute rewrites, and
+item/type/pattern AST construction remain reserved until Ari has a broader
+compile-time evaluator.
 
 Expression, item, and type-position macro invocation use Rust-style
 `ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
@@ -222,8 +225,9 @@ their basename matches a prelude macro. User expression macros must resolve to
 `token_stream -> token_stream` or `ast -> ast` meta functions. Empty and
 `return input;` bodies are identity transforms: the token tree inside
 `ident!(...)` is parsed as one expression and then lowered as that expression.
-Closed expression returns from `ast -> ast` bodies replace that parsed input at
-expression macro sites. User syntax-rewriting attributes and active
+Expression returns from `ast -> ast` bodies replace that parsed input at
+expression macro sites, with bare meta-parameter references substituted by the
+parsed input expression. User syntax-rewriting attributes and active
 item-position macros must also resolve to
 `token_stream -> token_stream` or `ast -> ast` meta functions. Function,
 constant, struct, enum, trait, impl, inline module, and use item macro
