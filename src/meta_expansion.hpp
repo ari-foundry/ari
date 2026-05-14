@@ -6,10 +6,11 @@
 
 namespace ari {
 
-struct ItemMacroFunctionExpansion {
+struct ItemMacroExpansion {
+    std::vector<ConstDecl> constants;
     std::vector<FunctionDecl> functions;
 };
 
-ItemMacroFunctionExpansion expand_item_macro_functions(const ItemMacroInvocation& invocation);
+ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation);
 
 } // namespace ari

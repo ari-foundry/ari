@@ -418,6 +418,7 @@ private:
     std::map<std::string, ImplMethodInfo> drop_impls_;
     std::vector<ImplMethodInfo> impl_methods_to_lower_;
     std::set<std::string> queued_impl_methods_;
+    std::vector<ConstDecl> item_macro_constants_;
     std::vector<FunctionDecl> item_macro_functions_;
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
@@ -780,6 +781,12 @@ private:
     void for_each_function_decl(Visitor&& visitor) const {
         for (const auto& fn : program_.functions) visitor(fn);
         for (const auto& fn : item_macro_functions_) visitor(fn);
+    }
+
+    template <typename Visitor>
+    void for_each_constant_decl(Visitor&& visitor) const {
+        for (const auto& decl : program_.constants) visitor(decl);
+        for (const auto& decl : item_macro_constants_) visitor(decl);
     }
 
     void collect_module_decls() {
@@ -1293,7 +1300,8 @@ private:
                 throw;
             }
             current_module_name_ = previous_module;
-            ItemMacroFunctionExpansion expansion = expand_item_macro_functions(invocation);
+            ItemMacroExpansion expansion = expand_item_macro_items(invocation);
+            for (auto& constant : expansion.constants) item_macro_constants_.push_back(std::move(constant));
             for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
         }
     }
@@ -1423,7 +1431,7 @@ private:
     }
 
     void collect_constant_decls() {
-        for (const auto& decl : program_.constants) {
+        for_each_constant_decl([&](const ConstDecl& decl) {
             ConstantInfo info;
             info.name = decl.name;
             info.module_name = decl.module_name;
@@ -1433,7 +1441,7 @@ private:
             info.loc = decl.loc;
             auto inserted = constants_.emplace(decl.name, std::move(info));
             if (!inserted.second) fail(decl.loc, "duplicate constant '" + decl.name + "'");
-        }
+        });
     }
 
     void collect_struct_decls() {

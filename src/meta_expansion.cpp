@@ -38,52 +38,53 @@ SourceLocation impl_location(const ImplDecl& decl) {
 void reject_unsupported_item_macro_output(const Program& program, SourceLocation invocation_loc) {
     if (!program.uses.empty()) {
         fail_expansion(program.uses.front().loc,
-                       "item macro identity expansion currently supports function declarations; generated use declarations remain planned");
+                       "item macro identity expansion currently supports function and constant declarations; generated use declarations remain planned");
     }
     if (!program.module_imports.empty()) {
         fail_expansion(program.module_imports.front().loc,
-                       "item macro identity expansion currently supports function declarations; generated module imports remain planned");
+                       "item macro identity expansion currently supports function and constant declarations; generated module imports remain planned");
     }
     if (!program.modules.empty()) {
         fail_expansion(program.modules.front().loc,
-                       "item macro identity expansion currently supports function declarations; generated modules remain planned");
+                       "item macro identity expansion currently supports function and constant declarations; generated modules remain planned");
     }
     if (!program.item_macros.empty()) {
         fail_expansion(program.item_macros.front().loc,
                        "nested item macro identity expansion is planned but not supported yet");
     }
-    if (!program.constants.empty()) {
-        fail_expansion(program.constants.front().loc,
-                       "item macro identity expansion currently supports function declarations; generated constants remain planned");
-    }
     if (!program.structs.empty()) {
         fail_expansion(program.structs.front().loc,
-                       "item macro identity expansion currently supports function declarations; generated structs remain planned");
+                       "item macro identity expansion currently supports function and constant declarations; generated structs remain planned");
     }
     if (!program.enums.empty()) {
         fail_expansion(program.enums.front().loc,
-                       "item macro identity expansion currently supports function declarations; generated enums remain planned");
+                       "item macro identity expansion currently supports function and constant declarations; generated enums remain planned");
     }
     if (!program.traits.empty()) {
         fail_expansion(program.traits.front().loc,
-                       "item macro identity expansion currently supports function declarations; generated traits remain planned");
+                       "item macro identity expansion currently supports function and constant declarations; generated traits remain planned");
     }
     if (!program.impls.empty()) {
         fail_expansion(impl_location(program.impls.front()),
-                       "item macro identity expansion currently supports function declarations; generated impls remain planned");
+                       "item macro identity expansion currently supports function and constant declarations; generated impls remain planned");
     }
-    if (program.functions.empty()) {
-        fail_expansion(invocation_loc, "item macro identity expansion requires at least one generated function declaration");
+    if (program.constants.empty() && program.functions.empty()) {
+        fail_expansion(invocation_loc,
+                       "item macro identity expansion requires at least one generated function or constant declaration");
     }
 }
 
 } // namespace
 
-ItemMacroFunctionExpansion expand_item_macro_functions(const ItemMacroInvocation& invocation) {
+ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation) {
     Program program = parse_item_macro_tokens(invocation);
     reject_unsupported_item_macro_output(program, invocation.loc);
 
-    ItemMacroFunctionExpansion expansion;
+    ItemMacroExpansion expansion;
+    expansion.constants = std::move(program.constants);
+    for (auto& constant : expansion.constants) {
+        if (invocation.is_public) constant.is_public = true;
+    }
     expansion.functions = std::move(program.functions);
     for (auto& fn : expansion.functions) {
         if (fn.meta) {
