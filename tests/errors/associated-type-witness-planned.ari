@@ -1,0 +1,15 @@
+trait Source {
+  fn next(self) -> i64
+}
+
+impl Source for i64 {
+  type Item = i64;
+
+  fn next(self) -> i64 {
+    return self;
+  }
+}
+
+fn main() -> i64 {
+  return 0;
+}

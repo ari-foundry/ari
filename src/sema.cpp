@@ -2838,6 +2838,18 @@ private:
             }
             current_type_substitutions_ = std::move(outer_previous_substitutions);
 
+            for (const auto& witness : impl.associated_type_witnesses) {
+                if (!impl.has_trait) {
+                    current_module_name_ = previous_module;
+                    fail(witness.loc, "associated type witnesses are only allowed in trait impls");
+                }
+                current_module_name_ = previous_module;
+                fail(witness.loc,
+                     "associated type witness '" + trait_application_display(trait_name, trait_args) +
+                         " for " + type_name(self_type) + "::" + witness.name +
+                         "' is reserved but semantic lowering is planned");
+            }
+
             std::set<std::string> local_method_names;
             for (const auto& method : impl.methods) {
                 if (!method.has_body) {

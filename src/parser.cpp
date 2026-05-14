@@ -713,12 +713,33 @@ private:
         }
         expect(TokenKind::LBrace, "expected { after impl header");
         while (!match(TokenKind::RBrace)) {
+            if (check(TokenKind::End)) fail(peek().loc, "unterminated impl");
             bool method_public = match(TokenKind::KwPub);
-            expect(TokenKind::KwFn, "expected function in impl block");
+            if (check(TokenKind::Identifier) && peek().text == "type") {
+                if (method_public) fail(peek().loc, "associated type witnesses cannot use pub");
+                decl.associated_type_witnesses.push_back(parse_impl_associated_type_witness());
+                optional_separator();
+                continue;
+            }
+            expect(TokenKind::KwFn, "expected function or associated type witness in impl block");
             decl.methods.push_back(parse_function(false, true, method_public));
             optional_separator();
         }
         return decl;
+    }
+
+    ImplDecl::AssociatedTypeWitness parse_impl_associated_type_witness() {
+        Token type_keyword = expect(TokenKind::Identifier, "expected associated type witness");
+        if (type_keyword.text != "type") fail(type_keyword.loc, "expected associated type witness");
+        Token name = expect_identifier_or_contextual_name_keyword("expected associated type witness name");
+        if (match(TokenKind::LBracket)) fail(tokens_[pos_ - 1].loc, "generic associated types are planned");
+        if (match(TokenKind::Colon)) fail(tokens_[pos_ - 1].loc, "associated type witness bounds are not supported");
+        expect(TokenKind::Equal, "expected = in associated type witness");
+        ImplDecl::AssociatedTypeWitness witness;
+        witness.name = name.text;
+        witness.type = parse_type();
+        witness.loc = name.loc;
+        return witness;
     }
 
     std::vector<StmtPtr> parse_block() {

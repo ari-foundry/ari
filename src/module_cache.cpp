@@ -18,7 +18,7 @@ namespace ari {
 
 namespace {
 
-constexpr int kModuleCacheVersion = 11;
+constexpr int kModuleCacheVersion = 12;
 
 std::string read_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -327,9 +327,11 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 cache.format_version = 10;
             } else if (line == "ari-module-cache-v11") {
                 cache.format_version = 11;
+            } else if (line == "ari-module-cache-v12") {
+                cache.format_version = 12;
             } else {
                 throw CompileError("invalid module cache '" + display_path +
-                                   "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, ari-module-cache-v5, ari-module-cache-v6, ari-module-cache-v7, ari-module-cache-v8, ari-module-cache-v9, ari-module-cache-v10, or ari-module-cache-v11 header");
+                                   "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, ari-module-cache-v5, ari-module-cache-v6, ari-module-cache-v7, ari-module-cache-v8, ari-module-cache-v9, ari-module-cache-v10, ari-module-cache-v11, or ari-module-cache-v12 header");
             }
             saw_header = true;
             continue;
@@ -423,7 +425,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
 
     if (!saw_header) {
         throw CompileError("invalid module cache '" + display_path +
-                           "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, ari-module-cache-v5, ari-module-cache-v6, ari-module-cache-v7, ari-module-cache-v8, ari-module-cache-v9, ari-module-cache-v10, or ari-module-cache-v11 header");
+                           "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, ari-module-cache-v5, ari-module-cache-v6, ari-module-cache-v7, ari-module-cache-v8, ari-module-cache-v9, ari-module-cache-v10, ari-module-cache-v11, or ari-module-cache-v12 header");
     }
     if (!saw_metadata) {
         throw CompileError("invalid module cache '" + display_path + "': missing metadata record");

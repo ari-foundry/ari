@@ -339,15 +339,19 @@ trait Iterator[T] {
   type Item
 }
 
+impl Iterator[i64] for Counter {
+  type Item = i64
+}
+
 let item: Iterator[i64]::Item = 1
 ```
 
 The spelling is Ari-style `Trait[T]::Item`, not Rust's
-`<T as Trait>::Item`. The parser preserves declarations and projections in the
-AST and module cache so lint and language-server tooling can treat them as
-stable. Semantic lowering is still planned, so executable code rejects
-associated type declarations and projected types with focused planned-feature
-diagnostics until impl witnesses exist.
+`<T as Trait>::Item`. The parser preserves declarations, impl witnesses, and
+projections in the AST and module cache so lint and language-server tooling can
+treat them as stable. Semantic lowering is still planned, so executable code
+rejects associated type declarations, impl witnesses, and projected types with
+focused planned-feature diagnostics until projection lowering exists.
 
 Inside modules, methods are private by default. Mark the method `pub`, or mark
 the whole `impl` block `pub`, to make its methods callable from outside the

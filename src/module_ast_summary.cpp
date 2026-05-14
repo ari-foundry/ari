@@ -920,6 +920,13 @@ public:
             skip_attributes();
             if (has_trait) skip_type("impl trait type");
             skip_type("impl target type");
+            if (version_ >= 12) {
+                std::uint64_t associated_type_witness_count = read_count("impl associated type witness count");
+                for (std::uint64_t j = 0; j < associated_type_witness_count; ++j) {
+                    read_field("impl associated type witness name");
+                    skip_type("impl associated type witness type");
+                }
+            }
             std::uint64_t method_count = read_count("impl method count");
             for (std::uint64_t j = 0; j < method_count; ++j) skip_function_signature();
         }
@@ -1097,6 +1104,17 @@ public:
             decl.attributes = read_attributes();
             if (decl.has_trait) decl.trait_type = read_type("impl trait type");
             decl.for_type = read_type("impl target type");
+            if (version_ >= 12) {
+                std::uint64_t associated_type_witness_count = read_count("impl associated type witness count");
+                decl.associated_type_witnesses.reserve(static_cast<std::size_t>(associated_type_witness_count));
+                for (std::uint64_t j = 0; j < associated_type_witness_count; ++j) {
+                    ImplDecl::AssociatedTypeWitness witness;
+                    witness.name = read_field("impl associated type witness name");
+                    witness.type = read_type("impl associated type witness type");
+                    witness.loc = default_loc();
+                    decl.associated_type_witnesses.push_back(std::move(witness));
+                }
+            }
             std::uint64_t method_count = read_count("impl method count");
             decl.methods.reserve(static_cast<std::size_t>(method_count));
             for (std::uint64_t j = 0; j < method_count; ++j) {
@@ -1124,6 +1142,7 @@ private:
     }
 
     void consume_header() {
+        const std::string v12 = "ari-ast-decls-v12;";
         const std::string v11 = "ari-ast-decls-v11;";
         const std::string v10 = "ari-ast-decls-v10;";
         const std::string v9 = "ari-ast-decls-v9;";
@@ -1135,6 +1154,11 @@ private:
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v12.size(), v12) == 0) {
+            version_ = 12;
+            pos_ += v12.size();
+            return;
+        }
         if (text_.compare(pos_, v11.size(), v11) == 0) {
             version_ = 11;
             pos_ += v11.size();
@@ -1190,7 +1214,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v11;', 'ari-ast-decls-v10;', 'ari-ast-decls-v9;', 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v12;', 'ari-ast-decls-v11;', 'ari-ast-decls-v10;', 'ari-ast-decls-v9;', 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1896,7 +1920,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v11;";
+    out << "ari-ast-decls-v12;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {
@@ -1992,6 +2016,11 @@ std::string declaration_summary_payload(const Program& program) {
         append_attributes(out, decl.attributes);
         if (decl.has_trait) append_type(out, decl.trait_type);
         append_type(out, decl.for_type);
+        append_count(out, decl.associated_type_witnesses.size());
+        for (const auto& witness : decl.associated_type_witnesses) {
+            append_field(out, witness.name);
+            append_type(out, witness.type);
+        }
         append_count(out, decl.methods.size());
         for (const auto& method : decl.methods) append_function_signature(out, method);
     }

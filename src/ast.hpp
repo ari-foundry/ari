@@ -829,6 +829,12 @@ struct TraitDecl {
 };
 
 struct ImplDecl {
+    struct AssociatedTypeWitness {
+        std::string name;
+        TypeRef type;
+        SourceLocation loc;
+    };
+
     TypeRef trait_type;
     TypeRef for_type;
     std::string module_name;
@@ -836,6 +842,7 @@ struct ImplDecl {
     bool has_trait = false;
     std::vector<GenericParam> generics;
     std::vector<Attribute> attributes;
+    std::vector<AssociatedTypeWitness> associated_type_witnesses;
     std::vector<FunctionDecl> methods;
 };
 
