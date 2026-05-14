@@ -1044,10 +1044,10 @@ private:
     void collect_meta_functions() {
         for (const auto& fn : program_.functions) {
             if (!fn.meta) continue;
-            validate_meta_function_signature(fn);
+            MetaTransformKind transform_kind = validate_meta_function_signature(fn);
             auto inserted = meta_functions_.emplace(
                 fn.name,
-                MetaFunctionInfo{fn.name, fn.module_name, fn.loc}
+                MetaFunctionInfo{fn.name, fn.module_name, transform_kind, fn.loc}
             );
             if (!inserted.second) fail(fn.loc, "duplicate meta function '" + fn.name + "'");
         }
@@ -1227,11 +1227,19 @@ private:
                 continue;
             }
             std::string meta_name = resolve_meta_function_name(attr.name);
-            if (!meta_functions_.count(meta_name)) {
+            auto found = meta_functions_.find(meta_name);
+            if (found == meta_functions_.end()) {
                 current_module_name_ = previous_module;
                 fail(attr.loc,
                      "unknown attribute '@" + attr.name +
                          "'; define a meta function with token_stream or ast input to reserve it");
+            }
+            if (!meta_transform_can_rewrite_syntax(found->second.transform_kind)) {
+                current_module_name_ = previous_module;
+                fail(attr.loc,
+                     "attribute '@" + attr.name + "' is reserved by meta function '" + meta_name +
+                         "' with " + meta_transform_signature(found->second.transform_kind) +
+                         " domain; attributes require token_stream -> token_stream or ast -> ast");
             }
         }
         current_module_name_ = previous_module;
@@ -14019,8 +14027,15 @@ private:
         if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
 
         std::string meta_name = resolve_meta_function_name(expr.name);
-        if (!meta_functions_.count(meta_name)) {
+        auto found = meta_functions_.find(meta_name);
+        if (found == meta_functions_.end()) {
             fail(expr.loc, "unknown macro '" + expr.name + "!'");
+        }
+        if (!meta_transform_can_rewrite_syntax(found->second.transform_kind)) {
+            fail(expr.loc,
+                 "macro invocation '" + expr.name + "!' refers to meta function '" + meta_name +
+                     "' with " + meta_transform_signature(found->second.transform_kind) +
+                     " domain; expression macros require token_stream -> token_stream or ast -> ast");
         }
         fail(expr.loc,
              "macro invocation '" + expr.name +

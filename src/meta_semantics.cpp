@@ -111,7 +111,25 @@ std::string meta_type_names() {
     return "token_stream, ast, or type";
 }
 
-void validate_meta_function_signature(const FunctionDecl& fn) {
+std::string meta_transform_signature(MetaTransformKind kind) {
+    switch (kind) {
+        case MetaTransformKind::TokenStream:
+            return "token_stream -> token_stream";
+        case MetaTransformKind::Ast:
+            return "ast -> ast";
+        case MetaTransformKind::Type:
+            return "type -> type";
+        case MetaTransformKind::None:
+            break;
+    }
+    return "unknown";
+}
+
+bool meta_transform_can_rewrite_syntax(MetaTransformKind kind) {
+    return kind == MetaTransformKind::TokenStream || kind == MetaTransformKind::Ast;
+}
+
+MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
     require_unique_generic_params(fn.generics, "meta function", fn.name);
     if (!fn.generics.empty()) {
         fail(fn.loc,
@@ -147,6 +165,7 @@ void validate_meta_function_signature(const FunctionDecl& fn) {
         fail(fn.body.front()->loc,
              "meta function bodies are reserved for future compile-time evaluation; keep the body empty for now");
     }
+    return input_kind;
 }
 
 } // namespace ari

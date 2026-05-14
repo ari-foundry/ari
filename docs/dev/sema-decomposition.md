@@ -384,9 +384,9 @@ These moves should happen after pure helpers and local state have settled.
    - Own function signatures, struct/enum/trait tables, impl tables,
      constants, extern functions, metadata needed for IR export, and duplicate
      diagnostics.
-   - `meta_semantics` now owns the `meta fn` transform signature rules and
-     diagnostics; later declaration-table work should keep meta registration
-     separate from executable function signature collection.
+   - `meta_semantics` now owns the `meta fn` transform signature/domain rules
+     and diagnostics; later declaration-table work should keep meta
+     registration separate from executable function signature collection.
    - Keep monomorphization queues in `SemanticChecker` until generic lowering
      is split.
 3. Extract generic and trait resolution into `trait_semantics`.

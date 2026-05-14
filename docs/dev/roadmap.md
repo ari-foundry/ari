@@ -174,7 +174,9 @@ without backend emission for editor tooling.
    `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Bodies
    must stay empty until compile-time evaluation exists, so declarations can
    reserve attributes and macro names without pretending runtime statements
-   execute.
+   execute. Attribute and expression-macro sites now reject `type -> type`
+   transforms and accept only syntax-rewriting `token_stream -> token_stream`
+   or `ast -> ast` domains.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [calls] expand user-defined Rust-style `name!(...)` expression calls

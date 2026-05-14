@@ -84,7 +84,8 @@ struct typedefs for pointer-only APIs, concrete generic `@repr(C)` struct
 typedefs for by-value exported instantiations, plus generic/non-generic
 fieldless enum declarations, by-value header ABI target/size guards,
 one-parameter same-domain meta signatures over `token_stream`/`ast`/`type`,
-and planned Rust-style `name!(...)` macro invocation diagnostics.
+attribute/expression macro domain checks, and planned Rust-style `name!(...)`
+macro invocation diagnostics.
 
 `make check-prelude` runs prelude IO, formatting, input, assertion, source
 header, and builtin macro tests. It covers function and macro assertion forms,

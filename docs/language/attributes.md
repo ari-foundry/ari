@@ -149,7 +149,7 @@ fn value() -> i64 {
 
 User attributes are currently parsed, validated by name, and retained as
 front-end metadata. The reserving `meta fn` must be concrete, non-generic, and
-written as one explicit matching transform: `token_stream -> token_stream`,
-`ast -> ast`, or `type -> type`. Meta bodies must stay empty until Ari has a
-compile-time evaluator. Attribute macros that rewrite or insert AST nodes are
-planned.
+written as either `token_stream -> token_stream` or `ast -> ast`; `type -> type`
+meta functions are reserved for future type-position expansion and cannot
+reserve attributes. Meta bodies must stay empty until Ari has a compile-time
+evaluator. Attribute macros that rewrite or insert AST nodes are planned.

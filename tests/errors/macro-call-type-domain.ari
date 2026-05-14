@@ -1,0 +1,6 @@
+meta fn choose(input: type) -> type {
+}
+
+fn main() -> i64 {
+  return choose!(i64);
+}

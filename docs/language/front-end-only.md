@@ -179,8 +179,11 @@ attributes and macro names without silently ignoring executable statements.
 
 Expression and item macro invocation use Rust-style `!` syntax. The built-in
 prelude assertion, stop, `print!`, `println!`, and `matches!` macros lower
-today. User `meta fn` expansion, item macros, and `format!` are still planned
-and rejected with specific diagnostics.
+today. User syntax-rewriting attributes and expression macros must resolve to
+`token_stream -> token_stream` or `ast -> ast` meta functions; `type -> type`
+meta functions are reserved for future type-position expansion and cannot be
+used as attributes or expression macros. User `meta fn` expansion, item macros,
+and `format!` are still planned and rejected with specific diagnostics.
 
 ## Raw Pointers
 
