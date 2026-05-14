@@ -1410,6 +1410,7 @@ private:
         }
         if (bare_identifier_is_binding &&
             !check(TokenKind::ColonColon) &&
+            !check(TokenKind::Bang) &&
             !check(TokenKind::LParen) &&
             !check(TokenKind::LBrace) &&
             !check(TokenKind::At)) {
@@ -1420,6 +1421,11 @@ private:
 
         pattern.kind = PatternKind::EnumCase;
         pattern.case_name = parse_path_after_first(name);
+        if (match(TokenKind::Bang)) {
+            Token bang = tokens_[pos_ - 1];
+            parse_pattern_macro_token_tree(bang.loc);
+            fail(pattern.loc, "pattern macro invocation '" + pattern.case_name + "!' requires compile-time pattern expansion");
+        }
         if (match(TokenKind::At)) {
             fail(tokens_[pos_ - 1].loc, "pattern aliases must bind a plain name before @");
         }
@@ -1727,6 +1733,10 @@ private:
 
     std::vector<Token> parse_attribute_token_tree(SourceLocation loc) {
         return parse_balanced_token_tree(loc, "expected ( after attribute name", "attribute arguments");
+    }
+
+    std::vector<Token> parse_pattern_macro_token_tree(SourceLocation loc) {
+        return parse_balanced_token_tree(loc, "expected ( after pattern macro invocation name", "pattern macro invocation");
     }
 
     std::vector<Token> parse_macro_token_tree(SourceLocation loc) {

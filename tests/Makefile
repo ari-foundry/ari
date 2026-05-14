@@ -1446,6 +1446,8 @@ check-meta: $(TARGET)
 	grep -q "expected , after matches! value" $(BUILD_DIR)/meta/matches-macro-arity.err
 	if $(TARGET) tests/errors/matches-macro-pattern-type.ari -o $(BUILD_DIR)/meta/matches-macro-pattern-type.elf >$(BUILD_DIR)/meta/matches-macro-pattern-type.err 2>&1; then exit 1; fi
 	grep -q "integer match patterns must be integer literals or _" $(BUILD_DIR)/meta/matches-macro-pattern-type.err
+	if $(TARGET) tests/errors/pattern-macro-planned.ari -o $(BUILD_DIR)/meta/pattern-macro-planned.elf >$(BUILD_DIR)/meta/pattern-macro-planned.err 2>&1; then exit 1; fi
+	grep -q "pattern macro invocation 'make_pattern!' requires compile-time pattern expansion" $(BUILD_DIR)/meta/pattern-macro-planned.err
 	if $(TARGET) tests/errors/macro-call-planned.ari -o $(BUILD_DIR)/meta/macro-call-planned.elf >$(BUILD_DIR)/meta/macro-call-planned.err 2>&1; then exit 1; fi
 	grep -q "macro invocation 'make_value!' requires compile-time token_stream/ast expansion" $(BUILD_DIR)/meta/macro-call-planned.err
 	if $(TARGET) tests/errors/macro-call-unknown.ari -o $(BUILD_DIR)/meta/macro-call-unknown.elf >$(BUILD_DIR)/meta/macro-call-unknown.err 2>&1; then exit 1; fi

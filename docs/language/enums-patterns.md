@@ -562,6 +562,16 @@ let nested_struct = match (point, color) {
 ```
 
 Slice patterns remain planned for the shared richer pattern engine.
+Pattern-position macro invocation uses reserved Rust-style `ident!(...)`
+syntax and preserves a balanced token tree, but active pattern expansion is
+still planned:
+
+```ari
+match value {
+  make_pattern!({ Some(_) }) => { return 1; }
+  _ => { return 0; }
+}
+```
 
 Alias patterns bind the matched value while still testing an inner pattern:
 

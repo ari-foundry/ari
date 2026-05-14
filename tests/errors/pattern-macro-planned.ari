@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  let value = 1;
+  match value {
+    make_pattern!({ Some(_) }) => {
+      return 0;
+    }
+    _ => {
+      return 1;
+    }
+  }
+}

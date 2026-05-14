@@ -187,6 +187,9 @@ attributes, expression macros, and active item-position macros must resolve to
 macro invocations must resolve to `type -> type` meta functions. User `meta fn`
 expansion, active item macro expansion, active type macro expansion, and
 `format!` are still planned and rejected with specific diagnostics.
+Pattern-position `ident!(...)` uses the same reserved spelling and balanced
+token-tree parser, but is rejected until pattern macro expansion can produce
+pattern AST.
 
 Macro invocation is the only parser-level token-tree expression form. A macro
 call is always an ordinary named call such as `make_tokens!(...)`; there is no

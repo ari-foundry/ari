@@ -192,13 +192,18 @@ stages rather than one file per syntax feature.
    balanced token-tree parser, with nested `(...)`, `{...}`, and `[...]`
    delimiter validation before sema diagnostics for unknown names, bad domains,
    or planned expansion. Item/type macro token trees are also preserved through
-   AST/module summary plumbing. Disabled `@cfg(false)` declarations still parse
-   for linting/cache stability.
+   AST/module summary plumbing. Pattern-position `ident!(...)` invocations are
+   now parser-reserved with the same balanced token-tree validation and a
+   planned-expansion diagnostic, so lint tooling can rely on the spelling before
+   pattern macro lowering exists. Disabled `@cfg(false)` declarations still
+   parse for linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [types] expand sema-validated type-position macro invocations into type refs
    - [calls] expand user-defined Rust-style `ident!(...)` expression calls
    - [items] expand sema-validated item-position macro invocations into top-level items
+   - [patterns] expand parser-reserved pattern-position `ident!(...)` invocations
+     once compile-time construction can produce pattern AST
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
@@ -271,7 +276,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    statement bindings also share the same product match lowering path.
    - [slice-patterns] lower `Slice[T]` and `Vec[T]` length-checked patterns
      after the shared binding-mode engine decides reference/ownership behavior
-   - [macro-pattern] allow pattern-position macro expansion after the macro system is real
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and
      function-parameter patterns on one shared binding-mode engine; value alias
      patterns now work in range, list-literal, and stored-vector loop heads when
