@@ -323,6 +323,10 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err
+	if $(TARGET) tests/errors/prelude-string-reserved.ari -o $(BUILD_DIR)/prelude/prelude-string-reserved.elf >$(BUILD_DIR)/prelude/prelude-string-reserved.err 2>&1; then exit 1; fi
+	grep -q "prelude type 'String' is reserved for future owned runtime strings" $(BUILD_DIR)/prelude/prelude-string-reserved.err
+	if $(TARGET) tests/errors/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
+	grep -q "prelude type 'String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
 	if $(TARGET) tests/errors/prelude-box-reserved.ari -o $(BUILD_DIR)/prelude/prelude-box-reserved.elf >$(BUILD_DIR)/prelude/prelude-box-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Box' is reserved for the future unique owning smart pointer" $(BUILD_DIR)/prelude/prelude-box-reserved.err
 	if $(TARGET) tests/errors/prelude-unique-reserved.ari -o $(BUILD_DIR)/prelude/prelude-unique-reserved.elf >$(BUILD_DIR)/prelude/prelude-unique-reserved.err 2>&1; then exit 1; fi

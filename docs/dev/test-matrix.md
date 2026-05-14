@@ -560,6 +560,8 @@ Checklist:
       `print!`, and `println!`
 - [x] lower `matches!` through the pattern engine
 - [x] reserve `format!` with targeted planned diagnostics
+- [x] reject reserved root owned-string surface `String` with a diagnostic
+      that points users to lowercase `string` for today's pointer-shaped values
 - [x] reserve Rust-like standard traits: debug/display/default/clone/copy/drop,
       equality/order, conversion, iterator, string/owned surfaces
 - [x] reserve `Iterable[T]`

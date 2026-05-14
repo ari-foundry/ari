@@ -98,6 +98,11 @@ internal reusable buffer rather than an owned allocation. The `--freestanding`
 backend still supports string literals only as compile-time format strings for
 `print` and `println`.
 
+The uppercase root type `String` is reserved for future owned runtime strings.
+Use lowercase `string` for today's pointer-shaped string values. The future
+owned `String` surface will require explicit allocator or capability arguments
+when it creates independent storage.
+
 ## Tuples
 
 Tuple types and literals are type-checked:
@@ -748,6 +753,8 @@ Meanings:
   zone memory, `zone::scratch<T>` creates a local scratch pointer through a
   hidden temporary zone, `zone::promote<T>` copies a pointed-to value into an
   explicit target zone, and `zone::destroy` releases a non-temporary region
+- `String`: reserved root owned runtime string name. Lowercase `string` remains
+  today's borrowed C-string pointer-shaped value.
 - `Box[T]`, `Unique[T]`, `Shared[T]`, and `Weak[T]`: reserved root
   smart-pointer names. `Box[T]` is the future unique owning handle spelling;
   `Unique[T]` remains reserved for policy compatibility, and `Shared[T]` /

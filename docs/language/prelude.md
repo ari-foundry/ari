@@ -195,8 +195,10 @@ These helpers return a `string` with one trailing `\n` or `\r` removed. End of
 input returns an empty string. The current implementation uses one internal
 line buffer, so a later line read can overwrite the bytes seen through an
 earlier returned `string`. Copying into owned runtime strings is planned with
-allocator-backed strings. The `--freestanding` backend rejects line input until
-that backend has runtime string storage.
+allocator-backed `String` values. The root `String` type name is reserved for
+that future owned buffer surface; use lowercase `string` for today's borrowed
+pointer-shaped text values. The `--freestanding` backend rejects line input
+until that backend has runtime string storage.
 
 ## Assertions And Stops
 
@@ -629,6 +631,7 @@ return/value ABI work.
 Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 
 ```ari
+String
 Box[T]
 Unique[T]
 Shared[T]

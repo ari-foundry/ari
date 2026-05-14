@@ -250,6 +250,10 @@ bool is_source_declared_prelude_special_name(const std::string& name) {
 
 bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
     std::string base = unqualified_name(name);
+    if (base == "String") {
+        arity = 0;
+        return true;
+    }
     if (base == "Box" || base == "Unique" || base == "Shared" || base == "Weak") {
         arity = 1;
         return true;
@@ -259,6 +263,9 @@ bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
 
 std::string planned_prelude_type_message(const std::string& name) {
     std::string base = unqualified_name(name);
+    if (base == "String") {
+        return "prelude type 'String' is reserved for future owned runtime strings; use lowercase string for today's borrowed C-string pointer values";
+    }
     if (base == "Box") {
         return "prelude type 'Box' is reserved for the future unique owning smart pointer; use std::boxed::Box<T> with an explicit Zone for today's zone-backed handle";
     }

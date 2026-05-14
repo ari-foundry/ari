@@ -153,8 +153,11 @@ without backend emission for editor tooling.
    - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
      top of the existing explicit-zone `std::boxed::Box<T>` seed before std
      APIs start returning owning heap handles
-   - [owned-strings] add allocator-backed owned runtime string buffers before
-     `read_line`, `format!`, or general text APIs return independent values
+   - [owned-strings] root `String` is reserved as the future owned runtime
+     string spelling while lowercase `string` remains today's borrowed
+     C-string pointer value. Add allocator-backed `String` buffers, ownership
+     and drop rules, and conversion/copying from `string` before `read_line`,
+     `format!`, or general text APIs return independent values
    - [std-vec-runtime-abi] define the runtime-capacity and non-local ABI rules
      for root `Vec[T]` before making ergonomic std collection methods the
      permanent public surface

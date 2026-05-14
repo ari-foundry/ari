@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let text: String[i64] = "ari";
+  return 0;
+}
