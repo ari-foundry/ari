@@ -1321,8 +1321,12 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.raw; code=$$?; test $$code -eq 56
 	$(TARGET) --freestanding tests/ok/attribute-derive-ord.ari -o $(BUILD_DIR)/meta/attribute-derive-ord.raw
 	$(BUILD_DIR)/meta/attribute-derive-ord.raw; code=$$?; test $$code -eq 36
+	$(TARGET) --freestanding tests/ok/attribute-derive-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-ord-enum.raw
+	$(BUILD_DIR)/meta/attribute-derive-ord-enum.raw; code=$$?; test $$code -eq 78
 	$(TARGET) --freestanding tests/ok/attribute-derive-partial-ord.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord.raw
 	$(BUILD_DIR)/meta/attribute-derive-partial-ord.raw; code=$$?; test $$code -eq 36
+	$(TARGET) --freestanding tests/ok/attribute-derive-partial-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.raw
+	$(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.raw; code=$$?; test $$code -eq 78
 	$(TARGET) tests/ok/attribute-repr-borrow-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
 	grep -q "{ ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
 	grep -q "extractvalue { ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
@@ -1461,10 +1465,6 @@ check-meta: $(TARGET)
 	grep -q "Default derive case 'Missing' does not name a case of enum 'State'" $(BUILD_DIR)/meta/attribute-derive-default-enum-missing-case.err
 	if $(TARGET) tests/errors/attribute-derive-default-struct-case.ari -o $(BUILD_DIR)/meta/attribute-derive-default-struct-case.elf >$(BUILD_DIR)/meta/attribute-derive-default-struct-case.err 2>&1; then exit 1; fi
 	grep -q "Default derive case marker is only valid for enum derives" $(BUILD_DIR)/meta/attribute-derive-default-struct-case.err
-	if $(TARGET) tests/errors/attribute-derive-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-ord-enum.elf >$(BUILD_DIR)/meta/attribute-derive-ord-enum.err 2>&1; then exit 1; fi
-	grep -q "Ord derive for enums requires an explicit enum ordering policy, which is not supported yet" $(BUILD_DIR)/meta/attribute-derive-ord-enum.err
-	if $(TARGET) tests/errors/attribute-derive-partial-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.elf >$(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.err 2>&1; then exit 1; fi
-	grep -q "PartialOrd derive for enums requires an explicit enum ordering policy, which is not supported yet" $(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.err
 	if $(TARGET) tests/errors/attribute-repr-unsupported.ari -o $(BUILD_DIR)/meta/attribute-repr-unsupported.elf >$(BUILD_DIR)/meta/attribute-repr-unsupported.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr' currently supports only C layout" $(BUILD_DIR)/meta/attribute-repr-unsupported.err
 	if $(TARGET) tests/errors/attribute-repr-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-repr-enum-payload.elf >$(BUILD_DIR)/meta/attribute-repr-enum-payload.err 2>&1; then exit 1; fi

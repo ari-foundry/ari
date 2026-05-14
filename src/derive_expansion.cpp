@@ -608,6 +608,30 @@ Pattern make_enum_case_pattern(const EnumCase& item, const std::string& binding_
     return pattern;
 }
 
+Pattern make_enum_case_wildcard_pattern(const EnumCase& item) {
+    Pattern pattern;
+    pattern.kind = PatternKind::EnumCase;
+    pattern.case_name = item.name;
+    pattern.loc = item.loc;
+    if (item.payloads.empty()) return pattern;
+
+    pattern.has_payload_pattern = true;
+    if (item.payloads.size() == 1) {
+        pattern.payload_pattern = std::make_unique<Pattern>(make_wildcard_pattern(item.loc));
+        return pattern;
+    }
+
+    Pattern tuple;
+    tuple.kind = PatternKind::Tuple;
+    tuple.loc = item.loc;
+    tuple.elements.reserve(item.payloads.size());
+    for (std::size_t i = 0; i < item.payloads.size(); ++i) {
+        tuple.elements.push_back(make_wildcard_pattern(item.loc));
+    }
+    pattern.payload_pattern = std::make_unique<Pattern>(std::move(tuple));
+    return pattern;
+}
+
 ExprPtr make_named_equality_call(const std::string& trait_name,
                                  TypeRef type,
                                  SourceLocation loc,
@@ -618,6 +642,22 @@ ExprPtr make_named_equality_call(const std::string& trait_name,
     args.push_back(make_ast_name_expr(loc, right_name));
 
     ExprPtr call = make_ast_call_expr(loc, "std::" + trait_name + "::eq", nullptr, std::move(args));
+    std::vector<TypeRef> trait_args;
+    trait_args.push_back(std::move(type));
+    set_expr_receiver_type_args(*call, std::move(trait_args));
+    return call;
+}
+
+ExprPtr make_named_ordering_call(const std::string& trait_name,
+                                 TypeRef type,
+                                 SourceLocation loc,
+                                 const std::string& left_name,
+                                 const std::string& right_name) {
+    std::vector<ExprPtr> args;
+    args.push_back(make_ast_name_expr(loc, left_name));
+    args.push_back(make_ast_name_expr(loc, right_name));
+
+    ExprPtr call = make_ast_call_expr(loc, "std::" + trait_name + "::lt", nullptr, std::move(args));
     std::vector<TypeRef> trait_args;
     trait_args.push_back(std::move(type));
     set_expr_receiver_type_args(*call, std::move(trait_args));
@@ -702,6 +742,97 @@ ImplDecl make_equality_derive_impl(const EnumDecl& decl, const std::string& trai
     return impl;
 }
 
+ExprPtr make_ordering_enum_payload_value(const EnumCase& item,
+                                         const std::string& trait_name,
+                                         const std::string& left_prefix,
+                                         const std::string& right_prefix) {
+    ExprPtr value = make_ast_bool_expr(item.loc, false);
+    for (std::size_t i = item.payloads.size(); i > 0; --i) {
+        std::size_t index = i - 1;
+        ExprPtr right_lt_left = make_named_ordering_call(
+            trait_name,
+            item.payloads[index],
+            item.loc,
+            enum_payload_binding_name(right_prefix, index),
+            enum_payload_binding_name(left_prefix, index));
+        value = make_ast_binary_expr(
+            item.loc,
+            TokenKind::PipePipe,
+            make_named_ordering_call(
+                trait_name,
+                item.payloads[index],
+                item.loc,
+                enum_payload_binding_name(left_prefix, index),
+                enum_payload_binding_name(right_prefix, index)),
+            make_ast_binary_expr(
+                item.loc,
+                TokenKind::AmpAmp,
+                make_ast_unary_expr(item.loc, TokenKind::Bang, std::move(right_lt_left)),
+                std::move(value)));
+    }
+    return value;
+}
+
+ExprPtr make_ordering_enum_other_match(const EnumDecl& decl,
+                                       std::size_t left_index,
+                                       const std::string& trait_name,
+                                       const std::string& left_prefix,
+                                       const std::string& right_prefix) {
+    std::vector<ExprMatchArm> arms;
+    arms.reserve(decl.cases.size());
+    for (std::size_t right_index = 0; right_index < decl.cases.size(); ++right_index) {
+        const auto& item = decl.cases[right_index];
+        ExprMatchArm arm;
+        arm.pattern = right_index == left_index
+                          ? make_enum_case_pattern(item, right_prefix)
+                          : make_enum_case_wildcard_pattern(item);
+        arm.loc = item.loc;
+        if (right_index == left_index) {
+            arm.value = make_ordering_enum_payload_value(item, trait_name, left_prefix, right_prefix);
+        } else {
+            arm.value = make_ast_bool_expr(item.loc, left_index < right_index);
+        }
+        arms.push_back(std::move(arm));
+    }
+    return make_ast_match_expr(decl.loc, make_ast_name_expr(decl.loc, "other"), std::move(arms));
+}
+
+ExprPtr make_ordering_enum_match_value(const EnumDecl& decl, const std::string& trait_name) {
+    std::vector<ExprMatchArm> arms;
+    arms.reserve(decl.cases.size());
+    for (std::size_t left_index = 0; left_index < decl.cases.size(); ++left_index) {
+        const auto& item = decl.cases[left_index];
+        std::string left_prefix = "left_ord_" + std::to_string(left_index);
+        std::string right_prefix = "right_ord_" + std::to_string(left_index);
+        ExprMatchArm arm;
+        arm.pattern = make_enum_case_pattern(item, left_prefix);
+        arm.loc = item.loc;
+        arm.value = make_ordering_enum_other_match(decl, left_index, trait_name, left_prefix, right_prefix);
+        arms.push_back(std::move(arm));
+    }
+    return make_ast_match_expr(decl.loc, make_ast_name_expr(decl.loc, "self"), std::move(arms));
+}
+
+FunctionDecl make_ordering_method(const EnumDecl& decl, const std::string& trait_name) {
+    return make_derived_method(
+        decl.module_name,
+        "lt",
+        binary_self_params(decl.loc),
+        bool_type_ref(decl.loc),
+        make_ordering_enum_match_value(decl, trait_name),
+        decl.loc);
+}
+
+ImplDecl make_ordering_derive_impl(const EnumDecl& decl, const std::string& trait_name) {
+    std::vector<GenericParam> generics = enum_payload_trait_impl_generics(decl, trait_name, trait_name);
+    std::vector<TypeRef> trait_args;
+    trait_args.push_back(declared_type_ref(decl.name, decl.generics, decl.loc));
+    ImplDecl impl =
+        make_trait_derive_impl(trait_name, decl.name, decl.module_name, generics, decl.loc, std::move(trait_args));
+    impl.methods.push_back(make_ordering_method(decl, trait_name));
+    return impl;
+}
+
 ExprPtr make_ordering_call(const std::string& trait_name,
                            const StructField& field,
                            const std::string& left_base,
@@ -753,12 +884,6 @@ ImplDecl make_ordering_derive_impl(const StructDecl& decl, const std::string& tr
     return impl;
 }
 
-[[noreturn]] void fail_enum_ordering_derive(const EnumDecl& decl, const std::string& trait_name) {
-    fail_derive_expansion(
-        decl.loc,
-        trait_name + " derive for enums requires an explicit enum ordering policy, which is not supported yet");
-}
-
 } // namespace
 
 std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl) {
@@ -808,9 +933,9 @@ std::vector<ImplDecl> expand_derive_impls_for_enum(const EnumDecl& decl) {
         } else if (name == "PartialEq") {
             impls.push_back(make_equality_derive_impl(decl, "PartialEq"));
         } else if (name == "Ord") {
-            fail_enum_ordering_derive(decl, "Ord");
+            impls.push_back(make_ordering_derive_impl(decl, "Ord"));
         } else if (name == "PartialOrd") {
-            fail_enum_ordering_derive(decl, "PartialOrd");
+            impls.push_back(make_ordering_derive_impl(decl, "PartialOrd"));
         }
     }
     return impls;

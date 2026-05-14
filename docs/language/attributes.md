@@ -131,11 +131,11 @@ static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.
 
 `@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`, `@derive(Eq)`, and
-`@derive(PartialEq)` are supported on structs and enums. `@derive(Default)` is
+`@derive(PartialEq)`, `@derive(Ord)`, and `@derive(PartialOrd)` are supported
+on structs and enums. `@derive(Default)` is
 supported on named structs, tuple structs, and enums with an explicit default
-case marker such as `@derive(Default(Ready))`. `@derive(Ord)` and
-`@derive(PartialOrd)` are supported on named and tuple structs. Each derive
-preserves the generic parameters of generic declarations.
+case marker such as `@derive(Default(Ready))`. Each derive preserves the
+generic parameters of generic declarations.
 `Debug` and `Copy` expand to empty trait impls so derived values satisfy their
 trait bounds. `Clone` expands to an impl with a value-self `clone` method that
 returns `self`, matching Ari's current `Clone` trait contract. Struct
@@ -151,14 +151,15 @@ matching payload slots with the matching payload `eq` trait method. Struct
 `Ord` and `PartialOrd` derives expand to lexicographic
 `fn lt(self, other: Self) -> bool` methods that call the matching field `lt`
 trait method, returning on the first unequal field and `false` when all fields
-compare equal. Enum `Ord` and `PartialOrd` derives are reserved until Ari has
-an explicit enum ordering policy. Generic `Default`, `Eq`, `PartialEq`, `Ord`,
-and `PartialOrd` derives add the matching std trait bounds for generic
+compare equal. Enum `Ord` and `PartialOrd` derive methods order cases by source
+declaration order, then compare matching payload slots lexicographically with
+the matching payload `lt` trait method. Generic `Default`, `Eq`, `PartialEq`,
+`Ord`, and `PartialOrd` derives add the matching std trait bounds for generic
 parameters that appear in generated field or payload construction when those
-parameters do not already have another constraint. `Copy` derive is a
-marker-trait impl only; it does not change Ari's structural copyability rules
-for values. Other derive names are rejected until their trait method surfaces
-and expansion contracts are defined.
+parameters do not already have another constraint. `Copy` derive is a marker
+trait impl only; it does not change Ari's structural copyability rules for
+values. Other derive names are rejected until their trait method surfaces and
+expansion contracts are defined.
 
 ## User Attributes
 
