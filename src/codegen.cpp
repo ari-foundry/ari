@@ -3600,7 +3600,12 @@ private:
         }
     }
 
-    void emit_format_argument(const IrExpr& expr) {
+    void emit_format_argument(const IrExpr& expr, const IrFormatSpec& spec) {
+        if (spec.precision >= 0 ||
+            (expr.type.qualifier == TypeQualifier::Value &&
+             (expr.type.primitive == IrPrimitiveKind::F32 || expr.type.primitive == IrPrimitiveKind::F64))) {
+            throw CompileError(where(expr.loc) + ": freestanding backend does not support float formatting yet");
+        }
         emit_expr(expr);
         if (expr.type.qualifier == TypeQualifier::Value && expr.type.primitive == IrPrimitiveKind::Bool) {
             emit_mov_reg_reg(Reg::RDI, Reg::RAX);
@@ -3617,9 +3622,13 @@ private:
             throw CompileError(where(expr.loc) + ": format print expression is missing format payload");
         }
         const std::vector<std::string>& format_parts = ir_expr_format_parts(expr);
+        const std::vector<IrFormatSpec>& format_specs = ir_expr_format_specs(expr);
         for (std::size_t i = 0; i < format_parts.size(); ++i) {
             emit_format_literal(format_parts[i]);
-            if (i < expr.args.size()) emit_format_argument(*expr.args[i]);
+            if (i < expr.args.size()) {
+                const IrFormatSpec& spec = i < format_specs.size() ? format_specs[i] : IrFormatSpec{};
+                emit_format_argument(*expr.args[i], spec);
+            }
         }
         if (ir_expr_format_print_newline(expr)) {
             emit_direct_call("newline");

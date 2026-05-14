@@ -345,13 +345,14 @@ IrExprPtr make_builtin_call(SourceLocation loc,
 IrExprPtr make_format_print_expr(SourceLocation loc,
                                  IrType result,
                                  std::vector<std::string> format_parts,
+                                 std::vector<IrFormatSpec> format_specs,
                                  std::vector<IrExprPtr> args,
                                  bool print_newline) {
     auto expr = std::make_unique<IrExpr>();
     expr->kind = IrExprKind::FormatPrint;
     expr->loc = loc;
     expr->type = std::move(result);
-    set_ir_expr_format_print_payload(*expr, std::move(format_parts), print_newline);
+    set_ir_expr_format_print_payload(*expr, std::move(format_parts), std::move(format_specs), print_newline);
     expr->args = std::move(args);
     return expr;
 }

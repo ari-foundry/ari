@@ -122,6 +122,7 @@ Compile it with a module search path that can find `lib/std.arih`, for example
 ```ari
 fn main() -> i64 {
   println("value={} ok={}", 42, true)
+  println("pi={:.2}", 3.14159f64)
   print("escaped braces: {{}}")
   newline()
   return 0
@@ -132,14 +133,19 @@ Formatting rules:
 
 - the first argument must be a string literal
 - `{}` consumes one value argument
+- `{:.N}` consumes one `f32` or `f64` value and prints it with `N` digits
+  after the decimal point; `N` must be between `0` and `64`
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the placeholder count is checked at compile time
-- formatted values currently support integers and bool
+- formatted values currently support integers, bool, `f32`, and `f64`
 - `println` appends one newline
 - `print` does not append a newline
 
 `bool` currently prints as `1` or `0`.
+On the raw `--freestanding` backend, formatted float output is reserved until
+the freestanding runtime grows decimal float formatting; integer and bool
+formatting still work there.
 
 ## Qualified Formatting Names
 

@@ -245,8 +245,13 @@ struct IrExprMatchPayload {
     std::vector<IrMatchExprArm> arms;
 };
 
+struct IrFormatSpec {
+    int precision = -1;
+};
+
 struct IrExprFormatPrintPayload {
     std::vector<std::string> parts;
+    std::vector<IrFormatSpec> specs;
     bool print_newline = false;
 };
 
@@ -417,15 +422,21 @@ inline const std::vector<std::string>& ir_expr_format_parts(const IrExpr& expr) 
     return ir_expr_format_print_payload(expr).parts;
 }
 
+inline const std::vector<IrFormatSpec>& ir_expr_format_specs(const IrExpr& expr) {
+    return ir_expr_format_print_payload(expr).specs;
+}
+
 inline bool ir_expr_format_print_newline(const IrExpr& expr) {
     return ir_expr_format_print_payload(expr).print_newline;
 }
 
 inline void set_ir_expr_format_print_payload(IrExpr& expr,
                                              std::vector<std::string> parts,
+                                             std::vector<IrFormatSpec> specs,
                                              bool print_newline) {
     expr.format_print_payload = std::make_unique<IrExprFormatPrintPayload>();
     expr.format_print_payload->parts = std::move(parts);
+    expr.format_print_payload->specs = std::move(specs);
     expr.format_print_payload->print_newline = print_newline;
 }
 

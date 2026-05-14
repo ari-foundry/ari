@@ -1,0 +1,5 @@
+fn main() -> i64 {
+  println("pi={:.2} default={}", 3.14159f64, 1.5f32);
+  print("whole={:.0}\n", 6.0f64);
+  return 0;
+}

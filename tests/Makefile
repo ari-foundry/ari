@@ -16,6 +16,10 @@ check: check-std-api $(TARGET) check-cli check-prelude check-control-flow check-
 	$(TARGET) tests/ok/format-print.ari --emit-llvm $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_write_i64" $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_newline" $(BUILD_DIR)/ir/format-print.ll
+	$(TARGET) tests/ok/format-float-precision.ari --emit-llvm $(BUILD_DIR)/ir/format-float-precision.ll
+	grep -F -q "\\25\\2E\\32\\66" $(BUILD_DIR)/ir/format-float-precision.ll
+	grep -q "fpext float" $(BUILD_DIR)/ir/format-float-precision.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/format-float-precision.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-float-precision.elf; $(BUILD_DIR)/format-float-precision.elf >$(BUILD_DIR)/format-float-precision.out; grep -q "pi=3.14 default=1.500000" $(BUILD_DIR)/format-float-precision.out; grep -q "whole=6" $(BUILD_DIR)/format-float-precision.out; fi
 	$(TARGET) tests/ok/context-arg.ari --emit-llvm $(BUILD_DIR)/ir/context-arg.ll
 	grep -q "@ari_builtin_context_arg" $(BUILD_DIR)/ir/context-arg.ll
 	$(TARGET) tests/ok/ffi-c-puts.ari --emit-llvm $(BUILD_DIR)/ir/ffi-c-puts.ll
@@ -2767,6 +2771,12 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "format string has 2 placeholders but 1 values were provided" $(BUILD_DIR)/errors/format-placeholder-count.err
 	if $(TARGET) tests/errors/format-nonliteral.ari -o $(BUILD_DIR)/errors/format-nonliteral.elf >$(BUILD_DIR)/errors/format-nonliteral.err 2>&1; then exit 1; fi
 	grep -q "expects a string literal format argument" $(BUILD_DIR)/errors/format-nonliteral.err
+	if $(TARGET) tests/errors/format-precision-nonfloat.ari -o $(BUILD_DIR)/errors/format-precision-nonfloat.elf >$(BUILD_DIR)/errors/format-precision-nonfloat.err 2>&1; then exit 1; fi
+	grep -q "format precision placeholders require f32 or f64 arguments" $(BUILD_DIR)/errors/format-precision-nonfloat.err
+	if $(TARGET) tests/errors/format-precision-syntax.ari -o $(BUILD_DIR)/errors/format-precision-syntax.elf >$(BUILD_DIR)/errors/format-precision-syntax.err 2>&1; then exit 1; fi
+	grep -q "format precision placeholder expects digits after colon-dot" $(BUILD_DIR)/errors/format-precision-syntax.err
+	if $(TARGET) --freestanding tests/errors/format-float-freestanding.ari -o $(BUILD_DIR)/errors/format-float-freestanding.elf >$(BUILD_DIR)/errors/format-float-freestanding.err 2>&1; then exit 1; fi
+	grep -q "freestanding backend does not support float formatting yet" $(BUILD_DIR)/errors/format-float-freestanding.err
 	if $(TARGET) tests/errors/extern-cpp-removed.ari -o $(BUILD_DIR)/errors/extern-cpp-removed.elf >$(BUILD_DIR)/errors/extern-cpp-removed.err 2>&1; then exit 1; fi
 	grep -q 'extern ABI must be "C" or "ari"' $(BUILD_DIR)/errors/extern-cpp-removed.err
 	if $(TARGET) tests/errors/extern-body.ari -o $(BUILD_DIR)/errors/extern-body.elf >$(BUILD_DIR)/errors/extern-body.err 2>&1; then exit 1; fi

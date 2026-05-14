@@ -2888,6 +2888,7 @@ private:
             throw CompileError(where(expr.loc) + ": format print expression is missing format payload");
         }
         const std::vector<std::string>& format_parts = ir_expr_format_parts(expr);
+        const std::vector<IrFormatSpec>& format_specs = ir_expr_format_specs(expr);
         std::string fmt_string = string_ptr("%s");
         for (std::size_t i = 0; i < format_parts.size(); ++i) {
             if (!format_parts[i].empty()) {
@@ -2897,6 +2898,18 @@ private:
                 Value arg = emit_expr(*expr.args[i]);
                 if (arg.ir_type.primitive == IrPrimitiveKind::Bool) {
                     line("  call i64 @ari_builtin_write_bool(i1 " + arg.name + ")");
+                } else if (arg.ir_type.primitive == IrPrimitiveKind::F32 ||
+                           arg.ir_type.primitive == IrPrimitiveKind::F64) {
+                    Value wide = arg;
+                    if (arg.ir_type.primitive == IrPrimitiveKind::F32) {
+                        std::string out = temp();
+                        line("  " + out + " = fpext float " + arg.name + " to double");
+                        IrType double_type{TypeQualifier::Value, IrPrimitiveKind::F64, "f64", {}, {}, {}, {}, expr.loc};
+                        wide = Value{"double", out, double_type};
+                    }
+                    int precision = i < format_specs.size() ? format_specs[i].precision : -1;
+                    std::string printf_format = precision >= 0 ? "%." + std::to_string(precision) + "f" : "%f";
+                    line("  call i32 (ptr, ...) @printf(ptr " + string_ptr(printf_format) + ", double " + wide.name + ")");
                 } else if (arg.ir_type.primitive == IrPrimitiveKind::U8 || arg.ir_type.primitive == IrPrimitiveKind::I8) {
                     Value byte = cast_value(arg, IrType{TypeQualifier::Value, IrPrimitiveKind::U8, "u8", {}, {}, {}, {}, expr.loc});
                     line("  call i64 @ari_builtin_write_byte(i8 " + byte.name + ")");

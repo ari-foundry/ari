@@ -78,6 +78,7 @@ IrExprPtr make_builtin_call(SourceLocation loc,
 IrExprPtr make_format_print_expr(SourceLocation loc,
                                  IrType result,
                                  std::vector<std::string> format_parts,
+                                 std::vector<IrFormatSpec> format_specs,
                                  std::vector<IrExprPtr> args,
                                  bool print_newline);
 IrExprPtr make_trait_object_call_expr(SourceLocation loc,

@@ -250,10 +250,13 @@ stages rather than one file per syntax feature.
    - [ast] support non-identity `ast` construction and rewrites beyond
      empty/`return input;` identity bodies
    - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [format] lower `format!` after owned runtime strings exist; the reserved
-     diagnostic now applies to unqualified `format!`, `std::format!`, and
-     aliases that resolve to the root `std` macro path, while unrelated
-     qualified `format!` paths remain user macro names
+   - [format] `print`/`println` now accept `{}`, escaped braces, and `{:.N}`
+     fixed decimal precision for `f32`/`f64` on the LLVM host backend. Lower
+     `format!` after owned runtime strings exist; the reserved diagnostic now
+     applies to unqualified `format!`, `std::format!`, and aliases that resolve
+     to the root `std` macro path, while unrelated qualified `format!` paths
+     remain user macro names. The raw `--freestanding` backend still needs its
+     own decimal float formatting runtime before it accepts float placeholders.
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -265,9 +268,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    hashes/imports and can materialize declaration-safe headers plus
    summary-safe executable dependency bodies from AST summaries without parsing
    the cached source snapshot. The current source-level AST expression,
-   statement, and pattern surface is covered by that path. Add IR summaries
-   later for future executable bodies that cannot round-trip through the compact
-   AST summary format.
+   statement, and pattern surface is covered by that path. Keep this current
+   source-snapshot cache format until the 0.1.0/v0 cache baseline, then add IR
+   summaries later for future executable bodies that cannot round-trip through
+   the compact AST summary format.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies whose executable function or impl bodies
      use forms outside the AST summary subset

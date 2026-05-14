@@ -13740,8 +13740,33 @@ private:
             access.type);
     }
 
-    static std::vector<std::string> parse_format_string(SourceLocation loc, const std::string& text, std::size_t arg_count) {
+    struct ParsedFormatString {
         std::vector<std::string> parts;
+        std::vector<IrFormatSpec> specs;
+    };
+
+    static IrFormatSpec parse_format_placeholder(SourceLocation loc, const std::string& text) {
+        if (text.empty()) return IrFormatSpec{};
+        if (text.size() < 2 || text[0] != ':' || text[1] != '.') {
+            fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
+        }
+        int precision = 0;
+        bool has_digit = false;
+        for (std::size_t i = 2; i < text.size(); ++i) {
+            unsigned char c = static_cast<unsigned char>(text[i]);
+            if (!std::isdigit(c)) {
+                fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
+            }
+            has_digit = true;
+            precision = precision * 10 + static_cast<int>(text[i] - '0');
+            if (precision > 64) fail(loc, "format precision must be at most 64");
+        }
+        if (!has_digit) fail(loc, "format precision placeholder expects digits after colon-dot");
+        return IrFormatSpec{precision};
+    }
+
+    static ParsedFormatString parse_format_string(SourceLocation loc, const std::string& text, std::size_t arg_count) {
+        ParsedFormatString parsed;
         std::string current;
         std::size_t placeholders = 0;
         for (std::size_t i = 0; i < text.size(); ++i) {
@@ -13752,14 +13777,16 @@ private:
                     ++i;
                     continue;
                 }
-                if (i + 1 < text.size() && text[i + 1] == '}') {
-                    parts.push_back(current);
-                    current.clear();
-                    ++placeholders;
-                    ++i;
-                    continue;
+                std::size_t close = text.find('}', i + 1);
+                if (close == std::string::npos) {
+                    fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
                 }
-                fail(loc, "format string only supports {} placeholders; escape literal { as {{");
+                parsed.parts.push_back(current);
+                current.clear();
+                parsed.specs.push_back(parse_format_placeholder(loc, text.substr(i + 1, close - i - 1)));
+                ++placeholders;
+                i = close;
+                continue;
             }
             if (c == '}') {
                 if (i + 1 < text.size() && text[i + 1] == '}') {
@@ -13771,12 +13798,12 @@ private:
             }
             current.push_back(c);
         }
-        parts.push_back(current);
+        parsed.parts.push_back(current);
         if (placeholders != arg_count) {
             fail(loc, "format string has " + std::to_string(placeholders) +
                       " placeholders but " + std::to_string(arg_count) + " values were provided");
         }
-        return parts;
+        return parsed;
     }
 
     IrExprPtr check_format_print(const Expr& expr, IrExprPtr lowered, const std::string& print_name) {
@@ -13787,12 +13814,13 @@ private:
             fail(format.loc, "'" + expr.name + "' expects a string literal format argument");
         }
 
-        std::vector<std::string> format_parts = parse_format_string(format.loc, format.string_value, expr.args.size() - 1);
+        ParsedFormatString format_string = parse_format_string(format.loc, format.string_value, expr.args.size() - 1);
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size() - 1);
 
         for (std::size_t i = 1; i < expr.args.size(); ++i) {
             IrExprPtr arg = check_expr(*expr.args[i]);
+            const IrFormatSpec& spec = format_string.specs.at(i - 1);
             if (is_borrow_type(arg->type)) {
                 fail(expr.args[i]->loc, "format arguments cannot be borrow values");
             }
@@ -13802,16 +13830,26 @@ private:
             if (arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::U64) {
                 fail(expr.args[i]->loc, "format arguments do not support u64 yet");
             }
-            if (!is_value_integer_type(arg->type) &&
-                !(arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool)) {
-                fail(expr.args[i]->loc, "format arguments currently support integer and bool values, got " + type_name(arg->type));
+            bool is_bool = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool;
+            bool is_supported_float =
+                arg->type.qualifier == TypeQualifier::Value &&
+                (arg->type.primitive == IrPrimitiveKind::F32 || arg->type.primitive == IrPrimitiveKind::F64);
+            if (spec.precision >= 0 && !is_supported_float) {
+                fail(expr.args[i]->loc, "format precision placeholders require f32 or f64 arguments, got " + type_name(arg->type));
+            }
+            if (is_value_float_type(arg->type) && !is_supported_float) {
+                fail(expr.args[i]->loc, "format arguments do not support " + type_name(arg->type) + " yet");
+            }
+            if (!is_value_integer_type(arg->type) && !is_bool && !is_supported_float) {
+                fail(expr.args[i]->loc, "format arguments currently support integer, bool, f32, and f64 values, got " + type_name(arg->type));
             }
             args.push_back(std::move(arg));
         }
         return make_format_print_expr(
             expr.loc,
             i64_type(expr.loc),
-            std::move(format_parts),
+            std::move(format_string.parts),
+            std::move(format_string.specs),
             std::move(args),
             is_println_name(print_name)
         );
