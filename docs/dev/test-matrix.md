@@ -246,6 +246,9 @@ Checklist:
 - [x] checked local `Vec.swap(a, b)` on the LLVM backend, including known-empty
       runtime-index rejection
 - [x] frozen local `Vec[T]` API rejects unsupported compiler-known methods with allocator-backed std guidance
+- [x] root `Vec[T]` non-local ABI/storage use is rejected for function and
+      extern parameters/returns, direct or generic-instantiated struct fields,
+      and impl receivers until the runtime-capacity layout is defined
 - [x] `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` seeds future
       allocator-backed Vec storage with a tracked zone-backed element pointer
 - [x] `std::boxed::new<T>(ref mut Zone, value)` wraps placement construction in

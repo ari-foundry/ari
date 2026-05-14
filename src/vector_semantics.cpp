@@ -121,6 +121,30 @@ bool is_vector_storage_type(const IrType& type) {
     return type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1;
 }
 
+bool contains_root_vector_without_runtime_abi(const IrType& type) {
+    if (type.primitive == IrPrimitiveKind::Vector &&
+        type.args.size() == 1 &&
+        type.array_size == 0) {
+        return true;
+    }
+    for (const auto& arg : type.args) {
+        if (contains_root_vector_without_runtime_abi(arg)) return true;
+    }
+    for (const auto& field : type.field_types) {
+        if (contains_root_vector_without_runtime_abi(field)) return true;
+    }
+    return false;
+}
+
+void require_root_vector_runtime_abi(SourceLocation loc,
+                                     const IrType& type,
+                                     const std::string& context) {
+    if (!contains_root_vector_without_runtime_abi(type)) return;
+    fail(loc,
+         "root Vec[T] cannot be used as " + context +
+             " until the runtime-capacity Vec ABI is defined; use std::vec::Vec[T] with an explicit Zone handle or pass Slice[T]");
+}
+
 IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {
     IrType type = primitive_type(IrPrimitiveKind::Vector, "Vec", loc);
     type.args.push_back(element);

@@ -1,0 +1,8 @@
+struct Holder[T] {
+  value: T,
+}
+
+fn main() -> i64 {
+  let holder: Holder[Vec[i64]] = Holder<Vec[i64]> { value: [1, 2] };
+  return len(holder.value);
+}

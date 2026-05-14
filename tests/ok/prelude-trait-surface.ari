@@ -67,15 +67,19 @@ impl TryFrom[i64] for i64 {
 impl TryInto[i64] for i64 {
 }
 
-impl Iterator[i64] for Vec[i64] {
+struct Bag {
+  value: i64,
+}
+
+impl Iterator[i64] for Bag {
   fn next(self: ref mut Self) -> Option[i64] {
     return None<i64>();
   }
 }
 
-impl IntoIterator[i64] for Vec[i64] {
-  fn into_iter(self: ref mut Self) -> Vec[i64] {
-    self
+impl IntoIterator[i64] for Bag {
+  fn into_iter(self: ref mut Self) -> Bag {
+    return Bag { value: 0 };
   }
 }
 

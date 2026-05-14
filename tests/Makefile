@@ -1604,7 +1604,9 @@ check-traits: $(TARGET)
 	if $(TARGET) tests/errors/iterable-trait-arity.ari -o $(BUILD_DIR)/traits/iterable-trait-arity.elf >$(BUILD_DIR)/traits/iterable-trait-arity.err 2>&1; then exit 1; fi
 	grep -q "trait 'std::Iterable' expects 1 type argument" $(BUILD_DIR)/traits/iterable-trait-arity.err
 	if $(TARGET) tests/errors/duplicate-trait-impl.ari -o $(BUILD_DIR)/traits/duplicate-trait-impl.elf >$(BUILD_DIR)/traits/duplicate-trait-impl.err 2>&1; then exit 1; fi
-	grep -q "duplicate impl of trait 'std::Iterable' for Vec\\[i64\\]" $(BUILD_DIR)/traits/duplicate-trait-impl.err
+	grep -q "duplicate impl of trait 'std::Iterable' for Bag" $(BUILD_DIR)/traits/duplicate-trait-impl.err
+	if $(TARGET) tests/errors/vector-impl-runtime-abi.ari -o $(BUILD_DIR)/traits/vector-impl-runtime-abi.elf >$(BUILD_DIR)/traits/vector-impl-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as an impl receiver until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/traits/vector-impl-runtime-abi.err
 	if $(TARGET) tests/errors/trait-duplicate-decl.ari -o $(BUILD_DIR)/traits/trait-duplicate-decl.elf >$(BUILD_DIR)/traits/trait-duplicate-decl.err 2>&1; then exit 1; fi
 	grep -q "duplicate trait 'Show'" $(BUILD_DIR)/traits/trait-duplicate-decl.err
 	if $(TARGET) tests/errors/trait-duplicate-method.ari -o $(BUILD_DIR)/traits/trait-duplicate-method.elf >$(BUILD_DIR)/traits/trait-duplicate-method.err 2>&1; then exit 1; fi
@@ -1720,6 +1722,10 @@ check-structs: $(TARGET)
 	grep -q "duplicate field 'x' in struct 'Point'" $(BUILD_DIR)/structs/struct-duplicate-field.err
 	if $(TARGET) tests/errors/struct-unknown-field-type.ari -o $(BUILD_DIR)/structs/struct-unknown-field-type.elf >$(BUILD_DIR)/structs/struct-unknown-field-type.err 2>&1; then exit 1; fi
 	grep -q "unsupported executable type 'Missing'" $(BUILD_DIR)/structs/struct-unknown-field-type.err
+	if $(TARGET) tests/errors/vector-struct-field-runtime-abi.ari -o $(BUILD_DIR)/structs/vector-struct-field-runtime-abi.elf >$(BUILD_DIR)/structs/vector-struct-field-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as a struct field until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/structs/vector-struct-field-runtime-abi.err
+	if $(TARGET) tests/errors/vector-generic-struct-field-runtime-abi.ari -o $(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.elf >$(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as a struct field until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.err
 	if $(TARGET) tests/errors/struct-generic-arity.ari -o $(BUILD_DIR)/structs/struct-generic-arity.elf >$(BUILD_DIR)/structs/struct-generic-arity.err 2>&1; then exit 1; fi
 	grep -q "struct 'Pair' expects 1 type argument" $(BUILD_DIR)/structs/struct-generic-arity.err
 	if $(TARGET) tests/errors/generic-struct-infer-conflict.ari -o $(BUILD_DIR)/structs/generic-struct-infer-conflict.elf >$(BUILD_DIR)/structs/generic-struct-infer-conflict.err 2>&1; then exit 1; fi
@@ -2345,6 +2351,10 @@ check-ffi: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-callback.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-callback.elf; $(BUILD_DIR)/ffi/ffi-c-callback.elf; code=$$?; test $$code -eq 15; fi
 	if $(TARGET) tests/errors/extern-void-param.ari -o $(BUILD_DIR)/ffi/extern-void-param.elf >$(BUILD_DIR)/ffi/extern-void-param.err 2>&1; then exit 1; fi
 	grep -q "extern parameter cannot have void type; use ptr c_void for void\\*" $(BUILD_DIR)/ffi/extern-void-param.err
+	if $(TARGET) tests/errors/vector-extern-param-runtime-abi.ari -o $(BUILD_DIR)/ffi/vector-extern-param-runtime-abi.elf >$(BUILD_DIR)/ffi/vector-extern-param-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as an extern function parameter until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/ffi/vector-extern-param-runtime-abi.err
+	if $(TARGET) tests/errors/vector-extern-return-runtime-abi.ari -o $(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.elf >$(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as an extern function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.err
 	if $(TARGET) tests/errors/extern-varargs-nonextern.ari -o $(BUILD_DIR)/ffi/extern-varargs-nonextern.elf >$(BUILD_DIR)/ffi/extern-varargs-nonextern.err 2>&1; then exit 1; fi
 	grep -q "variadic parameters are only supported on extern \"C\" functions" $(BUILD_DIR)/ffi/extern-varargs-nonextern.err
 	if $(TARGET) tests/errors/extern-varargs-empty.ari -o $(BUILD_DIR)/ffi/extern-varargs-empty.elf >$(BUILD_DIR)/ffi/extern-varargs-empty.err 2>&1; then exit 1; fi
@@ -2511,6 +2521,10 @@ check-function-errors: $(TARGET)
 	grep -q "wrong argument count for 'add'" $(BUILD_DIR)/functions/errors/function-wrong-arg-count.err
 	if $(TARGET) tests/errors/function-arg-type-mismatch.ari -o $(BUILD_DIR)/functions/errors/function-arg-type-mismatch.elf >$(BUILD_DIR)/functions/errors/function-arg-type-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/functions/errors/function-arg-type-mismatch.err
+	if $(TARGET) tests/errors/vector-function-param-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-param-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-param-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as a function parameter until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-param-runtime-abi.err
+	if $(TARGET) tests/errors/vector-function-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as a function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err
 	if $(TARGET) tests/errors/function-param-pattern.ari -o $(BUILD_DIR)/functions/errors/function-param-pattern.elf >$(BUILD_DIR)/functions/errors/function-param-pattern.err 2>&1; then exit 1; fi
 	grep -q "tuple binding pattern requires a tuple value, got i64" $(BUILD_DIR)/functions/errors/function-param-pattern.err
 	if $(TARGET) tests/errors/function-overload-params.ari -o $(BUILD_DIR)/functions/errors/function-overload-params.elf >$(BUILD_DIR)/functions/errors/function-overload-params.err 2>&1; then exit 1; fi
@@ -2660,7 +2674,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/iterable-trait-arity.ari -o $(BUILD_DIR)/errors/iterable-trait-arity.elf >$(BUILD_DIR)/errors/iterable-trait-arity.err 2>&1; then exit 1; fi
 	grep -q "trait 'std::Iterable' expects 1 type argument" $(BUILD_DIR)/errors/iterable-trait-arity.err
 	if $(TARGET) tests/errors/duplicate-trait-impl.ari -o $(BUILD_DIR)/errors/duplicate-trait-impl.elf >$(BUILD_DIR)/errors/duplicate-trait-impl.err 2>&1; then exit 1; fi
-	grep -q "duplicate impl of trait 'std::Iterable' for Vec\\[i64\\]" $(BUILD_DIR)/errors/duplicate-trait-impl.err
+	grep -q "duplicate impl of trait 'std::Iterable' for Bag" $(BUILD_DIR)/errors/duplicate-trait-impl.err
 	if $(TARGET) tests/errors/logical-non-bool.ari -o $(BUILD_DIR)/errors/logical-non-bool.elf >$(BUILD_DIR)/errors/logical-non-bool.err 2>&1; then exit 1; fi
 	grep -q "logical operand must be bool, got i64" $(BUILD_DIR)/errors/logical-non-bool.err
 	if $(TARGET) tests/errors/not-non-bool.ari -o $(BUILD_DIR)/errors/not-non-bool.elf >$(BUILD_DIR)/errors/not-non-bool.err 2>&1; then exit 1; fi

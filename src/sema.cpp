@@ -1622,7 +1622,8 @@ private:
             current_module_name_ = decl.module_name;
             current_type_substitutions_ = std::move(substitutions);
             for (const auto& field : decl.fields) {
-                (void)resolve_executable_type(field.type);
+                IrType field_type = resolve_executable_type(field.type);
+                require_root_vector_runtime_abi(field.loc, field_type, "a struct field");
             }
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
@@ -3008,6 +3009,7 @@ private:
             std::map<std::string, IrType> outer_previous_substitutions = std::move(current_type_substitutions_);
             current_type_substitutions_ = substitutions;
             IrType self_type = resolve_executable_type(impl.for_type);
+            require_root_vector_runtime_abi(impl.for_type.loc, self_type, "an impl receiver");
             substitutions.emplace("Self", self_type);
             current_type_substitutions_ = substitutions;
             std::vector<GenericTraitBound> impl_bounds = resolve_generic_trait_bounds(impl.generics);
@@ -3055,8 +3057,15 @@ private:
                 sig.loc = method.loc;
                 sig.module_name = method.module_name;
                 sig.is_public = false;
-                for (const auto& param : method.params) sig.params.push_back(resolve_executable_type(param.type));
+                for (const auto& param : method.params) {
+                    IrType param_type = resolve_executable_type(param.type);
+                    require_root_vector_runtime_abi(param.type.loc, param_type, "an impl method parameter");
+                    sig.params.push_back(param_type);
+                }
                 sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
+                if (method.has_return_type) {
+                    require_root_vector_runtime_abi(method.return_type.loc, sig.result, "an impl method return type");
+                }
                 set_function_return_contracts(sig);
                 apply_explicit_borrow_return_contract(sig, method);
                 set_function_borrow_return_path_hint(sig, method);
@@ -3381,8 +3390,15 @@ private:
                                              fn.name);
             std::string previous_module = current_module_name_;
             current_module_name_ = fn.module_name;
-            for (const auto& param : fn.params) sig.params.push_back(resolve_executable_type(param.type));
+            for (const auto& param : fn.params) {
+                IrType param_type = resolve_executable_type(param.type);
+                require_root_vector_runtime_abi(param.type.loc, param_type, "a function parameter");
+                sig.params.push_back(param_type);
+            }
             sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+            if (fn.has_return_type) {
+                require_root_vector_runtime_abi(fn.return_type.loc, sig.result, "a function return type");
+            }
             set_function_return_contracts(sig);
             apply_explicit_borrow_return_contract(sig, fn);
             set_function_borrow_return_path_hint(sig, fn);
@@ -3447,12 +3463,16 @@ private:
         current_module_name_ = fn.module_name;
         for (const auto& param : fn.params) {
             IrType param_type = resolve_executable_type(param.type);
+            require_root_vector_runtime_abi(param.type.loc, param_type, "an extern function parameter");
             if (param_type.qualifier == TypeQualifier::Value && param_type.primitive == IrPrimitiveKind::Void) {
                 fail(param.type.loc, "extern parameter cannot have void type; use ptr c_void for void*");
             }
             sig.params.push_back(param_type);
         }
         sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+        if (fn.has_return_type) {
+            require_root_vector_runtime_abi(fn.return_type.loc, sig.result, "an extern function return type");
+        }
         set_function_return_contracts(sig);
         apply_explicit_borrow_return_contract(sig, fn);
         current_module_name_ = previous_module;
@@ -3987,6 +4007,7 @@ private:
                     type.field_mutable.push_back(field.mutable_field);
                 }
                 current_type_substitutions_ = std::move(previous_substitutions);
+                require_root_vector_runtime_abi(type.loc, type, "a struct field");
             } else {
                 std::string resolved_name = resolve_enum_type_name(type.name);
                 auto enum_found = enums_.find(resolved_name);
@@ -4086,6 +4107,9 @@ private:
         push_scope();
 
         current_return_ = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
+        if (fn.has_return_type) {
+            require_root_vector_runtime_abi(fn.return_type.loc, current_return_, "a function return type");
+        }
 
         IrFunction ir_fn;
         ir_fn.name = lowered_name;
@@ -4100,6 +4124,7 @@ private:
         std::vector<IrStmtPtr> parameter_pattern_prelude;
         for (const auto& param : fn.params) {
             IrType type = resolve_executable_type(param.type);
+            require_root_vector_runtime_abi(param.type.loc, type, "a function parameter");
             const Pattern* param_pattern = param.has_pattern ? &expanded_pattern(param.pattern) : nullptr;
             if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Void) {
                 fail(fn.loc, "parameter cannot have void type");
@@ -13934,11 +13959,19 @@ private:
         sig.module_name = method.module_name;
         sig.is_public = method.is_public;
         for (const auto& param : method.fn->params) {
-            sig.params.push_back(resolve_type_with_substitutions(param.type, substitutions));
+            IrType param_type = resolve_type_with_substitutions(param.type, substitutions);
+            require_root_vector_runtime_abi(param.type.loc, param_type, "an impl method parameter");
+            sig.params.push_back(param_type);
         }
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
+        if (method.fn->has_return_type) {
+            require_root_vector_runtime_abi(
+                method.fn->return_type.loc,
+                sig.result,
+                "an impl method return type");
+        }
         set_function_return_contracts(sig);
         apply_explicit_borrow_return_contract(sig, *method.fn);
         set_function_borrow_return_path_hint(sig, *method.fn);
@@ -13974,11 +14007,19 @@ private:
         sig.module_name = method.module_name;
         sig.is_public = method.is_public;
         for (const auto& param : method.fn->params) {
-            sig.params.push_back(resolve_type_with_substitutions(param.type, substitutions));
+            IrType param_type = resolve_type_with_substitutions(param.type, substitutions);
+            require_root_vector_runtime_abi(param.type.loc, param_type, "an impl method parameter");
+            sig.params.push_back(param_type);
         }
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
+        if (method.fn->has_return_type) {
+            require_root_vector_runtime_abi(
+                method.fn->return_type.loc,
+                sig.result,
+                "an impl method return type");
+        }
         set_function_return_contracts(sig);
         apply_explicit_borrow_return_contract(sig, *method.fn);
         set_function_borrow_return_path_hint(sig, *method.fn);

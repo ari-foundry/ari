@@ -129,6 +129,12 @@ stages rather than one file per syntax feature.
    returns a tracked source `std::boxed::Box<T>` handle with `get`, `set`,
    `replace`, `copy_to`, `swap`, and `as_ptr` methods, while the root owning
    `Box[T]` smart-pointer surface remains future work.
+   Root `Vec[T]` now has an explicit non-local rule while runtime capacity is
+   still absent: it remains a fixed-local value only, and sema rejects root
+   `Vec[T]` in function/extern parameters or returns, struct fields, and impl
+   receivers. Cross-boundary heap-capacity handles should use
+   `std::vec::Vec<T>` with an explicit `Zone`, while borrowed views should use
+   `Slice[T]`.
    - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
      root `Vec[T].reserve(capacity)` with runtime heap capacity growth
    - [ops-runtime] port the root `Vec[T]` public method surface to
@@ -165,9 +171,6 @@ stages rather than one file per syntax feature.
      C-string pointer value. Add allocator-backed `String` buffers, ownership
      and drop rules, and conversion/copying from `string` before `read_line`,
      `format!`, or general text APIs return independent values
-   - [std-vec-runtime-abi] define the runtime-capacity and non-local ABI rules
-     for root `Vec[T]` before making ergonomic std collection methods the
-     permanent public surface
 3. Stabilize and implement user-defined compile-time meta expansion for
    `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.
@@ -390,7 +393,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [raw-c-imports] define a real C ABI/link path for imported `extern "C"`
      symbols on raw/freestanding targets; direct C extern calls remain rejected
      there until this exists
-   - [vectors] define non-local and growable vector ABI after allocator-backed `Vec[T]` storage exists
+   - [vectors] define the growable root `Vec[T]` runtime ABI and backend
+     lowering after allocator-backed storage exists; fixed-local root `Vec[T]`
+     remains rejected at non-local boundaries until then
    - [enums] finish direct value materialization for multi-payload aggregate
      enums in the freestanding backend and define their external FFI ABI
 3. Add freestanding runtime string storage so raw ELF output can lower string

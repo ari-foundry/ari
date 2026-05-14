@@ -1,7 +1,10 @@
-impl Iterable[i64] for Vec[i64] {
+struct Bag {
 }
 
-impl Iterable[i64] for Vec[i64] {
+impl Iterable[i64] for Bag {
+}
+
+impl Iterable[i64] for Bag {
 }
 
 fn main() -> i64 {

@@ -1,7 +1,10 @@
-impl Iterable[i64] for Vec[i64] {
+struct Bag {
 }
 
-impl iter::Iterator[i64] for Vec[i64] {
+impl Iterable[i64] for Bag {
+}
+
+impl iter::Iterator[i64] for Bag {
   fn next(self) -> Option[i64] {
     None<i64>()
   }
