@@ -151,8 +151,9 @@ fn value() -> i64 {
 
 The attribute name is checked against meta functions today. Attribute arguments
 are parsed as a balanced token tree inside the outer parentheses, preserving
-nested `(...)`, `{...}`, and `[...]` groups for the future evaluator. Expansion
-is planned.
+nested `(...)`, `{...}`, and `[...]` groups for the future evaluator. Module
+AST summaries keep the full token payload, including literal suffixes.
+Expansion is planned.
 
 ## Meta Functions
 

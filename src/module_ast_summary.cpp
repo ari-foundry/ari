@@ -83,10 +83,7 @@ void append_attributes(std::ostringstream& out, const std::vector<Attribute>& at
         append_field(out, attr.name);
         append_bool(out, attr.has_args);
         append_count(out, attr.args.size());
-        for (const auto& token : attr.args) {
-            append_count(out, static_cast<std::uint64_t>(token.kind));
-            append_field(out, token.text);
-        }
+        for (const auto& token : attr.args) append_token_payload(out, token);
     }
 }
 
@@ -1109,6 +1106,7 @@ private:
     }
 
     void consume_header() {
+        const std::string v9 = "ari-ast-decls-v9;";
         const std::string v8 = "ari-ast-decls-v8;";
         const std::string v7 = "ari-ast-decls-v7;";
         const std::string v6 = "ari-ast-decls-v6;";
@@ -1117,6 +1115,11 @@ private:
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v9.size(), v9) == 0) {
+            version_ = 9;
+            pos_ += v9.size();
+            return;
+        }
         if (text_.compare(pos_, v8.size(), v8) == 0) {
             version_ = 8;
             pos_ += v8.size();
@@ -1157,7 +1160,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v9;', 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1280,11 +1283,15 @@ private:
             std::uint64_t arg_count = read_count("attribute token count");
             attr.args.reserve(static_cast<std::size_t>(arg_count));
             for (std::uint64_t j = 0; j < arg_count; ++j) {
-                Token token;
-                token.kind = static_cast<TokenKind>(read_count("attribute token kind"));
-                token.text = read_field("attribute token text");
-                token.loc = default_loc();
-                attr.args.push_back(std::move(token));
+                if (version_ >= 9) {
+                    attr.args.push_back(read_token_payload("attribute token"));
+                } else {
+                    Token token;
+                    token.kind = static_cast<TokenKind>(read_count("attribute token kind"));
+                    token.text = read_field("attribute token text");
+                    token.loc = default_loc();
+                    attr.args.push_back(std::move(token));
+                }
             }
             attr.loc = default_loc();
             attributes.push_back(std::move(attr));
@@ -1853,7 +1860,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v8;";
+    out << "ari-ast-decls-v9;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {

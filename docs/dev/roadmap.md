@@ -191,13 +191,14 @@ stages rather than one file per syntax feature.
    item-position/type-position `ident!(...)` invocations now use the same
    balanced token-tree parser, with nested `(...)`, `{...}`, and `[...]`
    delimiter validation before sema diagnostics for unknown names, bad domains,
-   or planned expansion. Item/type macro token trees are also preserved through
-   AST/module summary plumbing. Pattern-position `ident!(...)` invocations are
-   now parsed with the same balanced token-tree validation, preserved through
-   AST/module summary payloads, and sema-validated for unknown names, bad
-   domains, and planned expansion, so lint tooling can rely on the spelling
-   before pattern macro lowering exists. Disabled `@cfg(false)` declarations
-   still parse for linting/cache stability.
+   or planned expansion. User attribute arguments and item/type macro token
+   trees are also preserved through AST/module summary plumbing with full token
+   payloads. Pattern-position `ident!(...)` invocations are now parsed with the
+   same balanced token-tree validation, preserved through AST/module summary
+   payloads, and sema-validated for unknown names, bad domains, and planned
+   expansion, so lint tooling can rely on the spelling before pattern macro
+   lowering exists. Disabled `@cfg(false)` declarations still parse for
+   linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [types] expand sema-validated type-position macro invocations into type refs

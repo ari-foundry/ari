@@ -150,9 +150,10 @@ fn value() -> i64 {
 User attributes are currently parsed, validated by name, and retained as
 front-end metadata. Attribute arguments are a balanced token tree inside the
 outer parentheses, so nested `(...)`, `{...}`, and `[...]` groups are accepted
-and mismatched delimiters are rejected during parsing. The reserving `meta fn`
-must be concrete, non-generic, and written as either `token_stream ->
-token_stream` or `ast -> ast`; `type -> type` meta functions are reserved for
-future type-position expansion and cannot reserve attributes. Meta bodies must
-stay empty until Ari has a compile-time evaluator. Attribute macros that rewrite
-or insert AST nodes are planned.
+and mismatched delimiters are rejected during parsing. The full token payload is
+preserved in module AST summaries, including numeric values, float bits, and
+literal suffixes. The reserving `meta fn` must be concrete, non-generic, and
+written as either `token_stream -> token_stream` or `ast -> ast`; `type -> type`
+meta functions are reserved for future type-position expansion and cannot
+reserve attributes. Meta bodies must stay empty until Ari has a compile-time
+evaluator. Attribute macros that rewrite or insert AST nodes are planned.
