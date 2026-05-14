@@ -2157,6 +2157,10 @@ check-variables: $(TARGET)
 	grep -Fq "empty [] literals need an explicit Vec[T] type or non-empty array elements" $(BUILD_DIR)/variables/vector-empty-non-vec-expected.err
 	if $(TARGET) tests/errors/vector-api-freeze.ari -o $(BUILD_DIR)/variables/vector-api-freeze.elf >$(BUILD_DIR)/variables/vector-api-freeze.err 2>&1; then exit 1; fi
 	grep -Fq "local Vec method 'map' is reserved for allocator-backed std collection APIs" $(BUILD_DIR)/variables/vector-api-freeze.err
+	if $(TARGET) tests/errors/vector-pattern-length-checked.ari -o $(BUILD_DIR)/variables/vector-pattern-length-checked.elf >$(BUILD_DIR)/variables/vector-pattern-length-checked.err 2>&1; then exit 1; fi
+	grep -Fq "Vec[T] length-checked array patterns are planned but are not supported yet; use len(...) and indexing for now" $(BUILD_DIR)/variables/vector-pattern-length-checked.err
+	if $(TARGET) tests/errors/slice-pattern-length-checked.ari -o $(BUILD_DIR)/variables/slice-pattern-length-checked.elf >$(BUILD_DIR)/variables/slice-pattern-length-checked.err 2>&1; then exit 1; fi
+	grep -Fq "Slice[T] length-checked array patterns are planned but are not supported yet; use len(...) and indexing for now" $(BUILD_DIR)/variables/slice-pattern-length-checked.err
 	if $(TARGET) tests/errors/vector-method-shape.ari -o $(BUILD_DIR)/variables/vector-method-shape.elf >$(BUILD_DIR)/variables/vector-method-shape.err 2>&1; then exit 1; fi
 	grep -q "Vec.push expects one value argument" $(BUILD_DIR)/variables/vector-method-shape.err
 	if $(TARGET) tests/errors/vector-method-immutable.ari -o $(BUILD_DIR)/variables/vector-method-immutable.elf >$(BUILD_DIR)/variables/vector-method-immutable.err 2>&1; then exit 1; fi

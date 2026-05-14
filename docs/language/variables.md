@@ -132,6 +132,11 @@ Declaration patterns bind by value. `let ref x`, `let ref mut x`, `let &x`,
 rejected today; use `var x = ...` for a mutable local or create an explicit
 borrow with `let x = ref value`.
 
+The `[a, b]` pattern spelling is currently fixed to compile-time-length array
+values. Using it against `Vec[T]` or `Slice[T]` is rejected with a stable
+diagnostic until runtime length-checked vector and slice pattern lowering
+lands. Use `len(...)`, `.len()`, and indexing for that control flow today.
+
 Single-payload enum cases can also be used in local bindings:
 
 ```ari

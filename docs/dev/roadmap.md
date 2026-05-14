@@ -10,6 +10,9 @@ future reference/ownership binding modes do not collide with the current AST.
 Both `ref mut T` and `mut ref T` are accepted as equivalent mutable borrow
 spellings. `--check` runs parsing, module loading, and semantic lowering
 without backend emission for editor tooling.
+`[ ... ]` patterns are fixed to compile-time-length arrays for now; applying
+that spelling to `Vec[T]` or `Slice[T]` is rejected with a stable planned
+feature diagnostic until runtime length-checked lowering is designed.
 Sema maintenance now follows phase-oriented extraction: constant folding stays
 in `constant_semantics`, generic binding/unification/substitution lives in
 `type_inference`, and future splits should target broad analysis or lowering
@@ -317,7 +320,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    Aggregate `if let` statement/expression and aggregate `while let`
    statement bindings also share the same product match lowering path.
    - [slice-patterns] lower `Slice[T]` and `Vec[T]` length-checked patterns
-     after the shared binding-mode engine decides reference/ownership behavior
+     after the shared binding-mode engine decides reference/ownership behavior;
+     the parser-visible `[ ... ]` spelling now has stable sema diagnostics
+     for these runtime sequence subjects, so the remaining work is runtime
+     length-condition lowering and element binding semantics
+   - [slice-pattern-guards] add a shared `len == n` / `len >= n` condition
+     builder before enabling runtime sequence element binding
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and
      function-parameter patterns on one shared binding-mode engine; value alias
      patterns now work in range, list-literal, and stored-vector loop heads when

@@ -5484,6 +5484,25 @@ private:
         }
     }
 
+    static bool is_runtime_sequence_pattern_subject(const IrType& type) {
+        return is_vector_storage_type(type) || is_prelude_slice_type(type);
+    }
+
+    static std::string runtime_sequence_pattern_subject_name(const IrType& type) {
+        if (is_vector_storage_type(type)) return "Vec[T]";
+        if (is_prelude_slice_type(type)) return "Slice[T]";
+        return type_name(type);
+    }
+
+    static void reject_runtime_sequence_array_pattern_if_needed(const Pattern& pattern,
+                                                                const IrType& source_type) {
+        if (!is_runtime_sequence_pattern_subject(source_type)) return;
+        if (!pattern_contains_array_pattern(pattern)) return;
+        fail(pattern.loc,
+             runtime_sequence_pattern_subject_name(source_type) +
+                 " length-checked array patterns are planned but are not supported yet; use len(...) and indexing for now");
+    }
+
     void lower_binding_pattern_from_local(
         const Pattern& pattern,
         const std::string& source_name,
@@ -5496,6 +5515,7 @@ private:
             lower_binding_pattern_from_local(effective_pattern, source_name, source_type, mutable_binding, statements);
             return;
         }
+        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
         switch (pattern.kind) {
             case PatternKind::Wildcard:
                 return;
@@ -5611,6 +5631,7 @@ private:
             validate_product_binding_pattern_shape(effective_pattern, source_type);
             return;
         }
+        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -5805,6 +5826,7 @@ private:
             lower_tuple_binding_pattern_from_local(effective_pattern, source_name, source_type, mutable_binding, statements);
             return;
         }
+        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
         bool array_pattern = pattern.kind == PatternKind::Array;
         IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
         const char* pattern_name = array_pattern ? "array" : "tuple";
@@ -8682,6 +8704,7 @@ private:
             }
             case PatternKind::Array: {
                 if (field_type.primitive != IrPrimitiveKind::Array) {
+                    reject_runtime_sequence_array_pattern_if_needed(pattern, field_type);
                     fail(pattern.loc, "nested array pattern requires an array field, got " + type_name(field_type));
                 }
                 std::string nested_name = make_hidden_local("$match_array");
@@ -8753,6 +8776,7 @@ private:
         if (&effective_pattern != &pattern) {
             return lower_tuple_match_pattern_condition(effective_pattern, source_name, source_type, prelude);
         }
+        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -9212,6 +9236,7 @@ private:
                 effective_pattern, source_name, source_type, statements, mutable_binding);
             return;
         }
+        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -9488,6 +9513,7 @@ private:
 
         lowered.kind = IrStmtKind::Block;
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
+        reject_runtime_sequence_array_pattern_if_needed(condition_pattern, match_value->type);
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
@@ -9861,6 +9887,11 @@ private:
             if (is_aggregate_type(lowered.match_value->type)) {
                 return check_tuple_match(stmt, lowered);
             }
+            if (is_runtime_sequence_pattern_subject(lowered.match_value->type)) {
+                for (const auto& arm : source_arms) {
+                    reject_runtime_sequence_array_pattern_if_needed(expanded_pattern(arm.pattern), lowered.match_value->type);
+                }
+            }
             fail(stmt.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(lowered.match_value->type));
         }
 
@@ -10061,6 +10092,7 @@ private:
         set_ir_stmt_label(lowered, label);
         lowered.match_value = std::move(match_value);
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
+        reject_runtime_sequence_array_pattern_if_needed(condition_pattern, lowered.match_value->type);
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
         IrType enum_value_type = lowered.match_value->type;
         EnumMatchCoverage coverage;
@@ -12294,6 +12326,11 @@ private:
                 lowered = make_ir_match_expr(expr.loc, std::move(match_value));
                 return check_tuple_match_expr(expr, std::move(lowered), expected);
             }
+            if (is_runtime_sequence_pattern_subject(match_value->type)) {
+                for (const auto& arm : expr_match_arms(expr)) {
+                    reject_runtime_sequence_array_pattern_if_needed(expanded_pattern(arm.pattern), match_value->type);
+                }
+            }
             fail(expr.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(match_value->type));
         }
 
@@ -12596,6 +12633,7 @@ private:
 
         lowered = make_ir_block_expr(expr.loc);
         const Pattern& condition_pattern = expanded_pattern(*expr_if_condition_pattern(expr));
+        reject_runtime_sequence_array_pattern_if_needed(condition_pattern, match_value->type);
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(expr.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(

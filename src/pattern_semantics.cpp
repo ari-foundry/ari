@@ -104,6 +104,19 @@ bool pattern_contains_or(const Pattern& pattern) {
     return false;
 }
 
+bool pattern_contains_array_pattern(const Pattern& pattern) {
+    if (pattern.kind == PatternKind::Array) return true;
+    if (pattern.alias_pattern && pattern_contains_array_pattern(*pattern.alias_pattern)) return true;
+    if (pattern.payload_pattern && pattern_contains_array_pattern(*pattern.payload_pattern)) return true;
+    for (const auto& alternative : pattern.alternatives) {
+        if (pattern_contains_array_pattern(alternative)) return true;
+    }
+    for (const auto& element : pattern.elements) {
+        if (pattern_contains_array_pattern(element)) return true;
+    }
+    return false;
+}
+
 std::vector<Pattern> expand_or_pattern_alternatives(const Pattern& pattern) {
     if (pattern.kind == PatternKind::Or) {
         std::vector<Pattern> out;

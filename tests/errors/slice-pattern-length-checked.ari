@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  var value = 7;
+  let view: Slice[i64] = slice((ref mut value) as ptr i64, 1);
+  let [head] = view;
+  return head;
+}
