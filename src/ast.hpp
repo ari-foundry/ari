@@ -22,6 +22,8 @@ struct TypeRef {
     bool is_dyn_object = false;
     bool nullable = false;
     bool is_macro_invocation = false;
+    bool has_associated_projection = false;
+    std::string associated_projection;
     std::vector<Token> macro_tokens;
 };
 

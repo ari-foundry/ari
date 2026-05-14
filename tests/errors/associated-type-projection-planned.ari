@@ -1,0 +1,8 @@
+trait ItemSource[T] {
+  fn next(self) -> T
+}
+
+fn main() -> i64 {
+  let value: ItemSource[i64]::Item = 1;
+  return value;
+}

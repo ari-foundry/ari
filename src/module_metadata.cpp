@@ -284,6 +284,10 @@ std::string type_ref_summary(const TypeRef& type) {
         }
         name += "]";
     }
+    if (type.has_associated_projection) {
+        name += "::";
+        name += type.associated_projection;
+    }
     if (type.nullable) name += "?";
     return name;
 }

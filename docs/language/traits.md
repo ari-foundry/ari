@@ -329,6 +329,22 @@ implementing type or let Ari infer them from the value arguments. If the
 implementing type is inferred from the expected result type, method-level
 generics must be inferred from the value arguments.
 
+## Associated Type Projections
+
+Ari reserves associated type projections for generic trait applications in
+type positions:
+
+```ari
+let item: Iterator[i64]::Item = 1
+```
+
+The spelling is Ari-style `Trait[T]::Item`, not Rust's
+`<T as Trait>::Item`. The parser preserves this syntax in the AST and module
+cache so lint and language-server tooling can treat it as stable. Semantic
+lowering is still planned, so executable code rejects projected types with a
+focused planned-feature diagnostic until trait associated type declarations
+and impl witnesses exist.
+
 Inside modules, methods are private by default. Mark the method `pub`, or mark
 the whole `impl` block `pub`, to make its methods callable from outside the
 module.

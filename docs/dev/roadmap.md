@@ -209,6 +209,17 @@ stages rather than one file per syntax feature.
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
+4. Stabilize trait associated type syntax before lint.
+   The Medium-Term associated-items work has one syntax piece that should be
+   fixed before lint tooling lands. Ari now reserves generic trait application
+   projections as `Trait[T]::Item` in type positions. The parser preserves the
+   projection in `TypeRef`, declaration summaries, and module cache payloads,
+   and sema rejects executable use with a focused planned-feature diagnostic.
+   Ari intentionally does not adopt Rust's `<T as Trait>::Item` spelling.
+   - [associated-type-decls] add associated type declarations inside traits
+   - [associated-type-witnesses] add impl witnesses for associated type values
+   - [associated-type-lowering] lower reserved `Trait[T]::Item` projections
+     into concrete type refs for iterator-style generic APIs
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -259,8 +270,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    `Ok(...)`. Keep Ari on trait composition instead of struct inheritance:
    structs remain explicit data layouts with field embedding rather than hidden
    base-object layout.
-   - [associated-types] add associated type declarations, impl witnesses, and
-     projection syntax for generic APIs such as iterator item types
    - [generic-supertrait-inference] handle richer generic supertrait
      applications once associated types and projections exist
 2. Extend pattern binding modes beyond value bindings.

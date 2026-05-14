@@ -474,6 +474,12 @@ private:
                 } while (match(TokenKind::Comma));
             }
             expect(TokenKind::RBracket, "expected ] after type arguments");
+            if (match(TokenKind::ColonColon)) {
+                Token projection =
+                    expect_identifier_or_contextual_name_keyword("expected associated type name after ::");
+                type.has_associated_projection = true;
+                type.associated_projection = projection.text;
+            }
         }
         return finish_type(std::move(type));
     }

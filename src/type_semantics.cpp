@@ -315,6 +315,10 @@ std::string type_ref_key(const TypeRef& type) {
         }
         key += "]";
     }
+    if (type.has_associated_projection) {
+        key += "::";
+        key += type.associated_projection;
+    }
     if (type.nullable) key += "?";
     return key;
 }

@@ -3477,6 +3477,11 @@ private:
 
     IrType resolve_executable_type(const TypeRef& ast_type) {
         if (ast_type.is_macro_invocation) return resolve_type_macro_invocation(ast_type);
+        if (ast_type.has_associated_projection) {
+            fail(ast_type.loc,
+                 "associated type projection '" + type_ref_key(ast_type) +
+                     "' is reserved but semantic lowering is planned");
+        }
         if (ast_type.nullable) return resolve_nullable_type(ast_type);
 
         auto substitution = current_type_substitutions_.find(ast_type.name);

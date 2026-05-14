@@ -64,6 +64,8 @@ void append_type(std::ostringstream& out, const TypeRef& type) {
         append_count(out, type.macro_tokens.size());
         for (const auto& token : type.macro_tokens) append_token_payload(out, token);
     }
+    append_bool(out, type.has_associated_projection);
+    if (type.has_associated_projection) append_field(out, type.associated_projection);
     append_count(out, type.args.size());
     for (const auto& arg : type.args) append_type(out, arg);
 }
@@ -1106,6 +1108,7 @@ private:
     }
 
     void consume_header() {
+        const std::string v10 = "ari-ast-decls-v10;";
         const std::string v9 = "ari-ast-decls-v9;";
         const std::string v8 = "ari-ast-decls-v8;";
         const std::string v7 = "ari-ast-decls-v7;";
@@ -1115,6 +1118,11 @@ private:
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v10.size(), v10) == 0) {
+            version_ = 10;
+            pos_ += v10.size();
+            return;
+        }
         if (text_.compare(pos_, v9.size(), v9) == 0) {
             version_ = 9;
             pos_ += v9.size();
@@ -1160,7 +1168,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v9;', 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v10;', 'ari-ast-decls-v9;', 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1238,6 +1246,12 @@ private:
                 for (std::uint64_t i = 0; i < token_count; ++i) {
                     type.macro_tokens.push_back(read_token_payload(label + " macro token"));
                 }
+            }
+        }
+        if (version_ >= 10) {
+            type.has_associated_projection = read_bool(label + " associated type projection flag");
+            if (type.has_associated_projection) {
+                type.associated_projection = read_field(label + " associated type projection name");
             }
         }
         std::uint64_t arg_count = read_count(label + " argument count");
@@ -1860,7 +1874,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v9;";
+    out << "ari-ast-decls-v10;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {
