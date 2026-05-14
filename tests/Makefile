@@ -1402,6 +1402,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/item-macro-function-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-const-identity.ari -o $(BUILD_DIR)/meta/item-macro-const-identity.raw
 	$(BUILD_DIR)/meta/item-macro-const-identity.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/item-macro-struct-identity.ari -o $(BUILD_DIR)/meta/item-macro-struct-identity.raw
+	$(BUILD_DIR)/meta/item-macro-struct-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/type-macro-identity.ari -o $(BUILD_DIR)/meta/type-macro-identity.raw
 	$(BUILD_DIR)/meta/type-macro-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.raw
@@ -1469,7 +1471,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/macro-call-unknown.ari -o $(BUILD_DIR)/meta/macro-call-unknown.elf >$(BUILD_DIR)/meta/macro-call-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'missing!'" $(BUILD_DIR)/meta/macro-call-unknown.err
 	if $(TARGET) tests/errors/item-macro-unsupported-item.ari -o $(BUILD_DIR)/meta/item-macro-unsupported-item.elf >$(BUILD_DIR)/meta/item-macro-unsupported-item.err 2>&1; then exit 1; fi
-	grep -q "item macro identity expansion currently supports function and constant declarations" $(BUILD_DIR)/meta/item-macro-unsupported-item.err
+	grep -q "item macro identity expansion currently supports function, constant, and struct declarations" $(BUILD_DIR)/meta/item-macro-unsupported-item.err
 	if $(TARGET) tests/errors/item-macro-type-domain.ari -o $(BUILD_DIR)/meta/item-macro-type-domain.elf >$(BUILD_DIR)/meta/item-macro-type-domain.err 2>&1; then exit 1; fi
 	grep -q "item macros require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/item-macro-type-domain.err
 	if $(TARGET) tests/errors/item-macro-unknown.ari -o $(BUILD_DIR)/meta/item-macro-unknown.elf >$(BUILD_DIR)/meta/item-macro-unknown.err 2>&1; then exit 1; fi

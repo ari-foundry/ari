@@ -87,7 +87,7 @@ one-parameter same-domain meta signatures over `token_stream`/`ast`/`type`,
 attribute/expression/item/type macro domain checks, parser-stable
 `ident!(...)` expression, item, and type token-tree macro invocation syntax,
 expression-position identity expansion from a parsed expression input,
-function/constant item macro identity expansion from parsed top-level
+function/constant/struct item macro identity expansion from parsed top-level
 declarations,
 type-position identity expansion from a parsed type input, and planned
 expansion diagnostics for remaining item/pattern syntax-producing user

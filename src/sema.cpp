@@ -420,6 +420,7 @@ private:
     std::set<std::string> queued_impl_methods_;
     std::vector<ConstDecl> item_macro_constants_;
     std::vector<FunctionDecl> item_macro_functions_;
+    std::vector<StructDecl> item_macro_structs_;
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
     std::map<std::string, std::string> exported_symbols_;
@@ -789,6 +790,12 @@ private:
         for (const auto& decl : item_macro_constants_) visitor(decl);
     }
 
+    template <typename Visitor>
+    void for_each_struct_decl(Visitor&& visitor) const {
+        for (const auto& decl : program_.structs) visitor(decl);
+        for (const auto& decl : item_macro_structs_) visitor(decl);
+    }
+
     void collect_module_decls() {
         for (const auto& decl : program_.modules) {
             ModuleInfo info;
@@ -832,10 +839,11 @@ private:
     }
 
     bool has_source_std_surface() const {
-        for (const auto& decl : program_.structs) {
-            if (decl.name == "std::Vec") return true;
-        }
-        return false;
+        bool found = false;
+        for_each_struct_decl([&](const StructDecl& decl) {
+            if (decl.name == "std::Vec") found = true;
+        });
+        return found;
     }
 
     bool prelude_specials_available() const {
@@ -886,11 +894,11 @@ private:
                 add(basename_of_qualified_name(decl.name), decl.name);
             }
         }
-        for (const auto& decl : program_.structs) {
+        for_each_struct_decl([&](const StructDecl& decl) {
             if (decl.module_name == "std" && decl.is_public) {
                 add(basename_of_qualified_name(decl.name), decl.name);
             }
-        }
+        });
         for (const auto& decl : program_.enums) {
             if (decl.module_name != "std" || !decl.is_public) continue;
             add(basename_of_qualified_name(decl.name), decl.name);
@@ -930,13 +938,13 @@ private:
                 add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
             }
         }
-        for (const auto& decl : program_.structs) {
+        for_each_struct_decl([&](const StructDecl& decl) {
             if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
                 std::string alias = basename_of_qualified_name(decl.name);
                 add_unqualified_type_alias(alias, decl.name);
                 add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
             }
-        }
+        });
         for (const auto& decl : program_.enums) {
             if (!is_std_descendant_module_name(decl.module_name) || !decl.is_public) continue;
             std::string enum_alias = basename_of_qualified_name(decl.name);
@@ -970,9 +978,11 @@ private:
         for (const auto& decl : program_.functions) {
             if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
         }
-        for (const auto& decl : program_.structs) {
-            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
-        }
+        bool has_struct_alias = false;
+        for_each_struct_decl([&](const StructDecl& decl) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_struct_alias = true;
+        });
+        if (has_struct_alias) return true;
         for (const auto& decl : program_.enums) {
             if (decl.module_name != module_name) continue;
             if (basename_of_qualified_name(decl.name) == alias) return true;
@@ -1008,7 +1018,9 @@ private:
         for (const auto& decl : program_.modules) module_names.insert(decl.name);
         for (const auto& decl : program_.constants) module_names.insert(decl.module_name);
         for (const auto& decl : program_.functions) module_names.insert(decl.module_name);
-        for (const auto& decl : program_.structs) module_names.insert(decl.module_name);
+        for_each_struct_decl([&](const StructDecl& decl) {
+            module_names.insert(decl.module_name);
+        });
         for (const auto& decl : program_.enums) module_names.insert(decl.module_name);
         for (const auto& decl : program_.traits) module_names.insert(decl.module_name);
         for (const auto& decl : program_.impls) module_names.insert(decl.module_name);
@@ -1046,11 +1058,11 @@ private:
                 add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
             }
         }
-        for (const auto& decl : program_.structs) {
+        for_each_struct_decl([&](const StructDecl& decl) {
             if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
                 add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
             }
-        }
+        });
         for (const auto& decl : program_.enums) {
             if (!can_glob_import_item(expanded, decl.module_name, decl.is_public)) continue;
             add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
@@ -1273,10 +1285,10 @@ private:
         for_each_function_decl([&](const FunctionDecl& fn) {
             validate_attribute_list(fn.attributes, "function", fn.module_name);
         });
-        for (const auto& decl : program_.structs) {
+        for_each_struct_decl([&](const StructDecl& decl) {
             validate_attribute_list(decl.attributes, "struct", decl.module_name);
             validate_repr_c_struct(decl);
-        }
+        });
         for (const auto& decl : program_.enums) {
             validate_attribute_list(decl.attributes, "enum", decl.module_name);
             validate_repr_c_enum(decl);
@@ -1303,6 +1315,7 @@ private:
             ItemMacroExpansion expansion = expand_item_macro_items(invocation);
             for (auto& constant : expansion.constants) item_macro_constants_.push_back(std::move(constant));
             for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
+            for (auto& decl : expansion.structs) item_macro_structs_.push_back(std::move(decl));
         }
     }
 
@@ -1445,7 +1458,7 @@ private:
     }
 
     void collect_struct_decls() {
-        for (const auto& decl : program_.structs) {
+        for_each_struct_decl([&](const StructDecl& decl) {
             StructInfo info;
             info.name = decl.name;
             info.module_name = decl.module_name;
@@ -1474,13 +1487,13 @@ private:
 
             auto inserted = structs_.emplace(decl.name, std::move(info));
             if (!inserted.second) fail(decl.loc, "duplicate struct '" + decl.name + "'");
-        }
+        });
     }
 
     void validate_struct_decls() {
-        for (const auto& decl : program_.structs) {
+        for_each_struct_decl([&](const StructDecl& decl) {
             auto found = structs_.find(decl.name);
-            if (found == structs_.end()) continue;
+            if (found == structs_.end()) return;
 
             std::map<std::string, IrType> substitutions;
             for (const auto& generic : decl.generics) {
@@ -1501,7 +1514,7 @@ private:
             }
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
-        }
+        });
     }
 
     void collect_trait_decls() {
@@ -2187,9 +2200,9 @@ private:
     }
 
     void validate_generic_constraints() {
-        for (const auto& decl : program_.structs) {
+        for_each_struct_decl([&](const StructDecl& decl) {
             validate_generic_constraints_for(decl.generics, decl.module_name);
-        }
+        });
         for (const auto& decl : program_.enums) {
             validate_generic_constraints_for(decl.generics, decl.module_name);
         }
@@ -3356,9 +3369,9 @@ private:
     }
 
     void collect_ir_c_records(IrProgram& ir) {
-        for (const auto& decl : program_.structs) {
-            if (!decl.is_public) continue;
-            if (!find_attribute(decl.attributes, "repr")) continue;
+        for_each_struct_decl([&](const StructDecl& decl) {
+            if (!decl.is_public) return;
+            if (!find_attribute(decl.attributes, "repr")) return;
 
             IrCRecord record;
             record.name = decl.name;
@@ -3367,7 +3380,7 @@ private:
             record.opaque = !decl.generics.empty();
             if (record.opaque) {
                 ir.c_records.push_back(std::move(record));
-                continue;
+                return;
             }
             for (const auto& field : decl.fields) {
                 record.fields.push_back(IrCRecordField{
@@ -3377,7 +3390,7 @@ private:
                 });
             }
             ir.c_records.push_back(std::move(record));
-        }
+        });
     }
 
     void collect_ir_c_enums(IrProgram& ir) const {

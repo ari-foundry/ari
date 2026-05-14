@@ -188,16 +188,16 @@ Because meta bodies are still empty, expression macro expansion is currently
 an identity transform: the token tree inside `ident!(...)` is parsed as one
 expression and then lowered as that expression. User syntax-rewriting
 attributes and active item-position macros must also resolve to
-`token_stream -> token_stream` or `ast -> ast` meta functions. Function and
-constant item macro expansion is currently an identity transform: the token
-tree is parsed as top-level function/constant declarations and those generated
-items participate in normal semantic checking. Generated type, module, trait,
-impl, and use items are still planned. Type-position macro invocations must
-resolve to
+`token_stream -> token_stream` or `ast -> ast` meta functions. Function,
+constant, and struct item macro expansion is currently an identity transform:
+the token tree is parsed as top-level function/constant/struct declarations
+and those generated items participate in normal semantic checking. Generated
+enum, trait, impl, module, and use items are still planned. Type-position
+macro invocations must resolve to
 `type -> type` meta functions and are also identity transforms today: their
 token tree is parsed as a type input and then lowered as that type. User
-`meta fn` rewriting, non-function/non-constant item macro expansion, and
-`format!` are still planned and rejected with specific diagnostics.
+`meta fn` rewriting, remaining item macro expansion, and `format!` are still
+planned and rejected with specific diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions, and then
@@ -225,6 +225,10 @@ make_item!(fn generated_value() -> i64 {
 
 make_item!(const GENERATED: i64 = 21;);
 
+make_item!(struct Generated {
+  value: i64,
+});
+
 meta fn make_type(input: type) -> type {
 }
 
@@ -234,8 +238,8 @@ let value: make_type!(i64) = 0;
 Active user macro expressions parse their input as one expression immediately;
 malformed expression input, such as extra comma-separated tokens, is rejected
 before semantic expression lowering. Item-position macro invocations parse
-function and constant declaration output immediately; malformed supported items
-or generated unsupported item kinds are rejected before normal declaration
+function, constant, and struct declaration output immediately; malformed
+supported items or generated unsupported item kinds are rejected before normal declaration
 collection.
 Pattern-position macro invocations are rejected until compile-time construction
 exists, but sema checks unknown names and domain mismatches before emitting the
