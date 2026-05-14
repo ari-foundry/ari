@@ -1,0 +1,23 @@
+meta fn wrap_some(input: ast) -> ast {
+  return pattern!(Some(input));
+}
+
+enum MaybeI64 {
+  None,
+  Some(i64),
+}
+
+fn score(value: MaybeI64) -> i64 {
+  return match value {
+    wrap_some!(inner) => {
+      inner
+    }
+    _ => {
+      0
+    }
+  };
+}
+
+fn main() -> i64 {
+  return score(Some(42));
+}

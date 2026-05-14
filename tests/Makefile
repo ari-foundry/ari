@@ -1478,6 +1478,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/type-macro-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/pattern-macro-identity.ari -o $(BUILD_DIR)/meta/pattern-macro-identity.raw
 	$(BUILD_DIR)/meta/pattern-macro-identity.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/pattern-macro-ast-return.ari -o $(BUILD_DIR)/meta/pattern-macro-ast-return.raw
+	$(BUILD_DIR)/meta/pattern-macro-ast-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/pattern-macro-identity.ari --emit-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache.ll
 	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/meta/pattern-macro-identity.aricache
 	$(TARGET) tests/ok/pattern-macro-identity.ari --use-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache-use.ll
@@ -1536,6 +1538,8 @@ check-meta: $(TARGET)
 	grep -q "ast meta expression returns cannot reference names other than the meta input yet" $(BUILD_DIR)/meta/meta-function-ast-name-reference.err
 	if $(TARGET) tests/errors/meta-function-decl-expression-site.ari -o $(BUILD_DIR)/meta/meta-function-decl-expression-site.elf >$(BUILD_DIR)/meta/meta-function-decl-expression-site.err 2>&1; then exit 1; fi
 	grep -q "declaration-returning ast meta function 'make_decl' can currently be used only at item macro sites" $(BUILD_DIR)/meta/meta-function-decl-expression-site.err
+	if $(TARGET) tests/errors/meta-function-pattern-expression-site.ari -o $(BUILD_DIR)/meta/meta-function-pattern-expression-site.elf >$(BUILD_DIR)/meta/meta-function-pattern-expression-site.err 2>&1; then exit 1; fi
+	grep -q "pattern-returning ast meta function 'wildcard' can currently be used only at pattern macro sites" $(BUILD_DIR)/meta/meta-function-pattern-expression-site.err
 	if $(TARGET) tests/errors/attribute-meta-type-domain.ari -o $(BUILD_DIR)/meta/attribute-meta-type-domain.elf >$(BUILD_DIR)/meta/attribute-meta-type-domain.err 2>&1; then exit 1; fi
 	grep -q "attributes require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/attribute-meta-type-domain.err
 	if $(TARGET) tests/errors/macro-call-type-domain.ari -o $(BUILD_DIR)/meta/macro-call-type-domain.elf >$(BUILD_DIR)/meta/macro-call-type-domain.err 2>&1; then exit 1; fi

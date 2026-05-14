@@ -43,10 +43,23 @@ bool is_decl_ast_constructor(const Expr& expr) {
     return expr.kind == ExprKind::MacroCall && expr.name == "decl";
 }
 
+bool is_pattern_ast_constructor(const Expr& expr) {
+    return expr.kind == ExprKind::MacroCall && expr.name == "pattern";
+}
+
 bool supported_decl_ast_return_expr(const Expr& expr, std::string& reason) {
     if (!is_decl_ast_constructor(expr)) return false;
     if (!expr.macro_tokens || expr.macro_tokens->empty()) {
         reason = "decl! ast constructor requires one or more declaration tokens";
+        return false;
+    }
+    return true;
+}
+
+bool supported_pattern_ast_return_expr(const Expr& expr, std::string& reason) {
+    if (!is_pattern_ast_constructor(expr)) return false;
+    if (!expr.macro_tokens || expr.macro_tokens->empty()) {
+        reason = "pattern! ast constructor requires one or more pattern tokens";
         return false;
     }
     return true;
@@ -112,7 +125,8 @@ bool supported_ast_return_expr(const Expr& expr,
                 "ast meta expression returns currently support only literal, input, tuple, vector, unary, binary, and cast expression trees";
             return false;
         case ExprKind::MacroCall:
-            reason = "ast meta expression returns cannot call macros; use decl!(...) only for item macro declaration output";
+            reason =
+                "ast meta expression returns cannot call macros; use decl!(...) for item macro declaration output or pattern!(...) for pattern macro output";
             return false;
     }
     reason = "unsupported ast meta return expression";
@@ -123,7 +137,8 @@ MetaAstReturnKind classify_ast_return_expr(const Expr& expr,
                                            const std::string& input_name,
                                            std::string& reason) {
     if (supported_decl_ast_return_expr(expr, reason)) return MetaAstReturnKind::ItemDeclarations;
-    if (is_decl_ast_constructor(expr)) return MetaAstReturnKind::None;
+    if (supported_pattern_ast_return_expr(expr, reason)) return MetaAstReturnKind::Pattern;
+    if (is_decl_ast_constructor(expr) || is_pattern_ast_constructor(expr)) return MetaAstReturnKind::None;
     if (supported_ast_return_expr(expr, input_name, reason)) return MetaAstReturnKind::Expression;
     return MetaAstReturnKind::None;
 }
@@ -270,7 +285,7 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
         if (input_kind == MetaTransformKind::Ast) {
             fail(fn.body.front()->loc,
                  "meta function bodies currently allow only an empty body, `return " + param.name +
-                     ";` identity body, an expression return using literals and the meta input for ast -> ast expression macros, or decl!(...) for item macro declaration output");
+                     ";` identity body, an expression return using literals and the meta input for ast -> ast expression macros, decl!(...) for item macro declaration output, or pattern!(...) for pattern macro output");
         }
         fail(fn.body.front()->loc,
              "meta function bodies currently allow only an empty body or `return " + param.name +

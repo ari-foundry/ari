@@ -33,9 +33,9 @@ Program parse_item_macro_tokens(const std::vector<Token>& source_tokens,
     return parse_tokens_in_module(std::move(tokens), module_path_for_macro(module_name));
 }
 
-std::vector<Token> substitute_decl_input_tokens(const std::vector<Token>& constructor_tokens,
-                                                const std::string& input_name,
-                                                const std::vector<Token>& input_tokens) {
+std::vector<Token> substitute_input_tokens(const std::vector<Token>& constructor_tokens,
+                                           const std::string& input_name,
+                                           const std::vector<Token>& input_tokens) {
     std::vector<Token> expanded;
     for (const Token& token : constructor_tokens) {
         if (token.kind == TokenKind::Identifier && token.text == input_name) {
@@ -122,8 +122,7 @@ ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation&
     if (returned_ast.kind != ExprKind::MacroCall || returned_ast.name != "decl" || !returned_ast.macro_tokens) {
         fail_expansion(returned_ast.loc, "internal error: expected decl!(...) ast constructor");
     }
-    std::vector<Token> output_tokens =
-        substitute_decl_input_tokens(*returned_ast.macro_tokens, input_name, invocation.tokens);
+    std::vector<Token> output_tokens = substitute_input_tokens(*returned_ast.macro_tokens, input_name, invocation.tokens);
     Program program = parse_item_macro_tokens(output_tokens, invocation.module_name, returned_ast.loc);
     return finish_item_macro_expansion(std::move(program), invocation, "item macro declaration AST output");
 }
@@ -133,6 +132,20 @@ Pattern expand_pattern_macro_invocation(const Pattern& invocation) {
         fail_expansion(invocation.loc, "internal error: expected pattern macro invocation");
     }
     return parse_macro_pattern(invocation.macro_tokens, invocation.loc);
+}
+
+Pattern expand_pattern_macro_constructor(const Pattern& invocation,
+                                         const std::string& input_name,
+                                         const Expr& returned_ast) {
+    if (!invocation.is_macro_invocation) {
+        fail_expansion(invocation.loc, "internal error: expected pattern macro invocation");
+    }
+    if (returned_ast.kind != ExprKind::MacroCall || returned_ast.name != "pattern" || !returned_ast.macro_tokens) {
+        fail_expansion(returned_ast.loc, "internal error: expected pattern!(...) ast constructor");
+    }
+    return parse_macro_pattern(
+        substitute_input_tokens(*returned_ast.macro_tokens, input_name, invocation.macro_tokens),
+        returned_ast.loc);
 }
 
 ExprPtr expand_ast_expression_return(const Expr& returned_ast,

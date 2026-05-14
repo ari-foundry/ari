@@ -18,6 +18,7 @@ enum class MetaAstReturnKind {
     None,
     Expression,
     ItemDeclarations,
+    Pattern,
 };
 
 enum class MetaInvocationSite {

@@ -692,6 +692,12 @@ private:
                  "declaration-returning ast meta function '" + meta_name +
                      "' can currently be used only at item macro sites");
         }
+        if (found->second.ast_return_kind == MetaAstReturnKind::Pattern &&
+            site != MetaInvocationSite::PatternMacro) {
+            fail(loc,
+                 "pattern-returning ast meta function '" + meta_name +
+                     "' can currently be used only at pattern macro sites");
+        }
         return found->second;
     }
 
@@ -1465,8 +1471,11 @@ private:
 
     Pattern expand_pattern_macro_tree(const Pattern& pattern) {
         if (pattern.is_macro_invocation) {
-            (void)require_meta_invocation(pattern.loc, MetaInvocationSite::PatternMacro, pattern.case_name);
-            Pattern expanded = expand_pattern_macro_invocation(pattern);
+            const MetaFunctionInfo& meta =
+                require_meta_invocation(pattern.loc, MetaInvocationSite::PatternMacro, pattern.case_name);
+            Pattern expanded = meta.ast_return_kind == MetaAstReturnKind::Pattern
+                                   ? expand_pattern_macro_constructor(pattern, meta.parameter_name, *meta.ast_return)
+                                   : expand_pattern_macro_invocation(pattern);
             return expand_pattern_macro_tree(expanded);
         }
 

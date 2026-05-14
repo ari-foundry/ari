@@ -23,6 +23,9 @@ ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation&
                                                       const std::string& input_name,
                                                       const Expr& returned_ast);
 Pattern expand_pattern_macro_invocation(const Pattern& invocation);
+Pattern expand_pattern_macro_constructor(const Pattern& invocation,
+                                         const std::string& input_name,
+                                         const Expr& returned_ast);
 ExprPtr expand_ast_expression_return(const Expr& returned_ast,
                                       const std::string& input_name,
                                       const Expr& input_ast);

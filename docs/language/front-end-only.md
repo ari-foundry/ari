@@ -212,8 +212,8 @@ bare expression, Ari substitutes that node with the parsed invocation
 expression. This first non-identity AST step has no quote/eval syntax, and
 names other than the meta input parameter are rejected in returned expression
 ASTs. Non-identity token construction, attribute rewrites, and
-type/pattern AST construction remain reserved until Ari has a broader
-compile-time evaluator. Item-position `ast -> ast` macros can return
+type AST construction remain reserved until Ari has a broader compile-time
+evaluator. Item-position `ast -> ast` macros can return
 declaration AST output with the meta-body-only `decl!(...)` constructor:
 
 ```ari
@@ -240,6 +240,23 @@ meta fn append_generated(input: ast) -> ast {
 append_generated!(fn original() -> i64 {
   return 41;
 });
+```
+
+Pattern-position `ast -> ast` macros can return pattern AST output with the
+meta-body-only `pattern!(...)` constructor. A bare token that matches the meta
+parameter name inside `pattern!(...)` is replaced with the invocation's pattern
+input tokens:
+
+```ari
+meta fn wrap_some(input: ast) -> ast {
+  return pattern!(Some(input));
+}
+
+match value {
+  wrap_some!(inner) => {
+    return inner;
+  }
+}
 ```
 
 Expression, item, and type-position macro invocation use Rust-style
@@ -274,9 +291,10 @@ token tree is parsed as a type input and then lowered as that type. User
 `format!` are still planned and rejected with specific diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
-against `token_stream -> token_stream` or `ast -> ast` meta functions, and is
-an identity transform today: the token tree is parsed as one pattern and then
-lowered through the ordinary pattern engine.
+against `token_stream -> token_stream` or `ast -> ast` meta functions. Empty
+and `return input;` bodies identity-expand by parsing the token tree as one
+pattern before ordinary pattern lowering; `ast -> ast` bodies that return
+`pattern!(...)` replace that input with the constructed pattern AST.
 
 Macro invocation is the only parser-level token-tree expression form. A macro
 call is always an ordinary named call such as `make_tokens!(...)`; there is no

@@ -1,0 +1,7 @@
+meta fn wildcard(input: ast) -> ast {
+  return pattern!(_);
+}
+
+fn main() -> i64 {
+  return wildcard!(1);
+}

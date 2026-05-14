@@ -196,8 +196,10 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    other name references are rejected. Item-position `ast -> ast` macros can
    also return top-level declaration AST output with the meta-body-only
    `decl!(...)` constructor, for example `return decl!(fn generated() -> i64 {
-   return 42; });`. Pattern/type AST construction and declaration input
-   inspection remain reserved until evaluation exists. Attribute,
+   return 42; });`. Pattern-position `ast -> ast` macros can return pattern
+   AST output with the meta-body-only `pattern!(...)` constructor, such as
+   `return pattern!(Some(input));`. Type AST construction and declaration
+   input inspection remain reserved until evaluation exists. Attribute,
    expression-macro, and active
    item-macro sites now reject `type -> type` transforms and accept only
    syntax-rewriting `token_stream -> token_stream` or `ast -> ast` domains;
@@ -248,7 +250,10 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    identity-expanded by parsing their token-tree input as one pattern before
    pattern lowering. Invalid extra pattern tokens are rejected before match,
    `if let`, `while let`, `for`, function-parameter, or binding pattern
-   lowering. Disabled `@cfg(false)` declarations still parse for linting/cache
+   lowering. Non-identity pattern-position `ast -> ast` bodies can return
+   `pattern!(...)`; bare uses of the meta parameter name inside that
+   constructor are substituted with the invocation's pattern input tokens.
+   Disabled `@cfg(false)` declarations still parse for linting/cache
    stability.
    Built-in `@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`,
    `@derive(Eq)`, and `@derive(PartialEq)` now expand on structs and enums,
@@ -274,8 +279,9 @@ V0 cache-format contract until a cache version bump is explicitly approved.
      beyond empty/`return input;` identity bodies
    - [ast] extend non-identity `ast` construction beyond expression-position
      expression returns with input substitution and item-position `decl!(...)`
-     declaration output with input substitution: add pattern/type AST output
-     and richer expression trees once evaluator policy is defined
+     declaration output with input substitution and pattern-position
+     `pattern!(...)` output with input substitution: add type AST output and
+     richer expression trees once evaluator policy is defined
    - [ast-decl-input] let item-position declaration constructors inspect the
      invocation declaration input after evaluator policy is defined
    - [attributes] allow attribute macros to rewrite or insert AST nodes
