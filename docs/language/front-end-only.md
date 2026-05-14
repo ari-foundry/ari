@@ -195,7 +195,7 @@ empty or contain a single `return input;` identity return, where `input` is the
 meta function parameter. Expression-position `ast -> ast` macros may also
 return an expression AST directly and use the meta input parameter as a
 substitution point. Literal, tuple, vector, field/index/tuple access, function
-call, unary, binary, and cast expression trees are accepted:
+call, method call, unary, binary, and cast expression trees are accepted:
 
 ```ari
 meta fn add_one(input: ast) -> ast {
@@ -204,6 +204,10 @@ meta fn add_one(input: ast) -> ast {
 
 meta fn score(input: ast) -> ast {
   return add(input.left, input.values[1]);
+}
+
+meta fn bumped(input: ast) -> ast {
+  return input.bump(2);
 }
 
 fn main() -> i64 {

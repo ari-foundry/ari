@@ -1,0 +1,17 @@
+trait Bump {
+  fn bump(self, extra: i64) -> i64
+}
+
+impl Bump for i64 {
+  fn bump(self, extra: i64) -> i64 {
+    self + extra
+  }
+}
+
+meta fn bump_ast(input: ast) -> ast {
+  return input.bump(2);
+}
+
+fn main() -> i64 {
+  return bump_ast!(40);
+}

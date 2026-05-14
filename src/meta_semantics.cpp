@@ -133,6 +133,8 @@ bool supported_ast_return_expr(const Expr& expr,
             return require_binary();
         case ExprKind::Call:
             return require_args();
+        case ExprKind::MethodCall:
+            return require_operand(expr_operand(expr)) && require_args();
         case ExprKind::Name:
             if (expr.name == input_name) {
                 return true;
@@ -144,12 +146,11 @@ bool supported_ast_return_expr(const Expr& expr,
         case ExprKind::Try:
         case ExprKind::NullCoalesce:
         case ExprKind::StructLiteral:
-        case ExprKind::MethodCall:
         case ExprKind::Match:
         case ExprKind::If:
         case ExprKind::Block:
             reason =
-                "ast meta expression returns currently support only literal, input, tuple, vector, access, call, unary, binary, and cast expression trees";
+                "ast meta expression returns currently support only literal, input, tuple, vector, access, call, method call, unary, binary, and cast expression trees";
             return false;
         case ExprKind::MacroCall:
             reason =

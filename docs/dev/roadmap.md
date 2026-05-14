@@ -220,9 +220,9 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    `return input;` lower as identity expansion; non-identity expression
    returns from `ast -> ast` bodies clone the returned AST and substitute that
    parsed input expression wherever the meta parameter name appears. Literal,
-   tuple, vector, access, call, unary, binary, and cast expression trees are
-   accepted. Invalid extra tokens are rejected before semantic expression
-   lowering.
+   tuple, vector, access, function call, method call, unary, binary, and cast
+   expression trees are accepted. Invalid extra tokens are rejected before
+   semantic expression lowering.
    Item-position `ast -> ast` bodies can also return `decl!(...)`; those
    declaration tokens are parsed as top-level use, inline module, function,
    constant, struct, enum, trait, or impl declarations and spliced into normal
@@ -289,8 +289,8 @@ V0 cache-format contract until a cache version bump is explicitly approved.
      declaration output with input substitution and pattern-position
      `pattern!(...)` output with input substitution, plus type-position
      `type!(...)` output with input substitution: add struct literal,
-     method-call, control-flow, and other richer expression trees once
-     evaluator policy is defined
+     control-flow, and other richer expression trees once evaluator policy is
+     defined
    - [ast-decl-input] let item-position declaration constructors inspect the
      invocation declaration input after evaluator policy is defined
    - [attributes] allow attribute macros to rewrite or insert AST nodes
