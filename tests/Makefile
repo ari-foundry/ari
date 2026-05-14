@@ -1398,6 +1398,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/macro-token-tree-syntax.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/macro-call-identity.ari -o $(BUILD_DIR)/meta/macro-call-identity.raw
 	$(BUILD_DIR)/meta/macro-call-identity.raw; code=$$?; test $$code -eq 13
+	$(TARGET) --freestanding tests/ok/item-macro-function-identity.ari -o $(BUILD_DIR)/meta/item-macro-function-identity.raw
+	$(BUILD_DIR)/meta/item-macro-function-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/type-macro-identity.ari -o $(BUILD_DIR)/meta/type-macro-identity.raw
 	$(BUILD_DIR)/meta/type-macro-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.raw
@@ -1464,8 +1466,8 @@ check-meta: $(TARGET)
 	grep -q "unknown pattern macro 'missing_pattern!'" $(BUILD_DIR)/meta/pattern-macro-unknown.err
 	if $(TARGET) tests/errors/macro-call-unknown.ari -o $(BUILD_DIR)/meta/macro-call-unknown.elf >$(BUILD_DIR)/meta/macro-call-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'missing!'" $(BUILD_DIR)/meta/macro-call-unknown.err
-	if $(TARGET) tests/errors/item-macro-planned.ari -o $(BUILD_DIR)/meta/item-macro-planned.elf >$(BUILD_DIR)/meta/item-macro-planned.err 2>&1; then exit 1; fi
-	grep -q "item macro invocation 'make_item!' requires compile-time token_stream/ast expansion" $(BUILD_DIR)/meta/item-macro-planned.err
+	if $(TARGET) tests/errors/item-macro-unsupported-item.ari -o $(BUILD_DIR)/meta/item-macro-unsupported-item.elf >$(BUILD_DIR)/meta/item-macro-unsupported-item.err 2>&1; then exit 1; fi
+	grep -q "item macro identity expansion currently supports function declarations" $(BUILD_DIR)/meta/item-macro-unsupported-item.err
 	if $(TARGET) tests/errors/item-macro-type-domain.ari -o $(BUILD_DIR)/meta/item-macro-type-domain.elf >$(BUILD_DIR)/meta/item-macro-type-domain.err 2>&1; then exit 1; fi
 	grep -q "item macros require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/item-macro-type-domain.err
 	if $(TARGET) tests/errors/item-macro-unknown.ari -o $(BUILD_DIR)/meta/item-macro-unknown.elf >$(BUILD_DIR)/meta/item-macro-unknown.err 2>&1; then exit 1; fi

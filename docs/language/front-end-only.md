@@ -188,12 +188,16 @@ Because meta bodies are still empty, expression macro expansion is currently
 an identity transform: the token tree inside `ident!(...)` is parsed as one
 expression and then lowered as that expression. User syntax-rewriting
 attributes and active item-position macros must also resolve to
-`token_stream -> token_stream` or `ast -> ast` meta functions, but active item
-rewrites are still planned. Type-position macro invocations must resolve to
+`token_stream -> token_stream` or `ast -> ast` meta functions. Function-only
+item macro expansion is currently an identity transform: the token tree is
+parsed as one or more top-level function declarations and those generated
+functions participate in normal semantic checking. Generated const, type,
+module, trait, and impl items are still planned. Type-position macro
+invocations must resolve to
 `type -> type` meta functions and are also identity transforms today: their
 token tree is parsed as a type input and then lowered as that type. User
-`meta fn` rewriting, active item macro expansion, and `format!` are still
-planned and rejected with specific diagnostics.
+`meta fn` rewriting, non-function item macro expansion, and `format!` are
+still planned and rejected with specific diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions, and then
@@ -212,6 +216,13 @@ meta fn make_tokens(input: token_stream) -> token_stream {
 
 let value = make_tokens!(1 + 2 * 3);
 
+meta fn make_item(input: token_stream) -> token_stream {
+}
+
+make_item!(fn generated_value() -> i64 {
+  return 21;
+});
+
 meta fn make_type(input: type) -> type {
 }
 
@@ -220,13 +231,16 @@ let value: make_type!(i64) = 0;
 
 Active user macro expressions parse their input as one expression immediately;
 malformed expression input, such as extra comma-separated tokens, is rejected
-before semantic expression lowering. Item-position and pattern-position macro
-invocations are rejected until compile-time construction exists, but sema
-checks unknown names and domain mismatches before emitting the planned
-expansion diagnostic. Type-position macro invocations parse their input as a
-type immediately; malformed type input, such as extra comma-separated tokens,
-is rejected before semantic type lowering. The `ident!(...)` token-tree surface
-is fixed for linting and disabled `@cfg(false)` declarations still parse.
+before semantic expression lowering. Item-position macro invocations parse
+function-declaration output immediately; malformed function items or generated
+non-function items are rejected before normal declaration collection.
+Pattern-position macro invocations are rejected until compile-time construction
+exists, but sema checks unknown names and domain mismatches before emitting the
+planned expansion diagnostic. Type-position macro invocations parse their input
+as a type immediately; malformed type input, such as extra comma-separated
+tokens, is rejected before semantic type lowering. The `ident!(...)` token-tree
+surface is fixed for linting and disabled `@cfg(false)` declarations still
+parse.
 
 ## Raw Pointers
 

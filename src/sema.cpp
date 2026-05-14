@@ -20,6 +20,7 @@
 #include "layout.hpp"
 #include "local_state.hpp"
 #include "loop_state_semantics.hpp"
+#include "meta_expansion.hpp"
 #include "meta_semantics.hpp"
 #include "module_path.hpp"
 #include "move_semantics.hpp"
@@ -223,8 +224,8 @@ public:
         collect_module_decls();
         collect_uses();
         collect_meta_functions();
+        expand_item_macro_invocations();
         validate_attributes();
-        validate_item_macro_invocations();
         validate_pattern_macro_invocations();
         collect_trait_decls();
         collect_struct_decls();
@@ -250,11 +251,11 @@ public:
         collect_ir_extern_functions(ir);
         collect_ir_c_enums(ir);
         collect_ir_c_records(ir);
-        for (const auto& fn : program_.functions) {
-            if (!is_executable_function(fn)) continue;
-            if (options_.test_mode && fn.name == "main") continue;
-            ir.functions.push_back(check_function(fn));
-        }
+        for_each_function_decl([&](const FunctionDecl& fn) {
+            if (is_executable_function(fn) && !(options_.test_mode && fn.name == "main")) {
+                ir.functions.push_back(check_function(fn));
+            }
+        });
         if (options_.test_mode) {
             ir.functions.push_back(make_test_main(test_functions));
         }
@@ -417,6 +418,7 @@ private:
     std::map<std::string, ImplMethodInfo> drop_impls_;
     std::vector<ImplMethodInfo> impl_methods_to_lower_;
     std::set<std::string> queued_impl_methods_;
+    std::vector<FunctionDecl> item_macro_functions_;
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
     std::map<std::string, std::string> exported_symbols_;
@@ -772,6 +774,12 @@ private:
         if (!can_access(fn.module_name, fn.is_public)) {
             fail(loc, "function '" + name + "' is not public");
         }
+    }
+
+    template <typename Visitor>
+    void for_each_function_decl(Visitor&& visitor) const {
+        for (const auto& fn : program_.functions) visitor(fn);
+        for (const auto& fn : item_macro_functions_) visitor(fn);
     }
 
     void collect_module_decls() {
@@ -1255,9 +1263,9 @@ private:
     }
 
     void validate_attributes() {
-        for (const auto& fn : program_.functions) {
+        for_each_function_decl([&](const FunctionDecl& fn) {
             validate_attribute_list(fn.attributes, "function", fn.module_name);
-        }
+        });
         for (const auto& decl : program_.structs) {
             validate_attribute_list(decl.attributes, "struct", decl.module_name);
             validate_repr_c_struct(decl);
@@ -1274,13 +1282,19 @@ private:
         }
     }
 
-    void validate_item_macro_invocations() {
+    void expand_item_macro_invocations() {
         for (const auto& invocation : program_.item_macros) {
             std::string previous_module = current_module_name_;
             current_module_name_ = invocation.module_name;
-            (void)require_meta_invocation(invocation.loc, MetaInvocationSite::ItemMacro, invocation.name);
+            try {
+                (void)require_meta_invocation(invocation.loc, MetaInvocationSite::ItemMacro, invocation.name);
+            } catch (...) {
+                current_module_name_ = previous_module;
+                throw;
+            }
             current_module_name_ = previous_module;
-            fail(invocation.loc, meta_invocation_planned_message(MetaInvocationSite::ItemMacro, invocation.name));
+            ItemMacroFunctionExpansion expansion = expand_item_macro_functions(invocation);
+            for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
         }
     }
 
@@ -1373,7 +1387,9 @@ private:
     }
 
     void validate_pattern_macro_invocations() {
-        for (const auto& fn : program_.functions) validate_function_pattern_macros(fn);
+        for_each_function_decl([&](const FunctionDecl& fn) {
+            validate_function_pattern_macros(fn);
+        });
         for (const auto& trait : program_.traits) {
             for (const auto& method : trait.methods) validate_function_pattern_macros(method);
         }
@@ -2180,9 +2196,9 @@ private:
                 validate_generic_constraints_for(method.generics, decl.module_name, std::move(method_substitutions));
             }
         }
-        for (const auto& fn : program_.functions) {
+        for_each_function_decl([&](const FunctionDecl& fn) {
             validate_generic_constraints_for(fn.generics, fn.module_name);
-        }
+        });
         for (const auto& impl : program_.impls) {
             validate_generic_constraints_for(impl.generics, impl.module_name);
         }
@@ -3189,7 +3205,7 @@ private:
     }
 
     void collect_function_signatures() {
-        for (const auto& fn : program_.functions) {
+        for_each_function_decl([&](const FunctionDecl& fn) {
             require_unique_generic_params(fn.generics, fn.meta ? "meta function" : "function", fn.name);
             if (fn.params.size() > std::numeric_limits<std::uint16_t>::max()) {
                 fail(fn.loc, "functions support up to 65535 parameters");
@@ -3199,15 +3215,15 @@ private:
             }
             if (fn.is_extern) {
                 collect_extern_function_signature(fn);
-                continue;
+                return;
             }
             (void)exported_link_name(fn);
             if (!fn.generics.empty()) {
                 auto inserted = generic_functions_.emplace(fn.name, &fn);
                 if (!inserted.second) fail(fn.loc, "duplicate generic function '" + fn.name + "'");
-                continue;
+                return;
             }
-            if (!is_executable_function(fn)) continue;
+            if (!is_executable_function(fn)) return;
             if (enum_cases_.count(fn.name)) fail(fn.loc, "function '" + fn.name + "' conflicts with enum case constructor");
             if (is_format_print_name(fn.name)) fail(fn.loc, "function '" + fn.name + "' conflicts with prelude print builtin");
             if (functions_.count(fn.name)) fail(fn.loc, "duplicate executable function '" + fn.name + "'");
@@ -3241,7 +3257,7 @@ private:
 
             auto inserted = functions_.emplace(fn.name, std::move(sig));
             if (!inserted.second) fail(fn.loc, "duplicate executable function '" + fn.name + "'");
-        }
+        });
     }
 
     void collect_extern_function_signature(const FunctionDecl& fn) {
@@ -3380,8 +3396,8 @@ private:
 
     std::vector<const FunctionDecl*> collect_test_functions() const {
         std::vector<const FunctionDecl*> tests;
-        for (const auto& fn : program_.functions) {
-            if (!find_attribute(fn.attributes, "test")) continue;
+        for_each_function_decl([&](const FunctionDecl& fn) {
+            if (!find_attribute(fn.attributes, "test")) return;
             if (fn.is_extern) fail(fn.loc, "@test functions cannot be extern");
             if (fn.meta) fail(fn.loc, "@test functions cannot be meta functions");
             if (!fn.generics.empty()) fail(fn.loc, "@test functions cannot be generic");
@@ -3395,7 +3411,7 @@ private:
                 fail(fn.loc, "@test functions must return i64 or void");
             }
             tests.push_back(&fn);
-        }
+        });
         return tests;
     }
 

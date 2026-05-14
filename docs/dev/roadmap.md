@@ -194,7 +194,12 @@ stages rather than one file per syntax feature.
    before semantic expression lowering. Type-position `type -> type` meta
    invocations now parse their token-tree input as a type ref and lower as an
    identity expansion while meta bodies stay empty; invalid extra tokens are
-   rejected before semantic type lowering. User attribute
+   rejected before semantic type lowering. Item-position `token_stream ->
+   token_stream` and `ast -> ast` meta invocations can now parse their
+   token-tree input as top-level function declarations and splice those
+   generated functions into sema as identity expansion output while meta bodies
+   stay empty; generated const/type/module/trait/impl items remain planned.
+   User attribute
    arguments and item-position/type-position `ident!(...)` invocations now use
    the same
    balanced token-tree parser, with nested `(...)`, `{...}`, and `[...]`
@@ -209,7 +214,9 @@ stages rather than one file per syntax feature.
    linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
-   - [items] expand sema-validated item-position macro invocations into top-level items
+   - [items-non-fn] expand sema-validated item-position macro invocations into
+     non-function top-level items such as consts, structs, enums, traits, impls,
+     modules, and use declarations
    - [patterns] expand sema-validated pattern-position `ident!(...)` invocations
      once compile-time construction can produce pattern AST
    - [attributes] allow attribute macros to rewrite or insert AST nodes
