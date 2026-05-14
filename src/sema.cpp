@@ -219,6 +219,7 @@ public:
         collect_meta_functions();
         validate_attributes();
         validate_item_macro_invocations();
+        validate_pattern_macro_invocations();
         collect_trait_decls();
         collect_struct_decls();
         collect_enum_layouts();
@@ -1274,6 +1275,104 @@ private:
             (void)require_meta_invocation(invocation.loc, MetaInvocationSite::ItemMacro, invocation.name);
             current_module_name_ = previous_module;
             fail(invocation.loc, meta_invocation_planned_message(MetaInvocationSite::ItemMacro, invocation.name));
+        }
+    }
+
+    void validate_pattern_macro(const Pattern& pattern) {
+        if (pattern.is_macro_invocation) {
+            (void)require_meta_invocation(pattern.loc, MetaInvocationSite::PatternMacro, pattern.case_name);
+            fail(pattern.loc, meta_invocation_planned_message(MetaInvocationSite::PatternMacro, pattern.case_name));
+        }
+        if (pattern.payload_pattern) validate_pattern_macro(*pattern.payload_pattern);
+        if (pattern.alias_pattern) validate_pattern_macro(*pattern.alias_pattern);
+        for (const auto& alternative : pattern.alternatives) validate_pattern_macro(alternative);
+        for (const auto& element : pattern.elements) validate_pattern_macro(element);
+    }
+
+    void validate_expr_pattern_macros(const ExprPtr& expr) {
+        if (!expr) return;
+        validate_expr_pattern_macros(expr_operand(*expr));
+        validate_expr_pattern_macros(expr_left(*expr));
+        validate_expr_pattern_macros(expr_right(*expr));
+        for (const auto& arg : expr->args) validate_expr_pattern_macros(arg);
+        if (expr->if_payload) {
+            validate_expr_pattern_macros(expr->if_payload->condition);
+            if (expr->if_payload->condition_pattern) validate_pattern_macro(*expr->if_payload->condition_pattern);
+            validate_stmt_list_pattern_macros(expr->if_payload->then_body);
+            validate_expr_pattern_macros(expr->if_payload->then_value);
+            validate_stmt_list_pattern_macros(expr->if_payload->else_body);
+            validate_expr_pattern_macros(expr->if_payload->else_value);
+        }
+        if (expr->block_payload) {
+            validate_stmt_list_pattern_macros(expr->block_payload->body);
+            validate_expr_pattern_macros(expr->block_payload->value);
+        }
+        if (expr->match_payload) {
+            validate_expr_pattern_macros(expr->match_payload->value);
+            for (const auto& arm : expr->match_payload->arms) {
+                validate_pattern_macro(arm.pattern);
+                validate_expr_pattern_macros(arm.value);
+            }
+        }
+    }
+
+    void validate_binding_pattern_macros(const Binding& binding) {
+        if (binding.has_pattern) validate_pattern_macro(binding.pattern);
+        validate_expr_pattern_macros(binding.init);
+    }
+
+    void validate_stmt_pattern_macros(const Stmt& stmt) {
+        validate_binding_pattern_macros(stmt.binding);
+        validate_expr_pattern_macros(stmt.expr);
+        validate_expr_pattern_macros(stmt.condition);
+        validate_expr_pattern_macros(stmt.for_iterable);
+        validate_expr_pattern_macros(stmt.match_value);
+        if (stmt.has_condition_pattern && stmt.condition_pattern) validate_pattern_macro(*stmt.condition_pattern);
+        if (stmt.for_pattern) validate_pattern_macro(*stmt.for_pattern);
+        for (const auto& binding : stmt.init_bindings) validate_binding_pattern_macros(binding);
+        for (const auto& update : stmt.updates) validate_expr_pattern_macros(update);
+        if (stmt.assign_payload) {
+            validate_expr_pattern_macros(stmt.assign_payload->target);
+            validate_expr_pattern_macros(stmt.assign_payload->rhs);
+        }
+        if (stmt.body_payload) {
+            validate_stmt_list_pattern_macros(stmt.body_payload->statements);
+            validate_stmt_list_pattern_macros(stmt.body_payload->then_body);
+            validate_stmt_list_pattern_macros(stmt.body_payload->else_body);
+            validate_stmt_list_pattern_macros(stmt.body_payload->loop_body);
+        }
+        if (stmt.match_arms) {
+            for (const auto& arm : *stmt.match_arms) {
+                validate_pattern_macro(arm.pattern);
+                validate_stmt_list_pattern_macros(arm.body);
+            }
+        }
+        if (stmt.break_payload) validate_expr_pattern_macros(stmt.break_payload->value);
+    }
+
+    void validate_stmt_list_pattern_macros(const std::vector<StmtPtr>& statements) {
+        for (const auto& stmt : statements) {
+            if (stmt) validate_stmt_pattern_macros(*stmt);
+        }
+    }
+
+    void validate_function_pattern_macros(const FunctionDecl& fn) {
+        std::string previous_module = current_module_name_;
+        current_module_name_ = fn.module_name;
+        for (const auto& param : fn.params) {
+            if (param.has_pattern) validate_pattern_macro(param.pattern);
+        }
+        validate_stmt_list_pattern_macros(fn.body);
+        current_module_name_ = previous_module;
+    }
+
+    void validate_pattern_macro_invocations() {
+        for (const auto& fn : program_.functions) validate_function_pattern_macros(fn);
+        for (const auto& trait : program_.traits) {
+            for (const auto& method : trait.methods) validate_function_pattern_macros(method);
+        }
+        for (const auto& impl : program_.impls) {
+            for (const auto& method : impl.methods) validate_function_pattern_macros(method);
         }
     }
 

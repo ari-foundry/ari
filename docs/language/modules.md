@@ -313,11 +313,12 @@ ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build
 
 The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, and a compact AST summary for each cached source. Current
-caches are written as `ari-module-cache-v8`; older v1/v2/v3/v4/v5/v6/v7 caches
-are treated as stale because they do not carry the current AST-summary
-declaration fingerprints, function and local binding pattern payloads,
-constant initializer payloads, and simple executable body payloads. A later
-build can validate the cache and parse from that snapshot:
+caches are written as `ari-module-cache-v8`, with declaration summaries using
+`ari-ast-decls-v8`; older v1/v2/v3/v4/v5/v6/v7 caches are treated as stale
+because they do not carry the current AST-summary declaration fingerprints,
+function and local binding pattern payloads, constant initializer payloads, and
+simple executable body payloads. A later build can validate the cache and parse
+from that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll

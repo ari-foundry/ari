@@ -66,6 +66,7 @@ bool meta_transform_allowed_at_site(MetaInvocationSite site, MetaTransformKind k
         case MetaInvocationSite::Attribute:
         case MetaInvocationSite::ExpressionMacro:
         case MetaInvocationSite::ItemMacro:
+        case MetaInvocationSite::PatternMacro:
             return meta_transform_can_rewrite_syntax(kind);
         case MetaInvocationSite::TypeMacro:
             return kind == MetaTransformKind::Type;
@@ -82,6 +83,8 @@ std::string unknown_meta_invocation_message(MetaInvocationSite site, const std::
             return "unknown macro '" + name + "!'";
         case MetaInvocationSite::ItemMacro:
             return "unknown item macro '" + name + "!'";
+        case MetaInvocationSite::PatternMacro:
+            return "unknown pattern macro '" + name + "!'";
         case MetaInvocationSite::TypeMacro:
             return "unknown type macro '" + name + "!'";
     }
@@ -106,6 +109,10 @@ std::string meta_invocation_domain_message(MetaInvocationSite site,
             return "item macro invocation '" + name + "!' refers to meta function '" + meta_name +
                    "' with " + signature +
                    " domain; item macros require token_stream -> token_stream or ast -> ast";
+        case MetaInvocationSite::PatternMacro:
+            return "pattern macro invocation '" + name + "!' refers to meta function '" + meta_name +
+                   "' with " + signature +
+                   " domain; pattern macros require token_stream -> token_stream or ast -> ast";
         case MetaInvocationSite::TypeMacro:
             return "type macro invocation '" + name + "!' refers to meta function '" + meta_name +
                    "' with " + signature + " domain; type macros require type -> type";
@@ -121,6 +128,9 @@ std::string meta_invocation_planned_message(MetaInvocationSite site, const std::
         case MetaInvocationSite::ItemMacro:
             return "item macro invocation '" + name +
                    "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet";
+        case MetaInvocationSite::PatternMacro:
+            return "pattern macro invocation '" + name +
+                   "!' requires compile-time pattern expansion, which is planned but not implemented yet";
         case MetaInvocationSite::TypeMacro:
             return "type macro invocation '" + name +
                    "!' requires compile-time type expansion, which is planned but not implemented yet";

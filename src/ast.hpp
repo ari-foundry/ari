@@ -124,6 +124,8 @@ struct Pattern {
     std::size_t rest_index = 0;
     std::string alias_name;
     std::unique_ptr<Pattern> alias_pattern;
+    bool is_macro_invocation = false;
+    std::vector<Token> macro_tokens;
     SourceLocation loc;
 };
 

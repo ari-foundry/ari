@@ -18,6 +18,7 @@ enum class MetaInvocationSite {
     Attribute,
     ExpressionMacro,
     ItemMacro,
+    PatternMacro,
     TypeMacro,
 };
 

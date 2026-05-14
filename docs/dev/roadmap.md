@@ -193,16 +193,17 @@ stages rather than one file per syntax feature.
    delimiter validation before sema diagnostics for unknown names, bad domains,
    or planned expansion. Item/type macro token trees are also preserved through
    AST/module summary plumbing. Pattern-position `ident!(...)` invocations are
-   now parser-reserved with the same balanced token-tree validation and a
-   planned-expansion diagnostic, so lint tooling can rely on the spelling before
-   pattern macro lowering exists. Disabled `@cfg(false)` declarations still
-   parse for linting/cache stability.
+   now parsed with the same balanced token-tree validation, preserved through
+   AST/module summary payloads, and sema-validated for unknown names, bad
+   domains, and planned expansion, so lint tooling can rely on the spelling
+   before pattern macro lowering exists. Disabled `@cfg(false)` declarations
+   still parse for linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [types] expand sema-validated type-position macro invocations into type refs
    - [calls] expand user-defined Rust-style `ident!(...)` expression calls
    - [items] expand sema-validated item-position macro invocations into top-level items
-   - [patterns] expand parser-reserved pattern-position `ident!(...)` invocations
+   - [patterns] expand sema-validated pattern-position `ident!(...)` invocations
      once compile-time construction can produce pattern AST
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists

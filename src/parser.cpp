@@ -1423,8 +1423,9 @@ private:
         pattern.case_name = parse_path_after_first(name);
         if (match(TokenKind::Bang)) {
             Token bang = tokens_[pos_ - 1];
-            parse_pattern_macro_token_tree(bang.loc);
-            fail(pattern.loc, "pattern macro invocation '" + pattern.case_name + "!' requires compile-time pattern expansion");
+            pattern.is_macro_invocation = true;
+            pattern.macro_tokens = parse_pattern_macro_token_tree(bang.loc);
+            return pattern;
         }
         if (match(TokenKind::At)) {
             fail(tokens_[pos_ - 1].loc, "pattern aliases must bind a plain name before @");

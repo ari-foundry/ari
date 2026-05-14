@@ -563,8 +563,9 @@ let nested_struct = match (point, color) {
 
 Slice patterns remain planned for the shared richer pattern engine.
 Pattern-position macro invocation uses reserved Rust-style `ident!(...)`
-syntax and preserves a balanced token tree, but active pattern expansion is
-still planned:
+syntax and preserves a balanced token tree in the AST and module summaries. The
+name must resolve to a `token_stream -> token_stream` or `ast -> ast` meta
+function, but active pattern expansion is still planned:
 
 ```ari
 match value {

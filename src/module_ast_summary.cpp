@@ -107,6 +107,13 @@ void append_token_payload(std::ostringstream& out, const Token& token) {
     append_field(out, token.literal_suffix);
 }
 
+void append_pattern_macro_payload(std::ostringstream& out, const Pattern& pattern) {
+    append_bool(out, pattern.is_macro_invocation);
+    if (!pattern.is_macro_invocation) return;
+    append_count(out, pattern.macro_tokens.size());
+    for (const auto& token : pattern.macro_tokens) append_token_payload(out, token);
+}
+
 void append_function_body_summary(std::ostringstream& out, const FunctionDecl& fn);
 bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern);
 
@@ -441,23 +448,28 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
     switch (pattern.kind) {
         case PatternKind::Wildcard:
             append_field(out, "wildcard");
+            append_pattern_macro_payload(out, pattern);
             return true;
         case PatternKind::Binding:
             append_field(out, "binding");
+            append_pattern_macro_payload(out, pattern);
             append_field(out, pattern.payload_name);
             return true;
         case PatternKind::IntegerLiteral:
             append_field(out, "integer");
+            append_pattern_macro_payload(out, pattern);
             append_bool(out, pattern.int_negative);
             append_count(out, pattern.int_value);
             append_field(out, pattern.literal_suffix);
             return true;
         case PatternKind::BoolLiteral:
             append_field(out, "bool");
+            append_pattern_macro_payload(out, pattern);
             append_bool(out, pattern.bool_value);
             return true;
         case PatternKind::Range:
             append_field(out, "range");
+            append_pattern_macro_payload(out, pattern);
             append_bool(out, pattern.int_negative);
             append_count(out, pattern.int_value);
             append_field(out, pattern.literal_suffix);
@@ -468,6 +480,7 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
             return true;
         case PatternKind::EnumCase: {
             append_field(out, "enum");
+            append_pattern_macro_payload(out, pattern);
             append_field(out, pattern.case_name);
             append_bool(out, pattern.has_payload_pattern);
             append_bool(out, pattern.has_payload_binding);
@@ -480,6 +493,7 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
         }
         case PatternKind::Or:
             append_field(out, "or");
+            append_pattern_macro_payload(out, pattern);
             append_count(out, pattern.alternatives.size());
             for (const auto& alternative : pattern.alternatives) {
                 if (!append_pattern_payload(out, alternative)) return false;
@@ -488,11 +502,13 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
         case PatternKind::Alias:
             if (!pattern.alias_pattern) return false;
             append_field(out, "alias");
+            append_pattern_macro_payload(out, pattern);
             append_field(out, pattern.alias_name);
             return append_pattern_payload(out, *pattern.alias_pattern);
         case PatternKind::Tuple:
         case PatternKind::Array: {
             append_field(out, pattern.kind == PatternKind::Tuple ? "tuple" : "array");
+            append_pattern_macro_payload(out, pattern);
             append_bool(out, pattern.has_rest);
             append_count(out, pattern.rest_index);
             append_count(out, pattern.elements.size());
@@ -504,6 +520,7 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
         case PatternKind::Struct:
             if (pattern.field_names.size() != pattern.elements.size()) return false;
             append_field(out, "struct");
+            append_pattern_macro_payload(out, pattern);
             append_field(out, pattern.case_name);
             append_bool(out, pattern.has_rest);
             append_count(out, pattern.rest_index);
@@ -1092,6 +1109,7 @@ private:
     }
 
     void consume_header() {
+        const std::string v8 = "ari-ast-decls-v8;";
         const std::string v7 = "ari-ast-decls-v7;";
         const std::string v6 = "ari-ast-decls-v6;";
         const std::string v5 = "ari-ast-decls-v5;";
@@ -1099,6 +1117,11 @@ private:
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v8.size(), v8) == 0) {
+            version_ = 8;
+            pos_ += v8.size();
+            return;
+        }
         if (text_.compare(pos_, v7.size(), v7) == 0) {
             version_ = 7;
             pos_ += v7.size();
@@ -1134,7 +1157,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1564,6 +1587,16 @@ private:
         std::string kind = read_field(label + " kind");
         Pattern pattern;
         pattern.loc = default_loc();
+        if (version_ >= 8) {
+            pattern.is_macro_invocation = read_bool(label + " macro invocation flag");
+            if (pattern.is_macro_invocation) {
+                std::uint64_t token_count = read_count(label + " macro token count");
+                pattern.macro_tokens.reserve(static_cast<std::size_t>(token_count));
+                for (std::uint64_t i = 0; i < token_count; ++i) {
+                    pattern.macro_tokens.push_back(read_token_payload(label + " macro token"));
+                }
+            }
+        }
         if (kind == "wildcard") {
             pattern.kind = PatternKind::Wildcard;
             return pattern;
@@ -1820,7 +1853,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v7;";
+    out << "ari-ast-decls-v8;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {
