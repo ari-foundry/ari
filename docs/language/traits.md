@@ -349,9 +349,10 @@ let item: Iterator[i64]::Item = 1
 The spelling is Ari-style `Trait[T]::Item`, not Rust's
 `<T as Trait>::Item`. The parser preserves declarations, impl witnesses, and
 projections in the AST and module cache so lint and language-server tooling can
-treat them as stable. Semantic lowering is still planned, so executable code
-rejects associated type declarations, impl witnesses, and projected types with
-focused planned-feature diagnostics until projection lowering exists.
+treat them as stable. During semantic lowering, a projection resolves to the
+impl witness type when exactly one visible impl witness matches the trait
+application. If no witness matches, or more than one impl witness matches, Ari
+rejects the projection with a focused diagnostic instead of guessing a type.
 
 Inside modules, methods are private by default. Mark the method `pub`, or mark
 the whole `impl` block `pub`, to make its methods callable from outside the

@@ -1,0 +1,34 @@
+struct Left {
+  value: i64,
+}
+
+struct Right {
+  value: i64,
+}
+
+trait Source[T] {
+  type Item;
+
+  fn get(self) -> T
+}
+
+impl Source[i64] for Left {
+  type Item = i64;
+
+  fn get(self) -> i64 {
+    return self.value;
+  }
+}
+
+impl Source[i64] for Right {
+  type Item = i64;
+
+  fn get(self) -> i64 {
+    return self.value;
+  }
+}
+
+fn main() -> i64 {
+  let value: Source[i64]::Item = 1;
+  return value;
+}

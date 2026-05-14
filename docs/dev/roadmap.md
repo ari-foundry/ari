@@ -209,19 +209,6 @@ stages rather than one file per syntax feature.
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist
-4. Stabilize trait associated type syntax before lint.
-   The Medium-Term associated-items work has one syntax piece that should be
-   fixed before lint tooling lands. Ari now reserves generic trait application
-   projections as `Trait[T]::Item` in type positions and associated type
-   declarations as `type Item` inside traits. Impl witness syntax
-   `type Item = SomeType` is also reserved inside impl blocks. The parser
-   preserves all three forms in `TypeRef`, trait/impl declarations,
-   declaration summaries, and module cache payloads, and sema rejects
-   executable use with focused planned-feature diagnostics. Ari intentionally
-   does not adopt Rust's
-   `<T as Trait>::Item` spelling.
-   - [associated-type-lowering] lower reserved `Trait[T]::Item` projections
-     into concrete type refs for iterator-style generic APIs
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -273,7 +260,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    structs remain explicit data layouts with field embedding rather than hidden
    base-object layout.
    - [generic-supertrait-inference] handle richer generic supertrait
-     applications once associated types and projections exist
+     applications now that associated type declarations, witnesses, and
+     unique-witness projections exist
 2. Extend pattern binding modes beyond value bindings.
    The parser now reserves `ref`, `ref mut`, `&`, `&mut`, and `mut`
    binding-mode spellings as Near-Term syntax-stability work. This Medium-Term

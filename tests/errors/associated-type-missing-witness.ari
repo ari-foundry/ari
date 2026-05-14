@@ -1,0 +1,15 @@
+trait Source[T] {
+  type Item;
+
+  fn get(self) -> T
+}
+
+impl Source[i64] for i64 {
+  fn get(self) -> i64 {
+    return self;
+  }
+}
+
+fn main() -> i64 {
+  return 0;
+}

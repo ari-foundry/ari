@@ -1544,6 +1544,8 @@ check-traits: $(TARGET)
 	grep -q "Box_i64_" $(BUILD_DIR)/traits/generic-trait-associated.ll
 	grep -q "Box_bool_" $(BUILD_DIR)/traits/generic-trait-associated.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/generic-trait-associated.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/generic-trait-associated.elf; $(BUILD_DIR)/traits/generic-trait-associated.elf; code=$$?; test $$code -eq 21; fi
+	$(TARGET) --freestanding tests/ok/associated-type-projection.ari -o $(BUILD_DIR)/traits/associated-type-projection.raw
+	$(BUILD_DIR)/traits/associated-type-projection.raw; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/generic-trait-method.ari --emit-llvm $(BUILD_DIR)/traits/generic-trait-method.ll
 	grep -q "keep__G_i64" $(BUILD_DIR)/traits/generic-trait-method.ll
 	grep -q "keep__G_bool" $(BUILD_DIR)/traits/generic-trait-method.ll
@@ -1606,12 +1608,10 @@ check-traits: $(TARGET)
 	grep -q "trait-qualified method call 'BothScores::score' for type i64 is ambiguous" $(BUILD_DIR)/traits/trait-qualified-supertrait-ambiguous.err
 	if $(TARGET) tests/errors/trait-associated-ambiguous.ari -o $(BUILD_DIR)/traits/trait-associated-ambiguous.elf >$(BUILD_DIR)/traits/trait-associated-ambiguous.err 2>&1; then exit 1; fi
 	grep -q "associated function 'pick' for type Box is ambiguous" $(BUILD_DIR)/traits/trait-associated-ambiguous.err
-	if $(TARGET) tests/errors/associated-type-projection-planned.ari -o $(BUILD_DIR)/traits/associated-type-projection-planned.elf >$(BUILD_DIR)/traits/associated-type-projection-planned.err 2>&1; then exit 1; fi
-	grep -q "associated type projection 'ItemSource\\[i64\\]::Item' is reserved but semantic lowering is planned" $(BUILD_DIR)/traits/associated-type-projection-planned.err
-	if $(TARGET) tests/errors/associated-type-decl-planned.ari -o $(BUILD_DIR)/traits/associated-type-decl-planned.elf >$(BUILD_DIR)/traits/associated-type-decl-planned.err 2>&1; then exit 1; fi
-	grep -q "associated type declaration 'Source::Item' is reserved but semantic lowering is planned" $(BUILD_DIR)/traits/associated-type-decl-planned.err
-	if $(TARGET) tests/errors/associated-type-witness-planned.ari -o $(BUILD_DIR)/traits/associated-type-witness-planned.elf >$(BUILD_DIR)/traits/associated-type-witness-planned.err 2>&1; then exit 1; fi
-	grep -q "associated type witness 'Source for i64::Item' is reserved but semantic lowering is planned" $(BUILD_DIR)/traits/associated-type-witness-planned.err
+	if $(TARGET) tests/errors/associated-type-missing-witness.ari -o $(BUILD_DIR)/traits/associated-type-missing-witness.elf >$(BUILD_DIR)/traits/associated-type-missing-witness.err 2>&1; then exit 1; fi
+	grep -q "impl of trait 'Source' for i64 is missing associated type 'Item'" $(BUILD_DIR)/traits/associated-type-missing-witness.err
+	if $(TARGET) tests/errors/associated-type-projection-ambiguous.ari -o $(BUILD_DIR)/traits/associated-type-projection-ambiguous.elf >$(BUILD_DIR)/traits/associated-type-projection-ambiguous.err 2>&1; then exit 1; fi
+	grep -q "associated type projection 'Source\\[i64\\]::Item' is ambiguous across impl witnesses" $(BUILD_DIR)/traits/associated-type-projection-ambiguous.err
 	if $(TARGET) tests/errors/trait-qualified-associated-missing-self.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-missing-self.elf >$(BUILD_DIR)/traits/trait-qualified-associated-missing-self.err 2>&1; then exit 1; fi
 	grep -q "trait-qualified associated function call 'Build::build' requires an explicit implementing type argument" $(BUILD_DIR)/traits/trait-qualified-associated-missing-self.err
 	if $(TARGET) tests/errors/trait-qualified-associated-missing-impl.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-missing-impl.elf >$(BUILD_DIR)/traits/trait-qualified-associated-missing-impl.err 2>&1; then exit 1; fi

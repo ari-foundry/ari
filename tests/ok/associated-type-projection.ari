@@ -1,0 +1,26 @@
+struct Box[T] {
+  value: T,
+}
+
+trait Source[T] {
+  type Item;
+
+  fn get(self) -> T
+}
+
+impl[T] Source[T] for Box[T] {
+  type Item = T;
+
+  fn get(self) -> T {
+    return self.value;
+  }
+}
+
+fn main() -> i64 {
+  let value: Source[i64]::Item = 41;
+  let flag: Source[bool]::Item = true;
+  if flag {
+    return value + 1;
+  }
+  return 1;
+}

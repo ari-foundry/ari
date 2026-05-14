@@ -150,6 +150,11 @@ struct StructInfo {
 };
 
 struct TraitInfo {
+    struct AssociatedType {
+        std::string name;
+        SourceLocation loc;
+    };
+
     struct Method {
         std::string name;
         std::vector<GenericParam> generics;
@@ -165,6 +170,7 @@ struct TraitInfo {
     std::size_t generic_arity = 0;
     std::vector<std::string> generic_names;
     std::vector<TypeRef> supertrait_refs;
+    std::map<std::string, AssociatedType> associated_types;
     std::map<std::string, Method> methods;
     bool is_public = false;
     SourceLocation loc;
@@ -1490,14 +1496,23 @@ private:
             for (const auto& generic : decl.generics) trait_generic_names.insert(generic.name);
 
             for (const auto& associated_type : decl.associated_types) {
-                fail(associated_type.loc,
-                     "associated type declaration '" + decl.name + "::" + associated_type.name +
-                         "' is reserved but semantic lowering is planned");
+                TraitInfo::AssociatedType trait_type;
+                trait_type.name = associated_type.name;
+                trait_type.loc = associated_type.loc;
+                auto inserted = info.associated_types.emplace(trait_type.name, std::move(trait_type));
+                if (!inserted.second) {
+                    fail(associated_type.loc,
+                         "duplicate associated type '" + associated_type.name + "' in trait '" + decl.name + "'");
+                }
             }
 
             for (const auto& method : decl.methods) {
                 std::string method_name = basename_of_qualified_name(method.name);
                 require_unique_generic_params(method.generics, "trait method", method_name);
+                if (info.associated_types.count(method_name)) {
+                    fail(method.loc,
+                         "method '" + method_name + "' conflicts with an associated type in trait '" + decl.name + "'");
+                }
                 for (const auto& generic : method.generics) {
                     if (trait_generic_names.count(generic.name)) {
                         fail(generic.loc,
@@ -2238,6 +2253,30 @@ private:
         return ari::is_into_iterator_receiver_contract(trait.name, method_name);
     }
 
+    void validate_trait_impl_associated_types(
+        const ImplDecl& impl,
+        const TraitInfo& trait,
+        const std::map<std::string, IrType>& actual_substitutions
+    ) {
+        std::map<std::string, const ImplDecl::AssociatedTypeWitness*> witnesses;
+        for (const auto& witness : impl.associated_type_witnesses) {
+            auto inserted = witnesses.emplace(witness.name, &witness);
+            if (!inserted.second) fail(witness.loc, "duplicate associated type witness '" + witness.name + "' in impl");
+            if (!trait.associated_types.count(witness.name)) {
+                fail(witness.loc,
+                     "associated type witness '" + witness.name + "' is not declared by trait '" + trait.name + "'");
+            }
+            (void)resolve_impl_method_type(witness.type, actual_substitutions);
+        }
+        for (const auto& item : trait.associated_types) {
+            if (!witnesses.count(item.first)) {
+                fail(impl.trait_type.loc,
+                     "impl of trait '" + trait.name + "' for " + type_ref_key(impl.for_type) +
+                         " is missing associated type '" + item.first + "'");
+            }
+        }
+    }
+
     void validate_trait_impl_methods(
         const ImplDecl& impl,
         const TraitInfo& trait,
@@ -2354,6 +2393,9 @@ private:
         std::set<std::string> names;
         std::set<std::string> impl_generic_names;
         for (const auto& generic : impl.generics) impl_generic_names.insert(generic.name);
+        for (const auto& witness : impl.associated_type_witnesses) {
+            fail(witness.loc, "associated type witnesses are only allowed in trait impls");
+        }
         for (const auto& method : impl.methods) {
             if (method.is_variadic) fail(method.variadic_loc, "variadic parameters are only supported on extern \"C\" functions");
             std::string name = basename_of_qualified_name(method.name);
@@ -2442,6 +2484,7 @@ private:
                          "' for " + type_name(previous.self_type));
             }
 
+            validate_trait_impl_associated_types(impl, trait, actual_substitutions);
             validate_trait_impl_methods(impl, trait, expected_substitutions, actual_substitutions);
             trait_impl_coherence_.push_back(std::move(coherence));
             if (!impl.generics.empty()) {
@@ -2837,18 +2880,6 @@ private:
                 }
             }
             current_type_substitutions_ = std::move(outer_previous_substitutions);
-
-            for (const auto& witness : impl.associated_type_witnesses) {
-                if (!impl.has_trait) {
-                    current_module_name_ = previous_module;
-                    fail(witness.loc, "associated type witnesses are only allowed in trait impls");
-                }
-                current_module_name_ = previous_module;
-                fail(witness.loc,
-                     "associated type witness '" + trait_application_display(trait_name, trait_args) +
-                         " for " + type_name(self_type) + "::" + witness.name +
-                         "' is reserved but semantic lowering is planned");
-            }
 
             std::set<std::string> local_method_names;
             for (const auto& method : impl.methods) {
@@ -3493,12 +3524,112 @@ private:
         fail(ast_type.loc, meta_invocation_planned_message(MetaInvocationSite::TypeMacro, ast_type.name));
     }
 
+    IrType finish_associated_projection_type(const TypeRef& ast_type, IrType type) {
+        if (ast_type.nullable) {
+            if (ast_type.qualifier != TypeQualifier::Value) {
+                fail(ast_type.loc, "nullable type suffix ? cannot be combined with own, ref, or ptr qualifiers");
+            }
+            if (type.qualifier != TypeQualifier::Value) {
+                fail(ast_type.loc, "nullable type suffix ? expects a plain value type");
+            }
+            type.qualifier = TypeQualifier::Ptr;
+        } else if (ast_type.qualifier != TypeQualifier::Value) {
+            type.qualifier = ast_type.qualifier;
+        }
+        type.loc = ast_type.loc;
+        return type;
+    }
+
+    IrType resolve_associated_type_projection(const TypeRef& ast_type) {
+        std::string trait_name = resolve_trait_name(ast_type.name);
+        auto trait_found = traits_.find(trait_name);
+        if (trait_found == traits_.end()) {
+            fail(ast_type.loc, "unknown trait '" + ast_type.name + "' in associated type projection");
+        }
+        const TraitInfo& trait = trait_found->second;
+        require_trait_access(ast_type.loc, trait);
+        if (ast_type.args.size() != trait.generic_arity) {
+            fail(ast_type.loc,
+                 "trait '" + trait.name + "' expects " + std::to_string(trait.generic_arity) +
+                     " type argument" + (trait.generic_arity == 1 ? "" : "s"));
+        }
+        if (!trait.associated_types.count(ast_type.associated_projection)) {
+            fail(ast_type.loc,
+                 "trait '" + trait.name + "' has no associated type '" + ast_type.associated_projection + "'");
+        }
+
+        std::vector<IrType> trait_args;
+        trait_args.reserve(ast_type.args.size());
+        for (const auto& arg : ast_type.args) trait_args.push_back(resolve_executable_type(arg));
+
+        std::vector<IrType> candidates;
+        for (const auto& impl : program_.impls) {
+            if (!impl.has_trait) continue;
+
+            std::string previous_module = current_module_name_;
+            std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+            current_module_name_ = impl.module_name;
+            std::map<std::string, IrType> impl_substitutions = generic_placeholder_substitutions(impl.generics);
+            current_type_substitutions_ = impl_substitutions;
+
+            bool matches = false;
+            std::map<std::string, IrType> inferred;
+            if (resolve_trait_name(impl.trait_type.name) == trait.name &&
+                impl.trait_type.args.size() == trait_args.size()) {
+                std::vector<IrType> impl_trait_args;
+                impl_trait_args.reserve(impl.trait_type.args.size());
+                for (const auto& arg : impl.trait_type.args) impl_trait_args.push_back(resolve_executable_type(arg));
+                if (impl.generics.empty()) {
+                    matches = same_type_list(impl_trait_args, trait_args);
+                } else {
+                    matches = true;
+                    std::vector<std::string> generic_names;
+                    for (const auto& generic : impl.generics) generic_names.push_back(generic.name);
+                    for (std::size_t i = 0; i < impl_trait_args.size(); ++i) {
+                        if (!infer_generic_pattern_type(impl_trait_args[i], trait_args[i], generic_names, inferred)) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    for (const auto& generic_name : generic_names) {
+                        if (!inferred.count(generic_name)) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (matches) {
+                for (const auto& witness : impl.associated_type_witnesses) {
+                    if (witness.name != ast_type.associated_projection) continue;
+                    IrType witness_type = resolve_executable_type(witness.type);
+                    if (!impl.generics.empty()) witness_type = substitute_inferred_type(witness_type, inferred);
+                    candidates.push_back(std::move(witness_type));
+                }
+            }
+
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+        }
+
+        if (candidates.empty()) {
+            fail(ast_type.loc,
+                 "associated type projection '" + type_ref_key(ast_type) +
+                     "' has no matching impl witness");
+        }
+        if (candidates.size() > 1) {
+            fail(ast_type.loc,
+                 "associated type projection '" + type_ref_key(ast_type) +
+                     "' is ambiguous across impl witnesses");
+        }
+        return finish_associated_projection_type(ast_type, std::move(candidates.front()));
+    }
+
     IrType resolve_executable_type(const TypeRef& ast_type) {
         if (ast_type.is_macro_invocation) return resolve_type_macro_invocation(ast_type);
         if (ast_type.has_associated_projection) {
-            fail(ast_type.loc,
-                 "associated type projection '" + type_ref_key(ast_type) +
-                     "' is reserved but semantic lowering is planned");
+            return resolve_associated_type_projection(ast_type);
         }
         if (ast_type.nullable) return resolve_nullable_type(ast_type);
 
