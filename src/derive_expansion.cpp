@@ -39,10 +39,11 @@ std::string canonical_derive_name(SourceLocation loc, const std::string& path) {
     if (path == "Copy" || path == "std::Copy") return "Copy";
     if (path == "Clone" || path == "std::Clone") return "Clone";
     if (path == "Default" || path == "std::Default") return "Default";
+    if (path == "Eq" || path == "std::Eq") return "Eq";
     if (path == "PartialEq" || path == "std::PartialEq") return "PartialEq";
     fail_derive_expansion(
         loc,
-        "unsupported derive '" + path + "'; supported derives: Debug, Copy, Clone, Default, PartialEq");
+        "unsupported derive '" + path + "'; supported derives: Debug, Copy, Clone, Default, Eq, PartialEq");
 }
 
 std::vector<std::string> derive_names(const std::vector<Attribute>& attributes) {
@@ -325,26 +326,26 @@ ExprPtr make_field_access(SourceLocation loc, const std::string& base_name, cons
     return make_ast_field_access_expr(loc, std::move(base), field.name);
 }
 
-ExprPtr make_partial_eq_call(const StructField& field) {
+ExprPtr make_equality_call(const std::string& trait_name, const StructField& field) {
     std::vector<ExprPtr> args;
     args.push_back(make_field_access(field.loc, "self", field));
     args.push_back(make_field_access(field.loc, "other", field));
 
-    ExprPtr call = make_ast_call_expr(field.loc, "std::PartialEq::eq", nullptr, std::move(args));
+    ExprPtr call = make_ast_call_expr(field.loc, "std::" + trait_name + "::eq", nullptr, std::move(args));
     std::vector<TypeRef> trait_args;
     trait_args.push_back(field.type);
     set_expr_receiver_type_args(*call, std::move(trait_args));
     return call;
 }
 
-ExprPtr make_partial_eq_struct_value(const StructDecl& decl) {
+ExprPtr make_equality_struct_value(const StructDecl& decl, const std::string& trait_name) {
     ExprPtr value = make_ast_bool_expr(decl.loc, true);
     for (const auto& field : decl.fields) {
         value = make_ast_binary_expr(
             field.loc,
             TokenKind::AmpAmp,
             std::move(value),
-            make_partial_eq_call(field));
+            make_equality_call(trait_name, field));
     }
     return value;
 }
@@ -362,13 +363,13 @@ std::vector<Param> binary_self_params(SourceLocation loc) {
     return params;
 }
 
-FunctionDecl make_partial_eq_method(const StructDecl& decl) {
+FunctionDecl make_equality_method(const StructDecl& decl, const std::string& trait_name) {
     return make_derived_method(
         decl.module_name,
         "eq",
         binary_self_params(decl.loc),
         bool_type_ref(decl.loc),
-        make_partial_eq_struct_value(decl),
+        make_equality_struct_value(decl, trait_name),
         decl.loc);
 }
 
@@ -380,16 +381,16 @@ TypeRef declared_type_ref(const std::string& type_name,
     return type;
 }
 
-ImplDecl make_partial_eq_derive_impl(const StructDecl& decl) {
-    std::vector<GenericParam> generics = field_trait_impl_generics(decl, "PartialEq", "PartialEq");
+ImplDecl make_equality_derive_impl(const StructDecl& decl, const std::string& trait_name) {
+    std::vector<GenericParam> generics = field_trait_impl_generics(decl, trait_name, trait_name);
     std::vector<TypeRef> trait_args;
     trait_args.push_back(declared_type_ref(decl.name, decl.generics, decl.loc));
-    ImplDecl impl = make_trait_derive_impl("PartialEq", decl.name, decl.module_name, generics, decl.loc, std::move(trait_args));
-    impl.methods.push_back(make_partial_eq_method(decl));
+    ImplDecl impl = make_trait_derive_impl(trait_name, decl.name, decl.module_name, generics, decl.loc, std::move(trait_args));
+    impl.methods.push_back(make_equality_method(decl, trait_name));
     return impl;
 }
 
-ExprPtr make_partial_eq_enum_value(SourceLocation loc) {
+ExprPtr make_equality_enum_value(SourceLocation loc) {
     return make_ast_binary_expr(
         loc,
         TokenKind::EqEq,
@@ -397,29 +398,29 @@ ExprPtr make_partial_eq_enum_value(SourceLocation loc) {
         make_ast_name_expr(loc, "other"));
 }
 
-FunctionDecl make_partial_eq_method(const EnumDecl& decl) {
+FunctionDecl make_equality_method(const EnumDecl& decl) {
     return make_derived_method(
         decl.module_name,
         "eq",
         binary_self_params(decl.loc),
         bool_type_ref(decl.loc),
-        make_partial_eq_enum_value(decl.loc),
+        make_equality_enum_value(decl.loc),
         decl.loc);
 }
 
-ImplDecl make_partial_eq_derive_impl(const EnumDecl& decl) {
+ImplDecl make_equality_derive_impl(const EnumDecl& decl, const std::string& trait_name) {
     for (const auto& item : decl.cases) {
         if (!item.payloads.empty()) {
             fail_derive_expansion(
                 item.loc,
-                "PartialEq derive for enums currently requires all cases to be fieldless");
+                trait_name + " derive for enums currently requires all cases to be fieldless");
         }
     }
     std::vector<TypeRef> trait_args;
     trait_args.push_back(declared_type_ref(decl.name, decl.generics, decl.loc));
     ImplDecl impl =
-        make_trait_derive_impl("PartialEq", decl.name, decl.module_name, decl.generics, decl.loc, std::move(trait_args));
-    impl.methods.push_back(make_partial_eq_method(decl));
+        make_trait_derive_impl(trait_name, decl.name, decl.module_name, decl.generics, decl.loc, std::move(trait_args));
+    impl.methods.push_back(make_equality_method(decl));
     return impl;
 }
 
@@ -436,8 +437,10 @@ std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl) {
             impls.push_back(make_clone_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
         } else if (name == "Default") {
             impls.push_back(make_default_derive_impl(decl));
+        } else if (name == "Eq") {
+            impls.push_back(make_equality_derive_impl(decl, "Eq"));
         } else if (name == "PartialEq") {
-            impls.push_back(make_partial_eq_derive_impl(decl));
+            impls.push_back(make_equality_derive_impl(decl, "PartialEq"));
         }
     }
     return impls;
@@ -456,8 +459,10 @@ std::vector<ImplDecl> expand_derive_impls_for_enum(const EnumDecl& decl) {
             fail_derive_expansion(
                 decl.loc,
                 "Default derive for enums requires an explicit default case marker, which is not supported yet");
+        } else if (name == "Eq") {
+            impls.push_back(make_equality_derive_impl(decl, "Eq"));
         } else if (name == "PartialEq") {
-            impls.push_back(make_partial_eq_derive_impl(decl));
+            impls.push_back(make_equality_derive_impl(decl, "PartialEq"));
         }
     }
     return impls;

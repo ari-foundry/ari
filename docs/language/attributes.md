@@ -130,7 +130,7 @@ Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.
 
-`@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`, and
+`@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`, `@derive(Eq)`, and
 `@derive(PartialEq)` are supported on structs and enums. `@derive(Default)` is
 supported on named and tuple structs. Each derive preserves the generic
 parameters of generic declarations. `Debug` and `Copy` expand to empty trait
@@ -139,11 +139,12 @@ with a value-self `clone` method that returns `self`, matching Ari's current
 `Clone` trait contract. Struct `Default` derives expand to a `fn default() ->
 Self` method that constructs the struct by calling
 `Default::default<FieldType>()` for each field; field types must therefore have
-a visible `Default` impl. Struct `PartialEq` derives expand to `fn eq(self,
-other: Self) -> bool` by comparing every field with
-`PartialEq[FieldType]::eq`. Fieldless enum `PartialEq` derives compare the enum
-tags directly; payload-bearing enum `PartialEq` is reserved until payload
-comparison policy is defined. Generic `Default` and `PartialEq` derives add the
+a visible `Default` impl. Struct `Eq` and `PartialEq` derives expand to
+`fn eq(self, other: Self) -> bool` by comparing every field with the matching
+`Eq[FieldType]::eq` or `PartialEq[FieldType]::eq` trait-qualified call.
+Fieldless enum `Eq` and `PartialEq` derives compare the enum tags directly;
+payload-bearing enum equality derives are reserved until payload comparison
+policy is defined. Generic `Default`, `Eq`, and `PartialEq` derives add the
 matching std trait bounds for generic parameters that appear in fields when
 those parameters do not already have another constraint. `Default` for enums is
 reserved until Ari has an explicit default-case marker. `Copy` derive is a

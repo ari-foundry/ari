@@ -221,29 +221,29 @@ stages rather than one file per syntax feature.
    `if let`, `while let`, `for`, function-parameter, or binding pattern
    lowering. Disabled `@cfg(false)` declarations still parse for linting/cache
    stability.
-   Built-in `@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`, and
-   `@derive(PartialEq)` now expand on structs and enums, including generic
-   declarations. `@derive(Default)` now expands on named and tuple structs,
-   including generic declarations whose used type parameters can receive a
-   `std::Default` bound. `Debug` and `Copy` synthesize empty trait impls;
-   `Clone` synthesizes a value-self method that returns `self` to match the
-   current `Clone` contract; struct `Default` synthesizes an associated function
-   that defaults each field through `Default::default<FieldType>()`; struct
-   `PartialEq` compares every field through `PartialEq[FieldType]::eq`; and
-   fieldless enum `PartialEq` compares tags directly. `Copy` derive remains a
-   marker-trait impl and does not change Ari's structural copyability rules.
-   Unsupported or duplicate derive names are rejected before impl validation,
-   enum `Default` derives are reserved until an explicit default-case marker
-   exists, and payload-bearing enum `PartialEq` derives are reserved until
-   payload comparison policy is defined.
+   Built-in `@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`,
+   `@derive(Eq)`, and `@derive(PartialEq)` now expand on structs and enums,
+   including generic declarations. `@derive(Default)` now expands on named and
+   tuple structs, including generic declarations whose used type parameters can
+   receive a `std::Default` bound. `Debug` and `Copy` synthesize empty trait
+   impls; `Clone` synthesizes a value-self method that returns `self` to match
+   the current `Clone` contract; struct `Default` synthesizes an associated
+   function that defaults each field through `Default::default<FieldType>()`;
+   struct `Eq` and `PartialEq` compare every field through the matching
+   trait-qualified `eq`; and fieldless enum `Eq` and `PartialEq` compare tags
+   directly. `Copy` derive remains a marker-trait impl and does not change
+   Ari's structural copyability rules. Unsupported or duplicate derive names
+   are rejected before impl validation, enum `Default` derives are reserved
+   until an explicit default-case marker exists, and payload-bearing enum
+   equality derives are reserved until payload comparison policy is defined.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [derive-methods] add remaining method-generating built-in derives such as
-     `Eq` and ordering derives, add enum `Default` once a default-case marker is
-     designed, and extend enum `PartialEq` to payload-bearing cases once payload
-     comparison policy is defined; revisit ownership-aware `Clone` bodies if
-     `Clone` later gains a non-consuming or allocator-aware contract
+   - [derive-methods] add remaining method-generating built-in ordering derives,
+     add enum `Default` once a default-case marker is designed, and extend enum
+     equality derives to payload-bearing cases once payload comparison policy is
+     defined; revisit ownership-aware `Clone` bodies if `Clone` later gains a
+     non-consuming or allocator-aware contract
    - [format] lower `format!` after owned runtime strings exist
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
