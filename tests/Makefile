@@ -114,6 +114,10 @@ check-prelude: $(TARGET)
 	$(TARGET) --freestanding tests/ok/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.raw
 	$(BUILD_DIR)/prelude/prelude-macros.raw >$(BUILD_DIR)/prelude/prelude-macros.out; code=$$?; test $$code -eq 7
 	grep -q "macro=5 ok=1" $(BUILD_DIR)/prelude/prelude-macros.out
+	$(TARGET) --freestanding tests/ok/format-float-freestanding.ari -o $(BUILD_DIR)/prelude/format-float-freestanding.raw
+	$(BUILD_DIR)/prelude/format-float-freestanding.raw >$(BUILD_DIR)/prelude/format-float-freestanding.out
+	grep -qx "value=1.3 default=1.500000 whole=6" $(BUILD_DIR)/prelude/format-float-freestanding.out
+	grep -qx "round=1.13 carry=10 neg=-2.5" $(BUILD_DIR)/prelude/format-float-freestanding.out
 	$(TARGET) tests/ok/prelude-macros.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_bool" $(BUILD_DIR)/prelude/prelude-macros.ll
@@ -2775,8 +2779,6 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "format precision placeholders require f32 or f64 arguments" $(BUILD_DIR)/errors/format-precision-nonfloat.err
 	if $(TARGET) tests/errors/format-precision-syntax.ari -o $(BUILD_DIR)/errors/format-precision-syntax.elf >$(BUILD_DIR)/errors/format-precision-syntax.err 2>&1; then exit 1; fi
 	grep -q "format precision placeholder expects digits after colon-dot" $(BUILD_DIR)/errors/format-precision-syntax.err
-	if $(TARGET) --freestanding tests/errors/format-float-freestanding.ari -o $(BUILD_DIR)/errors/format-float-freestanding.elf >$(BUILD_DIR)/errors/format-float-freestanding.err 2>&1; then exit 1; fi
-	grep -q "freestanding backend does not support float formatting yet" $(BUILD_DIR)/errors/format-float-freestanding.err
 	if $(TARGET) tests/errors/extern-cpp-removed.ari -o $(BUILD_DIR)/errors/extern-cpp-removed.elf >$(BUILD_DIR)/errors/extern-cpp-removed.err 2>&1; then exit 1; fi
 	grep -q 'extern ABI must be "C" or "ari"' $(BUILD_DIR)/errors/extern-cpp-removed.err
 	if $(TARGET) tests/errors/extern-body.ari -o $(BUILD_DIR)/errors/extern-body.elf >$(BUILD_DIR)/errors/extern-body.err 2>&1; then exit 1; fi

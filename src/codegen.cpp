@@ -3601,10 +3601,19 @@ private:
     }
 
     void emit_format_argument(const IrExpr& expr, const IrFormatSpec& spec) {
-        if (spec.precision >= 0 ||
-            (expr.type.qualifier == TypeQualifier::Value &&
-             (expr.type.primitive == IrPrimitiveKind::F32 || expr.type.primitive == IrPrimitiveKind::F64))) {
-            throw CompileError(where(expr.loc) + ": freestanding backend does not support float formatting yet");
+        if (expr.type.qualifier == TypeQualifier::Value &&
+            (expr.type.primitive == IrPrimitiveKind::F32 || expr.type.primitive == IrPrimitiveKind::F64)) {
+            emit_expr(expr);
+            if (expr.type.primitive == IrPrimitiveKind::F32) {
+                IrType f64_type{TypeQualifier::Value, IrPrimitiveKind::F64, "f64", {}, {}, {}, {}, expr.loc};
+                emit_mov_gp_to_xmm(0, Reg::RAX);
+                emit_sse_float_width_cast(expr.type, f64_type);
+                emit_mov_xmm_to_gp(Reg::RAX, 0);
+            }
+            emit_mov_reg_reg(Reg::RDI, Reg::RAX);
+            emit_mov_reg_imm64(Reg::RSI, static_cast<std::uint64_t>(spec.precision >= 0 ? spec.precision : 6));
+            emit_direct_call("write_f64");
+            return;
         }
         emit_expr(expr);
         if (expr.type.qualifier == TypeQualifier::Value && expr.type.primitive == IrPrimitiveKind::Bool) {
@@ -4345,6 +4354,185 @@ private:
         code_.u64(value);
     }
 
+    void emit_rex(bool w, int r, int b) {
+        std::uint8_t rex = 0x40;
+        if (w) rex |= 0x08;
+        if (r & 8) rex |= 0x04;
+        if (b & 8) rex |= 0x01;
+        if (rex != 0x40) code_.u8(rex);
+    }
+
+    void emit_modrm(int mod, int reg, int rm) {
+        code_.u8(static_cast<std::uint8_t>(((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7)));
+    }
+
+    void emit_mov_reg_imm64(Reg dst, std::uint64_t value) {
+        int d = reg_code(dst);
+        emit_rex(true, 0, d);
+        code_.u8(static_cast<std::uint8_t>(0xB8 + (d & 7)));
+        code_.u64(value);
+    }
+
+    void emit_mov_reg_reg(Reg dst, Reg src) {
+        int d = reg_code(dst);
+        int s = reg_code(src);
+        emit_rex(true, s, d);
+        code_.u8(0x89);
+        emit_modrm(3, s, d);
+    }
+
+    void emit_mov_reg_mem_local(Reg dst, int offset) {
+        int d = reg_code(dst);
+        emit_rex(true, d, reg_code(Reg::RBP));
+        code_.u8(0x8B);
+        emit_modrm(1, d, reg_code(Reg::RBP));
+        code_.u8(static_cast<std::uint8_t>(-offset));
+    }
+
+    void emit_mov_mem_local_reg(int offset, Reg src) {
+        int s = reg_code(src);
+        emit_rex(true, s, reg_code(Reg::RBP));
+        code_.u8(0x89);
+        emit_modrm(1, s, reg_code(Reg::RBP));
+        code_.u8(static_cast<std::uint8_t>(-offset));
+    }
+
+    void emit_cmp_reg_imm8(Reg reg, std::uint8_t value) {
+        int r = reg_code(reg);
+        emit_rex(true, 0, r);
+        code_.u8(0x83);
+        emit_modrm(3, 7, r);
+        code_.u8(value);
+    }
+
+    void emit_cmp_reg_reg(Reg left, Reg right) {
+        int l = reg_code(left);
+        int r = reg_code(right);
+        emit_rex(true, r, l);
+        code_.u8(0x39);
+        emit_modrm(3, r, l);
+    }
+
+    void emit_test_reg_reg(Reg left, Reg right) {
+        int l = reg_code(left);
+        int r = reg_code(right);
+        emit_rex(true, r, l);
+        code_.u8(0x85);
+        emit_modrm(3, r, l);
+    }
+
+    void emit_and_reg_reg(Reg dst, Reg src) {
+        int d = reg_code(dst);
+        int s = reg_code(src);
+        emit_rex(true, s, d);
+        code_.u8(0x21);
+        emit_modrm(3, s, d);
+    }
+
+    void emit_inc_reg(Reg reg) {
+        int r = reg_code(reg);
+        emit_rex(true, 0, r);
+        code_.u8(0xFF);
+        emit_modrm(3, 0, r);
+    }
+
+    void emit_dec_reg(Reg reg) {
+        int r = reg_code(reg);
+        emit_rex(true, 0, r);
+        code_.u8(0xFF);
+        emit_modrm(3, 1, r);
+    }
+
+    void emit_mov_gp_to_xmm(int xmm, Reg src) {
+        code_.u8(0x66);
+        emit_rex(true, xmm, reg_code(src));
+        code_.u8(0x0F);
+        code_.u8(0x6E);
+        emit_modrm(3, xmm, reg_code(src));
+    }
+
+    void emit_cvttsd2si_rax_xmm0() {
+        code_.u8(0xF2);
+        emit_rex(true, reg_code(Reg::RAX), 0);
+        code_.u8(0x0F);
+        code_.u8(0x2C);
+        emit_modrm(3, reg_code(Reg::RAX), 0);
+    }
+
+    void emit_cvtsi2sd_xmm1_local(int offset) {
+        code_.u8(0xF2);
+        emit_rex(true, 1, reg_code(Reg::RBP));
+        code_.u8(0x0F);
+        code_.u8(0x2A);
+        emit_modrm(1, 1, reg_code(Reg::RBP));
+        code_.u8(static_cast<std::uint8_t>(-offset));
+    }
+
+    void emit_subsd_xmm0_xmm1() {
+        code_.u8(0xF2);
+        code_.u8(0x0F);
+        code_.u8(0x5C);
+        emit_modrm(3, 0, 1);
+    }
+
+    void emit_mulsd_xmm0_xmm2() {
+        code_.u8(0xF2);
+        code_.u8(0x0F);
+        code_.u8(0x59);
+        emit_modrm(3, 0, 2);
+    }
+
+    void emit_mov_indexed_digit_al(int buffer_offset) {
+        code_.u8(0x88);
+        code_.u8(0x44);
+        code_.u8(0x1D);
+        code_.u8(static_cast<std::uint8_t>(-buffer_offset));
+    }
+
+    void emit_mov_al_indexed_digit(int buffer_offset) {
+        code_.u8(0x8A);
+        code_.u8(0x44);
+        code_.u8(0x1D);
+        code_.u8(static_cast<std::uint8_t>(-buffer_offset));
+    }
+
+    void emit_mov_indexed_digit_imm8(int buffer_offset, std::uint8_t value) {
+        code_.u8(0xC6);
+        code_.u8(0x44);
+        code_.u8(0x1D);
+        code_.u8(static_cast<std::uint8_t>(-buffer_offset));
+        code_.u8(value);
+    }
+
+    void emit_inc_indexed_digit(int buffer_offset) {
+        code_.u8(0xFE);
+        code_.u8(0x44);
+        code_.u8(0x1D);
+        code_.u8(static_cast<std::uint8_t>(-buffer_offset));
+    }
+
+    void emit_movzx_reg_indexed_digit(Reg dst, int buffer_offset) {
+        int d = reg_code(dst);
+        emit_rex(true, d, reg_code(Reg::RBP));
+        code_.u8(0x0F);
+        code_.u8(0xB6);
+        emit_modrm(1, d, 4);
+        code_.u8(0x1D);
+        code_.u8(static_cast<std::uint8_t>(-buffer_offset));
+    }
+
+    void emit_builtin_call(const std::string& name) {
+        code_.u8(0xE8);
+        std::size_t pos = code_.size();
+        code_.u32(0);
+        global_calls_.push_back(CallPatch{pos, name});
+    }
+
+    void emit_builtin_write_byte_imm(std::uint8_t value) {
+        emit_mov_reg_imm64(Reg::RDI, value);
+        emit_builtin_call("write_byte");
+    }
+
     void emit_sys_write_from_local(int offset, std::uint64_t length) {
         emit_mov_rax_imm64(1);
         emit_mov_rdi_imm64(1);
@@ -4552,6 +4740,160 @@ private:
         emit_builtin_epilogue();
     }
 
+    void emit_builtin_write_f64() {
+        constexpr int kValueOffset = 8;
+        constexpr int kPrecisionOffset = 16;
+        constexpr int kIntegerOffset = 24;
+        constexpr int kSignOffset = 32;
+        constexpr int kDigitOffset = 40;
+        constexpr int kDigitBufferOffset = 128;
+
+        double ten = 10.0;
+        std::uint64_t ten_bits = 0;
+        std::memcpy(&ten_bits, &ten, sizeof(ten_bits));
+        std::vector<std::size_t> finish_jumps;
+
+        emit_builtin_prologue(160);
+        emit_mov_mem_local_reg(kValueOffset, Reg::RDI);
+        emit_mov_mem_local_reg(kPrecisionOffset, Reg::RSI);
+        emit_mov_reg_imm64(Reg::RAX, 0);
+        emit_mov_mem_local_reg(kSignOffset, Reg::RAX);
+
+        emit_mov_reg_reg(Reg::RAX, Reg::RDI);
+        emit_mov_reg_imm64(Reg::RCX, 0x8000000000000000ULL);
+        emit_test_reg_reg(Reg::RAX, Reg::RCX);
+        std::size_t positive = emit_jcc_placeholder(0x84);
+        emit_mov_reg_imm64(Reg::RAX, 1);
+        emit_mov_mem_local_reg(kSignOffset, Reg::RAX);
+        emit_mov_reg_mem_local(Reg::RAX, kValueOffset);
+        emit_mov_reg_imm64(Reg::RCX, 0x7fffffffffffffffULL);
+        emit_and_reg_reg(Reg::RAX, Reg::RCX);
+        emit_mov_mem_local_reg(kValueOffset, Reg::RAX);
+        patch_rel32(positive, code_.size());
+
+        emit_mov_reg_mem_local(Reg::RAX, kValueOffset);
+        emit_mov_reg_reg(Reg::RDX, Reg::RAX);
+        emit_mov_reg_imm64(Reg::RCX, 0x7ff0000000000000ULL);
+        emit_and_reg_reg(Reg::RDX, Reg::RCX);
+        emit_cmp_reg_reg(Reg::RDX, Reg::RCX);
+        std::size_t finite_value = emit_jcc_placeholder(0x85);
+        emit_mov_reg_reg(Reg::RDX, Reg::RAX);
+        emit_mov_reg_imm64(Reg::RCX, 0x000fffffffffffffULL);
+        emit_and_reg_reg(Reg::RDX, Reg::RCX);
+        emit_cmp_reg_imm8(Reg::RDX, 0);
+        std::size_t print_nan = emit_jcc_placeholder(0x85);
+        emit_mov_reg_mem_local(Reg::RAX, kSignOffset);
+        emit_cmp_reg_imm8(Reg::RAX, 0);
+        std::size_t no_inf_sign = emit_jcc_placeholder(0x84);
+        emit_builtin_write_byte_imm(static_cast<std::uint8_t>('-'));
+        patch_rel32(no_inf_sign, code_.size());
+        emit_builtin_write_byte_imm(static_cast<std::uint8_t>('i'));
+        emit_builtin_write_byte_imm(static_cast<std::uint8_t>('n'));
+        emit_builtin_write_byte_imm(static_cast<std::uint8_t>('f'));
+        finish_jumps.push_back(emit_jmp_placeholder());
+        patch_rel32(print_nan, code_.size());
+        emit_builtin_write_byte_imm(static_cast<std::uint8_t>('n'));
+        emit_builtin_write_byte_imm(static_cast<std::uint8_t>('a'));
+        emit_builtin_write_byte_imm(static_cast<std::uint8_t>('n'));
+        finish_jumps.push_back(emit_jmp_placeholder());
+        patch_rel32(finite_value, code_.size());
+
+        emit_mov_reg_mem_local(Reg::RAX, kValueOffset);
+        emit_mov_gp_to_xmm(0, Reg::RAX);
+        emit_cvttsd2si_rax_xmm0();
+        emit_mov_mem_local_reg(kIntegerOffset, Reg::RAX);
+        emit_cvtsi2sd_xmm1_local(kIntegerOffset);
+        emit_subsd_xmm0_xmm1();
+        emit_mov_reg_imm64(Reg::RAX, ten_bits);
+        emit_mov_gp_to_xmm(2, Reg::RAX);
+
+        emit_mov_reg_mem_local(Reg::RCX, kPrecisionOffset);
+        emit_cmp_reg_imm8(Reg::RCX, 0);
+        std::size_t no_stored_digits = emit_jcc_placeholder(0x84);
+        emit_mov_reg_imm64(Reg::RBX, 0);
+        std::size_t digit_loop = code_.size();
+        emit_mulsd_xmm0_xmm2();
+        emit_cvttsd2si_rax_xmm0();
+        emit_mov_mem_local_reg(kDigitOffset, Reg::RAX);
+        code_.u8(0x04);
+        code_.u8(static_cast<std::uint8_t>('0'));
+        emit_mov_indexed_digit_al(kDigitBufferOffset);
+        emit_cvtsi2sd_xmm1_local(kDigitOffset);
+        emit_subsd_xmm0_xmm1();
+        emit_inc_reg(Reg::RBX);
+        emit_dec_reg(Reg::RCX);
+        emit_cmp_reg_imm8(Reg::RCX, 0);
+        std::size_t more_digits = emit_jcc_placeholder(0x85);
+        patch_rel32(more_digits, digit_loop);
+        patch_rel32(no_stored_digits, code_.size());
+
+        emit_mulsd_xmm0_xmm2();
+        emit_cvttsd2si_rax_xmm0();
+        emit_cmp_reg_imm8(Reg::RAX, 5);
+        std::size_t no_round = emit_jcc_placeholder(0x8C);
+        emit_mov_reg_mem_local(Reg::RAX, kPrecisionOffset);
+        emit_cmp_reg_imm8(Reg::RAX, 0);
+        std::size_t round_integer_for_zero_precision = emit_jcc_placeholder(0x84);
+        emit_mov_reg_reg(Reg::RBX, Reg::RAX);
+        emit_dec_reg(Reg::RBX);
+        std::size_t carry_loop = code_.size();
+        emit_mov_al_indexed_digit(kDigitBufferOffset);
+        code_.u8(0x3C);
+        code_.u8(static_cast<std::uint8_t>('9'));
+        std::size_t increment_digit = emit_jcc_placeholder(0x85);
+        emit_mov_indexed_digit_imm8(kDigitBufferOffset, static_cast<std::uint8_t>('0'));
+        emit_cmp_reg_imm8(Reg::RBX, 0);
+        std::size_t round_integer_for_carry = emit_jcc_placeholder(0x84);
+        emit_dec_reg(Reg::RBX);
+        patch_rel32(emit_jmp_placeholder(), carry_loop);
+
+        patch_rel32(increment_digit, code_.size());
+        emit_inc_indexed_digit(kDigitBufferOffset);
+        std::size_t skip_integer_round = emit_jmp_placeholder();
+
+        std::size_t round_integer = code_.size();
+        patch_rel32(round_integer_for_zero_precision, round_integer);
+        patch_rel32(round_integer_for_carry, round_integer);
+        emit_mov_reg_mem_local(Reg::RAX, kIntegerOffset);
+        emit_inc_reg(Reg::RAX);
+        emit_mov_mem_local_reg(kIntegerOffset, Reg::RAX);
+
+        std::size_t rounded = code_.size();
+        patch_rel32(no_round, rounded);
+        patch_rel32(skip_integer_round, rounded);
+
+        emit_mov_reg_mem_local(Reg::RAX, kSignOffset);
+        emit_cmp_reg_imm8(Reg::RAX, 0);
+        std::size_t no_sign = emit_jcc_placeholder(0x84);
+        emit_mov_reg_imm64(Reg::RDI, static_cast<std::uint64_t>('-'));
+        emit_builtin_call("write_byte");
+        patch_rel32(no_sign, code_.size());
+
+        emit_mov_reg_mem_local(Reg::RDI, kIntegerOffset);
+        emit_builtin_call("write_i64");
+
+        emit_mov_reg_mem_local(Reg::RAX, kPrecisionOffset);
+        emit_cmp_reg_imm8(Reg::RAX, 0);
+        std::size_t done = emit_jcc_placeholder(0x84);
+        emit_mov_reg_imm64(Reg::RDI, static_cast<std::uint64_t>('.'));
+        emit_builtin_call("write_byte");
+        emit_mov_reg_mem_local(Reg::R9, kPrecisionOffset);
+        emit_mov_reg_imm64(Reg::RBX, 0);
+        std::size_t print_loop = code_.size();
+        emit_movzx_reg_indexed_digit(Reg::RDI, kDigitBufferOffset);
+        emit_builtin_call("write_byte");
+        emit_inc_reg(Reg::RBX);
+        emit_dec_reg(Reg::R9);
+        emit_cmp_reg_imm8(Reg::R9, 0);
+        std::size_t more_print = emit_jcc_placeholder(0x85);
+        patch_rel32(more_print, print_loop);
+
+        patch_rel32(done, code_.size());
+        for (std::size_t patch : finish_jumps) patch_rel32(patch, code_.size());
+        emit_mov_rax_imm64(0);
+        emit_builtin_epilogue();
+    }
+
     void register_builtin_aliases(const std::string& symbol, std::size_t offset) {
         for (const auto& alias : ari_builtin_source_aliases()) {
             if (alias.symbol == symbol) function_offsets_[alias.source_name] = offset;
@@ -4578,6 +4920,10 @@ private:
         std::size_t write_i64 = code_.size();
         register_builtin_aliases("ari_builtin_write_i64", write_i64);
         emit_builtin_write_i64();
+
+        std::size_t write_f64 = code_.size();
+        function_offsets_["write_f64"] = write_f64;
+        emit_builtin_write_f64();
 
         std::size_t assert_fn = code_.size();
         register_builtin_aliases("ari_builtin_assert", assert_fn);

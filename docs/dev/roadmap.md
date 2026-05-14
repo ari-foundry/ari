@@ -250,13 +250,11 @@ stages rather than one file per syntax feature.
    - [ast] support non-identity `ast` construction and rewrites beyond
      empty/`return input;` identity bodies
    - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [format] `print`/`println` now accept `{}`, escaped braces, and `{:.N}`
-     fixed decimal precision for `f32`/`f64` on the LLVM host backend. Lower
-     `format!` after owned runtime strings exist; the reserved diagnostic now
-     applies to unqualified `format!`, `std::format!`, and aliases that resolve
-     to the root `std` macro path, while unrelated qualified `format!` paths
-     remain user macro names. The raw `--freestanding` backend still needs its
-     own decimal float formatting runtime before it accepts float placeholders.
+   Formatting syntax for `print`/`println` is fixed for linting: `{}`,
+   escaped braces, and `{:.N}` fixed decimal precision for `f32`/`f64` now
+   lower on both the LLVM host and raw freestanding backends. `format!` remains
+   tracked under the owned `String` work because it needs a runtime string
+   result.
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

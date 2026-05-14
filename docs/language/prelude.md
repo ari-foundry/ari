@@ -143,9 +143,9 @@ Formatting rules:
 - `print` does not append a newline
 
 `bool` currently prints as `1` or `0`.
-On the raw `--freestanding` backend, formatted float output is reserved until
-the freestanding runtime grows decimal float formatting; integer and bool
-formatting still work there.
+On the raw `--freestanding` backend, formatted `f32` and `f64` values use the
+same `{}` default precision and `{:.N}` fixed decimal precision surface as the
+LLVM host backend.
 
 ## Qualified Formatting Names
 

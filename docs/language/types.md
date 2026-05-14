@@ -80,8 +80,10 @@ local `f32`/`f64` literal values as raw IEEE bit patterns, including
 `ptr_load`, `ptr_store`, and `*pointer` access through `ptr f32` or `ptr f64`.
 It also lowers `f32`/`f64` arithmetic and ordered comparisons with SSE scalar
 instructions, including `f32`/`f64` width casts, integer/float casts, and
-direct Ari calls that pass or return `f32`/`f64`. It still rejects `f128` until
-the remaining native floating-point work is implemented.
+direct Ari calls that pass or return `f32`/`f64`. `print` and `println` can
+format `f32`/`f64` values with `{}` or `{:.N}` on both the LLVM host and raw
+freestanding backends. It still rejects `f128` until the remaining native
+floating-point work is implemented.
 
 ## Strings
 
