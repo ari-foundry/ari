@@ -1,0 +1,14 @@
+fn init_continue_value() -> i64 {
+  init i = 0, total = 0 while i < 3 {
+    var scratch = zone::temp(64);
+    let next_i = zone::new<i64>(ref mut scratch, i + 1);
+    let next_total = zone::new<i64>(ref mut scratch, total + *next_i);
+    continue *next_i, *next_total;
+  } next i + 1, total
+
+  return total;
+}
+
+fn main() -> i64 {
+  return init_continue_value();
+}

@@ -389,6 +389,10 @@ inserts `zone::destroy` when the declaring scope falls through, before returns,
 and before `break`, `continue`, or labeled-block exits that leave the
 declaring scope. This is a raw memory reclaim policy for short-lived objects:
 destructors for values placed inside the zone are not run.
+When a return, labeled-block break, or value-carrying `init while` continue
+needs a value computed inside that temporary-zone scope, the checker first
+materializes the value into a hidden local, then emits the cleanup, then exits
+the scope with the saved value.
 Raw pointers allocated from a temporary zone cannot escape that lexical
 lifetime. Returning such a pointer, storing it into an outer binding or
 aggregate, or passing it through an escape-prone call is rejected with a

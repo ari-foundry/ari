@@ -2163,6 +2163,9 @@ check-ffi: $(TARGET)
 	grep -q 'call void @"ari_builtin_zone_destroy"' $(BUILD_DIR)/ffi/zone-temp-nested.ll
 	$(TARGET) tests/ok/zone-temp-control-flow.ari --emit-llvm $(BUILD_DIR)/ffi/zone-temp-control-flow.ll
 	grep -q 'call void @"ari_builtin_zone_destroy"' $(BUILD_DIR)/ffi/zone-temp-control-flow.ll
+	$(TARGET) tests/ok/zone-temp-init-while-continue.ari --emit-llvm $(BUILD_DIR)/ffi/zone-temp-init-while-continue.ll
+	grep -q '%_continue' $(BUILD_DIR)/ffi/zone-temp-init-while-continue.ll
+	grep -q 'call void @"ari_builtin_zone_destroy"' $(BUILD_DIR)/ffi/zone-temp-init-while-continue.ll
 	$(TARGET) tests/ok/zone-scratch-local.ari --emit-llvm $(BUILD_DIR)/ffi/zone-scratch-local.ll
 	grep -q 'call ptr @"ari_builtin_zone_create"' $(BUILD_DIR)/ffi/zone-scratch-local.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/ffi/zone-scratch-local.ll
@@ -2248,6 +2251,7 @@ check-ffi: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-temp-function-local.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-temp-function-local.elf; $(BUILD_DIR)/ffi/zone-temp-function-local.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-temp-nested.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-temp-nested.elf; $(BUILD_DIR)/ffi/zone-temp-nested.elf; code=$$?; test $$code -eq 22; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-temp-control-flow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-temp-control-flow.elf; $(BUILD_DIR)/ffi/zone-temp-control-flow.elf; code=$$?; test $$code -eq 37; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-temp-init-while-continue.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-temp-init-while-continue.elf; $(BUILD_DIR)/ffi/zone-temp-init-while-continue.elf; code=$$?; test $$code -eq 6; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-scratch-local.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-scratch-local.elf; $(BUILD_DIR)/ffi/zone-scratch-local.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-promote-return.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-promote-return.elf; $(BUILD_DIR)/ffi/zone-promote-return.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-add.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-add.elf; $(BUILD_DIR)/ffi/pointer-add.elf; code=$$?; test $$code -eq 19; fi

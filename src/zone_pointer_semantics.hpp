@@ -29,6 +29,20 @@ struct ZonePointerLocalAdapter {
     LocalLookup find_local;
 };
 
+struct AutoDestroyZoneCleanupContext {
+    using HiddenLocalNameFactory = std::function<std::string(const std::string&)>;
+
+    LocalScopeStack& scopes;
+    ZonePointerSourceResolver source_resolver;
+    ZonePointerLocalAdapter locals;
+    HiddenLocalNameFactory make_hidden_local;
+};
+
+struct AutoDestroyZoneMaterialization {
+    IrExprPtr value;
+    std::optional<std::string> error;
+};
+
 bool is_auto_destroy_zone(const LocalInfo& local);
 const IrExpr& zone_pointer_source_expr(const IrExpr& value);
 std::string zone_pointer_escape_name(const IrExpr& value);
@@ -76,5 +90,31 @@ std::optional<std::string> append_auto_destroy_zone_cleanup(SourceLocation loc,
                                                             std::vector<IrStmtPtr>& statements,
                                                             LocalScopeStack& scopes,
                                                             std::size_t first_scope_index);
+std::optional<std::string> require_no_temporary_zone_pointer_escape(const IrExpr& value,
+                                                                    std::size_t first_scope_index,
+                                                                    const std::string& context,
+                                                                    const AutoDestroyZoneCleanupContext& cleanup);
+bool has_auto_destroy_zone_cleanup(const AutoDestroyZoneCleanupContext& cleanup,
+                                   std::size_t first_scope_index);
+std::optional<std::string> append_auto_destroy_zone_cleanup(SourceLocation loc,
+                                                            std::vector<IrStmtPtr>& statements,
+                                                            AutoDestroyZoneCleanupContext& cleanup,
+                                                            std::size_t first_scope_index);
+AutoDestroyZoneMaterialization materialize_value_before_auto_destroy_cleanup(
+    SourceLocation loc,
+    IrExprPtr value,
+    std::vector<IrStmtPtr>& statements,
+    AutoDestroyZoneCleanupContext& cleanup,
+    std::size_t first_scope_index,
+    const std::string& hidden_prefix,
+    const std::string& escape_context);
+std::optional<std::string> materialize_values_before_auto_destroy_cleanup(
+    SourceLocation loc,
+    std::vector<IrExprPtr>& values,
+    std::vector<IrStmtPtr>& statements,
+    AutoDestroyZoneCleanupContext& cleanup,
+    std::size_t first_scope_index,
+    const std::string& hidden_prefix,
+    const std::string& escape_context);
 
 } // namespace ari

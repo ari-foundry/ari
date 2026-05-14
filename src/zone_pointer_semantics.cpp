@@ -7,6 +7,7 @@
 #include "slice_semantics.hpp"
 #include "std_box_semantics.hpp"
 #include "std_vec_semantics.hpp"
+#include "type_semantics.hpp"
 #include "zone_return_semantics.hpp"
 
 #include <map>
@@ -349,6 +350,96 @@ std::optional<std::string> append_auto_destroy_zone_cleanup(SourceLocation loc,
             mark_local_zone_destroyed(local);
         });
     return std::nullopt;
+}
+
+std::optional<std::string> require_no_temporary_zone_pointer_escape(
+    const IrExpr& value,
+    std::size_t first_scope_index,
+    const std::string& context,
+    const AutoDestroyZoneCleanupContext& cleanup
+) {
+    return temporary_zone_pointer_escape_error(
+        value,
+        first_scope_index,
+        context,
+        cleanup.source_resolver,
+        cleanup.locals,
+        cleanup.scopes);
+}
+
+bool has_auto_destroy_zone_cleanup(const AutoDestroyZoneCleanupContext& cleanup,
+                                   std::size_t first_scope_index) {
+    return has_auto_destroy_zone_cleanup(cleanup.scopes, first_scope_index);
+}
+
+std::optional<std::string> append_auto_destroy_zone_cleanup(
+    SourceLocation loc,
+    std::vector<IrStmtPtr>& statements,
+    AutoDestroyZoneCleanupContext& cleanup,
+    std::size_t first_scope_index
+) {
+    return append_auto_destroy_zone_cleanup(loc, statements, cleanup.scopes, first_scope_index);
+}
+
+AutoDestroyZoneMaterialization materialize_value_before_auto_destroy_cleanup(
+    SourceLocation loc,
+    IrExprPtr value,
+    std::vector<IrStmtPtr>& statements,
+    AutoDestroyZoneCleanupContext& cleanup,
+    std::size_t first_scope_index,
+    const std::string& hidden_prefix,
+    const std::string& escape_context
+) {
+    if (value) {
+        if (auto error = require_no_temporary_zone_pointer_escape(
+                *value,
+                first_scope_index,
+                escape_context,
+                cleanup)) {
+            return {std::move(value), error};
+        }
+    }
+    if (!has_auto_destroy_zone_cleanup(cleanup, first_scope_index)) {
+        return {std::move(value), std::nullopt};
+    }
+    if (value && !is_void_value_type(value->type)) {
+        IrType saved_type = value->type;
+        std::string saved_name = cleanup.make_hidden_local(hidden_prefix);
+        statements.push_back(make_ir_var_decl(loc, saved_name, saved_type, std::move(value), false));
+        value = make_local_lvalue_expr(loc, saved_name, saved_type);
+    }
+    if (auto error = append_auto_destroy_zone_cleanup(loc, statements, cleanup, first_scope_index)) {
+        return {std::move(value), error};
+    }
+    return {std::move(value), std::nullopt};
+}
+
+std::optional<std::string> materialize_values_before_auto_destroy_cleanup(
+    SourceLocation loc,
+    std::vector<IrExprPtr>& values,
+    std::vector<IrStmtPtr>& statements,
+    AutoDestroyZoneCleanupContext& cleanup,
+    std::size_t first_scope_index,
+    const std::string& hidden_prefix,
+    const std::string& escape_context
+) {
+    if (!has_auto_destroy_zone_cleanup(cleanup, first_scope_index)) return std::nullopt;
+    for (auto& value : values) {
+        if (!value) continue;
+        if (auto error = require_no_temporary_zone_pointer_escape(
+                *value,
+                first_scope_index,
+                escape_context,
+                cleanup)) {
+            return error;
+        }
+        if (is_void_value_type(value->type)) continue;
+        IrType saved_type = value->type;
+        std::string saved_name = cleanup.make_hidden_local(hidden_prefix);
+        statements.push_back(make_ir_var_decl(loc, saved_name, saved_type, std::move(value), false));
+        value = make_local_lvalue_expr(loc, saved_name, saved_type);
+    }
+    return append_auto_destroy_zone_cleanup(loc, statements, cleanup, first_scope_index);
 }
 
 } // namespace ari

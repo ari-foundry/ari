@@ -53,6 +53,11 @@ adding more narrow `*_semantics` siblings.
   seed checks out of the central expression lowering logic
 - `std_box_semantics` for source-prelude `std::boxed::Box<T>` handle recognition
   and its zone-backed source field shape
+- `zone_pointer_semantics` for zone pointer/source handle provenance tracing,
+  source/generation assignment, reset/destroy invalidation diagnostics,
+  temporary-zone escape diagnostics, temporary-zone `zone::destroy` cleanup IR,
+  and cleanup-before-exit value materialization for returns, labeled-block
+  breaks, and `init while` continue values
 - `range_semantics` for shared `Range[T]` / `RangeInclusive[T]` name and type
   recognition plus source-prelude range value type construction used by sema's
   type resolver, range constructors, stored-range loops, and Slice range checks
@@ -360,8 +365,9 @@ pending IR.
      expressions. It also owns source/generation assignment helpers, reset-call
      generation updates, invalidation diagnostics, and temporary-zone escape
      diagnostics for returns, aggregate/call escapes, and outer-binding leaks,
-     plus temporary-zone `zone::destroy` IR cleanup construction. Move the
-     remaining cleanup call-site orchestration and scratch/promotion validation.
+     plus temporary-zone `zone::destroy` IR cleanup construction and
+     cleanup-before-exit value materialization. Move the remaining
+     scratch/promotion validation.
    - Keep actual `zone::*` call typing in expression lowering until prelude
      special calls are split.
 

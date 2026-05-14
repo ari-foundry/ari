@@ -136,22 +136,17 @@ without backend emission for editor tooling.
    child modules now live as package files under `lib/std/`, so the root
    `lib/std.arih` stays focused on root types, root traits, builtin declarations,
    and re-exports while future child modules can start in their own files.
-   - [std-provenance] keep zone-provenance rules for source handles and
-     pointer-returning methods in focused helpers such as `std_box_semantics`,
-     `std_vec_semantics`, `slice_semantics`, `zone_pointer_semantics`, and
-     future string/smart-pointer helpers instead of adding more bespoke checks
-     to `sema.cpp`. The `std::vec::Vec` same-zone method contract now lives in
-     `std_vec_semantics`, and source-handle/pointer provenance expression
-     tracing for locals, tuple fields, calls, slices, and control-flow
-     expressions now lives in `zone_pointer_semantics`. Zone source/generation
-     assignment, named zone-borrow reset recognition, reset invalidation, and
-     validity diagnostics also route through `zone_pointer_semantics`. Temporary
-     zone escape diagnostics for returns, aggregate/call escapes, and
-     outer-binding leaks are shared there as well, and temporary-zone
-     `zone::destroy` IR cleanup construction is centralized there. Remaining
-     work is to move the automatic cleanup call-site orchestration out of
-     `sema.cpp` once statement/control-flow lowering has a smaller context
-     object.
+   Zone-provenance rules for source handles and pointer-returning methods now
+   stay in focused helpers such as `std_box_semantics`, `std_vec_semantics`,
+   `slice_semantics`, and `zone_pointer_semantics` instead of growing more
+   bespoke checks in `sema.cpp`. The `std::vec::Vec` same-zone method contract
+   lives in `std_vec_semantics`, and source-handle/pointer provenance expression
+   tracing for locals, tuple fields, calls, slices, and control-flow expressions
+   lives in `zone_pointer_semantics`. Zone source/generation assignment, named
+   zone-borrow reset recognition, reset invalidation, validity diagnostics,
+   temporary-zone escape diagnostics, temporary-zone `zone::destroy` IR cleanup,
+   and cleanup-before-exit value materialization for returns, labeled breaks,
+   and `init while` continue values are centralized there.
    - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
      top of the existing explicit-zone `std::boxed::Box<T>` seed before std
      APIs start returning owning heap handles
