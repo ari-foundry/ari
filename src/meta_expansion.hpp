@@ -10,6 +10,7 @@ struct ItemMacroExpansion {
     std::vector<ConstDecl> constants;
     std::vector<FunctionDecl> functions;
     std::vector<StructDecl> structs;
+    std::vector<EnumDecl> enums;
 };
 
 ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation);

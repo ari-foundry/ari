@@ -1,0 +1,19 @@
+meta fn make_item(input: token_stream) -> token_stream {
+}
+
+make_item!(enum Generated {
+  Ready,
+  Done,
+});
+
+fn main() -> i64 {
+  let generated = Done;
+  match generated {
+    Ready => {
+      return 1;
+    }
+    Done => {
+      return 42;
+    }
+  }
+}

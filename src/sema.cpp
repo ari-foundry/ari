@@ -421,6 +421,7 @@ private:
     std::vector<ConstDecl> item_macro_constants_;
     std::vector<FunctionDecl> item_macro_functions_;
     std::vector<StructDecl> item_macro_structs_;
+    std::vector<EnumDecl> item_macro_enums_;
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
     std::map<std::string, std::string> exported_symbols_;
@@ -796,6 +797,12 @@ private:
         for (const auto& decl : item_macro_structs_) visitor(decl);
     }
 
+    template <typename Visitor>
+    void for_each_enum_decl(Visitor&& visitor) const {
+        for (const auto& decl : program_.enums) visitor(decl);
+        for (const auto& decl : item_macro_enums_) visitor(decl);
+    }
+
     void collect_module_decls() {
         for (const auto& decl : program_.modules) {
             ModuleInfo info;
@@ -899,13 +906,13 @@ private:
                 add(basename_of_qualified_name(decl.name), decl.name);
             }
         });
-        for (const auto& decl : program_.enums) {
-            if (decl.module_name != "std" || !decl.is_public) continue;
+        for_each_enum_decl([&](const EnumDecl& decl) {
+            if (decl.module_name != "std" || !decl.is_public) return;
             add(basename_of_qualified_name(decl.name), decl.name);
             for (const auto& item : decl.cases) {
                 add(item.name, qualify_in_module(decl.module_name, item.name));
             }
-        }
+        });
         for (const auto& decl : program_.traits) {
             if (decl.module_name == "std" && decl.is_public) {
                 add(basename_of_qualified_name(decl.name), decl.name);
@@ -945,8 +952,8 @@ private:
                 add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
             }
         });
-        for (const auto& decl : program_.enums) {
-            if (!is_std_descendant_module_name(decl.module_name) || !decl.is_public) continue;
+        for_each_enum_decl([&](const EnumDecl& decl) {
+            if (!is_std_descendant_module_name(decl.module_name) || !decl.is_public) return;
             std::string enum_alias = basename_of_qualified_name(decl.name);
             std::string module_alias = basename_of_qualified_name(decl.module_name);
             add_unqualified_type_alias(enum_alias, decl.name);
@@ -956,7 +963,7 @@ private:
                 add(item.name, case_name);
                 add(module_alias + "::" + item.name, case_name);
             }
-        }
+        });
         for (const auto& decl : program_.traits) {
             if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
                 std::string alias = basename_of_qualified_name(decl.name);
@@ -983,13 +990,18 @@ private:
             if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_struct_alias = true;
         });
         if (has_struct_alias) return true;
-        for (const auto& decl : program_.enums) {
-            if (decl.module_name != module_name) continue;
-            if (basename_of_qualified_name(decl.name) == alias) return true;
-            for (const auto& item : decl.cases) {
-                if (item.name == alias) return true;
+        bool has_enum_alias = false;
+        for_each_enum_decl([&](const EnumDecl& decl) {
+            if (decl.module_name != module_name) return;
+            if (basename_of_qualified_name(decl.name) == alias) {
+                has_enum_alias = true;
+                return;
             }
-        }
+            for (const auto& item : decl.cases) {
+                if (item.name == alias) has_enum_alias = true;
+            }
+        });
+        if (has_enum_alias) return true;
         for (const auto& decl : program_.traits) {
             if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
         }
@@ -1021,7 +1033,9 @@ private:
         for_each_struct_decl([&](const StructDecl& decl) {
             module_names.insert(decl.module_name);
         });
-        for (const auto& decl : program_.enums) module_names.insert(decl.module_name);
+        for_each_enum_decl([&](const EnumDecl& decl) {
+            module_names.insert(decl.module_name);
+        });
         for (const auto& decl : program_.traits) module_names.insert(decl.module_name);
         for (const auto& decl : program_.impls) module_names.insert(decl.module_name);
 
@@ -1063,14 +1077,14 @@ private:
                 add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
             }
         });
-        for (const auto& decl : program_.enums) {
-            if (!can_glob_import_item(expanded, decl.module_name, decl.is_public)) continue;
+        for_each_enum_decl([&](const EnumDecl& decl) {
+            if (!can_glob_import_item(expanded, decl.module_name, decl.is_public)) return;
             add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
             for (const auto& item : decl.cases) {
                 std::string case_name = qualify_in_module(decl.module_name, item.name);
                 add_use_info(use.module_name, item.name, case_name, use.is_public, use.loc);
             }
-        }
+        });
         for (const auto& decl : program_.traits) {
             if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
                 add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
@@ -1289,10 +1303,10 @@ private:
             validate_attribute_list(decl.attributes, "struct", decl.module_name);
             validate_repr_c_struct(decl);
         });
-        for (const auto& decl : program_.enums) {
+        for_each_enum_decl([&](const EnumDecl& decl) {
             validate_attribute_list(decl.attributes, "enum", decl.module_name);
             validate_repr_c_enum(decl);
-        }
+        });
         for (const auto& decl : program_.traits) {
             validate_attribute_list(decl.attributes, "trait", decl.module_name);
         }
@@ -1316,6 +1330,7 @@ private:
             for (auto& constant : expansion.constants) item_macro_constants_.push_back(std::move(constant));
             for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
             for (auto& decl : expansion.structs) item_macro_structs_.push_back(std::move(decl));
+            for (auto& decl : expansion.enums) item_macro_enums_.push_back(std::move(decl));
         }
     }
 
@@ -2203,9 +2218,9 @@ private:
         for_each_struct_decl([&](const StructDecl& decl) {
             validate_generic_constraints_for(decl.generics, decl.module_name);
         });
-        for (const auto& decl : program_.enums) {
+        for_each_enum_decl([&](const EnumDecl& decl) {
             validate_generic_constraints_for(decl.generics, decl.module_name);
-        }
+        });
         for (const auto& decl : program_.traits) {
             validate_generic_constraints_for(decl.generics, decl.module_name);
             std::map<std::string, IrType> trait_substitutions = generic_placeholder_substitutions(decl.generics);
@@ -3149,7 +3164,7 @@ private:
     }
 
     void collect_enum_layouts() {
-        for (const auto& decl : program_.enums) {
+        for_each_enum_decl([&](const EnumDecl& decl) {
             require_unique_generic_params(decl.generics, "enum", decl.name);
             if (structs_.count(decl.name)) {
                 fail(decl.loc, "enum '" + decl.name + "' conflicts with struct of the same name");
@@ -3189,7 +3204,7 @@ private:
 
             auto inserted = enums_.emplace(decl.name, std::move(info));
             if (!inserted.second) fail(decl.loc, "duplicate enum '" + decl.name + "'");
-        }
+        });
 
         for (auto& [enum_name, enum_info] : enums_) {
             if (enum_info.generic_arity == 0) {
@@ -3394,9 +3409,9 @@ private:
     }
 
     void collect_ir_c_enums(IrProgram& ir) const {
-        for (const auto& decl : program_.enums) {
-            if (!decl.is_public) continue;
-            if (!find_attribute(decl.attributes, "repr")) continue;
+        for_each_enum_decl([&](const EnumDecl& decl) {
+            if (!decl.is_public) return;
+            if (!find_attribute(decl.attributes, "repr")) return;
 
             IrCEnum item;
             item.name = decl.name;
@@ -3412,7 +3427,7 @@ private:
                 });
             }
             ir.c_enums.push_back(std::move(item));
-        }
+        });
     }
 
     std::vector<const FunctionDecl*> collect_test_functions() const {

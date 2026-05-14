@@ -198,9 +198,9 @@ stages rather than one file per syntax feature.
    token_stream` and `ast -> ast` meta invocations can now parse their
    token-tree input as top-level function declarations and splice those
    generated functions into sema as identity expansion output while meta bodies
-   stay empty. Item-position invocations also support generated constant
-   and struct declarations through the same identity expansion path; generated
-   enum/trait/impl/module/use items remain planned.
+   stay empty. Item-position invocations also support generated constant,
+   struct, and enum declarations through the same identity expansion path;
+   generated trait/impl/module/use items remain planned.
    User attribute
    arguments and item-position/type-position `ident!(...)` invocations now use
    the same
@@ -216,8 +216,8 @@ stages rather than one file per syntax feature.
    linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
-   - [items-non-record] expand sema-validated item-position macro invocations
-     into enum, trait, impl, module, and use declarations
+   - [items-namespace-and-impl] expand sema-validated item-position macro
+     invocations into trait, impl, module, and use declarations
    - [patterns] expand sema-validated pattern-position `ident!(...)` invocations
      once compile-time construction can produce pattern AST
    - [attributes] allow attribute macros to rewrite or insert AST nodes
