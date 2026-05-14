@@ -85,7 +85,8 @@ typedefs for by-value exported instantiations, plus generic/non-generic
 fieldless enum declarations, by-value header ABI target/size guards,
 one-parameter same-domain meta signatures over `token_stream`/`ast`/`type`,
 attribute/expression macro domain checks, parser-stable `ident!(...)`
-token-tree macro invocation syntax, and planned expansion diagnostics.
+expression and item token-tree macro invocation syntax, and planned expansion
+diagnostics.
 
 `make check-prelude` runs prelude IO, formatting, input, assertion, source
 header, and builtin macro tests. It covers function and macro assertion forms,

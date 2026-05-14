@@ -1,4 +1,10 @@
 @cfg(false)
+make_item!(fn generated_item() -> i64 {
+  let value = quote!({ nested([1, 2, 3]) });
+  return value;
+});
+
+@cfg(false)
 fn generated() -> i64 {
   let quoted = quote!(fn ~(name)(~(args)) -> i64 {
     return ~(body);

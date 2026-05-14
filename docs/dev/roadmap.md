@@ -185,14 +185,17 @@ stages rather than one file per syntax feature.
    quote grammar. User macro calls capture balanced token trees and preserve
    future quote/unquote marker tokens such as `~(...)`, but active expansion
    still needs compile-time token_stream/ast construction before it can produce
-   values.
+   values. Item-position `ident!(...)` invocations now use the same balanced
+   token-tree parser and are accepted under disabled `@cfg(false)` declarations
+   for linting/cache stability, while active item macros still produce a
+   planned-expansion diagnostic.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [quote-eval] lower quote-like `ident!(...)` payloads into
      `token_stream`/`ast` values and splice `~(...)` unquotes once the
      compile-time evaluator exists
    - [calls] expand user-defined Rust-style `ident!(...)` expression calls
-   - [items] expand item-position macro invocations
+   - [items] expand parsed item-position macro invocations into top-level items
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist

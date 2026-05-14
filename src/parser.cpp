@@ -180,8 +180,16 @@ private:
         } else if (match(TokenKind::KwImpl)) {
             target.impls.push_back(parse_impl(public_decl, std::move(attributes)));
         } else if (check(TokenKind::Identifier) && peek(1).kind == TokenKind::Bang) {
-            fail(peek(1).loc,
-                 "item macro invocation syntax is planned for meta functions but expansion is not supported yet");
+            if (cfg_enabled) reject_attributes_except_cfg(attributes, "item macro invocations");
+            Token name = expect(TokenKind::Identifier, "expected item macro invocation name");
+            Token bang = expect(TokenKind::Bang, "expected ! after item macro invocation name");
+            parse_macro_token_tree(bang.loc);
+            match(TokenKind::Semicolon);
+            if (cfg_enabled) {
+                fail(name.loc,
+                     "item macro invocation '" + name.text +
+                         "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet");
+            }
         } else {
             fail(peek().loc, "expected top-level declaration");
         }

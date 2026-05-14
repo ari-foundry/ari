@@ -1443,7 +1443,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/macro-call-unknown.ari -o $(BUILD_DIR)/meta/macro-call-unknown.elf >$(BUILD_DIR)/meta/macro-call-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'missing!'" $(BUILD_DIR)/meta/macro-call-unknown.err
 	if $(TARGET) tests/errors/item-macro-planned.ari -o $(BUILD_DIR)/meta/item-macro-planned.elf >$(BUILD_DIR)/meta/item-macro-planned.err 2>&1; then exit 1; fi
-	grep -q "item macro invocation syntax is planned for meta functions but expansion is not supported yet" $(BUILD_DIR)/meta/item-macro-planned.err
+	grep -q "item macro invocation 'make_item!' requires compile-time token_stream/ast expansion" $(BUILD_DIR)/meta/item-macro-planned.err
 
 check-traits: $(TARGET)
 	mkdir -p $(BUILD_DIR)/traits

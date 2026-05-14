@@ -177,13 +177,14 @@ each transform shape instead of a `[T]`-generic meta function. Bodies must be
 empty until Ari has a compile-time evaluator, so declarations can reserve
 attributes and macro names without silently ignoring executable statements.
 
-Expression and item macro invocation use Rust-style `!` syntax. The built-in
-prelude assertion, stop, `print!`, `println!`, and `matches!` macros lower
-today. User syntax-rewriting attributes and expression macros must resolve to
-`token_stream -> token_stream` or `ast -> ast` meta functions; `type -> type`
-meta functions are reserved for future type-position expansion and cannot be
-used as attributes or expression macros. User `meta fn` expansion, item macros,
-and `format!` are still planned and rejected with specific diagnostics.
+Expression and item macro invocation use Rust-style `ident!(...)` syntax. The
+built-in prelude assertion, stop, `print!`, `println!`, and `matches!` macros
+lower today. User syntax-rewriting attributes and expression macros must
+resolve to `token_stream -> token_stream` or `ast -> ast` meta functions;
+`type -> type` meta functions are reserved for future type-position expansion
+and cannot be used as attributes or expression macros. User `meta fn`
+expansion, active item macros, and `format!` are still planned and rejected
+with specific diagnostics.
 
 Macro invocation is the only parser-level token-tree expression form. A
 quote-like meta function is written as an ordinary named macro call such as
@@ -199,9 +200,10 @@ quote!(fn ~(name)(~(args)) -> i64 {
 })
 ```
 
-Active user macro expressions are rejected until compile-time `token_stream`
-and `ast` construction exists, but the `ident!(...)` expression surface is fixed
-for linting and disabled `@cfg(false)` declarations still parse.
+Active user macro expressions and item-position macro invocations are rejected
+until compile-time `token_stream` and `ast` construction exists, but the
+`ident!(...)` token-tree surface is fixed for linting and disabled
+`@cfg(false)` declarations still parse.
 
 ## Raw Pointers
 
