@@ -1,0 +1,39 @@
+impl Default for i64 {
+  fn default() -> i64 {
+    return 7;
+  }
+}
+
+impl Default for bool {
+  fn default() -> bool {
+    return true;
+  }
+}
+
+@derive(Default)
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+@derive(std::Default)
+struct Pair(i64, bool)
+
+@derive(Default)
+struct Box[T] {
+  value: T,
+}
+
+fn make_default[T: Default]() -> T {
+  return Default::default<T>();
+}
+
+fn main() -> i64 {
+  let point = make_default<Point>();
+  let pair = make_default<Pair>();
+  let boxed = make_default<Box[i64]>();
+  if pair.1 {
+    return point.x + point.y + pair.0 + boxed.value;
+  }
+  return 1;
+}

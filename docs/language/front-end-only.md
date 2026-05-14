@@ -97,7 +97,7 @@ derives and user-defined attribute macros that rewrite or insert AST nodes.
 
 ```ari
 @deprecated("use NewToken")
-@derive(Debug, Clone)
+@derive(Debug, Clone, Default)
 @repr(C)
 struct Token {
   kind: i64,
@@ -107,6 +107,7 @@ struct Token {
 The compiler accepts a small built-in attribute surface:
 
 - `@derive(Debug)` / `@derive(Copy)` / `@derive(Clone)` on structs and enums
+- `@derive(Default)` on structs
 - `@repr(C)` on structs and enums
 - `@deprecated` or `@deprecated("message")` on declarations
 - `@test` on functions
@@ -135,12 +136,13 @@ compilation.
 
 `@test` functions can be run with `ari --test`, which synthesizes a `main`
 that calls each test in source order. `@derive(Debug)`, `@derive(Copy)`, and
-`@derive(Clone)` expand for structs and enums, including generic declarations.
-`Debug` and `Copy` generate empty trait impls; `Clone` generates
-`fn clone(self) -> Self { return self; }` for the current value-self trait
-contract. `Copy` derive is only a marker-trait impl and does not change
-structural copyability. Other derive names remain reserved until their trait
-method surfaces are implemented.
+`@derive(Clone)` expand for structs and enums, including generic declarations;
+`@derive(Default)` expands for structs. `Debug` and `Copy` generate empty trait
+impls, `Clone` generates `fn clone(self) -> Self { return self; }`, and
+struct `Default` generates a `default` associated function that defaults each
+field. `Copy` derive is only a marker-trait impl and does not change structural
+copyability. Other derive names remain reserved until their trait method
+surfaces are implemented.
 
 User-defined attributes can be reserved by declaring a matching `meta fn`:
 

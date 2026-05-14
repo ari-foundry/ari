@@ -222,18 +222,23 @@ stages rather than one file per syntax feature.
    lowering. Disabled `@cfg(false)` declarations still parse for linting/cache
    stability.
    Built-in `@derive(Debug)`, `@derive(Copy)`, and `@derive(Clone)` now expand
-   on structs and enums, including generic declarations. `Debug` and `Copy`
+   on structs and enums, including generic declarations. `@derive(Default)` now
+   expands on named and tuple structs, including generic declarations whose
+   used type parameters can receive a `std::Default` bound. `Debug` and `Copy`
    synthesize empty trait impls; `Clone` synthesizes a value-self method that
-   returns `self` to match the current `Clone` contract. `Copy` derive remains
-   a marker-trait impl and does not change Ari's structural copyability rules.
-   Unsupported or duplicate derive names are rejected before impl validation.
+   returns `self` to match the current `Clone` contract; struct `Default`
+   synthesizes an associated function that defaults each field through
+   `Default::default<FieldType>()`. `Copy` derive remains a marker-trait impl
+   and does not change Ari's structural copyability rules. Unsupported or
+   duplicate derive names are rejected before impl validation, and enum
+   `Default` derives are reserved until an explicit default-case marker exists.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive-methods] add remaining method-generating built-in derives such as
-     `Default` and equality/order derives after generated method contracts are
-     defined; revisit ownership-aware `Clone` bodies if `Clone` later gains a
-     non-consuming or allocator-aware contract
+     equality/order derives, and add enum `Default` once a default-case marker
+     is designed; revisit ownership-aware `Clone` bodies if `Clone` later gains
+     a non-consuming or allocator-aware contract
    - [format] lower `format!` after owned runtime strings exist
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

@@ -131,13 +131,20 @@ static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.
 
 `@derive(Debug)`, `@derive(Copy)`, and `@derive(Clone)` are supported on structs
-and enums. Each derive preserves the generic parameters of generic structs and
-enums. `Debug` and `Copy` expand to empty trait impls so derived values satisfy
-their trait bounds. `Clone` expands to an impl with a value-self `clone` method
-that returns `self`, matching Ari's current `Clone` trait contract. `Copy`
-derive is a marker-trait impl only; it does not change Ari's structural
-copyability rules for values. Other derive names are rejected until their trait
-method surfaces and expansion contracts are defined.
+and enums. `@derive(Default)` is supported on named and tuple structs. Each
+derive preserves the generic parameters of generic declarations. `Debug` and
+`Copy` expand to empty trait impls so derived values satisfy their trait bounds.
+`Clone` expands to an impl with a value-self `clone` method that returns `self`,
+matching Ari's current `Clone` trait contract. Struct `Default` derives expand
+to a `fn default() -> Self` method that constructs the struct by calling
+`Default::default<FieldType>()` for each field; field types must therefore have
+a visible `Default` impl. Generic struct `Default` derives add `std::Default`
+bounds for generic parameters that appear directly in fields when those
+parameters do not already have another constraint. `Default` for enums is
+reserved until Ari has an explicit default-case marker. `Copy` derive is a
+marker-trait impl only; it does not change Ari's structural copyability rules
+for values. Other derive names are rejected until their trait method surfaces
+and expansion contracts are defined.
 
 ## User Attributes
 
