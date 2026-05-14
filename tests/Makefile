@@ -1466,6 +1466,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-ast-struct-literal.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/meta-function-ast-borrow.ari -o $(BUILD_DIR)/meta/meta-function-ast-borrow.raw
 	$(BUILD_DIR)/meta/meta-function-ast-borrow.raw; code=$$?; test $$code -eq 41
+	$(TARGET) --freestanding tests/ok/meta-function-ast-try-null-coalescing.ari -o $(BUILD_DIR)/meta/meta-function-ast-try-null-coalescing.raw
+	$(BUILD_DIR)/meta/meta-function-ast-try-null-coalescing.raw; code=$$?; test $$code -eq 46
 	$(TARGET) --freestanding tests/ok/item-macro-function-identity.ari -o $(BUILD_DIR)/meta/item-macro-function-identity.raw
 	$(BUILD_DIR)/meta/item-macro-function-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-ast-decl-return.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-return.raw

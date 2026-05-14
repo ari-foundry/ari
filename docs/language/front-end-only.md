@@ -195,8 +195,8 @@ empty or contain a single `return input;` identity return, where `input` is the
 meta function parameter. Expression-position `ast -> ast` macros may also
 return an expression AST directly and use the meta input parameter as a
 substitution point. Literal, struct literal, tuple, vector, field/index/tuple
-access, borrow, function call, method call, unary, binary, and cast expression
-trees are accepted:
+access, borrow, postfix try, null-coalescing, function call, method call,
+unary, binary, and cast expression trees are accepted:
 
 ```ari
 meta fn add_one(input: ast) -> ast {
@@ -213,6 +213,10 @@ meta fn make_pair(input: ast) -> ast {
 
 meta fn borrow_shared(input: ast) -> ast {
   return ref input;
+}
+
+meta fn or_zero(input: ast) -> ast {
+  return input ?? 0;
 }
 
 meta fn bumped(input: ast) -> ast {

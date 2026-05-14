@@ -1,0 +1,23 @@
+enum MaybeI32 {
+  None,
+  Some(i32),
+}
+
+meta fn unwrap(input: ast) -> ast {
+  return input?;
+}
+
+meta fn fallback(input: ast) -> ast {
+  return input ?? 5i32;
+}
+
+fn bump(value: MaybeI32) -> MaybeI32 {
+  let inner = unwrap!(value);
+  return Some(inner + 1i32);
+}
+
+fn main() -> i64 {
+  let success = fallback!(bump(Some(40i32)));
+  let missing = fallback!(bump(None));
+  return (success as i64) + (missing as i64);
+}
