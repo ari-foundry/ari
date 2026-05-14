@@ -3519,12 +3519,7 @@ private:
         return type;
     }
 
-    IrType resolve_type_macro_invocation(const TypeRef& ast_type) {
-        (void)require_meta_invocation(ast_type.loc, MetaInvocationSite::TypeMacro, ast_type.name);
-        fail(ast_type.loc, meta_invocation_planned_message(MetaInvocationSite::TypeMacro, ast_type.name));
-    }
-
-    IrType finish_associated_projection_type(const TypeRef& ast_type, IrType type) {
+    IrType finish_type_ref_wrapper_type(const TypeRef& ast_type, IrType type) {
         if (ast_type.nullable) {
             if (ast_type.qualifier != TypeQualifier::Value) {
                 fail(ast_type.loc, "nullable type suffix ? cannot be combined with own, ref, or ptr qualifiers");
@@ -3538,6 +3533,17 @@ private:
         }
         type.loc = ast_type.loc;
         return type;
+    }
+
+    IrType resolve_type_macro_invocation(const TypeRef& ast_type) {
+        (void)require_meta_invocation(ast_type.loc, MetaInvocationSite::TypeMacro, ast_type.name);
+        TypeRef expanded = parse_macro_type_ref(ast_type.macro_tokens, ast_type.loc);
+        IrType type = resolve_executable_type(expanded);
+        return finish_type_ref_wrapper_type(ast_type, std::move(type));
+    }
+
+    IrType finish_associated_projection_type(const TypeRef& ast_type, IrType type) {
+        return finish_type_ref_wrapper_type(ast_type, std::move(type));
     }
 
     IrType resolve_associated_type_projection(const TypeRef& ast_type) {

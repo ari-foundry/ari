@@ -19,5 +19,6 @@ Program parse_tokens_in_module(std::vector<Token> tokens,
                                std::set<std::string> cfg_features,
                                std::string target_triple = {});
 std::vector<ExprPtr> parse_macro_argument_expressions(std::vector<Token> tokens, SourceLocation loc);
+TypeRef parse_macro_type_ref(std::vector<Token> tokens, SourceLocation loc);
 
 } // namespace ari

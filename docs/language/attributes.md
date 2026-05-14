@@ -154,6 +154,6 @@ and mismatched delimiters are rejected during parsing. The full token payload is
 preserved in module AST summaries, including numeric values, float bits, and
 literal suffixes. The reserving `meta fn` must be concrete, non-generic, and
 written as either `token_stream -> token_stream` or `ast -> ast`; `type -> type`
-meta functions are reserved for future type-position expansion and cannot
+meta functions are accepted only at type-position macro sites and cannot
 reserve attributes. Meta bodies must stay empty until Ari has a compile-time
 evaluator. Attribute macros that rewrite or insert AST nodes are planned.

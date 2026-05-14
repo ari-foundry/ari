@@ -1396,6 +1396,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-surface.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/macro-token-tree-syntax.ari -o $(BUILD_DIR)/meta/macro-token-tree-syntax.raw
 	$(BUILD_DIR)/meta/macro-token-tree-syntax.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/type-macro-identity.ari -o $(BUILD_DIR)/meta/type-macro-identity.raw
+	$(BUILD_DIR)/meta/type-macro-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.raw
 	$(BUILD_DIR)/meta/matches-macro.raw; code=$$?; test $$code -eq 15
 	if $(TARGET) tests/errors/attribute-unknown.ari -o $(BUILD_DIR)/meta/attribute-unknown.elf >$(BUILD_DIR)/meta/attribute-unknown.err 2>&1; then exit 1; fi
@@ -1440,8 +1442,8 @@ check-meta: $(TARGET)
 	grep -q "attributes require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/attribute-meta-type-domain.err
 	if $(TARGET) tests/errors/macro-call-type-domain.ari -o $(BUILD_DIR)/meta/macro-call-type-domain.elf >$(BUILD_DIR)/meta/macro-call-type-domain.err 2>&1; then exit 1; fi
 	grep -q "expression macros require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/macro-call-type-domain.err
-	if $(TARGET) tests/errors/type-macro-planned.ari -o $(BUILD_DIR)/meta/type-macro-planned.elf >$(BUILD_DIR)/meta/type-macro-planned.err 2>&1; then exit 1; fi
-	grep -q "type macro invocation 'make_type!' requires compile-time type expansion" $(BUILD_DIR)/meta/type-macro-planned.err
+	if $(TARGET) tests/errors/type-macro-invalid-input.ari -o $(BUILD_DIR)/meta/type-macro-invalid-input.elf >$(BUILD_DIR)/meta/type-macro-invalid-input.err 2>&1; then exit 1; fi
+	grep -q "expected end of type macro input" $(BUILD_DIR)/meta/type-macro-invalid-input.err
 	if $(TARGET) tests/errors/type-macro-token-domain.ari -o $(BUILD_DIR)/meta/type-macro-token-domain.elf >$(BUILD_DIR)/meta/type-macro-token-domain.err 2>&1; then exit 1; fi
 	grep -q "type macros require type -> type" $(BUILD_DIR)/meta/type-macro-token-domain.err
 	if $(TARGET) tests/errors/type-macro-unknown.ari -o $(BUILD_DIR)/meta/type-macro-unknown.elf >$(BUILD_DIR)/meta/type-macro-unknown.err 2>&1; then exit 1; fi

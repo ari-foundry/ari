@@ -185,9 +185,12 @@ Expression, item, and type-position macro invocation use Rust-style
 `println!`, and `matches!` macros lower today. User syntax-rewriting
 attributes, expression macros, and active item-position macros must resolve to
 `token_stream -> token_stream` or `ast -> ast` meta functions. Type-position
-macro invocations must resolve to `type -> type` meta functions. User `meta fn`
-expansion, active item macro expansion, active type macro expansion, and
-`format!` are still planned and rejected with specific diagnostics.
+macro invocations must resolve to `type -> type` meta functions. Because meta
+bodies are still empty, type-position macro expansion is currently an identity
+transform: the token tree inside `ident!(...)` is parsed as a type input and
+then lowered as that type. User `meta fn` value/syntax expansion, active item
+macro expansion, and `format!` are still planned and rejected with specific
+diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions, and then
@@ -215,10 +218,13 @@ let value: make_type!(i64) = 0;
 ```
 
 Active user macro expressions, item-position macro invocations, and
-type-position macro invocations are rejected until compile-time construction
+pattern-position macro invocations are rejected until compile-time construction
 exists, but sema checks unknown names and domain mismatches before emitting the
-planned expansion diagnostic. The `ident!(...)` token-tree surface is fixed for
-linting and disabled `@cfg(false)` declarations still parse.
+planned expansion diagnostic. Type-position macro invocations parse their input
+as a type immediately; malformed type input, such as extra comma-separated
+tokens, is rejected before semantic type lowering. The `ident!(...)` token-tree
+surface is fixed for linting and disabled `@cfg(false)` declarations still
+parse.
 
 ## Raw Pointers
 

@@ -47,6 +47,13 @@ public:
         fail(loc, "unreachable macro argument parser state");
     }
 
+    TypeRef parse_type_until_end(SourceLocation loc) {
+        if (check(TokenKind::End)) fail(loc, "type macro invocation requires a type input");
+        TypeRef type = parse_type();
+        expect(TokenKind::End, "expected end of type macro input");
+        return type;
+    }
+
 private:
     std::vector<Token> tokens_;
     std::size_t pos_ = 0;
@@ -2336,6 +2343,15 @@ std::vector<ExprPtr> parse_macro_argument_expressions(std::vector<Token> tokens,
     tokens.push_back(end);
     Parser parser(std::move(tokens));
     return parser.parse_expression_arguments_until_end(loc);
+}
+
+TypeRef parse_macro_type_ref(std::vector<Token> tokens, SourceLocation loc) {
+    Token end;
+    end.kind = TokenKind::End;
+    end.loc = loc;
+    tokens.push_back(end);
+    Parser parser(std::move(tokens));
+    return parser.parse_type_until_end(loc);
 }
 
 } // namespace ari

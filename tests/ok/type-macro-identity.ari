@@ -1,0 +1,17 @@
+meta fn make_type(input: type) -> type {
+}
+
+struct Box[T] {
+  value: T,
+}
+
+fn main() -> i64 {
+  let value: make_type!(i64) = 40;
+  let boxed: make_type!(Box[i64]) = Box<i64> { value: 2 };
+  let nested: make_type!(make_type!(i64)) = boxed.value;
+  let pair: make_type!((i64, bool)) = (value + nested, true);
+  if pair.1 {
+    return pair.0;
+  }
+  return 1;
+}
