@@ -1,0 +1,7 @@
+meta fn make_tokens(input: token_stream) -> token_stream {
+}
+
+fn main() -> i64 {
+  let value: make_tokens!(i64) = 0;
+  return value;
+}

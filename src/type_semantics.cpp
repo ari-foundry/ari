@@ -296,6 +296,13 @@ std::string type_ref_key(const TypeRef& type) {
         return key;
     }
 
+    if (type.is_macro_invocation) {
+        key += type.name;
+        key += "!(...)";
+        if (type.nullable) key += "?";
+        return key;
+    }
+
     if (type.name == "int") key += "i64";
     else if (type.name == "std::Vec" || type.name == "prelude::Vec") key += "Vec";
     else key += type.name;

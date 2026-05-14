@@ -177,14 +177,14 @@ each transform shape instead of a `[T]`-generic meta function. Bodies must be
 empty until Ari has a compile-time evaluator, so declarations can reserve
 attributes and macro names without silently ignoring executable statements.
 
-Expression and item macro invocation use Rust-style `ident!(...)` syntax. The
-built-in prelude assertion, stop, `print!`, `println!`, and `matches!` macros
-lower today. User syntax-rewriting attributes, expression macros, and active
-item-position macros must resolve to `token_stream -> token_stream` or `ast ->
-ast` meta functions; `type -> type` meta functions are reserved for future
-type-position expansion and cannot be used at syntax-rewriting sites. User
-`meta fn` expansion, active item macro expansion, and `format!` are still
-planned and rejected with specific diagnostics.
+Expression, item, and type-position macro invocation use Rust-style
+`ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
+`println!`, and `matches!` macros lower today. User syntax-rewriting
+attributes, expression macros, and active item-position macros must resolve to
+`token_stream -> token_stream` or `ast -> ast` meta functions. Type-position
+macro invocations must resolve to `type -> type` meta functions. User `meta fn`
+expansion, active item macro expansion, active type macro expansion, and
+`format!` are still planned and rejected with specific diagnostics.
 
 Macro invocation is the only parser-level token-tree expression form. A macro
 call is always an ordinary named call such as `make_tokens!(...)`; there is no
@@ -200,13 +200,18 @@ meta fn make_tokens(input: token_stream) -> token_stream {
 make_tokens!(fn generated_value(arg) -> i64 {
   return arg;
 })
+
+meta fn make_type(input: type) -> type {
+}
+
+let value: make_type!(i64) = 0;
 ```
 
-Active user macro expressions and item-position macro invocations are rejected
-until compile-time `token_stream` and `ast` construction exists, but sema now
-checks unknown names and type-domain mismatches before emitting the planned
-expansion diagnostic. The `ident!(...)` token-tree surface is fixed for linting
-and disabled `@cfg(false)` declarations still parse.
+Active user macro expressions, item-position macro invocations, and
+type-position macro invocations are rejected until compile-time construction
+exists, but sema checks unknown names and domain mismatches before emitting the
+planned expansion diagnostic. The `ident!(...)` token-tree surface is fixed for
+linting and disabled `@cfg(false)` declarations still parse.
 
 ## Raw Pointers
 

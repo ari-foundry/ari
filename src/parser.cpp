@@ -476,7 +476,11 @@ private:
         type.qualifier = qualifier;
         type.name = parse_path_after_first(name);
         type.loc = qualifier == TypeQualifier::Value ? name.loc : loc;
-        if (match(TokenKind::LBracket)) {
+        if (match(TokenKind::Bang)) {
+            Token bang = tokens_[pos_ - 1];
+            type.is_macro_invocation = true;
+            type.macro_tokens = parse_macro_token_tree(bang.loc);
+        } else if (match(TokenKind::LBracket)) {
             if (!check(TokenKind::RBracket)) {
                 do {
                     type.args.push_back(parse_type());

@@ -51,12 +51,19 @@ void append_qualifier(std::ostringstream& out, TypeQualifier qualifier) {
     }
 }
 
+void append_token_payload(std::ostringstream& out, const Token& token);
+
 void append_type(std::ostringstream& out, const TypeRef& type) {
     append_qualifier(out, type.qualifier);
     append_field(out, type.name);
     append_bool(out, type.is_dyn_object);
     append_bool(out, type.nullable);
     append_count(out, type.array_size);
+    append_bool(out, type.is_macro_invocation);
+    if (type.is_macro_invocation) {
+        append_count(out, type.macro_tokens.size());
+        for (const auto& token : type.macro_tokens) append_token_payload(out, token);
+    }
     append_count(out, type.args.size());
     for (const auto& arg : type.args) append_type(out, arg);
 }
@@ -82,8 +89,6 @@ void append_attributes(std::ostringstream& out, const std::vector<Attribute>& at
         }
     }
 }
-
-void append_token_payload(std::ostringstream& out, const Token& token);
 
 void append_item_macro_invocation(std::ostringstream& out, const ItemMacroInvocation& invocation) {
     append_field(out, invocation.module_name);
@@ -1087,12 +1092,18 @@ private:
     }
 
     void consume_header() {
+        const std::string v7 = "ari-ast-decls-v7;";
         const std::string v6 = "ari-ast-decls-v6;";
         const std::string v5 = "ari-ast-decls-v5;";
         const std::string v4 = "ari-ast-decls-v4;";
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v7.size(), v7) == 0) {
+            version_ = 7;
+            pos_ += v7.size();
+            return;
+        }
         if (text_.compare(pos_, v6.size(), v6) == 0) {
             version_ = 6;
             pos_ += v6.size();
@@ -1123,7 +1134,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1193,6 +1204,16 @@ private:
         type.is_dyn_object = read_bool(label + " dyn flag");
         type.nullable = read_bool(label + " nullable flag");
         type.array_size = read_count(label + " array size");
+        if (version_ >= 7) {
+            type.is_macro_invocation = read_bool(label + " macro invocation flag");
+            if (type.is_macro_invocation) {
+                std::uint64_t token_count = read_count(label + " macro token count");
+                type.macro_tokens.reserve(static_cast<std::size_t>(token_count));
+                for (std::uint64_t i = 0; i < token_count; ++i) {
+                    type.macro_tokens.push_back(read_token_payload(label + " macro token"));
+                }
+            }
+        }
         std::uint64_t arg_count = read_count(label + " argument count");
         type.args.reserve(static_cast<std::size_t>(arg_count));
         for (std::uint64_t i = 0; i < arg_count; ++i) {
@@ -1799,7 +1820,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v6;";
+    out << "ari-ast-decls-v7;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {

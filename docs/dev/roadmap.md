@@ -180,19 +180,21 @@ stages rather than one file per syntax feature.
    reserve attributes and macro names without pretending runtime statements
    execute. Attribute, expression-macro, and active item-macro sites now reject
    `type -> type` transforms and accept only syntax-rewriting `token_stream ->
-   token_stream` or `ast -> ast` domains. Macro invocation syntax `ident!(...)`
-   is the stable parser surface for token-tree expressions; there is no
+   token_stream` or `ast -> ast` domains; type-position macro sites accept only
+   `type -> type` domains. Macro invocation syntax `ident!(...)` is the stable
+   parser surface for token-tree expressions and type positions; there is no
    separate anonymous macro grammar. User macro calls capture balanced token
    trees, and the selected `meta fn` parameter domain determines whether the
    future evaluator receives `token_stream`, `ast`, or `type` input. Active
-   expansion still needs compile-time `token_stream`/`ast`
-   construction before it can produce values. Item-position `ident!(...)`
-   invocations now use the same balanced token-tree parser, are preserved
-   through AST/module summary plumbing, and receive sema diagnostics for
-   unknown names, bad domains, or planned expansion. Disabled `@cfg(false)`
+   expansion still needs compile-time `token_stream`/`ast`/`type`
+   construction before it can produce values. Item-position and type-position
+   `ident!(...)` invocations now use the same balanced token-tree parser, are
+   preserved through AST/module summary plumbing, and receive sema diagnostics
+   for unknown names, bad domains, or planned expansion. Disabled `@cfg(false)`
    declarations still parse for linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
+   - [types] expand sema-validated type-position macro invocations into type refs
    - [calls] expand user-defined Rust-style `ident!(...)` expression calls
    - [items] expand sema-validated item-position macro invocations into top-level items
    - [attributes] allow attribute macros to rewrite or insert AST nodes

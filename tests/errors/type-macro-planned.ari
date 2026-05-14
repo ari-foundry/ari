@@ -1,0 +1,7 @@
+meta fn make_type(input: type) -> type {
+}
+
+fn main() -> i64 {
+  let value: make_type!(i64) = 0;
+  return value;
+}

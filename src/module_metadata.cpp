@@ -269,6 +269,12 @@ std::string type_ref_summary(const TypeRef& type) {
         if (type.nullable) name += "?";
         return name;
     }
+    if (type.is_macro_invocation) {
+        name += type.name;
+        name += "!(...)";
+        if (type.nullable) name += "?";
+        return name;
+    }
     name += type.name;
     if (!type.args.empty()) {
         name += "[";

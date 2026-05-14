@@ -3385,7 +3385,25 @@ private:
         return type;
     }
 
+    IrType resolve_type_macro_invocation(const TypeRef& ast_type) {
+        std::string meta_name = resolve_meta_function_name(ast_type.name);
+        auto found = meta_functions_.find(meta_name);
+        if (found == meta_functions_.end()) {
+            fail(ast_type.loc, "unknown type macro '" + ast_type.name + "!'");
+        }
+        if (found->second.transform_kind != MetaTransformKind::Type) {
+            fail(ast_type.loc,
+                 "type macro invocation '" + ast_type.name + "!' refers to meta function '" + meta_name +
+                     "' with " + meta_transform_signature(found->second.transform_kind) +
+                     " domain; type macros require type -> type");
+        }
+        fail(ast_type.loc,
+             "type macro invocation '" + ast_type.name +
+                 "!' requires compile-time type expansion, which is planned but not implemented yet");
+    }
+
     IrType resolve_executable_type(const TypeRef& ast_type) {
+        if (ast_type.is_macro_invocation) return resolve_type_macro_invocation(ast_type);
         if (ast_type.nullable) return resolve_nullable_type(ast_type);
 
         auto substitution = current_type_substitutions_.find(ast_type.name);

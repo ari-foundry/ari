@@ -21,6 +21,8 @@ struct TypeRef {
     std::uint64_t array_size = 0;
     bool is_dyn_object = false;
     bool nullable = false;
+    bool is_macro_invocation = false;
+    std::vector<Token> macro_tokens;
 };
 
 struct UseDecl {
