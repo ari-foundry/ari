@@ -191,9 +191,26 @@ stable declaration shape is one parameter and a matching return domain:
 `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Meta
 functions are intentionally non-generic; define one concrete entry point for
 each transform shape instead of a `[T]`-generic meta function. Bodies may be
-empty or contain only a single `return input;` identity return, where `input`
-is the meta function parameter. Non-identity token or AST construction remains
-reserved until Ari has a compile-time evaluator.
+empty or contain a single `return input;` identity return, where `input` is the
+meta function parameter. Expression-position `ast -> ast` macros may also
+return a closed expression AST directly:
+
+```ari
+meta fn answer(input: ast) -> ast {
+  return 40 + 2;
+}
+
+fn main() -> i64 {
+  return answer!(ignored_input())
+}
+```
+
+The invocation input is still parsed as one expression to validate the macro
+argument domain, but the output expression is the returned AST. This first
+non-identity AST step has no quote/eval syntax and cannot reference `input`
+inside the constructed expression yet. Non-identity token construction,
+attribute rewrites, and item/type/pattern AST construction remain reserved
+until Ari has a broader compile-time evaluator.
 
 Expression, item, and type-position macro invocation use Rust-style
 `ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
@@ -202,11 +219,12 @@ macros other than the parser-special `matches!` spelling are matched only
 through unqualified names or paths that resolve to the root `std` macro
 spelling; other qualified paths are left for user meta functions even when
 their basename matches a prelude macro. User expression macros must resolve to
-`token_stream -> token_stream` or `ast -> ast` meta functions.
-Because active user meta bodies are identity-only, expression macro expansion
-is currently an identity transform: the token tree inside `ident!(...)` is
-parsed as one expression and then lowered as that expression. User syntax-rewriting
-attributes and active item-position macros must also resolve to
+`token_stream -> token_stream` or `ast -> ast` meta functions. Empty and
+`return input;` bodies are identity transforms: the token tree inside
+`ident!(...)` is parsed as one expression and then lowered as that expression.
+Closed expression returns from `ast -> ast` bodies replace that parsed input at
+expression macro sites. User syntax-rewriting attributes and active
+item-position macros must also resolve to
 `token_stream -> token_stream` or `ast -> ast` meta functions. Function,
 constant, struct, enum, trait, impl, inline module, and use item macro
 expansion is currently an identity transform: the token tree is parsed as

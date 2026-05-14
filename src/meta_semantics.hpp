@@ -27,6 +27,7 @@ struct MetaFunctionInfo {
     std::string module_name;
     MetaTransformKind transform_kind = MetaTransformKind::None;
     SourceLocation loc;
+    const Expr* ast_expression_return = nullptr;
 };
 
 MetaTransformKind classify_meta_type_ref(const TypeRef& type);
@@ -40,5 +41,6 @@ std::string meta_invocation_domain_message(MetaInvocationSite site,
                                            const std::string& meta_name,
                                            MetaTransformKind kind);
 MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn);
+const Expr* meta_function_ast_expression_return(const FunctionDecl& fn);
 
 } // namespace ari

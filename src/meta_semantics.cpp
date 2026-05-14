@@ -32,6 +32,78 @@ bool is_identity_meta_return(const Stmt& stmt, const Param& param) {
     return stmt.expr->kind == ExprKind::Name && stmt.expr->name == param.name;
 }
 
+const Expr* return_expression(const FunctionDecl& fn) {
+    if (fn.body.size() != 1) return nullptr;
+    const Stmt& stmt = *fn.body.front();
+    if (stmt.kind != StmtKind::Return || !stmt.expr) return nullptr;
+    return stmt.expr.get();
+}
+
+bool supported_closed_ast_return_expr(const Expr& expr,
+                                      const std::string& input_name,
+                                      std::string& reason) {
+    auto require_operand = [&](const ExprPtr& operand) {
+        if (!operand) {
+            reason = "malformed ast meta return expression";
+            return false;
+        }
+        return supported_closed_ast_return_expr(*operand, input_name, reason);
+    };
+    auto require_binary = [&]() {
+        if (!expr_left(expr) || !expr_right(expr)) {
+            reason = "malformed ast meta return expression";
+            return false;
+        }
+        return supported_closed_ast_return_expr(*expr_left(expr), input_name, reason) &&
+               supported_closed_ast_return_expr(*expr_right(expr), input_name, reason);
+    };
+
+    switch (expr.kind) {
+        case ExprKind::Integer:
+        case ExprKind::Float:
+        case ExprKind::String:
+        case ExprKind::Bool:
+        case ExprKind::Null:
+            return true;
+        case ExprKind::Tuple:
+        case ExprKind::Vector:
+            for (const auto& arg : expr.args) {
+                if (!supported_closed_ast_return_expr(*arg, input_name, reason)) return false;
+            }
+            return true;
+        case ExprKind::Unary:
+        case ExprKind::Cast:
+            return require_operand(expr_operand(expr));
+        case ExprKind::Binary:
+            return require_binary();
+        case ExprKind::Name:
+            if (expr.name == input_name) {
+                reason = "ast meta expression returns cannot reference the meta input yet";
+            } else {
+                reason = "ast meta expression returns cannot reference names yet";
+            }
+            return false;
+        case ExprKind::Borrow:
+        case ExprKind::Try:
+        case ExprKind::NullCoalesce:
+        case ExprKind::TupleIndex:
+        case ExprKind::Index:
+        case ExprKind::FieldAccess:
+        case ExprKind::StructLiteral:
+        case ExprKind::MacroCall:
+        case ExprKind::MethodCall:
+        case ExprKind::Match:
+        case ExprKind::If:
+        case ExprKind::Block:
+        case ExprKind::Call:
+            reason =
+                "ast meta expression returns currently support only closed literal, tuple, vector, unary, binary, and cast expression trees";
+            return false;
+    }
+    reason = "unsupported ast meta return expression";
+    return false;
+}
+
 } // namespace
 
 MetaTransformKind classify_meta_type_ref(const TypeRef& type) {
@@ -163,11 +235,33 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
                  ";` identity body");
     }
     if (!fn.body.empty() && !is_identity_meta_return(*fn.body.front(), param)) {
+        const Expr* returned = return_expression(fn);
+        if (input_kind == MetaTransformKind::Ast && returned) {
+            std::string reason;
+            if (supported_closed_ast_return_expr(*returned, param.name, reason)) {
+                return input_kind;
+            }
+            fail(returned->loc, reason);
+        }
+        if (input_kind == MetaTransformKind::Ast) {
+            fail(fn.body.front()->loc,
+                 "meta function bodies currently allow only an empty body, `return " + param.name +
+                     ";` identity body, or a closed expression return for ast -> ast expression macros");
+        }
         fail(fn.body.front()->loc,
              "meta function bodies currently allow only an empty body or `return " + param.name +
                  ";` identity body");
     }
     return input_kind;
+}
+
+const Expr* meta_function_ast_expression_return(const FunctionDecl& fn) {
+    if (classify_meta_type_ref(fn.return_type) != MetaTransformKind::Ast) return nullptr;
+    if (fn.params.size() != 1) return nullptr;
+    const Expr* returned = return_expression(fn);
+    if (!returned) return nullptr;
+    if (returned->kind == ExprKind::Name && returned->name == fn.params.front().name) return nullptr;
+    return returned;
 }
 
 } // namespace ari

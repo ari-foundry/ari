@@ -680,6 +680,11 @@ private:
         if (!meta_transform_allowed_at_site(site, found->second.transform_kind)) {
             fail(loc, meta_invocation_domain_message(site, name, meta_name, found->second.transform_kind));
         }
+        if (found->second.ast_expression_return && site != MetaInvocationSite::ExpressionMacro) {
+            fail(loc,
+                 "non-identity ast meta function '" + meta_name +
+                     "' can currently be used only at expression macro sites");
+        }
         return found->second;
     }
 
@@ -1176,7 +1181,13 @@ private:
             MetaTransformKind transform_kind = validate_meta_function_signature(fn);
             auto inserted = meta_functions_.emplace(
                 fn.name,
-                MetaFunctionInfo{fn.name, fn.module_name, transform_kind, fn.loc}
+                MetaFunctionInfo{
+                    fn.name,
+                    fn.module_name,
+                    transform_kind,
+                    fn.loc,
+                    meta_function_ast_expression_return(fn),
+                }
             );
             if (!inserted.second) fail(fn.loc, "duplicate meta function '" + fn.name + "'");
         }
@@ -15153,11 +15164,14 @@ private:
             if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
         }
 
-        (void)require_meta_invocation(expr.loc, MetaInvocationSite::ExpressionMacro, expr.name);
+        const MetaFunctionInfo& meta = require_meta_invocation(expr.loc, MetaInvocationSite::ExpressionMacro, expr.name);
         if (!expr.macro_tokens) {
             fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
         }
         ExprPtr expanded = parse_macro_expression(*expr.macro_tokens, expr.loc);
+        if (meta.ast_expression_return) {
+            expanded = clone_expression_tree(*meta.ast_expression_return);
+        }
         return check_expr(*expanded);
     }
 

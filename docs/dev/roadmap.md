@@ -189,9 +189,12 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    evaluator lands. `meta fn` entries are compile-time-only, concrete,
    non-generic, one-parameter transforms over exactly one meta domain:
    `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Bodies
-   may be empty or use a single `return input;` identity body, where `input` is
-   the meta function parameter; non-identity compile-time construction remains
-   reserved until evaluation exists. Attribute, expression-macro, and active
+   may be empty, use a single `return input;` identity body, or, for
+   expression-position `ast -> ast` macros, return a closed expression AST such
+   as `return 40 + 2;` without quote/eval syntax. Meta bodies still cannot
+   reference the input inside constructed expressions, and non-expression
+   construction remains reserved until evaluation exists. Attribute,
+   expression-macro, and active
    item-macro sites now reject `type -> type` transforms and accept only
    syntax-rewriting `token_stream -> token_stream` or `ast -> ast` domains;
    type-position macro sites accept only `type -> type` domains. Macro
@@ -254,8 +257,9 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    validation, and enum `Default` derives without a case marker are rejected.
    - [tokens] support non-identity `token_stream` construction and rewrites
      beyond empty/`return input;` identity bodies
-   - [ast] support non-identity `ast` construction and rewrites beyond
-     empty/`return input;` identity bodies
+   - [ast] extend non-identity `ast` construction beyond closed expression
+     returns: add input substitution, pattern/type/item AST output, and richer
+     expression trees once evaluator policy is defined
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    Formatting syntax for `print`/`println` is fixed for linting: `{}`,
    escaped braces, and `{:.N}` fixed decimal precision for `f32`/`f64` now
