@@ -309,6 +309,25 @@ let copy = *point_ptr;
 ptr_store(point_ptr, ptr_load(point_ptr));
 ```
 
+## Smart Pointer Policy
+
+The root smart-pointer names are reserved but not executable yet:
+
+- `Box[T]` is the future unique owning heap handle.
+- `Unique[T]` is reserved for policy compatibility, but the preferred unique
+  owner spelling is `Box[T]`.
+- `Shared[T]` is reserved for future reference-counted shared ownership.
+- `Weak[T]` is reserved for non-owning shared handles that upgrade through
+  `Option[Shared[T]]`.
+
+All of these future handles must be created through explicit allocator or
+capability arguments. Ari does not provide an ambient global heap. `drop` of a
+unique or shared handle will be the operation that runs the handle's destructor
+and releases or decrements its allocation; raw pointers exposed from these
+handles will be non-owning views and must not transfer destruction rights. The
+current `std::boxed::Box<T>` is different: it is a zone-backed source handle
+over `zone::new<T>` storage, and the zone owns the memory lifetime.
+
 ## Zone Allocation
 
 `Zone` is the first executable allocation capability. `zone::create(capacity)`

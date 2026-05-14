@@ -1,0 +1,4 @@
+fn main() -> i64 {
+  let value: Weak[i64] = 0;
+  return value;
+}

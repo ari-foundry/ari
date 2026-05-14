@@ -323,6 +323,14 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err
+	if $(TARGET) tests/errors/prelude-box-reserved.ari -o $(BUILD_DIR)/prelude/prelude-box-reserved.elf >$(BUILD_DIR)/prelude/prelude-box-reserved.err 2>&1; then exit 1; fi
+	grep -q "prelude type 'Box' is reserved for the future unique owning smart pointer" $(BUILD_DIR)/prelude/prelude-box-reserved.err
+	if $(TARGET) tests/errors/prelude-unique-reserved.ari -o $(BUILD_DIR)/prelude/prelude-unique-reserved.elf >$(BUILD_DIR)/prelude/prelude-unique-reserved.err 2>&1; then exit 1; fi
+	grep -q "prelude type 'Unique' is reserved for smart-pointer policy" $(BUILD_DIR)/prelude/prelude-unique-reserved.err
+	if $(TARGET) tests/errors/prelude-shared-reserved.ari -o $(BUILD_DIR)/prelude/prelude-shared-reserved.elf >$(BUILD_DIR)/prelude/prelude-shared-reserved.err 2>&1; then exit 1; fi
+	grep -q "prelude type 'Shared' is reserved for future reference-counted ownership" $(BUILD_DIR)/prelude/prelude-shared-reserved.err
+	if $(TARGET) tests/errors/prelude-weak-reserved.ari -o $(BUILD_DIR)/prelude/prelude-weak-reserved.elf >$(BUILD_DIR)/prelude/prelude-weak-reserved.err 2>&1; then exit 1; fi
+	grep -q "prelude type 'Weak' is reserved for future non-owning shared-pointer handles" $(BUILD_DIR)/prelude/prelude-weak-reserved.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-special-without-std.ari -o $(BUILD_DIR)/prelude/prelude-special-without-std.elf >$(BUILD_DIR)/prelude/prelude-special-without-std.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'size_of'" $(BUILD_DIR)/prelude/prelude-special-without-std.err
 	if $(TARGET) --no-implicit-std --module-path tests/fixtures/std-missing-helper tests/errors/prelude-special-missing-decl.ari -o $(BUILD_DIR)/prelude/prelude-special-missing-decl.elf >$(BUILD_DIR)/prelude/prelude-special-missing-decl.err 2>&1; then exit 1; fi

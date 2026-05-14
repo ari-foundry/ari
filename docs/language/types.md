@@ -748,6 +748,10 @@ Meanings:
   zone memory, `zone::scratch<T>` creates a local scratch pointer through a
   hidden temporary zone, `zone::promote<T>` copies a pointed-to value into an
   explicit target zone, and `zone::destroy` releases a non-temporary region
+- `Box[T]`, `Unique[T]`, `Shared[T]`, and `Weak[T]`: reserved root
+  smart-pointer names. `Box[T]` is the future unique owning handle spelling;
+  `Unique[T]` remains reserved for policy compatibility, and `Shared[T]` /
+  `Weak[T]` are reserved for future reference-counted ownership.
 - `fn(T, U) -> R`: function pointer value with checked indirect call syntax
 - `dyn Trait[...]`: trait object type syntax. The compiler resolves the trait
   and its generic arguments in type positions today. Explicit

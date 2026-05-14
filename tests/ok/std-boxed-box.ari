@@ -1,6 +1,6 @@
 fn main() -> i64 {
   var zone = zone::create(64);
-  var boxed = std::boxed::new<i64>(ref mut zone, 21);
+  var boxed: boxed::Box[i64] = std::boxed::new<i64>(ref mut zone, 21);
 
   let before = boxed.get();
   boxed.set(9);

@@ -146,15 +146,15 @@ without backend emission for editor tooling.
    zone-borrow reset recognition, reset invalidation, validity diagnostics,
    temporary-zone escape diagnostics, temporary-zone `zone::destroy` IR cleanup,
    and cleanup-before-exit value materialization for returns, labeled breaks,
-   and `init while` continue values are centralized there.
+   and `init while` continue values are centralized there. Root smart-pointer
+   names are also fixed for future std work: `Box[T]` is the unique owning
+   handle spelling, `Unique[T]` stays reserved for policy compatibility, and
+   `Shared[T]` / `Weak[T]` are reserved for reference-counted ownership.
    - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
      top of the existing explicit-zone `std::boxed::Box<T>` seed before std
      APIs start returning owning heap handles
    - [owned-strings] add allocator-backed owned runtime string buffers before
      `read_line`, `format!`, or general text APIs return independent values
-   - [smart-pointers] decide `Unique[T]` / `Box[T]`, `Shared[T]`, and `Weak[T]`
-     clone/drop/raw-pointer interop policy before library resource handles
-     depend on those names
    - [std-vec-runtime-abi] define the runtime-capacity and non-local ABI rules
      for root `Vec[T]` before making ergonomic std collection methods the
      permanent public surface

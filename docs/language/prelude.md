@@ -44,10 +44,10 @@ The explicit paths still exist as `std::Vec`, `std::iter::range`,
 `std::mem::size_of`, and `std::zone::new`. `std::vec::Vec` names the
 source-backed allocator seed handle while the root `Vec`/`std::Vec` spelling is
 still the current compiler-known local vector type. `std::boxed::Box` names the
-source zone-backed box seed; the root `Box[T]` smart-pointer spelling remains
-reserved. Local declarations and explicit `use` aliases win over these
-implicit prelude names. If you want a separate namespace handle, alias the
-module explicitly:
+source zone-backed box seed; the root `Box[T]`, `Unique[T]`, `Shared[T]`, and
+`Weak[T]` smart-pointer spellings remain reserved. Local declarations and
+explicit `use` aliases win over these implicit prelude names. If you want a
+separate namespace handle, alias the module explicitly:
 
 ```ari
 use std as core
@@ -551,6 +551,15 @@ zone provenance, so reset/destroy invalidation applies to the handle and to raw
 pointers recovered through `as_ptr()`. It does not run destructors or free the
 value independently; memory is released with the zone.
 
+Root smart-pointer names are reserved now so the lint and library surfaces do
+not drift. `Box[T]` is the future unique owning smart pointer spelling.
+`Unique[T]` is reserved as policy/design space, but the root unique owner should
+be spelled `Box[T]` once implemented. `Shared[T]` is reserved for future
+reference-counted shared ownership, and `Weak[T]` is reserved for non-owning
+handles that can be upgraded back to `Option[Shared[T]]`. These future handles
+must be constructed through explicit allocator or capability arguments; Ari
+does not add a magical global heap for them.
+
 `Slice[T]` is a source `std` view struct:
 
 ```ari
@@ -621,6 +630,9 @@ Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 
 ```ari
 Box[T]
+Unique[T]
+Shared[T]
+Weak[T]
 ```
 
 `Hash` and hash-map containers are intentionally not part of the prelude. They

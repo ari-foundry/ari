@@ -837,6 +837,11 @@ private:
         auto add = [&items](const std::string& alias, const std::string& path) {
             if (!alias.empty() && !path.empty()) items.emplace_back(alias, path);
         };
+        auto add_unqualified_type_alias = [&add](const std::string& alias, const std::string& path) {
+            std::size_t planned_arity = 0;
+            if (planned_prelude_type_arity(alias, planned_arity)) return;
+            add(alias, path);
+        };
 
         for (const auto& decl : program_.constants) {
             if (decl.module_name == "std" && decl.is_public) {
@@ -895,7 +900,7 @@ private:
         for (const auto& decl : program_.structs) {
             if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
                 std::string alias = basename_of_qualified_name(decl.name);
-                add(alias, decl.name);
+                add_unqualified_type_alias(alias, decl.name);
                 add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
             }
         }
@@ -903,7 +908,7 @@ private:
             if (!is_std_descendant_module_name(decl.module_name) || !decl.is_public) continue;
             std::string enum_alias = basename_of_qualified_name(decl.name);
             std::string module_alias = basename_of_qualified_name(decl.module_name);
-            add(enum_alias, decl.name);
+            add_unqualified_type_alias(enum_alias, decl.name);
             add(module_alias + "::" + enum_alias, decl.name);
             for (const auto& item : decl.cases) {
                 std::string case_name = qualify_in_module(decl.module_name, item.name);
