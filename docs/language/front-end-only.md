@@ -161,16 +161,21 @@ meta fn rewrite(input: ast) -> ast {
 meta fn identity_tokens(input: token_stream) -> token_stream {
 }
 
+meta fn choose_type(input: type) -> type {
+}
+
 fn main() -> i64 {
   return make_value!(1 + 2)
 }
 ```
 
-`meta fn` signatures may use `token_stream`, `ast`, or `type`. They are
-intentionally non-generic; define one concrete meta entry point for each
-transform shape instead of a `[T]`-generic meta function. The compiler parses
-and validates these functions as compile-time declarations, but it does not
-execute them yet.
+`meta fn` is the compile-time-only transform entry surface. Its current
+stable declaration shape is one parameter and a matching return domain:
+`token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Meta
+functions are intentionally non-generic; define one concrete entry point for
+each transform shape instead of a `[T]`-generic meta function. Bodies must be
+empty until Ari has a compile-time evaluator, so declarations can reserve
+attributes and macro names without silently ignoring executable statements.
 
 Expression and item macro invocation use Rust-style `!` syntax. The built-in
 prelude assertion, stop, `print!`, `println!`, and `matches!` macros lower

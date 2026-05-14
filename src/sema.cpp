@@ -20,6 +20,7 @@
 #include "layout.hpp"
 #include "local_state.hpp"
 #include "loop_state_semantics.hpp"
+#include "meta_semantics.hpp"
 #include "module_path.hpp"
 #include "move_semantics.hpp"
 #include "parser.hpp"
@@ -165,12 +166,6 @@ struct TraitInfo {
     std::vector<TypeRef> supertrait_refs;
     std::map<std::string, Method> methods;
     bool is_public = false;
-    SourceLocation loc;
-};
-
-struct MetaFunctionInfo {
-    std::string name;
-    std::string module_name;
     SourceLocation loc;
 };
 
@@ -1043,40 +1038,6 @@ private:
             if (!names.insert(generic.name).second) {
                 fail(generic.loc, "duplicate generic parameter '" + generic.name + "' in " + owner_kind + " '" + owner_name + "'");
             }
-        }
-    }
-
-    static bool is_meta_type_ref(const TypeRef& type) {
-        return type.qualifier == TypeQualifier::Value &&
-               !type.nullable &&
-               type.args.empty() &&
-               (type.name == "token_stream" || type.name == "ast" || type.name == "type");
-    }
-
-    static std::string meta_type_names() {
-        return "token_stream, ast, or type";
-    }
-
-    void validate_meta_function_signature(const FunctionDecl& fn) const {
-        require_unique_generic_params(fn.generics, "meta function", fn.name);
-        if (!fn.generics.empty()) {
-            fail(fn.loc,
-                 "meta functions cannot be generic; define one concrete meta entry point per token_stream, ast, or type transform");
-        }
-        if (!fn.has_body) fail(fn.loc, "meta functions must have a body");
-        if (!fn.has_return_type) fail(fn.loc, "meta functions must declare a meta return type");
-        for (const auto& param : fn.params) {
-            if (param.has_pattern) {
-                fail(param.pattern.loc, "meta function parameters cannot use patterns");
-            }
-            if (!is_meta_type_ref(param.type)) {
-                fail(param.type.loc,
-                     "meta function parameters must use " + meta_type_names() + ", got " + type_ref_key(param.type));
-            }
-        }
-        if (!is_meta_type_ref(fn.return_type)) {
-            fail(fn.return_type.loc,
-                 "meta function return type must be " + meta_type_names() + ", got " + type_ref_key(fn.return_type));
         }
     }
 

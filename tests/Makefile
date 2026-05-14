@@ -1420,6 +1420,12 @@ check-meta: $(TARGET)
 	grep -q "meta function parameters must use token_stream, ast, or type, got i64" $(BUILD_DIR)/meta/meta-function-bad-param.err
 	if $(TARGET) tests/errors/meta-function-generic.ari -o $(BUILD_DIR)/meta/meta-function-generic.elf >$(BUILD_DIR)/meta/meta-function-generic.err 2>&1; then exit 1; fi
 	grep -q "meta functions cannot be generic; define one concrete meta entry point per token_stream, ast, or type transform" $(BUILD_DIR)/meta/meta-function-generic.err
+	if $(TARGET) tests/errors/meta-function-missing-param.ari -o $(BUILD_DIR)/meta/meta-function-missing-param.elf >$(BUILD_DIR)/meta/meta-function-missing-param.err 2>&1; then exit 1; fi
+	grep -q "meta functions must take exactly one token_stream, ast, or type parameter" $(BUILD_DIR)/meta/meta-function-missing-param.err
+	if $(TARGET) tests/errors/meta-function-domain-mismatch.ari -o $(BUILD_DIR)/meta/meta-function-domain-mismatch.elf >$(BUILD_DIR)/meta/meta-function-domain-mismatch.err 2>&1; then exit 1; fi
+	grep -q "meta function return type must match its input meta type" $(BUILD_DIR)/meta/meta-function-domain-mismatch.err
+	if $(TARGET) tests/errors/meta-function-body-planned.ari -o $(BUILD_DIR)/meta/meta-function-body-planned.elf >$(BUILD_DIR)/meta/meta-function-body-planned.err 2>&1; then exit 1; fi
+	grep -q "meta function bodies are reserved for future compile-time evaluation" $(BUILD_DIR)/meta/meta-function-body-planned.err
 	if $(TARGET) tests/errors/matches-macro-arity.ari -o $(BUILD_DIR)/meta/matches-macro-arity.elf >$(BUILD_DIR)/meta/matches-macro-arity.err 2>&1; then exit 1; fi
 	grep -q "expected , after matches! value" $(BUILD_DIR)/meta/matches-macro-arity.err
 	if $(TARGET) tests/errors/matches-macro-pattern-type.ari -o $(BUILD_DIR)/meta/matches-macro-pattern-type.elf >$(BUILD_DIR)/meta/matches-macro-pattern-type.err 2>&1; then exit 1; fi

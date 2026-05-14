@@ -4,6 +4,9 @@ meta fn rewrite(input: ast) -> ast {
 meta fn identity_tokens(input: token_stream) -> token_stream {
 }
 
+meta fn choose_type(input: type) -> type {
+}
+
 fn main() -> i64 {
   return 0;
 }

@@ -164,6 +164,24 @@ without backend emission for editor tooling.
    - [std-api-tests] require every new source `std` API to land with focused
      provenance, reset/destroy, implicit-std/module, and docs/test-matrix
      coverage when those dimensions apply
+3. Stabilize and implement user-defined compile-time meta expansion for
+   `meta fn`.
+   The built-in `matches!` macro lowers through the pattern engine today.
+   The declaration surface has been pulled forward from Medium-Term work so
+   lint and language-server tooling can treat it as stable syntax before the
+   evaluator lands. `meta fn` entries are compile-time-only, concrete,
+   non-generic, one-parameter transforms over exactly one meta domain:
+   `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Bodies
+   must stay empty until compile-time evaluation exists, so declarations can
+   reserve attributes and macro names without pretending runtime statements
+   execute.
+   - [tokens] support `token_stream` input/output rewrites
+   - [ast] support `ast` input/output rewrites
+   - [calls] expand user-defined Rust-style `name!(...)` expression calls
+   - [items] expand item-position macro invocations
+   - [attributes] allow attribute macros to rewrite or insert AST nodes
+   - [derive] expand built-in derives such as `Debug` where the trait surface exists
+   - [format] lower `format!` after owned runtime strings exist
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -243,18 +261,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      binding modes still need shared lowering. Future `for let` filters over
      vector and slice values should reuse the same product-pattern binding path
      once vector/slice patterns have length-checked lowering.
-3. Implement user-defined compile-time meta expansion for `meta fn`.
-   The built-in `matches!` macro lowers through the pattern engine today.
-   Meta functions are intentionally non-generic; define concrete meta entry
-   points over `token_stream`, `ast`, or `type` instead of instantiating them.
-   - [tokens] support `token_stream` input/output rewrites
-   - [ast] support `ast` input/output rewrites
-   - [calls] expand user-defined Rust-style `name!(...)` expression calls
-   - [items] expand item-position macro invocations
-   - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [derive] expand built-in derives such as `Debug` where the trait surface exists
-   - [format] lower `format!` after owned runtime strings exist
-4. Expand aggregate enum payload storage beyond the nested-enum MVP.
+3. Expand aggregate enum payload storage beyond the nested-enum MVP.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values, and
    LLVM homogeneous nested aggregate-enum values today. Nested enum-case
@@ -273,7 +280,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      aggregate enum payloads after payload ABI and aliasing rules are explicit
    - [repr-c-payloads] define C tagged-union layout and C header emission for
      payload-bearing `@repr(C)` enums after aggregate enum payload ABI is stable
-5. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
+4. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
     prelude and connected to
@@ -292,7 +299,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
-6. Design `std` smart-pointer and explicit move surfaces.
+5. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers
     for common heap and shared-resource patterns. The explicit move surface
@@ -300,7 +307,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     the pointer family and its clone/drop/raw-pointer policy are now tracked in
     the Near-Term source-`std` library-prep checklist before broad library
     handles depend on them.
-7. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
+6. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, length queries,
@@ -316,7 +323,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     temporary compiler-known local API does not become permanent surface area.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
-8. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+7. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot
