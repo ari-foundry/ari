@@ -5502,13 +5502,480 @@ private:
         return type_name(type);
     }
 
-    static void reject_runtime_sequence_array_pattern_if_needed(const Pattern& pattern,
-                                                                const IrType& source_type) {
-        if (!is_runtime_sequence_pattern_subject(source_type)) return;
-        if (!pattern_contains_array_pattern(pattern)) return;
-        fail(pattern.loc,
-             runtime_sequence_pattern_subject_name(source_type) +
-                 " length-checked array patterns are planned but are not supported yet; use len(...) and indexing for now");
+    static const IrType& runtime_sequence_element_type(SourceLocation loc, const IrType& source_type) {
+        if (!is_runtime_sequence_pattern_subject(source_type) || source_type.args.size() != 1) {
+            fail(loc, "runtime sequence pattern requires a Vec[T] or Slice[T] value");
+        }
+        return source_type.args[0];
+    }
+
+    bool runtime_sequence_array_pattern_is_irrefutable(const Pattern& pattern) const {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) return runtime_sequence_array_pattern_is_irrefutable(effective_pattern);
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return true;
+            case PatternKind::Alias:
+                return pattern.alias_pattern &&
+                       runtime_sequence_array_pattern_is_irrefutable(*pattern.alias_pattern);
+            case PatternKind::Or:
+                for (const auto& alternative : pattern.alternatives) {
+                    if (runtime_sequence_array_pattern_is_irrefutable(alternative)) return true;
+                }
+                return false;
+            case PatternKind::Array:
+                return pattern.has_rest && pattern.elements.empty();
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+            case PatternKind::EnumCase:
+            case PatternKind::Tuple:
+            case PatternKind::Struct:
+                return false;
+        }
+        return false;
+    }
+
+    static IrExprPtr make_i64_binary_expr(SourceLocation loc,
+                                          IrBinaryOp op,
+                                          IrExprPtr left,
+                                          IrExprPtr right) {
+        auto expr = std::make_unique<IrExpr>();
+        expr->kind = IrExprKind::Binary;
+        expr->loc = loc;
+        expr->op = op;
+        expr->type = i64_type(loc);
+        set_ir_expr_left(*expr, std::move(left));
+        set_ir_expr_right(*expr, std::move(right));
+        return expr;
+    }
+
+    IrExprPtr make_runtime_sequence_len_expr(SourceLocation loc,
+                                             const std::string& source_name,
+                                             const IrType& source_type) const {
+        return make_collection_len_expr(loc, make_local_lvalue_expr(loc, source_name, source_type));
+    }
+
+    IrExprPtr make_runtime_sequence_pattern_index_expr(SourceLocation loc,
+                                                       const Pattern& pattern,
+                                                       std::size_t pattern_index,
+                                                       const std::string& source_name,
+                                                       const IrType& source_type) const {
+        if (!pattern.has_rest || pattern_index < pattern.rest_index) {
+            return make_integer_literal(loc, i64_type(loc), pattern_index);
+        }
+
+        std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+        std::size_t suffix_offset = pattern_index - pattern.rest_index;
+        IrExprPtr index = make_i64_binary_expr(
+            loc,
+            IrBinaryOp::Sub,
+            make_runtime_sequence_len_expr(loc, source_name, source_type),
+            make_integer_literal(loc, i64_type(loc), suffix_count)
+        );
+        if (suffix_offset == 0) return index;
+        return make_i64_binary_expr(
+            loc,
+            IrBinaryOp::Add,
+            std::move(index),
+            make_integer_literal(loc, i64_type(loc), suffix_offset)
+        );
+    }
+
+    void require_runtime_sequence_element_materializable(SourceLocation loc,
+                                                         const IrType& source_type,
+                                                         const IrType& element_type,
+                                                         const std::string& operation) const {
+        if (is_prelude_slice_type(source_type)) {
+            require_slice_element_materializable(loc, element_type, operation);
+            return;
+        }
+        if (is_owner_type(element_type) || contains_borrow_type(element_type)) {
+            fail(loc, operation + " cannot copy ownership- or borrow-valued Vec elements yet");
+        }
+    }
+
+    IrExprPtr make_runtime_sequence_index_expr(SourceLocation loc,
+                                               const std::string& source_name,
+                                               const IrType& source_type,
+                                               IrExprPtr index,
+                                               const std::string& operation) const {
+        const IrType& element_type = runtime_sequence_element_type(loc, source_type);
+        require_runtime_sequence_element_materializable(loc, source_type, element_type, operation);
+        return make_ir_index_expr(
+            loc,
+            make_local_lvalue_expr(loc, source_name, source_type),
+            std::move(index)
+        );
+    }
+
+    IrExprPtr make_runtime_sequence_pattern_element_expr(SourceLocation loc,
+                                                         const Pattern& pattern,
+                                                         std::size_t pattern_index,
+                                                         const std::string& source_name,
+                                                         const IrType& source_type,
+                                                         const std::string& operation) const {
+        return make_runtime_sequence_index_expr(
+            loc,
+            source_name,
+            source_type,
+            make_runtime_sequence_pattern_index_expr(loc, pattern, pattern_index, source_name, source_type),
+            operation
+        );
+    }
+
+    IrExprPtr lower_runtime_sequence_pattern_length_condition(const Pattern& pattern,
+                                                              const std::string& source_name,
+                                                              const IrType& source_type) const {
+        if (runtime_sequence_array_pattern_is_irrefutable(pattern)) return nullptr;
+        const std::uint64_t required = static_cast<std::uint64_t>(pattern.elements.size());
+        return make_bool_binary_expr(
+            pattern.loc,
+            pattern.has_rest ? IrBinaryOp::Ge : IrBinaryOp::Eq,
+            make_runtime_sequence_len_expr(pattern.loc, source_name, source_type),
+            make_integer_literal(pattern.loc, i64_type(pattern.loc), required)
+        );
+    }
+
+    void materialize_runtime_sequence_element(SourceLocation loc,
+                                              const Pattern& sequence_pattern,
+                                              std::size_t pattern_index,
+                                              const std::string& source_name,
+                                              const IrType& source_type,
+                                              const std::string& local_name,
+                                              std::vector<IrStmtPtr>& statements,
+                                              const std::string& operation) {
+        const IrType& element_type = runtime_sequence_element_type(loc, source_type);
+        declare_local(loc, local_name, element_type, false);
+        statements.push_back(make_ir_var_decl(
+            loc,
+            local_name,
+            element_type,
+            make_runtime_sequence_pattern_element_expr(
+                loc,
+                sequence_pattern,
+                pattern_index,
+                source_name,
+                source_type,
+                operation
+            ),
+            false
+        ));
+    }
+
+    IrExprPtr lower_runtime_sequence_element_match_condition(const Pattern& pattern,
+                                                             const Pattern& sequence_pattern,
+                                                             std::size_t pattern_index,
+                                                             const std::string& source_name,
+                                                             const IrType& source_type,
+                                                             std::vector<IrStmtPtr>& prelude) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_runtime_sequence_element_match_condition(
+                effective_pattern, sequence_pattern, pattern_index, source_name, source_type, prelude);
+        }
+        const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return nullptr;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                return lower_runtime_sequence_element_match_condition(
+                    *pattern.alias_pattern, sequence_pattern, pattern_index, source_name, source_type, prelude);
+            case PatternKind::IntegerLiteral:
+                if (!is_value_integer_type(element_type)) {
+                    fail(pattern.loc, "integer runtime sequence patterns require integer elements");
+                }
+                return make_bool_binary_expr(
+                    pattern.loc,
+                    IrBinaryOp::Eq,
+                    make_runtime_sequence_pattern_element_expr(
+                        pattern.loc, sequence_pattern, pattern_index, source_name, source_type, "runtime sequence pattern"),
+                    make_pattern_integer_expr(pattern, element_type)
+                );
+            case PatternKind::BoolLiteral:
+                if (element_type.qualifier != TypeQualifier::Value ||
+                    element_type.primitive != IrPrimitiveKind::Bool) {
+                    fail(pattern.loc, "bool runtime sequence patterns require bool elements");
+                }
+                return make_bool_binary_expr(
+                    pattern.loc,
+                    IrBinaryOp::Eq,
+                    make_runtime_sequence_pattern_element_expr(
+                        pattern.loc, sequence_pattern, pattern_index, source_name, source_type, "runtime sequence pattern"),
+                    make_bool_literal_expr(pattern.loc, pattern.bool_value)
+                );
+            case PatternKind::Range: {
+                if (!is_value_integer_type(element_type)) {
+                    fail(pattern.loc, "range runtime sequence patterns require integer elements");
+                }
+                if (!range_start_le_end(pattern, element_type)) {
+                    fail(pattern.loc, "range pattern start must be <= end");
+                }
+                IrExprPtr lower = make_bool_binary_expr(
+                    pattern.loc,
+                    IrBinaryOp::Ge,
+                    make_runtime_sequence_pattern_element_expr(
+                        pattern.loc, sequence_pattern, pattern_index, source_name, source_type, "runtime sequence pattern"),
+                    make_pattern_range_endpoint_expr(
+                        pattern.loc,
+                        pattern.int_value,
+                        pattern.int_negative,
+                        pattern.literal_suffix,
+                        element_type
+                    )
+                );
+                IrExprPtr upper = make_bool_binary_expr(
+                    pattern.loc,
+                    pattern.range_inclusive ? IrBinaryOp::Le : IrBinaryOp::Lt,
+                    make_runtime_sequence_pattern_element_expr(
+                        pattern.loc, sequence_pattern, pattern_index, source_name, source_type, "runtime sequence pattern"),
+                    make_pattern_range_endpoint_expr(
+                        pattern.loc,
+                        pattern.range_end_value,
+                        pattern.range_end_negative,
+                        pattern.range_end_suffix,
+                        element_type
+                    )
+                );
+                return combine_tuple_match_conditions(
+                    pattern.loc, IrBinaryOp::LogicalAnd, std::move(lower), std::move(upper));
+            }
+            case PatternKind::Or: {
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                IrExprPtr condition;
+                for (const auto& alternative : pattern.alternatives) {
+                    IrExprPtr alternative_condition = lower_runtime_sequence_element_match_condition(
+                        alternative, sequence_pattern, pattern_index, source_name, source_type, prelude);
+                    if (!alternative_condition) return nullptr;
+                    condition = combine_tuple_match_conditions(
+                        pattern.loc,
+                        IrBinaryOp::LogicalOr,
+                        std::move(condition),
+                        std::move(alternative_condition)
+                    );
+                }
+                return condition;
+            }
+            case PatternKind::EnumCase: {
+                ConstantValue constant_pattern;
+                if (try_constant_pattern_value(pattern, constant_pattern)) {
+                    if (element_type.qualifier == TypeQualifier::Value &&
+                        element_type.primitive == IrPrimitiveKind::Bool) {
+                        if (!constant_pattern.is_bool) {
+                            fail(pattern.loc, "bool runtime sequence constant pattern must have type bool");
+                        }
+                    } else if (is_value_integer_type(element_type)) {
+                        if (constant_pattern.is_bool || !is_value_integer_type(constant_pattern.type)) {
+                            fail(pattern.loc, "integer runtime sequence constant pattern must have an integer type");
+                        }
+                        require_assignable(pattern.loc, element_type, constant_pattern.type);
+                    } else {
+                        fail(pattern.loc, "constant runtime sequence patterns require integer or bool elements");
+                    }
+                    return make_bool_binary_expr(
+                        pattern.loc,
+                        IrBinaryOp::Eq,
+                        make_runtime_sequence_pattern_element_expr(
+                            pattern.loc, sequence_pattern, pattern_index, source_name, source_type, "runtime sequence pattern"),
+                        make_constant_expr(pattern.loc, constant_pattern)
+                    );
+                }
+                if (element_type.primitive != IrPrimitiveKind::Struct) {
+                    fail(pattern.loc, "tuple-struct runtime sequence element patterns require tuple-struct elements");
+                }
+                std::string nested_name = make_hidden_local("$match_seq");
+                materialize_runtime_sequence_element(
+                    pattern.loc,
+                    sequence_pattern,
+                    pattern_index,
+                    source_name,
+                    source_type,
+                    nested_name,
+                    prelude,
+                    "runtime sequence pattern"
+                );
+                return lower_struct_match_pattern_condition(pattern, nested_name, element_type, prelude);
+            }
+            case PatternKind::Tuple: {
+                if (element_type.primitive != IrPrimitiveKind::Tuple) {
+                    fail(pattern.loc, "nested tuple runtime sequence pattern requires tuple elements, got " +
+                                      type_name(element_type));
+                }
+                std::string nested_name = make_hidden_local("$match_seq");
+                materialize_runtime_sequence_element(
+                    pattern.loc, sequence_pattern, pattern_index, source_name, source_type,
+                    nested_name, prelude, "runtime sequence pattern");
+                return lower_tuple_match_pattern_condition(pattern, nested_name, element_type, prelude);
+            }
+            case PatternKind::Array: {
+                if (element_type.primitive != IrPrimitiveKind::Array &&
+                    !is_runtime_sequence_pattern_subject(element_type)) {
+                    fail(pattern.loc, "nested array runtime sequence pattern requires array, Vec, or Slice elements, got " +
+                                      type_name(element_type));
+                }
+                std::string nested_name = make_hidden_local("$match_seq");
+                materialize_runtime_sequence_element(
+                    pattern.loc, sequence_pattern, pattern_index, source_name, source_type,
+                    nested_name, prelude, "runtime sequence pattern");
+                if (is_runtime_sequence_pattern_subject(element_type)) {
+                    return lower_runtime_sequence_match_pattern_condition(pattern, nested_name, element_type, prelude);
+                }
+                return lower_tuple_match_pattern_condition(pattern, nested_name, element_type, prelude);
+            }
+            case PatternKind::Struct: {
+                if (element_type.primitive != IrPrimitiveKind::Struct) {
+                    fail(pattern.loc, "struct runtime sequence element patterns require struct elements");
+                }
+                std::string nested_name = make_hidden_local("$match_seq");
+                materialize_runtime_sequence_element(
+                    pattern.loc, sequence_pattern, pattern_index, source_name, source_type,
+                    nested_name, prelude, "runtime sequence pattern");
+                return lower_struct_match_pattern_condition(pattern, nested_name, element_type, prelude);
+            }
+        }
+        fail(pattern.loc, "unsupported runtime sequence element pattern");
+    }
+
+    IrExprPtr lower_runtime_sequence_match_pattern_condition(const Pattern& pattern,
+                                                             const std::string& source_name,
+                                                             const IrType& source_type,
+                                                             std::vector<IrStmtPtr>& prelude) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_runtime_sequence_match_pattern_condition(
+                effective_pattern, source_name, source_type, prelude);
+        }
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                return nullptr;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                return lower_runtime_sequence_match_pattern_condition(*pattern.alias_pattern, source_name, source_type, prelude);
+            case PatternKind::Or: {
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                IrExprPtr condition;
+                for (const auto& alternative : pattern.alternatives) {
+                    IrExprPtr alternative_condition =
+                        lower_runtime_sequence_match_pattern_condition(alternative, source_name, source_type, prelude);
+                    if (!alternative_condition) return nullptr;
+                    condition = combine_tuple_match_conditions(
+                        pattern.loc,
+                        IrBinaryOp::LogicalOr,
+                        std::move(condition),
+                        std::move(alternative_condition)
+                    );
+                }
+                return condition;
+            }
+            case PatternKind::Array:
+                break;
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+            case PatternKind::EnumCase:
+            case PatternKind::Tuple:
+            case PatternKind::Struct:
+                fail(pattern.loc, runtime_sequence_pattern_subject_name(source_type) +
+                                  " match patterns must use [..], _, or a binding");
+        }
+
+        IrExprPtr condition = lower_runtime_sequence_pattern_length_condition(pattern, source_name, source_type);
+        for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+            IrExprPtr element_condition = lower_runtime_sequence_element_match_condition(
+                pattern.elements[i],
+                pattern,
+                i,
+                source_name,
+                source_type,
+                prelude
+            );
+            condition = combine_tuple_match_conditions(
+                pattern.elements[i].loc,
+                IrBinaryOp::LogicalAnd,
+                std::move(condition),
+                std::move(element_condition)
+            );
+        }
+        return condition;
+    }
+
+    void lower_runtime_sequence_match_pattern_bindings_from_local(const Pattern& pattern,
+                                                                  const std::string& source_name,
+                                                                  const IrType& source_type,
+                                                                  std::vector<IrStmtPtr>& statements,
+                                                                  bool mutable_binding = false) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_runtime_sequence_match_pattern_bindings_from_local(
+                effective_pattern, source_name, source_type, statements, mutable_binding);
+            return;
+        }
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+            case PatternKind::EnumCase:
+            case PatternKind::Tuple:
+            case PatternKind::Struct:
+                return;
+            case PatternKind::Binding:
+                lower_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
+                return;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
+                statements.push_back(make_ir_var_decl(
+                    pattern.loc,
+                    pattern.alias_name,
+                    source_type,
+                    make_local_lvalue_expr(pattern.loc, source_name, source_type),
+                    mutable_binding
+                ));
+                lower_product_match_pattern_bindings_from_local(
+                    *pattern.alias_pattern,
+                    source_name,
+                    source_type,
+                    statements,
+                    mutable_binding
+                );
+                return;
+            case PatternKind::Or:
+                if (pattern_has_binding(pattern)) {
+                    fail(pattern.loc, "or-pattern bindings are planned but are not supported yet");
+                }
+                return;
+            case PatternKind::Array:
+                break;
+        }
+
+        const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+        for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+            const Pattern& item = pattern.elements[i];
+            if (item.kind == PatternKind::Wildcard) continue;
+            lower_tuple_match_value_bindings(
+                item,
+                element_type,
+                make_runtime_sequence_pattern_element_expr(
+                    item.loc,
+                    pattern,
+                    i,
+                    source_name,
+                    source_type,
+                    "runtime sequence pattern binding"
+                ),
+                statements,
+                mutable_binding
+            );
+        }
     }
 
     void lower_binding_pattern_from_local(
@@ -5523,7 +5990,57 @@ private:
             lower_binding_pattern_from_local(effective_pattern, source_name, source_type, mutable_binding, statements);
             return;
         }
-        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
+        if (is_runtime_sequence_pattern_subject(source_type) && pattern_contains_array_pattern(pattern)) {
+            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
+            std::set<std::string> reusable_names;
+            if (pattern_contains_or(pattern)) {
+                reusable_names = require_same_or_pattern_bindings(pattern.loc, alternatives, source_type);
+            }
+
+            bool has_irrefutable_alternative = false;
+            std::vector<TupleCheckedStmtArm> checked_arms;
+            checked_arms.reserve(alternatives.size() + 1);
+            for (std::size_t i = 0; i < alternatives.size(); ++i) {
+                const Pattern& alternative = alternatives[i];
+                TupleCheckedStmtArm arm;
+                arm.loc = alternative.loc;
+                std::vector<IrStmtPtr> condition_prelude;
+                arm.condition = lower_runtime_sequence_match_pattern_condition(
+                    alternative,
+                    source_name,
+                    source_type,
+                    condition_prelude
+                );
+                if (!arm.condition) has_irrefutable_alternative = true;
+                for (auto& statement : condition_prelude) {
+                    statements.push_back(std::move(statement));
+                }
+
+                local_scopes_.set_reusable_pattern_bindings(i == 0 ? std::set<std::string>{} : reusable_names);
+                lower_runtime_sequence_match_pattern_bindings_from_local(
+                    alternative,
+                    source_name,
+                    source_type,
+                    arm.body,
+                    mutable_binding
+                );
+                local_scopes_.clear_reusable_pattern_bindings();
+                checked_arms.push_back(std::move(arm));
+            }
+
+            if (!has_irrefutable_alternative) {
+                TupleCheckedStmtArm failure;
+                failure.loc = pattern.loc;
+                failure.body.push_back(make_panic_stmt(pattern.loc));
+                checked_arms.push_back(std::move(failure));
+            }
+
+            std::vector<IrStmtPtr> lowered = build_tuple_match_if_chain(checked_arms);
+            for (auto& statement : lowered) {
+                statements.push_back(std::move(statement));
+            }
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
                 return;
@@ -5639,7 +6156,6 @@ private:
             validate_product_binding_pattern_shape(effective_pattern, source_type);
             return;
         }
-        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -5658,6 +6174,13 @@ private:
                 return;
             case PatternKind::Tuple:
             case PatternKind::Array: {
+                if (pattern.kind == PatternKind::Array && is_runtime_sequence_pattern_subject(source_type)) {
+                    const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+                    for (const auto& element : pattern.elements) {
+                        validate_product_binding_pattern_shape(element, element_type);
+                    }
+                    return;
+                }
                 bool array_pattern = pattern.kind == PatternKind::Array;
                 IrPrimitiveKind expected = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
                 const char* pattern_name = array_pattern ? "array" : "tuple";
@@ -5834,7 +6357,6 @@ private:
             lower_tuple_binding_pattern_from_local(effective_pattern, source_name, source_type, mutable_binding, statements);
             return;
         }
-        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
         bool array_pattern = pattern.kind == PatternKind::Array;
         IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
         const char* pattern_name = array_pattern ? "array" : "tuple";
@@ -5875,6 +6397,16 @@ private:
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(item.loc, nested_name, fields[field_index], false);
                 statements.push_back(make_ir_var_decl(item.loc, nested_name, fields[field_index], std::move(field), false));
+                if (is_runtime_sequence_pattern_subject(fields[field_index])) {
+                    lower_runtime_sequence_match_pattern_bindings_from_local(
+                        item,
+                        nested_name,
+                        fields[field_index],
+                        statements,
+                        mutable_binding
+                    );
+                    continue;
+                }
                 lower_tuple_binding_pattern_from_local(item, nested_name, fields[field_index], mutable_binding, statements);
                 continue;
             }
@@ -5940,6 +6472,16 @@ private:
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(item.loc, nested_name, field_type, false);
                 statements.push_back(make_ir_var_decl(item.loc, nested_name, field_type, std::move(field), false));
+                if (is_runtime_sequence_pattern_subject(field_type)) {
+                    lower_runtime_sequence_match_pattern_bindings_from_local(
+                        item,
+                        nested_name,
+                        field_type,
+                        statements,
+                        mutable_binding
+                    );
+                    continue;
+                }
                 lower_tuple_binding_pattern_from_local(item, nested_name, field_type, mutable_binding, statements);
                 continue;
             }
@@ -7483,6 +8025,13 @@ private:
                 fail(pattern.loc, "internal error: or-pattern should be expanded before binding collection");
             case PatternKind::Tuple:
             case PatternKind::Array: {
+                if (pattern.kind == PatternKind::Array && is_runtime_sequence_pattern_subject(type)) {
+                    const IrType& element_type = runtime_sequence_element_type(pattern.loc, type);
+                    for (const auto& element : pattern.elements) {
+                        collect_pattern_bindings(element, element_type, bindings);
+                    }
+                    return;
+                }
                 IrPrimitiveKind expected = pattern.kind == PatternKind::Array
                     ? IrPrimitiveKind::Array
                     : IrPrimitiveKind::Tuple;
@@ -8712,7 +9261,19 @@ private:
             }
             case PatternKind::Array: {
                 if (field_type.primitive != IrPrimitiveKind::Array) {
-                    reject_runtime_sequence_array_pattern_if_needed(pattern, field_type);
+                    if (is_runtime_sequence_pattern_subject(field_type)) {
+                        std::string nested_name = make_hidden_local("$match_array");
+                        declare_local(pattern.loc, nested_name, field_type, false);
+                        prelude.push_back(make_ir_var_decl(
+                            pattern.loc,
+                            nested_name,
+                            field_type,
+                            make_tuple_index_expr(pattern.loc, source_name, source_type, field_index),
+                            false
+                        ));
+                        return lower_runtime_sequence_match_pattern_condition(
+                            pattern, nested_name, field_type, prelude);
+                    }
                     fail(pattern.loc, "nested array pattern requires an array field, got " + type_name(field_type));
                 }
                 std::string nested_name = make_hidden_local("$match_array");
@@ -8784,7 +9345,9 @@ private:
         if (&effective_pattern != &pattern) {
             return lower_tuple_match_pattern_condition(effective_pattern, source_name, source_type, prelude);
         }
-        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
+        if (is_runtime_sequence_pattern_subject(source_type)) {
+            return lower_runtime_sequence_match_pattern_condition(pattern, source_name, source_type, prelude);
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -8964,6 +9527,9 @@ private:
         if (&effective_pattern != &pattern) {
             return lower_product_match_pattern_condition(effective_pattern, source_name, source_type, prelude);
         }
+        if (is_runtime_sequence_pattern_subject(source_type)) {
+            return lower_runtime_sequence_match_pattern_condition(pattern, source_name, source_type, prelude);
+        }
         if (source_type.primitive == IrPrimitiveKind::Tuple) {
             return lower_tuple_match_pattern_condition(pattern, source_name, source_type, prelude);
         }
@@ -9124,6 +9690,16 @@ private:
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
+                if (is_runtime_sequence_pattern_subject(value_type)) {
+                    lower_runtime_sequence_match_pattern_bindings_from_local(
+                        pattern,
+                        nested_name,
+                        value_type,
+                        statements,
+                        mutable_binding
+                    );
+                    return;
+                }
                 lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
                 return;
             }
@@ -9152,6 +9728,11 @@ private:
         if (&effective_pattern != &pattern) {
             lower_product_match_pattern_bindings_from_local(
                 effective_pattern, source_name, source_type, statements, mutable_binding);
+            return;
+        }
+        if (is_runtime_sequence_pattern_subject(source_type)) {
+            lower_runtime_sequence_match_pattern_bindings_from_local(
+                pattern, source_name, source_type, statements, mutable_binding);
             return;
         }
         if (source_type.primitive == IrPrimitiveKind::Tuple) {
@@ -9244,7 +9825,11 @@ private:
                 effective_pattern, source_name, source_type, statements, mutable_binding);
             return;
         }
-        reject_runtime_sequence_array_pattern_if_needed(pattern, source_type);
+        if (is_runtime_sequence_pattern_subject(source_type)) {
+            lower_runtime_sequence_match_pattern_bindings_from_local(
+                pattern, source_name, source_type, statements, mutable_binding);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -9515,13 +10100,13 @@ private:
 
     Flow check_if_let(const Stmt& stmt, IrStmt& lowered) {
         IrExprPtr match_value = check_expr(*stmt.condition);
-        if (is_aggregate_type(match_value->type)) {
+        if (is_aggregate_type(match_value->type) ||
+            is_runtime_sequence_pattern_subject(match_value->type)) {
             return check_aggregate_if_let(stmt, lowered, std::move(match_value));
         }
 
         lowered.kind = IrStmtKind::Block;
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
-        reject_runtime_sequence_array_pattern_if_needed(condition_pattern, match_value->type);
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
@@ -9780,7 +10365,8 @@ private:
     Flow check_tuple_match(const Stmt& stmt, IrStmt& lowered) {
         IrExprPtr subject = std::move(lowered.match_value);
         IrType subject_type = subject->type;
-        if (!is_aggregate_type(subject_type)) {
+        const bool runtime_sequence_subject = is_runtime_sequence_pattern_subject(subject_type);
+        if (!is_aggregate_type(subject_type) && !runtime_sequence_subject) {
             fail(stmt.loc, "aggregate match requires a tuple, array, or struct value, got " + type_name(subject_type));
         }
 
@@ -9824,8 +10410,12 @@ private:
                 for (auto& statement : condition_prelude) {
                     ir_stmt_statements(lowered).push_back(std::move(statement));
                 }
-                note_product_match_coverage(pattern, subject_type, coverage);
-                if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
+                if (runtime_sequence_subject) {
+                    if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
+                } else {
+                    note_product_match_coverage(pattern, subject_type, coverage);
+                    if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
+                }
 
                 restore_states(branch_input);
                 push_scope();
@@ -9864,7 +10454,15 @@ private:
             }
         }
 
-        require_tuple_match_exhaustive(stmt.loc, subject_type, coverage);
+        if (runtime_sequence_subject) {
+            if (!coverage.has_irrefutable_arm) {
+                fail(stmt.loc,
+                     runtime_sequence_pattern_subject_name(subject_type) +
+                         " match must include _ or [..] fallback");
+            }
+        } else {
+            require_tuple_match_exhaustive(stmt.loc, subject_type, coverage);
+        }
         std::vector<IrStmtPtr> chain = build_tuple_match_if_chain(checked_arms);
         for (auto& statement : chain) {
             ir_stmt_statements(lowered).push_back(std::move(statement));
@@ -9892,13 +10490,9 @@ private:
                  lowered.match_value->type.primitive == IrPrimitiveKind::Bool)) {
                 return check_scalar_match(stmt, lowered);
             }
-            if (is_aggregate_type(lowered.match_value->type)) {
+            if (is_aggregate_type(lowered.match_value->type) ||
+                is_runtime_sequence_pattern_subject(lowered.match_value->type)) {
                 return check_tuple_match(stmt, lowered);
-            }
-            if (is_runtime_sequence_pattern_subject(lowered.match_value->type)) {
-                for (const auto& arm : source_arms) {
-                    reject_runtime_sequence_array_pattern_if_needed(expanded_pattern(arm.pattern), lowered.match_value->type);
-                }
             }
             fail(stmt.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(lowered.match_value->type));
         }
@@ -10090,7 +10684,8 @@ private:
 
     void check_while_let(const Stmt& stmt, IrStmt& lowered) {
         IrExprPtr match_value = check_expr(*stmt.condition);
-        if (is_aggregate_type(match_value->type)) {
+        if (is_aggregate_type(match_value->type) ||
+            is_runtime_sequence_pattern_subject(match_value->type)) {
             check_aggregate_while_let(stmt, lowered, std::move(match_value));
             return;
         }
@@ -10100,7 +10695,6 @@ private:
         set_ir_stmt_label(lowered, label);
         lowered.match_value = std::move(match_value);
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
-        reject_runtime_sequence_array_pattern_if_needed(condition_pattern, lowered.match_value->type);
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
         IrType enum_value_type = lowered.match_value->type;
         EnumMatchCoverage coverage;
@@ -12173,7 +12767,8 @@ private:
     IrExprPtr check_tuple_match_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         IrExprPtr subject = std::move(ir_expr_match_value(*lowered));
         IrType subject_type = subject->type;
-        if (!is_aggregate_type(subject_type)) {
+        const bool runtime_sequence_subject = is_runtime_sequence_pattern_subject(subject_type);
+        if (!is_aggregate_type(subject_type) && !runtime_sequence_subject) {
             fail(expr.loc, "aggregate match requires a tuple, array, or struct value, got " + type_name(subject_type));
         }
 
@@ -12225,8 +12820,12 @@ private:
                 for (auto& statement : condition_prelude) {
                     ir_expr_block_body(*lowered).push_back(std::move(statement));
                 }
-                note_product_match_coverage(pattern, subject_type, coverage);
-                if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
+                if (runtime_sequence_subject) {
+                    if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
+                } else {
+                    note_product_match_coverage(pattern, subject_type, coverage);
+                    if (!lowered_arm.condition) coverage.has_irrefutable_arm = true;
+                }
 
                 restore_states(branch_input);
                 push_scope();
@@ -12298,7 +12897,15 @@ private:
             }
         }
 
-        require_tuple_match_exhaustive(expr.loc, subject_type, coverage);
+        if (runtime_sequence_subject) {
+            if (!coverage.has_irrefutable_arm) {
+                fail(expr.loc,
+                     runtime_sequence_pattern_subject_name(subject_type) +
+                         " match must include _ or [..] fallback");
+            }
+        } else {
+            require_tuple_match_exhaustive(expr.loc, subject_type, coverage);
+        }
         restore_states(continuing_state);
         lowered->type = result_type;
         set_ir_expr_block_value(
@@ -12330,14 +12937,10 @@ private:
                 lowered = make_ir_match_expr(expr.loc, std::move(match_value));
                 return check_scalar_match_expr(expr, std::move(lowered), expected);
             }
-            if (is_aggregate_type(match_value->type)) {
+            if (is_aggregate_type(match_value->type) ||
+                is_runtime_sequence_pattern_subject(match_value->type)) {
                 lowered = make_ir_match_expr(expr.loc, std::move(match_value));
                 return check_tuple_match_expr(expr, std::move(lowered), expected);
-            }
-            if (is_runtime_sequence_pattern_subject(match_value->type)) {
-                for (const auto& arm : expr_match_arms(expr)) {
-                    reject_runtime_sequence_array_pattern_if_needed(expanded_pattern(arm.pattern), match_value->type);
-                }
             }
             fail(expr.loc, "match value must be an enum, integer, bool, tuple, array, or struct, got " + type_name(match_value->type));
         }
@@ -12635,13 +13238,13 @@ private:
 
     IrExprPtr check_if_let_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         IrExprPtr match_value = check_expr(*expr_if_condition(expr));
-        if (is_aggregate_type(match_value->type)) {
+        if (is_aggregate_type(match_value->type) ||
+            is_runtime_sequence_pattern_subject(match_value->type)) {
             return check_aggregate_if_let_expr(expr, std::move(lowered), std::move(match_value), expected);
         }
 
         lowered = make_ir_block_expr(expr.loc);
         const Pattern& condition_pattern = expanded_pattern(*expr_if_condition_pattern(expr));
-        reject_runtime_sequence_array_pattern_if_needed(condition_pattern, match_value->type);
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(expr.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(

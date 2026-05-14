@@ -512,13 +512,13 @@ match (2, false) {
 }
 ```
 
-Fixed arrays can be matched with `[a, b]` positional patterns. Like tuple
-patterns, array patterns can contain literal tests, ranges, `_`, immutable
-bindings, aliases, nested product patterns, and one `..` rest marker. The rest
-marker skips elements; it does not bind a runtime slice yet. The same spelling
-is reserved for future `Vec[T]` and `Slice[T]` length-checked patterns; those
-runtime sequence subjects are rejected today instead of being treated as fixed
-arrays.
+Fixed arrays, local `Vec[T]` storage, and `Slice[T]` views can be matched with
+`[a, b]` positional patterns. Like tuple patterns, array patterns can contain
+literal tests, ranges, `_`, immutable bindings, aliases, nested product
+patterns, and one `..` rest marker. For `Vec[T]` and `Slice[T]`, `..` makes the
+runtime length check use `>=`; without it, the check uses exact length equality.
+Runtime sequence `match` expressions and statements must still include an
+irrefutable fallback such as `_` or `[..]`.
 
 ```ari
 let score = match values {

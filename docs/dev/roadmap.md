@@ -10,9 +10,12 @@ future reference/ownership binding modes do not collide with the current AST.
 Both `ref mut T` and `mut ref T` are accepted as equivalent mutable borrow
 spellings. `--check` runs parsing, module loading, and semantic lowering
 without backend emission for editor tooling.
-`[ ... ]` patterns are fixed to compile-time-length arrays for now; applying
-that spelling to `Vec[T]` or `Slice[T]` is rejected with a stable planned
-feature diagnostic until runtime length-checked lowering is designed.
+`[ ... ]` patterns are fixed syntax for both compile-time-length arrays and
+runtime sequence subjects. Local `Vec[T]` storage and `Slice[T]` views now
+lower those patterns through shared `len == n` / `len >= n` guards and indexed
+element bindings in `let`/`var`, `match`, and `if let`/`while let` statement and
+expression positions. Runtime sequence `match` still requires an irrefutable
+fallback such as `_` or `[..]`.
 Sema maintenance now follows phase-oriented extraction: constant folding stays
 in `constant_semantics`, generic binding/unification/substitution lives in
 `type_inference`, and future splits should target broad analysis or lowering
@@ -322,23 +325,16 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    tuple, fixed-array, named-struct, and tuple-struct literal/range/alias/or
    tests, and preserve `var` mutability for every introduced binding.
    Aggregate `if let` statement/expression and aggregate `while let`
-   statement bindings also share the same product match lowering path.
-   - [slice-patterns] lower `Slice[T]` and `Vec[T]` length-checked patterns
-     after the shared binding-mode engine decides reference/ownership behavior;
-     the parser-visible `[ ... ]` spelling now has stable sema diagnostics
-     for these runtime sequence subjects, so the remaining work is runtime
-     length-condition lowering and element binding semantics
-   - [slice-pattern-guards] add a shared `len == n` / `len >= n` condition
-     builder before enabling runtime sequence element binding
+   statement bindings also share the same product match lowering path. Local
+   `Vec[T]` storage and `Slice[T]` views now participate in that path through
+   length-checked `[ ... ]` runtime sequence patterns.
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and
      function-parameter patterns on one shared binding-mode engine; value alias
      patterns now work in range, list-literal, and stored-vector loop heads when
      the wrapped pattern is irrefutable. Non-iterator loop-head validation now
      lives in `for_pattern_semantics`, with a shared sema lowering helper for
      range, list-literal, and stored-vector loop heads; reference/ownership
-     binding modes still need shared lowering. Future `for let` filters over
-     vector and slice values should reuse the same product-pattern binding path
-     once vector/slice patterns have length-checked lowering.
+     binding modes still need shared lowering.
 3. Expand aggregate enum payload storage beyond the nested-enum MVP.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values, and

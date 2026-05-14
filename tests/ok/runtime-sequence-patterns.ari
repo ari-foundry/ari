@@ -1,0 +1,44 @@
+fn vector_suffix_match() -> i64 {
+  let values: Vec[i64] = [1, 2, 9];
+  return match values {
+    [0, ..] => 1,
+    [head, .., 9] => head + 10,
+    [..] => 0,
+  };
+}
+
+fn vector_exact_match() -> i64 {
+  let values: Vec[i64] = [1];
+  return match values {
+    [_, _] => 99,
+    [only] => only + 20,
+    _ => 0,
+  };
+}
+
+fn vector_binding() -> i64 {
+  let values: Vec[i64] = [4, 5, 6];
+  let [head, .., tail] = values;
+  return head + tail;
+}
+
+fn slice_iflet() -> i64 {
+  var values = [7, 8];
+  let view = values.as_slice();
+  if let [head, second] = view {
+    return head + second;
+  } else {
+    return 0;
+  }
+}
+
+fn slice_binding() -> i64 {
+  var value = 7;
+  let view: Slice[i64] = slice((ref mut value) as ptr i64, 1);
+  let [head] = view;
+  return head;
+}
+
+fn main() -> i64 {
+  return vector_suffix_match() + vector_exact_match() + vector_binding() + slice_iflet() + slice_binding();
+}

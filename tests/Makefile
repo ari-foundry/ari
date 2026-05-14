@@ -744,6 +744,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/constant-direct-composite.raw; code=$$?; test $$code -eq 22
 	$(TARGET) --freestanding tests/ok/array-patterns.ari -o $(BUILD_DIR)/match/array-patterns.raw
 	$(BUILD_DIR)/match/array-patterns.raw; code=$$?; test $$code -eq 25
+	$(TARGET) --freestanding tests/ok/runtime-sequence-patterns.ari -o $(BUILD_DIR)/match/runtime-sequence-patterns.raw
+	$(BUILD_DIR)/match/runtime-sequence-patterns.raw; code=$$?; test $$code -eq 64
 	$(TARGET) tests/ok/match-patterns.ari --emit-llvm $(BUILD_DIR)/match/match-patterns.ll
 	grep -q "match.arm" $(BUILD_DIR)/match/match-patterns.ll
 	grep -q "lshr" $(BUILD_DIR)/match/match-patterns.ll
@@ -813,6 +815,10 @@ check-match: $(TARGET)
 	grep -q "insertvalue \\[2 x i64\\]" $(BUILD_DIR)/match/constant-direct-composite.ll
 	$(TARGET) tests/ok/array-patterns.ari --emit-llvm $(BUILD_DIR)/match/array-patterns.ll
 	grep -q "extractvalue \\[4 x i64\\]" $(BUILD_DIR)/match/array-patterns.ll
+	$(TARGET) tests/ok/runtime-sequence-patterns.ari --emit-llvm $(BUILD_DIR)/match/runtime-sequence-patterns.ll
+	grep -q "vector.bounds.fail" $(BUILD_DIR)/match/runtime-sequence-patterns.ll
+	grep -q "slice.bounds.fail" $(BUILD_DIR)/match/runtime-sequence-patterns.ll
+	grep -q "icmp sge i64" $(BUILD_DIR)/match/runtime-sequence-patterns.ll
 	$(TARGET) tests/ok/match-symbolic-product.ari --emit-llvm $(BUILD_DIR)/match/match-symbolic-product.ll
 	grep -q "icmp ule i16" $(BUILD_DIR)/match/match-symbolic-product.ll
 	$(TARGET) tests/ok/match-aggregate-enum-payload-literals.ari --emit-llvm $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.ll
@@ -833,6 +839,8 @@ check-match: $(TARGET)
 	grep -q "integer match must include a wildcard arm" $(BUILD_DIR)/match/match-literal-nonexhaustive.err
 	if $(TARGET) tests/errors/match-bool-nonexhaustive.ari -o $(BUILD_DIR)/match/match-bool-nonexhaustive.elf >$(BUILD_DIR)/match/match-bool-nonexhaustive.err 2>&1; then exit 1; fi
 	grep -q "bool match must cover true and false or include a wildcard arm" $(BUILD_DIR)/match/match-bool-nonexhaustive.err
+	if $(TARGET) tests/errors/runtime-sequence-match-nonexhaustive.ari -o $(BUILD_DIR)/match/runtime-sequence-match-nonexhaustive.elf >$(BUILD_DIR)/match/runtime-sequence-match-nonexhaustive.err 2>&1; then exit 1; fi
+	grep -Fq "Vec[T] match must include _ or [..] fallback" $(BUILD_DIR)/match/runtime-sequence-match-nonexhaustive.err
 	if $(TARGET) tests/errors/match-literal-type.ari -o $(BUILD_DIR)/match/match-literal-type.elf >$(BUILD_DIR)/match/match-literal-type.err 2>&1; then exit 1; fi
 	grep -q "integer match patterns must be integer literals or _" $(BUILD_DIR)/match/match-literal-type.err
 	if $(TARGET) tests/errors/match-range-pattern-order.ari -o $(BUILD_DIR)/match/match-range-pattern-order.elf >$(BUILD_DIR)/match/match-range-pattern-order.err 2>&1; then exit 1; fi
@@ -2171,10 +2179,6 @@ check-variables: $(TARGET)
 	grep -Fq "empty [] literals need an explicit Vec[T] type or non-empty array elements" $(BUILD_DIR)/variables/vector-empty-non-vec-expected.err
 	if $(TARGET) tests/errors/vector-api-freeze.ari -o $(BUILD_DIR)/variables/vector-api-freeze.elf >$(BUILD_DIR)/variables/vector-api-freeze.err 2>&1; then exit 1; fi
 	grep -Fq "local Vec method 'map' is reserved for allocator-backed std collection APIs" $(BUILD_DIR)/variables/vector-api-freeze.err
-	if $(TARGET) tests/errors/vector-pattern-length-checked.ari -o $(BUILD_DIR)/variables/vector-pattern-length-checked.elf >$(BUILD_DIR)/variables/vector-pattern-length-checked.err 2>&1; then exit 1; fi
-	grep -Fq "Vec[T] length-checked array patterns are planned but are not supported yet; use len(...) and indexing for now" $(BUILD_DIR)/variables/vector-pattern-length-checked.err
-	if $(TARGET) tests/errors/slice-pattern-length-checked.ari -o $(BUILD_DIR)/variables/slice-pattern-length-checked.elf >$(BUILD_DIR)/variables/slice-pattern-length-checked.err 2>&1; then exit 1; fi
-	grep -Fq "Slice[T] length-checked array patterns are planned but are not supported yet; use len(...) and indexing for now" $(BUILD_DIR)/variables/slice-pattern-length-checked.err
 	if $(TARGET) tests/errors/vector-method-shape.ari -o $(BUILD_DIR)/variables/vector-method-shape.elf >$(BUILD_DIR)/variables/vector-method-shape.err 2>&1; then exit 1; fi
 	grep -q "Vec.push expects one value argument" $(BUILD_DIR)/variables/vector-method-shape.err
 	if $(TARGET) tests/errors/vector-method-immutable.ari -o $(BUILD_DIR)/variables/vector-method-immutable.elf >$(BUILD_DIR)/variables/vector-method-immutable.err 2>&1; then exit 1; fi

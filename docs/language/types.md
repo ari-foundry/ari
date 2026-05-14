@@ -713,7 +713,10 @@ let score = match values {
 ```
 
 Array patterns are fixed-size product patterns. `..` skips a range of elements
-but does not bind a slice yet.
+but does not bind a slice yet. The same `[a, .., b]` spelling also works for
+local `Vec[T]` storage and `Slice[T]` views by lowering to `len(...)` checks and
+indexed element reads; runtime sequence matches need a final `_` or `[..]`
+fallback arm when earlier arms are length-checked.
 
 ## Ownership-Qualified Types
 
