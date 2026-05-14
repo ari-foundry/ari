@@ -1,5 +1,5 @@
 # Test targets are included by the repository-root Makefile.
-.PHONY: check check-debug check-sanitize check-cli check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
+.PHONY: check check-debug check-sanitize check-std-api check-cli check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-function-errors check-errors
 
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
@@ -7,7 +7,7 @@ check-debug: $(DEBUG_TARGET) check
 check-sanitize: TARGET := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 $(SANITIZE_TARGET)
 check-sanitize: $(SANITIZE_TARGET) check
 
-check: $(TARGET) check-cli check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
+check: check-std-api $(TARGET) check-cli check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
 	mkdir -p $(BUILD_DIR)/ir
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/ir/count.ll
 	grep -q 'define i64 @"_ARNv4main"' $(BUILD_DIR)/ir/count.ll
@@ -40,6 +40,9 @@ check: $(TARGET) check-cli check-prelude check-control-flow check-match check-mo
 	$(BUILD_DIR)/for-vector-freestanding.elf; code=$$?; test $$code -eq 9
 	$(TARGET) --freestanding tests/ok/module-freestanding.ari -o $(BUILD_DIR)/module-freestanding.elf
 	$(BUILD_DIR)/module-freestanding.elf; code=$$?; test $$code -eq 3
+
+check-std-api:
+	python3 tests/check_std_api_manifest.py
 
 check-cli: $(TARGET)
 	mkdir -p $(BUILD_DIR)/cli

@@ -153,7 +153,10 @@ stages rather than one file per syntax feature.
    and `init while` continue values are centralized there. Root smart-pointer
    names are also fixed for future std work: `Box[T]` is the unique owning
    handle spelling, `Unique[T]` stays reserved for policy compatibility, and
-   `Shared[T]` / `Weak[T]` are reserved for reference-counted ownership.
+   `Shared[T]` / `Weak[T]` are reserved for reference-counted ownership. New
+   source `std` APIs are now guarded by `make check-std-api`, which compares the
+   extracted public `lib/std` surface with `tests/std_api_manifest.txt` and
+   requires a focused coverage note beside the API entry.
    - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
      top of the existing explicit-zone `std::boxed::Box<T>` seed before std
      APIs start returning owning heap handles
@@ -165,9 +168,6 @@ stages rather than one file per syntax feature.
    - [std-vec-runtime-abi] define the runtime-capacity and non-local ABI rules
      for root `Vec[T]` before making ergonomic std collection methods the
      permanent public surface
-   - [std-api-tests] require every new source `std` API to land with focused
-     provenance, reset/destroy, implicit-std/module, and docs/test-matrix
-     coverage when those dimensions apply
 3. Stabilize and implement user-defined compile-time meta expansion for
    `meta fn`.
    The built-in `matches!` macro lowers through the pattern engine today.

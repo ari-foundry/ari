@@ -1,0 +1,181 @@
+# Source std public API manifest.
+#
+# Format:
+#   <extracted API>|<focused coverage note>
+#
+# `make check-std-api` compares the left side of each entry with the public
+# declarations in lib/std. Add or remove entries only with focused tests,
+# docs/dev/test-matrix.md coverage, and language docs when the API is user
+# visible.
+
+enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
+enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
+fn std::assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
+fn std::assert_eq_bool|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
+fn std::assert_eq_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
+fn std::assert_ne_bool|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
+fn std::assert_ne_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
+fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
+fn std::context::argc|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
+fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
+fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
+fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
+fn std::io::newline|prelude IO and print tests; docs/dev/test-matrix.md Prelude row
+fn std::io::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
+fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Prelude row
+fn std::io::write_bool|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
+fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude row
+fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
+fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
+fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
+fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
+fn std::mem::ptr_add[T]|typed pointer arithmetic tests; docs/dev/test-matrix.md C FFI row
+fn std::mem::ptr_load[T]|raw pointer load tests; docs/dev/test-matrix.md C FFI row
+fn std::mem::ptr_offset[T]|byte pointer offset tests; docs/dev/test-matrix.md C FFI row
+fn std::mem::ptr_store[T]|raw pointer store tests; docs/dev/test-matrix.md C FFI row
+fn std::mem::size_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
+fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row
+fn std::panic|prelude panic helpers; docs/dev/test-matrix.md Prelude row
+fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
+fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
+fn std::todo|planned panic helper tests; docs/dev/test-matrix.md Prelude row
+fn std::unreachable|planned panic helper tests; docs/dev/test-matrix.md Prelude row
+fn std::vec::alloc_buffer[T]|std vec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::vec::new[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::vec::with_capacity[T]|std RawVec tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::alloc|zone allocation tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::alloc[T]|typed zone allocation tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::create|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::new[T]|placement construction tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::promote[T]|scratch promotion tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::zone::reset|zone reset invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::as_ptr|check-prelude std-boxed-as-ptr; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::copy_to|check-prelude std-boxed-copy-to; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::get|check-prelude std-boxed-box; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::replace|check-prelude std-boxed-replace; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::set|check-prelude std-boxed-box; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::capacity|check-prelude std-vec-metadata-methods; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::clear|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::contains|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::first|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::get|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::index_of|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::insert|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::insert_in|check-prelude std-vec-insert-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::is_empty|check-prelude std-vec-metadata-methods; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::last|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::len|check-prelude std-vec-metadata-methods; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::pop|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::push|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::push_in|check-prelude std-vec-push-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::remove|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::replace|check-prelude std-vec-replace; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::reserve|check-prelude std-vec-reserve; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::reserve_extra|check-prelude std-vec-reserve-extra; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::resize_in|check-prelude std-vec-resize-in; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::set|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
+module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row
+module std::convert|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+module std::fmt|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+module std::input|prelude input tests; docs/dev/test-matrix.md Prelude row
+module std::io|prelude IO tests; docs/dev/test-matrix.md Prelude row
+module std::iter|range and iterator tests; docs/dev/test-matrix.md Control flow row
+module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
+module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
+module std::zone|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
+struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
+struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
+struct std::Vec[T]|temporary root Vec tests; docs/dev/test-matrix.md Variables row
+struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
+struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
+struct std::vec::RawVec[T]|std RawVec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::vec::Vec[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
+trait std::Clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::Copy|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::Debug|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::Default|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::Display|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::Drop|ownership destructor tests; docs/dev/test-matrix.md Ownership row
+trait std::Eq[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::From[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::IntoIterator[T]|iterator tests; docs/dev/test-matrix.md Control flow and Front-end surfaces rows
+trait std::Into[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::Iterable[T]|iterator tests; docs/dev/test-matrix.md Control flow and Front-end surfaces rows
+trait std::Iterator[T]|iterator tests; docs/dev/test-matrix.md Control flow and Front-end surfaces rows
+trait std::Ord[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::PartialEq[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::PartialOrd[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::ToOwned|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::ToString|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::TryFrom[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::TryInto[T]|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait std::cmp::Eq[T]|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::cmp::Ord[T]|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::cmp::PartialEq[T]|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::cmp::PartialOrd[T]|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::convert::From[T]|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::convert::Into[T]|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::convert::TryFrom[T]|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::convert::TryInto[T]|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::fmt::Debug|fmt module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::fmt::Display|fmt module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait std::iter::IntoIterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
+trait std::iter::Iterable[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
+trait std::iter::Iterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
+trait-method std::Clone::clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::Default::default|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::Drop::drop|ownership destructor tests; docs/dev/test-matrix.md Ownership row
+trait-method std::Eq[T]::eq|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::From[T]::from|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::IntoIterator[T]::into_iter|iterator tests; docs/dev/test-matrix.md Control flow row
+trait-method std::Into[T]::into|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::Iterator[T]::next|iterator tests; docs/dev/test-matrix.md Control flow row
+trait-method std::Ord[T]::lt|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::PartialEq[T]::eq|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::PartialOrd[T]::lt|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::ToString::to_string|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::cmp::Eq[T]::eq|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::cmp::Ord[T]::lt|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::cmp::PartialEq[T]::eq|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::cmp::PartialOrd[T]::lt|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::convert::From[T]::from|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::convert::Into[T]::into|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
+trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
+trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
+use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
+use std::alloc|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::arg|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows
+use std::arg_count|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows
+use std::create|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::destroy|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::new|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::newline|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::promote|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::ptr_add|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
+use std::ptr_load|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
+use std::ptr_offset|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
+use std::ptr_store|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
+use std::range|std root re-export tests; docs/dev/test-matrix.md Prelude and Control flow rows
+use std::range_inclusive|std root re-export tests; docs/dev/test-matrix.md Prelude and Control flow rows
+use std::read_byte|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::read_line|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::reset|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::size_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
+use std::write_bool|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::write_byte|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::write_i64|std root re-export tests; docs/dev/test-matrix.md Prelude row

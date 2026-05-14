@@ -26,6 +26,7 @@ and each focused `check-*` target still run from the repository root.
 
 ```sh
 make check
+make check-std-api
 make check-debug
 make check-sanitize
 make check-cli
@@ -40,6 +41,12 @@ make check-functions
 
 `make check` builds the compiler, runs negative tests, compiles positive tests,
 executes generated ELF files, and checks exit codes or stdout where needed.
+
+`make check-std-api` extracts the public source `std` surface from
+`lib/std.arih` and `lib/std/*.arih`, then compares it with
+`tests/std_api_manifest.txt`. A new source `std` API should update that manifest
+with a focused coverage note, add or extend the relevant test, and update
+`docs/dev/test-matrix.md` or user-facing language docs when the API is visible.
 
 `make check-cli` runs just the compiler invocation and build-mode checks:
 LLVM IR output, optional LLVM-driver linked output when `clang` is installed,
