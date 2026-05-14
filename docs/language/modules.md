@@ -283,8 +283,10 @@ intentionally a summary format; use a module cache when you want to reuse a
 validated package source snapshot.
 Current metadata is written as `ari-module-metadata-v0`. The compiler accepts
 only that V0 header until the cache format is explicitly allowed to advance.
-Any other metadata header is rejected and should be regenerated with
-`--emit-module-metadata`.
+This header belongs to the same V0 cache-format contract as module caches and
+AST declaration summaries, so version bumps happen together instead of one
+record family drifting ahead. Any other metadata header is rejected and should
+be regenerated with `--emit-module-metadata`.
 Malformed summaries that repeat an exact source, import, or item record are
 rejected when read.
 
@@ -317,7 +319,8 @@ the resolved graph, and a compact AST summary for each cached source. Current
 caches are written as `ari-module-cache-v0`, with declaration summaries using
 `ari-ast-decls-v0`. Ari accepts only this V0 cache family until the cache format
 is explicitly allowed to advance; any other cache or declaration-summary header
-is rejected and should be regenerated. A later build can validate the cache and
+is rejected and should be regenerated. The three V0 headers are treated as one
+format family inside the compiler. A later build can validate the cache and
 parse from that snapshot:
 
 ```sh

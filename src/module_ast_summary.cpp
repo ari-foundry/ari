@@ -1,6 +1,7 @@
 #include "module_ast_summary.hpp"
 
 #include "common.hpp"
+#include "module_cache_format.hpp"
 #include "module_metadata.hpp"
 #include "module_path.hpp"
 
@@ -1126,12 +1127,12 @@ private:
     }
 
     void consume_header() {
-        const std::string v0 = "ari-ast-decls-v0;";
+        const std::string v0 = kModuleAstDeclsPayloadHeader;
         if (text_.compare(pos_, v0.size(), v0) == 0) {
             pos_ += v0.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v0;'");
+        fail("expected '" + std::string(kModuleAstDeclsPayloadHeader) + "'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1817,7 +1818,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v0;";
+    out << kModuleAstDeclsPayloadHeader;
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {
@@ -1977,6 +1978,16 @@ void require_valid_module_cache_ast_summary_payload(const ModuleCacheAstSummary&
         throw CompileError("invalid module cache '" + display_path +
                            "': AST summary for " + summary_display(summary) +
                            " is missing a declaration summary");
+    }
+    if (summary.declaration_summary.compare(
+            0,
+            std::strlen(kModuleAstDeclsPayloadHeader),
+            kModuleAstDeclsPayloadHeader
+        ) != 0) {
+        throw CompileError("invalid module cache '" + display_path +
+                           "': AST summary for " + summary_display(summary) +
+                           " declaration summary expected '" +
+                           std::string(kModuleAstDeclsPayloadHeader) + "' header");
     }
     std::string hash = module_metadata_source_hash(summary.declaration_summary);
     if (hash != summary.declaration_hash) {

@@ -21,6 +21,9 @@ Sema maintenance now follows phase-oriented extraction: constant folding stays
 in `constant_semantics`, generic binding/unification/substitution lives in
 `type_inference`, and future splits should target broad analysis or lowering
 stages rather than one file per syntax feature.
+Module cache headers are also fixed for lint/tooling stability: metadata,
+source-snapshot cache, and AST declaration-summary payloads all use the shared
+V0 cache-format contract until a cache version bump is explicitly approved.
 
 1. Start allocator-backed growable `Vec[T]`.
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
@@ -270,11 +273,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    hashes/imports and can materialize declaration-safe headers plus
    summary-safe executable dependency bodies from AST summaries without parsing
    the cached source snapshot. The current source-level AST expression,
-   statement, and pattern surface is covered by that path. Keep the cache
-   family on `ari-module-metadata-v0`, `ari-module-cache-v0`, and
-   `ari-ast-decls-v0` until a cache version bump is explicitly approved; add IR
-   summaries later for future executable bodies that cannot round-trip through
-   the compact AST summary format without changing the V0 header by default.
+   statement, and pattern surface is covered by that path. The V0 cache family
+   is centralized on `ari-module-metadata-v0`, `ari-module-cache-v0`, and
+   `ari-ast-decls-v0`; add IR summaries later for future executable bodies that
+   cannot round-trip through the compact AST summary format without changing the
+   V0 header by default.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies whose executable function or impl bodies
      use forms outside the AST summary subset

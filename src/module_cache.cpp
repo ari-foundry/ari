@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 #include "module_ast_summary.hpp"
+#include "module_cache_format.hpp"
 #include "module_loader.hpp"
 #include "module_path.hpp"
 
@@ -17,8 +18,6 @@
 namespace ari {
 
 namespace {
-
-constexpr int kModuleCacheVersion = 0;
 
 std::string read_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -257,7 +256,7 @@ std::uint64_t parse_count_field(const std::string& value,
 
 std::string serialize_module_cache(const ModuleCache& cache) {
     std::ostringstream out;
-    out << "ari-module-cache-v" << kModuleCacheVersion << "\n";
+    out << kModuleCacheHeader << "\n";
     write_line(out, {"metadata", serialize_module_metadata(cache.metadata)});
     for (const auto& source : cache.sources) {
         write_line(out, {
@@ -305,11 +304,11 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
     while (std::getline(in, line)) {
         ++line_number;
         if (!saw_header) {
-            if (line != "ari-module-cache-v0") {
+            if (line != kModuleCacheHeader) {
                 throw CompileError("invalid module cache '" + display_path +
-                                   "': expected ari-module-cache-v0 header");
+                                   "': expected " + std::string(kModuleCacheHeader) + " header");
             }
-            cache.format_version = kModuleCacheVersion;
+            cache.format_version = kModuleCacheFormatVersion;
             saw_header = true;
             continue;
         }
@@ -388,7 +387,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
 
     if (!saw_header) {
         throw CompileError("invalid module cache '" + display_path +
-                           "': expected ari-module-cache-v0 header");
+                           "': expected " + std::string(kModuleCacheHeader) + " header");
     }
     if (!saw_metadata) {
         throw CompileError("invalid module cache '" + display_path + "': missing metadata record");
@@ -471,10 +470,10 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
                                           const std::string& root_input,
                                           const ModuleLoadOptions& options,
                                           const std::string& display_path) {
-    if (cache.format_version != kModuleCacheVersion) {
+    if (cache.format_version != kModuleCacheFormatVersion) {
         fail_stale(display_path, "unsupported module cache format");
     }
-    if (cache.metadata.format_version != 0) {
+    if (cache.metadata.format_version != kModuleCacheFormatVersion) {
         fail_stale(display_path, "embedded metadata format is not v0");
     }
     require_same_search_paths(cache, options, display_path);

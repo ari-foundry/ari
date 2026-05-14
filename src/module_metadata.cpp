@@ -1,6 +1,7 @@
 #include "module_metadata.hpp"
 
 #include "common.hpp"
+#include "module_cache_format.hpp"
 #include "module_path.hpp"
 
 #include <algorithm>
@@ -16,8 +17,6 @@
 namespace ari {
 
 namespace {
-
-constexpr int kModuleMetadataVersion = 0;
 
 std::string escape_field(const std::string& text) {
     std::string escaped;
@@ -381,7 +380,7 @@ std::string module_metadata_source_hash(const std::string& source) {
 
 std::string serialize_module_metadata(const ModuleMetadata& metadata) {
     std::ostringstream out;
-    out << "ari-module-metadata-v" << kModuleMetadataVersion << "\n";
+    out << kModuleMetadataHeader << "\n";
     for (const auto& path : metadata.module_search_paths) {
         write_line(out, {"search", path});
     }
@@ -424,10 +423,11 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
     while (std::getline(in, line)) {
         ++line_number;
         if (!saw_header) {
-            if (line != "ari-module-metadata-v0") {
-                throw CompileError("invalid module metadata '" + display_path + "': expected ari-module-metadata-v0 header");
+            if (line != kModuleMetadataHeader) {
+                throw CompileError("invalid module metadata '" + display_path +
+                                   "': expected " + std::string(kModuleMetadataHeader) + " header");
             }
-            metadata.format_version = kModuleMetadataVersion;
+            metadata.format_version = kModuleCacheFormatVersion;
             saw_header = true;
             continue;
         }
@@ -518,7 +518,8 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
     }
 
     if (!saw_header) {
-        throw CompileError("invalid module metadata '" + display_path + "': expected ari-module-metadata-v0 header");
+        throw CompileError("invalid module metadata '" + display_path +
+                           "': expected " + std::string(kModuleMetadataHeader) + " header");
     }
     return metadata;
 }
@@ -534,10 +535,11 @@ ModuleMetadata read_module_metadata_file(const std::string& path) {
 void require_matching_module_metadata(const ModuleMetadata& expected,
                                       const ModuleMetadata& actual,
                                       const std::string& path) {
-    if (expected.format_version != kModuleMetadataVersion) {
+    if (expected.format_version != kModuleCacheFormatVersion) {
         throw CompileError("module metadata '" + path +
                            "' uses ari-module-metadata-v" + std::to_string(expected.format_version) +
-                           ", but this compiler only accepts ari-module-metadata-v0; regenerate it with --emit-module-metadata");
+                           ", but this compiler only accepts " + std::string(kModuleMetadataHeader) +
+                           "; regenerate it with --emit-module-metadata");
     }
     if (serialize_module_metadata(expected) == serialize_module_metadata(actual)) return;
     std::string detail = find_module_metadata_mismatch(expected, actual);

@@ -966,6 +966,9 @@ check-modules: $(TARGET)
 	grep -q "4:drop" $(BUILD_DIR)/modules/package-cache-body.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-body-cache.ll $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
+	sed '0,/ari-ast-decls-v0/s/ari-ast-decls-v0/ari-ast-decls-v1/' $(BUILD_DIR)/modules/package-cache-body.aricache >$(BUILD_DIR)/modules/package-cache-body-ast-non-v0.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.ll >$(BUILD_DIR)/modules/package-cache-body-ast-non-v0.err 2>&1; then exit 1; fi
+	grep -q "expected 'ari-ast-decls-v0;'" $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.err
 	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.raw
 	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 14
 	$(TARGET) -Itests/packages tests/ok/package-cache-indirect-call-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-indirect-call.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-indirect-call-cache.ll
@@ -1029,7 +1032,7 @@ check-modules: $(TARGET)
 	grep -q "declaration summary hashes to" $(BUILD_DIR)/modules/package-module-main-cache-summary-hash-tampered.err
 	awk 'BEGIN { FS=OFS="\t" } $$1 == "ast-summary" && $$2 == "package_math" { $$7 = "tampered" } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.err 2>&1; then exit 1; fi
-	grep -q "declaration summary hashes to" $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.err
+	grep -q "declaration summary expected 'ari-ast-decls-v0;' header" $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.err
 	sed '0,/package_math::value/s/package_math::value/package_math::wrong/' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-tampered.err 2>&1; then exit 1; fi
 	grep -q "does not match the current source graph" $(BUILD_DIR)/modules/package-module-main-cache-tampered.err
