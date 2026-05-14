@@ -96,7 +96,8 @@ attribute/expression/item/type macro domain checks, parser-stable
 `ident!(...)` expression, item, and type token-tree macro invocation syntax,
 expression-position identity expansion from a parsed expression input,
 function/constant/struct/enum/trait/impl/inline-module/use item macro identity
-expansion from parsed top-level declarations,
+expansion from parsed top-level declarations, item-position `ast -> ast`
+declaration output and declaration input substitution through `decl!(...)`,
 type-position identity expansion from a parsed type input, pattern-position
 identity expansion from a parsed pattern input, and malformed pattern macro
 input diagnostics.

@@ -1,0 +1,11 @@
+meta fn append_generated(input: ast) -> ast {
+  return decl!(input const GENERATED: i64 = 1;);
+}
+
+append_generated!(fn original() -> i64 {
+  return 41;
+});
+
+fn main() -> i64 {
+  return original() + GENERATED;
+}

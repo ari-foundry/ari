@@ -1426,7 +1426,7 @@ private:
                 const MetaFunctionInfo& meta =
                     require_meta_invocation(invocation.loc, MetaInvocationSite::ItemMacro, invocation.name);
                 expansion = meta.ast_return_kind == MetaAstReturnKind::ItemDeclarations
-                                ? expand_item_macro_decl_constructor(invocation, *meta.ast_return)
+                                ? expand_item_macro_decl_constructor(invocation, meta.parameter_name, *meta.ast_return)
                                 : expand_item_macro_items(invocation);
             } catch (...) {
                 current_module_name_ = previous_module;

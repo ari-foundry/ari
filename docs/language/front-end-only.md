@@ -228,7 +228,19 @@ make_answer!();
 
 `decl!(...)` parses its payload as top-level declarations and can currently be
 used only as the return value of an `ast -> ast` meta function that is invoked
-from an item macro site.
+from an item macro site. A bare token that matches the meta parameter name
+inside `decl!(...)` is replaced with the item macro invocation's declaration
+input tokens:
+
+```ari
+meta fn append_generated(input: ast) -> ast {
+  return decl!(input const GENERATED: i64 = 1;);
+}
+
+append_generated!(fn original() -> i64 {
+  return 41;
+});
+```
 
 Expression, item, and type-position macro invocation use Rust-style
 `ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
@@ -250,9 +262,10 @@ expansion is currently an identity transform: the token tree is parsed as
 top-level function/constant/struct/enum/trait/impl/module/use declarations and
 those generated items participate in normal semantic checking. Non-identity
 item-position `ast -> ast` bodies can also generate those declaration kinds by
-returning `decl!(...)`. Generated file-backed `mod name;` imports are not
-supported in item macro output because module loading runs before semantic
-expansion; keep file-backed imports as
+returning `decl!(...)`, and they may splice the input declaration token tree
+back into that constructor with the meta parameter name. Generated file-backed
+`mod name;` imports are not supported in item macro output because module
+loading runs before semantic expansion; keep file-backed imports as
 source-level `mod` declarations. Type-position
 macro invocations must resolve to
 `type -> type` meta functions and are also identity transforms today: their

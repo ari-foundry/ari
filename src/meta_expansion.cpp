@@ -33,6 +33,20 @@ Program parse_item_macro_tokens(const std::vector<Token>& source_tokens,
     return parse_tokens_in_module(std::move(tokens), module_path_for_macro(module_name));
 }
 
+std::vector<Token> substitute_decl_input_tokens(const std::vector<Token>& constructor_tokens,
+                                                const std::string& input_name,
+                                                const std::vector<Token>& input_tokens) {
+    std::vector<Token> expanded;
+    for (const Token& token : constructor_tokens) {
+        if (token.kind == TokenKind::Identifier && token.text == input_name) {
+            expanded.insert(expanded.end(), input_tokens.begin(), input_tokens.end());
+            continue;
+        }
+        expanded.push_back(token);
+    }
+    return expanded;
+}
+
 void reject_unsupported_item_macro_output(const Program& program,
                                           SourceLocation invocation_loc,
                                           const std::string& context) {
@@ -103,11 +117,14 @@ ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation
 }
 
 ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation& invocation,
+                                                      const std::string& input_name,
                                                       const Expr& returned_ast) {
     if (returned_ast.kind != ExprKind::MacroCall || returned_ast.name != "decl" || !returned_ast.macro_tokens) {
         fail_expansion(returned_ast.loc, "internal error: expected decl!(...) ast constructor");
     }
-    Program program = parse_item_macro_tokens(*returned_ast.macro_tokens, invocation.module_name, returned_ast.loc);
+    std::vector<Token> output_tokens =
+        substitute_decl_input_tokens(*returned_ast.macro_tokens, input_name, invocation.tokens);
+    Program program = parse_item_macro_tokens(output_tokens, invocation.module_name, returned_ast.loc);
     return finish_item_macro_expansion(std::move(program), invocation, "item macro declaration AST output");
 }
 
