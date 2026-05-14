@@ -185,6 +185,20 @@ meta functions are reserved for future type-position expansion and cannot be
 used as attributes or expression macros. User `meta fn` expansion, item macros,
 and `format!` are still planned and rejected with specific diagnostics.
 
+Meta quote syntax is reserved as `~!(...)`. The parser captures the balanced
+token tree inside the outer parentheses and preserves nested `(...)`, `{...}`,
+and `[...]` groups, including future unquote markers written as `~(...)`:
+
+```ari
+~!(fn ~(name)(~(args)) -> i64 {
+  return ~(body);
+})
+```
+
+Active quote expressions are rejected until compile-time `token_stream` and
+`ast` construction exists, but the syntax is fixed for linting and disabled
+`@cfg(false)` declarations still parse.
+
 ## Raw Pointers
 
 ```ari

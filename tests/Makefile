@@ -1388,6 +1388,8 @@ check-meta: $(TARGET)
 	grep -q 'define i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility-exe.ll
 	$(TARGET) --freestanding tests/ok/meta-function-surface.ari -o $(BUILD_DIR)/meta/meta-function-surface.raw
 	$(BUILD_DIR)/meta/meta-function-surface.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/meta-quote-syntax.ari -o $(BUILD_DIR)/meta/meta-quote-syntax.raw
+	$(BUILD_DIR)/meta/meta-quote-syntax.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.raw
 	$(BUILD_DIR)/meta/matches-macro.raw; code=$$?; test $$code -eq 15
 	if $(TARGET) tests/errors/attribute-unknown.ari -o $(BUILD_DIR)/meta/attribute-unknown.elf >$(BUILD_DIR)/meta/attribute-unknown.err 2>&1; then exit 1; fi
@@ -1430,6 +1432,8 @@ check-meta: $(TARGET)
 	grep -q "attributes require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/attribute-meta-type-domain.err
 	if $(TARGET) tests/errors/macro-call-type-domain.ari -o $(BUILD_DIR)/meta/macro-call-type-domain.elf >$(BUILD_DIR)/meta/macro-call-type-domain.err 2>&1; then exit 1; fi
 	grep -q "expression macros require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/macro-call-type-domain.err
+	if $(TARGET) tests/errors/meta-quote-planned.ari -o $(BUILD_DIR)/meta/meta-quote-planned.elf >$(BUILD_DIR)/meta/meta-quote-planned.err 2>&1; then exit 1; fi
+	grep -q "meta quote expression '~!(...)' requires compile-time token_stream/ast construction" $(BUILD_DIR)/meta/meta-quote-planned.err
 	if $(TARGET) tests/errors/matches-macro-arity.ari -o $(BUILD_DIR)/meta/matches-macro-arity.elf >$(BUILD_DIR)/meta/matches-macro-arity.err 2>&1; then exit 1; fi
 	grep -q "expected , after matches! value" $(BUILD_DIR)/meta/matches-macro-arity.err
 	if $(TARGET) tests/errors/matches-macro-pattern-type.ari -o $(BUILD_DIR)/meta/matches-macro-pattern-type.elf >$(BUILD_DIR)/meta/matches-macro-pattern-type.err 2>&1; then exit 1; fi

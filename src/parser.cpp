@@ -1661,6 +1661,9 @@ private:
             }
             return make_ast_binary_expr(minus.loc, TokenKind::Minus, make_ast_integer_expr(minus.loc, 0), parse_unary());
         }
+        if (check(TokenKind::Tilde) && peek(1).kind == TokenKind::Bang) {
+            return parse_meta_quote();
+        }
         if (match(TokenKind::Bang)) {
             Token bang = tokens_[pos_ - 1];
             return make_ast_unary_expr(bang.loc, TokenKind::Bang, parse_unary());
@@ -1679,6 +1682,50 @@ private:
             return make_ast_borrow_expr(ref.loc, parse_call(), mutable_borrow);
         }
         return parse_call();
+    }
+
+    static TokenKind matching_delimiter(TokenKind kind) {
+        if (kind == TokenKind::LParen) return TokenKind::RParen;
+        if (kind == TokenKind::LBrace) return TokenKind::RBrace;
+        if (kind == TokenKind::LBracket) return TokenKind::RBracket;
+        return TokenKind::End;
+    }
+
+    static bool is_closing_delimiter(TokenKind kind) {
+        return kind == TokenKind::RParen || kind == TokenKind::RBrace || kind == TokenKind::RBracket;
+    }
+
+    std::vector<Token> parse_meta_quote_token_tree(SourceLocation loc) {
+        expect(TokenKind::LParen, "expected ( after ~!");
+        std::vector<Token> tokens;
+        std::vector<TokenKind> closing_stack{TokenKind::RParen};
+        while (!closing_stack.empty()) {
+            if (check(TokenKind::End)) fail(loc, "unterminated meta quote");
+            Token token = peek();
+            if (token.kind == closing_stack.back()) {
+                ++pos_;
+                closing_stack.pop_back();
+                if (!closing_stack.empty()) tokens.push_back(token);
+                continue;
+            }
+            TokenKind matching = matching_delimiter(token.kind);
+            if (matching != TokenKind::End) {
+                tokens.push_back(tokens_[pos_++]);
+                closing_stack.push_back(matching);
+                continue;
+            }
+            if (is_closing_delimiter(token.kind)) {
+                fail(token.loc, "mismatched delimiter in meta quote");
+            }
+            tokens.push_back(tokens_[pos_++]);
+        }
+        return tokens;
+    }
+
+    ExprPtr parse_meta_quote() {
+        Token tilde = expect(TokenKind::Tilde, "expected ~ at start of meta quote");
+        expect(TokenKind::Bang, "expected ! after ~ in meta quote");
+        return make_ast_macro_call_expr(tilde.loc, "~", parse_meta_quote_token_tree(tilde.loc));
     }
 
     std::vector<Token> parse_macro_token_tree(SourceLocation loc) {
