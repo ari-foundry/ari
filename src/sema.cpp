@@ -14075,7 +14075,11 @@ private:
         if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
 
         (void)require_meta_invocation(expr.loc, MetaInvocationSite::ExpressionMacro, expr.name);
-        fail(expr.loc, meta_invocation_planned_message(MetaInvocationSite::ExpressionMacro, expr.name));
+        if (!expr.macro_tokens) {
+            fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
+        }
+        ExprPtr expanded = parse_macro_expression(*expr.macro_tokens, expr.loc);
+        return check_expr(*expanded);
     }
 
     IrExprPtr check_generic_call(const Expr& expr, const FunctionDecl& fn, const std::string& resolved_name, IrExprPtr lowered) {

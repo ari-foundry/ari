@@ -1,0 +1,15 @@
+meta fn make_value(input: token_stream) -> token_stream {
+}
+
+meta fn rewrite_expr(input: ast) -> ast {
+}
+
+fn add(left: i64, right: i64) -> i64 {
+  return left + right;
+}
+
+fn main() -> i64 {
+  let token_value = make_value!(add(1, 2) * 3);
+  let ast_value = rewrite_expr!(if true { 4 } else { 0 });
+  return token_value + ast_value;
+}

@@ -1396,6 +1396,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-surface.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/macro-token-tree-syntax.ari -o $(BUILD_DIR)/meta/macro-token-tree-syntax.raw
 	$(BUILD_DIR)/meta/macro-token-tree-syntax.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/macro-call-identity.ari -o $(BUILD_DIR)/meta/macro-call-identity.raw
+	$(BUILD_DIR)/meta/macro-call-identity.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/type-macro-identity.ari -o $(BUILD_DIR)/meta/type-macro-identity.raw
 	$(BUILD_DIR)/meta/type-macro-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.raw
@@ -1448,8 +1450,8 @@ check-meta: $(TARGET)
 	grep -q "type macros require type -> type" $(BUILD_DIR)/meta/type-macro-token-domain.err
 	if $(TARGET) tests/errors/type-macro-unknown.ari -o $(BUILD_DIR)/meta/type-macro-unknown.elf >$(BUILD_DIR)/meta/type-macro-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown type macro 'missing_type!'" $(BUILD_DIR)/meta/type-macro-unknown.err
-	if $(TARGET) tests/errors/macro-token-tree-planned.ari -o $(BUILD_DIR)/meta/macro-token-tree-planned.elf >$(BUILD_DIR)/meta/macro-token-tree-planned.err 2>&1; then exit 1; fi
-	grep -q "macro invocation 'make_tokens!' requires compile-time token_stream/ast expansion" $(BUILD_DIR)/meta/macro-token-tree-planned.err
+	if $(TARGET) tests/errors/macro-call-invalid-input.ari -o $(BUILD_DIR)/meta/macro-call-invalid-input.elf >$(BUILD_DIR)/meta/macro-call-invalid-input.err 2>&1; then exit 1; fi
+	grep -q "expected end of macro invocation input" $(BUILD_DIR)/meta/macro-call-invalid-input.err
 	if $(TARGET) tests/errors/matches-macro-arity.ari -o $(BUILD_DIR)/meta/matches-macro-arity.elf >$(BUILD_DIR)/meta/matches-macro-arity.err 2>&1; then exit 1; fi
 	grep -q "expected , after matches! value" $(BUILD_DIR)/meta/matches-macro-arity.err
 	if $(TARGET) tests/errors/matches-macro-pattern-type.ari -o $(BUILD_DIR)/meta/matches-macro-pattern-type.elf >$(BUILD_DIR)/meta/matches-macro-pattern-type.err 2>&1; then exit 1; fi
@@ -1460,8 +1462,6 @@ check-meta: $(TARGET)
 	grep -q "pattern macros require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/pattern-macro-type-domain.err
 	if $(TARGET) tests/errors/pattern-macro-unknown.ari -o $(BUILD_DIR)/meta/pattern-macro-unknown.elf >$(BUILD_DIR)/meta/pattern-macro-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown pattern macro 'missing_pattern!'" $(BUILD_DIR)/meta/pattern-macro-unknown.err
-	if $(TARGET) tests/errors/macro-call-planned.ari -o $(BUILD_DIR)/meta/macro-call-planned.elf >$(BUILD_DIR)/meta/macro-call-planned.err 2>&1; then exit 1; fi
-	grep -q "macro invocation 'make_value!' requires compile-time token_stream/ast expansion" $(BUILD_DIR)/meta/macro-call-planned.err
 	if $(TARGET) tests/errors/macro-call-unknown.ari -o $(BUILD_DIR)/meta/macro-call-unknown.elf >$(BUILD_DIR)/meta/macro-call-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'missing!'" $(BUILD_DIR)/meta/macro-call-unknown.err
 	if $(TARGET) tests/errors/item-macro-planned.ari -o $(BUILD_DIR)/meta/item-macro-planned.elf >$(BUILD_DIR)/meta/item-macro-planned.err 2>&1; then exit 1; fi

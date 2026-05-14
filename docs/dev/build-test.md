@@ -86,8 +86,9 @@ fieldless enum declarations, by-value header ABI target/size guards,
 one-parameter same-domain meta signatures over `token_stream`/`ast`/`type`,
 attribute/expression/item/type macro domain checks, parser-stable
 `ident!(...)` expression, item, and type token-tree macro invocation syntax,
+expression-position identity expansion from a parsed expression input,
 type-position identity expansion from a parsed type input, and planned
-expansion diagnostics for value/syntax-producing user macros.
+expansion diagnostics for item/pattern syntax-producing user macros.
 
 `make check-prelude` runs prelude IO, formatting, input, assertion, source
 header, and builtin macro tests. It covers function and macro assertion forms,

@@ -187,10 +187,14 @@ stages rather than one file per syntax feature.
    trees, and the selected `meta fn` parameter domain determines whether the
    future evaluator receives `token_stream`, `ast`, or `type` input. Active
    expansion still needs compile-time `token_stream`/`ast`
-   construction before it can produce values or syntax. Type-position
-   `type -> type` meta invocations now parse their token-tree input as a type
-   ref and lower as an identity expansion while meta bodies stay empty; invalid
-   extra tokens are rejected before semantic type lowering. User attribute
+   construction before it can rewrite values or syntax. Expression-position
+   `token_stream -> token_stream` and `ast -> ast` meta invocations now parse
+   their token-tree input as a single expression and lower as an identity
+   expansion while meta bodies stay empty; invalid extra tokens are rejected
+   before semantic expression lowering. Type-position `type -> type` meta
+   invocations now parse their token-tree input as a type ref and lower as an
+   identity expansion while meta bodies stay empty; invalid extra tokens are
+   rejected before semantic type lowering. User attribute
    arguments and item-position/type-position `ident!(...)` invocations now use
    the same
    balanced token-tree parser, with nested `(...)`, `{...}`, and `[...]`
@@ -205,7 +209,6 @@ stages rather than one file per syntax feature.
    linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
-   - [calls] expand user-defined Rust-style `ident!(...)` expression calls
    - [items] expand sema-validated item-position macro invocations into top-level items
    - [patterns] expand sema-validated pattern-position `ident!(...)` invocations
      once compile-time construction can produce pattern AST
