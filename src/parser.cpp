@@ -1661,9 +1661,6 @@ private:
             }
             return make_ast_binary_expr(minus.loc, TokenKind::Minus, make_ast_integer_expr(minus.loc, 0), parse_unary());
         }
-        if (check(TokenKind::Tilde) && peek(1).kind == TokenKind::Bang) {
-            return parse_meta_quote();
-        }
         if (match(TokenKind::Bang)) {
             Token bang = tokens_[pos_ - 1];
             return make_ast_unary_expr(bang.loc, TokenKind::Bang, parse_unary());
@@ -1695,12 +1692,12 @@ private:
         return kind == TokenKind::RParen || kind == TokenKind::RBrace || kind == TokenKind::RBracket;
     }
 
-    std::vector<Token> parse_meta_quote_token_tree(SourceLocation loc) {
-        expect(TokenKind::LParen, "expected ( after ~!");
+    std::vector<Token> parse_macro_token_tree(SourceLocation loc) {
+        expect(TokenKind::LParen, "expected ( after macro invocation name");
         std::vector<Token> tokens;
         std::vector<TokenKind> closing_stack{TokenKind::RParen};
         while (!closing_stack.empty()) {
-            if (check(TokenKind::End)) fail(loc, "unterminated meta quote");
+            if (check(TokenKind::End)) fail(loc, "unterminated macro invocation");
             Token token = peek();
             if (token.kind == closing_stack.back()) {
                 ++pos_;
@@ -1715,35 +1712,9 @@ private:
                 continue;
             }
             if (is_closing_delimiter(token.kind)) {
-                fail(token.loc, "mismatched delimiter in meta quote");
+                fail(token.loc, "mismatched delimiter in macro invocation");
             }
             tokens.push_back(tokens_[pos_++]);
-        }
-        return tokens;
-    }
-
-    ExprPtr parse_meta_quote() {
-        Token tilde = expect(TokenKind::Tilde, "expected ~ at start of meta quote");
-        expect(TokenKind::Bang, "expected ! after ~ in meta quote");
-        return make_ast_macro_call_expr(tilde.loc, "~", parse_meta_quote_token_tree(tilde.loc));
-    }
-
-    std::vector<Token> parse_macro_token_tree(SourceLocation loc) {
-        expect(TokenKind::LParen, "expected ( after macro invocation name");
-        std::vector<Token> tokens;
-        int depth = 1;
-        while (depth > 0) {
-            if (check(TokenKind::End)) fail(loc, "unterminated macro invocation");
-            Token token = peek();
-            if (match(TokenKind::LParen)) {
-                ++depth;
-                if (depth > 1) tokens.push_back(token);
-            } else if (match(TokenKind::RParen)) {
-                --depth;
-                if (depth > 0) tokens.push_back(token);
-            } else {
-                tokens.push_back(tokens_[pos_++]);
-            }
         }
         return tokens;
     }

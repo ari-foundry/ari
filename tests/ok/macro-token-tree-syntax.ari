@@ -1,6 +1,6 @@
 @cfg(false)
 fn generated() -> i64 {
-  let quoted = ~!(fn ~(name)(~(args)) -> i64 {
+  let quoted = quote!(fn ~(name)(~(args)) -> i64 {
     return ~(body);
   });
   return 0;

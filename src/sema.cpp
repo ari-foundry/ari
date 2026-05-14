@@ -13795,11 +13795,6 @@ private:
     }
 
     IrExprPtr check_macro_call(const Expr& expr) {
-        if (expr.name == "~") {
-            fail(expr.loc,
-                 "meta quote expression '~!(...)' requires compile-time token_stream/ast construction, which is planned but not implemented yet");
-        }
-
         PreludeMacroKind prelude = prelude_macro_kind(unqualified_name(expr.name));
         if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
 
