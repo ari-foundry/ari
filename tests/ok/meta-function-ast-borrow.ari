@@ -1,0 +1,24 @@
+meta fn borrow_shared(input: ast) -> ast {
+  return ref input;
+}
+
+meta fn borrow_unique(input: ast) -> ast {
+  return ref mut input;
+}
+
+fn main() -> i64 {
+  var value = 20;
+  var total = 0;
+  {
+    let shared: ref i64 = borrow_shared!(value);
+    let shared_raw: ptr i64 = shared as ptr i64;
+    total = total + *shared_raw;
+  }
+  {
+    let unique: ref mut i64 = borrow_unique!(value);
+    let unique_raw: ptr i64 = unique as ptr i64;
+    *unique_raw = *unique_raw + 1;
+    total = total + *unique_raw;
+  }
+  return total;
+}

@@ -122,6 +122,7 @@ bool supported_ast_return_expr(const Expr& expr,
         case ExprKind::Tuple:
         case ExprKind::Vector:
             return require_args();
+        case ExprKind::Borrow:
         case ExprKind::Unary:
         case ExprKind::Cast:
             return require_operand(expr_operand(expr));
@@ -143,14 +144,13 @@ bool supported_ast_return_expr(const Expr& expr,
                 reason = "ast meta expression returns cannot reference names other than the meta input yet";
             }
             return false;
-        case ExprKind::Borrow:
         case ExprKind::Try:
         case ExprKind::NullCoalesce:
         case ExprKind::Match:
         case ExprKind::If:
         case ExprKind::Block:
             reason =
-                "ast meta expression returns currently support only literal, input, struct literal, tuple, vector, access, call, method call, unary, binary, and cast expression trees";
+                "ast meta expression returns currently support only literal, input, struct literal, tuple, vector, access, borrow, call, method call, unary, binary, and cast expression trees";
             return false;
         case ExprKind::MacroCall:
             reason =
