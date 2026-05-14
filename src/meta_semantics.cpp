@@ -96,6 +96,20 @@ bool supported_ast_return_expr(const Expr& expr,
         return supported_ast_return_expr(*expr_left(expr), input_name, reason) &&
                supported_ast_return_expr(*expr_right(expr), input_name, reason);
     };
+    auto require_index = [&]() {
+        if (!expr_operand(expr) || !expr_right(expr)) {
+            reason = "malformed ast meta return expression";
+            return false;
+        }
+        return supported_ast_return_expr(*expr_operand(expr), input_name, reason) &&
+               supported_ast_return_expr(*expr_right(expr), input_name, reason);
+    };
+    auto require_args = [&]() {
+        for (const auto& arg : expr.args) {
+            if (!supported_ast_return_expr(*arg, input_name, reason)) return false;
+        }
+        return true;
+    };
 
     switch (expr.kind) {
         case ExprKind::Integer:
@@ -106,15 +120,19 @@ bool supported_ast_return_expr(const Expr& expr,
             return true;
         case ExprKind::Tuple:
         case ExprKind::Vector:
-            for (const auto& arg : expr.args) {
-                if (!supported_ast_return_expr(*arg, input_name, reason)) return false;
-            }
-            return true;
+            return require_args();
         case ExprKind::Unary:
         case ExprKind::Cast:
             return require_operand(expr_operand(expr));
+        case ExprKind::TupleIndex:
+        case ExprKind::FieldAccess:
+            return require_operand(expr_operand(expr));
+        case ExprKind::Index:
+            return require_index();
         case ExprKind::Binary:
             return require_binary();
+        case ExprKind::Call:
+            return require_args();
         case ExprKind::Name:
             if (expr.name == input_name) {
                 return true;
@@ -125,21 +143,17 @@ bool supported_ast_return_expr(const Expr& expr,
         case ExprKind::Borrow:
         case ExprKind::Try:
         case ExprKind::NullCoalesce:
-        case ExprKind::TupleIndex:
-        case ExprKind::Index:
-        case ExprKind::FieldAccess:
         case ExprKind::StructLiteral:
         case ExprKind::MethodCall:
         case ExprKind::Match:
         case ExprKind::If:
         case ExprKind::Block:
-        case ExprKind::Call:
             reason =
-                "ast meta expression returns currently support only literal, input, tuple, vector, unary, binary, and cast expression trees";
+                "ast meta expression returns currently support only literal, input, tuple, vector, access, call, unary, binary, and cast expression trees";
             return false;
         case ExprKind::MacroCall:
             reason =
-                "ast meta expression returns cannot call macros; use decl!(...) for item macro declaration output, pattern!(...) for pattern macro output, or type!(...) for type macro output";
+                "ast meta expression returns cannot call macros; use decl!(...) for item macro declaration output or pattern!(...) for pattern macro output";
             return false;
     }
     reason = "unsupported ast meta return expression";

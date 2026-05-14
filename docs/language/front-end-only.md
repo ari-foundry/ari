@@ -194,11 +194,16 @@ each transform shape instead of a `[T]`-generic meta function. Bodies may be
 empty or contain a single `return input;` identity return, where `input` is the
 meta function parameter. Expression-position `ast -> ast` macros may also
 return an expression AST directly and use the meta input parameter as a
-substitution point:
+substitution point. Literal, tuple, vector, field/index/tuple access, function
+call, unary, binary, and cast expression trees are accepted:
 
 ```ari
 meta fn add_one(input: ast) -> ast {
   return input + 1;
+}
+
+meta fn score(input: ast) -> ast {
+  return add(input.left, input.values[1]);
 }
 
 fn main() -> i64 {
@@ -284,7 +289,10 @@ their basename matches a prelude macro. User expression macros must resolve to
 `ident!(...)` is parsed as one expression and then lowered as that expression.
 Expression returns from `ast -> ast` bodies replace that parsed input at
 expression macro sites, with bare meta-parameter references substituted by the
-parsed input expression. User syntax-rewriting attributes and active
+parsed input expression. Function names and field names in the returned AST are
+ordinary source names resolved after expansion; only bare expression names other
+than the meta parameter are rejected at meta body validation time. User
+syntax-rewriting attributes and active
 item-position macros must also resolve to
 `token_stream -> token_stream` or `ast -> ast` meta functions. Function,
 constant, struct, enum, trait, impl, inline module, and use item macro

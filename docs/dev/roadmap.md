@@ -191,7 +191,8 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Bodies
    may be empty, use a single `return input;` identity body, or, for
    expression-position `ast -> ast` macros, return an expression AST such as
-   `return input + 1;` or `return 40 + 2;` without quote/eval syntax. The
+   `return input + 1;`, `return 40 + 2;`, or `return add(input.left, 1);`
+   without quote/eval syntax. The
    meta input parameter is substituted with the parsed invocation expression;
    other name references are rejected. Item-position `ast -> ast` macros can
    also return top-level declaration AST output with the meta-body-only
@@ -218,8 +219,10 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    their token-tree input as a single expression. Empty bodies and
    `return input;` lower as identity expansion; non-identity expression
    returns from `ast -> ast` bodies clone the returned AST and substitute that
-   parsed input expression wherever the meta parameter name appears. Invalid
-   extra tokens are rejected before semantic expression lowering.
+   parsed input expression wherever the meta parameter name appears. Literal,
+   tuple, vector, access, call, unary, binary, and cast expression trees are
+   accepted. Invalid extra tokens are rejected before semantic expression
+   lowering.
    Item-position `ast -> ast` bodies can also return `decl!(...)`; those
    declaration tokens are parsed as top-level use, inline module, function,
    constant, struct, enum, trait, or impl declarations and spliced into normal
@@ -285,8 +288,9 @@ V0 cache-format contract until a cache version bump is explicitly approved.
      expression returns with input substitution and item-position `decl!(...)`
      declaration output with input substitution and pattern-position
      `pattern!(...)` output with input substitution, plus type-position
-     `type!(...)` output with input substitution: add richer expression trees
-     once evaluator policy is defined
+     `type!(...)` output with input substitution: add struct literal,
+     method-call, control-flow, and other richer expression trees once
+     evaluator policy is defined
    - [ast-decl-input] let item-position declaration constructors inspect the
      invocation declaration input after evaluator policy is defined
    - [attributes] allow attribute macros to rewrite or insert AST nodes

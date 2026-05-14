@@ -1458,6 +1458,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-ast-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/meta-function-ast-input-substitution.ari -o $(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw
 	$(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/meta-function-ast-call-access.ari -o $(BUILD_DIR)/meta/meta-function-ast-call-access.raw
+	$(BUILD_DIR)/meta/meta-function-ast-call-access.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-function-identity.ari -o $(BUILD_DIR)/meta/item-macro-function-identity.raw
 	$(BUILD_DIR)/meta/item-macro-function-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-ast-decl-return.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-return.raw

@@ -1,0 +1,17 @@
+struct Pack {
+  left: i64,
+  values: [i64, 2],
+}
+
+fn add(left: i64, middle: i64, right: i64) -> i64 {
+  return left + middle + right;
+}
+
+meta fn score_pack(input: ast) -> ast {
+  return add(input.left, input.values[1], input.values[0]);
+}
+
+fn main() -> i64 {
+  let pack = Pack { left: 20, values: [2, 20] };
+  return score_pack!(pack);
+}
