@@ -143,14 +143,16 @@ User-defined attributes can be reserved by declaring a matching `meta fn`:
 meta fn trace(input: token_stream) -> token_stream {
 }
 
-@trace(enabled)
+@trace({ enabled([1, 2], (3)) })
 fn value() -> i64 {
   return 1
 }
 ```
 
-The attribute name is checked against meta functions today. Expansion is
-planned.
+The attribute name is checked against meta functions today. Attribute arguments
+are parsed as a balanced token tree inside the outer parentheses, preserving
+nested `(...)`, `{...}`, and `[...]` groups for the future evaluator. Expansion
+is planned.
 
 ## Meta Functions
 

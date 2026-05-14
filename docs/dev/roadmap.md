@@ -187,11 +187,13 @@ stages rather than one file per syntax feature.
    trees, and the selected `meta fn` parameter domain determines whether the
    future evaluator receives `token_stream`, `ast`, or `type` input. Active
    expansion still needs compile-time `token_stream`/`ast`/`type`
-   construction before it can produce values. Item-position and type-position
-   `ident!(...)` invocations now use the same balanced token-tree parser, are
-   preserved through AST/module summary plumbing, and receive sema diagnostics
-   for unknown names, bad domains, or planned expansion. Disabled `@cfg(false)`
-   declarations still parse for linting/cache stability.
+   construction before it can produce values. User attribute arguments and
+   item-position/type-position `ident!(...)` invocations now use the same
+   balanced token-tree parser, with nested `(...)`, `{...}`, and `[...]`
+   delimiter validation before sema diagnostics for unknown names, bad domains,
+   or planned expansion. Item/type macro token trees are also preserved through
+   AST/module summary plumbing. Disabled `@cfg(false)` declarations still parse
+   for linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [types] expand sema-validated type-position macro invocations into type refs

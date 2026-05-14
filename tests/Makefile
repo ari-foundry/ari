@@ -1394,6 +1394,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/matches-macro.raw; code=$$?; test $$code -eq 15
 	if $(TARGET) tests/errors/attribute-unknown.ari -o $(BUILD_DIR)/meta/attribute-unknown.elf >$(BUILD_DIR)/meta/attribute-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown attribute '@unknown'" $(BUILD_DIR)/meta/attribute-unknown.err
+	if $(TARGET) tests/errors/attribute-token-tree-mismatch.ari -o $(BUILD_DIR)/meta/attribute-token-tree-mismatch.elf >$(BUILD_DIR)/meta/attribute-token-tree-mismatch.err 2>&1; then exit 1; fi
+	grep -q "mismatched delimiter in attribute arguments" $(BUILD_DIR)/meta/attribute-token-tree-mismatch.err
 	if $(TARGET) tests/errors/attribute-placement.ari -o $(BUILD_DIR)/meta/attribute-placement.elf >$(BUILD_DIR)/meta/attribute-placement.err 2>&1; then exit 1; fi
 	grep -q "attribute '@derive' is only supported on structs and enums" $(BUILD_DIR)/meta/attribute-placement.err
 	if $(TARGET) tests/errors/attribute-repr-unsupported.ari -o $(BUILD_DIR)/meta/attribute-repr-unsupported.elf >$(BUILD_DIR)/meta/attribute-repr-unsupported.err 2>&1; then exit 1; fi

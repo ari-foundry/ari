@@ -343,22 +343,9 @@ private:
             Attribute attr;
             attr.name = parse_path_after_first(name);
             attr.loc = name.loc;
-            if (match(TokenKind::LParen)) {
+            if (check(TokenKind::LParen)) {
                 attr.has_args = true;
-                int depth = 1;
-                while (depth > 0) {
-                    if (check(TokenKind::End)) fail(peek().loc, "unterminated attribute");
-                    Token token = peek();
-                    if (match(TokenKind::LParen)) {
-                        ++depth;
-                        if (depth > 1) attr.args.push_back(token);
-                    } else if (match(TokenKind::RParen)) {
-                        --depth;
-                        if (depth > 0) attr.args.push_back(token);
-                    } else {
-                        attr.args.push_back(tokens_[pos_++]);
-                    }
-                }
+                attr.args = parse_attribute_token_tree(attr.loc);
             }
             attributes.push_back(std::move(attr));
         }
@@ -1709,12 +1696,14 @@ private:
         return kind == TokenKind::RParen || kind == TokenKind::RBrace || kind == TokenKind::RBracket;
     }
 
-    std::vector<Token> parse_macro_token_tree(SourceLocation loc) {
-        expect(TokenKind::LParen, "expected ( after macro invocation name");
+    std::vector<Token> parse_balanced_token_tree(SourceLocation loc,
+                                                 const std::string& expected_open_message,
+                                                 const std::string& context) {
+        expect(TokenKind::LParen, expected_open_message);
         std::vector<Token> tokens;
         std::vector<TokenKind> closing_stack{TokenKind::RParen};
         while (!closing_stack.empty()) {
-            if (check(TokenKind::End)) fail(loc, "unterminated macro invocation");
+            if (check(TokenKind::End)) fail(loc, "unterminated " + context);
             Token token = peek();
             if (token.kind == closing_stack.back()) {
                 ++pos_;
@@ -1729,11 +1718,19 @@ private:
                 continue;
             }
             if (is_closing_delimiter(token.kind)) {
-                fail(token.loc, "mismatched delimiter in macro invocation");
+                fail(token.loc, "mismatched delimiter in " + context);
             }
             tokens.push_back(tokens_[pos_++]);
         }
         return tokens;
+    }
+
+    std::vector<Token> parse_attribute_token_tree(SourceLocation loc) {
+        return parse_balanced_token_tree(loc, "expected ( after attribute name", "attribute arguments");
+    }
+
+    std::vector<Token> parse_macro_token_tree(SourceLocation loc) {
+        return parse_balanced_token_tree(loc, "expected ( after macro invocation name", "macro invocation");
     }
 
     static std::string unqualified_name(const std::string& name) {
