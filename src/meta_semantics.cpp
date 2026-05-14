@@ -27,6 +27,11 @@ void require_unique_generic_params(const std::vector<GenericParam>& generics,
     }
 }
 
+bool is_identity_meta_return(const Stmt& stmt, const Param& param) {
+    if (stmt.kind != StmtKind::Return || !stmt.expr) return false;
+    return stmt.expr->kind == ExprKind::Name && stmt.expr->name == param.name;
+}
+
 } // namespace
 
 MetaTransformKind classify_meta_type_ref(const TypeRef& type) {
@@ -152,9 +157,15 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
         fail(fn.return_type.loc,
              "meta function return type must match its input meta type; use token_stream -> token_stream, ast -> ast, or type -> type");
     }
-    if (!fn.body.empty()) {
+    if (fn.body.size() > 1) {
+        fail(fn.body[1]->loc,
+             "meta function bodies currently allow only an empty body or `return " + param.name +
+                 ";` identity body");
+    }
+    if (!fn.body.empty() && !is_identity_meta_return(*fn.body.front(), param)) {
         fail(fn.body.front()->loc,
-             "meta function bodies are reserved for future compile-time evaluation; keep the body empty for now");
+             "meta function bodies currently allow only an empty body or `return " + param.name +
+                 ";` identity body");
     }
     return input_kind;
 }

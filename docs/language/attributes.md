@@ -130,7 +130,7 @@ Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.
 
-`@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`, `@derive(Eq)`, and
+`@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`, `@derive(Eq)`,
 `@derive(PartialEq)`, `@derive(Ord)`, and `@derive(PartialOrd)` are supported
 on structs and enums. `@derive(Default)` is
 supported on named structs, tuple structs, and enums with an explicit default
@@ -183,5 +183,7 @@ preserved in module AST summaries, including numeric values, float bits, and
 literal suffixes. The reserving `meta fn` must be concrete, non-generic, and
 written as either `token_stream -> token_stream` or `ast -> ast`; `type -> type`
 meta functions are accepted only at type-position macro sites and cannot
-reserve attributes. Meta bodies must stay empty until Ari has a compile-time
-evaluator. Attribute macros that rewrite or insert AST nodes are planned.
+reserve attributes. Meta bodies may be empty or contain only `return input;`,
+where `input` is the single meta parameter, so today's user macros remain
+identity transforms without adding quote/eval syntax. Attribute macros that
+rewrite or insert AST nodes are planned.

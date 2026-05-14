@@ -190,17 +190,18 @@ fn main() -> i64 {
 stable declaration shape is one parameter and a matching return domain:
 `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Meta
 functions are intentionally non-generic; define one concrete entry point for
-each transform shape instead of a `[T]`-generic meta function. Bodies must be
-empty until Ari has a compile-time evaluator, so declarations can reserve
-attributes and macro names without silently ignoring executable statements.
+each transform shape instead of a `[T]`-generic meta function. Bodies may be
+empty or contain only a single `return input;` identity return, where `input`
+is the meta function parameter. Non-identity token or AST construction remains
+reserved until Ari has a compile-time evaluator.
 
 Expression, item, and type-position macro invocation use Rust-style
 `ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
 `println!`, and `matches!` macros lower today. User expression macros must
 resolve to `token_stream -> token_stream` or `ast -> ast` meta functions.
-Because meta bodies are still empty, expression macro expansion is currently
-an identity transform: the token tree inside `ident!(...)` is parsed as one
-expression and then lowered as that expression. User syntax-rewriting
+Because active user meta bodies are identity-only, expression macro expansion
+is currently an identity transform: the token tree inside `ident!(...)` is
+parsed as one expression and then lowered as that expression. User syntax-rewriting
 attributes and active item-position macros must also resolve to
 `token_stream -> token_stream` or `ast -> ast` meta functions. Function,
 constant, struct, enum, trait, impl, inline module, and use item macro

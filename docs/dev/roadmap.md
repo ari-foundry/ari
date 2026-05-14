@@ -179,12 +179,13 @@ stages rather than one file per syntax feature.
    evaluator lands. `meta fn` entries are compile-time-only, concrete,
    non-generic, one-parameter transforms over exactly one meta domain:
    `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Bodies
-   must stay empty until compile-time evaluation exists, so declarations can
-   reserve attributes and macro names without pretending runtime statements
-   execute. Attribute, expression-macro, and active item-macro sites now reject
-   `type -> type` transforms and accept only syntax-rewriting `token_stream ->
-   token_stream` or `ast -> ast` domains; type-position macro sites accept only
-   `type -> type` domains. Macro invocation syntax `ident!(...)` is the stable
+   may be empty or use a single `return input;` identity body, where `input` is
+   the meta function parameter; non-identity compile-time construction remains
+   reserved until evaluation exists. Attribute, expression-macro, and active
+   item-macro sites now reject `type -> type` transforms and accept only
+   syntax-rewriting `token_stream -> token_stream` or `ast -> ast` domains;
+   type-position macro sites accept only `type -> type` domains. Macro
+   invocation syntax `ident!(...)` is the stable
    parser surface for token-tree expressions and type positions; there is no
    separate anonymous macro grammar. User macro calls capture balanced token
    trees, and the selected `meta fn` parameter domain determines whether the
@@ -241,8 +242,10 @@ stages rather than one file per syntax feature.
    remains a marker-trait impl and does not change Ari's structural copyability
    rules. Unsupported or duplicate derive names are rejected before impl
    validation, and enum `Default` derives without a case marker are rejected.
-   - [tokens] support `token_stream` input/output rewrites
-   - [ast] support `ast` input/output rewrites
+   - [tokens] support non-identity `token_stream` construction and rewrites
+     beyond empty/`return input;` identity bodies
+   - [ast] support non-identity `ast` construction and rewrites beyond
+     empty/`return input;` identity bodies
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [format] lower `format!` after owned runtime strings exist
    - [future-clone-contract] revisit derived `Clone` bodies only if `Clone`

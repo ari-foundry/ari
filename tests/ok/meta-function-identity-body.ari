@@ -1,0 +1,16 @@
+meta fn keep_tokens(input: token_stream) -> token_stream {
+  return input;
+}
+
+meta fn keep_ast(input: ast) -> ast {
+  return input;
+}
+
+meta fn keep_type(input: type) -> type {
+  return input;
+}
+
+fn main() -> i64 {
+  let value: keep_type!(i64) = keep_tokens!(keep_ast!(3 + 4));
+  return value;
+}

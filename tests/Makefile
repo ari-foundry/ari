@@ -1423,6 +1423,8 @@ check-meta: $(TARGET)
 	grep -q 'define i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility-exe.ll
 	$(TARGET) --freestanding tests/ok/meta-function-surface.ari -o $(BUILD_DIR)/meta/meta-function-surface.raw
 	$(BUILD_DIR)/meta/meta-function-surface.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/meta-function-identity-body.ari -o $(BUILD_DIR)/meta/meta-function-identity-body.raw
+	$(BUILD_DIR)/meta/meta-function-identity-body.raw; code=$$?; test $$code -eq 7
 	$(TARGET) --freestanding tests/ok/macro-token-tree-syntax.ari -o $(BUILD_DIR)/meta/macro-token-tree-syntax.raw
 	$(BUILD_DIR)/meta/macro-token-tree-syntax.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/macro-call-identity.ari -o $(BUILD_DIR)/meta/macro-call-identity.raw
@@ -1496,7 +1498,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/meta-function-domain-mismatch.ari -o $(BUILD_DIR)/meta/meta-function-domain-mismatch.elf >$(BUILD_DIR)/meta/meta-function-domain-mismatch.err 2>&1; then exit 1; fi
 	grep -q "meta function return type must match its input meta type" $(BUILD_DIR)/meta/meta-function-domain-mismatch.err
 	if $(TARGET) tests/errors/meta-function-body-planned.ari -o $(BUILD_DIR)/meta/meta-function-body-planned.elf >$(BUILD_DIR)/meta/meta-function-body-planned.err 2>&1; then exit 1; fi
-	grep -q "meta function bodies are reserved for future compile-time evaluation" $(BUILD_DIR)/meta/meta-function-body-planned.err
+	grep -q 'meta function bodies currently allow only an empty body or `return input;` identity body' $(BUILD_DIR)/meta/meta-function-body-planned.err
 	if $(TARGET) tests/errors/attribute-meta-type-domain.ari -o $(BUILD_DIR)/meta/attribute-meta-type-domain.elf >$(BUILD_DIR)/meta/attribute-meta-type-domain.err 2>&1; then exit 1; fi
 	grep -q "attributes require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/attribute-meta-type-domain.err
 	if $(TARGET) tests/errors/macro-call-type-domain.ari -o $(BUILD_DIR)/meta/macro-call-type-domain.elf >$(BUILD_DIR)/meta/macro-call-type-domain.err 2>&1; then exit 1; fi
