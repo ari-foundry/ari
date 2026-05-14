@@ -1,0 +1,48 @@
+impl PartialEq[i64] for i64 {
+  fn eq(self, other: i64) -> bool {
+    return self == other;
+  }
+}
+
+impl PartialEq[bool] for bool {
+  fn eq(self, other: bool) -> bool {
+    return self == other;
+  }
+}
+
+@derive(PartialEq)
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+@derive(std::PartialEq)
+struct Pair(i64, bool)
+
+@derive(PartialEq)
+struct Box[T] {
+  value: T,
+}
+
+@derive(PartialEq)
+enum Mode {
+  Slow,
+  Fast,
+}
+
+fn same[T: PartialEq[T]](left: T, right: T) -> i64 {
+  if left.eq(right) {
+    return 11;
+  }
+  return 3;
+}
+
+fn main() -> i64 {
+  let point = same<Point>(Point { x: 1, y: 2 }, Point { x: 1, y: 2 });
+  let not_point = same<Point>(Point { x: 1, y: 2 }, Point { x: 1, y: 3 });
+  let pair = same<Pair>(Pair(7, true), Pair(7, true));
+  let boxed = same<Box[i64]>(Box { value: 9 }, Box { value: 9 });
+  let mode = same<Mode>(Fast, Fast);
+  let not_mode = same<Mode>(Slow, Fast);
+  return point + not_point + pair + boxed + mode + not_mode;
+}

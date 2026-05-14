@@ -39,7 +39,10 @@ std::string canonical_derive_name(SourceLocation loc, const std::string& path) {
     if (path == "Copy" || path == "std::Copy") return "Copy";
     if (path == "Clone" || path == "std::Clone") return "Clone";
     if (path == "Default" || path == "std::Default") return "Default";
-    fail_derive_expansion(loc, "unsupported derive '" + path + "'; supported derives: Debug, Copy, Clone, Default");
+    if (path == "PartialEq" || path == "std::PartialEq") return "PartialEq";
+    fail_derive_expansion(
+        loc,
+        "unsupported derive '" + path + "'; supported derives: Debug, Copy, Clone, Default, PartialEq");
 }
 
 std::vector<std::string> derive_names(const std::vector<Attribute>& attributes) {
@@ -100,6 +103,7 @@ StmtPtr make_return_stmt(SourceLocation loc, ExprPtr value) {
 FunctionDecl make_derived_method(const std::string& module_name,
                                  const std::string& name,
                                  std::vector<Param> params,
+                                 TypeRef return_type,
                                  ExprPtr return_value,
                                  SourceLocation loc) {
     FunctionDecl method;
@@ -107,32 +111,48 @@ FunctionDecl make_derived_method(const std::string& module_name,
     method.module_name = module_name;
     method.loc = loc;
     method.params = std::move(params);
-    method.return_type = simple_type_ref("Self", loc);
+    method.return_type = std::move(return_type);
     method.has_return_type = true;
     method.has_body = true;
     method.body.push_back(make_return_stmt(loc, std::move(return_value)));
     return method;
 }
 
+TypeRef self_type_ref(SourceLocation loc) {
+    return simple_type_ref("Self", loc);
+}
+
+TypeRef bool_type_ref(SourceLocation loc) {
+    return simple_type_ref("bool", loc);
+}
+
 FunctionDecl make_clone_method(const std::string& module_name, SourceLocation loc) {
     Param self;
     self.name = "self";
-    self.type = simple_type_ref("Self", loc);
+    self.type = self_type_ref(loc);
     std::vector<Param> params;
     params.push_back(std::move(self));
-    return make_derived_method(module_name, "clone", std::move(params), make_ast_name_expr(loc, "self"), loc);
+    return make_derived_method(
+        module_name,
+        "clone",
+        std::move(params),
+        self_type_ref(loc),
+        make_ast_name_expr(loc, "self"),
+        loc);
 }
 
 ImplDecl make_trait_derive_impl(const std::string& trait_name,
                                 const std::string& type_name,
                                 const std::string& module_name,
                                 const std::vector<GenericParam>& generics,
-                                SourceLocation loc) {
+                                SourceLocation loc,
+                                std::vector<TypeRef> trait_args = {}) {
     ImplDecl impl;
     impl.module_name = module_name;
     impl.has_trait = true;
     impl.generics = generics;
     impl.trait_type = simple_type_ref("std::" + trait_name, loc);
+    impl.trait_type.args = std::move(trait_args);
     impl.for_type = simple_type_ref(type_name, loc);
     impl.for_type.args = generic_type_args(generics);
     return impl;
@@ -157,6 +177,26 @@ bool is_default_trait_ref(const TypeRef& type) {
            (type.name == "Default" || type.name == "std::Default");
 }
 
+bool is_matching_trait_ref(const TypeRef& type, const std::string& trait_name, const std::string& generic_name) {
+    if (type.qualifier != TypeQualifier::Value ||
+        type.args.size() != 1 ||
+        type.is_dyn_object ||
+        type.nullable ||
+        type.is_macro_invocation ||
+        type.has_associated_projection ||
+        (type.name != trait_name && type.name != "std::" + trait_name)) {
+        return false;
+    }
+    const TypeRef& arg = type.args.front();
+    return arg.qualifier == TypeQualifier::Value &&
+           arg.name == generic_name &&
+           arg.args.empty() &&
+           !arg.is_dyn_object &&
+           !arg.nullable &&
+           !arg.is_macro_invocation &&
+           !arg.has_associated_projection;
+}
+
 bool type_ref_mentions_name(const TypeRef& type, const std::string& name) {
     if (type.qualifier == TypeQualifier::Value && type.name == name && type.args.empty()) return true;
     for (const auto& arg : type.args) {
@@ -170,6 +210,12 @@ bool generic_is_used_in_fields(const std::vector<StructField>& fields, const std
         if (type_ref_mentions_name(field.type, generic_name)) return true;
     }
     return false;
+}
+
+TypeRef trait_self_constraint(const std::string& trait_name, const GenericParam& generic) {
+    TypeRef constraint = simple_type_ref("std::" + trait_name, generic.loc);
+    constraint.args.push_back(simple_type_ref(generic.name, generic.loc));
+    return constraint;
 }
 
 std::vector<GenericParam> default_impl_generics(const StructDecl& decl) {
@@ -186,6 +232,28 @@ std::vector<GenericParam> default_impl_generics(const StructDecl& decl) {
                 generic.loc,
                 "Default derive cannot add the required std::Default bound to generic parameter '" +
                     generic.name + "' because it already has a constraint");
+        }
+    }
+    return generics;
+}
+
+std::vector<GenericParam> field_trait_impl_generics(const StructDecl& decl,
+                                                    const std::string& trait_name,
+                                                    const std::string& derive_name) {
+    std::vector<GenericParam> generics = decl.generics;
+    for (auto& generic : generics) {
+        if (!generic_is_used_in_fields(decl.fields, generic.name)) continue;
+        if (!generic.has_constraint) {
+            generic.constraint = trait_self_constraint(trait_name, generic);
+            generic.has_constraint = true;
+            continue;
+        }
+        if (!is_matching_trait_ref(generic.constraint, trait_name, generic.name)) {
+            fail_derive_expansion(
+                generic.loc,
+                derive_name + " derive cannot add the required std::" + trait_name +
+                    " bound to generic parameter '" + generic.name +
+                    "' because it already has a constraint");
         }
     }
     return generics;
@@ -228,6 +296,7 @@ FunctionDecl make_default_method(const StructDecl& decl) {
         decl.module_name,
         "default",
         {},
+        self_type_ref(decl.loc),
         make_default_struct_value(decl),
         decl.loc);
 }
@@ -236,6 +305,121 @@ ImplDecl make_default_derive_impl(const StructDecl& decl) {
     std::vector<GenericParam> generics = default_impl_generics(decl);
     ImplDecl impl = make_trait_derive_impl("Default", decl.name, decl.module_name, generics, decl.loc);
     impl.methods.push_back(make_default_method(decl));
+    return impl;
+}
+
+ExprPtr make_field_access(SourceLocation loc, const std::string& base_name, const StructField& field) {
+    ExprPtr base = make_ast_name_expr(loc, base_name);
+    if (!field.name.empty()) {
+        bool numeric = true;
+        for (char ch : field.name) {
+            if (ch < '0' || ch > '9') {
+                numeric = false;
+                break;
+            }
+        }
+        if (numeric) {
+            return make_ast_tuple_index_expr(loc, std::move(base), static_cast<std::uint64_t>(std::stoull(field.name)));
+        }
+    }
+    return make_ast_field_access_expr(loc, std::move(base), field.name);
+}
+
+ExprPtr make_partial_eq_call(const StructField& field) {
+    std::vector<ExprPtr> args;
+    args.push_back(make_field_access(field.loc, "self", field));
+    args.push_back(make_field_access(field.loc, "other", field));
+
+    ExprPtr call = make_ast_call_expr(field.loc, "std::PartialEq::eq", nullptr, std::move(args));
+    std::vector<TypeRef> trait_args;
+    trait_args.push_back(field.type);
+    set_expr_receiver_type_args(*call, std::move(trait_args));
+    return call;
+}
+
+ExprPtr make_partial_eq_struct_value(const StructDecl& decl) {
+    ExprPtr value = make_ast_bool_expr(decl.loc, true);
+    for (const auto& field : decl.fields) {
+        value = make_ast_binary_expr(
+            field.loc,
+            TokenKind::AmpAmp,
+            std::move(value),
+            make_partial_eq_call(field));
+    }
+    return value;
+}
+
+std::vector<Param> binary_self_params(SourceLocation loc) {
+    Param self;
+    self.name = "self";
+    self.type = self_type_ref(loc);
+    Param other;
+    other.name = "other";
+    other.type = self_type_ref(loc);
+    std::vector<Param> params;
+    params.push_back(std::move(self));
+    params.push_back(std::move(other));
+    return params;
+}
+
+FunctionDecl make_partial_eq_method(const StructDecl& decl) {
+    return make_derived_method(
+        decl.module_name,
+        "eq",
+        binary_self_params(decl.loc),
+        bool_type_ref(decl.loc),
+        make_partial_eq_struct_value(decl),
+        decl.loc);
+}
+
+TypeRef declared_type_ref(const std::string& type_name,
+                          const std::vector<GenericParam>& generics,
+                          SourceLocation loc) {
+    TypeRef type = simple_type_ref(type_name, loc);
+    type.args = generic_type_args(generics);
+    return type;
+}
+
+ImplDecl make_partial_eq_derive_impl(const StructDecl& decl) {
+    std::vector<GenericParam> generics = field_trait_impl_generics(decl, "PartialEq", "PartialEq");
+    std::vector<TypeRef> trait_args;
+    trait_args.push_back(declared_type_ref(decl.name, decl.generics, decl.loc));
+    ImplDecl impl = make_trait_derive_impl("PartialEq", decl.name, decl.module_name, generics, decl.loc, std::move(trait_args));
+    impl.methods.push_back(make_partial_eq_method(decl));
+    return impl;
+}
+
+ExprPtr make_partial_eq_enum_value(SourceLocation loc) {
+    return make_ast_binary_expr(
+        loc,
+        TokenKind::EqEq,
+        make_ast_name_expr(loc, "self"),
+        make_ast_name_expr(loc, "other"));
+}
+
+FunctionDecl make_partial_eq_method(const EnumDecl& decl) {
+    return make_derived_method(
+        decl.module_name,
+        "eq",
+        binary_self_params(decl.loc),
+        bool_type_ref(decl.loc),
+        make_partial_eq_enum_value(decl.loc),
+        decl.loc);
+}
+
+ImplDecl make_partial_eq_derive_impl(const EnumDecl& decl) {
+    for (const auto& item : decl.cases) {
+        if (!item.payloads.empty()) {
+            fail_derive_expansion(
+                item.loc,
+                "PartialEq derive for enums currently requires all cases to be fieldless");
+        }
+    }
+    std::vector<TypeRef> trait_args;
+    trait_args.push_back(declared_type_ref(decl.name, decl.generics, decl.loc));
+    ImplDecl impl =
+        make_trait_derive_impl("PartialEq", decl.name, decl.module_name, decl.generics, decl.loc, std::move(trait_args));
+    impl.methods.push_back(make_partial_eq_method(decl));
     return impl;
 }
 
@@ -252,6 +436,8 @@ std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl) {
             impls.push_back(make_clone_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
         } else if (name == "Default") {
             impls.push_back(make_default_derive_impl(decl));
+        } else if (name == "PartialEq") {
+            impls.push_back(make_partial_eq_derive_impl(decl));
         }
     }
     return impls;
@@ -270,6 +456,8 @@ std::vector<ImplDecl> expand_derive_impls_for_enum(const EnumDecl& decl) {
             fail_derive_expansion(
                 decl.loc,
                 "Default derive for enums requires an explicit default case marker, which is not supported yet");
+        } else if (name == "PartialEq") {
+            impls.push_back(make_partial_eq_derive_impl(decl));
         }
     }
     return impls;
