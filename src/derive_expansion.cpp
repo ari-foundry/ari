@@ -49,19 +49,52 @@ std::string canonical_derive_name(SourceLocation loc, const std::string& path) {
             "'; supported derives: Debug, Copy, Clone, Default, Eq, PartialEq, Ord, PartialOrd");
 }
 
-std::vector<std::string> derive_names(const std::vector<Attribute>& attributes) {
-    std::vector<std::string> names;
+struct DeriveRequest {
+    std::string name;
+    std::string default_case;
+    bool has_default_case = false;
+    SourceLocation loc;
+    SourceLocation default_case_loc;
+};
+
+DeriveRequest parse_derive_request(const Attribute& attr, std::size_t& index) {
+    SourceLocation name_loc = attr.args[index].loc;
+    DeriveRequest request;
+    request.name = canonical_derive_name(name_loc, parse_derive_path(attr, index));
+    request.loc = name_loc;
+    if (index < attr.args.size() && attr.args[index].kind == TokenKind::LParen) {
+        SourceLocation marker_loc = attr.args[index].loc;
+        if (request.name != "Default") {
+            fail_derive_expansion(marker_loc, request.name + " derive does not accept arguments");
+        }
+        ++index;
+        if (index >= attr.args.size() || attr.args[index].kind != TokenKind::Identifier) {
+            fail_derive_expansion(marker_loc, "Default derive case marker expects one enum case name");
+        }
+        request.default_case = attr.args[index].text;
+        request.default_case_loc = attr.args[index].loc;
+        request.has_default_case = true;
+        ++index;
+        if (index >= attr.args.size() || attr.args[index].kind != TokenKind::RParen) {
+            fail_derive_expansion(marker_loc, "Default derive case marker expects one enum case name");
+        }
+        ++index;
+    }
+    return request;
+}
+
+std::vector<DeriveRequest> derive_requests(const std::vector<Attribute>& attributes) {
+    std::vector<DeriveRequest> requests;
     std::set<std::string> seen;
     for (const auto& attr : attributes) {
         if (attr.name != "derive") continue;
         std::size_t index = 0;
         while (index < attr.args.size()) {
-            SourceLocation name_loc = attr.args[index].loc;
-            std::string name = canonical_derive_name(name_loc, parse_derive_path(attr, index));
-            if (!seen.insert(name).second) {
-                fail_derive_expansion(attr.loc, "duplicate derive '" + name + "'");
+            DeriveRequest request = parse_derive_request(attr, index);
+            if (!seen.insert(request.name).second) {
+                fail_derive_expansion(attr.loc, "duplicate derive '" + request.name + "'");
             }
-            names.push_back(std::move(name));
+            requests.push_back(std::move(request));
             if (index >= attr.args.size()) break;
             if (attr.args[index].kind != TokenKind::Comma) {
                 fail_derive_expansion(attr.loc, "attribute '@derive' expects trait names separated by commas");
@@ -72,7 +105,7 @@ std::vector<std::string> derive_names(const std::vector<Attribute>& attributes) 
             }
         }
     }
-    return names;
+    return requests;
 }
 
 TypeRef simple_type_ref(const std::string& name, SourceLocation loc) {
@@ -244,16 +277,25 @@ bool generic_is_used_in_fields(const std::vector<StructField>& fields, const std
     return false;
 }
 
+bool generic_is_used_in_types(const std::vector<TypeRef>& types, const std::string& generic_name) {
+    for (const auto& type : types) {
+        if (type_ref_mentions_name(type, generic_name)) return true;
+    }
+    return false;
+}
+
 TypeRef trait_self_constraint(const std::string& trait_name, const GenericParam& generic) {
     TypeRef constraint = simple_type_ref("std::" + trait_name, generic.loc);
     constraint.args.push_back(simple_type_ref(generic.name, generic.loc));
     return constraint;
 }
 
-std::vector<GenericParam> default_impl_generics(const StructDecl& decl) {
-    std::vector<GenericParam> generics = decl.generics;
+template <typename IsGenericUsed>
+std::vector<GenericParam> default_impl_generics_for(const std::vector<GenericParam>& source_generics,
+                                                    IsGenericUsed is_generic_used) {
+    std::vector<GenericParam> generics = source_generics;
     for (auto& generic : generics) {
-        if (!generic_is_used_in_fields(decl.fields, generic.name)) continue;
+        if (!is_generic_used(generic.name)) continue;
         if (!generic.has_constraint) {
             generic.constraint = simple_type_ref("std::Default", generic.loc);
             generic.has_constraint = true;
@@ -267,6 +309,18 @@ std::vector<GenericParam> default_impl_generics(const StructDecl& decl) {
         }
     }
     return generics;
+}
+
+std::vector<GenericParam> default_impl_generics(const StructDecl& decl) {
+    return default_impl_generics_for(decl.generics, [&](const std::string& generic_name) {
+        return generic_is_used_in_fields(decl.fields, generic_name);
+    });
+}
+
+std::vector<GenericParam> default_impl_generics(const EnumDecl& decl, const EnumCase& item) {
+    return default_impl_generics_for(decl.generics, [&](const std::string& generic_name) {
+        return generic_is_used_in_types(item.payloads, generic_name);
+    });
 }
 
 std::vector<GenericParam> field_trait_impl_generics(const StructDecl& decl,
@@ -337,6 +391,49 @@ ImplDecl make_default_derive_impl(const StructDecl& decl) {
     std::vector<GenericParam> generics = default_impl_generics(decl);
     ImplDecl impl = make_trait_derive_impl("Default", decl.name, decl.module_name, generics, decl.loc);
     impl.methods.push_back(make_default_method(decl));
+    return impl;
+}
+
+const EnumCase& default_enum_case(const EnumDecl& decl, const DeriveRequest& derive) {
+    if (!derive.has_default_case) {
+        fail_derive_expansion(
+            derive.loc,
+            "Default derive for enums requires a case marker such as @derive(Default(CaseName))");
+    }
+    for (const auto& item : decl.cases) {
+        if (item.name == derive.default_case) return item;
+    }
+    fail_derive_expansion(
+        derive.default_case_loc,
+        "Default derive case '" + derive.default_case + "' does not name a case of enum '" + decl.name + "'");
+}
+
+ExprPtr make_default_enum_value(const EnumDecl& decl, const EnumCase& item) {
+    std::vector<ExprPtr> values;
+    values.reserve(item.payloads.size());
+    for (const auto& payload : item.payloads) {
+        values.push_back(make_default_call(payload, item.loc));
+    }
+    ExprPtr value = make_ast_call_expr(item.loc, item.name, nullptr, std::move(values));
+    set_expr_type_args(*value, generic_type_args(decl.generics));
+    return value;
+}
+
+FunctionDecl make_default_method(const EnumDecl& decl, const EnumCase& item) {
+    return make_derived_method(
+        decl.module_name,
+        "default",
+        {},
+        self_type_ref(decl.loc),
+        make_default_enum_value(decl, item),
+        decl.loc);
+}
+
+ImplDecl make_default_derive_impl(const EnumDecl& decl, const DeriveRequest& derive) {
+    const EnumCase& item = default_enum_case(decl, derive);
+    std::vector<GenericParam> generics = default_impl_generics(decl, item);
+    ImplDecl impl = make_trait_derive_impl("Default", decl.name, decl.module_name, generics, decl.loc);
+    impl.methods.push_back(make_default_method(decl, item));
     return impl;
 }
 
@@ -516,7 +613,8 @@ ImplDecl make_ordering_derive_impl(const StructDecl& decl, const std::string& tr
 
 std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl) {
     std::vector<ImplDecl> impls;
-    for (const auto& name : derive_names(decl.attributes)) {
+    for (const auto& derive : derive_requests(decl.attributes)) {
+        const std::string& name = derive.name;
         if (name == "Debug") {
             impls.push_back(make_trait_derive_impl("Debug", decl.name, decl.module_name, decl.generics, decl.loc));
         } else if (name == "Copy") {
@@ -524,6 +622,11 @@ std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl) {
         } else if (name == "Clone") {
             impls.push_back(make_clone_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
         } else if (name == "Default") {
+            if (derive.has_default_case) {
+                fail_derive_expansion(
+                    derive.default_case_loc,
+                    "Default derive case marker is only valid for enum derives");
+            }
             impls.push_back(make_default_derive_impl(decl));
         } else if (name == "Eq") {
             impls.push_back(make_equality_derive_impl(decl, "Eq"));
@@ -540,7 +643,8 @@ std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl) {
 
 std::vector<ImplDecl> expand_derive_impls_for_enum(const EnumDecl& decl) {
     std::vector<ImplDecl> impls;
-    for (const auto& name : derive_names(decl.attributes)) {
+    for (const auto& derive : derive_requests(decl.attributes)) {
+        const std::string& name = derive.name;
         if (name == "Debug") {
             impls.push_back(make_trait_derive_impl("Debug", decl.name, decl.module_name, decl.generics, decl.loc));
         } else if (name == "Copy") {
@@ -548,9 +652,7 @@ std::vector<ImplDecl> expand_derive_impls_for_enum(const EnumDecl& decl) {
         } else if (name == "Clone") {
             impls.push_back(make_clone_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
         } else if (name == "Default") {
-            fail_derive_expansion(
-                decl.loc,
-                "Default derive for enums requires an explicit default case marker, which is not supported yet");
+            impls.push_back(make_default_derive_impl(decl, derive));
         } else if (name == "Eq") {
             impls.push_back(make_equality_derive_impl(decl, "Eq"));
         } else if (name == "PartialEq") {

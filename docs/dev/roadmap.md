@@ -225,25 +225,26 @@ stages rather than one file per syntax feature.
    `@derive(Eq)`, and `@derive(PartialEq)` now expand on structs and enums,
    including generic declarations. `@derive(Default)` now expands on named and
    tuple structs, including generic declarations whose used type parameters can
-   receive a `std::Default` bound. `Debug` and `Copy` synthesize empty trait
-   impls; `Clone` synthesizes a value-self method that returns `self` to match
-   the current `Clone` contract; struct `Default` synthesizes an associated
-   function that defaults each field through `Default::default<FieldType>()`;
-   struct `Eq` and `PartialEq` compare every field through the matching
-   trait-qualified `eq`; struct `Ord` and `PartialOrd` compare fields
-   lexicographically through the matching trait-qualified `lt`; and fieldless
-   enum `Eq` and `PartialEq` compare tags directly. `Copy` derive remains a
-   marker-trait impl and does not change Ari's structural copyability rules.
-   Unsupported or duplicate derive names are rejected before impl validation,
-   enum `Default` derives are reserved until an explicit default-case marker
-   exists, enum ordering derives are reserved until enum ordering policy is
-   defined, and payload-bearing enum equality derives are reserved until
-   payload comparison policy is defined.
+   receive a `std::Default` bound. `@derive(Default(CaseName))` now expands on
+   enums by returning the named case from `default`, default-constructing any
+   payloads through `Default::default<PayloadType>()`. `Debug` and `Copy`
+   synthesize empty trait impls; `Clone` synthesizes a value-self method that
+   returns `self` to match the current `Clone` contract; struct `Default`
+   synthesizes an associated function that defaults each field through
+   `Default::default<FieldType>()`; struct `Eq` and `PartialEq` compare every
+   field through the matching trait-qualified `eq`; struct `Ord` and
+   `PartialOrd` compare fields lexicographically through the matching
+   trait-qualified `lt`; and fieldless enum `Eq` and `PartialEq` compare tags
+   directly. `Copy` derive remains a marker-trait impl and does not change
+   Ari's structural copyability rules. Unsupported or duplicate derive names
+   are rejected before impl validation, enum `Default` derives without a case
+   marker are rejected, enum ordering derives are reserved until enum ordering
+   policy is defined, and payload-bearing enum equality derives are reserved
+   until payload comparison policy is defined.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [derive-methods] add enum `Default` once a default-case marker is
-     designed, extend enum equality/order derives to payload-bearing or
+   - [derive-methods] extend enum equality/order derives to payload-bearing or
      explicitly ordered cases once comparison policy is defined, and revisit
      ownership-aware `Clone` bodies if `Clone` later gains a non-consuming or
      allocator-aware contract

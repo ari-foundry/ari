@@ -1,0 +1,66 @@
+impl Default for i64 {
+  fn default() -> i64 {
+    return 7;
+  }
+}
+
+@derive(Default(Ready))
+enum Mode {
+  Waiting,
+  Ready,
+}
+
+@derive(std::Default(None))
+enum Maybe[T] {
+  Some(T),
+  None,
+}
+
+@derive(Default(Full))
+enum Filled[T] {
+  Empty,
+  Full(T),
+}
+
+fn make_default[T: Default]() -> T {
+  return Default::default<T>();
+}
+
+fn score_mode(value: Mode) -> i64 {
+  match value {
+    Waiting => {
+      return 1;
+    }
+    Ready => {
+      return 10;
+    }
+  }
+}
+
+fn score_maybe(value: Maybe[i64]) -> i64 {
+  match value {
+    Some(_) => {
+      return 2;
+    }
+    None => {
+      return 20;
+    }
+  }
+}
+
+fn score_filled(value: Filled[i64]) -> i64 {
+  match value {
+    Empty => {
+      return 3;
+    }
+    Full(inner) => {
+      return inner;
+    }
+  }
+}
+
+fn main() -> i64 {
+  return score_mode(make_default<Mode>()) +
+         score_maybe(make_default<Maybe[i64]>()) +
+         score_filled(make_default<Filled[i64]>());
+}

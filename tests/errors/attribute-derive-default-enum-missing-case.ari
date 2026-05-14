@@ -1,0 +1,8 @@
+@derive(Default(Missing))
+enum State {
+  Ready,
+}
+
+fn main() -> i64 {
+  return 0;
+}

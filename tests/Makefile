@@ -1309,6 +1309,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/attribute-derive-clone.raw; code=$$?; test $$code -eq 16
 	$(TARGET) --freestanding tests/ok/attribute-derive-default.ari -o $(BUILD_DIR)/meta/attribute-derive-default.raw
 	$(BUILD_DIR)/meta/attribute-derive-default.raw; code=$$?; test $$code -eq 28
+	$(TARGET) --freestanding tests/ok/attribute-derive-enum-default.ari -o $(BUILD_DIR)/meta/attribute-derive-enum-default.raw
+	$(BUILD_DIR)/meta/attribute-derive-enum-default.raw; code=$$?; test $$code -eq 37
 	$(TARGET) --freestanding tests/ok/attribute-derive-eq.ari -o $(BUILD_DIR)/meta/attribute-derive-eq.raw
 	$(BUILD_DIR)/meta/attribute-derive-eq.raw; code=$$?; test $$code -eq 50
 	$(TARGET) --freestanding tests/ok/attribute-derive-partial-eq.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-eq.raw
@@ -1450,7 +1452,11 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/attribute-derive-duplicate.ari -o $(BUILD_DIR)/meta/attribute-derive-duplicate.elf >$(BUILD_DIR)/meta/attribute-derive-duplicate.err 2>&1; then exit 1; fi
 	grep -q "duplicate derive 'Debug'" $(BUILD_DIR)/meta/attribute-derive-duplicate.err
 	if $(TARGET) tests/errors/attribute-derive-default-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-default-enum.elf >$(BUILD_DIR)/meta/attribute-derive-default-enum.err 2>&1; then exit 1; fi
-	grep -q "Default derive for enums requires an explicit default case marker, which is not supported yet" $(BUILD_DIR)/meta/attribute-derive-default-enum.err
+	grep -q "Default derive for enums requires a case marker such as @derive(Default(CaseName))" $(BUILD_DIR)/meta/attribute-derive-default-enum.err
+	if $(TARGET) tests/errors/attribute-derive-default-enum-missing-case.ari -o $(BUILD_DIR)/meta/attribute-derive-default-enum-missing-case.elf >$(BUILD_DIR)/meta/attribute-derive-default-enum-missing-case.err 2>&1; then exit 1; fi
+	grep -q "Default derive case 'Missing' does not name a case of enum 'State'" $(BUILD_DIR)/meta/attribute-derive-default-enum-missing-case.err
+	if $(TARGET) tests/errors/attribute-derive-default-struct-case.ari -o $(BUILD_DIR)/meta/attribute-derive-default-struct-case.elf >$(BUILD_DIR)/meta/attribute-derive-default-struct-case.err 2>&1; then exit 1; fi
+	grep -q "Default derive case marker is only valid for enum derives" $(BUILD_DIR)/meta/attribute-derive-default-struct-case.err
 	if $(TARGET) tests/errors/attribute-derive-eq-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-derive-eq-enum-payload.elf >$(BUILD_DIR)/meta/attribute-derive-eq-enum-payload.err 2>&1; then exit 1; fi
 	grep -q "Eq derive for enums currently requires all cases to be fieldless" $(BUILD_DIR)/meta/attribute-derive-eq-enum-payload.err
 	if $(TARGET) tests/errors/attribute-derive-partial-eq-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.elf >$(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.err 2>&1; then exit 1; fi

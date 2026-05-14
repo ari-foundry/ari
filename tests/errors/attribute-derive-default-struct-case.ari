@@ -1,0 +1,8 @@
+@derive(Default(value))
+struct Box {
+  value: i64,
+}
+
+fn main() -> i64 {
+  return 0;
+}

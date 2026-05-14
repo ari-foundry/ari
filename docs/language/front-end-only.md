@@ -107,7 +107,8 @@ struct Token {
 The compiler accepts a small built-in attribute surface:
 
 - `@derive(Debug)` / `@derive(Copy)` / `@derive(Clone)` / `@derive(Eq)` / `@derive(PartialEq)` on structs and enums
-- `@derive(Default)` / `@derive(Ord)` / `@derive(PartialOrd)` on structs
+- `@derive(Default)` on structs and `@derive(Default(CaseName))` on enums
+- `@derive(Ord)` / `@derive(PartialOrd)` on structs
 - `@repr(C)` on structs and enums
 - `@deprecated` or `@deprecated("message")` on declarations
 - `@test` on functions
@@ -138,14 +139,16 @@ compilation.
 that calls each test in source order. `@derive(Debug)`, `@derive(Copy)`,
 `@derive(Clone)`, `@derive(Eq)`, and `@derive(PartialEq)` expand for structs
 and enums, including generic declarations; `@derive(Default)`, `@derive(Ord)`,
-and `@derive(PartialOrd)` expand for structs. `Debug` and `Copy` generate empty
-trait impls, `Clone` generates `fn clone(self) -> Self { return self; }`,
-struct `Default` generates a `default` associated function that defaults each
-field, `Eq`/`PartialEq` generate value-self `eq` methods for structs plus
-fieldless enums, and `Ord`/`PartialOrd` generate lexicographic value-self `lt`
-methods for structs. `Copy` derive is only a marker-trait impl and does not
-change structural copyability. Other derive names remain reserved until their
-trait method surfaces are implemented.
+and `@derive(PartialOrd)` expand for structs; `@derive(Default(CaseName))`
+expands for enums. `Debug` and `Copy` generate empty trait impls, `Clone`
+generates `fn clone(self) -> Self { return self; }`, struct `Default`
+generates a `default` associated function that defaults each field, enum
+`Default(CaseName)` returns the named case with defaulted payloads,
+`Eq`/`PartialEq` generate value-self `eq` methods for structs plus fieldless
+enums, and `Ord`/`PartialOrd` generate lexicographic value-self `lt` methods
+for structs. `Copy` derive is only a marker-trait impl and does not change
+structural copyability. Other derive names remain reserved until their trait
+method surfaces are implemented.
 
 User-defined attributes can be reserved by declaring a matching `meta fn`:
 
