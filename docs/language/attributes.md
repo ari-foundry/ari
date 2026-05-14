@@ -130,8 +130,11 @@ Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.
 
-`@derive(...)` is validated on structs and enums and retained as metadata.
-Actual derive expansion is planned as part of compile-time meta expansion.
+`@derive(Debug)` is supported on structs and enums. It expands to an empty
+`impl std::Debug for Type` declaration, preserving the generic parameters of
+generic structs and enums, so derived values satisfy `Debug` trait bounds.
+Other derive names are rejected until their trait method surfaces and expansion
+contracts are defined.
 
 ## User Attributes
 

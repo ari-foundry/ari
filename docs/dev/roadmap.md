@@ -221,10 +221,15 @@ stages rather than one file per syntax feature.
    `if let`, `while let`, `for`, function-parameter, or binding pattern
    lowering. Disabled `@cfg(false)` declarations still parse for linting/cache
    stability.
+   Built-in `@derive(Debug)` now expands on structs and enums, including
+   generic declarations, by synthesizing an empty `std::Debug` impl so derived
+   values satisfy `Debug` trait bounds. Unsupported or duplicate derive names
+   are rejected before impl validation.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
    - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [derive] expand built-in derives such as `Debug` where the trait surface exists
+   - [derive-more] add additional built-in derives after their trait method
+     surfaces and generated method contracts are defined
    - [format] lower `format!` after owned runtime strings exist
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

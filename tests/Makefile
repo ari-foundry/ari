@@ -1301,6 +1301,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/attributes-builtin.raw; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/attributes-builtin.ari --emit-llvm $(BUILD_DIR)/meta/attributes-builtin.ll >$(BUILD_DIR)/meta/attribute-deprecated.warn 2>&1
 	grep -q "warning: use of deprecated function 'old_value': use next_value" $(BUILD_DIR)/meta/attribute-deprecated.warn
+	$(TARGET) --freestanding tests/ok/attribute-derive-debug.ari -o $(BUILD_DIR)/meta/attribute-derive-debug.raw
+	$(BUILD_DIR)/meta/attribute-derive-debug.raw; code=$$?; test $$code -eq 3
 	$(TARGET) tests/ok/attribute-repr-borrow-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
 	grep -q "{ ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
 	grep -q "extractvalue { ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
@@ -1429,6 +1431,10 @@ check-meta: $(TARGET)
 	grep -q "mismatched delimiter in attribute arguments" $(BUILD_DIR)/meta/attribute-token-tree-mismatch.err
 	if $(TARGET) tests/errors/attribute-placement.ari -o $(BUILD_DIR)/meta/attribute-placement.elf >$(BUILD_DIR)/meta/attribute-placement.err 2>&1; then exit 1; fi
 	grep -q "attribute '@derive' is only supported on structs and enums" $(BUILD_DIR)/meta/attribute-placement.err
+	if $(TARGET) tests/errors/attribute-derive-unsupported.ari -o $(BUILD_DIR)/meta/attribute-derive-unsupported.elf >$(BUILD_DIR)/meta/attribute-derive-unsupported.err 2>&1; then exit 1; fi
+	grep -q "unsupported derive 'Display'; supported derives: Debug" $(BUILD_DIR)/meta/attribute-derive-unsupported.err
+	if $(TARGET) tests/errors/attribute-derive-duplicate.ari -o $(BUILD_DIR)/meta/attribute-derive-duplicate.elf >$(BUILD_DIR)/meta/attribute-derive-duplicate.err 2>&1; then exit 1; fi
+	grep -q "duplicate derive 'Debug'" $(BUILD_DIR)/meta/attribute-derive-duplicate.err
 	if $(TARGET) tests/errors/attribute-repr-unsupported.ari -o $(BUILD_DIR)/meta/attribute-repr-unsupported.elf >$(BUILD_DIR)/meta/attribute-repr-unsupported.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr' currently supports only C layout" $(BUILD_DIR)/meta/attribute-repr-unsupported.err
 	if $(TARGET) tests/errors/attribute-repr-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-repr-enum-payload.elf >$(BUILD_DIR)/meta/attribute-repr-enum-payload.err 2>&1; then exit 1; fi

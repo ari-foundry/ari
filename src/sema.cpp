@@ -48,6 +48,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <memory>
@@ -232,6 +233,7 @@ public:
         collect_trait_decls();
         collect_struct_decls();
         collect_enum_layouts();
+        expand_derive_impls();
         collect_constant_decls();
         validate_struct_decls();
         resolve_trait_supertraits();
@@ -428,6 +430,7 @@ private:
     std::vector<EnumDecl> item_macro_enums_;
     std::vector<TraitDecl> item_macro_traits_;
     std::vector<ImplDecl> item_macro_impls_;
+    std::vector<ImplDecl> derived_impls_;
     std::map<const Pattern*, Pattern> pattern_macro_expansions_;
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
@@ -820,6 +823,7 @@ private:
     void for_each_impl_decl(Visitor&& visitor) const {
         for (const auto& decl : program_.impls) visitor(decl);
         for (const auto& decl : item_macro_impls_) visitor(decl);
+        for (const auto& decl : derived_impls_) visitor(decl);
     }
 
     template <typename Visitor>
@@ -1365,6 +1369,23 @@ private:
         });
         for_each_impl_decl([&](const ImplDecl& decl) {
             validate_attribute_list(decl.attributes, "impl", decl.module_name);
+        });
+    }
+
+    void expand_derive_impls() {
+        for_each_struct_decl([&](const StructDecl& decl) {
+            std::vector<ImplDecl> impls = expand_derive_impls_for_struct(decl);
+            derived_impls_.insert(
+                derived_impls_.end(),
+                std::make_move_iterator(impls.begin()),
+                std::make_move_iterator(impls.end()));
+        });
+        for_each_enum_decl([&](const EnumDecl& decl) {
+            std::vector<ImplDecl> impls = expand_derive_impls_for_enum(decl);
+            derived_impls_.insert(
+                derived_impls_.end(),
+                std::make_move_iterator(impls.begin()),
+                std::make_move_iterator(impls.end()));
         });
     }
 

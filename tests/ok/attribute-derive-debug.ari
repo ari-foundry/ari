@@ -1,0 +1,29 @@
+@derive(Debug)
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+@derive(Debug)
+enum Maybe {
+  Empty,
+  Full(i64),
+}
+
+@derive(Debug)
+struct Box[T] {
+  value: T,
+}
+
+fn need_debug[T: Debug](value: T) -> i64 {
+  return 1;
+}
+
+fn main() -> i64 {
+  let point = Point { x: 1, y: 2 };
+  let maybe: Maybe = Full(7);
+  let boxed = Box { value: 9 };
+  return need_debug<Point>(point) +
+         need_debug<Maybe>(maybe) +
+         need_debug<Box[i64]>(boxed);
+}
