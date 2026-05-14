@@ -281,9 +281,10 @@ selected target triple, source files with stable content hashes, resolved
 file-backed imports, and declaration names seen in each source file. It is
 intentionally a summary format; use a module cache when you want to reuse a
 validated package source snapshot.
-Current metadata is written as `ari-module-metadata-v2`; older v1 summaries can
-be parsed for diagnostics, but `--check-module-metadata` asks you to regenerate
-them because v1 lacks source content hashes.
+Current metadata is written as `ari-module-metadata-v0`. The compiler accepts
+only that V0 header until the cache format is explicitly allowed to advance.
+Any other metadata header is rejected and should be regenerated with
+`--emit-module-metadata`.
 Malformed summaries that repeat an exact source, import, or item record are
 rejected when read.
 
@@ -313,14 +314,11 @@ ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build
 
 The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, and a compact AST summary for each cached source. Current
-caches are written as `ari-module-cache-v12`, with declaration summaries using
-`ari-ast-decls-v12`; older v1/v2/v3/v4/v5/v6/v7/v8/v9/v10/v11 caches are treated as
-stale because they do not carry the current AST-summary declaration
-fingerprints, function and local binding pattern payloads, constant initializer
-payloads, simple executable body payloads, reserved associated type projection
-payloads, reserved trait associated type declarations, and reserved impl
-associated type witnesses. A later build can validate the cache and parse from
-that snapshot:
+caches are written as `ari-module-cache-v0`, with declaration summaries using
+`ari-ast-decls-v0`. Ari accepts only this V0 cache family until the cache format
+is explicitly allowed to advance; any other cache or declaration-summary header
+is rejected and should be regenerated. A later build can validate the cache and
+parse from that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll

@@ -837,17 +837,15 @@ public:
             read_bool("module declaration visibility");
         }
 
-        if (version_ >= 6) {
-            counts.item_macro_count = read_count("item macro invocation count");
-            for (std::uint64_t i = 0; i < counts.item_macro_count; ++i) {
-                read_field("item macro module name");
-                read_field("item macro name");
-                read_bool("item macro visibility");
-                skip_attributes();
-                std::uint64_t token_count = read_count("item macro token count");
-                for (std::uint64_t j = 0; j < token_count; ++j) {
-                    (void)read_token_payload("item macro token");
-                }
+        counts.item_macro_count = read_count("item macro invocation count");
+        for (std::uint64_t i = 0; i < counts.item_macro_count; ++i) {
+            read_field("item macro module name");
+            read_field("item macro name");
+            read_bool("item macro visibility");
+            skip_attributes();
+            std::uint64_t token_count = read_count("item macro token count");
+            for (std::uint64_t j = 0; j < token_count; ++j) {
+                (void)read_token_payload("item macro token");
             }
         }
 
@@ -857,7 +855,7 @@ public:
             read_field("constant name");
             read_bool("constant visibility");
             skip_type("constant type");
-            if (version_ >= 2) skip_const_initializer("constant initializer");
+            skip_const_initializer("constant initializer");
         }
 
         counts.function_count = read_count("function count");
@@ -901,11 +899,9 @@ public:
             read_bool("trait visibility");
             skip_generics();
             skip_attributes();
-            if (version_ >= 11) {
-                std::uint64_t associated_type_count = read_count("trait associated type count");
-                for (std::uint64_t j = 0; j < associated_type_count; ++j) {
-                    read_field("trait associated type name");
-                }
+            std::uint64_t associated_type_count = read_count("trait associated type count");
+            for (std::uint64_t j = 0; j < associated_type_count; ++j) {
+                read_field("trait associated type name");
             }
             std::uint64_t method_count = read_count("trait method count");
             for (std::uint64_t j = 0; j < method_count; ++j) skip_function_signature();
@@ -920,12 +916,10 @@ public:
             skip_attributes();
             if (has_trait) skip_type("impl trait type");
             skip_type("impl target type");
-            if (version_ >= 12) {
-                std::uint64_t associated_type_witness_count = read_count("impl associated type witness count");
-                for (std::uint64_t j = 0; j < associated_type_witness_count; ++j) {
-                    read_field("impl associated type witness name");
-                    skip_type("impl associated type witness type");
-                }
+            std::uint64_t associated_type_witness_count = read_count("impl associated type witness count");
+            for (std::uint64_t j = 0; j < associated_type_witness_count; ++j) {
+                read_field("impl associated type witness name");
+                skip_type("impl associated type witness type");
             }
             std::uint64_t method_count = read_count("impl method count");
             for (std::uint64_t j = 0; j < method_count; ++j) skip_function_signature();
@@ -975,23 +969,21 @@ public:
             program.modules.push_back(std::move(decl));
         }
 
-        if (version_ >= 6) {
-            std::uint64_t item_macro_count = read_count("item macro invocation count");
-            program.item_macros.reserve(static_cast<std::size_t>(item_macro_count));
-            for (std::uint64_t i = 0; i < item_macro_count; ++i) {
-                ItemMacroInvocation invocation;
-                invocation.module_name = read_field("item macro module name");
-                invocation.name = read_field("item macro name");
-                invocation.is_public = read_bool("item macro visibility");
-                invocation.attributes = read_attributes();
-                std::uint64_t token_count = read_count("item macro token count");
-                invocation.tokens.reserve(static_cast<std::size_t>(token_count));
-                for (std::uint64_t j = 0; j < token_count; ++j) {
-                    invocation.tokens.push_back(read_token_payload("item macro token"));
-                }
-                invocation.loc = default_loc();
-                program.item_macros.push_back(std::move(invocation));
+        std::uint64_t item_macro_count = read_count("item macro invocation count");
+        program.item_macros.reserve(static_cast<std::size_t>(item_macro_count));
+        for (std::uint64_t i = 0; i < item_macro_count; ++i) {
+            ItemMacroInvocation invocation;
+            invocation.module_name = read_field("item macro module name");
+            invocation.name = read_field("item macro name");
+            invocation.is_public = read_bool("item macro visibility");
+            invocation.attributes = read_attributes();
+            std::uint64_t token_count = read_count("item macro token count");
+            invocation.tokens.reserve(static_cast<std::size_t>(token_count));
+            for (std::uint64_t j = 0; j < token_count; ++j) {
+                invocation.tokens.push_back(read_token_payload("item macro token"));
             }
+            invocation.loc = default_loc();
+            program.item_macros.push_back(std::move(invocation));
         }
 
         std::uint64_t constant_count = read_count("constant count");
@@ -1002,9 +994,7 @@ public:
             decl.name = read_field("constant name");
             decl.is_public = read_bool("constant visibility");
             decl.type = read_type("constant type");
-            if (version_ >= 2) {
-                decl.init = read_const_initializer("constant initializer");
-            }
+            decl.init = read_const_initializer("constant initializer");
             decl.loc = default_loc();
             program.constants.push_back(std::move(decl));
         }
@@ -1074,15 +1064,13 @@ public:
             decl.is_public = read_bool("trait visibility");
             decl.generics = read_generics();
             decl.attributes = read_attributes();
-            if (version_ >= 11) {
-                std::uint64_t associated_type_count = read_count("trait associated type count");
-                decl.associated_types.reserve(static_cast<std::size_t>(associated_type_count));
-                for (std::uint64_t j = 0; j < associated_type_count; ++j) {
-                    TraitDecl::AssociatedType associated_type;
-                    associated_type.name = read_field("trait associated type name");
-                    associated_type.loc = default_loc();
-                    decl.associated_types.push_back(std::move(associated_type));
-                }
+            std::uint64_t associated_type_count = read_count("trait associated type count");
+            decl.associated_types.reserve(static_cast<std::size_t>(associated_type_count));
+            for (std::uint64_t j = 0; j < associated_type_count; ++j) {
+                TraitDecl::AssociatedType associated_type;
+                associated_type.name = read_field("trait associated type name");
+                associated_type.loc = default_loc();
+                decl.associated_types.push_back(std::move(associated_type));
             }
             std::uint64_t method_count = read_count("trait method count");
             decl.methods.reserve(static_cast<std::size_t>(method_count));
@@ -1104,16 +1092,14 @@ public:
             decl.attributes = read_attributes();
             if (decl.has_trait) decl.trait_type = read_type("impl trait type");
             decl.for_type = read_type("impl target type");
-            if (version_ >= 12) {
-                std::uint64_t associated_type_witness_count = read_count("impl associated type witness count");
-                decl.associated_type_witnesses.reserve(static_cast<std::size_t>(associated_type_witness_count));
-                for (std::uint64_t j = 0; j < associated_type_witness_count; ++j) {
-                    ImplDecl::AssociatedTypeWitness witness;
-                    witness.name = read_field("impl associated type witness name");
-                    witness.type = read_type("impl associated type witness type");
-                    witness.loc = default_loc();
-                    decl.associated_type_witnesses.push_back(std::move(witness));
-                }
+            std::uint64_t associated_type_witness_count = read_count("impl associated type witness count");
+            decl.associated_type_witnesses.reserve(static_cast<std::size_t>(associated_type_witness_count));
+            for (std::uint64_t j = 0; j < associated_type_witness_count; ++j) {
+                ImplDecl::AssociatedTypeWitness witness;
+                witness.name = read_field("impl associated type witness name");
+                witness.type = read_type("impl associated type witness type");
+                witness.loc = default_loc();
+                decl.associated_type_witnesses.push_back(std::move(witness));
             }
             std::uint64_t method_count = read_count("impl method count");
             decl.methods.reserve(static_cast<std::size_t>(method_count));
@@ -1131,8 +1117,6 @@ private:
     const std::string& text_;
     std::string display_;
     std::size_t pos_ = 0;
-    int version_ = 0;
-
     [[noreturn]] void fail(const std::string& detail) const {
         throw CompileError("malformed declaration summary for " + display_ + ": " + detail);
     }
@@ -1142,79 +1126,12 @@ private:
     }
 
     void consume_header() {
-        const std::string v12 = "ari-ast-decls-v12;";
-        const std::string v11 = "ari-ast-decls-v11;";
-        const std::string v10 = "ari-ast-decls-v10;";
-        const std::string v9 = "ari-ast-decls-v9;";
-        const std::string v8 = "ari-ast-decls-v8;";
-        const std::string v7 = "ari-ast-decls-v7;";
-        const std::string v6 = "ari-ast-decls-v6;";
-        const std::string v5 = "ari-ast-decls-v5;";
-        const std::string v4 = "ari-ast-decls-v4;";
-        const std::string v3 = "ari-ast-decls-v3;";
-        const std::string v2 = "ari-ast-decls-v2;";
-        const std::string v1 = "ari-ast-decls-v1;";
-        if (text_.compare(pos_, v12.size(), v12) == 0) {
-            version_ = 12;
-            pos_ += v12.size();
+        const std::string v0 = "ari-ast-decls-v0;";
+        if (text_.compare(pos_, v0.size(), v0) == 0) {
+            pos_ += v0.size();
             return;
         }
-        if (text_.compare(pos_, v11.size(), v11) == 0) {
-            version_ = 11;
-            pos_ += v11.size();
-            return;
-        }
-        if (text_.compare(pos_, v10.size(), v10) == 0) {
-            version_ = 10;
-            pos_ += v10.size();
-            return;
-        }
-        if (text_.compare(pos_, v9.size(), v9) == 0) {
-            version_ = 9;
-            pos_ += v9.size();
-            return;
-        }
-        if (text_.compare(pos_, v8.size(), v8) == 0) {
-            version_ = 8;
-            pos_ += v8.size();
-            return;
-        }
-        if (text_.compare(pos_, v7.size(), v7) == 0) {
-            version_ = 7;
-            pos_ += v7.size();
-            return;
-        }
-        if (text_.compare(pos_, v6.size(), v6) == 0) {
-            version_ = 6;
-            pos_ += v6.size();
-            return;
-        }
-        if (text_.compare(pos_, v5.size(), v5) == 0) {
-            version_ = 5;
-            pos_ += v5.size();
-            return;
-        }
-        if (text_.compare(pos_, v4.size(), v4) == 0) {
-            version_ = 4;
-            pos_ += v4.size();
-            return;
-        }
-        if (text_.compare(pos_, v3.size(), v3) == 0) {
-            version_ = 3;
-            pos_ += v3.size();
-            return;
-        }
-        if (text_.compare(pos_, v2.size(), v2) == 0) {
-            version_ = 2;
-            pos_ += v2.size();
-            return;
-        }
-        if (text_.compare(pos_, v1.size(), v1) == 0) {
-            version_ = 1;
-            pos_ += v1.size();
-            return;
-        }
-        fail("expected 'ari-ast-decls-v12;', 'ari-ast-decls-v11;', 'ari-ast-decls-v10;', 'ari-ast-decls-v9;', 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v0;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1284,21 +1201,17 @@ private:
         type.is_dyn_object = read_bool(label + " dyn flag");
         type.nullable = read_bool(label + " nullable flag");
         type.array_size = read_count(label + " array size");
-        if (version_ >= 7) {
-            type.is_macro_invocation = read_bool(label + " macro invocation flag");
-            if (type.is_macro_invocation) {
-                std::uint64_t token_count = read_count(label + " macro token count");
-                type.macro_tokens.reserve(static_cast<std::size_t>(token_count));
-                for (std::uint64_t i = 0; i < token_count; ++i) {
-                    type.macro_tokens.push_back(read_token_payload(label + " macro token"));
-                }
+        type.is_macro_invocation = read_bool(label + " macro invocation flag");
+        if (type.is_macro_invocation) {
+            std::uint64_t token_count = read_count(label + " macro token count");
+            type.macro_tokens.reserve(static_cast<std::size_t>(token_count));
+            for (std::uint64_t i = 0; i < token_count; ++i) {
+                type.macro_tokens.push_back(read_token_payload(label + " macro token"));
             }
         }
-        if (version_ >= 10) {
-            type.has_associated_projection = read_bool(label + " associated type projection flag");
-            if (type.has_associated_projection) {
-                type.associated_projection = read_field(label + " associated type projection name");
-            }
+        type.has_associated_projection = read_bool(label + " associated type projection flag");
+        if (type.has_associated_projection) {
+            type.associated_projection = read_field(label + " associated type projection name");
         }
         std::uint64_t arg_count = read_count(label + " argument count");
         type.args.reserve(static_cast<std::size_t>(arg_count));
@@ -1343,15 +1256,7 @@ private:
             std::uint64_t arg_count = read_count("attribute token count");
             attr.args.reserve(static_cast<std::size_t>(arg_count));
             for (std::uint64_t j = 0; j < arg_count; ++j) {
-                if (version_ >= 9) {
-                    attr.args.push_back(read_token_payload("attribute token"));
-                } else {
-                    Token token;
-                    token.kind = static_cast<TokenKind>(read_count("attribute token kind"));
-                    token.text = read_field("attribute token text");
-                    token.loc = default_loc();
-                    attr.args.push_back(std::move(token));
-                }
+                attr.args.push_back(read_token_payload("attribute token"));
             }
             attr.loc = default_loc();
             attributes.push_back(std::move(attr));
@@ -1383,20 +1288,18 @@ private:
             Param param;
             param.name = read_field("function parameter name");
             param.has_pattern = read_bool("function parameter pattern flag");
-            if (param.has_pattern && version_ >= 4) {
+            if (param.has_pattern) {
                 param.pattern = read_pattern("function parameter pattern");
             }
             param.type = read_type("function parameter type");
             fn.params.push_back(std::move(param));
         }
         if (fn.has_return_type) fn.return_type = read_type("function return type");
-        if (version_ >= 3) {
-            bool has_body_summary = read_bool("function body summary flag");
-            if (has_body_summary) {
-                if (!fn.has_body) fail("function body summary present without body flag");
-                fn.has_body_summary = true;
-                fn.body = read_body_stmt_list("function body");
-            }
+        bool has_body_summary = read_bool("function body summary flag");
+        if (has_body_summary) {
+            if (!fn.has_body) fail("function body summary present without body flag");
+            fn.has_body_summary = true;
+            fn.body = read_body_stmt_list("function body");
         }
         fn.loc = default_loc();
         fn.variadic_loc = default_loc();
@@ -1654,14 +1557,12 @@ private:
         std::string kind = read_field(label + " kind");
         Pattern pattern;
         pattern.loc = default_loc();
-        if (version_ >= 8) {
-            pattern.is_macro_invocation = read_bool(label + " macro invocation flag");
-            if (pattern.is_macro_invocation) {
-                std::uint64_t token_count = read_count(label + " macro token count");
-                pattern.macro_tokens.reserve(static_cast<std::size_t>(token_count));
-                for (std::uint64_t i = 0; i < token_count; ++i) {
-                    pattern.macro_tokens.push_back(read_token_payload(label + " macro token"));
-                }
+        pattern.is_macro_invocation = read_bool(label + " macro invocation flag");
+        if (pattern.is_macro_invocation) {
+            std::uint64_t token_count = read_count(label + " macro token count");
+            pattern.macro_tokens.reserve(static_cast<std::size_t>(token_count));
+            for (std::uint64_t i = 0; i < token_count; ++i) {
+                pattern.macro_tokens.push_back(read_token_payload(label + " macro token"));
             }
         }
         if (kind == "wildcard") {
@@ -1783,11 +1684,9 @@ private:
             stmt->kind = StmtKind::VarDecl;
             stmt->binding.name = read_field(label + " binding name");
             stmt->binding.mutable_binding = read_bool(label + " binding mutability");
-            if (version_ >= 5) {
-                stmt->binding.has_pattern = read_bool(label + " binding pattern flag");
-                if (stmt->binding.has_pattern) {
-                    stmt->binding.pattern = read_pattern(label + " binding pattern");
-                }
+            stmt->binding.has_pattern = read_bool(label + " binding pattern flag");
+            if (stmt->binding.has_pattern) {
+                stmt->binding.pattern = read_pattern(label + " binding pattern");
             }
             stmt->binding.has_type = read_bool(label + " binding type flag");
             if (stmt->binding.has_type) stmt->binding.type = read_type(label + " binding type");
@@ -1873,11 +1772,9 @@ private:
                 binding.loc = default_loc();
                 binding.name = read_field(label + " init binding name");
                 binding.mutable_binding = read_bool(label + " init binding mutability");
-                if (version_ >= 5) {
-                    binding.has_pattern = read_bool(label + " init binding pattern flag");
-                    if (binding.has_pattern) {
-                        binding.pattern = read_pattern(label + " init binding pattern");
-                    }
+                binding.has_pattern = read_bool(label + " init binding pattern flag");
+                if (binding.has_pattern) {
+                    binding.pattern = read_pattern(label + " init binding pattern");
                 }
                 binding.has_type = read_bool(label + " init binding type flag");
                 if (binding.has_type) binding.type = read_type(label + " init binding type");
@@ -1920,7 +1817,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v12;";
+    out << "ari-ast-decls-v0;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {

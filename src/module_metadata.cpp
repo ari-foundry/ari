@@ -17,7 +17,7 @@ namespace ari {
 
 namespace {
 
-constexpr int kModuleMetadataVersion = 2;
+constexpr int kModuleMetadataVersion = 0;
 
 std::string escape_field(const std::string& text) {
     std::string escaped;
@@ -424,13 +424,10 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
     while (std::getline(in, line)) {
         ++line_number;
         if (!saw_header) {
-            if (line == "ari-module-metadata-v1") {
-                metadata.format_version = 1;
-            } else if (line == "ari-module-metadata-v2") {
-                metadata.format_version = 2;
-            } else {
-                throw CompileError("invalid module metadata '" + display_path + "': expected ari-module-metadata-v1 or ari-module-metadata-v2 header");
+            if (line != "ari-module-metadata-v0") {
+                throw CompileError("invalid module metadata '" + display_path + "': expected ari-module-metadata-v0 header");
             }
+            metadata.format_version = kModuleMetadataVersion;
             saw_header = true;
             continue;
         }
@@ -463,15 +460,14 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
                                    std::to_string(line_number) + ": unknown option");
             }
         } else if (tag == "source") {
-            std::size_t expected_fields = metadata.format_version >= 2 ? 5 : 4;
-            if (fields.size() != expected_fields) {
+            if (fields.size() != 5) {
                 throw CompileError("invalid module metadata '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed source record");
             }
             ModuleMetadataSource source{
                 fields[1],
                 fields[2],
-                fields.size() == 5 ? fields[4] : "",
+                fields[4],
                 parse_bool_field(fields[3], display_path, line_number),
             };
             if (!seen_sources.insert(source_key(source)).second) {
@@ -522,7 +518,7 @@ ModuleMetadata parse_module_metadata_text(const std::string& text, const std::st
     }
 
     if (!saw_header) {
-        throw CompileError("invalid module metadata '" + display_path + "': expected ari-module-metadata-v1 or ari-module-metadata-v2 header");
+        throw CompileError("invalid module metadata '" + display_path + "': expected ari-module-metadata-v0 header");
     }
     return metadata;
 }
@@ -538,10 +534,10 @@ ModuleMetadata read_module_metadata_file(const std::string& path) {
 void require_matching_module_metadata(const ModuleMetadata& expected,
                                       const ModuleMetadata& actual,
                                       const std::string& path) {
-    if (expected.format_version < kModuleMetadataVersion) {
+    if (expected.format_version != kModuleMetadataVersion) {
         throw CompileError("module metadata '" + path +
                            "' uses ari-module-metadata-v" + std::to_string(expected.format_version) +
-                           ", which does not include source content hashes; regenerate it with --emit-module-metadata");
+                           ", but this compiler only accepts ari-module-metadata-v0; regenerate it with --emit-module-metadata");
     }
     if (serialize_module_metadata(expected) == serialize_module_metadata(actual)) return;
     std::string detail = find_module_metadata_mismatch(expected, actual);

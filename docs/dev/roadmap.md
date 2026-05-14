@@ -268,10 +268,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    hashes/imports and can materialize declaration-safe headers plus
    summary-safe executable dependency bodies from AST summaries without parsing
    the cached source snapshot. The current source-level AST expression,
-   statement, and pattern surface is covered by that path. Keep this current
-   source-snapshot cache format until the 0.1.0/v0 cache baseline, then add IR
+   statement, and pattern surface is covered by that path. Keep the cache
+   family on `ari-module-metadata-v0`, `ari-module-cache-v0`, and
+   `ari-ast-decls-v0` until a cache version bump is explicitly approved; add IR
    summaries later for future executable bodies that cannot round-trip through
-   the compact AST summary format.
+   the compact AST summary format without changing the V0 header by default.
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies whose executable function or impl bodies
      use forms outside the AST summary subset

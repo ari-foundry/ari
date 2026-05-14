@@ -18,7 +18,7 @@ namespace ari {
 
 namespace {
 
-constexpr int kModuleCacheVersion = 12;
+constexpr int kModuleCacheVersion = 0;
 
 std::string read_file(const std::string& path) {
     std::ifstream in(path, std::ios::binary);
@@ -305,34 +305,11 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
     while (std::getline(in, line)) {
         ++line_number;
         if (!saw_header) {
-            if (line == "ari-module-cache-v1") {
-                cache.format_version = 1;
-            } else if (line == "ari-module-cache-v2") {
-                cache.format_version = 2;
-            } else if (line == "ari-module-cache-v3") {
-                cache.format_version = 3;
-            } else if (line == "ari-module-cache-v4") {
-                cache.format_version = 4;
-            } else if (line == "ari-module-cache-v5") {
-                cache.format_version = 5;
-            } else if (line == "ari-module-cache-v6") {
-                cache.format_version = 6;
-            } else if (line == "ari-module-cache-v7") {
-                cache.format_version = 7;
-            } else if (line == "ari-module-cache-v8") {
-                cache.format_version = 8;
-            } else if (line == "ari-module-cache-v9") {
-                cache.format_version = 9;
-            } else if (line == "ari-module-cache-v10") {
-                cache.format_version = 10;
-            } else if (line == "ari-module-cache-v11") {
-                cache.format_version = 11;
-            } else if (line == "ari-module-cache-v12") {
-                cache.format_version = 12;
-            } else {
+            if (line != "ari-module-cache-v0") {
                 throw CompileError("invalid module cache '" + display_path +
-                                   "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, ari-module-cache-v5, ari-module-cache-v6, ari-module-cache-v7, ari-module-cache-v8, ari-module-cache-v9, ari-module-cache-v10, ari-module-cache-v11, or ari-module-cache-v12 header");
+                                   "': expected ari-module-cache-v0 header");
             }
+            cache.format_version = kModuleCacheVersion;
             saw_header = true;
             continue;
         }
@@ -371,23 +348,11 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 is_root,
             });
         } else if (tag == "ast-summary") {
-            if (fields.size() != 14 && fields.size() != 15 && fields.size() != 16) {
+            if (fields.size() != 16) {
                 throw CompileError("invalid module cache '" + display_path + "' at line " +
                                    std::to_string(line_number) + ": malformed ast-summary record");
             }
-            if (cache.format_version >= 4 && fields.size() != 16) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) +
-                                   ": malformed ast-summary record; v4+ requires a declaration summary");
-            }
-            if (cache.format_version >= 3 && fields.size() < 15) {
-                throw CompileError("invalid module cache '" + display_path + "' at line " +
-                                   std::to_string(line_number) +
-                                   ": malformed ast-summary record; v3 requires a declaration hash");
-            }
-            const bool has_declaration_hash = fields.size() >= 15;
-            const bool has_declaration_summary = fields.size() >= 16;
-            const std::size_t count_offset = has_declaration_summary ? 7 : (has_declaration_hash ? 6 : 5);
+            const std::size_t count_offset = 7;
             bool is_root = parse_bool_field(fields[3], display_path, line_number);
             std::string key = source_key(fields[1], fields[2], is_root);
             if (!seen_ast_summaries.insert(key).second) {
@@ -400,8 +365,8 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 fields[1],
                 fields[2],
                 fields[4],
-                has_declaration_hash ? fields[5] : "",
-                has_declaration_summary ? fields[6] : "",
+                fields[5],
+                fields[6],
                 is_root,
                 parse_count_field(fields[count_offset], display_path, line_number),
                 parse_count_field(fields[count_offset + 1], display_path, line_number),
@@ -413,9 +378,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
                 parse_count_field(fields[count_offset + 7], display_path, line_number),
                 parse_count_field(fields[count_offset + 8], display_path, line_number),
             };
-            if (has_declaration_summary && cache.format_version >= kModuleCacheVersion) {
-                require_valid_module_cache_ast_summary_payload(summary, display_path);
-            }
+            require_valid_module_cache_ast_summary_payload(summary, display_path);
             cache.ast_summaries.push_back(std::move(summary));
         } else {
             throw CompileError("invalid module cache '" + display_path + "' at line " +
@@ -425,7 +388,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
 
     if (!saw_header) {
         throw CompileError("invalid module cache '" + display_path +
-                           "': expected ari-module-cache-v1, ari-module-cache-v2, ari-module-cache-v3, ari-module-cache-v4, ari-module-cache-v5, ari-module-cache-v6, ari-module-cache-v7, ari-module-cache-v8, ari-module-cache-v9, ari-module-cache-v10, ari-module-cache-v11, or ari-module-cache-v12 header");
+                           "': expected ari-module-cache-v0 header");
     }
     if (!saw_metadata) {
         throw CompileError("invalid module cache '" + display_path + "': missing metadata record");
@@ -508,11 +471,11 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
                                           const std::string& root_input,
                                           const ModuleLoadOptions& options,
                                           const std::string& display_path) {
-    if (cache.format_version < kModuleCacheVersion) {
-        fail_stale(display_path, "old module cache format");
+    if (cache.format_version != kModuleCacheVersion) {
+        fail_stale(display_path, "unsupported module cache format");
     }
-    if (cache.metadata.format_version < 2) {
-        fail_stale(display_path, "embedded metadata does not include source content hashes");
+    if (cache.metadata.format_version != 0) {
+        fail_stale(display_path, "embedded metadata format is not v0");
     }
     require_same_search_paths(cache, options, display_path);
     require_same_cfg(cache, options, display_path);

@@ -31,7 +31,7 @@ struct ModuleMetadataItem {
 };
 
 struct ModuleMetadata {
-    int format_version = 2;
+    int format_version = 0;
     std::vector<std::string> module_search_paths;
     std::set<std::string> cfg_features;
     std::string target_triple;
