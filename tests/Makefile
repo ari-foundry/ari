@@ -1462,6 +1462,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-ast-call-access.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/meta-function-ast-method-call.ari -o $(BUILD_DIR)/meta/meta-function-ast-method-call.raw
 	$(BUILD_DIR)/meta/meta-function-ast-method-call.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/meta-function-ast-struct-literal.ari -o $(BUILD_DIR)/meta/meta-function-ast-struct-literal.raw
+	$(BUILD_DIR)/meta/meta-function-ast-struct-literal.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-function-identity.ari -o $(BUILD_DIR)/meta/item-macro-function-identity.raw
 	$(BUILD_DIR)/meta/item-macro-function-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-ast-decl-return.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-return.raw

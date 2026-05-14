@@ -1,0 +1,13 @@
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+meta fn make_pair(input: ast) -> ast {
+  return Pair { left: input, right: 2 };
+}
+
+fn main() -> i64 {
+  let pair = make_pair!(40);
+  return pair.left + pair.right;
+}

@@ -95,7 +95,7 @@ empty and explicit `return input;` identity meta bodies,
 attribute/expression/item/type macro domain checks, parser-stable
 `ident!(...)` expression, item, and type token-tree macro invocation syntax,
 expression-position identity expansion from a parsed expression input,
-expression-position `ast -> ast` call/access/method-call output with input substitution,
+expression-position `ast -> ast` struct-literal/call/access/method-call output with input substitution,
 function/constant/struct/enum/trait/impl/inline-module/use item macro identity
 expansion from parsed top-level declarations, item-position `ast -> ast`
 declaration output and declaration input substitution through `decl!(...)`,
