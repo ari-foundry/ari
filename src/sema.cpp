@@ -680,10 +680,17 @@ private:
         if (!meta_transform_allowed_at_site(site, found->second.transform_kind)) {
             fail(loc, meta_invocation_domain_message(site, name, meta_name, found->second.transform_kind));
         }
-        if (found->second.ast_expression_return && site != MetaInvocationSite::ExpressionMacro) {
+        if (found->second.ast_return_kind == MetaAstReturnKind::Expression &&
+            site != MetaInvocationSite::ExpressionMacro) {
             fail(loc,
                  "non-identity ast meta function '" + meta_name +
                      "' can currently be used only at expression macro sites");
+        }
+        if (found->second.ast_return_kind == MetaAstReturnKind::ItemDeclarations &&
+            site != MetaInvocationSite::ItemMacro) {
+            fail(loc,
+                 "declaration-returning ast meta function '" + meta_name +
+                     "' can currently be used only at item macro sites");
         }
         return found->second;
     }
@@ -1187,7 +1194,8 @@ private:
                     transform_kind,
                     fn.loc,
                     fn.params[0].name,
-                    meta_function_ast_expression_return(fn),
+                    meta_function_ast_return_kind(fn),
+                    meta_function_ast_return(fn),
                 }
             );
             if (!inserted.second) fail(fn.loc, "duplicate meta function '" + fn.name + "'");
@@ -1413,14 +1421,18 @@ private:
         for (const auto& invocation : program_.item_macros) {
             std::string previous_module = current_module_name_;
             current_module_name_ = invocation.module_name;
+            ItemMacroExpansion expansion;
             try {
-                (void)require_meta_invocation(invocation.loc, MetaInvocationSite::ItemMacro, invocation.name);
+                const MetaFunctionInfo& meta =
+                    require_meta_invocation(invocation.loc, MetaInvocationSite::ItemMacro, invocation.name);
+                expansion = meta.ast_return_kind == MetaAstReturnKind::ItemDeclarations
+                                ? expand_item_macro_decl_constructor(invocation, *meta.ast_return)
+                                : expand_item_macro_items(invocation);
             } catch (...) {
                 current_module_name_ = previous_module;
                 throw;
             }
             current_module_name_ = previous_module;
-            ItemMacroExpansion expansion = expand_item_macro_items(invocation);
             for (auto& use : expansion.uses) item_macro_uses_.push_back(std::move(use));
             for (auto& decl : expansion.modules) item_macro_modules_.push_back(std::move(decl));
             for (auto& constant : expansion.constants) item_macro_constants_.push_back(std::move(constant));
@@ -15170,8 +15182,8 @@ private:
             fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
         }
         ExprPtr expanded = parse_macro_expression(*expr.macro_tokens, expr.loc);
-        if (meta.ast_expression_return) {
-            expanded = expand_ast_expression_return(*meta.ast_expression_return, meta.parameter_name, *expanded);
+        if (meta.ast_return) {
+            expanded = expand_ast_expression_return(*meta.ast_return, meta.parameter_name, *expanded);
         }
         return check_expr(*expanded);
     }

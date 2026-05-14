@@ -1460,6 +1460,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-function-identity.ari -o $(BUILD_DIR)/meta/item-macro-function-identity.raw
 	$(BUILD_DIR)/meta/item-macro-function-identity.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/item-macro-ast-decl-return.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-return.raw
+	$(BUILD_DIR)/meta/item-macro-ast-decl-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-const-identity.ari -o $(BUILD_DIR)/meta/item-macro-const-identity.raw
 	$(BUILD_DIR)/meta/item-macro-const-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-struct-identity.ari -o $(BUILD_DIR)/meta/item-macro-struct-identity.raw
@@ -1530,6 +1532,8 @@ check-meta: $(TARGET)
 	grep -q 'meta function bodies currently allow only an empty body or `return input;` identity body' $(BUILD_DIR)/meta/meta-function-body-planned.err
 	if $(TARGET) tests/errors/meta-function-ast-name-reference.ari -o $(BUILD_DIR)/meta/meta-function-ast-name-reference.elf >$(BUILD_DIR)/meta/meta-function-ast-name-reference.err 2>&1; then exit 1; fi
 	grep -q "ast meta expression returns cannot reference names other than the meta input yet" $(BUILD_DIR)/meta/meta-function-ast-name-reference.err
+	if $(TARGET) tests/errors/meta-function-decl-expression-site.ari -o $(BUILD_DIR)/meta/meta-function-decl-expression-site.elf >$(BUILD_DIR)/meta/meta-function-decl-expression-site.err 2>&1; then exit 1; fi
+	grep -q "declaration-returning ast meta function 'make_decl' can currently be used only at item macro sites" $(BUILD_DIR)/meta/meta-function-decl-expression-site.err
 	if $(TARGET) tests/errors/attribute-meta-type-domain.ari -o $(BUILD_DIR)/meta/attribute-meta-type-domain.elf >$(BUILD_DIR)/meta/attribute-meta-type-domain.err 2>&1; then exit 1; fi
 	grep -q "attributes require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/attribute-meta-type-domain.err
 	if $(TARGET) tests/errors/macro-call-type-domain.ari -o $(BUILD_DIR)/meta/macro-call-type-domain.elf >$(BUILD_DIR)/meta/macro-call-type-domain.err 2>&1; then exit 1; fi

@@ -14,6 +14,12 @@ enum class MetaTransformKind {
     Type,
 };
 
+enum class MetaAstReturnKind {
+    None,
+    Expression,
+    ItemDeclarations,
+};
+
 enum class MetaInvocationSite {
     Attribute,
     ExpressionMacro,
@@ -28,7 +34,8 @@ struct MetaFunctionInfo {
     MetaTransformKind transform_kind = MetaTransformKind::None;
     SourceLocation loc;
     std::string parameter_name;
-    const Expr* ast_expression_return = nullptr;
+    MetaAstReturnKind ast_return_kind = MetaAstReturnKind::None;
+    const Expr* ast_return = nullptr;
 };
 
 MetaTransformKind classify_meta_type_ref(const TypeRef& type);
@@ -42,6 +49,7 @@ std::string meta_invocation_domain_message(MetaInvocationSite site,
                                            const std::string& meta_name,
                                            MetaTransformKind kind);
 MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn);
-const Expr* meta_function_ast_expression_return(const FunctionDecl& fn);
+const Expr* meta_function_ast_return(const FunctionDecl& fn);
+MetaAstReturnKind meta_function_ast_return_kind(const FunctionDecl& fn);
 
 } // namespace ari

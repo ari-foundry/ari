@@ -19,6 +19,8 @@ struct ItemMacroExpansion {
 };
 
 ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation);
+ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation& invocation,
+                                                      const Expr& returned_ast);
 Pattern expand_pattern_macro_invocation(const Pattern& invocation);
 ExprPtr expand_ast_expression_return(const Expr& returned_ast,
                                       const std::string& input_name,

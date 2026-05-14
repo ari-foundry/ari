@@ -193,8 +193,11 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    expression-position `ast -> ast` macros, return an expression AST such as
    `return input + 1;` or `return 40 + 2;` without quote/eval syntax. The
    meta input parameter is substituted with the parsed invocation expression;
-   other name references are rejected, and non-expression construction remains
-   reserved until evaluation exists. Attribute,
+   other name references are rejected. Item-position `ast -> ast` macros can
+   also return top-level declaration AST output with the meta-body-only
+   `decl!(...)` constructor, for example `return decl!(fn generated() -> i64 {
+   return 42; });`. Pattern/type AST construction and declaration input
+   substitution remain reserved until evaluation exists. Attribute,
    expression-macro, and active
    item-macro sites now reject `type -> type` transforms and accept only
    syntax-rewriting `token_stream -> token_stream` or `ast -> ast` domains;
@@ -213,7 +216,10 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    returns from `ast -> ast` bodies clone the returned AST and substitute that
    parsed input expression wherever the meta parameter name appears. Invalid
    extra tokens are rejected before semantic expression lowering.
-   Type-position `type -> type` meta
+   Item-position `ast -> ast` bodies can also return `decl!(...)`; those
+   declaration tokens are parsed as top-level use, inline module, function,
+   constant, struct, enum, trait, or impl declarations and spliced into normal
+   sema. Type-position `type -> type` meta
    invocations now parse their token-tree input as a type ref and lower as an
    identity expansion while meta bodies stay empty; invalid extra tokens are
    rejected before semantic type lowering. Item-position `token_stream ->
@@ -263,8 +269,12 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    - [tokens] support non-identity `token_stream` construction and rewrites
      beyond empty/`return input;` identity bodies
    - [ast] extend non-identity `ast` construction beyond expression-position
-     expression returns with input substitution: add pattern/type/item AST
-     output and richer expression trees once evaluator policy is defined
+     expression returns with input substitution and item-position `decl!(...)`
+     declaration output: add declaration input substitution, pattern/type AST
+     output, and richer expression trees once evaluator policy is defined
+   - [ast-decl-input] let item-position declaration constructors inspect or
+     substitute the invocation declaration input after evaluator policy is
+     defined
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    Formatting syntax for `print`/`println` is fixed for linting: `{}`,
    escaped braces, and `{:.N}` fixed decimal precision for `f32`/`f64` now

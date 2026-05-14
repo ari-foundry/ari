@@ -1,0 +1,11 @@
+meta fn make_answer(input: ast) -> ast {
+  return decl!(fn generated_answer() -> i64 {
+    return 42;
+  });
+}
+
+make_answer!();
+
+fn main() -> i64 {
+  return generated_answer();
+}

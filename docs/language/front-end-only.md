@@ -212,8 +212,23 @@ bare expression, Ari substitutes that node with the parsed invocation
 expression. This first non-identity AST step has no quote/eval syntax, and
 names other than the meta input parameter are rejected in returned expression
 ASTs. Non-identity token construction, attribute rewrites, and
-item/type/pattern AST construction remain reserved until Ari has a broader
-compile-time evaluator.
+type/pattern AST construction remain reserved until Ari has a broader
+compile-time evaluator. Item-position `ast -> ast` macros can return
+declaration AST output with the meta-body-only `decl!(...)` constructor:
+
+```ari
+meta fn make_answer(input: ast) -> ast {
+  return decl!(fn generated_answer() -> i64 {
+    return 42;
+  });
+}
+
+make_answer!();
+```
+
+`decl!(...)` parses its payload as top-level declarations and can currently be
+used only as the return value of an `ast -> ast` meta function that is invoked
+from an item macro site.
 
 Expression, item, and type-position macro invocation use Rust-style
 `ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
@@ -233,9 +248,11 @@ item-position macros must also resolve to
 constant, struct, enum, trait, impl, inline module, and use item macro
 expansion is currently an identity transform: the token tree is parsed as
 top-level function/constant/struct/enum/trait/impl/module/use declarations and
-those generated items participate in normal semantic checking. Generated
-file-backed `mod name;` imports are not supported in item macro output because
-module loading runs before semantic expansion; keep file-backed imports as
+those generated items participate in normal semantic checking. Non-identity
+item-position `ast -> ast` bodies can also generate those declaration kinds by
+returning `decl!(...)`. Generated file-backed `mod name;` imports are not
+supported in item macro output because module loading runs before semantic
+expansion; keep file-backed imports as
 source-level `mod` declarations. Type-position
 macro invocations must resolve to
 `type -> type` meta functions and are also identity transforms today: their

@@ -39,6 +39,19 @@ const Expr* return_expression(const FunctionDecl& fn) {
     return stmt.expr.get();
 }
 
+bool is_decl_ast_constructor(const Expr& expr) {
+    return expr.kind == ExprKind::MacroCall && expr.name == "decl";
+}
+
+bool supported_decl_ast_return_expr(const Expr& expr, std::string& reason) {
+    if (!is_decl_ast_constructor(expr)) return false;
+    if (!expr.macro_tokens || expr.macro_tokens->empty()) {
+        reason = "decl! ast constructor requires one or more declaration tokens";
+        return false;
+    }
+    return true;
+}
+
 bool supported_ast_return_expr(const Expr& expr,
                                const std::string& input_name,
                                std::string& reason) {
@@ -90,7 +103,6 @@ bool supported_ast_return_expr(const Expr& expr,
         case ExprKind::Index:
         case ExprKind::FieldAccess:
         case ExprKind::StructLiteral:
-        case ExprKind::MacroCall:
         case ExprKind::MethodCall:
         case ExprKind::Match:
         case ExprKind::If:
@@ -99,9 +111,21 @@ bool supported_ast_return_expr(const Expr& expr,
             reason =
                 "ast meta expression returns currently support only literal, input, tuple, vector, unary, binary, and cast expression trees";
             return false;
+        case ExprKind::MacroCall:
+            reason = "ast meta expression returns cannot call macros; use decl!(...) only for item macro declaration output";
+            return false;
     }
     reason = "unsupported ast meta return expression";
     return false;
+}
+
+MetaAstReturnKind classify_ast_return_expr(const Expr& expr,
+                                           const std::string& input_name,
+                                           std::string& reason) {
+    if (supported_decl_ast_return_expr(expr, reason)) return MetaAstReturnKind::ItemDeclarations;
+    if (is_decl_ast_constructor(expr)) return MetaAstReturnKind::None;
+    if (supported_ast_return_expr(expr, input_name, reason)) return MetaAstReturnKind::Expression;
+    return MetaAstReturnKind::None;
 }
 
 } // namespace
@@ -238,7 +262,7 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
         const Expr* returned = return_expression(fn);
         if (input_kind == MetaTransformKind::Ast && returned) {
             std::string reason;
-            if (supported_ast_return_expr(*returned, param.name, reason)) {
+            if (classify_ast_return_expr(*returned, param.name, reason) != MetaAstReturnKind::None) {
                 return input_kind;
             }
             fail(returned->loc, reason);
@@ -246,7 +270,7 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
         if (input_kind == MetaTransformKind::Ast) {
             fail(fn.body.front()->loc,
                  "meta function bodies currently allow only an empty body, `return " + param.name +
-                     ";` identity body, or an expression return using literals and the meta input for ast -> ast expression macros");
+                     ";` identity body, an expression return using literals and the meta input for ast -> ast expression macros, or decl!(...) for item macro declaration output");
         }
         fail(fn.body.front()->loc,
              "meta function bodies currently allow only an empty body or `return " + param.name +
@@ -255,13 +279,20 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
     return input_kind;
 }
 
-const Expr* meta_function_ast_expression_return(const FunctionDecl& fn) {
+const Expr* meta_function_ast_return(const FunctionDecl& fn) {
     if (classify_meta_type_ref(fn.return_type) != MetaTransformKind::Ast) return nullptr;
     if (fn.params.size() != 1) return nullptr;
     const Expr* returned = return_expression(fn);
     if (!returned) return nullptr;
     if (returned->kind == ExprKind::Name && returned->name == fn.params.front().name) return nullptr;
     return returned;
+}
+
+MetaAstReturnKind meta_function_ast_return_kind(const FunctionDecl& fn) {
+    const Expr* returned = meta_function_ast_return(fn);
+    if (!returned || fn.params.empty()) return MetaAstReturnKind::None;
+    std::string reason;
+    return classify_ast_return_expr(*returned, fn.params.front().name, reason);
 }
 
 } // namespace ari

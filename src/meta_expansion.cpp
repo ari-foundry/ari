@@ -17,41 +17,44 @@ namespace {
     throw CompileError(where(loc) + ": " + message);
 }
 
-std::vector<std::string> module_path_for_macro(const ItemMacroInvocation& invocation) {
-    if (invocation.module_name.empty()) return {};
-    return split_qualified_path(invocation.module_name);
+std::vector<std::string> module_path_for_macro(const std::string& module_name) {
+    if (module_name.empty()) return {};
+    return split_qualified_path(module_name);
 }
 
-Program parse_item_macro_tokens(const ItemMacroInvocation& invocation) {
-    std::vector<Token> tokens = invocation.tokens;
+Program parse_item_macro_tokens(const std::vector<Token>& source_tokens,
+                                const std::string& module_name,
+                                SourceLocation loc) {
+    std::vector<Token> tokens = source_tokens;
     Token end;
     end.kind = TokenKind::End;
-    end.loc = invocation.loc;
+    end.loc = loc;
     tokens.push_back(end);
-    return parse_tokens_in_module(std::move(tokens), module_path_for_macro(invocation));
+    return parse_tokens_in_module(std::move(tokens), module_path_for_macro(module_name));
 }
 
-void reject_unsupported_item_macro_output(const Program& program, SourceLocation invocation_loc) {
+void reject_unsupported_item_macro_output(const Program& program,
+                                          SourceLocation invocation_loc,
+                                          const std::string& context) {
     if (!program.module_imports.empty()) {
         fail_expansion(program.module_imports.front().loc,
-                       "item macro identity expansion cannot generate file-backed module imports; use an inline module output or a source-level mod declaration");
+                       context + " cannot generate file-backed module imports; use an inline module output or a source-level mod declaration");
     }
     if (!program.item_macros.empty()) {
         fail_expansion(program.item_macros.front().loc,
-                       "nested item macro identity expansion is planned but not supported yet");
+                       "nested " + context + " is planned but not supported yet");
     }
     if (program.uses.empty() && program.modules.empty() && program.constants.empty() && program.functions.empty() &&
         program.structs.empty() && program.enums.empty() && program.traits.empty() && program.impls.empty()) {
         fail_expansion(invocation_loc,
-                       "item macro identity expansion requires at least one generated use, inline module, function, constant, struct, enum, trait, or impl declaration");
+                       context + " requires at least one generated use, inline module, function, constant, struct, enum, trait, or impl declaration");
     }
 }
 
-} // namespace
-
-ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation) {
-    Program program = parse_item_macro_tokens(invocation);
-    reject_unsupported_item_macro_output(program, invocation.loc);
+ItemMacroExpansion finish_item_macro_expansion(Program program,
+                                               const ItemMacroInvocation& invocation,
+                                               const std::string& context) {
+    reject_unsupported_item_macro_output(program, invocation.loc, context);
 
     ItemMacroExpansion expansion;
     expansion.uses = std::move(program.uses);
@@ -90,6 +93,22 @@ ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation
         if (invocation.is_public) decl.is_public = true;
     }
     return expansion;
+}
+
+} // namespace
+
+ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation) {
+    Program program = parse_item_macro_tokens(invocation.tokens, invocation.module_name, invocation.loc);
+    return finish_item_macro_expansion(std::move(program), invocation, "item macro identity expansion");
+}
+
+ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation& invocation,
+                                                      const Expr& returned_ast) {
+    if (returned_ast.kind != ExprKind::MacroCall || returned_ast.name != "decl" || !returned_ast.macro_tokens) {
+        fail_expansion(returned_ast.loc, "internal error: expected decl!(...) ast constructor");
+    }
+    Program program = parse_item_macro_tokens(*returned_ast.macro_tokens, invocation.module_name, returned_ast.loc);
+    return finish_item_macro_expansion(std::move(program), invocation, "item macro declaration AST output");
 }
 
 Pattern expand_pattern_macro_invocation(const Pattern& invocation) {
