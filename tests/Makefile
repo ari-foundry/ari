@@ -2521,10 +2521,11 @@ check-functions: $(TARGET) check-function-errors
 	$(TARGET) tests/ok/function-param-patterns.ari --emit-llvm $(BUILD_DIR)/functions/function-param-patterns.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/functions/function-param-patterns.ll
 	grep -q "extractvalue \\[4 x i64\\]" $(BUILD_DIR)/functions/function-param-patterns.ll
+	grep -q "slice.bounds.fail" $(BUILD_DIR)/functions/function-param-patterns.ll
 	grep -q "match.arm" $(BUILD_DIR)/functions/function-param-patterns.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-param-patterns.elf; $(BUILD_DIR)/functions/function-param-patterns.elf; code=$$?; test $$code -eq 73; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-param-patterns.elf; $(BUILD_DIR)/functions/function-param-patterns.elf; code=$$?; test $$code -eq 87; fi
 	$(TARGET) --freestanding tests/ok/function-param-patterns.ari -o $(BUILD_DIR)/functions/function-param-patterns.raw
-	$(BUILD_DIR)/functions/function-param-patterns.raw; code=$$?; test $$code -eq 73
+	$(BUILD_DIR)/functions/function-param-patterns.raw; code=$$?; test $$code -eq 87
 	$(TARGET) --freestanding tests/ok/function-six-args-freestanding.ari -o $(BUILD_DIR)/functions/function-six-args-freestanding.elf
 	$(BUILD_DIR)/functions/function-six-args-freestanding.elf; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/function-eight-args-freestanding.ari -o $(BUILD_DIR)/functions/function-eight-args-freestanding.elf

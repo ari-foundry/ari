@@ -14,8 +14,9 @@ without backend emission for editor tooling.
 runtime sequence subjects. Local `Vec[T]` storage and `Slice[T]` views now
 lower those patterns through shared `len == n` / `len >= n` guards and indexed
 element bindings in `let`/`var`, `match`, and `if let`/`while let` statement and
-expression positions. Runtime sequence `match` still requires an irrefutable
-fallback such as `_` or `[..]`.
+expression positions, and `Slice[T]` views use the same lowering for
+function-parameter patterns. Runtime sequence `match` still requires an
+irrefutable fallback such as `_` or `[..]`.
 Sema maintenance now follows phase-oriented extraction: constant folding stays
 in `constant_semantics`, generic binding/unification/substitution lives in
 `type_inference`, and future splits should target broad analysis or lowering
@@ -327,10 +328,13 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    Aggregate `if let` statement/expression and aggregate `while let`
    statement bindings also share the same product match lowering path. Local
    `Vec[T]` storage and `Slice[T]` views now participate in that path through
-   length-checked `[ ... ]` runtime sequence patterns.
+   length-checked `[ ... ]` runtime sequence patterns; `Slice[T]` function
+   parameter patterns reuse the same function-entry binding prelude.
    - [positions] keep `let`/`var`, match, control-flow, for-loop, and
-     function-parameter patterns on one shared binding-mode engine; value alias
-     patterns now work in range, list-literal, and stored-vector loop heads when
+     function-parameter patterns on one shared binding-mode engine; function
+     parameters now cover value-mode aggregate and `Slice[T]` runtime sequence
+     destructuring, and value alias patterns now work in range, list-literal,
+     and stored-vector loop heads when
      the wrapped pattern is irrefutable. Non-iterator loop-head validation now
      lives in `for_pattern_semantics`, with a shared sema lowering helper for
      range, list-literal, and stored-vector loop heads; reference/ownership

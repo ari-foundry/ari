@@ -292,13 +292,17 @@ fn ignore_first(_: i64, value: i64) -> i64 {
 }
 ```
 
-Tuple, fixed-array, struct, tuple-struct, wildcard, alias, and enum-case
-parameter patterns lower at function entry. Refutable enum-case parameters
-panic if the caller passes a non-matching case. Owning and borrow-valued
-parameter patterns are still rejected until ownership behavior for parameter
-destructuring is defined. Parameter patterns are value-binding-only for now:
-`ref`, `ref mut`, `&`, `&mut`, and `mut` binding-mode patterns are reserved and
-rejected. Trait and extern function signatures must keep named parameters.
+Tuple, fixed-array, `Slice[T]` runtime-sequence, struct, tuple-struct,
+wildcard, alias, and enum-case parameter patterns lower at function entry.
+Refutable enum-case and `Slice[T]` sequence parameters panic if the caller
+passes a non-matching case or length. Owning and borrow-valued parameter
+patterns are still rejected until ownership behavior for parameter
+destructuring is defined. Root `Vec[T]` function parameters are still rejected
+until the runtime-capacity Vec ABI is defined; pass `Slice[T]` when a callee
+only needs a borrowed sequence view. Parameter patterns are value-binding-only
+for now: `ref`, `ref mut`, `&`, `&mut`, and `mut` binding-mode patterns are
+reserved and rejected. Trait and extern function signatures must keep named
+parameters.
 
 ## Borrow Returns
 

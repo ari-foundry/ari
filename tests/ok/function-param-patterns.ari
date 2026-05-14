@@ -26,6 +26,10 @@ fn sum_array([first, .., last]: [i64, 4]) -> i64 {
   return first * 10 + last;
 }
 
+fn sum_slice([first, .., last]: Slice[i64]) -> i64 {
+  return first + last;
+}
+
 fn sum_tuple_struct(Pair(left, right): Pair) -> i64 {
   return left + right;
 }
@@ -39,10 +43,13 @@ fn ignore_first(_: i64, value: i64) -> i64 {
 }
 
 fn main() -> i64 {
+  var values = [6, 7, 8];
+  let view = values.as_slice();
   return sum_pair((3, 4)) +
          sum_point(Point { x: 5, y: 6 }) +
          sum_point_alias(Point { x: 2, y: 3 }) +
          sum_array([1, 2, 3, 4]) +
+         sum_slice(view) +
          sum_tuple_struct(Pair(9, 10)) +
          take_some(Some(7)) +
          ignore_first(99, 8);
