@@ -1967,7 +1967,7 @@ private:
                 if (expr->kind != ExprKind::Name) {
                     fail(bang.loc, "macro invocation syntax requires a named meta function before !");
                 }
-                if (unqualified_name(expr->name) == "matches") {
+                if (expr->name == "matches") {
                     expr = parse_matches_macro(expr->loc);
                     continue;
                 }

@@ -1065,6 +1065,14 @@ private:
                module_declares_alias(current_module_name_, name);
     }
 
+    static PreludeMacroKind prelude_macro_kind_for_resolved_name(const std::string& name) {
+        std::string base = basename_of_qualified_name(name);
+        PreludeMacroKind kind = prelude_macro_kind(base);
+        if (kind == PreludeMacroKind::None) return PreludeMacroKind::None;
+        if (name == base || name == "std::" + base) return kind;
+        return PreludeMacroKind::None;
+    }
+
     void add_implicit_use_info(const std::string& module_name,
                                const std::string& alias,
                                const std::string& path) {
@@ -14497,8 +14505,12 @@ private:
     }
 
     IrExprPtr check_macro_call(const Expr& expr) {
-        PreludeMacroKind prelude = prelude_macro_kind(unqualified_name(expr.name));
-        if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
+        std::string prelude_name = resolve_use_path(expr.name);
+        bool local_decl_shadows_prelude = unqualified_decl_shadows_prelude_name(expr.name, prelude_name);
+        if (prelude_specials_available() && !local_decl_shadows_prelude) {
+            PreludeMacroKind prelude = prelude_macro_kind_for_resolved_name(prelude_name);
+            if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
+        }
 
         (void)require_meta_invocation(expr.loc, MetaInvocationSite::ExpressionMacro, expr.name);
         if (!expr.macro_tokens) {

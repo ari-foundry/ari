@@ -1,0 +1,7 @@
+use std as core;
+
+fn main() -> i64 {
+  let text = core::format!("value={}", 1);
+  let ignored = text;
+  return 0;
+}

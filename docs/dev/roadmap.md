@@ -250,7 +250,10 @@ stages rather than one file per syntax feature.
    - [ast] support non-identity `ast` construction and rewrites beyond
      empty/`return input;` identity bodies
    - [attributes] allow attribute macros to rewrite or insert AST nodes
-   - [format] lower `format!` after owned runtime strings exist
+   - [format] lower `format!` after owned runtime strings exist; the reserved
+     diagnostic now applies to unqualified `format!`, `std::format!`, and
+     aliases that resolve to the root `std` macro path, while unrelated
+     qualified `format!` paths remain user macro names
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 

@@ -18,5 +18,6 @@ fn main() -> i64 {
 
   print!("macro={}", 5);
   println!(" ok={}", true);
+  std::print!(" std={}", 6);
   return 7;
 }

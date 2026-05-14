@@ -358,6 +358,12 @@ check-prelude: $(TARGET)
 	grep -q "freestanding backend does not lower line input helpers yet" $(BUILD_DIR)/prelude/prelude-read-line-freestanding.err
 	if $(TARGET) tests/errors/prelude-macro-format-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-planned.err 2>&1; then exit 1; fi
 	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/prelude/prelude-macro-format-planned.err
+	if $(TARGET) tests/errors/prelude-macro-format-qualified-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err 2>&1; then exit 1; fi
+	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err
+	if $(TARGET) tests/errors/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi
+	grep -q "unknown macro 'other::format!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err
+	if $(TARGET) tests/errors/prelude-macro-nonprelude-matches.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err 2>&1; then exit 1; fi
+	grep -q "unknown macro 'other::matches!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err
 	if $(TARGET) tests/errors/prelude-macro-assert-eq-type.ari -o $(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.elf >$(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.err 2>&1; then exit 1; fi
 	grep -q "assert_eq! arguments must both be integer values or both be bool values" $(BUILD_DIR)/prelude/prelude-macro-assert-eq-type.err
 	if $(TARGET) tests/errors/prelude-assert-type.ari -o $(BUILD_DIR)/prelude/prelude-assert-type.elf >$(BUILD_DIR)/prelude/prelude-assert-type.err 2>&1; then exit 1; fi

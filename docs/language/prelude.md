@@ -236,10 +236,14 @@ matches!(value, Some(_))
 ```
 
 `assert_eq!` and `assert_ne!` dispatch to integer or bool assertion builtins.
-`matches!` expands to a bool-valued pattern test using the same pattern engine
-as `match`, so enum, scalar, tuple, array, struct, tuple-struct, alias, and
-or-pattern forms follow the same rules. `format!` is reserved until Ari has
-owned runtime strings.
+`matches!` uses the unqualified parser-special spelling and expands to a
+bool-valued pattern test using the same pattern engine as `match`, so enum,
+scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
+the same rules. `format!` is reserved until Ari has owned runtime strings.
+Other prelude expression macros are recognized as unqualified names or paths
+that resolve to the root `std` macro name, such as `std::print!` or an alias of
+`std::format!`; arbitrary module paths whose basename is `format`, `print`, or
+another prelude macro name remain user macro paths.
 
 ## Current Source Signatures
 

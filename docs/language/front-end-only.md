@@ -197,8 +197,12 @@ reserved until Ari has a compile-time evaluator.
 
 Expression, item, and type-position macro invocation use Rust-style
 `ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
-`println!`, and `matches!` macros lower today. User expression macros must
-resolve to `token_stream -> token_stream` or `ast -> ast` meta functions.
+`println!`, and unqualified `matches!` macros lower today. Prelude expression
+macros other than the parser-special `matches!` spelling are matched only
+through unqualified names or paths that resolve to the root `std` macro
+spelling; other qualified paths are left for user meta functions even when
+their basename matches a prelude macro. User expression macros must resolve to
+`token_stream -> token_stream` or `ast -> ast` meta functions.
 Because active user meta bodies are identity-only, expression macro expansion
 is currently an identity transform: the token tree inside `ident!(...)` is
 parsed as one expression and then lowered as that expression. User syntax-rewriting
