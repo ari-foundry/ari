@@ -647,6 +647,20 @@ private:
         return resolved;
     }
 
+    const MetaFunctionInfo& require_meta_invocation(SourceLocation loc,
+                                                    MetaInvocationSite site,
+                                                    const std::string& name) const {
+        std::string meta_name = resolve_meta_function_name(name);
+        auto found = meta_functions_.find(meta_name);
+        if (found == meta_functions_.end()) {
+            fail(loc, unknown_meta_invocation_message(site, name));
+        }
+        if (!meta_transform_allowed_at_site(site, found->second.transform_kind)) {
+            fail(loc, meta_invocation_domain_message(site, name, meta_name, found->second.transform_kind));
+        }
+        return found->second;
+    }
+
     std::string resolve_enum_case_name(const std::string& name) const {
         std::string resolved = import_or_qualified_name(name);
         if (is_qualified_name(resolved) || current_module_name_.empty()) return resolved;
@@ -1228,21 +1242,7 @@ private:
                 validate_builtin_attribute(attr, target_kind);
                 continue;
             }
-            std::string meta_name = resolve_meta_function_name(attr.name);
-            auto found = meta_functions_.find(meta_name);
-            if (found == meta_functions_.end()) {
-                current_module_name_ = previous_module;
-                fail(attr.loc,
-                     "unknown attribute '@" + attr.name +
-                         "'; define a meta function with token_stream or ast input to reserve it");
-            }
-            if (!meta_transform_can_rewrite_syntax(found->second.transform_kind)) {
-                current_module_name_ = previous_module;
-                fail(attr.loc,
-                     "attribute '@" + attr.name + "' is reserved by meta function '" + meta_name +
-                         "' with " + meta_transform_signature(found->second.transform_kind) +
-                         " domain; attributes require token_stream -> token_stream or ast -> ast");
-            }
+            (void)require_meta_invocation(attr.loc, MetaInvocationSite::Attribute, attr.name);
         }
         current_module_name_ = previous_module;
     }
@@ -1271,23 +1271,9 @@ private:
         for (const auto& invocation : program_.item_macros) {
             std::string previous_module = current_module_name_;
             current_module_name_ = invocation.module_name;
-            std::string meta_name = resolve_meta_function_name(invocation.name);
-            auto found = meta_functions_.find(meta_name);
-            if (found == meta_functions_.end()) {
-                current_module_name_ = previous_module;
-                fail(invocation.loc, "unknown item macro '" + invocation.name + "!'");
-            }
-            if (!meta_transform_can_rewrite_syntax(found->second.transform_kind)) {
-                current_module_name_ = previous_module;
-                fail(invocation.loc,
-                     "item macro invocation '" + invocation.name + "!' refers to meta function '" + meta_name +
-                         "' with " + meta_transform_signature(found->second.transform_kind) +
-                         " domain; item macros require token_stream -> token_stream or ast -> ast");
-            }
+            (void)require_meta_invocation(invocation.loc, MetaInvocationSite::ItemMacro, invocation.name);
             current_module_name_ = previous_module;
-            fail(invocation.loc,
-                 "item macro invocation '" + invocation.name +
-                     "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet");
+            fail(invocation.loc, meta_invocation_planned_message(MetaInvocationSite::ItemMacro, invocation.name));
         }
     }
 
@@ -3386,20 +3372,8 @@ private:
     }
 
     IrType resolve_type_macro_invocation(const TypeRef& ast_type) {
-        std::string meta_name = resolve_meta_function_name(ast_type.name);
-        auto found = meta_functions_.find(meta_name);
-        if (found == meta_functions_.end()) {
-            fail(ast_type.loc, "unknown type macro '" + ast_type.name + "!'");
-        }
-        if (found->second.transform_kind != MetaTransformKind::Type) {
-            fail(ast_type.loc,
-                 "type macro invocation '" + ast_type.name + "!' refers to meta function '" + meta_name +
-                     "' with " + meta_transform_signature(found->second.transform_kind) +
-                     " domain; type macros require type -> type");
-        }
-        fail(ast_type.loc,
-             "type macro invocation '" + ast_type.name +
-                 "!' requires compile-time type expansion, which is planned but not implemented yet");
+        (void)require_meta_invocation(ast_type.loc, MetaInvocationSite::TypeMacro, ast_type.name);
+        fail(ast_type.loc, meta_invocation_planned_message(MetaInvocationSite::TypeMacro, ast_type.name));
     }
 
     IrType resolve_executable_type(const TypeRef& ast_type) {
@@ -13841,20 +13815,8 @@ private:
         PreludeMacroKind prelude = prelude_macro_kind(unqualified_name(expr.name));
         if (prelude != PreludeMacroKind::None) return check_prelude_macro_call(expr, prelude);
 
-        std::string meta_name = resolve_meta_function_name(expr.name);
-        auto found = meta_functions_.find(meta_name);
-        if (found == meta_functions_.end()) {
-            fail(expr.loc, "unknown macro '" + expr.name + "!'");
-        }
-        if (!meta_transform_can_rewrite_syntax(found->second.transform_kind)) {
-            fail(expr.loc,
-                 "macro invocation '" + expr.name + "!' refers to meta function '" + meta_name +
-                     "' with " + meta_transform_signature(found->second.transform_kind) +
-                     " domain; expression macros require token_stream -> token_stream or ast -> ast");
-        }
-        fail(expr.loc,
-             "macro invocation '" + expr.name +
-                 "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet");
+        (void)require_meta_invocation(expr.loc, MetaInvocationSite::ExpressionMacro, expr.name);
+        fail(expr.loc, meta_invocation_planned_message(MetaInvocationSite::ExpressionMacro, expr.name));
     }
 
     IrExprPtr check_generic_call(const Expr& expr, const FunctionDecl& fn, const std::string& resolved_name, IrExprPtr lowered) {

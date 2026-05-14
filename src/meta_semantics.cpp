@@ -61,6 +61,75 @@ bool meta_transform_can_rewrite_syntax(MetaTransformKind kind) {
     return kind == MetaTransformKind::TokenStream || kind == MetaTransformKind::Ast;
 }
 
+bool meta_transform_allowed_at_site(MetaInvocationSite site, MetaTransformKind kind) {
+    switch (site) {
+        case MetaInvocationSite::Attribute:
+        case MetaInvocationSite::ExpressionMacro:
+        case MetaInvocationSite::ItemMacro:
+            return meta_transform_can_rewrite_syntax(kind);
+        case MetaInvocationSite::TypeMacro:
+            return kind == MetaTransformKind::Type;
+    }
+    return false;
+}
+
+std::string unknown_meta_invocation_message(MetaInvocationSite site, const std::string& name) {
+    switch (site) {
+        case MetaInvocationSite::Attribute:
+            return "unknown attribute '@" + name +
+                   "'; define a meta function with token_stream or ast input to reserve it";
+        case MetaInvocationSite::ExpressionMacro:
+            return "unknown macro '" + name + "!'";
+        case MetaInvocationSite::ItemMacro:
+            return "unknown item macro '" + name + "!'";
+        case MetaInvocationSite::TypeMacro:
+            return "unknown type macro '" + name + "!'";
+    }
+    return "unknown meta invocation '" + name + "'";
+}
+
+std::string meta_invocation_domain_message(MetaInvocationSite site,
+                                           const std::string& name,
+                                           const std::string& meta_name,
+                                           MetaTransformKind kind) {
+    std::string signature = meta_transform_signature(kind);
+    switch (site) {
+        case MetaInvocationSite::Attribute:
+            return "attribute '@" + name + "' is reserved by meta function '" + meta_name +
+                   "' with " + signature +
+                   " domain; attributes require token_stream -> token_stream or ast -> ast";
+        case MetaInvocationSite::ExpressionMacro:
+            return "macro invocation '" + name + "!' refers to meta function '" + meta_name +
+                   "' with " + signature +
+                   " domain; expression macros require token_stream -> token_stream or ast -> ast";
+        case MetaInvocationSite::ItemMacro:
+            return "item macro invocation '" + name + "!' refers to meta function '" + meta_name +
+                   "' with " + signature +
+                   " domain; item macros require token_stream -> token_stream or ast -> ast";
+        case MetaInvocationSite::TypeMacro:
+            return "type macro invocation '" + name + "!' refers to meta function '" + meta_name +
+                   "' with " + signature + " domain; type macros require type -> type";
+    }
+    return "meta invocation '" + name + "' has unsupported meta transform domain";
+}
+
+std::string meta_invocation_planned_message(MetaInvocationSite site, const std::string& name) {
+    switch (site) {
+        case MetaInvocationSite::ExpressionMacro:
+            return "macro invocation '" + name +
+                   "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet";
+        case MetaInvocationSite::ItemMacro:
+            return "item macro invocation '" + name +
+                   "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet";
+        case MetaInvocationSite::TypeMacro:
+            return "type macro invocation '" + name +
+                   "!' requires compile-time type expansion, which is planned but not implemented yet";
+        case MetaInvocationSite::Attribute:
+            break;
+    }
+    return "meta invocation '" + name + "' requires compile-time expansion, which is planned but not implemented yet";
+}
+
 MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
     require_unique_generic_params(fn.generics, "meta function", fn.name);
     if (!fn.generics.empty()) {

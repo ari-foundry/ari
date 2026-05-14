@@ -391,10 +391,12 @@ These moves should happen after pure helpers and local state have settled.
      constants, extern functions, metadata needed for IR export, and duplicate
      diagnostics.
    - Keep `meta fn` transform signature/domain validation with declaration
-     analysis instead of growing a meta syntax subsystem. Existing meta helper
-     code can fold into the declaration-table extraction when that pass owns
-     meta registration separately from executable function signature
-     collection.
+     analysis instead of growing a syntax-feature subsystem. `meta_semantics`
+     now owns the shared attribute/expression/item/type invocation site domain
+     rules and diagnostics while `SemanticChecker` still owns module-aware
+     name resolution into the meta function table. These helpers can fold into
+     the declaration-table extraction when that pass owns meta registration
+     separately from executable function signature collection.
    - Keep monomorphization queues in `SemanticChecker` until generic lowering
      is split.
 3. Continue extracting generic type inference into `type_inference`.
