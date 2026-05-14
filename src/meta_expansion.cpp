@@ -30,39 +30,27 @@ Program parse_item_macro_tokens(const ItemMacroInvocation& invocation) {
     return parse_tokens_in_module(std::move(tokens), module_path_for_macro(invocation));
 }
 
-SourceLocation impl_location(const ImplDecl& decl) {
-    if (decl.has_trait) return decl.trait_type.loc;
-    return decl.for_type.loc;
-}
-
 void reject_unsupported_item_macro_output(const Program& program, SourceLocation invocation_loc) {
     if (!program.uses.empty()) {
         fail_expansion(program.uses.front().loc,
-                       "item macro identity expansion currently supports function, constant, struct, and enum declarations; generated use declarations remain planned");
+                       "item macro identity expansion currently supports function, constant, struct, enum, trait, and impl declarations; generated use declarations remain planned");
     }
     if (!program.module_imports.empty()) {
         fail_expansion(program.module_imports.front().loc,
-                       "item macro identity expansion currently supports function, constant, struct, and enum declarations; generated module imports remain planned");
+                       "item macro identity expansion currently supports function, constant, struct, enum, trait, and impl declarations; generated module imports remain planned");
     }
     if (!program.modules.empty()) {
         fail_expansion(program.modules.front().loc,
-                       "item macro identity expansion currently supports function, constant, struct, and enum declarations; generated modules remain planned");
+                       "item macro identity expansion currently supports function, constant, struct, enum, trait, and impl declarations; generated modules remain planned");
     }
     if (!program.item_macros.empty()) {
         fail_expansion(program.item_macros.front().loc,
                        "nested item macro identity expansion is planned but not supported yet");
     }
-    if (!program.traits.empty()) {
-        fail_expansion(program.traits.front().loc,
-                       "item macro identity expansion currently supports function, constant, struct, and enum declarations; generated traits remain planned");
-    }
-    if (!program.impls.empty()) {
-        fail_expansion(impl_location(program.impls.front()),
-                       "item macro identity expansion currently supports function, constant, struct, and enum declarations; generated impls remain planned");
-    }
-    if (program.constants.empty() && program.functions.empty() && program.structs.empty() && program.enums.empty()) {
+    if (program.constants.empty() && program.functions.empty() && program.structs.empty() && program.enums.empty() &&
+        program.traits.empty() && program.impls.empty()) {
         fail_expansion(invocation_loc,
-                       "item macro identity expansion requires at least one generated function, constant, struct, or enum declaration");
+                       "item macro identity expansion requires at least one generated function, constant, struct, enum, trait, or impl declaration");
     }
 }
 
@@ -90,6 +78,14 @@ ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation
     }
     expansion.enums = std::move(program.enums);
     for (auto& decl : expansion.enums) {
+        if (invocation.is_public) decl.is_public = true;
+    }
+    expansion.traits = std::move(program.traits);
+    for (auto& decl : expansion.traits) {
+        if (invocation.is_public) decl.is_public = true;
+    }
+    expansion.impls = std::move(program.impls);
+    for (auto& decl : expansion.impls) {
         if (invocation.is_public) decl.is_public = true;
     }
     return expansion;

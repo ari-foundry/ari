@@ -422,6 +422,8 @@ private:
     std::vector<FunctionDecl> item_macro_functions_;
     std::vector<StructDecl> item_macro_structs_;
     std::vector<EnumDecl> item_macro_enums_;
+    std::vector<TraitDecl> item_macro_traits_;
+    std::vector<ImplDecl> item_macro_impls_;
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
     std::map<std::string, std::string> exported_symbols_;
@@ -803,6 +805,18 @@ private:
         for (const auto& decl : item_macro_enums_) visitor(decl);
     }
 
+    template <typename Visitor>
+    void for_each_trait_decl(Visitor&& visitor) const {
+        for (const auto& decl : program_.traits) visitor(decl);
+        for (const auto& decl : item_macro_traits_) visitor(decl);
+    }
+
+    template <typename Visitor>
+    void for_each_impl_decl(Visitor&& visitor) const {
+        for (const auto& decl : program_.impls) visitor(decl);
+        for (const auto& decl : item_macro_impls_) visitor(decl);
+    }
+
     void collect_module_decls() {
         for (const auto& decl : program_.modules) {
             ModuleInfo info;
@@ -913,11 +927,11 @@ private:
                 add(item.name, qualify_in_module(decl.module_name, item.name));
             }
         });
-        for (const auto& decl : program_.traits) {
+        for_each_trait_decl([&](const TraitDecl& decl) {
             if (decl.module_name == "std" && decl.is_public) {
                 add(basename_of_qualified_name(decl.name), decl.name);
             }
-        }
+        });
 
         auto root_uses = uses_.find("std");
         if (root_uses != uses_.end()) {
@@ -964,13 +978,13 @@ private:
                 add(module_alias + "::" + item.name, case_name);
             }
         });
-        for (const auto& decl : program_.traits) {
+        for_each_trait_decl([&](const TraitDecl& decl) {
             if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
                 std::string alias = basename_of_qualified_name(decl.name);
                 add(alias, decl.name);
                 add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
             }
-        }
+        });
 
         return items;
     }
@@ -1002,9 +1016,11 @@ private:
             }
         });
         if (has_enum_alias) return true;
-        for (const auto& decl : program_.traits) {
-            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
-        }
+        bool has_trait_alias = false;
+        for_each_trait_decl([&](const TraitDecl& decl) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_trait_alias = true;
+        });
+        if (has_trait_alias) return true;
         return false;
     }
 
@@ -1036,8 +1052,12 @@ private:
         for_each_enum_decl([&](const EnumDecl& decl) {
             module_names.insert(decl.module_name);
         });
-        for (const auto& decl : program_.traits) module_names.insert(decl.module_name);
-        for (const auto& decl : program_.impls) module_names.insert(decl.module_name);
+        for_each_trait_decl([&](const TraitDecl& decl) {
+            module_names.insert(decl.module_name);
+        });
+        for_each_impl_decl([&](const ImplDecl& decl) {
+            module_names.insert(decl.module_name);
+        });
 
         std::vector<std::pair<std::string, std::string>> prelude_items = implicit_std_prelude_items();
         for (const auto& module_name : module_names) {
@@ -1085,11 +1105,11 @@ private:
                 add_use_info(use.module_name, item.name, case_name, use.is_public, use.loc);
             }
         });
-        for (const auto& decl : program_.traits) {
+        for_each_trait_decl([&](const TraitDecl& decl) {
             if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
                 add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
             }
-        }
+        });
     }
 
     static void require_unique_generic_params(
@@ -1307,12 +1327,12 @@ private:
             validate_attribute_list(decl.attributes, "enum", decl.module_name);
             validate_repr_c_enum(decl);
         });
-        for (const auto& decl : program_.traits) {
+        for_each_trait_decl([&](const TraitDecl& decl) {
             validate_attribute_list(decl.attributes, "trait", decl.module_name);
-        }
-        for (const auto& decl : program_.impls) {
+        });
+        for_each_impl_decl([&](const ImplDecl& decl) {
             validate_attribute_list(decl.attributes, "impl", decl.module_name);
-        }
+        });
     }
 
     void expand_item_macro_invocations() {
@@ -1331,6 +1351,8 @@ private:
             for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
             for (auto& decl : expansion.structs) item_macro_structs_.push_back(std::move(decl));
             for (auto& decl : expansion.enums) item_macro_enums_.push_back(std::move(decl));
+            for (auto& decl : expansion.traits) item_macro_traits_.push_back(std::move(decl));
+            for (auto& decl : expansion.impls) item_macro_impls_.push_back(std::move(decl));
         }
     }
 
@@ -1426,12 +1448,12 @@ private:
         for_each_function_decl([&](const FunctionDecl& fn) {
             validate_function_pattern_macros(fn);
         });
-        for (const auto& trait : program_.traits) {
+        for_each_trait_decl([&](const TraitDecl& trait) {
             for (const auto& method : trait.methods) validate_function_pattern_macros(method);
-        }
-        for (const auto& impl : program_.impls) {
+        });
+        for_each_impl_decl([&](const ImplDecl& impl) {
             for (const auto& method : impl.methods) validate_function_pattern_macros(method);
-        }
+        });
     }
 
     void validate_repr_c_struct(const StructDecl& decl) const {
@@ -1533,7 +1555,7 @@ private:
     }
 
     void collect_trait_decls() {
-        for (const auto& decl : program_.traits) {
+        for_each_trait_decl([&](const TraitDecl& decl) {
             require_unique_generic_params(decl.generics, "trait", decl.name);
             TraitInfo info;
             info.name = decl.name;
@@ -1594,7 +1616,7 @@ private:
 
             auto inserted = traits_.emplace(decl.name, std::move(info));
             if (!inserted.second) fail(decl.loc, "duplicate trait '" + decl.name + "'");
-        }
+        });
     }
 
     GenericTraitBound resolve_supertrait_bound(const TypeRef& constraint) {
@@ -2221,7 +2243,7 @@ private:
         for_each_enum_decl([&](const EnumDecl& decl) {
             validate_generic_constraints_for(decl.generics, decl.module_name);
         });
-        for (const auto& decl : program_.traits) {
+        for_each_trait_decl([&](const TraitDecl& decl) {
             validate_generic_constraints_for(decl.generics, decl.module_name);
             std::map<std::string, IrType> trait_substitutions = generic_placeholder_substitutions(decl.generics);
             for (const auto& method : decl.methods) {
@@ -2231,13 +2253,13 @@ private:
                 }
                 validate_generic_constraints_for(method.generics, decl.module_name, std::move(method_substitutions));
             }
-        }
+        });
         for_each_function_decl([&](const FunctionDecl& fn) {
             validate_generic_constraints_for(fn.generics, fn.module_name);
         });
-        for (const auto& impl : program_.impls) {
+        for_each_impl_decl([&](const ImplDecl& impl) {
             validate_generic_constraints_for(impl.generics, impl.module_name);
-        }
+        });
     }
 
     IrType resolve_impl_method_type(const TypeRef& type, const std::map<std::string, IrType>& substitutions) {
@@ -2464,11 +2486,11 @@ private:
     }
 
     void validate_impls() {
-        for (const auto& impl : program_.impls) {
+        for_each_impl_decl([&](const ImplDecl& impl) {
             require_unique_generic_params(impl.generics, "impl", "impl");
             if (!impl.has_trait) {
                 validate_inherent_impl_methods(impl);
-                continue;
+                return;
             }
             if (impl.trait_type.qualifier != TypeQualifier::Value) {
                 fail(impl.trait_type.loc, "impl trait type cannot have an ownership qualifier");
@@ -2552,12 +2574,12 @@ private:
             }
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
-        }
+        });
     }
 
     void validate_supertrait_impls() {
-        for (const auto& impl : program_.impls) {
-            if (!impl.has_trait) continue;
+        for_each_impl_decl([&](const ImplDecl& impl) {
+            if (!impl.has_trait) return;
 
             std::string previous_module = current_module_name_;
             std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
@@ -2570,7 +2592,7 @@ private:
             if (trait_found == traits_.end()) {
                 current_type_substitutions_ = std::move(previous_substitutions);
                 current_module_name_ = previous_module;
-                continue;
+                return;
             }
             const TraitInfo& trait = trait_found->second;
             IrType self_type = resolve_executable_type(impl.for_type);
@@ -2594,7 +2616,7 @@ private:
 
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
-        }
+        });
     }
 
     const FunctionDecl& require_impl_method_decl(const ImplDecl& impl, const std::string& name) const {
@@ -2605,8 +2627,8 @@ private:
     }
 
     void validate_into_iterator_result_contracts() {
-        for (const auto& impl : program_.impls) {
-            if (!impl.has_trait) continue;
+        for_each_impl_decl([&](const ImplDecl& impl) {
+            if (!impl.has_trait) return;
 
             std::string previous_module = current_module_name_;
             std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
@@ -2621,7 +2643,7 @@ private:
             if (!is_std_into_iterator_trait_name(trait_name)) {
                 current_type_substitutions_ = std::move(previous_substitutions);
                 current_module_name_ = previous_module;
-                continue;
+                return;
             }
             IrType item_type = resolve_executable_type(impl.trait_type.args[0]);
             item_type.qualifier = TypeQualifier::Value;
@@ -2649,7 +2671,7 @@ private:
 
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
-        }
+        });
     }
 
     std::optional<BorrowReturnOperandPathHint> borrow_return_operand_path_hint(
@@ -2903,7 +2925,7 @@ private:
     }
 
     void collect_impl_method_signatures() {
-        for (const auto& impl : program_.impls) {
+        for_each_impl_decl([&](const ImplDecl& impl) {
             std::string previous_module = current_module_name_;
             current_module_name_ = impl.module_name;
 
@@ -3009,7 +3031,7 @@ private:
             }
 
             current_module_name_ = previous_module;
-        }
+        });
     }
 
     std::map<std::string, IrType> enum_type_arg_substitutions(
@@ -3621,8 +3643,8 @@ private:
         for (const auto& arg : ast_type.args) trait_args.push_back(resolve_executable_type(arg));
 
         std::vector<IrType> candidates;
-        for (const auto& impl : program_.impls) {
-            if (!impl.has_trait) continue;
+        for_each_impl_decl([&](const ImplDecl& impl) {
+            if (!impl.has_trait) return;
 
             std::string previous_module = current_module_name_;
             std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
@@ -3669,7 +3691,7 @@ private:
 
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
-        }
+        });
 
         if (candidates.empty()) {
             fail(ast_type.loc,
