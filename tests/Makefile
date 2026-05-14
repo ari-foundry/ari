@@ -1477,7 +1477,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/macro-call-unknown.ari -o $(BUILD_DIR)/meta/macro-call-unknown.elf >$(BUILD_DIR)/meta/macro-call-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'missing!'" $(BUILD_DIR)/meta/macro-call-unknown.err
 	if $(TARGET) tests/errors/item-macro-unsupported-item.ari -o $(BUILD_DIR)/meta/item-macro-unsupported-item.elf >$(BUILD_DIR)/meta/item-macro-unsupported-item.err 2>&1; then exit 1; fi
-	grep -q "item macro identity expansion currently supports inline module and use declarations; generated file-backed module imports remain planned" $(BUILD_DIR)/meta/item-macro-unsupported-item.err
+	grep -q "item macro identity expansion cannot generate file-backed module imports; use an inline module output or a source-level mod declaration" $(BUILD_DIR)/meta/item-macro-unsupported-item.err
 	if $(TARGET) tests/errors/item-macro-type-domain.ari -o $(BUILD_DIR)/meta/item-macro-type-domain.elf >$(BUILD_DIR)/meta/item-macro-type-domain.err 2>&1; then exit 1; fi
 	grep -q "item macros require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/item-macro-type-domain.err
 	if $(TARGET) tests/errors/item-macro-unknown.ari -o $(BUILD_DIR)/meta/item-macro-unknown.elf >$(BUILD_DIR)/meta/item-macro-unknown.err 2>&1; then exit 1; fi

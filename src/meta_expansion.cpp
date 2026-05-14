@@ -33,7 +33,7 @@ Program parse_item_macro_tokens(const ItemMacroInvocation& invocation) {
 void reject_unsupported_item_macro_output(const Program& program, SourceLocation invocation_loc) {
     if (!program.module_imports.empty()) {
         fail_expansion(program.module_imports.front().loc,
-                       "item macro identity expansion currently supports inline module and use declarations; generated file-backed module imports remain planned");
+                       "item macro identity expansion cannot generate file-backed module imports; use an inline module output or a source-level mod declaration");
     }
     if (!program.item_macros.empty()) {
         fail_expansion(program.item_macros.front().loc,

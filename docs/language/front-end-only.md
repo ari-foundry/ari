@@ -193,13 +193,15 @@ constant, struct, enum, trait, impl, inline module, and use item macro
 expansion is currently an identity transform: the token tree is parsed as
 top-level function/constant/struct/enum/trait/impl/module/use declarations and
 those generated items participate in normal semantic checking. Generated
-file-backed `mod name;` imports are still planned because module loading runs
-before semantic expansion. Type-position
+file-backed `mod name;` imports are not supported in item macro output because
+module loading runs before semantic expansion; keep file-backed imports as
+source-level `mod` declarations. Type-position
 macro invocations must resolve to
 `type -> type` meta functions and are also identity transforms today: their
 token tree is parsed as a type input and then lowered as that type. User
-`meta fn` rewriting, remaining item macro expansion, and `format!` are still
-planned and rejected with specific diagnostics.
+`meta fn` rewrites that change syntax, pattern/attribute macro expansion,
+derives, and `format!` are still planned and rejected with specific
+diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions, and then
