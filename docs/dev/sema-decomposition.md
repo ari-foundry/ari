@@ -5,13 +5,14 @@ resolution, type resolution, trait selection, ownership and borrow state,
 pattern analysis, control-flow lowering, prelude lowering hooks, and IR
 construction. Some helpers have already moved out to focused files:
 
-Current direction: avoid further fine-grained feature-file splits while the
-language surface is still settling. New sema decomposition work should target
-large subsystems such as name resolution, type inference/checking, ownership and
-borrow checking, pattern binding/coverage, or statement/expression lowering.
+Current direction: sema decomposition is phase-oriented. Do not split new work
+by individual grammar surface while the language surface is still settling. New
+sema decomposition work should target large compiler responsibilities such as
+name resolution, declaration tables, constant folding, type inference/checking,
+ownership and borrow checking, pattern binding/coverage, or IR lowering.
 Existing small helpers can stay in place until a natural consolidation point,
 but new work should prefer merging related helpers into broader subsystems over
-adding more narrow `*_semantics` siblings.
+adding more narrow syntax-specific `*_semantics` siblings.
 
 - `attribute_semantics` for attribute validation helpers
 - `prelude_resolver` for compiler-known standard-library spellings
@@ -21,8 +22,13 @@ adding more narrow `*_semantics` siblings.
   used by constant-like local reasoning and local Vec capacity/length
   decisions, plus constant-cycle path formatting and constant pattern lowering
   for scalar matches and enum payload conditions
-- `type_semantics` for shared type predicates, raw-pointer type checks,
-  literal range checks, and assignability/operand diagnostics
+- `type_semantics` for shared type predicates, `TypeRef` diagnostic spelling,
+  raw-pointer type checks, literal range checks, and assignability/operand
+  diagnostics
+- `type_inference` for generic type-name lookup, substitution maps, generic
+  pattern unification, substitution, and diagnostic-aware inference used by
+  generic functions, impl methods, trait-qualified associated functions, and
+  generic enum constructors
 - `vector_semantics` for local `Vec[T]` storage type/helpers, typed empty
   vector literal construction, frozen local method classification and shape
   diagnostics, shared `len`/`is_empty`/`as_slice` shape diagnostics, shared
@@ -384,15 +390,27 @@ These moves should happen after pure helpers and local state have settled.
    - Own function signatures, struct/enum/trait tables, impl tables,
      constants, extern functions, metadata needed for IR export, and duplicate
      diagnostics.
-   - `meta_semantics` now owns the `meta fn` transform signature/domain rules
-     and diagnostics; later declaration-table work should keep meta
-     registration separate from executable function signature collection.
+   - Keep `meta fn` transform signature/domain validation with declaration
+     analysis instead of growing a meta syntax subsystem. Existing meta helper
+     code can fold into the declaration-table extraction when that pass owns
+     meta registration separately from executable function signature
+     collection.
    - Keep monomorphization queues in `SemanticChecker` until generic lowering
      is split.
-3. Extract generic and trait resolution into `trait_semantics`.
-   - Move generic binding/inference, trait bound validation, impl coherence,
-     inherent and trait method selection, associated calls, trait object
-     conversion, vtable planning, and object-safety checks.
+3. Continue extracting generic type inference into `type_inference`.
+   - Generic type binding, pattern unification, substitution, and TypeRef-based
+     inference now live outside `sema.cpp`.
+   - Move the remaining generic-call argument binding loops, generic enum
+     constructor inference glue, and monomorphization substitution plumbing
+     here once declaration/type tables are readable through a narrow context.
+   - Small goal label: `type-inference-context` can wrap substitutions plus
+     diagnostic locations once more call sites move; do not introduce it until
+     it removes real duplication across function, method, associated function,
+     and enum constructor inference.
+4. Extract trait resolution into a broad trait-resolution subsystem.
+   - Move trait bound validation, impl coherence, inherent and trait method
+     selection, associated calls, trait object conversion, vtable planning, and
+     object-safety checks.
    - Pure trait-call helpers already live in `trait_semantics`, including
      display keys, `Self` receiver recognition, and whether an expected value
      type can select the implementing type for a trait-qualified associated
@@ -425,9 +443,10 @@ surface.
 2. `local_state`
 3. `borrow_semantics`
 4. `zone_semantics`
-5. `name_resolution`
-6. `trait_semantics`
-7. `expr_lowering` / `stmt_lowering`
+5. `type_inference`
+6. `name_resolution`
+7. broad trait resolution
+8. `expr_lowering` / `stmt_lowering`
 
 This order keeps early patches mostly pure, then moves stateful pieces only
 after their dependencies have a stable API. The end state should make

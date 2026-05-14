@@ -1,5 +1,7 @@
 #include "meta_semantics.hpp"
 
+#include "type_semantics.hpp"
+
 #include <cstddef>
 #include <set>
 #include <string>
@@ -10,76 +12,6 @@ namespace {
 
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
     throw CompileError(where(loc) + ": " + message);
-}
-
-std::string type_ref_key(const TypeRef& type) {
-    std::string key;
-    switch (type.qualifier) {
-        case TypeQualifier::Value:
-            break;
-        case TypeQualifier::Own:
-            key += "own ";
-            break;
-        case TypeQualifier::Ref:
-            key += "ref ";
-            break;
-        case TypeQualifier::MutRef:
-            key += "ref mut ";
-            break;
-        case TypeQualifier::Ptr:
-            key += "ptr ";
-            break;
-    }
-
-    if (type.name == "Array" && type.args.size() == 1) {
-        key += "[" + type_ref_key(type.args[0]) + ", " + std::to_string(type.array_size) + "]";
-        if (type.nullable) key += "?";
-        return key;
-    }
-
-    if (type.is_dyn_object) {
-        key += "dyn ";
-        key += type.name;
-        if (!type.args.empty()) {
-            key += "[";
-            for (std::size_t i = 0; i < type.args.size(); ++i) {
-                if (i > 0) key += ", ";
-                key += type_ref_key(type.args[i]);
-            }
-            key += "]";
-        }
-        if (type.nullable) key += "?";
-        return key;
-    }
-
-    if (type.name == "fn" && !type.args.empty()) {
-        key += "fn(";
-        std::size_t param_count = static_cast<std::size_t>(type.array_size);
-        if (param_count + 1 > type.args.size()) param_count = type.args.size() - 1;
-        for (std::size_t i = 0; i < param_count; ++i) {
-            if (i > 0) key += ", ";
-            key += type_ref_key(type.args[i]);
-        }
-        key += ") -> ";
-        key += type_ref_key(type.args[param_count]);
-        if (type.nullable) key += "?";
-        return key;
-    }
-
-    if (type.name == "int") key += "i64";
-    else if (type.name == "std::Vec" || type.name == "prelude::Vec") key += "Vec";
-    else key += type.name;
-
-    if (!type.args.empty()) {
-        key += "[";
-        for (std::size_t i = 0; i < type.args.size(); ++i) {
-            if (i > 0) key += ", ";
-            key += type_ref_key(type.args[i]);
-        }
-        key += "]";
-    }
-    if (type.nullable) key += "?";
-    return key;
 }
 
 void require_unique_generic_params(const std::vector<GenericParam>& generics,

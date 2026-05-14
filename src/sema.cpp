@@ -36,6 +36,7 @@
 #include "symbol_mangle.hpp"
 #include "trait_semantics.hpp"
 #include "try_model.hpp"
+#include "type_inference.hpp"
 #include "type_semantics.hpp"
 #include "vector_semantics.hpp"
 #include "zone_pointer_semantics.hpp"
@@ -1511,76 +1512,6 @@ private:
         }
     }
 
-    static std::string type_ref_key(const TypeRef& type) {
-        std::string key;
-        switch (type.qualifier) {
-            case TypeQualifier::Value:
-                break;
-            case TypeQualifier::Own:
-                key += "own ";
-                break;
-            case TypeQualifier::Ref:
-                key += "ref ";
-                break;
-            case TypeQualifier::MutRef:
-                key += "ref mut ";
-                break;
-            case TypeQualifier::Ptr:
-                key += "ptr ";
-                break;
-        }
-
-        if (type.name == "Array" && type.args.size() == 1) {
-            key += "[" + type_ref_key(type.args[0]) + ", " + std::to_string(type.array_size) + "]";
-            if (type.nullable) key += "?";
-            return key;
-        }
-
-        if (type.is_dyn_object) {
-            key += "dyn ";
-            key += type.name;
-            if (!type.args.empty()) {
-                key += "[";
-                for (std::size_t i = 0; i < type.args.size(); ++i) {
-                    if (i > 0) key += ", ";
-                    key += type_ref_key(type.args[i]);
-                }
-                key += "]";
-            }
-            if (type.nullable) key += "?";
-            return key;
-        }
-
-        if (type.name == "fn" && !type.args.empty()) {
-            key += "fn(";
-            std::size_t param_count = static_cast<std::size_t>(type.array_size);
-            if (param_count + 1 > type.args.size()) param_count = type.args.size() - 1;
-            for (std::size_t i = 0; i < param_count; ++i) {
-                if (i > 0) key += ", ";
-                key += type_ref_key(type.args[i]);
-            }
-            key += ") -> ";
-            key += type_ref_key(type.args[param_count]);
-            if (type.nullable) key += "?";
-            return key;
-        }
-
-        if (type.name == "int") key += "i64";
-        else if (type.name == "std::Vec" || type.name == "prelude::Vec") key += "Vec";
-        else key += type.name;
-
-        if (!type.args.empty()) {
-            key += "[";
-            for (std::size_t i = 0; i < type.args.size(); ++i) {
-                if (i > 0) key += ", ";
-                key += type_ref_key(type.args[i]);
-            }
-            key += "]";
-        }
-        if (type.nullable) key += "?";
-        return key;
-    }
-
     static bool same_type_list(const std::vector<IrType>& left, const std::vector<IrType>& right) {
         if (left.size() != right.size()) return false;
         for (std::size_t i = 0; i < left.size(); ++i) {
@@ -1758,7 +1689,7 @@ private:
     ) const {
         GenericTraitBound resolved = bound;
         for (auto& arg : resolved.trait_args) {
-            arg = substitute_impl_generic_type(arg, substitutions);
+            arg = substitute_inferred_type(arg, substitutions);
         }
         return resolved;
     }
@@ -9852,7 +9783,7 @@ private:
             if (impl.trait_args.size() != 1) continue;
 
             std::map<std::string, IrType> substitutions;
-            if (!infer_generic_impl_pattern_type(impl.self_type, self_type, impl.generic_names, substitutions)) continue;
+            if (!infer_generic_pattern_type(impl.self_type, self_type, impl.generic_names, substitutions)) continue;
 
             bool complete = true;
             for (const auto& generic_name : impl.generic_names) {
@@ -9867,7 +9798,7 @@ private:
             std::set<std::string> visiting;
             if (!impl_generic_bounds_satisfied(impl.generic_bounds, substitutions, visiting, nullptr)) continue;
 
-            item_type = substitute_impl_generic_type(impl.trait_args[0], substitutions);
+            item_type = substitute_inferred_type(impl.trait_args[0], substitutions);
             item_type.qualifier = TypeQualifier::Value;
             return true;
         }
@@ -12776,7 +12707,7 @@ private:
 
             bool trait_args_match = true;
             for (std::size_t i = 0; i < target.args.size(); ++i) {
-                if (!infer_generic_impl_pattern_type(
+                if (!infer_generic_pattern_type(
                         candidate.trait_args[i],
                         target.args[i],
                         candidate.generic_names,
@@ -13192,13 +13123,6 @@ private:
         );
     }
 
-    static bool is_generic_type_name(const std::vector<GenericParam>& generics, const std::string& name) {
-        for (const auto& generic : generics) {
-            if (generic.name == name) return true;
-        }
-        return false;
-    }
-
     static std::string mangle_text_key(const std::string& text) {
         std::string out;
         out.reserve(text.size());
@@ -13293,81 +13217,13 @@ private:
         return resolved;
     }
 
-    void bind_generic_type(SourceLocation loc,
-                           const std::string& name,
-                           const IrType& binding,
-                           std::map<std::string, IrType>& substitutions) const {
-        auto found = substitutions.find(name);
-        if (found == substitutions.end()) {
-            substitutions.emplace(name, binding);
-            return;
-        }
-        if (!same_type(found->second, binding)) {
-            fail(loc, "generic type '" + name + "' inferred as both " + type_name(found->second) + " and " + type_name(binding));
-        }
-    }
-
-    static bool is_generic_impl_type_name(const std::vector<std::string>& generic_names, const std::string& name) {
-        return std::find(generic_names.begin(), generic_names.end(), name) != generic_names.end();
-    }
-
-    bool try_bind_impl_generic_type(
-        const std::string& name,
-        const IrType& binding,
-        std::map<std::string, IrType>& substitutions
-    ) const {
-        auto found = substitutions.find(name);
-        if (found == substitutions.end()) {
-            substitutions.emplace(name, binding);
-            return true;
-        }
-        return same_type(found->second, binding);
-    }
-
-    bool infer_generic_impl_pattern_type(
-        const IrType& pattern,
-        const IrType& actual,
-        const std::vector<std::string>& generic_names,
-        std::map<std::string, IrType>& substitutions
-    ) const {
-        if (pattern.primitive == IrPrimitiveKind::Unknown &&
-            pattern.args.empty() &&
-            is_generic_impl_type_name(generic_names, pattern.name)) {
-            IrType binding = actual;
-            binding.qualifier = TypeQualifier::Value;
-            return try_bind_impl_generic_type(pattern.name, binding, substitutions);
-        }
-
-        if (pattern.qualifier != actual.qualifier ||
-            pattern.primitive != actual.primitive ||
-            pattern.name != actual.name ||
-            pattern.array_size != actual.array_size ||
-            pattern.args.size() != actual.args.size()) {
-            return false;
-        }
-
-        for (std::size_t i = 0; i < pattern.args.size(); ++i) {
-            if (!infer_generic_impl_pattern_type(pattern.args[i], actual.args[i], generic_names, substitutions)) return false;
-        }
-        return true;
-    }
-
-    bool infer_generic_impl_receiver_type(
-        const IrType& pattern,
-        const IrType& actual,
-        const ImplMethodInfo& method,
-        std::map<std::string, IrType>& substitutions
-    ) const {
-        return infer_generic_impl_pattern_type(pattern, actual, method.generic_names, substitutions);
-    }
-
     bool infer_generic_impl_method_substitutions(
         const ImplMethodInfo& method,
         const IrType& receiver_type,
         std::map<std::string, IrType>& substitutions
     ) const {
         substitutions.clear();
-        if (!infer_generic_impl_receiver_type(method.receiver_type, receiver_type, method, substitutions)) return false;
+        if (!infer_generic_pattern_type(method.receiver_type, receiver_type, method.generic_names, substitutions)) return false;
         for (const auto& generic_name : method.generic_names) {
             if (!substitutions.count(generic_name)) return false;
         }
@@ -13385,9 +13241,9 @@ private:
         substitutions.clear();
         if (impl.trait_name != trait_name) return false;
         if (impl.trait_args.size() != trait_args.size()) return false;
-        if (!infer_generic_impl_pattern_type(impl.self_type, self_type, impl.generic_names, substitutions)) return false;
+        if (!infer_generic_pattern_type(impl.self_type, self_type, impl.generic_names, substitutions)) return false;
         for (std::size_t i = 0; i < trait_args.size(); ++i) {
-            if (!infer_generic_impl_pattern_type(impl.trait_args[i], trait_args[i], impl.generic_names, substitutions)) {
+            if (!infer_generic_pattern_type(impl.trait_args[i], trait_args[i], impl.generic_names, substitutions)) {
                 return false;
             }
         }
@@ -13396,26 +13252,6 @@ private:
         }
         substitutions.emplace("Self", self_type);
         return true;
-    }
-
-    IrType substitute_impl_generic_type(
-        const IrType& type,
-        const std::map<std::string, IrType>& substitutions
-    ) const {
-        if (type.primitive == IrPrimitiveKind::Unknown && type.args.empty()) {
-            auto found = substitutions.find(type.name);
-            if (found != substitutions.end()) {
-                IrType resolved = found->second;
-                resolved.qualifier = type.qualifier;
-                resolved.loc = type.loc;
-                return resolved;
-            }
-        }
-
-        IrType resolved = type;
-        for (auto& arg : resolved.args) arg = substitute_impl_generic_type(arg, substitutions);
-        for (auto& field_type : resolved.field_types) field_type = substitute_impl_generic_type(field_type, substitutions);
-        return resolved;
     }
 
     bool impl_generic_bounds_satisfied(
@@ -13433,7 +13269,7 @@ private:
             std::vector<IrType> trait_args;
             trait_args.reserve(bound.trait_args.size());
             for (const auto& arg : bound.trait_args) {
-                trait_args.push_back(substitute_impl_generic_type(arg, substitutions));
+                trait_args.push_back(substitute_inferred_type(arg, substitutions));
             }
             if (!type_implements_trait(bound.trait_name, trait_args, self_type, visiting)) {
                 if (failure) {
@@ -13615,7 +13451,7 @@ private:
                     std::map<std::string, IrType> trait_substitutions = substitutions;
                     bool trait_args_match = true;
                     for (std::size_t i = 0; i < bound.trait_args.size(); ++i) {
-                        if (!infer_generic_impl_pattern_type(
+                        if (!infer_generic_pattern_type(
                                 candidate.trait_args[i],
                                 bound.trait_args[i],
                                 candidate.generic_names,
@@ -13701,50 +13537,6 @@ private:
         }
     }
 
-    void infer_method_generic_type(
-        SourceLocation loc,
-        const TypeRef& expected,
-        const IrType& actual,
-        const ImplMethodInfo& method,
-        std::map<std::string, IrType>& substitutions
-    ) const {
-        if (expected.args.empty() && is_generic_impl_type_name(method.method_generic_names, expected.name)) {
-            if (expected.qualifier != TypeQualifier::Value && expected.qualifier != actual.qualifier) {
-                fail(loc, "type mismatch: expected " + type_ref_key(expected) + ", got " + type_name(actual));
-            }
-            IrType binding = actual;
-            binding.qualifier = TypeQualifier::Value;
-            bind_generic_type(loc, expected.name, binding, substitutions);
-            return;
-        }
-        if (expected.args.size() != actual.args.size()) return;
-        for (std::size_t i = 0; i < expected.args.size(); ++i) {
-            infer_method_generic_type(loc, expected.args[i], actual.args[i], method, substitutions);
-        }
-    }
-
-    void infer_named_generic_type(
-        SourceLocation loc,
-        const TypeRef& expected,
-        const IrType& actual,
-        const std::vector<std::string>& generic_names,
-        std::map<std::string, IrType>& substitutions
-    ) const {
-        if (expected.args.empty() && is_generic_impl_type_name(generic_names, expected.name)) {
-            if (expected.qualifier != TypeQualifier::Value && expected.qualifier != actual.qualifier) {
-                fail(loc, "type mismatch: expected " + type_ref_key(expected) + ", got " + type_name(actual));
-            }
-            IrType binding = actual;
-            binding.qualifier = TypeQualifier::Value;
-            bind_generic_type(loc, expected.name, binding, substitutions);
-            return;
-        }
-        if (expected.args.size() != actual.args.size()) return;
-        for (std::size_t i = 0; i < expected.args.size(); ++i) {
-            infer_named_generic_type(loc, expected.args[i], actual.args[i], generic_names, substitutions);
-        }
-    }
-
     bool bind_or_infer_method_generic_type_args(
         const Expr& expr,
         const ImplMethodInfo& method,
@@ -13764,11 +13556,11 @@ private:
             bind_method_generic_type_args(expr.loc, method, type_args, substitutions);
         } else {
             for (std::size_t i = 0; i < arg_types.size(); ++i) {
-                infer_method_generic_type(
+                infer_named_generic_type(
                     expr.loc,
                     method.fn->params[i + 1].type,
                     arg_types[i],
-                    method,
+                    method.method_generic_names,
                     substitutions);
             }
         }
@@ -13870,7 +13662,7 @@ private:
             if (!bind_or_infer_associated_generic_type_args(expr, candidate, arg_types, substitutions, &first_inference_failure)) {
                 continue;
             }
-            IrType receiver_type = substitute_impl_generic_type(candidate.receiver_type, substitutions);
+            IrType receiver_type = substitute_inferred_type(candidate.receiver_type, substitutions);
             substitutions["Self"] = receiver_type;
 
             std::set<std::string> visiting;
@@ -13902,26 +13694,6 @@ private:
         }
         selected = std::move(matches.front());
         return true;
-    }
-
-    void infer_generic_type(SourceLocation loc,
-                            const TypeRef& expected,
-                            const IrType& actual,
-                            const std::vector<GenericParam>& generics,
-                            std::map<std::string, IrType>& substitutions) const {
-        if (expected.args.empty() && is_generic_type_name(generics, expected.name)) {
-            if (expected.qualifier != TypeQualifier::Value && expected.qualifier != actual.qualifier) {
-                fail(loc, "type mismatch: expected " + type_ref_key(expected) + ", got " + type_name(actual));
-            }
-            IrType binding = actual;
-            binding.qualifier = TypeQualifier::Value;
-            bind_generic_type(loc, expected.name, binding, substitutions);
-            return;
-        }
-        if (expected.args.size() != actual.args.size()) return;
-        for (std::size_t i = 0; i < expected.args.size(); ++i) {
-            infer_generic_type(loc, expected.args[i], actual.args[i], generics, substitutions);
-        }
     }
 
     void require_generic_bounds(
@@ -15210,7 +14982,7 @@ private:
             std::vector<IrType> candidate_trait_args;
             candidate_trait_args.reserve(candidate.trait_args.size());
             for (const auto& arg : candidate.trait_args) {
-                candidate_trait_args.push_back(substitute_impl_generic_type(arg, substitutions));
+                candidate_trait_args.push_back(substitute_inferred_type(arg, substitutions));
             }
             if (!trait_application_implies_trait(
                     trait_name,
@@ -15371,11 +15143,17 @@ private:
             if (candidate.trait_name.empty()) continue;
 
             std::map<std::string, IrType> substitutions;
-            if (!infer_generic_impl_receiver_type(candidate.receiver_type, receiver_type, candidate, substitutions)) continue;
+            if (!infer_generic_pattern_type(
+                    candidate.receiver_type,
+                    receiver_type,
+                    candidate.generic_names,
+                    substitutions)) {
+                continue;
+            }
             if (candidate.trait_name == trait_name && candidate.trait_args.size() == trait_args.size()) {
                 bool trait_args_match = true;
                 for (std::size_t i = 0; i < trait_args.size(); ++i) {
-                    if (!infer_generic_impl_pattern_type(
+                    if (!infer_generic_pattern_type(
                             candidate.trait_args[i],
                             trait_args[i],
                             candidate.generic_names,
@@ -15398,7 +15176,7 @@ private:
             std::vector<IrType> candidate_trait_args;
             candidate_trait_args.reserve(candidate.trait_args.size());
             for (const auto& arg : candidate.trait_args) {
-                candidate_trait_args.push_back(substitute_impl_generic_type(arg, substitutions));
+                candidate_trait_args.push_back(substitute_inferred_type(arg, substitutions));
             }
             if (!trait_application_implies_trait(
                     trait_name,

@@ -10,6 +10,10 @@ future reference/ownership binding modes do not collide with the current AST.
 Both `ref mut T` and `mut ref T` are accepted as equivalent mutable borrow
 spellings. `--check` runs parsing, module loading, and semantic lowering
 without backend emission for editor tooling.
+Sema maintenance now follows phase-oriented extraction: constant folding stays
+in `constant_semantics`, generic binding/unification/substitution lives in
+`type_inference`, and future splits should target broad analysis or lowering
+stages rather than one file per syntax feature.
 
 1. Start allocator-backed growable `Vec[T]`.
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /

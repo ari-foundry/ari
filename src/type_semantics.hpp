@@ -40,6 +40,7 @@ bool has_aggregate_enum_layout(const IrType& type);
 
 bool is_float_primitive(IrPrimitiveKind primitive);
 const char* primitive_name(IrPrimitiveKind primitive);
+std::string type_ref_key(const TypeRef& type);
 IrType integer_literal_suffix_type(const std::string& suffix, SourceLocation loc);
 IrType float_literal_suffix_type(const std::string& suffix, SourceLocation loc);
 
