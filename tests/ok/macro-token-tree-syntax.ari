@@ -1,13 +1,13 @@
 @cfg(false)
 make_item!(fn generated_item() -> i64 {
-  let value = quote!({ nested([1, 2, 3]) });
+  let value = make_tokens!({ nested([1, 2, 3]) });
   return value;
 });
 
 @cfg(false)
 fn generated() -> i64 {
-  let quoted = quote!(fn ~(name)(~(args)) -> i64 {
-    return ~(body);
+  let tokens = make_tokens!(fn generated_value(arg) -> i64 {
+    return arg;
   });
   return 0;
 }

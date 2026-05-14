@@ -186,17 +186,19 @@ type-position expansion and cannot be used at syntax-rewriting sites. User
 `meta fn` expansion, active item macro expansion, and `format!` are still
 planned and rejected with specific diagnostics.
 
-Macro invocation is the only parser-level token-tree expression form. A
-quote-like meta function is written as an ordinary named macro call such as
-`quote!(...)`; there is no separate anonymous quote grammar. The parser
-captures the balanced token tree inside the outer parentheses and preserves
-nested `(...)`, `{...}`, and `[...]` groups. Markers such as `~(...)` are just
-tokens in that payload until a future meta evaluator assigns them quote/unquote
-meaning:
+Macro invocation is the only parser-level token-tree expression form. A macro
+call is always an ordinary named call such as `make_tokens!(...)`; there is no
+separate anonymous macro grammar. The parser captures the balanced token tree
+inside the outer parentheses and preserves nested `(...)`, `{...}`, and `[...]`
+groups. The selected `meta fn` parameter domain determines whether the future
+evaluator receives `token_stream`, `ast`, or `type` input:
 
 ```ari
-quote!(fn ~(name)(~(args)) -> i64 {
-  return ~(body);
+meta fn make_tokens(input: token_stream) -> token_stream {
+}
+
+make_tokens!(fn generated_value(arg) -> i64 {
+  return arg;
 })
 ```
 

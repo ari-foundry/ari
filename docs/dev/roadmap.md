@@ -182,19 +182,17 @@ stages rather than one file per syntax feature.
    `type -> type` transforms and accept only syntax-rewriting `token_stream ->
    token_stream` or `ast -> ast` domains. Macro invocation syntax `ident!(...)`
    is the stable parser surface for token-tree expressions; there is no
-   separate anonymous quote grammar. User macro calls capture balanced token
-   trees and preserve future quote/unquote marker tokens such as `~(...)`, but
-   active expansion still needs compile-time token_stream/ast construction
-   before it can produce values. Item-position `ident!(...)` invocations now
-   use the same balanced token-tree parser, are preserved through AST/module
-   summary plumbing, and receive sema diagnostics for unknown names, bad
-   domains, or planned expansion. Disabled `@cfg(false)` declarations still
-   parse for linting/cache stability.
+   separate anonymous macro grammar. User macro calls capture balanced token
+   trees, and the selected `meta fn` parameter domain determines whether the
+   future evaluator receives `token_stream`, `ast`, or `type` input. Active
+   expansion still needs compile-time `token_stream`/`ast`
+   construction before it can produce values. Item-position `ident!(...)`
+   invocations now use the same balanced token-tree parser, are preserved
+   through AST/module summary plumbing, and receive sema diagnostics for
+   unknown names, bad domains, or planned expansion. Disabled `@cfg(false)`
+   declarations still parse for linting/cache stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
-   - [quote-eval] lower quote-like `ident!(...)` payloads into
-     `token_stream`/`ast` values and splice `~(...)` unquotes once the
-     compile-time evaluator exists
    - [calls] expand user-defined Rust-style `ident!(...)` expression calls
    - [items] expand sema-validated item-position macro invocations into top-level items
    - [attributes] allow attribute macros to rewrite or insert AST nodes
