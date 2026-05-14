@@ -225,6 +225,8 @@ public:
         collect_uses();
         collect_meta_functions();
         expand_item_macro_invocations();
+        collect_item_macro_module_decls();
+        collect_item_macro_uses();
         validate_attributes();
         validate_pattern_macro_invocations();
         collect_trait_decls();
@@ -418,6 +420,8 @@ private:
     std::map<std::string, ImplMethodInfo> drop_impls_;
     std::vector<ImplMethodInfo> impl_methods_to_lower_;
     std::set<std::string> queued_impl_methods_;
+    std::vector<UseDecl> item_macro_uses_;
+    std::vector<ModuleDecl> item_macro_modules_;
     std::vector<ConstDecl> item_macro_constants_;
     std::vector<FunctionDecl> item_macro_functions_;
     std::vector<StructDecl> item_macro_structs_;
@@ -817,20 +821,40 @@ private:
         for (const auto& decl : item_macro_impls_) visitor(decl);
     }
 
+    template <typename Visitor>
+    void for_each_module_decl(Visitor&& visitor) const {
+        for (const auto& decl : program_.modules) visitor(decl);
+        for (const auto& decl : item_macro_modules_) visitor(decl);
+    }
+
+    void collect_module_decl(const ModuleDecl& decl) {
+        ModuleInfo info;
+        info.name = decl.name;
+        info.module_name = decl.module_name;
+        info.is_public = decl.is_public;
+        info.loc = decl.loc;
+        auto inserted = modules_.emplace(decl.name, std::move(info));
+        if (!inserted.second) fail(decl.loc, "duplicate module '" + decl.name + "'");
+    }
+
     void collect_module_decls() {
-        for (const auto& decl : program_.modules) {
-            ModuleInfo info;
-            info.name = decl.name;
-            info.module_name = decl.module_name;
-            info.is_public = decl.is_public;
-            info.loc = decl.loc;
-            auto inserted = modules_.emplace(decl.name, std::move(info));
-            if (!inserted.second) fail(decl.loc, "duplicate module '" + decl.name + "'");
-        }
+        for (const auto& decl : program_.modules) collect_module_decl(decl);
+    }
+
+    void collect_item_macro_module_decls() {
+        for (const auto& decl : item_macro_modules_) collect_module_decl(decl);
     }
 
     void collect_uses() {
         for (const auto& use : program_.uses) {
+            if (use.is_glob) collect_glob_use(use);
+            else add_use_info(use.module_name, use.alias, use.path, use.is_public, use.loc);
+        }
+        collect_implicit_std_prelude_uses();
+    }
+
+    void collect_item_macro_uses() {
+        for (const auto& use : item_macro_uses_) {
             if (use.is_glob) collect_glob_use(use);
             else add_use_info(use.module_name, use.alias, use.path, use.is_public, use.loc);
         }
@@ -940,11 +964,11 @@ private:
             }
         }
 
-        for (const auto& decl : program_.modules) {
+        for_each_module_decl([&](const ModuleDecl& decl) {
             if (is_std_descendant_module_name(decl.name) && decl.is_public) {
                 add(basename_of_qualified_name(decl.name), decl.name);
             }
-        }
+        });
         for (const auto& decl : program_.constants) {
             if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
                 std::string alias = basename_of_qualified_name(decl.name);
@@ -990,15 +1014,21 @@ private:
     }
 
     bool module_declares_alias(const std::string& module_name, const std::string& alias) const {
-        for (const auto& decl : program_.modules) {
-            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
-        }
-        for (const auto& decl : program_.constants) {
-            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
-        }
-        for (const auto& decl : program_.functions) {
-            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) return true;
-        }
+        bool has_module_alias = false;
+        for_each_module_decl([&](const ModuleDecl& decl) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_module_alias = true;
+        });
+        if (has_module_alias) return true;
+        bool has_constant_alias = false;
+        for_each_constant_decl([&](const ConstDecl& decl) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_constant_alias = true;
+        });
+        if (has_constant_alias) return true;
+        bool has_function_alias = false;
+        for_each_function_decl([&](const FunctionDecl& decl) {
+            if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_function_alias = true;
+        });
+        if (has_function_alias) return true;
         bool has_struct_alias = false;
         for_each_struct_decl([&](const StructDecl& decl) {
             if (decl.module_name == module_name && basename_of_qualified_name(decl.name) == alias) has_struct_alias = true;
@@ -1043,7 +1073,9 @@ private:
 
         std::set<std::string> module_names;
         module_names.insert("");
-        for (const auto& decl : program_.modules) module_names.insert(decl.name);
+        for_each_module_decl([&](const ModuleDecl& decl) {
+            module_names.insert(decl.name);
+        });
         for (const auto& decl : program_.constants) module_names.insert(decl.module_name);
         for (const auto& decl : program_.functions) module_names.insert(decl.module_name);
         for_each_struct_decl([&](const StructDecl& decl) {
@@ -1082,16 +1114,16 @@ private:
         UseDecl expanded = use;
         expanded.path = module_path;
 
-        for (const auto& fn : program_.functions) {
+        for_each_function_decl([&](const FunctionDecl& fn) {
             if (can_glob_import_item(expanded, fn.module_name, fn.is_public)) {
                 add_use_info(use.module_name, basename_of_qualified_name(fn.name), fn.name, use.is_public, use.loc);
             }
-        }
-        for (const auto& decl : program_.constants) {
+        });
+        for_each_constant_decl([&](const ConstDecl& decl) {
             if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
                 add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
             }
-        }
+        });
         for_each_struct_decl([&](const StructDecl& decl) {
             if (can_glob_import_item(expanded, decl.module_name, decl.is_public)) {
                 add_use_info(use.module_name, basename_of_qualified_name(decl.name), decl.name, use.is_public, use.loc);
@@ -1347,6 +1379,8 @@ private:
             }
             current_module_name_ = previous_module;
             ItemMacroExpansion expansion = expand_item_macro_items(invocation);
+            for (auto& use : expansion.uses) item_macro_uses_.push_back(std::move(use));
+            for (auto& decl : expansion.modules) item_macro_modules_.push_back(std::move(decl));
             for (auto& constant : expansion.constants) item_macro_constants_.push_back(std::move(constant));
             for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
             for (auto& decl : expansion.structs) item_macro_structs_.push_back(std::move(decl));

@@ -31,26 +31,18 @@ Program parse_item_macro_tokens(const ItemMacroInvocation& invocation) {
 }
 
 void reject_unsupported_item_macro_output(const Program& program, SourceLocation invocation_loc) {
-    if (!program.uses.empty()) {
-        fail_expansion(program.uses.front().loc,
-                       "item macro identity expansion currently supports function, constant, struct, enum, trait, and impl declarations; generated use declarations remain planned");
-    }
     if (!program.module_imports.empty()) {
         fail_expansion(program.module_imports.front().loc,
-                       "item macro identity expansion currently supports function, constant, struct, enum, trait, and impl declarations; generated module imports remain planned");
-    }
-    if (!program.modules.empty()) {
-        fail_expansion(program.modules.front().loc,
-                       "item macro identity expansion currently supports function, constant, struct, enum, trait, and impl declarations; generated modules remain planned");
+                       "item macro identity expansion currently supports inline module and use declarations; generated file-backed module imports remain planned");
     }
     if (!program.item_macros.empty()) {
         fail_expansion(program.item_macros.front().loc,
                        "nested item macro identity expansion is planned but not supported yet");
     }
-    if (program.constants.empty() && program.functions.empty() && program.structs.empty() && program.enums.empty() &&
-        program.traits.empty() && program.impls.empty()) {
+    if (program.uses.empty() && program.modules.empty() && program.constants.empty() && program.functions.empty() &&
+        program.structs.empty() && program.enums.empty() && program.traits.empty() && program.impls.empty()) {
         fail_expansion(invocation_loc,
-                       "item macro identity expansion requires at least one generated function, constant, struct, enum, trait, or impl declaration");
+                       "item macro identity expansion requires at least one generated use, inline module, function, constant, struct, enum, trait, or impl declaration");
     }
 }
 
@@ -61,6 +53,14 @@ ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation
     reject_unsupported_item_macro_output(program, invocation.loc);
 
     ItemMacroExpansion expansion;
+    expansion.uses = std::move(program.uses);
+    for (auto& use : expansion.uses) {
+        if (invocation.is_public) use.is_public = true;
+    }
+    expansion.modules = std::move(program.modules);
+    for (auto& decl : expansion.modules) {
+        if (invocation.is_public) decl.is_public = true;
+    }
     expansion.constants = std::move(program.constants);
     for (auto& constant : expansion.constants) {
         if (invocation.is_public) constant.is_public = true;

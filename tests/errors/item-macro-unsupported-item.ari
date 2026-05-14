@@ -1,7 +1,7 @@
 meta fn make_item(input: token_stream) -> token_stream {
 }
 
-make_item!(use Missing::Thing;);
+make_item!(mod Generated;);
 
 fn main() -> i64 {
   return 0;
