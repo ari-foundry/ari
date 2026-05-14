@@ -61,6 +61,15 @@ struct Attribute {
     SourceLocation loc;
 };
 
+struct ItemMacroInvocation {
+    std::string name;
+    std::string module_name;
+    bool is_public = false;
+    std::vector<Attribute> attributes;
+    std::vector<Token> tokens;
+    SourceLocation loc;
+};
+
 struct Expr;
 using ExprPtr = std::unique_ptr<Expr>;
 
@@ -822,6 +831,7 @@ struct Program {
     std::vector<UseDecl> uses;
     std::vector<ModuleImport> module_imports;
     std::vector<ModuleDecl> modules;
+    std::vector<ItemMacroInvocation> item_macros;
     std::vector<ConstDecl> constants;
     std::vector<FunctionDecl> functions;
     std::vector<StructDecl> structs;

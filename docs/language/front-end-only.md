@@ -179,12 +179,12 @@ attributes and macro names without silently ignoring executable statements.
 
 Expression and item macro invocation use Rust-style `ident!(...)` syntax. The
 built-in prelude assertion, stop, `print!`, `println!`, and `matches!` macros
-lower today. User syntax-rewriting attributes and expression macros must
-resolve to `token_stream -> token_stream` or `ast -> ast` meta functions;
-`type -> type` meta functions are reserved for future type-position expansion
-and cannot be used as attributes or expression macros. User `meta fn`
-expansion, active item macros, and `format!` are still planned and rejected
-with specific diagnostics.
+lower today. User syntax-rewriting attributes, expression macros, and active
+item-position macros must resolve to `token_stream -> token_stream` or `ast ->
+ast` meta functions; `type -> type` meta functions are reserved for future
+type-position expansion and cannot be used at syntax-rewriting sites. User
+`meta fn` expansion, active item macro expansion, and `format!` are still
+planned and rejected with specific diagnostics.
 
 Macro invocation is the only parser-level token-tree expression form. A
 quote-like meta function is written as an ordinary named macro call such as
@@ -201,9 +201,10 @@ quote!(fn ~(name)(~(args)) -> i64 {
 ```
 
 Active user macro expressions and item-position macro invocations are rejected
-until compile-time `token_stream` and `ast` construction exists, but the
-`ident!(...)` token-tree surface is fixed for linting and disabled
-`@cfg(false)` declarations still parse.
+until compile-time `token_stream` and `ast` construction exists, but sema now
+checks unknown names and type-domain mismatches before emitting the planned
+expansion diagnostic. The `ident!(...)` token-tree surface is fixed for linting
+and disabled `@cfg(false)` declarations still parse.
 
 ## Raw Pointers
 

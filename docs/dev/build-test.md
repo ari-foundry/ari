@@ -84,7 +84,7 @@ struct typedefs for pointer-only APIs, concrete generic `@repr(C)` struct
 typedefs for by-value exported instantiations, plus generic/non-generic
 fieldless enum declarations, by-value header ABI target/size guards,
 one-parameter same-domain meta signatures over `token_stream`/`ast`/`type`,
-attribute/expression macro domain checks, parser-stable `ident!(...)`
+attribute/expression/item macro domain checks, parser-stable `ident!(...)`
 expression and item token-tree macro invocation syntax, and planned expansion
 diagnostics.
 

@@ -1,0 +1,8 @@
+meta fn choose_item(input: type) -> type {
+}
+
+choose_item!(fn generated() -> i64 { return 1 });
+
+fn main() -> i64 {
+  return 0;
+}

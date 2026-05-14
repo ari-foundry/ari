@@ -218,6 +218,7 @@ public:
         collect_uses();
         collect_meta_functions();
         validate_attributes();
+        validate_item_macro_invocations();
         collect_trait_decls();
         collect_struct_decls();
         collect_enum_layouts();
@@ -1263,6 +1264,30 @@ private:
         }
         for (const auto& decl : program_.impls) {
             validate_attribute_list(decl.attributes, "impl", decl.module_name);
+        }
+    }
+
+    void validate_item_macro_invocations() {
+        for (const auto& invocation : program_.item_macros) {
+            std::string previous_module = current_module_name_;
+            current_module_name_ = invocation.module_name;
+            std::string meta_name = resolve_meta_function_name(invocation.name);
+            auto found = meta_functions_.find(meta_name);
+            if (found == meta_functions_.end()) {
+                current_module_name_ = previous_module;
+                fail(invocation.loc, "unknown item macro '" + invocation.name + "!'");
+            }
+            if (!meta_transform_can_rewrite_syntax(found->second.transform_kind)) {
+                current_module_name_ = previous_module;
+                fail(invocation.loc,
+                     "item macro invocation '" + invocation.name + "!' refers to meta function '" + meta_name +
+                         "' with " + meta_transform_signature(found->second.transform_kind) +
+                         " domain; item macros require token_stream -> token_stream or ast -> ast");
+            }
+            current_module_name_ = previous_module;
+            fail(invocation.loc,
+                 "item macro invocation '" + invocation.name +
+                     "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet");
         }
     }
 

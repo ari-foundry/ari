@@ -83,6 +83,17 @@ void append_attributes(std::ostringstream& out, const std::vector<Attribute>& at
     }
 }
 
+void append_token_payload(std::ostringstream& out, const Token& token);
+
+void append_item_macro_invocation(std::ostringstream& out, const ItemMacroInvocation& invocation) {
+    append_field(out, invocation.module_name);
+    append_field(out, invocation.name);
+    append_bool(out, invocation.is_public);
+    append_attributes(out, invocation.attributes);
+    append_count(out, invocation.tokens.size());
+    for (const auto& token : invocation.tokens) append_token_payload(out, token);
+}
+
 void append_token_payload(std::ostringstream& out, const Token& token) {
     append_count(out, static_cast<std::uint64_t>(token.kind));
     append_field(out, token.text);
@@ -758,6 +769,7 @@ struct DeclarationSummaryCounts {
     std::uint64_t use_count = 0;
     std::uint64_t module_import_count = 0;
     std::uint64_t module_decl_count = 0;
+    std::uint64_t item_macro_count = 0;
     std::uint64_t constant_count = 0;
     std::uint64_t function_count = 0;
     std::uint64_t struct_count = 0;
@@ -802,6 +814,20 @@ public:
             read_field("module declaration owner");
             read_field("module declaration name");
             read_bool("module declaration visibility");
+        }
+
+        if (version_ >= 6) {
+            counts.item_macro_count = read_count("item macro invocation count");
+            for (std::uint64_t i = 0; i < counts.item_macro_count; ++i) {
+                read_field("item macro module name");
+                read_field("item macro name");
+                read_bool("item macro visibility");
+                skip_attributes();
+                std::uint64_t token_count = read_count("item macro token count");
+                for (std::uint64_t j = 0; j < token_count; ++j) {
+                    (void)read_token_payload("item macro token");
+                }
+            }
         }
 
         counts.constant_count = read_count("constant count");
@@ -913,6 +939,25 @@ public:
             decl.is_public = read_bool("module declaration visibility");
             decl.loc = default_loc();
             program.modules.push_back(std::move(decl));
+        }
+
+        if (version_ >= 6) {
+            std::uint64_t item_macro_count = read_count("item macro invocation count");
+            program.item_macros.reserve(static_cast<std::size_t>(item_macro_count));
+            for (std::uint64_t i = 0; i < item_macro_count; ++i) {
+                ItemMacroInvocation invocation;
+                invocation.module_name = read_field("item macro module name");
+                invocation.name = read_field("item macro name");
+                invocation.is_public = read_bool("item macro visibility");
+                invocation.attributes = read_attributes();
+                std::uint64_t token_count = read_count("item macro token count");
+                invocation.tokens.reserve(static_cast<std::size_t>(token_count));
+                for (std::uint64_t j = 0; j < token_count; ++j) {
+                    invocation.tokens.push_back(read_token_payload("item macro token"));
+                }
+                invocation.loc = default_loc();
+                program.item_macros.push_back(std::move(invocation));
+            }
         }
 
         std::uint64_t constant_count = read_count("constant count");
@@ -1042,11 +1087,17 @@ private:
     }
 
     void consume_header() {
+        const std::string v6 = "ari-ast-decls-v6;";
         const std::string v5 = "ari-ast-decls-v5;";
         const std::string v4 = "ari-ast-decls-v4;";
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v6.size(), v6) == 0) {
+            version_ = 6;
+            pos_ += v6.size();
+            return;
+        }
         if (text_.compare(pos_, v5.size(), v5) == 0) {
             version_ = 5;
             pos_ += v5.size();
@@ -1072,7 +1123,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1748,7 +1799,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v5;";
+    out << "ari-ast-decls-v6;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {
@@ -1772,6 +1823,11 @@ std::string declaration_summary_payload(const Program& program) {
         append_field(out, decl.module_name);
         append_field(out, decl.name);
         append_bool(out, decl.is_public);
+    }
+
+    append_count(out, program.item_macros.size());
+    for (const auto& invocation : program.item_macros) {
+        append_item_macro_invocation(out, invocation);
     }
 
     append_count(out, program.constants.size());
@@ -1942,6 +1998,7 @@ Program materialize_module_cache_ast_summary_declarations(const ModuleCacheAstSu
 }
 
 bool can_load_module_cache_ast_summary_declarations(const Program& program) {
+    if (!program.item_macros.empty()) return false;
     for (const auto& decl : program.constants) {
         if (!decl.init) return false;
     }

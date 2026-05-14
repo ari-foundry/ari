@@ -134,6 +134,7 @@ void append_program(Program& dst, Program&& src) {
     move_append(dst.uses, src.uses);
     move_append(dst.module_imports, src.module_imports);
     move_append(dst.modules, src.modules);
+    move_append(dst.item_macros, src.item_macros);
     move_append(dst.constants, src.constants);
     move_append(dst.functions, src.functions);
     move_append(dst.structs, src.structs);

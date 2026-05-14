@@ -183,12 +183,17 @@ private:
             if (cfg_enabled) reject_attributes_except_cfg(attributes, "item macro invocations");
             Token name = expect(TokenKind::Identifier, "expected item macro invocation name");
             Token bang = expect(TokenKind::Bang, "expected ! after item macro invocation name");
-            parse_macro_token_tree(bang.loc);
+            std::vector<Token> tokens = parse_macro_token_tree(bang.loc);
             match(TokenKind::Semicolon);
             if (cfg_enabled) {
-                fail(name.loc,
-                     "item macro invocation '" + name.text +
-                         "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet");
+                ItemMacroInvocation invocation;
+                invocation.name = name.text;
+                invocation.module_name = current_module_name();
+                invocation.is_public = public_decl;
+                invocation.attributes = std::move(attributes);
+                invocation.tokens = std::move(tokens);
+                invocation.loc = name.loc;
+                target.item_macros.push_back(std::move(invocation));
             }
         } else {
             fail(peek().loc, "expected top-level declaration");
