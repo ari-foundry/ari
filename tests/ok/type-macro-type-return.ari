@@ -1,0 +1,14 @@
+meta fn pointer_to(input: type) -> type {
+  return type!(ptr input);
+}
+
+fn as_pointer(value: ref mut i64) -> pointer_to!(i64) {
+  return value as pointer_to!(i64);
+}
+
+fn main() -> i64 {
+  var value = 40;
+  let raw: pointer_to!(i64) = as_pointer(ref mut value);
+  *raw = *raw + 2;
+  return value;
+}

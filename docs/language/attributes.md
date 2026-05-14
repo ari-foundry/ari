@@ -184,7 +184,9 @@ preserved in module AST summaries, including numeric values, float bits, and
 literal suffixes. The reserving `meta fn` must be concrete, non-generic, and
 written as either `token_stream -> token_stream` or `ast -> ast`; `type -> type`
 meta functions are accepted only at type-position macro sites and cannot
-reserve attributes. Attribute macros remain identity/reservation-only today:
+reserve attributes; at those type sites, `type -> type` bodies may return
+type AST output with `type!(...)`. Attribute macros remain
+identity/reservation-only today:
 non-identity `ast -> ast` bodies are currently executable only at expression
 macro sites, where a body can return an expression AST and substitute the meta
 input parameter, or at item macro sites, where a body can return declaration

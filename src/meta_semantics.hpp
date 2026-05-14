@@ -37,6 +37,7 @@ struct MetaFunctionInfo {
     std::string parameter_name;
     MetaAstReturnKind ast_return_kind = MetaAstReturnKind::None;
     const Expr* ast_return = nullptr;
+    const Expr* type_return = nullptr;
 };
 
 MetaTransformKind classify_meta_type_ref(const TypeRef& type);
@@ -52,5 +53,6 @@ std::string meta_invocation_domain_message(MetaInvocationSite site,
 MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn);
 const Expr* meta_function_ast_return(const FunctionDecl& fn);
 MetaAstReturnKind meta_function_ast_return_kind(const FunctionDecl& fn);
+const Expr* meta_function_type_return(const FunctionDecl& fn);
 
 } // namespace ari

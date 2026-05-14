@@ -26,6 +26,10 @@ Pattern expand_pattern_macro_invocation(const Pattern& invocation);
 Pattern expand_pattern_macro_constructor(const Pattern& invocation,
                                          const std::string& input_name,
                                          const Expr& returned_ast);
+TypeRef expand_type_macro_invocation(const TypeRef& invocation);
+TypeRef expand_type_macro_constructor(const TypeRef& invocation,
+                                      const std::string& input_name,
+                                      const Expr& returned_type);
 ExprPtr expand_ast_expression_return(const Expr& returned_ast,
                                       const std::string& input_name,
                                       const Expr& input_ast);

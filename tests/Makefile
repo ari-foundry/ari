@@ -1476,6 +1476,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/item-macro-module-use-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/type-macro-identity.ari -o $(BUILD_DIR)/meta/type-macro-identity.raw
 	$(BUILD_DIR)/meta/type-macro-identity.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/type-macro-type-return.ari -o $(BUILD_DIR)/meta/type-macro-type-return.raw
+	$(BUILD_DIR)/meta/type-macro-type-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/pattern-macro-identity.ari -o $(BUILD_DIR)/meta/pattern-macro-identity.raw
 	$(BUILD_DIR)/meta/pattern-macro-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/pattern-macro-ast-return.ari -o $(BUILD_DIR)/meta/pattern-macro-ast-return.raw
@@ -1546,6 +1548,8 @@ check-meta: $(TARGET)
 	grep -q "expression macros require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/macro-call-type-domain.err
 	if $(TARGET) tests/errors/type-macro-invalid-input.ari -o $(BUILD_DIR)/meta/type-macro-invalid-input.elf >$(BUILD_DIR)/meta/type-macro-invalid-input.err 2>&1; then exit 1; fi
 	grep -q "expected end of type macro input" $(BUILD_DIR)/meta/type-macro-invalid-input.err
+	if $(TARGET) tests/errors/meta-function-type-constructor-empty.ari -o $(BUILD_DIR)/meta/meta-function-type-constructor-empty.elf >$(BUILD_DIR)/meta/meta-function-type-constructor-empty.err 2>&1; then exit 1; fi
+	grep -q "type! type constructor requires one or more type tokens" $(BUILD_DIR)/meta/meta-function-type-constructor-empty.err
 	if $(TARGET) tests/errors/type-macro-token-domain.ari -o $(BUILD_DIR)/meta/type-macro-token-domain.elf >$(BUILD_DIR)/meta/type-macro-token-domain.err 2>&1; then exit 1; fi
 	grep -q "type macros require type -> type" $(BUILD_DIR)/meta/type-macro-token-domain.err
 	if $(TARGET) tests/errors/type-macro-unknown.ari -o $(BUILD_DIR)/meta/type-macro-unknown.elf >$(BUILD_DIR)/meta/type-macro-unknown.err 2>&1; then exit 1; fi

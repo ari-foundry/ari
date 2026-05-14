@@ -211,9 +211,9 @@ argument domain. When the returned AST contains the meta parameter name as a
 bare expression, Ari substitutes that node with the parsed invocation
 expression. This first non-identity AST step has no quote/eval syntax, and
 names other than the meta input parameter are rejected in returned expression
-ASTs. Non-identity token construction, attribute rewrites, and
-type AST construction remain reserved until Ari has a broader compile-time
-evaluator. Item-position `ast -> ast` macros can return
+ASTs. Non-identity token construction and attribute rewrites remain reserved
+until Ari has a broader compile-time evaluator. Item-position `ast -> ast`
+macros can return
 declaration AST output with the meta-body-only `decl!(...)` constructor:
 
 ```ari
@@ -259,6 +259,19 @@ match value {
 }
 ```
 
+Type-position `type -> type` macros can return type output with the
+meta-body-only `type!(...)` constructor. A bare token that matches the meta
+parameter name inside `type!(...)` is replaced with the invocation's type
+input tokens:
+
+```ari
+meta fn pointer_to(input: type) -> type {
+  return type!(ptr input);
+}
+
+let raw: pointer_to!(i64) = (ref mut value) as pointer_to!(i64);
+```
+
 Expression, item, and type-position macro invocation use Rust-style
 `ident!(...)` syntax. The built-in prelude assertion, stop, `print!`,
 `println!`, and unqualified `matches!` macros lower today. Prelude expression
@@ -285,10 +298,12 @@ back into that constructor with the meta parameter name. Generated file-backed
 loading runs before semantic expansion; keep file-backed imports as
 source-level `mod` declarations. Type-position
 macro invocations must resolve to
-`type -> type` meta functions and are also identity transforms today: their
-token tree is parsed as a type input and then lowered as that type. User
-`meta fn` rewrites that change syntax, attribute macro expansion, derives, and
-`format!` are still planned and rejected with specific diagnostics.
+`type -> type` meta functions. Empty and `return input;` bodies
+identity-expand by parsing their token tree as one type before semantic type
+lowering; `type -> type` bodies that return `type!(...)` replace that input
+with the constructed type AST. User `meta fn` rewrites that change general
+syntax, attribute macro expansion, derives, and `format!` are still planned
+and rejected with specific diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions. Empty
@@ -351,6 +366,12 @@ meta fn make_type(input: type) -> type {
 }
 
 let value: make_type!(i64) = 0;
+
+meta fn pointer_to(input: type) -> type {
+  return type!(ptr input);
+}
+
+let raw: pointer_to!(i64) = null;
 ```
 
 Active user macro expressions parse their input as one expression immediately;

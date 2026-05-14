@@ -47,6 +47,10 @@ bool is_pattern_ast_constructor(const Expr& expr) {
     return expr.kind == ExprKind::MacroCall && expr.name == "pattern";
 }
 
+bool is_type_constructor(const Expr& expr) {
+    return expr.kind == ExprKind::MacroCall && expr.name == "type";
+}
+
 bool supported_decl_ast_return_expr(const Expr& expr, std::string& reason) {
     if (!is_decl_ast_constructor(expr)) return false;
     if (!expr.macro_tokens || expr.macro_tokens->empty()) {
@@ -60,6 +64,15 @@ bool supported_pattern_ast_return_expr(const Expr& expr, std::string& reason) {
     if (!is_pattern_ast_constructor(expr)) return false;
     if (!expr.macro_tokens || expr.macro_tokens->empty()) {
         reason = "pattern! ast constructor requires one or more pattern tokens";
+        return false;
+    }
+    return true;
+}
+
+bool supported_type_return_expr(const Expr& expr, std::string& reason) {
+    if (!is_type_constructor(expr)) return false;
+    if (!expr.macro_tokens || expr.macro_tokens->empty()) {
+        reason = "type! type constructor requires one or more type tokens";
         return false;
     }
     return true;
@@ -126,7 +139,7 @@ bool supported_ast_return_expr(const Expr& expr,
             return false;
         case ExprKind::MacroCall:
             reason =
-                "ast meta expression returns cannot call macros; use decl!(...) for item macro declaration output or pattern!(...) for pattern macro output";
+                "ast meta expression returns cannot call macros; use decl!(...) for item macro declaration output, pattern!(...) for pattern macro output, or type!(...) for type macro output";
             return false;
     }
     reason = "unsupported ast meta return expression";
@@ -282,10 +295,25 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
             }
             fail(returned->loc, reason);
         }
+        if (input_kind == MetaTransformKind::Type && returned) {
+            std::string reason;
+            if (supported_type_return_expr(*returned, reason)) {
+                return input_kind;
+            }
+            fail(returned->loc, reason.empty()
+                                    ? "type meta function bodies currently allow only an empty body, `return " +
+                                          param.name + ";` identity body, or type!(...) type output"
+                                    : reason);
+        }
         if (input_kind == MetaTransformKind::Ast) {
             fail(fn.body.front()->loc,
                  "meta function bodies currently allow only an empty body, `return " + param.name +
                      ";` identity body, an expression return using literals and the meta input for ast -> ast expression macros, decl!(...) for item macro declaration output, or pattern!(...) for pattern macro output");
+        }
+        if (input_kind == MetaTransformKind::Type) {
+            fail(fn.body.front()->loc,
+                 "type meta function bodies currently allow only an empty body, `return " + param.name +
+                     ";` identity body, or type!(...) type output");
         }
         fail(fn.body.front()->loc,
              "meta function bodies currently allow only an empty body or `return " + param.name +
@@ -308,6 +336,17 @@ MetaAstReturnKind meta_function_ast_return_kind(const FunctionDecl& fn) {
     if (!returned || fn.params.empty()) return MetaAstReturnKind::None;
     std::string reason;
     return classify_ast_return_expr(*returned, fn.params.front().name, reason);
+}
+
+const Expr* meta_function_type_return(const FunctionDecl& fn) {
+    if (classify_meta_type_ref(fn.return_type) != MetaTransformKind::Type) return nullptr;
+    if (fn.params.size() != 1) return nullptr;
+    const Expr* returned = return_expression(fn);
+    if (!returned) return nullptr;
+    if (returned->kind == ExprKind::Name && returned->name == fn.params.front().name) return nullptr;
+    std::string reason;
+    if (!supported_type_return_expr(*returned, reason)) return nullptr;
+    return returned;
 }
 
 } // namespace ari

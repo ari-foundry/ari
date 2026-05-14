@@ -98,7 +98,8 @@ expression-position identity expansion from a parsed expression input,
 function/constant/struct/enum/trait/impl/inline-module/use item macro identity
 expansion from parsed top-level declarations, item-position `ast -> ast`
 declaration output and declaration input substitution through `decl!(...)`,
-type-position identity expansion from a parsed type input, pattern-position
+type-position identity expansion from a parsed type input, type-position
+`type -> type` output and input substitution through `type!(...)`, pattern-position
 identity expansion from a parsed pattern input, pattern-position `ast -> ast`
 output and input substitution through `pattern!(...)`, and malformed pattern macro
 input diagnostics.

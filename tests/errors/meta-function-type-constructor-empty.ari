@@ -1,0 +1,7 @@
+meta fn empty_type(input: type) -> type {
+  return type!();
+}
+
+fn main() -> i64 {
+  return 0;
+}

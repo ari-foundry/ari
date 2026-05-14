@@ -148,6 +148,27 @@ Pattern expand_pattern_macro_constructor(const Pattern& invocation,
         returned_ast.loc);
 }
 
+TypeRef expand_type_macro_invocation(const TypeRef& invocation) {
+    if (!invocation.is_macro_invocation) {
+        fail_expansion(invocation.loc, "internal error: expected type macro invocation");
+    }
+    return parse_macro_type_ref(invocation.macro_tokens, invocation.loc);
+}
+
+TypeRef expand_type_macro_constructor(const TypeRef& invocation,
+                                      const std::string& input_name,
+                                      const Expr& returned_type) {
+    if (!invocation.is_macro_invocation) {
+        fail_expansion(invocation.loc, "internal error: expected type macro invocation");
+    }
+    if (returned_type.kind != ExprKind::MacroCall || returned_type.name != "type" || !returned_type.macro_tokens) {
+        fail_expansion(returned_type.loc, "internal error: expected type!(...) type constructor");
+    }
+    return parse_macro_type_ref(
+        substitute_input_tokens(*returned_type.macro_tokens, input_name, invocation.macro_tokens),
+        returned_type.loc);
+}
+
 ExprPtr expand_ast_expression_return(const Expr& returned_ast,
                                       const std::string& input_name,
                                       const Expr& input_ast) {

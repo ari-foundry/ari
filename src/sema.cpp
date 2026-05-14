@@ -1202,6 +1202,7 @@ private:
                     fn.params[0].name,
                     meta_function_ast_return_kind(fn),
                     meta_function_ast_return(fn),
+                    meta_function_type_return(fn),
                 }
             );
             if (!inserted.second) fail(fn.loc, "duplicate meta function '" + fn.name + "'");
@@ -3767,8 +3768,11 @@ private:
     }
 
     IrType resolve_type_macro_invocation(const TypeRef& ast_type) {
-        (void)require_meta_invocation(ast_type.loc, MetaInvocationSite::TypeMacro, ast_type.name);
-        TypeRef expanded = parse_macro_type_ref(ast_type.macro_tokens, ast_type.loc);
+        const MetaFunctionInfo& meta =
+            require_meta_invocation(ast_type.loc, MetaInvocationSite::TypeMacro, ast_type.name);
+        TypeRef expanded = meta.type_return
+                               ? expand_type_macro_constructor(ast_type, meta.parameter_name, *meta.type_return)
+                               : expand_type_macro_invocation(ast_type);
         IrType type = resolve_executable_type(expanded);
         return finish_type_ref_wrapper_type(ast_type, std::move(type));
     }
