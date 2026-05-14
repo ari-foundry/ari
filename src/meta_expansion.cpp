@@ -66,7 +66,8 @@ std::string parse_derive_path(const Attribute& attr, std::size_t& index) {
 
 std::string canonical_derive_name(SourceLocation loc, const std::string& path) {
     if (path == "Debug" || path == "std::Debug") return "Debug";
-    fail_expansion(loc, "unsupported derive '" + path + "'; supported derives: Debug");
+    if (path == "Copy" || path == "std::Copy") return "Copy";
+    fail_expansion(loc, "unsupported derive '" + path + "'; supported derives: Debug, Copy");
 }
 
 std::vector<std::string> derive_names(const std::vector<Attribute>& attributes) {
@@ -124,12 +125,28 @@ ImplDecl make_debug_derive_impl(const std::string& type_name,
     return impl;
 }
 
+ImplDecl make_copy_derive_impl(const std::string& type_name,
+                               const std::string& module_name,
+                               const std::vector<GenericParam>& generics,
+                               SourceLocation loc) {
+    ImplDecl impl;
+    impl.module_name = module_name;
+    impl.has_trait = true;
+    impl.generics = generics;
+    impl.trait_type = simple_type_ref("std::Copy", loc);
+    impl.for_type = simple_type_ref(type_name, loc);
+    impl.for_type.args = generic_type_args(generics);
+    return impl;
+}
+
 template <typename Decl>
 std::vector<ImplDecl> expand_derive_impls_for_decl(const Decl& decl) {
     std::vector<ImplDecl> impls;
     for (const auto& name : derive_names(decl.attributes)) {
         if (name == "Debug") {
             impls.push_back(make_debug_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
+        } else if (name == "Copy") {
+            impls.push_back(make_copy_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
         }
     }
     return impls;

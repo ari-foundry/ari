@@ -1,0 +1,34 @@
+@derive(Copy)
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+@derive(std::Copy)
+enum Flag {
+  Off,
+  On,
+}
+
+@derive(Debug, Copy)
+struct Box[T] {
+  value: T,
+}
+
+fn need_copy[T: Copy](value: T) -> i64 {
+  return 1;
+}
+
+fn need_debug[T: Debug](value: T) -> i64 {
+  return 1;
+}
+
+fn main() -> i64 {
+  let point = Point { x: 1, y: 2 };
+  let flag: Flag = On;
+  let boxed = Box { value: 9 };
+  return need_copy<Point>(point) +
+         need_copy<Flag>(flag) +
+         need_copy<Box[i64]>(boxed) +
+         need_debug<Box[i64]>(boxed);
+}

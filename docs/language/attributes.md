@@ -130,11 +130,12 @@ Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.
 
-`@derive(Debug)` is supported on structs and enums. It expands to an empty
-`impl std::Debug for Type` declaration, preserving the generic parameters of
-generic structs and enums, so derived values satisfy `Debug` trait bounds.
-Other derive names are rejected until their trait method surfaces and expansion
-contracts are defined.
+`@derive(Debug)` and `@derive(Copy)` are supported on structs and enums. Each
+derive expands to an empty trait impl, preserving the generic parameters of
+generic structs and enums, so derived values satisfy `Debug` or `Copy` trait
+bounds. `Copy` derive is a marker-trait impl only; it does not change Ari's
+structural copyability rules for values. Other derive names are rejected until
+their trait method surfaces and expansion contracts are defined.
 
 ## User Attributes
 

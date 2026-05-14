@@ -92,7 +92,7 @@ prelude ADTs.
 ## Attributes
 
 See [Attributes](attributes.md) for implemented built-in attribute behavior.
-The remaining front-end-only pieces are additional built-in derives and
+The remaining front-end-only pieces are method-generating built-in derives and
 user-defined attribute macros that rewrite or insert AST nodes.
 
 ```ari
@@ -106,7 +106,7 @@ struct Token {
 
 The compiler accepts a small built-in attribute surface:
 
-- `@derive(Debug)` on structs and enums
+- `@derive(Debug)` / `@derive(Copy)` on structs and enums
 - `@repr(C)` on structs and enums
 - `@deprecated` or `@deprecated("message")` on declarations
 - `@test` on functions
@@ -134,10 +134,11 @@ of deprecated functions, structs, and enums emit warnings but do not stop
 compilation.
 
 `@test` functions can be run with `ari --test`, which synthesizes a `main`
-that calls each test in source order. `@derive(Debug)` expands for structs and
-enums, including generic declarations, by generating an empty `std::Debug`
-trait impl. Other derive names remain reserved until their trait method
-surfaces are implemented.
+that calls each test in source order. `@derive(Debug)` and `@derive(Copy)`
+expand for structs and enums, including generic declarations, by generating
+empty trait impls. `Copy` derive is only a marker-trait impl and does not change
+structural copyability. Other derive names remain reserved until their trait
+method surfaces are implemented.
 
 User-defined attributes can be reserved by declaring a matching `meta fn`:
 
