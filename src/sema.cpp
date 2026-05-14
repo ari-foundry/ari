@@ -1489,6 +1489,12 @@ private:
             std::set<std::string> trait_generic_names;
             for (const auto& generic : decl.generics) trait_generic_names.insert(generic.name);
 
+            for (const auto& associated_type : decl.associated_types) {
+                fail(associated_type.loc,
+                     "associated type declaration '" + decl.name + "::" + associated_type.name +
+                         "' is reserved but semantic lowering is planned");
+            }
+
             for (const auto& method : decl.methods) {
                 std::string method_name = basename_of_qualified_name(method.name);
                 require_unique_generic_params(method.generics, "trait method", method_name);

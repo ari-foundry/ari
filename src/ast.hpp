@@ -812,12 +812,18 @@ struct EnumDecl {
 };
 
 struct TraitDecl {
+    struct AssociatedType {
+        std::string name;
+        SourceLocation loc;
+    };
+
     std::string name;
     std::string module_name;
     bool is_public = false;
     std::vector<Attribute> attributes;
     std::vector<GenericParam> generics;
     std::vector<TypeRef> supertraits;
+    std::vector<AssociatedType> associated_types;
     std::vector<FunctionDecl> methods;
     SourceLocation loc;
 };

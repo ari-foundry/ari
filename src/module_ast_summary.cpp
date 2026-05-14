@@ -901,6 +901,12 @@ public:
             read_bool("trait visibility");
             skip_generics();
             skip_attributes();
+            if (version_ >= 11) {
+                std::uint64_t associated_type_count = read_count("trait associated type count");
+                for (std::uint64_t j = 0; j < associated_type_count; ++j) {
+                    read_field("trait associated type name");
+                }
+            }
             std::uint64_t method_count = read_count("trait method count");
             for (std::uint64_t j = 0; j < method_count; ++j) skip_function_signature();
         }
@@ -1061,6 +1067,16 @@ public:
             decl.is_public = read_bool("trait visibility");
             decl.generics = read_generics();
             decl.attributes = read_attributes();
+            if (version_ >= 11) {
+                std::uint64_t associated_type_count = read_count("trait associated type count");
+                decl.associated_types.reserve(static_cast<std::size_t>(associated_type_count));
+                for (std::uint64_t j = 0; j < associated_type_count; ++j) {
+                    TraitDecl::AssociatedType associated_type;
+                    associated_type.name = read_field("trait associated type name");
+                    associated_type.loc = default_loc();
+                    decl.associated_types.push_back(std::move(associated_type));
+                }
+            }
             std::uint64_t method_count = read_count("trait method count");
             decl.methods.reserve(static_cast<std::size_t>(method_count));
             for (std::uint64_t j = 0; j < method_count; ++j) {
@@ -1108,6 +1124,7 @@ private:
     }
 
     void consume_header() {
+        const std::string v11 = "ari-ast-decls-v11;";
         const std::string v10 = "ari-ast-decls-v10;";
         const std::string v9 = "ari-ast-decls-v9;";
         const std::string v8 = "ari-ast-decls-v8;";
@@ -1118,6 +1135,11 @@ private:
         const std::string v3 = "ari-ast-decls-v3;";
         const std::string v2 = "ari-ast-decls-v2;";
         const std::string v1 = "ari-ast-decls-v1;";
+        if (text_.compare(pos_, v11.size(), v11) == 0) {
+            version_ = 11;
+            pos_ += v11.size();
+            return;
+        }
         if (text_.compare(pos_, v10.size(), v10) == 0) {
             version_ = 10;
             pos_ += v10.size();
@@ -1168,7 +1190,7 @@ private:
             pos_ += v1.size();
             return;
         }
-        fail("expected 'ari-ast-decls-v10;', 'ari-ast-decls-v9;', 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
+        fail("expected 'ari-ast-decls-v11;', 'ari-ast-decls-v10;', 'ari-ast-decls-v9;', 'ari-ast-decls-v8;', 'ari-ast-decls-v7;', 'ari-ast-decls-v6;', 'ari-ast-decls-v5;', 'ari-ast-decls-v4;', 'ari-ast-decls-v3;', 'ari-ast-decls-v2;', or 'ari-ast-decls-v1;'");
     }
 
     void consume_char(char expected, const std::string& label) {
@@ -1874,7 +1896,7 @@ private:
 
 std::string declaration_summary_payload(const Program& program) {
     std::ostringstream out;
-    out << "ari-ast-decls-v10;";
+    out << "ari-ast-decls-v11;";
 
     append_count(out, program.uses.size());
     for (const auto& decl : program.uses) {
@@ -1955,6 +1977,8 @@ std::string declaration_summary_payload(const Program& program) {
         append_bool(out, decl.is_public);
         append_generics(out, decl.generics);
         append_attributes(out, decl.attributes);
+        append_count(out, decl.associated_types.size());
+        for (const auto& associated_type : decl.associated_types) append_field(out, associated_type.name);
         append_count(out, decl.methods.size());
         for (const auto& method : decl.methods) append_function_signature(out, method);
     }

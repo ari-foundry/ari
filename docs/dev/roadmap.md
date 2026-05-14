@@ -212,11 +212,12 @@ stages rather than one file per syntax feature.
 4. Stabilize trait associated type syntax before lint.
    The Medium-Term associated-items work has one syntax piece that should be
    fixed before lint tooling lands. Ari now reserves generic trait application
-   projections as `Trait[T]::Item` in type positions. The parser preserves the
-   projection in `TypeRef`, declaration summaries, and module cache payloads,
-   and sema rejects executable use with a focused planned-feature diagnostic.
-   Ari intentionally does not adopt Rust's `<T as Trait>::Item` spelling.
-   - [associated-type-decls] add associated type declarations inside traits
+   projections as `Trait[T]::Item` in type positions and associated type
+   declarations as `type Item` inside traits. The parser preserves both forms
+   in `TypeRef`, trait declarations, declaration summaries, and module cache
+   payloads, and sema rejects executable use with focused planned-feature
+   diagnostics. Ari intentionally does not adopt Rust's
+   `<T as Trait>::Item` spelling.
    - [associated-type-witnesses] add impl witnesses for associated type values
    - [associated-type-lowering] lower reserved `Trait[T]::Item` projections
      into concrete type refs for iterator-style generic APIs

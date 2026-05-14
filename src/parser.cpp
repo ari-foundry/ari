@@ -671,10 +671,29 @@ private:
         }
         expect(TokenKind::LBrace, "expected { after trait name");
         while (!match(TokenKind::RBrace)) {
-            expect(TokenKind::KwFn, "expected trait method");
+            if (check(TokenKind::End)) fail(name.loc, "unterminated trait");
+            if (check(TokenKind::Identifier) && peek().text == "type") {
+                decl.associated_types.push_back(parse_trait_associated_type());
+                optional_separator();
+                continue;
+            }
+            expect(TokenKind::KwFn, "expected trait method or associated type declaration");
             decl.methods.push_back(parse_function(false, false, false));
             optional_separator();
         }
+        return decl;
+    }
+
+    TraitDecl::AssociatedType parse_trait_associated_type() {
+        Token type_keyword = expect(TokenKind::Identifier, "expected associated type declaration");
+        if (type_keyword.text != "type") fail(type_keyword.loc, "expected associated type declaration");
+        Token name = expect_identifier_or_contextual_name_keyword("expected associated type name");
+        if (match(TokenKind::LBracket)) fail(tokens_[pos_ - 1].loc, "generic associated types are planned");
+        if (match(TokenKind::Colon)) fail(tokens_[pos_ - 1].loc, "associated type bounds are planned");
+        if (match(TokenKind::Equal)) fail(tokens_[pos_ - 1].loc, "associated type defaults are planned");
+        TraitDecl::AssociatedType decl;
+        decl.name = name.text;
+        decl.loc = name.loc;
         return decl;
     }
 
