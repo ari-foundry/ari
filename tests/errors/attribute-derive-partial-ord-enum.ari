@@ -1,0 +1,9 @@
+@derive(PartialOrd)
+enum Mode {
+  Slow,
+  Fast,
+}
+
+fn main() -> i64 {
+  return 0;
+}

@@ -41,9 +41,12 @@ std::string canonical_derive_name(SourceLocation loc, const std::string& path) {
     if (path == "Default" || path == "std::Default") return "Default";
     if (path == "Eq" || path == "std::Eq") return "Eq";
     if (path == "PartialEq" || path == "std::PartialEq") return "PartialEq";
+    if (path == "Ord" || path == "std::Ord") return "Ord";
+    if (path == "PartialOrd" || path == "std::PartialOrd") return "PartialOrd";
     fail_derive_expansion(
         loc,
-        "unsupported derive '" + path + "'; supported derives: Debug, Copy, Clone, Default, Eq, PartialEq");
+        "unsupported derive '" + path +
+            "'; supported derives: Debug, Copy, Clone, Default, Eq, PartialEq, Ord, PartialOrd");
 }
 
 std::vector<std::string> derive_names(const std::vector<Attribute>& attributes) {
@@ -101,12 +104,23 @@ StmtPtr make_return_stmt(SourceLocation loc, ExprPtr value) {
     return stmt;
 }
 
-FunctionDecl make_derived_method(const std::string& module_name,
-                                 const std::string& name,
-                                 std::vector<Param> params,
-                                 TypeRef return_type,
-                                 ExprPtr return_value,
-                                 SourceLocation loc) {
+StmtPtr make_if_return_stmt(SourceLocation loc, ExprPtr condition, bool value) {
+    auto stmt = std::make_unique<Stmt>();
+    stmt->kind = StmtKind::If;
+    stmt->loc = loc;
+    stmt->condition = std::move(condition);
+    std::vector<StmtPtr> then_body;
+    then_body.push_back(make_return_stmt(loc, make_ast_bool_expr(loc, value)));
+    set_stmt_then_body(*stmt, std::move(then_body));
+    return stmt;
+}
+
+FunctionDecl make_derived_method_with_body(const std::string& module_name,
+                                           const std::string& name,
+                                           std::vector<Param> params,
+                                           TypeRef return_type,
+                                           std::vector<StmtPtr> body,
+                                           SourceLocation loc) {
     FunctionDecl method;
     method.name = qualify_generated_name(module_name, name);
     method.module_name = module_name;
@@ -115,8 +129,25 @@ FunctionDecl make_derived_method(const std::string& module_name,
     method.return_type = std::move(return_type);
     method.has_return_type = true;
     method.has_body = true;
-    method.body.push_back(make_return_stmt(loc, std::move(return_value)));
+    method.body = std::move(body);
     return method;
+}
+
+FunctionDecl make_derived_method(const std::string& module_name,
+                                 const std::string& name,
+                                 std::vector<Param> params,
+                                 TypeRef return_type,
+                                 ExprPtr return_value,
+                                 SourceLocation loc) {
+    std::vector<StmtPtr> body;
+    body.push_back(make_return_stmt(loc, std::move(return_value)));
+    return make_derived_method_with_body(
+        module_name,
+        name,
+        std::move(params),
+        std::move(return_type),
+        std::move(body),
+        loc);
 }
 
 TypeRef self_type_ref(SourceLocation loc) {
@@ -424,6 +455,63 @@ ImplDecl make_equality_derive_impl(const EnumDecl& decl, const std::string& trai
     return impl;
 }
 
+ExprPtr make_ordering_call(const std::string& trait_name,
+                           const StructField& field,
+                           const std::string& left_base,
+                           const std::string& right_base) {
+    std::vector<ExprPtr> args;
+    args.push_back(make_field_access(field.loc, left_base, field));
+    args.push_back(make_field_access(field.loc, right_base, field));
+
+    ExprPtr call = make_ast_call_expr(field.loc, "std::" + trait_name + "::lt", nullptr, std::move(args));
+    std::vector<TypeRef> trait_args;
+    trait_args.push_back(field.type);
+    set_expr_receiver_type_args(*call, std::move(trait_args));
+    return call;
+}
+
+std::vector<StmtPtr> make_ordering_method_body(const StructDecl& decl, const std::string& trait_name) {
+    std::vector<StmtPtr> body;
+    for (const auto& field : decl.fields) {
+        body.push_back(make_if_return_stmt(
+            field.loc,
+            make_ordering_call(trait_name, field, "self", "other"),
+            true));
+        body.push_back(make_if_return_stmt(
+            field.loc,
+            make_ordering_call(trait_name, field, "other", "self"),
+            false));
+    }
+    body.push_back(make_return_stmt(decl.loc, make_ast_bool_expr(decl.loc, false)));
+    return body;
+}
+
+FunctionDecl make_ordering_method(const StructDecl& decl, const std::string& trait_name) {
+    return make_derived_method_with_body(
+        decl.module_name,
+        "lt",
+        binary_self_params(decl.loc),
+        bool_type_ref(decl.loc),
+        make_ordering_method_body(decl, trait_name),
+        decl.loc);
+}
+
+ImplDecl make_ordering_derive_impl(const StructDecl& decl, const std::string& trait_name) {
+    std::vector<GenericParam> generics = field_trait_impl_generics(decl, trait_name, trait_name);
+    std::vector<TypeRef> trait_args;
+    trait_args.push_back(declared_type_ref(decl.name, decl.generics, decl.loc));
+    ImplDecl impl =
+        make_trait_derive_impl(trait_name, decl.name, decl.module_name, generics, decl.loc, std::move(trait_args));
+    impl.methods.push_back(make_ordering_method(decl, trait_name));
+    return impl;
+}
+
+[[noreturn]] void fail_enum_ordering_derive(const EnumDecl& decl, const std::string& trait_name) {
+    fail_derive_expansion(
+        decl.loc,
+        trait_name + " derive for enums requires an explicit enum ordering policy, which is not supported yet");
+}
+
 } // namespace
 
 std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl) {
@@ -441,6 +529,10 @@ std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl) {
             impls.push_back(make_equality_derive_impl(decl, "Eq"));
         } else if (name == "PartialEq") {
             impls.push_back(make_equality_derive_impl(decl, "PartialEq"));
+        } else if (name == "Ord") {
+            impls.push_back(make_ordering_derive_impl(decl, "Ord"));
+        } else if (name == "PartialOrd") {
+            impls.push_back(make_ordering_derive_impl(decl, "PartialOrd"));
         }
     }
     return impls;
@@ -463,6 +555,10 @@ std::vector<ImplDecl> expand_derive_impls_for_enum(const EnumDecl& decl) {
             impls.push_back(make_equality_derive_impl(decl, "Eq"));
         } else if (name == "PartialEq") {
             impls.push_back(make_equality_derive_impl(decl, "PartialEq"));
+        } else if (name == "Ord") {
+            fail_enum_ordering_derive(decl, "Ord");
+        } else if (name == "PartialOrd") {
+            fail_enum_ordering_derive(decl, "PartialOrd");
         }
     }
     return impls;

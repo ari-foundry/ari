@@ -131,26 +131,31 @@ static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.
 
 `@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`, `@derive(Eq)`, and
-`@derive(PartialEq)` are supported on structs and enums. `@derive(Default)` is
-supported on named and tuple structs. Each derive preserves the generic
-parameters of generic declarations. `Debug` and `Copy` expand to empty trait
-impls so derived values satisfy their trait bounds. `Clone` expands to an impl
-with a value-self `clone` method that returns `self`, matching Ari's current
-`Clone` trait contract. Struct `Default` derives expand to a `fn default() ->
-Self` method that constructs the struct by calling
-`Default::default<FieldType>()` for each field; field types must therefore have
-a visible `Default` impl. Struct `Eq` and `PartialEq` derives expand to
-`fn eq(self, other: Self) -> bool` by comparing every field with the matching
-`Eq[FieldType]::eq` or `PartialEq[FieldType]::eq` trait-qualified call.
-Fieldless enum `Eq` and `PartialEq` derives compare the enum tags directly;
-payload-bearing enum equality derives are reserved until payload comparison
-policy is defined. Generic `Default`, `Eq`, and `PartialEq` derives add the
-matching std trait bounds for generic parameters that appear in fields when
-those parameters do not already have another constraint. `Default` for enums is
-reserved until Ari has an explicit default-case marker. `Copy` derive is a
-marker-trait impl only; it does not change Ari's structural copyability rules
-for values. Other derive names are rejected until their trait method surfaces
-and expansion contracts are defined.
+`@derive(PartialEq)` are supported on structs and enums. `@derive(Default)`,
+`@derive(Ord)`, and `@derive(PartialOrd)` are supported on named and tuple
+structs. Each derive preserves the generic parameters of generic declarations.
+`Debug` and `Copy` expand to empty trait impls so derived values satisfy their
+trait bounds. `Clone` expands to an impl with a value-self `clone` method that
+returns `self`, matching Ari's current `Clone` trait contract. Struct
+`Default` derives expand to a `fn default() -> Self` method that constructs the
+struct by calling `Default::default<FieldType>()` for each field; field types
+must therefore have a visible `Default` impl. Struct `Eq` and `PartialEq`
+derives expand to `fn eq(self, other: Self) -> bool` by comparing every field
+with the matching `Eq[FieldType]::eq` or `PartialEq[FieldType]::eq`
+trait-qualified call. Struct `Ord` and `PartialOrd` derives expand to
+lexicographic `fn lt(self, other: Self) -> bool` methods that call the matching
+field `lt` trait method, returning on the first unequal field and `false` when
+all fields compare equal. Fieldless enum `Eq` and `PartialEq` derives compare
+the enum tags directly; payload-bearing enum equality derives are reserved
+until payload comparison policy is defined. Enum `Ord` and `PartialOrd` derives
+are reserved until Ari has an explicit enum ordering policy. Generic `Default`,
+`Eq`, `PartialEq`, `Ord`, and `PartialOrd` derives add the matching std trait
+bounds for generic parameters that appear in fields when those parameters do
+not already have another constraint. `Default` for enums is reserved until Ari
+has an explicit default-case marker. `Copy` derive is a marker-trait impl only;
+it does not change Ari's structural copyability rules for values. Other derive
+names are rejected until their trait method surfaces and expansion contracts
+are defined.
 
 ## User Attributes
 

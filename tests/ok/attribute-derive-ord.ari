@@ -1,0 +1,40 @@
+impl Ord[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+impl Ord[bool] for bool {
+  fn lt(self, other: bool) -> bool {
+    return !self && other;
+  }
+}
+
+@derive(Ord)
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+@derive(std::Ord)
+struct Pair(i64, bool)
+
+@derive(Ord)
+struct Box[T] {
+  value: T,
+}
+
+fn less[T: Ord[T]](left: T, right: T) -> i64 {
+  if left.lt(right) {
+    return 11;
+  }
+  return 3;
+}
+
+fn main() -> i64 {
+  let point = less<Point>(Point { x: 1, y: 9 }, Point { x: 2, y: 0 });
+  let not_point = less<Point>(Point { x: 1, y: 9 }, Point { x: 1, y: 8 });
+  let pair = less<Pair>(Pair(7, false), Pair(7, true));
+  let boxed = less<Box[i64]>(Box { value: 3 }, Box { value: 4 });
+  return point + not_point + pair + boxed;
+}

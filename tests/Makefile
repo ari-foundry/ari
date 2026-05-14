@@ -1313,6 +1313,10 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/attribute-derive-eq.raw; code=$$?; test $$code -eq 50
 	$(TARGET) --freestanding tests/ok/attribute-derive-partial-eq.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-eq.raw
 	$(BUILD_DIR)/meta/attribute-derive-partial-eq.raw; code=$$?; test $$code -eq 50
+	$(TARGET) --freestanding tests/ok/attribute-derive-ord.ari -o $(BUILD_DIR)/meta/attribute-derive-ord.raw
+	$(BUILD_DIR)/meta/attribute-derive-ord.raw; code=$$?; test $$code -eq 36
+	$(TARGET) --freestanding tests/ok/attribute-derive-partial-ord.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord.raw
+	$(BUILD_DIR)/meta/attribute-derive-partial-ord.raw; code=$$?; test $$code -eq 36
 	$(TARGET) tests/ok/attribute-repr-borrow-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
 	grep -q "{ ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
 	grep -q "extractvalue { ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
@@ -1442,7 +1446,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/attribute-placement.ari -o $(BUILD_DIR)/meta/attribute-placement.elf >$(BUILD_DIR)/meta/attribute-placement.err 2>&1; then exit 1; fi
 	grep -q "attribute '@derive' is only supported on structs and enums" $(BUILD_DIR)/meta/attribute-placement.err
 	if $(TARGET) tests/errors/attribute-derive-unsupported.ari -o $(BUILD_DIR)/meta/attribute-derive-unsupported.elf >$(BUILD_DIR)/meta/attribute-derive-unsupported.err 2>&1; then exit 1; fi
-	grep -q "unsupported derive 'Display'; supported derives: Debug, Copy, Clone, Default, Eq, PartialEq" $(BUILD_DIR)/meta/attribute-derive-unsupported.err
+	grep -q "unsupported derive 'Display'; supported derives: Debug, Copy, Clone, Default, Eq, PartialEq, Ord, PartialOrd" $(BUILD_DIR)/meta/attribute-derive-unsupported.err
 	if $(TARGET) tests/errors/attribute-derive-duplicate.ari -o $(BUILD_DIR)/meta/attribute-derive-duplicate.elf >$(BUILD_DIR)/meta/attribute-derive-duplicate.err 2>&1; then exit 1; fi
 	grep -q "duplicate derive 'Debug'" $(BUILD_DIR)/meta/attribute-derive-duplicate.err
 	if $(TARGET) tests/errors/attribute-derive-default-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-default-enum.elf >$(BUILD_DIR)/meta/attribute-derive-default-enum.err 2>&1; then exit 1; fi
@@ -1451,6 +1455,10 @@ check-meta: $(TARGET)
 	grep -q "Eq derive for enums currently requires all cases to be fieldless" $(BUILD_DIR)/meta/attribute-derive-eq-enum-payload.err
 	if $(TARGET) tests/errors/attribute-derive-partial-eq-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.elf >$(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.err 2>&1; then exit 1; fi
 	grep -q "PartialEq derive for enums currently requires all cases to be fieldless" $(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.err
+	if $(TARGET) tests/errors/attribute-derive-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-ord-enum.elf >$(BUILD_DIR)/meta/attribute-derive-ord-enum.err 2>&1; then exit 1; fi
+	grep -q "Ord derive for enums requires an explicit enum ordering policy, which is not supported yet" $(BUILD_DIR)/meta/attribute-derive-ord-enum.err
+	if $(TARGET) tests/errors/attribute-derive-partial-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.elf >$(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.err 2>&1; then exit 1; fi
+	grep -q "PartialOrd derive for enums requires an explicit enum ordering policy, which is not supported yet" $(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.err
 	if $(TARGET) tests/errors/attribute-repr-unsupported.ari -o $(BUILD_DIR)/meta/attribute-repr-unsupported.elf >$(BUILD_DIR)/meta/attribute-repr-unsupported.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr' currently supports only C layout" $(BUILD_DIR)/meta/attribute-repr-unsupported.err
 	if $(TARGET) tests/errors/attribute-repr-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-repr-enum-payload.elf >$(BUILD_DIR)/meta/attribute-repr-enum-payload.err 2>&1; then exit 1; fi
