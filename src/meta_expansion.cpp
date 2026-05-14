@@ -1,9 +1,11 @@
 #include "meta_expansion.hpp"
 
+#include "ast_builders.hpp"
 #include "common.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
 
+#include <memory>
 #include <set>
 #include <string>
 #include <utility>
@@ -67,7 +69,8 @@ std::string parse_derive_path(const Attribute& attr, std::size_t& index) {
 std::string canonical_derive_name(SourceLocation loc, const std::string& path) {
     if (path == "Debug" || path == "std::Debug") return "Debug";
     if (path == "Copy" || path == "std::Copy") return "Copy";
-    fail_expansion(loc, "unsupported derive '" + path + "'; supported derives: Debug, Copy");
+    if (path == "Clone" || path == "std::Clone") return "Clone";
+    fail_expansion(loc, "unsupported derive '" + path + "'; supported derives: Debug, Copy, Clone");
 }
 
 std::vector<std::string> derive_names(const std::vector<Attribute>& attributes) {
@@ -77,7 +80,8 @@ std::vector<std::string> derive_names(const std::vector<Attribute>& attributes) 
         if (attr.name != "derive") continue;
         std::size_t index = 0;
         while (index < attr.args.size()) {
-            std::string name = canonical_derive_name(attr.args[index].loc, parse_derive_path(attr, index));
+            SourceLocation name_loc = attr.args[index].loc;
+            std::string name = canonical_derive_name(name_loc, parse_derive_path(attr, index));
             if (!seen.insert(name).second) {
                 fail_expansion(attr.loc, "duplicate derive '" + name + "'");
             }
@@ -111,7 +115,37 @@ std::vector<TypeRef> generic_type_args(const std::vector<GenericParam>& generics
     return args;
 }
 
-ImplDecl make_debug_derive_impl(const std::string& type_name,
+std::string qualify_generated_name(const std::string& module_name, const std::string& name) {
+    if (module_name.empty()) return name;
+    return module_name + "::" + name;
+}
+
+StmtPtr make_return_self_stmt(SourceLocation loc) {
+    auto stmt = std::make_unique<Stmt>();
+    stmt->kind = StmtKind::Return;
+    stmt->loc = loc;
+    stmt->expr = make_ast_name_expr(loc, "self");
+    return stmt;
+}
+
+FunctionDecl make_clone_method(const std::string& module_name, SourceLocation loc) {
+    FunctionDecl method;
+    method.name = qualify_generated_name(module_name, "clone");
+    method.module_name = module_name;
+    method.loc = loc;
+    Param self;
+    self.name = "self";
+    self.type = simple_type_ref("Self", loc);
+    method.params.push_back(std::move(self));
+    method.return_type = simple_type_ref("Self", loc);
+    method.has_return_type = true;
+    method.has_body = true;
+    method.body.push_back(make_return_self_stmt(loc));
+    return method;
+}
+
+ImplDecl make_trait_derive_impl(const std::string& trait_name,
+                                const std::string& type_name,
                                 const std::string& module_name,
                                 const std::vector<GenericParam>& generics,
                                 SourceLocation loc) {
@@ -119,23 +153,18 @@ ImplDecl make_debug_derive_impl(const std::string& type_name,
     impl.module_name = module_name;
     impl.has_trait = true;
     impl.generics = generics;
-    impl.trait_type = simple_type_ref("std::Debug", loc);
+    impl.trait_type = simple_type_ref("std::" + trait_name, loc);
     impl.for_type = simple_type_ref(type_name, loc);
     impl.for_type.args = generic_type_args(generics);
     return impl;
 }
 
-ImplDecl make_copy_derive_impl(const std::string& type_name,
-                               const std::string& module_name,
-                               const std::vector<GenericParam>& generics,
-                               SourceLocation loc) {
-    ImplDecl impl;
-    impl.module_name = module_name;
-    impl.has_trait = true;
-    impl.generics = generics;
-    impl.trait_type = simple_type_ref("std::Copy", loc);
-    impl.for_type = simple_type_ref(type_name, loc);
-    impl.for_type.args = generic_type_args(generics);
+ImplDecl make_clone_derive_impl(const std::string& type_name,
+                                const std::string& module_name,
+                                const std::vector<GenericParam>& generics,
+                                SourceLocation loc) {
+    ImplDecl impl = make_trait_derive_impl("Clone", type_name, module_name, generics, loc);
+    impl.methods.push_back(make_clone_method(module_name, loc));
     return impl;
 }
 
@@ -144,9 +173,11 @@ std::vector<ImplDecl> expand_derive_impls_for_decl(const Decl& decl) {
     std::vector<ImplDecl> impls;
     for (const auto& name : derive_names(decl.attributes)) {
         if (name == "Debug") {
-            impls.push_back(make_debug_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
+            impls.push_back(make_trait_derive_impl("Debug", decl.name, decl.module_name, decl.generics, decl.loc));
         } else if (name == "Copy") {
-            impls.push_back(make_copy_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
+            impls.push_back(make_trait_derive_impl("Copy", decl.name, decl.module_name, decl.generics, decl.loc));
+        } else if (name == "Clone") {
+            impls.push_back(make_clone_derive_impl(decl.name, decl.module_name, decl.generics, decl.loc));
         }
     }
     return impls;
