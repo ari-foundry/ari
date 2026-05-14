@@ -212,14 +212,14 @@ stages rather than one file per syntax feature.
    trees are also preserved through AST/module summary plumbing with full token
    payloads. Pattern-position `ident!(...)` invocations are now parsed with the
    same balanced token-tree validation, preserved through AST/module summary
-   payloads, and sema-validated for unknown names, bad domains, and planned
-   expansion, so lint tooling can rely on the spelling before pattern macro
-   lowering exists. Disabled `@cfg(false)` declarations still parse for
-   linting/cache stability.
+   payloads, sema-validated for unknown names and bad domains, and
+   identity-expanded by parsing their token-tree input as one pattern before
+   pattern lowering. Invalid extra pattern tokens are rejected before match,
+   `if let`, `while let`, `for`, function-parameter, or binding pattern
+   lowering. Disabled `@cfg(false)` declarations still parse for linting/cache
+   stability.
    - [tokens] support `token_stream` input/output rewrites
    - [ast] support `ast` input/output rewrites
-   - [patterns] expand sema-validated pattern-position `ident!(...)` invocations
-     once compile-time construction can produce pattern AST
    - [attributes] allow attribute macros to rewrite or insert AST nodes
    - [derive] expand built-in derives such as `Debug` where the trait surface exists
    - [format] lower `format!` after owned runtime strings exist

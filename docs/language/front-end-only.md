@@ -199,13 +199,13 @@ source-level `mod` declarations. Type-position
 macro invocations must resolve to
 `type -> type` meta functions and are also identity transforms today: their
 token tree is parsed as a type input and then lowered as that type. User
-`meta fn` rewrites that change syntax, pattern/attribute macro expansion,
-derives, and `format!` are still planned and rejected with specific
-diagnostics.
+`meta fn` rewrites that change syntax, attribute macro expansion, derives, and
+`format!` are still planned and rejected with specific diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
-against `token_stream -> token_stream` or `ast -> ast` meta functions, and then
-rejected until pattern macro expansion can produce pattern AST.
+against `token_stream -> token_stream` or `ast -> ast` meta functions, and is
+an identity transform today: the token tree is parsed as one pattern and then
+lowered through the ordinary pattern engine.
 
 Macro invocation is the only parser-level token-tree expression form. A macro
 call is always an ordinary named call such as `make_tokens!(...)`; there is no
@@ -270,13 +270,13 @@ before semantic expression lowering. Item-position macro invocations parse
 function, constant, struct, enum, trait, impl, inline module, and use
 declaration output immediately; malformed supported items or generated
 unsupported item kinds are rejected before normal declaration collection.
-Pattern-position macro invocations are rejected until compile-time construction
-exists, but sema checks unknown names and domain mismatches before emitting the
-planned expansion diagnostic. Type-position macro invocations parse their input
-as a type immediately; malformed type input, such as extra comma-separated
-tokens, is rejected before semantic type lowering. The `ident!(...)` token-tree
-surface is fixed for linting and disabled `@cfg(false)` declarations still
-parse.
+Pattern-position macro invocations parse their input as one pattern
+immediately; malformed pattern input, such as extra comma-separated tokens, is
+rejected before pattern lowering. Type-position macro invocations parse their
+input as a type immediately; malformed type input, such as extra
+comma-separated tokens, is rejected before semantic type lowering. The
+`ident!(...)` token-tree surface is fixed for linting and disabled
+`@cfg(false)` declarations still parse.
 
 ## Raw Pointers
 

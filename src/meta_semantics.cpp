@@ -120,26 +120,6 @@ std::string meta_invocation_domain_message(MetaInvocationSite site,
     return "meta invocation '" + name + "' has unsupported meta transform domain";
 }
 
-std::string meta_invocation_planned_message(MetaInvocationSite site, const std::string& name) {
-    switch (site) {
-        case MetaInvocationSite::ExpressionMacro:
-            return "macro invocation '" + name +
-                   "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet";
-        case MetaInvocationSite::ItemMacro:
-            return "item macro invocation '" + name +
-                   "!' requires compile-time token_stream/ast expansion, which is planned but not implemented yet";
-        case MetaInvocationSite::PatternMacro:
-            return "pattern macro invocation '" + name +
-                   "!' requires compile-time pattern expansion, which is planned but not implemented yet";
-        case MetaInvocationSite::TypeMacro:
-            return "type macro invocation '" + name +
-                   "!' requires compile-time type expansion, which is planned but not implemented yet";
-        case MetaInvocationSite::Attribute:
-            break;
-    }
-    return "meta invocation '" + name + "' requires compile-time expansion, which is planned but not implemented yet";
-}
-
 MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
     require_unique_generic_params(fn.generics, "meta function", fn.name);
     if (!fn.generics.empty()) {

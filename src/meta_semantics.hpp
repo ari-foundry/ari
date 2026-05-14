@@ -39,7 +39,6 @@ std::string meta_invocation_domain_message(MetaInvocationSite site,
                                            const std::string& name,
                                            const std::string& meta_name,
                                            MetaTransformKind kind);
-std::string meta_invocation_planned_message(MetaInvocationSite site, const std::string& name);
 MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn);
 
 } // namespace ari

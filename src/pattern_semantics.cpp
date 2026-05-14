@@ -30,6 +30,8 @@ Pattern clone_pattern_without_children(const Pattern& pattern) {
     copy.has_rest = pattern.has_rest;
     copy.rest_index = pattern.rest_index;
     copy.alias_name = pattern.alias_name;
+    copy.is_macro_invocation = pattern.is_macro_invocation;
+    copy.macro_tokens = pattern.macro_tokens;
     copy.loc = pattern.loc;
     switch (pattern.kind) {
         case PatternKind::IntegerLiteral:

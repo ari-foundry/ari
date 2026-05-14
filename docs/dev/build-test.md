@@ -89,8 +89,9 @@ attribute/expression/item/type macro domain checks, parser-stable
 expression-position identity expansion from a parsed expression input,
 function/constant/struct/enum/trait/impl/inline-module/use item macro identity
 expansion from parsed top-level declarations,
-type-position identity expansion from a parsed type input, and planned
-expansion diagnostics for remaining pattern syntax-producing user macros.
+type-position identity expansion from a parsed type input, pattern-position
+identity expansion from a parsed pattern input, and malformed pattern macro
+input diagnostics.
 
 `make check-prelude` runs prelude IO, formatting, input, assertion, source
 header, and builtin macro tests. It covers function and macro assertion forms,

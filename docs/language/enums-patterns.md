@@ -565,11 +565,12 @@ Slice patterns remain planned for the shared richer pattern engine.
 Pattern-position macro invocation uses reserved Rust-style `ident!(...)`
 syntax and preserves a balanced token tree in the AST and module summaries. The
 name must resolve to a `token_stream -> token_stream` or `ast -> ast` meta
-function, but active pattern expansion is still planned:
+function. Until compile-time evaluation can rewrite the input, the invocation
+is an identity transform: the token tree must parse as exactly one pattern:
 
 ```ari
 match value {
-  make_pattern!({ Some(_) }) => { return 1; }
+  make_pattern!(Some(_)) => { return 1; }
   _ => { return 0; }
 }
 ```

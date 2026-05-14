@@ -61,6 +61,13 @@ public:
         return type;
     }
 
+    Pattern parse_pattern_until_end(SourceLocation loc) {
+        if (check(TokenKind::End)) fail(loc, "pattern macro invocation requires a pattern input");
+        Pattern pattern = parse_pattern();
+        expect(TokenKind::End, "expected end of pattern macro input");
+        return pattern;
+    }
+
 private:
     std::vector<Token> tokens_;
     std::size_t pos_ = 0;
@@ -2368,6 +2375,15 @@ TypeRef parse_macro_type_ref(std::vector<Token> tokens, SourceLocation loc) {
     tokens.push_back(end);
     Parser parser(std::move(tokens));
     return parser.parse_type_until_end(loc);
+}
+
+Pattern parse_macro_pattern(std::vector<Token> tokens, SourceLocation loc) {
+    Token end;
+    end.kind = TokenKind::End;
+    end.loc = loc;
+    tokens.push_back(end);
+    Parser parser(std::move(tokens));
+    return parser.parse_pattern_until_end(loc);
 }
 
 } // namespace ari

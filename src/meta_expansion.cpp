@@ -91,4 +91,11 @@ ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation
     return expansion;
 }
 
+Pattern expand_pattern_macro_invocation(const Pattern& invocation) {
+    if (!invocation.is_macro_invocation) {
+        fail_expansion(invocation.loc, "internal error: expected pattern macro invocation");
+    }
+    return parse_macro_pattern(invocation.macro_tokens, invocation.loc);
+}
+
 } // namespace ari

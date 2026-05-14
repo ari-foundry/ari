@@ -21,5 +21,6 @@ Program parse_tokens_in_module(std::vector<Token> tokens,
 std::vector<ExprPtr> parse_macro_argument_expressions(std::vector<Token> tokens, SourceLocation loc);
 ExprPtr parse_macro_expression(std::vector<Token> tokens, SourceLocation loc);
 TypeRef parse_macro_type_ref(std::vector<Token> tokens, SourceLocation loc);
+Pattern parse_macro_pattern(std::vector<Token> tokens, SourceLocation loc);
 
 } // namespace ari

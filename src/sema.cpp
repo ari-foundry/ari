@@ -428,6 +428,7 @@ private:
     std::vector<EnumDecl> item_macro_enums_;
     std::vector<TraitDecl> item_macro_traits_;
     std::vector<ImplDecl> item_macro_impls_;
+    std::map<const Pattern*, Pattern> pattern_macro_expansions_;
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
     std::map<std::string, std::string> exported_symbols_;
@@ -1390,15 +1391,55 @@ private:
         }
     }
 
-    void validate_pattern_macro(const Pattern& pattern) {
+    const Pattern& expanded_pattern(const Pattern& pattern) const {
+        auto found = pattern_macro_expansions_.find(&pattern);
+        if (found == pattern_macro_expansions_.end()) return pattern;
+        return found->second;
+    }
+
+    static bool pattern_tree_has_macro_invocation(const Pattern& pattern) {
+        if (pattern.is_macro_invocation) return true;
+        if (pattern.payload_pattern && pattern_tree_has_macro_invocation(*pattern.payload_pattern)) return true;
+        if (pattern.alias_pattern && pattern_tree_has_macro_invocation(*pattern.alias_pattern)) return true;
+        for (const auto& alternative : pattern.alternatives) {
+            if (pattern_tree_has_macro_invocation(alternative)) return true;
+        }
+        for (const auto& element : pattern.elements) {
+            if (pattern_tree_has_macro_invocation(element)) return true;
+        }
+        return false;
+    }
+
+    Pattern expand_pattern_macro_tree(const Pattern& pattern) {
         if (pattern.is_macro_invocation) {
             (void)require_meta_invocation(pattern.loc, MetaInvocationSite::PatternMacro, pattern.case_name);
-            fail(pattern.loc, meta_invocation_planned_message(MetaInvocationSite::PatternMacro, pattern.case_name));
+            Pattern expanded = expand_pattern_macro_invocation(pattern);
+            return expand_pattern_macro_tree(expanded);
         }
-        if (pattern.payload_pattern) validate_pattern_macro(*pattern.payload_pattern);
-        if (pattern.alias_pattern) validate_pattern_macro(*pattern.alias_pattern);
-        for (const auto& alternative : pattern.alternatives) validate_pattern_macro(alternative);
-        for (const auto& element : pattern.elements) validate_pattern_macro(element);
+
+        Pattern expanded = clone_pattern(pattern);
+        if (pattern.payload_pattern) {
+            expanded.payload_pattern = std::make_unique<Pattern>(expand_pattern_macro_tree(*pattern.payload_pattern));
+        }
+        if (pattern.alias_pattern) {
+            expanded.alias_pattern = std::make_unique<Pattern>(expand_pattern_macro_tree(*pattern.alias_pattern));
+        }
+        expanded.alternatives.clear();
+        expanded.alternatives.reserve(pattern.alternatives.size());
+        for (const auto& alternative : pattern.alternatives) {
+            expanded.alternatives.push_back(expand_pattern_macro_tree(alternative));
+        }
+        expanded.elements.clear();
+        expanded.elements.reserve(pattern.elements.size());
+        for (const auto& element : pattern.elements) {
+            expanded.elements.push_back(expand_pattern_macro_tree(element));
+        }
+        return expanded;
+    }
+
+    void validate_pattern_macro(const Pattern& pattern) {
+        if (!pattern_tree_has_macro_invocation(pattern)) return;
+        pattern_macro_expansions_[&pattern] = expand_pattern_macro_tree(pattern);
     }
 
     void validate_expr_pattern_macros(const ExprPtr& expr) {
@@ -4059,15 +4100,16 @@ private:
         std::vector<IrStmtPtr> parameter_pattern_prelude;
         for (const auto& param : fn.params) {
             IrType type = resolve_executable_type(param.type);
+            const Pattern* param_pattern = param.has_pattern ? &expanded_pattern(param.pattern) : nullptr;
             if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Void) {
                 fail(fn.loc, "parameter cannot have void type");
             }
             if (param.has_pattern) {
                 if (is_owner_type(type)) {
-                    fail(param.pattern.loc, "owning parameter patterns are planned after ownership through parameter destructuring is defined");
+                    fail(param_pattern->loc, "owning parameter patterns are planned after ownership through parameter destructuring is defined");
                 }
                 if (contains_borrow_type(type)) {
-                    fail(param.pattern.loc, "borrow parameter patterns are not supported yet; use a named parameter");
+                    fail(param_pattern->loc, "borrow parameter patterns are not supported yet; use a named parameter");
                 }
             }
             std::string ir_param_name = param.has_pattern
@@ -4083,7 +4125,7 @@ private:
             ir_fn.params.push_back(IrParam{ir_param_name, type});
             if (param.has_pattern) {
                 lower_binding_pattern_from_local(
-                    param.pattern,
+                    *param_pattern,
                     ir_param_name,
                     type,
                     false,
@@ -5243,7 +5285,8 @@ private:
         release_temporary_borrows(borrow_mark);
 
         lowered.kind = IrStmtKind::Block;
-        if (stmt.binding.pattern.kind == PatternKind::Wildcard && !is_aggregate_type(declared)) {
+        const Pattern& binding_pattern = expanded_pattern(stmt.binding.pattern);
+        if (binding_pattern.kind == PatternKind::Wildcard && !is_aggregate_type(declared)) {
             if (is_owner_type(declared)) {
                 fail(stmt.loc, "owning expression result must be bound, returned, passed, or dropped");
             }
@@ -5263,7 +5306,7 @@ private:
         declare_local(stmt.loc, source_name, declared, false);
         ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, source_name, declared, std::move(init), false));
         lower_binding_pattern_from_local(
-            stmt.binding.pattern,
+            binding_pattern,
             source_name,
             declared,
             stmt.binding.mutable_binding,
@@ -5402,6 +5445,11 @@ private:
         bool mutable_binding,
         std::vector<IrStmtPtr>& statements
     ) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_binding_pattern_from_local(effective_pattern, source_name, source_type, mutable_binding, statements);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
                 return;
@@ -5512,6 +5560,11 @@ private:
     }
 
     void validate_product_binding_pattern_shape(const Pattern& pattern, const IrType& source_type) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            validate_product_binding_pattern_shape(effective_pattern, source_type);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -5623,6 +5676,12 @@ private:
         bool mutable_binding,
         std::vector<IrStmtPtr>& statements
     ) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_refutable_product_binding_pattern_from_local(
+                effective_pattern, source_name, source_type, mutable_binding, statements);
+            return;
+        }
         if (!is_aggregate_type(source_type)) {
             fail(pattern.loc, "aggregate binding pattern requires tuple, array, or struct value");
         }
@@ -5695,6 +5754,11 @@ private:
         bool mutable_binding,
         std::vector<IrStmtPtr>& statements
     ) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_tuple_binding_pattern_from_local(effective_pattern, source_name, source_type, mutable_binding, statements);
+            return;
+        }
         bool array_pattern = pattern.kind == PatternKind::Array;
         IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
         const char* pattern_name = array_pattern ? "array" : "tuple";
@@ -5756,6 +5820,11 @@ private:
         bool mutable_binding,
         std::vector<IrStmtPtr>& statements
     ) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_struct_binding_pattern_from_local(effective_pattern, source_name, source_type, mutable_binding, statements);
+            return;
+        }
         if (source_type.primitive != IrPrimitiveKind::Struct) {
             fail(pattern.loc, "struct binding pattern requires a struct value, got " + type_name(source_type));
         }
@@ -5816,6 +5885,11 @@ private:
         bool mutable_binding,
         std::vector<IrStmtPtr>& statements
     ) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_binding_pattern_value(effective_pattern, value_type, std::move(value), mutable_binding, statements);
+            return;
+        }
         if (pattern.kind == PatternKind::Wildcard) return;
         if (pattern.kind != PatternKind::Binding) {
             fail(pattern.loc, "let/var enum pattern bindings are planned but are not supported yet");
@@ -7112,6 +7186,8 @@ private:
     }
 
     bool try_constant_pattern_value(const Pattern& pattern, ConstantValue& value) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) return try_constant_pattern_value(effective_pattern, value);
         if (pattern.kind != PatternKind::EnumCase ||
             pattern.has_payload_pattern ||
             pattern.has_payload_binding) {
@@ -7137,6 +7213,10 @@ private:
         const EnumInfo& enum_info,
         const IrType& enum_value_type
     ) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_enum_case_pattern(effective_pattern, enum_info, enum_value_type);
+        }
         if (pattern.kind == PatternKind::Alias) {
             if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
             if (pattern.alias_pattern->kind == PatternKind::Or) {
@@ -7193,6 +7273,10 @@ private:
                                        const EnumInfo& enum_info,
                                        const IrType& enum_value_type,
                                        EnumMatchCoverage& coverage) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_match_arm_pattern(effective_pattern, enum_info, enum_value_type, coverage);
+        }
         if (coverage.has_wildcard) fail(pattern.loc, "unreachable match arm after wildcard");
 
         if (pattern.kind == PatternKind::Alias) {
@@ -7243,6 +7327,10 @@ private:
                                                      const EnumInfo& enum_info,
                                                      const IrType& enum_value_type,
                                                      EnumMatchCoverage& coverage) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_match_arm_patterns(effective_pattern, enum_info, enum_value_type, coverage);
+        }
         std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
         if (pattern_contains_or(pattern)) {
             require_same_or_pattern_bindings(pattern.loc, alternatives, enum_match_value_type(pattern.loc, enum_value_type));
@@ -7296,6 +7384,11 @@ private:
     void collect_pattern_bindings(const Pattern& pattern,
                                   const IrType& type,
                                   PatternBindingSignature& bindings) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            collect_pattern_bindings(effective_pattern, type, bindings);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -7445,6 +7538,10 @@ private:
     bool lower_enum_payload_pattern(const Pattern& pattern,
                                     const EnumCaseInfo& case_info,
                                     IrMatchArm& lowered_arm) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_enum_payload_pattern(effective_pattern, case_info, lowered_arm);
+        }
         if (case_info.payloads.empty()) return true;
         if (!pattern.payload_pattern) {
             fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
@@ -7488,6 +7585,11 @@ private:
                                          IrMatchArm& lowered_arm,
                                          std::uint32_t payload_index,
                                          bool aggregate_layout) {
+        const Pattern& effective_payload = expanded_pattern(payload);
+        if (&effective_payload != &payload) {
+            return lower_enum_payload_slot_pattern(
+                effective_payload, payload_type, case_info, lowered_arm, payload_index, aggregate_layout);
+        }
         switch (payload.kind) {
             case PatternKind::Binding:
                 if (aggregate_layout && is_value_enum_type(payload_type) &&
@@ -7565,6 +7667,11 @@ private:
                                      IrMatchArm& lowered_arm,
                                      std::uint32_t payload_index,
                                      bool aggregate_layout) {
+        const Pattern& effective_payload = expanded_pattern(payload);
+        if (&effective_payload != &payload) {
+            lower_alias_payload_pattern(effective_payload, payload_type, case_info, lowered_arm, payload_index, aggregate_layout);
+            return;
+        }
         if (!payload.alias_pattern) fail(payload.loc, "missing aliased payload pattern");
         if (pattern_has_binding(*payload.alias_pattern)) {
             fail(payload.loc, "alias payload patterns cannot contain another binding yet");
@@ -7752,6 +7859,11 @@ private:
                                            const IrType& payload_type,
                                            IrMatchArm& lowered_arm,
                                            std::uint32_t payload_index) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_nested_enum_payload_pattern(effective_pattern, payload_type, lowered_arm, payload_index);
+            return;
+        }
         std::string case_name = resolve_enum_case_name(pattern.case_name);
         auto case_found = enum_cases_.find(case_name);
         if (case_found == enum_cases_.end()) {
@@ -7852,6 +7964,19 @@ private:
                                                 std::uint32_t payload_index,
                                                 std::uint32_t nested_payload_index,
                                                 IrPayloadEnumCondition& condition) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_nested_enum_payload_slot_pattern(
+                effective_pattern,
+                nested_payload_type,
+                nested_enum_type,
+                lowered_arm,
+                payload_index,
+                nested_payload_index,
+                condition
+            );
+            return;
+        }
         condition.nested_payload_index = nested_payload_index;
         switch (pattern.kind) {
             case PatternKind::Binding:
@@ -8141,6 +8266,10 @@ private:
     IrMatchArm lower_scalar_match_arm_pattern(const Pattern& pattern,
                                               const IrType& match_type,
                                               ScalarMatchCoverage& coverage) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_scalar_match_arm_pattern(effective_pattern, match_type, coverage);
+        }
         if (coverage.has_wildcard) fail(pattern.loc, "unreachable match arm after wildcard");
 
         if (pattern.kind == PatternKind::Alias) {
@@ -8270,6 +8399,10 @@ private:
     std::vector<IrMatchArm> lower_scalar_match_arm_patterns(const Pattern& pattern,
                                                             const IrType& match_type,
                                                             ScalarMatchCoverage& coverage) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_scalar_match_arm_patterns(effective_pattern, match_type, coverage);
+        }
         std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
         if (pattern_contains_or(pattern)) {
             require_same_or_pattern_bindings(pattern.loc, alternatives, match_type);
@@ -8349,6 +8482,10 @@ private:
                                                   const IrType& source_type,
                                                   std::size_t field_index,
                                                   std::vector<IrStmtPtr>& prelude) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_tuple_element_match_condition(effective_pattern, source_name, source_type, field_index, prelude);
+        }
         const std::vector<IrType>& fields = aggregate_field_types(source_type);
         const IrType& field_type = fields[field_index];
 
@@ -8535,6 +8672,10 @@ private:
                                                                const std::string& source_name,
                                                                const IrType& source_type,
                                                                std::vector<IrStmtPtr>& prelude) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_positional_product_match_pattern_condition(effective_pattern, source_name, source_type, prelude);
+        }
         const std::vector<IrType>& fields = aggregate_field_types(source_type);
         require_tuple_pattern_arity(pattern, source_type, fields);
 
@@ -8562,6 +8703,10 @@ private:
                                                   const std::string& source_name,
                                                   const IrType& source_type,
                                                   std::vector<IrStmtPtr>& prelude) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_tuple_match_pattern_condition(effective_pattern, source_name, source_type, prelude);
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -8631,6 +8776,10 @@ private:
                                                          const std::string& source_name,
                                                          const IrType& source_type,
                                                          std::vector<IrStmtPtr>& prelude) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_tuple_struct_match_pattern_condition(effective_pattern, source_name, source_type, prelude);
+        }
         const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
         if (!info.tuple_struct) {
             fail(pattern.loc, "tuple-struct pattern requires a tuple struct");
@@ -8655,6 +8804,10 @@ private:
                                                    const std::string& source_name,
                                                    const IrType& source_type,
                                                    std::vector<IrStmtPtr>& prelude) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_struct_match_pattern_condition(effective_pattern, source_name, source_type, prelude);
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -8729,6 +8882,10 @@ private:
                                                     const std::string& source_name,
                                                     const IrType& source_type,
                                                     std::vector<IrStmtPtr>& prelude) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return lower_product_match_pattern_condition(effective_pattern, source_name, source_type, prelude);
+        }
         if (source_type.primitive == IrPrimitiveKind::Tuple) {
             return lower_tuple_match_pattern_condition(pattern, source_name, source_type, prelude);
         }
@@ -8806,6 +8963,11 @@ private:
     void note_product_match_coverage(const Pattern& pattern,
                                      const IrType& subject_type,
                                      ProductMatchCoverage& coverage) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            note_product_match_coverage(effective_pattern, subject_type, coverage);
+            return;
+        }
         initialize_product_match_coverage(subject_type, coverage);
         ProductPatternCoverageHooks hooks = product_pattern_coverage_hooks();
         bool finite_handled = false;
@@ -8832,6 +8994,11 @@ private:
                                           IrExprPtr value,
                                           std::vector<IrStmtPtr>& statements,
                                           bool mutable_binding = false) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_tuple_match_value_bindings(effective_pattern, value_type, std::move(value), statements, mutable_binding);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -8903,6 +9070,12 @@ private:
                                                          const IrType& source_type,
                                                          std::vector<IrStmtPtr>& statements,
                                                          bool mutable_binding = false) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_product_match_pattern_bindings_from_local(
+                effective_pattern, source_name, source_type, statements, mutable_binding);
+            return;
+        }
         if (source_type.primitive == IrPrimitiveKind::Tuple) {
             lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
             return;
@@ -8959,6 +9132,12 @@ private:
                                                                     const IrType& source_type,
                                                                     std::vector<IrStmtPtr>& statements,
                                                                     bool mutable_binding = false) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_positional_product_match_pattern_bindings_from_local(
+                effective_pattern, source_name, source_type, statements, mutable_binding);
+            return;
+        }
         const std::vector<IrType>& fields = aggregate_field_types(source_type);
         require_tuple_pattern_arity(pattern, source_type, fields);
 
@@ -8981,6 +9160,12 @@ private:
                                                        const IrType& source_type,
                                                        std::vector<IrStmtPtr>& statements,
                                                        bool mutable_binding = false) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_tuple_match_pattern_bindings_from_local(
+                effective_pattern, source_name, source_type, statements, mutable_binding);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -9040,6 +9225,12 @@ private:
                                                               const IrType& source_type,
                                                               std::vector<IrStmtPtr>& statements,
                                                               bool mutable_binding = false) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_tuple_struct_match_pattern_bindings_from_local(
+                effective_pattern, source_name, source_type, statements, mutable_binding);
+            return;
+        }
         const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
         if (!info.tuple_struct) {
             fail(pattern.loc, "tuple-struct pattern requires a tuple struct");
@@ -9072,6 +9263,12 @@ private:
                                                         const IrType& source_type,
                                                         std::vector<IrStmtPtr>& statements,
                                                         bool mutable_binding = false) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_struct_match_pattern_bindings_from_local(
+                effective_pattern, source_name, source_type, statements, mutable_binding);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -9244,7 +9441,7 @@ private:
         }
 
         lowered.kind = IrStmtKind::Block;
-        const Pattern& condition_pattern = *stmt.condition_pattern;
+        const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
@@ -9348,7 +9545,7 @@ private:
 
     Flow check_aggregate_if_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
-        const Pattern& condition_pattern = *stmt.condition_pattern;
+        const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         lowered.kind = IrStmtKind::Block;
 
         std::string subject_name = make_hidden_local(
@@ -9817,7 +10014,7 @@ private:
         const std::string& label = stmt_label(stmt);
         set_ir_stmt_label(lowered, label);
         lowered.match_value = std::move(match_value);
-        const Pattern& condition_pattern = *stmt.condition_pattern;
+        const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
         IrType enum_value_type = lowered.match_value->type;
         EnumMatchCoverage coverage;
@@ -9870,7 +10067,7 @@ private:
 
     void check_aggregate_while_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
-        const Pattern& condition_pattern = *stmt.condition_pattern;
+        const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         lowered.kind = IrStmtKind::While;
         const std::string& label = stmt_label(stmt);
         set_ir_stmt_label(lowered, label);
@@ -9993,6 +10190,18 @@ private:
                                                  IrExprPtr* item_expr,
                                                  std::vector<IrStmtPtr>& pattern_prelude,
                                                  bool materialize_wildcard_aggregate) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_irrefutable_non_iterator_for_head(
+                effective_pattern,
+                item_type,
+                loop_binding_name,
+                item_expr,
+                pattern_prelude,
+                materialize_wildcard_aggregate
+            );
+            return;
+        }
         if (pattern.kind == PatternKind::Binding) {
             bind_irrefutable_non_iterator_for_item(
                 pattern.loc,
@@ -10038,6 +10247,11 @@ private:
     }
 
     void require_supported_for_iterator_pattern(const Pattern& pattern, const IrType& value_type) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            require_supported_for_iterator_pattern(effective_pattern, value_type);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::Binding:
@@ -10085,6 +10299,8 @@ private:
     }
 
     bool iterator_binding_names_enum_case(const Pattern& pattern, const IrType& value_type) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) return iterator_binding_names_enum_case(effective_pattern, value_type);
         if (pattern.kind != PatternKind::Binding || !is_value_enum_type(value_type)) return false;
         std::string case_name = resolve_enum_case_name(pattern.payload_name);
         auto case_found = enum_cases_.find(case_name);
@@ -10096,6 +10312,8 @@ private:
     }
 
     Pattern normalize_iterator_item_pattern(const Pattern& pattern, const IrType& value_type) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) return normalize_iterator_item_pattern(effective_pattern, value_type);
         if (iterator_binding_names_enum_case(pattern, value_type)) {
             Pattern enum_pattern;
             enum_pattern.kind = PatternKind::EnumCase;
@@ -10286,7 +10504,7 @@ private:
         IrExprPtr iterator,
         const IrType& item_type
     ) {
-        const Pattern& for_pattern = *stmt.for_pattern;
+        const Pattern& for_pattern = expanded_pattern(*stmt.for_pattern);
         IrType iterator_type = iterator->type;
         const bool borrowed_iterator = is_borrow_type(iterator_type);
         const bool owning_iterator = is_owner_type(iterator_type);
@@ -10429,7 +10647,7 @@ private:
     }
 
     void check_for(const Stmt& stmt, IrStmt& lowered) {
-        const Pattern& for_pattern = *stmt.for_pattern;
+        const Pattern& for_pattern = expanded_pattern(*stmt.for_pattern);
         std::string range_call_name;
         bool is_range_call = false;
         if (stmt.for_iterable && stmt.for_iterable->kind == ExprKind::Call) {
@@ -10510,7 +10728,7 @@ private:
     }
 
     void finish_for_range(const Stmt& stmt, IrStmt& lowered, IrExprPtr start, IrExprPtr end, bool inclusive) {
-        const Pattern& for_pattern = *stmt.for_pattern;
+        const Pattern& for_pattern = expanded_pattern(*stmt.for_pattern);
         IrType bound_type = start->type;
         lowered.kind = IrStmtKind::ForRange;
         const std::string& label = stmt_label(stmt);
@@ -10558,7 +10776,7 @@ private:
     }
 
     void check_for_vector(const Stmt& stmt, IrStmt& lowered) {
-        const Pattern& for_pattern = *stmt.for_pattern;
+        const Pattern& for_pattern = expanded_pattern(*stmt.for_pattern);
         IrExprPtr iterable = check_expr(*stmt.for_iterable);
         if (iterable->kind != IrExprKind::Vector || iterable->type.args.size() != 1) {
             fail(stmt.loc, "for currently supports list literal iterator expressions");
@@ -10604,7 +10822,7 @@ private:
     }
 
     void check_for_vector_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
-        const Pattern& for_pattern = *stmt.for_pattern;
+        const Pattern& for_pattern = expanded_pattern(*stmt.for_pattern);
         if (iterable->type.args.size() != 1) {
             fail(stmt.loc, "for currently supports stored local vector values with a known length");
         }
@@ -12331,7 +12549,7 @@ private:
         }
 
         lowered = make_ir_block_expr(expr.loc);
-        const Pattern& condition_pattern = *expr_if_condition_pattern(expr);
+        const Pattern& condition_pattern = expanded_pattern(*expr_if_condition_pattern(expr));
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(expr.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
@@ -12481,7 +12699,7 @@ private:
         const IrType* expected = nullptr
     ) {
         IrType subject_type = subject->type;
-        const Pattern& condition_pattern = *expr_if_condition_pattern(expr);
+        const Pattern& condition_pattern = expanded_pattern(*expr_if_condition_pattern(expr));
         lowered = make_ir_block_expr(expr.loc);
 
         std::string subject_name = make_hidden_local(

@@ -1412,6 +1412,12 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/item-macro-module-use-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/type-macro-identity.ari -o $(BUILD_DIR)/meta/type-macro-identity.raw
 	$(BUILD_DIR)/meta/type-macro-identity.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/pattern-macro-identity.ari -o $(BUILD_DIR)/meta/pattern-macro-identity.raw
+	$(BUILD_DIR)/meta/pattern-macro-identity.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/pattern-macro-identity.ari --emit-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache.ll
+	grep -q "ari-ast-decls-v12" $(BUILD_DIR)/meta/pattern-macro-identity.aricache
+	$(TARGET) tests/ok/pattern-macro-identity.ari --use-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache-use.ll
+	cmp -s $(BUILD_DIR)/meta/pattern-macro-identity-cache.ll $(BUILD_DIR)/meta/pattern-macro-identity-cache-use.ll
 	$(TARGET) --freestanding tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.raw
 	$(BUILD_DIR)/meta/matches-macro.raw; code=$$?; test $$code -eq 15
 	if $(TARGET) tests/errors/attribute-unknown.ari -o $(BUILD_DIR)/meta/attribute-unknown.elf >$(BUILD_DIR)/meta/attribute-unknown.err 2>&1; then exit 1; fi
@@ -1468,8 +1474,8 @@ check-meta: $(TARGET)
 	grep -q "expected , after matches! value" $(BUILD_DIR)/meta/matches-macro-arity.err
 	if $(TARGET) tests/errors/matches-macro-pattern-type.ari -o $(BUILD_DIR)/meta/matches-macro-pattern-type.elf >$(BUILD_DIR)/meta/matches-macro-pattern-type.err 2>&1; then exit 1; fi
 	grep -q "integer match patterns must be integer literals or _" $(BUILD_DIR)/meta/matches-macro-pattern-type.err
-	if $(TARGET) tests/errors/pattern-macro-planned.ari -o $(BUILD_DIR)/meta/pattern-macro-planned.elf >$(BUILD_DIR)/meta/pattern-macro-planned.err 2>&1; then exit 1; fi
-	grep -q "pattern macro invocation 'make_pattern!' requires compile-time pattern expansion" $(BUILD_DIR)/meta/pattern-macro-planned.err
+	if $(TARGET) tests/errors/pattern-macro-invalid-input.ari -o $(BUILD_DIR)/meta/pattern-macro-invalid-input.elf >$(BUILD_DIR)/meta/pattern-macro-invalid-input.err 2>&1; then exit 1; fi
+	grep -q "expected end of pattern macro input" $(BUILD_DIR)/meta/pattern-macro-invalid-input.err
 	if $(TARGET) tests/errors/pattern-macro-type-domain.ari -o $(BUILD_DIR)/meta/pattern-macro-type-domain.elf >$(BUILD_DIR)/meta/pattern-macro-type-domain.err 2>&1; then exit 1; fi
 	grep -q "pattern macros require token_stream -> token_stream or ast -> ast" $(BUILD_DIR)/meta/pattern-macro-type-domain.err
 	if $(TARGET) tests/errors/pattern-macro-unknown.ari -o $(BUILD_DIR)/meta/pattern-macro-unknown.elf >$(BUILD_DIR)/meta/pattern-macro-unknown.err 2>&1; then exit 1; fi
