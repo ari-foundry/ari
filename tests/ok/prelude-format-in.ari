@@ -1,8 +1,21 @@
+fn count() -> i64 {
+  return 9;
+}
+
+fn ready(value: i64) -> bool {
+  return value == 9;
+}
+
+fn label() -> string {
+  return "done";
+}
+
 fn main() -> i64 {
   var zone = zone::create(64);
   let value = -7;
   let ok = true;
   var text: String = format_in!(ref mut zone, "ari={} ok={} {{}} {}", value, ok, "done");
+  var computed: String = format_in!(ref mut zone, "n={} ready={} label={}", count(), ready(count()), label());
 
   assert_eq_i64(text.len(), 22);
   assert_eq_i64(text.get(4) as i64, 45);
@@ -10,8 +23,13 @@ fn main() -> i64 {
   assert_eq_i64(text.get(10) as i64, 116);
   assert_eq_i64(text.get(15) as i64, 123);
   assert_eq_i64(text.get(21) as i64, 101);
+  assert_eq_i64(computed.len(), 25);
+  assert_eq_i64(computed.get(2) as i64, 57);
+  assert_eq_i64(computed.get(10) as i64, 116);
+  assert_eq_i64(computed.get(21) as i64, 100);
+  assert_eq_i64(computed.get(24) as i64, 101);
 
-  let total = text.len() + (text.get(10) as i64) + (text.get(15) as i64) + (text.get(21) as i64);
+  let total = text.len() + computed.len() + (text.get(10) as i64) + (text.get(15) as i64) + (text.get(21) as i64);
   zone::destroy(zone);
   return total % 256;
 }

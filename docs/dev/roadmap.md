@@ -214,8 +214,10 @@ constructor subset documented in the language guide.
    - [text-format] finish the formatted string surface after the first
      explicit-zone pass. `format_in!(ref mut Zone, "...", values...)` now
      lowers `{}` string/integer/bool formatting to source `String` construction
-     plus same-zone append helpers; remaining work is the final `format!`
-     policy and owned-string float/precision formatting.
+     plus same-zone append helpers, and evaluates each formatted value once
+     before selecting the append helper from the lowered value type; remaining
+     work is the final `format!` policy and owned-string float/precision
+     formatting.
      Small follow-up: [format-display-trait] once trait dispatch is ready for
      broad library use, route user-defined formatted values through a compact
      display-style trait instead of adding more macro-only cases.

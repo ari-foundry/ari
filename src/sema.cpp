@@ -14744,33 +14744,15 @@ private:
         Bool
     };
 
-    static bool format_in_bool_binary_op(TokenKind op) {
-        switch (op) {
-            case TokenKind::EqEq:
-            case TokenKind::BangEq:
-            case TokenKind::Less:
-            case TokenKind::LessEq:
-            case TokenKind::Greater:
-            case TokenKind::GreaterEq:
-            case TokenKind::AmpAmp:
-            case TokenKind::PipePipe:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    static bool format_in_integer_type_ref_name(const std::string& name) {
-        return name == "i8" || name == "i16" || name == "i32" || name == "i64" ||
-               name == "u8" || name == "u16" || name == "u32" || name == "u64";
-    }
-
-    static StmtPtr make_format_in_var_decl(SourceLocation loc, std::string name, ExprPtr init) {
+    static StmtPtr make_format_in_var_decl(SourceLocation loc,
+                                           std::string name,
+                                           ExprPtr init,
+                                           bool mutable_binding) {
         auto stmt = std::make_unique<Stmt>();
         stmt->kind = StmtKind::VarDecl;
         stmt->loc = loc;
         stmt->binding.name = std::move(name);
-        stmt->binding.mutable_binding = true;
+        stmt->binding.mutable_binding = mutable_binding;
         stmt->binding.loc = loc;
         stmt->binding.init = std::move(init);
         return stmt;
@@ -14801,50 +14783,11 @@ private:
         return std::nullopt;
     }
 
-    std::optional<FormatInAppendMethod> format_in_append_method_from_known_expr(const Expr& arg) {
-        switch (arg.kind) {
-            case ExprKind::String:
-                return FormatInAppendMethod::String;
-            case ExprKind::Bool:
-                return FormatInAppendMethod::Bool;
-            case ExprKind::Integer:
-                return FormatInAppendMethod::I64;
-            case ExprKind::Float:
-                fail(arg.loc, "format_in! currently supports string, integer, and bool values; use print!/println! for float formatting");
-            case ExprKind::Name:
-                if (LocalInfo* local = find_local_slot(arg.name)) {
-                    return format_in_append_method_from_type(arg.loc, local->type);
-                }
-                return std::nullopt;
-            case ExprKind::Cast:
-                if (arg.cast_type.name == "string") return FormatInAppendMethod::String;
-                if (arg.cast_type.name == "bool") return FormatInAppendMethod::Bool;
-                if (format_in_integer_type_ref_name(arg.cast_type.name)) return FormatInAppendMethod::I64;
-                return format_in_append_method_from_type(arg.loc, resolve_executable_type(arg.cast_type));
-            case ExprKind::Unary:
-                if (arg.op == TokenKind::Bang) return FormatInAppendMethod::Bool;
-                return FormatInAppendMethod::I64;
-            case ExprKind::Binary:
-                return format_in_bool_binary_op(arg.op)
-                    ? FormatInAppendMethod::Bool
-                    : FormatInAppendMethod::I64;
-            case ExprKind::Call:
-                {
-                    std::string function_name = resolve_function_name(arg.name);
-                    auto found = functions_.find(function_name);
-                    if (found != functions_.end()) {
-                        return format_in_append_method_from_type(arg.loc, found->second.result);
-                    }
-                }
-                return std::nullopt;
-            default:
-                return std::nullopt;
-        }
-    }
-
-    FormatInAppendMethod format_in_append_method_for_expr(const Expr& arg) {
-        if (auto known = format_in_append_method_from_known_expr(arg)) return *known;
-        return FormatInAppendMethod::I64;
+    FormatInAppendMethod format_in_append_method_for_local(SourceLocation loc, const std::string& name) {
+        const LocalInfo* local = find_local_slot(name);
+        if (!local) throw CompileError("internal error: missing format_in! value local '" + name + "'");
+        if (auto method = format_in_append_method_from_type(loc, local->type)) return *method;
+        fail(loc, "format_in! could not infer a supported value type for '" + name + "'");
     }
 
     static const char* format_in_append_method_name(FormatInAppendMethod method) {
@@ -14882,11 +14825,11 @@ private:
     ExprPtr make_format_in_append_call(SourceLocation loc,
                                        const std::string& result_name,
                                        const Expr& zone_arg,
-                                       const Expr& value_arg) {
-        FormatInAppendMethod method = format_in_append_method_for_expr(value_arg);
+                                       FormatInAppendMethod method,
+                                       ExprPtr value_arg) {
         std::vector<ExprPtr> args;
         args.push_back(clone_expression_tree(zone_arg));
-        args.push_back(clone_expression_tree(value_arg));
+        args.push_back(std::move(value_arg));
         return make_ast_method_call_expr(
             loc,
             make_ast_name_expr(loc, result_name),
@@ -14894,6 +14837,15 @@ private:
             {},
             std::move(args)
         );
+    }
+
+    void append_format_in_statement(SourceLocation loc, StmtPtr stmt, std::vector<IrStmtPtr>& statements) {
+        CheckedStatement checked = check_statement(*stmt);
+        if (checked.flow != Flow::Continues) {
+            discard_scope();
+            fail(loc, "format_in! generated control-flow where a value append was expected");
+        }
+        statements.push_back(std::move(checked.statement));
     }
 
     IrExprPtr check_format_in_macro(const Expr& expr, std::vector<ExprPtr> args) {
@@ -14914,42 +14866,95 @@ private:
         }
 
         std::string result_name = make_hidden_local("$format");
-        std::vector<StmtPtr> body;
+        std::vector<IrStmtPtr> statements;
+        push_scope();
+
         std::vector<ExprPtr> new_args;
         new_args.push_back(clone_expression_tree(zone_arg));
         new_args.push_back(make_ast_integer_expr(expr.loc, format_in_initial_capacity(format_string)));
-        body.push_back(make_format_in_var_decl(
+        append_format_in_statement(expr.loc, make_format_in_var_decl(
             expr.loc,
             result_name,
-            make_ast_call_expr(expr.loc, "std::string::new", nullptr, std::move(new_args))
-        ));
+            make_ast_call_expr(expr.loc, "std::string::new", nullptr, std::move(new_args)),
+            true
+        ), statements);
 
         for (std::size_t i = 0; i < format_string.specs.size(); ++i) {
             if (!format_string.parts[i].empty()) {
-                body.push_back(make_format_in_expr_stmt(
+                append_format_in_statement(expr.loc, make_format_in_expr_stmt(
                     expr.loc,
                     make_format_in_append_call(expr.loc, result_name, zone_arg, format_string.parts[i])
-                ));
+                ), statements);
             }
-            body.push_back(make_format_in_expr_stmt(
+            const std::string value_name = make_hidden_local("$format_value");
+            append_format_in_statement(args[i + 2]->loc, make_format_in_var_decl(
                 args[i + 2]->loc,
-                make_format_in_append_call(args[i + 2]->loc, result_name, zone_arg, *args[i + 2])
-            ));
+                value_name,
+                clone_expression_tree(*args[i + 2]),
+                false
+            ), statements);
+            FormatInAppendMethod method = format_in_append_method_for_local(args[i + 2]->loc, value_name);
+            append_format_in_statement(args[i + 2]->loc, make_format_in_expr_stmt(
+                args[i + 2]->loc,
+                make_format_in_append_call(
+                    args[i + 2]->loc,
+                    result_name,
+                    zone_arg,
+                    method,
+                    make_ast_name_expr(args[i + 2]->loc, value_name))
+            ), statements);
         }
         if (!format_string.parts.empty() && !format_string.parts.back().empty()) {
-            body.push_back(make_format_in_expr_stmt(
+            append_format_in_statement(expr.loc, make_format_in_expr_stmt(
                 expr.loc,
                 make_format_in_append_call(expr.loc, result_name, zone_arg, format_string.parts.back())
-            ));
+            ), statements);
         }
 
-        ExprPtr block = make_ast_block_expr(
+        Expr result_expr;
+        result_expr.kind = ExprKind::Name;
+        result_expr.loc = expr.loc;
+        result_expr.name = result_name;
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr value = check_expr(result_expr);
+        std::optional<BorrowResultSource> borrow_source =
+            finish_control_flow_borrow_result(
+                expr.loc,
+                "format_in! expression",
+                *value,
+                statements,
+                local_scopes_.size() - 1,
+                borrow_mark);
+        if (!borrow_source && is_borrow_type(value->type)) {
+            pop_scope();
+            fail(expr.loc, "format_in! expression cannot produce borrow values");
+        }
+        if (is_void_value_type(value->type)) {
+            pop_scope();
+            fail(expr.loc, "format_in! expression must produce a value");
+        }
+        if (!borrow_source) {
+            value = materialize_value_before_auto_destroy_cleanup(
+                expr.loc,
+                std::move(value),
+                statements,
+                local_scopes_.size() - 1,
+                "$format",
+                "format_in! result"
+            );
+        }
+        IrType result_type = value->type;
+        pop_scope();
+
+        IrExprPtr block = make_ir_block_expr(
             expr.loc,
             {},
-            std::move(body),
-            make_ast_name_expr(expr.loc, result_name)
+            std::move(result_type),
+            std::move(statements),
+            std::move(value)
         );
-        return check_expr(*block);
+        if (borrow_source) activate_control_flow_borrow_result(expr.loc, *block, *borrow_source);
+        return block;
     }
 
     static std::string mangle_text_key(const std::string& text) {
