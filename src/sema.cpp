@@ -15467,7 +15467,7 @@ private:
 
     IrExprPtr check_prelude_macro_call(const Expr& expr, PreludeMacroKind kind) {
         if (kind == PreludeMacroKind::Format) {
-            fail(expr.loc, "prelude macro 'format!' needs owned runtime strings before it can return a formatted value");
+            fail(expr.loc, "prelude macro 'format!' needs explicit-zone formatted string lowering before it can return a value");
         }
         if (kind == PreludeMacroKind::Matches) {
             fail(expr.loc, "prelude macro 'matches!' needs pattern-position macro expansion before it can be lowered");

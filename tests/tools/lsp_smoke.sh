@@ -66,5 +66,5 @@ printf '%s' "$output" | grep -q '"id":10,"result":.*"Remove trailing whitespace"
 printf '%s' "$output" | grep -q '"id":10,"result":.*"Apply Ari lint fixes"'
 printf '%s' "$output" | grep -q '"line":4'
 printf '%s' "$output" | grep -q '"source":"ari","code":"ari/compiler"'
-printf '%s' "$output" | grep -q "prelude macro 'format!' needs owned runtime strings"
+printf '%s' "$output" | grep -q "prelude macro 'format!' needs explicit-zone formatted string lowering"
 printf '%s' "$output" | grep -q '"line":1'

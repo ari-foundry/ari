@@ -111,13 +111,16 @@ tracked `RawString` handle with `data`, `len`, and `capacity` fields, and
 source string handle supports `len`, `capacity`,
 `is_empty`, checked byte `get`/`set`/`replace`, fixed-capacity
 `push`/`pop`/`insert`, same-zone growth through `reserve`, `reserve_extra`,
-`push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, plus
+`push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, append helpers
+for lowercase `string`, `i64`, and `bool` values through `append_string_in`,
+`append_i64_in`, and `append_bool_in`, plus
 `truncate`, `clear`, `as_ptr`, and `as_slice`. `std::string::from_string(ref
 mut zone, text)` copies today's borrowed lowercase `string` into independent
 zone-backed bytes, and `std::string::copy_to(value, ref mut zone)` copies the
 current bytes into another explicit zone. This is still an explicit-zone
 string API; allocations are released by `zone::reset` or `zone::destroy`, and
-the string handle's `Drop` impl only ends the binding.
+the string handle's `Drop` impl only ends the binding. The same-zone append and
+growth helpers must receive the zone that created the handle.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -164,7 +167,7 @@ Formatting rules:
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the placeholder count is checked at compile time
-- formatted values currently support integers, bool, `f32`, and `f64`
+- formatted print values currently support integers, bool, `f32`, and `f64`
 - `println` appends one newline
 - `print` does not append a newline
 
@@ -282,7 +285,9 @@ matches!(value, Some(_))
 `matches!` uses the unqualified parser-special spelling and expands to a
 bool-valued pattern test using the same pattern engine as `match`, so enum,
 scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
-the same rules. `format!` is reserved until Ari has owned runtime strings.
+the same rules. `format!` is still reserved until the explicit-zone formatted
+string macro surface is wired. Today, build owned text with a `String` handle
+and `append_string_in`, `append_i64_in`, or `append_bool_in`.
 Other prelude expression macros are recognized as unqualified names or paths
 that resolve to the root `std` macro name, such as `std::print!` or an alias of
 `std::format!`; arbitrary module paths whose basename is `format`, `print`, or
@@ -631,7 +636,9 @@ seed, use `std::string::new(ref mut Zone, capacity)` or
 
 ```ari
 var text = std::string::from_string(ref mut zone, "ari")
-text.push(33u8)
+text.append_string_in(ref mut zone, "=")
+text.append_i64_in(ref mut zone, 42)
+text.append_bool_in(ref mut zone, true)
 let raw = text.as_ptr()
 let view = text.as_slice()
 var other_zone = zone::create(64)
@@ -644,9 +651,11 @@ full. Use `reserve(ref mut Zone, capacity)` or `reserve_extra(ref mut Zone,
 additional)` for explicit growth, `push_in(ref mut Zone, byte)` and
 `insert_in(ref mut Zone, index, byte)` for grow-on-demand writes,
 `extend_from_slice_in(ref mut Zone, Slice[u8])` for bulk byte appends, and
-`resize_in(ref mut Zone, length, byte)` to grow or shrink. These growth methods
-must receive the same explicit zone that created the handle, so provenance
-continues to match reset/destroy invalidation. Use
+`resize_in(ref mut Zone, length, byte)` to grow or shrink. `append_string_in`,
+`append_i64_in`, and `append_bool_in` build text from the first scalar values
+needed by explicit formatting. These growth and append methods must receive
+the same explicit zone that created the handle, so provenance continues to
+match reset/destroy invalidation. Use
 `std::string::copy_to(value, ref mut Zone)` to copy the current bytes into
 another explicit zone.
 Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`

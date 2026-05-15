@@ -78,7 +78,7 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	if $(LINT_TARGET) --ari $(TARGET) --json tests/errors/prelude-macro-format-planned.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
 	grep -q '"code":"ari/compiler"' $(BUILD_DIR)/tools/lint-format.json
-	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/tools/lint-format.json
+	grep -q "prelude macro 'format!' needs explicit-zone formatted string lowering" $(BUILD_DIR)/tools/lint-format.json
 	sh tests/tools/lsp_smoke.sh
 
 check-cli: $(TARGET)
@@ -237,6 +237,10 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl19std__string__String8inherent9insert_in' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent9resize_in' $(BUILD_DIR)/prelude/std-string-grow.ll
+	$(TARGET) tests/ok/std-string-append.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append.ll
+	grep -q 'append_string_in' $(BUILD_DIR)/prelude/std-string-append.ll
+	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/std-string-append.ll
+	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3len' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8capacity' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
@@ -414,6 +418,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err
 	if $(TARGET) tests/errors/std-string-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-string-push-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.push_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-push-in-different-zone.err
+	if $(TARGET) tests/errors/std-string-append-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::string::String.append_i64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-different-zone.err
 	if $(TARGET) tests/errors/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
 	grep -q "struct 'std::string::String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
 	if $(TARGET) tests/errors/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi
@@ -447,9 +453,9 @@ check-prelude: $(TARGET)
 	if $(TARGET) tests/errors/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err
 	if $(TARGET) tests/errors/prelude-macro-format-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-planned.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/prelude/prelude-macro-format-planned.err
+	grep -q "prelude macro 'format!' needs explicit-zone formatted string lowering" $(BUILD_DIR)/prelude/prelude-macro-format-planned.err
 	if $(TARGET) tests/errors/prelude-macro-format-qualified-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err
+	grep -q "prelude macro 'format!' needs explicit-zone formatted string lowering" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err
 	if $(TARGET) tests/errors/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'other::format!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err
 	if $(TARGET) tests/errors/prelude-macro-nonprelude-matches.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err 2>&1; then exit 1; fi

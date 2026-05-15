@@ -284,8 +284,9 @@ compact enum      -> i64 tagged union word
 ```
 
 `string` values can be passed to `ptr c_char`, `ptr c_uchar`, or `ptr c_void`
-parameters. Use `ptr c_void` for C `void*`; a by-value `c_void` parameter is
-rejected.
+parameters, and can be explicitly cast to raw pointer types when low-level
+byte access is needed. Use `ptr c_void` for C `void*`; a by-value `c_void`
+parameter is rejected.
 
 For the current supported target tables, `c_char` is signed (`i8`). Use
 `c_schar` or `c_uchar` when an API needs explicit signedness. Pointer-width
@@ -309,8 +310,8 @@ fn main() -> i64 {
 ```
 
 When `null` is used without an expected type, it defaults to `ptr c_void`.
-Pointer-to-pointer casts, nullable raw-pointer casts, and pointer/integer
-address casts use explicit `as` casts:
+Pointer-to-pointer casts, nullable raw-pointer casts, lowercase `string` to raw
+pointer casts, and pointer/integer address casts use explicit `as` casts:
 
 ```ari
 let raw: ptr c_void = null;

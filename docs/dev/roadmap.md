@@ -194,6 +194,8 @@ constructor subset documented in the language guide.
    checked get/set/replace, truncate/clear, slice and raw-pointer views,
    explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
    `insert_in`, `extend_from_slice_in`, and `resize_in`,
+   same-zone text construction helpers through `append_string_in`,
+   `append_i64_in`, and `append_bool_in`,
    `std::string::copy_to(value, ref mut Zone)` target-zone copying, and
    `from_string(ref mut Zone, string)` copying from today's borrowed lowercase
    `string` values. Host line input now has explicit-zone owned helpers
@@ -209,9 +211,9 @@ constructor subset documented in the language guide.
      handles. The source `std::boxed::Box<T>` seed already has a no-op generic
      Drop impl and use-after-drop checking; the remaining work is the final
      root owning smart-pointer surface and value-destroying ownership contract.
-   - [text-format] choose and implement the explicit-zone formatted string
-     construction surface before broad library APIs start returning formatted
-     text.
+   - [text-format] wire the explicit-zone formatted string macro/helper surface
+     on top of the source string append primitives before broad library APIs
+     start returning formatted text.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

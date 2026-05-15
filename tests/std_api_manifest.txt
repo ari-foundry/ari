@@ -64,6 +64,9 @@ method std::boxed::Box[T]::get|check-prelude std-boxed-box; docs/dev/test-matrix
 method std::boxed::Box[T]::replace|check-prelude std-boxed-replace; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::set|check-prelude std-boxed-box; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::string::String::append_i64_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::string::String::append_string_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::as_ptr|check-prelude std-string-handle and as-ptr provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::as_slice|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::capacity|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row

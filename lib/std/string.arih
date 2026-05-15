@@ -14,6 +14,25 @@ pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::Strin
 pub extern "ari" fn from_string(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
 pub extern "ari" fn copy_to(value: std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
 
+fn append_byte_in(value: ref mut std::string::String, zone: ref mut Zone, byte: u8) -> void {
+  if value.raw.len >= value.raw.capacity {
+    var capacity = value.raw.capacity * 2;
+    if capacity <= value.raw.len {
+      capacity = value.raw.len + 1;
+    }
+    let data = alloc_buffer(zone, capacity);
+    var index = 0;
+    while index < value.raw.len {
+      ptr_store(ptr_add(data, index), ptr_load(ptr_add(value.raw.data, index)));
+      index = index + 1;
+    }
+    value.raw.data = data;
+    value.raw.capacity = capacity;
+  }
+  ptr_store(ptr_add(value.raw.data, value.raw.len), byte);
+  value.raw.len = value.raw.len + 1;
+}
+
 pub impl std::string::String {
   fn len(self) -> i64 {
     return self.raw.len;
@@ -69,6 +88,64 @@ pub impl std::string::String {
       self.raw.capacity = capacity;
     }
     self.push(value);
+  }
+
+  fn append_string_in(self: ref mut Self, zone: ref mut Zone, value: string) -> void {
+    let data = value as ptr u8;
+    var index = 0;
+    var byte = ptr_load(ptr_add(data, index));
+    while byte != (0 as u8) {
+      append_byte_in(self, zone, byte);
+      index = index + 1;
+      byte = ptr_load(ptr_add(data, index));
+    }
+  }
+
+  fn append_i64_in(self: ref mut Self, zone: ref mut Zone, value: i64) -> void {
+    if value == 0 {
+      append_byte_in(self, zone, 48 as u8);
+      return;
+    }
+
+    var remaining = value;
+    if remaining < 0 {
+      append_byte_in(self, zone, 45 as u8);
+    }
+
+    let digit_start = self.raw.len;
+    while remaining != 0 {
+      var digit = remaining % 10;
+      if digit < 0 {
+        digit = 0 - digit;
+      }
+      append_byte_in(self, zone, (digit + 48) as u8);
+      remaining = remaining / 10;
+    }
+
+    var left = digit_start;
+    var right = self.raw.len - 1;
+    while left < right {
+      let temporary = ptr_load(ptr_add(self.raw.data, left));
+      ptr_store(ptr_add(self.raw.data, left), ptr_load(ptr_add(self.raw.data, right)));
+      ptr_store(ptr_add(self.raw.data, right), temporary);
+      left = left + 1;
+      right = right - 1;
+    }
+  }
+
+  fn append_bool_in(self: ref mut Self, zone: ref mut Zone, value: bool) -> void {
+    if value {
+      append_byte_in(self, zone, 116 as u8);
+      append_byte_in(self, zone, 114 as u8);
+      append_byte_in(self, zone, 117 as u8);
+      append_byte_in(self, zone, 101 as u8);
+      return;
+    }
+    append_byte_in(self, zone, 102 as u8);
+    append_byte_in(self, zone, 97 as u8);
+    append_byte_in(self, zone, 108 as u8);
+    append_byte_in(self, zone, 115 as u8);
+    append_byte_in(self, zone, 101 as u8);
   }
 
   fn pop(self: ref mut Self) -> u8 {

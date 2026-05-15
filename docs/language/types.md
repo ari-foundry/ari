@@ -113,9 +113,10 @@ zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
 borrowed lowercase `string` into that handle. It supports checked byte
 `get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone
 grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
-`extend_from_slice_in`, and `resize_in`, plus `truncate`, `clear`, `as_ptr`,
-`as_slice`, and top-level `std::string::copy_to(value, ref mut Zone)`. The
-zone argument passed to a grow method must be the same source zone that created
+`extend_from_slice_in`, and `resize_in`, plus `append_string_in`,
+`append_i64_in`, `append_bool_in`, `truncate`, `clear`, `as_ptr`, `as_slice`,
+and top-level `std::string::copy_to(value, ref mut Zone)`. The zone argument
+passed to a grow or append method must be the same source zone that created
 the handle. `String` is still an explicit-zone handle: `zone::reset` or
 `zone::destroy` releases the bytes, and dropping the handle only ends that
 binding.
@@ -752,9 +753,9 @@ Meanings:
 - `T?`: nullable raw-pointer spelling for `ptr T`
 - `null`: nullable raw-pointer literal; it defaults to `ptr c_void` unless a
   `ptr T` or `T?` type is expected
-- `value as ptr U`: raw pointer casts, pointer/integer address casts, and
-  `(ref mut value) as ptr U` borrow-to-raw-pointer casts use ordinary explicit
-  casts
+- `value as ptr U`: raw pointer casts, pointer/integer address casts,
+  lowercase `string` to raw pointer casts, and `(ref mut value) as ptr U`
+  borrow-to-raw-pointer casts use ordinary explicit casts
 - `ptr_offset(value, bytes)`: explicit byte-wise raw pointer offset; the result
   has the same `ptr T` type as `value`
 - `ptr_add(value, count)`: explicit typed raw pointer offset; the result moves
