@@ -2,4 +2,5 @@ pub trait Debug {
 }
 
 pub trait Display {
+  fn format_in(self, zone: ref mut Zone) -> std::string::String;
 }

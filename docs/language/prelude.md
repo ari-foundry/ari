@@ -288,13 +288,17 @@ scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
 the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
 `String` in the explicit zone and lowers `{}` placeholders for lowercase
 `string`, integer, bool, `f32`, and `f64` values through the same checked append
-helpers as manual text construction. `{:.N}` placeholders format `f32`/`f64`
-values with `N` decimal digits, matching the print formatting surface. Each
-value expression is evaluated once before the type-directed append call is
-selected, so function calls and computed bool/integer expressions work the same
-as local bindings. Ari does not provide an implicit allocation zone in the 0.x
-language surface, so `format!` is a reserved spelling with a targeted diagnostic
-that points to `format_in!`.
+helpers as manual text construction. User-defined value types can participate
+by implementing `Display::format_in` or `fmt::Display::format_in`, returning a
+source `String` in the same explicit zone. `{:.N}` placeholders format
+`f32`/`f64` values with `N` decimal digits, matching the print formatting
+surface; precision placeholders do not dispatch through `Display`. Each value
+expression is evaluated once before the type-directed append call is selected,
+so function calls and computed bool/integer expressions work the same as local
+bindings.
+Ari does not provide an implicit allocation zone in the 0.x language surface,
+so `format!` is a reserved spelling with a targeted diagnostic that points to
+`format_in!`.
 Other prelude expression macros are recognized as unqualified names or paths
 that resolve to the root `std` macro name, such as `std::print!`, `std::format!`,
 or an alias of `std::format_in!`; arbitrary module paths whose basename is
@@ -393,6 +397,13 @@ iter::Iterator[T]
 iter::IntoIterator[T]
 ToString
 ToOwned
+```
+
+`Display` and `fmt::Display` define the explicit-zone formatting hook used by
+`format_in!` for user-defined values:
+
+```ari
+fn format_in(self, zone: ref mut Zone) -> std::string::String
 ```
 
 `Drop` has one required method:
@@ -668,6 +679,9 @@ scalar values needed by explicit formatting, and
 `format_in!(ref mut Zone, "...", values...)` wraps those helpers in a single
 expression for `{}` string/integer/bool/float formatting plus `{:.N}` float
 precision, with each formatted value evaluated once before append dispatch.
+For user-defined value types, `format_in!` calls `Display::format_in` or
+`fmt::Display::format_in` with the value and the same explicit zone, then
+appends the returned source string into the final output.
 These growth and append methods must receive the same explicit zone that
 created the handle, so provenance continues to match reset/destroy invalidation.
 Use

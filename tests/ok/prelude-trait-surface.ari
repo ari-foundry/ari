@@ -2,6 +2,11 @@ impl Debug for i64 {
 }
 
 impl fmt::Display for i64 {
+  fn format_in(self, zone: ref mut Zone) -> std::string::String {
+    var output = std::string::new(zone, 1);
+    output.append_i64_in(zone, self);
+    return output;
+  }
 }
 
 impl Default for i64 {

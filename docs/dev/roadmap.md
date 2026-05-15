@@ -220,13 +220,13 @@ constructor subset documented in the language guide.
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
    string/integer/bool/float formatting and `{:.N}` float precision to source
    `String` construction plus same-zone append helpers, and evaluates each
-   formatted value once before selecting the append helper from the lowered
-   value type. Plain `format!` remains a reserved spelling with a targeted
+   formatted value once before selecting the append target from the lowered
+   value type. User-defined value types can implement `Display::format_in` or
+   `fmt::Display::format_in` to return a source `String` in the same explicit
+   zone, so formatting no longer needs new macro-only cases for every library
+   type. Plain `format!` remains a reserved spelling with a targeted
    no-implicit-allocation-zone diagnostic, keeping Ari away from a magical
    global heap while the library surface stays explicit-capability based.
-   Small follow-up: [format-display-trait] once trait dispatch is ready for
-   broad library use, route user-defined formatted values through a compact
-   display-style trait instead of adding more macro-only cases.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

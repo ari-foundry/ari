@@ -1,0 +1,31 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+impl fmt::Display for Point {
+  fn format_in(self, zone: ref mut Zone) -> std::string::String {
+    var output = std::string::new(zone, 8);
+    output.append_string_in(zone, "(");
+    output.append_i64_in(zone, self.x);
+    output.append_string_in(zone, ",");
+    output.append_i64_in(zone, self.y);
+    output.append_string_in(zone, ")");
+    return output;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let point = Point { x: 4, y: 9 };
+  var text: String = format_in!(ref mut zone, "p={}!", point);
+
+  assert_eq_i64(text.len(), 8);
+  assert_eq_i64(text.get(3) as i64, 52);
+  assert_eq_i64(text.get(5) as i64, 57);
+  assert_eq_i64(text.get(7) as i64, 33);
+
+  let total = text.len() + (text.get(3) as i64) + (text.get(5) as i64) + (text.get(7) as i64);
+  zone::destroy(zone);
+  return total % 256;
+}

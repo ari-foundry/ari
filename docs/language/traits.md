@@ -387,6 +387,17 @@ ToString
 ToOwned
 ```
 
+`Display` and `fmt::Display` use the explicit-zone formatting hook:
+
+```ari
+fn format_in(self, zone: ref mut Zone) -> std::string::String
+```
+
+`format_in!(ref mut zone, "{}", value)` calls this hook for user-defined value
+types that are not one of the built-in string, integer, bool, or float cases.
+The implementation builds and returns a source `String` in the same explicit
+zone, and the macro appends that temporary string into the final output.
+
 `Iterator[T]` requires `fn next(self: ref mut Self) -> Option[T]`. Direct `for`
 lowering works for copyable non-borrow iterator values by storing the iterator
 once and mutably borrowing that hidden iterator binding for each `next` call.

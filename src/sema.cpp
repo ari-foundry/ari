@@ -16,6 +16,7 @@
 #include "drop_semantics.hpp"
 #include "enum_constructor_semantics.hpp"
 #include "for_pattern_semantics.hpp"
+#include "format_semantics.hpp"
 #include "format_string_semantics.hpp"
 #include "ir_builders.hpp"
 #include "iterator_semantics.hpp"
@@ -14761,13 +14762,6 @@ private:
         );
     }
 
-    enum class FormatInAppendMethod {
-        String,
-        I64,
-        Bool,
-        F64
-    };
-
     static StmtPtr make_format_in_var_decl(SourceLocation loc,
                                            std::string name,
                                            ExprPtr init,
@@ -14790,42 +14784,31 @@ private:
         return stmt;
     }
 
-    std::optional<FormatInAppendMethod> format_in_append_method_from_type(SourceLocation loc, const IrType& type) const {
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::String) {
-            return FormatInAppendMethod::String;
-        }
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
-            return FormatInAppendMethod::Bool;
-        }
-        if (is_value_integer_type(type)) return FormatInAppendMethod::I64;
-        if (type.qualifier == TypeQualifier::Value &&
-            (type.primitive == IrPrimitiveKind::F32 || type.primitive == IrPrimitiveKind::F64)) {
-            return FormatInAppendMethod::F64;
-        }
-        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::F128) {
-            fail(loc, "format_in! currently supports string, integer, bool, f32, and f64 values, got " + type_name(type));
+    std::optional<std::string> format_in_display_trait_for_type(const IrType& type) const {
+        if (type.qualifier != TypeQualifier::Value) return std::nullopt;
+        if (is_owner_type(type) || contains_borrow_type(type)) return std::nullopt;
+        static const std::vector<IrType> no_trait_args;
+        if (type_implements_trait("std::Display", no_trait_args, type)) return std::string("std::Display");
+        if (type_implements_trait("std::fmt::Display", no_trait_args, type)) return std::string("std::fmt::Display");
+        return std::nullopt;
+    }
+
+    std::optional<FormatInAppendTarget> format_in_append_target_from_type(SourceLocation loc, const IrType& type) const {
+        if (auto target = builtin_format_in_append_target_from_type(type)) return target;
+        if (auto display_trait = format_in_display_trait_for_type(type)) {
+            return format_in_display_append_target(*display_trait);
         }
         if (type.primitive != IrPrimitiveKind::Unknown) {
-            fail(loc, "format_in! currently supports string, integer, bool, f32, and f64 values, got " + type_name(type));
+            fail(loc, unsupported_format_in_value_message(type));
         }
         return std::nullopt;
     }
 
-    FormatInAppendMethod format_in_append_method_for_local(SourceLocation loc, const std::string& name) {
+    FormatInAppendTarget format_in_append_target_for_local(SourceLocation loc, const std::string& name) {
         const LocalInfo* local = find_local_slot(name);
         if (!local) throw CompileError("internal error: missing format_in! value local '" + name + "'");
-        if (auto method = format_in_append_method_from_type(loc, local->type)) return *method;
+        if (auto target = format_in_append_target_from_type(loc, local->type)) return *target;
         fail(loc, "format_in! could not infer a supported value type for '" + name + "'");
-    }
-
-    static const char* format_in_append_method_name(FormatInAppendMethod method) {
-        switch (method) {
-            case FormatInAppendMethod::String: return "append_string_in";
-            case FormatInAppendMethod::I64: return "append_i64_in";
-            case FormatInAppendMethod::Bool: return "append_bool_in";
-            case FormatInAppendMethod::F64: return "append_f64_in";
-        }
-        return "append_i64_in";
     }
 
     static TypeRef format_in_f64_type_ref(SourceLocation loc) {
@@ -14861,16 +14844,16 @@ private:
     ExprPtr make_format_in_append_call(SourceLocation loc,
                                        const std::string& result_name,
                                        const Expr& zone_arg,
-                                       FormatInAppendMethod method,
+                                       FormatInAppendTarget target,
                                        ExprPtr value_arg,
                                        const IrFormatSpec& spec) {
         std::vector<ExprPtr> args;
         args.push_back(clone_expression_tree(zone_arg));
-        if (method == FormatInAppendMethod::F64) {
+        if (format_in_append_target_is_f64(target)) {
             value_arg = make_ast_cast_expr(loc, std::move(value_arg), format_in_f64_type_ref(loc));
         }
         args.push_back(std::move(value_arg));
-        if (method == FormatInAppendMethod::F64) {
+        if (format_in_append_target_is_f64(target)) {
             args.push_back(make_ast_integer_expr(
                 loc,
                 static_cast<std::uint64_t>(spec.precision >= 0 ? spec.precision : 6)
@@ -14879,10 +14862,44 @@ private:
         return make_ast_method_call_expr(
             loc,
             make_ast_name_expr(loc, result_name),
-            format_in_append_method_name(method),
+            format_in_builtin_append_method_name(target),
             {},
             std::move(args)
         );
+    }
+
+    ExprPtr make_format_in_display_call(SourceLocation loc,
+                                        const Expr& zone_arg,
+                                        const FormatInAppendTarget& target,
+                                        ExprPtr value_arg) {
+        std::vector<ExprPtr> args;
+        args.push_back(std::move(value_arg));
+        args.push_back(clone_expression_tree(zone_arg));
+        return make_ast_call_expr(
+            loc,
+            target.display_trait_name + "::format_in",
+            nullptr,
+            std::move(args));
+    }
+
+    ExprPtr make_format_in_extend_from_string_call(SourceLocation loc,
+                                                   const std::string& result_name,
+                                                   const Expr& zone_arg,
+                                                   const std::string& display_name) {
+        std::vector<ExprPtr> args;
+        args.push_back(clone_expression_tree(zone_arg));
+        args.push_back(make_ast_method_call_expr(
+            loc,
+            make_ast_name_expr(loc, display_name),
+            "as_slice",
+            {},
+            {}));
+        return make_ast_method_call_expr(
+            loc,
+            make_ast_name_expr(loc, result_name),
+            "extend_from_slice_in",
+            {},
+            std::move(args));
     }
 
     void append_format_in_statement(SourceLocation loc, StmtPtr stmt, std::vector<IrStmtPtr>& statements) {
@@ -14933,22 +14950,46 @@ private:
                 clone_expression_tree(*args[i + 2]),
                 false
             ), statements);
-            FormatInAppendMethod method = format_in_append_method_for_local(args[i + 2]->loc, value_name);
-            if (format_string.specs[i].precision >= 0 && method != FormatInAppendMethod::F64) {
+            FormatInAppendTarget target = format_in_append_target_for_local(args[i + 2]->loc, value_name);
+            if (format_string.specs[i].precision >= 0 && !format_in_append_target_is_f64(target)) {
                 const LocalInfo* local = find_local_slot(value_name);
                 if (!local) throw CompileError("internal error: missing format_in! value local '" + value_name + "'");
                 fail(args[i + 2]->loc,
                      "format precision placeholders require f32 or f64 arguments, got " + type_name(local->type));
             }
+            ExprPtr value = make_ast_name_expr(args[i + 2]->loc, value_name);
+            if (format_in_append_target_is_display(target)) {
+                const std::string display_name = make_hidden_local("$format_display");
+                append_format_in_statement(args[i + 2]->loc, make_format_in_var_decl(
+                    args[i + 2]->loc,
+                    display_name,
+                    make_format_in_display_call(
+                        args[i + 2]->loc,
+                        zone_arg,
+                        target,
+                        std::move(value)),
+                    true
+                ), statements);
+                append_format_in_statement(args[i + 2]->loc, make_format_in_expr_stmt(
+                    args[i + 2]->loc,
+                    make_format_in_extend_from_string_call(
+                        args[i + 2]->loc,
+                        result_name,
+                        zone_arg,
+                        display_name)
+                ), statements);
+                continue;
+            }
+            ExprPtr append_call = make_format_in_append_call(
+                args[i + 2]->loc,
+                result_name,
+                zone_arg,
+                target,
+                std::move(value),
+                format_string.specs[i]);
             append_format_in_statement(args[i + 2]->loc, make_format_in_expr_stmt(
                 args[i + 2]->loc,
-                make_format_in_append_call(
-                    args[i + 2]->loc,
-                    result_name,
-                    zone_arg,
-                    method,
-                    make_ast_name_expr(args[i + 2]->loc, value_name),
-                    format_string.specs[i])
+                std::move(append_call)
             ), statements);
         }
         if (!format_string.parts.empty() && !format_string.parts.back().empty()) {
