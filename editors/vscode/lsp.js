@@ -53,7 +53,7 @@ class AriLspController {
 
   start() {
     this.client = createClient();
-    this.client.start();
+    return this.client.start();
   }
 
   stop() {
@@ -65,6 +65,7 @@ class AriLspController {
 
   restart() {
     this.operation = this.operation
+      .catch(() => undefined)
       .then(() => this.stop())
       .then(() => this.start());
     return this.operation;
@@ -75,9 +76,26 @@ class AriLspController {
   }
 }
 
+async function restartFromCommand(controller) {
+  try {
+    await controller.restart();
+    vscode.window.showInformationMessage('Ari language server restarted.');
+  } catch (error) {
+    const message = error && error.message ? error.message : String(error);
+    vscode.window.showErrorMessage(`Failed to restart Ari language server: ${message}`);
+  }
+}
+
 function registerAriLsp(context) {
   const controller = new AriLspController();
-  controller.start();
+  controller.start().catch((error) => {
+    const message = error && error.message ? error.message : String(error);
+    vscode.window.showErrorMessage(`Failed to start Ari language server: ${message}`);
+  });
+  context.subscriptions.push(vscode.commands.registerCommand(
+    'ari.restartLanguageServer',
+    () => restartFromCommand(controller)
+  ));
   context.subscriptions.push({
     dispose: () => controller.dispose()
   });

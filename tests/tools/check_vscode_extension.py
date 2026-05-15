@@ -13,6 +13,7 @@ commands = {item["command"] for item in package["contributes"]["commands"]}
 required_commands = {
     "ari.checkCurrentFile",
     "ari.lintCurrentFile",
+    "ari.restartLanguageServer",
 }
 missing_commands = sorted(required_commands - commands)
 if missing_commands:

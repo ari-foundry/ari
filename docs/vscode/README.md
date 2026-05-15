@@ -48,8 +48,10 @@ symbols in the active document.
 - `Ari: Check Current File` saves the active Ari file and runs
   `ari --check`.
 - `Ari: Lint Current File` saves the active Ari file and runs `ari-lint`.
+- `Ari: Restart Language Server` stops and starts the Ari language client with
+  the current extension settings.
 
-Both commands write to the `Ari` output channel.
+The check and lint commands write to the `Ari` output channel.
 
 ## Tasks
 

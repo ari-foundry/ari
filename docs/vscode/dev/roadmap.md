@@ -29,6 +29,8 @@
       files to both lint commands and LSP startup.
 - [x] Leave lint config path optional so CLI/LSP-side `ari-lint.rules`
       discovery works naturally in editor sessions.
+- [x] Add `Ari: Restart Language Server` so extension users can manually
+      restart `ari-lsp` after rebuilding tools or changing local setup.
 
 ## Near-Term Work
 

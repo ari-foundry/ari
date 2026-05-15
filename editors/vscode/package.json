@@ -14,6 +14,7 @@
     "onLanguage:ari",
     "onCommand:ari.checkCurrentFile",
     "onCommand:ari.lintCurrentFile",
+    "onCommand:ari.restartLanguageServer",
     "onTaskType:ari"
   ],
   "main": "./extension.js",
@@ -47,6 +48,10 @@
       {
         "command": "ari.lintCurrentFile",
         "title": "Ari: Lint Current File"
+      },
+      {
+        "command": "ari.restartLanguageServer",
+        "title": "Ari: Restart Language Server"
       }
     ],
     "taskDefinitions": [
