@@ -232,9 +232,69 @@ bool supported_tokens_match_method(const Expr& expr, const std::string& input_na
            all_string_literals(expr.args, 0);
 }
 
+bool supported_attribute_args_present_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "attribute_args_present" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 1 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name);
+}
+
+bool supported_attribute_args_empty_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "attribute_args_empty" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 1 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name);
+}
+
+bool supported_attribute_args_count_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "attribute_args_count" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 1 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name);
+}
+
+bool supported_attribute_args_match_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "attribute_args_match" &&
+           !expr_operand(expr) &&
+           expr.args.size() >= 2 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name) &&
+           all_string_literals(expr.args, 1);
+}
+
 bool supported_tokens_capture_call(const Expr& expr, const std::string& input_name, std::string& reason) {
     if (expr.kind != ExprKind::Call ||
         expr.name != "tokens_capture" ||
+        expr_operand(expr) ||
+        expr.args.size() < 3 ||
+        !expr_receiver_type_args(expr).empty() ||
+        !expr_type_args(expr).empty() ||
+        !is_input_name(*expr.args[0], input_name) ||
+        !is_string_literal(*expr.args[1]) ||
+        !all_string_literals(expr.args, 2)) {
+        return false;
+    }
+    if (!valid_capture_name(expr.args[1]->string_value)) {
+        reason = "token_stream capture names must be identifier-like strings";
+        return false;
+    }
+    return true;
+}
+
+bool supported_attribute_args_capture_call(const Expr& expr, const std::string& input_name, std::string& reason) {
+    if (expr.kind != ExprKind::Call ||
+        expr.name != "attribute_args_capture" ||
         expr_operand(expr) ||
         expr.args.size() < 3 ||
         !expr_receiver_type_args(expr).empty() ||
@@ -480,6 +540,7 @@ bool supported_token_integer_expr(const Expr& expr,
             return !expr.int_negative;
         case ExprKind::Call:
             if (supported_tokens_count_call(expr, input_name)) return true;
+            if (supported_attribute_args_count_call(expr, input_name)) return true;
             break;
         case ExprKind::MethodCall:
             if (supported_tokens_len_method(expr, input_name)) return true;
@@ -496,27 +557,42 @@ bool supported_token_integer_expr(const Expr& expr,
             break;
     }
     reason = "token_stream meta integer conditions currently support only non-negative integer literals, tokens_count(" +
-             input_name + "), " + input_name + ".len(), or + / - arithmetic over those values";
+             input_name + "), " + input_name + ".len(), attribute_args_count(" + input_name +
+             "), or + / - arithmetic over those values";
     return false;
+}
+
+const std::vector<Token>& require_attribute_args_tokens(SourceLocation loc,
+                                                        MetaTokenAttributeContext attribute_context) {
+    if (!attribute_context.args) {
+        fail_eval(loc, "attribute argument tokens are available only while expanding an attribute macro");
+    }
+    return *attribute_context.args;
 }
 
 std::uint64_t eval_token_integer_expr(const Expr& expr,
                                       const std::string& input_name,
-                                      const std::vector<Token>& input_tokens) {
+                                      const std::vector<Token>& input_tokens,
+                                      MetaTokenAttributeContext attribute_context) {
     switch (expr.kind) {
         case ExprKind::Integer:
             if (!expr.int_negative) return expr.int_value;
             break;
         case ExprKind::Call:
             if (supported_tokens_count_call(expr, input_name)) return input_tokens.size();
+            if (supported_attribute_args_count_call(expr, input_name)) {
+                return require_attribute_args_tokens(expr.loc, attribute_context).size();
+            }
             break;
         case ExprKind::MethodCall:
             if (supported_tokens_len_method(expr, input_name)) return input_tokens.size();
             break;
         case ExprKind::Binary:
             if (is_token_integer_arithmetic(expr.op) && expr_left(expr) && expr_right(expr)) {
-                std::uint64_t left = eval_token_integer_expr(*expr_left(expr), input_name, input_tokens);
-                std::uint64_t right = eval_token_integer_expr(*expr_right(expr), input_name, input_tokens);
+                std::uint64_t left = eval_token_integer_expr(
+                    *expr_left(expr), input_name, input_tokens, attribute_context);
+                std::uint64_t right = eval_token_integer_expr(
+                    *expr_right(expr), input_name, input_tokens, attribute_context);
                 if (expr.op == TokenKind::Plus) {
                     if (left > std::numeric_limits<std::uint64_t>::max() - right) {
                         fail_eval(expr.loc, "token_stream meta integer expression overflowed");
@@ -562,12 +638,30 @@ bool supported_tokens_slice_method(const Expr& expr,
            supported_token_integer_expr(*expr.args[1], input_name, reason);
 }
 
+bool supported_attribute_args_slice_call(const Expr& expr,
+                                         const std::string& input_name,
+                                         std::string& reason) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "attribute_args_slice" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 3 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name) &&
+           supported_token_integer_expr(*expr.args[1], input_name, reason) &&
+           supported_token_integer_expr(*expr.args[2], input_name, reason);
+}
+
 std::vector<Token> token_slice(const std::vector<Token>& input_tokens,
                                const Expr& start_expr,
                                const Expr& end_expr,
-                               const std::string& input_name) {
-    std::uint64_t start = eval_token_integer_expr(start_expr, input_name, input_tokens);
-    std::uint64_t end = eval_token_integer_expr(end_expr, input_name, input_tokens);
+                               const std::string& input_name,
+                               const std::vector<Token>& primary_input_tokens,
+                               MetaTokenAttributeContext attribute_context) {
+    std::uint64_t start =
+        eval_token_integer_expr(start_expr, input_name, primary_input_tokens, attribute_context);
+    std::uint64_t end =
+        eval_token_integer_expr(end_expr, input_name, primary_input_tokens, attribute_context);
     if (start > end) {
         fail_eval(start_expr.loc, "token_stream slice start cannot be greater than its end");
     }
@@ -615,11 +709,14 @@ bool supported_token_condition_expr(const Expr& expr,
             break;
         case ExprKind::Call:
             if (supported_tokens_empty_call(expr, input_name)) return true;
+            if (supported_attribute_args_present_call(expr, input_name)) return true;
+            if (supported_attribute_args_empty_call(expr, input_name)) return true;
             if (supported_tokens_starts_with_call(expr, input_name)) return true;
             if (supported_tokens_ends_with_call(expr, input_name)) return true;
             if (supported_tokens_wrapped_by_call(expr, input_name)) return true;
             if (supported_tokens_nth_is_call(expr, input_name)) return true;
             if (supported_tokens_match_call(expr, input_name)) return true;
+            if (supported_attribute_args_match_call(expr, input_name)) return true;
             break;
         case ExprKind::MethodCall:
             if (supported_tokens_empty_method(expr, input_name)) return true;
@@ -645,13 +742,17 @@ bool supported_token_condition_expr(const Expr& expr,
              input_name + ", index, \"...\") or " + input_name +
              ".nth_is(index, \"...\"), plus token pattern matching with tokens_match(" +
              input_name + ", \"...\", \"_\", \"$name\", \"$name...\", ...) or " + input_name +
-             ".matches(\"...\", \"_\", \"$name\", \"$name...\", ...)";
+             ".matches(\"...\", \"_\", \"$name\", \"$name...\", ...), and attribute macro argument checks with attribute_args_present(" +
+             input_name + "), attribute_args_empty(" + input_name + "), attribute_args_count(" +
+             input_name + "), or attribute_args_match(" + input_name +
+             ", \"...\", \"_\", \"$name\", \"$name...\", ...)";
     return false;
 }
 
 bool eval_token_condition_expr(const Expr& expr,
                                const std::string& input_name,
                                const std::vector<Token>& input_tokens,
+                               MetaTokenAttributeContext attribute_context,
                                std::vector<TokenCapture>& captures) {
     switch (expr.kind) {
         case ExprKind::Bool:
@@ -659,17 +760,20 @@ bool eval_token_condition_expr(const Expr& expr,
         case ExprKind::Unary:
             if (expr.op == TokenKind::Bang && expr_operand(expr)) {
                 std::vector<TokenCapture> ignored_captures;
-                return !eval_token_condition_expr(*expr_operand(expr), input_name, input_tokens, ignored_captures);
+                return !eval_token_condition_expr(
+                    *expr_operand(expr), input_name, input_tokens, attribute_context, ignored_captures);
             }
             break;
         case ExprKind::Binary:
             if (expr.op == TokenKind::AmpAmp && expr_left(expr) && expr_right(expr)) {
                 std::vector<TokenCapture> left_captures;
-                if (!eval_token_condition_expr(*expr_left(expr), input_name, input_tokens, left_captures)) {
+                if (!eval_token_condition_expr(
+                        *expr_left(expr), input_name, input_tokens, attribute_context, left_captures)) {
                     return false;
                 }
                 std::vector<TokenCapture> right_captures;
-                if (!eval_token_condition_expr(*expr_right(expr), input_name, input_tokens, right_captures)) {
+                if (!eval_token_condition_expr(
+                        *expr_right(expr), input_name, input_tokens, attribute_context, right_captures)) {
                     return false;
                 }
                 append_token_captures(captures, left_captures);
@@ -678,20 +782,24 @@ bool eval_token_condition_expr(const Expr& expr,
             }
             if (expr.op == TokenKind::PipePipe && expr_left(expr) && expr_right(expr)) {
                 std::vector<TokenCapture> left_captures;
-                if (eval_token_condition_expr(*expr_left(expr), input_name, input_tokens, left_captures)) {
+                if (eval_token_condition_expr(
+                        *expr_left(expr), input_name, input_tokens, attribute_context, left_captures)) {
                     append_token_captures(captures, left_captures);
                     return true;
                 }
                 std::vector<TokenCapture> right_captures;
-                if (eval_token_condition_expr(*expr_right(expr), input_name, input_tokens, right_captures)) {
+                if (eval_token_condition_expr(
+                        *expr_right(expr), input_name, input_tokens, attribute_context, right_captures)) {
                     append_token_captures(captures, right_captures);
                     return true;
                 }
                 return false;
             }
             if (is_token_integer_comparison(expr.op) && expr_left(expr) && expr_right(expr)) {
-                std::uint64_t left = eval_token_integer_expr(*expr_left(expr), input_name, input_tokens);
-                std::uint64_t right = eval_token_integer_expr(*expr_right(expr), input_name, input_tokens);
+                std::uint64_t left =
+                    eval_token_integer_expr(*expr_left(expr), input_name, input_tokens, attribute_context);
+                std::uint64_t right =
+                    eval_token_integer_expr(*expr_right(expr), input_name, input_tokens, attribute_context);
                 switch (expr.op) {
                     case TokenKind::EqEq:
                         return left == right;
@@ -712,6 +820,13 @@ bool eval_token_condition_expr(const Expr& expr,
             break;
         case ExprKind::Call:
             if (supported_tokens_empty_call(expr, input_name)) return input_tokens.empty();
+            if (supported_attribute_args_present_call(expr, input_name)) {
+                (void)require_attribute_args_tokens(expr.loc, attribute_context);
+                return attribute_context.has_args;
+            }
+            if (supported_attribute_args_empty_call(expr, input_name)) {
+                return require_attribute_args_tokens(expr.loc, attribute_context).empty();
+            }
             if (supported_tokens_starts_with_call(expr, input_name)) {
                 return token_starts_with(input_tokens, expr.args, 1);
             }
@@ -726,6 +841,10 @@ bool eval_token_condition_expr(const Expr& expr,
             }
             if (supported_tokens_match_call(expr, input_name)) {
                 return token_matches_with_captures(input_tokens, expr.args, 1, captures);
+            }
+            if (supported_attribute_args_match_call(expr, input_name)) {
+                return token_matches_with_captures(
+                    require_attribute_args_tokens(expr.loc, attribute_context), expr.args, 1, captures);
             }
             break;
         case ExprKind::MethodCall:
@@ -785,6 +904,7 @@ std::vector<Token> substitute_meta_input_tokens_with_captures(const std::vector<
 std::vector<Token> evaluate_meta_token_return_expr_impl(const Expr& expr,
                                                         const std::string& input_name,
                                                         const std::vector<Token>& input_tokens,
+                                                        MetaTokenAttributeContext attribute_context,
                                                         const std::vector<TokenCapture>& captures) {
     if (is_input_name(expr, input_name)) return input_tokens;
 
@@ -797,10 +917,19 @@ std::vector<Token> evaluate_meta_token_return_expr_impl(const Expr& expr,
 
     std::string reason;
     if (supported_tokens_slice_call(expr, input_name, reason)) {
-        return token_slice(input_tokens, *expr.args[1], *expr.args[2], input_name);
+        return token_slice(input_tokens, *expr.args[1], *expr.args[2], input_name, input_tokens, attribute_context);
     }
     if (supported_tokens_slice_method(expr, input_name, reason)) {
-        return token_slice(input_tokens, *expr.args[0], *expr.args[1], input_name);
+        return token_slice(input_tokens, *expr.args[0], *expr.args[1], input_name, input_tokens, attribute_context);
+    }
+    if (supported_attribute_args_slice_call(expr, input_name, reason)) {
+        return token_slice(
+            require_attribute_args_tokens(expr.loc, attribute_context),
+            *expr.args[1],
+            *expr.args[2],
+            input_name,
+            input_tokens,
+            attribute_context);
     }
     if (supported_tokens_capture_call(expr, input_name, reason)) {
         return token_capture(input_tokens, expr.args, 2, *expr.args[1]);
@@ -808,17 +937,22 @@ std::vector<Token> evaluate_meta_token_return_expr_impl(const Expr& expr,
     if (supported_tokens_capture_method(expr, input_name, reason)) {
         return token_capture(input_tokens, expr.args, 1, *expr.args[0]);
     }
+    if (supported_attribute_args_capture_call(expr, input_name, reason)) {
+        return token_capture(require_attribute_args_tokens(expr.loc, attribute_context), expr.args, 2, *expr.args[1]);
+    }
 
     if (expr.kind == ExprKind::If) {
         if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
             fail_eval(expr.loc, "malformed token_stream meta branch");
         }
         std::vector<TokenCapture> branch_captures = captures;
-        bool take_then = eval_token_condition_expr(*expr_if_condition(expr), input_name, input_tokens, branch_captures);
+        bool take_then = eval_token_condition_expr(
+            *expr_if_condition(expr), input_name, input_tokens, attribute_context, branch_captures);
         return evaluate_meta_token_return_expr_impl(
             take_then ? *expr_if_then_value(expr) : *expr_if_else_value(expr),
             input_name,
             input_tokens,
+            attribute_context,
             take_then ? branch_captures : captures);
     }
 
@@ -849,8 +983,10 @@ bool is_supported_meta_token_return_expr(const Expr& expr,
 
     if (expr.kind == ExprKind::Call && supported_tokens_slice_call(expr, input_name, reason)) return true;
     if (expr.kind == ExprKind::MethodCall && supported_tokens_slice_method(expr, input_name, reason)) return true;
+    if (expr.kind == ExprKind::Call && supported_attribute_args_slice_call(expr, input_name, reason)) return true;
     if (expr.kind == ExprKind::Call && supported_tokens_capture_call(expr, input_name, reason)) return true;
     if (expr.kind == ExprKind::MethodCall && supported_tokens_capture_method(expr, input_name, reason)) return true;
+    if (expr.kind == ExprKind::Call && supported_attribute_args_capture_call(expr, input_name, reason)) return true;
 
     if (expr.kind == ExprKind::If) {
         if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
@@ -879,7 +1015,14 @@ bool is_supported_meta_token_return_expr(const Expr& expr,
 std::vector<Token> evaluate_meta_token_return_expr(const Expr& expr,
                                                    const std::string& input_name,
                                                    const std::vector<Token>& input_tokens) {
-    return evaluate_meta_token_return_expr_impl(expr, input_name, input_tokens, {});
+    return evaluate_meta_token_return_expr_impl(expr, input_name, input_tokens, {}, {});
+}
+
+std::vector<Token> evaluate_meta_token_return_expr(const Expr& expr,
+                                                   const std::string& input_name,
+                                                   const std::vector<Token>& input_tokens,
+                                                   MetaTokenAttributeContext attribute_context) {
+    return evaluate_meta_token_return_expr_impl(expr, input_name, input_tokens, attribute_context, {});
 }
 
 } // namespace ari

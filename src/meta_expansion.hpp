@@ -26,6 +26,7 @@ ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation&
                                                       const std::string& input_name,
                                                       const Expr& returned_ast);
 ItemMacroExpansion expand_attribute_macro_token_return(const std::vector<Token>& declaration_tokens,
+                                                       const Attribute& attr,
                                                        const std::string& module_name,
                                                        SourceLocation loc,
                                                        const std::string& input_name,

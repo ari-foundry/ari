@@ -438,7 +438,13 @@ emit related generated declarations in one expansion.
 User-defined attribute macros can use the declaration output path too. The meta
 input is the annotated declaration token tree without its attributes, and the
 original declaration is replaced by the macro output. Splice `input` into the
-output when the generated declarations should keep the annotated declaration:
+output when the generated declarations should keep the annotated declaration.
+For `token_stream -> token_stream` attribute macros, the attribute's own
+balanced argument tokens are available through `attribute_args_present(input)`,
+`attribute_args_empty(input)`, `attribute_args_count(input)`,
+`attribute_args_match(input, ...)`, `attribute_args_capture(input, ...)`, and
+`attribute_args_slice(input, ...)`; successful pattern captures can be spliced
+into `tokens!(...)` output with `~name`:
 
 ```ari
 meta fn add_generated(input: ast) -> ast {
@@ -523,7 +529,7 @@ macro invocations must resolve to
 identity-expand by parsing their token tree as one type before semantic type
 lowering; `type -> type` bodies that return `type!(...)` replace that input
 with the constructed type AST. General syntax-rewriting meta evaluation,
-attribute argument inspection, additional derives, and `format!` are still
+generated-attribute expansion, additional derives, and `format!` are still
 planned and rejected with specific diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked

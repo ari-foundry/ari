@@ -1499,7 +1499,7 @@ private:
         }
         if (meta.token_return) {
             return expand_attribute_macro_token_return(
-                declaration_tokens, module_name, loc, meta.parameter_name, *meta.token_return);
+                declaration_tokens, attr, module_name, loc, meta.parameter_name, *meta.token_return);
         }
         fail(attr.loc, "internal error: attribute meta function does not rewrite declarations");
     }

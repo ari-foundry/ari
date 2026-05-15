@@ -1,0 +1,24 @@
+meta fn add_named(input: token_stream) -> token_stream {
+  return if attribute_args_present(input) &&
+            attribute_args_count(input) == 1 &&
+            attribute_args_match(input, "$Name") {
+    tokens!(
+      input
+
+      fn ~Name() -> i64 {
+        return 41;
+      }
+    )
+  } else {
+    input
+  };
+}
+
+@add_named(generated)
+fn original() -> i64 {
+  return 1;
+}
+
+fn main() -> i64 {
+  return original() + generated();
+}

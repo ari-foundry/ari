@@ -1506,6 +1506,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/item-macro-ast-decl-input-substitution.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/attribute-macro-function-decl.ari -o $(BUILD_DIR)/meta/attribute-macro-function-decl.raw
 	$(BUILD_DIR)/meta/attribute-macro-function-decl.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/attribute-macro-args-token.ari -o $(BUILD_DIR)/meta/attribute-macro-args-token.raw
+	$(BUILD_DIR)/meta/attribute-macro-args-token.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-const-identity.ari -o $(BUILD_DIR)/meta/item-macro-const-identity.raw
 	$(BUILD_DIR)/meta/item-macro-const-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-struct-identity.ari -o $(BUILD_DIR)/meta/item-macro-struct-identity.raw
