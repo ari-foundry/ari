@@ -1436,7 +1436,7 @@ private:
                 if (meta.ast_return_kind == MetaAstReturnKind::ItemDeclarations) {
                     expansion = expand_item_macro_decl_constructor(invocation, meta.parameter_name, *meta.ast_return);
                 } else if (meta.token_return) {
-                    expansion = expand_item_macro_token_constructor(invocation, meta.parameter_name, *meta.token_return);
+                    expansion = expand_item_macro_token_return(invocation, meta.parameter_name, *meta.token_return);
                 } else {
                     expansion = expand_item_macro_items(invocation);
                 }
@@ -1483,7 +1483,7 @@ private:
             if (meta.ast_return_kind == MetaAstReturnKind::Pattern) {
                 expanded = expand_pattern_macro_constructor(pattern, meta.parameter_name, *meta.ast_return);
             } else if (meta.token_return) {
-                expanded = expand_pattern_macro_token_constructor(pattern, meta.parameter_name, *meta.token_return);
+                expanded = expand_pattern_macro_token_return(pattern, meta.parameter_name, *meta.token_return);
             } else {
                 expanded = expand_pattern_macro_invocation(pattern);
             }
@@ -15205,7 +15205,7 @@ private:
             fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
         }
         if (meta.token_return) {
-            ExprPtr expanded = expand_expression_macro_token_constructor(
+            ExprPtr expanded = expand_expression_macro_token_return(
                 *expr.macro_tokens, expr.loc, meta.parameter_name, *meta.token_return);
             return check_expr(*expanded);
         }

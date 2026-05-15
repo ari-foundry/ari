@@ -1456,6 +1456,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/macro-call-identity.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/meta-function-token-stream-return.ari -o $(BUILD_DIR)/meta/meta-function-token-stream-return.raw
 	$(BUILD_DIR)/meta/meta-function-token-stream-return.raw; code=$$?; test $$code -eq 40
+	$(TARGET) --freestanding tests/ok/meta-function-token-branch.ari -o $(BUILD_DIR)/meta/meta-function-token-branch.raw
+	$(BUILD_DIR)/meta/meta-function-token-branch.raw; code=$$?; test $$code -eq 43
 	$(TARGET) --freestanding tests/ok/meta-function-ast-return.ari -o $(BUILD_DIR)/meta/meta-function-ast-return.raw
 	$(BUILD_DIR)/meta/meta-function-ast-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/meta-function-ast-input-substitution.ari -o $(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw
@@ -1549,7 +1551,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/meta-function-domain-mismatch.ari -o $(BUILD_DIR)/meta/meta-function-domain-mismatch.elf >$(BUILD_DIR)/meta/meta-function-domain-mismatch.err 2>&1; then exit 1; fi
 	grep -q "meta function return type must match its input meta type" $(BUILD_DIR)/meta/meta-function-domain-mismatch.err
 	if $(TARGET) tests/errors/meta-function-body-planned.ari -o $(BUILD_DIR)/meta/meta-function-body-planned.elf >$(BUILD_DIR)/meta/meta-function-body-planned.err 2>&1; then exit 1; fi
-	grep -q 'token_stream meta function bodies currently allow only an empty body, `return input;` identity body, or tokens!(...) token output' $(BUILD_DIR)/meta/meta-function-body-planned.err
+	grep -q 'token_stream meta function bodies currently allow only an empty body, `return input;` identity body, tokens!(...) token output, or `if tokens_empty(input) { tokens!(...) } else { tokens!(...) }` token branching' $(BUILD_DIR)/meta/meta-function-body-planned.err
 	if $(TARGET) tests/errors/meta-function-ast-name-reference.ari -o $(BUILD_DIR)/meta/meta-function-ast-name-reference.elf >$(BUILD_DIR)/meta/meta-function-ast-name-reference.err 2>&1; then exit 1; fi
 	grep -q "ast meta expression returns cannot reference names other than the meta input or local control-flow pattern bindings yet" $(BUILD_DIR)/meta/meta-function-ast-name-reference.err
 	if $(TARGET) tests/errors/meta-function-decl-expression-site.ari -o $(BUILD_DIR)/meta/meta-function-decl-expression-site.elf >$(BUILD_DIR)/meta/meta-function-decl-expression-site.err 2>&1; then exit 1; fi

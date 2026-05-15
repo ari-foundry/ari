@@ -190,7 +190,9 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    non-generic, one-parameter transforms over exactly one meta domain:
    `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Bodies
    may be empty, use a single `return input;` identity body, return raw
-   token output with `tokens!(...)` for `token_stream -> token_stream`, or, for
+   token output with `tokens!(...)` for `token_stream -> token_stream`, branch
+   between token outputs with `if tokens_empty(input) { tokens!(...) } else {
+   tokens!(...) }`, or, for
    expression-position `ast -> ast` macros, return an expression AST such as
    `return input + 1;`, `return Pair { left: input, right: 2 };`,
    `return ref input;`, `return input ?? 0;`,
@@ -215,8 +217,8 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    parser surface for token-tree expressions and type positions; there is no
    separate anonymous macro grammar. User macro calls capture balanced token
    trees, and the selected `meta fn` parameter domain determines whether the
-   future evaluator receives `token_stream`, `ast`, or `type` input. Full
-   active expansion still needs token inspection/branching and broader `ast`
+   compile-time evaluator receives `token_stream`, `ast`, or `type` input.
+   Full active expansion still needs richer token inspection and broader `ast`
    construction before it can rewrite general values or syntax.
    Expression-position
    `token_stream -> token_stream` and `ast -> ast` meta invocations now parse
@@ -224,7 +226,12 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    `return input;` lower as identity expansion. Non-identity token-stream
    bodies can return `tokens!(...)`; bare meta-parameter tokens inside that
    constructor are substituted with the invocation token payload before the
-   output tokens are parsed at the invocation site. Non-identity expression
+   output tokens are parsed at the invocation site. They can also use an
+   expression-only `if` return whose condition is made from bool literals, `!`,
+   `&&`, `||`, `tokens_empty(input)`, or `input.is_empty()` and whose arms
+   return token output with `tokens!(...)`. This currently lets expression,
+   item, and pattern macros choose fallback output for empty token payloads
+   while keeping general token matching reserved. Non-identity expression
    returns from `ast -> ast` bodies clone the returned AST and substitute that
    parsed input expression wherever the meta parameter name appears. Literal,
    struct literal, tuple, vector, access, borrow, postfix try,
@@ -298,8 +305,8 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    remains a marker-trait impl and does not change Ari's structural copyability
    rules. Unsupported or duplicate derive names are rejected before impl
    validation, and enum `Default` derives without a case marker are rejected.
-   - [tokens] extend `tokens!(...)` beyond direct token construction into
-     evaluator-backed token inspection and branching
+   - [tokens] extend the token_stream evaluator beyond empty-input branching
+     into token matching, token counting, and broader token inspection
    - [ast] extend non-identity `ast` construction beyond expression-position
      expression returns with input substitution and item-position `decl!(...)`
      declaration output with input substitution and pattern-position

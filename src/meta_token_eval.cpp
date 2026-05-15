@@ -1,0 +1,199 @@
+#include "meta_token_eval.hpp"
+
+#include "common.hpp"
+
+#include <string>
+#include <vector>
+
+namespace ari {
+namespace {
+
+[[noreturn]] void fail_eval(SourceLocation loc, const std::string& message) {
+    throw CompileError(where(loc) + ": " + message);
+}
+
+std::string token_return_forms(const std::string& input_name) {
+    return "token_stream meta function bodies currently allow only an empty body, `return " +
+           input_name +
+           ";` identity body, tokens!(...) token output, or `if tokens_empty(" +
+           input_name +
+           ") { tokens!(...) } else { tokens!(...) }` token branching";
+}
+
+bool is_input_name(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Name && expr.name == input_name;
+}
+
+bool is_token_constructor(const Expr& expr) {
+    return expr.kind == ExprKind::MacroCall && expr.name == "tokens";
+}
+
+bool supported_token_constructor(const Expr& expr, std::string& reason) {
+    if (!is_token_constructor(expr)) return false;
+    if (!expr.macro_tokens || expr.macro_tokens->empty()) {
+        reason = "tokens! token_stream constructor requires one or more output tokens";
+        return false;
+    }
+    return true;
+}
+
+bool supported_tokens_empty_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "tokens_empty" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 1 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name);
+}
+
+bool supported_tokens_empty_method(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::MethodCall &&
+           expr.name == "is_empty" &&
+           expr.args.empty() &&
+           expr_type_args(expr).empty() &&
+           expr_operand(expr) &&
+           is_input_name(*expr_operand(expr), input_name);
+}
+
+bool supported_token_condition_expr(const Expr& expr,
+                                    const std::string& input_name,
+                                    std::string& reason) {
+    switch (expr.kind) {
+        case ExprKind::Bool:
+            return true;
+        case ExprKind::Unary:
+            if (expr.op == TokenKind::Bang && expr_operand(expr)) {
+                return supported_token_condition_expr(*expr_operand(expr), input_name, reason);
+            }
+            break;
+        case ExprKind::Binary:
+            if ((expr.op == TokenKind::AmpAmp || expr.op == TokenKind::PipePipe) &&
+                expr_left(expr) &&
+                expr_right(expr)) {
+                return supported_token_condition_expr(*expr_left(expr), input_name, reason) &&
+                       supported_token_condition_expr(*expr_right(expr), input_name, reason);
+            }
+            break;
+        case ExprKind::Call:
+            if (supported_tokens_empty_call(expr, input_name)) return true;
+            break;
+        case ExprKind::MethodCall:
+            if (supported_tokens_empty_method(expr, input_name)) return true;
+            break;
+        default:
+            break;
+    }
+
+    reason = "token_stream meta branch conditions currently support only bool literals, !, &&, ||, tokens_empty(" +
+             input_name + "), or " + input_name + ".is_empty()";
+    return false;
+}
+
+bool eval_token_condition_expr(const Expr& expr,
+                               const std::string& input_name,
+                               const std::vector<Token>& input_tokens) {
+    switch (expr.kind) {
+        case ExprKind::Bool:
+            return expr.bool_value;
+        case ExprKind::Unary:
+            if (expr.op == TokenKind::Bang && expr_operand(expr)) {
+                return !eval_token_condition_expr(*expr_operand(expr), input_name, input_tokens);
+            }
+            break;
+        case ExprKind::Binary:
+            if (expr.op == TokenKind::AmpAmp && expr_left(expr) && expr_right(expr)) {
+                return eval_token_condition_expr(*expr_left(expr), input_name, input_tokens) &&
+                       eval_token_condition_expr(*expr_right(expr), input_name, input_tokens);
+            }
+            if (expr.op == TokenKind::PipePipe && expr_left(expr) && expr_right(expr)) {
+                return eval_token_condition_expr(*expr_left(expr), input_name, input_tokens) ||
+                       eval_token_condition_expr(*expr_right(expr), input_name, input_tokens);
+            }
+            break;
+        case ExprKind::Call:
+            if (supported_tokens_empty_call(expr, input_name)) return input_tokens.empty();
+            break;
+        case ExprKind::MethodCall:
+            if (supported_tokens_empty_method(expr, input_name)) return input_tokens.empty();
+            break;
+        default:
+            break;
+    }
+    fail_eval(expr.loc, "internal error: unsupported token_stream meta condition");
+}
+
+bool expression_only_branch(const std::vector<StmtPtr>& body) {
+    return body.empty();
+}
+
+} // namespace
+
+std::vector<Token> substitute_meta_input_tokens(const std::vector<Token>& constructor_tokens,
+                                                const std::string& input_name,
+                                                const std::vector<Token>& input_tokens) {
+    std::vector<Token> expanded;
+    for (const Token& token : constructor_tokens) {
+        if (token.kind == TokenKind::Identifier && token.text == input_name) {
+            expanded.insert(expanded.end(), input_tokens.begin(), input_tokens.end());
+            continue;
+        }
+        expanded.push_back(token);
+    }
+    return expanded;
+}
+
+bool is_supported_meta_token_return_expr(const Expr& expr,
+                                         const std::string& input_name,
+                                         std::string& reason) {
+    if (supported_token_constructor(expr, reason)) return true;
+
+    if (expr.kind == ExprKind::If) {
+        if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
+            reason = "malformed token_stream meta branch";
+            return false;
+        }
+        if (expr_if_condition_pattern(expr)) {
+            reason = "token_stream meta branch conditions cannot use if-let patterns";
+            return false;
+        }
+        if (!expression_only_branch(expr_if_then_body(expr)) ||
+            !expression_only_branch(expr_if_else_body(expr))) {
+            reason = "token_stream meta branches currently require expression-only arms with no statement bodies";
+            return false;
+        }
+        if (!supported_token_condition_expr(*expr_if_condition(expr), input_name, reason)) return false;
+        if (!is_supported_meta_token_return_expr(*expr_if_then_value(expr), input_name, reason)) return false;
+        if (!is_supported_meta_token_return_expr(*expr_if_else_value(expr), input_name, reason)) return false;
+        return true;
+    }
+
+    if (reason.empty()) reason = token_return_forms(input_name);
+    return false;
+}
+
+std::vector<Token> evaluate_meta_token_return_expr(const Expr& expr,
+                                                   const std::string& input_name,
+                                                   const std::vector<Token>& input_tokens) {
+    if (is_token_constructor(expr)) {
+        if (!expr.macro_tokens || expr.macro_tokens->empty()) {
+            fail_eval(expr.loc, "tokens! token_stream constructor requires one or more output tokens");
+        }
+        return substitute_meta_input_tokens(*expr.macro_tokens, input_name, input_tokens);
+    }
+
+    if (expr.kind == ExprKind::If) {
+        if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
+            fail_eval(expr.loc, "malformed token_stream meta branch");
+        }
+        bool take_then = eval_token_condition_expr(*expr_if_condition(expr), input_name, input_tokens);
+        return evaluate_meta_token_return_expr(
+            take_then ? *expr_if_then_value(expr) : *expr_if_else_value(expr),
+            input_name,
+            input_tokens);
+    }
+
+    fail_eval(expr.loc, "internal error: unsupported token_stream meta return expression");
+}
+
+} // namespace ari
