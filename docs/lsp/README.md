@@ -35,6 +35,7 @@ Additional module search paths can be passed with `-I path`.
 - `textDocument/didSave`
 - `textDocument/didClose`
 - `textDocument/publishDiagnostics`
+- `textDocument/diagnostic`
 
 Diagnostics currently use saved files on disk. Unsaved in-memory checking is a
 future milestone because Ari module resolution depends on the source file path.

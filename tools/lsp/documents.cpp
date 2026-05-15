@@ -44,14 +44,9 @@ std::string path_to_uri(const std::string& path) {
     return "file://" + path;
 }
 
-std::string diagnostics_notification(const std::string& uri, const std::vector<tooling::Diagnostic>& diagnostics) {
+std::string diagnostics_json_array(const std::vector<tooling::Diagnostic>& diagnostics) {
     std::ostringstream out;
-    out << "{";
-    out << "\"jsonrpc\":\"2.0\",";
-    out << "\"method\":\"textDocument/publishDiagnostics\",";
-    out << "\"params\":{";
-    out << "\"uri\":\"" << tooling::json_escape(uri) << "\",";
-    out << "\"diagnostics\":[";
+    out << "[";
     bool first = true;
     for (const tooling::Diagnostic& diagnostic : diagnostics) {
         if (!first) out << ",";
@@ -69,6 +64,29 @@ std::string diagnostics_notification(const std::string& uri, const std::vector<t
         out << "}";
     }
     out << "]";
+    return out.str();
+}
+
+std::string diagnostics_notification(const std::string& uri, const std::vector<tooling::Diagnostic>& diagnostics) {
+    std::ostringstream out;
+    out << "{";
+    out << "\"jsonrpc\":\"2.0\",";
+    out << "\"method\":\"textDocument/publishDiagnostics\",";
+    out << "\"params\":{";
+    out << "\"uri\":\"" << tooling::json_escape(uri) << "\",";
+    out << "\"diagnostics\":" << diagnostics_json_array(diagnostics);
+    out << "}}";
+    return out.str();
+}
+
+std::string diagnostics_report_response(const std::string& id, const std::vector<tooling::Diagnostic>& diagnostics) {
+    std::ostringstream out;
+    out << "{";
+    out << "\"jsonrpc\":\"2.0\",";
+    out << "\"id\":" << (id.empty() ? "null" : id) << ",";
+    out << "\"result\":{";
+    out << "\"kind\":\"full\",";
+    out << "\"items\":" << diagnostics_json_array(diagnostics);
     out << "}}";
     return out.str();
 }

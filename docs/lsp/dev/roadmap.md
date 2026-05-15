@@ -7,6 +7,8 @@
 - [x] Reply to `initialize` with diagnostic-first capabilities.
 - [x] Publish compiler-backed diagnostics for opened, changed, and saved file
       notifications.
+- [x] Respond to `textDocument/diagnostic` pull requests using the same
+      diagnostic conversion as publish diagnostics.
 - [x] Clear diagnostics on `didClose`.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
 

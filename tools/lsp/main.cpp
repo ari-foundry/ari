@@ -69,6 +69,32 @@ void publish_for_uri(const Config& config, const std::string& uri) {
     ari::lsp::write_message(std::cout, ari::lsp::diagnostics_notification(uri, diagnostics));
 }
 
+std::vector<ari::tooling::Diagnostic> diagnostics_for_uri(const Config& config, const std::string& uri) {
+    if (uri.empty()) {
+        return {ari::tooling::Diagnostic{
+            "",
+            1,
+            1,
+            ari::tooling::DiagnosticSeverity::Error,
+            "missing textDocument.uri",
+            "ari-lsp",
+        }};
+    }
+    std::string path = ari::lsp::uri_to_path(uri);
+    try {
+        return check_file(config, path);
+    } catch (const std::exception& ex) {
+        return {ari::tooling::Diagnostic{
+            path,
+            1,
+            1,
+            ari::tooling::DiagnosticSeverity::Error,
+            ex.what(),
+            "ari-lsp",
+        }};
+    }
+}
+
 std::string response_result(const std::string& id, const std::string& result) {
     return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}";
 }
@@ -141,6 +167,12 @@ int main(int argc, char** argv) {
             method == "textDocument/didSave" ||
             method == "textDocument/didChange") {
             publish_for_uri(config, ari::lsp::json_string_field(body, "uri"));
+            continue;
+        }
+        if (method == "textDocument/diagnostic") {
+            std::vector<ari::tooling::Diagnostic> diagnostics =
+                diagnostics_for_uri(config, ari::lsp::json_string_field(body, "uri"));
+            ari::lsp::write_message(std::cout, ari::lsp::diagnostics_report_response(id, diagnostics));
             continue;
         }
         if (method == "textDocument/didClose") {
