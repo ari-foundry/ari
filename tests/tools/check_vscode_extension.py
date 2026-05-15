@@ -10,6 +10,10 @@ language_config = json.loads((root / "editors/vscode/language-configuration.json
 for source in ("extension.js", "commands.js", "tasks.js", "lsp.js", "paths.js", "config.js"):
     if not (root / "editors/vscode" / source).exists():
         raise SystemExit(f"missing VS Code source file: {source}")
+if not (root / "editors/vscode/.vscode/launch.json").exists():
+    raise SystemExit("missing VS Code extension launch configuration")
+if not (root / "docs/vscode/usage.md").exists():
+    raise SystemExit("missing VS Code usage guide")
 
 commands = {item["command"] for item in package["contributes"]["commands"]}
 required_commands = {

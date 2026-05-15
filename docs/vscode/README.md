@@ -57,6 +57,11 @@ top-level declarations in the active document.
 
 The check and lint commands write to the `Ari` output channel.
 
+## Usage
+
+Local run instructions, feature expectations, and troubleshooting are documented
+in [Ari VS Code Usage](usage.md).
+
 ## Tasks
 
 The extension contributes Ari tasks for common repository commands:

@@ -44,6 +44,7 @@ Use these when changing editor and lint tooling:
 - [Ari Lint](lint/README.md)
 - [Ari LSP](lsp/README.md)
 - [Ari VS Code Extension](vscode/README.md)
+- [Ari VS Code Usage](vscode/usage.md)
 
 ## Notes
 
