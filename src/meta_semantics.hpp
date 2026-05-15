@@ -36,6 +36,7 @@ struct MetaFunctionInfo {
     SourceLocation loc;
     std::string parameter_name;
     MetaAstReturnKind ast_return_kind = MetaAstReturnKind::None;
+    const Expr* token_return = nullptr;
     const Expr* ast_return = nullptr;
     const Expr* type_return = nullptr;
 };
@@ -51,6 +52,7 @@ std::string meta_invocation_domain_message(MetaInvocationSite site,
                                            const std::string& meta_name,
                                            MetaTransformKind kind);
 MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn);
+const Expr* meta_function_token_return(const FunctionDecl& fn);
 const Expr* meta_function_ast_return(const FunctionDecl& fn);
 MetaAstReturnKind meta_function_ast_return_kind(const FunctionDecl& fn);
 const Expr* meta_function_type_return(const FunctionDecl& fn);

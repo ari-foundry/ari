@@ -51,6 +51,19 @@ bool is_type_constructor(const Expr& expr) {
     return expr.kind == ExprKind::MacroCall && expr.name == "type";
 }
 
+bool is_token_stream_constructor(const Expr& expr) {
+    return expr.kind == ExprKind::MacroCall && expr.name == "tokens";
+}
+
+bool supported_token_stream_return_expr(const Expr& expr, std::string& reason) {
+    if (!is_token_stream_constructor(expr)) return false;
+    if (!expr.macro_tokens || expr.macro_tokens->empty()) {
+        reason = "tokens! token_stream constructor requires one or more output tokens";
+        return false;
+    }
+    return true;
+}
+
 bool supported_decl_ast_return_expr(const Expr& expr, std::string& reason) {
     if (!is_decl_ast_constructor(expr)) return false;
     if (!expr.macro_tokens || expr.macro_tokens->empty()) {
@@ -381,6 +394,16 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
     }
     if (!fn.body.empty() && !is_identity_meta_return(*fn.body.front(), param)) {
         const Expr* returned = return_expression(fn);
+        if (input_kind == MetaTransformKind::TokenStream && returned) {
+            std::string reason;
+            if (supported_token_stream_return_expr(*returned, reason)) {
+                return input_kind;
+            }
+            fail(returned->loc, reason.empty()
+                                    ? "token_stream meta function bodies currently allow only an empty body, `return " +
+                                          param.name + ";` identity body, or tokens!(...) token output"
+                                    : reason);
+        }
         if (input_kind == MetaTransformKind::Ast && returned) {
             std::string reason;
             if (classify_ast_return_expr(*returned, param.name, reason) != MetaAstReturnKind::None) {
@@ -409,10 +432,21 @@ MetaTransformKind validate_meta_function_signature(const FunctionDecl& fn) {
                      ";` identity body, or type!(...) type output");
         }
         fail(fn.body.front()->loc,
-             "meta function bodies currently allow only an empty body or `return " + param.name +
-                 ";` identity body");
+             "token_stream meta function bodies currently allow only an empty body, `return " + param.name +
+                 ";` identity body, or tokens!(...) token output");
     }
     return input_kind;
+}
+
+const Expr* meta_function_token_return(const FunctionDecl& fn) {
+    if (classify_meta_type_ref(fn.return_type) != MetaTransformKind::TokenStream) return nullptr;
+    if (fn.params.size() != 1) return nullptr;
+    const Expr* returned = return_expression(fn);
+    if (!returned) return nullptr;
+    if (returned->kind == ExprKind::Name && returned->name == fn.params.front().name) return nullptr;
+    std::string reason;
+    if (!supported_token_stream_return_expr(*returned, reason)) return nullptr;
+    return returned;
 }
 
 const Expr* meta_function_ast_return(const FunctionDecl& fn) {

@@ -90,7 +90,7 @@ ItemMacroExpansion finish_item_macro_expansion(Program program,
     expansion.functions = std::move(program.functions);
     for (auto& fn : expansion.functions) {
         if (fn.meta) {
-            fail_expansion(fn.loc, "item macro identity expansion cannot generate meta functions yet");
+            fail_expansion(fn.loc, context + " cannot generate meta functions yet");
         }
         if (invocation.is_public) fn.is_public = true;
     }
@@ -120,6 +120,19 @@ ItemMacroExpansion expand_item_macro_items(const ItemMacroInvocation& invocation
     return finish_item_macro_expansion(std::move(program), invocation, "item macro identity expansion");
 }
 
+ItemMacroExpansion expand_item_macro_token_constructor(const ItemMacroInvocation& invocation,
+                                                       const std::string& input_name,
+                                                       const Expr& returned_tokens) {
+    if (returned_tokens.kind != ExprKind::MacroCall || returned_tokens.name != "tokens" ||
+        !returned_tokens.macro_tokens) {
+        fail_expansion(returned_tokens.loc, "internal error: expected tokens!(...) token_stream constructor");
+    }
+    std::vector<Token> output_tokens =
+        substitute_input_tokens(*returned_tokens.macro_tokens, input_name, invocation.tokens);
+    Program program = parse_item_macro_tokens(output_tokens, invocation.module_name, returned_tokens.loc);
+    return finish_item_macro_expansion(std::move(program), invocation, "item macro token_stream output");
+}
+
 ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation& invocation,
                                                       const std::string& input_name,
                                                       const Expr& returned_ast) {
@@ -136,6 +149,21 @@ Pattern expand_pattern_macro_invocation(const Pattern& invocation) {
         fail_expansion(invocation.loc, "internal error: expected pattern macro invocation");
     }
     return parse_macro_pattern(invocation.macro_tokens, invocation.loc);
+}
+
+Pattern expand_pattern_macro_token_constructor(const Pattern& invocation,
+                                               const std::string& input_name,
+                                               const Expr& returned_tokens) {
+    if (!invocation.is_macro_invocation) {
+        fail_expansion(invocation.loc, "internal error: expected pattern macro invocation");
+    }
+    if (returned_tokens.kind != ExprKind::MacroCall || returned_tokens.name != "tokens" ||
+        !returned_tokens.macro_tokens) {
+        fail_expansion(returned_tokens.loc, "internal error: expected tokens!(...) token_stream constructor");
+    }
+    return parse_macro_pattern(
+        substitute_input_tokens(*returned_tokens.macro_tokens, input_name, invocation.macro_tokens),
+        returned_tokens.loc);
 }
 
 Pattern expand_pattern_macro_constructor(const Pattern& invocation,
@@ -171,6 +199,19 @@ TypeRef expand_type_macro_constructor(const TypeRef& invocation,
     return parse_macro_type_ref(
         substitute_input_tokens(*returned_type.macro_tokens, input_name, invocation.macro_tokens),
         returned_type.loc);
+}
+
+ExprPtr expand_expression_macro_token_constructor(const std::vector<Token>& invocation_tokens,
+                                                  SourceLocation invocation_loc,
+                                                  const std::string& input_name,
+                                                  const Expr& returned_tokens) {
+    if (returned_tokens.kind != ExprKind::MacroCall || returned_tokens.name != "tokens" ||
+        !returned_tokens.macro_tokens) {
+        fail_expansion(returned_tokens.loc, "internal error: expected tokens!(...) token_stream constructor");
+    }
+    return parse_macro_expression(
+        substitute_input_tokens(*returned_tokens.macro_tokens, input_name, invocation_tokens),
+        invocation_loc);
 }
 
 ExprPtr expand_ast_expression_return(const Expr& returned_ast,

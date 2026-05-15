@@ -1201,6 +1201,7 @@ private:
                     fn.loc,
                     fn.params[0].name,
                     meta_function_ast_return_kind(fn),
+                    meta_function_token_return(fn),
                     meta_function_ast_return(fn),
                     meta_function_type_return(fn),
                 }
@@ -1432,9 +1433,13 @@ private:
             try {
                 const MetaFunctionInfo& meta =
                     require_meta_invocation(invocation.loc, MetaInvocationSite::ItemMacro, invocation.name);
-                expansion = meta.ast_return_kind == MetaAstReturnKind::ItemDeclarations
-                                ? expand_item_macro_decl_constructor(invocation, meta.parameter_name, *meta.ast_return)
-                                : expand_item_macro_items(invocation);
+                if (meta.ast_return_kind == MetaAstReturnKind::ItemDeclarations) {
+                    expansion = expand_item_macro_decl_constructor(invocation, meta.parameter_name, *meta.ast_return);
+                } else if (meta.token_return) {
+                    expansion = expand_item_macro_token_constructor(invocation, meta.parameter_name, *meta.token_return);
+                } else {
+                    expansion = expand_item_macro_items(invocation);
+                }
             } catch (...) {
                 current_module_name_ = previous_module;
                 throw;
@@ -1474,9 +1479,14 @@ private:
         if (pattern.is_macro_invocation) {
             const MetaFunctionInfo& meta =
                 require_meta_invocation(pattern.loc, MetaInvocationSite::PatternMacro, pattern.case_name);
-            Pattern expanded = meta.ast_return_kind == MetaAstReturnKind::Pattern
-                                   ? expand_pattern_macro_constructor(pattern, meta.parameter_name, *meta.ast_return)
-                                   : expand_pattern_macro_invocation(pattern);
+            Pattern expanded;
+            if (meta.ast_return_kind == MetaAstReturnKind::Pattern) {
+                expanded = expand_pattern_macro_constructor(pattern, meta.parameter_name, *meta.ast_return);
+            } else if (meta.token_return) {
+                expanded = expand_pattern_macro_token_constructor(pattern, meta.parameter_name, *meta.token_return);
+            } else {
+                expanded = expand_pattern_macro_invocation(pattern);
+            }
             return expand_pattern_macro_tree(expanded);
         }
 
@@ -15193,6 +15203,11 @@ private:
         const MetaFunctionInfo& meta = require_meta_invocation(expr.loc, MetaInvocationSite::ExpressionMacro, expr.name);
         if (!expr.macro_tokens) {
             fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
+        }
+        if (meta.token_return) {
+            ExprPtr expanded = expand_expression_macro_token_constructor(
+                *expr.macro_tokens, expr.loc, meta.parameter_name, *meta.token_return);
+            return check_expr(*expanded);
         }
         ExprPtr expanded = parse_macro_expression(*expr.macro_tokens, expr.loc);
         if (meta.ast_return) {

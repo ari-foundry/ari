@@ -189,15 +189,16 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    evaluator lands. `meta fn` entries are compile-time-only, concrete,
    non-generic, one-parameter transforms over exactly one meta domain:
    `token_stream -> token_stream`, `ast -> ast`, or `type -> type`. Bodies
-   may be empty, use a single `return input;` identity body, or, for
+   may be empty, use a single `return input;` identity body, return raw
+   token output with `tokens!(...)` for `token_stream -> token_stream`, or, for
    expression-position `ast -> ast` macros, return an expression AST such as
    `return input + 1;`, `return Pair { left: input, right: 2 };`,
    `return ref input;`, `return input ?? 0;`,
    `return if input > 0 { input } else { 0 };`, or `return add(input.left, 1);`
-   without quote/eval syntax. The
-   meta input parameter is substituted with the parsed invocation expression;
-   other bare expression name references are rejected unless they are introduced
-   by the current control-flow pattern arm. Item-position
+   without quote/eval syntax. For those expression AST outputs, the meta input
+   parameter is substituted with the parsed invocation expression; other bare
+   expression name references are rejected unless they are introduced by the
+   current control-flow pattern arm. Item-position
    `ast -> ast` macros can also return top-level declaration AST output with the meta-body-only
    `decl!(...)` constructor, for example `return decl!(fn generated() -> i64 {
    return 42; });`. Pattern-position `ast -> ast` macros can return pattern
@@ -215,12 +216,15 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    separate anonymous macro grammar. User macro calls capture balanced token
    trees, and the selected `meta fn` parameter domain determines whether the
    future evaluator receives `token_stream`, `ast`, or `type` input. Full
-   active expansion still needs compile-time `token_stream` construction and
-   broader `ast` construction before it can rewrite general values or syntax.
+   active expansion still needs token inspection/branching and broader `ast`
+   construction before it can rewrite general values or syntax.
    Expression-position
    `token_stream -> token_stream` and `ast -> ast` meta invocations now parse
    their token-tree input as a single expression. Empty bodies and
-   `return input;` lower as identity expansion; non-identity expression
+   `return input;` lower as identity expansion. Non-identity token-stream
+   bodies can return `tokens!(...)`; bare meta-parameter tokens inside that
+   constructor are substituted with the invocation token payload before the
+   output tokens are parsed at the invocation site. Non-identity expression
    returns from `ast -> ast` bodies clone the returned AST and substitute that
    parsed input expression wherever the meta parameter name appears. Literal,
    struct literal, tuple, vector, access, borrow, postfix try,
@@ -238,7 +242,10 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    sema. Bare uses of the meta parameter name inside `decl!(...)` are
    substituted with the item macro invocation's declaration input tokens, so
    `return decl!(input const Extra: i64 = 1;);` preserves the input
-   declarations and appends a generated declaration. Type-position
+   declarations and appends a generated declaration. Item-position
+   `token_stream -> token_stream` bodies can use `tokens!(...)` for the same
+   parse-and-splice path, and pattern-position `token_stream -> token_stream`
+   bodies can use it to generate one pattern. Type-position
    `type -> type` meta
    invocations now parse their token-tree input as a type ref. Empty bodies
    and `return input;` lower as identity expansion; non-identity type bodies
@@ -291,8 +298,8 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    remains a marker-trait impl and does not change Ari's structural copyability
    rules. Unsupported or duplicate derive names are rejected before impl
    validation, and enum `Default` derives without a case marker are rejected.
-   - [tokens] support non-identity `token_stream` construction and rewrites
-     beyond empty/`return input;` identity bodies
+   - [tokens] extend `tokens!(...)` beyond direct token construction into
+     evaluator-backed token inspection and branching
    - [ast] extend non-identity `ast` construction beyond expression-position
      expression returns with input substitution and item-position `decl!(...)`
      declaration output with input substitution and pattern-position
