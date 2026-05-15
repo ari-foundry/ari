@@ -1,11 +1,13 @@
 const vscode = require('vscode');
 const { LanguageClient } = require('vscode-languageclient/node');
 const { registerAriCommands, resolveWorkspacePath } = require('./commands');
+const { registerAriTasks } = require('./tasks');
 
 let client;
 
 function activate(context) {
   registerAriCommands(context);
+  registerAriTasks(context);
 
   const config = vscode.workspace.getConfiguration('ari');
   const compilerPath = resolveWorkspacePath(config.get('compilerPath', 'build/ari'));

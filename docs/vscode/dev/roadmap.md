@@ -17,12 +17,13 @@
       completion path.
 - [x] Add command-palette actions for running `ari-lint` and `ari --check` on
       the active Ari file.
+- [x] Add VS Code task-provider entries for `make`, `make check`, `make tools`,
+      `make check-tools`, `make lint`, and `make lsp`.
 
 ## Near-Term Work
 
 - [ ] Add a README section for packaging and local extension development once
       dependency installation policy is decided.
-- [ ] Add workspace task snippets for `make`, `make check`, and `make lint`.
 - [ ] Add richer syntax highlighting after the lint/LSP diagnostic path is
       stable.
 

@@ -18,6 +18,8 @@ symbols in the active document.
 - `editors/vscode/extension.js` starts the language client.
 - `editors/vscode/commands.js` owns command-palette actions and output-channel
   process execution.
+- `editors/vscode/tasks.js` owns VS Code task-provider integration for common
+  Ari make targets.
 - `editors/vscode/language-configuration.json` defines comments, brackets, and
   auto-closing pairs.
 - `editors/vscode/syntaxes/ari.tmLanguage.json` provides lightweight syntax
@@ -37,6 +39,17 @@ symbols in the active document.
 - `Ari: Lint Current File` saves the active Ari file and runs `ari-lint`.
 
 Both commands write to the `Ari` output channel.
+
+## Tasks
+
+The extension contributes Ari tasks for common repository commands:
+
+- `Ari: make`
+- `Ari: make check`
+- `Ari: make tools`
+- `Ari: make check-tools`
+- `Ari: make lint`
+- `Ari: make lsp`
 
 ## Developer Notes
 

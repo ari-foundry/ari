@@ -13,7 +13,8 @@
   "activationEvents": [
     "onLanguage:ari",
     "onCommand:ari.checkCurrentFile",
-    "onCommand:ari.lintCurrentFile"
+    "onCommand:ari.lintCurrentFile",
+    "onTaskType:ari"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -46,6 +47,28 @@
       {
         "command": "ari.lintCurrentFile",
         "title": "Ari: Lint Current File"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "ari",
+        "required": [
+          "target"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "enum": [
+              "build",
+              "check",
+              "tools",
+              "check-tools",
+              "lint",
+              "lsp"
+            ],
+            "description": "Ari make target to run."
+          }
+        }
       }
     ],
     "configuration": {
