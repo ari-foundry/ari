@@ -11,6 +11,7 @@
       Outline path.
 - [x] Surface first-pass same-document identifier highlights through the LSP
       document-highlight path.
+- [x] Surface first-pass brace-block folding through the LSP folding-range path.
 - [x] Surface first-pass workspace symbol search through the LSP
       `workspace/symbol` path.
 - [x] Surface first-pass hover text for top-level Ari declarations through the

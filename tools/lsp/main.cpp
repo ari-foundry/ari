@@ -1,4 +1,5 @@
 #include "documents.hpp"
+#include "folding.hpp"
 #include "highlights.hpp"
 #include "json_rpc.hpp"
 #include "symbols.hpp"
@@ -227,6 +228,7 @@ int main(int argc, char** argv) {
                 "\"diagnosticProvider\":{\"interFileDependencies\":true,\"workspaceDiagnostics\":false},"
                 "\"documentSymbolProvider\":true,"
                 "\"documentHighlightProvider\":true,"
+                "\"foldingRangeProvider\":true,"
                 "\"workspaceSymbolProvider\":true,"
                 "\"hoverProvider\":true,"
                 "\"definitionProvider\":true,"
@@ -271,6 +273,11 @@ int main(int argc, char** argv) {
                     text_for_uri(documents, uri),
                     int_field_or_zero(body, "line"),
                     int_field_or_zero(body, "character")));
+            continue;
+        }
+        if (method == "textDocument/foldingRange") {
+            std::string uri = ari::lsp::json_string_field(body, "uri");
+            ari::lsp::write_message(std::cout, ari::lsp::folding_ranges_response(id, text_for_uri(documents, uri)));
             continue;
         }
         if (method == "workspace/symbol") {

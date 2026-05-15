@@ -15,6 +15,8 @@
       Outline using the current document text.
 - [x] Add first-pass `textDocument/documentHighlight` support for same-document
       identifier highlighting using shared LSP text-position helpers.
+- [x] Add first-pass `textDocument/foldingRange` support for brace-block
+      folding in VS Code.
 - [x] Add first-pass `workspace/symbol` support by scanning Ari source files
       under the server working directory.
 - [x] Add first-pass `textDocument/hover` support for top-level declarations
@@ -40,6 +42,8 @@
       nested symbols.
 - [ ] Replace first-pass document highlights with parser/sema-backed symbol
       identity so unrelated same-name identifiers are not grouped together.
+- [ ] Replace first-pass folding ranges with parser-backed block/declaration
+      ranges so braces inside strings or comments cannot affect folding.
 - [ ] Replace first-pass workspace symbols with parser/module-summary-backed
       package indexing.
 - [ ] Replace first-pass definition with parser/sema-backed local, module, and
