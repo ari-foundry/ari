@@ -1,0 +1,24 @@
+meta fn CreateNewFn(input: token_stream) -> token_stream {
+  return if input.matches("struct", "$Name", "{", "value", ":", "i64", ",", "}") {
+    tokens!(
+      input
+
+      impl ~Name {
+        fn new(value: i64) -> ~Name {
+          ~Name { value: value }
+        }
+      }
+    )
+  } else {
+    input
+  };
+}
+
+CreateNewFn!(struct GeneratedBox {
+  value: i64,
+});
+
+fn main() -> i64 {
+  let item = GeneratedBox::new(42);
+  return item.value;
+}

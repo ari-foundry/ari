@@ -232,6 +232,9 @@ span and backtracks against later pattern pieces. Branches can return that
 capture or span with
 `tokens_capture(input, "value", "...", "$value", ...)` or
 `input.capture("value", "...", "$value", ...)`.
+When a branch condition matches named captures, `tokens!(...)` can splice
+those captures with `~name`; this lets an item macro match a declaration and
+emit related declarations next to it.
 Each branch must return token output, the input stream, a capture, or a slice:
 
 ```ari
@@ -314,6 +317,26 @@ meta fn wrapped_expr(input: token_stream) -> token_stream {
     tokens!(0)
   };
 }
+
+meta fn CreateNewFn(input: token_stream) -> token_stream {
+  return if input.matches("struct", "$Name", "{", "value", ":", "i64", ",", "}") {
+    tokens!(
+      input
+
+      impl ~Name {
+        fn new(value: i64) -> ~Name {
+          ~Name { value: value }
+        }
+      }
+    )
+  } else {
+    input
+  };
+}
+
+CreateNewFn!(struct GeneratedBox {
+  value: i64,
+});
 ```
 
 Expression-position `ast -> ast` macros may also return an expression AST
@@ -408,8 +431,9 @@ append_generated!(fn original() -> i64 {
 `token_stream -> token_stream` meta functions can use `tokens!(...)` and the
 empty-input branch form at item and pattern macro sites too. The chosen output
 is parsed in the site domain after raw token substitution. Count-based
-conditions are available there as well. General token matching and content
-inspection are still reserved.
+conditions, token matching, named captures, and `~name` capture splices are
+available there as well, so an item macro can preserve an input declaration and
+emit related generated declarations in one expansion.
 
 User-defined attribute macros can use the declaration output path too. The meta
 input is the annotated declaration token tree without its attributes, and the
@@ -482,15 +506,18 @@ syntax-rewriting attributes and active
 item-position macros must also resolve to
 `token_stream -> token_stream` or `ast -> ast` meta functions. Function,
 constant, struct, enum, trait, impl, inline module, and use item macro
-expansion is currently an identity transform: the token tree is parsed as
-top-level function/constant/struct/enum/trait/impl/module/use declarations and
-those generated items participate in normal semantic checking. Non-identity
-item-position `ast -> ast` bodies can also generate those declaration kinds by
-returning `decl!(...)`, and they may splice the input declaration token tree
-back into that constructor with the meta parameter name. Generated file-backed
-`mod name;` imports are not supported in item macro output because module
-loading runs before semantic expansion; keep file-backed imports as
-source-level `mod` declarations. Type-position
+expansion can parse the token tree as top-level
+function/constant/struct/enum/trait/impl/module/use declarations and splice
+those generated items into normal semantic checking. Non-identity
+item-position `token_stream -> token_stream` bodies can generate those
+declaration kinds through `tokens!(...)`; captures from a successful
+`input.matches(...)` branch are spliced into that output with `~name`.
+Non-identity item-position `ast -> ast` bodies can also generate those
+declaration kinds by returning `decl!(...)`, and they may splice the input
+declaration token tree back into that constructor with the meta parameter name.
+Generated file-backed `mod name;` imports are not supported in item macro
+output because module loading runs before semantic expansion; keep file-backed
+imports as source-level `mod` declarations. Type-position
 macro invocations must resolve to
 `type -> type` meta functions. Empty and `return input;` bodies
 identity-expand by parsing their token tree as one type before semantic type

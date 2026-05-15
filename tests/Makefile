@@ -1478,6 +1478,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-token-capture.raw; code=$$?; test $$code -eq 38
 	$(TARGET) --freestanding tests/ok/meta-function-token-span-capture.ari -o $(BUILD_DIR)/meta/meta-function-token-span-capture.raw
 	$(BUILD_DIR)/meta/meta-function-token-span-capture.raw; code=$$?; test $$code -eq 23
+	$(TARGET) --freestanding tests/ok/item-macro-token-capture-splice.ari -o $(BUILD_DIR)/meta/item-macro-token-capture-splice.raw
+	$(BUILD_DIR)/meta/item-macro-token-capture-splice.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/meta-function-ast-return.ari -o $(BUILD_DIR)/meta/meta-function-ast-return.raw
 	$(BUILD_DIR)/meta/meta-function-ast-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/meta-function-ast-input-substitution.ari -o $(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw

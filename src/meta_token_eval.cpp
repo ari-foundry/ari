@@ -434,13 +434,6 @@ bool match_token_pattern_at(const std::vector<Token>& input_tokens,
     return match_token_pattern_at(input_tokens, parts, token_index + 1, part_index + 1, captures);
 }
 
-bool token_matches(const std::vector<Token>& input_tokens,
-                   const std::vector<ExprPtr>& parts,
-                   std::size_t first) {
-    std::vector<TokenCapture> captures;
-    return match_token_pattern_at(input_tokens, parts, 0, first, captures);
-}
-
 std::vector<Token> token_capture(const std::vector<Token>& input_tokens,
                                  const std::vector<ExprPtr>& parts,
                                  std::size_t first,
@@ -458,6 +451,21 @@ std::vector<Token> token_capture(const std::vector<Token>& input_tokens,
         return *captured;
     }
     fail_eval(capture_name_expr.loc, "token_stream capture pattern does not bind $" + requested_name);
+}
+
+void append_token_captures(std::vector<TokenCapture>& target,
+                           const std::vector<TokenCapture>& source) {
+    target.insert(target.end(), source.begin(), source.end());
+}
+
+bool token_matches_with_captures(const std::vector<Token>& input_tokens,
+                                 const std::vector<ExprPtr>& parts,
+                                 std::size_t first,
+                                 std::vector<TokenCapture>& captures) {
+    std::vector<TokenCapture> matched;
+    if (!match_token_pattern_at(input_tokens, parts, 0, first, matched)) return false;
+    append_token_captures(captures, matched);
+    return true;
 }
 
 bool is_token_integer_arithmetic(TokenKind op) {
@@ -643,23 +651,43 @@ bool supported_token_condition_expr(const Expr& expr,
 
 bool eval_token_condition_expr(const Expr& expr,
                                const std::string& input_name,
-                               const std::vector<Token>& input_tokens) {
+                               const std::vector<Token>& input_tokens,
+                               std::vector<TokenCapture>& captures) {
     switch (expr.kind) {
         case ExprKind::Bool:
             return expr.bool_value;
         case ExprKind::Unary:
             if (expr.op == TokenKind::Bang && expr_operand(expr)) {
-                return !eval_token_condition_expr(*expr_operand(expr), input_name, input_tokens);
+                std::vector<TokenCapture> ignored_captures;
+                return !eval_token_condition_expr(*expr_operand(expr), input_name, input_tokens, ignored_captures);
             }
             break;
         case ExprKind::Binary:
             if (expr.op == TokenKind::AmpAmp && expr_left(expr) && expr_right(expr)) {
-                return eval_token_condition_expr(*expr_left(expr), input_name, input_tokens) &&
-                       eval_token_condition_expr(*expr_right(expr), input_name, input_tokens);
+                std::vector<TokenCapture> left_captures;
+                if (!eval_token_condition_expr(*expr_left(expr), input_name, input_tokens, left_captures)) {
+                    return false;
+                }
+                std::vector<TokenCapture> right_captures;
+                if (!eval_token_condition_expr(*expr_right(expr), input_name, input_tokens, right_captures)) {
+                    return false;
+                }
+                append_token_captures(captures, left_captures);
+                append_token_captures(captures, right_captures);
+                return true;
             }
             if (expr.op == TokenKind::PipePipe && expr_left(expr) && expr_right(expr)) {
-                return eval_token_condition_expr(*expr_left(expr), input_name, input_tokens) ||
-                       eval_token_condition_expr(*expr_right(expr), input_name, input_tokens);
+                std::vector<TokenCapture> left_captures;
+                if (eval_token_condition_expr(*expr_left(expr), input_name, input_tokens, left_captures)) {
+                    append_token_captures(captures, left_captures);
+                    return true;
+                }
+                std::vector<TokenCapture> right_captures;
+                if (eval_token_condition_expr(*expr_right(expr), input_name, input_tokens, right_captures)) {
+                    append_token_captures(captures, right_captures);
+                    return true;
+                }
+                return false;
             }
             if (is_token_integer_comparison(expr.op) && expr_left(expr) && expr_right(expr)) {
                 std::uint64_t left = eval_token_integer_expr(*expr_left(expr), input_name, input_tokens);
@@ -697,7 +725,7 @@ bool eval_token_condition_expr(const Expr& expr,
                 return token_nth_is(input_tokens, *expr.args[1], *expr.args[2]);
             }
             if (supported_tokens_match_call(expr, input_name)) {
-                return token_matches(input_tokens, expr.args, 1);
+                return token_matches_with_captures(input_tokens, expr.args, 1, captures);
             }
             break;
         case ExprKind::MethodCall:
@@ -715,7 +743,7 @@ bool eval_token_condition_expr(const Expr& expr,
                 return token_nth_is(input_tokens, *expr.args[0], *expr.args[1]);
             }
             if (supported_tokens_match_method(expr, input_name)) {
-                return token_matches(input_tokens, expr.args, 0);
+                return token_matches_with_captures(input_tokens, expr.args, 0, captures);
             }
             break;
         default:
@@ -726,6 +754,75 @@ bool eval_token_condition_expr(const Expr& expr,
 
 bool expression_only_branch(const std::vector<StmtPtr>& body) {
     return body.empty();
+}
+
+std::vector<Token> substitute_meta_input_tokens_with_captures(const std::vector<Token>& constructor_tokens,
+                                                              const std::string& input_name,
+                                                              const std::vector<Token>& input_tokens,
+                                                              const std::vector<TokenCapture>& captures) {
+    std::vector<Token> expanded;
+    for (std::size_t i = 0; i < constructor_tokens.size(); ++i) {
+        const Token& token = constructor_tokens[i];
+        if (token.kind == TokenKind::Identifier && token.text == input_name) {
+            expanded.insert(expanded.end(), input_tokens.begin(), input_tokens.end());
+            continue;
+        }
+        if (token.kind == TokenKind::Tilde &&
+            i + 1 < constructor_tokens.size() &&
+            constructor_tokens[i + 1].kind == TokenKind::Identifier) {
+            const std::string& capture_name = constructor_tokens[i + 1].text;
+            if (const auto* captured = find_capture(captures, capture_name)) {
+                expanded.insert(expanded.end(), captured->begin(), captured->end());
+                ++i;
+                continue;
+            }
+        }
+        expanded.push_back(token);
+    }
+    return expanded;
+}
+
+std::vector<Token> evaluate_meta_token_return_expr_impl(const Expr& expr,
+                                                        const std::string& input_name,
+                                                        const std::vector<Token>& input_tokens,
+                                                        const std::vector<TokenCapture>& captures) {
+    if (is_input_name(expr, input_name)) return input_tokens;
+
+    if (is_token_constructor(expr)) {
+        if (!expr.macro_tokens || expr.macro_tokens->empty()) {
+            fail_eval(expr.loc, "tokens! token_stream constructor requires one or more output tokens");
+        }
+        return substitute_meta_input_tokens_with_captures(*expr.macro_tokens, input_name, input_tokens, captures);
+    }
+
+    std::string reason;
+    if (supported_tokens_slice_call(expr, input_name, reason)) {
+        return token_slice(input_tokens, *expr.args[1], *expr.args[2], input_name);
+    }
+    if (supported_tokens_slice_method(expr, input_name, reason)) {
+        return token_slice(input_tokens, *expr.args[0], *expr.args[1], input_name);
+    }
+    if (supported_tokens_capture_call(expr, input_name, reason)) {
+        return token_capture(input_tokens, expr.args, 2, *expr.args[1]);
+    }
+    if (supported_tokens_capture_method(expr, input_name, reason)) {
+        return token_capture(input_tokens, expr.args, 1, *expr.args[0]);
+    }
+
+    if (expr.kind == ExprKind::If) {
+        if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
+            fail_eval(expr.loc, "malformed token_stream meta branch");
+        }
+        std::vector<TokenCapture> branch_captures = captures;
+        bool take_then = eval_token_condition_expr(*expr_if_condition(expr), input_name, input_tokens, branch_captures);
+        return evaluate_meta_token_return_expr_impl(
+            take_then ? *expr_if_then_value(expr) : *expr_if_else_value(expr),
+            input_name,
+            input_tokens,
+            take_then ? branch_captures : captures);
+    }
+
+    fail_eval(expr.loc, "internal error: unsupported token_stream meta return expression");
 }
 
 } // namespace
@@ -782,41 +879,7 @@ bool is_supported_meta_token_return_expr(const Expr& expr,
 std::vector<Token> evaluate_meta_token_return_expr(const Expr& expr,
                                                    const std::string& input_name,
                                                    const std::vector<Token>& input_tokens) {
-    if (is_input_name(expr, input_name)) return input_tokens;
-
-    if (is_token_constructor(expr)) {
-        if (!expr.macro_tokens || expr.macro_tokens->empty()) {
-            fail_eval(expr.loc, "tokens! token_stream constructor requires one or more output tokens");
-        }
-        return substitute_meta_input_tokens(*expr.macro_tokens, input_name, input_tokens);
-    }
-
-    std::string reason;
-    if (supported_tokens_slice_call(expr, input_name, reason)) {
-        return token_slice(input_tokens, *expr.args[1], *expr.args[2], input_name);
-    }
-    if (supported_tokens_slice_method(expr, input_name, reason)) {
-        return token_slice(input_tokens, *expr.args[0], *expr.args[1], input_name);
-    }
-    if (supported_tokens_capture_call(expr, input_name, reason)) {
-        return token_capture(input_tokens, expr.args, 2, *expr.args[1]);
-    }
-    if (supported_tokens_capture_method(expr, input_name, reason)) {
-        return token_capture(input_tokens, expr.args, 1, *expr.args[0]);
-    }
-
-    if (expr.kind == ExprKind::If) {
-        if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
-            fail_eval(expr.loc, "malformed token_stream meta branch");
-        }
-        bool take_then = eval_token_condition_expr(*expr_if_condition(expr), input_name, input_tokens);
-        return evaluate_meta_token_return_expr(
-            take_then ? *expr_if_then_value(expr) : *expr_if_else_value(expr),
-            input_name,
-            input_tokens);
-    }
-
-    fail_eval(expr.loc, "internal error: unsupported token_stream meta return expression");
+    return evaluate_meta_token_return_expr_impl(expr, input_name, input_tokens, {});
 }
 
 } // namespace ari
