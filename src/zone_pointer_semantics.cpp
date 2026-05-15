@@ -6,6 +6,7 @@
 #include "prelude_resolver.hpp"
 #include "slice_semantics.hpp"
 #include "std_box_semantics.hpp"
+#include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 #include "type_semantics.hpp"
 #include "zone_return_semantics.hpp"
@@ -42,6 +43,7 @@ bool is_zone_pointer_trackable_type(const IrType& type) {
     }
     return type.qualifier == TypeQualifier::Ptr ||
            is_std_box_handle_type(value_type) ||
+           is_std_string_zone_handle_type(value_type) ||
            is_std_vec_zone_handle_type(value_type) ||
            is_prelude_slice_type(value_type);
 }
@@ -96,6 +98,11 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
         if (!source_index || *source_index >= source.args.size()) return false;
         return zone_pointer_source_name_from_expr(*source.args[*source_index], resolver, out);
     }
+    if (source.kind == IrExprKind::Tuple && is_std_string_zone_handle_type(source.type)) {
+        std::optional<std::size_t> source_index = std_string_zone_handle_source_field_index(source.type);
+        if (!source_index || *source_index >= source.args.size()) return false;
+        return zone_pointer_source_name_from_expr(*source.args[*source_index], resolver, out);
+    }
     if (source.kind == IrExprKind::Tuple && is_std_box_handle_type(source.type)) {
         std::optional<std::size_t> source_index = std_box_zone_handle_source_field_index(source.type);
         if (!source_index || *source_index >= source.args.size()) return false;
@@ -116,6 +123,11 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
         if (source_index && source.tuple_index == *source_index) {
             return zone_pointer_source_name_from_expr(operand, resolver, out);
         }
+        std::optional<std::size_t> string_source_index =
+            std_string_zone_handle_source_field_index(operand.type);
+        if (string_source_index && source.tuple_index == *string_source_index) {
+            return zone_pointer_source_name_from_expr(operand, resolver, out);
+        }
         if (is_prelude_slice_type(operand.type) && source.tuple_index == 0) {
             return zone_pointer_source_name_from_expr(operand, resolver, out);
         }
@@ -134,6 +146,10 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
             return true;
         }
         if (std_vec_pointer_result_preserves_receiver_zone(source) &&
+            zone_pointer_source_name_from_expr(*source.args[0], resolver, out)) {
+            return true;
+        }
+        if (std_string_pointer_result_preserves_receiver_zone(source) &&
             zone_pointer_source_name_from_expr(*source.args[0], resolver, out)) {
             return true;
         }

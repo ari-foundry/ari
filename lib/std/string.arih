@@ -1,1 +1,85 @@
+pub struct RawString {
+  mut data: ptr u8,
+  mut len: i64,
+  mut capacity: i64,
+}
+
+pub struct String {
+  raw: RawString,
+}
+
 pub extern "ari" fn alloc_buffer(zone: ref mut Zone, capacity: i64) -> ptr u8 = "ari_builtin_string_alloc_buffer";
+pub extern "ari" fn with_capacity(zone: ref mut Zone, capacity: i64) -> RawString = "ari_builtin_string_with_capacity";
+pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::String = "ari_builtin_string_new";
+pub extern "ari" fn from_string(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
+pub extern "ari" fn copy_to(value: std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
+
+pub impl std::string::String {
+  fn len(self) -> i64 {
+    return self.raw.len;
+  }
+
+  fn capacity(self) -> i64 {
+    return self.raw.capacity;
+  }
+
+  fn is_empty(self) -> bool {
+    return self.raw.len == 0;
+  }
+
+  fn get(self, index: i64) -> u8 {
+    std::assert(index >= 0);
+    std::assert(index < self.raw.len);
+    return ptr_load(ptr_add(self.raw.data, index));
+  }
+
+  fn set(self: ref mut Self, index: i64, value: u8) -> void {
+    std::assert(index >= 0);
+    std::assert(index < self.raw.len);
+    ptr_store(ptr_add(self.raw.data, index), value);
+  }
+
+  fn replace(self: ref mut Self, index: i64, value: u8) -> u8 {
+    std::assert(index >= 0);
+    std::assert(index < self.raw.len);
+    let previous = ptr_load(ptr_add(self.raw.data, index));
+    ptr_store(ptr_add(self.raw.data, index), value);
+    return previous;
+  }
+
+  fn push(self: ref mut Self, value: u8) -> void {
+    std::assert(self.raw.len < self.raw.capacity);
+    ptr_store(ptr_add(self.raw.data, self.raw.len), value);
+    self.raw.len = self.raw.len + 1;
+  }
+
+  fn pop(self: ref mut Self) -> u8 {
+    std::assert(self.raw.len > 0);
+    self.raw.len = self.raw.len - 1;
+    return ptr_load(ptr_add(self.raw.data, self.raw.len));
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    self.raw.len = 0;
+  }
+
+  fn truncate(self: ref mut Self, length: i64) -> void {
+    std::assert(length >= 0);
+    std::assert(length <= self.raw.len);
+    self.raw.len = length;
+  }
+
+  fn as_ptr(self) -> ptr u8 {
+    return self.raw.data;
+  }
+
+  fn as_slice(self: ref mut Self) -> super::Slice[u8] {
+    return super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+  }
+}
+
+impl std::Drop for std::string::String {
+  fn drop(self) -> void {
+    return;
+  }
+}

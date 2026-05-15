@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  var zone = zone::create(16);
+  let raw = std::string::with_capacity(ref mut zone, 3);
+
+  zone::reset(ref mut zone);
+  return raw.len;
+}

@@ -99,14 +99,21 @@ explicit zone and are released by `zone::reset` or `zone::destroy`. The dropped
 handle binding cannot be used again. This is not yet the final owning root
 `Box[T]` smart pointer surface.
 
-The `std::string` module currently exposes only
-`std::string::alloc_buffer(ref mut zone, capacity) -> ptr u8`. It validates a
+The `std::string` module exposes the source-level seed for owned text storage.
+`std::string::alloc_buffer(ref mut zone, capacity) -> ptr u8` validates a
 non-negative byte capacity, allocates that many bytes from an explicit `Zone`,
-and returns a tracked raw byte pointer, using `null` for zero capacity. The
-pointer follows the same reset/destroy invalidation rules as other zone
-allocations. This is the buffer seed for future owned `String` storage, not the
-final root `String` API and not a conversion from today's borrowed lowercase
-`string` values.
+and returns a tracked raw byte pointer, using `null` for zero capacity.
+`std::string::with_capacity(ref mut zone, capacity)` wraps the pointer in a
+tracked `RawString` handle with `data`, `len`, and `capacity` fields, and
+`std::string::new(ref mut zone, capacity)` wraps that in
+`std::string::String`. The source string handle supports `len`, `capacity`,
+`is_empty`, checked byte `get`/`set`/`replace`, fixed-capacity `push`/`pop`,
+`truncate`, `clear`, `as_ptr`, and `as_slice`. `std::string::from_string(ref
+mut zone, text)` copies today's borrowed lowercase `string` into independent
+zone-backed bytes, and `std::string::copy_to(value, ref mut zone)` copies the
+current bytes into another explicit zone. This is still not the final root
+`String` API; allocations remain owned by the explicit zone and are released by
+`zone::reset` or `zone::destroy`.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -598,9 +605,26 @@ ptr_store(ptr_add(bytes, 1), 66 as u8)
 ptr_store(ptr_add(bytes, 2), 0 as u8)
 ```
 
-The returned pointer is still a raw `ptr u8`, so callers must manage length,
-terminators, and element writes explicitly for now. Using it after
-`zone::reset` or `zone::destroy` is rejected.
+The raw returned pointer is still a `ptr u8`, so callers must manage length,
+terminators, and element writes explicitly at that level. For the source handle
+seed, use `std::string::new(ref mut Zone, capacity)` or
+`std::string::from_string(ref mut Zone, text)`:
+
+```ari
+var text = std::string::from_string(ref mut zone, "ari")
+text.push(33u8)
+let raw = text.as_ptr()
+let view = text.as_slice()
+var other_zone = zone::create(64)
+let copied = std::string::copy_to(text, ref mut other_zone)
+```
+
+The handle tracks `len` separately from `capacity` and does not append a NUL
+terminator. `push` is fixed-capacity and asserts if the buffer is full. Use
+`std::string::copy_to(value, ref mut Zone)` to copy the current bytes into
+another explicit zone.
+Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`
+result, or slice view after its source zone is reset or destroyed is rejected.
 
 Root smart-pointer names are reserved now so the lint and library surfaces do
 not drift. `Box[T]` is the future unique owning smart pointer spelling.

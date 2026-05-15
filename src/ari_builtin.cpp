@@ -56,6 +56,14 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::zone::alloc", "ari_builtin_zone_alloc"},
         {"string::alloc_buffer", "ari_builtin_string_alloc_buffer"},
         {"std::string::alloc_buffer", "ari_builtin_string_alloc_buffer"},
+        {"string::with_capacity", "ari_builtin_string_with_capacity"},
+        {"std::string::with_capacity", "ari_builtin_string_with_capacity"},
+        {"string::new", "ari_builtin_string_new"},
+        {"std::string::new", "ari_builtin_string_new"},
+        {"string::from_string", "ari_builtin_string_from_string"},
+        {"std::string::from_string", "ari_builtin_string_from_string"},
+        {"string::copy_to", "ari_builtin_string_copy_to"},
+        {"std::string::copy_to", "ari_builtin_string_copy_to"},
         {"reset", "ari_builtin_zone_reset"},
         {"std::reset", "ari_builtin_zone_reset"},
         {"zone::reset", "ari_builtin_zone_reset"},
@@ -98,6 +106,10 @@ bool is_ari_builtin_symbol(const std::string& symbol) {
            symbol == "ari_builtin_zone_create" ||
            symbol == "ari_builtin_zone_alloc" ||
            symbol == "ari_builtin_string_alloc_buffer" ||
+           symbol == "ari_builtin_string_with_capacity" ||
+           symbol == "ari_builtin_string_new" ||
+           symbol == "ari_builtin_string_from_string" ||
+           symbol == "ari_builtin_string_copy_to" ||
            symbol == "ari_builtin_zone_reset" ||
            symbol == "ari_builtin_zone_destroy" ||
            symbol == "ari_builtin_assert" ||
@@ -136,6 +148,10 @@ std::optional<std::string> ari_builtin_freestanding_blocked_feature(const std::s
     if (*symbol == "ari_builtin_zone_create" ||
         *symbol == "ari_builtin_zone_alloc" ||
         *symbol == "ari_builtin_string_alloc_buffer" ||
+        *symbol == "ari_builtin_string_with_capacity" ||
+        *symbol == "ari_builtin_string_new" ||
+        *symbol == "ari_builtin_string_from_string" ||
+        *symbol == "ari_builtin_string_copy_to" ||
         *symbol == "ari_builtin_zone_reset" ||
         *symbol == "ari_builtin_zone_destroy") {
         return "zone allocation";

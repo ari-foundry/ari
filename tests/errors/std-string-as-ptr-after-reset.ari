@@ -1,0 +1,8 @@
+fn main() -> i64 {
+  var zone = zone::create(16);
+  let text = std::string::from_string(ref mut zone, "ari");
+  let raw = text.as_ptr();
+
+  zone::reset(ref mut zone);
+  return ptr_load(raw) as i64;
+}

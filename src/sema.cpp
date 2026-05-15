@@ -34,6 +34,7 @@
 #include "range_semantics.hpp"
 #include "slice_semantics.hpp"
 #include "std_box_semantics.hpp"
+#include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "trait_semantics.hpp"
@@ -12945,6 +12946,9 @@ private:
         if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_box_zone_handle_source_field_index(struct_type);
         }
+        if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field = std_string_zone_handle_source_field_index(struct_type);
+        }
         for (std::size_t i = 0; i < struct_type.field_names.size(); ++i) {
             IrExprPtr value = std::move(lowered_values[i]);
             coerce_expr_to_expected(*value, struct_type.field_types[i]);
@@ -17252,7 +17256,9 @@ private:
                 const char* escape_context = sig.extern_abi == "ari"
                     ? "extern ari builtin call argument"
                     : "extern C call argument";
-                require_no_zone_pointer_escape(expr.args[i]->loc, *arg, escape_context);
+                if (!std_string_extern_builtin_allows_zone_pointer_argument(function_name, i)) {
+                    require_no_zone_pointer_escape(expr.args[i]->loc, *arg, escape_context);
+                }
             }
             args.push_back(std::move(arg));
         }

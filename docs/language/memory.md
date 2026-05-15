@@ -429,15 +429,18 @@ The checker tracks direct local pointers produced by `zone::alloc<T>` and
 `zone::new<T>`, plus calls to pointer-returning functions or associated
 constructors that take exactly one `ref Zone` or `ref mut Zone` parameter. Using
 those bindings after the source zone has been reset or destroyed is rejected.
-Source handles such as `std::boxed::Box<T>`, `std::vec::RawVec<T>`, and
-`std::vec::Vec<T>` carry the same tracked source-zone provenance when they are
-returned by a single-zone constructor. Raw pointers recovered from a tracked
-`std::boxed::Box<T>` or `std::vec::Vec<T>` through `as_ptr()` keep that
-provenance too. A `std::boxed::Box<T>` or `std::vec::Vec<T>` copied with
-`copy_to(ref mut Zone)` is tracked against the target zone, not the original
-source zone. When a control-flow expression selects tracked handles from the
-same source zone, the selected handle keeps that provenance. Different-source
-selections are not modeled as a single-source handle; keep those values local
+Source handles such as `std::boxed::Box<T>`, `std::string::RawString`,
+`std::string::String`, `std::vec::RawVec<T>`, and `std::vec::Vec<T>` carry the
+same tracked source-zone provenance when they are returned by a single-zone
+constructor. Raw pointers recovered from a tracked `std::boxed::Box<T>`,
+`std::string::String`, or `std::vec::Vec<T>` through `as_ptr()` keep that
+provenance too. A `std::boxed::Box<T>`, `std::string::String`, or
+`std::vec::Vec<T>` copied with `copy_to(ref mut Zone)`, or a
+`std::string::String` copied with `std::string::copy_to(value, ref mut Zone)`,
+is tracked against the target zone, not the original source zone. When a
+control-flow expression selects tracked handles from the same source zone, the
+selected handle keeps that provenance. Different-source selections are not
+modeled as a single-source handle; keep those values local
 until APIs with explicit multi-source lifetime contracts exist.
 That single-zone wrapper rule is a signature-level contract: a pointer-returning
 function with no Zone borrow parameters or with more than one Zone borrow

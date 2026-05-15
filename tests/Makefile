@@ -181,6 +181,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-string-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_string_alloc_buffer"' $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
 	grep -q 'call ptr @ari_builtin_zone_alloc(ptr %zone.slot, i64 %capacity, i64 1)' $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
+	$(TARGET) tests/ok/std-string-handle.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -q 'ari_builtin_string_with_capacity' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -q 'ari_builtin_string_new' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -q '_ARNv4impl19std__string__String8inherent3len' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -q '_ARNv4impl19std__string__String8inherent4push' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -q '_ARNv4impl19std__string__String8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-handle.ll
+	$(TARGET) tests/ok/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
+	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/std-string-from-copy.ll
+	grep -q 'ari_builtin_string_copy_to' $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3len' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8capacity' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
@@ -254,6 +263,8 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-drop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-drop.elf; $(BUILD_DIR)/prelude/std-boxed-drop.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; code=$$?; test $$code -eq 6; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-handle.elf; $(BUILD_DIR)/prelude/std-string-handle.elf; code=$$?; test $$code -eq 153; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-from-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-copy.elf; $(BUILD_DIR)/prelude/std-string-from-copy.elf; code=$$?; test $$code -eq 163; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-replace.elf; $(BUILD_DIR)/prelude/std-vec-replace.elf; code=$$?; test $$code -eq 22; fi
@@ -347,6 +358,12 @@ check-prelude: $(TARGET)
 	grep -q "cannot use dropped binding 'boxed'" $(BUILD_DIR)/prelude/std-boxed-drop-use-after.err
 	if $(TARGET) tests/errors/std-string-alloc-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'data' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.err
+	if $(TARGET) tests/errors/std-string-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-string-handle-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-handle-after-reset.err
+	if $(TARGET) tests/errors/std-string-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.err
+	if $(TARGET) tests/errors/std-string-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err
 	if $(TARGET) tests/errors/prelude-string-reserved.ari -o $(BUILD_DIR)/prelude/prelude-string-reserved.elf >$(BUILD_DIR)/prelude/prelude-string-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'String' is reserved for future owned runtime strings" $(BUILD_DIR)/prelude/prelude-string-reserved.err
 	if $(TARGET) tests/errors/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi

@@ -39,6 +39,10 @@ fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row
 fn std::panic|prelude panic helpers; docs/dev/test-matrix.md Prelude row
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::string::copy_to|check-prelude std-string-from-copy and target reset tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::string::from_string|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::string::new|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::string::with_capacity|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
 fn std::todo|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::unreachable|planned panic helper tests; docs/dev/test-matrix.md Prelude row
@@ -58,6 +62,18 @@ method std::boxed::Box[T]::get|check-prelude std-boxed-box; docs/dev/test-matrix
 method std::boxed::Box[T]::replace|check-prelude std-boxed-replace; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::set|check-prelude std-boxed-box; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::as_ptr|check-prelude std-string-handle and as-ptr provenance tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::as_slice|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::capacity|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::clear|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::get|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::is_empty|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::len|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::pop|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::push|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::replace|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::set|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::truncate|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::capacity|check-prelude std-vec-metadata-methods; docs/dev/test-matrix.md Explicit memory zones row
@@ -104,6 +120,8 @@ struct std::Vec[T]|temporary root Vec tests; docs/dev/test-matrix.md Variables r
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
+struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::string::String|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::vec::RawVec[T]|std RawVec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::vec::Vec[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
 trait std::Clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row

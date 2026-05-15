@@ -1,0 +1,38 @@
+fn main() -> i64 {
+  var zone = zone::create(32);
+  let raw_seed = std::string::with_capacity(ref mut zone, 0);
+  if raw_seed.len != 0 || raw_seed.capacity != 0 {
+    zone::destroy(zone);
+    return 2;
+  }
+
+  var text = std::string::new(ref mut zone, 4);
+
+  if !text.is_empty() {
+    zone::destroy(zone);
+    return 1;
+  }
+
+  text.push(65u8);
+  text.push(66u8);
+  text.push(67u8);
+
+  let old = text.replace(1, 68u8);
+  text.set(2, 69u8);
+  let view = text.as_slice();
+  let raw = text.as_ptr();
+  let total = text.len() + text.capacity() +
+    (old as i64) +
+    (text.get(0) as i64) +
+    (text.get(1) as i64) +
+    (view[2] as i64) +
+    (ptr_load(raw) as i64);
+
+  let tail = text.pop();
+  text.truncate(1);
+  text.clear();
+  let final_len = text.len();
+
+  zone::destroy(zone);
+  return (total + (tail as i64) + final_len) % 256;
+}

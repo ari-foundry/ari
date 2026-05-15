@@ -49,9 +49,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   view type construction, and the scalar/plain-aggregate element materialization
   checks used by sema, Vec `as_slice` lowering, and both backends. Zone
   provenance for source `Slice[T]` views is tracked through
-  `zone_pointer_semantics` alongside pointer and source `std::vec` handles,
-  including the helper code that stores source/generation state, recognizes
-  reset through named zone borrows, and reports reset/destroy invalidation.
+  `zone_pointer_semantics` alongside pointer and source `std::string` /
+  `std::vec` handles, including the helper code that stores source/generation
+  state, recognizes reset through named zone borrows, and reports
+  reset/destroy invalidation.
 - `std_vec_semantics` for source-prelude `std::vec::RawVec<T>` and
   `std::vec::Vec<T>` handle recognition plus their zone-backed source field
   shapes, same-zone method list and diagnostics, and provenance-preserving
@@ -59,6 +60,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   seed checks out of the central expression lowering logic
 - `std_box_semantics` for source-prelude `std::boxed::Box<T>` handle recognition
   and its zone-backed source field shape
+- `std_string_semantics` for source-prelude `std::string::RawString` and
+  `std::string::String` handle recognition, their zone-backed byte source
+  field shapes, and provenance-preserving pointer-return methods such as
+  `String.as_ptr()`
 - `zone_pointer_semantics` for zone pointer/source handle provenance tracing,
   source/generation assignment, reset/destroy invalidation diagnostics,
   temporary-zone escape diagnostics, temporary-zone `zone::destroy` cleanup IR,

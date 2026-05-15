@@ -1,6 +1,7 @@
 #include "zone_return_semantics.hpp"
 
 #include "std_box_semantics.hpp"
+#include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 
 namespace ari {
@@ -25,6 +26,7 @@ std::optional<std::size_t> zone_pointer_return_param_index(const std::vector<IrT
                                                            const IrType& result) {
     if (result.qualifier != TypeQualifier::Ptr &&
         !is_std_box_handle_type(result) &&
+        !is_std_string_zone_handle_type(result) &&
         !is_std_vec_zone_handle_type(result)) {
         return std::nullopt;
     }

@@ -628,6 +628,86 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "{ ptr, i64, i64 } @ari_builtin_string_with_capacity(ptr %zone.slot, i64 %capacity) {");
+        line("entry:");
+        line("  %data = call ptr @ari_builtin_string_alloc_buffer(ptr %zone.slot, i64 %capacity)");
+        line("  %with.data = insertvalue { ptr, i64, i64 } undef, ptr %data, 0");
+        line("  %with.len = insertvalue { ptr, i64, i64 } %with.data, i64 0, 1");
+        line("  %with.capacity = insertvalue { ptr, i64, i64 } %with.len, i64 %capacity, 2");
+        line("  ret { ptr, i64, i64 } %with.capacity");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ { ptr, i64, i64 } } @ari_builtin_string_new(ptr %zone.slot, i64 %capacity) {");
+        line("entry:");
+        line("  %raw = call { ptr, i64, i64 } @ari_builtin_string_with_capacity(ptr %zone.slot, i64 %capacity)");
+        line("  %out = insertvalue { { ptr, i64, i64 } } undef, { ptr, i64, i64 } %raw, 0");
+        line("  ret { { ptr, i64, i64 } } %out");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ { ptr, i64, i64 } } @ari_builtin_string_from_string(ptr %zone.slot, ptr %text) {");
+        line("entry:");
+        line("  br label %scan");
+        line("scan:");
+        line("  %index = phi i64 [ 0, %entry ], [ %next, %scan.next ]");
+        line("  %source.ptr = getelementptr i8, ptr %text, i64 %index");
+        line("  %byte = load i8, ptr %source.ptr");
+        line("  %done = icmp eq i8 %byte, 0");
+        line("  br i1 %done, label %alloc, label %scan.next");
+        line("scan.next:");
+        line("  %next = add i64 %index, 1");
+        line("  br label %scan");
+        line("alloc:");
+        line("  %result = call { { ptr, i64, i64 } } @ari_builtin_string_new(ptr %zone.slot, i64 %index)");
+        line("  %raw = extractvalue { { ptr, i64, i64 } } %result, 0");
+        line("  %dest = extractvalue { ptr, i64, i64 } %raw, 0");
+        line("  br label %copy.cond");
+        line("copy.cond:");
+        line("  %copy.index = phi i64 [ 0, %alloc ], [ %copy.next, %copy.body ]");
+        line("  %copy.done = icmp eq i64 %copy.index, %index");
+        line("  br i1 %copy.done, label %ret, label %copy.body");
+        line("copy.body:");
+        line("  %copy.source.ptr = getelementptr i8, ptr %text, i64 %copy.index");
+        line("  %copy.byte = load i8, ptr %copy.source.ptr");
+        line("  %copy.dest.ptr = getelementptr i8, ptr %dest, i64 %copy.index");
+        line("  store i8 %copy.byte, ptr %copy.dest.ptr");
+        line("  %copy.next = add i64 %copy.index, 1");
+        line("  br label %copy.cond");
+        line("ret:");
+        line("  %owned.raw = insertvalue { ptr, i64, i64 } %raw, i64 %index, 1");
+        line("  %owned.result = insertvalue { { ptr, i64, i64 } } %result, { ptr, i64, i64 } %owned.raw, 0");
+        line("  ret { { ptr, i64, i64 } } %owned.result");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "{ { ptr, i64, i64 } } @ari_builtin_string_copy_to({ { ptr, i64, i64 } } %value, ptr %target.slot) {");
+        line("entry:");
+        line("  %source.raw = extractvalue { { ptr, i64, i64 } } %value, 0");
+        line("  %source.data = extractvalue { ptr, i64, i64 } %source.raw, 0");
+        line("  %length = extractvalue { ptr, i64, i64 } %source.raw, 1");
+        line("  %result = call { { ptr, i64, i64 } } @ari_builtin_string_new(ptr %target.slot, i64 %length)");
+        line("  %dest.raw = extractvalue { { ptr, i64, i64 } } %result, 0");
+        line("  %dest.data = extractvalue { ptr, i64, i64 } %dest.raw, 0");
+        line("  br label %copy.cond");
+        line("copy.cond:");
+        line("  %copy.index = phi i64 [ 0, %entry ], [ %copy.next, %copy.body ]");
+        line("  %copy.done = icmp eq i64 %copy.index, %length");
+        line("  br i1 %copy.done, label %ret, label %copy.body");
+        line("copy.body:");
+        line("  %source.ptr = getelementptr i8, ptr %source.data, i64 %copy.index");
+        line("  %byte = load i8, ptr %source.ptr");
+        line("  %dest.ptr = getelementptr i8, ptr %dest.data, i64 %copy.index");
+        line("  store i8 %byte, ptr %dest.ptr");
+        line("  %copy.next = add i64 %copy.index, 1");
+        line("  br label %copy.cond");
+        line("ret:");
+        line("  %copied.raw = insertvalue { ptr, i64, i64 } %dest.raw, i64 %length, 1");
+        line("  %copied.result = insertvalue { { ptr, i64, i64 } } %result, { ptr, i64, i64 } %copied.raw, 0");
+        line("  ret { { ptr, i64, i64 } } %copied.result");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "void @ari_builtin_zone_reset(ptr %zone.slot) {");
         line("entry:");
         line("  %zone = load ptr, ptr %zone.slot");
@@ -3026,7 +3106,12 @@ private:
             params = function_params_.at(name);
         } else if (std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(name)) {
             symbol = *builtin_symbol;
-            result = (symbol == "ari_builtin_zone_alloc" || symbol == "ari_builtin_string_alloc_buffer")
+            result = (symbol == "ari_builtin_zone_alloc" ||
+                      symbol == "ari_builtin_string_alloc_buffer" ||
+                      symbol == "ari_builtin_string_with_capacity" ||
+                      symbol == "ari_builtin_string_new" ||
+                      symbol == "ari_builtin_string_from_string" ||
+                      symbol == "ari_builtin_string_copy_to")
                          ? expr.type
                          : builtin_result_type(symbol, expr.loc);
         } else {

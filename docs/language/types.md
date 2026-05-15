@@ -105,6 +105,16 @@ Use lowercase `string` for today's pointer-shaped string values. The future
 owned `String` surface will require explicit allocator or capability arguments
 when it creates independent storage.
 
+The source prelude already has the allocator-backed seed under `std::string`.
+`std::string::new(ref mut zone, capacity)` creates a tracked
+`std::string::String` handle with separate `len` and `capacity` metadata over
+zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
+borrowed lowercase `string` into that handle. It supports checked byte
+`get`/`set`/`replace`, fixed-capacity `push`/`pop`, `truncate`, `clear`,
+`as_ptr`, `as_slice`, and top-level `std::string::copy_to(value, ref mut Zone)`.
+The root `String` name remains reserved until the final ownership/value-drop
+contract and growable runtime text capacity are defined.
+
 ## Tuples
 
 Tuple types and literals are type-checked:
