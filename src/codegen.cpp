@@ -4237,30 +4237,10 @@ public:
 
     EmittedProgram emit() {
         collect_extern_abis();
+        collect_ir_functions();
         emit_entry();
-        std::vector<CompiledFunction> functions;
-        for (const auto& fn : program_.functions) {
-            FunctionEmitter emitter(fn, extern_abis_);
-            functions.push_back(emitter.emit());
-        }
-        for (std::size_t i = 0; i < functions.size(); ++i) {
-            auto& fn = functions[i];
-            std::size_t offset = code_.size();
-            function_offsets_[fn.name] = offset;
-            for (std::uint8_t byte : fn.code) code_.u8(byte);
-            const IrFunction& ir_fn = program_.functions[i];
-            symbols_.push_back(CodeSymbol{
-                ir_fn.link_name.empty() ? mangle_function_name(ir_fn.name) : ir_fn.link_name,
-                static_cast<std::uint64_t>(offset),
-                static_cast<std::uint64_t>(fn.code.size())
-            });
-            for (const auto& call : fn.calls) {
-                global_calls_.push_back(CallPatch{function_offsets_[fn.name] + call.imm_offset, call.name});
-            }
-            for (const auto& address : fn.addresses) {
-                global_addresses_.push_back(CallPatch{function_offsets_[fn.name] + address.imm_offset, address.name});
-            }
-        }
+        enqueue_initial_functions();
+        emit_queued_functions();
         emit_builtin_functions();
         patch_calls();
         return EmittedProgram{std::move(code_.bytes), std::move(symbols_)};
@@ -4270,6 +4250,8 @@ private:
     const IrProgram& program_;
     CodeBuffer code_;
     std::map<std::string, std::size_t> function_offsets_;
+    std::map<std::string, const IrFunction*> ir_functions_;
+    std::vector<const IrFunction*> function_queue_;
     std::map<std::string, IrExternAbi> extern_abis_;
     std::vector<CallPatch> global_calls_;
     std::vector<CallPatch> global_addresses_;
@@ -4278,6 +4260,61 @@ private:
     void collect_extern_abis() {
         for (const auto& fn : program_.extern_functions) {
             extern_abis_[fn.name] = fn.abi;
+        }
+    }
+
+    void collect_ir_functions() {
+        for (const auto& fn : program_.functions) {
+            ir_functions_[fn.name] = &fn;
+        }
+    }
+
+    static bool is_std_module_name(const std::string& module_name) {
+        return module_name == "std" ||
+               (module_name.size() > 5 && module_name.compare(0, 5, "std::") == 0);
+    }
+
+    static bool should_emit_initially(const IrFunction& fn) {
+        if (is_std_module_name(fn.module_name)) return !fn.link_name.empty();
+        return true;
+    }
+
+    void enqueue_function(const std::string& name) {
+        if (function_offsets_.count(name)) return;
+        auto found = ir_functions_.find(name);
+        if (found == ir_functions_.end()) return;
+        function_offsets_[name] = 0;
+        function_queue_.push_back(found->second);
+    }
+
+    void enqueue_initial_functions() {
+        for (const auto& fn : program_.functions) {
+            if (should_emit_initially(fn)) enqueue_function(fn.name);
+        }
+    }
+
+    void emit_queued_functions() {
+        std::size_t index = 0;
+        while (index < function_queue_.size()) {
+            const IrFunction& ir_fn = *function_queue_[index++];
+            FunctionEmitter emitter(ir_fn, extern_abis_);
+            CompiledFunction fn = emitter.emit();
+            std::size_t offset = code_.size();
+            function_offsets_[fn.name] = offset;
+            for (std::uint8_t byte : fn.code) code_.u8(byte);
+            symbols_.push_back(CodeSymbol{
+                ir_fn.link_name.empty() ? mangle_function_name(ir_fn.name) : ir_fn.link_name,
+                static_cast<std::uint64_t>(offset),
+                static_cast<std::uint64_t>(fn.code.size())
+            });
+            for (const auto& call : fn.calls) {
+                global_calls_.push_back(CallPatch{function_offsets_[fn.name] + call.imm_offset, call.name});
+                enqueue_function(call.name);
+            }
+            for (const auto& address : fn.addresses) {
+                global_addresses_.push_back(CallPatch{function_offsets_[fn.name] + address.imm_offset, address.name});
+                enqueue_function(address.name);
+            }
         }
     }
 

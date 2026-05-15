@@ -1214,6 +1214,7 @@ inline void set_ir_stmt_break_value(IrStmt& stmt, IrExprPtr value) {
 
 struct IrFunction {
     std::string name;
+    std::string module_name;
     std::string link_name;
     std::vector<IrParam> params;
     IrType return_type;

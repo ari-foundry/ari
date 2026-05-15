@@ -4,7 +4,12 @@
 check-debug: TARGET := $(DEBUG_TARGET)
 check-debug: $(DEBUG_TARGET) check
 
+TOOL_ENV ?=
+TOOL_ARI ?= $(TARGET)
+
 check-sanitize: TARGET := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 $(SANITIZE_TARGET)
+check-sanitize: TOOL_ENV := env ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1
+check-sanitize: TOOL_ARI := $(SANITIZE_TARGET)
 check-sanitize: $(SANITIZE_TARGET) check
 
 check: check-std-api $(TARGET) check-cli check-tools check-prelude check-control-flow check-match check-modules check-operators check-generics check-meta check-traits check-structs check-variables check-ffi check-functions check-errors
@@ -52,34 +57,34 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools
 	python3 tests/tools/check_vscode_extension.py
 	if command -v node >/dev/null 2>&1; then node --check editors/vscode/extension.js; node --check editors/vscode/commands.js; node --check editors/vscode/tasks.js; node --check editors/vscode/lsp.js; node --check editors/vscode/paths.js; node --check editors/vscode/config.js; node --check editors/vscode/scripts/package-vsix.js; fi
-	$(LINT_TARGET) --ari $(TARGET) examples/count.ari >$(BUILD_DIR)/tools/lint-ok.out
+	$(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) examples/count.ari >$(BUILD_DIR)/tools/lint-ok.out
 	grep -q 'examples/count.ari: ok' $(BUILD_DIR)/tools/lint-ok.out
 	$(LINT_TARGET) --list-rules >$(BUILD_DIR)/tools/lint-rules.out
 	grep -q 'lint/trailing-whitespace' $(BUILD_DIR)/tools/lint-rules.out
 	grep -q 'lint/missing-final-newline' $(BUILD_DIR)/tools/lint-rules.out
 	printf 'fn main() -> i64 { \n  return 0;\n}\n' >$(BUILD_DIR)/tools/lint-trailing-whitespace.ari
 	printf '# Ari lint config\nlint/trailing-whitespace = error\n' >$(BUILD_DIR)/tools/ari-lint.rules
-	if $(LINT_TARGET) --ari $(TARGET) $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.out; then exit 1; fi
+	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.out; then exit 1; fi
 	grep -q 'lint/trailing-whitespace' $(BUILD_DIR)/tools/lint-trailing.out
 	grep -q 'error: \[lint/trailing-whitespace\]' $(BUILD_DIR)/tools/lint-trailing.out
-	$(LINT_TARGET) --ari $(TARGET) --rule lint/trailing-whitespace=off $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-off.out
+	$(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --rule lint/trailing-whitespace=off $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-off.out
 	grep -q '$(BUILD_DIR)/tools/lint-trailing-whitespace.ari: ok' $(BUILD_DIR)/tools/lint-trailing-off.out
-	if $(LINT_TARGET) --ari $(TARGET) --config $(BUILD_DIR)/tools/ari-lint.rules $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-config.out; then exit 1; fi
+	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --config $(BUILD_DIR)/tools/ari-lint.rules $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-config.out; then exit 1; fi
 	grep -q 'error: \[lint/trailing-whitespace\]' $(BUILD_DIR)/tools/lint-trailing-config.out
-	if $(LINT_TARGET) --ari $(TARGET) --json --rule trailing-whitespace=error $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.json; then exit 1; fi
+	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --json --rule trailing-whitespace=error $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.json; then exit 1; fi
 	grep -q '"severity":"error"' $(BUILD_DIR)/tools/lint-trailing.json
 	grep -q '"code":"lint/trailing-whitespace"' $(BUILD_DIR)/tools/lint-trailing.json
 	printf 'fn main() -> i64 {\n  return 0;\n}' >$(BUILD_DIR)/tools/lint-missing-final-newline.ari
-	if $(LINT_TARGET) --ari $(TARGET) --json --rule missing-final-newline=error $(BUILD_DIR)/tools/lint-missing-final-newline.ari >$(BUILD_DIR)/tools/lint-missing-final-newline.json; then exit 1; fi
+	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --json --rule missing-final-newline=error $(BUILD_DIR)/tools/lint-missing-final-newline.ari >$(BUILD_DIR)/tools/lint-missing-final-newline.json; then exit 1; fi
 	grep -q '"code":"lint/missing-final-newline"' $(BUILD_DIR)/tools/lint-missing-final-newline.json
 	grep -q '"message":"missing final newline"' $(BUILD_DIR)/tools/lint-missing-final-newline.json
-	$(LINT_TARGET) --ari $(TARGET) --rule lint/missing-final-newline=off $(BUILD_DIR)/tools/lint-missing-final-newline.ari >$(BUILD_DIR)/tools/lint-missing-final-newline-off.out
+	$(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --rule lint/missing-final-newline=off $(BUILD_DIR)/tools/lint-missing-final-newline.ari >$(BUILD_DIR)/tools/lint-missing-final-newline-off.out
 	grep -q '$(BUILD_DIR)/tools/lint-missing-final-newline.ari: ok' $(BUILD_DIR)/tools/lint-missing-final-newline-off.out
-	if $(LINT_TARGET) --ari $(TARGET) --json tests/errors/prelude-macro-format-planned.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
+	if $(TOOL_ENV) $(LINT_TARGET) --ari $(TOOL_ARI) --json tests/errors/prelude-macro-format-no-default-zone.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
 	grep -q '"code":"ari/compiler"' $(BUILD_DIR)/tools/lint-format.json
-	grep -q "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/tools/lint-format.json
-	sh tests/tools/lsp_smoke.sh
+	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/tools/lint-format.json
+	ARI="$(TOOL_ARI)" LSP="$(LSP_TARGET)" $(TOOL_ENV) sh tests/tools/lsp_smoke.sh
 
 check-cli: $(TARGET)
 	mkdir -p $(BUILD_DIR)/cli
@@ -459,10 +464,10 @@ check-prelude: $(TARGET)
 	grep -q "freestanding backend does not lower line input helpers yet" $(BUILD_DIR)/prelude/prelude-read-line-freestanding.err
 	if $(TARGET) tests/errors/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err
-	if $(TARGET) tests/errors/prelude-macro-format-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-planned.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-planned.err
-	if $(TARGET) tests/errors/prelude-macro-format-qualified-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err
+	if $(TARGET) tests/errors/prelude-macro-format-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err 2>&1; then exit 1; fi
+	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err
+	if $(TARGET) tests/errors/prelude-macro-format-qualified-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err 2>&1; then exit 1; fi
+	grep -q "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-no-default-zone.err
 	if $(TARGET) tests/errors/prelude-format-in-f128.ari -o $(BUILD_DIR)/prelude/prelude-format-in-f128.elf >$(BUILD_DIR)/prelude/prelude-format-in-f128.err 2>&1; then exit 1; fi
 	grep -q "format_in! currently supports string, integer, bool, f32, and f64 values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
 	if $(TARGET) tests/errors/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi

@@ -211,15 +211,17 @@ constructor subset documented in the language guide.
      handles. The source `std::boxed::Box<T>` seed already has a no-op generic
      Drop impl and use-after-drop checking; the remaining work is the final
      root owning smart-pointer surface and value-destroying ownership contract.
-   - [text-format] finish the formatted string surface after the first
-     explicit-zone pass. `format_in!(ref mut Zone, "...", values...)` now
-     lowers `{}` string/integer/bool/float formatting and `{:.N}` float
-     precision to source `String` construction plus same-zone append helpers,
-     and evaluates each formatted value once before selecting the append helper
-     from the lowered value type; remaining work is the final `format!` policy.
-     Small follow-up: [format-display-trait] once trait dispatch is ready for
-     broad library use, route user-defined formatted values through a compact
-     display-style trait instead of adding more macro-only cases.
+   Explicit-zone formatted strings are now settled for the 0.x source-`std`
+   surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
+   string/integer/bool/float formatting and `{:.N}` float precision to source
+   `String` construction plus same-zone append helpers, and evaluates each
+   formatted value once before selecting the append helper from the lowered
+   value type. Plain `format!` remains a reserved spelling with a targeted
+   no-implicit-allocation-zone diagnostic, keeping Ari away from a magical
+   global heap while the library surface stays explicit-capability based.
+   Small follow-up: [format-display-trait] once trait dispatch is ready for
+   broad library use, route user-defined formatted values through a compact
+   display-style trait instead of adding more macro-only cases.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

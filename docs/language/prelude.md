@@ -292,8 +292,9 @@ helpers as manual text construction. `{:.N}` placeholders format `f32`/`f64`
 values with `N` decimal digits, matching the print formatting surface. Each
 value expression is evaluated once before the type-directed append call is
 selected, so function calls and computed bool/integer expressions work the same
-as local bindings. `format!` is still reserved for the future default-zone or
-context-aware spelling.
+as local bindings. Ari does not provide an implicit allocation zone in the 0.x
+language surface, so `format!` is a reserved spelling with a targeted diagnostic
+that points to `format_in!`.
 Other prelude expression macros are recognized as unqualified names or paths
 that resolve to the root `std` macro name, such as `std::print!`, `std::format!`,
 or an alias of `std::format_in!`; arbitrary module paths whose basename is

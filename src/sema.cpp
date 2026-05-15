@@ -4420,6 +4420,7 @@ private:
 
         IrFunction ir_fn;
         ir_fn.name = lowered_name;
+        ir_fn.module_name = fn.module_name;
         ir_fn.loc = fn.loc;
         ir_fn.return_type = current_return_;
         auto sig_found = functions_.find(lowered_name);
@@ -4484,6 +4485,7 @@ private:
                 current_borrow_return_path_ = sig_found->second.borrow_return_path;
             }
         }
+        seed_source_std_same_zone_parameter_sources(fn);
 
         CheckedStatements body = check_statements(fn.body, false);
         if (body.flow == Flow::Continues) {
@@ -5038,6 +5040,27 @@ private:
     bool is_zone_pointer_expr(const IrExpr& value) {
         std::string source_name;
         return zone_pointer_source_name_from_expr(value, source_name);
+    }
+
+    void seed_source_std_same_zone_parameter_sources(const FunctionDecl& fn) {
+        if (fn.params.size() < 2) return;
+
+        const std::string method_name = basename_of_qualified_name(fn.name);
+        LocalInfo* receiver = find_local_slot(fn.params[0].name);
+        LocalInfo* zone = find_local_slot(fn.params[1].name);
+        if (!receiver || !zone || !is_zone_source_type(zone->type)) return;
+
+        IrType receiver_type = value_qualified_type(receiver->type);
+        bool same_zone_source_method =
+            (fn.module_name == "std::string" &&
+             std_string_method_requires_same_zone_argument(method_name) &&
+             is_std_string_handle_type(receiver_type)) ||
+            (fn.module_name == "std::vec" &&
+             std_vec_method_requires_same_zone_argument(method_name) &&
+             is_std_vec_handle_type(receiver_type));
+        if (!same_zone_source_method) return;
+
+        set_zone_pointer_source_from_name(*receiver, fn.params[1].name, zone_pointer_locals());
     }
 
     void require_no_zone_pointer_escape(SourceLocation loc, const IrExpr& value, const std::string& context) {
@@ -6880,7 +6903,7 @@ private:
         if (current_module_name_ != "std::vec" && current_module_name_ != "std::string") return false;
         std::string base_name;
         std::string path;
-        if (!tracked_ir_access_path(target, base_name, path) || base_name != "self") return false;
+        if (!tracked_ir_access_path(target, base_name, path)) return false;
         const LocalInfo* local = find_local_slot(base_name);
         if (!local) return false;
         if (current_module_name_ == "std::string") {
@@ -15645,7 +15668,7 @@ private:
 
     IrExprPtr check_prelude_macro_call(const Expr& expr, PreludeMacroKind kind) {
         if (kind == PreludeMacroKind::Format) {
-            fail(expr.loc, "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings");
+            fail(expr.loc, "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings");
         }
         if (kind == PreludeMacroKind::FormatIn) {
             if (!expr.macro_tokens) {

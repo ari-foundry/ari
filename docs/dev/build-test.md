@@ -131,7 +131,7 @@ auto-loaded explicit `std::...` header calls, implicit Rust-like standard
 aliases such as `Vec`/`Range`/`range`, explicit `mod std;` loading under
 `--no-implicit-std`, `print!`/`println!`, host `read_line`/`input`,
 freestanding byte IO and formatted float output, explicit-zone `format_in!`
-string construction, and planned `format!` string allocation diagnostics.
+string construction, and `format!` no-implicit-zone diagnostics.
 
 `make check-traits` runs trait-focused tests for generic trait declarations,
 impl conformance, bare `self` signature inference, concrete method-call static
