@@ -1,0 +1,40 @@
+{
+  "scopeName": "source.ari",
+  "patterns": [
+    {
+      "name": "comment.line.double-slash.ari",
+      "match": "//.*$"
+    },
+    {
+      "name": "string.quoted.double.ari",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.ari",
+          "match": "\\\\."
+        }
+      ]
+    },
+    {
+      "name": "keyword.control.ari",
+      "match": "\\b(fn|extern|return|let|var|if|else|while|for|in|match|break|continue|init|next|mod|pub|use|impl|trait|struct|enum|as|own|drop|ref|mut)\\b"
+    },
+    {
+      "name": "constant.language.ari",
+      "match": "\\b(true|false)\\b"
+    },
+    {
+      "name": "storage.type.ari",
+      "match": "\\b(i8|i16|i32|i64|u8|u16|u32|u64|bool|string|void|Zone|Self)\\b"
+    },
+    {
+      "name": "constant.numeric.ari",
+      "match": "\\b[0-9]+\\b"
+    },
+    {
+      "name": "entity.name.function.macro.ari",
+      "match": "\\b[A-Za-z_][A-Za-z0-9_]*!"
+    }
+  ]
+}

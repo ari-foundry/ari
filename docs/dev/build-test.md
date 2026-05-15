@@ -6,6 +6,9 @@
 make release
 make debug
 make sanitize
+make tools
+make lint
+make lsp
 ```
 
 Outputs:
@@ -14,6 +17,8 @@ Outputs:
 build/ari
 build/debug/ari
 build/sanitize/ari
+build/ari-lint
+build/ari-lsp
 ```
 
 `make` is the same as `make release`.
@@ -27,6 +32,7 @@ and each focused `check-*` target still run from the repository root.
 ```sh
 make check
 make check-std-api
+make check-tools
 make check-debug
 make check-sanitize
 make check-cli
@@ -51,6 +57,10 @@ with a focused coverage note, add or extend the relevant test, and update
 `make check-cli` runs just the compiler invocation and build-mode checks:
 LLVM IR output, optional LLVM-driver linked output when `clang` is installed,
 freestanding output, and common bad CLI argument paths.
+
+`make check-tools` builds `ari-lint` and `ari-lsp`, checks lint's human and JSON
+diagnostic output, and runs a small JSON-RPC smoke test for
+`textDocument/publishDiagnostics`.
 
 The root `Makefile` and the compiler driver both look for `clang`,
 versioned `clang-21` through `clang-14`, and common `/usr/lib/llvm-*` install

@@ -31,12 +31,20 @@ Run the full test suite:
 make check
 ```
 
+Build the lint and LSP tools:
+
+```sh
+make tools
+```
+
 ## Build Modes
 
 ```sh
 make release
 make debug
 make sanitize
+make tools
+make check-tools
 make check
 make check-debug
 make check-sanitize

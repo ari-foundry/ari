@@ -1,0 +1,69 @@
+{
+  "name": "ari-vscode",
+  "displayName": "Ari",
+  "description": "Language support for Ari source files through ari-lsp.",
+  "version": "0.1.0",
+  "publisher": "ari-lang",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:ari"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "ari",
+        "aliases": [
+          "Ari",
+          "ari"
+        ],
+        "extensions": [
+          ".ari",
+          ".arih"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ari",
+        "scopeName": "source.ari",
+        "path": "./syntaxes/ari.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Ari",
+      "properties": {
+        "ari.compilerPath": {
+          "type": "string",
+          "default": "build/ari",
+          "description": "Path to the Ari compiler used by ari-lsp for --check diagnostics."
+        },
+        "ari.lspPath": {
+          "type": "string",
+          "default": "build/ari-lsp",
+          "description": "Path to the ari-lsp executable."
+        },
+        "ari.modulePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Extra module search paths passed to ari-lsp as -I arguments."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0"
+  }
+}

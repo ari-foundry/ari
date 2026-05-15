@@ -13,15 +13,26 @@ BUILD_DIR := build
 TARGET := $(BUILD_DIR)/ari$(EXEEXT)
 DEBUG_TARGET := $(BUILD_DIR)/debug/ari$(EXEEXT)
 SANITIZE_TARGET := $(BUILD_DIR)/sanitize/ari$(EXEEXT)
+LINT_TARGET := $(BUILD_DIR)/ari-lint$(EXEEXT)
+LSP_TARGET := $(BUILD_DIR)/ari-lsp$(EXEEXT)
 SRC := $(wildcard src/*.cpp)
 HEADERS := $(wildcard src/*.hpp)
+TOOLING_SRC := $(wildcard tools/ari_tooling/*.cpp)
+TOOLING_HEADERS := $(wildcard tools/ari_tooling/*.hpp)
+LINT_SRC := $(wildcard tools/lint/*.cpp)
+LINT_HEADERS := $(wildcard tools/lint/*.hpp)
+LSP_SRC := $(wildcard tools/lsp/*.cpp)
+LSP_HEADERS := $(wildcard tools/lsp/*.hpp)
 
-.PHONY: all release debug sanitize clean sample
+.PHONY: all release debug sanitize tools lint lsp clean sample
 
 all: $(TARGET)
 release: $(TARGET)
 debug: $(DEBUG_TARGET)
 sanitize: $(SANITIZE_TARGET)
+tools: lint lsp
+lint: $(LINT_TARGET)
+lsp: $(LSP_TARGET)
 
 $(TARGET): $(SRC) $(HEADERS)
 	mkdir -p $(BUILD_DIR)
@@ -34,6 +45,14 @@ $(DEBUG_TARGET): $(SRC) $(HEADERS)
 $(SANITIZE_TARGET): $(SRC) $(HEADERS)
 	mkdir -p $(BUILD_DIR)/sanitize
 	$(CXX) $(SANITIZE_CXXFLAGS) $(SRC) -o $@
+
+$(LINT_TARGET): $(LINT_SRC) $(LINT_HEADERS) $(TOOLING_SRC) $(TOOLING_HEADERS)
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(TOOLING_SRC) $(LINT_SRC) -o $@
+
+$(LSP_TARGET): $(LSP_SRC) $(LSP_HEADERS) $(TOOLING_SRC) $(TOOLING_HEADERS)
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) $(TOOLING_SRC) $(LSP_SRC) -o $@
 
 sample: $(TARGET)
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/count.ll

@@ -37,6 +37,14 @@ Use these when changing the compiler:
 - [Roadmap](dev/roadmap.md)
 - [Semantic Checker Decomposition](dev/sema-decomposition.md)
 
+## Tooling Docs
+
+Use these when changing editor and lint tooling:
+
+- [Ari Lint](lint/README.md)
+- [Ari LSP](lsp/README.md)
+- [Ari VS Code Extension](vscode/README.md)
+
 ## Notes
 
 Use these for design direction and handoff context:
