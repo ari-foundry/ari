@@ -253,9 +253,11 @@ Checklist:
       allocator-backed Vec storage with a tracked zone-backed element pointer
 - [x] `std::boxed::new<T>(ref mut Zone, value)` wraps placement construction in
       a tracked source `std::boxed::Box<T>` handle with
-      `get`/`set`/`replace`/`copy_to`/`swap`/`as_ptr` methods and reset/destroy
-      invalidation, plus a generic Drop impl that consumes the handle binding,
-      runs `Drop` for the stored value when one exists, and rejects later use
+      `get`/`set`/`replace`/`copy_to`/`swap`/`as_ptr` methods, borrowed
+      receiver lowering for read-only `get`/`copy_to`/`as_ptr`, and
+      reset/destroy invalidation, plus a generic Drop impl that consumes the
+      handle binding, runs `Drop` for the stored value when one exists, and
+      rejects later use
 - [x] expose root `Box[T]` / `std::Box[T]` as aliases for the explicit-zone
       source `std::boxed::Box<T>` handle, including `Box::new<T>` /
       `std::Box::new<T>` associated construction with reset/destroy

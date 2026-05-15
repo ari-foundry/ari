@@ -93,6 +93,8 @@ constructors through `Box::new<T>(ref mut zone, value)` and
 `replace(value)`, `copy_to(ref mut zone)`, `swap(ref mut other)`, and
 `as_ptr()` methods for copyable, zone-placeable values. `replace(value)` stores
 a new value and returns the previous one.
+`get()`, `copy_to(ref mut zone)`, and `as_ptr()` borrow the handle receiver
+instead of copying it; the mutating methods borrow it mutably.
 `copy_to(ref mut zone)` copies the current value into another explicit zone and
 returns a new tracked `std::boxed::Box<T>` handle for that target zone.
 `swap(ref mut other)` exchanges the values stored by two boxes without changing
@@ -639,11 +641,12 @@ let raw = boxed.as_ptr()
 
 The handle stores a raw pointer returned by `zone::new<T>` and keeps the same
 zone provenance, so reset/destroy invalidation applies to the handle and to raw
-pointers recovered through `as_ptr()`. Explicit `drop boxed` consumes the
-handle binding and loads the pointed-to value through the normal `Drop` path,
-so a stored type with a `Drop` impl gets its destructor call. The zone still
-owns the backing bytes; memory is released with `zone::reset` or
-`zone::destroy`.
+pointers recovered through `as_ptr()`. `get()`, `copy_to(ref mut Zone)`, and
+`as_ptr()` are read-only borrows of the handle; `set`, `replace`, and `swap`
+take mutable borrows. Explicit `drop boxed` consumes the handle binding and
+loads the pointed-to value through the normal `Drop` path, so a stored type with
+a `Drop` impl gets its destructor call. The zone still owns the backing bytes;
+memory is released with `zone::reset` or `zone::destroy`.
 
 `std::string::alloc_buffer(ref mut Zone, capacity)` allocates byte storage for
 future owned strings:

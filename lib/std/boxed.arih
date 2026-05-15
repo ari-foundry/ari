@@ -11,7 +11,7 @@ pub impl[T] std::boxed::Box[T] {
     return std::boxed::new<T>(zone, value);
   }
 
-  fn get(self) -> T {
+  fn get(self: ref Self) -> T {
     return ptr_load(self.data);
   }
 
@@ -25,7 +25,7 @@ pub impl[T] std::boxed::Box[T] {
     return previous;
   }
 
-  fn copy_to(self, target: ref mut Zone) -> std::boxed::Box[T] {
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::boxed::Box[T] {
     return std::boxed::new<T>(target, self.get());
   }
 
@@ -35,7 +35,7 @@ pub impl[T] std::boxed::Box[T] {
     ptr_store(other.data, temporary);
   }
 
-  fn as_ptr(self) -> ptr T {
+  fn as_ptr(self: ref Self) -> ptr T {
     return self.data;
   }
 }
