@@ -118,7 +118,7 @@ tracked `RawString` handle with `data`, `len`, and `capacity` fields, and
 `std::string::new(ref mut zone, capacity)` wraps that in
 `std::string::String` (also available as `String` and `std::String`). The
 source string handle supports `len`, `capacity`,
-`is_empty`, checked byte `get`/`set`/`replace`, fixed-capacity
+`is_empty`, checked byte `first`/`last`/`get`/`set`/`replace`, fixed-capacity
 `push`/`pop`/`insert`, same-zone growth through `reserve`, `reserve_extra`,
 `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, append helpers
 for lowercase `string`, `i64`, bool, and `f64` values through
@@ -130,7 +130,7 @@ lowercase `string` into independent zone-backed bytes,
 `std::string::from_slice_in(ref mut zone, values)` copies a borrowed byte slice
 into independent zone-backed bytes, and `std::string::copy_to(ref value, ref
 mut zone)` copies the current bytes into another explicit zone. Metadata,
-checked byte `get`, byte search, method-style `copy_to(ref mut zone)`,
+checked byte `first`/`last`/`get`, byte search, method-style `copy_to(ref mut zone)`,
 `as_ptr`, and top-level target-zone copy borrow the handle instead of copying
 it. This is still an explicit-zone string API; allocations are released by
 `zone::reset` or `zone::destroy`, and the string handle's `Drop` impl only ends
@@ -721,8 +721,8 @@ Use
 `std::string::from_slice_in(ref mut Zone, Slice[u8])` to copy a borrowed byte
 slice into another explicit zone, or
 `text.copy_to(ref mut Zone)` / `std::string::copy_to(ref value, ref mut Zone)`
-to copy the current bytes into another explicit zone. Metadata, checked byte
-reads, `as_ptr()`, and target-zone copy are read-only borrows of the source
+to copy the current bytes into another explicit zone. Metadata, checked
+endpoint/indexed byte reads, `as_ptr()`, and target-zone copy are read-only borrows of the source
 string handle. So are byte-search helpers: `contains(byte)` reports whether a
 byte is present, `index_of(byte)` returns the first matching byte index or
 `-1`, and `count(byte)` returns the number of matches. Mutating byte and growth

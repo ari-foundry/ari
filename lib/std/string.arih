@@ -52,6 +52,16 @@ pub impl std::string::String {
     return self.raw.len == 0;
   }
 
+  fn first(self: ref Self) -> u8 {
+    std::assert(self.raw.len > 0);
+    return ptr_load(self.raw.data);
+  }
+
+  fn last(self: ref Self) -> u8 {
+    std::assert(self.raw.len > 0);
+    return ptr_load(ptr_add(self.raw.data, self.raw.len - 1));
+  }
+
   fn get(self: ref Self, index: i64) -> u8 {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);

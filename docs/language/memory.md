@@ -453,7 +453,7 @@ the target zone, not the original source zone. When a
 source `std::string::String` or `std::vec::Vec<T>` grows through an explicit
 zone argument, that argument must be the same source zone that created the
 handle. Read-only `std::string::String` and `std::vec::Vec<T>` handle methods
-borrow the receiver, so metadata, checked reads, source string/Vec search,
+borrow the receiver, so metadata, checked endpoint/indexed reads, source string/Vec search,
 target-zone copy, and raw-pointer recovery do not copy the handle itself.
 Dropping a tracked source `std::vec::Vec<T>`
 consumes the handle and drops each current element, while the explicit zone

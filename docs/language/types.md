@@ -113,7 +113,7 @@ zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
 borrowed lowercase `string` into that handle.
 `std::string::from_slice_in(ref mut Zone, Slice[u8])` copies a borrowed byte
 slice into a new target-zone string handle. It supports checked byte
-`get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone
+`first`/`last`/`get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone
 grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in`, plus `append_string_in`,
 `append_i64_in`, `append_bool_in`, `append_f64_in`, `truncate`, `clear`,
@@ -121,7 +121,7 @@ byte search with `contains`, `index_of`, and `count`, `as_ptr`, `as_slice`,
 method-style `copy_to(ref mut Zone)`, and top-level
 `std::string::copy_to(ref value, ref mut Zone)`. The zone argument passed to a
 grow or append method must be the same source zone that created the handle.
-Metadata, checked byte `get`, byte search, `as_ptr`, and target-zone copy
+Metadata, checked byte `first`/`last`/`get`, byte search, `as_ptr`, and target-zone copy
 borrow the string handle instead of copying it. `String` is still an
 explicit-zone handle: `zone::reset` or `zone::destroy` releases the bytes, and
 dropping the handle only ends that binding.
