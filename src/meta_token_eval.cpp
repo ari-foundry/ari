@@ -133,6 +133,29 @@ bool supported_tokens_ends_with_method(const Expr& expr, const std::string& inpu
            all_string_literals(expr.args, 0);
 }
 
+bool supported_tokens_wrapped_by_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "tokens_wrapped_by" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 3 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name) &&
+           is_string_literal(*expr.args[1]) &&
+           is_string_literal(*expr.args[2]);
+}
+
+bool supported_tokens_wrapped_by_method(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::MethodCall &&
+           expr.name == "wrapped_by" &&
+           expr.args.size() == 2 &&
+           expr_type_args(expr).empty() &&
+           expr_operand(expr) &&
+           is_input_name(*expr_operand(expr), input_name) &&
+           is_string_literal(*expr.args[0]) &&
+           is_string_literal(*expr.args[1]);
+}
+
 bool supported_tokens_nth_is_call(const Expr& expr, const std::string& input_name) {
     return expr.kind == ExprKind::Call &&
            expr.name == "tokens_nth_is" &&
@@ -176,6 +199,50 @@ bool token_ends_with(const std::vector<Token>& input_tokens,
         if (input_tokens[offset + i - first].text != parts[i]->string_value) return false;
     }
     return true;
+}
+
+std::string matching_close_text(const std::string& open) {
+    if (open == "(") return ")";
+    if (open == "{") return "}";
+    if (open == "[") return "]";
+    return "";
+}
+
+std::string matching_open_text(const std::string& close) {
+    if (close == ")") return "(";
+    if (close == "}") return "{";
+    if (close == "]") return "[";
+    return "";
+}
+
+bool is_close_delimiter_text(const std::string& text) {
+    return !matching_open_text(text).empty();
+}
+
+bool token_wrapped_by(const std::vector<Token>& input_tokens,
+                      const Expr& open_expr,
+                      const Expr& close_expr) {
+    const std::string& open = open_expr.string_value;
+    const std::string& close = close_expr.string_value;
+    if (matching_close_text(open) != close) return false;
+    if (input_tokens.size() < 2) return false;
+    if (input_tokens.front().text != open || input_tokens.back().text != close) return false;
+
+    std::vector<std::string> closing_stack;
+    for (std::size_t i = 0; i < input_tokens.size(); ++i) {
+        const std::string& text = input_tokens[i].text;
+        std::string matching = matching_close_text(text);
+        if (!matching.empty()) {
+            closing_stack.push_back(matching);
+            continue;
+        }
+        if (is_close_delimiter_text(text)) {
+            if (closing_stack.empty() || closing_stack.back() != text) return false;
+            closing_stack.pop_back();
+            if (closing_stack.empty() && i + 1 != input_tokens.size()) return false;
+        }
+    }
+    return closing_stack.empty();
 }
 
 bool token_nth_is(const std::vector<Token>& input_tokens,
@@ -263,12 +330,14 @@ bool supported_token_condition_expr(const Expr& expr,
             if (supported_tokens_empty_call(expr, input_name)) return true;
             if (supported_tokens_starts_with_call(expr, input_name)) return true;
             if (supported_tokens_ends_with_call(expr, input_name)) return true;
+            if (supported_tokens_wrapped_by_call(expr, input_name)) return true;
             if (supported_tokens_nth_is_call(expr, input_name)) return true;
             break;
         case ExprKind::MethodCall:
             if (supported_tokens_empty_method(expr, input_name)) return true;
             if (supported_tokens_starts_with_method(expr, input_name)) return true;
             if (supported_tokens_ends_with_method(expr, input_name)) return true;
+            if (supported_tokens_wrapped_by_method(expr, input_name)) return true;
             if (supported_tokens_nth_is_method(expr, input_name)) return true;
             break;
         default:
@@ -281,7 +350,9 @@ bool supported_token_condition_expr(const Expr& expr,
              input_name + ", \"...\", ...) or " + input_name +
              ".starts_with(\"...\", ...), token-suffix text matching with tokens_ends_with(" +
              input_name + ", \"...\", ...) or " + input_name +
-             ".ends_with(\"...\", ...), and indexed token text matching with tokens_nth_is(" +
+             ".ends_with(\"...\", ...), delimiter wrapper checks with tokens_wrapped_by(" +
+             input_name + ", \"(\", \")\") or " + input_name +
+             ".wrapped_by(\"(\", \")\"), and indexed token text matching with tokens_nth_is(" +
              input_name + ", index, \"...\") or " + input_name + ".nth_is(index, \"...\")";
     return false;
 }
@@ -335,6 +406,9 @@ bool eval_token_condition_expr(const Expr& expr,
             if (supported_tokens_ends_with_call(expr, input_name)) {
                 return token_ends_with(input_tokens, expr.args, 1);
             }
+            if (supported_tokens_wrapped_by_call(expr, input_name)) {
+                return token_wrapped_by(input_tokens, *expr.args[1], *expr.args[2]);
+            }
             if (supported_tokens_nth_is_call(expr, input_name)) {
                 return token_nth_is(input_tokens, *expr.args[1], *expr.args[2]);
             }
@@ -346,6 +420,9 @@ bool eval_token_condition_expr(const Expr& expr,
             }
             if (supported_tokens_ends_with_method(expr, input_name)) {
                 return token_ends_with(input_tokens, expr.args, 0);
+            }
+            if (supported_tokens_wrapped_by_method(expr, input_name)) {
+                return token_wrapped_by(input_tokens, *expr.args[0], *expr.args[1]);
             }
             if (supported_tokens_nth_is_method(expr, input_name)) {
                 return token_nth_is(input_tokens, *expr.args[0], *expr.args[1]);
