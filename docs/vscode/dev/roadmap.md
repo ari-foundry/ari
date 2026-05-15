@@ -15,12 +15,13 @@
       declarations through the LSP definition path.
 - [x] Surface first-pass top-level Ari declaration completion through the LSP
       completion path.
+- [x] Add command-palette actions for running `ari-lint` and `ari --check` on
+      the active Ari file.
 
 ## Near-Term Work
 
 - [ ] Add a README section for packaging and local extension development once
       dependency installation policy is decided.
-- [ ] Add command-palette actions for running `ari-lint` and `ari --check`.
 - [ ] Add workspace task snippets for `make`, `make check`, and `make lint`.
 - [ ] Add richer syntax highlighting after the lint/LSP diagnostic path is
       stable.

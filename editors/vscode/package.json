@@ -11,7 +11,9 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "onLanguage:ari"
+    "onLanguage:ari",
+    "onCommand:ari.checkCurrentFile",
+    "onCommand:ari.lintCurrentFile"
   ],
   "main": "./extension.js",
   "contributes": {
@@ -36,6 +38,16 @@
         "path": "./syntaxes/ari.tmLanguage.json"
       }
     ],
+    "commands": [
+      {
+        "command": "ari.checkCurrentFile",
+        "title": "Ari: Check Current File"
+      },
+      {
+        "command": "ari.lintCurrentFile",
+        "title": "Ari: Lint Current File"
+      }
+    ],
     "configuration": {
       "title": "Ari",
       "properties": {
@@ -48,6 +60,11 @@
           "type": "string",
           "default": "build/ari-lsp",
           "description": "Path to the ari-lsp executable."
+        },
+        "ari.lintPath": {
+          "type": "string",
+          "default": "build/ari-lint",
+          "description": "Path to the ari-lint executable used by the Ari: Lint Current File command."
         },
         "ari.modulePaths": {
           "type": "array",

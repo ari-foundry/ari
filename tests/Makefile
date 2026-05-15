@@ -50,6 +50,8 @@ check-std-api:
 
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools
+	python3 tests/tools/check_vscode_extension.py
+	if command -v node >/dev/null 2>&1; then node --check editors/vscode/extension.js; node --check editors/vscode/commands.js; fi
 	$(LINT_TARGET) --ari $(TARGET) examples/count.ari >$(BUILD_DIR)/tools/lint-ok.out
 	grep -q 'examples/count.ari: ok' $(BUILD_DIR)/tools/lint-ok.out
 	if $(LINT_TARGET) --ari $(TARGET) --json tests/errors/prelude-macro-format-planned.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi

@@ -27,6 +27,9 @@ build/ari-lint --ari build/ari -I path/to/modules source.ari
 `ARI_COMPILER` can also point the tool at a compiler binary when `--ari` is not
 provided.
 
+The VS Code extension's `Ari: Lint Current File` command invokes this tool
+through its `ari.lintPath` setting.
+
 ## Current Scope
 
 - Uses saved source files, not editor buffers.
