@@ -298,6 +298,10 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent8index_of"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent8contains"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent5count"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	$(TARGET) tests/ok/std-vec-slice-compare.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
+	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
+	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
+	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
 	$(TARGET) tests/ok/std-vec-as-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-slice.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8as_slice' $(BUILD_DIR)/prelude/std-vec-as-slice.ll
 	$(TARGET) tests/ok/std-vec-reserve.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve.ll
@@ -377,6 +381,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-grow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-grow.elf; $(BUILD_DIR)/prelude/std-string-grow.elf; code=$$?; test $$code -eq 177; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-slice-compare.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; code=$$?; test $$code -eq 221; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-replace.elf; $(BUILD_DIR)/prelude/std-vec-replace.elf; code=$$?; test $$code -eq 22; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-as-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-slice.elf; $(BUILD_DIR)/prelude/std-vec-as-slice.elf; code=$$?; test $$code -eq 99; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-reserve.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve.elf; $(BUILD_DIR)/prelude/std-vec-reserve.elf; code=$$?; test $$code -eq 43; fi

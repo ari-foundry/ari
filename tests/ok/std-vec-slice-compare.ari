@@ -1,0 +1,57 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var values = std::vec::new<i64>(ref mut zone, 4);
+  var same = std::vec::new<i64>(ref mut zone, 4);
+  var prefix = std::vec::new<i64>(ref mut zone, 2);
+  var suffix = std::vec::new<i64>(ref mut zone, 2);
+  var wrong = std::vec::new<i64>(ref mut zone, 2);
+  var too_long = std::vec::new<i64>(ref mut zone, 5);
+  var empty = std::vec::new<i64>(ref mut zone, 0);
+
+  values.push(3);
+  values.push(5);
+  values.push(8);
+  values.push(13);
+
+  same.push(3);
+  same.push(5);
+  same.push(8);
+  same.push(13);
+
+  prefix.push(3);
+  prefix.push(5);
+
+  suffix.push(8);
+  suffix.push(13);
+
+  wrong.push(5);
+  wrong.push(8);
+
+  too_long.push(3);
+  too_long.push(5);
+  too_long.push(8);
+  too_long.push(13);
+  too_long.push(21);
+
+  let same_view = same.as_slice();
+  let prefix_view = prefix.as_slice();
+  let suffix_view = suffix.as_slice();
+  let wrong_view = wrong.as_slice();
+  let too_long_view = too_long.as_slice();
+  let empty_view = empty.as_slice();
+
+  let a = if values.equals(same_view) { 11 } else { 0 };
+  let b = if values.starts_with(prefix_view) { 13 } else { 0 };
+  let c = if values.ends_with(suffix_view) { 17 } else { 0 };
+  let d = if values.equals(prefix_view) { 0 } else { 19 };
+  let e = if values.starts_with(wrong_view) { 0 } else { 23 };
+  let f = if values.ends_with(too_long_view) { 0 } else { 29 };
+  let g = if values.starts_with(empty_view) { 31 } else { 0 };
+  let h = if values.ends_with(empty_view) { 37 } else { 0 };
+
+  values.push_in(ref mut zone, 21);
+  let i = if values.equals(same_view) { 0 } else { 41 };
+
+  zone::destroy(zone);
+  return a + b + c + d + e + f + g + h + i;
+}

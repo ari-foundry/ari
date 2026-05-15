@@ -560,6 +560,9 @@ let len = vec.len()
 let cap = vec.capacity()
 let middle = vec.get(1)
 let view = vec.as_slice()
+let same = vec.equals(view)
+let has_prefix = vec.starts_with(view)
+let has_suffix = vec.ends_with(view)
 let copied_from_view = std::vec::from_slice_in<i64>(ref mut other_zone, view)
 vec.extend_from_slice_in(ref mut zone, view)
 let removed = vec.remove(1)
@@ -595,9 +598,10 @@ handle tied to the target zone, so resetting the source zone does not
 invalidate the copy. `std::vec::Vec<T>.as_ptr()` returns the stored element
 pointer with the receiver's zone provenance intact. `vec.as_slice()` returns a
 `Slice[T]` over the same zone-backed buffer, and that slice is rejected after
-the source zone is reset or destroyed. Metadata, checked read, search,
-target-zone copy, and raw-pointer methods borrow the source handle receiver
-instead of copying it.
+the source zone is reset or destroyed. `equals(view)`, `starts_with(view)`, and
+`ends_with(view)` compare the current Vec elements with a borrowed `Slice[T]`
+view. Metadata, checked read, search, Slice comparison, target-zone copy, and
+raw-pointer methods borrow the source handle receiver instead of copying it.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over

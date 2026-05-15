@@ -127,7 +127,8 @@ constructor subset documented in the language guide.
    `std::vec::Vec<T>` handle and `std::vec::new<T>(ref mut Zone, capacity)`
    now connect that raw seed to a public allocator/capability creation surface.
    The source handle also has metadata, checked read/write/replace, push/pop,
-   insert/remove, swap, truncate/clear, simple linear search, grow-only
+   insert/remove, swap, truncate/clear, simple linear search plus
+   `Slice<T>` exact/prefix/suffix checks, grow-only
    explicit `reserve(ref mut Zone, capacity)`,
    `reserve_extra(ref mut Zone, additional)` capacity growth to
    `len + additional`, same-zone grow-on-demand
@@ -139,8 +140,8 @@ constructor subset documented in the language guide.
    tracked `as_slice` views over its allocated buffer. It can also expose
    the stored data pointer through provenance-preserving `as_ptr()` and
    `copy_to(ref mut Zone)` into a new target-zone handle; read-only metadata,
-   read, search, target-zone copy, and raw-pointer methods borrow their
-   receiver rather than copying the handle. Its `Drop` impl consumes the handle
+   read, search, Slice comparison, target-zone copy, and raw-pointer methods
+   borrow their receiver rather than copying the handle. Its `Drop` impl consumes the handle
    and drops each current element while the explicit zone keeps responsibility
    for releasing the backing storage. Runtime heap growth for
    root/local `Vec[T]` and the root

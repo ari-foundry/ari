@@ -295,6 +295,49 @@ pub impl[T] std::vec::Vec[T] {
     return total;
   }
 
+  fn starts_with(self: ref Self, values: super::Slice[T]) -> bool {
+    if values.len > self.raw.len {
+      return false;
+    }
+    var index = 0;
+    while index < values.len {
+      if ptr_load(ptr_add(self.raw.data, index)) != values[index] {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
+  fn ends_with(self: ref Self, values: super::Slice[T]) -> bool {
+    if values.len > self.raw.len {
+      return false;
+    }
+    let offset = self.raw.len - values.len;
+    var index = 0;
+    while index < values.len {
+      if ptr_load(ptr_add(self.raw.data, offset + index)) != values[index] {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
+  fn equals(self: ref Self, values: super::Slice[T]) -> bool {
+    if self.raw.len != values.len {
+      return false;
+    }
+    var index = 0;
+    while index < values.len {
+      if ptr_load(ptr_add(self.raw.data, index)) != values[index] {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
   fn as_slice(self: ref mut Self) -> super::Slice[T] {
     return super::Slice<T> { data: self.raw.data, len: self.raw.len };
   }

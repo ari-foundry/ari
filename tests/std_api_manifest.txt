@@ -106,6 +106,8 @@ method std::vec::Vec[T]::clear|check-prelude std-vec-fixed-ops; docs/dev/test-ma
 method std::vec::Vec[T]::contains|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::ends_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::equals|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::first|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::get|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
@@ -124,6 +126,7 @@ method std::vec::Vec[T]::reserve|check-prelude std-vec-reserve; docs/dev/test-ma
 method std::vec::Vec[T]::reserve_extra|check-prelude std-vec-reserve-extra; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::resize_in|check-prelude std-vec-resize-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::set|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
