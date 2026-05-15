@@ -15,6 +15,8 @@
       Outline using the current document text.
 - [x] Add first-pass `textDocument/hover` support for top-level declarations
       using the same symbol scanner.
+- [x] Add first-pass same-document `textDocument/definition` support for
+      top-level declarations using the same symbol scanner.
 - [x] Clear diagnostics on `didClose`.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
 
@@ -23,7 +25,8 @@
 - [ ] Add stable diagnostic codes once the compiler/lint layer exposes them.
 - [ ] Replace first-pass text symbol scanning with parser/module-summary-backed
       nested symbols.
-- [ ] Add go-to-definition for local modules and source declarations.
+- [ ] Replace first-pass definition with parser/sema-backed local, module, and
+      imported source declaration navigation.
 - [ ] Replace first-pass hover text with parser/sema-backed signatures and std
       API docs.
 

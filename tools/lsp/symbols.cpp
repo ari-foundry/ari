@@ -153,12 +153,24 @@ std::string word_at_position(const std::string& text, int line, int character) {
     return value.substr(start, end - start);
 }
 
-const Symbol* find_hover_symbol(const std::vector<Symbol>& symbols, const std::string& word) {
+const Symbol* find_symbol_for_word(const std::vector<Symbol>& symbols, const std::string& word) {
     for (const Symbol& symbol : symbols) {
         if (symbol.name == word) return &symbol;
         if (symbol.name.rfind("impl ", 0) == 0 && symbol.name.substr(5) == word) return &symbol;
     }
     return nullptr;
+}
+
+std::string location_json(const std::string& uri, const Symbol& symbol) {
+    std::ostringstream out;
+    out << "{";
+    out << "\"uri\":\"" << tooling::json_escape(uri) << "\",";
+    out << "\"range\":{";
+    out << "\"start\":{\"line\":" << symbol.line << ",\"character\":" << symbol.start << "},";
+    out << "\"end\":{\"line\":" << symbol.line << ",\"character\":" << symbol.end << "}";
+    out << "}";
+    out << "}";
+    return out.str();
 }
 
 } // namespace
@@ -182,7 +194,7 @@ std::string document_symbols_response(const std::string& id, const std::string& 
 std::string hover_response(const std::string& id, const std::string& text, int line, int character) {
     std::string word = word_at_position(text, line, character);
     const std::vector<Symbol> symbols = collect_symbols(text);
-    const Symbol* symbol = find_hover_symbol(symbols, word);
+    const Symbol* symbol = find_symbol_for_word(symbols, word);
     std::ostringstream out;
     out << "{";
     out << "\"jsonrpc\":\"2.0\",";
@@ -197,6 +209,27 @@ std::string hover_response(const std::string& id, const std::string& text, int l
         out << "\"result\":{";
         out << "\"contents\":{\"kind\":\"markdown\",\"value\":\"" << tooling::json_escape(value) << "\"}";
         out << "}";
+    }
+    out << "}";
+    return out.str();
+}
+
+std::string definition_response(const std::string& id,
+                                const std::string& text,
+                                const std::string& uri,
+                                int line,
+                                int character) {
+    std::string word = word_at_position(text, line, character);
+    const std::vector<Symbol> symbols = collect_symbols(text);
+    const Symbol* symbol = find_symbol_for_word(symbols, word);
+    std::ostringstream out;
+    out << "{";
+    out << "\"jsonrpc\":\"2.0\",";
+    out << "\"id\":" << (id.empty() ? "null" : id) << ",";
+    if (!symbol) {
+        out << "\"result\":null";
+    } else {
+        out << "\"result\":" << location_json(uri, *symbol);
     }
     out << "}";
     return out.str();

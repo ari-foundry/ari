@@ -7,7 +7,8 @@ publish and pull diagnostic flows, including unsaved buffer text, so VS Code can
 show compiler-backed errors in the Problems panel while editing. The extension
 also receives `textDocument/documentSymbol` results from `ari-lsp`, which gives
 VS Code a first-pass Outline for top-level Ari declarations. Hover is also
-served for those top-level declarations.
+served for those top-level declarations, and same-document definition requests
+can jump to their declaration lines.
 
 ## Layout
 

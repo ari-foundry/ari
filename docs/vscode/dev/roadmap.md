@@ -11,6 +11,8 @@
       Outline path.
 - [x] Surface first-pass hover text for top-level Ari declarations through the
       LSP hover path.
+- [x] Surface first-pass same-document go-to-definition for top-level Ari
+      declarations through the LSP definition path.
 
 ## Near-Term Work
 

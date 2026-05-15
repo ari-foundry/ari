@@ -188,7 +188,8 @@ int main(int argc, char** argv) {
                 "\"textDocumentSync\":1,"
                 "\"diagnosticProvider\":{\"interFileDependencies\":true,\"workspaceDiagnostics\":false},"
                 "\"documentSymbolProvider\":true,"
-                "\"hoverProvider\":true"
+                "\"hoverProvider\":true,"
+                "\"definitionProvider\":true"
                 "},\"serverInfo\":{\"name\":\"ari-lsp\",\"version\":\"0.1.0-dev\"}}";
             ari::lsp::write_message(std::cout, response_result(id.empty() ? "null" : id, capabilities));
             continue;
@@ -227,6 +228,18 @@ int main(int argc, char** argv) {
                 ari::lsp::hover_response(
                     id,
                     text_for_uri(documents, uri),
+                    int_field_or_zero(body, "line"),
+                    int_field_or_zero(body, "character")));
+            continue;
+        }
+        if (method == "textDocument/definition") {
+            std::string uri = ari::lsp::json_string_field(body, "uri");
+            ari::lsp::write_message(
+                std::cout,
+                ari::lsp::definition_response(
+                    id,
+                    text_for_uri(documents, uri),
+                    uri,
                     int_field_or_zero(body, "line"),
                     int_field_or_zero(body, "character")));
             continue;
