@@ -1,6 +1,6 @@
 fn main() -> i64 {
   var zone = zone::create(64);
-  let text = format_in!(ref mut zone, "value={}", 1.5);
+  let text = format_in!(ref mut zone, "value={}", 1.5f128);
   zone::destroy(zone);
   return text.len();
 }

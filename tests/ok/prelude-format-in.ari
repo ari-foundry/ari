@@ -16,6 +16,7 @@ fn main() -> i64 {
   let ok = true;
   var text: String = format_in!(ref mut zone, "ari={} ok={} {{}} {}", value, ok, "done");
   var computed: String = format_in!(ref mut zone, "n={} ready={} label={}", count(), ready(count()), label());
+  var floats: String = format_in!(ref mut zone, "pi={:.2} default={}", 3.14159f64, 1.5f32);
 
   assert_eq_i64(text.len(), 22);
   assert_eq_i64(text.get(4) as i64, 45);
@@ -28,8 +29,15 @@ fn main() -> i64 {
   assert_eq_i64(computed.get(10) as i64, 116);
   assert_eq_i64(computed.get(21) as i64, 100);
   assert_eq_i64(computed.get(24) as i64, 101);
+  assert_eq_i64(floats.len(), 24);
+  assert_eq_i64(floats.get(3) as i64, 51);
+  assert_eq_i64(floats.get(4) as i64, 46);
+  assert_eq_i64(floats.get(6) as i64, 52);
+  assert_eq_i64(floats.get(16) as i64, 49);
+  assert_eq_i64(floats.get(18) as i64, 53);
+  assert_eq_i64(floats.get(23) as i64, 48);
 
-  let total = text.len() + computed.len() + (text.get(10) as i64) + (text.get(15) as i64) + (text.get(21) as i64);
+  let total = text.len() + computed.len() + floats.len() + (text.get(10) as i64) + (text.get(15) as i64) + (text.get(21) as i64);
   zone::destroy(zone);
   return total % 256;
 }

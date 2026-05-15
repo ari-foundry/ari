@@ -112,8 +112,8 @@ source string handle supports `len`, `capacity`,
 `is_empty`, checked byte `get`/`set`/`replace`, fixed-capacity
 `push`/`pop`/`insert`, same-zone growth through `reserve`, `reserve_extra`,
 `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, append helpers
-for lowercase `string`, `i64`, and `bool` values through `append_string_in`,
-`append_i64_in`, and `append_bool_in`, plus
+for lowercase `string`, `i64`, bool, and `f64` values through
+`append_string_in`, `append_i64_in`, `append_bool_in`, and `append_f64_in`, plus
 `truncate`, `clear`, `as_ptr`, and `as_slice`. `std::string::from_string(ref
 mut zone, text)` copies today's borrowed lowercase `string` into independent
 zone-backed bytes, and `std::string::copy_to(value, ref mut zone)` copies the
@@ -286,13 +286,14 @@ matches!(value, Some(_))
 bool-valued pattern test using the same pattern engine as `match`, so enum,
 scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
 the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
-`String` in the explicit zone and currently lowers `{}` placeholders for
-lowercase `string`, integer, and bool values through the same checked append
-helpers as manual text construction. Each value expression is evaluated once
-before the type-directed append call is selected, so function calls and
-computed bool/integer expressions work the same as local bindings. Precision
-placeholders and float values remain on `print!`/`println!` for now. `format!`
-is still reserved for the future default-zone or context-aware spelling.
+`String` in the explicit zone and lowers `{}` placeholders for lowercase
+`string`, integer, bool, `f32`, and `f64` values through the same checked append
+helpers as manual text construction. `{:.N}` placeholders format `f32`/`f64`
+values with `N` decimal digits, matching the print formatting surface. Each
+value expression is evaluated once before the type-directed append call is
+selected, so function calls and computed bool/integer expressions work the same
+as local bindings. `format!` is still reserved for the future default-zone or
+context-aware spelling.
 Other prelude expression macros are recognized as unqualified names or paths
 that resolve to the root `std` macro name, such as `std::print!`, `std::format!`,
 or an alias of `std::format_in!`; arbitrary module paths whose basename is
@@ -645,7 +646,8 @@ var text = std::string::from_string(ref mut zone, "ari")
 text.append_string_in(ref mut zone, "=")
 text.append_i64_in(ref mut zone, 42)
 text.append_bool_in(ref mut zone, true)
-let rendered = format_in!(ref mut zone, "ari={} ok={}", 42, true)
+text.append_f64_in(ref mut zone, 3.14159f64, 2)
+let rendered = format_in!(ref mut zone, "ari={} ok={} pi={:.2}", 42, true, 3.14159f64)
 let raw = text.as_ptr()
 let view = text.as_slice()
 var other_zone = zone::create(64)
@@ -659,10 +661,11 @@ additional)` for explicit growth, `push_in(ref mut Zone, byte)` and
 `insert_in(ref mut Zone, index, byte)` for grow-on-demand writes,
 `extend_from_slice_in(ref mut Zone, Slice[u8])` for bulk byte appends, and
 `resize_in(ref mut Zone, length, byte)` to grow or shrink. `append_string_in`,
-`append_i64_in`, and `append_bool_in` build text from the first scalar values
-needed by explicit formatting, and `format_in!(ref mut Zone, "...", values...)`
-wraps those helpers in a single expression for `{}` string/integer/bool
-formatting, with each formatted value evaluated once before append dispatch.
+`append_i64_in`, `append_bool_in`, and `append_f64_in` build text from the
+scalar values needed by explicit formatting, and
+`format_in!(ref mut Zone, "...", values...)` wraps those helpers in a single
+expression for `{}` string/integer/bool/float formatting plus `{:.N}` float
+precision, with each formatted value evaluated once before append dispatch.
 These growth and append methods must receive the same explicit zone that
 created the handle, so provenance continues to match reset/destroy invalidation.
 Use

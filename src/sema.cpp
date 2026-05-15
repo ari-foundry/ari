@@ -14741,7 +14741,8 @@ private:
     enum class FormatInAppendMethod {
         String,
         I64,
-        Bool
+        Bool,
+        F64
     };
 
     static StmtPtr make_format_in_var_decl(SourceLocation loc,
@@ -14774,11 +14775,15 @@ private:
             return FormatInAppendMethod::Bool;
         }
         if (is_value_integer_type(type)) return FormatInAppendMethod::I64;
-        if (is_value_float_type(type)) {
-            fail(loc, "format_in! currently supports string, integer, and bool values; use print!/println! for float formatting");
+        if (type.qualifier == TypeQualifier::Value &&
+            (type.primitive == IrPrimitiveKind::F32 || type.primitive == IrPrimitiveKind::F64)) {
+            return FormatInAppendMethod::F64;
+        }
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::F128) {
+            fail(loc, "format_in! currently supports string, integer, bool, f32, and f64 values, got " + type_name(type));
         }
         if (type.primitive != IrPrimitiveKind::Unknown) {
-            fail(loc, "format_in! currently supports string, integer, and bool values, got " + type_name(type));
+            fail(loc, "format_in! currently supports string, integer, bool, f32, and f64 values, got " + type_name(type));
         }
         return std::nullopt;
     }
@@ -14795,8 +14800,16 @@ private:
             case FormatInAppendMethod::String: return "append_string_in";
             case FormatInAppendMethod::I64: return "append_i64_in";
             case FormatInAppendMethod::Bool: return "append_bool_in";
+            case FormatInAppendMethod::F64: return "append_f64_in";
         }
         return "append_i64_in";
+    }
+
+    static TypeRef format_in_f64_type_ref(SourceLocation loc) {
+        TypeRef type;
+        type.loc = loc;
+        type.name = "f64";
+        return type;
     }
 
     static std::uint64_t format_in_initial_capacity(const ParsedFormatString& format_string) {
@@ -14826,10 +14839,20 @@ private:
                                        const std::string& result_name,
                                        const Expr& zone_arg,
                                        FormatInAppendMethod method,
-                                       ExprPtr value_arg) {
+                                       ExprPtr value_arg,
+                                       const IrFormatSpec& spec) {
         std::vector<ExprPtr> args;
         args.push_back(clone_expression_tree(zone_arg));
+        if (method == FormatInAppendMethod::F64) {
+            value_arg = make_ast_cast_expr(loc, std::move(value_arg), format_in_f64_type_ref(loc));
+        }
         args.push_back(std::move(value_arg));
+        if (method == FormatInAppendMethod::F64) {
+            args.push_back(make_ast_integer_expr(
+                loc,
+                static_cast<std::uint64_t>(spec.precision >= 0 ? spec.precision : 6)
+            ));
+        }
         return make_ast_method_call_expr(
             loc,
             make_ast_name_expr(loc, result_name),
@@ -14859,12 +14882,6 @@ private:
         }
 
         ParsedFormatString format_string = parse_format_string(format.loc, format.string_value, args.size() - 2);
-        for (const IrFormatSpec& spec : format_string.specs) {
-            if (spec.precision >= 0) {
-                fail(format.loc, "format_in! currently supports {} placeholders only; use print!/println! for precision formatting");
-            }
-        }
-
         std::string result_name = make_hidden_local("$format");
         std::vector<IrStmtPtr> statements;
         push_scope();
@@ -14894,6 +14911,12 @@ private:
                 false
             ), statements);
             FormatInAppendMethod method = format_in_append_method_for_local(args[i + 2]->loc, value_name);
+            if (format_string.specs[i].precision >= 0 && method != FormatInAppendMethod::F64) {
+                const LocalInfo* local = find_local_slot(value_name);
+                if (!local) throw CompileError("internal error: missing format_in! value local '" + value_name + "'");
+                fail(args[i + 2]->loc,
+                     "format precision placeholders require f32 or f64 arguments, got " + type_name(local->type));
+            }
             append_format_in_statement(args[i + 2]->loc, make_format_in_expr_stmt(
                 args[i + 2]->loc,
                 make_format_in_append_call(
@@ -14901,7 +14924,8 @@ private:
                     result_name,
                     zone_arg,
                     method,
-                    make_ast_name_expr(args[i + 2]->loc, value_name))
+                    make_ast_name_expr(args[i + 2]->loc, value_name),
+                    format_string.specs[i])
             ), statements);
         }
         if (!format_string.parts.empty() && !format_string.parts.back().empty()) {

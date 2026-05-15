@@ -195,7 +195,7 @@ constructor subset documented in the language guide.
    explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
    `insert_in`, `extend_from_slice_in`, and `resize_in`,
    same-zone text construction helpers through `append_string_in`,
-   `append_i64_in`, and `append_bool_in`,
+   `append_i64_in`, `append_bool_in`, and `append_f64_in`,
    `std::string::copy_to(value, ref mut Zone)` target-zone copying, and
    `from_string(ref mut Zone, string)` copying from today's borrowed lowercase
    `string` values. Host line input now has explicit-zone owned helpers
@@ -213,11 +213,10 @@ constructor subset documented in the language guide.
      root owning smart-pointer surface and value-destroying ownership contract.
    - [text-format] finish the formatted string surface after the first
      explicit-zone pass. `format_in!(ref mut Zone, "...", values...)` now
-     lowers `{}` string/integer/bool formatting to source `String` construction
-     plus same-zone append helpers, and evaluates each formatted value once
-     before selecting the append helper from the lowered value type; remaining
-     work is the final `format!` policy and owned-string float/precision
-     formatting.
+     lowers `{}` string/integer/bool/float formatting and `{:.N}` float
+     precision to source `String` construction plus same-zone append helpers,
+     and evaluates each formatted value once before selecting the append helper
+     from the lowered value type; remaining work is the final `format!` policy.
      Small follow-up: [format-display-trait] once trait dispatch is ready for
      broad library use, route user-defined formatted values through a compact
      display-style trait instead of adding more macro-only cases.

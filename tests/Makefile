@@ -245,6 +245,7 @@ check-prelude: $(TARGET)
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
+	grep -q 'append_f64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3len' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8capacity' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
@@ -424,6 +425,8 @@ check-prelude: $(TARGET)
 	grep -q "std::string::String.push_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-push-in-different-zone.err
 	if $(TARGET) tests/errors/std-string-append-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_i64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-different-zone.err
+	if $(TARGET) tests/errors/std-string-append-f64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::string::String.append_f64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err
 	if $(TARGET) tests/errors/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
 	grep -q "struct 'std::string::String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
 	if $(TARGET) tests/errors/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi
@@ -460,8 +463,8 @@ check-prelude: $(TARGET)
 	grep -q "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-planned.err
 	if $(TARGET) tests/errors/prelude-macro-format-qualified-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err 2>&1; then exit 1; fi
 	grep -q "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err
-	if $(TARGET) tests/errors/prelude-format-in-float.ari -o $(BUILD_DIR)/prelude/prelude-format-in-float.elf >$(BUILD_DIR)/prelude/prelude-format-in-float.err 2>&1; then exit 1; fi
-	grep -q "format_in! currently supports string, integer, and bool values; use print!/println! for float formatting" $(BUILD_DIR)/prelude/prelude-format-in-float.err
+	if $(TARGET) tests/errors/prelude-format-in-f128.ari -o $(BUILD_DIR)/prelude/prelude-format-in-f128.elf >$(BUILD_DIR)/prelude/prelude-format-in-f128.err 2>&1; then exit 1; fi
+	grep -q "format_in! currently supports string, integer, bool, f32, and f64 values, got f128" $(BUILD_DIR)/prelude/prelude-format-in-f128.err
 	if $(TARGET) tests/errors/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'other::format!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err
 	if $(TARGET) tests/errors/prelude-macro-nonprelude-matches.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err 2>&1; then exit 1; fi

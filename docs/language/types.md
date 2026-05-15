@@ -114,7 +114,8 @@ borrowed lowercase `string` into that handle. It supports checked byte
 `get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone
 grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in`, plus `append_string_in`,
-`append_i64_in`, `append_bool_in`, `truncate`, `clear`, `as_ptr`, `as_slice`,
+`append_i64_in`, `append_bool_in`, `append_f64_in`, `truncate`, `clear`,
+`as_ptr`, `as_slice`,
 and top-level `std::string::copy_to(value, ref mut Zone)`. The zone argument
 passed to a grow or append method must be the same source zone that created
 the handle. `String` is still an explicit-zone handle: `zone::reset` or

@@ -148,6 +148,55 @@ pub impl std::string::String {
     append_byte_in(self, zone, 101 as u8);
   }
 
+  fn append_f64_in(self: ref mut Self, zone: ref mut Zone, value: f64, precision: i64) -> void {
+    std::assert(precision >= 0);
+    std::assert(precision <= 64);
+
+    var remaining = value;
+    if remaining != remaining {
+      append_byte_in(self, zone, 110 as u8);
+      append_byte_in(self, zone, 97 as u8);
+      append_byte_in(self, zone, 110 as u8);
+      return;
+    }
+
+    if remaining < 0.0f64 {
+      append_byte_in(self, zone, 45 as u8);
+      remaining = 0.0f64 - remaining;
+    }
+
+    var scale = 1.0f64;
+    var scale_index = 0;
+    while scale_index < precision {
+      scale = scale * 10.0f64;
+      scale_index = scale_index + 1;
+    }
+
+    remaining = remaining + (0.5f64 / scale);
+    let integer = remaining as i64;
+    self.append_i64_in(zone, integer);
+    if precision == 0 {
+      return;
+    }
+
+    append_byte_in(self, zone, 46 as u8);
+    var fraction = remaining - (integer as f64);
+    var written = 0;
+    while written < precision {
+      fraction = fraction * 10.0f64;
+      var digit = fraction as i64;
+      if digit < 0 {
+        digit = 0;
+      }
+      if digit > 9 {
+        digit = 9;
+      }
+      append_byte_in(self, zone, (digit + 48) as u8);
+      fraction = fraction - (digit as f64);
+      written = written + 1;
+    }
+  }
+
   fn pop(self: ref mut Self) -> u8 {
     std::assert(self.raw.len > 0);
     self.raw.len = self.raw.len - 1;
