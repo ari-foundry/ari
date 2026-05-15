@@ -1,0 +1,39 @@
+meta fn slice_expr(input: token_stream) -> token_stream {
+  return if input.wrapped_by("(", ")") {
+    input.slice(1, input.len() - 1)
+  } else {
+    input
+  };
+}
+
+meta fn slice_item(input: token_stream) -> token_stream {
+  return tokens_slice(input, 1, tokens_count(input) - 1);
+}
+
+meta fn slice_pattern(input: token_stream) -> token_stream {
+  return input.slice(1, input.len());
+}
+
+slice_item!(discard fn generated_slice() -> i64 {
+  return 7;
+} discard);
+
+enum MaybeI64 {
+  None,
+  Some(i64),
+}
+
+fn score(value: MaybeI64) -> i64 {
+  return match value {
+    slice_pattern!(skip Some(inner)) => {
+      inner
+    }
+    _ => {
+      3
+    }
+  };
+}
+
+fn main() -> i64 {
+  return slice_expr!((20 + 1)) + slice_expr!(4) + generated_slice() + score(Some(9)) + score(None());
+}

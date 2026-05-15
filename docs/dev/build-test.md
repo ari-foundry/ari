@@ -95,7 +95,8 @@ empty and explicit `return input;` identity meta bodies,
 attribute/expression/item/type macro domain checks, parser-stable
 `ident!(...)` expression, item, and type token-tree macro invocation syntax,
 expression/item/pattern-position `token_stream -> token_stream` output through
-`tokens!(...)` plus empty-input, token-count, token-boundary, delimiter-wrapper, and indexed text branching,
+`tokens!(...)` plus empty-input, token-count, token-boundary, delimiter-wrapper,
+indexed text branching, and end-exclusive slice extraction,
 expression-position identity expansion from a parsed expression input,
 expression-position `ast -> ast` struct-literal/borrow/try/null-coalescing/control-flow/call/access/method-call output with input substitution and hygienic generated pattern bindings,
 function/constant/struct/enum/trait/impl/inline-module/use item macro identity

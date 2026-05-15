@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -17,7 +18,7 @@ namespace {
 std::string token_return_forms(const std::string& input_name) {
     return "token_stream meta function bodies currently allow only an empty body, `return " +
            input_name +
-           ";` identity body, tokens!(...) token output, or expression-only `if` token branching with supported token_stream conditions";
+           ";` identity body, tokens!(...) token output, token slice extraction, or expression-only `if` token branching with supported token_stream conditions";
 }
 
 bool is_input_name(const Expr& expr, const std::string& input_name) {
@@ -253,6 +254,10 @@ bool token_nth_is(const std::vector<Token>& input_tokens,
            input_tokens[static_cast<std::size_t>(index)].text == text_expr.string_value;
 }
 
+bool is_token_integer_arithmetic(TokenKind op) {
+    return op == TokenKind::Plus || op == TokenKind::Minus;
+}
+
 bool supported_token_integer_expr(const Expr& expr,
                                   const std::string& input_name,
                                   std::string& reason) {
@@ -265,11 +270,19 @@ bool supported_token_integer_expr(const Expr& expr,
         case ExprKind::MethodCall:
             if (supported_tokens_len_method(expr, input_name)) return true;
             break;
+        case ExprKind::Binary:
+            if (is_token_integer_arithmetic(expr.op) &&
+                expr_left(expr) &&
+                expr_right(expr)) {
+                return supported_token_integer_expr(*expr_left(expr), input_name, reason) &&
+                       supported_token_integer_expr(*expr_right(expr), input_name, reason);
+            }
+            break;
         default:
             break;
     }
     reason = "token_stream meta integer conditions currently support only non-negative integer literals, tokens_count(" +
-             input_name + "), or " + input_name + ".len()";
+             input_name + "), " + input_name + ".len(), or + / - arithmetic over those values";
     return false;
 }
 
@@ -286,10 +299,70 @@ std::uint64_t eval_token_integer_expr(const Expr& expr,
         case ExprKind::MethodCall:
             if (supported_tokens_len_method(expr, input_name)) return input_tokens.size();
             break;
+        case ExprKind::Binary:
+            if (is_token_integer_arithmetic(expr.op) && expr_left(expr) && expr_right(expr)) {
+                std::uint64_t left = eval_token_integer_expr(*expr_left(expr), input_name, input_tokens);
+                std::uint64_t right = eval_token_integer_expr(*expr_right(expr), input_name, input_tokens);
+                if (expr.op == TokenKind::Plus) {
+                    if (left > std::numeric_limits<std::uint64_t>::max() - right) {
+                        fail_eval(expr.loc, "token_stream meta integer expression overflowed");
+                    }
+                    return left + right;
+                }
+                if (left < right) {
+                    fail_eval(expr.loc, "token_stream meta integer expression cannot become negative");
+                }
+                return left - right;
+            }
+            break;
         default:
             break;
     }
     fail_eval(expr.loc, "internal error: unsupported token_stream meta integer expression");
+}
+
+bool supported_tokens_slice_call(const Expr& expr,
+                                 const std::string& input_name,
+                                 std::string& reason) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "tokens_slice" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 3 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name) &&
+           supported_token_integer_expr(*expr.args[1], input_name, reason) &&
+           supported_token_integer_expr(*expr.args[2], input_name, reason);
+}
+
+bool supported_tokens_slice_method(const Expr& expr,
+                                   const std::string& input_name,
+                                   std::string& reason) {
+    return expr.kind == ExprKind::MethodCall &&
+           expr.name == "slice" &&
+           expr.args.size() == 2 &&
+           expr_type_args(expr).empty() &&
+           expr_operand(expr) &&
+           is_input_name(*expr_operand(expr), input_name) &&
+           supported_token_integer_expr(*expr.args[0], input_name, reason) &&
+           supported_token_integer_expr(*expr.args[1], input_name, reason);
+}
+
+std::vector<Token> token_slice(const std::vector<Token>& input_tokens,
+                               const Expr& start_expr,
+                               const Expr& end_expr,
+                               const std::string& input_name) {
+    std::uint64_t start = eval_token_integer_expr(start_expr, input_name, input_tokens);
+    std::uint64_t end = eval_token_integer_expr(end_expr, input_name, input_tokens);
+    if (start > end) {
+        fail_eval(start_expr.loc, "token_stream slice start cannot be greater than its end");
+    }
+    if (end > input_tokens.size()) {
+        fail_eval(end_expr.loc, "token_stream slice end is past the input token count");
+    }
+    auto first = input_tokens.begin() + static_cast<std::vector<Token>::difference_type>(start);
+    auto last = input_tokens.begin() + static_cast<std::vector<Token>::difference_type>(end);
+    return std::vector<Token>(first, last);
 }
 
 bool is_token_integer_comparison(TokenKind op) {
@@ -346,7 +419,7 @@ bool supported_token_condition_expr(const Expr& expr,
 
     reason = "token_stream meta branch conditions currently support bool literals, !, &&, ||, tokens_empty(" +
              input_name + "), " + input_name + ".is_empty(), and integer comparisons over tokens_count(" +
-             input_name + ") or " + input_name + ".len(), plus token-prefix text matching with tokens_starts_with(" +
+             input_name + ") or " + input_name + ".len() with + / - arithmetic, plus token-prefix text matching with tokens_starts_with(" +
              input_name + ", \"...\", ...) or " + input_name +
              ".starts_with(\"...\", ...), token-suffix text matching with tokens_ends_with(" +
              input_name + ", \"...\", ...) or " + input_name +
@@ -457,7 +530,11 @@ std::vector<Token> substitute_meta_input_tokens(const std::vector<Token>& constr
 bool is_supported_meta_token_return_expr(const Expr& expr,
                                          const std::string& input_name,
                                          std::string& reason) {
+    if (is_input_name(expr, input_name)) return true;
     if (supported_token_constructor(expr, reason)) return true;
+
+    if (expr.kind == ExprKind::Call && supported_tokens_slice_call(expr, input_name, reason)) return true;
+    if (expr.kind == ExprKind::MethodCall && supported_tokens_slice_method(expr, input_name, reason)) return true;
 
     if (expr.kind == ExprKind::If) {
         if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
@@ -486,11 +563,21 @@ bool is_supported_meta_token_return_expr(const Expr& expr,
 std::vector<Token> evaluate_meta_token_return_expr(const Expr& expr,
                                                    const std::string& input_name,
                                                    const std::vector<Token>& input_tokens) {
+    if (is_input_name(expr, input_name)) return input_tokens;
+
     if (is_token_constructor(expr)) {
         if (!expr.macro_tokens || expr.macro_tokens->empty()) {
             fail_eval(expr.loc, "tokens! token_stream constructor requires one or more output tokens");
         }
         return substitute_meta_input_tokens(*expr.macro_tokens, input_name, input_tokens);
+    }
+
+    std::string reason;
+    if (supported_tokens_slice_call(expr, input_name, reason)) {
+        return token_slice(input_tokens, *expr.args[1], *expr.args[2], input_name);
+    }
+    if (supported_tokens_slice_method(expr, input_name, reason)) {
+        return token_slice(input_tokens, *expr.args[0], *expr.args[1], input_name);
     }
 
     if (expr.kind == ExprKind::If) {
