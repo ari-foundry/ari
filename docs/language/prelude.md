@@ -44,12 +44,14 @@ The explicit paths still exist as `std::Vec`, `std::iter::range`,
 `std::mem::size_of`, and `std::zone::new`. `std::vec::Vec` names the
 source-backed allocator seed handle while the root `Vec`/`std::Vec` spelling is
 still the current compiler-known local vector type. `std::boxed::Box` names the
-source zone-backed box seed, and `std::string` names the early allocator-backed
-byte-buffer seed for owned strings. The root `String`/`std::String` spelling is
-a public alias for `std::string::String`; it is a zone-backed source handle, so
-the explicit `Zone` still owns the bytes. The root `Box[T]`, `Unique[T]`,
-`Shared[T]`, and `Weak[T]` smart-pointer spellings remain reserved. Local
-declarations and explicit `use` aliases win over these implicit prelude names.
+source zone-backed box seed, and the root `Box[T]`/`std::Box[T]` spelling is a
+public alias for that same explicit-zone source handle. `std::string` names the
+early allocator-backed byte-buffer seed for owned strings. The root
+`String`/`std::String` spelling is a public alias for `std::string::String`;
+it is a zone-backed source handle, so the explicit `Zone` still owns the bytes.
+`Unique[T]`, `Shared[T]`, and `Weak[T]` remain reserved smart-pointer spellings.
+Local declarations and explicit `use` aliases win over these implicit prelude
+names.
 If you want a separate namespace handle, alias the module explicitly:
 
 ```ari
@@ -84,7 +86,8 @@ pointer with the source zone provenance preserved. This is not the final root
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
-source lives in `lib/std/boxed.arih`. The handle has `get()`, `set(value)`,
+source lives in `lib/std/boxed.arih`, and the same handle is available through
+the root `Box[T]` / `std::Box[T]` alias. The handle has `get()`, `set(value)`,
 `replace(value)`, `copy_to(ref mut zone)`, `swap(ref mut other)`, and
 `as_ptr()` methods for copyable, zone-placeable values. `replace(value)` stores
 a new value and returns the previous one.
@@ -94,11 +97,11 @@ returns a new tracked `std::boxed::Box<T>` handle for that target zone.
 which zone each handle belongs to. `as_ptr()` returns the stored `ptr T` with
 the same zone provenance as the handle, so using that pointer after the source
 zone is reset or destroyed is also rejected by the checker. The handle has a
-generic `Drop` impl whose destructor is intentionally a no-op: dropping the
-handle ends that binding, but the placed value and storage stay owned by the
-explicit zone and are released by `zone::reset` or `zone::destroy`. The dropped
-handle binding cannot be used again. This is not yet the final owning root
-`Box[T]` smart pointer surface.
+generic `Drop` impl: dropping it consumes the handle binding and runs the
+stored value's `Drop` path when one exists, while the backing bytes stay owned
+by the explicit zone and are released by `zone::reset` or `zone::destroy`. The
+dropped handle binding cannot be used again. This root spelling is still not
+the final allocator-backed unique owning smart pointer.
 
 The `std::string` module exposes the source-level seed for owned text storage.
 `std::string::alloc_buffer(ref mut zone, capacity) -> ptr u8` validates a
@@ -690,14 +693,17 @@ another explicit zone.
 Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`
 result, or slice view after its source zone is reset or destroyed is rejected.
 
-Root smart-pointer names are reserved now so the lint and library surfaces do
-not drift. `Box[T]` is the future unique owning smart pointer spelling.
-`Unique[T]` is reserved as policy/design space, but the root unique owner should
-be spelled `Box[T]` once implemented. `Shared[T]` is reserved for future
-reference-counted shared ownership, and `Weak[T]` is reserved for non-owning
-handles that can be upgraded back to `Option[Shared[T]]`. These future handles
-must be constructed through explicit allocator or capability arguments; Ari
-does not add a magical global heap for them.
+`Box[T]` is available today as the root alias for the explicit-zone
+`std::boxed::Box<T>` source handle. It is useful for source library APIs that
+need a one-value handle before the final owning smart pointer ABI exists, but
+it still takes explicit zone construction through `std::boxed::new<T>` and the
+zone still releases the backing bytes. `Unique[T]` remains reserved as
+policy/design space, but the eventual unique owner should use the `Box[T]`
+spelling once it grows allocator-backed ownership. `Shared[T]` is reserved for
+future reference-counted shared ownership, and `Weak[T]` is reserved for
+non-owning handles that can be upgraded back to `Option[Shared[T]]`. These
+future handles must be constructed through explicit allocator or capability
+arguments; Ari does not add a magical global heap for them.
 
 `Slice[T]` is a source `std` view struct:
 
@@ -768,7 +774,6 @@ return/value ABI work.
 Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 
 ```ari
-Box[T]
 Unique[T]
 Shared[T]
 Weak[T]

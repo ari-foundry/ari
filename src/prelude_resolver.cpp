@@ -250,7 +250,7 @@ bool is_source_declared_prelude_special_name(const std::string& name) {
 
 bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
     std::string base = unqualified_name(name);
-    if (base == "Box" || base == "Unique" || base == "Shared" || base == "Weak") {
+    if (base == "Unique" || base == "Shared" || base == "Weak") {
         arity = 1;
         return true;
     }
@@ -259,11 +259,8 @@ bool planned_prelude_type_arity(const std::string& name, std::size_t& arity) {
 
 std::string planned_prelude_type_message(const std::string& name) {
     std::string base = unqualified_name(name);
-    if (base == "Box") {
-        return "prelude type 'Box' is reserved for the future unique owning smart pointer; use std::boxed::Box<T> with an explicit Zone for today's zone-backed handle";
-    }
     if (base == "Unique") {
-        return "prelude type 'Unique' is reserved for smart-pointer policy; use Box[T] once the unique owning surface is implemented";
+        return "prelude type 'Unique' is reserved for smart-pointer policy; use Box[T] for today's explicit-zone handle";
     }
     if (base == "Shared") {
         return "prelude type 'Shared' is reserved for future reference-counted ownership";

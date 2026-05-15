@@ -256,6 +256,9 @@ Checklist:
       `get`/`set`/`replace`/`copy_to`/`swap`/`as_ptr` methods and reset/destroy
       invalidation, plus a generic Drop impl that consumes the handle binding,
       runs `Drop` for the stored value when one exists, and rejects later use
+- [x] expose root `Box[T]` / `std::Box[T]` as aliases for the explicit-zone
+      source `std::boxed::Box<T>` handle while leaving allocator-backed unique
+      ownership for the smart-pointer roadmap
 - [x] `std::string::alloc_buffer(ref mut Zone, capacity)` seeds future owned
       string storage with tracked zone-backed `ptr u8` byte allocation and
       reset/destroy invalidation
@@ -657,8 +660,8 @@ Checklist:
       `view[start..end]` / `view[start..=end]` range slicing; the same positive
       surface now runs through the raw freestanding backend to cover local Slice
       pointer/length lowering and aggregate-argument register spills
-- [x] reject reserved root smart-pointer surfaces `Box`, `Unique`, `Shared`,
-      and `Weak` with roadmap-backed diagnostics
+- [x] reject reserved root smart-pointer surfaces `Unique`, `Shared`, and
+      `Weak` with roadmap-backed diagnostics
 - [x] reject non-`i64` prelude range bounds until generic range lowering exists
 - [x] add `lib/std.arih` source declarations for the stable
       declaration-shaped prelude surface, auto-load it as `std`, and verify

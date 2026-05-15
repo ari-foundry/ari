@@ -143,7 +143,9 @@ constructor subset documented in the language guide.
    returns a tracked source `std::boxed::Box<T>` handle with `get`, `set`,
    `replace`, `copy_to`, `swap`, and `as_ptr` methods. Its generic `Drop` impl
    consumes the handle and runs the stored value through normal Drop lowering,
-   while the root owning `Box[T]` smart-pointer surface remains future work.
+   and the root `Box[T]`/`std::Box[T]` spelling now aliases that explicit-zone
+   source handle. Allocator-backed unique `Box[T]` ownership remains future
+   work.
    Root `Vec[T]` now has an explicit non-local rule while runtime capacity is
    still absent: it remains a fixed-local value only, and sema rejects root
    `Vec[T]` in function/extern parameters or returns, struct fields, and impl
@@ -171,15 +173,17 @@ constructor subset documented in the language guide.
    zone-borrow reset recognition, reset invalidation, validity diagnostics,
    temporary-zone escape diagnostics, temporary-zone `zone::destroy` IR cleanup,
    and cleanup-before-exit value materialization for returns, labeled breaks,
-   and `init while` continue values are centralized there. Root smart-pointer
-   names are also fixed for future std work: `Box[T]` is the unique owning
-   handle spelling, `Unique[T]` stays reserved for policy compatibility, and
-   `Shared[T]` / `Weak[T]` are reserved for reference-counted ownership. New
+   and `init while` continue values are centralized there. The root
+   `Box[T]`/`std::Box[T]` spelling currently aliases the explicit-zone source
+   `std::boxed::Box<T>` handle; `Unique[T]` stays reserved for policy
+   compatibility, and `Shared[T]` / `Weak[T]` are reserved for
+   reference-counted ownership. New
    source `std` APIs are now guarded by `make check-std-api`, which compares the
    extracted public `lib/std` surface with `tests/std_api_manifest.txt` and
    requires a focused coverage note beside the API entry. Generic `Drop` impls
    are now selected during explicit drop lowering, and the existing
-   `std::boxed::Box<T>` source seed has a concrete value-drop contract:
+   `std::boxed::Box<T>` source seed, including the root `Box[T]` alias, has a
+   concrete value-drop contract:
    `drop boxed` consumes the handle binding and runs the pointed-to value
    through normal Drop lowering, while storage release remains the explicit
    zone's responsibility through `zone::reset` or `zone::destroy`. The Drop
@@ -207,15 +211,16 @@ constructor subset documented in the language guide.
    `String`/`std::String` spelling now aliases that explicit-zone source
    string handle; storage is still released by `zone::reset`/`zone::destroy`,
    and the current `Drop` impl only ends the binding.
-   - [owned-box-root] define and implement the final root/unique `Box[T]`
+   - [owned-box-unique] define and implement allocator-backed unique `Box[T]`
      ownership, construction, and move contract before std APIs start returning
-     owning heap handles. The source `std::boxed::Box<T>` seed already has
-     zone-provenance tracking, use-after-drop checking, and a generic Drop impl
-     that runs the stored value's Drop path.
-   - [owned-box-release] connect the root `Box[T]` Drop path to the heap-storage
-     release contract once the allocator-backed root handle exists. The current
-     source `std::boxed::Box<T>` value-drop contract intentionally leaves
-     storage release with `zone::reset` / `zone::destroy`.
+     owning heap handles. Today's root `Box[T]`/`std::Box[T]` spelling is an
+     alias for the explicit-zone `std::boxed::Box<T>` source seed, which already
+     has zone-provenance tracking, use-after-drop checking, and a generic Drop
+     impl that runs the stored value's Drop path.
+   - [owned-box-release] connect the allocator-backed unique `Box[T]` Drop path
+     to the heap-storage release contract once that root handle exists. The
+     current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract
+     intentionally leaves storage release with `zone::reset` / `zone::destroy`.
    Explicit-zone formatted strings are now settled for the 0.x source-`std`
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
    string/integer/bool/float formatting and `{:.N}` float precision to source
@@ -350,10 +355,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     and still relies on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
-    Root/unique `Box[T]` ownership and formatted owned-string construction
-    remain promoted into the Near-Term source-`std` library-prep checklist
-    because broad library APIs should not depend on those surfaces until their
-    ownership, provenance, and drop contracts are explicit.
+    Allocator-backed unique `Box[T]` ownership remains promoted into the
+    Near-Term source-`std` library-prep checklist because broad library APIs
+    should not return owning heap handles until their construction, provenance,
+    move, and drop contracts are explicit. The explicit-zone formatted string
+    construction path is already in the Near-Term completed surface through
+    `format_in!` and `Display::format_in`.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.

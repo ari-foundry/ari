@@ -1,4 +1,0 @@
-fn main() -> i64 {
-  let value: Box[i64] = 0;
-  return value;
-}

@@ -311,24 +311,27 @@ ptr_store(point_ptr, ptr_load(point_ptr));
 
 ## Smart Pointer Policy
 
-The root smart-pointer names are reserved but not executable yet:
+`Box[T]` is executable today as the root alias for `std::boxed::Box<T>`, the
+source explicit-zone handle over `zone::new<T>` storage. Construct it with
+`std::boxed::new<T>(ref mut Zone, value)`. Dropping it consumes the handle and
+runs the stored value's `Drop` impl when one exists, but the explicit zone still
+owns and releases the backing bytes.
 
-- `Box[T]` is the future unique owning heap handle.
+The remaining root smart-pointer names stay reserved for the later ownership
+policy:
+
 - `Unique[T]` is reserved for policy compatibility, but the preferred unique
-  owner spelling is `Box[T]`.
+  owner spelling is `Box[T]` once that spelling grows allocator-backed heap
+  ownership.
 - `Shared[T]` is reserved for future reference-counted shared ownership.
 - `Weak[T]` is reserved for non-owning shared handles that upgrade through
   `Option[Shared[T]]`.
 
-All of these future handles must be created through explicit allocator or
+Future owning or shared handles must be created through explicit allocator or
 capability arguments. Ari does not provide an ambient global heap. `drop` of a
 unique or shared handle will be the operation that runs the handle's destructor
 and releases or decrements its allocation; raw pointers exposed from these
-handles will be non-owning views and must not transfer destruction rights. The
-current `std::boxed::Box<T>` is different: it is a zone-backed source handle
-over `zone::new<T>` storage. Dropping it consumes the handle and runs the
-stored value's `Drop` impl when one exists, but the zone still owns and releases
-the backing bytes.
+handles will be non-owning views and must not transfer destruction rights.
 
 The root `String` name follows the same capability-oriented path: it aliases
 the source `std::string::String` explicit-zone handle. Lowercase `string`

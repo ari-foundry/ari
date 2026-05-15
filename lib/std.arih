@@ -41,6 +41,7 @@ pub mod mem;
 pub mod zone;
 
 pub mod boxed;
+pub use boxed::Box;
 
 pub mod string;
 
