@@ -1,0 +1,51 @@
+meta fn prefix_expr(input: token_stream) -> token_stream {
+  return if tokens_starts_with(input, "fast", "+") {
+    tokens!(30)
+  } else {
+    tokens!(input)
+  };
+}
+
+meta fn prefix_item(input: token_stream) -> token_stream {
+  return if input.starts_with("fn", "kept_prefix") {
+    tokens!(input)
+  } else {
+    tokens!(fn generated_prefix() -> i64 {
+      return 4;
+    })
+  };
+}
+
+meta fn prefix_pattern(input: token_stream) -> token_stream {
+  return if tokens_starts_with(input, "Some", "(") {
+    tokens!(input)
+  } else {
+    tokens!(None)
+  };
+}
+
+prefix_item!(fn kept_prefix() -> i64 {
+  return 7;
+});
+
+prefix_item!();
+
+enum MaybeI64 {
+  None,
+  Some(i64),
+}
+
+fn score(value: MaybeI64) -> i64 {
+  return match value {
+    prefix_pattern!(Some(inner)) => {
+      inner
+    }
+    prefix_pattern!(_) => {
+      9
+    }
+  };
+}
+
+fn main() -> i64 {
+  return prefix_expr!(fast + 1) + prefix_expr!(3) + kept_prefix() + generated_prefix() + score(Some(5)) + score(None());
+}
