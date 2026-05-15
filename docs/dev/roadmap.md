@@ -141,8 +141,9 @@ constructor subset documented in the language guide.
    `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
    returns a tracked source `std::boxed::Box<T>` handle with `get`, `set`,
-   `replace`, `copy_to`, `swap`, and `as_ptr` methods, while the root owning
-   `Box[T]` smart-pointer surface remains future work.
+   `replace`, `copy_to`, `swap`, and `as_ptr` methods. Its generic `Drop` impl
+   consumes the handle and runs the stored value through normal Drop lowering,
+   while the root owning `Box[T]` smart-pointer surface remains future work.
    Root `Vec[T]` now has an explicit non-local rule while runtime capacity is
    still absent: it remains a fixed-local value only, and sema rejects root
    `Vec[T]` in function/extern parameters or returns, struct fields, and impl
@@ -177,13 +178,14 @@ constructor subset documented in the language guide.
    source `std` APIs are now guarded by `make check-std-api`, which compares the
    extracted public `lib/std` surface with `tests/std_api_manifest.txt` and
    requires a focused coverage note beside the API entry. Generic `Drop` impls
-   are now selected during explicit drop lowering, so the existing
-   `std::boxed::Box<T>` source seed has a concrete no-op handle drop contract:
-   `drop boxed` ends the binding, while value destruction and storage release
-   remain the explicit zone's responsibility through `zone::reset` or
-   `zone::destroy`. The Drop trait/method shape checks and shared diagnostics
-   for explicit destructor lowering now live in `drop_semantics`, keeping this
-   ownership/destructor phase out of the central expression-lowering code.
+   are now selected during explicit drop lowering, and the existing
+   `std::boxed::Box<T>` source seed has a concrete value-drop contract:
+   `drop boxed` consumes the handle binding and runs the pointed-to value
+   through normal Drop lowering, while storage release remains the explicit
+   zone's responsibility through `zone::reset` or `zone::destroy`. The Drop
+   trait/method shape checks and shared diagnostics for explicit destructor
+   lowering now live in `drop_semantics`, keeping this ownership/destructor
+   phase out of the central expression-lowering code.
    Owned string work has a source-handle root spelling now:
    `std::string::alloc_buffer(ref mut Zone, capacity) -> ptr u8` validates a
    non-negative byte capacity, allocates bytes through the explicit zone
@@ -205,12 +207,15 @@ constructor subset documented in the language guide.
    `String`/`std::String` spelling now aliases that explicit-zone source
    string handle; storage is still released by `zone::reset`/`zone::destroy`,
    and the current `Drop` impl only ends the binding.
-   - [owned-box] define and implement the final root/unique `Box[T]` ownership,
-     construction, move, and value-drop contract on top of the explicit-zone
-     `std::boxed::Box<T>` seed before std APIs start returning owning heap
-     handles. The source `std::boxed::Box<T>` seed already has a no-op generic
-     Drop impl and use-after-drop checking; the remaining work is the final
-     root owning smart-pointer surface and value-destroying ownership contract.
+   - [owned-box-root] define and implement the final root/unique `Box[T]`
+     ownership, construction, and move contract before std APIs start returning
+     owning heap handles. The source `std::boxed::Box<T>` seed already has
+     zone-provenance tracking, use-after-drop checking, and a generic Drop impl
+     that runs the stored value's Drop path.
+   - [owned-box-release] connect the root `Box[T]` Drop path to the heap-storage
+     release contract once the allocator-backed root handle exists. The current
+     source `std::boxed::Box<T>` value-drop contract intentionally leaves
+     storage release with `zone::reset` / `zone::destroy`.
    Explicit-zone formatted strings are now settled for the 0.x source-`std`
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
    string/integer/bool/float formatting and `{:.N}` float precision to source

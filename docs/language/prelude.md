@@ -621,10 +621,11 @@ let raw = boxed.as_ptr()
 
 The handle stores a raw pointer returned by `zone::new<T>` and keeps the same
 zone provenance, so reset/destroy invalidation applies to the handle and to raw
-pointers recovered through `as_ptr()`. Explicit `drop boxed` uses the handle's
-generic no-op `Drop` impl: it ends the binding without running a destructor for
-the pointed-to value or freeing storage independently. Memory is released with
-the zone.
+pointers recovered through `as_ptr()`. Explicit `drop boxed` consumes the
+handle binding and loads the pointed-to value through the normal `Drop` path,
+so a stored type with a `Drop` impl gets its destructor call. The zone still
+owns the backing bytes; memory is released with `zone::reset` or
+`zone::destroy`.
 
 `std::string::alloc_buffer(ref mut Zone, capacity)` allocates byte storage for
 future owned strings:

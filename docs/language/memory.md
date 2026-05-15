@@ -326,7 +326,9 @@ unique or shared handle will be the operation that runs the handle's destructor
 and releases or decrements its allocation; raw pointers exposed from these
 handles will be non-owning views and must not transfer destruction rights. The
 current `std::boxed::Box<T>` is different: it is a zone-backed source handle
-over `zone::new<T>` storage, and the zone owns the memory lifetime.
+over `zone::new<T>` storage. Dropping it consumes the handle and runs the
+stored value's `Drop` impl when one exists, but the zone still owns and releases
+the backing bytes.
 
 The root `String` name follows the same capability-oriented path: it aliases
 the source `std::string::String` explicit-zone handle. Lowercase `string`

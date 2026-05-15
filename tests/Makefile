@@ -220,6 +220,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent6as_ptr' $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
 	$(TARGET) tests/ok/std-boxed-drop.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-boxed-drop.ll
+	$(TARGET) tests/ok/std-boxed-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
+	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
 	$(TARGET) tests/ok/std-string-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_string_alloc_buffer"' $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
 	grep -q 'call ptr @ari_builtin_zone_alloc(ptr %zone.slot, i64 %capacity, i64 1)' $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll

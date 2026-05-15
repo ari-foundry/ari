@@ -38,6 +38,8 @@ pub impl[T] std::boxed::Box[T] {
 
 impl[T] std::Drop for std::boxed::Box[T] {
   fn drop(self) -> void {
+    let value = ptr_load(self.data);
+    drop value;
     return;
   }
 }
