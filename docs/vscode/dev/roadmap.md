@@ -46,12 +46,15 @@
       diagnostics, navigation, commands, tasks, and settings.
 - [x] Expand TextMate syntax highlighting for comments, attributes,
       declarations, macros, keywords, built-in types, numbers, and operators.
+- [x] Add a local 0.1.0 VSIX packaging workflow for installing the extension
+      without running an Extension Development Host.
 
-## Near-Term Work
+## Post-0.1.0 Work
 
-- [ ] Add packaging instructions once the extension publish/install workflow is
-      decided.
 - [ ] Add semantic tokens once parser-backed LSP symbol/type data exists.
+- [ ] Add marketplace publishing metadata once the local 0.1.0 package has
+      been used enough to settle extension naming, screenshots, and release
+      notes.
 
 ## Design Notes
 

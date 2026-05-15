@@ -30,6 +30,8 @@ edits for simple native lint rules exposed by `ari-lsp`.
   Ari make targets.
 - `editors/vscode/paths.js` owns workspace-relative path resolution shared by
   commands and LSP startup.
+- `editors/vscode/scripts/package-vsix.js` creates the local 0.1.0 VSIX and
+  injects the runtime Node packages needed by the language client.
 - `editors/vscode/language-configuration.json` defines comments, brackets, and
   auto-closing pairs.
 - `editors/vscode/syntaxes/ari.tmLanguage.json` provides lightweight syntax
@@ -65,6 +67,9 @@ in [Ari VS Code Usage](usage.md).
 
 The current editor feature set is documented in
 [Ari VS Code Features](features.md).
+
+The current local installable package workflow is documented in
+[Ari VS Code Release](release.md).
 
 ## Tasks
 

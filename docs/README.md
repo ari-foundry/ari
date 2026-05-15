@@ -48,6 +48,7 @@ Use these when changing editor and lint tooling:
 - [Ari VS Code Extension](vscode/README.md)
 - [Ari VS Code Features](vscode/features.md)
 - [Ari VS Code Usage](vscode/usage.md)
+- [Ari VS Code Release](vscode/release.md)
 
 ## Notes
 

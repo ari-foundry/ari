@@ -32,6 +32,20 @@ Extension Development Host so the default tool paths resolve to:
 Open an `.ari` file such as `examples/count.ari` in the Extension Development
 Host to activate the extension.
 
+## Local 0.1.0 VSIX
+
+To create an installable local extension package without installing it:
+
+```sh
+cd /mnt/c/home/asss/editors/vscode
+npm install
+npm run package
+```
+
+The VSIX is written to `build/vscode/ari-vscode-0.1.0.vsix` relative to the
+repository root. Install it later with `npm run install:local` when you want to
+replace the local VS Code extension build.
+
 ## Available Features
 
 - Syntax highlighting for Ari source and header files.

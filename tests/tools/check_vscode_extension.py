@@ -10,16 +10,50 @@ language_config = json.loads((root / "editors/vscode/language-configuration.json
 for source in ("extension.js", "commands.js", "tasks.js", "lsp.js", "paths.js", "config.js"):
     if not (root / "editors/vscode" / source).exists():
         raise SystemExit(f"missing VS Code source file: {source}")
+if not (root / "editors/vscode/scripts/package-vsix.js").exists():
+    raise SystemExit("missing VS Code package script")
 if not (root / "editors/vscode/.vscode/launch.json").exists():
     raise SystemExit("missing VS Code extension launch configuration")
+if not (root / "editors/vscode/README.md").exists():
+    raise SystemExit("missing VS Code extension package README")
+if not (root / "editors/vscode/.vscodeignore").exists():
+    raise SystemExit("missing VS Code extension package ignore file")
 for doc in (
     "docs/lint/features.md",
     "docs/lsp/features.md",
     "docs/vscode/features.md",
+    "docs/vscode/release.md",
     "docs/vscode/usage.md",
 ):
     if not (root / doc).exists():
         raise SystemExit(f"missing tool documentation: {doc}")
+
+scripts = package.get("scripts", {})
+for script in ("check", "package", "install:local"):
+    if script not in scripts:
+        raise SystemExit(f"missing VS Code package script: {script}")
+if "package-vsix.js" not in scripts["package"]:
+    raise SystemExit("VS Code package script must use scripts/package-vsix.js")
+if package.get("version") != "0.1.0":
+    raise SystemExit("VS Code package version must be 0.1.0")
+if "@vscode/vsce" not in package.get("devDependencies", {}):
+    raise SystemExit("VS Code package must include @vscode/vsce for local VSIX packaging")
+if "vscode-languageclient" not in package.get("dependencies", {}):
+    raise SystemExit("VS Code package must depend on vscode-languageclient")
+
+package_script = (root / "editors/vscode/scripts/package-vsix.js").read_text()
+for runtime_package in (
+    "balanced-match",
+    "brace-expansion",
+    "minimatch",
+    "semver",
+    "vscode-jsonrpc",
+    "vscode-languageclient",
+    "vscode-languageserver-protocol",
+    "vscode-languageserver-types",
+):
+    if runtime_package not in package_script:
+        raise SystemExit(f"missing VS Code runtime package in packaging script: {runtime_package}")
 
 commands = {item["command"] for item in package["contributes"]["commands"]}
 required_commands = {
