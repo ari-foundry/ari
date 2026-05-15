@@ -36,6 +36,8 @@
 - [x] Preserve shared diagnostic codes and explicit end spans in LSP diagnostic
       JSON when the tooling layer provides them.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
+- [x] Add a user-facing LSP feature guide for diagnostics, symbols, workspace
+      search, editor helpers, and configuration.
 
 ## Near-Term Work
 

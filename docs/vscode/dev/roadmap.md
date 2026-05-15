@@ -40,6 +40,8 @@
       restart `ari-lsp` after rebuilding tools or changing local setup.
 - [x] Add a VS Code extension launch configuration and usage guide for local
       Extension Development Host runs.
+- [x] Add a user-facing VS Code feature guide for activation, syntax,
+      diagnostics, navigation, commands, tasks, and settings.
 - [x] Expand TextMate syntax highlighting for comments, attributes,
       declarations, macros, keywords, built-in types, numbers, and operators.
 

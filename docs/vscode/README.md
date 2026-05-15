@@ -62,6 +62,9 @@ The check and lint commands write to the `Ari` output channel.
 Local run instructions, feature expectations, and troubleshooting are documented
 in [Ari VS Code Usage](usage.md).
 
+The current editor feature set is documented in
+[Ari VS Code Features](features.md).
+
 ## Tasks
 
 The extension contributes Ari tasks for common repository commands:

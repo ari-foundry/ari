@@ -23,6 +23,8 @@
       LSP, and VS Code all pass through the same rule settings.
 - [x] Discover the nearest `ari-lint.rules` from each checked source file when
       no explicit `--config` is supplied.
+- [x] Add a user-facing lint feature guide for CLI behavior, native rules,
+      config, output modes, and tool integration.
 
 ## Near-Term Work
 

@@ -65,6 +65,10 @@ the CLI share the same rule registry and severity handling.
 - Provides a JSON shape shared by the LSP server.
 - Emits lint rule codes when a diagnostic comes from a native lint rule.
 
+## Feature Guide
+
+The current lint feature set is documented in [Ari Lint Features](features.md).
+
 ## Rules
 
 ### `lint/trailing-whitespace`

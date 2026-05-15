@@ -53,6 +53,8 @@ temporary source file beside the original document path, so nearby
 - `textDocument/definition`
 - `textDocument/completion`
 
+The current LSP feature set is documented in [Ari LSP Features](features.md).
+
 For open documents, the server mirrors the current in-memory text into a
 temporary file beside the original source path before invoking `ari --check`, so
 relative module lookup still follows the edited file's directory. If the editor

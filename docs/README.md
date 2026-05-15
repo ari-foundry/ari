@@ -42,8 +42,11 @@ Use these when changing the compiler:
 Use these when changing editor and lint tooling:
 
 - [Ari Lint](lint/README.md)
+- [Ari Lint Features](lint/features.md)
 - [Ari LSP](lsp/README.md)
+- [Ari LSP Features](lsp/features.md)
 - [Ari VS Code Extension](vscode/README.md)
+- [Ari VS Code Features](vscode/features.md)
 - [Ari VS Code Usage](vscode/usage.md)
 
 ## Notes
