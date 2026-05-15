@@ -54,6 +54,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::alloc", "ari_builtin_zone_alloc"},
         {"zone::alloc", "ari_builtin_zone_alloc"},
         {"std::zone::alloc", "ari_builtin_zone_alloc"},
+        {"string::alloc_buffer", "ari_builtin_string_alloc_buffer"},
+        {"std::string::alloc_buffer", "ari_builtin_string_alloc_buffer"},
         {"reset", "ari_builtin_zone_reset"},
         {"std::reset", "ari_builtin_zone_reset"},
         {"zone::reset", "ari_builtin_zone_reset"},
@@ -95,6 +97,7 @@ bool is_ari_builtin_symbol(const std::string& symbol) {
            symbol == "ari_builtin_read_line" ||
            symbol == "ari_builtin_zone_create" ||
            symbol == "ari_builtin_zone_alloc" ||
+           symbol == "ari_builtin_string_alloc_buffer" ||
            symbol == "ari_builtin_zone_reset" ||
            symbol == "ari_builtin_zone_destroy" ||
            symbol == "ari_builtin_assert" ||
@@ -132,6 +135,7 @@ std::optional<std::string> ari_builtin_freestanding_blocked_feature(const std::s
     }
     if (*symbol == "ari_builtin_zone_create" ||
         *symbol == "ari_builtin_zone_alloc" ||
+        *symbol == "ari_builtin_string_alloc_buffer" ||
         *symbol == "ari_builtin_zone_reset" ||
         *symbol == "ari_builtin_zone_destroy") {
         return "zone allocation";

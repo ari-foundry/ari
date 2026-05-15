@@ -38,6 +38,7 @@ fn std::mem::size_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row
 fn std::panic|prelude panic helpers; docs/dev/test-matrix.md Prelude row
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
+fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
 fn std::todo|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::unreachable|planned panic helper tests; docs/dev/test-matrix.md Prelude row
@@ -93,6 +94,7 @@ module std::input|prelude input tests; docs/dev/test-matrix.md Prelude row
 module std::io|prelude IO tests; docs/dev/test-matrix.md Prelude row
 module std::iter|range and iterator tests; docs/dev/test-matrix.md Control flow row
 module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
+module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
 module std::zone|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row

@@ -184,6 +184,11 @@ constructor subset documented in the language guide.
    `zone::destroy`. The Drop trait/method shape checks and shared diagnostics
    for explicit destructor lowering now live in `drop_semantics`, keeping this
    ownership/destructor phase out of the central expression-lowering code.
+   Owned string work has a raw allocation seed now:
+   `std::string::alloc_buffer(ref mut Zone, capacity) -> ptr u8` validates a
+   non-negative byte capacity, allocates bytes through the explicit zone
+   capability, and returns a tracked pointer that is invalidated by
+   `zone::reset`/`zone::destroy`.
    - [owned-box] define and implement the final root/unique `Box[T]` ownership,
      construction, move, and value-drop contract on top of the explicit-zone
      `std::boxed::Box<T>` seed before std APIs start returning owning heap
@@ -192,9 +197,10 @@ constructor subset documented in the language guide.
      root owning smart-pointer surface and value-destroying ownership contract.
    - [owned-strings] root `String` is reserved as the future owned runtime
      string spelling while lowercase `string` remains today's borrowed
-     C-string pointer value. Add allocator-backed `String` buffers, ownership
-     and drop rules, and conversion/copying from `string` before `read_line`,
-     `format!`, or general text APIs return independent values
+     C-string pointer value. The raw `std::string::alloc_buffer` byte seed is
+     in place; add a length/capacity `String` handle, ownership and drop rules,
+     and conversion/copying from `string` before `read_line`, `format!`, or
+     general text APIs return independent values
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

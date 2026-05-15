@@ -42,6 +42,8 @@ pub mod zone;
 
 pub mod boxed;
 
+pub mod string;
+
 pub mod vec;
 
 pub mod iter;

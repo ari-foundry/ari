@@ -44,10 +44,12 @@ The explicit paths still exist as `std::Vec`, `std::iter::range`,
 `std::mem::size_of`, and `std::zone::new`. `std::vec::Vec` names the
 source-backed allocator seed handle while the root `Vec`/`std::Vec` spelling is
 still the current compiler-known local vector type. `std::boxed::Box` names the
-source zone-backed box seed; the root `Box[T]`, `Unique[T]`, `Shared[T]`, and
-`Weak[T]` smart-pointer spellings remain reserved. Local declarations and
-explicit `use` aliases win over these implicit prelude names. If you want a
-separate namespace handle, alias the module explicitly:
+source zone-backed box seed, and `std::string` names the early allocator-backed
+byte-buffer seed for future owned strings. The root `String`, `Box[T]`,
+`Unique[T]`, `Shared[T]`, and `Weak[T]` smart-pointer spellings remain
+reserved. Local declarations and explicit `use` aliases win over these
+implicit prelude names. If you want a separate namespace handle, alias the
+module explicitly:
 
 ```ari
 use std as core
@@ -96,6 +98,15 @@ handle ends that binding, but the placed value and storage stay owned by the
 explicit zone and are released by `zone::reset` or `zone::destroy`. The dropped
 handle binding cannot be used again. This is not yet the final owning root
 `Box[T]` smart pointer surface.
+
+The `std::string` module currently exposes only
+`std::string::alloc_buffer(ref mut zone, capacity) -> ptr u8`. It validates a
+non-negative byte capacity, allocates that many bytes from an explicit `Zone`,
+and returns a tracked raw byte pointer, using `null` for zero capacity. The
+pointer follows the same reset/destroy invalidation rules as other zone
+allocations. This is the buffer seed for future owned `String` storage, not the
+final root `String` API and not a conversion from today's borrowed lowercase
+`string` values.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -483,6 +494,10 @@ existing elements into a larger zone allocation when growth is needed and keep
 old storage under the zone's bulk lifetime. Callers can still use
 `vec.raw.data` with `ptr_store`, `ptr_load`, and `ptr_add` directly for
 lower-level experiments.
+`std::string::alloc_buffer(ref mut Zone, capacity)` is the analogous raw
+byte-buffer seed for future owned string storage. It returns `ptr u8` tied to
+the source zone; higher-level `String` ownership, length/capacity handles, and
+copying from lowercase `string` are still planned.
 
 ## Aggregate Surfaces
 
@@ -571,6 +586,21 @@ pointers recovered through `as_ptr()`. Explicit `drop boxed` uses the handle's
 generic no-op `Drop` impl: it ends the binding without running a destructor for
 the pointed-to value or freeing storage independently. Memory is released with
 the zone.
+
+`std::string::alloc_buffer(ref mut Zone, capacity)` allocates byte storage for
+future owned strings:
+
+```ari
+var zone = zone::create(64)
+let bytes = std::string::alloc_buffer(ref mut zone, 3)
+ptr_store(bytes, 65 as u8)
+ptr_store(ptr_add(bytes, 1), 66 as u8)
+ptr_store(ptr_add(bytes, 2), 0 as u8)
+```
+
+The returned pointer is still a raw `ptr u8`, so callers must manage length,
+terminators, and element writes explicitly for now. Using it after
+`zone::reset` or `zone::destroy` is rejected.
 
 Root smart-pointer names are reserved now so the lint and library surfaces do
 not drift. `Box[T]` is the future unique owning smart pointer spelling.

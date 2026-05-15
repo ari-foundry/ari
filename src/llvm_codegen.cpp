@@ -368,7 +368,7 @@ private:
         if (symbol == "ari_builtin_zone_create") {
             return IrType{TypeQualifier::Own, IrPrimitiveKind::Zone, "Zone", {}, {}, {}, {}, loc};
         }
-        if (symbol == "ari_builtin_zone_alloc") {
+        if (symbol == "ari_builtin_zone_alloc" || symbol == "ari_builtin_string_alloc_buffer") {
             return IrType{TypeQualifier::Ptr, IrPrimitiveKind::U8, "u8", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_context_arg" || symbol == "ari_builtin_read_line") {
@@ -604,6 +604,24 @@ private:
         line("  %data = load ptr, ptr %data.slot");
         line("  %out = getelementptr i8, ptr %data, i64 %aligned");
         line("  ret ptr %out");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_string_alloc_buffer(ptr %zone.slot, i64 %capacity) {");
+        line("entry:");
+        line("  %valid = icmp sge i64 %capacity, 0");
+        line("  br i1 %valid, label %check.empty, label %fail");
+        line("check.empty:");
+        line("  %empty = icmp eq i64 %capacity, 0");
+        line("  br i1 %empty, label %empty.ret, label %alloc");
+        line("empty.ret:");
+        line("  ret ptr null");
+        line("alloc:");
+        line("  %ptr = call ptr @ari_builtin_zone_alloc(ptr %zone.slot, i64 %capacity, i64 1)");
+        line("  ret ptr %ptr");
         line("fail:");
         line("  call void @exit(i32 1)");
         line("  unreachable");
@@ -3008,7 +3026,9 @@ private:
             params = function_params_.at(name);
         } else if (std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(name)) {
             symbol = *builtin_symbol;
-            result = symbol == "ari_builtin_zone_alloc" ? expr.type : builtin_result_type(symbol, expr.loc);
+            result = (symbol == "ari_builtin_zone_alloc" || symbol == "ari_builtin_string_alloc_buffer")
+                         ? expr.type
+                         : builtin_result_type(symbol, expr.loc);
         } else {
             symbol = function_symbols_.at(name);
             result = function_results_.at(name);

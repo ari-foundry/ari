@@ -1,0 +1,14 @@
+fn main() -> i64 {
+  var zone = zone::create(16);
+  let data = std::string::alloc_buffer(ref mut zone, 3);
+
+  ptr_store(data, 1 as u8);
+  ptr_store(ptr_add(data, 1), 2 as u8);
+  ptr_store(ptr_add(data, 2), 3 as u8);
+
+  let total = ptr_load(data) as i64 +
+              ptr_load(ptr_add(data, 1)) as i64 +
+              ptr_load(ptr_add(data, 2)) as i64;
+  zone::destroy(zone);
+  return total;
+}
