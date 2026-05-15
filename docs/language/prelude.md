@@ -544,7 +544,9 @@ provenance, so it is rejected after that zone is reset or destroyed.
 `reserve`, `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`,
 and `resize_in` must receive the same zone that created the handle; they copy
 existing elements into a larger zone allocation when growth is needed and keep
-old storage under the zone's bulk lifetime. Callers can still use
+old storage under the zone's bulk lifetime. Dropping the source `Vec<T>` handle
+consumes it and drops each current element while leaving all backing storage
+under the explicit zone's bulk lifetime. Callers can still use
 `vec.raw.data` with `ptr_store`, `ptr_load`, and `ptr_add` directly for
 lower-level experiments.
 `std::string::alloc_buffer(ref mut Zone, capacity)` is the analogous raw

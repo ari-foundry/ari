@@ -293,3 +293,15 @@ pub impl[T] std::vec::Vec[T] {
     return super::Slice<T> { data: self.raw.data, len: self.raw.len };
   }
 }
+
+impl[T] std::Drop for std::vec::Vec[T] {
+  fn drop(self) -> void {
+    var index = 0;
+    while index < self.raw.len {
+      let value = ptr_load(ptr_add(self.raw.data, index));
+      drop value;
+      index = index + 1;
+    }
+    return;
+  }
+}

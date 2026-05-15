@@ -1,0 +1,19 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var values = std::vec::new<i64>(ref mut zone, 1);
+
+  values.push_in(ref mut zone, 12);
+  values.push_in(ref mut zone, 30);
+  values.push_in(ref mut zone, 5);
+
+  drop values;
+
+  zone::destroy(zone);
+  return 0;
+}

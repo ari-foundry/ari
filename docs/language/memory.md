@@ -445,7 +445,9 @@ provenance too. A `std::boxed::Box<T>`, `std::string::String`, or
 is tracked against the target zone, not the original source zone. When a
 source `std::string::String` or `std::vec::Vec<T>` grows through an explicit
 zone argument, that argument must be the same source zone that created the
-handle. When a
+handle. Dropping a tracked source `std::vec::Vec<T>` consumes the handle and
+drops each current element, while the explicit zone still owns the backing
+bytes. When a
 control-flow expression selects tracked handles from the same source zone, the
 selected handle keeps that provenance. Different-source selections are not
 modeled as a single-source handle; keep those values local

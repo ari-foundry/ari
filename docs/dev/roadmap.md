@@ -136,7 +136,9 @@ constructor subset documented in the language guide.
    grow-or-shrink `resize_in(ref mut Zone, length, value)`, and
    tracked `as_slice` views over its allocated buffer. It can also expose
    the stored data pointer through provenance-preserving `as_ptr()` and
-   `copy_to(ref mut Zone)` into a new target-zone handle. Runtime heap growth for
+   `copy_to(ref mut Zone)` into a new target-zone handle. Its `Drop` impl
+   consumes the handle and drops each current element while the explicit zone
+   keeps responsibility for releasing the backing storage. Runtime heap growth for
    root/local `Vec[T]` and the root
    `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
@@ -186,7 +188,10 @@ constructor subset documented in the language guide.
    concrete value-drop contract:
    `drop boxed` consumes the handle binding and runs the pointed-to value
    through normal Drop lowering, while storage release remains the explicit
-   zone's responsibility through `zone::reset` or `zone::destroy`. The Drop
+   zone's responsibility through `zone::reset` or `zone::destroy`. Source
+   `std::vec::Vec<T>` follows the same explicit-zone value-drop policy:
+   `drop vec` drops each current element and leaves buffer release to the zone.
+   The Drop
    trait/method shape checks and shared diagnostics for explicit destructor
    lowering now live in `drop_semantics`, keeping this ownership/destructor
    phase out of the central expression-lowering code.

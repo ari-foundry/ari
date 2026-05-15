@@ -579,7 +579,8 @@ of `value`. `replace(index, value)` returns the previous element at `index`
 after storing the new value. Passing a different zone borrow to `reserve`,
 `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`, or
 `resize_in` is rejected because the source handle remains tied to the zone that
-created it.
+created it. Dropping the source `Vec<T>` handle runs `drop` on each current
+element, but the explicit zone still owns the backing allocation.
 `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current elements into a new
 handle tied to the target zone, so resetting the source zone does not
 invalidate the copy. `std::vec::Vec<T>.as_ptr()` returns the stored element
