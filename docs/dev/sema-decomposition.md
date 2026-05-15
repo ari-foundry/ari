@@ -109,7 +109,7 @@ adding more narrow syntax-specific `*_semantics` siblings.
   constructor IR node assembly after payload semantic checks
 - `meta_token_eval` for token_stream meta return validation/evaluation,
   including meta-input token substitution and the current
-  empty/count/boundary/wrapper/indexed-text branch evaluator plus
+  empty/count/boundary/wrapper/indexed-text/pattern branch evaluator plus
   end-exclusive slice extraction used before expression/item/pattern macro
   output is reparsed
 - `ast_clone` for union-safe AST expression cloning shared by parser compound

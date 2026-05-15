@@ -180,6 +180,27 @@ bool supported_tokens_nth_is_method(const Expr& expr, const std::string& input_n
            is_string_literal(*expr.args[1]);
 }
 
+bool supported_tokens_match_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "tokens_match" &&
+           !expr_operand(expr) &&
+           expr.args.size() >= 2 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name) &&
+           all_string_literals(expr.args, 1);
+}
+
+bool supported_tokens_match_method(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::MethodCall &&
+           expr.name == "matches" &&
+           !expr.args.empty() &&
+           expr_type_args(expr).empty() &&
+           expr_operand(expr) &&
+           is_input_name(*expr_operand(expr), input_name) &&
+           all_string_literals(expr.args, 0);
+}
+
 bool token_starts_with(const std::vector<Token>& input_tokens,
                        const std::vector<ExprPtr>& parts,
                        std::size_t first) {
@@ -252,6 +273,19 @@ bool token_nth_is(const std::vector<Token>& input_tokens,
     std::uint64_t index = index_expr.int_value;
     return index < input_tokens.size() &&
            input_tokens[static_cast<std::size_t>(index)].text == text_expr.string_value;
+}
+
+bool token_matches(const std::vector<Token>& input_tokens,
+                   const std::vector<ExprPtr>& parts,
+                   std::size_t first) {
+    std::size_t count = parts.size() - first;
+    if (input_tokens.size() != count) return false;
+    for (std::size_t i = first; i < parts.size(); ++i) {
+        const std::string& expected = parts[i]->string_value;
+        if (expected == "_") continue;
+        if (input_tokens[i - first].text != expected) return false;
+    }
+    return true;
 }
 
 bool is_token_integer_arithmetic(TokenKind op) {
@@ -405,6 +439,7 @@ bool supported_token_condition_expr(const Expr& expr,
             if (supported_tokens_ends_with_call(expr, input_name)) return true;
             if (supported_tokens_wrapped_by_call(expr, input_name)) return true;
             if (supported_tokens_nth_is_call(expr, input_name)) return true;
+            if (supported_tokens_match_call(expr, input_name)) return true;
             break;
         case ExprKind::MethodCall:
             if (supported_tokens_empty_method(expr, input_name)) return true;
@@ -412,6 +447,7 @@ bool supported_token_condition_expr(const Expr& expr,
             if (supported_tokens_ends_with_method(expr, input_name)) return true;
             if (supported_tokens_wrapped_by_method(expr, input_name)) return true;
             if (supported_tokens_nth_is_method(expr, input_name)) return true;
+            if (supported_tokens_match_method(expr, input_name)) return true;
             break;
         default:
             break;
@@ -426,7 +462,9 @@ bool supported_token_condition_expr(const Expr& expr,
              ".ends_with(\"...\", ...), delimiter wrapper checks with tokens_wrapped_by(" +
              input_name + ", \"(\", \")\") or " + input_name +
              ".wrapped_by(\"(\", \")\"), and indexed token text matching with tokens_nth_is(" +
-             input_name + ", index, \"...\") or " + input_name + ".nth_is(index, \"...\")";
+             input_name + ", index, \"...\") or " + input_name +
+             ".nth_is(index, \"...\"), plus exact token pattern matching with tokens_match(" +
+             input_name + ", \"...\", \"_\", ...) or " + input_name + ".matches(\"...\", \"_\", ...)";
     return false;
 }
 
@@ -485,6 +523,9 @@ bool eval_token_condition_expr(const Expr& expr,
             if (supported_tokens_nth_is_call(expr, input_name)) {
                 return token_nth_is(input_tokens, *expr.args[1], *expr.args[2]);
             }
+            if (supported_tokens_match_call(expr, input_name)) {
+                return token_matches(input_tokens, expr.args, 1);
+            }
             break;
         case ExprKind::MethodCall:
             if (supported_tokens_empty_method(expr, input_name)) return input_tokens.empty();
@@ -499,6 +540,9 @@ bool eval_token_condition_expr(const Expr& expr,
             }
             if (supported_tokens_nth_is_method(expr, input_name)) {
                 return token_nth_is(input_tokens, *expr.args[0], *expr.args[1]);
+            }
+            if (supported_tokens_match_method(expr, input_name)) {
+                return token_matches(input_tokens, expr.args, 0);
             }
             break;
         default:

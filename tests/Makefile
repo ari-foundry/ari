@@ -1472,6 +1472,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-token-wrapped.raw; code=$$?; test $$code -eq 69
 	$(TARGET) --freestanding tests/ok/meta-function-token-slice.ari -o $(BUILD_DIR)/meta/meta-function-token-slice.raw
 	$(BUILD_DIR)/meta/meta-function-token-slice.raw; code=$$?; test $$code -eq 44
+	$(TARGET) --freestanding tests/ok/meta-function-token-pattern.ari -o $(BUILD_DIR)/meta/meta-function-token-pattern.raw
+	$(BUILD_DIR)/meta/meta-function-token-pattern.raw; code=$$?; test $$code -eq 61
 	$(TARGET) --freestanding tests/ok/meta-function-ast-return.ari -o $(BUILD_DIR)/meta/meta-function-ast-return.raw
 	$(BUILD_DIR)/meta/meta-function-ast-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/meta-function-ast-input-substitution.ari -o $(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw

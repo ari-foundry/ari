@@ -200,7 +200,10 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    delimiter-wrapper conditions such as `tokens_wrapped_by(input, "(", ")")`
    and `input.wrapped_by("(", ")")`, or indexed token text conditions such as
    `tokens_nth_is(input, 1, "=>")` and `input.nth_is(1, "=>")`. They may also
-   return token slices with `tokens_slice(input, 1, input.len() - 1)` or
+   use exact token patterns with a one-token `"_"` wildcard through
+   `tokens_match(input, "fn", "_", "(", ")")` or
+   `input.matches("fn", "_", "(", ")")`. They may also return token slices
+   with `tokens_slice(input, 1, input.len() - 1)` or
    `input.slice(1, input.len() - 1)`, using end-exclusive bounds, or, for
    expression-position `ast -> ast` macros, return an expression AST such as
    `return input + 1;`, `return Pair { left: input, right: 2 };`,
@@ -245,14 +248,16 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    delimiter-wrapper checks with `tokens_wrapped_by(input, "(", ")")` or
    `input.wrapped_by("(", ")")`,
    and indexed token text checks with `tokens_nth_is(input, index, "...")` or
-   `input.nth_is(index, "...")`.
+   `input.nth_is(index, "...")`, plus exact token-pattern checks with
+   `tokens_match(input, "...", "_", ...)` or
+   `input.matches("...", "_", ...)` where `"_"` matches one token.
    Its arms return token output with `tokens!(...)`, the input token stream,
    or end-exclusive slice extraction with `tokens_slice(input, start, end)` or
    `input.slice(start, end)`. This currently lets expression, item, and
    pattern macros choose fallback output for empty token payloads, arity-like
    token counts, keyword/operator boundary checks, delimiter-wrapped inputs,
-   fixed-position token text checks, and fixed-range token extraction while
-   keeping named captures and patterned token matching reserved. Non-identity expression
+   fixed-position token text checks, exact one-token-wildcard patterns, and
+   fixed-range token extraction while keeping named captures reserved. Non-identity expression
    returns from `ast -> ast` bodies clone the returned AST and substitute that
    parsed input expression wherever the meta parameter name appears. Literal,
    struct literal, tuple, vector, access, borrow, postfix try,
@@ -328,8 +333,8 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    validation, and enum `Default` derives without a case marker are rejected.
    - [tokens] extend the token_stream evaluator beyond empty-input/count,
      token-boundary, delimiter-wrapper, indexed text branching, and
-     end-exclusive slice extraction into named captures/patterned token
-     matching
+     end-exclusive slice extraction plus exact one-token-wildcard pattern
+     matching into named captures
    - [ast] extend non-identity `ast` construction beyond expression-position
      expression returns with input substitution and item-position `decl!(...)`
      declaration output with input substitution and pattern-position
