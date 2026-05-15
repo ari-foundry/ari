@@ -13,6 +13,7 @@
 #include "cfg_eval.hpp"
 #include "constant_semantics.hpp"
 #include "control_flow_semantics.hpp"
+#include "drop_semantics.hpp"
 #include "enum_constructor_semantics.hpp"
 #include "for_pattern_semantics.hpp"
 #include "ir_builders.hpp"
@@ -7261,8 +7262,8 @@ private:
     }
 
     IrStmtPtr make_drop_call_stmt(SourceLocation loc, const ImplMethodInfo& method, DropValueFactory make_value) {
-        if (method.sig.params.size() != 1 || method.sig.result.primitive != IrPrimitiveKind::Void) {
-            throw CompileError("internal error: invalid Drop impl method for " + type_name(method.receiver_type));
+        if (!is_valid_drop_method_signature(method.sig.params.size(), method.sig.result)) {
+            throw CompileError(invalid_drop_impl_internal_message(method.receiver_type));
         }
         std::vector<IrExprPtr> args;
         args.push_back(make_value());
@@ -7283,8 +7284,7 @@ private:
         std::vector<ImplMethodInfo> matches;
         for (const auto& candidate : generic_method_impls_) {
             if (!is_drop_impl_method(candidate)) continue;
-            if (candidate.sig.params.size() != 1 ||
-                candidate.sig.result.primitive != IrPrimitiveKind::Void) {
+            if (!is_valid_drop_method_signature(candidate.sig.params.size(), candidate.sig.result)) {
                 continue;
             }
 
@@ -7313,7 +7313,7 @@ private:
             return std::nullopt;
         }
         if (matches.size() > 1) {
-            fail(loc, "Drop impl for type " + type_name(dropped_type) + " is ambiguous");
+            fail(loc, ambiguous_drop_impl_message(dropped_type));
         }
         return matches.front();
     }
@@ -14810,8 +14810,7 @@ private:
     }
 
     static bool is_drop_impl_method(const ImplMethodInfo& method) {
-        return (method.trait_name == "Drop" || method.trait_name == "std::Drop") &&
-               basename_of_qualified_name(method.fn->name) == "drop";
+        return is_drop_trait_method_name(method.trait_name, basename_of_qualified_name(method.fn->name));
     }
 
     static bool split_associated_call_name(const std::string& name, std::string& receiver_name, std::string& method_name) {

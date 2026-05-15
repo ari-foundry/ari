@@ -93,8 +93,9 @@ the same zone provenance as the handle, so using that pointer after the source
 zone is reset or destroyed is also rejected by the checker. The handle has a
 generic `Drop` impl whose destructor is intentionally a no-op: dropping the
 handle ends that binding, but the placed value and storage stay owned by the
-explicit zone and are released by `zone::reset` or `zone::destroy`. This is not
-yet the final owning root `Box[T]` smart pointer surface.
+explicit zone and are released by `zone::reset` or `zone::destroy`. The dropped
+handle binding cannot be used again. This is not yet the final owning root
+`Box[T]` smart pointer surface.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import

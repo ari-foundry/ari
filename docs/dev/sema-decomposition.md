@@ -98,6 +98,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   validation shared by range, list-literal, and stored-vector loops
 - `move_semantics` for pure helpers around explicit ownership-consumption
   syntax such as `take(place)` place-shape validation
+- `drop_semantics` for explicit destructor semantics that are independent of
+  source syntax: Drop trait/method name recognition, `drop(self) -> void`
+  signature validation, and shared Drop impl diagnostics used while sema lowers
+  explicit `drop value;` statements and generic Drop impls
 - `trait_semantics` for small trait display/key helpers and pure trait-method
   shape checks, including syntactic `self` receiver classification, shared by
   trait impl validation, method dispatch diagnostics, and future

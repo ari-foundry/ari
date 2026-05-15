@@ -254,7 +254,8 @@ Checklist:
 - [x] `std::boxed::new<T>(ref mut Zone, value)` wraps placement construction in
       a tracked source `std::boxed::Box<T>` handle with
       `get`/`set`/`replace`/`copy_to`/`swap`/`as_ptr` methods and reset/destroy
-      invalidation
+      invalidation, plus a no-op generic Drop impl that consumes the handle
+      binding and rejects later use
 - [x] `std::vec::with_capacity<T>(ref mut Zone, capacity)` wraps that pointer
       in a tracked `RawVec<T>` handle whose field access is invalidated after
       zone reset/destroy

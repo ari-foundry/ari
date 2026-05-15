@@ -181,11 +181,15 @@ constructor subset documented in the language guide.
    `std::boxed::Box<T>` source seed has a concrete no-op handle drop contract:
    `drop boxed` ends the binding, while value destruction and storage release
    remain the explicit zone's responsibility through `zone::reset` or
-   `zone::destroy`.
+   `zone::destroy`. The Drop trait/method shape checks and shared diagnostics
+   for explicit destructor lowering now live in `drop_semantics`, keeping this
+   ownership/destructor phase out of the central expression-lowering code.
    - [owned-box] define and implement the final root/unique `Box[T]` ownership,
      construction, move, and value-drop contract on top of the explicit-zone
      `std::boxed::Box<T>` seed before std APIs start returning owning heap
-     handles
+     handles. The source `std::boxed::Box<T>` seed already has a no-op generic
+     Drop impl and use-after-drop checking; the remaining work is the final
+     root owning smart-pointer surface and value-destroying ownership contract.
    - [owned-strings] root `String` is reserved as the future owned runtime
      string spelling while lowercase `string` remains today's borrowed
      C-string pointer value. Add allocator-backed `String` buffers, ownership
