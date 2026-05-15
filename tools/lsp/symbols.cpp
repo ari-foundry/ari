@@ -11,16 +11,6 @@
 namespace ari::lsp {
 namespace {
 
-struct Symbol {
-    std::string name;
-    std::string label;
-    std::string declaration;
-    int kind = 12;
-    int line = 0;
-    int start = 0;
-    int end = 0;
-};
-
 std::string trim_left(const std::string& text, std::size_t& indent) {
     indent = 0;
     while (indent < text.size() && std::isspace(static_cast<unsigned char>(text[indent]))) ++indent;
@@ -95,20 +85,6 @@ bool parse_symbol_line(const std::string& line, int line_number, Symbol& symbol)
     return true;
 }
 
-std::vector<Symbol> collect_symbols(const std::string& text) {
-    std::vector<Symbol> symbols;
-    std::istringstream in(text);
-    std::string line;
-    int line_number = 0;
-    while (std::getline(in, line)) {
-        if (!line.empty() && line.back() == '\r') line.pop_back();
-        Symbol symbol;
-        if (parse_symbol_line(line, line_number, symbol)) symbols.push_back(std::move(symbol));
-        ++line_number;
-    }
-    return symbols;
-}
-
 std::string symbol_json(const Symbol& symbol) {
     std::ostringstream out;
     out << "{";
@@ -161,18 +137,6 @@ const Symbol* find_symbol_for_word(const std::vector<Symbol>& symbols, const std
     return nullptr;
 }
 
-std::string location_json(const std::string& uri, const Symbol& symbol) {
-    std::ostringstream out;
-    out << "{";
-    out << "\"uri\":\"" << tooling::json_escape(uri) << "\",";
-    out << "\"range\":{";
-    out << "\"start\":{\"line\":" << symbol.line << ",\"character\":" << symbol.start << "},";
-    out << "\"end\":{\"line\":" << symbol.line << ",\"character\":" << symbol.end << "}";
-    out << "}";
-    out << "}";
-    return out.str();
-}
-
 int completion_kind(const Symbol& symbol) {
     if (symbol.label == "function") return 3;
     if (symbol.label == "module") return 9;
@@ -206,6 +170,32 @@ std::string completion_item_json(const Symbol& symbol) {
 }
 
 } // namespace
+
+std::vector<Symbol> collect_symbols(const std::string& text) {
+    std::vector<Symbol> symbols;
+    std::istringstream in(text);
+    std::string line;
+    int line_number = 0;
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        Symbol symbol;
+        if (parse_symbol_line(line, line_number, symbol)) symbols.push_back(std::move(symbol));
+        ++line_number;
+    }
+    return symbols;
+}
+
+std::string symbol_location_json(const std::string& uri, const Symbol& symbol) {
+    std::ostringstream out;
+    out << "{";
+    out << "\"uri\":\"" << tooling::json_escape(uri) << "\",";
+    out << "\"range\":{";
+    out << "\"start\":{\"line\":" << symbol.line << ",\"character\":" << symbol.start << "},";
+    out << "\"end\":{\"line\":" << symbol.line << ",\"character\":" << symbol.end << "}";
+    out << "}";
+    out << "}";
+    return out.str();
+}
 
 std::string document_symbols_response(const std::string& id, const std::string& text) {
     std::ostringstream out;
@@ -261,7 +251,7 @@ std::string definition_response(const std::string& id,
     if (!symbol) {
         out << "\"result\":null";
     } else {
-        out << "\"result\":" << location_json(uri, *symbol);
+        out << "\"result\":" << symbol_location_json(uri, *symbol);
     }
     out << "}";
     return out.str();

@@ -1,6 +1,7 @@
 #include "documents.hpp"
 #include "json_rpc.hpp"
 #include "symbols.hpp"
+#include "workspace_symbols.hpp"
 
 #include "../ari_tooling/diagnostic.hpp"
 #include "../lint/checker.hpp"
@@ -13,6 +14,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <unistd.h>
 #include <vector>
 
 namespace {
@@ -125,6 +127,12 @@ int int_field_or_zero(const std::string& body, const std::string& field) {
     return std::stoi(raw);
 }
 
+std::string current_directory() {
+    char buffer[4096];
+    if (!getcwd(buffer, sizeof(buffer))) return ".";
+    return buffer;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -217,6 +225,7 @@ int main(int argc, char** argv) {
                 "\"textDocumentSync\":1,"
                 "\"diagnosticProvider\":{\"interFileDependencies\":true,\"workspaceDiagnostics\":false},"
                 "\"documentSymbolProvider\":true,"
+                "\"workspaceSymbolProvider\":true,"
                 "\"hoverProvider\":true,"
                 "\"definitionProvider\":true,"
                 "\"completionProvider\":{\"resolveProvider\":false,\"triggerCharacters\":[\".\",\":\"]}"
@@ -249,6 +258,12 @@ int main(int argc, char** argv) {
         if (method == "textDocument/documentSymbol") {
             std::string uri = ari::lsp::json_string_field(body, "uri");
             ari::lsp::write_message(std::cout, ari::lsp::document_symbols_response(id, text_for_uri(documents, uri)));
+            continue;
+        }
+        if (method == "workspace/symbol") {
+            ari::lsp::write_message(
+                std::cout,
+                ari::lsp::workspace_symbols_response(id, current_directory(), ari::lsp::json_string_field(body, "query")));
             continue;
         }
         if (method == "textDocument/hover") {
