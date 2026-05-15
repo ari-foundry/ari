@@ -195,7 +195,8 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    tokens!(...) }` or count conditions such as `tokens_count(input) == 1` and
    `input.len() > 0`, or token-prefix text conditions such as
    `tokens_starts_with(input, "pub", "fn")` and
-   `input.starts_with("pub", "fn")`, or, for
+   `input.starts_with("pub", "fn")`, or indexed token text conditions such as
+   `tokens_nth_is(input, 1, "=>")` and `input.nth_is(1, "=>")`, or, for
    expression-position `ast -> ast` macros, return an expression AST such as
    `return input + 1;`, `return Pair { left: input, right: 2 };`,
    `return ref input;`, `return input ?? 0;`,
@@ -234,11 +235,13 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    `&&`, `||`, `tokens_empty(input)`, `input.is_empty()`, and integer
    comparisons over `tokens_count(input)` or `input.len()`, plus token-prefix
    text checks with `tokens_starts_with(input, "...", ...)` or
-   `input.starts_with("...", ...)`. Its arms return
+   `input.starts_with("...", ...)`, and indexed token text checks with
+   `tokens_nth_is(input, index, "...")` or `input.nth_is(index, "...")`.
+   Its arms return
    token output with `tokens!(...)`. This currently lets expression, item, and
    pattern macros choose fallback output for empty token payloads, arity-like
-   token counts, and keyword/operator prefix checks while keeping general
-   token matching reserved. Non-identity expression
+   token counts, keyword/operator prefix checks, and fixed-position token text
+   checks while keeping structured token extraction reserved. Non-identity expression
    returns from `ast -> ast` bodies clone the returned AST and substitute that
    parsed input expression wherever the meta parameter name appears. Literal,
    struct literal, tuple, vector, access, borrow, postfix try,
@@ -312,8 +315,9 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    remains a marker-trait impl and does not change Ari's structural copyability
    rules. Unsupported or duplicate derive names are rejected before impl
    validation, and enum `Default` derives without a case marker are rejected.
-   - [tokens] extend the token_stream evaluator beyond empty-input/count and
-     token-prefix branching into broader token inspection
+   - [tokens] extend the token_stream evaluator beyond empty-input/count,
+     token-prefix, and indexed text branching into structured token extraction
+     or delimiter-aware captures
    - [ast] extend non-identity `ast` construction beyond expression-position
      expression returns with input substitution and item-position `decl!(...)`
      declaration output with input substitution and pattern-position

@@ -1,0 +1,51 @@
+meta fn nth_expr(input: token_stream) -> token_stream {
+  return if tokens_nth_is(input, 1, "+") {
+    tokens!(20)
+  } else {
+    tokens!(input)
+  };
+}
+
+meta fn nth_item(input: token_stream) -> token_stream {
+  return if input.nth_is(1, "kept_nth") {
+    tokens!(input)
+  } else {
+    tokens!(fn generated_nth() -> i64 {
+      return 6;
+    })
+  };
+}
+
+meta fn nth_pattern(input: token_stream) -> token_stream {
+  return if input.nth_is(3, ")") {
+    tokens!(input)
+  } else {
+    tokens!(None)
+  };
+}
+
+nth_item!(fn kept_nth() -> i64 {
+  return 7;
+});
+
+nth_item!();
+
+enum MaybeI64 {
+  None,
+  Some(i64),
+}
+
+fn score(value: MaybeI64) -> i64 {
+  return match value {
+    nth_pattern!(Some(inner)) => {
+      inner
+    }
+    nth_pattern!(_) => {
+      9
+    }
+  };
+}
+
+fn main() -> i64 {
+  return nth_expr!(9 + 1) + nth_expr!(3) + kept_nth() + generated_nth() + score(Some(4)) + score(None());
+}
