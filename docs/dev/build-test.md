@@ -99,7 +99,7 @@ expression/item/pattern-position `token_stream -> token_stream` output through
 indexed text branching, one-token-wildcard and named-span pattern branching, and
 end-exclusive slice plus named token/span capture extraction,
 expression-position identity expansion from a parsed expression input,
-expression-position `ast -> ast` struct-literal/borrow/try/null-coalescing/control-flow/call/access/method-call output with input substitution and hygienic generated pattern bindings,
+expression-position `ast -> ast` struct-literal/borrow/try/null-coalescing/control-flow/call/access/method-call output with input substitution and hygienic generated local/pattern bindings,
 function/constant/struct/enum/trait/impl/inline-module/use item macro identity
 expansion from parsed top-level declarations, item-position `ast -> ast`
 declaration output and declaration input substitution through `decl!(...)`,

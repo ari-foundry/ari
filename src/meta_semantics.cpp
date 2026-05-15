@@ -105,6 +105,132 @@ void collect_pattern_binding_names(const Pattern& pattern, std::set<std::string>
     for (const auto& element : pattern.elements) collect_pattern_binding_names(element, names);
 }
 
+void collect_binding_names(const Binding& binding, std::set<std::string>& names) {
+    if (binding.has_pattern) {
+        collect_pattern_binding_names(binding.pattern, names);
+        return;
+    }
+    if (!binding.name.empty()) names.insert(binding.name);
+}
+
+bool supported_ast_return_expr(const Expr& expr,
+                               const std::string& input_name,
+                               const std::set<std::string>& local_names,
+                               std::string& reason);
+
+bool supported_ast_statement_body(const std::vector<StmtPtr>& body,
+                                  const std::string& input_name,
+                                  std::set<std::string>& local_names,
+                                  std::string& reason);
+
+bool is_local_generated_name(const std::string& name,
+                             const std::set<std::string>& local_names,
+                             std::string& reason) {
+    if (local_names.count(name)) return true;
+    reason =
+        "ast meta expression returns cannot reference names other than the meta input, generated local bindings, or local control-flow pattern bindings yet";
+    return false;
+}
+
+bool supported_ast_statement(const Stmt& stmt,
+                             const std::string& input_name,
+                             std::set<std::string>& local_names,
+                             std::string& reason) {
+    auto require_expr = [&](const ExprPtr& expr) {
+        return !expr || supported_ast_return_expr(*expr, input_name, local_names, reason);
+    };
+    auto require_scoped_body = [&](const std::vector<StmtPtr>& body) {
+        std::set<std::string> scoped_names = local_names;
+        return supported_ast_statement_body(body, input_name, scoped_names, reason);
+    };
+    auto require_condition_pattern_body = [&](const std::vector<StmtPtr>& body) {
+        if (!require_expr(stmt.condition)) return false;
+        std::set<std::string> scoped_names = local_names;
+        if (stmt.has_condition_pattern && stmt.condition_pattern) {
+            collect_pattern_binding_names(*stmt.condition_pattern, scoped_names);
+        }
+        return supported_ast_statement_body(body, input_name, scoped_names, reason);
+    };
+
+    switch (stmt.kind) {
+        case StmtKind::Block:
+            return require_scoped_body(stmt_statements(stmt));
+        case StmtKind::VarDecl:
+            if (!require_expr(stmt.binding.init)) return false;
+            collect_binding_names(stmt.binding, local_names);
+            return true;
+        case StmtKind::Assign:
+            if (!stmt_assign_name(stmt).empty() &&
+                !is_local_generated_name(stmt_assign_name(stmt), local_names, reason)) {
+                return false;
+            }
+            if (!require_expr(stmt_assign_target(stmt))) return false;
+            return require_expr(stmt_assign_rhs(stmt));
+        case StmtKind::ExprStmt:
+        case StmtKind::Return:
+            return require_expr(stmt.expr);
+        case StmtKind::If:
+            if (!require_condition_pattern_body(stmt_then_body(stmt))) return false;
+            return require_scoped_body(stmt_else_body(stmt));
+        case StmtKind::While:
+        case StmtKind::WhileLet:
+            return require_condition_pattern_body(stmt_loop_body(stmt));
+        case StmtKind::For: {
+            if (!require_expr(stmt.for_iterable)) return false;
+            std::set<std::string> scoped_names = local_names;
+            if (stmt.for_pattern) collect_pattern_binding_names(*stmt.for_pattern, scoped_names);
+            return supported_ast_statement_body(stmt_loop_body(stmt), input_name, scoped_names, reason);
+        }
+        case StmtKind::InitWhile: {
+            std::set<std::string> loop_names = local_names;
+            for (const auto& binding : stmt.init_bindings) {
+                if (binding.init && !supported_ast_return_expr(*binding.init, input_name, loop_names, reason)) {
+                    return false;
+                }
+                collect_binding_names(binding, loop_names);
+            }
+            if (stmt.condition && !supported_ast_return_expr(*stmt.condition, input_name, loop_names, reason)) {
+                return false;
+            }
+            std::set<std::string> body_names = loop_names;
+            if (!supported_ast_statement_body(stmt_loop_body(stmt), input_name, body_names, reason)) return false;
+            for (const auto& update : stmt.updates) {
+                if (!supported_ast_return_expr(*update, input_name, loop_names, reason)) return false;
+            }
+            return true;
+        }
+        case StmtKind::Continue:
+            for (const auto& update : stmt.updates) {
+                if (!supported_ast_return_expr(*update, input_name, local_names, reason)) return false;
+            }
+            return true;
+        case StmtKind::Break:
+            return require_expr(stmt_break_value(stmt));
+        case StmtKind::Match:
+            if (!require_expr(stmt.match_value)) return false;
+            for (const auto& arm : stmt_match_arms(stmt)) {
+                std::set<std::string> arm_names = local_names;
+                collect_pattern_binding_names(arm.pattern, arm_names);
+                if (!supported_ast_statement_body(arm.body, input_name, arm_names, reason)) return false;
+            }
+            return true;
+        case StmtKind::Drop:
+            return is_local_generated_name(stmt_drop_name(stmt), local_names, reason);
+    }
+    reason = "unsupported ast meta statement body";
+    return false;
+}
+
+bool supported_ast_statement_body(const std::vector<StmtPtr>& body,
+                                  const std::string& input_name,
+                                  std::set<std::string>& local_names,
+                                  std::string& reason) {
+    for (const auto& stmt : body) {
+        if (!supported_ast_statement(*stmt, input_name, local_names, reason)) return false;
+    }
+    return true;
+}
+
 bool supported_ast_return_expr(const Expr& expr,
                                const std::string& input_name,
                                const std::set<std::string>& local_names,
@@ -138,38 +264,30 @@ bool supported_ast_return_expr(const Expr& expr,
         }
         return true;
     };
-    auto require_expression_only_body = [&](const std::vector<StmtPtr>& body) {
-        if (!body.empty()) {
-            reason =
-                "ast meta control-flow expression returns currently require expression-only arms with no statement bodies";
-            return false;
-        }
-        return true;
-    };
     auto require_if_expr = [&]() {
         if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
             reason = "malformed ast meta return expression";
             return false;
         }
-        if (!require_expression_only_body(expr_if_then_body(expr)) ||
-            !require_expression_only_body(expr_if_else_body(expr))) {
-            return false;
-        }
+        if (!supported_ast_return_expr(*expr_if_condition(expr), input_name, local_names, reason)) return false;
         std::set<std::string> then_names = local_names;
         if (expr_if_condition_pattern(expr)) {
             collect_pattern_binding_names(*expr_if_condition_pattern(expr), then_names);
         }
-        return supported_ast_return_expr(*expr_if_condition(expr), input_name, local_names, reason) &&
-               supported_ast_return_expr(*expr_if_then_value(expr), input_name, then_names, reason) &&
-               supported_ast_return_expr(*expr_if_else_value(expr), input_name, local_names, reason);
+        if (!supported_ast_statement_body(expr_if_then_body(expr), input_name, then_names, reason)) return false;
+        std::set<std::string> else_names = local_names;
+        if (!supported_ast_statement_body(expr_if_else_body(expr), input_name, else_names, reason)) return false;
+        return supported_ast_return_expr(*expr_if_then_value(expr), input_name, then_names, reason) &&
+               supported_ast_return_expr(*expr_if_else_value(expr), input_name, else_names, reason);
     };
     auto require_block_expr = [&]() {
         if (!expr_block_value(expr)) {
             reason = "malformed ast meta return expression";
             return false;
         }
-        if (!require_expression_only_body(expr_block_body(expr))) return false;
-        return supported_ast_return_expr(*expr_block_value(expr), input_name, local_names, reason);
+        std::set<std::string> block_names = local_names;
+        if (!supported_ast_statement_body(expr_block_body(expr), input_name, block_names, reason)) return false;
+        return supported_ast_return_expr(*expr_block_value(expr), input_name, block_names, reason);
     };
     auto require_match_expr = [&]() {
         if (!expr_match_value(expr)) {
@@ -222,7 +340,7 @@ bool supported_ast_return_expr(const Expr& expr,
                 return true;
             } else {
                 reason =
-                    "ast meta expression returns cannot reference names other than the meta input or local control-flow pattern bindings yet";
+                    "ast meta expression returns cannot reference names other than the meta input, generated local bindings, or local control-flow pattern bindings yet";
             }
             return false;
         case ExprKind::Match:

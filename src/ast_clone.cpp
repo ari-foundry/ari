@@ -70,6 +70,7 @@ struct CloneContext {
 };
 
 ExprPtr clone_expression_tree_impl(const Expr& expr, CloneContext& context);
+StmtPtr clone_statement_impl(const Stmt& stmt, CloneContext& context);
 
 bool lookup_local_rename(const CloneContext& context, const std::string& name, std::string& renamed) {
     for (auto it = context.local_renames.rbegin(); it != context.local_renames.rend(); ++it) {
@@ -81,13 +82,17 @@ bool lookup_local_rename(const CloneContext& context, const std::string& name, s
     return false;
 }
 
-void add_pattern_binding_rename(CloneContext& context, std::string& name) {
+void add_local_binding_rename(CloneContext& context, std::string& name) {
     if (name.empty()) return;
     std::string original = name;
     if (!context.hygiene_prefix.empty()) {
         name = context.hygiene_prefix + "_" + std::to_string(context.next_binding++) + "_" + original;
     }
     context.local_renames.push_back(LocalRename{std::move(original), name});
+}
+
+void add_pattern_binding_rename(CloneContext& context, std::string& name) {
+    add_local_binding_rename(context, name);
 }
 
 void rename_pattern_bindings(Pattern& pattern, CloneContext& context) {
@@ -132,44 +137,85 @@ ExprPtr clone_optional_expression(const ExprPtr& expr, CloneContext& context) {
     return expr ? clone_expression_tree_impl(*expr, context) : nullptr;
 }
 
-std::vector<StmtPtr> clone_expression_only_statement_list(const std::vector<StmtPtr>& statements) {
-    if (!statements.empty()) {
-        throw CompileError("internal error: statementful ast meta expression clone is not supported yet");
+std::vector<ExprPtr> clone_expression_list(const std::vector<ExprPtr>& exprs, CloneContext& context) {
+    std::vector<ExprPtr> copies;
+    copies.reserve(exprs.size());
+    for (const auto& expr : exprs) {
+        copies.push_back(clone_expression_tree_impl(*expr, context));
     }
-    return {};
+    return copies;
+}
+
+Binding clone_binding_impl(const Binding& binding, CloneContext& context) {
+    Binding copy;
+    copy.name = binding.name;
+    copy.type = binding.type;
+    copy.has_type = binding.has_type;
+    copy.mutable_binding = binding.mutable_binding;
+    copy.loc = binding.loc;
+    copy.init = clone_optional_expression(binding.init, context);
+    copy.has_pattern = binding.has_pattern;
+    if (binding.has_pattern) {
+        copy.pattern = clone_pattern_with_local_renames(binding.pattern, context);
+    } else {
+        add_local_binding_rename(context, copy.name);
+    }
+    return copy;
+}
+
+std::vector<StmtPtr> clone_statement_list(const std::vector<StmtPtr>& statements, CloneContext& context) {
+    std::vector<StmtPtr> copies;
+    copies.reserve(statements.size());
+    for (const auto& statement : statements) {
+        copies.push_back(clone_statement_impl(*statement, context));
+    }
+    return copies;
 }
 
 void clone_if_payload(const Expr& source,
                       Expr& target,
                       CloneContext& context) {
     if (!source.if_payload) return;
-    std::size_t rename_mark = context.local_renames.size();
+    ExprPtr condition = clone_optional_expression(expr_if_condition(source), context);
+
+    std::size_t then_rename_mark = context.local_renames.size();
     std::unique_ptr<Pattern> condition_pattern;
     if (expr_if_condition_pattern(source)) {
         condition_pattern =
             std::make_unique<Pattern>(clone_pattern_with_local_renames(*expr_if_condition_pattern(source), context));
     }
+    std::vector<StmtPtr> then_body = clone_statement_list(expr_if_then_body(source), context);
     ExprPtr then_value = clone_optional_expression(expr_if_then_value(source), context);
-    context.local_renames.resize(rename_mark);
+    context.local_renames.resize(then_rename_mark);
+
+    std::size_t else_rename_mark = context.local_renames.size();
+    std::vector<StmtPtr> else_body = clone_statement_list(expr_if_else_body(source), context);
+    ExprPtr else_value = clone_optional_expression(expr_if_else_value(source), context);
+    context.local_renames.resize(else_rename_mark);
+
     set_expr_if_payload(
         target,
-        clone_optional_expression(expr_if_condition(source), context),
+        std::move(condition),
         std::move(condition_pattern),
-        clone_expression_only_statement_list(expr_if_then_body(source)),
+        std::move(then_body),
         std::move(then_value),
-        clone_expression_only_statement_list(expr_if_else_body(source)),
-        clone_optional_expression(expr_if_else_value(source), context));
+        std::move(else_body),
+        std::move(else_value));
 }
 
 void clone_block_payload(const Expr& source,
                          Expr& target,
                          CloneContext& context) {
     if (!source.block_payload) return;
+    std::size_t rename_mark = context.local_renames.size();
+    std::vector<StmtPtr> body = clone_statement_list(expr_block_body(source), context);
+    ExprPtr value = clone_optional_expression(expr_block_value(source), context);
+    context.local_renames.resize(rename_mark);
     set_expr_block_payload(
         target,
         expr_block_label(source),
-        clone_expression_only_statement_list(expr_block_body(source)),
-        clone_optional_expression(expr_block_value(source), context));
+        std::move(body),
+        std::move(value));
 }
 
 void clone_match_payload(const Expr& source,
@@ -220,6 +266,127 @@ ExprPtr clone_expression_tree_impl(const Expr& expr, CloneContext& context) {
     clone_if_payload(expr, *clone, context);
     clone_block_payload(expr, *clone, context);
     clone_match_payload(expr, *clone, context);
+    return clone;
+}
+
+std::string clone_local_name_reference(const std::string& name, const CloneContext& context) {
+    std::string renamed;
+    if (lookup_local_rename(context, name, renamed)) return renamed;
+    return name;
+}
+
+void clone_condition_pattern_body(const Stmt& source,
+                                  Stmt& target,
+                                  CloneContext& context,
+                                  const std::vector<StmtPtr>& source_body,
+                                  bool set_as_loop_body) {
+    ExprPtr condition = clone_optional_expression(source.condition, context);
+    std::size_t rename_mark = context.local_renames.size();
+    if (source.has_condition_pattern && source.condition_pattern) {
+        target.has_condition_pattern = true;
+        target.condition_pattern =
+            std::make_unique<Pattern>(clone_pattern_with_local_renames(*source.condition_pattern, context));
+    }
+    std::vector<StmtPtr> body = clone_statement_list(source_body, context);
+    context.local_renames.resize(rename_mark);
+    target.condition = std::move(condition);
+    if (set_as_loop_body) {
+        set_stmt_loop_body(target, std::move(body));
+    } else {
+        set_stmt_then_body(target, std::move(body));
+    }
+}
+
+StmtPtr clone_statement_impl(const Stmt& stmt, CloneContext& context) {
+    auto clone = std::make_unique<Stmt>();
+    clone->kind = stmt.kind;
+    clone->loc = stmt.loc;
+    set_stmt_label(*clone, stmt_label(stmt));
+
+    switch (stmt.kind) {
+        case StmtKind::Block: {
+            std::size_t rename_mark = context.local_renames.size();
+            set_stmt_statements(*clone, clone_statement_list(stmt_statements(stmt), context));
+            context.local_renames.resize(rename_mark);
+            break;
+        }
+        case StmtKind::VarDecl:
+            clone->binding = clone_binding_impl(stmt.binding, context);
+            break;
+        case StmtKind::Assign:
+            set_stmt_assign_name(*clone, clone_local_name_reference(stmt_assign_name(stmt), context));
+            if (stmt_assign_target(stmt)) {
+                set_stmt_assign_target(*clone, clone_expression_tree_impl(*stmt_assign_target(stmt), context));
+            }
+            if (stmt_assign_rhs(stmt)) {
+                set_stmt_assign_rhs(*clone, clone_expression_tree_impl(*stmt_assign_rhs(stmt), context));
+            }
+            break;
+        case StmtKind::ExprStmt:
+        case StmtKind::Return:
+            clone->expr = clone_optional_expression(stmt.expr, context);
+            break;
+        case StmtKind::If: {
+            clone_condition_pattern_body(stmt, *clone, context, stmt_then_body(stmt), false);
+            std::size_t else_mark = context.local_renames.size();
+            set_stmt_else_body(*clone, clone_statement_list(stmt_else_body(stmt), context));
+            context.local_renames.resize(else_mark);
+            break;
+        }
+        case StmtKind::While:
+        case StmtKind::WhileLet:
+            clone_condition_pattern_body(stmt, *clone, context, stmt_loop_body(stmt), true);
+            break;
+        case StmtKind::For: {
+            clone->for_pattern_filter = stmt.for_pattern_filter;
+            clone->for_iterable = clone_optional_expression(stmt.for_iterable, context);
+            std::size_t rename_mark = context.local_renames.size();
+            if (stmt.for_pattern) {
+                clone->for_pattern =
+                    std::make_unique<Pattern>(clone_pattern_with_local_renames(*stmt.for_pattern, context));
+            }
+            set_stmt_loop_body(*clone, clone_statement_list(stmt_loop_body(stmt), context));
+            context.local_renames.resize(rename_mark);
+            break;
+        }
+        case StmtKind::InitWhile: {
+            std::size_t rename_mark = context.local_renames.size();
+            for (const auto& binding : stmt.init_bindings) {
+                clone->init_bindings.push_back(clone_binding_impl(binding, context));
+            }
+            clone->condition = clone_optional_expression(stmt.condition, context);
+            std::size_t body_mark = context.local_renames.size();
+            set_stmt_loop_body(*clone, clone_statement_list(stmt_loop_body(stmt), context));
+            context.local_renames.resize(body_mark);
+            clone->updates = clone_expression_list(stmt.updates, context);
+            context.local_renames.resize(rename_mark);
+            break;
+        }
+        case StmtKind::Continue:
+            clone->updates = clone_expression_list(stmt.updates, context);
+            break;
+        case StmtKind::Break:
+            set_stmt_break_label(*clone, stmt_break_label(stmt));
+            set_stmt_break_value(*clone, clone_optional_expression(stmt_break_value(stmt), context));
+            break;
+        case StmtKind::Match: {
+            clone->match_value = clone_optional_expression(stmt.match_value, context);
+            for (const auto& arm : stmt_match_arms(stmt)) {
+                std::size_t rename_mark = context.local_renames.size();
+                MatchArm copy;
+                copy.pattern = clone_pattern_with_local_renames(arm.pattern, context);
+                copy.body = clone_statement_list(arm.body, context);
+                copy.loc = arm.loc;
+                ensure_stmt_match_arms(*clone).push_back(std::move(copy));
+                context.local_renames.resize(rename_mark);
+            }
+            break;
+        }
+        case StmtKind::Drop:
+            set_stmt_drop_name(*clone, clone_local_name_reference(stmt_drop_name(stmt), context));
+            break;
+    }
+
     return clone;
 }
 
