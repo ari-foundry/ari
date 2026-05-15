@@ -27,6 +27,7 @@ struct Diagnostic {
 
 std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std::string& fallback_file);
 
+std::string fallback_compiler_diagnostic_code(const std::string& message);
 std::string json_escape(const std::string& text);
 std::optional<DiagnosticSeverity> parse_severity_name(const std::string& text);
 std::string severity_name(DiagnosticSeverity severity);

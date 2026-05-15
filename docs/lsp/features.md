@@ -8,6 +8,10 @@ The language server supports both publish diagnostics and pull diagnostics.
 Diagnostics are produced through the shared lint checker, which runs compiler
 `--check` diagnostics and native lint rules.
 
+LSP diagnostics preserve native lint codes and compiler-provided codes. When the
+compiler does not provide a structured code, compiler-backed diagnostics use the
+stable fallback code `ari/compiler`.
+
 Open documents are checked from a temporary same-directory file so unsaved text
 can be diagnosed while preserving relative module lookup and nearby
 `ari-lint.rules` discovery.

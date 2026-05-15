@@ -25,10 +25,11 @@
       no explicit `--config` is supplied.
 - [x] Add a user-facing lint feature guide for CLI behavior, native rules,
       config, output modes, and tool integration.
+- [x] Preserve explicit compiler diagnostic codes when present and attach the
+      stable `ari/compiler` fallback code to compiler-backed diagnostics.
 
-## Near-Term Work
+## Post-0.1.0 Work
 
-- [ ] Add stable diagnostic codes once compiler diagnostics expose codes.
 - [ ] Extend compiler-backed diagnostics with wider spans once the compiler
       exposes them.
 - [ ] Keep adding lint-only rules and docs as policy decisions become stable;

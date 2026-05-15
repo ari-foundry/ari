@@ -8,6 +8,10 @@ This page describes the current user-facing behavior of `ari-lint`.
 Parser, module-loader, semantic, ownership, and lowering diagnostics therefore
 come from the same compiler path used by normal builds.
 
+Compiler diagnostics keep explicit compiler-provided codes when present. Until
+the compiler emits more specific structured codes, compiler-backed diagnostics
+use the stable fallback code `ari/compiler`.
+
 Useful commands:
 
 ```sh
@@ -66,7 +70,7 @@ build/ari-lint --json source.ari
 ```
 
 JSON diagnostics include `line`, `column`, `endLine`, `endColumn`, `severity`,
-`source`, and a `code` when the diagnostic has one.
+`source`, and `code`.
 
 ## Tool Integration
 

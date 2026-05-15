@@ -51,7 +51,7 @@ check-std-api:
 check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	mkdir -p $(BUILD_DIR)/tools
 	python3 tests/tools/check_vscode_extension.py
-	if command -v node >/dev/null 2>&1; then node --check editors/vscode/extension.js; node --check editors/vscode/commands.js; node --check editors/vscode/tasks.js; node --check editors/vscode/lsp.js; node --check editors/vscode/paths.js; node --check editors/vscode/config.js; fi
+	if command -v node >/dev/null 2>&1; then node --check editors/vscode/extension.js; node --check editors/vscode/commands.js; node --check editors/vscode/tasks.js; node --check editors/vscode/lsp.js; node --check editors/vscode/paths.js; node --check editors/vscode/config.js; node --check editors/vscode/scripts/package-vsix.js; fi
 	$(LINT_TARGET) --ari $(TARGET) examples/count.ari >$(BUILD_DIR)/tools/lint-ok.out
 	grep -q 'examples/count.ari: ok' $(BUILD_DIR)/tools/lint-ok.out
 	$(LINT_TARGET) --list-rules >$(BUILD_DIR)/tools/lint-rules.out
@@ -77,6 +77,7 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	grep -q '$(BUILD_DIR)/tools/lint-missing-final-newline.ari: ok' $(BUILD_DIR)/tools/lint-missing-final-newline-off.out
 	if $(LINT_TARGET) --ari $(TARGET) --json tests/errors/prelude-macro-format-planned.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
+	grep -q '"code":"ari/compiler"' $(BUILD_DIR)/tools/lint-format.json
 	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/tools/lint-format.json
 	sh tests/tools/lsp_smoke.sh
 

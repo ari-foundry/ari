@@ -63,7 +63,7 @@ LintResult run_lint(const LintConfig& config, const std::string& file) {
             tooling::DiagnosticSeverity::Error,
             process.output.empty() ? "compiler check failed" : process.output,
             "ari",
-            "",
+            "ari/compiler-check-failed",
             0,
             0,
         });

@@ -29,6 +29,10 @@ The extension launches `ari-lsp`, which reports compiler-backed diagnostics and
 native lint diagnostics in the Problems panel. Unsaved buffer text is sent to the
 language server, so diagnostics update while editing.
 
+Diagnostics include stable codes. Native lint diagnostics use `lint/...` codes,
+and compiler-backed diagnostics use explicit compiler codes when available or
+the `ari/compiler` fallback code.
+
 ## Navigation And Editing
 
 Current LSP-powered editor features:

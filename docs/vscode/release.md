@@ -11,6 +11,7 @@ The 0.1.0 package is meant for local Ari development. It includes:
 - `ari-lsp` startup through `vscode-languageclient`
 - diagnostics, Outline, hover, definition, completion, highlights, folding,
   selection ranges, workspace symbols, and Quick Fix actions from `ari-lsp`
+- stable diagnostic codes for native lint and compiler-backed diagnostics
 - command-palette actions for `ari --check`, `ari-lint`, and LSP restart
 - Ari task entries for common repository `make` targets
 

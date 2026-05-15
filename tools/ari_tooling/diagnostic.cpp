@@ -13,15 +13,20 @@ std::string trim_carriage_return(std::string line) {
     return line;
 }
 
+std::string diagnostic_code(const std::ssub_match& explicit_code, const std::string& message) {
+    if (explicit_code.matched && explicit_code.length() > 0) return explicit_code.str();
+    return fallback_compiler_diagnostic_code(message);
+}
+
 } // namespace
 
 std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std::string& fallback_file) {
     std::vector<Diagnostic> diagnostics;
     std::istringstream in(text);
     std::string line;
-    const std::regex ari_pattern(R"(^ari: (error|warning|note|hint): ([0-9]+):([0-9]+): (.*)$)");
-    const std::regex file_pattern(R"(^(.+):([0-9]+):([0-9]+): (error|warning|note|hint): (.*)$)");
-    const std::regex general_pattern(R"(^ari: (error|warning|note|hint): (.*)$)");
+    const std::regex ari_pattern(R"(^ari: (error|warning|note|hint)(?:\[([^\]]+)\])?: ([0-9]+):([0-9]+): (.*)$)");
+    const std::regex file_pattern(R"(^(.+):([0-9]+):([0-9]+): (error|warning|note|hint)(?:\[([^\]]+)\])?: (.*)$)");
+    const std::regex general_pattern(R"(^ari: (error|warning|note|hint)(?:\[([^\]]+)\])?: (.*)$)");
 
     while (std::getline(in, line)) {
         line = trim_carriage_return(line);
@@ -29,12 +34,12 @@ std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std
         if (std::regex_match(line, match, ari_pattern)) {
             diagnostics.push_back(Diagnostic{
                 fallback_file,
-                std::max(1, std::stoi(match[2].str())),
                 std::max(1, std::stoi(match[3].str())),
+                std::max(1, std::stoi(match[4].str())),
                 parse_severity_name(match[1].str()).value_or(DiagnosticSeverity::Error),
-                match[4].str(),
+                match[5].str(),
                 "ari",
-                "",
+                diagnostic_code(match[2], match[5].str()),
                 0,
                 0,
             });
@@ -46,9 +51,9 @@ std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std
                 std::max(1, std::stoi(match[2].str())),
                 std::max(1, std::stoi(match[3].str())),
                 parse_severity_name(match[4].str()).value_or(DiagnosticSeverity::Error),
-                match[5].str(),
+                match[6].str(),
                 "ari",
-                "",
+                diagnostic_code(match[5], match[6].str()),
                 0,
                 0,
             });
@@ -60,15 +65,20 @@ std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std
                 1,
                 1,
                 parse_severity_name(match[1].str()).value_or(DiagnosticSeverity::Error),
-                match[2].str(),
+                match[3].str(),
                 "ari",
-                "",
+                diagnostic_code(match[2], match[3].str()),
                 0,
                 0,
             });
         }
     }
     return diagnostics;
+}
+
+std::string fallback_compiler_diagnostic_code(const std::string& message) {
+    (void)message;
+    return "ari/compiler";
 }
 
 std::string json_escape(const std::string& text) {

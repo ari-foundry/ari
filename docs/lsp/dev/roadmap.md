@@ -37,13 +37,14 @@
       explicit `--config` is supplied.
 - [x] Preserve shared diagnostic codes and explicit end spans in LSP diagnostic
       JSON when the tooling layer provides them.
+- [x] Preserve compiler diagnostic codes and surface the stable `ari/compiler`
+      fallback code through both publish and pull diagnostics.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
 - [x] Add a user-facing LSP feature guide for diagnostics, symbols, workspace
       search, editor helpers, and configuration.
 
-## Near-Term Work
+## Post-0.1.0 Work
 
-- [ ] Add stable diagnostic codes once the compiler/lint layer exposes them.
 - [ ] Replace first-pass lint text-edit code actions with rule-owned fix
       providers shared by the CLI and LSP.
 - [ ] Replace first-pass text symbol scanning with parser/module-summary-backed
