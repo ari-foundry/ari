@@ -1,0 +1,51 @@
+meta fn keyword_expr(input: token_stream) -> token_stream {
+  return if tokens_starts_with(input, "fast") {
+    tokens!(40)
+  } else {
+    tokens!(input)
+  };
+}
+
+meta fn keyword_item(input: token_stream) -> token_stream {
+  return if input.starts_with("fn") {
+    tokens!(input)
+  } else {
+    tokens!(fn generated_item() -> i64 {
+      return 5;
+    })
+  };
+}
+
+meta fn keyword_pattern(input: token_stream) -> token_stream {
+  return if input.starts_with("Some") {
+    tokens!(input)
+  } else {
+    tokens!(None)
+  };
+}
+
+keyword_item!(fn kept_item() -> i64 {
+  return 8;
+});
+
+keyword_item!();
+
+enum MaybeI64 {
+  None,
+  Some(i64),
+}
+
+fn score(value: MaybeI64) -> i64 {
+  return match value {
+    keyword_pattern!(Some(inner)) => {
+      inner
+    }
+    keyword_pattern!(_) => {
+      9
+    }
+  };
+}
+
+fn main() -> i64 {
+  return keyword_expr!(fast) + keyword_expr!(2) + kept_item() + generated_item() + score(Some(6)) + score(None());
+}

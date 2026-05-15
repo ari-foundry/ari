@@ -16,9 +16,7 @@ namespace {
 std::string token_return_forms(const std::string& input_name) {
     return "token_stream meta function bodies currently allow only an empty body, `return " +
            input_name +
-           ";` identity body, tokens!(...) token output, or `if tokens_empty(" +
-           input_name +
-           ") { tokens!(...) } else { tokens!(...) }` token branching";
+           ";` identity body, tokens!(...) token output, or expression-only `if` token branching with supported token_stream conditions";
 }
 
 bool is_input_name(const Expr& expr, const std::string& input_name) {
@@ -74,6 +72,35 @@ bool supported_tokens_len_method(const Expr& expr, const std::string& input_name
            expr_type_args(expr).empty() &&
            expr_operand(expr) &&
            is_input_name(*expr_operand(expr), input_name);
+}
+
+bool is_string_literal(const Expr& expr) {
+    return expr.kind == ExprKind::String;
+}
+
+bool supported_tokens_starts_with_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "tokens_starts_with" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 2 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name) &&
+           is_string_literal(*expr.args[1]);
+}
+
+bool supported_tokens_starts_with_method(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::MethodCall &&
+           expr.name == "starts_with" &&
+           expr.args.size() == 1 &&
+           expr_type_args(expr).empty() &&
+           expr_operand(expr) &&
+           is_input_name(*expr_operand(expr), input_name) &&
+           is_string_literal(*expr.args[0]);
+}
+
+bool token_starts_with(const std::vector<Token>& input_tokens, const std::string& text) {
+    return !input_tokens.empty() && input_tokens.front().text == text;
 }
 
 bool supported_token_integer_expr(const Expr& expr,
@@ -151,9 +178,11 @@ bool supported_token_condition_expr(const Expr& expr,
             break;
         case ExprKind::Call:
             if (supported_tokens_empty_call(expr, input_name)) return true;
+            if (supported_tokens_starts_with_call(expr, input_name)) return true;
             break;
         case ExprKind::MethodCall:
             if (supported_tokens_empty_method(expr, input_name)) return true;
+            if (supported_tokens_starts_with_method(expr, input_name)) return true;
             break;
         default:
             break;
@@ -161,7 +190,8 @@ bool supported_token_condition_expr(const Expr& expr,
 
     reason = "token_stream meta branch conditions currently support bool literals, !, &&, ||, tokens_empty(" +
              input_name + "), " + input_name + ".is_empty(), and integer comparisons over tokens_count(" +
-             input_name + ") or " + input_name + ".len()";
+             input_name + ") or " + input_name + ".len(), plus first-token text matching with tokens_starts_with(" +
+             input_name + ", \"...\") or " + input_name + ".starts_with(\"...\")";
     return false;
 }
 
@@ -208,9 +238,15 @@ bool eval_token_condition_expr(const Expr& expr,
             break;
         case ExprKind::Call:
             if (supported_tokens_empty_call(expr, input_name)) return input_tokens.empty();
+            if (supported_tokens_starts_with_call(expr, input_name)) {
+                return token_starts_with(input_tokens, expr.args[1]->string_value);
+            }
             break;
         case ExprKind::MethodCall:
             if (supported_tokens_empty_method(expr, input_name)) return input_tokens.empty();
+            if (supported_tokens_starts_with_method(expr, input_name)) {
+                return token_starts_with(input_tokens, expr.args[0]->string_value);
+            }
             break;
         default:
             break;
