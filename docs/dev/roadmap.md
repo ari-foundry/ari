@@ -208,8 +208,8 @@ constructor subset documented in the language guide.
    `std::string::String` now wrap that storage in a tracked source handle with
    `data`, `len`, and `capacity` metadata, borrowed receiver lowering for
    metadata, endpoint byte reads, indexed byte reads, byte search,
-   `Slice[u8]` prefix/suffix checks, and raw-pointer views, fixed-capacity
-   byte push/pop,
+   `Slice[u8]` exact/prefix/suffix checks, and raw-pointer views,
+   fixed-capacity byte push/pop,
    checked get/set/replace, truncate/clear, slice views,
    explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
    `insert_in`, `extend_from_slice_in`, and `resize_in`,

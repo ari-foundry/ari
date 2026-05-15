@@ -403,6 +403,20 @@ pub impl std::string::String {
     return true;
   }
 
+  fn equals(self: ref Self, values: super::Slice[u8]) -> bool {
+    if self.raw.len != values.len {
+      return false;
+    }
+    var index = 0;
+    while index < values.len {
+      if ptr_load(ptr_add(self.raw.data, index)) != values[index] {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::string::String {
     return std::string::copy_to(self, target);
   }

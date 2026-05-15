@@ -124,14 +124,14 @@ source string handle supports `len`, `capacity`,
 for lowercase `string`, `i64`, bool, and `f64` values through
 `append_string_in`, `append_i64_in`, `append_bool_in`, and `append_f64_in`, plus
 `truncate`, `clear`, byte search with `contains`, `index_of`, and `count`,
-`starts_with(Slice[u8])`, `ends_with(Slice[u8])`, `copy_to(ref mut zone)`,
-`as_ptr`, and `as_slice`.
+`equals(Slice[u8])`, `starts_with(Slice[u8])`, `ends_with(Slice[u8])`,
+`copy_to(ref mut zone)`, `as_ptr`, and `as_slice`.
 `std::string::from_string(ref mut zone, text)` copies today's borrowed
 lowercase `string` into independent zone-backed bytes,
 `std::string::from_slice_in(ref mut zone, values)` copies a borrowed byte slice
 into independent zone-backed bytes, and `std::string::copy_to(ref value, ref
 mut zone)` copies the current bytes into another explicit zone. Metadata,
-checked byte `first`/`last`/`get`, byte search, prefix/suffix checks,
+checked byte `first`/`last`/`get`, byte search, exact/prefix/suffix checks,
 method-style `copy_to(ref mut zone)`, `as_ptr`, and top-level target-zone copy
 borrow the handle instead of copying it. This is still an explicit-zone string
 API; allocations are released by `zone::reset` or `zone::destroy`, and the
@@ -727,8 +727,8 @@ endpoint/indexed byte reads, `as_ptr()`, and target-zone copy are read-only
 borrows of the source string handle. So are byte-search helpers:
 `contains(byte)` reports whether a byte is present, `index_of(byte)` returns
 the first matching byte index or `-1`, and `count(byte)` returns the number of
-matches. `starts_with(view)` and `ends_with(view)` compare the string bytes
-against a borrowed `Slice[u8]` view.
+matches. `equals(view)`, `starts_with(view)`, and `ends_with(view)` compare the
+string bytes against a borrowed `Slice[u8]` view.
 Mutating byte and growth helpers take mutable borrows.
 Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`
 result, or slice view after its source zone is reset or destroyed is rejected.
