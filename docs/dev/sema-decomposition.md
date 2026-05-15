@@ -62,8 +62,8 @@ adding more narrow syntax-specific `*_semantics` siblings.
   and its zone-backed source field shape
 - `std_string_semantics` for source-prelude `std::string::RawString` and
   `std::string::String` handle recognition, their zone-backed byte source
-  field shapes, and provenance-preserving pointer-return methods such as
-  `String.as_ptr()`
+  field shapes, same-zone growth-method diagnostics, and
+  provenance-preserving pointer-return methods such as `String.as_ptr()`
 - `zone_pointer_semantics` for zone pointer/source handle provenance tracing,
   source/generation assignment, reset/destroy invalidation diagnostics,
   temporary-zone escape diagnostics, temporary-zone `zone::destroy` cleanup IR,

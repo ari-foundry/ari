@@ -267,6 +267,9 @@ Checklist:
 - [x] `std::string::from_string(ref mut Zone, string)` copies today's borrowed
       lowercase `string` into independent source `std::string::String` storage
       tied to the target zone
+- [x] source `std::string::String` same-zone `reserve`, `reserve_extra`,
+      `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in` grow the
+      zone-backed byte buffer while rejecting a mismatched zone argument
 - [x] `std::vec::with_capacity<T>(ref mut Zone, capacity)` wraps that pointer
       in a tracked `RawVec<T>` handle whose field access is invalidated after
       zone reset/destroy

@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var other = zone::create(64);
+  var text = std::string::new(ref mut zone, 1);
+  text.push_in(ref mut other, 65u8);
+  zone::destroy(other);
+  zone::destroy(zone);
+  return 0;
+}

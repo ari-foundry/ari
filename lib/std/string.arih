@@ -53,10 +53,146 @@ pub impl std::string::String {
     self.raw.len = self.raw.len + 1;
   }
 
+  fn push_in(self: ref mut Self, zone: ref mut Zone, value: u8) -> void {
+    if self.raw.len >= self.raw.capacity {
+      var capacity = self.raw.capacity * 2;
+      if capacity <= self.raw.len {
+        capacity = self.raw.len + 1;
+      }
+      let data = alloc_buffer(zone, capacity);
+      var index = 0;
+      while index < self.raw.len {
+        ptr_store(ptr_add(data, index), ptr_load(ptr_add(self.raw.data, index)));
+        index = index + 1;
+      }
+      self.raw.data = data;
+      self.raw.capacity = capacity;
+    }
+    self.push(value);
+  }
+
   fn pop(self: ref mut Self) -> u8 {
     std::assert(self.raw.len > 0);
     self.raw.len = self.raw.len - 1;
     return ptr_load(ptr_add(self.raw.data, self.raw.len));
+  }
+
+  fn insert(self: ref mut Self, index: i64, value: u8) -> void {
+    std::assert(index >= 0);
+    std::assert(index <= self.raw.len);
+    std::assert(self.raw.len < self.raw.capacity);
+    var cursor = self.raw.len;
+    while cursor > index {
+      ptr_store(ptr_add(self.raw.data, cursor), ptr_load(ptr_add(self.raw.data, cursor - 1)));
+      cursor = cursor - 1;
+    }
+    ptr_store(ptr_add(self.raw.data, index), value);
+    self.raw.len = self.raw.len + 1;
+  }
+
+  fn insert_in(self: ref mut Self, zone: ref mut Zone, index: i64, value: u8) -> void {
+    std::assert(index >= 0);
+    std::assert(index <= self.raw.len);
+    if self.raw.len >= self.raw.capacity {
+      var capacity = self.raw.capacity * 2;
+      if capacity <= self.raw.len {
+        capacity = self.raw.len + 1;
+      }
+      let data = alloc_buffer(zone, capacity);
+      var cursor = 0;
+      while cursor < index {
+        ptr_store(ptr_add(data, cursor), ptr_load(ptr_add(self.raw.data, cursor)));
+        cursor = cursor + 1;
+      }
+      ptr_store(ptr_add(data, index), value);
+      while cursor < self.raw.len {
+        ptr_store(ptr_add(data, cursor + 1), ptr_load(ptr_add(self.raw.data, cursor)));
+        cursor = cursor + 1;
+      }
+      self.raw.data = data;
+      self.raw.capacity = capacity;
+      self.raw.len = self.raw.len + 1;
+      return;
+    }
+    self.insert(index, value);
+  }
+
+  fn extend_from_slice_in(self: ref mut Self, zone: ref mut Zone, values: super::Slice[u8]) -> void {
+    var index = 0;
+    while index < values.len {
+      if self.raw.len >= self.raw.capacity {
+        var capacity = self.raw.capacity * 2;
+        if capacity <= self.raw.len {
+          capacity = self.raw.len + 1;
+        }
+        let data = alloc_buffer(zone, capacity);
+        var cursor = 0;
+        while cursor < self.raw.len {
+          ptr_store(ptr_add(data, cursor), ptr_load(ptr_add(self.raw.data, cursor)));
+          cursor = cursor + 1;
+        }
+        self.raw.data = data;
+        self.raw.capacity = capacity;
+      }
+      self.push(values[index]);
+      index = index + 1;
+    }
+  }
+
+  fn resize_in(self: ref mut Self, zone: ref mut Zone, length: i64, value: u8) -> void {
+    std::assert(length >= 0);
+    if length <= self.raw.len {
+      self.raw.len = length;
+      return;
+    }
+    while self.raw.len < length {
+      if self.raw.len >= self.raw.capacity {
+        var capacity = self.raw.capacity * 2;
+        if capacity <= self.raw.len {
+          capacity = self.raw.len + 1;
+        }
+        let data = alloc_buffer(zone, capacity);
+        var cursor = 0;
+        while cursor < self.raw.len {
+          ptr_store(ptr_add(data, cursor), ptr_load(ptr_add(self.raw.data, cursor)));
+          cursor = cursor + 1;
+        }
+        self.raw.data = data;
+        self.raw.capacity = capacity;
+      }
+      self.push(value);
+    }
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    std::assert(capacity >= 0);
+    if capacity <= self.raw.capacity {
+      return;
+    }
+    let data = alloc_buffer(zone, capacity);
+    var index = 0;
+    while index < self.raw.len {
+      ptr_store(ptr_add(data, index), ptr_load(ptr_add(self.raw.data, index)));
+      index = index + 1;
+    }
+    self.raw.data = data;
+    self.raw.capacity = capacity;
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    let capacity = self.raw.len + additional;
+    if capacity <= self.raw.capacity {
+      return;
+    }
+    let data = alloc_buffer(zone, capacity);
+    var index = 0;
+    while index < self.raw.len {
+      ptr_store(ptr_add(data, index), ptr_load(ptr_add(self.raw.data, index)));
+      index = index + 1;
+    }
+    self.raw.data = data;
+    self.raw.capacity = capacity;
   }
 
   fn clear(self: ref mut Self) -> void {

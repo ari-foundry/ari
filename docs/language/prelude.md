@@ -107,7 +107,9 @@ and returns a tracked raw byte pointer, using `null` for zero capacity.
 tracked `RawString` handle with `data`, `len`, and `capacity` fields, and
 `std::string::new(ref mut zone, capacity)` wraps that in
 `std::string::String`. The source string handle supports `len`, `capacity`,
-`is_empty`, checked byte `get`/`set`/`replace`, fixed-capacity `push`/`pop`,
+`is_empty`, checked byte `get`/`set`/`replace`, fixed-capacity
+`push`/`pop`/`insert`, same-zone growth through `reserve`, `reserve_extra`,
+`push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, plus
 `truncate`, `clear`, `as_ptr`, and `as_slice`. `std::string::from_string(ref
 mut zone, text)` copies today's borrowed lowercase `string` into independent
 zone-backed bytes, and `std::string::copy_to(value, ref mut zone)` copies the
@@ -620,7 +622,14 @@ let copied = std::string::copy_to(text, ref mut other_zone)
 ```
 
 The handle tracks `len` separately from `capacity` and does not append a NUL
-terminator. `push` is fixed-capacity and asserts if the buffer is full. Use
+terminator. `push` and `insert` are fixed-capacity and assert if the buffer is
+full. Use `reserve(ref mut Zone, capacity)` or `reserve_extra(ref mut Zone,
+additional)` for explicit growth, `push_in(ref mut Zone, byte)` and
+`insert_in(ref mut Zone, index, byte)` for grow-on-demand writes,
+`extend_from_slice_in(ref mut Zone, Slice[u8])` for bulk byte appends, and
+`resize_in(ref mut Zone, length, byte)` to grow or shrink. These growth methods
+must receive the same explicit zone that created the handle, so provenance
+continues to match reset/destroy invalidation. Use
 `std::string::copy_to(value, ref mut Zone)` to copy the current bytes into
 another explicit zone.
 Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`

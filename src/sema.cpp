@@ -5069,6 +5069,25 @@ private:
         }
     }
 
+    void require_std_string_same_zone_method_matches_source(SourceLocation loc,
+                                                            const std::string& method_name,
+                                                            const IrType& receiver_type,
+                                                            const std::vector<IrExprPtr>& args) {
+        std::optional<std::string> violation = std_string_same_zone_method_violation(
+            method_name,
+            receiver_type,
+            args,
+            [this](const IrExpr& value, std::string& out) {
+                return zone_pointer_source_name_from_expr(value, out);
+            },
+            [this](const IrExpr& value, std::string& out) {
+                return zone_source_name_from_arg(value, out);
+            });
+        if (violation) {
+            fail(loc, *violation);
+        }
+    }
+
     void set_zone_pointer_source_from_expr(LocalInfo& target, const IrExpr& value) {
         ari::set_zone_pointer_source_from_expr(
             target,
@@ -6857,12 +6876,17 @@ private:
     }
 
     bool assignment_target_allows_zone_pointer_storage(const IrExpr& target) {
-        if (current_module_name_ != "std::vec") return false;
+        if (current_module_name_ != "std::vec" && current_module_name_ != "std::string") return false;
         std::string base_name;
         std::string path;
         if (!tracked_ir_access_path(target, base_name, path) || base_name != "self") return false;
         const LocalInfo* local = find_local_slot(base_name);
         if (!local) return false;
+        if (current_module_name_ == "std::string") {
+            std::optional<std::vector<std::size_t>> data_path =
+                std_string_zone_handle_data_field_path_indices(value_qualified_type(local->type));
+            return data_path && path == local_owned_field_path_from_indices(*data_path);
+        }
         std::optional<std::vector<std::size_t>> data_path =
             std_vec_zone_handle_data_field_path_indices(value_qualified_type(local->type));
         return data_path && path == local_owned_field_path_from_indices(*data_path);
@@ -17832,6 +17856,7 @@ private:
             args.push_back(std::move(arg));
         }
         require_std_vec_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
+        require_std_string_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
         return finish_tracked_call(
             expr.loc,
             expr.name,

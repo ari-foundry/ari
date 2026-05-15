@@ -192,6 +192,8 @@ constructor subset documented in the language guide.
    `std::string::String` now wrap that storage in a tracked source handle with
    `data`, `len`, and `capacity` metadata, fixed-capacity byte push/pop,
    checked get/set/replace, truncate/clear, slice and raw-pointer views,
+   explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
+   `insert_in`, `extend_from_slice_in`, and `resize_in`,
    `std::string::copy_to(value, ref mut Zone)` target-zone copying, and
    `from_string(ref mut Zone, string)` copying from today's borrowed lowercase
    `string` values.
@@ -205,11 +207,11 @@ constructor subset documented in the language guide.
      string spelling while lowercase `string` remains today's borrowed
      C-string pointer value. The source `std::string::String` seed now has
      tracked length/capacity storage, fixed-capacity byte operations,
-     lowercase `string` copying, and target-zone copying. Remaining work is
-     the final root `String` ownership/value-drop contract, grow-on-demand
-     runtime text capacity, and wiring `read_line`, `format!`, or general text
-     APIs to return independent owned values instead of borrowed buffers or
-     raw byte seeds
+     same-zone grow-on-demand byte capacity, lowercase `string` copying, and
+     target-zone copying. Remaining work is the final root `String`
+     ownership/value-drop contract and wiring `read_line`, `format!`, or
+     general text APIs to return independent owned values instead of borrowed
+     buffers or raw byte seeds
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

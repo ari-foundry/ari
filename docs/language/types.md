@@ -110,10 +110,13 @@ The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::String` handle with separate `len` and `capacity` metadata over
 zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
 borrowed lowercase `string` into that handle. It supports checked byte
-`get`/`set`/`replace`, fixed-capacity `push`/`pop`, `truncate`, `clear`,
-`as_ptr`, `as_slice`, and top-level `std::string::copy_to(value, ref mut Zone)`.
-The root `String` name remains reserved until the final ownership/value-drop
-contract and growable runtime text capacity are defined.
+`get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone
+grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
+`extend_from_slice_in`, and `resize_in`, plus `truncate`, `clear`, `as_ptr`,
+`as_slice`, and top-level `std::string::copy_to(value, ref mut Zone)`. The
+zone argument passed to a grow method must be the same source zone that created
+the handle. The root `String` name remains reserved until the final
+ownership/value-drop contract is defined.
 
 ## Tuples
 

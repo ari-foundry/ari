@@ -1,0 +1,35 @@
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var text = std::string::new(ref mut zone, 1);
+
+  text.push(65u8);
+  text.reserve(ref mut zone, 2);
+  let first_capacity = text.capacity();
+  text.reserve_extra(ref mut zone, 3);
+  let second_capacity = text.capacity();
+
+  text.push_in(ref mut zone, 66u8);
+  text.push_in(ref mut zone, 67u8);
+  text.insert_in(ref mut zone, 1, 68u8);
+  text.insert_in(ref mut zone, 4, 69u8);
+
+  var tail = std::string::new(ref mut zone, 2);
+  tail.push(70u8);
+  tail.push(71u8);
+  let view = tail.as_slice();
+  text.extend_from_slice_in(ref mut zone, view);
+
+  text.resize_in(ref mut zone, 9, 72u8);
+  text.resize_in(ref mut zone, 6, 0u8);
+
+  let total = text.len() + text.capacity() + first_capacity + second_capacity +
+    (text.get(0) as i64) +
+    (text.get(1) as i64) +
+    (text.get(2) as i64) +
+    (text.get(3) as i64) +
+    (text.get(4) as i64) +
+    (text.get(5) as i64);
+
+  zone::destroy(zone);
+  return total % 256;
+}

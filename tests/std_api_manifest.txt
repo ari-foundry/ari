@@ -66,12 +66,19 @@ method std::string::String::as_ptr|check-prelude std-string-handle and as-ptr pr
 method std::string::String::as_slice|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::capacity|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::clear|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::extend_from_slice_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::get|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::insert|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::insert_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::is_empty|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::len|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::pop|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::push_in|check-prelude std-string-grow and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::replace|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::reserve|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::reserve_extra|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::resize_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::set|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::truncate|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr; docs/dev/test-matrix.md Explicit memory zones row
