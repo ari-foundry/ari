@@ -585,9 +585,10 @@ element, but the explicit zone still owns the backing allocation.
 handle tied to the target zone, so resetting the source zone does not
 invalidate the copy. `std::vec::Vec<T>.as_ptr()` returns the stored element
 pointer with the receiver's zone provenance intact. `vec.as_slice()` returns a
-`Slice[T]` over the same zone-backed buffer, and that slice is
-rejected after
-the source zone is reset or destroyed.
+`Slice[T]` over the same zone-backed buffer, and that slice is rejected after
+the source zone is reset or destroyed. Metadata, checked read, search,
+target-zone copy, and raw-pointer methods borrow the source handle receiver
+instead of copying it.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over

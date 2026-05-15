@@ -136,9 +136,11 @@ constructor subset documented in the language guide.
    grow-or-shrink `resize_in(ref mut Zone, length, value)`, and
    tracked `as_slice` views over its allocated buffer. It can also expose
    the stored data pointer through provenance-preserving `as_ptr()` and
-   `copy_to(ref mut Zone)` into a new target-zone handle. Its `Drop` impl
-   consumes the handle and drops each current element while the explicit zone
-   keeps responsibility for releasing the backing storage. Runtime heap growth for
+   `copy_to(ref mut Zone)` into a new target-zone handle; read-only metadata,
+   read, search, target-zone copy, and raw-pointer methods borrow their
+   receiver rather than copying the handle. Its `Drop` impl consumes the handle
+   and drops each current element while the explicit zone keeps responsibility
+   for releasing the backing storage. Runtime heap growth for
    root/local `Vec[T]` and the root
    `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now

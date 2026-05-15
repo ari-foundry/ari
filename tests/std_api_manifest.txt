@@ -88,22 +88,22 @@ method std::string::String::reserve_extra|check-prelude std-string-grow; docs/de
 method std::string::String::resize_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::set|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::truncate|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::capacity|check-prelude std-vec-metadata-methods; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::capacity|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::clear|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::contains|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::contains|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::copy_to|check-prelude std-vec-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::count|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::first|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::get|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::index_of|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::first|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::get|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::index_of|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::insert|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::insert_in|check-prelude std-vec-insert-in; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::is_empty|check-prelude std-vec-metadata-methods; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::last|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
-method std::vec::Vec[T]::len|check-prelude std-vec-metadata-methods; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::is_empty|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::last|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::len|check-prelude std-vec-metadata-methods borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::pop|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::push_in|check-prelude std-vec-push-in; docs/dev/test-matrix.md Explicit memory zones row

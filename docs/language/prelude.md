@@ -79,10 +79,11 @@ The source handle currently exposes element methods: `len`, `capacity`,
 `resize_in(ref mut zone, length, value)`, `copy_to(ref mut zone)`, and
 `as_ptr()` and `as_slice`. `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in` use the same explicit zone capability
-to grow the buffer. `copy_to(ref mut zone)` copies the current elements into a
-new handle tied to the target zone. `as_ptr()` returns the stored element
-pointer with the source zone provenance preserved. This is not the final root
-`Vec[T]` method API.
+to grow the buffer. Metadata, checked reads, search, `copy_to(ref mut zone)`,
+and `as_ptr()` borrow the handle receiver instead of copying it. `copy_to(ref
+mut zone)` copies the current elements into a new handle tied to the target
+zone. `as_ptr()` returns the stored element pointer with the source zone
+provenance preserved. This is not the final root `Vec[T]` method API.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
@@ -544,7 +545,9 @@ simple linear search, and
 mutable `Slice[T]` view over the same zone-backed buffer. `copy_to(ref mut
 Zone)` copies the current elements into a new handle tied to the target zone.
 `as_ptr()` returns the stored element pointer with the receiver's zone
-provenance, so it is rejected after that zone is reset or destroyed.
+provenance, so it is rejected after that zone is reset or destroyed. Metadata,
+checked read, search, target-zone copy, and raw-pointer methods borrow the
+source handle receiver instead of copying it.
 `reserve`, `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`,
 and `resize_in` must receive the same zone that created the handle; they copy
 existing elements into a larger zone allocation when growth is needed and keep
@@ -614,9 +617,11 @@ insert/remove, swap,
 same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone
 `extend_from_slice_in` growth, same-zone `resize_in` growth, truncate/clear,
 simple search, target-zone `copy_to`, and `as_slice` calls over the stored raw
-handle. The resulting `Slice[T]` keeps the same zone provenance, so using it
-after `zone::reset` or `zone::destroy` is rejected. `as_ptr()` raw pointers
-and copied Vec handles track their source or target zone respectively. The root
+handle. Read-only metadata, checked reads, search, `copy_to`, and `as_ptr`
+borrow that source handle receiver. The resulting `Slice[T]` keeps the same
+zone provenance, so using it after `zone::reset` or `zone::destroy` is
+rejected. `as_ptr()` raw pointers and copied Vec handles track their source or
+target zone respectively. The root
 `Vec[T]` type and its current local method set remain fixed-local until runtime
 growth is ported. Root `Vec[T]` therefore cannot cross non-local ABI or storage
 boundaries yet: function and extern parameters/returns, struct fields, and impl

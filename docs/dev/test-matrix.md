@@ -293,10 +293,11 @@ Checklist:
 - [x] control-flow expressions that select source `std::vec::Vec<T>` handles
       from the same zone keep reset/destroy provenance on the selected handle
 - [x] source `std::vec::Vec<T>` exposes tracked read-only metadata methods
-      `len`, `capacity`, and `is_empty`
+      `len`, `capacity`, and `is_empty` with borrowed receiver lowering
 - [x] source `std::vec::Vec<T>` exposes fixed-capacity checked read/write,
       replace, push/pop, insert/remove, swap, truncate/clear, and
-      linear-search methods over its zone-backed buffer
+      linear-search methods over its zone-backed buffer, with borrowed receiver
+      lowering for read/search methods
 - [x] source `std::vec::Vec<T>.reserve(ref mut Zone, capacity)` grows the handle
       with a larger same-zone allocation and rejects different-zone reserve
       calls
@@ -316,10 +317,11 @@ Checklist:
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy
 - [x] source `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current
-      elements into a new target-zone handle and invalidates with that target
-      zone after reset/destroy
+      elements through a borrowed receiver into a new target-zone handle and
+      invalidates with that target zone after reset/destroy
 - [x] source `std::vec::Vec<T>.as_ptr()` returns the stored element pointer
-      while preserving receiver-zone reset/destroy provenance
+      through a borrowed receiver while preserving receiver-zone reset/destroy
+      provenance
 - [x] source `std::vec::Vec<T>` has a value-drop handle `Drop` impl that drops
       each current element while leaving storage release to the explicit zone
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local

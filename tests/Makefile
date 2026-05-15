@@ -260,9 +260,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/prelude-format-in-display.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	grep -q 'std__fmt__Display9format_in' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3len' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8capacity' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8is_empty' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
+	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent3len"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
+	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent8capacity"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
+	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent8is_empty"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	$(TARGET) tests/ok/std-vec-fixed-ops.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4push' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	$(TARGET) tests/ok/std-vec-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-replace.ll
@@ -270,7 +270,10 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6insert' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6remove' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8index_of' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent3get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent8index_of"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent8contains"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent5count"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	$(TARGET) tests/ok/std-vec-as-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-slice.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8as_slice' $(BUILD_DIR)/prelude/std-vec-as-slice.ll
 	$(TARGET) tests/ok/std-vec-reserve.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve.ll
@@ -278,9 +281,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-vec-reserve-extra.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-reserve-extra.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-vec-reserve-extra.ll
 	$(TARGET) tests/ok/std-vec-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-copy-to.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7copy_to' $(BUILD_DIR)/prelude/std-vec-copy-to.ll
+	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl18std__vec__Vec_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-vec-copy-to.ll
 	$(TARGET) tests/ok/std-vec-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
-	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent6as_ptr' $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
+	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
 	$(TARGET) tests/ok/std-vec-push-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-push-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-push-in.ll
 	$(TARGET) tests/ok/std-vec-insert-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-insert-in.ll

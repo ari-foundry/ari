@@ -25,29 +25,29 @@ pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::vec::Vec[T] {
 }
 
 pub impl[T] std::vec::Vec[T] {
-  fn len(self) -> i64 {
+  fn len(self: ref Self) -> i64 {
     return self.raw.len;
   }
 
-  fn capacity(self) -> i64 {
+  fn capacity(self: ref Self) -> i64 {
     return self.raw.capacity;
   }
 
-  fn is_empty(self) -> bool {
+  fn is_empty(self: ref Self) -> bool {
     return self.raw.len == 0;
   }
 
-  fn first(self) -> T {
+  fn first(self: ref Self) -> T {
     std::assert(self.raw.len > 0);
     return ptr_load(self.raw.data);
   }
 
-  fn last(self) -> T {
+  fn last(self: ref Self) -> T {
     std::assert(self.raw.len > 0);
     return ptr_load(ptr_add(self.raw.data, self.raw.len - 1));
   }
 
-  fn get(self, index: i64) -> T {
+  fn get(self: ref Self, index: i64) -> T {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);
     return ptr_load(ptr_add(self.raw.data, index));
@@ -206,7 +206,7 @@ pub impl[T] std::vec::Vec[T] {
     self.raw.capacity = capacity;
   }
 
-  fn copy_to(self, target: ref mut Zone) -> std::vec::Vec[T] {
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::vec::Vec[T] {
     var copied = std::vec::new<T>(target, self.raw.len);
     var index = 0;
     while index < self.raw.len {
@@ -216,7 +216,7 @@ pub impl[T] std::vec::Vec[T] {
     return copied;
   }
 
-  fn as_ptr(self) -> ptr T {
+  fn as_ptr(self: ref Self) -> ptr T {
     return self.raw.data;
   }
 
@@ -262,7 +262,7 @@ pub impl[T] std::vec::Vec[T] {
     self.raw.len = length;
   }
 
-  fn index_of(self, value: T) -> i64 {
+  fn index_of(self: ref Self, value: T) -> i64 {
     var index = 0;
     while index < self.raw.len {
       if ptr_load(ptr_add(self.raw.data, index)) == value {
@@ -273,11 +273,11 @@ pub impl[T] std::vec::Vec[T] {
     return -1;
   }
 
-  fn contains(self, value: T) -> bool {
+  fn contains(self: ref Self, value: T) -> bool {
     return self.index_of(value) >= 0;
   }
 
-  fn count(self, value: T) -> i64 {
+  fn count(self: ref Self, value: T) -> i64 {
     var total = 0;
     var index = 0;
     while index < self.raw.len {
