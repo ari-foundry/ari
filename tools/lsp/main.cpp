@@ -2,8 +2,8 @@
 #include "json_rpc.hpp"
 #include "symbols.hpp"
 
-#include "../ari_tooling/process.hpp"
 #include "../ari_tooling/diagnostic.hpp"
+#include "../lint/checker.hpp"
 
 #include <cstdlib>
 #include <fstream>
@@ -16,8 +16,7 @@
 namespace {
 
 struct Config {
-    std::string ari_path = "build/ari";
-    std::vector<std::string> module_paths;
+    ari::lint::LintConfig lint;
 };
 
 std::string default_ari_path() {
@@ -26,35 +25,11 @@ std::string default_ari_path() {
 }
 
 void usage() {
-    std::cerr << "usage: ari-lsp [--ari PATH] [-I DIR]\n";
+    std::cerr << "usage: ari-lsp [--ari PATH] [--rule RULE=SEVERITY] [-I DIR]\n";
 }
 
 std::vector<ari::tooling::Diagnostic> check_file(const Config& config, const std::string& path) {
-    std::vector<std::string> args;
-    args.push_back(config.ari_path);
-    for (const std::string& module_path : config.module_paths) {
-        args.push_back("-I");
-        args.push_back(module_path);
-    }
-    args.push_back(path);
-    args.push_back("--check");
-    ari::tooling::ProcessResult result = ari::tooling::run_process(args);
-    if (result.exit_code == 0) return {};
-    std::vector<ari::tooling::Diagnostic> diagnostics = ari::tooling::parse_ari_diagnostics(result.output, path);
-    if (diagnostics.empty()) {
-        diagnostics.push_back(ari::tooling::Diagnostic{
-            path,
-            1,
-            1,
-            ari::tooling::DiagnosticSeverity::Error,
-            result.output.empty() ? "compiler check failed" : result.output,
-            "ari",
-            "",
-            0,
-            0,
-        });
-    }
-    return diagnostics;
+    return ari::lint::run_lint(config.lint, path).diagnostics;
 }
 
 void remap_diagnostic_file(std::vector<ari::tooling::Diagnostic>& diagnostics,
@@ -148,11 +123,23 @@ int int_field_or_zero(const std::string& body, const std::string& field) {
     return std::stoi(raw);
 }
 
+bool apply_rule_setting(Config& config, const std::string& setting_text) {
+    std::size_t equals = setting_text.find('=');
+    std::string code = equals == std::string::npos ? setting_text : setting_text.substr(0, equals);
+    std::optional<ari::lint::RuleSetting> setting = ari::lint::parse_rule_setting(setting_text);
+    if (!setting) {
+        std::cerr << "ari-lsp: error: invalid rule setting '" << setting_text << "'\n";
+        return false;
+    }
+    config.lint.rule_settings[ari::lint::normalize_rule_code(code)] = *setting;
+    return true;
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
     Config config;
-    config.ari_path = default_ari_path();
+    config.lint.ari_path = default_ari_path();
     ari::lsp::DocumentStore documents;
 
     for (int i = 1; i < argc; ++i) {
@@ -166,7 +153,19 @@ int main(int argc, char** argv) {
                 usage();
                 return 2;
             }
-            config.ari_path = argv[++i];
+            config.lint.ari_path = argv[++i];
+            continue;
+        }
+        if (arg == "--rule") {
+            if (i + 1 >= argc) {
+                usage();
+                return 2;
+            }
+            if (!apply_rule_setting(config, argv[++i])) return 2;
+            continue;
+        }
+        if (arg.rfind("--rule=", 0) == 0) {
+            if (!apply_rule_setting(config, arg.substr(7))) return 2;
             continue;
         }
         if (arg == "-I") {
@@ -174,11 +173,11 @@ int main(int argc, char** argv) {
                 usage();
                 return 2;
             }
-            config.module_paths.push_back(argv[++i]);
+            config.lint.module_paths.push_back(argv[++i]);
             continue;
         }
         if (arg.rfind("-I", 0) == 0 && arg.size() > 2) {
-            config.module_paths.push_back(arg.substr(2));
+            config.lint.module_paths.push_back(arg.substr(2));
             continue;
         }
         usage();

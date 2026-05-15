@@ -1,11 +1,12 @@
 # Ari LSP
 
-`ari-lsp` is the language-server entry point for editors. The initial server is
+`ari-lsp` is the language-server entry point for editors. The server is
 diagnostic-first: it speaks JSON-RPC over stdio, tracks opened document text,
-and delegates source checking to `ari --check`.
+and delegates diagnostics to the shared lint checker, which runs `ari --check`
+and native lint-only rules.
 
 The server is intentionally small so it can stabilize protocol behavior before
-hover, symbols, references, and rename are added.
+larger parser-backed features such as references and rename are added.
 
 ## Build
 
@@ -21,9 +22,11 @@ Editors should launch:
 
 ```sh
 build/ari-lsp --ari build/ari
+build/ari-lsp --ari build/ari --rule lint/trailing-whitespace=error
 ```
 
 Additional module search paths can be passed with `-I path`.
+Lint rule severities use the same `--rule RULE=SEVERITY` format as `ari-lint`.
 
 ## Current Capabilities
 
@@ -45,8 +48,9 @@ For open documents, the server mirrors the current in-memory text into a
 temporary file beside the original source path before invoking `ari --check`, so
 relative module lookup still follows the edited file's directory. If the editor
 asks about a file that is not open, the saved file on disk is checked directly.
-Diagnostic serialization preserves shared diagnostic codes and explicit end
-spans when the tooling layer provides them.
+Diagnostics include compiler-backed errors and native lint warnings. Diagnostic
+serialization preserves shared diagnostic codes and explicit end spans when the
+tooling layer provides them.
 Document symbols are a first-pass top-level outline for functions, structs,
 enums, traits, impls, and modules; richer parser-backed symbol trees are still
 planned. Hover uses the same first-pass top-level declaration scan to show the

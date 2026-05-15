@@ -20,6 +20,8 @@
 - [x] Add first-pass `textDocument/completion` support for top-level symbols in
       the current document using the same symbol scanner.
 - [x] Clear diagnostics on `didClose`.
+- [x] Route LSP diagnostics through the shared lint checker so compiler
+      diagnostics and native lint rules use the same rule settings.
 - [x] Preserve shared diagnostic codes and explicit end spans in LSP diagnostic
       JSON when the tooling layer provides them.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.

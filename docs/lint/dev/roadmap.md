@@ -15,6 +15,8 @@
       its default behavior.
 - [x] Add machine-readable `endLine`/`endColumn` spans to lint JSON for
       diagnostics that know a wider source range.
+- [x] Share the lint checker library with `ari-lsp` so CLI and editor
+      diagnostics use the same native rules.
 
 ## Near-Term Work
 

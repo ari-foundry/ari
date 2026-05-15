@@ -96,6 +96,21 @@
           },
           "default": [],
           "description": "Extra module search paths passed to ari-lsp as -I arguments."
+        },
+        "ari.lintRules": {
+          "type": "object",
+          "default": {},
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "off",
+              "hint",
+              "note",
+              "warning",
+              "error"
+            ]
+          },
+          "description": "Lint rule severity overrides passed to ari-lint and ari-lsp, such as {\"lint/trailing-whitespace\":\"error\"}."
         }
       }
     }

@@ -5,7 +5,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
 package = json.loads((root / "editors/vscode/package.json").read_text())
-for source in ("extension.js", "commands.js", "tasks.js", "lsp.js", "paths.js"):
+for source in ("extension.js", "commands.js", "tasks.js", "lsp.js", "paths.js", "config.js"):
     if not (root / "editors/vscode" / source).exists():
         raise SystemExit(f"missing VS Code source file: {source}")
 
@@ -25,7 +25,7 @@ for command in required_commands:
         raise SystemExit(f"missing VS Code activation event: {event}")
 
 properties = package["contributes"]["configuration"]["properties"]
-for setting in ("ari.compilerPath", "ari.lspPath", "ari.lintPath", "ari.modulePaths"):
+for setting in ("ari.compilerPath", "ari.lspPath", "ari.lintPath", "ari.modulePaths", "ari.lintRules"):
     if setting not in properties:
         raise SystemExit(f"missing VS Code setting: {setting}")
 

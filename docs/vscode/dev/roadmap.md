@@ -22,6 +22,9 @@
 - [x] Split VS Code LSP client lifecycle into `lsp.js`, share path resolution
       through `paths.js`, and restart the client when Ari toolchain settings
       change.
+- [x] Add shared VS Code argument building for module paths and lint rule
+      severity overrides, and pass `ari.lintRules` to both lint commands and
+      LSP startup.
 
 ## Near-Term Work
 

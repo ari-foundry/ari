@@ -18,6 +18,8 @@ symbols in the active document.
 - `editors/vscode/extension.js` wires the extension subsystems together.
 - `editors/vscode/lsp.js` owns the language-client lifecycle and restarts
   `ari-lsp` when relevant Ari settings change.
+- `editors/vscode/config.js` converts Ari extension settings into shared
+  command-line arguments for lint and LSP tools.
 - `editors/vscode/commands.js` owns command-palette actions and output-channel
   process execution.
 - `editors/vscode/tasks.js` owns VS Code task-provider integration for common
@@ -35,6 +37,8 @@ symbols in the active document.
 - `ari.lspPath`: path to the `ari-lsp` executable
 - `ari.lintPath`: path to the `ari-lint` executable
 - `ari.modulePaths`: extra `-I` paths passed to the language server
+- `ari.lintRules`: lint severity overrides passed to both `ari-lint` and
+  `ari-lsp`, for example `{ "lint/trailing-whitespace": "error" }`
 
 ## Commands
 
@@ -57,9 +61,9 @@ The extension contributes Ari tasks for common repository commands:
 
 ## LSP Restart Policy
 
-Changing `ari.compilerPath`, `ari.lspPath`, or `ari.modulePaths` restarts the
-language client so diagnostics and editor features use the new toolchain
-settings.
+Changing `ari.compilerPath`, `ari.lspPath`, `ari.modulePaths`, or
+`ari.lintRules` restarts the language client so diagnostics and editor features
+use the new toolchain settings.
 
 ## Developer Notes
 

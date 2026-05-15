@@ -20,6 +20,7 @@ HEADERS := $(wildcard src/*.hpp)
 TOOLING_SRC := $(wildcard tools/ari_tooling/*.cpp)
 TOOLING_HEADERS := $(wildcard tools/ari_tooling/*.hpp)
 LINT_SRC := $(wildcard tools/lint/*.cpp)
+LINT_LIB_SRC := $(filter-out tools/lint/main.cpp,$(LINT_SRC))
 LINT_HEADERS := $(wildcard tools/lint/*.hpp)
 LSP_SRC := $(wildcard tools/lsp/*.cpp)
 LSP_HEADERS := $(wildcard tools/lsp/*.hpp)
@@ -50,9 +51,9 @@ $(LINT_TARGET): $(LINT_SRC) $(LINT_HEADERS) $(TOOLING_SRC) $(TOOLING_HEADERS)
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(TOOLING_SRC) $(LINT_SRC) -o $@
 
-$(LSP_TARGET): $(LSP_SRC) $(LSP_HEADERS) $(TOOLING_SRC) $(TOOLING_HEADERS)
+$(LSP_TARGET): $(LSP_SRC) $(LSP_HEADERS) $(LINT_LIB_SRC) $(LINT_HEADERS) $(TOOLING_SRC) $(TOOLING_HEADERS)
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) $(TOOLING_SRC) $(LSP_SRC) -o $@
+	$(CXX) $(CXXFLAGS) $(TOOLING_SRC) $(LINT_LIB_SRC) $(LSP_SRC) -o $@
 
 sample: $(TARGET)
 	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/count.ll

@@ -36,6 +36,9 @@ short lint name, such as `trailing-whitespace`.
 The VS Code extension's `Ari: Lint Current File` command invokes this tool
 through its `ari.lintPath` setting.
 
+`ari-lsp` links the lint checker library directly, so editor diagnostics and
+the CLI share the same rule registry and severity handling.
+
 ## Current Scope
 
 - Uses saved source files, not editor buffers.

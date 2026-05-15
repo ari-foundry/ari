@@ -1,15 +1,16 @@
 const vscode = require('vscode');
 const { LanguageClient } = require('vscode-languageclient/node');
+const { lintRuleArgs, modulePathArgs } = require('./config');
 const { resolveWorkspacePath, workspaceRoot } = require('./paths');
 
 function lspArgs(config) {
   const compilerPath = resolveWorkspacePath(config.get('compilerPath', 'build/ari'));
-  const args = ['--ari', compilerPath];
-  for (const modulePath of config.get('modulePaths', [])) {
-    args.push('-I');
-    args.push(resolveWorkspacePath(modulePath));
-  }
-  return args;
+  return [
+    '--ari',
+    compilerPath,
+    ...modulePathArgs(config.get('modulePaths', [])),
+    ...lintRuleArgs(config.get('lintRules', {}))
+  ];
 }
 
 function createClient() {
@@ -38,7 +39,8 @@ function createClient() {
 function shouldRestart(event) {
   return event.affectsConfiguration('ari.compilerPath') ||
     event.affectsConfiguration('ari.lspPath') ||
-    event.affectsConfiguration('ari.modulePaths');
+    event.affectsConfiguration('ari.modulePaths') ||
+    event.affectsConfiguration('ari.lintRules');
 }
 
 class AriLspController {

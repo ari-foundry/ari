@@ -4,7 +4,7 @@ LSP=${LSP:-build/ari-lsp}
 ARI=${ARI:-build/ari}
 FILE=$(pwd)/examples/count.ari
 URI="file://${FILE}"
-VALID_TEXT='pub struct Point {\n  mut x: i64,\n}\n\nfn main() -> i64 {\n  return 0;\n}\n'
+VALID_TEXT='pub struct Point { \n  mut x: i64,\n}\n\nfn main() -> i64 {\n  return 0;\n}\n'
 INVALID_TEXT='fn main() -> i64 {\n  let text = format!(\"value={}\", 1);\n  return 0;\n}\n'
 
 send() {
@@ -25,7 +25,7 @@ output=$(
     send '{"jsonrpc":"2.0","id":6,"method":"textDocument/diagnostic","params":{"textDocument":{"uri":"'"$URI"'"}}}'
     send '{"jsonrpc":"2.0","id":7,"method":"shutdown","params":null}'
     send '{"jsonrpc":"2.0","method":"exit","params":null}'
-  } | "$LSP" --ari "$ARI"
+  } | "$LSP" --ari "$ARI" --rule trailing-whitespace=error
 )
 
 printf '%s' "$output" | grep -q '"method":"textDocument/publishDiagnostics"'
@@ -34,6 +34,8 @@ printf '%s' "$output" | grep -q '"documentSymbolProvider":true'
 printf '%s' "$output" | grep -q '"hoverProvider":true'
 printf '%s' "$output" | grep -q '"definitionProvider":true'
 printf '%s' "$output" | grep -q '"completionProvider"'
+printf '%s' "$output" | grep -q '"source":"ari-lint","code":"lint/trailing-whitespace"'
+printf '%s' "$output" | grep -q '"severity":1,"source":"ari-lint","code":"lint/trailing-whitespace"'
 printf '%s' "$output" | grep -q '"name":"Point"'
 printf '%s' "$output" | grep -q '"name":"main"'
 printf '%s' "$output" | grep -q '"label":"Point"'
