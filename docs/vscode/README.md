@@ -35,8 +35,9 @@ edits for simple native lint rules exposed by `ari-lsp`.
 - `editors/vscode/language-configuration.json` defines comments, brackets, and
   auto-closing pairs.
 - `editors/vscode/syntaxes/ari.tmLanguage.json` provides lightweight syntax
-  highlighting for comments, strings, attributes, declarations, macros,
-  keywords, constants, primitive/support types, numeric literals, and operators.
+  highlighting for Ari 0.1.0 comments, strings, `@` attributes, declarations,
+  macros, keywords, constants, primitive/support types, numeric literals,
+  operators, punctuation, and type-like identifiers.
 
 ## Configuration
 

@@ -106,15 +106,87 @@ for section in (
     "comments",
     "constants",
     "declarations",
+    "identifiers",
     "keywords",
     "macros",
     "numbers",
     "operators",
+    "punctuation",
     "strings",
     "types",
 ):
     if section not in repository:
         raise SystemExit(f"missing Ari grammar repository section: {section}")
+
+grammar_text = (root / "editors/vscode/syntaxes/ari.tmLanguage.json").read_text()
+for keyword in (
+    "fn",
+    "const",
+    "as",
+    "meta",
+    "struct",
+    "extern",
+    "enum",
+    "trait",
+    "dyn",
+    "match",
+    "mod",
+    "pub",
+    "use",
+    "impl",
+    "for",
+    "in",
+    "let",
+    "var",
+    "own",
+    "ref",
+    "mut",
+    "ptr",
+    "return",
+    "if",
+    "else",
+    "while",
+    "init",
+    "next",
+    "continue",
+    "break",
+    "drop",
+    "null",
+    "true",
+    "false",
+):
+    if keyword not in grammar_text:
+        raise SystemExit(f"missing Ari grammar keyword: {keyword}")
+
+for operator, spellings in {
+    "->": ("->",),
+    "=>": ("=>",),
+    "::": ("::",),
+    "??": ("??", "\\?\\?", "\\\\?\\\\?", "keyword.operator.coalesce.ari"),
+    "<<=": ("<<=",),
+    ">>=": (">>=",),
+    "..=": ("..=", "\\.\\.=", "\\\\.\\\\.=", "keyword.operator.range.ari"),
+}.items():
+    if not any(spelling in grammar_text for spelling in spellings):
+        raise SystemExit(f"missing Ari grammar operator: {operator}")
+
+for type_name in (
+    "i8",
+    "i16",
+    "i32",
+    "i64",
+    "u8",
+    "u16",
+    "u32",
+    "u64",
+    "f32",
+    "f64",
+    "f128",
+    "bool",
+    "void",
+):
+    if type_name not in grammar_text:
+        raise SystemExit(f"missing Ari grammar type: {type_name}")
 
 comment_config = language_config.get("comments", {})
 if comment_config.get("lineComment") != "//":

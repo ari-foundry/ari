@@ -10,18 +10,21 @@ language id.
 
 ## Syntax Highlighting
 
-The bundled TextMate grammar highlights:
+The bundled TextMate grammar highlights the 0.1.0 Ari syntax surface:
 
 - comments
 - strings
-- attributes
-- declarations
+- `@name` attributes and attribute arguments
+- declarations including `pub`, `meta fn`, `extern fn`, `const`, `fn`,
+  `struct`, `enum`, `trait`, `mod`, `impl`, and `use`
 - macros
-- keywords
+- control, declaration, ownership, pointer, trait-object, and cast keywords
 - constants
-- primitive and support types
+- primitive integer, float, bool, void, and common support types
 - numeric literals
-- operators
+- arithmetic, comparison, logical, bitwise, assignment, range, path,
+  coalesce, try, and arrow operators
+- punctuation and type-like identifiers
 
 ## Diagnostics
 

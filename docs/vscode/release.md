@@ -7,7 +7,8 @@ This page tracks the local installable VS Code extension package.
 The 0.1.0 package is meant for local Ari development. It includes:
 
 - Ari language activation for `.ari` and `.arih`
-- syntax highlighting and language configuration
+- syntax highlighting for the Ari 0.1.0 lexer/parser surface and language
+  configuration
 - `ari-lsp` startup through `vscode-languageclient`
 - diagnostics, Outline, hover, definition, completion, highlights, folding,
   selection ranges, workspace symbols, and Quick Fix actions from `ari-lsp`

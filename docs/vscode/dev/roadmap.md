@@ -44,8 +44,10 @@
       Extension Development Host runs.
 - [x] Add a user-facing VS Code feature guide for activation, syntax,
       diagnostics, navigation, commands, tasks, and settings.
-- [x] Expand TextMate syntax highlighting for comments, attributes,
-      declarations, macros, keywords, built-in types, numbers, and operators.
+- [x] Expand TextMate syntax highlighting for the Ari 0.1.0 lexer/parser
+      surface: comments, strings, `@` attributes, declarations, macros,
+      keywords, constants, primitive/support types, numbers, operators,
+      punctuation, and type-like identifiers.
 - [x] Add a local 0.1.0 VSIX packaging workflow for installing the extension
       without running an Extension Development Host.
 

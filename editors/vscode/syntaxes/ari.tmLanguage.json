@@ -30,6 +30,12 @@
     },
     {
       "include": "#operators"
+    },
+    {
+      "include": "#punctuation"
+    },
+    {
+      "include": "#identifiers"
     }
   ],
   "repository": {
@@ -37,7 +43,33 @@
       "patterns": [
         {
           "name": "meta.attribute.ari",
-          "match": "#!?\\[[^\\]]*\\]"
+          "begin": "(@)([A-Za-z_][A-Za-z0-9_]*)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.attribute.ari"
+            },
+            "2": {
+              "name": "entity.name.function.attribute.ari"
+            }
+          },
+          "end": "(?=\\s|$|[{};,])",
+          "patterns": [
+            {
+              "include": "#strings"
+            },
+            {
+              "include": "#numbers"
+            },
+            {
+              "include": "#constants"
+            },
+            {
+              "include": "#operators"
+            },
+            {
+              "include": "#punctuation"
+            }
+          ]
         }
       ]
     },
@@ -50,59 +82,173 @@
         {
           "name": "comment.block.ari",
           "begin": "/\\*",
-          "end": "\\*/"
+          "end": "\\*/",
+          "patterns": [
+            {
+              "include": "#comments"
+            }
+          ]
         }
       ]
     },
     "constants": {
       "patterns": [
         {
-          "name": "constant.language.ari",
-          "match": "\\b(true|false|null)\\b"
+          "name": "constant.language.boolean.ari",
+          "match": "\\b(true|false)\\b"
+        },
+        {
+          "name": "constant.language.null.ari",
+          "match": "\\bnull\\b"
         }
       ]
     },
     "declarations": {
       "patterns": [
         {
-          "name": "meta.function.ari",
-          "match": "\\b(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "name": "meta.function.meta.ari",
+          "match": "\\b(pub\\s+)?(meta)\\s+(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)",
           "captures": {
             "1": {
-              "name": "keyword.declaration.function.ari"
+              "name": "keyword.declaration.visibility.ari"
             },
             "2": {
+              "name": "storage.modifier.meta.ari"
+            },
+            "3": {
+              "name": "keyword.declaration.function.ari"
+            },
+            "4": {
               "name": "entity.name.function.ari"
             }
           }
         },
         {
-          "name": "meta.type.declaration.ari",
-          "match": "\\b(struct|enum|trait|mod)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "name": "meta.function.extern.ari",
+          "match": "\\b(pub\\s+)?(extern)(?:\\s+(\"[^\"]*\"))?\\s+(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)",
           "captures": {
             "1": {
-              "name": "keyword.declaration.type.ari"
+              "name": "keyword.declaration.visibility.ari"
             },
             "2": {
+              "name": "keyword.declaration.extern.ari"
+            },
+            "3": {
+              "name": "string.quoted.double.ari"
+            },
+            "4": {
+              "name": "keyword.declaration.function.ari"
+            },
+            "5": {
+              "name": "entity.name.function.ari"
+            }
+          }
+        },
+        {
+          "name": "meta.function.ari",
+          "match": "\\b(pub\\s+)?(fn)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.visibility.ari"
+            },
+            "2": {
+              "name": "keyword.declaration.function.ari"
+            },
+            "3": {
+              "name": "entity.name.function.ari"
+            }
+          }
+        },
+        {
+          "name": "meta.constant.ari",
+          "match": "\\b(pub\\s+)?(const)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.visibility.ari"
+            },
+            "2": {
+              "name": "keyword.declaration.constant.ari"
+            },
+            "3": {
+              "name": "entity.name.constant.ari"
+            }
+          }
+        },
+        {
+          "name": "meta.type.declaration.ari",
+          "match": "\\b(pub\\s+)?(struct|enum|trait|mod)\\s+([A-Za-z_][A-Za-z0-9_]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.visibility.ari"
+            },
+            "2": {
+              "name": "keyword.declaration.type.ari"
+            },
+            "3": {
               "name": "entity.name.type.ari"
             }
           }
+        },
+        {
+          "name": "meta.implementation.ari",
+          "match": "\\b(impl)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.implementation.ari"
+            }
+          }
+        },
+        {
+          "name": "meta.use.ari",
+          "match": "\\b(pub\\s+)?(use)\\b",
+          "captures": {
+            "1": {
+              "name": "keyword.declaration.visibility.ari"
+            },
+            "2": {
+              "name": "keyword.declaration.import.ari"
+            }
+          }
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "name": "variable.language.self.ari",
+          "match": "\\bself\\b"
+        },
+        {
+          "name": "entity.name.type.ari",
+          "match": "\\b[A-Z][A-Za-z0-9_]*\\b"
         }
       ]
     },
     "keywords": {
       "patterns": [
         {
-          "name": "keyword.control.ari",
-          "match": "\\b(return|if|else|while|for|in|match|break|continue|init|next)\\b"
+          "name": "keyword.control.conditional.ari",
+          "match": "\\b(if|else|match)\\b"
+        },
+        {
+          "name": "keyword.control.loop.ari",
+          "match": "\\b(while|for|in|init|next|break|continue)\\b"
+        },
+        {
+          "name": "keyword.control.return.ari",
+          "match": "\\b(return)\\b"
         },
         {
           "name": "keyword.declaration.ari",
-          "match": "\\b(fn|extern|mod|pub|use|impl|trait|struct|enum|let|var)\\b"
+          "match": "\\b(fn|meta|const|extern|mod|pub|use|impl|trait|struct|enum|let|var)\\b"
+        },
+        {
+          "name": "storage.modifier.ari",
+          "match": "\\b(own|ref|mut|ptr|dyn)\\b"
         },
         {
           "name": "keyword.operator.word.ari",
-          "match": "\\b(as|own|drop|ref|mut)\\b"
+          "match": "\\b(as|drop)\\b"
         }
       ]
     },
@@ -117,16 +263,92 @@
     "numbers": {
       "patterns": [
         {
-          "name": "constant.numeric.ari",
-          "match": "\\b(0b[01_]+|0o[0-7_]+|0x[0-9A-Fa-f_]+|[0-9][0-9_]*(\\.[0-9_]+)?([eE][+-]?[0-9_]+)?)([iu](8|16|32|64)|f(32|64|128))?\\b"
+          "name": "constant.numeric.float.ari",
+          "match": "\\b[0-9][0-9_]*\\.[0-9_]+([eE][+-]?[0-9_]+)?(f(32|64|128))?\\b"
+        },
+        {
+          "name": "constant.numeric.float.ari",
+          "match": "\\b[0-9][0-9_]*[eE][+-]?[0-9_]+(f(32|64|128))?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.binary.ari",
+          "match": "\\b0[bB][01_]+([iu](8|16|32|64))?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.octal.ari",
+          "match": "\\b0[oO][0-7_]+([iu](8|16|32|64))?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.hexadecimal.ari",
+          "match": "\\b0[xX][0-9A-Fa-f_]+([iu](8|16|32|64))?\\b"
+        },
+        {
+          "name": "constant.numeric.integer.decimal.ari",
+          "match": "\\b[0-9][0-9_]*([iu](8|16|32|64))?\\b"
         }
       ]
     },
     "operators": {
       "patterns": [
         {
-          "name": "keyword.operator.ari",
-          "match": "->|=>|::|==|!=|<=|>=|&&|\\|\\||\\?\\?|[+\\-*/%&|^!~<>]=?|="
+          "name": "keyword.operator.assignment.compound.ari",
+          "match": "\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|<<=|>>="
+        },
+        {
+          "name": "keyword.operator.comparison.ari",
+          "match": "==|!=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.logical.ari",
+          "match": "&&|\\|\\||!"
+        },
+        {
+          "name": "keyword.operator.bitwise.ari",
+          "match": "<<|>>|&|\\||\\^|~"
+        },
+        {
+          "name": "keyword.operator.range.ari",
+          "match": "\\.\\.=|\\.\\.|\\.\\.\\."
+        },
+        {
+          "name": "keyword.operator.arrow.ari",
+          "match": "->|=>"
+        },
+        {
+          "name": "keyword.operator.path.ari",
+          "match": "::"
+        },
+        {
+          "name": "keyword.operator.coalesce.ari",
+          "match": "\\?\\?"
+        },
+        {
+          "name": "keyword.operator.question.ari",
+          "match": "\\?"
+        },
+        {
+          "name": "keyword.operator.assignment.ari",
+          "match": "="
+        },
+        {
+          "name": "keyword.operator.arithmetic.ari",
+          "match": "[+\\-*/%]"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.separator.ari",
+          "match": "[,;:]"
+        },
+        {
+          "name": "punctuation.accessor.ari",
+          "match": "\\."
+        },
+        {
+          "name": "punctuation.definition.group.ari",
+          "match": "[(){}\\[\\]]"
         }
       ]
     },
@@ -139,7 +361,7 @@
           "patterns": [
             {
               "name": "constant.character.escape.ari",
-              "match": "\\\\(x[0-9A-Fa-f]{2}|u\\{[0-9A-Fa-f_]+\\}|.)"
+              "match": "\\\\(x[0-9A-Fa-f]{2}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8}|n|r|t|0|\\\\|\"|.)"
             }
           ]
         }
@@ -148,8 +370,16 @@
     "types": {
       "patterns": [
         {
+          "name": "storage.type.primitive.integer.ari",
+          "match": "\\b(i8|i16|i32|i64|u8|u16|u32|u64)\\b"
+        },
+        {
+          "name": "storage.type.primitive.float.ari",
+          "match": "\\b(f32|f64|f128)\\b"
+        },
+        {
           "name": "storage.type.primitive.ari",
-          "match": "\\b(i8|i16|i32|i64|u8|u16|u32|u64|f32|f64|f128|bool|string|void)\\b"
+          "match": "\\b(bool|void)\\b"
         },
         {
           "name": "support.type.ari",
