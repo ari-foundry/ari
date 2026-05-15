@@ -227,6 +227,7 @@ public:
         collect_meta_functions();
         expand_item_macro_invocations();
         expand_attribute_macros();
+        expand_generated_attribute_macros();
         collect_item_macro_module_decls();
         collect_item_macro_uses();
         validate_attributes();
@@ -1511,6 +1512,30 @@ private:
                                                  SourceLocation loc,
                                                  const std::string& target_kind,
                                                  MarkRewritten mark_rewritten) {
+        const Attribute* rewriting_attr = nullptr;
+        const MetaFunctionInfo* rewriting_meta = nullptr;
+        if (find_rewriting_attribute_macro(
+                attributes,
+                module_name,
+                target_kind,
+                rewriting_attr,
+                rewriting_meta)) {
+            ItemMacroExpansion expansion = expand_attribute_macro_output(
+                *rewriting_attr,
+                *rewriting_meta,
+                declaration_tokens,
+                module_name,
+                loc);
+            append_item_macro_expansion(std::move(expansion));
+            mark_rewritten();
+        }
+    }
+
+    bool find_rewriting_attribute_macro(const std::vector<Attribute>& attributes,
+                                        const std::string& module_name,
+                                        const std::string& target_kind,
+                                        const Attribute*& rewriting_attr,
+                                        const MetaFunctionInfo*& rewriting_meta) {
         bool rewritten = false;
         for (const auto& attr : attributes) {
             if (is_builtin_attribute(attr.name)) continue;
@@ -1528,16 +1553,62 @@ private:
                     fail(attr.loc,
                          target_kind + " declarations can currently use only one rewriting attribute macro");
                 }
-                ItemMacroExpansion expansion =
-                    expand_attribute_macro_output(attr, meta, declaration_tokens, module_name, loc);
-                append_item_macro_expansion(std::move(expansion));
-                mark_rewritten();
+                rewriting_attr = &attr;
+                rewriting_meta = &meta;
                 rewritten = true;
             } catch (...) {
                 current_module_name_ = previous_module;
                 throw;
             }
             current_module_name_ = previous_module;
+        }
+        return rewritten;
+    }
+
+    template <typename Decl>
+    bool expand_generated_attribute_macros_in(std::vector<Decl>& declarations,
+                                              const std::string& target_kind) {
+        for (std::size_t i = 0; i < declarations.size(); ++i) {
+            const Attribute* rewriting_attr = nullptr;
+            const MetaFunctionInfo* rewriting_meta = nullptr;
+            if (!find_rewriting_attribute_macro(
+                    declarations[i].attributes,
+                    declarations[i].module_name,
+                    target_kind,
+                    rewriting_attr,
+                    rewriting_meta)) {
+                continue;
+            }
+            ItemMacroExpansion expansion = expand_attribute_macro_output(
+                *rewriting_attr,
+                *rewriting_meta,
+                declarations[i].source_tokens,
+                declarations[i].module_name,
+                declarations[i].loc);
+            using Difference = typename std::vector<Decl>::difference_type;
+            declarations.erase(declarations.begin() + static_cast<Difference>(i));
+            append_item_macro_expansion(std::move(expansion));
+            return true;
+        }
+        return false;
+    }
+
+    bool expand_generated_attribute_macros_once() {
+        if (expand_generated_attribute_macros_in(item_macro_functions_, "function")) return true;
+        if (expand_generated_attribute_macros_in(item_macro_structs_, "struct")) return true;
+        if (expand_generated_attribute_macros_in(item_macro_enums_, "enum")) return true;
+        if (expand_generated_attribute_macros_in(item_macro_traits_, "trait")) return true;
+        if (expand_generated_attribute_macros_in(item_macro_impls_, "impl")) return true;
+        return false;
+    }
+
+    void expand_generated_attribute_macros() {
+        constexpr std::size_t max_generated_attribute_expansions = 1024;
+        for (std::size_t expansions = 0; expand_generated_attribute_macros_once(); ++expansions) {
+            if (expansions >= max_generated_attribute_expansions) {
+                fail(SourceLocation{},
+                     "attribute macro expansion exceeded the generated-attribute recursion limit");
+            }
         }
     }
 

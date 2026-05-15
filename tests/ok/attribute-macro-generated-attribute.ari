@@ -1,0 +1,22 @@
+meta fn second(input: token_stream) -> token_stream {
+  return tokens!(
+    input
+
+    fn generated() -> i64 {
+      return 41;
+    }
+  );
+}
+
+meta fn first(input: token_stream) -> token_stream {
+  return tokens!(@second input);
+}
+
+@first
+fn original() -> i64 {
+  return 1;
+}
+
+fn main() -> i64 {
+  return original() + generated();
+}

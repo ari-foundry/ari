@@ -106,7 +106,8 @@ expansion from parsed top-level declarations, item-position `ast -> ast`
 declaration output and declaration input substitution through `decl!(...)`,
 attribute macro function/struct/enum/trait/impl declaration rewrite and input
 substitution through declaration output, attribute macro argument-token
-inspection and capture splicing in token output,
+inspection and capture splicing in token output, generated rewriting-attribute
+expansion,
 type-position identity expansion from a parsed type input, type-position
 `type -> type` output and input substitution through `type!(...)`, pattern-position
 identity expansion from a parsed pattern input, pattern-position `ast -> ast`
