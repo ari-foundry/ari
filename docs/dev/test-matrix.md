@@ -275,6 +275,9 @@ Checklist:
 - [x] `std::string::from_string(ref mut Zone, string)` copies today's borrowed
       lowercase `string` into independent source `std::string::String` storage
       tied to the target zone
+- [x] `std::string::from_slice_in(ref mut Zone, Slice[u8])` copies a borrowed
+      byte slice into independent source `std::string::String` storage tied to
+      the target zone
 - [x] source `std::string::String` same-zone `reserve`, `reserve_extra`,
       `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in` grow the
       zone-backed byte buffer while rejecting a mismatched zone argument

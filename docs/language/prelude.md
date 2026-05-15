@@ -125,11 +125,13 @@ for lowercase `string`, `i64`, bool, and `f64` values through
 `append_string_in`, `append_i64_in`, `append_bool_in`, and `append_f64_in`, plus
 `truncate`, `clear`, `as_ptr`, and `as_slice`. `std::string::from_string(ref
 mut zone, text)` copies today's borrowed lowercase `string` into independent
-zone-backed bytes, and `std::string::copy_to(ref value, ref mut zone)` copies
-the current bytes into another explicit zone. Metadata, checked byte `get`,
-`as_ptr`, and target-zone copy borrow the handle instead of copying it. This is
-still an explicit-zone string API; allocations are released by `zone::reset` or
-`zone::destroy`, and the string handle's `Drop` impl only ends the binding. The
+zone-backed bytes, `std::string::from_slice_in(ref mut zone, values)` copies a
+borrowed byte slice into independent zone-backed bytes, and
+`std::string::copy_to(ref value, ref mut zone)` copies the current bytes into
+another explicit zone. Metadata, checked byte `get`, `as_ptr`, and target-zone
+copy borrow the handle instead of copying it. This is still an explicit-zone
+string API; allocations are released by `zone::reset` or `zone::destroy`, and
+the string handle's `Drop` impl only ends the binding. The
 same-zone append and growth helpers must receive the zone that created the
 handle.
 
@@ -690,6 +692,7 @@ let rendered = format_in!(ref mut zone, "ari={} ok={} pi={:.2}", 42, true, 3.141
 let raw = text.as_ptr()
 let view = text.as_slice()
 var other_zone = zone::create(64)
+let copied_from_view = std::string::from_slice_in(ref mut other_zone, view)
 let copied = std::string::copy_to(ref text, ref mut other_zone)
 ```
 
@@ -711,6 +714,8 @@ explicit zone, then appends the returned source string into the final output.
 These growth and append methods must receive the same explicit zone that
 created the handle, so provenance continues to match reset/destroy invalidation.
 Use
+`std::string::from_slice_in(ref mut Zone, Slice[u8])` to copy a borrowed byte
+slice into another explicit zone, or
 `std::string::copy_to(ref value, ref mut Zone)` to copy the current bytes into
 another explicit zone. Metadata, checked byte reads, `as_ptr()`, and
 target-zone copy are read-only borrows of the source string handle; mutating

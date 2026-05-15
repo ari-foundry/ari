@@ -214,7 +214,8 @@ constructor subset documented in the language guide.
    same-zone text construction helpers through `append_string_in`,
    `append_i64_in`, `append_bool_in`, and `append_f64_in`,
    `std::string::copy_to(ref value, ref mut Zone)` borrowed-source target-zone
-   copying, and
+   copying, `std::string::from_slice_in(ref mut Zone, Slice[u8])` target-zone
+   construction from a borrowed byte slice, and
    `from_string(ref mut Zone, string)` copying from today's borrowed lowercase
    `string` values. Host line input now has explicit-zone owned helpers
    (`read_line_owned`, `std::io::read_line_owned`, `input_owned`, and

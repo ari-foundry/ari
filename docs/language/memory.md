@@ -445,8 +445,10 @@ constructor. Raw pointers recovered from a tracked `std::boxed::Box<T>`,
 provenance too. A `std::boxed::Box<T>`, `std::string::String`, or
 `std::vec::Vec<T>` copied with `copy_to(ref mut Zone)`,
 `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)`, or a
-`std::string::String` copied with `std::string::copy_to(ref value, ref mut Zone)`,
-is tracked against the target zone, not the original source zone. When a
+`std::string::String` copied with
+`std::string::from_slice_in(ref mut Zone, Slice[u8])` or
+`std::string::copy_to(ref value, ref mut Zone)`, the result is tracked against
+the target zone, not the original source zone. When a
 source `std::string::String` or `std::vec::Vec<T>` grows through an explicit
 zone argument, that argument must be the same source zone that created the
 handle. Read-only `std::string::String` and `std::vec::Vec<T>` handle methods

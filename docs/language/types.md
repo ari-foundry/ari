@@ -110,7 +110,9 @@ The source prelude already has the allocator-backed seed under `std::string`.
 `std::string::new(ref mut zone, capacity)` creates a tracked
 `std::string::String` handle with separate `len` and `capacity` metadata over
 zone-backed bytes, and `std::string::from_string(ref mut zone, text)` copies a
-borrowed lowercase `string` into that handle. It supports checked byte
+borrowed lowercase `string` into that handle.
+`std::string::from_slice_in(ref mut Zone, Slice[u8])` copies a borrowed byte
+slice into a new target-zone string handle. It supports checked byte
 `get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone
 grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in`, plus `append_string_in`,
