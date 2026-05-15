@@ -49,6 +49,7 @@ fn std::take[T]|explicit take tests; docs/dev/test-matrix.md Ownership row
 fn std::todo|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::unreachable|planned panic helper tests; docs/dev/test-matrix.md Prelude row
 fn std::vec::alloc_buffer[T]|std vec allocation tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::vec::from_slice_in[T]|std vec from-slice target-zone copy tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::vec::new[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::vec::with_capacity[T]|std RawVec tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::alloc|zone allocation tests; docs/dev/test-matrix.md Explicit memory zones row

@@ -1,0 +1,10 @@
+fn main() -> i64 {
+  var source = zone::create(64);
+  var target = zone::create(64);
+  var vec = std::vec::new<i64>(ref mut source, 1);
+  vec.push(21);
+  let view = vec.as_slice();
+  let copied = std::vec::from_slice_in<i64>(ref mut target, view);
+  zone::reset(ref mut target);
+  return copied.get(0);
+}

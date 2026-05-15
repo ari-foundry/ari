@@ -313,6 +313,8 @@ Checklist:
       through the same explicit zone capability and grows capacity on demand
 - [x] source `std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)`
       appends a slice through the same explicit zone capability
+- [x] `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` copies a borrowed
+      slice into a new target-zone source `Vec<T>` handle
 - [x] source `std::vec::Vec<T>.resize_in(ref mut Zone, length, value)` shrinks
       by length or grows through the same explicit zone capability
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view

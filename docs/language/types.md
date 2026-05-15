@@ -555,6 +555,7 @@ let len = vec.len()
 let cap = vec.capacity()
 let middle = vec.get(1)
 let view = vec.as_slice()
+let copied_from_view = std::vec::from_slice_in<i64>(ref mut other_zone, view)
 vec.extend_from_slice_in(ref mut zone, view)
 let removed = vec.remove(1)
 let popped = vec.pop()
@@ -576,7 +577,9 @@ shifting later elements.
 `std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)` appends each
 slice element through that same growth path. `std::vec::Vec<T>.resize_in(ref
 mut Zone, length, value)` shrinks by setting `len` or grows by appending copies
-of `value`. `replace(index, value)` returns the previous element at `index`
+of `value`. `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` builds a new
+target-zone source `Vec<T>` by copying the borrowed slice elements into fresh
+zone storage. `replace(index, value)` returns the previous element at `index`
 after storing the new value. Passing a different zone borrow to `reserve`,
 `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`, or
 `resize_in` is rejected because the source handle remains tied to the zone that

@@ -443,7 +443,8 @@ same tracked source-zone provenance when they are returned by a single-zone
 constructor. Raw pointers recovered from a tracked `std::boxed::Box<T>`,
 `std::string::String`, or `std::vec::Vec<T>` through `as_ptr()` keep that
 provenance too. A `std::boxed::Box<T>`, `std::string::String`, or
-`std::vec::Vec<T>` copied with `copy_to(ref mut Zone)`, or a
+`std::vec::Vec<T>` copied with `copy_to(ref mut Zone)`,
+`std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)`, or a
 `std::string::String` copied with `std::string::copy_to(ref value, ref mut Zone)`,
 is tracked against the target zone, not the original source zone. When a
 source `std::string::String` or `std::vec::Vec<T>` grows through an explicit

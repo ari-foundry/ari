@@ -24,6 +24,12 @@ pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::vec::Vec[T] {
   return std::vec::Vec<T> { raw: with_capacity<T>(zone, capacity) };
 }
 
+pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::vec::Vec[T] {
+  var output = std::vec::new<T>(zone, values.len);
+  output.extend_from_slice_in(zone, values);
+  return output;
+}
+
 pub impl[T] std::vec::Vec[T] {
   fn len(self: ref Self) -> i64 {
     return self.raw.len;

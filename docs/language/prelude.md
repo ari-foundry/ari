@@ -76,8 +76,9 @@ The source handle currently exposes element methods: `len`, `capacity`,
 `reserve_extra(ref mut zone, additional)`, `pop`, `insert`,
 `insert_in(ref mut zone, index, value)`, `remove`, `clear`, `truncate`,
 `contains`, `index_of`, `count`, `extend_from_slice_in(ref mut zone, values)`,
-`resize_in(ref mut zone, length, value)`, `copy_to(ref mut zone)`, and
-`as_ptr()` and `as_slice`. `reserve`, `reserve_extra`, `push_in`, `insert_in`,
+`resize_in(ref mut zone, length, value)`, `copy_to(ref mut zone)`,
+top-level `std::vec::from_slice_in<T>(ref mut zone, values)`, `as_ptr()`, and
+`as_slice`. `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in` use the same explicit zone capability
 to grow the buffer. Metadata, checked reads, search, `copy_to(ref mut zone)`,
 and `as_ptr()` borrow the handle receiver instead of copying it. `copy_to(ref
@@ -551,8 +552,10 @@ grow-on-demand `insert_in(ref mut Zone, index, value)`,
 simple linear search, and
 `extend_from_slice_in(ref mut Zone, Slice<T>)`, and `vec.as_slice()` creates a
 mutable `Slice[T]` view over the same zone-backed buffer. `copy_to(ref mut
-Zone)` copies the current elements into a new handle tied to the target zone.
-`as_ptr()` returns the stored element pointer with the receiver's zone
+Zone)` copies the current elements into a new handle tied to the target zone,
+and `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` builds a target-zone
+handle from any borrowed slice view. `as_ptr()` returns the stored element
+pointer with the receiver's zone
 provenance, so it is rejected after that zone is reset or destroyed. Metadata,
 checked read, search, target-zone copy, and raw-pointer methods borrow the
 source handle receiver instead of copying it.

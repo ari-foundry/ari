@@ -133,7 +133,9 @@ constructor subset documented in the language guide.
    `len + additional`, same-zone grow-on-demand
    `push_in(ref mut Zone, value)` and `insert_in(ref mut Zone, index, value)`,
    slice extension with `extend_from_slice_in(ref mut Zone, Slice<T>)`,
-   grow-or-shrink `resize_in(ref mut Zone, length, value)`, and
+   target-zone construction from an existing slice with
+   `from_slice_in<T>(ref mut Zone, Slice<T>)`, grow-or-shrink
+   `resize_in(ref mut Zone, length, value)`, and
    tracked `as_slice` views over its allocated buffer. It can also expose
    the stored data pointer through provenance-preserving `as_ptr()` and
    `copy_to(ref mut Zone)` into a new target-zone handle; read-only metadata,

@@ -297,6 +297,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9insert_in' $(BUILD_DIR)/prelude/std-vec-insert-in.ll
 	$(TARGET) tests/ok/std-vec-extend-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.ll
+	$(TARGET) tests/ok/std-vec-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
+	grep -q '_ARNv3std3vec20from_slice_in__G_i64' $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-from-slice-in.ll
 	$(TARGET) tests/ok/std-vec-resize-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-resize-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9resize_in' $(BUILD_DIR)/prelude/std-vec-resize-in.ll
 	$(TARGET) tests/ok/std-vec-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-drop-value.ll
@@ -360,6 +363,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-push-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-push-in.elf; $(BUILD_DIR)/prelude/std-vec-push-in.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-insert-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-insert-in.elf; $(BUILD_DIR)/prelude/std-vec-insert-in.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-extend-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; code=$$?; test $$code -eq 11; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; code=$$?; test $$code -eq 40; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-resize-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-resize-in.elf; $(BUILD_DIR)/prelude/std-vec-resize-in.elf; code=$$?; test $$code -eq 37; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-drop-value.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
@@ -431,6 +435,8 @@ check-prelude: $(TARGET)
 	grep -q "std::vec::Vec.resize_in zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-resize-in-different-zone.err
 	if $(TARGET) tests/errors/std-vec-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err
+	if $(TARGET) tests/errors/std-vec-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err
 	if $(TARGET) tests/errors/std-vec-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-box-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-box-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-box-after-reset.err 2>&1; then exit 1; fi
