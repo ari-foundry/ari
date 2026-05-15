@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ari {
@@ -18,7 +19,7 @@ namespace {
 std::string token_return_forms(const std::string& input_name) {
     return "token_stream meta function bodies currently allow only an empty body, `return " +
            input_name +
-           ";` identity body, tokens!(...) token output, token slice extraction, or expression-only `if` token branching with supported token_stream conditions";
+           ";` identity body, tokens!(...) token output, token slice/capture extraction, or expression-only `if` token branching with supported token_stream conditions";
 }
 
 bool is_input_name(const Expr& expr, const std::string& input_name) {
@@ -82,6 +83,28 @@ bool is_string_literal(const Expr& expr) {
 
 bool is_non_negative_integer_literal(const Expr& expr) {
     return expr.kind == ExprKind::Integer && !expr.int_negative;
+}
+
+bool is_capture_name_start(char ch) {
+    return (ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || ch == '_';
+}
+
+bool is_capture_name_continue(char ch) {
+    return is_capture_name_start(ch) || (ch >= '0' && ch <= '9');
+}
+
+bool valid_capture_name(const std::string& name) {
+    if (name.empty() || !is_capture_name_start(name.front())) return false;
+    for (std::size_t i = 1; i < name.size(); ++i) {
+        if (!is_capture_name_continue(name[i])) return false;
+    }
+    return true;
+}
+
+bool capture_marker_name(const std::string& part, std::string& name) {
+    if (part.size() < 2 || part.front() != '$') return false;
+    name = part.substr(1);
+    return valid_capture_name(name);
 }
 
 bool all_string_literals(const std::vector<ExprPtr>& args, std::size_t first) {
@@ -201,6 +224,43 @@ bool supported_tokens_match_method(const Expr& expr, const std::string& input_na
            all_string_literals(expr.args, 0);
 }
 
+bool supported_tokens_capture_call(const Expr& expr, const std::string& input_name, std::string& reason) {
+    if (expr.kind != ExprKind::Call ||
+        expr.name != "tokens_capture" ||
+        expr_operand(expr) ||
+        expr.args.size() < 3 ||
+        !expr_receiver_type_args(expr).empty() ||
+        !expr_type_args(expr).empty() ||
+        !is_input_name(*expr.args[0], input_name) ||
+        !is_string_literal(*expr.args[1]) ||
+        !all_string_literals(expr.args, 2)) {
+        return false;
+    }
+    if (!valid_capture_name(expr.args[1]->string_value)) {
+        reason = "token_stream capture names must be identifier-like strings";
+        return false;
+    }
+    return true;
+}
+
+bool supported_tokens_capture_method(const Expr& expr, const std::string& input_name, std::string& reason) {
+    if (expr.kind != ExprKind::MethodCall ||
+        expr.name != "capture" ||
+        expr.args.size() < 2 ||
+        !expr_type_args(expr).empty() ||
+        !expr_operand(expr) ||
+        !is_input_name(*expr_operand(expr), input_name) ||
+        !is_string_literal(*expr.args[0]) ||
+        !all_string_literals(expr.args, 1)) {
+        return false;
+    }
+    if (!valid_capture_name(expr.args[0]->string_value)) {
+        reason = "token_stream capture names must be identifier-like strings";
+        return false;
+    }
+    return true;
+}
+
 bool token_starts_with(const std::vector<Token>& input_tokens,
                        const std::vector<ExprPtr>& parts,
                        std::size_t first) {
@@ -280,12 +340,58 @@ bool token_matches(const std::vector<Token>& input_tokens,
                    std::size_t first) {
     std::size_t count = parts.size() - first;
     if (input_tokens.size() != count) return false;
+    std::vector<std::pair<std::string, std::string>> captures;
     for (std::size_t i = first; i < parts.size(); ++i) {
         const std::string& expected = parts[i]->string_value;
         if (expected == "_") continue;
+        std::string capture_name;
+        if (capture_marker_name(expected, capture_name)) {
+            const std::string& actual = input_tokens[i - first].text;
+            bool seen = false;
+            for (const auto& capture : captures) {
+                if (capture.first != capture_name) continue;
+                seen = true;
+                if (capture.second != actual) return false;
+                break;
+            }
+            if (!seen) captures.push_back({capture_name, actual});
+            continue;
+        }
         if (input_tokens[i - first].text != expected) return false;
     }
     return true;
+}
+
+std::vector<Token> token_capture(const std::vector<Token>& input_tokens,
+                                 const std::vector<ExprPtr>& parts,
+                                 std::size_t first,
+                                 const Expr& capture_name_expr) {
+    const std::string& requested_name = capture_name_expr.string_value;
+    if (!valid_capture_name(requested_name)) {
+        fail_eval(capture_name_expr.loc, "token_stream capture names must be identifier-like strings");
+    }
+    if (!token_matches(input_tokens, parts, first)) {
+        fail_eval(capture_name_expr.loc, "token_stream capture pattern did not match input");
+    }
+
+    bool found = false;
+    Token captured;
+    for (std::size_t i = first; i < parts.size(); ++i) {
+        std::string capture_name;
+        if (!capture_marker_name(parts[i]->string_value, capture_name) || capture_name != requested_name) continue;
+        if (!found) {
+            captured = input_tokens[i - first];
+            found = true;
+            continue;
+        }
+        if (captured.text != input_tokens[i - first].text) {
+            fail_eval(parts[i]->loc, "token_stream capture pattern binds $" + requested_name + " to different tokens");
+        }
+    }
+    if (!found) {
+        fail_eval(capture_name_expr.loc, "token_stream capture pattern does not bind $" + requested_name);
+    }
+    return {captured};
 }
 
 bool is_token_integer_arithmetic(TokenKind op) {
@@ -579,6 +685,8 @@ bool is_supported_meta_token_return_expr(const Expr& expr,
 
     if (expr.kind == ExprKind::Call && supported_tokens_slice_call(expr, input_name, reason)) return true;
     if (expr.kind == ExprKind::MethodCall && supported_tokens_slice_method(expr, input_name, reason)) return true;
+    if (expr.kind == ExprKind::Call && supported_tokens_capture_call(expr, input_name, reason)) return true;
+    if (expr.kind == ExprKind::MethodCall && supported_tokens_capture_method(expr, input_name, reason)) return true;
 
     if (expr.kind == ExprKind::If) {
         if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
@@ -622,6 +730,12 @@ std::vector<Token> evaluate_meta_token_return_expr(const Expr& expr,
     }
     if (supported_tokens_slice_method(expr, input_name, reason)) {
         return token_slice(input_tokens, *expr.args[0], *expr.args[1], input_name);
+    }
+    if (supported_tokens_capture_call(expr, input_name, reason)) {
+        return token_capture(input_tokens, expr.args, 2, *expr.args[1]);
+    }
+    if (supported_tokens_capture_method(expr, input_name, reason)) {
+        return token_capture(input_tokens, expr.args, 1, *expr.args[0]);
     }
 
     if (expr.kind == ExprKind::If) {

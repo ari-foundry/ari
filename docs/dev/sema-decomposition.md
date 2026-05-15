@@ -110,8 +110,8 @@ adding more narrow syntax-specific `*_semantics` siblings.
 - `meta_token_eval` for token_stream meta return validation/evaluation,
   including meta-input token substitution and the current
   empty/count/boundary/wrapper/indexed-text/pattern branch evaluator plus
-  end-exclusive slice extraction used before expression/item/pattern macro
-  output is reparsed
+  end-exclusive slice and single-token named capture extraction used before
+  expression/item/pattern macro output is reparsed
 - `ast_clone` for union-safe AST expression cloning shared by parser compound
   assignment lowering and sema borrow-receiver synthesis
 - `ast_builders` for small AST expression constructors that keep scalar/name,
