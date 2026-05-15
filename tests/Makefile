@@ -224,6 +224,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl20std__boxed__Box_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
 	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
 	$(TARGET) tests/ok/prelude-box-root.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-box-root.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent3new' $(BUILD_DIR)/prelude/prelude-box-root.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent7copy_to' $(BUILD_DIR)/prelude/prelude-box-root.ll
 	$(TARGET) tests/ok/std-string-alloc-buffer.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll
 	grep -q 'call ptr @"ari_builtin_string_alloc_buffer"' $(BUILD_DIR)/prelude/std-string-alloc-buffer.ll

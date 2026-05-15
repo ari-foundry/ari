@@ -257,8 +257,9 @@ Checklist:
       invalidation, plus a generic Drop impl that consumes the handle binding,
       runs `Drop` for the stored value when one exists, and rejects later use
 - [x] expose root `Box[T]` / `std::Box[T]` as aliases for the explicit-zone
-      source `std::boxed::Box<T>` handle while leaving allocator-backed unique
-      ownership for the smart-pointer roadmap
+      source `std::boxed::Box<T>` handle, including `Box::new<T>` /
+      `std::Box::new<T>` associated construction, while leaving
+      allocator-backed unique ownership for the smart-pointer roadmap
 - [x] `std::string::alloc_buffer(ref mut Zone, capacity)` seeds future owned
       string storage with tracked zone-backed `ptr u8` byte allocation and
       reset/destroy invalidation

@@ -7,6 +7,10 @@ pub fn new[T](zone: ref mut Zone, value: T) -> std::boxed::Box[T] {
 }
 
 pub impl[T] std::boxed::Box[T] {
+  fn new(zone: ref mut Zone, value: T) -> std::boxed::Box[T] {
+    return std::boxed::new<T>(zone, value);
+  }
+
   fn get(self) -> T {
     return ptr_load(self.data);
   }

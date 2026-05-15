@@ -87,7 +87,9 @@ pointer with the source zone provenance preserved. This is not the final root
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
 source lives in `lib/std/boxed.arih`, and the same handle is available through
-the root `Box[T]` / `std::Box[T]` alias. The handle has `get()`, `set(value)`,
+the root `Box[T]` / `std::Box[T]` alias. The handle also has associated
+constructors through `Box::new<T>(ref mut zone, value)` and
+`std::Box::new<T>(ref mut zone, value)`. It exposes `get()`, `set(value)`,
 `replace(value)`, `copy_to(ref mut zone)`, `swap(ref mut other)`, and
 `as_ptr()` methods for copyable, zone-placeable values. `replace(value)` stores
 a new value and returns the previous one.
@@ -625,7 +627,7 @@ zone-backed value:
 ```ari
 var zone = zone::create(64)
 var other_zone = zone::create(64)
-var boxed = std::boxed::new<i64>(ref mut zone, 21)
+var boxed = Box::new<i64>(ref mut zone, 21)
 let before = boxed.get()
 boxed.set(9)
 let after = boxed.get()
@@ -698,8 +700,9 @@ result, or slice view after its source zone is reset or destroyed is rejected.
 `Box[T]` is available today as the root alias for the explicit-zone
 `std::boxed::Box<T>` source handle. It is useful for source library APIs that
 need a one-value handle before the final owning smart pointer ABI exists, but
-it still takes explicit zone construction through `std::boxed::new<T>` and the
-zone still releases the backing bytes. `Unique[T]` remains reserved as
+it still takes explicit zone construction through `Box::new<T>` or
+`std::boxed::new<T>`, and the zone still releases the backing bytes.
+`Unique[T]` remains reserved as
 policy/design space, but the eventual unique owner should use the `Box[T]`
 spelling once it grows allocator-backed ownership. `Shared[T]` is reserved for
 future reference-counted shared ownership, and `Weak[T]` is reserved for

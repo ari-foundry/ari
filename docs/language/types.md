@@ -786,9 +786,11 @@ Meanings:
   handle. Lowercase `string` remains today's borrowed C-string pointer-shaped
   value.
 - `Box[T]`: root alias for the source `std::boxed::Box<T>` explicit-zone
-  handle. Construct it with `std::boxed::new<T>(ref mut Zone, value)`; the
-  handle's `Drop` path runs the stored value's destructor when one exists, but
-  the explicit zone still owns and releases the backing bytes.
+  handle. Construct it with `Box::new<T>(ref mut Zone, value)`,
+  `std::Box::new<T>(ref mut Zone, value)`, or
+  `std::boxed::new<T>(ref mut Zone, value)`; the handle's `Drop` path runs the
+  stored value's destructor when one exists, but the explicit zone still owns
+  and releases the backing bytes.
 - `Unique[T]`, `Shared[T]`, and `Weak[T]`: reserved root smart-pointer names.
   `Unique[T]` remains reserved for policy compatibility, and `Shared[T]` /
   `Weak[T]` are reserved for future reference-counted ownership.

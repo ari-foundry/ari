@@ -142,12 +142,12 @@ constructor subset documented in the language guide.
    root/local `Vec[T]` and the root
    `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
-   returns a tracked source `std::boxed::Box<T>` handle with `get`, `set`,
-   `replace`, `copy_to`, `swap`, and `as_ptr` methods. Its generic `Drop` impl
-   consumes the handle and runs the stored value through normal Drop lowering,
-   and the root `Box[T]`/`std::Box[T]` spelling now aliases that explicit-zone
-   source handle. Allocator-backed unique `Box[T]` ownership remains future
-   work.
+   returns a tracked source `std::boxed::Box<T>` handle with associated
+   `Box::new<T>` construction plus `get`, `set`, `replace`, `copy_to`, `swap`,
+   and `as_ptr` methods. Its generic `Drop` impl consumes the handle and runs
+   the stored value through normal Drop lowering, and the root
+   `Box[T]`/`std::Box[T]` spelling now aliases that explicit-zone source
+   handle. Allocator-backed unique `Box[T]` ownership remains future work.
    Root `Vec[T]` now has an explicit non-local rule while runtime capacity is
    still absent: it remains a fixed-local value only, and sema rejects root
    `Vec[T]` in function/extern parameters or returns, struct fields, and impl
@@ -219,9 +219,10 @@ constructor subset documented in the language guide.
    - [owned-box-unique] define and implement allocator-backed unique `Box[T]`
      ownership, construction, and move contract before std APIs start returning
      owning heap handles. Today's root `Box[T]`/`std::Box[T]` spelling is an
-     alias for the explicit-zone `std::boxed::Box<T>` source seed, which already
-     has zone-provenance tracking, use-after-drop checking, and a generic Drop
-     impl that runs the stored value's Drop path.
+     alias for the explicit-zone `std::boxed::Box<T>` source seed, with
+     associated construction through `Box::new<T>(ref mut Zone, value)`,
+     zone-provenance tracking, use-after-drop checking, and a generic Drop impl
+     that runs the stored value's Drop path.
    - [owned-box-release] connect the allocator-backed unique `Box[T]` Drop path
      to the heap-storage release contract once that root handle exists. The
      current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract
