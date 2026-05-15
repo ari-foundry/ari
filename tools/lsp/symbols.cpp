@@ -173,6 +173,38 @@ std::string location_json(const std::string& uri, const Symbol& symbol) {
     return out.str();
 }
 
+int completion_kind(const Symbol& symbol) {
+    if (symbol.label == "function") return 3;
+    if (symbol.label == "module") return 9;
+    if (symbol.label == "struct") return 22;
+    if (symbol.label == "enum") return 13;
+    if (symbol.label == "trait") return 8;
+    if (symbol.label == "impl") return 6;
+    return 6;
+}
+
+bool matches_prefix(const Symbol& symbol, const std::string& prefix) {
+    if (prefix.empty()) return true;
+    if (symbol.name.rfind(prefix, 0) == 0) return true;
+    return symbol.name.rfind("impl ", 0) == 0 && symbol.name.substr(5).rfind(prefix, 0) == 0;
+}
+
+std::string completion_item_json(const Symbol& symbol) {
+    std::ostringstream out;
+    out << "{";
+    out << "\"label\":\"" << tooling::json_escape(symbol.name) << "\",";
+    out << "\"kind\":" << completion_kind(symbol) << ",";
+    out << "\"detail\":\"Ari " << tooling::json_escape(symbol.label) << "\"";
+    if (!symbol.declaration.empty()) {
+        out << ",\"documentation\":{";
+        out << "\"kind\":\"markdown\",";
+        out << "\"value\":\"" << tooling::json_escape("```ari\n" + symbol.declaration + "\n```") << "\"";
+        out << "}";
+    }
+    out << "}";
+    return out.str();
+}
+
 } // namespace
 
 std::string document_symbols_response(const std::string& id, const std::string& text) {
@@ -231,6 +263,28 @@ std::string definition_response(const std::string& id,
     } else {
         out << "\"result\":" << location_json(uri, *symbol);
     }
+    out << "}";
+    return out.str();
+}
+
+std::string completion_response(const std::string& id, const std::string& text, int line, int character) {
+    std::string prefix = word_at_position(text, line, character);
+    const std::vector<Symbol> symbols = collect_symbols(text);
+    std::ostringstream out;
+    out << "{";
+    out << "\"jsonrpc\":\"2.0\",";
+    out << "\"id\":" << (id.empty() ? "null" : id) << ",";
+    out << "\"result\":{";
+    out << "\"isIncomplete\":false,";
+    out << "\"items\":[";
+    bool first = true;
+    for (const Symbol& symbol : symbols) {
+        if (!matches_prefix(symbol, prefix)) continue;
+        if (!first) out << ",";
+        first = false;
+        out << completion_item_json(symbol);
+    }
+    out << "]}";
     out << "}";
     return out.str();
 }

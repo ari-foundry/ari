@@ -13,6 +13,8 @@
       LSP hover path.
 - [x] Surface first-pass same-document go-to-definition for top-level Ari
       declarations through the LSP definition path.
+- [x] Surface first-pass top-level Ari declaration completion through the LSP
+      completion path.
 
 ## Near-Term Work
 

@@ -11,5 +11,6 @@ std::string definition_response(const std::string& id,
                                 const std::string& uri,
                                 int line,
                                 int character);
+std::string completion_response(const std::string& id, const std::string& text, int line, int character);
 
 } // namespace ari::lsp

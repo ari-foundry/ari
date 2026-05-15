@@ -17,6 +17,8 @@
       using the same symbol scanner.
 - [x] Add first-pass same-document `textDocument/definition` support for
       top-level declarations using the same symbol scanner.
+- [x] Add first-pass `textDocument/completion` support for top-level symbols in
+      the current document using the same symbol scanner.
 - [x] Clear diagnostics on `didClose`.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
 
@@ -27,6 +29,8 @@
       nested symbols.
 - [ ] Replace first-pass definition with parser/sema-backed local, module, and
       imported source declaration navigation.
+- [ ] Replace first-pass completion with parser/sema-backed locals, imports,
+      fields, methods, and std API suggestions.
 - [ ] Replace first-pass hover text with parser/sema-backed signatures and std
       API docs.
 
