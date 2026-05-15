@@ -3,7 +3,7 @@ fn main() -> i64 {
   var target = zone::create(16);
 
   var text = std::string::from_string(ref mut source, "ari");
-  var copied = std::string::copy_to(text, ref mut target);
+  var copied = std::string::copy_to(ref text, ref mut target);
   zone::reset(ref mut source);
 
   let raw = copied.as_ptr();

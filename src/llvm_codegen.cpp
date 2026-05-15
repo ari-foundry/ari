@@ -681,8 +681,9 @@ private:
         line("}");
         line();
 
-        line("define " + runtime_visibility + "{ { ptr, i64, i64 } } @ari_builtin_string_copy_to({ { ptr, i64, i64 } } %value, ptr %target.slot) {");
+        line("define " + runtime_visibility + "{ { ptr, i64, i64 } } @ari_builtin_string_copy_to(ptr %value.slot, ptr %target.slot) {");
         line("entry:");
+        line("  %value = load { { ptr, i64, i64 } }, ptr %value.slot");
         line("  %source.raw = extractvalue { { ptr, i64, i64 } } %value, 0");
         line("  %source.data = extractvalue { ptr, i64, i64 } %source.raw, 0");
         line("  %length = extractvalue { ptr, i64, i64 } %source.raw, 1");

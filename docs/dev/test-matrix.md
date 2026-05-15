@@ -271,7 +271,7 @@ Checklist:
       `RawString` / source `std::string::String` handles with metadata,
       borrowed receiver lowering for metadata, byte reads, and `as_ptr`,
       fixed-capacity byte operations, `as_slice`, top-level
-      `std::string::copy_to`, and no-op Drop handling
+      `std::string::copy_to(ref value, ref mut Zone)`, and no-op Drop handling
 - [x] `std::string::from_string(ref mut Zone, string)` copies today's borrowed
       lowercase `string` into independent source `std::string::String` storage
       tied to the target zone

@@ -241,7 +241,7 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl19std__string__String8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-handle.ll
 	$(TARGET) tests/ok/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/std-string-from-copy.ll
-	grep -q 'ari_builtin_string_copy_to' $(BUILD_DIR)/prelude/std-string-from-copy.ll
+	grep -F -q 'define { { ptr, i64, i64 } } @ari_builtin_string_copy_to(ptr %value.slot, ptr %target.slot)' $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	$(TARGET) tests/ok/prelude-string-root.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-string-root.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/prelude-string-root.ll
 	grep -q 'ari_builtin_string_copy_to' $(BUILD_DIR)/prelude/prelude-string-root.ll

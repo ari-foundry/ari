@@ -12,7 +12,7 @@ pub extern "ari" fn alloc_buffer(zone: ref mut Zone, capacity: i64) -> ptr u8 = 
 pub extern "ari" fn with_capacity(zone: ref mut Zone, capacity: i64) -> RawString = "ari_builtin_string_with_capacity";
 pub extern "ari" fn new(zone: ref mut Zone, capacity: i64) -> std::string::String = "ari_builtin_string_new";
 pub extern "ari" fn from_string(zone: ref mut Zone, text: string) -> std::string::String = "ari_builtin_string_from_string";
-pub extern "ari" fn copy_to(value: std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
+pub extern "ari" fn copy_to(value: ref std::string::String, target: ref mut Zone) -> std::string::String = "ari_builtin_string_copy_to";
 
 fn append_byte_in(value: ref mut std::string::String, zone: ref mut Zone, byte: u8) -> void {
   if value.raw.len >= value.raw.capacity {

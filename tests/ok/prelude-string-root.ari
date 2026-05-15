@@ -3,7 +3,7 @@ fn main() -> i64 {
   var target = zone::create(16);
 
   let root: String = std::string::from_string(ref mut source, "ari");
-  let copied: std::String = std::string::copy_to(root, ref mut target);
+  let copied: std::String = std::string::copy_to(ref root, ref mut target);
 
   let total = copied.len() + copied.capacity() + (copied.get(0) as i64);
 

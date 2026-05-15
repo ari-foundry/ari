@@ -116,12 +116,12 @@ grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in`, plus `append_string_in`,
 `append_i64_in`, `append_bool_in`, `append_f64_in`, `truncate`, `clear`,
 `as_ptr`, `as_slice`,
-and top-level `std::string::copy_to(value, ref mut Zone)`. The zone argument
+and top-level `std::string::copy_to(ref value, ref mut Zone)`. The zone argument
 passed to a grow or append method must be the same source zone that created
-the handle. Metadata, checked byte `get`, and `as_ptr` borrow the string handle
-receiver instead of copying it. `String` is still an explicit-zone handle:
-`zone::reset` or `zone::destroy` releases the bytes, and dropping the handle
-only ends that binding.
+the handle. Metadata, checked byte `get`, `as_ptr`, and target-zone copy borrow
+the string handle instead of copying it. `String` is still an explicit-zone
+handle: `zone::reset` or `zone::destroy` releases the bytes, and dropping the
+handle only ends that binding.
 
 ## Tuples
 
