@@ -449,6 +449,8 @@ check-prelude: $(TARGET)
 	grep -q "struct 'std::string::String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
 	if $(TARGET) tests/errors/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-string-root-after-reset.err
+	if $(TARGET) tests/errors/prelude-box-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-box-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-box-root-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'boxed' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-box-root-after-reset.err
 	if $(TARGET) tests/errors/prelude-unique-reserved.ari -o $(BUILD_DIR)/prelude/prelude-unique-reserved.elf >$(BUILD_DIR)/prelude/prelude-unique-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Unique' is reserved for smart-pointer policy; use Box\\[T\\] for today's explicit-zone handle" $(BUILD_DIR)/prelude/prelude-unique-reserved.err
 	if $(TARGET) tests/errors/prelude-shared-reserved.ari -o $(BUILD_DIR)/prelude/prelude-shared-reserved.elf >$(BUILD_DIR)/prelude/prelude-shared-reserved.err 2>&1; then exit 1; fi
