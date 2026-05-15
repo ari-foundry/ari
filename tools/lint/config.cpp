@@ -20,6 +20,32 @@ std::string strip_comment(const std::string& line) {
     return line.substr(0, comment);
 }
 
+bool file_exists(const std::string& path) {
+    std::ifstream in(path);
+    return static_cast<bool>(in);
+}
+
+std::string dirname_of(const std::string& path) {
+    std::size_t slash = path.find_last_of('/');
+    if (slash == std::string::npos) return ".";
+    if (slash == 0) return "/";
+    return path.substr(0, slash);
+}
+
+std::string parent_dir(const std::string& path) {
+    if (path.empty() || path == "." || path == "/") return "";
+    std::size_t slash = path.find_last_of('/');
+    if (slash == std::string::npos) return ".";
+    if (slash == 0) return "/";
+    return path.substr(0, slash);
+}
+
+std::string join_path(const std::string& dir, const std::string& name) {
+    if (dir.empty() || dir == ".") return name;
+    if (dir.back() == '/') return dir + name;
+    return dir + "/" + name;
+}
+
 } // namespace
 
 bool apply_rule_setting(RuleSettings& settings, const std::string& setting_text, std::string* error) {
@@ -38,6 +64,18 @@ bool apply_rule_setting(RuleSettings& settings, const std::string& setting_text,
     }
     settings[normalize_rule_code(code)] = *setting;
     return true;
+}
+
+std::optional<std::string> find_rule_config_for_file(const std::string& source_path) {
+    std::string dir = dirname_of(source_path);
+    while (!dir.empty()) {
+        std::string candidate = join_path(dir, "ari-lint.rules");
+        if (file_exists(candidate)) return candidate;
+        std::string parent = parent_dir(dir);
+        if (parent == dir) break;
+        dir = parent;
+    }
+    return std::nullopt;
 }
 
 RuleConfigLoadResult load_rule_config(const std::string& path) {

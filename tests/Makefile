@@ -60,6 +60,7 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	printf '# Ari lint config\nlint/trailing-whitespace = error\n' >$(BUILD_DIR)/tools/ari-lint.rules
 	if $(LINT_TARGET) --ari $(TARGET) $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.out; then exit 1; fi
 	grep -q 'lint/trailing-whitespace' $(BUILD_DIR)/tools/lint-trailing.out
+	grep -q 'error: \[lint/trailing-whitespace\]' $(BUILD_DIR)/tools/lint-trailing.out
 	$(LINT_TARGET) --ari $(TARGET) --rule lint/trailing-whitespace=off $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-off.out
 	grep -q '$(BUILD_DIR)/tools/lint-trailing-whitespace.ari: ok' $(BUILD_DIR)/tools/lint-trailing-off.out
 	if $(LINT_TARGET) --ari $(TARGET) --config $(BUILD_DIR)/tools/ari-lint.rules $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-config.out; then exit 1; fi

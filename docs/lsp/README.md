@@ -27,9 +27,11 @@ build/ari-lsp --ari build/ari --rule lint/trailing-whitespace=error
 ```
 
 Additional module search paths can be passed with `-I path`.
-Lint rule severities use the same `--config PATH` and
+Lint rule severities use the same config discovery, `--config PATH`, and
 `--rule RULE=SEVERITY` formats as `ari-lint`; command-line rule overrides are
-applied after config-file settings.
+applied after config-file settings. For unsaved buffers, discovery follows the
+temporary source file beside the original document path, so nearby
+`ari-lint.rules` files still apply while editing.
 
 ## Current Capabilities
 

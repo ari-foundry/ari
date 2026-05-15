@@ -12,6 +12,7 @@ struct LintConfig {
     std::string ari_path = "build/ari";
     std::vector<std::string> module_paths;
     RuleSettings rule_settings;
+    bool discover_rule_config = true;
 };
 
 struct LintResult {

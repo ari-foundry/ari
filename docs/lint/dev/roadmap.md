@@ -19,6 +19,8 @@
       diagnostics use the same native rules.
 - [x] Add shared lint rule configuration loading with `--config PATH`; CLI,
       LSP, and VS Code all pass through the same rule settings.
+- [x] Discover the nearest `ari-lint.rules` from each checked source file when
+      no explicit `--config` is supplied.
 
 ## Near-Term Work
 
@@ -26,8 +28,8 @@
 - [ ] Extend compiler-backed diagnostics with wider spans once the compiler
       exposes them.
 - [ ] Keep adding lint-only rules and docs as policy decisions become stable.
-- [ ] Add project-root config discovery once the repository layout policy is
-      stable.
+- [ ] Add a formal project manifest hook if Ari packages later need to pin lint
+      policy at package-root boundaries.
 
 ## Design Notes
 

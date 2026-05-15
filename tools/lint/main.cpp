@@ -177,6 +177,7 @@ int main(int argc, char** argv) {
         }
         if (!loaded.errors.empty()) return 2;
         config.rule_settings = std::move(loaded.settings);
+        config.discover_rule_config = false;
     }
     for (const std::string& override_text : rule_overrides) {
         std::string error;

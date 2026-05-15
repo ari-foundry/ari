@@ -36,7 +36,9 @@ symbols in the active document.
 - `ari.compilerPath`: path passed to `ari-lsp --ari`
 - `ari.lspPath`: path to the `ari-lsp` executable
 - `ari.lintPath`: path to the `ari-lint` executable
-- `ari.lintConfigPath`: optional lint config path passed as `--config`
+- `ari.lintConfigPath`: optional explicit lint config path passed as `--config`;
+  leave empty to let `ari-lint` and `ari-lsp` discover the nearest
+  `ari-lint.rules`
 - `ari.modulePaths`: extra `-I` paths passed to the language server
 - `ari.lintRules`: lint severity overrides passed to both `ari-lint` and
   `ari-lsp`, for example `{ "lint/trailing-whitespace": "error" }`

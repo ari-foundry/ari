@@ -27,6 +27,8 @@
       LSP startup.
 - [x] Add `ari.lintConfigPath` so VS Code can pass persistent lint rule config
       files to both lint commands and LSP startup.
+- [x] Leave lint config path optional so CLI/LSP-side `ari-lint.rules`
+      discovery works naturally in editor sessions.
 
 ## Near-Term Work
 

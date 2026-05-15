@@ -23,6 +23,8 @@
 - [x] Route LSP diagnostics through the shared lint checker so compiler
       diagnostics and native lint rules use the same rule settings.
 - [x] Accept shared lint rule config files through `--config PATH`.
+- [x] Use lint config discovery for saved and unsaved LSP documents when no
+      explicit `--config` is supplied.
 - [x] Preserve shared diagnostic codes and explicit end spans in LSP diagnostic
       JSON when the tooling layer provides them.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.

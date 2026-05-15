@@ -34,9 +34,13 @@ provided.
 Rule names may use the full code, such as `lint/trailing-whitespace`, or the
 short lint name, such as `trailing-whitespace`.
 
-`--config PATH` loads persistent rule settings before command-line `--rule`
-overrides. The config format is intentionally small: one `RULE = SEVERITY`
-setting per line, blank lines allowed, and `#` comments supported.
+When `--config PATH` is not provided, `ari-lint` searches from each source file's
+directory upward for `ari-lint.rules`. `--config PATH` uses that file explicitly
+and disables discovery. In both cases, command-line `--rule` overrides are
+applied last.
+
+The config format is intentionally small: one `RULE = SEVERITY` setting per
+line, blank lines allowed, and `#` comments supported.
 
 ```text
 # ari-lint.rules
