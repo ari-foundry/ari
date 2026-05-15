@@ -1,0 +1,51 @@
+meta fn count_expr(input: token_stream) -> token_stream {
+  return if tokens_count(input) == 1 {
+    tokens!((input) * 3)
+  } else {
+    tokens!((input) + 10)
+  };
+}
+
+meta fn count_item(input: token_stream) -> token_stream {
+  return if input.len() > 0 {
+    tokens!(input)
+  } else {
+    tokens!(fn generated() -> i64 {
+      return 4;
+    })
+  };
+}
+
+meta fn count_pattern(input: token_stream) -> token_stream {
+  return if tokens_count(input) == 1 {
+    tokens!(Some(input))
+  } else {
+    tokens!(None)
+  };
+}
+
+count_item!();
+
+count_item!(fn kept() -> i64 {
+  return 6;
+});
+
+enum MaybeI64 {
+  None,
+  Some(i64),
+}
+
+fn score(value: MaybeI64) -> i64 {
+  return match value {
+    count_pattern!(inner) => {
+      inner
+    }
+    count_pattern!() => {
+      9
+    }
+  };
+}
+
+fn main() -> i64 {
+  return count_expr!(7) + count_expr!(2 + 3) + generated() + kept() + score(Some(5)) + score(None());
+}

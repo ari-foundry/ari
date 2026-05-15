@@ -2,6 +2,7 @@
 
 #include "common.hpp"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -56,6 +57,73 @@ bool supported_tokens_empty_method(const Expr& expr, const std::string& input_na
            is_input_name(*expr_operand(expr), input_name);
 }
 
+bool supported_tokens_count_call(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::Call &&
+           expr.name == "tokens_count" &&
+           !expr_operand(expr) &&
+           expr.args.size() == 1 &&
+           expr_receiver_type_args(expr).empty() &&
+           expr_type_args(expr).empty() &&
+           is_input_name(*expr.args[0], input_name);
+}
+
+bool supported_tokens_len_method(const Expr& expr, const std::string& input_name) {
+    return expr.kind == ExprKind::MethodCall &&
+           expr.name == "len" &&
+           expr.args.empty() &&
+           expr_type_args(expr).empty() &&
+           expr_operand(expr) &&
+           is_input_name(*expr_operand(expr), input_name);
+}
+
+bool supported_token_integer_expr(const Expr& expr,
+                                  const std::string& input_name,
+                                  std::string& reason) {
+    switch (expr.kind) {
+        case ExprKind::Integer:
+            return !expr.int_negative;
+        case ExprKind::Call:
+            if (supported_tokens_count_call(expr, input_name)) return true;
+            break;
+        case ExprKind::MethodCall:
+            if (supported_tokens_len_method(expr, input_name)) return true;
+            break;
+        default:
+            break;
+    }
+    reason = "token_stream meta integer conditions currently support only non-negative integer literals, tokens_count(" +
+             input_name + "), or " + input_name + ".len()";
+    return false;
+}
+
+std::uint64_t eval_token_integer_expr(const Expr& expr,
+                                      const std::string& input_name,
+                                      const std::vector<Token>& input_tokens) {
+    switch (expr.kind) {
+        case ExprKind::Integer:
+            if (!expr.int_negative) return expr.int_value;
+            break;
+        case ExprKind::Call:
+            if (supported_tokens_count_call(expr, input_name)) return input_tokens.size();
+            break;
+        case ExprKind::MethodCall:
+            if (supported_tokens_len_method(expr, input_name)) return input_tokens.size();
+            break;
+        default:
+            break;
+    }
+    fail_eval(expr.loc, "internal error: unsupported token_stream meta integer expression");
+}
+
+bool is_token_integer_comparison(TokenKind op) {
+    return op == TokenKind::EqEq ||
+           op == TokenKind::BangEq ||
+           op == TokenKind::Less ||
+           op == TokenKind::LessEq ||
+           op == TokenKind::Greater ||
+           op == TokenKind::GreaterEq;
+}
+
 bool supported_token_condition_expr(const Expr& expr,
                                     const std::string& input_name,
                                     std::string& reason) {
@@ -74,6 +142,12 @@ bool supported_token_condition_expr(const Expr& expr,
                 return supported_token_condition_expr(*expr_left(expr), input_name, reason) &&
                        supported_token_condition_expr(*expr_right(expr), input_name, reason);
             }
+            if (is_token_integer_comparison(expr.op) &&
+                expr_left(expr) &&
+                expr_right(expr)) {
+                return supported_token_integer_expr(*expr_left(expr), input_name, reason) &&
+                       supported_token_integer_expr(*expr_right(expr), input_name, reason);
+            }
             break;
         case ExprKind::Call:
             if (supported_tokens_empty_call(expr, input_name)) return true;
@@ -85,8 +159,9 @@ bool supported_token_condition_expr(const Expr& expr,
             break;
     }
 
-    reason = "token_stream meta branch conditions currently support only bool literals, !, &&, ||, tokens_empty(" +
-             input_name + "), or " + input_name + ".is_empty()";
+    reason = "token_stream meta branch conditions currently support bool literals, !, &&, ||, tokens_empty(" +
+             input_name + "), " + input_name + ".is_empty(), and integer comparisons over tokens_count(" +
+             input_name + ") or " + input_name + ".len()";
     return false;
 }
 
@@ -109,6 +184,26 @@ bool eval_token_condition_expr(const Expr& expr,
             if (expr.op == TokenKind::PipePipe && expr_left(expr) && expr_right(expr)) {
                 return eval_token_condition_expr(*expr_left(expr), input_name, input_tokens) ||
                        eval_token_condition_expr(*expr_right(expr), input_name, input_tokens);
+            }
+            if (is_token_integer_comparison(expr.op) && expr_left(expr) && expr_right(expr)) {
+                std::uint64_t left = eval_token_integer_expr(*expr_left(expr), input_name, input_tokens);
+                std::uint64_t right = eval_token_integer_expr(*expr_right(expr), input_name, input_tokens);
+                switch (expr.op) {
+                    case TokenKind::EqEq:
+                        return left == right;
+                    case TokenKind::BangEq:
+                        return left != right;
+                    case TokenKind::Less:
+                        return left < right;
+                    case TokenKind::LessEq:
+                        return left <= right;
+                    case TokenKind::Greater:
+                        return left > right;
+                    case TokenKind::GreaterEq:
+                        return left >= right;
+                    default:
+                        break;
+                }
             }
             break;
         case ExprKind::Call:

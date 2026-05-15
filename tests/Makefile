@@ -1458,6 +1458,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-token-stream-return.raw; code=$$?; test $$code -eq 40
 	$(TARGET) --freestanding tests/ok/meta-function-token-branch.ari -o $(BUILD_DIR)/meta/meta-function-token-branch.raw
 	$(BUILD_DIR)/meta/meta-function-token-branch.raw; code=$$?; test $$code -eq 43
+	$(TARGET) --freestanding tests/ok/meta-function-token-count.ari -o $(BUILD_DIR)/meta/meta-function-token-count.raw
+	$(BUILD_DIR)/meta/meta-function-token-count.raw; code=$$?; test $$code -eq 60
 	$(TARGET) --freestanding tests/ok/meta-function-ast-return.ari -o $(BUILD_DIR)/meta/meta-function-ast-return.raw
 	$(BUILD_DIR)/meta/meta-function-ast-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/meta-function-ast-input-substitution.ari -o $(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw
