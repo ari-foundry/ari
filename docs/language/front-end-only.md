@@ -428,6 +428,26 @@ append_generated!(fn original() -> i64 {
 });
 ```
 
+Declaration-returning `ast -> ast` meta functions can branch on structured
+declaration input before choosing a `decl!(...)` output. The supported
+inspection helpers are `decl_kind(input)` / `input.kind()`, `decl_name(input)` /
+`input.name()`, `decl_count(input)` / `input.count()`, `decl_is_public(input)` /
+`input.is_public()`, and `decl_is(input, "kind")` / `input.is("kind")`:
+
+```ari
+meta fn add_for_struct(input: ast) -> ast {
+  return if input.is("struct") && input.name() == "Widget" {
+    decl!(input fn generated() -> i64 { return 41; })
+  } else {
+    decl!(input fn generated() -> i64 { return 0; })
+  };
+}
+
+add_for_struct!(struct Widget {
+  value: i64,
+});
+```
+
 `token_stream -> token_stream` meta functions can use `tokens!(...)` and the
 empty-input branch form at item and pattern macro sites too. The chosen output
 is parsed in the site domain after raw token substitution. Count-based
@@ -526,6 +546,9 @@ declaration kinds through `tokens!(...)`; captures from a successful
 Non-identity item-position `ast -> ast` bodies can also generate those
 declaration kinds by returning `decl!(...)`, and they may splice the input
 declaration token tree back into that constructor with the meta parameter name.
+Declaration-returning AST bodies may choose among `decl!(...)` outputs with
+expression-only `if` branches over the declaration inspection helpers listed
+above.
 Generated file-backed `mod name;` imports are not supported in item macro
 output because module loading runs before semantic expansion; keep file-backed
 imports as source-level `mod` declarations. Type-position

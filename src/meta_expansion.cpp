@@ -2,6 +2,7 @@
 
 #include "ast_clone.hpp"
 #include "common.hpp"
+#include "meta_ast_eval.hpp"
 #include "meta_token_eval.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
@@ -127,10 +128,14 @@ ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation&
                                                       const std::string& input_name,
                                                       const Expr& returned_ast) {
     if (returned_ast.kind != ExprKind::MacroCall || returned_ast.name != "decl" || !returned_ast.macro_tokens) {
-        fail_expansion(returned_ast.loc, "internal error: expected decl!(...) ast constructor");
+        std::string reason;
+        if (!is_supported_meta_decl_return_expr(returned_ast, input_name, reason)) {
+            fail_expansion(returned_ast.loc, "internal error: expected decl!(...) ast constructor");
+        }
     }
-    std::vector<Token> output_tokens =
-        substitute_meta_input_tokens(*returned_ast.macro_tokens, input_name, invocation.tokens);
+    Program input_program = parse_item_macro_tokens(invocation.tokens, invocation.module_name, invocation.loc);
+    MetaAstDeclInput input = summarize_meta_ast_decl_input(invocation.tokens, input_program);
+    std::vector<Token> output_tokens = evaluate_meta_decl_return_expr(returned_ast, input_name, input);
     Program program = parse_item_macro_tokens(output_tokens, invocation.module_name, returned_ast.loc);
     return finish_item_macro_expansion(std::move(program), invocation, "item macro declaration AST output");
 }
@@ -154,10 +159,14 @@ ItemMacroExpansion expand_attribute_macro_decl_constructor(const std::vector<Tok
                                                            const std::string& input_name,
                                                            const Expr& returned_ast) {
     if (returned_ast.kind != ExprKind::MacroCall || returned_ast.name != "decl" || !returned_ast.macro_tokens) {
-        fail_expansion(returned_ast.loc, "internal error: expected decl!(...) ast constructor");
+        std::string reason;
+        if (!is_supported_meta_decl_return_expr(returned_ast, input_name, reason)) {
+            fail_expansion(returned_ast.loc, "internal error: expected decl!(...) ast constructor");
+        }
     }
-    std::vector<Token> output_tokens =
-        substitute_meta_input_tokens(*returned_ast.macro_tokens, input_name, declaration_tokens);
+    Program input_program = parse_item_macro_tokens(declaration_tokens, module_name, loc);
+    MetaAstDeclInput input = summarize_meta_ast_decl_input(declaration_tokens, input_program);
+    std::vector<Token> output_tokens = evaluate_meta_decl_return_expr(returned_ast, input_name, input);
     Program program = parse_item_macro_tokens(output_tokens, module_name, returned_ast.loc);
     return finish_declaration_expansion(std::move(program), loc, false, "attribute macro declaration AST output");
 }

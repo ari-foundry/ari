@@ -253,8 +253,9 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    separate anonymous macro grammar. User macro calls capture balanced token
    trees, and the selected `meta fn` parameter domain determines whether the
    compile-time evaluator receives `token_stream`, `ast`, or `type` input.
-   Full active expansion still needs richer token inspection and broader `ast`
-   construction before it can rewrite general values or syntax.
+   Full active expansion remains intentionally bounded to the lint-stable
+   constructor and inspection helpers here; broader `ast` construction and
+   dynamic declaration synthesis are tracked as Medium-Term evaluator work.
    Expression-position
    `token_stream -> token_stream` and `ast -> ast` meta invocations now parse
    their token-tree input as a single expression. Empty bodies and
@@ -302,7 +303,13 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    sema. Bare uses of the meta parameter name inside `decl!(...)` are
    substituted with the item macro invocation's declaration input tokens, so
    `return decl!(input const Extra: i64 = 1;);` preserves the input
-   declarations and appends a generated declaration. Item-position
+   declarations and appends a generated declaration. Item-position `ast -> ast`
+   declaration macros can branch on structured declaration input with
+   `decl_kind(input)` / `input.kind()`, `decl_name(input)` / `input.name()`,
+   `decl_count(input)` / `input.count()`, `decl_is_public(input)` /
+   `input.is_public()`, and `decl_is(input, "kind")` / `input.is("kind")`;
+   attribute declaration macros use the same inspection helpers for the
+   annotated declaration input. Item-position
    `token_stream -> token_stream` bodies can use `tokens!(...)` for the same
    parse-and-splice path, including declaration-style rewrites that match the
    invocation tokens with named captures and use `~name` in the output to
@@ -378,10 +385,6 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    remains a marker-trait impl and does not change Ari's structural copyability
    rules. Unsupported or duplicate derive names are rejected before impl
    validation, and enum `Default` derives without a case marker are rejected.
-   - [ast-decl-input] let item-position `ast -> ast` declaration constructors
-     inspect structured declaration input after evaluator policy is defined;
-     token-stream item macros can already capture declaration tokens and splice
-     them into generated declaration output with `~name`
    Formatting syntax for `print`/`println` is fixed for linting: `{}`,
    escaped braces, and `{:.N}` fixed decimal precision for `f32`/`f64` now
    lower on both the LLVM host and raw freestanding backends. `format!` remains
@@ -419,6 +422,17 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      iterations intentionally start from a changed but compatible state
    - [borrow-widen] merge compatible borrow-state transitions beyond exact
      snapshot equality without weakening source-borrow diagnostics
+3. Extend the meta AST evaluator beyond the lint-stable constructor subset.
+   Near-Term `ast -> ast` macros can generate declaration, expression, pattern,
+   and type AST output through explicit constructors and can inspect declaration
+   input by kind, name, count, and visibility. Keep richer compile-time AST
+   reflection out of the fixed syntax surface until its policy is explicit.
+   - [ast-rich-construction] add structured field/method/type inspection and
+     dynamic identifier construction for declaration-generating macros once the
+     evaluator's data model is defined
+   - [ast-general-values] decide which compile-time value operations are
+     allowed for non-declaration AST inputs before broadening expression
+     rewriting beyond today's explicit constructors and hygienic substitution
 
 ## Medium-Term Language Work
 

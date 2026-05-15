@@ -246,7 +246,11 @@ Non-identity `ast -> ast` bodies are also executable at expression macro sites,
 where a body can return an expression AST and substitute the meta input
 parameter, at item macro sites, where a body can return declaration AST output
 with `decl!(...)`, and at pattern macro sites, where a body can return pattern
-AST output with `pattern!(...)`. When a macro output declaration carries a
+AST output with `pattern!(...)`. Declaration-returning `ast -> ast` bodies can
+branch on `decl_kind(input)` / `input.kind()`, `decl_name(input)` /
+`input.name()`, `decl_count(input)` / `input.count()`, `decl_is_public(input)` /
+`input.is_public()`, and `decl_is(input, "kind")` / `input.is("kind")` before
+choosing a `decl!(...)` output. When a macro output declaration carries a
 rewriting attribute, Ari expands that generated attribute before later
 declaration collection; accidental self-generating chains stop at a recursion
 limit.

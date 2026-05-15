@@ -1,0 +1,53 @@
+meta fn inspect_item(input: ast) -> ast {
+  return if input.is("struct") && input.name() == "Widget" && input.count() == 1 {
+    decl!(
+      input
+
+      fn item_generated() -> i64 {
+        return 20;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn item_generated() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_attr(input: ast) -> ast {
+  return if decl_kind(input) == "fn" && decl_name(input) == "original" && decl_is_public(input) {
+    decl!(
+      input
+
+      fn attr_generated() -> i64 {
+        return 20;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn attr_generated() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+inspect_item!(struct Widget {
+  value: i64,
+});
+
+@inspect_attr
+pub fn original() -> i64 {
+  return 1;
+}
+
+fn main() -> i64 {
+  let widget = Widget { value: 1 };
+  return item_generated() + attr_generated() + original() + widget.value;
+}

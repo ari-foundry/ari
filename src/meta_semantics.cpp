@@ -1,5 +1,6 @@
 #include "meta_semantics.hpp"
 
+#include "meta_ast_eval.hpp"
 #include "meta_token_eval.hpp"
 #include "type_semantics.hpp"
 
@@ -50,15 +51,6 @@ bool is_pattern_ast_constructor(const Expr& expr) {
 
 bool is_type_constructor(const Expr& expr) {
     return expr.kind == ExprKind::MacroCall && expr.name == "type";
-}
-
-bool supported_decl_ast_return_expr(const Expr& expr, std::string& reason) {
-    if (!is_decl_ast_constructor(expr)) return false;
-    if (!expr.macro_tokens || expr.macro_tokens->empty()) {
-        reason = "decl! ast constructor requires one or more declaration tokens";
-        return false;
-    }
-    return true;
 }
 
 bool supported_pattern_ast_return_expr(const Expr& expr, std::string& reason) {
@@ -361,7 +353,7 @@ bool supported_ast_return_expr(const Expr& expr,
 MetaAstReturnKind classify_ast_return_expr(const Expr& expr,
                                            const std::string& input_name,
                                            std::string& reason) {
-    if (supported_decl_ast_return_expr(expr, reason)) return MetaAstReturnKind::ItemDeclarations;
+    if (is_supported_meta_decl_return_expr(expr, input_name, reason)) return MetaAstReturnKind::ItemDeclarations;
     if (supported_pattern_ast_return_expr(expr, reason)) return MetaAstReturnKind::Pattern;
     if (is_decl_ast_constructor(expr) || is_pattern_ast_constructor(expr)) return MetaAstReturnKind::None;
     if (supported_ast_return_expr(expr, input_name, {}, reason)) return MetaAstReturnKind::Expression;

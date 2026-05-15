@@ -103,7 +103,8 @@ expression-position identity expansion from a parsed expression input,
 expression-position `ast -> ast` struct-literal/borrow/try/null-coalescing/control-flow/call/access/method-call output with input substitution and hygienic generated local/pattern bindings,
 function/constant/struct/enum/trait/impl/inline-module/use item macro identity
 expansion from parsed top-level declarations, item-position `ast -> ast`
-declaration output and declaration input substitution through `decl!(...)`,
+declaration output, declaration input substitution, and structured declaration
+input inspection through `decl!(...)`,
 attribute macro function/struct/enum/trait/impl declaration rewrite and input
 substitution through declaration output, attribute macro argument-token
 inspection and capture splicing in token output, generated rewriting-attribute
