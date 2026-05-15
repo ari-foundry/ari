@@ -226,6 +226,7 @@ public:
         collect_uses();
         collect_meta_functions();
         expand_item_macro_invocations();
+        expand_attribute_macros();
         collect_item_macro_module_decls();
         collect_item_macro_uses();
         validate_attributes();
@@ -431,6 +432,11 @@ private:
     std::vector<TraitDecl> item_macro_traits_;
     std::vector<ImplDecl> item_macro_impls_;
     std::vector<ImplDecl> derived_impls_;
+    std::set<const FunctionDecl*> attribute_rewritten_functions_;
+    std::set<const StructDecl*> attribute_rewritten_structs_;
+    std::set<const EnumDecl*> attribute_rewritten_enums_;
+    std::set<const TraitDecl*> attribute_rewritten_traits_;
+    std::set<const ImplDecl*> attribute_rewritten_impls_;
     std::map<const Pattern*, Pattern> pattern_macro_expansions_;
     std::vector<IrTraitObjectVTable> trait_object_vtables_;
     std::map<std::string, std::string> trait_object_vtable_names_;
@@ -687,10 +693,11 @@ private:
                      "' can currently be used only at expression macro sites");
         }
         if (found->second.ast_return_kind == MetaAstReturnKind::ItemDeclarations &&
-            site != MetaInvocationSite::ItemMacro) {
+            site != MetaInvocationSite::ItemMacro &&
+            site != MetaInvocationSite::Attribute) {
             fail(loc,
                  "declaration-returning ast meta function '" + meta_name +
-                     "' can currently be used only at item macro sites");
+                     "' can currently be used only at item macro or attribute sites");
         }
         if (found->second.ast_return_kind == MetaAstReturnKind::Pattern &&
             site != MetaInvocationSite::PatternMacro) {
@@ -809,7 +816,9 @@ private:
 
     template <typename Visitor>
     void for_each_function_decl(Visitor&& visitor) const {
-        for (const auto& fn : program_.functions) visitor(fn);
+        for (const auto& fn : program_.functions) {
+            if (!attribute_rewritten_functions_.count(&fn)) visitor(fn);
+        }
         for (const auto& fn : item_macro_functions_) visitor(fn);
     }
 
@@ -821,25 +830,33 @@ private:
 
     template <typename Visitor>
     void for_each_struct_decl(Visitor&& visitor) const {
-        for (const auto& decl : program_.structs) visitor(decl);
+        for (const auto& decl : program_.structs) {
+            if (!attribute_rewritten_structs_.count(&decl)) visitor(decl);
+        }
         for (const auto& decl : item_macro_structs_) visitor(decl);
     }
 
     template <typename Visitor>
     void for_each_enum_decl(Visitor&& visitor) const {
-        for (const auto& decl : program_.enums) visitor(decl);
+        for (const auto& decl : program_.enums) {
+            if (!attribute_rewritten_enums_.count(&decl)) visitor(decl);
+        }
         for (const auto& decl : item_macro_enums_) visitor(decl);
     }
 
     template <typename Visitor>
     void for_each_trait_decl(Visitor&& visitor) const {
-        for (const auto& decl : program_.traits) visitor(decl);
+        for (const auto& decl : program_.traits) {
+            if (!attribute_rewritten_traits_.count(&decl)) visitor(decl);
+        }
         for (const auto& decl : item_macro_traits_) visitor(decl);
     }
 
     template <typename Visitor>
     void for_each_impl_decl(Visitor&& visitor) const {
-        for (const auto& decl : program_.impls) visitor(decl);
+        for (const auto& decl : program_.impls) {
+            if (!attribute_rewritten_impls_.count(&decl)) visitor(decl);
+        }
         for (const auto& decl : item_macro_impls_) visitor(decl);
         for (const auto& decl : derived_impls_) visitor(decl);
     }
@@ -926,19 +943,21 @@ private:
         std::string resolved = resolve_use_path(name);
         std::string resolved_base = basename_of_qualified_name(resolved);
         bool resolved_is_special = is_source_declared_prelude_special_name(resolved);
-        for (const auto& fn : program_.functions) {
-            if (fn.generics.empty() || !is_std_module_name(fn.module_name)) continue;
+        bool found_source_std_generic = false;
+        for_each_function_decl([&](const FunctionDecl& fn) {
+            if (fn.generics.empty() || !is_std_module_name(fn.module_name)) return;
             std::string qualified = qualify_in_module(fn.module_name, fn.name);
             if (qualified == resolved && is_source_declared_prelude_special_name(qualified)) {
-                return true;
+                found_source_std_generic = true;
+                return;
             }
             if (resolved_is_special &&
                 basename_of_qualified_name(qualified) == resolved_base &&
                 is_source_declared_prelude_special_name(qualified)) {
-                return true;
+                found_source_std_generic = true;
             }
-        }
-        return false;
+        });
+        return found_source_std_generic;
     }
 
     std::vector<std::pair<std::string, std::string>> implicit_std_prelude_items() const {
@@ -957,11 +976,11 @@ private:
                 add(basename_of_qualified_name(decl.name), decl.name);
             }
         }
-        for (const auto& decl : program_.functions) {
+        for_each_function_decl([&](const FunctionDecl& decl) {
             if (decl.module_name == "std" && decl.is_public) {
                 add(basename_of_qualified_name(decl.name), decl.name);
             }
-        }
+        });
         for_each_struct_decl([&](const StructDecl& decl) {
             if (decl.module_name == "std" && decl.is_public) {
                 add(basename_of_qualified_name(decl.name), decl.name);
@@ -999,13 +1018,13 @@ private:
                 add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
             }
         }
-        for (const auto& decl : program_.functions) {
+        for_each_function_decl([&](const FunctionDecl& decl) {
             if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
                 std::string alias = basename_of_qualified_name(decl.name);
                 add(alias, decl.name);
                 add(basename_of_qualified_name(decl.module_name) + "::" + alias, decl.name);
             }
-        }
+        });
         for_each_struct_decl([&](const StructDecl& decl) {
             if (is_std_descendant_module_name(decl.module_name) && decl.is_public) {
                 std::string alias = basename_of_qualified_name(decl.name);
@@ -1108,7 +1127,9 @@ private:
             module_names.insert(decl.name);
         });
         for (const auto& decl : program_.constants) module_names.insert(decl.module_name);
-        for (const auto& decl : program_.functions) module_names.insert(decl.module_name);
+        for_each_function_decl([&](const FunctionDecl& decl) {
+            module_names.insert(decl.module_name);
+        });
         for_each_struct_decl([&](const StructDecl& decl) {
             module_names.insert(decl.module_name);
         });
@@ -1425,6 +1446,17 @@ private:
         });
     }
 
+    void append_item_macro_expansion(ItemMacroExpansion expansion) {
+        for (auto& use : expansion.uses) item_macro_uses_.push_back(std::move(use));
+        for (auto& decl : expansion.modules) item_macro_modules_.push_back(std::move(decl));
+        for (auto& constant : expansion.constants) item_macro_constants_.push_back(std::move(constant));
+        for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
+        for (auto& decl : expansion.structs) item_macro_structs_.push_back(std::move(decl));
+        for (auto& decl : expansion.enums) item_macro_enums_.push_back(std::move(decl));
+        for (auto& decl : expansion.traits) item_macro_traits_.push_back(std::move(decl));
+        for (auto& decl : expansion.impls) item_macro_impls_.push_back(std::move(decl));
+    }
+
     void expand_item_macro_invocations() {
         for (const auto& invocation : program_.item_macros) {
             std::string previous_module = current_module_name_;
@@ -1445,14 +1477,139 @@ private:
                 throw;
             }
             current_module_name_ = previous_module;
-            for (auto& use : expansion.uses) item_macro_uses_.push_back(std::move(use));
-            for (auto& decl : expansion.modules) item_macro_modules_.push_back(std::move(decl));
-            for (auto& constant : expansion.constants) item_macro_constants_.push_back(std::move(constant));
-            for (auto& fn : expansion.functions) item_macro_functions_.push_back(std::move(fn));
-            for (auto& decl : expansion.structs) item_macro_structs_.push_back(std::move(decl));
-            for (auto& decl : expansion.enums) item_macro_enums_.push_back(std::move(decl));
-            for (auto& decl : expansion.traits) item_macro_traits_.push_back(std::move(decl));
-            for (auto& decl : expansion.impls) item_macro_impls_.push_back(std::move(decl));
+            append_item_macro_expansion(std::move(expansion));
+        }
+    }
+
+    static bool attribute_meta_rewrites_declaration(const MetaFunctionInfo& meta) {
+        return meta.token_return || meta.ast_return_kind == MetaAstReturnKind::ItemDeclarations;
+    }
+
+    ItemMacroExpansion expand_attribute_macro_output(const Attribute& attr,
+                                                     const MetaFunctionInfo& meta,
+                                                     const std::vector<Token>& declaration_tokens,
+                                                     const std::string& module_name,
+                                                     SourceLocation loc) {
+        if (declaration_tokens.empty()) {
+            fail(attr.loc, "attribute macro declaration input is unavailable for this declaration");
+        }
+        if (meta.ast_return_kind == MetaAstReturnKind::ItemDeclarations) {
+            return expand_attribute_macro_decl_constructor(
+                declaration_tokens, module_name, loc, meta.parameter_name, *meta.ast_return);
+        }
+        if (meta.token_return) {
+            return expand_attribute_macro_token_return(
+                declaration_tokens, module_name, loc, meta.parameter_name, *meta.token_return);
+        }
+        fail(attr.loc, "internal error: attribute meta function does not rewrite declarations");
+    }
+
+    template <typename MarkRewritten>
+    void expand_attribute_macros_for_declaration(const std::vector<Attribute>& attributes,
+                                                 const std::vector<Token>& declaration_tokens,
+                                                 const std::string& module_name,
+                                                 SourceLocation loc,
+                                                 const std::string& target_kind,
+                                                 MarkRewritten mark_rewritten) {
+        bool rewritten = false;
+        for (const auto& attr : attributes) {
+            if (is_builtin_attribute(attr.name)) continue;
+
+            std::string previous_module = current_module_name_;
+            current_module_name_ = module_name;
+            try {
+                const MetaFunctionInfo& meta =
+                    require_meta_invocation(attr.loc, MetaInvocationSite::Attribute, attr.name);
+                if (!attribute_meta_rewrites_declaration(meta)) {
+                    current_module_name_ = previous_module;
+                    continue;
+                }
+                if (rewritten) {
+                    fail(attr.loc,
+                         target_kind + " declarations can currently use only one rewriting attribute macro");
+                }
+                ItemMacroExpansion expansion =
+                    expand_attribute_macro_output(attr, meta, declaration_tokens, module_name, loc);
+                append_item_macro_expansion(std::move(expansion));
+                mark_rewritten();
+                rewritten = true;
+            } catch (...) {
+                current_module_name_ = previous_module;
+                throw;
+            }
+            current_module_name_ = previous_module;
+        }
+    }
+
+    void reject_rewriting_attribute_macros_on_meta_function(const FunctionDecl& fn) {
+        for (const auto& attr : fn.attributes) {
+            if (is_builtin_attribute(attr.name)) continue;
+
+            std::string previous_module = current_module_name_;
+            current_module_name_ = fn.module_name;
+            try {
+                const MetaFunctionInfo& meta =
+                    require_meta_invocation(attr.loc, MetaInvocationSite::Attribute, attr.name);
+                if (attribute_meta_rewrites_declaration(meta)) {
+                    fail(attr.loc, "attribute macros cannot rewrite meta functions yet");
+                }
+            } catch (...) {
+                current_module_name_ = previous_module;
+                throw;
+            }
+            current_module_name_ = previous_module;
+        }
+    }
+
+    void expand_attribute_macros() {
+        for (const auto& fn : program_.functions) {
+            if (fn.meta) {
+                reject_rewriting_attribute_macros_on_meta_function(fn);
+                continue;
+            }
+            expand_attribute_macros_for_declaration(
+                fn.attributes,
+                fn.source_tokens,
+                fn.module_name,
+                fn.loc,
+                "function",
+                [&]() { attribute_rewritten_functions_.insert(&fn); });
+        }
+        for (const auto& decl : program_.structs) {
+            expand_attribute_macros_for_declaration(
+                decl.attributes,
+                decl.source_tokens,
+                decl.module_name,
+                decl.loc,
+                "struct",
+                [&]() { attribute_rewritten_structs_.insert(&decl); });
+        }
+        for (const auto& decl : program_.enums) {
+            expand_attribute_macros_for_declaration(
+                decl.attributes,
+                decl.source_tokens,
+                decl.module_name,
+                decl.loc,
+                "enum",
+                [&]() { attribute_rewritten_enums_.insert(&decl); });
+        }
+        for (const auto& decl : program_.traits) {
+            expand_attribute_macros_for_declaration(
+                decl.attributes,
+                decl.source_tokens,
+                decl.module_name,
+                decl.loc,
+                "trait",
+                [&]() { attribute_rewritten_traits_.insert(&decl); });
+        }
+        for (const auto& decl : program_.impls) {
+            expand_attribute_macros_for_declaration(
+                decl.attributes,
+                decl.source_tokens,
+                decl.module_name,
+                decl.loc,
+                "impl",
+                [&]() { attribute_rewritten_impls_.insert(&decl); });
         }
     }
 

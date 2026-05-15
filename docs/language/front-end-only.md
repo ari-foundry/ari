@@ -93,7 +93,7 @@ prelude ADTs.
 
 See [Attributes](attributes.md) for implemented built-in attribute behavior.
 The remaining front-end-only pieces are additional method-generating built-in
-derives and user-defined attribute macros that rewrite or insert AST nodes.
+derives and broader attribute macro argument inspection.
 
 ```ari
 @deprecated("use NewToken")
@@ -167,7 +167,8 @@ The attribute name is checked against meta functions today. Attribute arguments
 are parsed as a balanced token tree inside the outer parentheses, preserving
 nested `(...)`, `{...}`, and `[...]` groups for the future evaluator. Module
 AST summaries keep the full token payload, including literal suffixes.
-Expansion is planned.
+User-defined attribute macros over top-level functions, structs, enums, traits,
+or impls can rewrite that declaration by returning top-level declarations.
 
 ## Meta Functions
 
@@ -374,9 +375,7 @@ names other than the meta input parameter are rejected in returned expression
 ASTs unless they are generated local bindings in the returned statement body or
 pattern-bound names inside the current `if let` or `match` arm. Generated local
 and pattern bindings are renamed internally so repeated macro calls do not
-collide with Ari's local-name rules. Attribute rewrites remain reserved until
-Ari has a broader compile-time evaluator. Item-position `ast -> ast`
-macros can return
+collide with Ari's local-name rules. Item-position `ast -> ast` macros can return
 declaration AST output with the meta-body-only `decl!(...)` constructor:
 
 ```ari
@@ -391,9 +390,10 @@ make_answer!();
 
 `decl!(...)` parses its payload as top-level declarations and can currently be
 used only as the return value of an `ast -> ast` meta function that is invoked
-from an item macro site. A bare token that matches the meta parameter name
-inside `decl!(...)` is replaced with the item macro invocation's declaration
-input tokens:
+from an item macro site or from a top-level declaration attribute macro. A bare
+token that matches the meta parameter name inside `decl!(...)` is replaced with
+the item macro invocation's declaration input tokens or the annotated
+declaration tokens:
 
 ```ari
 meta fn append_generated(input: ast) -> ast {
@@ -410,6 +410,28 @@ empty-input branch form at item and pattern macro sites too. The chosen output
 is parsed in the site domain after raw token substitution. Count-based
 conditions are available there as well. General token matching and content
 inspection are still reserved.
+
+User-defined attribute macros can use the declaration output path too. The meta
+input is the annotated declaration token tree without its attributes, and the
+original declaration is replaced by the macro output. Splice `input` into the
+output when the generated declarations should keep the annotated declaration:
+
+```ari
+meta fn add_generated(input: ast) -> ast {
+  return decl!(
+    input
+
+    fn generated() -> i64 {
+      return original() + 1;
+    }
+  );
+}
+
+@add_generated
+fn original() -> i64 {
+  return 41;
+}
+```
 
 Pattern-position `ast -> ast` macros can return pattern AST output with the
 meta-body-only `pattern!(...)` constructor. A bare token that matches the meta
@@ -473,9 +495,9 @@ macro invocations must resolve to
 `type -> type` meta functions. Empty and `return input;` bodies
 identity-expand by parsing their token tree as one type before semantic type
 lowering; `type -> type` bodies that return `type!(...)` replace that input
-with the constructed type AST. User `meta fn` rewrites that change general
-syntax, attribute macro expansion, derives, and `format!` are still planned
-and rejected with specific diagnostics.
+with the constructed type AST. General syntax-rewriting meta evaluation,
+attribute argument inspection, additional derives, and `format!` are still
+planned and rejected with specific diagnostics.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions. Empty

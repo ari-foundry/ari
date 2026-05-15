@@ -775,6 +775,7 @@ struct FunctionDecl {
     std::vector<StmtPtr> body;
     SourceLocation loc;
     SourceLocation variadic_loc;
+    std::vector<Token> source_tokens;
 };
 
 struct StructField {
@@ -793,6 +794,7 @@ struct StructDecl {
     std::vector<GenericParam> generics;
     std::vector<StructField> fields;
     SourceLocation loc;
+    std::vector<Token> source_tokens;
 };
 
 struct EnumCase {
@@ -809,6 +811,7 @@ struct EnumDecl {
     std::vector<GenericParam> generics;
     std::vector<EnumCase> cases;
     SourceLocation loc;
+    std::vector<Token> source_tokens;
 };
 
 struct TraitDecl {
@@ -826,6 +829,7 @@ struct TraitDecl {
     std::vector<AssociatedType> associated_types;
     std::vector<FunctionDecl> methods;
     SourceLocation loc;
+    std::vector<Token> source_tokens;
 };
 
 struct ImplDecl {
@@ -844,6 +848,8 @@ struct ImplDecl {
     std::vector<Attribute> attributes;
     std::vector<AssociatedTypeWitness> associated_type_witnesses;
     std::vector<FunctionDecl> methods;
+    SourceLocation loc;
+    std::vector<Token> source_tokens;
 };
 
 struct Program {

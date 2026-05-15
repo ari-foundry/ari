@@ -1502,6 +1502,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/item-macro-ast-decl-return.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-ast-decl-input-substitution.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-input-substitution.raw
 	$(BUILD_DIR)/meta/item-macro-ast-decl-input-substitution.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/attribute-macro-function-decl.ari -o $(BUILD_DIR)/meta/attribute-macro-function-decl.raw
+	$(BUILD_DIR)/meta/attribute-macro-function-decl.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-const-identity.ari -o $(BUILD_DIR)/meta/item-macro-const-identity.raw
 	$(BUILD_DIR)/meta/item-macro-const-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-struct-identity.ari -o $(BUILD_DIR)/meta/item-macro-struct-identity.raw
@@ -1577,7 +1579,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/meta-function-ast-name-reference.ari -o $(BUILD_DIR)/meta/meta-function-ast-name-reference.elf >$(BUILD_DIR)/meta/meta-function-ast-name-reference.err 2>&1; then exit 1; fi
 	grep -q "ast meta expression returns cannot reference names other than the meta input, generated local bindings, or local control-flow pattern bindings yet" $(BUILD_DIR)/meta/meta-function-ast-name-reference.err
 	if $(TARGET) tests/errors/meta-function-decl-expression-site.ari -o $(BUILD_DIR)/meta/meta-function-decl-expression-site.elf >$(BUILD_DIR)/meta/meta-function-decl-expression-site.err 2>&1; then exit 1; fi
-	grep -q "declaration-returning ast meta function 'make_decl' can currently be used only at item macro sites" $(BUILD_DIR)/meta/meta-function-decl-expression-site.err
+	grep -q "declaration-returning ast meta function 'make_decl' can currently be used only at item macro or attribute sites" $(BUILD_DIR)/meta/meta-function-decl-expression-site.err
 	if $(TARGET) tests/errors/meta-function-pattern-expression-site.ari -o $(BUILD_DIR)/meta/meta-function-pattern-expression-site.elf >$(BUILD_DIR)/meta/meta-function-pattern-expression-site.err 2>&1; then exit 1; fi
 	grep -q "pattern-returning ast meta function 'wildcard' can currently be used only at pattern macro sites" $(BUILD_DIR)/meta/meta-function-pattern-expression-site.err
 	if $(TARGET) tests/errors/attribute-meta-type-domain.ari -o $(BUILD_DIR)/meta/attribute-meta-type-domain.elf >$(BUILD_DIR)/meta/attribute-meta-type-domain.err 2>&1; then exit 1; fi

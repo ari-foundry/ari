@@ -25,6 +25,16 @@ ItemMacroExpansion expand_item_macro_token_return(const ItemMacroInvocation& inv
 ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation& invocation,
                                                       const std::string& input_name,
                                                       const Expr& returned_ast);
+ItemMacroExpansion expand_attribute_macro_token_return(const std::vector<Token>& declaration_tokens,
+                                                       const std::string& module_name,
+                                                       SourceLocation loc,
+                                                       const std::string& input_name,
+                                                       const Expr& returned_tokens);
+ItemMacroExpansion expand_attribute_macro_decl_constructor(const std::vector<Token>& declaration_tokens,
+                                                           const std::string& module_name,
+                                                           SourceLocation loc,
+                                                           const std::string& input_name,
+                                                           const Expr& returned_ast);
 Pattern expand_pattern_macro_invocation(const Pattern& invocation);
 Pattern expand_pattern_macro_token_return(const Pattern& invocation,
                                           const std::string& input_name,

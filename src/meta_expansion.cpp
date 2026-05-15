@@ -56,48 +56,55 @@ void reject_unsupported_item_macro_output(const Program& program,
     }
 }
 
-ItemMacroExpansion finish_item_macro_expansion(Program program,
-                                               const ItemMacroInvocation& invocation,
-                                               const std::string& context) {
-    reject_unsupported_item_macro_output(program, invocation.loc, context);
+ItemMacroExpansion finish_declaration_expansion(Program program,
+                                                SourceLocation loc,
+                                                bool force_public,
+                                                const std::string& context) {
+    reject_unsupported_item_macro_output(program, loc, context);
 
     ItemMacroExpansion expansion;
     expansion.uses = std::move(program.uses);
     for (auto& use : expansion.uses) {
-        if (invocation.is_public) use.is_public = true;
+        if (force_public) use.is_public = true;
     }
     expansion.modules = std::move(program.modules);
     for (auto& decl : expansion.modules) {
-        if (invocation.is_public) decl.is_public = true;
+        if (force_public) decl.is_public = true;
     }
     expansion.constants = std::move(program.constants);
     for (auto& constant : expansion.constants) {
-        if (invocation.is_public) constant.is_public = true;
+        if (force_public) constant.is_public = true;
     }
     expansion.functions = std::move(program.functions);
     for (auto& fn : expansion.functions) {
         if (fn.meta) {
             fail_expansion(fn.loc, context + " cannot generate meta functions yet");
         }
-        if (invocation.is_public) fn.is_public = true;
+        if (force_public) fn.is_public = true;
     }
     expansion.structs = std::move(program.structs);
     for (auto& decl : expansion.structs) {
-        if (invocation.is_public) decl.is_public = true;
+        if (force_public) decl.is_public = true;
     }
     expansion.enums = std::move(program.enums);
     for (auto& decl : expansion.enums) {
-        if (invocation.is_public) decl.is_public = true;
+        if (force_public) decl.is_public = true;
     }
     expansion.traits = std::move(program.traits);
     for (auto& decl : expansion.traits) {
-        if (invocation.is_public) decl.is_public = true;
+        if (force_public) decl.is_public = true;
     }
     expansion.impls = std::move(program.impls);
     for (auto& decl : expansion.impls) {
-        if (invocation.is_public) decl.is_public = true;
+        if (force_public) decl.is_public = true;
     }
     return expansion;
+}
+
+ItemMacroExpansion finish_item_macro_expansion(Program program,
+                                               const ItemMacroInvocation& invocation,
+                                               const std::string& context) {
+    return finish_declaration_expansion(std::move(program), invocation.loc, invocation.is_public, context);
 }
 
 } // namespace
@@ -126,6 +133,31 @@ ItemMacroExpansion expand_item_macro_decl_constructor(const ItemMacroInvocation&
         substitute_meta_input_tokens(*returned_ast.macro_tokens, input_name, invocation.tokens);
     Program program = parse_item_macro_tokens(output_tokens, invocation.module_name, returned_ast.loc);
     return finish_item_macro_expansion(std::move(program), invocation, "item macro declaration AST output");
+}
+
+ItemMacroExpansion expand_attribute_macro_token_return(const std::vector<Token>& declaration_tokens,
+                                                       const std::string& module_name,
+                                                       SourceLocation loc,
+                                                       const std::string& input_name,
+                                                       const Expr& returned_tokens) {
+    std::vector<Token> output_tokens =
+        evaluate_meta_token_return_expr(returned_tokens, input_name, declaration_tokens);
+    Program program = parse_item_macro_tokens(output_tokens, module_name, loc);
+    return finish_declaration_expansion(std::move(program), loc, false, "attribute macro token_stream output");
+}
+
+ItemMacroExpansion expand_attribute_macro_decl_constructor(const std::vector<Token>& declaration_tokens,
+                                                           const std::string& module_name,
+                                                           SourceLocation loc,
+                                                           const std::string& input_name,
+                                                           const Expr& returned_ast) {
+    if (returned_ast.kind != ExprKind::MacroCall || returned_ast.name != "decl" || !returned_ast.macro_tokens) {
+        fail_expansion(returned_ast.loc, "internal error: expected decl!(...) ast constructor");
+    }
+    std::vector<Token> output_tokens =
+        substitute_meta_input_tokens(*returned_ast.macro_tokens, input_name, declaration_tokens);
+    Program program = parse_item_macro_tokens(output_tokens, module_name, returned_ast.loc);
+    return finish_declaration_expansion(std::move(program), loc, false, "attribute macro declaration AST output");
 }
 
 Pattern expand_pattern_macro_invocation(const Pattern& invocation) {

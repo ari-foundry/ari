@@ -167,8 +167,14 @@ private:
         return true;
     }
 
+    std::vector<Token> declaration_source_tokens(std::size_t start) const {
+        return std::vector<Token>(tokens_.begin() + static_cast<std::vector<Token>::difference_type>(start),
+                                  tokens_.begin() + static_cast<std::vector<Token>::difference_type>(pos_));
+    }
+
     void parse_top_level_decl(Program& program) {
         std::vector<Attribute> attributes = parse_attributes();
+        std::size_t source_start = pos_;
         bool cfg_enabled = cfg_attributes_enabled(attributes);
         Program discarded;
         Program& target = cfg_enabled ? program : discarded;
@@ -176,11 +182,15 @@ private:
         bool meta = match(TokenKind::KwMeta);
         if (meta) {
             expect(TokenKind::KwFn, "expected fn after meta");
-            target.functions.push_back(parse_function(true, true, public_decl, std::move(attributes)));
+            FunctionDecl fn = parse_function(true, true, public_decl, std::move(attributes));
+            fn.source_tokens = declaration_source_tokens(source_start);
+            target.functions.push_back(std::move(fn));
             return;
         }
         if (match(TokenKind::KwExtern)) {
-            target.functions.push_back(parse_extern_function(public_decl, std::move(attributes)));
+            FunctionDecl fn = parse_extern_function(public_decl, std::move(attributes));
+            fn.source_tokens = declaration_source_tokens(source_start);
+            target.functions.push_back(std::move(fn));
         } else if (match(TokenKind::KwUse)) {
             if (cfg_enabled) reject_attributes_except_cfg(attributes, "use declarations");
             parse_use(target, public_decl);
@@ -191,15 +201,25 @@ private:
             if (cfg_enabled) reject_attributes_except_cfg(attributes, "constant declarations");
             target.constants.push_back(parse_const(public_decl));
         } else if (match(TokenKind::KwFn)) {
-            target.functions.push_back(parse_function(false, true, public_decl, std::move(attributes)));
+            FunctionDecl fn = parse_function(false, true, public_decl, std::move(attributes));
+            fn.source_tokens = declaration_source_tokens(source_start);
+            target.functions.push_back(std::move(fn));
         } else if (match(TokenKind::KwStruct)) {
-            target.structs.push_back(parse_struct(public_decl, std::move(attributes)));
+            StructDecl decl = parse_struct(public_decl, std::move(attributes));
+            decl.source_tokens = declaration_source_tokens(source_start);
+            target.structs.push_back(std::move(decl));
         } else if (match(TokenKind::KwEnum)) {
-            target.enums.push_back(parse_enum(public_decl, std::move(attributes)));
+            EnumDecl decl = parse_enum(public_decl, std::move(attributes));
+            decl.source_tokens = declaration_source_tokens(source_start);
+            target.enums.push_back(std::move(decl));
         } else if (match(TokenKind::KwTrait)) {
-            target.traits.push_back(parse_trait(public_decl, std::move(attributes)));
+            TraitDecl decl = parse_trait(public_decl, std::move(attributes));
+            decl.source_tokens = declaration_source_tokens(source_start);
+            target.traits.push_back(std::move(decl));
         } else if (match(TokenKind::KwImpl)) {
-            target.impls.push_back(parse_impl(public_decl, std::move(attributes)));
+            ImplDecl decl = parse_impl(public_decl, std::move(attributes));
+            decl.source_tokens = declaration_source_tokens(source_start);
+            target.impls.push_back(std::move(decl));
         } else if (check(TokenKind::Identifier) && peek(1).kind == TokenKind::Bang) {
             if (cfg_enabled) reject_attributes_except_cfg(attributes, "item macro invocations");
             Token name = expect(TokenKind::Identifier, "expected item macro invocation name");
@@ -725,6 +745,7 @@ private:
         decl.attributes = std::move(attributes);
         decl.generics = parse_generics();
         TypeRef first = parse_type();
+        decl.loc = first.loc;
         if (match(TokenKind::KwFor)) {
             decl.has_trait = true;
             decl.trait_type = std::move(first);
