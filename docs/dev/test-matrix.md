@@ -601,9 +601,10 @@ Checklist:
 - [x] reserve `format!` with targeted no-implicit-allocation-zone diagnostics
 - [x] lower `format_in!(ref mut Zone, "...", values...)` to source
       `std::string::String` construction plus same-zone string/i64/bool/f64
-      append helpers or `Display::format_in` / `fmt::Display::format_in`,
-      with value expressions evaluated once before type-directed append
-      selection and `{:.N}` float precision matching `print`
+      append helpers or borrowed-receiver `Display::format_in` /
+      `fmt::Display::format_in`, with value expressions evaluated once before
+      type-directed append selection and `{:.N}` float precision matching
+      `print`
 - [x] expose root `String` as the source `std::string::String` handle while
       keeping lowercase `string` as today's borrowed pointer-shaped text value
 - [x] reserve Rust-like standard traits: debug/display/default/clone/copy/drop,

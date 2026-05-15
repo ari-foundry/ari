@@ -172,7 +172,7 @@ trait std::iter::Iterable[T]|iterator module tests; docs/dev/test-matrix.md Cont
 trait std::iter::Iterator[T]|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::Clone::clone|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::Default::default|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
-trait-method std::Display::format_in|format_in Display trait tests; docs/dev/test-matrix.md Prelude row
+trait-method std::Display::format_in|format_in Display borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 trait-method std::Drop::drop|ownership destructor tests; docs/dev/test-matrix.md Ownership row
 trait-method std::Eq[T]::eq|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::From[T]::from|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
@@ -189,7 +189,7 @@ trait-method std::cmp::PartialEq[T]::eq|cmp module trait surface; docs/dev/test-
 trait-method std::cmp::PartialOrd[T]::lt|cmp module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::convert::From[T]::from|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::convert::Into[T]::into|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
-trait-method std::fmt::Display::format_in|format_in Display trait tests; docs/dev/test-matrix.md Prelude row
+trait-method std::fmt::Display::format_in|format_in Display borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row

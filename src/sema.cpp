@@ -14873,7 +14873,7 @@ private:
                                         const FormatInAppendTarget& target,
                                         ExprPtr value_arg) {
         std::vector<ExprPtr> args;
-        args.push_back(std::move(value_arg));
+        args.push_back(make_ast_borrow_expr(loc, std::move(value_arg), false));
         args.push_back(clone_expression_tree(zone_arg));
         return make_ast_call_expr(
             loc,

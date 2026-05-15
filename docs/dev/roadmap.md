@@ -238,12 +238,17 @@ constructor subset documented in the language guide.
    string/integer/bool/float formatting and `{:.N}` float precision to source
    `String` construction plus same-zone append helpers, and evaluates each
    formatted value once before selecting the append target from the lowered
-   value type. User-defined value types can implement `Display::format_in` or
-   `fmt::Display::format_in` to return a source `String` in the same explicit
-   zone, so formatting no longer needs new macro-only cases for every library
-   type. Plain `format!` remains a reserved spelling with a targeted
+   value type. User-defined value types can implement borrowed-receiver
+   `Display::format_in` or `fmt::Display::format_in` to return a source
+   `String` in the same explicit zone, so formatting no longer needs new
+   macro-only cases for every library type. Plain `format!` remains a reserved
+   spelling with a targeted
    no-implicit-allocation-zone diagnostic, keeping Ari away from a magical
    global heap while the library surface stays explicit-capability based.
+   Small follow-ups:
+   - [borrowed-field-access] allow read-only field projection from shared
+     `ref Struct` receivers so source library impls such as `Display` can write
+     `self.field` instead of explicitly loading through a raw pointer.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

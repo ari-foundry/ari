@@ -2,9 +2,10 @@ impl Debug for i64 {
 }
 
 impl fmt::Display for i64 {
-  fn format_in(self, zone: ref mut Zone) -> std::string::String {
+  fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let value = ptr_load(self as ptr i64);
     var output = std::string::new(zone, 1);
-    output.append_i64_in(zone, self);
+    output.append_i64_in(zone, value);
     return output;
   }
 }

@@ -299,8 +299,9 @@ the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
 `String` in the explicit zone and lowers `{}` placeholders for lowercase
 `string`, integer, bool, `f32`, and `f64` values through the same checked append
 helpers as manual text construction. User-defined value types can participate
-by implementing `Display::format_in` or `fmt::Display::format_in`, returning a
-source `String` in the same explicit zone. `{:.N}` placeholders format
+by implementing borrowed-receiver `Display::format_in` or
+`fmt::Display::format_in`, returning a source `String` in the same explicit
+zone. `{:.N}` placeholders format
 `f32`/`f64` values with `N` decimal digits, matching the print formatting
 surface; precision placeholders do not dispatch through `Display`. Each value
 expression is evaluated once before the type-directed append call is selected,
@@ -410,10 +411,11 @@ ToOwned
 ```
 
 `Display` and `fmt::Display` define the explicit-zone formatting hook used by
-`format_in!` for user-defined values:
+`format_in!` for user-defined values. The value is evaluated once into a hidden
+local, then passed to the hook by shared borrow:
 
 ```ari
-fn format_in(self, zone: ref mut Zone) -> std::string::String
+fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String
 ```
 
 `Drop` has one required method:
@@ -697,8 +699,8 @@ scalar values needed by explicit formatting, and
 expression for `{}` string/integer/bool/float formatting plus `{:.N}` float
 precision, with each formatted value evaluated once before append dispatch.
 For user-defined value types, `format_in!` calls `Display::format_in` or
-`fmt::Display::format_in` with the value and the same explicit zone, then
-appends the returned source string into the final output.
+`fmt::Display::format_in` with a shared borrow of the value and the same
+explicit zone, then appends the returned source string into the final output.
 These growth and append methods must receive the same explicit zone that
 created the handle, so provenance continues to match reset/destroy invalidation.
 Use

@@ -262,7 +262,8 @@ check-prelude: $(TARGET)
 	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_f64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	$(TARGET) tests/ok/prelude-format-in-display.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-display.ll
-	grep -q 'std__fmt__Display9format_in' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
+	grep -F -q 'std__fmt__Display9format_in"(ptr' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-format-in-display.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in-display.elf; $(BUILD_DIR)/prelude/prelude-format-in-display.elf; code=$$?; test $$code -eq 150; fi
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent3len"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent8capacity"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll

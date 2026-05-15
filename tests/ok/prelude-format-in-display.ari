@@ -4,12 +4,13 @@ struct Point {
 }
 
 impl fmt::Display for Point {
-  fn format_in(self, zone: ref mut Zone) -> std::string::String {
+  fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String {
+    let point = ptr_load(self as ptr Point);
     var output = std::string::new(zone, 8);
     output.append_string_in(zone, "(");
-    output.append_i64_in(zone, self.x);
+    output.append_i64_in(zone, point.x);
     output.append_string_in(zone, ",");
-    output.append_i64_in(zone, self.y);
+    output.append_i64_in(zone, point.y);
     output.append_string_in(zone, ")");
     return output;
   }

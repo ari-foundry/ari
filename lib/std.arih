@@ -74,7 +74,7 @@ pub trait Debug {
 }
 
 pub trait Display {
-  fn format_in(self, zone: ref mut Zone) -> std::string::String;
+  fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String;
 }
 
 pub trait Default {
