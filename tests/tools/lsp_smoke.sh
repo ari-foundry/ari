@@ -18,9 +18,10 @@ output=$(
     send '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
     send '{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"'"$URI"'","languageId":"ari","version":1,"text":"'"$VALID_TEXT"'"}}}'
     send '{"jsonrpc":"2.0","id":2,"method":"textDocument/documentSymbol","params":{"textDocument":{"uri":"'"$URI"'"}}}'
+    send '{"jsonrpc":"2.0","id":3,"method":"textDocument/hover","params":{"textDocument":{"uri":"'"$URI"'"},"position":{"line":4,"character":4}}}'
     send '{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"'"$URI"'","version":2},"contentChanges":[{"text":"'"$INVALID_TEXT"'"}]}}'
-    send '{"jsonrpc":"2.0","id":3,"method":"textDocument/diagnostic","params":{"textDocument":{"uri":"'"$URI"'"}}}'
-    send '{"jsonrpc":"2.0","id":4,"method":"shutdown","params":null}'
+    send '{"jsonrpc":"2.0","id":4,"method":"textDocument/diagnostic","params":{"textDocument":{"uri":"'"$URI"'"}}}'
+    send '{"jsonrpc":"2.0","id":5,"method":"shutdown","params":null}'
     send '{"jsonrpc":"2.0","method":"exit","params":null}'
   } | "$LSP" --ari "$ARI"
 )
@@ -28,7 +29,9 @@ output=$(
 printf '%s' "$output" | grep -q '"method":"textDocument/publishDiagnostics"'
 printf '%s' "$output" | grep -q '"kind":"full"'
 printf '%s' "$output" | grep -q '"documentSymbolProvider":true'
+printf '%s' "$output" | grep -q '"hoverProvider":true'
 printf '%s' "$output" | grep -q '"name":"Point"'
 printf '%s' "$output" | grep -q '"name":"main"'
+printf '%s' "$output" | grep -q 'Ari function `main`'
 printf '%s' "$output" | grep -q "prelude macro 'format!' needs owned runtime strings"
 printf '%s' "$output" | grep -q '"line":1'

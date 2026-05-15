@@ -133,6 +133,12 @@ std::string response_error(const std::string& id, int code, const std::string& m
            ",\"message\":\"" + ari::tooling::json_escape(message) + "\"}}";
 }
 
+int int_field_or_zero(const std::string& body, const std::string& field) {
+    std::string raw = ari::lsp::json_raw_field(body, field);
+    if (raw.empty()) return 0;
+    return std::stoi(raw);
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -181,7 +187,8 @@ int main(int argc, char** argv) {
                 "{\"capabilities\":{"
                 "\"textDocumentSync\":1,"
                 "\"diagnosticProvider\":{\"interFileDependencies\":true,\"workspaceDiagnostics\":false},"
-                "\"documentSymbolProvider\":true"
+                "\"documentSymbolProvider\":true,"
+                "\"hoverProvider\":true"
                 "},\"serverInfo\":{\"name\":\"ari-lsp\",\"version\":\"0.1.0-dev\"}}";
             ari::lsp::write_message(std::cout, response_result(id.empty() ? "null" : id, capabilities));
             continue;
@@ -211,6 +218,17 @@ int main(int argc, char** argv) {
         if (method == "textDocument/documentSymbol") {
             std::string uri = ari::lsp::json_string_field(body, "uri");
             ari::lsp::write_message(std::cout, ari::lsp::document_symbols_response(id, text_for_uri(documents, uri)));
+            continue;
+        }
+        if (method == "textDocument/hover") {
+            std::string uri = ari::lsp::json_string_field(body, "uri");
+            ari::lsp::write_message(
+                std::cout,
+                ari::lsp::hover_response(
+                    id,
+                    text_for_uri(documents, uri),
+                    int_field_or_zero(body, "line"),
+                    int_field_or_zero(body, "character")));
             continue;
         }
         if (method == "textDocument/didClose") {

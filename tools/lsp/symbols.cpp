@@ -13,6 +13,8 @@ namespace {
 
 struct Symbol {
     std::string name;
+    std::string label;
+    std::string declaration;
     int kind = 12;
     int line = 0;
     int start = 0;
@@ -56,29 +58,37 @@ bool parse_symbol_line(const std::string& line, int line_number, Symbol& symbol)
         std::size_t fn_pos = trimmed.find("fn ");
         if (fn_pos == std::string::npos) return false;
         symbol.name = read_identifier_after(trimmed, fn_pos + 2);
+        symbol.label = "function";
         symbol.kind = 12;
     } else if (starts_with_word(trimmed, "fn")) {
         symbol.name = read_identifier_after(trimmed, 2);
+        symbol.label = "function";
         symbol.kind = 12;
     } else if (starts_with_word(trimmed, "struct")) {
         symbol.name = read_identifier_after(trimmed, 6);
+        symbol.label = "struct";
         symbol.kind = 23;
     } else if (starts_with_word(trimmed, "enum")) {
         symbol.name = read_identifier_after(trimmed, 4);
+        symbol.label = "enum";
         symbol.kind = 10;
     } else if (starts_with_word(trimmed, "trait")) {
         symbol.name = read_identifier_after(trimmed, 5);
+        symbol.label = "trait";
         symbol.kind = 11;
     } else if (starts_with_word(trimmed, "impl")) {
         symbol.name = "impl " + read_identifier_after(trimmed, 4);
+        symbol.label = "impl";
         symbol.kind = 5;
     } else if (starts_with_word(trimmed, "mod")) {
         symbol.name = read_identifier_after(trimmed, 3);
+        symbol.label = "module";
         symbol.kind = 2;
     } else {
         return false;
     }
     if (symbol.name.empty()) return false;
+    symbol.declaration = trimmed;
     symbol.line = line_number;
     symbol.start = static_cast<int>(indent);
     symbol.end = static_cast<int>(line.size());
@@ -116,6 +126,41 @@ std::string symbol_json(const Symbol& symbol) {
     return out.str();
 }
 
+std::string line_at(const std::string& text, int target_line) {
+    std::istringstream in(text);
+    std::string line;
+    int line_number = 0;
+    while (std::getline(in, line)) {
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        if (line_number == target_line) return line;
+        ++line_number;
+    }
+    return "";
+}
+
+std::string word_at_position(const std::string& text, int line, int character) {
+    std::string value = line_at(text, line);
+    if (value.empty()) return "";
+    if (character < 0) character = 0;
+    std::size_t pos = static_cast<std::size_t>(character);
+    if (pos >= value.size()) pos = value.size() - 1;
+    if (!identifier_char(value[pos]) && pos > 0 && identifier_char(value[pos - 1])) --pos;
+    if (!identifier_char(value[pos])) return "";
+    std::size_t start = pos;
+    while (start > 0 && identifier_char(value[start - 1])) --start;
+    std::size_t end = pos + 1;
+    while (end < value.size() && identifier_char(value[end])) ++end;
+    return value.substr(start, end - start);
+}
+
+const Symbol* find_hover_symbol(const std::vector<Symbol>& symbols, const std::string& word) {
+    for (const Symbol& symbol : symbols) {
+        if (symbol.name == word) return &symbol;
+        if (symbol.name.rfind("impl ", 0) == 0 && symbol.name.substr(5) == word) return &symbol;
+    }
+    return nullptr;
+}
+
 } // namespace
 
 std::string document_symbols_response(const std::string& id, const std::string& text) {
@@ -131,6 +176,29 @@ std::string document_symbols_response(const std::string& id, const std::string& 
         out << symbol_json(symbol);
     }
     out << "]}";
+    return out.str();
+}
+
+std::string hover_response(const std::string& id, const std::string& text, int line, int character) {
+    std::string word = word_at_position(text, line, character);
+    const std::vector<Symbol> symbols = collect_symbols(text);
+    const Symbol* symbol = find_hover_symbol(symbols, word);
+    std::ostringstream out;
+    out << "{";
+    out << "\"jsonrpc\":\"2.0\",";
+    out << "\"id\":" << (id.empty() ? "null" : id) << ",";
+    if (!symbol) {
+        out << "\"result\":null";
+    } else {
+        std::string value = "Ari " + symbol->label + " `" + symbol->name + "`";
+        if (!symbol->declaration.empty()) {
+            value += "\n\n```ari\n" + symbol->declaration + "\n```";
+        }
+        out << "\"result\":{";
+        out << "\"contents\":{\"kind\":\"markdown\",\"value\":\"" << tooling::json_escape(value) << "\"}";
+        out << "}";
+    }
+    out << "}";
     return out.str();
 }
 

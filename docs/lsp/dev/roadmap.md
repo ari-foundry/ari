@@ -13,6 +13,8 @@
       same-directory temporary source file so relative modules keep working.
 - [x] Add first-pass top-level `textDocument/documentSymbol` support for VS Code
       Outline using the current document text.
+- [x] Add first-pass `textDocument/hover` support for top-level declarations
+      using the same symbol scanner.
 - [x] Clear diagnostics on `didClose`.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
 
@@ -22,7 +24,8 @@
 - [ ] Replace first-pass text symbol scanning with parser/module-summary-backed
       nested symbols.
 - [ ] Add go-to-definition for local modules and source declarations.
-- [ ] Add hover text for functions, types, and std APIs.
+- [ ] Replace first-pass hover text with parser/sema-backed signatures and std
+      API docs.
 
 ## Design Notes
 

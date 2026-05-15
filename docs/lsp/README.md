@@ -37,6 +37,7 @@ Additional module search paths can be passed with `-I path`.
 - `textDocument/publishDiagnostics`
 - `textDocument/diagnostic`
 - `textDocument/documentSymbol`
+- `textDocument/hover`
 
 For open documents, the server mirrors the current in-memory text into a
 temporary file beside the original source path before invoking `ari --check`, so
@@ -44,7 +45,8 @@ relative module lookup still follows the edited file's directory. If the editor
 asks about a file that is not open, the saved file on disk is checked directly.
 Document symbols are a first-pass top-level outline for functions, structs,
 enums, traits, impls, and modules; richer parser-backed symbol trees are still
-planned.
+planned. Hover uses the same first-pass top-level declaration scan to show the
+declaration kind and source line for known symbols.
 
 ## Developer Notes
 

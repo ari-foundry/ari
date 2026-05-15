@@ -9,6 +9,8 @@
 - [x] Add a small grammar and language configuration.
 - [x] Surface first-pass Ari top-level declaration symbols through the LSP
       Outline path.
+- [x] Surface first-pass hover text for top-level Ari declarations through the
+      LSP hover path.
 
 ## Near-Term Work
 
