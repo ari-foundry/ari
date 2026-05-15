@@ -78,35 +78,112 @@ bool supported_type_return_expr(const Expr& expr, std::string& reason) {
     return true;
 }
 
+void collect_pattern_binding_names(const Pattern& pattern, std::set<std::string>& names) {
+    switch (pattern.kind) {
+        case PatternKind::Binding:
+            if (!pattern.payload_name.empty()) names.insert(pattern.payload_name);
+            break;
+        case PatternKind::Alias:
+            if (!pattern.alias_name.empty()) names.insert(pattern.alias_name);
+            break;
+        case PatternKind::Wildcard:
+        case PatternKind::EnumCase:
+        case PatternKind::IntegerLiteral:
+        case PatternKind::BoolLiteral:
+        case PatternKind::Range:
+        case PatternKind::Or:
+        case PatternKind::Tuple:
+        case PatternKind::Array:
+        case PatternKind::Struct:
+            break;
+    }
+    if (pattern.has_payload_binding && !pattern.payload_name.empty()) names.insert(pattern.payload_name);
+    if (pattern.payload_pattern) collect_pattern_binding_names(*pattern.payload_pattern, names);
+    if (pattern.alias_pattern) collect_pattern_binding_names(*pattern.alias_pattern, names);
+    for (const auto& alternative : pattern.alternatives) collect_pattern_binding_names(alternative, names);
+    for (const auto& element : pattern.elements) collect_pattern_binding_names(element, names);
+}
+
 bool supported_ast_return_expr(const Expr& expr,
                                const std::string& input_name,
+                               const std::set<std::string>& local_names,
                                std::string& reason) {
     auto require_operand = [&](const ExprPtr& operand) {
         if (!operand) {
             reason = "malformed ast meta return expression";
             return false;
         }
-        return supported_ast_return_expr(*operand, input_name, reason);
+        return supported_ast_return_expr(*operand, input_name, local_names, reason);
     };
     auto require_binary = [&]() {
         if (!expr_left(expr) || !expr_right(expr)) {
             reason = "malformed ast meta return expression";
             return false;
         }
-        return supported_ast_return_expr(*expr_left(expr), input_name, reason) &&
-               supported_ast_return_expr(*expr_right(expr), input_name, reason);
+        return supported_ast_return_expr(*expr_left(expr), input_name, local_names, reason) &&
+               supported_ast_return_expr(*expr_right(expr), input_name, local_names, reason);
     };
     auto require_index = [&]() {
         if (!expr_operand(expr) || !expr_right(expr)) {
             reason = "malformed ast meta return expression";
             return false;
         }
-        return supported_ast_return_expr(*expr_operand(expr), input_name, reason) &&
-               supported_ast_return_expr(*expr_right(expr), input_name, reason);
+        return supported_ast_return_expr(*expr_operand(expr), input_name, local_names, reason) &&
+               supported_ast_return_expr(*expr_right(expr), input_name, local_names, reason);
     };
     auto require_args = [&]() {
         for (const auto& arg : expr.args) {
-            if (!supported_ast_return_expr(*arg, input_name, reason)) return false;
+            if (!supported_ast_return_expr(*arg, input_name, local_names, reason)) return false;
+        }
+        return true;
+    };
+    auto require_expression_only_body = [&](const std::vector<StmtPtr>& body) {
+        if (!body.empty()) {
+            reason =
+                "ast meta control-flow expression returns currently require expression-only arms with no statement bodies";
+            return false;
+        }
+        return true;
+    };
+    auto require_if_expr = [&]() {
+        if (!expr_if_condition(expr) || !expr_if_then_value(expr) || !expr_if_else_value(expr)) {
+            reason = "malformed ast meta return expression";
+            return false;
+        }
+        if (!require_expression_only_body(expr_if_then_body(expr)) ||
+            !require_expression_only_body(expr_if_else_body(expr))) {
+            return false;
+        }
+        std::set<std::string> then_names = local_names;
+        if (expr_if_condition_pattern(expr)) {
+            collect_pattern_binding_names(*expr_if_condition_pattern(expr), then_names);
+        }
+        return supported_ast_return_expr(*expr_if_condition(expr), input_name, local_names, reason) &&
+               supported_ast_return_expr(*expr_if_then_value(expr), input_name, then_names, reason) &&
+               supported_ast_return_expr(*expr_if_else_value(expr), input_name, local_names, reason);
+    };
+    auto require_block_expr = [&]() {
+        if (!expr_block_value(expr)) {
+            reason = "malformed ast meta return expression";
+            return false;
+        }
+        if (!require_expression_only_body(expr_block_body(expr))) return false;
+        return supported_ast_return_expr(*expr_block_value(expr), input_name, local_names, reason);
+    };
+    auto require_match_expr = [&]() {
+        if (!expr_match_value(expr)) {
+            reason = "malformed ast meta return expression";
+            return false;
+        }
+        if (!supported_ast_return_expr(*expr_match_value(expr), input_name, local_names, reason)) return false;
+        for (const auto& arm : expr_match_arms(expr)) {
+            if (!arm.value) {
+                reason = "malformed ast meta return expression";
+                return false;
+            }
+            std::set<std::string> arm_names = local_names;
+            collect_pattern_binding_names(arm.pattern, arm_names);
+            if (!supported_ast_return_expr(*arm.value, input_name, arm_names, reason)) return false;
         }
         return true;
     };
@@ -140,18 +217,19 @@ bool supported_ast_return_expr(const Expr& expr,
         case ExprKind::MethodCall:
             return require_operand(expr_operand(expr)) && require_args();
         case ExprKind::Name:
-            if (expr.name == input_name) {
+            if (expr.name == input_name || local_names.count(expr.name)) {
                 return true;
             } else {
-                reason = "ast meta expression returns cannot reference names other than the meta input yet";
+                reason =
+                    "ast meta expression returns cannot reference names other than the meta input or local control-flow pattern bindings yet";
             }
             return false;
         case ExprKind::Match:
+            return require_match_expr();
         case ExprKind::If:
+            return require_if_expr();
         case ExprKind::Block:
-            reason =
-                "ast meta expression returns currently support only literal, input, struct literal, tuple, vector, access, borrow, try, null-coalescing, call, method call, unary, binary, and cast expression trees";
-            return false;
+            return require_block_expr();
         case ExprKind::MacroCall:
             reason =
                 "ast meta expression returns cannot call macros; use decl!(...) for item macro declaration output or pattern!(...) for pattern macro output";
@@ -167,7 +245,7 @@ MetaAstReturnKind classify_ast_return_expr(const Expr& expr,
     if (supported_decl_ast_return_expr(expr, reason)) return MetaAstReturnKind::ItemDeclarations;
     if (supported_pattern_ast_return_expr(expr, reason)) return MetaAstReturnKind::Pattern;
     if (is_decl_ast_constructor(expr) || is_pattern_ast_constructor(expr)) return MetaAstReturnKind::None;
-    if (supported_ast_return_expr(expr, input_name, reason)) return MetaAstReturnKind::Expression;
+    if (supported_ast_return_expr(expr, input_name, {}, reason)) return MetaAstReturnKind::Expression;
     return MetaAstReturnKind::None;
 }
 

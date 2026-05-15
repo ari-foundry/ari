@@ -15196,7 +15196,7 @@ private:
         }
         ExprPtr expanded = parse_macro_expression(*expr.macro_tokens, expr.loc);
         if (meta.ast_return) {
-            expanded = expand_ast_expression_return(*meta.ast_return, meta.parameter_name, *expanded);
+            expanded = expand_ast_expression_return(*meta.ast_return, meta.parameter_name, *expanded, expr.loc);
         }
         return check_expr(*expanded);
     }

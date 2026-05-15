@@ -1,0 +1,44 @@
+enum MaybeI64 {
+  None,
+  Some(i64),
+}
+
+meta fn select_positive(input: ast) -> ast {
+  return if input > 0 { input + 1 } else { 5 };
+}
+
+meta fn grouped(input: ast) -> ast {
+  return { input * 2 };
+}
+
+meta fn score_match(input: ast) -> ast {
+  return match input {
+    Some(value) => value,
+    None => 3,
+  };
+}
+
+meta fn score_if_let(input: ast) -> ast {
+  return if let Some(value) = input { value } else { 4 };
+}
+
+fn choose(flag: bool, value: i64) -> MaybeI64 {
+  if flag {
+    return Some(value);
+  }
+  return None();
+}
+
+fn main() -> i64 {
+  let matched = choose(true, 20);
+  let missing_match = choose(false, 0);
+  let present_if_let = choose(true, 7);
+  let missing_if_let = choose(false, 0);
+  return select_positive!(1) +
+         select_positive!(0) +
+         grouped!(6) +
+         score_match!(matched) +
+         score_match!(missing_match) +
+         score_if_let!(present_if_let) +
+         score_if_let!(missing_if_let);
+}

@@ -192,11 +192,12 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    may be empty, use a single `return input;` identity body, or, for
    expression-position `ast -> ast` macros, return an expression AST such as
    `return input + 1;`, `return Pair { left: input, right: 2 };`,
-   `return ref input;`, `return input ?? 0;`, or
-   `return add(input.left, 1);`
+   `return ref input;`, `return input ?? 0;`,
+   `return if input > 0 { input } else { 0 };`, or `return add(input.left, 1);`
    without quote/eval syntax. The
    meta input parameter is substituted with the parsed invocation expression;
-   other bare expression name references are rejected. Item-position
+   other bare expression name references are rejected unless they are introduced
+   by the current control-flow pattern arm. Item-position
    `ast -> ast` macros can also return top-level declaration AST output with the meta-body-only
    `decl!(...)` constructor, for example `return decl!(fn generated() -> i64 {
    return 42; });`. Pattern-position `ast -> ast` macros can return pattern
@@ -224,8 +225,13 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    parsed input expression wherever the meta parameter name appears. Literal,
    struct literal, tuple, vector, access, borrow, postfix try,
    null-coalescing, function call, method call, unary, binary, and cast
-   expression trees are accepted. Invalid extra tokens are rejected before
-   semantic expression lowering.
+   expression trees are accepted. Expression-only `if`, block, and `match`
+   returns are also accepted, including pattern-bound names inside the matching
+   `if let` or `match` arm. Those generated pattern bindings are hygienically
+   renamed during expansion so repeated macro calls do not collide with Ari's
+   local-name rules. Control-flow arms with statement bodies remain reserved
+   until the evaluator policy is defined. Invalid extra tokens are rejected
+   before semantic expression lowering.
    Item-position `ast -> ast` bodies can also return `decl!(...)`; those
    declaration tokens are parsed as top-level use, inline module, function,
    constant, struct, enum, trait, or impl declarations and spliced into normal
@@ -291,8 +297,8 @@ V0 cache-format contract until a cache version bump is explicitly approved.
      expression returns with input substitution and item-position `decl!(...)`
      declaration output with input substitution and pattern-position
      `pattern!(...)` output with input substitution, plus type-position
-     `type!(...)` output with input substitution: add control-flow and other
-     richer expression trees once evaluator policy is defined
+     `type!(...)` output with input substitution: add statement-bodied
+     control-flow expression returns once evaluator policy is defined
    - [ast-decl-input] let item-position declaration constructors inspect the
      invocation declaration input after evaluator policy is defined
    - [attributes] allow attribute macros to rewrite or insert AST nodes

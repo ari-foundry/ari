@@ -22,6 +22,10 @@ std::vector<std::string> module_path_for_macro(const std::string& module_name) {
     return split_qualified_path(module_name);
 }
 
+std::string ast_expression_hygiene_prefix(SourceLocation loc) {
+    return "$meta" + std::to_string(loc.line) + "_" + std::to_string(loc.column);
+}
+
 Program parse_item_macro_tokens(const std::vector<Token>& source_tokens,
                                 const std::string& module_name,
                                 SourceLocation loc) {
@@ -171,8 +175,13 @@ TypeRef expand_type_macro_constructor(const TypeRef& invocation,
 
 ExprPtr expand_ast_expression_return(const Expr& returned_ast,
                                       const std::string& input_name,
-                                      const Expr& input_ast) {
-    return clone_expression_tree_substituting_name(returned_ast, input_name, input_ast);
+                                      const Expr& input_ast,
+                                      SourceLocation invocation_loc) {
+    return clone_expression_tree_substituting_name_hygienic(
+        returned_ast,
+        input_name,
+        input_ast,
+        ast_expression_hygiene_prefix(invocation_loc));
 }
 
 } // namespace ari

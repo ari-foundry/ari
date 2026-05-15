@@ -32,7 +32,8 @@ TypeRef expand_type_macro_constructor(const TypeRef& invocation,
                                       const Expr& returned_type);
 ExprPtr expand_ast_expression_return(const Expr& returned_ast,
                                       const std::string& input_name,
-                                      const Expr& input_ast);
+                                      const Expr& input_ast,
+                                      SourceLocation invocation_loc);
 std::vector<ImplDecl> expand_derive_impls_for_struct(const StructDecl& decl);
 std::vector<ImplDecl> expand_derive_impls_for_enum(const EnumDecl& decl);
 

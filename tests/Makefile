@@ -1468,6 +1468,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-ast-borrow.raw; code=$$?; test $$code -eq 41
 	$(TARGET) --freestanding tests/ok/meta-function-ast-try-null-coalescing.ari -o $(BUILD_DIR)/meta/meta-function-ast-try-null-coalescing.raw
 	$(BUILD_DIR)/meta/meta-function-ast-try-null-coalescing.raw; code=$$?; test $$code -eq 46
+	$(TARGET) --freestanding tests/ok/meta-function-ast-control-flow.ari -o $(BUILD_DIR)/meta/meta-function-ast-control-flow.raw
+	$(BUILD_DIR)/meta/meta-function-ast-control-flow.raw; code=$$?; test $$code -eq 53
 	$(TARGET) --freestanding tests/ok/item-macro-function-identity.ari -o $(BUILD_DIR)/meta/item-macro-function-identity.raw
 	$(BUILD_DIR)/meta/item-macro-function-identity.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/item-macro-ast-decl-return.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-return.raw
@@ -1547,7 +1549,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/meta-function-body-planned.ari -o $(BUILD_DIR)/meta/meta-function-body-planned.elf >$(BUILD_DIR)/meta/meta-function-body-planned.err 2>&1; then exit 1; fi
 	grep -q 'meta function bodies currently allow only an empty body or `return input;` identity body' $(BUILD_DIR)/meta/meta-function-body-planned.err
 	if $(TARGET) tests/errors/meta-function-ast-name-reference.ari -o $(BUILD_DIR)/meta/meta-function-ast-name-reference.elf >$(BUILD_DIR)/meta/meta-function-ast-name-reference.err 2>&1; then exit 1; fi
-	grep -q "ast meta expression returns cannot reference names other than the meta input yet" $(BUILD_DIR)/meta/meta-function-ast-name-reference.err
+	grep -q "ast meta expression returns cannot reference names other than the meta input or local control-flow pattern bindings yet" $(BUILD_DIR)/meta/meta-function-ast-name-reference.err
 	if $(TARGET) tests/errors/meta-function-decl-expression-site.ari -o $(BUILD_DIR)/meta/meta-function-decl-expression-site.elf >$(BUILD_DIR)/meta/meta-function-decl-expression-site.err 2>&1; then exit 1; fi
 	grep -q "declaration-returning ast meta function 'make_decl' can currently be used only at item macro sites" $(BUILD_DIR)/meta/meta-function-decl-expression-site.err
 	if $(TARGET) tests/errors/meta-function-pattern-expression-site.ari -o $(BUILD_DIR)/meta/meta-function-pattern-expression-site.elf >$(BUILD_DIR)/meta/meta-function-pattern-expression-site.err 2>&1; then exit 1; fi
