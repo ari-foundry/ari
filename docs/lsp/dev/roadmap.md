@@ -13,6 +13,8 @@
       same-directory temporary source file so relative modules keep working.
 - [x] Add first-pass top-level `textDocument/documentSymbol` support for VS Code
       Outline using the current document text.
+- [x] Add first-pass `textDocument/documentHighlight` support for same-document
+      identifier highlighting using shared LSP text-position helpers.
 - [x] Add first-pass `workspace/symbol` support by scanning Ari source files
       under the server working directory.
 - [x] Add first-pass `textDocument/hover` support for top-level declarations
@@ -36,6 +38,8 @@
 - [ ] Add stable diagnostic codes once the compiler/lint layer exposes them.
 - [ ] Replace first-pass text symbol scanning with parser/module-summary-backed
       nested symbols.
+- [ ] Replace first-pass document highlights with parser/sema-backed symbol
+      identity so unrelated same-name identifiers are not grouped together.
 - [ ] Replace first-pass workspace symbols with parser/module-summary-backed
       package indexing.
 - [ ] Replace first-pass definition with parser/sema-backed local, module, and

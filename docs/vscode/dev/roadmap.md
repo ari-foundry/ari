@@ -9,6 +9,8 @@
 - [x] Add a small grammar and language configuration.
 - [x] Surface first-pass Ari top-level declaration symbols through the LSP
       Outline path.
+- [x] Surface first-pass same-document identifier highlights through the LSP
+      document-highlight path.
 - [x] Surface first-pass workspace symbol search through the LSP
       `workspace/symbol` path.
 - [x] Surface first-pass hover text for top-level Ari declarations through the

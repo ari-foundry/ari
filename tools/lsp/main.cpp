@@ -1,4 +1,5 @@
 #include "documents.hpp"
+#include "highlights.hpp"
 #include "json_rpc.hpp"
 #include "symbols.hpp"
 #include "workspace_symbols.hpp"
@@ -225,6 +226,7 @@ int main(int argc, char** argv) {
                 "\"textDocumentSync\":1,"
                 "\"diagnosticProvider\":{\"interFileDependencies\":true,\"workspaceDiagnostics\":false},"
                 "\"documentSymbolProvider\":true,"
+                "\"documentHighlightProvider\":true,"
                 "\"workspaceSymbolProvider\":true,"
                 "\"hoverProvider\":true,"
                 "\"definitionProvider\":true,"
@@ -258,6 +260,17 @@ int main(int argc, char** argv) {
         if (method == "textDocument/documentSymbol") {
             std::string uri = ari::lsp::json_string_field(body, "uri");
             ari::lsp::write_message(std::cout, ari::lsp::document_symbols_response(id, text_for_uri(documents, uri)));
+            continue;
+        }
+        if (method == "textDocument/documentHighlight") {
+            std::string uri = ari::lsp::json_string_field(body, "uri");
+            ari::lsp::write_message(
+                std::cout,
+                ari::lsp::document_highlight_response(
+                    id,
+                    text_for_uri(documents, uri),
+                    int_field_or_zero(body, "line"),
+                    int_field_or_zero(body, "character")));
             continue;
         }
         if (method == "workspace/symbol") {

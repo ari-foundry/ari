@@ -45,6 +45,7 @@ temporary source file beside the original document path, so nearby
 - `textDocument/publishDiagnostics`
 - `textDocument/diagnostic`
 - `textDocument/documentSymbol`
+- `textDocument/documentHighlight`
 - `workspace/symbol`
 - `textDocument/hover`
 - `textDocument/definition`
@@ -59,8 +60,10 @@ serialization preserves shared diagnostic codes and explicit end spans when the
 tooling layer provides them.
 Document symbols are a first-pass top-level outline for functions, structs,
 enums, traits, impls, and modules; richer parser-backed symbol trees are still
-planned. Workspace symbols scan `.ari` and `.arih` files below the server
-working directory while skipping generated or dependency folders such as
+planned. Document highlights use the same lightweight identifier-at-cursor
+lookup as hover and definition, then return same-document identifier ranges for
+editor highlighting. Workspace symbols scan `.ari` and `.arih` files below the
+server working directory while skipping generated or dependency folders such as
 `build`, `.git`, and `node_modules`. Hover uses the same first-pass top-level
 declaration scan to show the declaration kind and source line for known symbols,
 and same-document definition requests can jump back to those top-level

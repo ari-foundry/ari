@@ -9,8 +9,9 @@ also receives `textDocument/documentSymbol` results from `ari-lsp`, which gives
 VS Code a first-pass Outline for top-level Ari declarations. Hover is also
 served for those top-level declarations, and same-document definition requests
 can jump to their declaration lines. Workspace symbol search can find top-level
-Ari declarations across workspace files. Completion suggests those same
-top-level symbols in the active document.
+Ari declarations across workspace files. Document highlights mark matching
+same-document identifiers, and completion suggests top-level declarations in the
+active document.
 
 ## Layout
 
