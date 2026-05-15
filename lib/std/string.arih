@@ -364,6 +364,10 @@ pub impl std::string::String {
     return total;
   }
 
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::string::String {
+    return std::string::copy_to(self, target);
+  }
+
   fn as_ptr(self: ref Self) -> ptr u8 {
     return self.raw.data;
   }

@@ -447,6 +447,7 @@ provenance too. A `std::boxed::Box<T>`, `std::string::String`, or
 `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)`, or a
 `std::string::String` copied with
 `std::string::from_slice_in(ref mut Zone, Slice[u8])` or
+`String.copy_to(ref mut Zone)` /
 `std::string::copy_to(ref value, ref mut Zone)`, the result is tracked against
 the target zone, not the original source zone. When a
 source `std::string::String` or `std::vec::Vec<T>` grows through an explicit

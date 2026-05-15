@@ -1,0 +1,20 @@
+fn main() -> i64 {
+  var source = zone::create(32);
+  var target = zone::create(32);
+
+  var text = std::string::from_string(ref mut source, "ari");
+  var copied = text.copy_to(ref mut target);
+  zone::reset(ref mut source);
+
+  copied.push_in(ref mut target, 33u8);
+  let total = copied.len() + copied.capacity() +
+    (copied.get(0) as i64) +
+    (copied.get(1) as i64) +
+    (copied.get(2) as i64) +
+    (copied.get(3) as i64) +
+    copied.count(33u8);
+
+  zone::destroy(target);
+  zone::destroy(source);
+  return total % 256;
+}

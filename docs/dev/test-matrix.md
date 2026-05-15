@@ -280,6 +280,9 @@ Checklist:
       the target zone
 - [x] source `std::string::String` exposes byte-search methods `contains`,
       `index_of`, and `count` with borrowed receiver lowering
+- [x] source `std::string::String.copy_to(ref mut Zone)` mirrors the
+      top-level target-zone copy helper while preserving reset/destroy
+      provenance on the returned handle
 - [x] source `std::string::String` same-zone `reserve`, `reserve_extra`,
       `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in` grow the
       zone-backed byte buffer while rejecting a mismatched zone argument

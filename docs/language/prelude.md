@@ -123,15 +123,18 @@ source string handle supports `len`, `capacity`,
 `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, append helpers
 for lowercase `string`, `i64`, bool, and `f64` values through
 `append_string_in`, `append_i64_in`, `append_bool_in`, and `append_f64_in`, plus
-`truncate`, `clear`, `as_ptr`, and `as_slice`. `std::string::from_string(ref
-mut zone, text)` copies today's borrowed lowercase `string` into independent
-zone-backed bytes, `std::string::from_slice_in(ref mut zone, values)` copies a
-borrowed byte slice into independent zone-backed bytes, and
-`std::string::copy_to(ref value, ref mut zone)` copies the current bytes into
-another explicit zone. Metadata, checked byte `get`, `as_ptr`, and target-zone
-copy borrow the handle instead of copying it. This is still an explicit-zone
-string API; allocations are released by `zone::reset` or `zone::destroy`, and
-the string handle's `Drop` impl only ends the binding. The
+`truncate`, `clear`, byte search with `contains`, `index_of`, and `count`,
+`copy_to(ref mut zone)`, `as_ptr`, and `as_slice`.
+`std::string::from_string(ref mut zone, text)` copies today's borrowed
+lowercase `string` into independent zone-backed bytes,
+`std::string::from_slice_in(ref mut zone, values)` copies a borrowed byte slice
+into independent zone-backed bytes, and `std::string::copy_to(ref value, ref
+mut zone)` copies the current bytes into another explicit zone. Metadata,
+checked byte `get`, byte search, method-style `copy_to(ref mut zone)`,
+`as_ptr`, and top-level target-zone copy borrow the handle instead of copying
+it. This is still an explicit-zone string API; allocations are released by
+`zone::reset` or `zone::destroy`, and the string handle's `Drop` impl only ends
+the binding. The
 same-zone append and growth helpers must receive the zone that created the
 handle.
 
@@ -693,7 +696,8 @@ let raw = text.as_ptr()
 let view = text.as_slice()
 var other_zone = zone::create(64)
 let copied_from_view = std::string::from_slice_in(ref mut other_zone, view)
-let copied = std::string::copy_to(ref text, ref mut other_zone)
+let copied = text.copy_to(ref mut other_zone)
+let copied_by_function = std::string::copy_to(ref text, ref mut other_zone)
 ```
 
 The handle tracks `len` separately from `capacity` and does not append a NUL
@@ -716,13 +720,13 @@ created the handle, so provenance continues to match reset/destroy invalidation.
 Use
 `std::string::from_slice_in(ref mut Zone, Slice[u8])` to copy a borrowed byte
 slice into another explicit zone, or
-`std::string::copy_to(ref value, ref mut Zone)` to copy the current bytes into
-another explicit zone. Metadata, checked byte reads, `as_ptr()`, and
-target-zone copy are read-only borrows of the source string handle. So are
-byte-search helpers: `contains(byte)` reports whether a byte is present,
-`index_of(byte)` returns the first matching byte index or `-1`, and
-`count(byte)` returns the number of matches. Mutating byte and growth helpers
-take mutable borrows.
+`text.copy_to(ref mut Zone)` / `std::string::copy_to(ref value, ref mut Zone)`
+to copy the current bytes into another explicit zone. Metadata, checked byte
+reads, `as_ptr()`, and target-zone copy are read-only borrows of the source
+string handle. So are byte-search helpers: `contains(byte)` reports whether a
+byte is present, `index_of(byte)` returns the first matching byte index or
+`-1`, and `count(byte)` returns the number of matches. Mutating byte and growth
+helpers take mutable borrows.
 Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`
 result, or slice view after its source zone is reset or destroyed is rejected.
 

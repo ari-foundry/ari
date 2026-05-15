@@ -207,12 +207,14 @@ constructor subset documented in the language guide.
    `zone::reset`/`zone::destroy`. `std::string::RawString` and
    `std::string::String` now wrap that storage in a tracked source handle with
    `data`, `len`, and `capacity` metadata, borrowed receiver lowering for
-   metadata, byte reads, byte search, and raw-pointer views, fixed-capacity byte push/pop,
+   metadata, byte reads, byte search, and raw-pointer views, fixed-capacity
+   byte push/pop,
    checked get/set/replace, truncate/clear, slice views,
    explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
    `insert_in`, `extend_from_slice_in`, and `resize_in`,
    same-zone text construction helpers through `append_string_in`,
    `append_i64_in`, `append_bool_in`, and `append_f64_in`,
+   `String.copy_to(ref mut Zone)` and
    `std::string::copy_to(ref value, ref mut Zone)` borrowed-source target-zone
    copying, `std::string::from_slice_in(ref mut Zone, Slice[u8])` target-zone
    construction from a borrowed byte slice, and

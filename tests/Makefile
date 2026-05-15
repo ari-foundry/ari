@@ -246,6 +246,8 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @ari_builtin_string_copy_to(ptr %value.slot, ptr %target.slot)' $(BUILD_DIR)/prelude/std-string-from-copy.ll
+	$(TARGET) tests/ok/std-string-copy-to-method.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-copy-to-method.ll
+	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-copy-to-method.ll
 	$(TARGET) tests/ok/std-string-from-slice-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-slice-in.ll
 	grep -q '_ARNv3std6string13from_slice_in' $(BUILD_DIR)/prelude/std-string-from-slice-in.ll
 	grep -q '_ARNv4impl19std__string__String8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-string-from-slice-in.ll
@@ -359,6 +361,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-handle.elf; $(BUILD_DIR)/prelude/std-string-handle.elf; code=$$?; test $$code -eq 153; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-search.elf; $(BUILD_DIR)/prelude/std-string-search.elf; code=$$?; test $$code -eq 77; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-from-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-copy.elf; $(BUILD_DIR)/prelude/std-string-from-copy.elf; code=$$?; test $$code -eq 163; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-copy-to-method.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; code=$$?; test $$code -eq 104; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; code=$$?; test $$code -eq 103; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-grow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-grow.elf; $(BUILD_DIR)/prelude/std-string-grow.elf; code=$$?; test $$code -eq 177; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
@@ -464,6 +467,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-as-ptr-after-reset.err
 	if $(TARGET) tests/errors/std-string-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err
+	if $(TARGET) tests/errors/std-string-copy-to-method-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.err
 	if $(TARGET) tests/errors/std-string-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.err
 	if $(TARGET) tests/errors/std-string-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-string-push-in-different-zone.err 2>&1; then exit 1; fi
