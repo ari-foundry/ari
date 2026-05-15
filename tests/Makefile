@@ -239,6 +239,10 @@ check-prelude: $(TARGET)
 	grep -F -q 'define ptr @"_ARNv4impl19std__string__String8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent4push' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-handle.ll
+	$(TARGET) tests/ok/std-string-search.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-search.ll
+	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent8index_of"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
+	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent8contains"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
+	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent5count"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
 	$(TARGET) tests/ok/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @ari_builtin_string_copy_to(ptr %value.slot, ptr %target.slot)' $(BUILD_DIR)/prelude/std-string-from-copy.ll
@@ -353,6 +357,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-box-root.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-box-root.elf; $(BUILD_DIR)/prelude/prelude-box-root.elf; code=$$?; test $$code -eq 43; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; code=$$?; test $$code -eq 6; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-handle.elf; $(BUILD_DIR)/prelude/std-string-handle.elf; code=$$?; test $$code -eq 153; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-search.elf; $(BUILD_DIR)/prelude/std-string-search.elf; code=$$?; test $$code -eq 77; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-from-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-copy.elf; $(BUILD_DIR)/prelude/std-string-from-copy.elf; code=$$?; test $$code -eq 163; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; code=$$?; test $$code -eq 103; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-grow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-grow.elf; $(BUILD_DIR)/prelude/std-string-grow.elf; code=$$?; test $$code -eq 177; fi

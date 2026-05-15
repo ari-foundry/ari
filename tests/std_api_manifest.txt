@@ -75,8 +75,11 @@ method std::string::String::as_ptr|check-prelude std-string-handle borrowed rece
 method std::string::String::as_slice|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::capacity|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::clear|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::contains|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::count|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::extend_from_slice_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::get|check-prelude std-string-handle borrowed receiver and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::index_of|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::insert|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::insert_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::is_empty|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row

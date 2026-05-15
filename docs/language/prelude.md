@@ -718,8 +718,11 @@ Use
 slice into another explicit zone, or
 `std::string::copy_to(ref value, ref mut Zone)` to copy the current bytes into
 another explicit zone. Metadata, checked byte reads, `as_ptr()`, and
-target-zone copy are read-only borrows of the source string handle; mutating
-byte and growth helpers take mutable borrows.
+target-zone copy are read-only borrows of the source string handle. So are
+byte-search helpers: `contains(byte)` reports whether a byte is present,
+`index_of(byte)` returns the first matching byte index or `-1`, and
+`count(byte)` returns the number of matches. Mutating byte and growth helpers
+take mutable borrows.
 Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`
 result, or slice view after its source zone is reset or destroyed is rejected.
 

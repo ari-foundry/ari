@@ -1,0 +1,21 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var text = std::string::from_string(ref mut zone, "banana");
+
+  let has_a = if text.contains(97u8) { 7 } else { 0 };
+  let misses_z = if text.contains(122u8) { 0 } else { 11 };
+  let missing_index = if text.index_of(120u8) == -1 { 13 } else { 0 };
+  let search_total = has_a + misses_z + missing_index +
+    text.index_of(97u8) +
+    text.index_of(110u8) +
+    text.count(97u8) +
+    text.count(98u8) +
+    text.count(122u8) +
+    text.len();
+
+  text.push_in(ref mut zone, 33u8);
+  let after_search_mutation = text.get(6) as i64;
+
+  zone::destroy(zone);
+  return search_total + after_search_mutation;
+}

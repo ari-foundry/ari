@@ -337,6 +337,33 @@ pub impl std::string::String {
     self.raw.len = length;
   }
 
+  fn index_of(self: ref Self, value: u8) -> i64 {
+    var index = 0;
+    while index < self.raw.len {
+      if ptr_load(ptr_add(self.raw.data, index)) == value {
+        return index;
+      }
+      index = index + 1;
+    }
+    return -1;
+  }
+
+  fn contains(self: ref Self, value: u8) -> bool {
+    return self.index_of(value) >= 0;
+  }
+
+  fn count(self: ref Self, value: u8) -> i64 {
+    var total = 0;
+    var index = 0;
+    while index < self.raw.len {
+      if ptr_load(ptr_add(self.raw.data, index)) == value {
+        total = total + 1;
+      }
+      index = index + 1;
+    }
+    return total;
+  }
+
   fn as_ptr(self: ref Self) -> ptr u8 {
     return self.raw.data;
   }
