@@ -7,6 +7,8 @@
 - [x] Add extension settings for compiler path, LSP path, and module paths.
 - [x] Launch `ari-lsp` through `vscode-languageclient`.
 - [x] Add a small grammar and language configuration.
+- [x] Surface first-pass Ari top-level declaration symbols through the LSP
+      Outline path.
 
 ## Near-Term Work
 

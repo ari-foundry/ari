@@ -1,12 +1,15 @@
 #include "documents.hpp"
 #include "json_rpc.hpp"
+#include "symbols.hpp"
 
 #include "../ari_tooling/process.hpp"
 #include "../ari_tooling/diagnostic.hpp"
 
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -108,6 +111,19 @@ void publish_for_document(const Config& config, const ari::lsp::DocumentStore& d
     ari::lsp::write_message(std::cout, ari::lsp::diagnostics_notification(uri, check_document(config, documents, uri)));
 }
 
+std::string read_file_text(const std::string& path) {
+    std::ifstream in(path);
+    if (!in) return "";
+    std::ostringstream out;
+    out << in.rdbuf();
+    return out.str();
+}
+
+std::string text_for_uri(const ari::lsp::DocumentStore& documents, const std::string& uri) {
+    if (std::optional<std::string> text = documents.text(uri)) return *text;
+    return read_file_text(ari::lsp::uri_to_path(uri));
+}
+
 std::string response_result(const std::string& id, const std::string& result) {
     return "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":" + result + "}";
 }
@@ -164,7 +180,8 @@ int main(int argc, char** argv) {
             std::string capabilities =
                 "{\"capabilities\":{"
                 "\"textDocumentSync\":1,"
-                "\"diagnosticProvider\":{\"interFileDependencies\":true,\"workspaceDiagnostics\":false}"
+                "\"diagnosticProvider\":{\"interFileDependencies\":true,\"workspaceDiagnostics\":false},"
+                "\"documentSymbolProvider\":true"
                 "},\"serverInfo\":{\"name\":\"ari-lsp\",\"version\":\"0.1.0-dev\"}}";
             ari::lsp::write_message(std::cout, response_result(id.empty() ? "null" : id, capabilities));
             continue;
@@ -189,6 +206,11 @@ int main(int argc, char** argv) {
             std::vector<ari::tooling::Diagnostic> diagnostics =
                 check_document(config, documents, ari::lsp::json_string_field(body, "uri"));
             ari::lsp::write_message(std::cout, ari::lsp::diagnostics_report_response(id, diagnostics));
+            continue;
+        }
+        if (method == "textDocument/documentSymbol") {
+            std::string uri = ari::lsp::json_string_field(body, "uri");
+            ari::lsp::write_message(std::cout, ari::lsp::document_symbols_response(id, text_for_uri(documents, uri)));
             continue;
         }
         if (method == "textDocument/didClose") {

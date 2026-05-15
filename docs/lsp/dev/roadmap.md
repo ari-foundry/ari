@@ -11,13 +11,16 @@
       diagnostic conversion as publish diagnostics.
 - [x] Track opened/changed document text and check unsaved buffers through a
       same-directory temporary source file so relative modules keep working.
+- [x] Add first-pass top-level `textDocument/documentSymbol` support for VS Code
+      Outline using the current document text.
 - [x] Clear diagnostics on `didClose`.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
 
 ## Near-Term Work
 
 - [ ] Add stable diagnostic codes once the compiler/lint layer exposes them.
-- [ ] Add document symbols from parser/module summaries.
+- [ ] Replace first-pass text symbol scanning with parser/module-summary-backed
+      nested symbols.
 - [ ] Add go-to-definition for local modules and source declarations.
 - [ ] Add hover text for functions, types, and std APIs.
 
