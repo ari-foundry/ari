@@ -7276,6 +7276,48 @@ private:
         return stmt;
     }
 
+    std::optional<ImplMethodInfo> find_drop_impl(SourceLocation loc, const IrType& dropped_type) {
+        auto exact = drop_impls_.find(drop_impl_key(dropped_type));
+        if (exact != drop_impls_.end()) return exact->second;
+
+        std::vector<ImplMethodInfo> matches;
+        for (const auto& candidate : generic_method_impls_) {
+            if (!is_drop_impl_method(candidate)) continue;
+            if (candidate.sig.params.size() != 1 ||
+                candidate.sig.result.primitive != IrPrimitiveKind::Void) {
+                continue;
+            }
+
+            std::map<std::string, IrType> substitutions;
+            if (!infer_generic_impl_method_substitutions(candidate, dropped_type, substitutions)) {
+                continue;
+            }
+
+            std::set<std::string> visiting;
+            std::string bound_failure;
+            if (!impl_generic_bounds_satisfied(candidate.generic_bounds, substitutions, visiting, &bound_failure)) {
+                continue;
+            }
+            if (!impl_generic_bounds_satisfied(candidate.method_generic_bounds, substitutions, visiting, &bound_failure)) {
+                continue;
+            }
+
+            matches.push_back(specialize_generic_impl_method_with_substitutions(
+                candidate,
+                dropped_type,
+                "drop",
+                std::move(substitutions)));
+        }
+
+        if (matches.empty()) {
+            return std::nullopt;
+        }
+        if (matches.size() > 1) {
+            fail(loc, "Drop impl for type " + type_name(dropped_type) + " is ambiguous");
+        }
+        return matches.front();
+    }
+
     void append_drop_stmts_for_value(SourceLocation loc,
                                      const IrType& type,
                                      DropValueFactory make_value,
@@ -7288,13 +7330,13 @@ private:
 
         IrType dropped_type = type;
         dropped_type.qualifier = TypeQualifier::Value;
-        auto destructor = drop_impls_.find(drop_impl_key(dropped_type));
-        bool can_call_destructor = destructor != drop_impls_.end();
+        std::optional<ImplMethodInfo> destructor = find_drop_impl(loc, dropped_type);
+        bool can_call_destructor = destructor.has_value();
         if (can_call_destructor && tracked_local && path.empty() && local_has_moved_or_dropped_owned_fields(*tracked_local)) {
             can_call_destructor = false;
         }
         if (can_call_destructor) {
-            statements.push_back(make_drop_call_stmt(loc, destructor->second, make_value));
+            statements.push_back(make_drop_call_stmt(loc, *destructor, make_value));
         }
 
         if (type.primitive == IrPrimitiveKind::Tuple ||
@@ -14765,6 +14807,11 @@ private:
 
     static std::string drop_impl_key(const IrType& type) {
         return type_name(type);
+    }
+
+    static bool is_drop_impl_method(const ImplMethodInfo& method) {
+        return (method.trait_name == "Drop" || method.trait_name == "std::Drop") &&
+               basename_of_qualified_name(method.fn->name) == "drop";
     }
 
     static bool split_associated_call_name(const std::string& name, std::string& receiver_name, std::string& method_name) {

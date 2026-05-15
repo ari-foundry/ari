@@ -176,10 +176,16 @@ constructor subset documented in the language guide.
    `Shared[T]` / `Weak[T]` are reserved for reference-counted ownership. New
    source `std` APIs are now guarded by `make check-std-api`, which compares the
    extracted public `lib/std` surface with `tests/std_api_manifest.txt` and
-   requires a focused coverage note beside the API entry.
-   - [owned-box] define the root/unique `Box[T]` ownership and drop contract on
-     top of the existing explicit-zone `std::boxed::Box<T>` seed before std
-     APIs start returning owning heap handles
+   requires a focused coverage note beside the API entry. Generic `Drop` impls
+   are now selected during explicit drop lowering, so the existing
+   `std::boxed::Box<T>` source seed has a concrete no-op handle drop contract:
+   `drop boxed` ends the binding, while value destruction and storage release
+   remain the explicit zone's responsibility through `zone::reset` or
+   `zone::destroy`.
+   - [owned-box] define and implement the final root/unique `Box[T]` ownership,
+     construction, move, and value-drop contract on top of the explicit-zone
+     `std::boxed::Box<T>` seed before std APIs start returning owning heap
+     handles
    - [owned-strings] root `String` is reserved as the future owned runtime
      string spelling while lowercase `string` remains today's borrowed
      C-string pointer value. Add allocator-backed `String` buffers, ownership

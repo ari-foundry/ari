@@ -90,8 +90,11 @@ returns a new tracked `std::boxed::Box<T>` handle for that target zone.
 `swap(ref mut other)` exchanges the values stored by two boxes without changing
 which zone each handle belongs to. `as_ptr()` returns the stored `ptr T` with
 the same zone provenance as the handle, so using that pointer after the source
-zone is reset or destroyed is also rejected by the checker. This is not yet the
-final owning root `Box[T]` smart pointer surface.
+zone is reset or destroyed is also rejected by the checker. The handle has a
+generic `Drop` impl whose destructor is intentionally a no-op: dropping the
+handle ends that binding, but the placed value and storage stay owned by the
+explicit zone and are released by `zone::reset` or `zone::destroy`. This is not
+yet the final owning root `Box[T]` smart pointer surface.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -563,8 +566,10 @@ let raw = boxed.as_ptr()
 
 The handle stores a raw pointer returned by `zone::new<T>` and keeps the same
 zone provenance, so reset/destroy invalidation applies to the handle and to raw
-pointers recovered through `as_ptr()`. It does not run destructors or free the
-value independently; memory is released with the zone.
+pointers recovered through `as_ptr()`. Explicit `drop boxed` uses the handle's
+generic no-op `Drop` impl: it ends the binding without running a destructor for
+the pointed-to value or freeing storage independently. Memory is released with
+the zone.
 
 Root smart-pointer names are reserved now so the lint and library surfaces do
 not drift. `Box[T]` is the future unique owning smart pointer spelling.

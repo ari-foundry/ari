@@ -35,3 +35,9 @@ pub impl[T] std::boxed::Box[T] {
     return self.data;
   }
 }
+
+impl[T] std::Drop for std::boxed::Box[T] {
+  fn drop(self) -> void {
+    return;
+  }
+}
