@@ -200,12 +200,15 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    delimiter-wrapper conditions such as `tokens_wrapped_by(input, "(", ")")`
    and `input.wrapped_by("(", ")")`, or indexed token text conditions such as
    `tokens_nth_is(input, 1, "=>")` and `input.nth_is(1, "=>")`. They may also
-   use exact token patterns with a one-token `"_"` wildcard through
+   use token patterns with a one-token `"_"` wildcard through
    `tokens_match(input, "fn", "_", "(", ")")` or
    `input.matches("fn", "_", "(", ")")`; pattern strings beginning with `$`
-   such as `"$name"` are single-token named captures. They may return a named
-   capture with `tokens_capture(input, "name", "fn", "$name")` or
-   `input.capture("name", "fn", "$name")`. They may also return token slices
+   such as `"$name"` are single-token named captures, while `"$name..."`
+   captures a zero-or-more-token span and backtracks against later pattern
+   pieces. They may return a named capture with
+   `tokens_capture(input, "name", "fn", "$name")`,
+   `input.capture("name", "fn", "$name")`, or the span form. They may also
+   return token slices
    with `tokens_slice(input, 1, input.len() - 1)` or
    `input.slice(1, input.len() - 1)`, using end-exclusive bounds, or, for
    expression-position `ast -> ast` macros, return an expression AST such as
@@ -251,21 +254,21 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    delimiter-wrapper checks with `tokens_wrapped_by(input, "(", ")")` or
    `input.wrapped_by("(", ")")`,
    and indexed token text checks with `tokens_nth_is(input, index, "...")` or
-   `input.nth_is(index, "...")`, plus exact token-pattern checks with
+   `input.nth_is(index, "...")`, plus token-pattern checks with
    `tokens_match(input, "...", "_", ...)` or
-   `input.matches("...", "_", ...)` where `"_"` matches one token and
-   `"$name"` binds a single named token. Its arms return token output with
-   `tokens!(...)`, the input token stream, a named single-token capture with
+   `input.matches("...", "_", ...)` where `"_"` matches one token,
+   `"$name"` binds one named token, and `"$name..."` binds a
+   zero-or-more-token span. Its arms return token output with `tokens!(...)`,
+   the input token stream, a named token or span capture with
    `tokens_capture(input, "name", "...", "$name", ...)` or
    `input.capture("name", "...", "$name", ...)`, or end-exclusive slice
    extraction with `tokens_slice(input, start, end)` or
    `input.slice(start, end)`. This currently lets expression, item, and
    pattern macros choose fallback output for empty token payloads, arity-like
    token counts, keyword/operator boundary checks, delimiter-wrapped inputs,
-   fixed-position token text checks, exact one-token-wildcard patterns, and
-   fixed-range plus single-token named extraction while keeping multi-token
-   capture spans reserved. Non-identity expression
-   returns from `ast -> ast` bodies clone the returned AST and substitute that
+   fixed-position token text checks, one-token-wildcard and named-span
+   patterns, and fixed-range plus named token/span extraction. Non-identity
+   expression returns from `ast -> ast` bodies clone the returned AST and substitute that
    parsed input expression wherever the meta parameter name appears. Literal,
    struct literal, tuple, vector, access, borrow, postfix try,
    null-coalescing, function call, method call, unary, binary, and cast
@@ -338,10 +341,6 @@ V0 cache-format contract until a cache version bump is explicitly approved.
    remains a marker-trait impl and does not change Ari's structural copyability
    rules. Unsupported or duplicate derive names are rejected before impl
    validation, and enum `Default` derives without a case marker are rejected.
-   - [tokens] extend the token_stream evaluator beyond empty-input/count,
-     token-boundary, delimiter-wrapper, indexed text branching, and
-     end-exclusive slice extraction plus exact one-token-wildcard pattern
-     matching plus single-token named captures into multi-token capture spans
    - [ast] extend non-identity `ast` construction beyond expression-position
      expression returns with input substitution and item-position `decl!(...)`
      declaration output with input substitution and pattern-position

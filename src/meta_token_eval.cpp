@@ -107,6 +107,14 @@ bool capture_marker_name(const std::string& part, std::string& name) {
     return valid_capture_name(name);
 }
 
+bool capture_span_marker_name(const std::string& part, std::string& name) {
+    static const std::string suffix = "...";
+    if (part.size() <= 1 + suffix.size() || part.front() != '$') return false;
+    if (part.compare(part.size() - suffix.size(), suffix.size(), suffix) != 0) return false;
+    name = part.substr(1, part.size() - 1 - suffix.size());
+    return valid_capture_name(name);
+}
+
 bool all_string_literals(const std::vector<ExprPtr>& args, std::size_t first) {
     if (first >= args.size()) return false;
     for (std::size_t i = first; i < args.size(); ++i) {
@@ -335,31 +343,102 @@ bool token_nth_is(const std::vector<Token>& input_tokens,
            input_tokens[static_cast<std::size_t>(index)].text == text_expr.string_value;
 }
 
+struct TokenCapture {
+    std::string name;
+    std::vector<Token> tokens;
+};
+
+const std::vector<Token>* find_capture(const std::vector<TokenCapture>& captures,
+                                       const std::string& name) {
+    for (const TokenCapture& capture : captures) {
+        if (capture.name == name) return &capture.tokens;
+    }
+    return nullptr;
+}
+
+bool same_token_texts(const std::vector<Token>& expected,
+                      const std::vector<Token>& input_tokens,
+                      std::size_t first) {
+    if (first + expected.size() > input_tokens.size()) return false;
+    for (std::size_t i = 0; i < expected.size(); ++i) {
+        if (expected[i].text != input_tokens[first + i].text) return false;
+    }
+    return true;
+}
+
+std::size_t min_tokens_for_pattern_suffix(const std::vector<ExprPtr>& parts,
+                                          std::size_t part_index) {
+    std::size_t min_count = 0;
+    for (std::size_t i = part_index; i < parts.size(); ++i) {
+        std::string capture_name;
+        if (capture_span_marker_name(parts[i]->string_value, capture_name)) continue;
+        ++min_count;
+    }
+    return min_count;
+}
+
+bool match_token_pattern_at(const std::vector<Token>& input_tokens,
+                            const std::vector<ExprPtr>& parts,
+                            std::size_t token_index,
+                            std::size_t part_index,
+                            std::vector<TokenCapture>& captures) {
+    if (part_index == parts.size()) return token_index == input_tokens.size();
+
+    const std::string& expected = parts[part_index]->string_value;
+    std::string capture_name;
+    if (capture_span_marker_name(expected, capture_name)) {
+        if (const auto* existing = find_capture(captures, capture_name)) {
+            if (!same_token_texts(*existing, input_tokens, token_index)) return false;
+            return match_token_pattern_at(
+                input_tokens, parts, token_index + existing->size(), part_index + 1, captures);
+        }
+
+        std::size_t min_remaining = min_tokens_for_pattern_suffix(parts, part_index + 1);
+        if (token_index + min_remaining > input_tokens.size()) return false;
+        std::size_t max_capture_len = input_tokens.size() - token_index - min_remaining;
+        for (std::size_t len_plus_one = max_capture_len + 1; len_plus_one > 0; --len_plus_one) {
+            std::size_t capture_len = len_plus_one - 1;
+            auto first_token = input_tokens.begin() + static_cast<std::vector<Token>::difference_type>(token_index);
+            auto last_token = first_token + static_cast<std::vector<Token>::difference_type>(capture_len);
+            captures.push_back({capture_name, std::vector<Token>(first_token, last_token)});
+            if (match_token_pattern_at(
+                    input_tokens, parts, token_index + capture_len, part_index + 1, captures)) {
+                return true;
+            }
+            captures.pop_back();
+        }
+        return false;
+    }
+
+    if (token_index >= input_tokens.size()) return false;
+    if (expected == "_") {
+        return match_token_pattern_at(input_tokens, parts, token_index + 1, part_index + 1, captures);
+    }
+
+    if (capture_marker_name(expected, capture_name)) {
+        std::vector<Token> captured = {input_tokens[token_index]};
+        if (const auto* existing = find_capture(captures, capture_name)) {
+            if (existing->size() != captured.size() || !same_token_texts(*existing, captured, 0)) return false;
+            return match_token_pattern_at(input_tokens, parts, token_index + 1, part_index + 1, captures);
+        }
+
+        captures.push_back({capture_name, captured});
+        if (match_token_pattern_at(input_tokens, parts, token_index + 1, part_index + 1, captures)) {
+            return true;
+        }
+        captures.pop_back();
+        return false;
+    }
+
+    if (input_tokens[token_index].text != expected) return false;
+    return match_token_pattern_at(input_tokens, parts, token_index + 1, part_index + 1, captures);
+}
+
 bool token_matches(const std::vector<Token>& input_tokens,
                    const std::vector<ExprPtr>& parts,
                    std::size_t first) {
-    std::size_t count = parts.size() - first;
-    if (input_tokens.size() != count) return false;
-    std::vector<std::pair<std::string, std::string>> captures;
-    for (std::size_t i = first; i < parts.size(); ++i) {
-        const std::string& expected = parts[i]->string_value;
-        if (expected == "_") continue;
-        std::string capture_name;
-        if (capture_marker_name(expected, capture_name)) {
-            const std::string& actual = input_tokens[i - first].text;
-            bool seen = false;
-            for (const auto& capture : captures) {
-                if (capture.first != capture_name) continue;
-                seen = true;
-                if (capture.second != actual) return false;
-                break;
-            }
-            if (!seen) captures.push_back({capture_name, actual});
-            continue;
-        }
-        if (input_tokens[i - first].text != expected) return false;
-    }
-    return true;
+    std::vector<TokenCapture> captures;
+    return match_token_pattern_at(input_tokens, parts, 0, first, captures);
 }
 
 std::vector<Token> token_capture(const std::vector<Token>& input_tokens,
@@ -370,28 +449,15 @@ std::vector<Token> token_capture(const std::vector<Token>& input_tokens,
     if (!valid_capture_name(requested_name)) {
         fail_eval(capture_name_expr.loc, "token_stream capture names must be identifier-like strings");
     }
-    if (!token_matches(input_tokens, parts, first)) {
+    std::vector<TokenCapture> captures;
+    if (!match_token_pattern_at(input_tokens, parts, 0, first, captures)) {
         fail_eval(capture_name_expr.loc, "token_stream capture pattern did not match input");
     }
 
-    bool found = false;
-    Token captured;
-    for (std::size_t i = first; i < parts.size(); ++i) {
-        std::string capture_name;
-        if (!capture_marker_name(parts[i]->string_value, capture_name) || capture_name != requested_name) continue;
-        if (!found) {
-            captured = input_tokens[i - first];
-            found = true;
-            continue;
-        }
-        if (captured.text != input_tokens[i - first].text) {
-            fail_eval(parts[i]->loc, "token_stream capture pattern binds $" + requested_name + " to different tokens");
-        }
+    if (const auto* captured = find_capture(captures, requested_name)) {
+        return *captured;
     }
-    if (!found) {
-        fail_eval(capture_name_expr.loc, "token_stream capture pattern does not bind $" + requested_name);
-    }
-    return {captured};
+    fail_eval(capture_name_expr.loc, "token_stream capture pattern does not bind $" + requested_name);
 }
 
 bool is_token_integer_arithmetic(TokenKind op) {
@@ -569,8 +635,9 @@ bool supported_token_condition_expr(const Expr& expr,
              input_name + ", \"(\", \")\") or " + input_name +
              ".wrapped_by(\"(\", \")\"), and indexed token text matching with tokens_nth_is(" +
              input_name + ", index, \"...\") or " + input_name +
-             ".nth_is(index, \"...\"), plus exact token pattern matching with tokens_match(" +
-             input_name + ", \"...\", \"_\", ...) or " + input_name + ".matches(\"...\", \"_\", ...)";
+             ".nth_is(index, \"...\"), plus token pattern matching with tokens_match(" +
+             input_name + ", \"...\", \"_\", \"$name\", \"$name...\", ...) or " + input_name +
+             ".matches(\"...\", \"_\", \"$name\", \"$name...\", ...)";
     return false;
 }
 

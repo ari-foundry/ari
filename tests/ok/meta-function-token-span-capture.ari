@@ -1,0 +1,35 @@
+meta fn span_expr(input: token_stream) -> token_stream {
+  return if input.matches("wrap", "(", "$body...", ")") {
+    input.capture("body", "wrap", "(", "$body...", ")")
+  } else {
+    tokens!(0)
+  };
+}
+
+meta fn span_case(input: token_stream) -> token_stream {
+  return if tokens_match(input, "case", "$pattern...") {
+    tokens_capture(input, "pattern", "case", "$pattern...")
+  } else {
+    tokens!(_)
+  };
+}
+
+enum MaybeI64 {
+  None,
+  Some(i64),
+}
+
+fn score(value: MaybeI64) -> i64 {
+  return match value {
+    span_case!(case Some(inner)) => {
+      inner
+    }
+    span_case!(other) => {
+      3
+    }
+  };
+}
+
+fn main() -> i64 {
+  return span_expr!(wrap(10 + 4)) + span_expr!(plain) + score(Some(6)) + score(None());
+}
