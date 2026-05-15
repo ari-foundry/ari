@@ -22,6 +22,8 @@
       declarations through the LSP definition path.
 - [x] Surface first-pass top-level Ari declaration completion through the LSP
       completion path.
+- [x] Surface first-pass LSP Quick Fix actions for direct native lint-rule text
+      edits.
 - [x] Add command-palette actions for running `ari-lint` and `ari --check` on
       the active Ari file.
 - [x] Add VS Code task-provider entries for `make`, `make check`, `make tools`,

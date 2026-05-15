@@ -42,6 +42,8 @@ Current LSP-powered editor features:
 - Same-document identifier highlights.
 - Brace-block folding ranges.
 - Selection range expansion from identifier to source line.
+- Quick Fix actions for direct text edits exposed by `ari-lsp`, including
+  trailing-whitespace removal and final-newline insertion.
 
 ## Commands
 

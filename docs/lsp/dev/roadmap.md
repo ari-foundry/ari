@@ -30,6 +30,8 @@
 - [x] Clear diagnostics on `didClose`.
 - [x] Route LSP diagnostics through the shared lint checker so compiler
       diagnostics and native lint rules use the same rule settings.
+- [x] Add first-pass `textDocument/codeAction` quick fixes for native
+      source-text lint rules and `source.fixAll.ari`.
 - [x] Accept shared lint rule config files through `--config PATH`.
 - [x] Use lint config discovery for saved and unsaved LSP documents when no
       explicit `--config` is supplied.
@@ -42,6 +44,8 @@
 ## Near-Term Work
 
 - [ ] Add stable diagnostic codes once the compiler/lint layer exposes them.
+- [ ] Replace first-pass lint text-edit code actions with rule-owned fix
+      providers shared by the CLI and LSP.
 - [ ] Replace first-pass text symbol scanning with parser/module-summary-backed
       nested symbols.
 - [ ] Replace first-pass document highlights with parser/sema-backed symbol

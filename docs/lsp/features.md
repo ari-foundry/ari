@@ -17,6 +17,17 @@ Supported diagnostic paths:
 - `textDocument/publishDiagnostics`
 - `textDocument/diagnostic`
 
+## Code Actions
+
+`textDocument/codeAction` returns quick fixes for native source-text lint rules
+that can be fixed with direct text edits:
+
+- remove trailing whitespace
+- insert a missing final newline
+
+The server also offers `source.fixAll.ari` when at least one of those edits is
+available.
+
 ## Symbols
 
 The first-pass symbol scanner recognizes top-level declarations in the current

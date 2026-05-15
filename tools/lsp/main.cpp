@@ -1,3 +1,4 @@
+#include "code_actions.hpp"
 #include "documents.hpp"
 #include "folding.hpp"
 #include "highlights.hpp"
@@ -234,6 +235,7 @@ int main(int argc, char** argv) {
                 "\"workspaceSymbolProvider\":true,"
                 "\"hoverProvider\":true,"
                 "\"definitionProvider\":true,"
+                "\"codeActionProvider\":{\"codeActionKinds\":[\"quickfix\",\"source.fixAll.ari\"]},"
                 "\"completionProvider\":{\"resolveProvider\":false,\"triggerCharacters\":[\".\",\":\"]}"
                 "},\"serverInfo\":{\"name\":\"ari-lsp\",\"version\":\"0.1.0-dev\"}}";
             ari::lsp::write_message(std::cout, response_result(id.empty() ? "null" : id, capabilities));
@@ -259,6 +261,11 @@ int main(int argc, char** argv) {
             std::vector<ari::tooling::Diagnostic> diagnostics =
                 check_document(config, documents, ari::lsp::json_string_field(body, "uri"));
             ari::lsp::write_message(std::cout, ari::lsp::diagnostics_report_response(id, diagnostics));
+            continue;
+        }
+        if (method == "textDocument/codeAction") {
+            std::string uri = ari::lsp::json_string_field(body, "uri");
+            ari::lsp::write_message(std::cout, ari::lsp::code_actions_response(id, uri, text_for_uri(documents, uri)));
             continue;
         }
         if (method == "textDocument/documentSymbol") {

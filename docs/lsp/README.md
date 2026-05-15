@@ -44,6 +44,7 @@ temporary source file beside the original document path, so nearby
 - `textDocument/didClose`
 - `textDocument/publishDiagnostics`
 - `textDocument/diagnostic`
+- `textDocument/codeAction`
 - `textDocument/documentSymbol`
 - `textDocument/documentHighlight`
 - `textDocument/foldingRange`
@@ -62,6 +63,9 @@ asks about a file that is not open, the saved file on disk is checked directly.
 Diagnostics include compiler-backed errors and native lint warnings. Diagnostic
 serialization preserves shared diagnostic codes and explicit end spans when the
 tooling layer provides them.
+Code actions provide first-pass quick fixes for native source-text lint rules
+that can be expressed as direct text edits, plus a source fix-all action for the
+same edit set.
 Document symbols are a first-pass top-level outline for functions, structs,
 enums, traits, impls, and modules; richer parser-backed symbol trees are still
 planned. Document highlights use the same lightweight identifier-at-cursor

@@ -12,7 +12,8 @@ can jump to their declaration lines. Workspace symbol search can find top-level
 Ari declarations across workspace files. Document highlights mark matching
 same-document identifiers, brace blocks provide editor folding ranges, selection
 range support expands from identifiers to source lines, and completion suggests
-top-level declarations in the active document.
+top-level declarations in the active document. Quick Fix can apply direct text
+edits for simple native lint rules exposed by `ari-lsp`.
 
 ## Layout
 
