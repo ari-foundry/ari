@@ -29,7 +29,8 @@ symbols in the active document.
 - `editors/vscode/language-configuration.json` defines comments, brackets, and
   auto-closing pairs.
 - `editors/vscode/syntaxes/ari.tmLanguage.json` provides lightweight syntax
-  highlighting.
+  highlighting for comments, strings, attributes, declarations, macros,
+  keywords, constants, primitive/support types, numeric literals, and operators.
 
 ## Configuration
 

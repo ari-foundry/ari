@@ -31,13 +31,14 @@
       discovery works naturally in editor sessions.
 - [x] Add `Ari: Restart Language Server` so extension users can manually
       restart `ari-lsp` after rebuilding tools or changing local setup.
+- [x] Expand TextMate syntax highlighting for comments, attributes,
+      declarations, macros, keywords, built-in types, numbers, and operators.
 
 ## Near-Term Work
 
 - [ ] Add a README section for packaging and local extension development once
       dependency installation policy is decided.
-- [ ] Add richer syntax highlighting after the lint/LSP diagnostic path is
-      stable.
+- [ ] Add semantic tokens once parser-backed LSP symbol/type data exists.
 
 ## Design Notes
 

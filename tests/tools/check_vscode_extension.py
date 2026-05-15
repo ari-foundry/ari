@@ -5,6 +5,8 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
 package = json.loads((root / "editors/vscode/package.json").read_text())
+grammar = json.loads((root / "editors/vscode/syntaxes/ari.tmLanguage.json").read_text())
+language_config = json.loads((root / "editors/vscode/language-configuration.json").read_text())
 for source in ("extension.js", "commands.js", "tasks.js", "lsp.js", "paths.js", "config.js"):
     if not (root / "editors/vscode" / source).exists():
         raise SystemExit(f"missing VS Code source file: {source}")
@@ -50,3 +52,28 @@ if missing_targets:
 
 if "onTaskType:ari" not in activation_events:
     raise SystemExit("missing VS Code activation event: onTaskType:ari")
+
+if grammar.get("scopeName") != "source.ari":
+    raise SystemExit("Ari grammar must use source.ari scope")
+
+repository = grammar.get("repository", {})
+for section in (
+    "attributes",
+    "comments",
+    "constants",
+    "declarations",
+    "keywords",
+    "macros",
+    "numbers",
+    "operators",
+    "strings",
+    "types",
+):
+    if section not in repository:
+        raise SystemExit(f"missing Ari grammar repository section: {section}")
+
+comment_config = language_config.get("comments", {})
+if comment_config.get("lineComment") != "//":
+    raise SystemExit("missing Ari line comment configuration")
+if comment_config.get("blockComment") != ["/*", "*/"]:
+    raise SystemExit("missing Ari block comment configuration")
