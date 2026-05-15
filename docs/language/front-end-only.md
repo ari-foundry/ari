@@ -557,8 +557,9 @@ macro invocations must resolve to
 identity-expand by parsing their token tree as one type before semantic type
 lowering; `type -> type` bodies that return `type!(...)` replace that input
 with the constructed type AST. General syntax-rewriting meta evaluation,
-additional derives, and `format!` are still
-planned and rejected with specific diagnostics.
+additional derives, and default-zone `format!` are still planned and rejected
+with specific diagnostics; use executable `format_in!` for today's
+explicit-zone owned string formatting.
 Pattern-position `ident!(...)` uses the same reserved spelling and balanced
 token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions. Empty

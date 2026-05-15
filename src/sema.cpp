@@ -16,6 +16,7 @@
 #include "drop_semantics.hpp"
 #include "enum_constructor_semantics.hpp"
 #include "for_pattern_semantics.hpp"
+#include "format_string_semantics.hpp"
 #include "ir_builders.hpp"
 #include "iterator_semantics.hpp"
 #include "layout.hpp"
@@ -14688,72 +14689,6 @@ private:
             access.type);
     }
 
-    struct ParsedFormatString {
-        std::vector<std::string> parts;
-        std::vector<IrFormatSpec> specs;
-    };
-
-    static IrFormatSpec parse_format_placeholder(SourceLocation loc, const std::string& text) {
-        if (text.empty()) return IrFormatSpec{};
-        if (text.size() < 2 || text[0] != ':' || text[1] != '.') {
-            fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
-        }
-        int precision = 0;
-        bool has_digit = false;
-        for (std::size_t i = 2; i < text.size(); ++i) {
-            unsigned char c = static_cast<unsigned char>(text[i]);
-            if (!std::isdigit(c)) {
-                fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
-            }
-            has_digit = true;
-            precision = precision * 10 + static_cast<int>(text[i] - '0');
-            if (precision > 64) fail(loc, "format precision must be at most 64");
-        }
-        if (!has_digit) fail(loc, "format precision placeholder expects digits after colon-dot");
-        return IrFormatSpec{precision};
-    }
-
-    static ParsedFormatString parse_format_string(SourceLocation loc, const std::string& text, std::size_t arg_count) {
-        ParsedFormatString parsed;
-        std::string current;
-        std::size_t placeholders = 0;
-        for (std::size_t i = 0; i < text.size(); ++i) {
-            char c = text[i];
-            if (c == '{') {
-                if (i + 1 < text.size() && text[i + 1] == '{') {
-                    current.push_back('{');
-                    ++i;
-                    continue;
-                }
-                std::size_t close = text.find('}', i + 1);
-                if (close == std::string::npos) {
-                    fail(loc, "format string only supports {} and {:.N} placeholders; escape literal { as {{");
-                }
-                parsed.parts.push_back(current);
-                current.clear();
-                parsed.specs.push_back(parse_format_placeholder(loc, text.substr(i + 1, close - i - 1)));
-                ++placeholders;
-                i = close;
-                continue;
-            }
-            if (c == '}') {
-                if (i + 1 < text.size() && text[i + 1] == '}') {
-                    current.push_back('}');
-                    ++i;
-                    continue;
-                }
-                fail(loc, "unmatched } in format string; escape literal } as }}");
-            }
-            current.push_back(c);
-        }
-        parsed.parts.push_back(current);
-        if (placeholders != arg_count) {
-            fail(loc, "format string has " + std::to_string(placeholders) +
-                      " placeholders but " + std::to_string(arg_count) + " values were provided");
-        }
-        return parsed;
-    }
-
     IrExprPtr check_format_print(const Expr& expr, IrExprPtr lowered, const std::string& print_name) {
         (void)lowered;
         if (expr.args.empty()) fail(expr.loc, "'" + expr.name + "' expects a string literal format argument");
@@ -14801,6 +14736,220 @@ private:
             std::move(args),
             is_println_name(print_name)
         );
+    }
+
+    enum class FormatInAppendMethod {
+        String,
+        I64,
+        Bool
+    };
+
+    static bool format_in_bool_binary_op(TokenKind op) {
+        switch (op) {
+            case TokenKind::EqEq:
+            case TokenKind::BangEq:
+            case TokenKind::Less:
+            case TokenKind::LessEq:
+            case TokenKind::Greater:
+            case TokenKind::GreaterEq:
+            case TokenKind::AmpAmp:
+            case TokenKind::PipePipe:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    static bool format_in_integer_type_ref_name(const std::string& name) {
+        return name == "i8" || name == "i16" || name == "i32" || name == "i64" ||
+               name == "u8" || name == "u16" || name == "u32" || name == "u64";
+    }
+
+    static StmtPtr make_format_in_var_decl(SourceLocation loc, std::string name, ExprPtr init) {
+        auto stmt = std::make_unique<Stmt>();
+        stmt->kind = StmtKind::VarDecl;
+        stmt->loc = loc;
+        stmt->binding.name = std::move(name);
+        stmt->binding.mutable_binding = true;
+        stmt->binding.loc = loc;
+        stmt->binding.init = std::move(init);
+        return stmt;
+    }
+
+    static StmtPtr make_format_in_expr_stmt(SourceLocation loc, ExprPtr expr) {
+        auto stmt = std::make_unique<Stmt>();
+        stmt->kind = StmtKind::ExprStmt;
+        stmt->loc = loc;
+        stmt->expr = std::move(expr);
+        return stmt;
+    }
+
+    std::optional<FormatInAppendMethod> format_in_append_method_from_type(SourceLocation loc, const IrType& type) const {
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::String) {
+            return FormatInAppendMethod::String;
+        }
+        if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
+            return FormatInAppendMethod::Bool;
+        }
+        if (is_value_integer_type(type)) return FormatInAppendMethod::I64;
+        if (is_value_float_type(type)) {
+            fail(loc, "format_in! currently supports string, integer, and bool values; use print!/println! for float formatting");
+        }
+        if (type.primitive != IrPrimitiveKind::Unknown) {
+            fail(loc, "format_in! currently supports string, integer, and bool values, got " + type_name(type));
+        }
+        return std::nullopt;
+    }
+
+    std::optional<FormatInAppendMethod> format_in_append_method_from_known_expr(const Expr& arg) {
+        switch (arg.kind) {
+            case ExprKind::String:
+                return FormatInAppendMethod::String;
+            case ExprKind::Bool:
+                return FormatInAppendMethod::Bool;
+            case ExprKind::Integer:
+                return FormatInAppendMethod::I64;
+            case ExprKind::Float:
+                fail(arg.loc, "format_in! currently supports string, integer, and bool values; use print!/println! for float formatting");
+            case ExprKind::Name:
+                if (LocalInfo* local = find_local_slot(arg.name)) {
+                    return format_in_append_method_from_type(arg.loc, local->type);
+                }
+                return std::nullopt;
+            case ExprKind::Cast:
+                if (arg.cast_type.name == "string") return FormatInAppendMethod::String;
+                if (arg.cast_type.name == "bool") return FormatInAppendMethod::Bool;
+                if (format_in_integer_type_ref_name(arg.cast_type.name)) return FormatInAppendMethod::I64;
+                return format_in_append_method_from_type(arg.loc, resolve_executable_type(arg.cast_type));
+            case ExprKind::Unary:
+                if (arg.op == TokenKind::Bang) return FormatInAppendMethod::Bool;
+                return FormatInAppendMethod::I64;
+            case ExprKind::Binary:
+                return format_in_bool_binary_op(arg.op)
+                    ? FormatInAppendMethod::Bool
+                    : FormatInAppendMethod::I64;
+            case ExprKind::Call:
+                {
+                    std::string function_name = resolve_function_name(arg.name);
+                    auto found = functions_.find(function_name);
+                    if (found != functions_.end()) {
+                        return format_in_append_method_from_type(arg.loc, found->second.result);
+                    }
+                }
+                return std::nullopt;
+            default:
+                return std::nullopt;
+        }
+    }
+
+    FormatInAppendMethod format_in_append_method_for_expr(const Expr& arg) {
+        if (auto known = format_in_append_method_from_known_expr(arg)) return *known;
+        return FormatInAppendMethod::I64;
+    }
+
+    static const char* format_in_append_method_name(FormatInAppendMethod method) {
+        switch (method) {
+            case FormatInAppendMethod::String: return "append_string_in";
+            case FormatInAppendMethod::I64: return "append_i64_in";
+            case FormatInAppendMethod::Bool: return "append_bool_in";
+        }
+        return "append_i64_in";
+    }
+
+    static std::uint64_t format_in_initial_capacity(const ParsedFormatString& format_string) {
+        std::uint64_t capacity = 0;
+        for (const auto& part : format_string.parts) capacity += part.size();
+        capacity += static_cast<std::uint64_t>(format_string.specs.size());
+        return capacity;
+    }
+
+    ExprPtr make_format_in_append_call(SourceLocation loc,
+                                       const std::string& result_name,
+                                       const Expr& zone_arg,
+                                       std::string part) {
+        std::vector<ExprPtr> args;
+        args.push_back(clone_expression_tree(zone_arg));
+        args.push_back(make_ast_string_expr(loc, std::move(part)));
+        return make_ast_method_call_expr(
+            loc,
+            make_ast_name_expr(loc, result_name),
+            "append_string_in",
+            {},
+            std::move(args)
+        );
+    }
+
+    ExprPtr make_format_in_append_call(SourceLocation loc,
+                                       const std::string& result_name,
+                                       const Expr& zone_arg,
+                                       const Expr& value_arg) {
+        FormatInAppendMethod method = format_in_append_method_for_expr(value_arg);
+        std::vector<ExprPtr> args;
+        args.push_back(clone_expression_tree(zone_arg));
+        args.push_back(clone_expression_tree(value_arg));
+        return make_ast_method_call_expr(
+            loc,
+            make_ast_name_expr(loc, result_name),
+            format_in_append_method_name(method),
+            {},
+            std::move(args)
+        );
+    }
+
+    IrExprPtr check_format_in_macro(const Expr& expr, std::vector<ExprPtr> args) {
+        if (args.size() < 2) {
+            fail(expr.loc, "format_in! expects a mutable zone borrow, a string literal format, and optional values");
+        }
+        const Expr& zone_arg = *args[0];
+        const Expr& format = *args[1];
+        if (format.kind != ExprKind::String) {
+            fail(format.loc, "format_in! expects a string literal format argument");
+        }
+
+        ParsedFormatString format_string = parse_format_string(format.loc, format.string_value, args.size() - 2);
+        for (const IrFormatSpec& spec : format_string.specs) {
+            if (spec.precision >= 0) {
+                fail(format.loc, "format_in! currently supports {} placeholders only; use print!/println! for precision formatting");
+            }
+        }
+
+        std::string result_name = make_hidden_local("$format");
+        std::vector<StmtPtr> body;
+        std::vector<ExprPtr> new_args;
+        new_args.push_back(clone_expression_tree(zone_arg));
+        new_args.push_back(make_ast_integer_expr(expr.loc, format_in_initial_capacity(format_string)));
+        body.push_back(make_format_in_var_decl(
+            expr.loc,
+            result_name,
+            make_ast_call_expr(expr.loc, "std::string::new", nullptr, std::move(new_args))
+        ));
+
+        for (std::size_t i = 0; i < format_string.specs.size(); ++i) {
+            if (!format_string.parts[i].empty()) {
+                body.push_back(make_format_in_expr_stmt(
+                    expr.loc,
+                    make_format_in_append_call(expr.loc, result_name, zone_arg, format_string.parts[i])
+                ));
+            }
+            body.push_back(make_format_in_expr_stmt(
+                args[i + 2]->loc,
+                make_format_in_append_call(args[i + 2]->loc, result_name, zone_arg, *args[i + 2])
+            ));
+        }
+        if (!format_string.parts.empty() && !format_string.parts.back().empty()) {
+            body.push_back(make_format_in_expr_stmt(
+                expr.loc,
+                make_format_in_append_call(expr.loc, result_name, zone_arg, format_string.parts.back())
+            ));
+        }
+
+        ExprPtr block = make_ast_block_expr(
+            expr.loc,
+            {},
+            std::move(body),
+            make_ast_name_expr(expr.loc, result_name)
+        );
+        return check_expr(*block);
     }
 
     static std::string mangle_text_key(const std::string& text) {
@@ -15467,7 +15616,13 @@ private:
 
     IrExprPtr check_prelude_macro_call(const Expr& expr, PreludeMacroKind kind) {
         if (kind == PreludeMacroKind::Format) {
-            fail(expr.loc, "prelude macro 'format!' needs explicit-zone formatted string lowering before it can return a value");
+            fail(expr.loc, "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings");
+        }
+        if (kind == PreludeMacroKind::FormatIn) {
+            if (!expr.macro_tokens) {
+                fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
+            }
+            return check_format_in_macro(expr, parse_macro_argument_expressions(*expr.macro_tokens, expr.loc));
         }
         if (kind == PreludeMacroKind::Matches) {
             fail(expr.loc, "prelude macro 'matches!' needs pattern-position macro expansion before it can be lowered");

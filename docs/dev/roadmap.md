@@ -211,9 +211,14 @@ constructor subset documented in the language guide.
      handles. The source `std::boxed::Box<T>` seed already has a no-op generic
      Drop impl and use-after-drop checking; the remaining work is the final
      root owning smart-pointer surface and value-destroying ownership contract.
-   - [text-format] wire the explicit-zone formatted string macro/helper surface
-     on top of the source string append primitives before broad library APIs
-     start returning formatted text.
+   - [text-format] finish the formatted string surface after the first
+     explicit-zone pass. `format_in!(ref mut Zone, "...", values...)` now
+     lowers `{}` string/integer/bool formatting to source `String` construction
+     plus same-zone append helpers; remaining work is the final `format!`
+     policy and owned-string float/precision formatting.
+     Small follow-up: [format-display-trait] once trait dispatch is ready for
+     broad library use, route user-defined formatted values through a compact
+     display-style trait instead of adding more macro-only cases.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

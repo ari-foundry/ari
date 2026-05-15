@@ -285,13 +285,17 @@ matches!(value, Some(_))
 `matches!` uses the unqualified parser-special spelling and expands to a
 bool-valued pattern test using the same pattern engine as `match`, so enum,
 scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
-the same rules. `format!` is still reserved until the explicit-zone formatted
-string macro surface is wired. Today, build owned text with a `String` handle
-and `append_string_in`, `append_i64_in`, or `append_bool_in`.
+the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
+`String` in the explicit zone and currently lowers `{}` placeholders for
+lowercase `string`, integer, and bool values through the same checked append
+helpers as manual text construction. Precision placeholders and float values
+remain on `print!`/`println!` for now. `format!` is still reserved for the
+future default-zone or context-aware spelling.
 Other prelude expression macros are recognized as unqualified names or paths
-that resolve to the root `std` macro name, such as `std::print!` or an alias of
-`std::format!`; arbitrary module paths whose basename is `format`, `print`, or
-another prelude macro name remain user macro paths.
+that resolve to the root `std` macro name, such as `std::print!`, `std::format!`,
+or an alias of `std::format_in!`; arbitrary module paths whose basename is
+`format`, `format_in`, `print`, or another prelude macro name remain user macro
+paths.
 
 ## Current Source Signatures
 
@@ -639,6 +643,7 @@ var text = std::string::from_string(ref mut zone, "ari")
 text.append_string_in(ref mut zone, "=")
 text.append_i64_in(ref mut zone, 42)
 text.append_bool_in(ref mut zone, true)
+let rendered = format_in!(ref mut zone, "ari={} ok={}", 42, true)
 let raw = text.as_ptr()
 let view = text.as_slice()
 var other_zone = zone::create(64)
@@ -653,9 +658,11 @@ additional)` for explicit growth, `push_in(ref mut Zone, byte)` and
 `extend_from_slice_in(ref mut Zone, Slice[u8])` for bulk byte appends, and
 `resize_in(ref mut Zone, length, byte)` to grow or shrink. `append_string_in`,
 `append_i64_in`, and `append_bool_in` build text from the first scalar values
-needed by explicit formatting. These growth and append methods must receive
-the same explicit zone that created the handle, so provenance continues to
-match reset/destroy invalidation. Use
+needed by explicit formatting, and `format_in!(ref mut Zone, "...", values...)`
+wraps those helpers in a single expression for `{}` string/integer/bool
+formatting. These growth and append methods must receive the same explicit zone
+that created the handle, so provenance continues to match reset/destroy
+invalidation. Use
 `std::string::copy_to(value, ref mut Zone)` to copy the current bytes into
 another explicit zone.
 Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`

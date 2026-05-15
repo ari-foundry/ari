@@ -16,6 +16,7 @@ enum class PreludeMacroKind {
     Print,
     Println,
     Format,
+    FormatIn,
     Matches
 };
 

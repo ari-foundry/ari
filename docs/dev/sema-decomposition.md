@@ -101,6 +101,9 @@ adding more narrow syntax-specific `*_semantics` siblings.
   rewrites
 - `for_pattern_semantics` for irrefutable non-iterator `for` loop-head pattern
   validation shared by range, list-literal, and stored-vector loops
+- `format_string_semantics` for shared `{}` / `{:.N}` format-string parsing,
+  escaped-brace handling, placeholder count diagnostics, and precision
+  validation used by both print lowering and explicit-zone string formatting
 - `move_semantics` for pure helpers around explicit ownership-consumption
   syntax such as `take(place)` place-shape validation
 - `drop_semantics` for explicit destructor semantics that are independent of

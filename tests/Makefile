@@ -78,7 +78,7 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	if $(LINT_TARGET) --ari $(TARGET) --json tests/errors/prelude-macro-format-planned.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
 	grep -q '"code":"ari/compiler"' $(BUILD_DIR)/tools/lint-format.json
-	grep -q "prelude macro 'format!' needs explicit-zone formatted string lowering" $(BUILD_DIR)/tools/lint-format.json
+	grep -q "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/tools/lint-format.json
 	sh tests/tools/lsp_smoke.sh
 
 check-cli: $(TARGET)
@@ -241,6 +241,10 @@ check-prelude: $(TARGET)
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/std-string-append.ll
+	$(TARGET) tests/ok/prelude-format-in.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in.ll
+	grep -q 'append_string_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
+	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
+	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3len' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent8capacity' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
@@ -453,9 +457,11 @@ check-prelude: $(TARGET)
 	if $(TARGET) tests/errors/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err
 	if $(TARGET) tests/errors/prelude-macro-format-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-planned.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' needs explicit-zone formatted string lowering" $(BUILD_DIR)/prelude/prelude-macro-format-planned.err
+	grep -q "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-planned.err
 	if $(TARGET) tests/errors/prelude-macro-format-qualified-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err 2>&1; then exit 1; fi
-	grep -q "prelude macro 'format!' needs explicit-zone formatted string lowering" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err
+	grep -q "prelude macro 'format!' is reserved; use format_in!(ref mut zone, ...) for explicit-zone strings" $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err
+	if $(TARGET) tests/errors/prelude-format-in-float.ari -o $(BUILD_DIR)/prelude/prelude-format-in-float.elf >$(BUILD_DIR)/prelude/prelude-format-in-float.err 2>&1; then exit 1; fi
+	grep -q "format_in! currently supports string, integer, and bool values; use print!/println! for float formatting" $(BUILD_DIR)/prelude/prelude-format-in-float.err
 	if $(TARGET) tests/errors/prelude-macro-nonprelude-qualified.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err 2>&1; then exit 1; fi
 	grep -q "unknown macro 'other::format!'" $(BUILD_DIR)/prelude/prelude-macro-nonprelude-qualified.err
 	if $(TARGET) tests/errors/prelude-macro-nonprelude-matches.ari -o $(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.elf >$(BUILD_DIR)/prelude/prelude-macro-nonprelude-matches.err 2>&1; then exit 1; fi

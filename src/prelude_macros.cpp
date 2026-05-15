@@ -13,6 +13,7 @@ PreludeMacroKind prelude_macro_kind(const std::string& name) {
     if (name == "print") return PreludeMacroKind::Print;
     if (name == "println") return PreludeMacroKind::Println;
     if (name == "format") return PreludeMacroKind::Format;
+    if (name == "format_in") return PreludeMacroKind::FormatIn;
     if (name == "matches") return PreludeMacroKind::Matches;
     return PreludeMacroKind::None;
 }

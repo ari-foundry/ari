@@ -1,0 +1,17 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let value = -7;
+  let ok = true;
+  var text: String = format_in!(ref mut zone, "ari={} ok={} {{}} {}", value, ok, "done");
+
+  assert_eq_i64(text.len(), 22);
+  assert_eq_i64(text.get(4) as i64, 45);
+  assert_eq_i64(text.get(5) as i64, 55);
+  assert_eq_i64(text.get(10) as i64, 116);
+  assert_eq_i64(text.get(15) as i64, 123);
+  assert_eq_i64(text.get(21) as i64, 101);
+
+  let total = text.len() + (text.get(10) as i64) + (text.get(15) as i64) + (text.get(21) as i64);
+  zone::destroy(zone);
+  return total % 256;
+}
