@@ -19,6 +19,9 @@
       the active Ari file.
 - [x] Add VS Code task-provider entries for `make`, `make check`, `make tools`,
       `make check-tools`, `make lint`, and `make lsp`.
+- [x] Split VS Code LSP client lifecycle into `lsp.js`, share path resolution
+      through `paths.js`, and restart the client when Ari toolchain settings
+      change.
 
 ## Near-Term Work
 

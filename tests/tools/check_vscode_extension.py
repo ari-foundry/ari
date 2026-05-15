@@ -5,6 +5,9 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[2]
 package = json.loads((root / "editors/vscode/package.json").read_text())
+for source in ("extension.js", "commands.js", "tasks.js", "lsp.js", "paths.js"):
+    if not (root / "editors/vscode" / source).exists():
+        raise SystemExit(f"missing VS Code source file: {source}")
 
 commands = {item["command"] for item in package["contributes"]["commands"]}
 required_commands = {

@@ -15,11 +15,15 @@ symbols in the active document.
 
 - `editors/vscode/package.json` declares language, configuration, and extension
   metadata.
-- `editors/vscode/extension.js` starts the language client.
+- `editors/vscode/extension.js` wires the extension subsystems together.
+- `editors/vscode/lsp.js` owns the language-client lifecycle and restarts
+  `ari-lsp` when relevant Ari settings change.
 - `editors/vscode/commands.js` owns command-palette actions and output-channel
   process execution.
 - `editors/vscode/tasks.js` owns VS Code task-provider integration for common
   Ari make targets.
+- `editors/vscode/paths.js` owns workspace-relative path resolution shared by
+  commands and LSP startup.
 - `editors/vscode/language-configuration.json` defines comments, brackets, and
   auto-closing pairs.
 - `editors/vscode/syntaxes/ari.tmLanguage.json` provides lightweight syntax
@@ -50,6 +54,12 @@ The extension contributes Ari tasks for common repository commands:
 - `Ari: make check-tools`
 - `Ari: make lint`
 - `Ari: make lsp`
+
+## LSP Restart Policy
+
+Changing `ari.compilerPath`, `ari.lspPath`, or `ari.modulePaths` restarts the
+language client so diagnostics and editor features use the new toolchain
+settings.
 
 ## Developer Notes
 
