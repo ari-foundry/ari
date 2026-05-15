@@ -22,11 +22,14 @@ Editors should launch:
 
 ```sh
 build/ari-lsp --ari build/ari
+build/ari-lsp --ari build/ari --config ari-lint.rules
 build/ari-lsp --ari build/ari --rule lint/trailing-whitespace=error
 ```
 
 Additional module search paths can be passed with `-I path`.
-Lint rule severities use the same `--rule RULE=SEVERITY` format as `ari-lint`.
+Lint rule severities use the same `--config PATH` and
+`--rule RULE=SEVERITY` formats as `ari-lint`; command-line rule overrides are
+applied after config-file settings.
 
 ## Current Capabilities
 

@@ -4,8 +4,12 @@ LSP=${LSP:-build/ari-lsp}
 ARI=${ARI:-build/ari}
 FILE=$(pwd)/examples/count.ari
 URI="file://${FILE}"
+CONFIG=$(pwd)/build/tools/lsp-lint.rules
 VALID_TEXT='pub struct Point { \n  mut x: i64,\n}\n\nfn main() -> i64 {\n  return 0;\n}\n'
 INVALID_TEXT='fn main() -> i64 {\n  let text = format!(\"value={}\", 1);\n  return 0;\n}\n'
+
+mkdir -p build/tools
+printf 'trailing-whitespace = error\n' >"$CONFIG"
 
 send() {
   body=$1
@@ -25,7 +29,7 @@ output=$(
     send '{"jsonrpc":"2.0","id":6,"method":"textDocument/diagnostic","params":{"textDocument":{"uri":"'"$URI"'"}}}'
     send '{"jsonrpc":"2.0","id":7,"method":"shutdown","params":null}'
     send '{"jsonrpc":"2.0","method":"exit","params":null}'
-  } | "$LSP" --ari "$ARI" --rule trailing-whitespace=error
+  } | "$LSP" --ari "$ARI" --config "$CONFIG"
 )
 
 printf '%s' "$output" | grep -q '"method":"textDocument/publishDiagnostics"'

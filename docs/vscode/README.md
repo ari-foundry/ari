@@ -36,6 +36,7 @@ symbols in the active document.
 - `ari.compilerPath`: path passed to `ari-lsp --ari`
 - `ari.lspPath`: path to the `ari-lsp` executable
 - `ari.lintPath`: path to the `ari-lint` executable
+- `ari.lintConfigPath`: optional lint config path passed as `--config`
 - `ari.modulePaths`: extra `-I` paths passed to the language server
 - `ari.lintRules`: lint severity overrides passed to both `ari-lint` and
   `ari-lsp`, for example `{ "lint/trailing-whitespace": "error" }`
@@ -62,8 +63,8 @@ The extension contributes Ari tasks for common repository commands:
 ## LSP Restart Policy
 
 Changing `ari.compilerPath`, `ari.lspPath`, `ari.modulePaths`, or
-`ari.lintRules` restarts the language client so diagnostics and editor features
-use the new toolchain settings.
+`ari.lintConfigPath`, or `ari.lintRules` restarts the language client so
+diagnostics and editor features use the new toolchain settings.
 
 ## Developer Notes
 

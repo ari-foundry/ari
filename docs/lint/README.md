@@ -23,6 +23,7 @@ build/ari-lint examples/count.ari
 build/ari-lint --json tests/errors/prelude-macro-format-planned.ari
 build/ari-lint --ari build/ari -I path/to/modules source.ari
 build/ari-lint --list-rules
+build/ari-lint --config ari-lint.rules source.ari
 build/ari-lint --rule lint/trailing-whitespace=error source.ari
 ```
 
@@ -32,6 +33,15 @@ provided.
 `--rule RULE=SEVERITY` accepts `off`, `hint`, `note`, `warning`, or `error`.
 Rule names may use the full code, such as `lint/trailing-whitespace`, or the
 short lint name, such as `trailing-whitespace`.
+
+`--config PATH` loads persistent rule settings before command-line `--rule`
+overrides. The config format is intentionally small: one `RULE = SEVERITY`
+setting per line, blank lines allowed, and `#` comments supported.
+
+```text
+# ari-lint.rules
+lint/trailing-whitespace = error
+```
 
 The VS Code extension's `Ari: Lint Current File` command invokes this tool
 through its `ari.lintPath` setting.

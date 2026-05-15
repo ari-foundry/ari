@@ -9,6 +9,14 @@ namespace {
 
 constexpr const char* trailing_whitespace_code = "lint/trailing-whitespace";
 
+std::string trim(const std::string& text) {
+    std::size_t begin = 0;
+    while (begin < text.size() && std::isspace(static_cast<unsigned char>(text[begin]))) ++begin;
+    std::size_t end = text.size();
+    while (end > begin && std::isspace(static_cast<unsigned char>(text[end - 1]))) --end;
+    return text.substr(begin, end - begin);
+}
+
 bool is_trailing_space(char c) {
     return c == ' ' || c == '\t';
 }
@@ -81,8 +89,8 @@ std::optional<RuleSetting> parse_rule_setting(const std::string& text) {
     std::size_t equals = text.find('=');
     if (equals == std::string::npos) return std::nullopt;
 
-    std::string code = normalize_rule_code(text.substr(0, equals));
-    std::string value = text.substr(equals + 1);
+    std::string code = normalize_rule_code(trim(text.substr(0, equals)));
+    std::string value = trim(text.substr(equals + 1));
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
         return static_cast<char>(std::tolower(c));
     });

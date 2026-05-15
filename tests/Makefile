@@ -57,10 +57,13 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	$(LINT_TARGET) --list-rules >$(BUILD_DIR)/tools/lint-rules.out
 	grep -q 'lint/trailing-whitespace' $(BUILD_DIR)/tools/lint-rules.out
 	printf 'fn main() -> i64 { \n  return 0;\n}\n' >$(BUILD_DIR)/tools/lint-trailing-whitespace.ari
+	printf '# Ari lint config\nlint/trailing-whitespace = error\n' >$(BUILD_DIR)/tools/ari-lint.rules
 	if $(LINT_TARGET) --ari $(TARGET) $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.out; then exit 1; fi
 	grep -q 'lint/trailing-whitespace' $(BUILD_DIR)/tools/lint-trailing.out
 	$(LINT_TARGET) --ari $(TARGET) --rule lint/trailing-whitespace=off $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-off.out
 	grep -q '$(BUILD_DIR)/tools/lint-trailing-whitespace.ari: ok' $(BUILD_DIR)/tools/lint-trailing-off.out
+	if $(LINT_TARGET) --ari $(TARGET) --config $(BUILD_DIR)/tools/ari-lint.rules $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-config.out; then exit 1; fi
+	grep -q 'error: \[lint/trailing-whitespace\]' $(BUILD_DIR)/tools/lint-trailing-config.out
 	if $(LINT_TARGET) --ari $(TARGET) --json --rule trailing-whitespace=error $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.json; then exit 1; fi
 	grep -q '"severity":"error"' $(BUILD_DIR)/tools/lint-trailing.json
 	grep -q '"code":"lint/trailing-whitespace"' $(BUILD_DIR)/tools/lint-trailing.json

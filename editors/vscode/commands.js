@@ -1,6 +1,6 @@
 const cp = require('child_process');
 const vscode = require('vscode');
-const { lintRuleArgs, modulePathArgs } = require('./config');
+const { lintConfigArgs, lintRuleArgs, modulePathArgs } = require('./config');
 const { resolveWorkspacePath, workspaceRoot } = require('./paths');
 
 function activeAriEditor() {
@@ -57,7 +57,14 @@ async function runCurrentFile(kind, channel) {
   channel.show(true);
   channel.appendLine('');
   if (kind === 'lint') {
-    await runProcess(channel, lintPath, ['--ari', compilerPath, ...modulePathArgs(modulePaths), ...lintRuleArgs(lintRules), file]);
+    await runProcess(channel, lintPath, [
+      '--ari',
+      compilerPath,
+      ...modulePathArgs(modulePaths),
+      ...lintConfigArgs(config),
+      ...lintRuleArgs(lintRules),
+      file
+    ]);
     return;
   }
   await runProcess(channel, compilerPath, [...modulePathArgs(modulePaths), file, '--check']);

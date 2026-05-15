@@ -1,17 +1,18 @@
 #include "checker.hpp"
+#include "config.hpp"
 
 #include "../ari_tooling/diagnostic.hpp"
 
 #include <cstdlib>
 #include <iostream>
-#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
 
 void usage() {
-    std::cerr << "usage: ari-lint [--ari PATH] [--json] [--list-rules] [--rule RULE=SEVERITY] [-I DIR] FILE...\n";
+    std::cerr << "usage: ari-lint [--ari PATH] [--json] [--list-rules] [--config PATH] [--rule RULE=SEVERITY] [-I DIR] FILE...\n";
 }
 
 std::string default_ari_path() {
@@ -49,18 +50,6 @@ void print_rules() {
                   << "\tdefault=" << ari::tooling::severity_name(rule.default_severity)
                   << "\t" << rule.description << "\n";
     }
-}
-
-bool apply_rule_setting(ari::lint::LintConfig& config, const std::string& setting_text) {
-    std::size_t equals = setting_text.find('=');
-    std::string code = equals == std::string::npos ? setting_text : setting_text.substr(0, equals);
-    std::optional<ari::lint::RuleSetting> setting = ari::lint::parse_rule_setting(setting_text);
-    if (!setting) {
-        std::cerr << "ari-lint: error: invalid rule setting '" << setting_text << "'\n";
-        return false;
-    }
-    config.rule_settings[ari::lint::normalize_rule_code(code)] = *setting;
-    return true;
 }
 
 void print_json(const std::vector<ari::lint::LintResult>& results) {
@@ -107,6 +96,8 @@ int main(int argc, char** argv) {
     config.ari_path = default_ari_path();
     bool json = false;
     bool list_rules = false;
+    std::string config_path;
+    std::vector<std::string> rule_overrides;
     std::vector<std::string> files;
 
     for (int i = 1; i < argc; ++i) {
@@ -123,16 +114,28 @@ int main(int argc, char** argv) {
             list_rules = true;
             continue;
         }
+        if (arg == "--config") {
+            if (i + 1 >= argc) {
+                usage();
+                return 2;
+            }
+            config_path = argv[++i];
+            continue;
+        }
+        if (arg.rfind("--config=", 0) == 0) {
+            config_path = arg.substr(9);
+            continue;
+        }
         if (arg == "--rule") {
             if (i + 1 >= argc) {
                 usage();
                 return 2;
             }
-            if (!apply_rule_setting(config, argv[++i])) return 2;
+            rule_overrides.push_back(argv[++i]);
             continue;
         }
         if (arg.rfind("--rule=", 0) == 0) {
-            if (!apply_rule_setting(config, arg.substr(7))) return 2;
+            rule_overrides.push_back(arg.substr(7));
             continue;
         }
         if (arg == "--ari") {
@@ -165,6 +168,22 @@ int main(int argc, char** argv) {
     if (list_rules) {
         print_rules();
         return 0;
+    }
+
+    if (!config_path.empty()) {
+        ari::lint::RuleConfigLoadResult loaded = ari::lint::load_rule_config(config_path);
+        for (const std::string& error : loaded.errors) {
+            std::cerr << "ari-lint: error: " << error << "\n";
+        }
+        if (!loaded.errors.empty()) return 2;
+        config.rule_settings = std::move(loaded.settings);
+    }
+    for (const std::string& override_text : rule_overrides) {
+        std::string error;
+        if (!ari::lint::apply_rule_setting(config.rule_settings, override_text, &error)) {
+            std::cerr << "ari-lint: error: invalid rule setting '" << override_text << "': " << error << "\n";
+            return 2;
+        }
     }
 
     if (files.empty()) {

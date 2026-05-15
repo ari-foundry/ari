@@ -19,7 +19,14 @@ function lintRuleArgs(lintRules) {
   return args;
 }
 
+function lintConfigArgs(config) {
+  const configPath = config.get('lintConfigPath', '');
+  if (!configPath) return [];
+  return ['--config', resolveWorkspacePath(configPath)];
+}
+
 module.exports = {
+  lintConfigArgs,
   lintRuleArgs,
   modulePathArgs
 };

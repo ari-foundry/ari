@@ -89,6 +89,11 @@
           "default": "build/ari-lint",
           "description": "Path to the ari-lint executable used by the Ari: Lint Current File command."
         },
+        "ari.lintConfigPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional path to an Ari lint config file passed to ari-lint and ari-lsp."
+        },
         "ari.modulePaths": {
           "type": "array",
           "items": {

@@ -25,7 +25,14 @@ for command in required_commands:
         raise SystemExit(f"missing VS Code activation event: {event}")
 
 properties = package["contributes"]["configuration"]["properties"]
-for setting in ("ari.compilerPath", "ari.lspPath", "ari.lintPath", "ari.modulePaths", "ari.lintRules"):
+for setting in (
+    "ari.compilerPath",
+    "ari.lspPath",
+    "ari.lintPath",
+    "ari.lintConfigPath",
+    "ari.modulePaths",
+    "ari.lintRules",
+):
     if setting not in properties:
         raise SystemExit(f"missing VS Code setting: {setting}")
 

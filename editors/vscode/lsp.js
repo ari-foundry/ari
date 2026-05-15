@@ -1,6 +1,6 @@
 const vscode = require('vscode');
 const { LanguageClient } = require('vscode-languageclient/node');
-const { lintRuleArgs, modulePathArgs } = require('./config');
+const { lintConfigArgs, lintRuleArgs, modulePathArgs } = require('./config');
 const { resolveWorkspacePath, workspaceRoot } = require('./paths');
 
 function lspArgs(config) {
@@ -9,6 +9,7 @@ function lspArgs(config) {
     '--ari',
     compilerPath,
     ...modulePathArgs(config.get('modulePaths', [])),
+    ...lintConfigArgs(config),
     ...lintRuleArgs(config.get('lintRules', {}))
   ];
 }
@@ -40,6 +41,7 @@ function shouldRestart(event) {
   return event.affectsConfiguration('ari.compilerPath') ||
     event.affectsConfiguration('ari.lspPath') ||
     event.affectsConfiguration('ari.modulePaths') ||
+    event.affectsConfiguration('ari.lintConfigPath') ||
     event.affectsConfiguration('ari.lintRules');
 }
 

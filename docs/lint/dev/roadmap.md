@@ -17,6 +17,8 @@
       diagnostics that know a wider source range.
 - [x] Share the lint checker library with `ari-lsp` so CLI and editor
       diagnostics use the same native rules.
+- [x] Add shared lint rule configuration loading with `--config PATH`; CLI,
+      LSP, and VS Code all pass through the same rule settings.
 
 ## Near-Term Work
 
@@ -24,8 +26,8 @@
 - [ ] Extend compiler-backed diagnostics with wider spans once the compiler
       exposes them.
 - [ ] Keep adding lint-only rules and docs as policy decisions become stable.
-- [ ] Add shared lint rule configuration loading once projects need persistent
-      per-repository policy.
+- [ ] Add project-root config discovery once the repository layout policy is
+      stable.
 
 ## Design Notes
 

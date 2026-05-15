@@ -25,6 +25,8 @@
 - [x] Add shared VS Code argument building for module paths and lint rule
       severity overrides, and pass `ari.lintRules` to both lint commands and
       LSP startup.
+- [x] Add `ari.lintConfigPath` so VS Code can pass persistent lint rule config
+      files to both lint commands and LSP startup.
 
 ## Near-Term Work
 
