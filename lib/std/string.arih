@@ -5,7 +5,7 @@ pub struct RawString {
 }
 
 pub struct String {
-  raw: RawString,
+  raw: std::string::RawString,
 }
 
 pub extern "ari" fn alloc_buffer(zone: ref mut Zone, capacity: i64) -> ptr u8 = "ari_builtin_string_alloc_buffer";

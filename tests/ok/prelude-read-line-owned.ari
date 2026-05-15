@@ -1,0 +1,17 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+
+  var first = read_line_owned(ref mut zone);
+  var second = io::read_line_owned(ref mut zone);
+  var third = input::owned_line(ref mut zone);
+  var fourth = input_owned(ref mut zone);
+
+  let total = first.len() + second.len() + third.len() + fourth.len() +
+    (first.get(0) as i64) +
+    (second.get(0) as i64) +
+    (third.get(0) as i64) +
+    (fourth.get(0) as i64);
+
+  zone::destroy(zone);
+  return total % 256;
+}

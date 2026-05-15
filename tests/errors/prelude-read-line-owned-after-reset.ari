@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  let text = read_line_owned(ref mut zone);
+  zone::reset(ref mut zone);
+  return text.len();
+}

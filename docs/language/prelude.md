@@ -224,11 +224,23 @@ let fourth = input::line()
 These helpers return a `string` with one trailing `\n` or `\r` removed. End of
 input returns an empty string. The current implementation uses one internal
 line buffer, so a later line read can overwrite the bytes seen through an
-earlier returned `string`. Copying into owned runtime strings is planned with
-allocator-backed `String` values. The root `String` type name is reserved for
-that future owned buffer surface; use lowercase `string` for today's borrowed
-pointer-shaped text values. The `--freestanding` backend rejects line input
-until that backend has runtime string storage.
+earlier returned `string`.
+
+Use the explicit-zone owned helpers when the line must survive later input:
+
+```ari
+var zone = zone::create(4096)
+var first = read_line_owned(ref mut zone)
+var second = io::read_line_owned(ref mut zone)
+var third = input::owned_line(ref mut zone)
+var fourth = input_owned(ref mut zone)
+```
+
+Those helpers copy the line into a tracked source `std::string::String` handle
+owned by the provided zone. The root `String` type name is still reserved for
+the future final owned buffer surface; use lowercase `string` for today's
+borrowed pointer-shaped text values. The `--freestanding` backend rejects line
+input until that backend has runtime string storage.
 
 ## Assertions And Stops
 
@@ -295,15 +307,19 @@ io::write_byte(value: u8) -> i64
 io::newline() -> i64
 io::read_byte() -> i64
 io::read_line() -> string
+io::read_line_owned(ref mut Zone) -> std::string::String
 write_i64(value: i64) -> i64
 write_bool(value: bool) -> i64
 write_byte(value: u8) -> i64
 newline() -> i64
 read_byte() -> i64
 read_line() -> string
+read_line_owned(ref mut Zone) -> std::string::String
 input() -> string
+input_owned(ref mut Zone) -> std::string::String
 input::read_byte() -> i64
 input::line() -> string
+input::owned_line(ref mut Zone) -> std::string::String
 assert(condition: bool) -> i64
 debug_assert(condition: bool) -> i64
 assert_eq_i64(left: i64, right: i64) -> i64

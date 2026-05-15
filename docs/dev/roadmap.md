@@ -196,7 +196,10 @@ constructor subset documented in the language guide.
    `insert_in`, `extend_from_slice_in`, and `resize_in`,
    `std::string::copy_to(value, ref mut Zone)` target-zone copying, and
    `from_string(ref mut Zone, string)` copying from today's borrowed lowercase
-   `string` values.
+   `string` values. Host line input now has explicit-zone owned helpers
+   (`read_line_owned`, `std::io::read_line_owned`, `input_owned`, and
+   `std::input::owned_line`) that copy the borrowed line buffer into
+   `std::string::String` storage before later input can overwrite it.
    - [owned-box] define and implement the final root/unique `Box[T]` ownership,
      construction, move, and value-drop contract on top of the explicit-zone
      `std::boxed::Box<T>` seed before std APIs start returning owning heap
@@ -208,9 +211,10 @@ constructor subset documented in the language guide.
      C-string pointer value. The source `std::string::String` seed now has
      tracked length/capacity storage, fixed-capacity byte operations,
      same-zone grow-on-demand byte capacity, lowercase `string` copying, and
-     target-zone copying. Remaining work is the final root `String`
-     ownership/value-drop contract and wiring `read_line`, `format!`, or
-     general text APIs to return independent owned values instead of borrowed
+     target-zone copying. `read_line`/`input` owned helper variants now return
+     independent source `std::string::String` values. Remaining work is the
+     final root `String` ownership/value-drop contract and wiring `format!` or
+     broader text APIs to return independent owned values instead of borrowed
      buffers or raw byte seeds
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the

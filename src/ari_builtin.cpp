@@ -34,6 +34,14 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::input", "ari_builtin_read_line"},
         {"input::line", "ari_builtin_read_line"},
         {"std::input::line", "ari_builtin_read_line"},
+        {"read_line_owned", "ari_builtin_read_line_owned"},
+        {"std::read_line_owned", "ari_builtin_read_line_owned"},
+        {"io::read_line_owned", "ari_builtin_read_line_owned"},
+        {"std::io::read_line_owned", "ari_builtin_read_line_owned"},
+        {"input_owned", "ari_builtin_read_line_owned"},
+        {"std::input_owned", "ari_builtin_read_line_owned"},
+        {"input::owned_line", "ari_builtin_read_line_owned"},
+        {"std::input::owned_line", "ari_builtin_read_line_owned"},
         {"arg_count", "ari_builtin_context_argc"},
         {"std::arg_count", "ari_builtin_context_argc"},
         {"context::argc", "ari_builtin_context_argc"},
@@ -103,6 +111,7 @@ bool is_ari_builtin_symbol(const std::string& symbol) {
            symbol == "ari_builtin_newline" ||
            symbol == "ari_builtin_read_byte" ||
            symbol == "ari_builtin_read_line" ||
+           symbol == "ari_builtin_read_line_owned" ||
            symbol == "ari_builtin_zone_create" ||
            symbol == "ari_builtin_zone_alloc" ||
            symbol == "ari_builtin_string_alloc_buffer" ||
@@ -141,7 +150,10 @@ std::optional<std::string> ari_builtin_freestanding_blocked_feature(const std::s
 
     std::optional<std::string> symbol = ari_builtin_symbol_for_source_name(source_name);
     if (!symbol) return std::nullopt;
-    if (*symbol == "ari_builtin_read_line") return "line input helpers";
+    if (*symbol == "ari_builtin_read_line" ||
+        *symbol == "ari_builtin_read_line_owned") {
+        return "line input helpers";
+    }
     if (*symbol == "ari_builtin_context_argc" || *symbol == "ari_builtin_context_arg") {
         return "process argument helpers";
     }

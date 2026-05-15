@@ -138,6 +138,9 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_read_line" $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "declare ptr @fgets" $(BUILD_DIR)/prelude/prelude-read-line.ll
 	grep -q "@ari_line_buffer" $(BUILD_DIR)/prelude/prelude-read-line.ll
+	$(TARGET) tests/ok/prelude-read-line-owned.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-read-line-owned.ll
+	grep -q 'ari_builtin_read_line_owned' $(BUILD_DIR)/prelude/prelude-read-line-owned.ll
+	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/prelude-read-line-owned.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-read-line.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line.elf; \
 		printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line.elf >$(BUILD_DIR)/prelude/prelude-read-line.out; \
@@ -146,6 +149,7 @@ check-prelude: $(TARGET)
 		grep -qx "gamma" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 		grep -qx "delta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 	fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-read-line-owned.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; code=$$?; test $$code -eq 161; fi
 	$(TARGET) --freestanding tests/ok/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.raw
 	$(BUILD_DIR)/prelude/prelude-trait-surface.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.raw
@@ -404,6 +408,8 @@ check-prelude: $(TARGET)
 	grep -q "enum 'std::Result' expects 2 type arguments" $(BUILD_DIR)/prelude/prelude-result-arity.err
 	if $(TARGET) --freestanding tests/errors/prelude-read-line-freestanding.ari -o $(BUILD_DIR)/prelude/prelude-read-line-freestanding.elf >$(BUILD_DIR)/prelude/prelude-read-line-freestanding.err 2>&1; then exit 1; fi
 	grep -q "freestanding backend does not lower line input helpers yet" $(BUILD_DIR)/prelude/prelude-read-line-freestanding.err
+	if $(TARGET) tests/errors/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err
 	if $(TARGET) tests/errors/prelude-macro-format-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-planned.err 2>&1; then exit 1; fi
 	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/prelude/prelude-macro-format-planned.err
 	if $(TARGET) tests/errors/prelude-macro-format-qualified-planned.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.elf >$(BUILD_DIR)/prelude/prelude-macro-format-qualified-planned.err 2>&1; then exit 1; fi

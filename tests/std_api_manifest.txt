@@ -20,10 +20,12 @@ fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Contex
 fn std::context::argc|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
+fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::newline|prelude IO and print tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Prelude row
+fn std::io::read_line_owned|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::io::write_bool|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
@@ -190,6 +192,7 @@ use std::arg_count|std root re-export tests; docs/dev/test-matrix.md Prelude and
 use std::create|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::destroy|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::new|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::newline|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::promote|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
@@ -201,6 +204,7 @@ use std::range|std root re-export tests; docs/dev/test-matrix.md Prelude and Con
 use std::range_inclusive|std root re-export tests; docs/dev/test-matrix.md Prelude and Control flow rows
 use std::read_byte|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::read_line|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::read_line_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::reset|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::size_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::write_bool|std root re-export tests; docs/dev/test-matrix.md Prelude row

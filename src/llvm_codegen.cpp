@@ -708,6 +708,14 @@ private:
         line("}");
         line();
 
+        line("define " + runtime_visibility + "{ { ptr, i64, i64 } } @ari_builtin_read_line_owned(ptr %zone.slot) {");
+        line("entry:");
+        line("  %line = call ptr @ari_builtin_read_line()");
+        line("  %owned = call { { ptr, i64, i64 } } @ari_builtin_string_from_string(ptr %zone.slot, ptr %line)");
+        line("  ret { { ptr, i64, i64 } } %owned");
+        line("}");
+        line();
+
         line("define " + runtime_visibility + "void @ari_builtin_zone_reset(ptr %zone.slot) {");
         line("entry:");
         line("  %zone = load ptr, ptr %zone.slot");
@@ -3111,7 +3119,8 @@ private:
                       symbol == "ari_builtin_string_with_capacity" ||
                       symbol == "ari_builtin_string_new" ||
                       symbol == "ari_builtin_string_from_string" ||
-                      symbol == "ari_builtin_string_copy_to")
+                      symbol == "ari_builtin_string_copy_to" ||
+                      symbol == "ari_builtin_read_line_owned")
                          ? expr.type
                          : builtin_result_type(symbol, expr.loc);
         } else {
