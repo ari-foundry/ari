@@ -69,16 +69,16 @@ method std::string::String::append_bool_in|check-prelude std-string-append and s
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_i64_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_string_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
-method std::string::String::as_ptr|check-prelude std-string-handle and as-ptr provenance tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::as_ptr|check-prelude std-string-handle borrowed receiver and as-ptr provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::as_slice|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
-method std::string::String::capacity|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::capacity|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::clear|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::extend_from_slice_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
-method std::string::String::get|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::get|check-prelude std-string-handle borrowed receiver and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::insert|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::insert_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
-method std::string::String::is_empty|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
-method std::string::String::len|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::is_empty|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::len|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::pop|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push_in|check-prelude std-string-grow and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones row

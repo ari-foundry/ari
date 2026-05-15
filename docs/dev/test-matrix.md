@@ -269,7 +269,8 @@ Checklist:
 - [x] `std::string::with_capacity(ref mut Zone, capacity)` and
       `std::string::new(ref mut Zone, capacity)` wrap byte storage in tracked
       `RawString` / source `std::string::String` handles with metadata,
-      fixed-capacity byte operations, `as_ptr`, `as_slice`, top-level
+      borrowed receiver lowering for metadata, byte reads, and `as_ptr`,
+      fixed-capacity byte operations, `as_slice`, top-level
       `std::string::copy_to`, and no-op Drop handling
 - [x] `std::string::from_string(ref mut Zone, string)` copies today's borrowed
       lowercase `string` into independent source `std::string::String` storage

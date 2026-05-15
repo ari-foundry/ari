@@ -204,8 +204,9 @@ constructor subset documented in the language guide.
    capability, and returns a tracked pointer that is invalidated by
    `zone::reset`/`zone::destroy`. `std::string::RawString` and
    `std::string::String` now wrap that storage in a tracked source handle with
-   `data`, `len`, and `capacity` metadata, fixed-capacity byte push/pop,
-   checked get/set/replace, truncate/clear, slice and raw-pointer views,
+   `data`, `len`, and `capacity` metadata, borrowed receiver lowering for
+   metadata, byte reads, and raw-pointer views, fixed-capacity byte push/pop,
+   checked get/set/replace, truncate/clear, slice views,
    explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
    `insert_in`, `extend_from_slice_in`, and `resize_in`,
    same-zone text construction helpers through `append_string_in`,

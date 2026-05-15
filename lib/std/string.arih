@@ -34,19 +34,19 @@ fn append_byte_in(value: ref mut std::string::String, zone: ref mut Zone, byte: 
 }
 
 pub impl std::string::String {
-  fn len(self) -> i64 {
+  fn len(self: ref Self) -> i64 {
     return self.raw.len;
   }
 
-  fn capacity(self) -> i64 {
+  fn capacity(self: ref Self) -> i64 {
     return self.raw.capacity;
   }
 
-  fn is_empty(self) -> bool {
+  fn is_empty(self: ref Self) -> bool {
     return self.raw.len == 0;
   }
 
-  fn get(self, index: i64) -> u8 {
+  fn get(self: ref Self, index: i64) -> u8 {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);
     return ptr_load(ptr_add(self.raw.data, index));
@@ -331,7 +331,7 @@ pub impl std::string::String {
     self.raw.len = length;
   }
 
-  fn as_ptr(self) -> ptr u8 {
+  fn as_ptr(self: ref Self) -> ptr u8 {
     return self.raw.data;
   }
 

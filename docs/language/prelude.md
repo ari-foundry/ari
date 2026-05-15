@@ -125,10 +125,12 @@ for lowercase `string`, `i64`, bool, and `f64` values through
 `truncate`, `clear`, `as_ptr`, and `as_slice`. `std::string::from_string(ref
 mut zone, text)` copies today's borrowed lowercase `string` into independent
 zone-backed bytes, and `std::string::copy_to(value, ref mut zone)` copies the
-current bytes into another explicit zone. This is still an explicit-zone
-string API; allocations are released by `zone::reset` or `zone::destroy`, and
-the string handle's `Drop` impl only ends the binding. The same-zone append and
-growth helpers must receive the zone that created the handle.
+current bytes into another explicit zone. Metadata, checked byte `get`, and
+`as_ptr` borrow the handle receiver instead of copying it. This is still an
+explicit-zone string API; allocations are released by `zone::reset` or
+`zone::destroy`, and the string handle's `Drop` impl only ends the binding. The
+same-zone append and growth helpers must receive the zone that created the
+handle.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -701,7 +703,9 @@ These growth and append methods must receive the same explicit zone that
 created the handle, so provenance continues to match reset/destroy invalidation.
 Use
 `std::string::copy_to(value, ref mut Zone)` to copy the current bytes into
-another explicit zone.
+another explicit zone. Metadata, checked byte reads, and `as_ptr()` are
+read-only borrows of the source string handle; mutating byte and growth helpers
+take mutable borrows.
 Using a raw byte pointer, `RawString`, source `std::string::String`, `as_ptr`
 result, or slice view after its source zone is reset or destroyed is rejected.
 

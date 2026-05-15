@@ -232,7 +232,11 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-string-handle.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q 'ari_builtin_string_with_capacity' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q 'ari_builtin_string_new' $(BUILD_DIR)/prelude/std-string-handle.ll
-	grep -q '_ARNv4impl19std__string__String8inherent3len' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent3len"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent8capacity"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent8is_empty"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent3get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -F -q 'define ptr @"_ARNv4impl19std__string__String8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent4push' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-handle.ll
 	$(TARGET) tests/ok/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
