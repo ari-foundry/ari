@@ -245,10 +245,6 @@ constructor subset documented in the language guide.
    spelling with a targeted
    no-implicit-allocation-zone diagnostic, keeping Ari away from a magical
    global heap while the library surface stays explicit-capability based.
-   Small follow-ups:
-   - [borrowed-field-access] allow read-only field projection from shared
-     `ref Struct` receivers so source library impls such as `Display` can write
-     `self.field` instead of explicitly loading through a raw pointer.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

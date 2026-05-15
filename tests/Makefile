@@ -263,6 +263,8 @@ check-prelude: $(TARGET)
 	grep -q 'append_f64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	$(TARGET) tests/ok/prelude-format-in-display.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	grep -F -q 'std__fmt__Display9format_in"(ptr' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
+	grep -E -q 'getelementptr inbounds \{ i64, i64 \}, ptr %t[0-9]+, i32 0, i32 0' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
+	grep -E -q 'getelementptr inbounds \{ i64, i64 \}, ptr %t[0-9]+, i32 0, i32 1' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-format-in-display.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in-display.elf; $(BUILD_DIR)/prelude/prelude-format-in-display.elf; code=$$?; test $$code -eq 150; fi
 	$(TARGET) tests/ok/std-vec-metadata-methods.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent3len"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-metadata-methods.ll
@@ -2882,8 +2884,8 @@ check-errors: $(TARGET) check-function-errors
 	$(BUILD_DIR)/errors/borrow-control-flow-result.raw; code=$$?; test $$code -eq 4
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-control-flow-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-control-flow-result.elf; $(BUILD_DIR)/errors/borrow-control-flow-result.elf; code=$$?; test $$code -eq 4; fi
 	$(TARGET) --freestanding tests/ok/borrow-return-param.ari -o $(BUILD_DIR)/errors/borrow-return-param.raw
-	$(BUILD_DIR)/errors/borrow-return-param.raw; code=$$?; test $$code -eq 57
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-param.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-param.elf; $(BUILD_DIR)/errors/borrow-return-param.elf; code=$$?; test $$code -eq 57; fi
+	$(BUILD_DIR)/errors/borrow-return-param.raw; code=$$?; test $$code -eq 80
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-param.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-param.elf; $(BUILD_DIR)/errors/borrow-return-param.elf; code=$$?; test $$code -eq 80; fi
 	$(TARGET) --freestanding tests/ok/borrow-return-subpath.ari -o $(BUILD_DIR)/errors/borrow-return-subpath.raw
 	$(BUILD_DIR)/errors/borrow-return-subpath.raw; code=$$?; test $$code -eq 182
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-subpath.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-subpath.elf; $(BUILD_DIR)/errors/borrow-return-subpath.elf; code=$$?; test $$code -eq 182; fi

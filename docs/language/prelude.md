@@ -418,6 +418,10 @@ local, then passed to the hook by shared borrow:
 fn format_in(self: ref Self, zone: ref mut Zone) -> std::string::String
 ```
 
+For struct values, the shared receiver can be read through ordinary field
+projection such as `self.field`; no raw-pointer load is needed just to inspect
+fields while formatting.
+
 `Drop` has one required method:
 
 ```ari

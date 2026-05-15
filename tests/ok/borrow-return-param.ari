@@ -20,6 +20,10 @@ fn left(pair: ref Pair) -> ref i64 {
   return ref pair.left;
 }
 
+fn sum(pair: ref Pair) -> i64 {
+  return pair.left + pair.right;
+}
+
 fn unique(value: ref mut i64) -> ref mut i64 {
   return value;
 }
@@ -44,5 +48,5 @@ fn main() -> i64 {
   let mutable_ptr: ptr i64 = mutable_ref as ptr i64;
   *mutable_ptr = 7;
 
-  return *first_ptr + *second_ptr + *selected_ptr + *field_ptr + *mutable_ptr;
+  return *first_ptr + *second_ptr + *selected_ptr + *field_ptr + *mutable_ptr + sum(ref pair);
 }

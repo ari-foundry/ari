@@ -127,8 +127,9 @@ Rules currently checked:
   local aggregate or one borrow-valued field releases only the replaced field
   sources after the new value has been checked
 - borrow-valued aggregate copies acquire their own source borrow records
-- fields behind a `ref mut Struct` parameter can be read and assigned through
-  the borrow, subject to the struct field's own `mut` marker
+- fields behind a `ref Struct` parameter can be read through the borrow, and
+  fields behind a `ref mut Struct` parameter can also be assigned through the
+  borrow, subject to the struct field's own `mut` marker
 - a named borrow keeps the source borrowed until its last visible use in the
   current straight-line statement scope, or until the binding's block exits
   when the checker cannot shorten it
