@@ -45,11 +45,12 @@ The explicit paths still exist as `std::Vec`, `std::iter::range`,
 source-backed allocator seed handle while the root `Vec`/`std::Vec` spelling is
 still the current compiler-known local vector type. `std::boxed::Box` names the
 source zone-backed box seed, and `std::string` names the early allocator-backed
-byte-buffer seed for future owned strings. The root `String`, `Box[T]`,
-`Unique[T]`, `Shared[T]`, and `Weak[T]` smart-pointer spellings remain
-reserved. Local declarations and explicit `use` aliases win over these
-implicit prelude names. If you want a separate namespace handle, alias the
-module explicitly:
+byte-buffer seed for owned strings. The root `String`/`std::String` spelling is
+a public alias for `std::string::String`; it is a zone-backed source handle, so
+the explicit `Zone` still owns the bytes. The root `Box[T]`, `Unique[T]`,
+`Shared[T]`, and `Weak[T]` smart-pointer spellings remain reserved. Local
+declarations and explicit `use` aliases win over these implicit prelude names.
+If you want a separate namespace handle, alias the module explicitly:
 
 ```ari
 use std as core
@@ -106,16 +107,17 @@ and returns a tracked raw byte pointer, using `null` for zero capacity.
 `std::string::with_capacity(ref mut zone, capacity)` wraps the pointer in a
 tracked `RawString` handle with `data`, `len`, and `capacity` fields, and
 `std::string::new(ref mut zone, capacity)` wraps that in
-`std::string::String`. The source string handle supports `len`, `capacity`,
+`std::string::String` (also available as `String` and `std::String`). The
+source string handle supports `len`, `capacity`,
 `is_empty`, checked byte `get`/`set`/`replace`, fixed-capacity
 `push`/`pop`/`insert`, same-zone growth through `reserve`, `reserve_extra`,
 `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, plus
 `truncate`, `clear`, `as_ptr`, and `as_slice`. `std::string::from_string(ref
 mut zone, text)` copies today's borrowed lowercase `string` into independent
 zone-backed bytes, and `std::string::copy_to(value, ref mut zone)` copies the
-current bytes into another explicit zone. This is still not the final root
-`String` API; allocations remain owned by the explicit zone and are released by
-`zone::reset` or `zone::destroy`.
+current bytes into another explicit zone. This is still an explicit-zone
+string API; allocations are released by `zone::reset` or `zone::destroy`, and
+the string handle's `Drop` impl only ends the binding.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -236,11 +238,10 @@ var third = input::owned_line(ref mut zone)
 var fourth = input_owned(ref mut zone)
 ```
 
-Those helpers copy the line into a tracked source `std::string::String` handle
-owned by the provided zone. The root `String` type name is still reserved for
-the future final owned buffer surface; use lowercase `string` for today's
-borrowed pointer-shaped text values. The `--freestanding` backend rejects line
-input until that backend has runtime string storage.
+Those helpers copy the line into a tracked `String` handle owned by the
+provided zone. Use lowercase `string` for today's borrowed pointer-shaped text
+values. The `--freestanding` backend rejects line input until that backend has
+runtime string storage.
 
 ## Assertions And Stops
 
@@ -520,9 +521,9 @@ old storage under the zone's bulk lifetime. Callers can still use
 `vec.raw.data` with `ptr_store`, `ptr_load`, and `ptr_add` directly for
 lower-level experiments.
 `std::string::alloc_buffer(ref mut Zone, capacity)` is the analogous raw
-byte-buffer seed for future owned string storage. It returns `ptr u8` tied to
-the source zone; higher-level `String` ownership, length/capacity handles, and
-copying from lowercase `string` are still planned.
+byte-buffer seed for owned string storage. It returns `ptr u8` tied to the
+source zone; `std::string::String`/`String` builds the length/capacity handle
+and lowercase `string` copying on top of that same explicit-zone storage.
 
 ## Aggregate Surfaces
 
@@ -729,7 +730,6 @@ return/value ABI work.
 Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 
 ```ari
-String
 Box[T]
 Unique[T]
 Shared[T]

@@ -328,10 +328,10 @@ handles will be non-owning views and must not transfer destruction rights. The
 current `std::boxed::Box<T>` is different: it is a zone-backed source handle
 over `zone::new<T>` storage, and the zone owns the memory lifetime.
 
-The root `String` name is reserved on the same capability-oriented path. It
-will be the owned runtime string buffer once Ari has explicit allocator-backed
-text storage and drop rules. Lowercase `string` remains today's borrowed
-C-string pointer value and does not own or free its bytes.
+The root `String` name follows the same capability-oriented path: it aliases
+the source `std::string::String` explicit-zone handle. Lowercase `string`
+remains today's borrowed C-string pointer value and does not own or free its
+bytes.
 
 ## Zone Allocation
 

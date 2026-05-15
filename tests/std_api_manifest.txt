@@ -185,6 +185,7 @@ trait-method std::convert::From[T]::from|convert module trait surface; docs/dev/
 trait-method std::convert::Into[T]::into|convert module trait surface; docs/dev/test-matrix.md Front-end surfaces row
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
+use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::alloc|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::arg|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows

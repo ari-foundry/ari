@@ -184,7 +184,7 @@ constructor subset documented in the language guide.
    `zone::destroy`. The Drop trait/method shape checks and shared diagnostics
    for explicit destructor lowering now live in `drop_semantics`, keeping this
    ownership/destructor phase out of the central expression-lowering code.
-   Owned string work has a raw allocation seed now:
+   Owned string work has a source-handle root spelling now:
    `std::string::alloc_buffer(ref mut Zone, capacity) -> ptr u8` validates a
    non-negative byte capacity, allocates bytes through the explicit zone
    capability, and returns a tracked pointer that is invalidated by
@@ -199,23 +199,19 @@ constructor subset documented in the language guide.
    `string` values. Host line input now has explicit-zone owned helpers
    (`read_line_owned`, `std::io::read_line_owned`, `input_owned`, and
    `std::input::owned_line`) that copy the borrowed line buffer into
-   `std::string::String` storage before later input can overwrite it.
+   `std::string::String` storage before later input can overwrite it. The root
+   `String`/`std::String` spelling now aliases that explicit-zone source
+   string handle; storage is still released by `zone::reset`/`zone::destroy`,
+   and the current `Drop` impl only ends the binding.
    - [owned-box] define and implement the final root/unique `Box[T]` ownership,
      construction, move, and value-drop contract on top of the explicit-zone
      `std::boxed::Box<T>` seed before std APIs start returning owning heap
      handles. The source `std::boxed::Box<T>` seed already has a no-op generic
      Drop impl and use-after-drop checking; the remaining work is the final
      root owning smart-pointer surface and value-destroying ownership contract.
-   - [owned-strings] root `String` is reserved as the future owned runtime
-     string spelling while lowercase `string` remains today's borrowed
-     C-string pointer value. The source `std::string::String` seed now has
-     tracked length/capacity storage, fixed-capacity byte operations,
-     same-zone grow-on-demand byte capacity, lowercase `string` copying, and
-     target-zone copying. `read_line`/`input` owned helper variants now return
-     independent source `std::string::String` values. Remaining work is the
-     final root `String` ownership/value-drop contract and wiring `format!` or
-     broader text APIs to return independent owned values instead of borrowed
-     buffers or raw byte seeds
+   - [text-format] choose and implement the explicit-zone formatted string
+     construction surface before broad library APIs start returning formatted
+     text.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -339,9 +335,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     and still relies on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
-    Root/unique `Box[T]` ownership and allocator-backed owned strings have been
-    promoted into the Near-Term source-`std` library-prep checklist because
-    broad library APIs should not depend on those surfaces until their
+    Root/unique `Box[T]` ownership and formatted owned-string construction
+    remain promoted into the Near-Term source-`std` library-prep checklist
+    because broad library APIs should not depend on those surfaces until their
     ownership, provenance, and drop contracts are explicit.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator

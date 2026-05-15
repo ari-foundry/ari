@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  var zone = zone::create(16);
+  let text: String = std::string::from_string(ref mut zone, "ari");
+  zone::reset(ref mut zone);
+  return text.len();
+}

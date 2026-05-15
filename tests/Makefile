@@ -227,6 +227,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -q 'ari_builtin_string_copy_to' $(BUILD_DIR)/prelude/std-string-from-copy.ll
+	$(TARGET) tests/ok/prelude-string-root.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-string-root.ll
+	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/prelude-string-root.ll
+	grep -q 'ari_builtin_string_copy_to' $(BUILD_DIR)/prelude/prelude-string-root.ll
 	$(TARGET) tests/ok/std-string-grow.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent7reserve' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-string-grow.ll
@@ -411,10 +414,10 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-copy-to-after-target-reset.err
 	if $(TARGET) tests/errors/std-string-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-string-push-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.push_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-push-in-different-zone.err
-	if $(TARGET) tests/errors/prelude-string-reserved.ari -o $(BUILD_DIR)/prelude/prelude-string-reserved.elf >$(BUILD_DIR)/prelude/prelude-string-reserved.err 2>&1; then exit 1; fi
-	grep -q "prelude type 'String' is reserved for future owned runtime strings" $(BUILD_DIR)/prelude/prelude-string-reserved.err
 	if $(TARGET) tests/errors/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
-	grep -q "prelude type 'String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
+	grep -q "struct 'std::string::String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
+	if $(TARGET) tests/errors/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-string-root-after-reset.err
 	if $(TARGET) tests/errors/prelude-box-reserved.ari -o $(BUILD_DIR)/prelude/prelude-box-reserved.elf >$(BUILD_DIR)/prelude/prelude-box-reserved.err 2>&1; then exit 1; fi
 	grep -q "prelude type 'Box' is reserved for the future unique owning smart pointer" $(BUILD_DIR)/prelude/prelude-box-reserved.err
 	if $(TARGET) tests/errors/prelude-unique-reserved.ari -o $(BUILD_DIR)/prelude/prelude-unique-reserved.elf >$(BUILD_DIR)/prelude/prelude-unique-reserved.err 2>&1; then exit 1; fi
