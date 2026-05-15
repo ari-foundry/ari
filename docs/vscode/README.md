@@ -10,8 +10,9 @@ VS Code a first-pass Outline for top-level Ari declarations. Hover is also
 served for those top-level declarations, and same-document definition requests
 can jump to their declaration lines. Workspace symbol search can find top-level
 Ari declarations across workspace files. Document highlights mark matching
-same-document identifiers, brace blocks provide editor folding ranges, and
-completion suggests top-level declarations in the active document.
+same-document identifiers, brace blocks provide editor folding ranges, selection
+range support expands from identifiers to source lines, and completion suggests
+top-level declarations in the active document.
 
 ## Layout
 

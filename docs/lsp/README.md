@@ -47,6 +47,7 @@ temporary source file beside the original document path, so nearby
 - `textDocument/documentSymbol`
 - `textDocument/documentHighlight`
 - `textDocument/foldingRange`
+- `textDocument/selectionRange`
 - `workspace/symbol`
 - `textDocument/hover`
 - `textDocument/definition`
@@ -64,13 +65,14 @@ enums, traits, impls, and modules; richer parser-backed symbol trees are still
 planned. Document highlights use the same lightweight identifier-at-cursor
 lookup as hover and definition, then return same-document identifier ranges for
 editor highlighting. Folding ranges are first-pass brace-block folds for editor
-outlining. Workspace symbols scan `.ari` and `.arih` files below the server
-working directory while skipping generated or dependency folders such as
-`build`, `.git`, and `node_modules`. Hover uses the same first-pass top-level
-declaration scan to show the declaration kind and source line for known symbols,
-and same-document definition requests can jump back to those top-level
-declarations. Completion uses the same declaration scan to suggest top-level
-symbols in the current document.
+outlining. Selection ranges expand from the identifier at the cursor to its
+containing source line. Workspace symbols scan `.ari` and `.arih` files below
+the server working directory while skipping generated or dependency folders such
+as `build`, `.git`, and `node_modules`. Hover uses the same first-pass
+top-level declaration scan to show the declaration kind and source line for
+known symbols, and same-document definition requests can jump back to those
+top-level declarations. Completion uses the same declaration scan to suggest
+top-level symbols in the current document.
 
 ## Developer Notes
 
