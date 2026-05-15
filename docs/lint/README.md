@@ -1,9 +1,9 @@
 # Ari Lint
 
-`ari-lint` is the standalone lint entry point for Ari tooling. The first
-version is intentionally thin: it delegates parser, module-loader, and semantic
-diagnostics to `ari --check`, then normalizes those diagnostics into either
-human-readable text or JSON.
+`ari-lint` is the standalone lint entry point for Ari tooling. It delegates
+parser, module-loader, and semantic diagnostics to `ari --check`, then runs
+lint-only source rules and normalizes diagnostics into either human-readable
+text or JSON.
 
 This keeps lint diagnostics aligned with the compiler while the lint-specific
 rule engine is still being designed.
@@ -22,10 +22,16 @@ The executable is written to `build/ari-lint`.
 build/ari-lint examples/count.ari
 build/ari-lint --json tests/errors/prelude-macro-format-planned.ari
 build/ari-lint --ari build/ari -I path/to/modules source.ari
+build/ari-lint --list-rules
+build/ari-lint --rule lint/trailing-whitespace=error source.ari
 ```
 
 `ARI_COMPILER` can also point the tool at a compiler binary when `--ari` is not
 provided.
+
+`--rule RULE=SEVERITY` accepts `off`, `hint`, `note`, `warning`, or `error`.
+Rule names may use the full code, such as `lint/trailing-whitespace`, or the
+short lint name, such as `trailing-whitespace`.
 
 The VS Code extension's `Ari: Lint Current File` command invokes this tool
 through its `ari.lintPath` setting.
@@ -34,11 +40,19 @@ through its `ari.lintPath` setting.
 
 - Uses saved source files, not editor buffers.
 - Runs the compiler in `--check` mode.
-- Emits normalized line/column diagnostics.
+- Runs native lint rules after compiler checking.
+- Emits normalized line/column diagnostics, with `endLine`/`endColumn` in JSON
+  when tools need a machine-readable span.
 - Provides a JSON shape shared by the LSP server.
+- Emits lint rule codes when a diagnostic comes from a native lint rule.
 
-Native lint rules will live here later instead of being embedded in the
-compiler's semantic lowering code.
+## Rules
+
+### `lint/trailing-whitespace`
+
+Reports spaces or tabs at the end of a source line. The default severity is
+`warning`. Use `--rule lint/trailing-whitespace=off` to disable it for generated
+or transitional sources, or set it to `error` when a CI job should reject it.
 
 ## Developer Notes
 

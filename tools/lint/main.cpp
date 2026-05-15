@@ -4,13 +4,14 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace {
 
 void usage() {
-    std::cerr << "usage: ari-lint [--ari PATH] [--json] [-I DIR] FILE...\n";
+    std::cerr << "usage: ari-lint [--ari PATH] [--json] [--list-rules] [--rule RULE=SEVERITY] [-I DIR] FILE...\n";
 }
 
 std::string default_ari_path() {
@@ -34,8 +35,32 @@ void print_human(const ari::lint::LintResult& result) {
                   << ":" << diagnostic.line
                   << ":" << diagnostic.column
                   << ": " << ari::tooling::severity_name(diagnostic.severity)
-                  << ": " << diagnostic.message << "\n";
+                  << ": ";
+        if (!diagnostic.code.empty()) {
+            std::cout << "[" << diagnostic.code << "] ";
+        }
+        std::cout << diagnostic.message << "\n";
     }
+}
+
+void print_rules() {
+    for (const ari::lint::RuleDescriptor& rule : ari::lint::registered_rules()) {
+        std::cout << rule.code
+                  << "\tdefault=" << ari::tooling::severity_name(rule.default_severity)
+                  << "\t" << rule.description << "\n";
+    }
+}
+
+bool apply_rule_setting(ari::lint::LintConfig& config, const std::string& setting_text) {
+    std::size_t equals = setting_text.find('=');
+    std::string code = equals == std::string::npos ? setting_text : setting_text.substr(0, equals);
+    std::optional<ari::lint::RuleSetting> setting = ari::lint::parse_rule_setting(setting_text);
+    if (!setting) {
+        std::cerr << "ari-lint: error: invalid rule setting '" << setting_text << "'\n";
+        return false;
+    }
+    config.rule_settings[ari::lint::normalize_rule_code(code)] = *setting;
+    return true;
 }
 
 void print_json(const std::vector<ari::lint::LintResult>& results) {
@@ -57,9 +82,16 @@ void print_json(const std::vector<ari::lint::LintResult>& results) {
             std::cout << "\"file\":\"" << ari::tooling::json_escape(diagnostic.file) << "\",";
             std::cout << "\"line\":" << diagnostic.line << ",";
             std::cout << "\"column\":" << diagnostic.column << ",";
+            int end_line = diagnostic.end_line > 0 ? diagnostic.end_line : diagnostic.line;
+            int end_column = diagnostic.end_column > 0 ? diagnostic.end_column : diagnostic.column + 1;
+            std::cout << "\"endLine\":" << end_line << ",";
+            std::cout << "\"endColumn\":" << end_column << ",";
             std::cout << "\"severity\":\"" << ari::tooling::json_escape(ari::tooling::severity_name(diagnostic.severity)) << "\",";
             std::cout << "\"message\":\"" << ari::tooling::json_escape(diagnostic.message) << "\",";
             std::cout << "\"source\":\"" << ari::tooling::json_escape(diagnostic.source) << "\"";
+            if (!diagnostic.code.empty()) {
+                std::cout << ",\"code\":\"" << ari::tooling::json_escape(diagnostic.code) << "\"";
+            }
             std::cout << "}";
         }
         std::cout << "]";
@@ -74,6 +106,7 @@ int main(int argc, char** argv) {
     ari::lint::LintConfig config;
     config.ari_path = default_ari_path();
     bool json = false;
+    bool list_rules = false;
     std::vector<std::string> files;
 
     for (int i = 1; i < argc; ++i) {
@@ -84,6 +117,22 @@ int main(int argc, char** argv) {
         }
         if (arg == "--json") {
             json = true;
+            continue;
+        }
+        if (arg == "--list-rules") {
+            list_rules = true;
+            continue;
+        }
+        if (arg == "--rule") {
+            if (i + 1 >= argc) {
+                usage();
+                return 2;
+            }
+            if (!apply_rule_setting(config, argv[++i])) return 2;
+            continue;
+        }
+        if (arg.rfind("--rule=", 0) == 0) {
+            if (!apply_rule_setting(config, arg.substr(7))) return 2;
             continue;
         }
         if (arg == "--ari") {
@@ -111,6 +160,11 @@ int main(int argc, char** argv) {
             return 2;
         }
         files.push_back(arg);
+    }
+
+    if (list_rules) {
+        print_rules();
+        return 0;
     }
 
     if (files.empty()) {

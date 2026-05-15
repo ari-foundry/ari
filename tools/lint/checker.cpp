@@ -15,11 +15,14 @@ LintResult run_lint(const LintConfig& config, const std::string& file) {
     args.push_back("--check");
 
     tooling::ProcessResult process = tooling::run_process(args);
+    std::vector<tooling::Diagnostic> diagnostics = tooling::parse_ari_diagnostics(process.output, file);
+    std::vector<tooling::Diagnostic> native_diagnostics = run_native_rules(config.rule_settings, file);
+    diagnostics.insert(diagnostics.end(), native_diagnostics.begin(), native_diagnostics.end());
     return LintResult{
         file,
         process.exit_code,
         process.output,
-        tooling::parse_ari_diagnostics(process.output, file),
+        diagnostics,
     };
 }
 

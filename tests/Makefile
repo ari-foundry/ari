@@ -54,6 +54,16 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	if command -v node >/dev/null 2>&1; then node --check editors/vscode/extension.js; node --check editors/vscode/commands.js; node --check editors/vscode/tasks.js; node --check editors/vscode/lsp.js; node --check editors/vscode/paths.js; fi
 	$(LINT_TARGET) --ari $(TARGET) examples/count.ari >$(BUILD_DIR)/tools/lint-ok.out
 	grep -q 'examples/count.ari: ok' $(BUILD_DIR)/tools/lint-ok.out
+	$(LINT_TARGET) --list-rules >$(BUILD_DIR)/tools/lint-rules.out
+	grep -q 'lint/trailing-whitespace' $(BUILD_DIR)/tools/lint-rules.out
+	printf 'fn main() -> i64 { \n  return 0;\n}\n' >$(BUILD_DIR)/tools/lint-trailing-whitespace.ari
+	if $(LINT_TARGET) --ari $(TARGET) $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.out; then exit 1; fi
+	grep -q 'lint/trailing-whitespace' $(BUILD_DIR)/tools/lint-trailing.out
+	$(LINT_TARGET) --ari $(TARGET) --rule lint/trailing-whitespace=off $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing-off.out
+	grep -q '$(BUILD_DIR)/tools/lint-trailing-whitespace.ari: ok' $(BUILD_DIR)/tools/lint-trailing-off.out
+	if $(LINT_TARGET) --ari $(TARGET) --json --rule trailing-whitespace=error $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.json; then exit 1; fi
+	grep -q '"severity":"error"' $(BUILD_DIR)/tools/lint-trailing.json
+	grep -q '"code":"lint/trailing-whitespace"' $(BUILD_DIR)/tools/lint-trailing.json
 	if $(LINT_TARGET) --ari $(TARGET) --json tests/errors/prelude-macro-format-planned.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
 	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/tools/lint-format.json

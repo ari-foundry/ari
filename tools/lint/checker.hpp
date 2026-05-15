@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ari_tooling/diagnostic.hpp"
+#include "rules.hpp"
 
 #include <string>
 #include <vector>
@@ -10,6 +11,7 @@ namespace ari::lint {
 struct LintConfig {
     std::string ari_path = "build/ari";
     std::vector<std::string> module_paths;
+    RuleSettings rule_settings;
 };
 
 struct LintResult {

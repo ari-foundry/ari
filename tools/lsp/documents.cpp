@@ -132,13 +132,18 @@ std::string diagnostics_json_array(const std::vector<tooling::Diagnostic>& diagn
         first = false;
         int line = diagnostic.line > 0 ? diagnostic.line - 1 : 0;
         int column = diagnostic.column > 0 ? diagnostic.column - 1 : 0;
+        int end_line = diagnostic.end_line > 0 ? diagnostic.end_line - 1 : line;
+        int end_column = diagnostic.end_column > 0 ? diagnostic.end_column - 1 : column + 1;
         out << "{";
         out << "\"range\":{";
         out << "\"start\":{\"line\":" << line << ",\"character\":" << column << "},";
-        out << "\"end\":{\"line\":" << line << ",\"character\":" << (column + 1) << "}";
+        out << "\"end\":{\"line\":" << end_line << ",\"character\":" << end_column << "}";
         out << "},";
         out << "\"severity\":" << tooling::lsp_severity(diagnostic.severity) << ",";
         out << "\"source\":\"" << tooling::json_escape(diagnostic.source) << "\",";
+        if (!diagnostic.code.empty()) {
+            out << "\"code\":\"" << tooling::json_escape(diagnostic.code) << "\",";
+        }
         out << "\"message\":\"" << tooling::json_escape(diagnostic.message) << "\"";
         out << "}";
     }

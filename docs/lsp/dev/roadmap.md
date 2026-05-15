@@ -20,6 +20,8 @@
 - [x] Add first-pass `textDocument/completion` support for top-level symbols in
       the current document using the same symbol scanner.
 - [x] Clear diagnostics on `didClose`.
+- [x] Preserve shared diagnostic codes and explicit end spans in LSP diagnostic
+      JSON when the tooling layer provides them.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
 
 ## Near-Term Work

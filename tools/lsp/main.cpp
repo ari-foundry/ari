@@ -49,6 +49,9 @@ std::vector<ari::tooling::Diagnostic> check_file(const Config& config, const std
             ari::tooling::DiagnosticSeverity::Error,
             result.output.empty() ? "compiler check failed" : result.output,
             "ari",
+            "",
+            0,
+            0,
         });
     }
     return diagnostics;
@@ -75,6 +78,9 @@ std::vector<ari::tooling::Diagnostic> check_document(const Config& config,
             ari::tooling::DiagnosticSeverity::Error,
             "missing textDocument.uri",
             "ari-lsp",
+            "",
+            0,
+            0,
         }};
     }
     std::string path = ari::lsp::uri_to_path(uri);
@@ -94,6 +100,9 @@ std::vector<ari::tooling::Diagnostic> check_document(const Config& config,
             ari::tooling::DiagnosticSeverity::Error,
             ex.what(),
             "ari-lsp",
+            "",
+            0,
+            0,
         }};
     }
 }

@@ -8,14 +8,22 @@
 - [x] Add `make lint` and `make check-tools` coverage.
 - [x] Support human output for quick terminal use.
 - [x] Support JSON output for editor and CI integrations.
+- [x] Add native lint-rule registration separate from compiler semantic
+      lowering.
+- [x] Add rule severity configuration through `--rule RULE=SEVERITY`.
+- [x] Add the first native lint rule, `lint/trailing-whitespace`, and document
+      its default behavior.
+- [x] Add machine-readable `endLine`/`endColumn` spans to lint JSON for
+      diagnostics that know a wider source range.
 
 ## Near-Term Work
 
 - [ ] Add stable diagnostic codes once compiler diagnostics expose codes.
-- [ ] Add native lint-rule registration separate from semantic lowering.
-- [ ] Add rule severity configuration.
-- [ ] Add machine-readable spans for multi-token diagnostics.
-- [ ] Add docs for each lint rule once real lint-only rules exist.
+- [ ] Extend compiler-backed diagnostics with wider spans once the compiler
+      exposes them.
+- [ ] Keep adding lint-only rules and docs as policy decisions become stable.
+- [ ] Add shared lint rule configuration loading once projects need persistent
+      per-repository policy.
 
 ## Design Notes
 

@@ -8,13 +8,6 @@
 namespace ari::tooling {
 namespace {
 
-DiagnosticSeverity parse_severity(const std::string& text) {
-    if (text == "warning") return DiagnosticSeverity::Warning;
-    if (text == "note") return DiagnosticSeverity::Information;
-    if (text == "hint") return DiagnosticSeverity::Hint;
-    return DiagnosticSeverity::Error;
-}
-
 std::string trim_carriage_return(std::string line) {
     if (!line.empty() && line.back() == '\r') line.pop_back();
     return line;
@@ -38,9 +31,12 @@ std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std
                 fallback_file,
                 std::max(1, std::stoi(match[2].str())),
                 std::max(1, std::stoi(match[3].str())),
-                parse_severity(match[1].str()),
+                parse_severity_name(match[1].str()).value_or(DiagnosticSeverity::Error),
                 match[4].str(),
                 "ari",
+                "",
+                0,
+                0,
             });
             continue;
         }
@@ -49,9 +45,12 @@ std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std
                 match[1].str(),
                 std::max(1, std::stoi(match[2].str())),
                 std::max(1, std::stoi(match[3].str())),
-                parse_severity(match[4].str()),
+                parse_severity_name(match[4].str()).value_or(DiagnosticSeverity::Error),
                 match[5].str(),
                 "ari",
+                "",
+                0,
+                0,
             });
             continue;
         }
@@ -60,9 +59,12 @@ std::vector<Diagnostic> parse_ari_diagnostics(const std::string& text, const std
                 fallback_file,
                 1,
                 1,
-                parse_severity(match[1].str()),
+                parse_severity_name(match[1].str()).value_or(DiagnosticSeverity::Error),
                 match[2].str(),
                 "ari",
+                "",
+                0,
+                0,
             });
         }
     }
@@ -94,6 +96,14 @@ std::string json_escape(const std::string& text) {
         }
     }
     return out;
+}
+
+std::optional<DiagnosticSeverity> parse_severity_name(const std::string& text) {
+    if (text == "error") return DiagnosticSeverity::Error;
+    if (text == "warning") return DiagnosticSeverity::Warning;
+    if (text == "note" || text == "info" || text == "information") return DiagnosticSeverity::Information;
+    if (text == "hint") return DiagnosticSeverity::Hint;
+    return std::nullopt;
 }
 
 std::string severity_name(DiagnosticSeverity severity) {
