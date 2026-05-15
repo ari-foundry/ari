@@ -1,3 +1,23 @@
 build/
 *.elf
 *.out
+
+# Native build byproducts that may be emitted outside build/.
+*.a
+*.d
+*.dll
+*.dylib
+*.exe
+*.o
+*.obj
+*.so
+
+# Node/VS Code extension development byproducts.
+node_modules/
+.vscode-test/
+.vscode-test-web/
+*.vsix
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
