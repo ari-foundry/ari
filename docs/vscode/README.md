@@ -3,8 +3,8 @@
 The VS Code extension lives in `editors/vscode/`. It registers `.ari` and
 `.arih` files, provides a small TextMate grammar, and launches `ari-lsp` through
 `vscode-languageclient`. Diagnostics are served by `ari-lsp` through both
-publish and pull diagnostic flows so VS Code can show compiler-backed errors in
-the Problems panel.
+publish and pull diagnostic flows, including unsaved buffer text, so VS Code can
+show compiler-backed errors in the Problems panel while editing.
 
 ## Layout
 

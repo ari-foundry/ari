@@ -1,8 +1,8 @@
 # Ari LSP
 
 `ari-lsp` is the language-server entry point for editors. The initial server is
-diagnostic-first: it speaks JSON-RPC over stdio, starts with saved-file
-diagnostics, and delegates source checking to `ari --check`.
+diagnostic-first: it speaks JSON-RPC over stdio, tracks opened document text,
+and delegates source checking to `ari --check`.
 
 The server is intentionally small so it can stabilize protocol behavior before
 hover, symbols, references, and rename are added.
@@ -37,8 +37,10 @@ Additional module search paths can be passed with `-I path`.
 - `textDocument/publishDiagnostics`
 - `textDocument/diagnostic`
 
-Diagnostics currently use saved files on disk. Unsaved in-memory checking is a
-future milestone because Ari module resolution depends on the source file path.
+For open documents, the server mirrors the current in-memory text into a
+temporary file beside the original source path before invoking `ari --check`, so
+relative module lookup still follows the edited file's directory. If the editor
+asks about a file that is not open, the saved file on disk is checked directly.
 
 ## Developer Notes
 

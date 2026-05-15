@@ -3,7 +3,12 @@
 #include "../ari_tooling/diagnostic.hpp"
 
 #include <cctype>
+#include <cerrno>
+#include <cstring>
+#include <stdexcept>
 #include <sstream>
+#include <utility>
+#include <unistd.h>
 
 namespace ari::lsp {
 namespace {
@@ -32,7 +37,81 @@ std::string percent_decode(const std::string& text) {
     return out;
 }
 
+std::string dirname_of(const std::string& path) {
+    std::size_t slash = path.find_last_of('/');
+    if (slash == std::string::npos) return ".";
+    if (slash == 0) return "/";
+    return path.substr(0, slash);
+}
+
+std::string basename_of(const std::string& path) {
+    std::size_t slash = path.find_last_of('/');
+    if (slash == std::string::npos) return path;
+    return path.substr(slash + 1);
+}
+
+std::string extension_of(const std::string& path) {
+    std::string base = basename_of(path);
+    std::size_t dot = base.find_last_of('.');
+    if (dot == std::string::npos) return ".ari";
+    return base.substr(dot);
+}
+
+void write_all(int fd, const std::string& text) {
+    const char* data = text.data();
+    std::size_t remaining = text.size();
+    while (remaining > 0) {
+        ssize_t count = write(fd, data, remaining);
+        if (count < 0) {
+            if (errno == EINTR) continue;
+            throw std::runtime_error(std::string("write failed: ") + std::strerror(errno));
+        }
+        data += count;
+        remaining -= static_cast<std::size_t>(count);
+    }
+}
+
 } // namespace
+
+void DocumentStore::set(const std::string& uri, std::string text) {
+    documents_[uri] = std::move(text);
+}
+
+void DocumentStore::erase(const std::string& uri) {
+    documents_.erase(uri);
+}
+
+std::optional<std::string> DocumentStore::text(const std::string& uri) const {
+    auto it = documents_.find(uri);
+    if (it == documents_.end()) return std::nullopt;
+    return it->second;
+}
+
+TemporaryDocumentFile::TemporaryDocumentFile(const std::string& original_path, const std::string& text) {
+    std::string suffix = extension_of(original_path);
+    std::string name = basename_of(original_path);
+    std::string templ = dirname_of(original_path) + "/.ari-lsp-" + name + "-XXXXXX" + suffix;
+    int fd = mkstemps(templ.data(), static_cast<int>(suffix.size()));
+    if (fd < 0) {
+        throw std::runtime_error(std::string("mkstemps failed: ") + std::strerror(errno));
+    }
+    try {
+        write_all(fd, text);
+    } catch (...) {
+        close(fd);
+        unlink(templ.c_str());
+        throw;
+    }
+    if (close(fd) != 0) {
+        unlink(templ.c_str());
+        throw std::runtime_error(std::string("close failed: ") + std::strerror(errno));
+    }
+    path_ = templ;
+}
+
+TemporaryDocumentFile::~TemporaryDocumentFile() {
+    if (!path_.empty()) unlink(path_.c_str());
+}
 
 std::string uri_to_path(const std::string& uri) {
     const std::string prefix = "file://";

@@ -2,8 +2,10 @@ set -eu
 
 LSP=${LSP:-build/ari-lsp}
 ARI=${ARI:-build/ari}
-FILE=$(pwd)/tests/errors/prelude-macro-format-planned.ari
+FILE=$(pwd)/examples/count.ari
 URI="file://${FILE}"
+VALID_TEXT='fn main() -> i64 {\n  return 0;\n}\n'
+INVALID_TEXT='fn main() -> i64 {\n  let text = format!(\"value={}\", 1);\n  return 0;\n}\n'
 
 send() {
   body=$1
@@ -14,7 +16,8 @@ send() {
 output=$(
   {
     send '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
-    send '{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"'"$URI"'","languageId":"ari","version":1,"text":""}}}'
+    send '{"jsonrpc":"2.0","method":"textDocument/didOpen","params":{"textDocument":{"uri":"'"$URI"'","languageId":"ari","version":1,"text":"'"$VALID_TEXT"'"}}}'
+    send '{"jsonrpc":"2.0","method":"textDocument/didChange","params":{"textDocument":{"uri":"'"$URI"'","version":2},"contentChanges":[{"text":"'"$INVALID_TEXT"'"}]}}'
     send '{"jsonrpc":"2.0","id":2,"method":"textDocument/diagnostic","params":{"textDocument":{"uri":"'"$URI"'"}}}'
     send '{"jsonrpc":"2.0","id":3,"method":"shutdown","params":null}'
     send '{"jsonrpc":"2.0","method":"exit","params":null}'

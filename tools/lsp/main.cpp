@@ -6,6 +6,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -50,26 +51,19 @@ std::vector<ari::tooling::Diagnostic> check_file(const Config& config, const std
     return diagnostics;
 }
 
-void publish_for_uri(const Config& config, const std::string& uri) {
-    if (uri.empty()) return;
-    std::string path = ari::lsp::uri_to_path(uri);
-    std::vector<ari::tooling::Diagnostic> diagnostics;
-    try {
-        diagnostics = check_file(config, path);
-    } catch (const std::exception& ex) {
-        diagnostics.push_back(ari::tooling::Diagnostic{
-            path,
-            1,
-            1,
-            ari::tooling::DiagnosticSeverity::Error,
-            ex.what(),
-            "ari-lsp",
-        });
+void remap_diagnostic_file(std::vector<ari::tooling::Diagnostic>& diagnostics,
+                           const std::string& from,
+                           const std::string& to) {
+    for (ari::tooling::Diagnostic& diagnostic : diagnostics) {
+        if (diagnostic.file.empty() || diagnostic.file == from) {
+            diagnostic.file = to;
+        }
     }
-    ari::lsp::write_message(std::cout, ari::lsp::diagnostics_notification(uri, diagnostics));
 }
 
-std::vector<ari::tooling::Diagnostic> diagnostics_for_uri(const Config& config, const std::string& uri) {
+std::vector<ari::tooling::Diagnostic> check_document(const Config& config,
+                                                     const ari::lsp::DocumentStore& documents,
+                                                     const std::string& uri) {
     if (uri.empty()) {
         return {ari::tooling::Diagnostic{
             "",
@@ -82,6 +76,12 @@ std::vector<ari::tooling::Diagnostic> diagnostics_for_uri(const Config& config, 
     }
     std::string path = ari::lsp::uri_to_path(uri);
     try {
+        if (std::optional<std::string> text = documents.text(uri)) {
+            ari::lsp::TemporaryDocumentFile temp(path, *text);
+            std::vector<ari::tooling::Diagnostic> diagnostics = check_file(config, temp.path());
+            remap_diagnostic_file(diagnostics, temp.path(), path);
+            return diagnostics;
+        }
         return check_file(config, path);
     } catch (const std::exception& ex) {
         return {ari::tooling::Diagnostic{
@@ -93,6 +93,19 @@ std::vector<ari::tooling::Diagnostic> diagnostics_for_uri(const Config& config, 
             "ari-lsp",
         }};
     }
+}
+
+void update_document_text(ari::lsp::DocumentStore& documents, const std::string& body, const std::string& uri) {
+    if (uri.empty()) return;
+    std::string raw_text = ari::lsp::json_raw_field(body, "text");
+    if (!raw_text.empty() && raw_text.front() == '"') {
+        documents.set(uri, ari::lsp::json_string_field(body, "text"));
+    }
+}
+
+void publish_for_document(const Config& config, const ari::lsp::DocumentStore& documents, const std::string& uri) {
+    if (uri.empty()) return;
+    ari::lsp::write_message(std::cout, ari::lsp::diagnostics_notification(uri, check_document(config, documents, uri)));
 }
 
 std::string response_result(const std::string& id, const std::string& result) {
@@ -109,6 +122,7 @@ std::string response_error(const std::string& id, int code, const std::string& m
 int main(int argc, char** argv) {
     Config config;
     config.ari_path = default_ari_path();
+    ari::lsp::DocumentStore documents;
 
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -166,18 +180,21 @@ int main(int argc, char** argv) {
         if (method == "textDocument/didOpen" ||
             method == "textDocument/didSave" ||
             method == "textDocument/didChange") {
-            publish_for_uri(config, ari::lsp::json_string_field(body, "uri"));
+            std::string uri = ari::lsp::json_string_field(body, "uri");
+            update_document_text(documents, body, uri);
+            publish_for_document(config, documents, uri);
             continue;
         }
         if (method == "textDocument/diagnostic") {
             std::vector<ari::tooling::Diagnostic> diagnostics =
-                diagnostics_for_uri(config, ari::lsp::json_string_field(body, "uri"));
+                check_document(config, documents, ari::lsp::json_string_field(body, "uri"));
             ari::lsp::write_message(std::cout, ari::lsp::diagnostics_report_response(id, diagnostics));
             continue;
         }
         if (method == "textDocument/didClose") {
             std::string uri = ari::lsp::json_string_field(body, "uri");
             if (!uri.empty()) {
+                documents.erase(uri);
                 ari::lsp::write_message(std::cout, ari::lsp::diagnostics_notification(uri, {}));
             }
             continue;

@@ -9,13 +9,13 @@
       notifications.
 - [x] Respond to `textDocument/diagnostic` pull requests using the same
       diagnostic conversion as publish diagnostics.
+- [x] Track opened/changed document text and check unsaved buffers through a
+      same-directory temporary source file so relative modules keep working.
 - [x] Clear diagnostics on `didClose`.
 - [x] Add smoke coverage through `tests/tools/lsp_smoke.sh`.
 
 ## Near-Term Work
 
-- [ ] Track in-memory document text and check unsaved buffers without breaking
-      path-sensitive module resolution.
 - [ ] Add stable diagnostic codes once the compiler/lint layer exposes them.
 - [ ] Add document symbols from parser/module summaries.
 - [ ] Add go-to-definition for local modules and source declarations.
