@@ -23,6 +23,9 @@ struct RuleDescriptor {
 
 using RuleSettings = std::map<std::string, RuleSetting>;
 
+constexpr const char* rule_trailing_whitespace = "lint/trailing-whitespace";
+constexpr const char* rule_missing_final_newline = "lint/missing-final-newline";
+
 std::vector<RuleDescriptor> registered_rules();
 std::optional<RuleSetting> parse_rule_setting(const std::string& text);
 std::string normalize_rule_code(const std::string& code);

@@ -56,6 +56,7 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	grep -q 'examples/count.ari: ok' $(BUILD_DIR)/tools/lint-ok.out
 	$(LINT_TARGET) --list-rules >$(BUILD_DIR)/tools/lint-rules.out
 	grep -q 'lint/trailing-whitespace' $(BUILD_DIR)/tools/lint-rules.out
+	grep -q 'lint/missing-final-newline' $(BUILD_DIR)/tools/lint-rules.out
 	printf 'fn main() -> i64 { \n  return 0;\n}\n' >$(BUILD_DIR)/tools/lint-trailing-whitespace.ari
 	printf '# Ari lint config\nlint/trailing-whitespace = error\n' >$(BUILD_DIR)/tools/ari-lint.rules
 	if $(LINT_TARGET) --ari $(TARGET) $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.out; then exit 1; fi
@@ -68,6 +69,12 @@ check-tools: $(TARGET) $(LINT_TARGET) $(LSP_TARGET)
 	if $(LINT_TARGET) --ari $(TARGET) --json --rule trailing-whitespace=error $(BUILD_DIR)/tools/lint-trailing-whitespace.ari >$(BUILD_DIR)/tools/lint-trailing.json; then exit 1; fi
 	grep -q '"severity":"error"' $(BUILD_DIR)/tools/lint-trailing.json
 	grep -q '"code":"lint/trailing-whitespace"' $(BUILD_DIR)/tools/lint-trailing.json
+	printf 'fn main() -> i64 {\n  return 0;\n}' >$(BUILD_DIR)/tools/lint-missing-final-newline.ari
+	if $(LINT_TARGET) --ari $(TARGET) --json --rule missing-final-newline=error $(BUILD_DIR)/tools/lint-missing-final-newline.ari >$(BUILD_DIR)/tools/lint-missing-final-newline.json; then exit 1; fi
+	grep -q '"code":"lint/missing-final-newline"' $(BUILD_DIR)/tools/lint-missing-final-newline.json
+	grep -q '"message":"missing final newline"' $(BUILD_DIR)/tools/lint-missing-final-newline.json
+	$(LINT_TARGET) --ari $(TARGET) --rule lint/missing-final-newline=off $(BUILD_DIR)/tools/lint-missing-final-newline.ari >$(BUILD_DIR)/tools/lint-missing-final-newline-off.out
+	grep -q '$(BUILD_DIR)/tools/lint-missing-final-newline.ari: ok' $(BUILD_DIR)/tools/lint-missing-final-newline-off.out
 	if $(LINT_TARGET) --ari $(TARGET) --json tests/errors/prelude-macro-format-planned.ari >$(BUILD_DIR)/tools/lint-format.json; then exit 1; fi
 	grep -q '"line":2' $(BUILD_DIR)/tools/lint-format.json
 	grep -q "prelude macro 'format!' needs owned runtime strings" $(BUILD_DIR)/tools/lint-format.json

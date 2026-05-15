@@ -13,6 +13,8 @@
 - [x] Add rule severity configuration through `--rule RULE=SEVERITY`.
 - [x] Add the first native lint rule, `lint/trailing-whitespace`, and document
       its default behavior.
+- [x] Add `lint/missing-final-newline` as a second native source-file rule and
+      split source-text rules away from the rule registry.
 - [x] Add machine-readable `endLine`/`endColumn` spans to lint JSON for
       diagnostics that know a wider source range.
 - [x] Share the lint checker library with `ari-lsp` so CLI and editor
@@ -27,7 +29,9 @@
 - [ ] Add stable diagnostic codes once compiler diagnostics expose codes.
 - [ ] Extend compiler-backed diagnostics with wider spans once the compiler
       exposes them.
-- [ ] Keep adding lint-only rules and docs as policy decisions become stable.
+- [ ] Keep adding lint-only rules and docs as policy decisions become stable;
+      current source-text coverage includes trailing whitespace and missing
+      final newline.
 - [ ] Add a formal project manifest hook if Ari packages later need to pin lint
       policy at package-root boundaries.
 

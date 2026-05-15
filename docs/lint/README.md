@@ -25,6 +25,7 @@ build/ari-lint --ari build/ari -I path/to/modules source.ari
 build/ari-lint --list-rules
 build/ari-lint --config ari-lint.rules source.ari
 build/ari-lint --rule lint/trailing-whitespace=error source.ari
+build/ari-lint --rule lint/missing-final-newline=off generated.ari
 ```
 
 `ARI_COMPILER` can also point the tool at a compiler binary when `--ari` is not
@@ -45,6 +46,7 @@ line, blank lines allowed, and `#` comments supported.
 ```text
 # ari-lint.rules
 lint/trailing-whitespace = error
+lint/missing-final-newline = warning
 ```
 
 The VS Code extension's `Ari: Lint Current File` command invokes this tool
@@ -70,6 +72,13 @@ the CLI share the same rule registry and severity handling.
 Reports spaces or tabs at the end of a source line. The default severity is
 `warning`. Use `--rule lint/trailing-whitespace=off` to disable it for generated
 or transitional sources, or set it to `error` when a CI job should reject it.
+
+### `lint/missing-final-newline`
+
+Reports non-empty source files that do not end with a newline. The default
+severity is `warning`. Use `--rule lint/missing-final-newline=off` for generated
+files that intentionally omit the final newline, or set it to `error` when CI
+should enforce repository text-file hygiene.
 
 ## Developer Notes
 
