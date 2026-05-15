@@ -282,6 +282,8 @@ Checklist:
       reads through `first` and `last`
 - [x] source `std::string::String` exposes byte-search methods `contains`,
       `index_of`, and `count` with borrowed receiver lowering
+- [x] source `std::string::String` exposes `starts_with(Slice[u8])` and
+      `ends_with(Slice[u8])` prefix/suffix checks over borrowed byte views
 - [x] source `std::string::String.copy_to(ref mut Zone)` mirrors the
       top-level target-zone copy helper while preserving reset/destroy
       provenance on the returned handle

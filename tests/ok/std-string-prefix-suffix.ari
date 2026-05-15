@@ -1,0 +1,28 @@
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var text = std::string::from_string(ref mut zone, "compiler");
+  var prefix = std::string::from_string(ref mut zone, "com");
+  var suffix = std::string::from_string(ref mut zone, "ler");
+  var wrong_prefix = std::string::from_string(ref mut zone, "omp");
+  var too_long = std::string::from_string(ref mut zone, "compiler!");
+  var empty = std::string::new(ref mut zone, 0);
+
+  let prefix_view = prefix.as_slice();
+  let suffix_view = suffix.as_slice();
+  let wrong_prefix_view = wrong_prefix.as_slice();
+  let too_long_view = too_long.as_slice();
+  let empty_view = empty.as_slice();
+
+  let a = if text.starts_with(prefix_view) { 11 } else { 0 };
+  let b = if text.ends_with(suffix_view) { 13 } else { 0 };
+  let c = if text.starts_with(wrong_prefix_view) { 0 } else { 17 };
+  let d = if text.ends_with(too_long_view) { 0 } else { 19 };
+  let e = if text.starts_with(empty_view) { 23 } else { 0 };
+  let f = if text.ends_with(empty_view) { 29 } else { 0 };
+
+  text.push_in(ref mut zone, 33u8);
+  let g = if text.ends_with(suffix_view) { 0 } else { 31 };
+
+  zone::destroy(zone);
+  return a + b + c + d + e + f + g;
+}

@@ -78,6 +78,7 @@ method std::string::String::clear|check-prelude std-string-handle tests; docs/de
 method std::string::String::contains|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::copy_to|check-prelude std-string-copy-to-method borrowed receiver and target reset tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::count|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::ends_with|check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::extend_from_slice_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::first|check-prelude std-string-first-last borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::get|check-prelude std-string-handle borrowed receiver and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -95,6 +96,7 @@ method std::string::String::reserve|check-prelude std-string-grow; docs/dev/test
 method std::string::String::reserve_extra|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::resize_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::set|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::starts_with|check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::truncate|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row
