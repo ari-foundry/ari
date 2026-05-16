@@ -23,6 +23,32 @@ pub fn slice[T](data: ptr T, len: i64) -> Slice[T] {
   return Slice<T> { data: data, len: len };
 }
 
+pub fn move[T](value: T) -> T;
+pub fn take[T](place: T) -> T;
+
+pub extern "ari" fn assert(condition: bool) -> i64 = "ari_builtin_assert";
+pub extern "ari" fn debug_assert(condition: bool) -> i64 = "ari_builtin_assert";
+pub extern "ari" fn assert_eq_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_eq_i64";
+pub extern "ari" fn assert_ne_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_ne_i64";
+pub extern "ari" fn assert_eq_bool(left: bool, right: bool) -> i64 = "ari_builtin_assert_eq_bool";
+pub extern "ari" fn assert_ne_bool(left: bool, right: bool) -> i64 = "ari_builtin_assert_ne_bool";
+pub extern "ari" fn panic() -> void = "ari_builtin_panic";
+pub extern "ari" fn todo() -> void = "ari_builtin_panic";
+pub extern "ari" fn unreachable() -> void = "ari_builtin_panic";
+
+pub mod mem;
+
+pub mod zone;
+
+pub mod boxed;
+pub use boxed::Box;
+
+pub mod string;
+
+pub use string::String;
+
+pub mod vec;
+
 pub impl[T] Slice[T] {
   fn first(self: ref Self) -> T {
     std::assert(self.len > 0);
@@ -110,32 +136,6 @@ pub impl[T] Slice[T] {
     return true;
   }
 }
-
-pub fn move[T](value: T) -> T;
-pub fn take[T](place: T) -> T;
-
-pub extern "ari" fn assert(condition: bool) -> i64 = "ari_builtin_assert";
-pub extern "ari" fn debug_assert(condition: bool) -> i64 = "ari_builtin_assert";
-pub extern "ari" fn assert_eq_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_eq_i64";
-pub extern "ari" fn assert_ne_i64(left: i64, right: i64) -> i64 = "ari_builtin_assert_ne_i64";
-pub extern "ari" fn assert_eq_bool(left: bool, right: bool) -> i64 = "ari_builtin_assert_eq_bool";
-pub extern "ari" fn assert_ne_bool(left: bool, right: bool) -> i64 = "ari_builtin_assert_ne_bool";
-pub extern "ari" fn panic() -> void = "ari_builtin_panic";
-pub extern "ari" fn todo() -> void = "ari_builtin_panic";
-pub extern "ari" fn unreachable() -> void = "ari_builtin_panic";
-
-pub mod mem;
-
-pub mod zone;
-
-pub mod boxed;
-pub use boxed::Box;
-
-pub mod string;
-
-pub use string::String;
-
-pub mod vec;
 
 pub mod iter;
 

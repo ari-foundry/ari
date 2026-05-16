@@ -1,0 +1,8 @@
+fn main() -> i64 {
+  var target = zone::create(64);
+  var values = [21];
+  let view = values.as_slice();
+  let copied = view.copy_to(ref mut target);
+  zone::reset(ref mut target);
+  return copied.get(0);
+}

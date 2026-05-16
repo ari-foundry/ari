@@ -1,0 +1,22 @@
+fn main() -> i64 {
+  var source = zone::create(128);
+  var target = zone::create(128);
+  var values = std::vec::new<i64>(ref mut source, 3);
+
+  values.push(4);
+  values.push(5);
+  values.push(6);
+
+  let view = values.as_slice();
+  var copied = view.copy_to(ref mut target);
+
+  zone::reset(ref mut source);
+  copied.push_in(ref mut target, 7);
+
+  let total = copied.len() + copied.capacity() + copied.get(0) +
+      copied.get(1) + copied.get(2) + copied.get(3);
+
+  zone::destroy(source);
+  zone::destroy(target);
+  return total;
+}

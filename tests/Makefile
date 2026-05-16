@@ -359,6 +359,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	$(TARGET) tests/ok/prelude-slice-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
+	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl15std__Slice_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
 	$(TARGET) --freestanding tests/ok/prelude-slice-view.ari -o $(BUILD_DIR)/prelude/prelude-slice-view.raw
 	$(BUILD_DIR)/prelude/prelude-slice-view.raw; code=$$?; test $$code -eq 101
 	$(TARGET) --freestanding tests/ok/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.raw
@@ -366,6 +368,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf; $(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; $(BUILD_DIR)/prelude/prelude-slice-copy-to.elf; code=$$?; test $$code -eq 32; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
 		$(BUILD_DIR)/prelude/prelude-header-main.elf >$(BUILD_DIR)/prelude/prelude-header-main.out; \
@@ -478,6 +481,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err
 	if $(TARGET) tests/errors/std-vec-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err
+	if $(TARGET) tests/errors/prelude-slice-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err
 	if $(TARGET) tests/errors/std-vec-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-box-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-box-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-box-after-reset.err 2>&1; then exit 1; fi

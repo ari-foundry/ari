@@ -187,8 +187,9 @@ constructor subset documented in the language guide.
    compatibility, and `Shared[T]` / `Weak[T]` are reserved for
    reference-counted ownership. Source `Slice[T]` now has checked
    `first`/`last`/`get`, element search, and borrowed `Slice[T]`
-   exact/prefix/suffix comparison methods so early library code can use
-   borrowed views without adding one-off helpers. New
+   exact/prefix/suffix comparison methods, plus
+   `copy_to(ref mut Zone)` into a target-zone `std::vec::Vec<T>`, so early
+   library code can use borrowed views without adding one-off helpers. New
    source `std` APIs are now guarded by `make check-std-api`, which compares the
    extracted public `lib/std` surface with `tests/std_api_manifest.txt` and
    requires a focused coverage note beside the API entry. Generic `Drop` impls
@@ -376,8 +377,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `view[index]`, `view[index] = value`, local array/Vec `as_slice()`,
     `view[start..end]` / `view[start..=end]` range slicing, checked
     `first`/`last`/`get`, element search, and exact/prefix/suffix Slice
-    comparisons. It is non-owning and still relies on explicit raw-pointer
-    discipline.
+    comparisons. It can also copy itself into target-zone `std::vec::Vec<T>`
+    storage through `copy_to(ref mut Zone)`. It is non-owning and still relies
+    on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
     Allocator-backed unique `Box[T]` ownership remains promoted into the
@@ -389,6 +391,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
+    - [slice-as-ptr-provenance] decide whether `Slice.as_ptr()` should expose
+      the stored pointer directly; add it only with explicit provenance rules
+      for local-array, local-Vec, and zone-backed views.
 5. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers

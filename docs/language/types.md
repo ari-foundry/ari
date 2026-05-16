@@ -468,9 +468,11 @@ adjusted raw pointer and length after checking the requested range against the
 source view. `first()`, `last()`, and `get(index)` are checked read-only
 accessors. `contains(value)`, `index_of(value)`, and `count(value)` scan
 comparable elements, while `equals(view)`, `starts_with(view)`, and
-`ends_with(view)` compare against another `Slice[T]`. The LLVM host backend and
-raw freestanding backend both lower this local Slice view surface for
-materializable element values.
+`ends_with(view)` compare against another `Slice[T]`. `copy_to(ref mut Zone)`
+copies the current view into a target-zone `std::vec::Vec<T>` handle whose
+reset/destroy provenance follows the target zone. The LLVM host backend and raw
+freestanding backend both lower the local Slice view surface for materializable
+element values; target-zone Slice copy is an LLVM host explicit-zone path.
 Array lengths, including direct array literal lengths, are folded directly:
 
 ```ari

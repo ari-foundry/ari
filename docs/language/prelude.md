@@ -775,11 +775,13 @@ existing element. `first()`, `last()`, and `get(index)` are checked read-only
 element accessors over the stored pointer and length. `contains(value)`,
 `index_of(value)`, and `count(value)` scan comparable elements. `equals(view)`,
 `starts_with(view)`, and `ends_with(view)` compare against another borrowed
-`Slice[T]` view. The raw freestanding backend uses the same pointer/length
-metadata for local Slice indexing, indexed assignment, range slicing, and
-read-only Slice methods. Slice patterns are still planned after the binding
-policy is nailed down. `len(view)`, `view.len()`, and `view.is_empty()` read
-the stored length.
+`Slice[T]` view. `copy_to(ref mut Zone)` copies the current view into a new
+target-zone `std::vec::Vec<T>` handle; the copied handle is invalidated with
+the target zone, not with the source view's backing storage. The raw
+freestanding backend uses the same pointer/length metadata for local Slice
+indexing, indexed assignment, range slicing, and read-only Slice methods.
+Slice patterns are still planned after the binding policy is nailed down.
+`len(view)`, `view.len()`, and `view.is_empty()` read the stored length.
 
 Ranges are compiler-known two-field values:
 

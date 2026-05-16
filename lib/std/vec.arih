@@ -30,6 +30,13 @@ pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::vec::
   return output;
 }
 
+pub impl[T] std::Slice[T] {
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::vec::Vec[T] {
+    let current = super::Slice<T> { data: self.data, len: self.len };
+    return std::vec::from_slice_in<T>(target, current);
+  }
+}
+
 pub impl[T] std::vec::Vec[T] {
   fn len(self: ref Self) -> i64 {
     return self.raw.len;
