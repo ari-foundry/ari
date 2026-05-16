@@ -1,0 +1,19 @@
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var boxed = Box::new<i64>(ref mut zone, 21);
+
+  let moved = boxed.take();
+  var score = 0;
+  if !boxed.is_empty() {
+    score = 1;
+  } else {
+    boxed.put_in(ref mut zone, 34);
+    let replaced = boxed.replace(55);
+    let current = boxed.get();
+    score = moved + replaced + current;
+  }
+
+  drop boxed;
+  zone::destroy(zone);
+  return score;
+}

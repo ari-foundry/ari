@@ -329,9 +329,10 @@ source explicit-zone handle over `zone::new<T>` storage. Construct it with
 `std::boxed::new<T>(ref mut Zone, value)`. Read-only handle methods such as
 `get`, `copy_to`, and `as_ptr` borrow the receiver. `take()` mutably borrows the
 handle, returns the stored value, and leaves the handle empty so a later
-`drop boxed` consumes only the handle. Dropping a non-empty handle runs the
-stored value's `Drop` impl when one exists, but the explicit zone still owns and
-releases the backing bytes.
+`drop boxed` consumes only the handle. `put_in(ref mut Zone, value)` can refill
+that empty handle, but the zone argument must match the handle's tracked source
+zone. Dropping a non-empty handle runs the stored value's `Drop` impl when one
+exists, but the explicit zone still owns and releases the backing bytes.
 
 The remaining root smart-pointer names stay reserved for the later ownership
 policy:

@@ -238,8 +238,9 @@ diagnostics.
    `drop boxed` consumes the handle binding and runs the pointed-to value
    through normal Drop lowering when the handle is not empty. `boxed.take()`
    moves the value out and empties the handle so a later handle drop skips that
-   value, while storage release remains the explicit zone's responsibility
-   through `zone::reset` or `zone::destroy`. Source
+   value; `boxed.put_in(ref mut zone, value)` refills that empty handle only
+   with the same tracked source zone, while storage release remains the
+   explicit zone's responsibility through `zone::reset` or `zone::destroy`. Source
    `std::vec::Vec<T>` follows the same explicit-zone value-drop policy:
    `drop vec` drops each current element and leaves buffer release to the zone.
    Source `std::mem::replace<T>` and `std::mem::swap<T>` now provide
@@ -318,10 +319,12 @@ diagnostics.
      checking, and a generic Drop impl that runs the stored value's Drop path.
      The explicit-zone seed now also has the first value move-out contract:
      `take()` returns the stored value, leaves the handle empty, `is_empty()`
-     exposes that state, and Drop skips empty handles. Remaining work is the
-     allocator-backed root handle layout, allocator/capability construction,
-     move-only ownership rules for the root handle, and integration with heap
-     release.
+     exposes that state, `put_in(ref mut Zone, value)` refills the empty handle
+     under same-zone provenance checks, and Drop skips empty handles. Remaining
+     work is the allocator-backed root handle layout, allocator/capability
+     construction, move-only ownership rules for the root handle, provenance
+     updates for any future cross-zone handle mutation, and integration with
+     heap release.
    - [owned-box-release] connect the allocator-backed unique `Box[T]` Drop path
      to the heap-storage release contract once that root handle exists. The
      current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract

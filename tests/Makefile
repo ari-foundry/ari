@@ -245,6 +245,8 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-boxed-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4take' $(BUILD_DIR)/prelude/std-boxed-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent8is_empty' $(BUILD_DIR)/prelude/std-boxed-take.ll
+	$(TARGET) tests/ok/std-boxed-put-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-put-in.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent6put_in' $(BUILD_DIR)/prelude/std-boxed-put-in.ll
 	$(TARGET) tests/ok/std-boxed-drop.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-boxed-drop.ll
 	$(TARGET) tests/ok/std-boxed-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
@@ -467,6 +469,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-take.elf; $(BUILD_DIR)/prelude/std-boxed-take.elf; code=$$?; test $$code -eq 24; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-put-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-put-in.elf; $(BUILD_DIR)/prelude/std-boxed-put-in.elf; code=$$?; test $$code -eq 110; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-drop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-drop.elf; $(BUILD_DIR)/prelude/std-boxed-drop.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-box-root.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-box-root.elf; $(BUILD_DIR)/prelude/prelude-box-root.elf; code=$$?; test $$code -eq 43; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; code=$$?; test $$code -eq 6; fi
@@ -587,6 +590,10 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err
 	if $(TARGET) tests/errors/std-boxed-drop-use-after.ari -o $(BUILD_DIR)/prelude/std-boxed-drop-use-after.elf >$(BUILD_DIR)/prelude/std-boxed-drop-use-after.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'boxed'" $(BUILD_DIR)/prelude/std-boxed-drop-use-after.err
+	if $(TARGET) tests/errors/std-boxed-put-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-boxed-put-in-different-zone.elf >$(BUILD_DIR)/prelude/std-boxed-put-in-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::boxed::Box.put_in zone argument must match the box allocation zone" $(BUILD_DIR)/prelude/std-boxed-put-in-different-zone.err
+	if $(TARGET) tests/errors/std-boxed-put-in-untracked.ari -o $(BUILD_DIR)/prelude/std-boxed-put-in-untracked.elf >$(BUILD_DIR)/prelude/std-boxed-put-in-untracked.err 2>&1; then exit 1; fi
+	grep -q "std::boxed::Box.put_in receiver must come from a tracked zone allocation" $(BUILD_DIR)/prelude/std-boxed-put-in-untracked.err
 	if $(TARGET) tests/errors/std-string-alloc-buffer-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.elf >$(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'data' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-alloc-buffer-after-reset.err
 	if $(TARGET) tests/errors/std-string-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-string-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-string-handle-after-reset.err 2>&1; then exit 1; fi

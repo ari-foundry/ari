@@ -2,6 +2,8 @@
 
 #include "type_semantics.hpp"
 
+#include <vector>
+
 namespace ari {
 
 namespace {
@@ -34,11 +36,47 @@ std::optional<std::size_t> std_box_zone_handle_source_field_index(const IrType& 
     return 0;
 }
 
+std::optional<std::vector<std::size_t>> std_box_zone_handle_data_field_path_indices(const IrType& type) {
+    std::optional<std::size_t> data_index = std_box_zone_handle_source_field_index(type);
+    if (!data_index) return std::nullopt;
+    return std::vector<std::size_t>{*data_index};
+}
+
+bool std_box_method_requires_same_zone_argument(const std::string& method_name) {
+    return method_name == "put_in";
+}
+
 bool std_box_pointer_result_preserves_receiver_zone(const IrExpr& call) {
     return call.kind == IrExprKind::Call &&
            call.type.qualifier == TypeQualifier::Ptr &&
            !call.args.empty() &&
            is_std_box_handle_type(value_qualified_box_type(call.args[0]->type));
+}
+
+std::optional<std::string> std_box_same_zone_method_violation(
+    const std::string& method_name,
+    const IrType& receiver_type,
+    const std::vector<IrExprPtr>& args,
+    const StdBoxZoneSourceLookup& receiver_zone_source,
+    const StdBoxZoneSourceLookup& argument_zone_source) {
+    if (!std_box_method_requires_same_zone_argument(method_name) || args.size() < 2) return std::nullopt;
+    if (!is_std_box_handle_type(value_qualified_box_type(receiver_type))) return std::nullopt;
+
+    std::string box_source;
+    if (!receiver_zone_source(*args[0], box_source)) {
+        return "std::boxed::Box." + method_name + " receiver must come from a tracked zone allocation";
+    }
+
+    std::string zone_source;
+    if (!argument_zone_source(*args[1], zone_source)) {
+        return "std::boxed::Box." + method_name + " requires an explicit zone borrow argument";
+    }
+
+    if (box_source != zone_source) {
+        return "std::boxed::Box." + method_name + " zone argument must match the box allocation zone";
+    }
+
+    return std::nullopt;
 }
 
 } // namespace ari

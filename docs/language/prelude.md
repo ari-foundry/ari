@@ -101,12 +101,14 @@ source lives in `lib/std/boxed.arih`, and the same handle is available through
 the root `Box[T]` / `std::Box[T]` alias. The handle also has associated
 constructors through `Box::new<T>(ref mut zone, value)` and
 `std::Box::new<T>(ref mut zone, value)`. It exposes `get()`, `set(value)`,
-`replace(value)`, `take()`, `is_empty()`, `copy_to(ref mut zone)`,
-`swap(ref mut other)`, and `as_ptr()` methods for copyable, zone-placeable
-values. `replace(value)` stores a new value and returns the previous one.
+`replace(value)`, `take()`, `put_in(ref mut zone, value)`, `is_empty()`,
+`copy_to(ref mut zone)`, `swap(ref mut other)`, and `as_ptr()` methods for
+copyable, zone-placeable values. `replace(value)` stores a new value and
+returns the previous one.
 `take()` moves the current value out of the handle and leaves the handle empty;
-`is_empty()` reports that state, and dropping an empty handle does not drop a
-value again.
+`is_empty()` reports that state, and `put_in(ref mut zone, value)` can refill
+that empty handle only with the same tracked zone that originally owns the box
+storage. Dropping an empty handle does not drop a value again.
 `get()`, `copy_to(ref mut zone)`, and `as_ptr()` borrow the handle receiver
 instead of copying it; the mutating methods borrow it mutably.
 `copy_to(ref mut zone)` copies the current value into another explicit zone and
@@ -723,6 +725,7 @@ var copied = boxed.copy_to(ref mut other_zone)
 boxed.swap(ref mut copied)
 let raw = boxed.as_ptr()
 let moved = boxed.take()
+boxed.put_in(ref mut zone, moved + 1)
 let empty = boxed.is_empty()
 ```
 
@@ -810,9 +813,9 @@ result, or slice view after its source zone is reset or destroyed is rejected.
 need a one-value handle before the final owning smart pointer ABI exists, but
 it still takes explicit zone construction through `Box::new<T>` or
 `std::boxed::new<T>`, and the zone still releases the backing bytes. Its
-`take()` method is the current explicit-zone value move-out contract; the
-allocator-backed unique owner will keep the root `Box[T]` spelling once heap
-release is part of the handle.
+`take()`/`put_in(ref mut Zone, value)` pair is the current explicit-zone
+move-out and same-zone refill contract; the allocator-backed unique owner will
+keep the root `Box[T]` spelling once heap release is part of the handle.
 `Unique[T]` remains reserved as
 policy/design space, but the eventual unique owner should use the `Box[T]`
 spelling once it grows allocator-backed ownership. `Shared[T]` is reserved for
