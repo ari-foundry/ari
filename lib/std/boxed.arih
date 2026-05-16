@@ -30,7 +30,9 @@ pub impl[T] std::boxed::Box[T] {
 
   fn set(self: ref mut Self, value: T) -> void {
     std::assert(!self.is_empty());
+    let previous = ptr_load(self.data);
     ptr_store(self.data, value);
+    drop previous;
   }
 
   fn replace(self: ref mut Self, value: T) -> T {

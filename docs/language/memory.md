@@ -327,8 +327,9 @@ ptr_store(point_ptr, ptr_load(point_ptr));
 source explicit-zone handle over `zone::new<T>` storage. Construct it with
 `Box::new<T>(ref mut Zone, value)`, `std::Box::new<T>(ref mut Zone, value)`, or
 `std::boxed::new<T>(ref mut Zone, value)`. Read-only handle methods such as
-`get`, `copy_to`, and `as_ptr` borrow the receiver. `take()` mutably borrows the
-handle, returns the stored value, and leaves the handle empty so a later
+`get`, `copy_to`, and `as_ptr` borrow the receiver. `set(value)` overwrites the
+stored value and drops the previous value. `take()` mutably borrows the handle,
+returns the stored value, and leaves the handle empty so a later
 `drop boxed` consumes only the handle. `clear()` mutably borrows the handle,
 drops the stored value if one is present, and leaves the handle empty.
 `put_in(ref mut Zone, value)` can refill that empty handle, but the zone

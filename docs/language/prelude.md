@@ -106,8 +106,9 @@ constructors through `Box::new<T>(ref mut zone, value)` and
 `std::Box::new<T>(ref mut zone, value)`. It exposes `get()`, `set(value)`,
 `replace(value)`, `take()`, `clear()`, `put_in(ref mut zone, value)`, `is_empty()`,
 `copy_to(ref mut zone)`, `swap(ref mut other)`, and `as_ptr()` methods for
-copyable, zone-placeable values. `replace(value)` stores a new value and
-returns the previous one.
+copyable, zone-placeable values. `set(value)` drops the previous value after
+storing the new one. `replace(value)` stores a new value and returns the
+previous one.
 `take()` moves the current value out of the handle and leaves the handle empty;
 `clear()` drops the current value if one is present and leaves the handle empty;
 `is_empty()` reports that state, and `put_in(ref mut zone, value)` can refill

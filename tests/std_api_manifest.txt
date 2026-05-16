@@ -105,7 +105,7 @@ method std::boxed::Box[T]::is_empty|check-prelude std-boxed-take empty handle co
 method std::boxed::Box[T]::new|check-prelude prelude-box-root; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::put_in|check-prelude std-boxed-put-in same-zone empty-handle refill; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::replace|check-prelude std-boxed-replace; docs/dev/test-matrix.md Explicit memory zones row
-method std::boxed::Box[T]::set|check-prelude std-boxed-box; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::set|check-prelude std-boxed-box and std-boxed-set-drop-value overwrite drop; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::take|check-prelude std-boxed-take value move-out leaves empty handle; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows

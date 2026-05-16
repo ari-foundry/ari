@@ -844,8 +844,9 @@ Meanings:
   `std::Box::new<T>(ref mut Zone, value)`, or
   `std::boxed::new<T>(ref mut Zone, value)`; the handle's `Drop` path runs the
   stored value's destructor when one exists, but the explicit zone still owns
-  and releases the backing bytes. `take()` moves the value out and leaves the
-  handle empty, so a later handle drop does not drop that value again.
+  and releases the backing bytes. `set(value)` drops the previous value after
+  storing the new one. `take()` moves the value out and leaves the handle empty,
+  so a later handle drop does not drop that value again.
   `clear()` drops the value if one is present and leaves the handle empty.
   `put_in(ref mut Zone, value)` refills an empty handle using the same tracked
   source zone.

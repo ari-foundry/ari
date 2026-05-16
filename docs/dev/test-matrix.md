@@ -263,8 +263,9 @@ Checklist:
       a tracked source `std::boxed::Box<T>` handle with
       `get`/`set`/`replace`/`take`/`clear`/`put_in`/`is_empty`/`copy_to`/`swap`/`as_ptr`
       methods, borrowed receiver lowering for read-only `get`/`copy_to`/`as_ptr`,
-      an empty-handle state after `take`, same-zone empty-handle refill through
-      `put_in(ref mut Zone, value)`, no-op clear for empty handles, and
+      value-drop overwrite through `set`, an empty-handle state after `take`,
+      same-zone empty-handle refill through `put_in(ref mut Zone, value)`,
+      no-op clear for empty handles, and
       reset/destroy invalidation, plus a generic Drop impl that consumes the
       handle binding, skips empty handles, runs `Drop` for the stored value when
       one exists, and rejects later use

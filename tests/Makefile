@@ -234,6 +234,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5boxed10new__G_i64' $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -F -q 'define i64 @"_ARNv4impl20std__boxed__Box_i64_8inherent3get"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent3set' $(BUILD_DIR)/prelude/std-boxed-box.ll
+	$(TARGET) tests/ok/std-boxed-set-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-set-drop-value.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent3set' $(BUILD_DIR)/prelude/std-boxed-set-drop-value.ll
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-boxed-set-drop-value.ll) -ge 2
 	$(TARGET) tests/ok/std-boxed-replace.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-replace.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent7replace' $(BUILD_DIR)/prelude/std-boxed-replace.ll
 	$(TARGET) tests/ok/std-boxed-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-copy-to.ll
@@ -474,6 +477,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-new-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-new-handle.elf; $(BUILD_DIR)/prelude/std-vec-new-handle.elf; code=$$?; test $$code -eq 40; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-macro-new.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-macro-new.elf; $(BUILD_DIR)/prelude/std-vec-macro-new.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-box.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-box.elf; $(BUILD_DIR)/prelude/std-boxed-box.elf; code=$$?; test $$code -eq 30; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-set-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-set-drop-value.elf; $(BUILD_DIR)/prelude/std-boxed-set-drop-value.elf; code=$$?; test $$code -eq 34; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-replace.elf; $(BUILD_DIR)/prelude/std-boxed-replace.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; code=$$?; test $$code -eq 51; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi

@@ -173,10 +173,11 @@ diagnostics.
    `Box::new<T>` construction plus `get`, `set`, `replace`, `take`,
    `clear`, `is_empty`, `copy_to`, `swap`, and `as_ptr` methods; read-only `get`,
    `is_empty`, `copy_to`, and `as_ptr` borrow their receiver instead of copying
-   the handle. `take` moves the current value out and leaves an empty handle,
-   `clear` drops the current value and leaves the same empty state, and its
-   generic `Drop` impl consumes the handle, skips empty handles, and runs the
-   stored value through normal Drop lowering otherwise. The root
+   the handle. `set` drops the overwritten value, `take` moves the current value
+   out and leaves an empty handle, `clear` drops the current value and leaves
+   the same empty state, and its generic `Drop` impl consumes the handle, skips
+   empty handles, and runs the stored value through normal Drop lowering
+   otherwise. The root
    `Box[T]`/`std::Box[T]` spelling now aliases that explicit-zone source
    handle. Allocator-backed unique `Box[T]` ownership remains future work.
    Root `Vec[T]` now has an explicit boundary rule while runtime capacity is
@@ -239,9 +240,10 @@ diagnostics.
    `std::boxed::Box<T>` source seed, including the root `Box[T]` alias, has a
    concrete value-drop contract:
    `drop boxed` consumes the handle binding and runs the pointed-to value
-   through normal Drop lowering when the handle is not empty. `boxed.take()`
-   moves the value out and empties the handle so a later handle drop skips that
-   value; `boxed.clear()` drops the current value and empties the handle;
+   through normal Drop lowering when the handle is not empty. `boxed.set(value)`
+   drops the overwritten value, `boxed.take()` moves the value out and empties
+   the handle so a later handle drop skips that value; `boxed.clear()` drops
+   the current value and empties the handle;
    `boxed.put_in(ref mut zone, value)` refills that empty handle only with the
    same tracked source zone, while storage release remains the
    explicit zone's responsibility through `zone::reset` or `zone::destroy`. Source
@@ -324,15 +326,15 @@ diagnostics.
      read-only method receivers, zone-provenance tracking, use-after-drop
      checking, and a generic Drop impl that runs the stored value's Drop path.
      The explicit-zone seed now also has the first value move-out contract:
-     `take()` returns the stored value, leaves the handle empty, `is_empty()`
-     exposes that state, `put_in(ref mut Zone, value)` refills the empty handle
-     under same-zone provenance checks, `clear()` drops and empties a non-empty
-     handle while treating an already empty handle as a no-op, and Drop skips
-     empty handles. Remaining work is the allocator-backed root handle layout,
-     allocator/capability
-     construction, move-only ownership rules for the root handle, provenance
-     updates for any future cross-zone handle mutation, and integration with
-     heap release.
+     `set(value)` drops the overwritten value, `take()` returns the stored value,
+     leaves the handle empty, `is_empty()` exposes that state,
+     `put_in(ref mut Zone, value)` refills the empty handle under same-zone
+     provenance checks, `clear()` drops and empties a non-empty handle while
+     treating an already empty handle as a no-op, and Drop skips empty handles.
+     Remaining work is the allocator-backed root handle layout,
+     allocator/capability construction, move-only ownership rules for the root
+     handle, provenance updates for any future cross-zone handle mutation, and
+     integration with heap release.
    - [owned-box-release] connect the allocator-backed unique `Box[T]` Drop path
      to the heap-storage release contract once that root handle exists. The
      current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract
