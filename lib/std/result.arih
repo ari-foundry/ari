@@ -1,0 +1,19 @@
+pub impl[T, E] std::Result[T, E] {
+  fn is_ok(self) -> bool {
+    return match self {
+      std::Ok(_) => true,
+      std::Err(_) => false;
+    };
+  }
+
+  fn is_err(self) -> bool {
+    return !self.is_ok();
+  }
+
+  fn unwrap_or(self, fallback: T) -> T {
+    return match self {
+      std::Ok(value) => value,
+      std::Err(_) => fallback;
+    };
+  }
+}

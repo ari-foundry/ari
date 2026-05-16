@@ -73,6 +73,12 @@ method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests
 method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::starts_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::is_none|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::is_some|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::is_err|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::is_ok|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Slice[T]::copy_to|check-prelude prelude-slice-copy-to borrowed receiver and target reset tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 method std::boxed::Box[T]::as_ptr|check-prelude std-boxed-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::copy_to|check-prelude std-boxed-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
@@ -154,6 +160,8 @@ module std::input|prelude input tests; docs/dev/test-matrix.md Prelude row
 module std::io|prelude IO tests; docs/dev/test-matrix.md Prelude row
 module std::iter|range and iterator tests; docs/dev/test-matrix.md Control flow row
 module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
+module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude row
+module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row
 module std::zone|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row

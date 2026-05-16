@@ -1,0 +1,19 @@
+pub impl[T] std::Option[T] {
+  fn is_some(self) -> bool {
+    return match self {
+      std::Some(_) => true,
+      std::None => false;
+    };
+  }
+
+  fn is_none(self) -> bool {
+    return !self.is_some();
+  }
+
+  fn unwrap_or(self, fallback: T) -> T {
+    return match self {
+      std::Some(value) => value,
+      std::None => fallback;
+    };
+  }
+}

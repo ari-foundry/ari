@@ -207,6 +207,10 @@ constructor subset documented in the language guide.
    raw-pointer materialization path as `ptr_load` / `ptr_store`, and that path
    now rejects ownership- or borrow-valued values instead of allowing accidental
    raw copies before a move-aware place contract exists.
+   Source `Option[T]` and `Result[T, E]` also have their first ordinary library
+   method surface now: value-receiver presence/status predicates plus
+   `unwrap_or`, implemented in focused `std::option` and `std::result` child
+   modules while the enum types and cases remain at the `std` root.
    The Drop
    trait/method shape checks and shared diagnostics for explicit destructor
    lowering now live in `drop_semantics`, keeping this ownership/destructor
@@ -255,6 +259,10 @@ constructor subset documented in the language guide.
      should become move-aware for owning values once Ari has a safe generic
      place-move contract. Today's helpers intentionally stay on the
      copyable/plain-value raw-pointer path.
+   - [option-result-borrow-methods] add borrowed-receiver probes for
+     `Option[T]` and `Result[T, E]` after enum ref-pattern matching has a
+     settled ownership/binding contract; today's methods intentionally consume
+     the enum value.
    Explicit-zone formatted strings are now settled for the 0.x source-`std`
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
    string/signed and unsigned integer/bool/float formatting and `{:.N}` float
@@ -386,7 +394,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
     prelude and connected to
-    `?`/`??` on the LLVM aggregate-enum path. `Slice[T]` is now a source `std`
+    `?`/`??` on the LLVM aggregate-enum path; their initial value-receiver
+    predicate and `unwrap_or` methods have been promoted into the Near-Term
+    source-`std` library-prep checklist. `Slice[T]` is now a source `std`
     view struct implemented on both LLVM and the raw freestanding backend for
     `slice(data, len)`, `len(view)`, `view.len()`, `view.is_empty()`,
     `view[index]`, `view[index] = value`, local array/Vec `as_slice()`,
