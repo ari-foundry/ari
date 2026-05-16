@@ -47,6 +47,15 @@ pub impl[T] std::boxed::Box[T] {
     return value;
   }
 
+  fn clear(self: ref mut Self) -> void {
+    if self.is_empty() {
+      return;
+    }
+    let value = ptr_load(self.data);
+    self.data = empty_data<T>();
+    drop value;
+  }
+
   fn put_in(self: ref mut Self, zone: ref mut Zone, value: T) -> void {
     std::assert(self.is_empty());
     self.data = std::zone::new<T>(zone, value);

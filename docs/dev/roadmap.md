@@ -169,11 +169,12 @@ diagnostics.
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
    returns a tracked source `std::boxed::Box<T>` handle with associated
    `Box::new<T>` construction plus `get`, `set`, `replace`, `take`,
-   `is_empty`, `copy_to`, `swap`, and `as_ptr` methods; read-only `get`,
+   `clear`, `is_empty`, `copy_to`, `swap`, and `as_ptr` methods; read-only `get`,
    `is_empty`, `copy_to`, and `as_ptr` borrow their receiver instead of copying
    the handle. `take` moves the current value out and leaves an empty handle,
-   and its generic `Drop` impl consumes the handle, skips empty handles, and
-   runs the stored value through normal Drop lowering otherwise. The root
+   `clear` drops the current value and leaves the same empty state, and its
+   generic `Drop` impl consumes the handle, skips empty handles, and runs the
+   stored value through normal Drop lowering otherwise. The root
    `Box[T]`/`std::Box[T]` spelling now aliases that explicit-zone source
    handle. Allocator-backed unique `Box[T]` ownership remains future work.
    Root `Vec[T]` now has an explicit boundary rule while runtime capacity is
@@ -238,8 +239,9 @@ diagnostics.
    `drop boxed` consumes the handle binding and runs the pointed-to value
    through normal Drop lowering when the handle is not empty. `boxed.take()`
    moves the value out and empties the handle so a later handle drop skips that
-   value; `boxed.put_in(ref mut zone, value)` refills that empty handle only
-   with the same tracked source zone, while storage release remains the
+   value; `boxed.clear()` drops the current value and empties the handle;
+   `boxed.put_in(ref mut zone, value)` refills that empty handle only with the
+   same tracked source zone, while storage release remains the
    explicit zone's responsibility through `zone::reset` or `zone::destroy`. Source
    `std::vec::Vec<T>` follows the same explicit-zone value-drop policy:
    `drop vec` drops each current element and leaves buffer release to the zone.
@@ -320,8 +322,10 @@ diagnostics.
      The explicit-zone seed now also has the first value move-out contract:
      `take()` returns the stored value, leaves the handle empty, `is_empty()`
      exposes that state, `put_in(ref mut Zone, value)` refills the empty handle
-     under same-zone provenance checks, and Drop skips empty handles. Remaining
-     work is the allocator-backed root handle layout, allocator/capability
+     under same-zone provenance checks, `clear()` drops and empties a non-empty
+     handle while treating an already empty handle as a no-op, and Drop skips
+     empty handles. Remaining work is the allocator-backed root handle layout,
+     allocator/capability
      construction, move-only ownership rules for the root handle, provenance
      updates for any future cross-zone handle mutation, and integration with
      heap release.

@@ -98,6 +98,7 @@ method std::Result[T,E]::unwrap_err|check-prelude prelude-option-result-unwrap; 
 method std::Result[T,E]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Slice[T]::copy_to|check-prelude prelude-slice-copy-to borrowed receiver and target reset tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 method std::boxed::Box[T]::as_ptr|check-prelude std-boxed-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::clear|check-prelude std-boxed-clear value-drop empty-handle clear; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::copy_to|check-prelude std-boxed-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::get|check-prelude std-boxed-box borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::is_empty|check-prelude std-boxed-take empty handle contract; docs/dev/test-matrix.md Explicit memory zones row

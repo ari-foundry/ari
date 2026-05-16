@@ -1,0 +1,24 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var boxed = Box::new<i64>(ref mut zone, 21);
+
+  boxed.clear();
+  var score = 0;
+  if boxed.is_empty() {
+    score = score + 3;
+  }
+
+  boxed.clear();
+  boxed.put_in(ref mut zone, 27);
+  score = score + boxed.get();
+
+  drop boxed;
+  zone::destroy(zone);
+  return score;
+}

@@ -101,11 +101,12 @@ source lives in `lib/std/boxed.arih`, and the same handle is available through
 the root `Box[T]` / `std::Box[T]` alias. The handle also has associated
 constructors through `Box::new<T>(ref mut zone, value)` and
 `std::Box::new<T>(ref mut zone, value)`. It exposes `get()`, `set(value)`,
-`replace(value)`, `take()`, `put_in(ref mut zone, value)`, `is_empty()`,
+`replace(value)`, `take()`, `clear()`, `put_in(ref mut zone, value)`, `is_empty()`,
 `copy_to(ref mut zone)`, `swap(ref mut other)`, and `as_ptr()` methods for
 copyable, zone-placeable values. `replace(value)` stores a new value and
 returns the previous one.
 `take()` moves the current value out of the handle and leaves the handle empty;
+`clear()` drops the current value if one is present and leaves the handle empty;
 `is_empty()` reports that state, and `put_in(ref mut zone, value)` can refill
 that empty handle only with the same tracked zone that originally owns the box
 storage. Dropping an empty handle does not drop a value again.
@@ -726,6 +727,7 @@ boxed.swap(ref mut copied)
 let raw = boxed.as_ptr()
 let moved = boxed.take()
 boxed.put_in(ref mut zone, moved + 1)
+boxed.clear()
 let empty = boxed.is_empty()
 ```
 
@@ -735,8 +737,10 @@ pointers recovered through `as_ptr()`. `get()`, `copy_to(ref mut Zone)`, and
 `as_ptr()` are read-only borrows of the handle; `set`, `replace`, and `swap`
 take mutable borrows. `take()` also takes a mutable borrow: it loads the
 pointed-to value and clears the handle's data pointer so `drop boxed` will not
-drop the same value again. Explicit `drop boxed` consumes the handle binding and
-loads the pointed-to value through the normal `Drop` path when the handle is not
+drop the same value again. `clear()` takes the same empty-handle path but drops
+the current value instead of returning it; calling `clear()` on an already empty
+handle is a no-op. Explicit `drop boxed` consumes the handle binding and loads
+the pointed-to value through the normal `Drop` path when the handle is not
 empty, so a stored type with a `Drop` impl gets its destructor call. The zone
 still owns the backing bytes; memory is released with `zone::reset` or
 `zone::destroy`.
