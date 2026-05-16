@@ -659,6 +659,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/control-flow-boolish.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --freestanding tests/ok/if-expression.ari -o $(BUILD_DIR)/control-flow/if-expression.raw
 	$(BUILD_DIR)/control-flow/if-expression.raw; code=$$?; test $$code -eq 13
+	$(TARGET) --freestanding tests/ok/noreturn-expression-arms.ari -o $(BUILD_DIR)/control-flow/noreturn-expression-arms.raw
+	$(BUILD_DIR)/control-flow/noreturn-expression-arms.raw; code=$$?; test $$code -eq 57
 	$(TARGET) --freestanding tests/ok/if-expression-payloads.ari -o $(BUILD_DIR)/control-flow/if-expression-payloads.raw
 	$(BUILD_DIR)/control-flow/if-expression-payloads.raw; code=$$?; test $$code -eq 37
 	$(TARGET) --freestanding tests/ok/if-let-expression.ari -o $(BUILD_DIR)/control-flow/if-let-expression.raw
@@ -797,6 +799,10 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/if-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/if-expression.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-expression.ll
 	grep -q "if.expr.end" $(BUILD_DIR)/control-flow/if-expression.ll
+	$(TARGET) tests/ok/noreturn-expression-arms.ari --emit-llvm $(BUILD_DIR)/control-flow/noreturn-expression-arms.ll
+	grep -q "call void @\"ari_builtin_panic\"()" $(BUILD_DIR)/control-flow/noreturn-expression-arms.ll
+	grep -q "unreachable" $(BUILD_DIR)/control-flow/noreturn-expression-arms.ll
+	grep -q "match.expr.end" $(BUILD_DIR)/control-flow/noreturn-expression-arms.ll
 	$(TARGET) tests/ok/if-expression-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/if-expression-payloads.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/if-expression-payloads.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/if-expression-payloads.ll

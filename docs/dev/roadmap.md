@@ -252,13 +252,11 @@ diagnostics.
    remain at the `std` root. The raw freestanding backend now preserves caller
    pointer bases while aggregate-valued match/control-flow results evaluate
    aggregate-returning callees, so these predicates and combinators run on both
-   LLVM-host and raw paths. Statement-position `panic`/`todo`/`unreachable`
-   noreturn recognition lives with the control-flow helpers rather than adding
-   one-off `sema.cpp` special cases.
-   - [noreturn-expr] allow diverging calls to type as bottom-like expression
-     values in expression-valued `if`/`match` arms; today the supported
-     contract is statement-position control flow, which is enough for source
-     `unwrap`/`expect`
+   LLVM-host and raw paths. Statement-position and expression-arm
+   `panic`/`todo`/`unreachable` noreturn recognition lives with the
+   control-flow helpers rather than adding one-off `sema.cpp` special cases,
+   so expression-valued `if`/`match` arms can use those stop calls as
+   bottom-like values while reachable arms determine the result type.
    Source `std::cmp` now has small generic value helpers
    (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
    re-exports for ordinary library code. This covers another ordinary-library

@@ -39,6 +39,9 @@ let adjusted = if score > 0 { score } else if retry { 1 } else { 0 };
 Expression arms are scoped blocks that may contain local statements before a
 final value expression. Both branches must produce compatible types, and the
 checker merges ownership state across the branches just like statement `if`.
+One branch may instead end in `panic()`, `todo()`, or `unreachable()`; that
+branch is treated as non-continuing, so the reachable branch determines the
+expression type and ownership state.
 
 The final value can come after several local statements:
 

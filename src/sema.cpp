@@ -312,6 +312,7 @@ private:
         IrExprPtr value;
         StateSnapshot state;
         std::optional<BorrowResultSource> borrow_source;
+        bool diverges = false;
     };
 
     struct LoopInfo {
@@ -5409,6 +5410,36 @@ private:
         return call;
     }
 
+    bool is_diverging_call(const IrExpr& expr) const {
+        if (is_diverging_builtin_call(expr)) return true;
+        if (expr.kind != IrExprKind::Call) return false;
+        auto found = functions_.find(ir_expr_name(expr));
+        return found != functions_.end() &&
+               found->second.is_extern &&
+               found->second.extern_abi == "ari" &&
+               found->second.link_name == "ari_builtin_panic";
+    }
+
+    bool is_diverging_source_call(const Expr& expr) const {
+        if (expr.kind != ExprKind::Call || expr_operand(expr)) return false;
+        std::string prelude_name = resolve_use_path(expr.name);
+        bool local_decl_shadows_prelude = unqualified_decl_shadows_prelude_name(expr.name, prelude_name);
+        if (!local_decl_shadows_prelude) {
+            std::optional<std::string> symbol = ari_builtin_symbol_for_source_name(prelude_name);
+            if (symbol && *symbol == "ari_builtin_panic") return true;
+        }
+        std::string function_name = resolve_function_name(expr.name);
+        auto found = functions_.find(function_name);
+        return found != functions_.end() &&
+               found->second.is_extern &&
+               found->second.extern_abi == "ari" &&
+               found->second.link_name == "ari_builtin_panic";
+    }
+
+    bool is_diverging_value_expr(const Expr& source, const IrExpr& lowered) const {
+        return is_diverging_call(lowered) || is_diverging_source_call(source);
+    }
+
     void require_borrow_result_source_outlives_scope(SourceLocation loc,
                                                      const BorrowResultSource& source,
                                                      std::size_t scope_index,
@@ -5547,7 +5578,7 @@ private:
                 if (is_owner_type(lowered->expr->type)) {
                     fail(stmt.loc, "owning expression result must be bound, returned, passed, or dropped");
                 }
-                if (is_diverging_builtin_call(*lowered->expr)) {
+                if (is_diverging_value_expr(*stmt.expr, *lowered->expr)) {
                     flow = Flow::Stops;
                 }
                 break;
@@ -13382,6 +13413,7 @@ private:
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 std::size_t borrow_mark = temporary_borrow_mark();
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
+                bool diverges = is_diverging_value_expr(*arm.value, *value);
                 std::optional<BorrowResultSource> arm_borrow_source =
                     finish_control_flow_borrow_result(
                         arm.loc,
@@ -13390,15 +13422,17 @@ private:
                         lowered_arm.body,
                         local_scopes_.size() - 1,
                         borrow_mark);
-                if (!arm_borrow_source && is_borrow_type(value->type)) {
+                if (!diverges && !arm_borrow_source && is_borrow_type(value->type)) {
                     pop_scope();
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
-                if (is_void_value_type(value->type)) {
+                if (!diverges && is_void_value_type(value->type)) {
                     pop_scope();
                     fail(arm.loc, "match expression arms must produce a value");
                 }
-                if (result_expected) {
+                if (diverges) {
+                    release_temporary_borrows(borrow_mark);
+                } else if (result_expected) {
                     coerce_expr_to_expected(*value, *result_expected);
                     require_assignable(arm.loc, *result_expected, value->type);
                     result_type = *result_expected;
@@ -13409,6 +13443,13 @@ private:
                 } else {
                     coerce_expr_to_expected(*value, result_type);
                     require_assignable(arm.loc, result_type, value->type);
+                }
+                if (diverges) {
+                    lowered_arm.value = std::move(value);
+                    discard_scope();
+                    checked_arms.push_back(std::move(lowered_arm));
+                    ++alternative_index;
+                    continue;
                 }
                 if (arm_borrow_source) {
                     require_same_borrow_result_source(
@@ -13452,6 +13493,9 @@ private:
             }
         } else {
             require_tuple_match_exhaustive(expr.loc, subject_type, coverage);
+        }
+        if (!has_result) {
+            fail(expr.loc, "match expression must have at least one reachable value arm");
         }
         restore_states(continuing_state);
         lowered->type = result_type;
@@ -13542,6 +13586,7 @@ private:
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 std::size_t borrow_mark = temporary_borrow_mark();
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
+                bool diverges = is_diverging_value_expr(*arm.value, *value);
                 std::optional<BorrowResultSource> arm_borrow_source =
                     finish_control_flow_borrow_result(
                         arm.loc,
@@ -13550,10 +13595,15 @@ private:
                         lowered_arm.body,
                         local_scopes_.size() - 1,
                         borrow_mark);
-                if (!arm_borrow_source && is_borrow_type(value->type)) {
+                if (!diverges && !arm_borrow_source && is_borrow_type(value->type)) {
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
-                if (result_expected) {
+                if (!diverges && is_void_value_type(value->type)) {
+                    fail(arm.loc, "match expression arms must produce a value");
+                }
+                if (diverges) {
+                    release_temporary_borrows(borrow_mark);
+                } else if (result_expected) {
                     coerce_expr_to_expected(*value, *result_expected);
                     require_assignable(arm.loc, *result_expected, value->type);
                     result_type = *result_expected;
@@ -13564,6 +13614,13 @@ private:
                 } else {
                     coerce_expr_to_expected(*value, result_type);
                     require_assignable(arm.loc, result_type, value->type);
+                }
+                if (diverges) {
+                    lowered_arm.value = std::move(value);
+                    discard_scope();
+                    ir_expr_match_arms(*lowered).push_back(std::move(lowered_arm));
+                    ++alternative_index;
+                    continue;
                 }
                 if (arm_borrow_source) {
                     require_same_borrow_result_source(
@@ -13600,6 +13657,9 @@ private:
         }
 
         require_match_exhaustive(expr.loc, enum_info, coverage);
+        if (!has_result) {
+            fail(expr.loc, "match expression must have at least one reachable value arm");
+        }
         restore_states(continuing_state);
         lowered->type = result_type;
         if (result_borrow_source) {
@@ -13647,6 +13707,7 @@ private:
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 std::size_t borrow_mark = temporary_borrow_mark();
                 IrExprPtr value = check_expr_maybe_expected(*arm.value, arm_expected);
+                bool diverges = is_diverging_value_expr(*arm.value, *value);
                 std::optional<BorrowResultSource> arm_borrow_source =
                     finish_control_flow_borrow_result(
                         arm.loc,
@@ -13655,10 +13716,15 @@ private:
                         lowered_arm.body,
                         local_scopes_.size() - 1,
                         borrow_mark);
-                if (!arm_borrow_source && is_borrow_type(value->type)) {
+                if (!diverges && !arm_borrow_source && is_borrow_type(value->type)) {
                     fail(arm.loc, "match expression arms cannot produce borrow values yet");
                 }
-                if (result_expected) {
+                if (!diverges && is_void_value_type(value->type)) {
+                    fail(arm.loc, "match expression arms must produce a value");
+                }
+                if (diverges) {
+                    release_temporary_borrows(borrow_mark);
+                } else if (result_expected) {
                     coerce_expr_to_expected(*value, *result_expected);
                     require_assignable(arm.loc, *result_expected, value->type);
                     result_type = *result_expected;
@@ -13669,6 +13735,13 @@ private:
                 } else {
                     coerce_expr_to_expected(*value, result_type);
                     require_assignable(arm.loc, result_type, value->type);
+                }
+                if (diverges) {
+                    lowered_arm.value = std::move(value);
+                    discard_scope();
+                    ir_expr_match_arms(*lowered).push_back(std::move(lowered_arm));
+                    ++alternative_index;
+                    continue;
                 }
                 if (arm_borrow_source) {
                     require_same_borrow_result_source(
@@ -13705,6 +13778,9 @@ private:
         }
 
         require_scalar_match_exhaustive(expr.loc, ir_expr_match_value(*lowered)->type, coverage);
+        if (!has_result) {
+            fail(expr.loc, "match expression must have at least one reachable value arm");
+        }
         restore_states(continuing_state);
         lowered->type = result_type;
         if (result_borrow_source) {
@@ -13727,9 +13803,34 @@ private:
             expr_if_then_body(expr),
             *expr_if_then_value(expr),
             expected);
-        IrType result_type = expected ? *expected : then_arm.value->type;
+        std::optional<IrType> probed_result_type;
+        if (then_arm.diverges && !expected) {
+            restore_states(branch_input);
+            CheckedExprBlock else_probe = check_value_block(
+                expr.loc,
+                "if expression arm",
+                expr_if_else_body(expr),
+                *expr_if_else_value(expr),
+                nullptr);
+            if (else_probe.diverges) {
+                fail(expr.loc, "if expression must have at least one reachable value arm");
+            }
+            probed_result_type = else_probe.value->type;
+            restore_states(branch_input);
+            then_arm = check_value_block(
+                expr.loc,
+                "if expression arm",
+                expr_if_then_body(expr),
+                *expr_if_then_value(expr),
+                &*probed_result_type);
+        }
+        IrType result_type = expected
+            ? *expected
+            : (probed_result_type ? *probed_result_type : then_arm.value->type);
         bool unsized_vector_expected = is_unsized_vector_storage_type(expected);
-        if (unsized_vector_expected) {
+        if (then_arm.diverges) {
+            result_type = expected ? *expected : result_type;
+        } else if (unsized_vector_expected) {
             widen_vector_result_storage(result_type, *then_arm.value);
         } else if (expected) {
             coerce_expr_to_expected(*then_arm.value, result_type);
@@ -13744,28 +13845,46 @@ private:
             expr_if_else_body(expr),
             *expr_if_else_value(expr),
             else_expected);
-        if (unsized_vector_expected) {
+        if (then_arm.diverges && else_arm.diverges) {
+            fail(expr.loc, "if expression must have at least one reachable value arm");
+        }
+        if (then_arm.diverges && !expected) {
+            result_type = else_arm.value->type;
+        }
+        if (!else_arm.diverges && unsized_vector_expected) {
             widen_vector_result_storage(result_type, *else_arm.value);
         }
-        coerce_expr_to_expected(*then_arm.value, result_type);
-        require_assignable(expr.loc, result_type, then_arm.value->type);
-        coerce_expr_to_expected(*else_arm.value, result_type);
-        require_assignable(expr.loc, result_type, else_arm.value->type);
+        if (!then_arm.diverges) {
+            coerce_expr_to_expected(*then_arm.value, result_type);
+            require_assignable(expr.loc, result_type, then_arm.value->type);
+        }
+        if (!else_arm.diverges) {
+            coerce_expr_to_expected(*else_arm.value, result_type);
+            require_assignable(expr.loc, result_type, else_arm.value->type);
+        }
 
-        require_same_states(expr.loc, then_arm.state, else_arm.state,
-                            "has incompatible ownership states after if expression branches");
-        restore_merged_states(then_arm.state, else_arm.state);
+        if (then_arm.diverges) {
+            restore_states(else_arm.state);
+        } else if (else_arm.diverges) {
+            restore_states(then_arm.state);
+        } else {
+            require_same_states(expr.loc, then_arm.state, else_arm.state,
+                                "has incompatible ownership states after if expression branches");
+            restore_merged_states(then_arm.state, else_arm.state);
+        }
 
         std::optional<BorrowResultSource> borrow_source = then_arm.borrow_source;
         if (borrow_source || else_arm.borrow_source) {
-            if (!borrow_source || !else_arm.borrow_source) {
+            if ((!borrow_source && !then_arm.diverges) || (!else_arm.borrow_source && !else_arm.diverges)) {
                 fail(expr.loc, "if expression arms must borrow the same source path and mode in every result arm");
             }
-            require_same_borrow_result_source(
-                expr.loc,
-                "if expression",
-                borrow_source,
-                *else_arm.borrow_source);
+            if (else_arm.borrow_source) {
+                require_same_borrow_result_source(
+                    expr.loc,
+                    "if expression",
+                    borrow_source,
+                    *else_arm.borrow_source);
+            }
         }
 
         IrExprPtr result = make_ir_if_expr(
@@ -14284,13 +14403,26 @@ private:
                 checked.statements,
                 local_scopes_.size() - 1,
                 borrow_mark);
-        if (!borrow_source && contains_borrow_type(value->type)) {
+        bool diverges = is_diverging_value_expr(value_expr, *value);
+        if (!diverges && !borrow_source && contains_borrow_type(value->type)) {
             pop_scope();
             fail(loc, context + " cannot produce borrow values yet");
         }
-        if (is_void_value_type(value->type)) {
+        if (!diverges && is_void_value_type(value->type)) {
             pop_scope();
             fail(loc, context + " must produce a value");
+        }
+        if (diverges) {
+            release_temporary_borrows(borrow_mark);
+            discard_scope();
+            StateSnapshot state = snapshot_states();
+            return CheckedExprBlock{
+                std::move(checked.statements),
+                std::move(value),
+                std::move(state),
+                std::nullopt,
+                true
+            };
         }
         if (!borrow_source) {
             value = materialize_value_before_auto_destroy_cleanup(
@@ -14336,13 +14468,26 @@ private:
                 checked.statements,
                 local_scopes_.size() - 1,
                 borrow_mark);
-        if (!borrow_source && is_borrow_type(value->type)) {
+        bool diverges = is_diverging_value_expr(value_expr, *value);
+        if (!diverges && !borrow_source && is_borrow_type(value->type)) {
             pop_scope();
             fail(loc, context + " cannot produce borrow values yet");
         }
-        if (is_void_value_type(value->type)) {
+        if (!diverges && is_void_value_type(value->type)) {
             pop_scope();
             fail(loc, context + " must produce a value");
+        }
+        if (diverges) {
+            release_temporary_borrows(borrow_mark);
+            discard_scope();
+            StateSnapshot state = snapshot_states();
+            return CheckedExprBlock{
+                std::move(checked.statements),
+                std::move(value),
+                std::move(state),
+                std::nullopt,
+                true
+            };
         }
         if (!borrow_source) {
             value = materialize_value_before_auto_destroy_cleanup(
@@ -19016,6 +19161,16 @@ private:
         }
     }
 
+    static bool is_diverging_control_flow_value(const IrExpr& expr) {
+        if (is_diverging_builtin_call(expr)) return true;
+        if (expr.kind == IrExprKind::Block &&
+            ir_expr_block_label(expr).empty() &&
+            ir_expr_block_value(expr)) {
+            return is_diverging_control_flow_value(*ir_expr_block_value(expr));
+        }
+        return false;
+    }
+
     static void coerce_expr_to_expected(IrExpr& expr, const IrType& expected) {
         if (is_null_literal(expr) && expected.qualifier == TypeQualifier::Ptr) {
             expr.type = expected;
@@ -19073,6 +19228,7 @@ private:
         }
         if (expr.kind == IrExprKind::Match) {
             for (auto& arm : ir_expr_match_arms(expr)) {
+                if (is_diverging_control_flow_value(*arm.value)) continue;
                 coerce_expr_to_expected(*arm.value, expected);
                 require_assignable(arm.loc, expected, arm.value->type);
             }
@@ -19080,14 +19236,24 @@ private:
             return;
         }
         if (expr.kind == IrExprKind::If) {
-            coerce_expr_to_expected(*ir_expr_if_then_value(expr), expected);
-            require_assignable(expr.loc, expected, ir_expr_if_then_value(expr)->type);
-            coerce_expr_to_expected(*ir_expr_if_else_value(expr), expected);
-            require_assignable(expr.loc, expected, ir_expr_if_else_value(expr)->type);
+            if (!is_diverging_control_flow_value(*ir_expr_if_then_value(expr))) {
+                coerce_expr_to_expected(*ir_expr_if_then_value(expr), expected);
+                require_assignable(expr.loc, expected, ir_expr_if_then_value(expr)->type);
+            }
+            if (!is_diverging_control_flow_value(*ir_expr_if_else_value(expr))) {
+                coerce_expr_to_expected(*ir_expr_if_else_value(expr), expected);
+                require_assignable(expr.loc, expected, ir_expr_if_else_value(expr)->type);
+            }
             expr.type = expected;
             return;
         }
         if (expr.kind == IrExprKind::Block) {
+            if (ir_expr_block_value(expr) &&
+                ir_expr_block_label(expr).empty() &&
+                is_diverging_control_flow_value(*ir_expr_block_value(expr))) {
+                expr.type = expected;
+                return;
+            }
             coerce_expr_to_expected(*ir_expr_block_value(expr), expected);
             require_assignable(expr.loc, expected, ir_expr_block_value(expr)->type);
             if (!ir_expr_block_label(expr).empty()) {

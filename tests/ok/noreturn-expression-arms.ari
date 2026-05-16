@@ -1,0 +1,52 @@
+fn from_if_else(flag: bool) -> i64 {
+  return if flag {
+    7
+  } else {
+    panic()
+  };
+}
+
+fn from_if_then(flag: bool) -> i64 {
+  return if flag {
+    std::panic()
+  } else {
+    8
+  };
+}
+
+fn from_option(value: Option[i64]) -> i64 {
+  return match value {
+    Some(inner) => inner,
+    None => panic(),
+  };
+}
+
+fn from_result(value: Result[i64, i32]) -> i64 {
+  return match value {
+    Ok(inner) => inner,
+    Err(_) => std::panic(),
+  };
+}
+
+fn from_scalar(value: i64) -> i64 {
+  return match value {
+    0 => std::panic(),
+    _ => 9,
+  };
+}
+
+fn from_tuple(pair: (i64, bool)) -> i64 {
+  return match pair {
+    (1, true) => 12,
+    _ => panic(),
+  };
+}
+
+fn main() -> i64 {
+  return from_if_else(true) +
+         from_if_then(false) +
+         from_option(Some(10)) +
+         from_result(Ok<i64, i32>(11)) +
+         from_scalar(1) +
+         from_tuple((1, true));
+}

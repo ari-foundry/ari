@@ -630,12 +630,14 @@ named `ref` / `ref mut` parameter instead.
 
 Expression-valued `match` currently supports enum patterns and copyable
 payloads. Borrow-valued arm results are rejected until the borrow checker grows
-richer expression lifetime tracking. Tuple-valued and aggregate-enum match arm
-results lower on the LLVM backend and on the freestanding backend when the raw
-backend already supports the matched value and arm-result storage. Freestanding
-arm results work for local aggregate enum matches that use tag checks and
-payload bindings, scalar payload literal/range checks, or one-level compact
-enum-case payload checks.
+richer expression lifetime tracking. Arms that end in `panic()`, `todo()`, or
+`unreachable()` are non-continuing and do not need to manufacture a dummy value;
+the reachable value arms determine the match result type and merged ownership
+state. Tuple-valued and aggregate-enum match arm results lower on the LLVM
+backend and on the freestanding backend when the raw backend already supports
+the matched value and arm-result storage. Freestanding arm results work for
+local aggregate enum matches that use tag checks and payload bindings, scalar
+payload literal/range checks, or one-level compact enum-case payload checks.
 
 ## Match Diagnostics
 

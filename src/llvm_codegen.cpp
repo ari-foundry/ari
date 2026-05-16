@@ -2509,12 +2509,20 @@ private:
             }
             emit_payload_bindings(arm, value);
             emit_statements(arm.body);
-            Value arm_value = cast_value(emit_expr(*arm.value), expr.type);
-            std::string incoming_label = current_label_;
-            line("  br label %" + end_label);
-            incoming.push_back({arm_value, incoming_label});
+            if (!block_terminated_) {
+                Value arm_value = emit_expr(*arm.value);
+                if (!block_terminated_) {
+                    arm_value = cast_value(arm_value, expr.type);
+                    std::string incoming_label = current_label_;
+                    line("  br label %" + end_label);
+                    incoming.push_back({arm_value, incoming_label});
+                }
+            }
         }
 
+        if (incoming.empty()) {
+            throw CompileError(where(expr.loc) + ": match expression has no reachable value arms during LLVM lowering");
+        }
         emit_label(end_label);
         std::string out = temp();
         std::string type = llvm_type(expr.type);
@@ -2680,21 +2688,39 @@ private:
 
         emit_label(then_label);
         emit_statements(ir_expr_if_then_body(expr));
-        Value then_value = cast_value(emit_expr(*ir_expr_if_then_value(expr)), expr.type);
-        std::string then_incoming = current_label_;
-        line("  br label %" + end_label);
+        std::vector<std::pair<Value, std::string>> incoming;
+        if (!block_terminated_) {
+            Value then_value = emit_expr(*ir_expr_if_then_value(expr));
+            if (!block_terminated_) {
+                then_value = cast_value(then_value, expr.type);
+                incoming.push_back({then_value, current_label_});
+                line("  br label %" + end_label);
+            }
+        }
 
         emit_label(else_label);
         emit_statements(ir_expr_if_else_body(expr));
-        Value else_value = cast_value(emit_expr(*ir_expr_if_else_value(expr)), expr.type);
-        std::string else_incoming = current_label_;
-        line("  br label %" + end_label);
+        if (!block_terminated_) {
+            Value else_value = emit_expr(*ir_expr_if_else_value(expr));
+            if (!block_terminated_) {
+                else_value = cast_value(else_value, expr.type);
+                incoming.push_back({else_value, current_label_});
+                line("  br label %" + end_label);
+            }
+        }
 
+        if (incoming.empty()) {
+            throw CompileError(where(expr.loc) + ": if expression has no reachable value arms during LLVM lowering");
+        }
         emit_label(end_label);
         std::string out = temp();
         std::string type = llvm_type(expr.type);
-        line("  " + out + " = phi " + type + " [" + then_value.name + ", %" + then_incoming +
-             "], [" + else_value.name + ", %" + else_incoming + "]");
+        std::string phi = "  " + out + " = phi " + type + " ";
+        for (std::size_t i = 0; i < incoming.size(); ++i) {
+            if (i > 0) phi += ", ";
+            phi += "[" + incoming[i].first.name + ", %" + incoming[i].second + "]";
+        }
+        line(phi);
         return Value{type, out, expr.type};
     }
 

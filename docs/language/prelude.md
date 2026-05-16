@@ -291,9 +291,12 @@ unreachable() -> void
 ```
 
 Failed assertions and stop helpers terminate the process with status `1`.
-The stop helpers are treated as non-continuing when used as expression
-statements, so a statement `if` or `match` arm can end with `panic()`,
-`todo()`, or `unreachable()` without adding a dummy `return`.
+The stop helpers are treated as non-continuing control flow. As expression
+statements, they let a statement `if` or `match` arm end without adding a dummy
+`return`. As the final value in an expression-valued `if` or `match` arm, they
+act like a bottom-like arm: the other reachable arm values determine the
+expression result type, and LLVM lowering emits the stop call followed by
+`unreachable` instead of adding it to the result phi.
 
 Rust-style macro forms are available for the executable assertion, stop, and
 printing helpers:
