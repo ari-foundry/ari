@@ -87,7 +87,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   source/IR diverging builtin recognition and block-wrapped bottom-like
   control-flow values used by expression-arm type coercion, while still routing
   expression blocks and conditionals through `ir_builders`
-- `module_metadata` and `module_cache` for package graph summaries and caches
+- `module_metadata` and `module_cache` for package graph summaries and caches;
+  `module_ir_summary_body` owns the lowered IR summary body-shape and
+  operand-tree payload serialization so `module_ir_summary` can stay focused on
+  per-module sidecar records, hashing, and record validation
 - `product_coverage` for symbolic product-rectangle coverage math used by
   aggregate pattern exhaustiveness diagnostics
 - `pattern_coverage` for scalar integer match interval coverage, including

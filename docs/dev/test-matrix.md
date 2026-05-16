@@ -526,8 +526,9 @@ Checklist:
 - [x] source-snapshot module cache parsing rejects duplicate source snapshot records
 - [x] source-snapshot module cache emits and reloads per-source AST summary records
 - [x] sema-checked module cache emission writes per-source IR summary sidecar
-      records with lowered body-shape and operand-tree payloads, and validates
-      duplicate, version, hash, and function-count mismatches when present
+      records with required lowered body-shape and operand-tree payloads, and
+      validates duplicate, version, hash, and function-count mismatches when
+      present
 - [x] AST summary records include declaration fingerprints and declaration
       payloads, then reject tampered fingerprints, payloads, or count/payload
       disagreement

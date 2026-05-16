@@ -349,13 +349,14 @@ function parameter patterns and local binding patterns in summary-safe bodies.
 Cache loading parses that payload and checks its hash and counts, so edited or
 corrupted summaries are caught before semantic checking relies on them.
 IR summary sidecars are emitted after semantic checking from the lowered IR
-function surface, body shape, and operand-tree payload for each source. They are
-validated as part of cache parsing: the payload header, hash, and function count
-must agree with the cache record, and the source hash must still match the
-embedded metadata. Today the module loader still uses AST summaries to decide
-whether a dependency can skip parsing; the IR sidecar is the reserved V0 bridge
-for future executable bodies that no longer fit in the compact source-level AST
-summary.
+function surface, body shape, and operand-tree payload for each source. The V0
+IR sidecar requires both the body-shape section and the operand-tree section.
+They are validated as part of cache parsing: the payload header, hash, required
+body payload sections, and function count must agree with the cache record, and
+the source hash must still match the embedded metadata. Today the module loader
+still uses AST summaries to decide whether a dependency can skip parsing; the IR
+sidecar is the reserved V0 bridge for future executable bodies that no longer
+fit in the compact source-level AST summary.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant
