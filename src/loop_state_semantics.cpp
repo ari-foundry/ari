@@ -58,6 +58,26 @@ std::optional<std::string> merge_loop_exit_state_snapshot(
     return std::nullopt;
 }
 
+std::optional<std::string> merge_loop_state_snapshot_conservatively(
+    StateSnapshot& merged,
+    const StateSnapshot& snapshot,
+    const std::string& message
+) {
+    StateSnapshotEntry default_entry;
+    for (auto& item : merged) {
+        const StateSnapshotEntry& actual = snapshot_entry_or_default(snapshot, item.first, default_entry);
+        if (item.second.state != actual.state) {
+            return "binding '" + item.first + "' " + message;
+        }
+        if (state_snapshot_key_is_field(item.first)) continue;
+        if (!merge_state_snapshot_entry_borrow_state_conservatively(item.second, actual)) {
+            return "binding '" + item.first + "' has incompatible borrow states";
+        }
+    }
+    merge_existing_zone_generations_into(merged, snapshot);
+    return std::nullopt;
+}
+
 } // namespace
 
 std::optional<std::string> loop_state_mismatch_error_ignoring_bindings(
@@ -98,6 +118,19 @@ std::optional<std::string> merge_loop_state_snapshots(
             return error;
         }
         merge_existing_zone_generations_into(merged, snapshot);
+    }
+    return std::nullopt;
+}
+
+std::optional<std::string> merge_loop_state_snapshots_conservatively(
+    StateSnapshot& merged,
+    const std::vector<StateSnapshot>& snapshots,
+    const std::string& message
+) {
+    for (const auto& snapshot : snapshots) {
+        if (auto error = merge_loop_state_snapshot_conservatively(merged, snapshot, message)) {
+            return error;
+        }
     }
     return std::nullopt;
 }

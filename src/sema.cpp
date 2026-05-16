@@ -5097,7 +5097,7 @@ private:
         StateSnapshot& loop_state,
         const LoopInfo& loop
     ) {
-        if (auto error = merge_loop_state_snapshots(
+        if (auto error = merge_loop_state_snapshots_conservatively(
                 loop_state,
                 loop.continue_state_snapshots,
                 "has incompatible ownership states at loop continue")) {
@@ -5141,10 +5141,19 @@ private:
         StateSnapshot exit_state = loop_exit_base_state(loop_input, loop, has_zero_iteration_exit);
         StateSnapshot next_iteration_state = loop_input;
         if (body_flow == Flow::Continues) {
-            require_same_states(loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            merge_existing_zone_generations_into(next_iteration_state, loop_body_state);
+            if (auto error = merge_loop_state_snapshots_conservatively(
+                    next_iteration_state,
+                    std::vector<StateSnapshot>{loop_body_state},
+                    "cannot change ownership state inside loop yet")) {
+                fail(loc, *error);
+            }
             if (has_zero_iteration_exit) {
-                merge_existing_zone_generations_into(exit_state, loop_body_state);
+                if (auto error = merge_loop_state_snapshots_conservatively(
+                        exit_state,
+                        std::vector<StateSnapshot>{loop_body_state},
+                        "cannot change ownership state inside loop yet")) {
+                    fail(loc, *error);
+                }
             }
         }
         merge_loop_continue_snapshots(loc, exit_state, std::move(next_iteration_state), loop, has_zero_iteration_exit);

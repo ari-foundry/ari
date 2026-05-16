@@ -421,14 +421,14 @@ If every reachable `break` exit has already consumed the same owner, Ari can
 merge `moved` and `dropped` states as one unavailable post-loop state. This lets
 different branches transfer or drop an owner before breaking without requiring
 identical terminal spelling. The owner still cannot be used after the loop, and
-`continue` paths remain exact next-iteration checks.
+`continue` paths keep exact owner-state next-iteration checks.
 
-`break` exits also merge named-borrow last-use release conservatively when the
-borrow provenance is the same on every path. If one exit has released a borrow
-source and another still has it active, Ari keeps the source active after the
-loop. Code that does not rely on the release can continue, while later
-assignments to that source are still rejected until the borrow is actually no
-longer visible.
+Loop exits, `continue` paths, and ordinary fallthrough fixed points also merge
+named-borrow last-use release conservatively when the borrow provenance is the
+same on every path. If one path has released a borrow source and another still
+has it active, Ari keeps the source active after the merge. Code that does not
+rely on the release can continue, while later assignments to that source are
+still rejected until the borrow is actually no longer visible.
 
 Because `break` leaves the current nested scopes, any owning binding declared in
 those scopes must be moved or dropped before the jump.

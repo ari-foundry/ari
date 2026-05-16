@@ -147,8 +147,8 @@ adding more narrow syntax-specific `*_semantics` siblings.
 - `loop_state_semantics` for loop-carried state comparison helpers that let
   sema ignore the bindings intentionally reinitialized by positional
   `init while` updates while still checking the surrounding ownership state, and
-  for merging loop-exit owner snapshots that are already unavailable while
-  conservatively preserving same-provenance borrow constraints
+  for merging loop state snapshots that are already unavailable or preserve the
+  same borrow provenance conservatively
 - `borrow_semantics` for the lexical temporary-borrow stack, named and aggregate
   borrow-source promotion/release, aggregate target-path prefixing for nested
   borrow-valued literals, local reborrow permission checks including

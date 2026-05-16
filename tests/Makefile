@@ -801,6 +801,10 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/loop-break-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.raw
 	$(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.raw; code=$$?; test $$code -eq 10
+	$(TARGET) --freestanding tests/ok/loop-fallthrough-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-fallthrough-borrow-release-merge.raw
+	$(BUILD_DIR)/control-flow/loop-fallthrough-borrow-release-merge.raw; code=$$?; test $$code -eq 11
+	$(TARGET) --freestanding tests/ok/loop-continue-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-continue-borrow-release-merge.raw
+	$(BUILD_DIR)/control-flow/loop-continue-borrow-release-merge.raw; code=$$?; test $$code -eq 11
 	$(TARGET) --freestanding tests/ok/while-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/while-true-return-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-return-owner-state.raw
@@ -930,6 +934,10 @@ check-control-flow: $(TARGET)
 	grep -q "while.end" $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
 	$(TARGET) tests/ok/loop-break-borrow-release-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.ll
+	$(TARGET) tests/ok/loop-fallthrough-borrow-release-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-fallthrough-borrow-release-merge.ll
+	grep -q "while.end" $(BUILD_DIR)/control-flow/loop-fallthrough-borrow-release-merge.ll
+	$(TARGET) tests/ok/loop-continue-borrow-release-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-continue-borrow-release-merge.ll
+	grep -q "while.end" $(BUILD_DIR)/control-flow/loop-continue-borrow-release-merge.ll
 	$(TARGET) tests/ok/while-true-continue-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.ll
 	$(TARGET) tests/ok/while-true-return-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-return-owner-state.ll
@@ -3105,7 +3113,9 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'first'" $(BUILD_DIR)/errors/while-false-borrow-state.err
 	if $(TARGET) tests/errors/loop-borrow-state.ari -o $(BUILD_DIR)/errors/loop-borrow-state.elf >$(BUILD_DIR)/errors/loop-borrow-state.err 2>&1; then exit 1; fi
-	grep -q "binding 'first' has incompatible borrow states" $(BUILD_DIR)/errors/loop-borrow-state.err
+	grep -q "binding 'holder' has incompatible borrow states" $(BUILD_DIR)/errors/loop-borrow-state.err
+	if $(TARGET) tests/errors/loop-continue-borrow-state.ari -o $(BUILD_DIR)/errors/loop-continue-borrow-state.elf >$(BUILD_DIR)/errors/loop-continue-borrow-state.err 2>&1; then exit 1; fi
+	grep -q "binding 'holder' has incompatible borrow states" $(BUILD_DIR)/errors/loop-continue-borrow-state.err
 	if $(TARGET) tests/errors/loop-break-borrow-release-conservative.ari -o $(BUILD_DIR)/errors/loop-break-borrow-release-conservative.elf >$(BUILD_DIR)/errors/loop-break-borrow-release-conservative.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/errors/loop-break-borrow-release-conservative.err
 	if $(TARGET) tests/errors/loop-break-live-owner.ari -o $(BUILD_DIR)/errors/loop-break-live-owner.elf >$(BUILD_DIR)/errors/loop-break-live-owner.err 2>&1; then exit 1; fi
