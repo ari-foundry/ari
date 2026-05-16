@@ -89,9 +89,9 @@ adding more narrow syntax-specific `*_semantics` siblings.
   expression blocks and conditionals through `ir_builders`
 - `module_metadata` and `module_cache` for package graph summaries and caches;
   `module_ir_summary_body` owns the lowered IR summary body-shape and
-  operand-tree payload serialization so `module_ir_summary` can stay focused on
-  per-module sidecar records, hashing, record validation, and validated lowered
-  function-surface materialization
+  operand-tree payload serialization plus structured body payload reading, so
+  `module_ir_summary` can stay focused on per-module sidecar records, hashing,
+  record validation, and validated lowered function-surface materialization
 - `product_coverage` for symbolic product-rectangle coverage math used by
   aggregate pattern exhaustiveness diagnostics
 - `pattern_coverage` for scalar integer match interval coverage, including

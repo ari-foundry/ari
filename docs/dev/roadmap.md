@@ -116,12 +116,15 @@ body that was checked only with the owner alive.
    required body-section, and function-count mismatches when sidecars are
    present. The loader now parses validated IR sidecars on the AST-summary
    dependency-skip path and rejects sidecars whose lowered free-function surface
-   no longer covers the AST-summary executable bodies. The remaining work is the
-   actual IR body materialization path for future executable bodies that cannot
-   round-trip through the compact AST summary format.
-   - [ir-body-materialize] materialize validated IR-summary operand-tree bodies
-     for dependencies whose executable function or impl bodies use forms
-     outside the AST summary subset
+   no longer covers the AST-summary executable bodies. IR summary body payloads
+   are also materialized into structured statement/expression summary trees in
+   the body layer instead of being discarded after validation. The remaining
+   work is wiring those materialized bodies into the executable dependency path
+   for future function bodies that cannot round-trip through the compact AST
+   summary format.
+   - [ir-body-inject] convert materialized IR-summary statement/expression
+     trees into reusable pre-lowered dependency bodies, including the type replay
+     needed for named aggregate and enum values
    - [cache-skip] once IR body materialization supplies those bodies, skip
      reparsing the cached source snapshot for such dependencies when metadata
      and source hashes match the current source graph and cfg/search-path inputs

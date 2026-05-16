@@ -154,7 +154,10 @@ rejection. Source-snapshot module cache emission/use is covered here too, with
 stale cfg, source-hash, import-resolution, AST declaration-fingerprint, and
 AST declaration-payload rejection checks plus malformed duplicate source-record,
 AST-summary, IR-summary, summary count/payload disagreement, and mismatched
-IR lowered-function surface rejection.
+IR lowered-function surface rejection. These cache-use tests also exercise the
+structured IR body payload reader because validated sidecars now materialize the
+body-shape and operand-tree sections, then recheck their structural agreement
+while loading summary-safe dependencies.
 
 `make check-structs` runs struct and ADT-focused tests for struct declarations,
 generic struct field resolution, named struct literals, tuple-struct

@@ -2,6 +2,7 @@
 
 #include "ir.hpp"
 #include "module_cache.hpp"
+#include "module_ir_summary_body.hpp"
 
 #include <cstdint>
 #include <string>
@@ -21,6 +22,7 @@ struct ModuleCacheIrFunctionSummary {
     std::string return_type;
     std::vector<ModuleCacheIrParamSummary> params;
     std::uint64_t body_statement_count = 0;
+    ModuleCacheIrBodySummary body;
     bool shared_export = false;
 };
 

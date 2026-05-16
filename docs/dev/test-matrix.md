@@ -532,6 +532,9 @@ Checklist:
 - [x] AST-summary cache skip parses matching IR sidecars and rejects lowered
       free-function surfaces that no longer cover summary-loaded executable
       bodies
+- [x] IR summary body payload parsing materializes lowered body-shape maps and
+      operand-tree statement/expression summaries, then rechecks that the shape
+      inventory matches the materialized tree
 - [x] AST summary records include declaration fingerprints and declaration
       payloads, then reject tampered fingerprints, payloads, or count/payload
       disagreement

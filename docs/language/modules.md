@@ -358,8 +358,12 @@ skip parsing through its AST summary and a matching IR sidecar is present, the
 loader also parses the lowered function surface from that sidecar and checks
 that summary-backed non-generic free functions are present there. This keeps the
 AST skip path tied to the sema-produced IR surface before full IR body
-materialization exists. The IR sidecar remains the reserved V0 bridge for future
-executable bodies that no longer fit in the compact source-level AST summary.
+materialization exists. The body payload reader also materializes the lowered
+body-shape and operand-tree sections into a structured statement/expression
+summary tree and rechecks that the shape inventory matches that tree, so cache
+parsing no longer treats the IR body as opaque text. The IR sidecar remains the
+reserved V0 bridge for future executable bodies that no longer fit in the
+compact source-level AST summary.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant
@@ -395,7 +399,8 @@ summaries still parse the cached source snapshot. The AST summary records and
 validated IR sidecars together form the bridge toward a future IR-materialization
 cache path for language forms that outgrow source-level body summaries; current
 cache use already rejects an IR sidecar whose lowered function surface no longer
-covers an AST-summary-loaded executable dependency function.
+covers an AST-summary-loaded executable dependency function and materializes the
+sidecar's body payload into a structured summary tree.
 
 ## Nested Modules
 
