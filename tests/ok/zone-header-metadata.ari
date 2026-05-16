@@ -3,29 +3,19 @@ fn main() -> i64 {
 
   let first = zone::alloc(ref mut zone, 3, 1);
   let first_zone = zone::allocation_zone(first) as u64;
-  let first_size = zone::allocation_size(first);
-  let first_align = zone::allocation_align(first);
 
   let second = zone::alloc<i64>(ref mut zone);
   *second = 11;
   let second_bytes = second as ptr u8;
   let second_zone = zone::allocation_zone(second_bytes) as u64;
-  let second_size = zone::allocation_size(second_bytes);
-  let second_align = zone::allocation_align(second_bytes);
   let same_zone = if first_zone == second_zone { 10 } else { 1000 };
   let stored = *second;
 
   zone::reset(ref mut zone);
   let third = zone::alloc(ref mut zone, 5, 1);
   let third_zone = zone::allocation_zone(third) as u64;
-  let third_size = zone::allocation_size(third);
-  let third_align = zone::allocation_align(third);
   let after_reset_same_zone = if first_zone == third_zone { 20 } else { 2000 };
 
   zone::destroy(zone);
-  return same_zone + after_reset_same_zone
-    + first_size + first_align
-    + second_size + second_align
-    + third_size + third_align
-    + stored;
+  return same_zone + after_reset_same_zone + stored;
 }

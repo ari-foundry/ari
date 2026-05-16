@@ -1,8 +1,6 @@
 pub extern "ari" fn create(capacity: i64) -> own Zone = "ari_builtin_zone_create";
 pub extern "ari" fn alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8 = "ari_builtin_zone_alloc";
 pub extern "ari" fn allocation_zone(data: ptr u8) -> ptr c_void = "ari_builtin_zone_allocation_zone";
-pub extern "ari" fn allocation_size(data: ptr u8) -> i64 = "ari_builtin_zone_allocation_size";
-pub extern "ari" fn allocation_align(data: ptr u8) -> i64 = "ari_builtin_zone_allocation_align";
 pub fn alloc[T](zone: ref mut Zone) -> ptr T;
 pub fn new[T](zone: ref mut Zone, value: T) -> ptr T;
 pub fn promote[T](target: ref mut Zone, source: ptr T) -> ptr T;

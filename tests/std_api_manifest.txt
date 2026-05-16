@@ -61,8 +61,6 @@ fn std::vec::new[T]|std vec handle tests; docs/dev/test-matrix.md Explicit memor
 fn std::vec::with_capacity[T]|std RawVec tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::alloc|zone allocation tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::alloc[T]|typed zone allocation tests; docs/dev/test-matrix.md Explicit memory zones row
-fn std::zone::allocation_align|zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row
-fn std::zone::allocation_size|zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::allocation_zone|zone allocation header metadata tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::create|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matrix.md Explicit memory zones row

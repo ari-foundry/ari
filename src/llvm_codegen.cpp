@@ -448,8 +448,6 @@ private:
         const std::string zone_min_payload_align = std::to_string(kZoneRuntimeMinimumPayloadAlign);
         const std::string zone_header_bytes = std::to_string(kZoneAllocationHeaderBytes);
         const std::string zone_header_zone_offset = std::to_string(kZoneAllocationHeaderZoneOffset);
-        const std::string zone_header_size_offset = std::to_string(kZoneAllocationHeaderSizeOffset);
-        const std::string zone_header_align_offset = std::to_string(kZoneAllocationHeaderAlignOffset);
 
         line("define " + runtime_visibility + "void @ari_context_init(i32 %argc, ptr %argv) {");
         line("entry:");
@@ -658,12 +656,7 @@ private:
         line("  %data.slot = getelementptr i8, ptr %zone, i64 16");
         line("  %data = load ptr, ptr %data.slot");
         line("  %header = getelementptr i8, ptr %data, i64 %header.offset");
-        line("  %size.slot = getelementptr i8, ptr %header, i64 0");
-        line("  store i64 %bytes, ptr %size.slot");
-        line("  %align.slot = getelementptr i8, ptr %header, i64 8");
-        line("  store i64 %align, ptr %align.slot");
-        line("  %zone.header.slot = getelementptr i8, ptr %header, i64 16");
-        line("  store ptr %zone, ptr %zone.header.slot");
+        line("  store ptr %zone, ptr %header");
         line("  %out = getelementptr i8, ptr %data, i64 %payload.offset");
         line("  ret ptr %out");
         line("fail:");
@@ -683,34 +676,6 @@ private:
         line("  br i1 %zone.null, label %fail, label %ok");
         line("ok:");
         line("  ret ptr %zone");
-        line("fail:");
-        line("  call void @exit(i32 1)");
-        line("  unreachable");
-        line("}");
-        line();
-
-        line("define " + runtime_visibility + "i64 @ari_builtin_zone_allocation_size(ptr %data) {");
-        line("entry:");
-        line("  %null = icmp eq ptr %data, null");
-        line("  br i1 %null, label %fail, label %load");
-        line("load:");
-        line("  %size.slot = getelementptr i8, ptr %data, i64 " + zone_header_size_offset);
-        line("  %size = load i64, ptr %size.slot");
-        line("  ret i64 %size");
-        line("fail:");
-        line("  call void @exit(i32 1)");
-        line("  unreachable");
-        line("}");
-        line();
-
-        line("define " + runtime_visibility + "i64 @ari_builtin_zone_allocation_align(ptr %data) {");
-        line("entry:");
-        line("  %null = icmp eq ptr %data, null");
-        line("  br i1 %null, label %fail, label %load");
-        line("load:");
-        line("  %align.slot = getelementptr i8, ptr %data, i64 " + zone_header_align_offset);
-        line("  %align = load i64, ptr %align.slot");
-        line("  ret i64 %align");
         line("fail:");
         line("  call void @exit(i32 1)");
         line("  unreachable");

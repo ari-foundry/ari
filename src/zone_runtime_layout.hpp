@@ -5,9 +5,7 @@
 
 namespace ari {
 
-inline constexpr std::int64_t kZoneAllocationHeaderBytes = 24;
-inline constexpr std::int64_t kZoneAllocationHeaderSizeOffset = -24;
-inline constexpr std::int64_t kZoneAllocationHeaderAlignOffset = -16;
+inline constexpr std::int64_t kZoneAllocationHeaderBytes = 8;
 inline constexpr std::int64_t kZoneAllocationHeaderZoneOffset = -8;
 inline constexpr std::int64_t kZoneRuntimeMinimumPayloadAlign = 8;
 inline constexpr std::int64_t kZoneRuntimeArenaReserveScale = 64;

@@ -61,14 +61,13 @@ inventing an ambient heap.
 
 Zone allocation-header metadata is fixed for the host 0.x ABI and is no longer
 tracked as active Near-Term work. Every non-empty host `zone::alloc` payload has
-a 24-byte header immediately before the returned user pointer: payload size at
-`ptr - 24`, requested alignment at `ptr - 16`, and the raw zone handle at
-`ptr - 8`. `zone::allocation_zone`, `zone::allocation_size`, and
-`zone::allocation_align` expose that metadata as narrow Ari builtins, while
-zero-capacity source handles may still keep null buffer pointers and
-reset/destroy diagnostics continue to use semantic provenance. Freestanding
-zone allocation remains deliberately rejected until a raw-backend allocation
-runtime exists.
+an 8-byte header immediately before the returned user pointer. The header
+stores only the raw zone handle at `ptr - 8`; size and requested alignment are
+not pointer metadata. `zone::allocation_zone` exposes that handle as a narrow
+Ari builtin, while zero-capacity source handles may still keep null buffer
+pointers and reset/destroy diagnostics continue to use semantic provenance.
+Freestanding zone allocation remains deliberately rejected until a raw-backend
+allocation runtime exists.
 
 1. Improve loop fixed-point precision beyond exact snapshots.
    The near-term loop checker now tracks ownership and borrow state at
