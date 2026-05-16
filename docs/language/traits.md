@@ -418,6 +418,17 @@ implemented for copyable values. A first-class associated iterator result
 spelling can replace this Ari-specific contract later; owner/borrow iterator
 values and explicit iterator lifetime rules remain planned.
 
+The `std::cmp` child module exposes its own comparison traits and value helpers:
+
+```ari
+cmp::min<T>(left, right)
+cmp::max<T>(left, right)
+cmp::clamp<T>(value, low, high)
+```
+
+These helpers require an impl of `cmp::Ord[T]` for `T`. `clamp` asserts that
+the lower bound is not greater than the upper bound.
+
 `Drop` is the prelude trait connected to explicit ownership destruction:
 
 ```ari

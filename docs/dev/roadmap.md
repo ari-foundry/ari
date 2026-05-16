@@ -211,6 +211,9 @@ constructor subset documented in the language guide.
    method surface now: value-receiver presence/status predicates plus
    `unwrap_or`, implemented in focused `std::option` and `std::result` child
    modules while the enum types and cases remain at the `std` root.
+   Source `std::cmp` now has small generic value helpers
+   (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, covering another
+   ordinary-library API without adding compiler-known hooks.
    The Drop
    trait/method shape checks and shared diagnostics for explicit destructor
    lowering now live in `drop_semantics`, keeping this ownership/destructor
@@ -263,6 +266,9 @@ constructor subset documented in the language guide.
      `Option[T]` and `Result[T, E]` after enum ref-pattern matching has a
      settled ownership/binding contract; today's methods intentionally consume
      the enum value.
+   - [cmp-root-policy] decide whether `std::cmp` value helpers should stay
+     child-module-only or get root prelude re-exports once the prelude name
+     policy is less crowded.
    Explicit-zone formatted strings are now settled for the 0.x source-`std`
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
    string/signed and unsigned integer/bool/float formatting and `{:.N}` float

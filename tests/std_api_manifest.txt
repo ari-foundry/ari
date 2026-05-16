@@ -16,6 +16,9 @@ fn std::assert_eq_i64|prelude assertion macro tests; docs/dev/test-matrix.md Pre
 fn std::assert_ne_bool|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
 fn std::assert_ne_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
 fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
+fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::cmp::min[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::context::argc|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row

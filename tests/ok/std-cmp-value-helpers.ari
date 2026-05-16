@@ -1,0 +1,33 @@
+impl cmp::Ord[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+struct Score {
+  value: i64,
+}
+
+impl cmp::Ord[Score] for Score {
+  fn lt(self, other: Score) -> bool {
+    return self.value < other.value;
+  }
+}
+
+fn main() -> i64 {
+  let small = cmp::min<i64>(9, 4);
+  let large = std::cmp::max<i64>(9, 4);
+  let clamped_low = cmp::clamp<i64>(2, 5, 10);
+  let clamped_mid = cmp::clamp<i64>(7, 5, 10);
+  let clamped_high = cmp::clamp<i64>(12, 5, 10);
+
+  let score_min = cmp::min<Score>(Score { value: 8 }, Score { value: 3 });
+  let score_max = cmp::max<Score>(Score { value: 8 }, Score { value: 3 });
+  let score_clamp = cmp::clamp<Score>(
+    Score { value: 11 },
+    Score { value: 4 },
+    Score { value: 9 });
+
+  return small + large + clamped_low + clamped_mid + clamped_high +
+         score_min.value + score_max.value + score_clamp.value;
+}

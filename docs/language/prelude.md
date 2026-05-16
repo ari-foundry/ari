@@ -449,6 +449,17 @@ An explicit `drop value;` statement calls this method when an impl exists for
 the value type. Types without a `Drop` impl still use `drop` as an ownership
 state operation.
 
+`std::cmp` also provides small value helpers over the `cmp::Ord[T]` trait:
+
+```ari
+cmp::min<T>(left, right)
+cmp::max<T>(left, right)
+cmp::clamp<T>(value, low, high)
+```
+
+`clamp` asserts that `low <= high` according to `cmp::Ord[T]` before choosing
+the bounded value.
+
 The compiler validates trait existence, type-argument count, visibility,
 duplicate impls, declared method conformance, and generic function trait
 bounds. Concrete impl method calls, trait-bound generic calls, and the current

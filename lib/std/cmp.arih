@@ -13,3 +13,28 @@ pub trait Ord[T] {
 pub trait PartialOrd[T] {
   fn lt(self, other: T) -> bool;
 }
+
+pub fn min[T: Ord[T]](left: T, right: T) -> T {
+  if right.lt(left) {
+    return right;
+  }
+  return left;
+}
+
+pub fn max[T: Ord[T]](left: T, right: T) -> T {
+  if left.lt(right) {
+    return right;
+  }
+  return left;
+}
+
+pub fn clamp[T: Ord[T]](value: T, low: T, high: T) -> T {
+  std::assert(!high.lt(low));
+  if value.lt(low) {
+    return low;
+  }
+  if high.lt(value) {
+    return high;
+  }
+  return value;
+}
