@@ -337,6 +337,10 @@ Checklist:
       slice into a new target-zone source `Vec<T>` handle
 - [x] source `std::vec::Vec<T>.resize_in(ref mut Zone, length, value)` shrinks
       by length or grows through the same explicit zone capability
+- [x] source `std::vec::Vec<T>` same-zone `reserve`, `reserve_extra`,
+      `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in` share
+      one private capacity/copy growth path, covered by
+      `std-vec-growth-paths`
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy
 - [x] source `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current

@@ -1,0 +1,43 @@
+fn main() -> i64 {
+  var zone = zone::create(2048);
+
+  var push = std::vec::new<i64>(ref mut zone, 0);
+  push.push_in(ref mut zone, 4);
+  push.push_in(ref mut zone, 6);
+  push.push_in(ref mut zone, 8);
+  let push_score = push.len() + push.capacity() + push.get(0) + push.get(1) + push.get(2);
+
+  var insert = std::vec::new<i64>(ref mut zone, 0);
+  insert.insert_in(ref mut zone, 0, 2);
+  insert.insert_in(ref mut zone, 1, 9);
+  insert.insert_in(ref mut zone, 1, 5);
+  let insert_score = insert.len() + insert.capacity() + insert.get(0) + insert.get(1) + insert.get(2);
+
+  var source = std::vec::new<i64>(ref mut zone, 2);
+  source.push(3);
+  source.push(4);
+  let view = source.as_slice();
+  var target = std::vec::new<i64>(ref mut zone, 0);
+  target.extend_from_slice_in(ref mut zone, view);
+  let extend_score = target.len() + target.capacity() + target.get(0) + target.get(1);
+
+  var resize = std::vec::new<i64>(ref mut zone, 1);
+  resize.push(2);
+  resize.resize_in(ref mut zone, 4, 7);
+  let grown_score = resize.len() + resize.capacity() + resize.get(0) + resize.get(1) + resize.get(3);
+  resize.resize_in(ref mut zone, 2, 99);
+  let resize_score = grown_score + resize.len() + resize.capacity() + resize.get(1);
+
+  var reserve = std::vec::new<i64>(ref mut zone, 1);
+  reserve.push(4);
+  reserve.reserve(ref mut zone, 4);
+  reserve.reserve_extra(ref mut zone, 6);
+  reserve.push(6);
+  reserve.push(8);
+  reserve.push(10);
+  let reserve_score = reserve.len() + reserve.capacity() + reserve.get(0) + reserve.get(1) + reserve.get(2) + reserve.get(3);
+
+  let total = push_score + insert_score + extend_score + resize_score + reserve_score;
+  zone::destroy(zone);
+  return total;
+}

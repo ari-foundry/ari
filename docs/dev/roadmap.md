@@ -146,7 +146,11 @@ Ambiguous inherited associated type names are rejected before witness lookup.
    the stored data pointer through provenance-preserving `as_ptr()` and
    `copy_to(ref mut Zone)` into a new target-zone handle; read-only metadata,
    read, search, Slice comparison, target-zone copy, and raw-pointer methods
-   borrow their receiver rather than copying the handle. Its `Drop` impl
+   borrow their receiver rather than copying the handle. The source Vec
+   reallocation/copy path is now centralized behind private capacity helpers,
+   so `reserve`, `reserve_extra`, `push_in`, `insert_in`,
+   `extend_from_slice_in`, and `resize_in` share one explicit-zone growth
+   implementation instead of carrying separate buffer-copy loops. Its `Drop` impl
    consumes the handle and drops each current element while the explicit zone
    keeps responsibility for releasing the backing storage. Runtime heap growth for
    root/local `Vec[T]` and the root
@@ -165,8 +169,10 @@ Ambiguous inherited associated type names are rejected before witness lookup.
    receivers. Cross-boundary heap-capacity handles should use
    `std::vec::Vec<T>` with an explicit `Zone`, while borrowed views should use
    `Slice[T]`.
-   - [capacity] replace local literal/const/static-expr/known-local/runtime-checked
-     root `Vec[T].reserve(capacity)` with runtime heap capacity growth
+   - [capacity] replace the fixed-local
+     literal/const/static-expr/known-local/runtime-checked root
+     `Vec[T].reserve(capacity)` path with runtime heap capacity growth; source
+     `std::vec::Vec<T>` growth already uses centralized explicit-zone helpers
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place
 2. Prepare source `std` library foundations before broad library expansion.
@@ -223,6 +229,10 @@ Ambiguous inherited associated type names are rejected before witness lookup.
    pointer bases while aggregate-valued match/control-flow results evaluate
    aggregate-returning callees, so these predicates and combinators run on both
    LLVM-host and raw paths.
+   Small follow-up labels:
+   - [string-growth-helper] centralize source `std::string::String`
+     reallocation/copy logic behind private helpers before adding more string
+     builder APIs
    Source `std::cmp` now has small generic value helpers
    (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
    re-exports for ordinary library code. This covers another ordinary-library
