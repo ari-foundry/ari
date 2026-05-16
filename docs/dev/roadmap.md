@@ -253,10 +253,11 @@ diagnostics.
    pointer bases while aggregate-valued match/control-flow results evaluate
    aggregate-returning callees, so these predicates and combinators run on both
    LLVM-host and raw paths. Statement-position and expression-arm
-   `panic`/`todo`/`unreachable` noreturn recognition lives with the
-   control-flow helpers rather than adding one-off `sema.cpp` special cases,
-   so expression-valued `if`/`match` arms can use those stop calls as
-   bottom-like values while reachable arms determine the result type.
+   `panic`/`todo`/`unreachable` noreturn recognition, including source builtin
+   aliases, Ari builtin symbols, and block-wrapped bottom-like values, lives
+   with the control-flow helpers rather than adding one-off `sema.cpp` special
+   cases, so expression-valued `if`/`match` arms can use those stop calls while
+   reachable arms determine the result type.
    Source `std::cmp` now has small generic value helpers
    (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
    re-exports for ordinary library code. This covers another ordinary-library

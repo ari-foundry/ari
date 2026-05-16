@@ -3,6 +3,7 @@
 #include "ir.hpp"
 
 #include <functional>
+#include <string>
 #include <vector>
 
 namespace ari {
@@ -33,6 +34,9 @@ IrExprPtr build_tuple_match_if_expr_chain(
     const std::function<IrExprPtr(SourceLocation, const IrType&)>& make_fallback
 );
 
+bool is_diverging_builtin_symbol(const std::string& symbol);
+bool is_diverging_builtin_source_name(const std::string& source_name);
 bool is_diverging_builtin_call(const IrExpr& expr);
+bool is_diverging_control_flow_value(const IrExpr& expr);
 
 } // namespace ari

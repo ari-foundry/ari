@@ -71,10 +71,27 @@ IrExprPtr build_tuple_match_if_expr_chain(
     return current;
 }
 
+bool is_diverging_builtin_symbol(const std::string& symbol) {
+    return symbol == "ari_builtin_panic";
+}
+
+bool is_diverging_builtin_source_name(const std::string& source_name) {
+    std::optional<std::string> symbol = ari_builtin_symbol_for_source_name(source_name);
+    return symbol && is_diverging_builtin_symbol(*symbol);
+}
+
 bool is_diverging_builtin_call(const IrExpr& expr) {
-    if (expr.kind != IrExprKind::Call) return false;
-    std::optional<std::string> symbol = ari_builtin_symbol_for_source_name(ir_expr_name(expr));
-    return symbol && *symbol == "ari_builtin_panic";
+    return expr.kind == IrExprKind::Call && is_diverging_builtin_source_name(ir_expr_name(expr));
+}
+
+bool is_diverging_control_flow_value(const IrExpr& expr) {
+    if (is_diverging_builtin_call(expr)) return true;
+    if (expr.kind == IrExprKind::Block &&
+        ir_expr_block_label(expr).empty() &&
+        ir_expr_block_value(expr)) {
+        return is_diverging_control_flow_value(*ir_expr_block_value(expr));
+    }
+    return false;
 }
 
 } // namespace ari

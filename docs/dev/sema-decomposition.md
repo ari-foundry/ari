@@ -83,8 +83,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   assembly, Option/Result-style `??` IR node assembly, and format-print payload
   assembly
 - `control_flow_semantics` for product-pattern if-chain assembly shared by
-  aggregate match, declaration, `if let`, and `while let` lowering, while
-  still routing expression blocks and conditionals through `ir_builders`
+  aggregate match, declaration, `if let`, and `while let` lowering, plus
+  source/IR diverging builtin recognition and block-wrapped bottom-like
+  control-flow values used by expression-arm type coercion, while still routing
+  expression blocks and conditionals through `ir_builders`
 - `module_metadata` and `module_cache` for package graph summaries and caches
 - `product_coverage` for symbolic product-rectangle coverage math used by
   aggregate pattern exhaustiveness diagnostics

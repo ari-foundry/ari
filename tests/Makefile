@@ -660,7 +660,7 @@ check-control-flow: $(TARGET)
 	$(TARGET) --freestanding tests/ok/if-expression.ari -o $(BUILD_DIR)/control-flow/if-expression.raw
 	$(BUILD_DIR)/control-flow/if-expression.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/noreturn-expression-arms.ari -o $(BUILD_DIR)/control-flow/noreturn-expression-arms.raw
-	$(BUILD_DIR)/control-flow/noreturn-expression-arms.raw; code=$$?; test $$code -eq 57
+	$(BUILD_DIR)/control-flow/noreturn-expression-arms.raw; code=$$?; test $$code -eq 84
 	$(TARGET) --freestanding tests/ok/if-expression-payloads.ari -o $(BUILD_DIR)/control-flow/if-expression-payloads.raw
 	$(BUILD_DIR)/control-flow/if-expression-payloads.raw; code=$$?; test $$code -eq 37
 	$(TARGET) --freestanding tests/ok/if-let-expression.ari -o $(BUILD_DIR)/control-flow/if-let-expression.raw

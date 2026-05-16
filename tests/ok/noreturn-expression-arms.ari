@@ -42,11 +42,28 @@ fn from_tuple(pair: (i64, bool)) -> i64 {
   };
 }
 
+fn from_todo(flag: bool) -> i64 {
+  return if flag {
+    13
+  } else {
+    todo()
+  };
+}
+
+fn from_unreachable(value: i64) -> i64 {
+  return match value {
+    1 => 14,
+    _ => unreachable(),
+  };
+}
+
 fn main() -> i64 {
   return from_if_else(true) +
          from_if_then(false) +
          from_option(Some(10)) +
          from_result(Ok<i64, i32>(11)) +
          from_scalar(1) +
-         from_tuple((1, true));
+         from_tuple((1, true)) +
+         from_todo(true) +
+         from_unreachable(1);
 }

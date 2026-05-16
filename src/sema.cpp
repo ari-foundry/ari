@@ -5417,7 +5417,7 @@ private:
         return found != functions_.end() &&
                found->second.is_extern &&
                found->second.extern_abi == "ari" &&
-               found->second.link_name == "ari_builtin_panic";
+               is_diverging_builtin_symbol(found->second.link_name);
     }
 
     bool is_diverging_source_call(const Expr& expr) const {
@@ -5425,15 +5425,14 @@ private:
         std::string prelude_name = resolve_use_path(expr.name);
         bool local_decl_shadows_prelude = unqualified_decl_shadows_prelude_name(expr.name, prelude_name);
         if (!local_decl_shadows_prelude) {
-            std::optional<std::string> symbol = ari_builtin_symbol_for_source_name(prelude_name);
-            if (symbol && *symbol == "ari_builtin_panic") return true;
+            if (is_diverging_builtin_source_name(prelude_name)) return true;
         }
         std::string function_name = resolve_function_name(expr.name);
         auto found = functions_.find(function_name);
         return found != functions_.end() &&
                found->second.is_extern &&
                found->second.extern_abi == "ari" &&
-               found->second.link_name == "ari_builtin_panic";
+               is_diverging_builtin_symbol(found->second.link_name);
     }
 
     bool is_diverging_value_expr(const Expr& source, const IrExpr& lowered) const {
@@ -19159,16 +19158,6 @@ private:
             default:
                 break;
         }
-    }
-
-    static bool is_diverging_control_flow_value(const IrExpr& expr) {
-        if (is_diverging_builtin_call(expr)) return true;
-        if (expr.kind == IrExprKind::Block &&
-            ir_expr_block_label(expr).empty() &&
-            ir_expr_block_value(expr)) {
-            return is_diverging_control_flow_value(*ir_expr_block_value(expr));
-        }
-        return false;
     }
 
     static void coerce_expr_to_expected(IrExpr& expr, const IrType& expected) {
