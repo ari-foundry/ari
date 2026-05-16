@@ -229,10 +229,6 @@ Ambiguous inherited associated type names are rejected before witness lookup.
    pointer bases while aggregate-valued match/control-flow results evaluate
    aggregate-returning callees, so these predicates and combinators run on both
    LLVM-host and raw paths.
-   Small follow-up labels:
-   - [string-growth-helper] centralize source `std::string::String`
-     reallocation/copy logic behind private helpers before adding more string
-     builder APIs
    Source `std::cmp` now has small generic value helpers
    (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
    re-exports for ordinary library code. This covers another ordinary-library
@@ -256,7 +252,9 @@ Ambiguous inherited associated type names are rejected before witness lookup.
    `insert_in`, `extend_from_slice_in`, and `resize_in`,
    same-zone text construction helpers through `append_string_in`,
    `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`, and
-   `append_f64_in`,
+   `append_f64_in`; all string growth now goes through private capacity
+   helpers that centralize the reallocation/copy path before later string
+   builder APIs are added,
    `String.copy_to(ref mut Zone)` and
    `std::string::copy_to(ref value, ref mut Zone)` borrowed-source target-zone
    copying, `std::string::from_slice_in(ref mut Zone, Slice[u8])` target-zone

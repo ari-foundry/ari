@@ -290,6 +290,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl19std__string__String8inherent9insert_in' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv4impl19std__string__String8inherent9resize_in' $(BUILD_DIR)/prelude/std-string-grow.ll
+	grep -q '_ARNv3std6string16grow_to_capacity' $(BUILD_DIR)/prelude/std-string-grow.ll
+	grep -q '_ARNv3std6string21ensure_spare_capacity' $(BUILD_DIR)/prelude/std-string-grow.ll
 	$(TARGET) tests/ok/std-string-append.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/std-string-append.ll

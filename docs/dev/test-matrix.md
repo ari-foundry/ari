@@ -293,10 +293,11 @@ Checklist:
       provenance on the returned handle
 - [x] source `std::string::String` same-zone `reserve`, `reserve_extra`,
       `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in` grow the
-      zone-backed byte buffer while rejecting a mismatched zone argument
+      zone-backed byte buffer through one private capacity/copy path while
+      rejecting a mismatched zone argument
 - [x] source `std::string::String` same-zone `append_string_in`,
       `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`,
-      and `append_f64_in` build
+      and `append_f64_in` build through that same private byte-append growth path
       explicit-zone owned text for the values the future formatted-string
       surface needs first
 - [x] expose the source `std::string::String` handle as root `String` and
