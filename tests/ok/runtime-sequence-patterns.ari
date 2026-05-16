@@ -22,6 +22,20 @@ fn vector_binding() -> i64 {
   return head + tail;
 }
 
+fn vector_rest_binding() -> i64 {
+  let values: Vec[i64] = [1, 2, 3, 4];
+  let [head, middle @ .., tail] = values;
+  return head + (len(middle) * 10) + middle[0] + middle[1] + tail;
+}
+
+fn vector_match_rest_binding() -> i64 {
+  let values: Vec[i64] = [5, 6, 7];
+  return match values {
+    [head, rest @ ..] => head + len(rest) + rest[1],
+    _ => 0,
+  };
+}
+
 fn slice_iflet() -> i64 {
   var values = [7, 8];
   let view = values.as_slice();
@@ -39,6 +53,33 @@ fn slice_binding() -> i64 {
   return head;
 }
 
+fn slice_rest_binding() -> i64 {
+  var values = [8, 9, 10, 11];
+  let view = values.as_slice();
+  if let [first, middle @ .., last] = view {
+    return first + (len(middle) * 10) + middle[0] + last;
+  } else {
+    return 0;
+  }
+}
+
+fn sum_slice_rest([first, rest @ ..]: Slice[i64]) -> i64 {
+  return first + len(rest) + rest[1];
+}
+
+fn slice_param_rest_binding() -> i64 {
+  var values = [3, 4, 5];
+  return sum_slice_rest(values.as_slice());
+}
+
 fn main() -> i64 {
-  return vector_suffix_match() + vector_exact_match() + vector_binding() + slice_iflet() + slice_binding();
+  return vector_suffix_match() +
+         vector_exact_match() +
+         vector_binding() +
+         vector_rest_binding() +
+         vector_match_rest_binding() +
+         slice_iflet() +
+         slice_binding() +
+         slice_rest_binding() +
+         slice_param_rest_binding();
 }

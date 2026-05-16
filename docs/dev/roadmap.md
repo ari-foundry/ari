@@ -14,9 +14,10 @@ without backend emission for editor tooling.
 runtime sequence subjects. Local `Vec[T]` storage and `Slice[T]` views now
 lower those patterns through shared `len == n` / `len >= n` guards and indexed
 element bindings in `let`/`var`, `match`, and `if let`/`while let` statement and
-expression positions, and `Slice[T]` views use the same lowering for
-function-parameter patterns. Runtime sequence `match` still requires an
-irrefutable fallback such as `_` or `[..]`.
+expression positions. Runtime sequence rest markers can bind the skipped range
+with `name @ ..` as a `Slice[T]` view, and `Slice[T]` views use the same
+lowering for function-parameter patterns. Runtime sequence `match` still
+requires an irrefutable fallback such as `_` or `[..]`.
 Sema maintenance now follows phase-oriented extraction: constant folding stays
 in `constant_semantics`, generic binding/unification/substitution lives in
 `type_inference`, and future splits should target broad analysis or lowering
@@ -474,7 +475,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     The root runtime-capacity and permanent public API decisions are now also
     tracked in the Near-Term source-`std` library-prep checklist, so the
     temporary compiler-known local API does not become permanent surface area.
-    - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
 5. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`

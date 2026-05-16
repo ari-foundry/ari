@@ -29,6 +29,8 @@ Pattern clone_pattern_without_children(const Pattern& pattern) {
     copy.field_names = pattern.field_names;
     copy.has_rest = pattern.has_rest;
     copy.rest_index = pattern.rest_index;
+    copy.rest_alias_name = pattern.rest_alias_name;
+    copy.rest_alias_loc = pattern.rest_alias_loc;
     copy.alias_name = pattern.alias_name;
     copy.is_macro_invocation = pattern.is_macro_invocation;
     copy.macro_tokens = pattern.macro_tokens;
@@ -80,6 +82,7 @@ Pattern clone_pattern(const Pattern& pattern) {
 bool pattern_has_binding(const Pattern& pattern) {
     if (pattern.kind == PatternKind::Binding) return true;
     if (pattern.kind == PatternKind::Alias) return true;
+    if (!pattern.rest_alias_name.empty()) return true;
     if (pattern.alias_pattern && pattern_has_binding(*pattern.alias_pattern)) return true;
     if (pattern.payload_pattern && pattern_has_binding(*pattern.payload_pattern)) return true;
     for (const auto& alternative : pattern.alternatives) {

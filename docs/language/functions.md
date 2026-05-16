@@ -279,6 +279,10 @@ fn sum_array([first, .., last]: [i64, 4]) -> i64 {
   first + last
 }
 
+fn sum_slice([first, rest @ ..]: Slice[i64]) -> i64 {
+  first + len(rest)
+}
+
 fn sum_alias(point @ Point { x, y }: Point) -> i64 {
   point.x + x + y
 }
@@ -294,10 +298,12 @@ fn ignore_first(_: i64, value: i64) -> i64 {
 
 Tuple, fixed-array, `Slice[T]` runtime-sequence, struct, tuple-struct,
 wildcard, alias, and enum-case parameter patterns lower at function entry.
-Refutable enum-case and `Slice[T]` sequence parameters panic if the caller
-passes a non-matching case or length. Owning and borrow-valued parameter
-patterns are still rejected until ownership behavior for parameter
-destructuring is defined. Root `Vec[T]` function parameters are allowed in
+`Slice[T]` runtime-sequence parameters support `name @ ..` rest bindings, which
+bind the skipped range as another `Slice[T]` view. Refutable enum-case and
+`Slice[T]` sequence parameters panic if the caller passes a non-matching case
+or length. Owning and borrow-valued parameter patterns are still rejected until
+ownership behavior for parameter destructuring is defined. Root `Vec[T]`
+function parameters are allowed in
 ordinary direct calls and in function pointer parameter positions such as
 `fn(Vec[T]) -> R`: the compiler lowers those parameter slots to a borrowed
 `Slice[T]`-shaped ABI, so one function body works for local Vec values with

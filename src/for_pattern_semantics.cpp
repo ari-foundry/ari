@@ -35,6 +35,11 @@ void require_tuple_pattern_arity(const Pattern& pattern,
                                  const IrType& source_type,
                                  const std::vector<IrType>& fields) {
     const char* pattern_name = pattern.kind == PatternKind::Array ? "array" : "tuple";
+    if (!pattern.rest_alias_name.empty()) {
+        fail(pattern.rest_alias_loc,
+             std::string(pattern_name) +
+                 " rest bindings currently require a Vec[T] or Slice[T] value");
+    }
     if (pattern.has_rest) {
         if (pattern.elements.size() > fields.size()) {
             fail(pattern.loc,

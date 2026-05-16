@@ -6174,6 +6174,60 @@ private:
         );
     }
 
+    IrExprPtr make_runtime_sequence_rest_slice_expr(SourceLocation loc,
+                                                    const Pattern& pattern,
+                                                    const std::string& source_name,
+                                                    const IrType& source_type) const {
+        const IrType& element_type = runtime_sequence_element_type(loc, source_type);
+        require_runtime_sequence_element_materializable(
+            loc,
+            source_type,
+            element_type,
+            "runtime sequence rest binding"
+        );
+
+        const std::size_t prefix_count = pattern.rest_index;
+        const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+        IrExprPtr data;
+        if (is_prelude_slice_type(source_type)) {
+            data = make_tuple_index_expr(
+                loc,
+                make_local_lvalue_expr(loc, source_name, source_type),
+                0
+            );
+        } else {
+            data = make_slice_data_pointer_expr(
+                loc,
+                make_vec_storage_lvalue_expr(loc, source_name, source_type),
+                element_type
+            );
+        }
+        if (prefix_count != 0) {
+            data = make_pointer_add_expr(
+                loc,
+                std::move(data),
+                make_integer_literal(loc, i64_type(loc), prefix_count)
+            );
+        }
+
+        IrExprPtr length = make_runtime_sequence_len_expr(loc, source_name, source_type);
+        const std::size_t skipped_count = prefix_count + suffix_count;
+        if (skipped_count != 0) {
+            length = make_i64_binary_expr(
+                loc,
+                IrBinaryOp::Sub,
+                std::move(length),
+                make_integer_literal(loc, i64_type(loc), skipped_count)
+            );
+        }
+        return make_slice_view_expr(
+            loc,
+            std::move(data),
+            std::move(length),
+            make_prelude_slice_type(loc, element_type)
+        );
+    }
+
     IrExprPtr lower_runtime_sequence_pattern_length_condition(const Pattern& pattern,
                                                               const std::string& source_name,
                                                               const IrType& source_type) const {
@@ -6507,6 +6561,22 @@ private:
         }
 
         const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+        if (!pattern.rest_alias_name.empty()) {
+            IrType slice_type = make_prelude_slice_type(pattern.rest_alias_loc, element_type);
+            declare_local(pattern.rest_alias_loc, pattern.rest_alias_name, slice_type, mutable_binding);
+            statements.push_back(make_ir_var_decl(
+                pattern.rest_alias_loc,
+                pattern.rest_alias_name,
+                slice_type,
+                make_runtime_sequence_rest_slice_expr(
+                    pattern.rest_alias_loc,
+                    pattern,
+                    source_name,
+                    source_type
+                ),
+                mutable_binding
+            ));
+        }
         for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
             const Pattern& item = pattern.elements[i];
             if (item.kind == PatternKind::Wildcard) continue;
@@ -6733,6 +6803,11 @@ private:
                 bool array_pattern = pattern.kind == PatternKind::Array;
                 IrPrimitiveKind expected = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
                 const char* pattern_name = array_pattern ? "array" : "tuple";
+                if (!pattern.rest_alias_name.empty()) {
+                    fail(pattern.rest_alias_loc,
+                         std::string(pattern_name) +
+                             " rest bindings currently require a Vec[T] or Slice[T] value");
+                }
                 if (source_type.primitive != expected) {
                     fail(pattern.loc, std::string(pattern_name) + " binding pattern requires a " +
                                       pattern_name + " value, got " + type_name(source_type));
@@ -6909,6 +6984,11 @@ private:
         bool array_pattern = pattern.kind == PatternKind::Array;
         IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
         const char* pattern_name = array_pattern ? "array" : "tuple";
+        if (!pattern.rest_alias_name.empty()) {
+            fail(pattern.rest_alias_loc,
+                 std::string(pattern_name) +
+                     " rest bindings currently require a Vec[T] or Slice[T] value");
+        }
         if (source_type.primitive != expected_primitive) {
             fail(pattern.loc, std::string(pattern_name) + " binding pattern requires a " +
                               pattern_name + " value, got " + type_name(source_type));
@@ -8622,6 +8702,14 @@ private:
             case PatternKind::Array: {
                 if (pattern.kind == PatternKind::Array && is_runtime_sequence_pattern_subject(type)) {
                     const IrType& element_type = runtime_sequence_element_type(pattern.loc, type);
+                    if (!pattern.rest_alias_name.empty()) {
+                        add_pattern_binding(
+                            pattern.rest_alias_loc,
+                            bindings,
+                            pattern.rest_alias_name,
+                            make_prelude_slice_type(pattern.rest_alias_loc, element_type)
+                        );
+                    }
                     for (const auto& element : pattern.elements) {
                         collect_pattern_bindings(element, element_type, bindings);
                     }
@@ -9681,6 +9769,11 @@ private:
                                             const IrType& source_type,
                                             const std::vector<IrType>& fields) {
         const char* pattern_name = pattern.kind == PatternKind::Array ? "array" : "tuple";
+        if (!pattern.rest_alias_name.empty()) {
+            fail(pattern.rest_alias_loc,
+                 std::string(pattern_name) +
+                     " rest bindings currently require a Vec[T] or Slice[T] value");
+        }
         if (pattern.has_rest) {
             if (pattern.elements.size() > fields.size()) {
                 fail(pattern.loc,

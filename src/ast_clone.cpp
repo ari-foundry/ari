@@ -96,6 +96,9 @@ void add_pattern_binding_rename(CloneContext& context, std::string& name) {
 }
 
 void rename_pattern_bindings(Pattern& pattern, CloneContext& context) {
+    if (!pattern.rest_alias_name.empty()) {
+        add_pattern_binding_rename(context, pattern.rest_alias_name);
+    }
     switch (pattern.kind) {
         case PatternKind::Binding:
             add_pattern_binding_rename(context, pattern.payload_name);

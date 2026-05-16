@@ -507,10 +507,17 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
             return append_pattern_payload(out, *pattern.alias_pattern);
         case PatternKind::Tuple:
         case PatternKind::Array: {
-            append_field(out, pattern.kind == PatternKind::Tuple ? "tuple" : "array");
+            if (pattern.kind == PatternKind::Array && !pattern.rest_alias_name.empty()) {
+                append_field(out, "array-rest-alias");
+            } else {
+                append_field(out, pattern.kind == PatternKind::Tuple ? "tuple" : "array");
+            }
             append_pattern_macro_payload(out, pattern);
             append_bool(out, pattern.has_rest);
             append_count(out, pattern.rest_index);
+            if (pattern.kind == PatternKind::Array && !pattern.rest_alias_name.empty()) {
+                append_field(out, pattern.rest_alias_name);
+            }
             append_count(out, pattern.elements.size());
             for (const auto& element : pattern.elements) {
                 if (!append_pattern_payload(out, element)) return false;
@@ -1624,10 +1631,14 @@ private:
             pattern.alias_pattern = std::make_unique<Pattern>(read_pattern(label + " alias pattern"));
             return pattern;
         }
-        if (kind == "tuple" || kind == "array") {
+        if (kind == "tuple" || kind == "array" || kind == "array-rest-alias") {
             pattern.kind = kind == "tuple" ? PatternKind::Tuple : PatternKind::Array;
             pattern.has_rest = read_bool(label + " rest flag");
             pattern.rest_index = static_cast<std::size_t>(read_count(label + " rest index"));
+            if (kind == "array-rest-alias") {
+                pattern.rest_alias_name = read_field(label + " rest alias name");
+                pattern.rest_alias_loc = default_loc();
+            }
             std::uint64_t count = read_count(label + " element count");
             pattern.elements.reserve(static_cast<std::size_t>(count));
             for (std::uint64_t i = 0; i < count; ++i) {

@@ -517,6 +517,10 @@ Fixed arrays, local `Vec[T]` storage, and `Slice[T]` views can be matched with
 literal tests, ranges, `_`, immutable bindings, aliases, nested product
 patterns, and one `..` rest marker. For `Vec[T]` and `Slice[T]`, `..` makes the
 runtime length check use `>=`; without it, the check uses exact length equality.
+Runtime sequence rest markers can also bind the skipped middle range with
+`name @ ..`. That binding has type `Slice[T]` and points at the matched
+sequence without copying elements. Fixed arrays still treat `..` only as a
+skip marker.
 Runtime sequence `match` expressions and statements must still include an
 irrefutable fallback such as `_` or `[..]`.
 
@@ -526,6 +530,9 @@ let score = match values {
   [head, .., 9] => head,
   [..] => 0,
 };
+
+let [first, middle @ .., last] = values;
+let middle_len = len(middle);
 
 let nested = match ([1, 2], false) {
   ([1, tail], false) => tail,
@@ -564,7 +571,8 @@ let nested_struct = match (point, color) {
 };
 ```
 
-Slice patterns remain planned for the shared richer pattern engine.
+Reference and ownership binding modes for sequence patterns remain planned for
+the shared richer pattern engine.
 Pattern-position macro invocation uses reserved Rust-style `ident!(...)`
 syntax and preserves a balanced token tree in the AST and module summaries. The
 name must resolve to a `token_stream -> token_stream` or `ast -> ast` meta

@@ -1091,6 +1091,38 @@ private:
         }
     }
 
+    bool parse_array_rest_pattern(Pattern& pattern, const std::string& duplicate_message) {
+        std::string alias_name;
+        SourceLocation alias_loc = peek().loc;
+        SourceLocation rest_loc = peek().loc;
+        if (check(TokenKind::Identifier) &&
+            peek(1).kind == TokenKind::At &&
+            peek(2).kind == TokenKind::DotDot) {
+            Token alias = tokens_[pos_++];
+            if (alias.text == "_") {
+                fail(alias.loc, "array rest pattern aliases must bind a plain name before @");
+            }
+            alias_name = alias.text;
+            alias_loc = alias.loc;
+            ++pos_;
+            Token rest = expect(TokenKind::DotDot, "expected .. after @ in array rest pattern");
+            rest_loc = rest.loc;
+        } else if (match(TokenKind::DotDot)) {
+            rest_loc = tokens_[pos_ - 1].loc;
+        } else {
+            return false;
+        }
+
+        if (pattern.has_rest) {
+            fail(rest_loc, duplicate_message);
+        }
+        pattern.has_rest = true;
+        pattern.rest_index = pattern.elements.size();
+        pattern.rest_alias_name = std::move(alias_name);
+        pattern.rest_alias_loc = alias_loc;
+        return true;
+    }
+
     StmtPtr parse_pattern_variable(bool mutable_binding) {
         Binding binding;
         binding.pattern = parse_pattern(true);
@@ -1120,12 +1152,7 @@ private:
             pattern.kind = PatternKind::Array;
             pattern.loc = tokens_[pos_ - 1].loc;
             while (!check(TokenKind::RBracket)) {
-                if (match(TokenKind::DotDot)) {
-                    if (pattern.has_rest) {
-                        fail(tokens_[pos_ - 1].loc, "array binding pattern can contain only one '..' rest");
-                    }
-                    pattern.has_rest = true;
-                    pattern.rest_index = pattern.elements.size();
+                if (parse_array_rest_pattern(pattern, "array binding pattern can contain only one '..' rest")) {
                     if (!match(TokenKind::Comma)) break;
                     if (check(TokenKind::RBracket)) break;
                     continue;
@@ -1439,12 +1466,7 @@ private:
             pattern.kind = PatternKind::Array;
             pattern.loc = tokens_[pos_ - 1].loc;
             while (!check(TokenKind::RBracket)) {
-                if (match(TokenKind::DotDot)) {
-                    if (pattern.has_rest) {
-                        fail(tokens_[pos_ - 1].loc, "array pattern can contain only one '..' rest");
-                    }
-                    pattern.has_rest = true;
-                    pattern.rest_index = pattern.elements.size();
+                if (parse_array_rest_pattern(pattern, "array pattern can contain only one '..' rest")) {
                     if (!match(TokenKind::Comma)) break;
                     if (check(TokenKind::RBracket)) break;
                     continue;

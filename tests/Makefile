@@ -1036,7 +1036,7 @@ check-match: $(TARGET)
 	$(TARGET) --freestanding tests/ok/array-patterns.ari -o $(BUILD_DIR)/match/array-patterns.raw
 	$(BUILD_DIR)/match/array-patterns.raw; code=$$?; test $$code -eq 25
 	$(TARGET) --freestanding tests/ok/runtime-sequence-patterns.ari -o $(BUILD_DIR)/match/runtime-sequence-patterns.raw
-	$(BUILD_DIR)/match/runtime-sequence-patterns.raw; code=$$?; test $$code -eq 64
+	$(BUILD_DIR)/match/runtime-sequence-patterns.raw; code=$$?; test $$code -eq 166
 	$(TARGET) tests/ok/match-patterns.ari --emit-llvm $(BUILD_DIR)/match/match-patterns.ll
 	grep -q "match.arm" $(BUILD_DIR)/match/match-patterns.ll
 	grep -q "lshr" $(BUILD_DIR)/match/match-patterns.ll
