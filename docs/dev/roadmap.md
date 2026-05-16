@@ -152,9 +152,10 @@ diagnostics.
    `from_slice_in<T>(ref mut Zone, Slice<T>)`, grow-or-shrink
    `resize_in(ref mut Zone, length, value)`, and
    tracked `as_slice` views over its allocated buffer. It can also expose
-   the stored data pointer through provenance-preserving `as_ptr()` and
-   `copy_to(ref mut Zone)` into a new target-zone handle; read-only metadata,
-   read, search, Slice comparison, target-zone copy, and raw-pointer methods
+   the stored data pointer through provenance-preserving `as_ptr()`,
+   produce a tracked `std::vec::Iter<T>` through `iter()` / `IntoIterator`,
+   and `copy_to(ref mut Zone)` into a new target-zone handle; read-only metadata,
+   read, search, Slice comparison, iterator, target-zone copy, and raw-pointer methods
    borrow their receiver rather than copying the handle. The source Vec
    reallocation/copy path is now centralized behind private capacity helpers,
    so `reserve`, `reserve_extra`, `push_in`, `insert_in`,
@@ -459,7 +460,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     The root runtime-capacity and permanent public API decisions are now also
     tracked in the Near-Term source-`std` library-prep checklist, so the
     temporary compiler-known local API does not become permanent surface area.
-    - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
 5. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.

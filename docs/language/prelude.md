@@ -83,15 +83,17 @@ The source handle currently exposes element methods: `len`, `capacity`,
 `starts_with(Slice[T])`, `ends_with(Slice[T])`,
 `extend_from_slice_in(ref mut zone, values)`,
 `resize_in(ref mut zone, length, value)`, `copy_to(ref mut zone)`,
-top-level `std::vec::from_slice_in<T>(ref mut zone, values)`, `as_ptr()`, and
-`as_slice`. `reserve`, `reserve_extra`, `push_in`, `insert_in`,
+top-level `std::vec::from_slice_in<T>(ref mut zone, values)`, `as_ptr()`,
+`iter()`, and `as_slice`. `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in` use the same explicit zone capability
 to grow the buffer. Metadata, checked reads, search, Slice comparison,
-`copy_to(ref mut zone)`, and `as_ptr()` borrow the handle receiver instead of
-copying it. `copy_to(ref mut zone)` copies the current elements into a new
-handle tied to the target zone. `as_ptr()` returns the stored element pointer
-with the source zone provenance preserved. This is not the final root `Vec[T]`
-method API.
+`copy_to(ref mut zone)`, `as_ptr()`, and `iter()` borrow the handle receiver
+instead of copying it. `copy_to(ref mut zone)` copies the current elements into
+a new handle tied to the target zone. `as_ptr()` returns the stored element
+pointer with the source zone provenance preserved. `iter()` returns a tracked
+`std::vec::Iter<T>` that implements `Iterator[T]`, and the Vec handle also
+implements `IntoIterator[T]` for direct `for value in vec` lowering. This is
+not the final root `Vec[T]` method API.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
@@ -605,9 +607,11 @@ Zone)` copies the current elements into a new handle tied to the target zone,
 and `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` builds a target-zone
 handle from any borrowed slice view. `as_ptr()` returns the stored element
 pointer with the receiver's zone
-provenance, so it is rejected after that zone is reset or destroyed. Metadata,
-checked read, search, target-zone copy, and raw-pointer methods borrow the
-source handle receiver instead of copying it.
+provenance, so it is rejected after that zone is reset or destroyed. `iter()`
+returns a tracked `std::vec::Iter<T>`, and `std::vec::Vec<T>` implements
+`IntoIterator[T]` so `for value in vec` uses the same iterator lowering.
+Metadata, checked read, search, iterator, target-zone copy, and raw-pointer
+methods borrow the source handle receiver instead of copying it.
 `reserve`, `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`,
 and `resize_in` must receive the same zone that created the handle; they copy
 existing elements into a larger zone allocation when growth is needed and keep

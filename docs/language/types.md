@@ -585,6 +585,7 @@ let has_prefix = vec.starts_with(view)
 let has_suffix = vec.ends_with(view)
 let copied_from_view = std::vec::from_slice_in<i64>(ref mut other_zone, view)
 vec.extend_from_slice_in(ref mut zone, view)
+let cursor = vec.iter()
 let removed = vec.remove(1)
 let popped = vec.pop()
 vec.truncate(1)
@@ -624,8 +625,13 @@ pointer with the receiver's zone provenance intact. `vec.as_slice()` returns a
 `Slice[T]` over the same zone-backed buffer, and that slice is rejected after
 the source zone is reset or destroyed. `equals(view)`, `starts_with(view)`, and
 `ends_with(view)` compare the current Vec elements with a borrowed `Slice[T]`
-view. Metadata, checked read, search, Slice comparison, target-zone copy, and
-raw-pointer methods borrow the source handle receiver instead of copying it.
+view. `vec.iter()` returns a tracked `std::vec::Iter<T>` over the current
+buffer, and `std::vec::Vec<T>` implements `IntoIterator[T]`, so
+`for value in vec` and `for value in vec.iter()` both advance through the same
+`Iterator[T].next` lowering. The iterator keeps the handle's zone provenance:
+using it after that zone is reset or destroyed is rejected. Metadata, checked
+read, search, Slice comparison, iterator, target-zone copy, and raw-pointer
+methods borrow the source handle receiver instead of copying it.
 
 `reserve(n)` accepts any integer capacity. A non-negative integer literal,
 integer constant, static integer arithmetic/bitwise/shift expression over

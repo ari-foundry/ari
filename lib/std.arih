@@ -222,7 +222,7 @@ pub trait Iterable[T] {
 }
 
 pub trait Iterator[T] {
-  fn next(self: ref mut Self) -> Option[T];
+  fn next(self: ref mut Self) -> std::Option[T];
 }
 
 pub trait IntoIterator[T] {

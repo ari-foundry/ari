@@ -149,7 +149,7 @@ bool zone_pointer_source_name_from_expr(const IrExpr& value,
             zone_pointer_source_name_from_expr(*source.args[0], resolver, out)) {
             return true;
         }
-        if (std_vec_pointer_result_preserves_receiver_zone(source) &&
+        if (std_vec_result_preserves_receiver_zone(source) &&
             zone_pointer_source_name_from_expr(*source.args[0], resolver, out)) {
             return true;
         }

@@ -355,6 +355,11 @@ Checklist:
 - [x] source `std::vec::Vec<T>.as_ptr()` returns the stored element pointer
       through a borrowed receiver while preserving receiver-zone reset/destroy
       provenance
+- [x] source `std::vec::Vec<T>.iter()` returns a tracked
+      `std::vec::Iter<T>` that implements `Iterator[T]`, and
+      `std::vec::Vec<T>` implements `IntoIterator[T]` for direct
+      `for value in vec` lowering while preserving receiver-zone
+      reset/destroy provenance
 - [x] source `std::vec::Vec<T>` has a value-drop handle `Drop` impl that drops
       each current element while leaving storage release to the explicit zone
 - [x] raw freestanding backend lowers stored local `Vec[T]` literals, local

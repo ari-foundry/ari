@@ -349,6 +349,10 @@ check-prelude: $(TARGET)
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl18std__vec__Vec_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-vec-copy-to.ll
 	$(TARGET) tests/ok/std-vec-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-as-ptr.ll
+	$(TARGET) tests/ok/std-vec-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-iter.ll
+	grep -F -q 'define { ptr, i64, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent4iter"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-iter.ll
+	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__vec__Iter_i64_13std__Iterator4next"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-iter.ll
+	grep -F -q 'define { ptr, i64, i64 } @"_ARNv4impl18std__vec__Vec_i64_17std__IntoIterator9into_iter"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-iter.ll
 	$(TARGET) tests/ok/std-vec-push-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-push-in.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-push-in.ll
 	$(TARGET) tests/ok/std-vec-insert-in.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-insert-in.ll
@@ -480,6 +484,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-reserve-extra.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-reserve-extra.elf; $(BUILD_DIR)/prelude/std-vec-reserve-extra.elf; code=$$?; test $$code -eq 41; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-copy-to.elf; $(BUILD_DIR)/prelude/std-vec-copy-to.elf; code=$$?; test $$code -eq 19; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-ptr.elf; $(BUILD_DIR)/prelude/std-vec-as-ptr.elf; code=$$?; test $$code -eq 17; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-iter.elf; $(BUILD_DIR)/prelude/std-vec-iter.elf; code=$$?; test $$code -eq 31; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-push-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-push-in.elf; $(BUILD_DIR)/prelude/std-vec-push-in.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-insert-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-insert-in.elf; $(BUILD_DIR)/prelude/std-vec-insert-in.elf; code=$$?; test $$code -eq 23; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-extend-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-extend-from-slice-in.elf; code=$$?; test $$code -eq 11; fi
@@ -568,6 +573,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.err
 	if $(TARGET) tests/errors/std-vec-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-as-ptr-after-reset.err
+	if $(TARGET) tests/errors/std-vec-iter-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-iter-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-iter-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-iter-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-box-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-box-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-box-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'boxed' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-box-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err 2>&1; then exit 1; fi

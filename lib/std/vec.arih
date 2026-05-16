@@ -8,6 +8,12 @@ pub struct Vec[T] {
   raw: RawVec[T],
 }
 
+pub struct Iter[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+}
+
 pub fn alloc_buffer[T](zone: ref mut Zone, capacity: i64) -> ptr T {
   std::assert(capacity >= 0);
   if capacity == 0 {
@@ -183,6 +189,10 @@ pub impl[T] std::vec::Vec[T] {
     return self.raw.data;
   }
 
+  fn iter(self: ref Self) -> std::vec::Iter[T] {
+    return std::vec::Iter<T> { data: self.raw.data, len: self.raw.len, index: 0 };
+  }
+
   fn pop(self: ref mut Self) -> T {
     std::assert(self.raw.len > 0);
     self.raw.len = self.raw.len - 1;
@@ -297,6 +307,23 @@ pub impl[T] std::vec::Vec[T] {
 
   fn as_slice(self: ref mut Self) -> super::Slice[T] {
     return super::Slice<T> { data: self.raw.data, len: self.raw.len };
+  }
+}
+
+impl[T] super::Iterator[T] for std::vec::Iter[T] {
+  pub fn next(self: ref mut Self) -> super::Option[T] {
+    if self.index >= self.len {
+      return super::None<T>();
+    }
+    let value = ptr_load(ptr_add(self.data, self.index));
+    self.index = self.index + 1;
+    return super::Some<T>(value);
+  }
+}
+
+impl[T] super::IntoIterator[T] for std::vec::Vec[T] {
+  pub fn into_iter(self: ref mut Self) -> std::vec::Iter[T] {
+    return std::vec::Iter<T> { data: self.raw.data, len: self.raw.len, index: 0 };
   }
 }
 
