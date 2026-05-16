@@ -1,0 +1,15 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var boxed = Box::new<i64>(ref mut zone, 21);
+
+  let first = boxed.try_take().unwrap_or(0);
+  let empty_bonus = if boxed.is_empty() { 3 } else { 0 };
+  let second = boxed.try_take().unwrap_or(7);
+
+  boxed.put_in(ref mut zone, 11);
+  let third = boxed.try_take().unwrap_or(0);
+
+  drop boxed;
+  zone::destroy(zone);
+  return first + empty_bonus + second + third;
+}

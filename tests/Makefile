@@ -248,6 +248,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-boxed-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4take' $(BUILD_DIR)/prelude/std-boxed-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent8is_empty' $(BUILD_DIR)/prelude/std-boxed-take.ll
+	$(TARGET) tests/ok/std-boxed-try-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-try-take.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent8try_take' $(BUILD_DIR)/prelude/std-boxed-try-take.ll
+	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-boxed-try-take.ll
 	$(TARGET) tests/ok/std-boxed-clear.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-clear.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent5clear' $(BUILD_DIR)/prelude/std-boxed-clear.ll
 	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-boxed-clear.ll
@@ -378,6 +381,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-vec-growth-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec23grow_to_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec28ensure_spare_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
+	$(TARGET) tests/ok/std-vec-try-pop.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-pop.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7try_pop' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
+	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	$(TARGET) tests/ok/std-vec-shrink-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv3std3vec20shrink_to_len__G_i64' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3set' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
@@ -483,6 +489,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-take.elf; $(BUILD_DIR)/prelude/std-boxed-take.elf; code=$$?; test $$code -eq 24; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-try-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-try-take.elf; $(BUILD_DIR)/prelude/std-boxed-try-take.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-clear.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-clear.elf; $(BUILD_DIR)/prelude/std-boxed-clear.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-put-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-put-in.elf; $(BUILD_DIR)/prelude/std-boxed-put-in.elf; code=$$?; test $$code -eq 110; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-drop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-drop.elf; $(BUILD_DIR)/prelude/std-boxed-drop.elf; code=$$?; test $$code -eq 0; fi
@@ -513,6 +520,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; code=$$?; test $$code -eq 40; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-resize-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-resize-in.elf; $(BUILD_DIR)/prelude/std-vec-resize-in.elf; code=$$?; test $$code -eq 37; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-growth-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; code=$$?; test $$code -eq 135; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-try-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-pop.elf; $(BUILD_DIR)/prelude/std-vec-try-pop.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-shrink-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; code=$$?; test $$code -eq 13; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-drop-value.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi

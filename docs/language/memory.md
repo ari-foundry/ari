@@ -330,8 +330,9 @@ source explicit-zone handle over `zone::new<T>` storage. Construct it with
 `get`, `copy_to`, and `as_ptr` borrow the receiver. `set(value)` overwrites the
 stored value and drops the previous value. `take()` mutably borrows the handle,
 returns the stored value, and leaves the handle empty so a later
-`drop boxed` consumes only the handle. `clear()` mutably borrows the handle,
-drops the stored value if one is present, and leaves the handle empty.
+`drop boxed` consumes only the handle. `try_take()` returns `Option[T]` instead
+of asserting on an empty handle. `clear()` mutably borrows the handle, drops the
+stored value if one is present, and leaves the handle empty.
 `put_in(ref mut Zone, value)` can refill that empty handle, but the zone
 argument must match the handle's tracked source zone. Dropping a non-empty
 handle runs the stored value's `Drop` impl when one exists, but the explicit

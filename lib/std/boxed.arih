@@ -49,6 +49,13 @@ pub impl[T] std::boxed::Box[T] {
     return value;
   }
 
+  fn try_take(self: ref mut Self) -> std::Option[T] {
+    if self.is_empty() {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.take());
+  }
+
   fn clear(self: ref mut Self) -> void {
     if self.is_empty() {
       return;

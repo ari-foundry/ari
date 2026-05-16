@@ -141,7 +141,7 @@ diagnostics.
    for the same source handle, so early library code can avoid spelling the
    full `std::vec::new<T>` path without confusing it with root local
    `Vec[T]` storage.
-   The source handle also has metadata, checked read/write/replace, push/pop,
+   The source handle also has metadata, checked read/write/replace, push/pop/try-pop,
    insert/remove, swap, truncate/clear, simple linear search plus
    `Slice<T>` exact/prefix/suffix checks, grow-only
    explicit `reserve(ref mut Zone, capacity)`,
@@ -171,10 +171,11 @@ diagnostics.
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
    returns a tracked source `std::boxed::Box<T>` handle with associated
    `Box::new<T>` construction plus `get`, `set`, `replace`, `take`,
-   `clear`, `is_empty`, `copy_to`, `swap`, and `as_ptr` methods; read-only `get`,
+   `try_take`, `clear`, `is_empty`, `copy_to`, `swap`, and `as_ptr` methods; read-only `get`,
    `is_empty`, `copy_to`, and `as_ptr` borrow their receiver instead of copying
    the handle. `set` drops the overwritten value, `take` moves the current value
-   out and leaves an empty handle, `clear` drops the current value and leaves
+   out and leaves an empty handle, `try_take` returns `Option<T>` for that
+   empty-aware move-out path, `clear` drops the current value and leaves
    the same empty state, and its generic `Drop` impl consumes the handle, skips
    empty handles, and runs the stored value through normal Drop lowering
    otherwise. The root
@@ -242,7 +243,8 @@ diagnostics.
    `drop boxed` consumes the handle binding and runs the pointed-to value
    through normal Drop lowering when the handle is not empty. `boxed.set(value)`
    drops the overwritten value, `boxed.take()` moves the value out and empties
-   the handle so a later handle drop skips that value; `boxed.clear()` drops
+   the handle so a later handle drop skips that value; `boxed.try_take()`
+   returns `Option<T>` for the same path; `boxed.clear()` drops
    the current value and empties the handle;
    `boxed.put_in(ref mut zone, value)` refills that empty handle only with the
    same tracked source zone, while storage release remains the
@@ -250,7 +252,8 @@ diagnostics.
    `std::vec::Vec<T>` follows the same explicit-zone value-drop policy:
    `drop vec` drops each current element and leaves buffer release to the zone,
    while overwrite and shrink helpers drop removed elements before reducing the
-   live length.
+   live length. `vec.try_pop()` returns `Option<T>` for empty-aware last-element
+   move-out.
    Source `std::mem::replace<T>` and `std::mem::swap<T>` now provide
    mutable-place value helpers for copyable scalar and plain Ari-layout
    aggregate values, with root prelude re-exports. They lower through the same
@@ -327,7 +330,8 @@ diagnostics.
      checking, and a generic Drop impl that runs the stored value's Drop path.
      The explicit-zone seed now also has the first value move-out contract:
      `set(value)` drops the overwritten value, `take()` returns the stored value,
-     leaves the handle empty, `is_empty()` exposes that state,
+     leaves the handle empty, `try_take()` returns `Option<T>` for the same
+     path, `is_empty()` exposes that state,
      `put_in(ref mut Zone, value)` refills the empty handle under same-zone
      provenance checks, `clear()` drops and empties a non-empty handle while
      treating an already empty handle as a no-op, and Drop skips empty handles.

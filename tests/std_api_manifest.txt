@@ -108,6 +108,7 @@ method std::boxed::Box[T]::replace|check-prelude std-boxed-replace; docs/dev/tes
 method std::boxed::Box[T]::set|check-prelude std-boxed-box and std-boxed-set-drop-value overwrite drop; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::take|check-prelude std-boxed-take value move-out leaves empty handle; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::try_take|check-prelude std-boxed-try-take Option-returning empty-handle move-out; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
@@ -173,6 +174,7 @@ method std::vec::Vec[T]::set|check-prelude std-vec-fixed-ops; docs/dev/test-matr
 method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
 module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row

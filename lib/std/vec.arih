@@ -213,6 +213,13 @@ pub impl[T] std::vec::Vec[T] {
     return ptr_load(ptr_add(self.raw.data, self.raw.len));
   }
 
+  fn try_pop(self: ref mut Self) -> super::Option[T] {
+    if self.is_empty() {
+      return super::None<T>();
+    }
+    return super::Some<T>(self.pop());
+  }
+
   fn insert(self: ref mut Self, index: i64, value: T) -> void {
     std::assert(index >= 0);
     std::assert(index <= self.raw.len);

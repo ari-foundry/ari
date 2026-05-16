@@ -588,6 +588,7 @@ vec.extend_from_slice_in(ref mut zone, view)
 let cursor = vec.iter()
 let removed = vec.remove(1)
 let popped = vec.pop()
+let maybe_popped = vec.try_pop()
 vec.truncate(1)
 vec.clear()
 ```
@@ -615,6 +616,8 @@ mut Zone, length, value)` shrinks by dropping removed tail values and reducing
 source `Vec<T>` by copying the borrowed slice elements into fresh zone storage.
 `set(index, value)` drops the previous element after storing the new value,
 while `replace(index, value)` returns the previous element instead.
+`try_pop()` returns `Some(value)` for the current last element or `None` when
+the handle is empty.
 `truncate(length)` and `clear()` drop removed elements before reducing the live
 length. Passing a different zone borrow to `reserve`,
 `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`, or
@@ -847,6 +850,8 @@ Meanings:
   and releases the backing bytes. `set(value)` drops the previous value after
   storing the new one. `take()` moves the value out and leaves the handle empty,
   so a later handle drop does not drop that value again.
+  `try_take()` returns `Some(value)` for the same move-out path or `None` when
+  the handle is empty.
   `clear()` drops the value if one is present and leaves the handle empty.
   `put_in(ref mut Zone, value)` refills an empty handle using the same tracked
   source zone.

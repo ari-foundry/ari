@@ -261,11 +261,11 @@ Checklist:
       helper used by `set`, `clear`, `truncate`, and shrinking `resize_in`
 - [x] `std::boxed::new<T>(ref mut Zone, value)` wraps placement construction in
       a tracked source `std::boxed::Box<T>` handle with
-      `get`/`set`/`replace`/`take`/`clear`/`put_in`/`is_empty`/`copy_to`/`swap`/`as_ptr`
+      `get`/`set`/`replace`/`take`/`try_take`/`clear`/`put_in`/`is_empty`/`copy_to`/`swap`/`as_ptr`
       methods, borrowed receiver lowering for read-only `get`/`copy_to`/`as_ptr`,
       value-drop overwrite through `set`, an empty-handle state after `take`,
-      same-zone empty-handle refill through `put_in(ref mut Zone, value)`,
-      no-op clear for empty handles, and
+      Option-returning empty-handle move-out through `try_take`, same-zone
+      empty-handle refill through `put_in(ref mut Zone, value)`, no-op clear for empty handles, and
       reset/destroy invalidation, plus a generic Drop impl that consumes the
       handle binding, skips empty handles, runs `Drop` for the stored value when
       one exists, and rejects later use
@@ -351,6 +351,8 @@ Checklist:
 - [x] source `std::vec::Vec<T>.resize_in(ref mut Zone, length, value)` shrinks
       by dropping removed tail values or grows through the same explicit zone
       capability
+- [x] source `std::vec::Vec<T>.try_pop()` returns `Option<T>` for empty-aware
+      last-element move-out without an assertion
 - [x] source `std::vec::Vec<T>` same-zone `reserve`, `reserve_extra`,
       `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in` share
       one private capacity/copy growth path, covered by

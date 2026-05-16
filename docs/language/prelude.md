@@ -77,7 +77,7 @@ construction sugar, not a root `Vec[T]` ABI workaround.
 The source handle currently exposes element methods: `len`, `capacity`,
 `is_empty`, `first`, `last`, `get`, `set`, `replace`, `swap`, `push`,
 `push_in(ref mut zone, value)`, grow-only same-zone `reserve`,
-`reserve_extra(ref mut zone, additional)`, `pop`, `insert`,
+`reserve_extra(ref mut zone, additional)`, `pop`, `try_pop`, `insert`,
 `insert_in(ref mut zone, index, value)`, `remove`, `clear`, `truncate`,
 `contains`, `index_of`, `count`, `equals(Slice[T])`,
 `starts_with(Slice[T])`, `ends_with(Slice[T])`,
@@ -96,7 +96,8 @@ implements `IntoIterator[T]` for direct `for value in vec` lowering. This is
 not the final root `Vec[T]` method API. `set`, shrinking `resize_in`,
 `truncate`, and `clear` run removed element values through normal Drop lowering
 before the handle forgets them; the explicit zone still releases the backing
-bytes.
+bytes. `try_pop()` returns `Option[T]`, using `None` for an empty handle instead
+of asserting.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
@@ -104,12 +105,15 @@ source lives in `lib/std/boxed.arih`, and the same handle is available through
 the root `Box[T]` / `std::Box[T]` alias. The handle also has associated
 constructors through `Box::new<T>(ref mut zone, value)` and
 `std::Box::new<T>(ref mut zone, value)`. It exposes `get()`, `set(value)`,
-`replace(value)`, `take()`, `clear()`, `put_in(ref mut zone, value)`, `is_empty()`,
-`copy_to(ref mut zone)`, `swap(ref mut other)`, and `as_ptr()` methods for
-copyable, zone-placeable values. `set(value)` drops the previous value after
+`replace(value)`, `take()`, `try_take()`, `clear()`,
+`put_in(ref mut zone, value)`, `is_empty()`, `copy_to(ref mut zone)`,
+`swap(ref mut other)`, and `as_ptr()` methods for copyable, zone-placeable
+values. `set(value)` drops the previous value after
 storing the new one. `replace(value)` stores a new value and returns the
 previous one.
 `take()` moves the current value out of the handle and leaves the handle empty;
+`try_take()` returns `Some(value)` for that same move-out path or `None` when
+the handle is already empty;
 `clear()` drops the current value if one is present and leaves the handle empty;
 `is_empty()` reports that state, and `put_in(ref mut zone, value)` can refill
 that empty handle only with the same tracked zone that originally owns the box
@@ -691,7 +695,7 @@ the explicit allocator path for future Vec storage, and
 constructor spelling for that same source handle. The source handle supports
 metadata, read/write/replace,
 push/pop, same-zone `push_in` growth, same-zone grow-only `reserve`,
-insert/remove, swap,
+`try_pop`, insert/remove, swap,
 same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone
 `extend_from_slice_in` growth, same-zone `resize_in` growth, truncate/clear,
 simple search, `Slice[T]` exact/prefix/suffix checks, target-zone `copy_to`,
@@ -702,7 +706,8 @@ same zone provenance, so using either after `zone::reset` or `zone::destroy`
 is rejected. `as_ptr()` raw pointers and copied Vec handles track their source
 or target zone respectively. Mutating overwrite/shrink helpers drop removed
 element values before reducing the live length, while buffer release remains
-with the explicit zone. The root
+with the explicit zone. `try_pop()` returns `Option[T]` instead of asserting on
+empty handles. The root
 `Vec[T]` type and its current local method set remain fixed-local until runtime
 growth is ported. Root `Vec[T]` can be used as an ordinary direct function
 parameter or as a function pointer parameter in `fn(Vec[T]) -> R`; sema lowers
@@ -733,6 +738,7 @@ boxed.swap(ref mut copied)
 let raw = boxed.as_ptr()
 let moved = boxed.take()
 boxed.put_in(ref mut zone, moved + 1)
+let maybe_moved = boxed.try_take()
 boxed.clear()
 let empty = boxed.is_empty()
 ```
@@ -745,11 +751,12 @@ take mutable borrows. `take()` also takes a mutable borrow: it loads the
 pointed-to value and clears the handle's data pointer so `drop boxed` will not
 drop the same value again. `clear()` takes the same empty-handle path but drops
 the current value instead of returning it; calling `clear()` on an already empty
-handle is a no-op. Explicit `drop boxed` consumes the handle binding and loads
-the pointed-to value through the normal `Drop` path when the handle is not
-empty, so a stored type with a `Drop` impl gets its destructor call. The zone
-still owns the backing bytes; memory is released with `zone::reset` or
-`zone::destroy`.
+handle is a no-op. `try_take()` wraps the move-out path in `Option<T>` and
+returns `None` when the handle is empty. Explicit `drop boxed` consumes the
+handle binding and loads the pointed-to value through the normal `Drop` path
+when the handle is not empty, so a stored type with a `Drop` impl gets its
+destructor call. The zone still owns the backing bytes; memory is released with
+`zone::reset` or `zone::destroy`.
 
 `std::string::alloc_buffer(ref mut Zone, capacity)` allocates byte storage for
 future owned strings:

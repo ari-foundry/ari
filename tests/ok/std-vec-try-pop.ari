@@ -1,0 +1,17 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var values = std::vec::new<i64>(ref mut zone, 2);
+
+  let empty_first = values.try_pop().unwrap_or(5);
+  values.push(4);
+  values.push(8);
+  let last = values.try_pop().unwrap_or(0);
+  let head = values.try_pop().unwrap_or(0);
+  let empty_again = values.try_pop().unwrap_or(6);
+  let len_after = values.len();
+  let capacity = values.capacity();
+
+  drop values;
+  zone::destroy(zone);
+  return empty_first + last + head + empty_again + len_after + capacity;
+}
