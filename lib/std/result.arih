@@ -16,4 +16,18 @@ pub impl[T, E] std::Result[T, E] {
       std::Err(_) => fallback;
     };
   }
+
+  fn map[U](self, op: fn(T) -> U) -> std::Result[U, E] {
+    return match self {
+      std::Ok(value) => std::Ok<U, E>(op(value)),
+      std::Err(error) => std::Err<U, E>(error);
+    };
+  }
+
+  fn map_err[F](self, op: fn(E) -> F) -> std::Result[T, F] {
+    return match self {
+      std::Ok(value) => std::Ok<T, F>(value),
+      std::Err(error) => std::Err<T, F>(op(error));
+    };
+  }
 }

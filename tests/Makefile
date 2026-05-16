@@ -406,8 +406,14 @@ check-prelude: $(TARGET)
 	grep -F -q 'Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Result_i64__i32_8inherent5is_ok' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Result_i64__i32_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
+	$(TARGET) tests/ok/prelude-option-result-combinators.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
+	grep -F -q 'Option_i64_8inherent10map__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
+	grep -F -q 'Option_i64_8inherent15and_then__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
+	grep -F -q 'Result_i64__i32_8inherent10map__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
+	grep -F -q 'Result_i64__i32_8inherent14map_err__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; code=$$?; test $$code -eq 75; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result-combinators.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; code=$$?; test $$code -eq 69; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf; $(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; $(BUILD_DIR)/prelude/prelude-slice-as-ptr.elf; code=$$?; test $$code -eq 47; fi

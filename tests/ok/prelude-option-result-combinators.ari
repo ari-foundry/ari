@@ -1,0 +1,34 @@
+fn double(value: i64) -> i64 {
+  return value * 2;
+}
+
+fn positive_next(value: i64) -> Option[i64] {
+  if value > 0 {
+    return Some(value + 1);
+  }
+  return None<i64>();
+}
+
+fn widen_error(code: i32) -> i64 {
+  return code as i64 + 10;
+}
+
+fn main() -> i64 {
+  let option_map = Some(5).map<i64>(double).unwrap_or(0);
+  let option_map_none = None<i64>().map<i64>(double).unwrap_or(3);
+  let option_then = Some(4).and_then<i64>(positive_next).unwrap_or(0);
+  let option_then_none = Some(-1).and_then<i64>(positive_next).unwrap_or(7);
+
+  let result_map = Ok<i64, i32>(6).map<i64>(double).unwrap_or(0);
+  let result_map_err_passthrough = Err<i64, i32>(4i32).map<i64>(double).unwrap_or(8);
+  let changed_error = Err<i64, i32>(5i32).map_err<i64>(widen_error);
+  let result_err_changed = match changed_error {
+    Ok(value) => value,
+    Err(error) => error;
+  };
+  let result_ok_passthrough = Ok<i64, i32>(9).map_err<i64>(widen_error).unwrap_or(0);
+
+  return option_map + option_map_none + option_then + option_then_none +
+         result_map + result_map_err_passthrough + result_err_changed +
+         result_ok_passthrough;
+}

@@ -76,11 +76,15 @@ method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests
 method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::starts_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::is_none|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::is_some|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Option[T]::map[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::is_err|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::is_ok|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::map[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
+method std::Result[T,E]::map_err[F]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Slice[T]::copy_to|check-prelude prelude-slice-copy-to borrowed receiver and target reset tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 method std::boxed::Box[T]::as_ptr|check-prelude std-boxed-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row

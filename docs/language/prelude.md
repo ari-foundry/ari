@@ -852,12 +852,14 @@ enum Result[T, E] {
 
 They are available without `std::` through the implicit prelude. Ari keeps the
 standard absence type to one spelling, `Option[T]`; there is no `Maybe[T]`
-alias. `Option[T]` has value-receiver `is_some()`, `is_none()`, and
-`unwrap_or(fallback)` methods. `Result[T, E]` has value-receiver `is_ok()`,
-`is_err()`, and `unwrap_or(fallback)` methods. Use explicit paths such as
-`std::Option[i64]`, `std::Some(1)`, or `std::Ok<i64, i32>(1)` when you want to
-spell the source module. The method implementations live in `std::option` and
-`std::result`, while the enum names and cases stay at the `std` root. Postfix
+alias. `Option[T]` has value-receiver `is_some()`, `is_none()`,
+`unwrap_or(fallback)`, `map[U](fn(T) -> U)`, and
+`and_then[U](fn(T) -> Option[U])` methods. `Result[T, E]` has value-receiver
+`is_ok()`, `is_err()`, `unwrap_or(fallback)`, `map[U](fn(T) -> U)`, and
+`map_err[F](fn(E) -> F)` methods. Use explicit paths such as `std::Option[i64]`,
+`std::Some(1)`, or `std::Ok<i64, i32>(1)` when you want to spell the source
+module. The method implementations live in `std::option` and `std::result`,
+while the enum names and cases stay at the `std` root. Postfix
 `?` and `??` recognize the same Option/Result-style enum shapes on the LLVM
 backend path; the freestanding backend still needs the broader aggregate enum
 return/value ABI work.

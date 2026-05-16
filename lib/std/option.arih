@@ -16,4 +16,18 @@ pub impl[T] std::Option[T] {
       std::None => fallback;
     };
   }
+
+  fn map[U](self, op: fn(T) -> U) -> std::Option[U] {
+    return match self {
+      std::Some(value) => std::Some<U>(op(value)),
+      std::None => std::None<U>();
+    };
+  }
+
+  fn and_then[U](self, op: fn(T) -> std::Option[U]) -> std::Option[U] {
+    return match self {
+      std::Some(value) => op(value),
+      std::None => std::None<U>();
+    };
+  }
 }
