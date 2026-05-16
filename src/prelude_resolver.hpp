@@ -19,6 +19,8 @@ bool is_prelude_pointer_offset_function_name(const std::string& name);
 bool is_prelude_pointer_add_function_name(const std::string& name);
 bool is_prelude_pointer_load_function_name(const std::string& name);
 bool is_prelude_pointer_store_function_name(const std::string& name);
+bool is_prelude_mem_replace_function_name(const std::string& name);
+bool is_prelude_mem_swap_function_name(const std::string& name);
 bool is_prelude_size_of_function_name(const std::string& name);
 bool is_prelude_align_of_function_name(const std::string& name);
 bool is_prelude_move_function_name(const std::string& name);

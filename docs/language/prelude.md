@@ -35,6 +35,7 @@ Like Rust, public standard names are imported by the implicit prelude when
 this surface: public root items, root `pub use` re-exports, and public `std`
 child modules become visible in ordinary code. Write `Vec[T]`, `Option[T]`,
 `Range[T]`, `Iterator[T]`, `range(...)`, `size_of<T>()`,
+`replace(ref mut value, next)`, `swap(ref mut left, ref mut right)`,
 `write_i64(...)`, `create(...)`, `new<T>(...)`, and pointer helpers directly.
 Nested forms such as `fmt::Display`, `iter::Iterator[T]`, `mem::size_of<T>()`,
 `input::read_byte()`, and `zone::new<T>(...)` resolve through implicit aliases
@@ -504,11 +505,19 @@ size_of<T>() -> i64
 align_of<T>() -> i64
 mem::size_of<T>() -> i64
 mem::align_of<T>() -> i64
+mem::replace<T>(target: ref mut T, value: T) -> T
+mem::swap<T>(left: ref mut T, right: ref mut T) -> void
 ```
 
 They support scalar types, pointer-shaped types, and Ari-layout aggregates such
 as structs, tuples, tuple structs, and fixed arrays. Aggregate results describe
 the current executable Ari layout, not a C ABI promise.
+
+`replace` and `swap` are source `std::mem` helpers built on the same checked
+raw-pointer materialization rules as `ptr_load` / `ptr_store`. They work for
+copyable scalar and plain Ari-layout aggregate values. Ownership- or
+borrow-valued values are rejected until Ari has a safe move-aware raw-place
+contract for those cases.
 
 ## Zone Allocation
 

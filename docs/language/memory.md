@@ -264,11 +264,19 @@ value through a `ptr T` and returns `void`. The
 operations. These operations are deliberately unchecked: they do not test for
 null, bounds, alignment, aliasing, or lifetime. On the freestanding backend,
 `ptr f32` and `ptr f64` load/store values as raw IEEE bit patterns; `f128`
-pointer access still waits for native float storage policy. Aggregates that
-contain `own`, `ref`, or `ref mut` fields are rejected for whole raw-pointer
-copies for now. `ptr_load<T>(pointer)` and `ptr_store<T>(pointer, value)` are
-accepted when the call should validate the pointee type explicitly instead of
-only inferring it from the pointer value.
+pointer access still waits for native float storage policy. Values that contain
+`own`, `ref`, or `ref mut` state are rejected for whole raw-pointer copies for
+now. `ptr_load<T>(pointer)` and `ptr_store<T>(pointer, value)` are accepted
+when the call should validate the pointee type explicitly instead of only
+inferring it from the pointer value.
+
+`mem::replace<T>(ref mut target, value)` stores a new value in a mutable place
+and returns the previous value. `mem::swap<T>(ref mut left, ref mut right)`
+exchanges two mutable places. The root prelude also re-exports them as
+`replace` and `swap`. These helpers are intentionally limited to the same
+copyable scalar and plain Ari-layout aggregate values as `ptr_load` /
+`ptr_store`; move-aware replacement for owning values should use the explicit
+`move(value)` / `take(place)` surface until a broader library contract exists.
 
 The same scalar operation can be written with dereference syntax:
 

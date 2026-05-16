@@ -496,9 +496,8 @@ IrType require_raw_pointer_materializable_type(SourceLocation loc,
                                                const IrType& pointer_type,
                                                const std::string& operation) {
     IrType element_type = require_raw_pointer_deref_type(loc, pointer_type, operation);
-    if (is_aggregate_type(element_type) &&
-        (is_owner_type(element_type) || contains_borrow_type(element_type))) {
-        fail(loc, operation + " cannot copy ownership- or borrow-valued aggregates through raw pointers yet");
+    if (is_owner_type(element_type) || contains_borrow_type(element_type)) {
+        fail(loc, operation + " cannot copy ownership- or borrow-valued values through raw pointers yet");
     }
     return element_type;
 }

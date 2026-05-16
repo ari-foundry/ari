@@ -200,6 +200,12 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/prelude-trait-surface.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.raw
 	$(BUILD_DIR)/prelude/prelude-explicit-move.raw; code=$$?; test $$code -eq 32
+	$(TARGET) tests/ok/std-mem-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
+	grep -q '_mem_replace' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
+	grep -q '_mem_swap' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
+	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
+	$(TARGET) --freestanding tests/ok/std-mem-value-helpers.ari -o $(BUILD_DIR)/prelude/std-mem-value-helpers.raw
+	$(BUILD_DIR)/prelude/std-mem-value-helpers.raw; code=$$?; test $$code -eq 46
 	$(TARGET) tests/ok/prelude-header-main.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/prelude-header-main.ll
@@ -561,6 +567,8 @@ check-prelude: $(TARGET)
 	grep -q "unknown function or enum case 'std::mem::size_of'" $(BUILD_DIR)/prelude/prelude-special-missing-decl.err
 	if $(TARGET) tests/errors/prelude-take-non-place.ari -o $(BUILD_DIR)/prelude/prelude-take-non-place.elf >$(BUILD_DIR)/prelude/prelude-take-non-place.err 2>&1; then exit 1; fi
 	grep -q "take expects a local binding, field, tuple index, or index expression" $(BUILD_DIR)/prelude/prelude-take-non-place.err
+	if $(TARGET) tests/errors/std-mem-replace-own.ari -o $(BUILD_DIR)/prelude/std-mem-replace-own.elf >$(BUILD_DIR)/prelude/std-mem-replace-own.err 2>&1; then exit 1; fi
+	grep -q "ptr_load cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-replace-own.err
 	if $(TARGET) tests/errors/prelude-move-borrow-result.ari -o $(BUILD_DIR)/prelude/prelude-move-borrow-result.elf >$(BUILD_DIR)/prelude/prelude-move-borrow-result.err 2>&1; then exit 1; fi
 	grep -q "move cannot return borrow-valued expressions" $(BUILD_DIR)/prelude/prelude-move-borrow-result.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-trait-without-std.ari -o $(BUILD_DIR)/prelude/prelude-trait-without-std.elf >$(BUILD_DIR)/prelude/prelude-trait-without-std.err 2>&1; then exit 1; fi
@@ -2782,7 +2790,7 @@ check-ffi: $(TARGET)
 	if $(TARGET) --freestanding tests/errors/zone-freestanding.ari -o $(BUILD_DIR)/ffi/zone-freestanding.raw >$(BUILD_DIR)/ffi/zone-freestanding.err 2>&1; then exit 1; fi
 	grep -q "freestanding backend does not lower zone allocation yet" $(BUILD_DIR)/ffi/zone-freestanding.err
 	if $(TARGET) tests/errors/pointer-deref-aggregate.ari -o $(BUILD_DIR)/ffi/pointer-deref-aggregate.elf >$(BUILD_DIR)/ffi/pointer-deref-aggregate.err 2>&1; then exit 1; fi
-	grep -q "pointer dereference cannot copy ownership- or borrow-valued aggregates through raw pointers yet" $(BUILD_DIR)/ffi/pointer-deref-aggregate.err
+	grep -q "pointer dereference cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/ffi/pointer-deref-aggregate.err
 check-functions: $(TARGET) check-function-errors
 	mkdir -p $(BUILD_DIR)/functions
 	$(TARGET) --freestanding tests/ok/function-recursion.ari -o $(BUILD_DIR)/functions/function-recursion.elf

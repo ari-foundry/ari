@@ -16628,6 +16628,211 @@ private:
         return make_pointer_store_expr(expr.loc, std::move(pointer), std::move(value));
     }
 
+    IrType resolve_optional_mem_place_type_arg(const Expr& expr, const std::string& operation) {
+        if (expr_type_args(expr).size() > 1) {
+            fail(expr.loc, operation + " expects at most one type argument");
+        }
+        if (expr_type_args(expr).empty()) return {};
+        IrType explicit_type = resolve_executable_type(expr_type_args(expr)[0]);
+        if (explicit_type.qualifier != TypeQualifier::Value) {
+            fail(expr_type_args(expr)[0].loc, operation + "<T> expects a value type, got " + type_name(explicit_type));
+        }
+        return explicit_type;
+    }
+
+    IrType require_mem_place_mut_borrow(SourceLocation loc,
+                                        const IrExpr& place,
+                                        const std::string& operation,
+                                        const std::string& argument_name) {
+        if (place.type.qualifier != TypeQualifier::MutRef) {
+            fail(loc, operation + " " + argument_name + " must be a mutable borrow, got " + type_name(place.type));
+        }
+        IrType element_type = place.type;
+        element_type.qualifier = TypeQualifier::Value;
+        return element_type;
+    }
+
+    void require_mem_place_type(SourceLocation loc,
+                                const IrType& inferred,
+                                const IrType& explicit_type,
+                                bool has_explicit_type,
+                                const std::string& operation,
+                                const std::string& argument_name) {
+        if (has_explicit_type && !same_type(inferred, explicit_type)) {
+            fail(loc,
+                 operation + " " + argument_name + " type mismatch: expected " +
+                     type_name(explicit_type) + ", got " + type_name(inferred));
+        }
+        IrType pointer_type = has_explicit_type ? explicit_type : inferred;
+        pointer_type.qualifier = TypeQualifier::Ptr;
+        (void)require_raw_pointer_materializable_type(loc, pointer_type, "ptr_load");
+    }
+
+    static IrStmtPtr make_ir_expr_stmt(SourceLocation loc, IrExprPtr expr) {
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::ExprStmt;
+        stmt->loc = loc;
+        stmt->expr = std::move(expr);
+        return stmt;
+    }
+
+    IrExprPtr check_mem_replace_call(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
+        const std::string operation = "std::mem::replace";
+        if (expr.args.size() != 2) fail(expr.loc, operation + " expects a mutable place and a value");
+
+        IrType explicit_type = resolve_optional_mem_place_type_arg(expr, operation);
+        bool has_explicit_type = !expr_type_args(expr).empty();
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr target = check_expr(*expr.args[0]);
+        IrType element_type = require_mem_place_mut_borrow(
+            expr.args[0]->loc,
+            *target,
+            operation,
+            "target");
+        require_mem_place_type(
+            expr.args[0]->loc,
+            element_type,
+            explicit_type,
+            has_explicit_type,
+            operation,
+            "target");
+        if (has_explicit_type) element_type = explicit_type;
+
+        IrExprPtr value = check_expr_maybe_expected(*expr.args[1], &element_type);
+        coerce_expr_to_expected(*value, element_type);
+        require_assignable(expr.args[1]->loc, element_type, value->type);
+        release_temporary_borrows(borrow_mark);
+
+        IrType pointer_type = element_type;
+        pointer_type.qualifier = TypeQualifier::Ptr;
+        std::string raw_name = make_hidden_local("$mem_replace_raw");
+        std::string previous_name = make_hidden_local("$mem_replace_previous");
+        declare_local(expr.loc, raw_name, pointer_type, false);
+        declare_local(expr.loc, previous_name, element_type, false);
+
+        std::vector<IrStmtPtr> body;
+        body.push_back(make_ir_var_decl(
+            expr.loc,
+            raw_name,
+            pointer_type,
+            make_cast_expr(expr.args[0]->loc, std::move(target), pointer_type),
+            false));
+        body.push_back(make_ir_var_decl(
+            expr.loc,
+            previous_name,
+            element_type,
+            make_pointer_load_expr(
+                expr.loc,
+                make_local_lvalue_expr(expr.loc, raw_name, pointer_type),
+                element_type),
+            false));
+        body.push_back(make_ir_expr_stmt(
+            expr.loc,
+            make_pointer_store_expr(
+                expr.loc,
+                make_local_lvalue_expr(expr.loc, raw_name, pointer_type),
+                std::move(value))));
+
+        return make_ir_block_expr(
+            expr.loc,
+            {},
+            element_type,
+            std::move(body),
+            make_local_lvalue_expr(expr.loc, previous_name, element_type));
+    }
+
+    IrExprPtr check_mem_swap_call(const Expr& expr, IrExprPtr lowered) {
+        (void)lowered;
+        const std::string operation = "std::mem::swap";
+        if (expr.args.size() != 2) fail(expr.loc, operation + " expects two mutable places");
+
+        IrType explicit_type = resolve_optional_mem_place_type_arg(expr, operation);
+        bool has_explicit_type = !expr_type_args(expr).empty();
+
+        std::size_t borrow_mark = temporary_borrow_mark();
+        IrExprPtr left = check_expr(*expr.args[0]);
+        IrType element_type = require_mem_place_mut_borrow(
+            expr.args[0]->loc,
+            *left,
+            operation,
+            "left argument");
+        require_mem_place_type(
+            expr.args[0]->loc,
+            element_type,
+            explicit_type,
+            has_explicit_type,
+            operation,
+            "left argument");
+        if (has_explicit_type) element_type = explicit_type;
+
+        IrExprPtr right = check_expr(*expr.args[1]);
+        IrType right_type = require_mem_place_mut_borrow(
+            expr.args[1]->loc,
+            *right,
+            operation,
+            "right argument");
+        if (!same_type(right_type, element_type)) {
+            fail(expr.args[1]->loc,
+                 operation + " right argument type mismatch: expected " +
+                     type_name(element_type) + ", got " + type_name(right_type));
+        }
+        release_temporary_borrows(borrow_mark);
+
+        IrType pointer_type = element_type;
+        pointer_type.qualifier = TypeQualifier::Ptr;
+        std::string left_raw_name = make_hidden_local("$mem_swap_left");
+        std::string right_raw_name = make_hidden_local("$mem_swap_right");
+        std::string temporary_name = make_hidden_local("$mem_swap_temporary");
+        declare_local(expr.loc, left_raw_name, pointer_type, false);
+        declare_local(expr.loc, right_raw_name, pointer_type, false);
+        declare_local(expr.loc, temporary_name, element_type, false);
+
+        std::vector<IrStmtPtr> body;
+        body.push_back(make_ir_var_decl(
+            expr.loc,
+            left_raw_name,
+            pointer_type,
+            make_cast_expr(expr.args[0]->loc, std::move(left), pointer_type),
+            false));
+        body.push_back(make_ir_var_decl(
+            expr.loc,
+            right_raw_name,
+            pointer_type,
+            make_cast_expr(expr.args[1]->loc, std::move(right), pointer_type),
+            false));
+        body.push_back(make_ir_var_decl(
+            expr.loc,
+            temporary_name,
+            element_type,
+            make_pointer_load_expr(
+                expr.loc,
+                make_local_lvalue_expr(expr.loc, left_raw_name, pointer_type),
+                element_type),
+            false));
+        body.push_back(make_ir_expr_stmt(
+            expr.loc,
+            make_pointer_store_expr(
+                expr.loc,
+                make_local_lvalue_expr(expr.loc, left_raw_name, pointer_type),
+                make_pointer_load_expr(
+                    expr.loc,
+                    make_local_lvalue_expr(expr.loc, right_raw_name, pointer_type),
+                    element_type))));
+
+        IrExprPtr final_store = make_pointer_store_expr(
+            expr.loc,
+            make_local_lvalue_expr(expr.loc, right_raw_name, pointer_type),
+            make_local_lvalue_expr(expr.loc, temporary_name, element_type));
+        return make_ir_block_expr(
+            expr.loc,
+            {},
+            void_type(expr.loc),
+            std::move(body),
+            std::move(final_store));
+    }
+
     IrExprPtr check_layout_query_call(const Expr& expr, IrExprPtr lowered, bool align_query) {
         (void)lowered;
         const std::string operation = align_query ? "align_of" : "size_of";
@@ -17408,6 +17613,12 @@ private:
         }
         if (can_use_source_declared_prelude_special && is_prelude_pointer_store_function_name(special_name)) {
             return check_pointer_store_call(expr, std::move(lowered));
+        }
+        if (can_use_source_declared_prelude_special && is_prelude_mem_replace_function_name(special_name)) {
+            return check_mem_replace_call(expr, std::move(lowered));
+        }
+        if (can_use_source_declared_prelude_special && is_prelude_mem_swap_function_name(special_name)) {
+            return check_mem_swap_call(expr, std::move(lowered));
         }
         if (can_use_source_declared_prelude_special && is_prelude_size_of_function_name(special_name)) {
             return check_layout_query_call(expr, std::move(lowered), false);

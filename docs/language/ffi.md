@@ -133,6 +133,9 @@ aggregate memory access through a `ptr T`. Scalar and plain aggregate `ptr T`
 values can also be loaded and stored with `*pointer` dereference syntax. Raw
 pointers to Ari aggregate layouts can address scalar fields and elements with
 `(*pointer).field`, `(*pointer).0`, and `(*pointer)[index]`.
+`std::mem::replace<T>(ref mut target, value)` and
+`std::mem::swap<T>(ref mut left, ref mut right)` are source helpers over the
+same scalar/plain-aggregate raw-place materialization rules.
 `size_of<T>()` and `align_of<T>()` expose the current scalar and Ari-layout
 aggregate size/alignment model for explicit pointer code. The raw
 `--freestanding` backend uses those same Ari byte offsets for tuple, struct,
@@ -367,8 +370,8 @@ let copy = *raw;
 
 Like the helper functions, dereference syntax is unchecked and does not imply
 null, bounds, alignment, aliasing, or lifetime validation. Whole raw-pointer
-copies of aggregates that contain `own`, `ref`, or `ref mut` fields are
-rejected until the ownership diagnostics for zone-backed memory are broadened.
+copies of values that contain `own`, `ref`, or `ref mut` state are rejected
+until the ownership diagnostics for zone-backed memory are broadened.
 
 Tuple parameters/returns, fixed arrays, vectors, generic types, and non-`repr(C)`
 structs are not ABI-lowered yet. Local stack tuples are an executable-language

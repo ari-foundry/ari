@@ -237,6 +237,6 @@ pub use input::line as input;
 pub use input::owned_line as input_owned;
 pub use context::argc as arg_count;
 pub use context::arg as arg;
-pub use mem::{size_of, align_of, ptr_offset, ptr_add, ptr_load, ptr_store};
+pub use mem::{size_of, align_of, ptr_offset, ptr_add, ptr_load, ptr_store, replace, swap};
 pub use zone::{create, alloc, new, promote, reset, destroy};
 pub use iter::{range, range_inclusive};

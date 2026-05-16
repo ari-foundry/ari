@@ -791,6 +791,9 @@ Meanings:
   aggregate enum raw pointer load from `ptr T`
 - `ptr_store(value, item)`: explicit scalar, plain Ari-layout aggregate, or
   supported aggregate enum raw pointer store through `ptr T`
+- `replace(ref mut value, item)` / `swap(ref mut left, ref mut right)`:
+  source `std::mem` helpers for copyable scalar and plain Ari-layout aggregate
+  mutable places
 - `*value`: scalar, plain Ari-layout aggregate, or supported aggregate enum
   dereference load/store syntax for `ptr T`
 - `(*value).field`, `(*value).0`, `(*value)[index]`: scalar field or fixed-array
@@ -889,9 +892,9 @@ Ari-layout aggregate, or supported aggregate enum memory access through raw
 pointers. `*pointer` provides the same dereference operation, and
 `(*pointer).field`, `(*pointer).0`, or `(*pointer)[index]` can read and write
 scalar slots inside a raw pointer to a struct, tuple struct, tuple, or fixed
-array. Whole-aggregate raw pointer copies
-are intentionally rejected for aggregates that contain `own`, `ref`, or
-`ref mut` fields until the zone and ownership diagnostics are broadened.
+array. Whole raw-pointer copies
+are intentionally rejected for values that contain `own`, `ref`, or `ref mut`
+state until the zone and ownership diagnostics are broadened.
 
 `Zone` values are explicit allocation regions on the LLVM host backend. A zone
 is created with `zone::create(capacity)` for manual ownership or

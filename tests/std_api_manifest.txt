@@ -37,7 +37,9 @@ fn std::mem::ptr_add[T]|typed pointer arithmetic tests; docs/dev/test-matrix.md 
 fn std::mem::ptr_load[T]|raw pointer load tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::ptr_offset[T]|byte pointer offset tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::ptr_store[T]|raw pointer store tests; docs/dev/test-matrix.md C FFI row
+fn std::mem::replace[T]|std mem value helper tests; docs/dev/test-matrix.md Prelude and C FFI rows
 fn std::mem::size_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
+fn std::mem::swap[T]|std mem value helper tests; docs/dev/test-matrix.md Prelude and C FFI rows
 fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row
 fn std::panic|prelude panic helpers; docs/dev/test-matrix.md Prelude row
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
@@ -242,8 +244,10 @@ use std::range_inclusive|std root re-export tests; docs/dev/test-matrix.md Prelu
 use std::read_byte|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::read_line|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::read_line_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::replace|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::reset|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::size_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
+use std::swap|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::write_bool|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::write_byte|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::write_i64|std root re-export tests; docs/dev/test-matrix.md Prelude row

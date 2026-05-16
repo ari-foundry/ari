@@ -4,3 +4,5 @@ pub fn ptr_offset[T](base: ptr T, bytes: i64) -> ptr T;
 pub fn ptr_add[T](base: ptr T, count: i64) -> ptr T;
 pub fn ptr_load[T](source: ptr T) -> T;
 pub fn ptr_store[T](target: ptr T, value: T) -> void;
+pub fn replace[T](target: ref mut T, value: T) -> T;
+pub fn swap[T](left: ref mut T, right: ref mut T) -> void;

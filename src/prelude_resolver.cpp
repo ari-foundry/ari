@@ -143,6 +143,28 @@ bool is_prelude_pointer_store_function_name(const std::string& name) {
     });
 }
 
+bool is_prelude_mem_replace_function_name(const std::string& name) {
+    return is_name_in(name, {
+        "replace",
+        "mem::replace",
+        "std::replace",
+        "std::mem::replace",
+        "prelude::replace",
+        "prelude::mem::replace",
+    });
+}
+
+bool is_prelude_mem_swap_function_name(const std::string& name) {
+    return is_name_in(name, {
+        "swap",
+        "mem::swap",
+        "std::swap",
+        "std::mem::swap",
+        "prelude::swap",
+        "prelude::mem::swap",
+    });
+}
+
 bool is_prelude_size_of_function_name(const std::string& name) {
     return is_name_in(name, {
         "size_of",
@@ -238,6 +260,8 @@ bool is_source_declared_prelude_special_name(const std::string& name) {
            is_prelude_pointer_add_function_name(name) ||
            is_prelude_pointer_load_function_name(name) ||
            is_prelude_pointer_store_function_name(name) ||
+           is_prelude_mem_replace_function_name(name) ||
+           is_prelude_mem_swap_function_name(name) ||
            is_prelude_size_of_function_name(name) ||
            is_prelude_align_of_function_name(name) ||
            is_prelude_move_function_name(name) ||

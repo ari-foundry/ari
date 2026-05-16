@@ -201,6 +201,12 @@ constructor subset documented in the language guide.
    zone's responsibility through `zone::reset` or `zone::destroy`. Source
    `std::vec::Vec<T>` follows the same explicit-zone value-drop policy:
    `drop vec` drops each current element and leaves buffer release to the zone.
+   Source `std::mem::replace<T>` and `std::mem::swap<T>` now provide
+   mutable-place value helpers for copyable scalar and plain Ari-layout
+   aggregate values, with root prelude re-exports. They lower through the same
+   raw-pointer materialization path as `ptr_load` / `ptr_store`, and that path
+   now rejects ownership- or borrow-valued values instead of allowing accidental
+   raw copies before a move-aware place contract exists.
    The Drop
    trait/method shape checks and shared diagnostics for explicit destructor
    lowering now live in `drop_semantics`, keeping this ownership/destructor
@@ -245,6 +251,10 @@ constructor subset documented in the language guide.
      to the heap-storage release contract once that root handle exists. The
      current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract
      intentionally leaves storage release with `zone::reset` / `zone::destroy`.
+   - [mem-owning-places] decide whether `std::mem::replace` and `std::mem::swap`
+     should become move-aware for owning values once Ari has a safe generic
+     place-move contract. Today's helpers intentionally stay on the
+     copyable/plain-value raw-pointer path.
    Explicit-zone formatted strings are now settled for the 0.x source-`std`
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
    string/signed and unsigned integer/bool/float formatting and `{:.N}` float
@@ -397,15 +407,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
-5. Design `std` smart-pointer and explicit move surfaces.
-    Ari's core memory model is zone/capability-oriented rather than strictly
-    borrow-safe, but the standard library still needs clear ownership helpers
-    for common heap and shared-resource patterns. The explicit move surface
-    itself is now available through prelude `move(value)` and `take(place)`;
-    the pointer family and its clone/drop/raw-pointer policy are now tracked in
-    the Near-Term source-`std` library-prep checklist before broad library
-    handles depend on them.
-6. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
+5. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, length queries,
@@ -421,7 +423,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     temporary compiler-known local API does not become permanent surface area.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
-7. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+6. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot

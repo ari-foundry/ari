@@ -1,0 +1,26 @@
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+fn scalar_score() -> i64 {
+  var left = 4;
+  var right = 9;
+  let old_left = std::mem::replace<i64>(ref mut left, 7);
+  std::mem::swap<i64>(ref mut left, ref mut right);
+  let old_right = replace(ref mut right, 5);
+  swap(ref mut left, ref mut right);
+  return old_left + old_right + left + right;
+}
+
+fn aggregate_score() -> i64 {
+  var pair = Pair { left: 1, right: 2 };
+  let old = mem::replace<Pair>(ref mut pair, Pair { left: 3, right: 4 });
+  var other = Pair { left: 5, right: 6 };
+  mem::swap<Pair>(ref mut pair, ref mut other);
+  return old.left + old.right + pair.left + pair.right + other.left + other.right;
+}
+
+fn main() -> i64 {
+  return scalar_score() + aggregate_score();
+}
