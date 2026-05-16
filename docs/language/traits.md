@@ -421,13 +421,17 @@ values and explicit iterator lifetime rules remain planned.
 The `std::cmp` child module exposes its own comparison traits and value helpers:
 
 ```ari
+min<T>(left, right)
+max<T>(left, right)
+clamp<T>(value, low, high)
 cmp::min<T>(left, right)
 cmp::max<T>(left, right)
 cmp::clamp<T>(value, low, high)
 ```
 
-These helpers require an impl of `cmp::Ord[T]` for `T`. `clamp` asserts that
-the lower bound is not greater than the upper bound.
+These helpers require an impl of `cmp::Ord[T]` for `T` and are also re-exported
+at the source `std` root. `clamp` asserts that the lower bound is not greater
+than the upper bound.
 
 `Drop` is the prelude trait connected to explicit ownership destruction:
 

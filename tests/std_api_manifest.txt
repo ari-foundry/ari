@@ -239,10 +239,13 @@ use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and 
 use std::alloc|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::arg|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows
 use std::arg_count|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows
+use std::clamp|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::create|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::destroy|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::max|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
+use std::min|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::new|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::newline|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::promote|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows

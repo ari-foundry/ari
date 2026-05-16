@@ -20,6 +20,9 @@ fn main() -> i64 {
   let clamped_low = cmp::clamp<i64>(2, 5, 10);
   let clamped_mid = cmp::clamp<i64>(7, 5, 10);
   let clamped_high = cmp::clamp<i64>(12, 5, 10);
+  let root_min = min<i64>(30, 12);
+  let root_max = std::max<i64>(6, 14);
+  let root_clamp = clamp<i64>(99, 20, 30);
 
   let score_min = cmp::min<Score>(Score { value: 8 }, Score { value: 3 });
   let score_max = cmp::max<Score>(Score { value: 8 }, Score { value: 3 });
@@ -29,5 +32,6 @@ fn main() -> i64 {
     Score { value: 9 });
 
   return small + large + clamped_low + clamped_mid + clamped_high +
+         root_min + root_max + root_clamp +
          score_min.value + score_max.value + score_clamp.value;
 }

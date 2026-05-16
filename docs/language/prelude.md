@@ -452,6 +452,9 @@ state operation.
 `std::cmp` also provides small value helpers over the `cmp::Ord[T]` trait:
 
 ```ari
+min<T>(left, right)
+max<T>(left, right)
+clamp<T>(value, low, high)
 cmp::min<T>(left, right)
 cmp::max<T>(left, right)
 cmp::clamp<T>(value, low, high)

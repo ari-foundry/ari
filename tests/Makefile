@@ -203,8 +203,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'std3cmp10max__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp12clamp__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	$(TARGET) --freestanding tests/ok/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.raw
-	$(BUILD_DIR)/prelude/std-cmp-value-helpers.raw; code=$$?; test $$code -eq 55
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 55; fi
+	$(BUILD_DIR)/prelude/std-cmp-value-helpers.raw; code=$$?; test $$code -eq 111
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 111; fi
 	$(TARGET) --freestanding tests/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.raw
 	$(BUILD_DIR)/prelude/prelude-explicit-move.raw; code=$$?; test $$code -eq 32
 	$(TARGET) tests/ok/std-mem-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
