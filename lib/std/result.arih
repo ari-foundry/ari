@@ -30,4 +30,18 @@ pub impl[T, E] std::Result[T, E] {
       std::Err(error) => std::Err<T, F>(op(error));
     };
   }
+
+  fn and_then[U](self, op: fn(T) -> std::Result[U, E]) -> std::Result[U, E] {
+    return match self {
+      std::Ok(value) => op(value),
+      std::Err(error) => std::Err<U, E>(error);
+    };
+  }
+
+  fn or_else[F](self, op: fn(E) -> std::Result[T, F]) -> std::Result[T, F] {
+    return match self {
+      std::Ok(value) => std::Ok<T, F>(value),
+      std::Err(error) => op(error);
+    };
+  }
 }

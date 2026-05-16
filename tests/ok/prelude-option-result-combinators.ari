@@ -9,8 +9,28 @@ fn positive_next(value: i64) -> Option[i64] {
   return None<i64>();
 }
 
+fn alternate_option() -> Option[i64] {
+  return Some(31);
+}
+
+fn missing_option() -> Option[i64] {
+  return None<i64>();
+}
+
 fn widen_error(code: i32) -> i64 {
   return code as i64 + 10;
+}
+
+fn result_next(value: i64) -> Result[i64, i32] {
+  return Ok<i64, i32>(value + 3);
+}
+
+fn recover_result(code: i32) -> Result[i64, i64] {
+  return Ok<i64, i64>((code as i64) + 20);
+}
+
+fn fail_result(code: i32) -> Result[i64, i64] {
+  return Err<i64, i64>((code as i64) + 30);
 }
 
 fn main() -> i64 {
@@ -18,6 +38,11 @@ fn main() -> i64 {
   let option_map_none = None<i64>().map<i64>(double).unwrap_or(3);
   let option_then = Some(4).and_then<i64>(positive_next).unwrap_or(0);
   let option_then_none = Some(-1).and_then<i64>(positive_next).unwrap_or(7);
+  let option_or_some = Some(2).or(Some(30)).unwrap_or(0);
+  let option_or_none = None<i64>().or(Some(31)).unwrap_or(0);
+  let option_or_else_some = Some(4).or_else(alternate_option).unwrap_or(0);
+  let option_or_else_none = None<i64>().or_else(alternate_option).unwrap_or(0);
+  let option_or_else_still_none = None<i64>().or_else(missing_option).unwrap_or(6);
 
   let result_map = Ok<i64, i32>(6).map<i64>(double).unwrap_or(0);
   let result_map_err_passthrough = Err<i64, i32>(4i32).map<i64>(double).unwrap_or(8);
@@ -27,8 +52,16 @@ fn main() -> i64 {
     Err(error) => error;
   };
   let result_ok_passthrough = Ok<i64, i32>(9).map_err<i64>(widen_error).unwrap_or(0);
+  let result_then_ok = Ok<i64, i32>(5).and_then<i64>(result_next).unwrap_or(0);
+  let result_then_err = Err<i64, i32>(6i32).and_then<i64>(result_next).unwrap_or(13);
+  let result_or_else_ok = Ok<i64, i32>(7).or_else<i64>(recover_result).unwrap_or(0);
+  let result_or_else_err = Err<i64, i32>(8i32).or_else<i64>(recover_result).unwrap_or(0);
+  let result_or_else_still_err = Err<i64, i32>(9i32).or_else<i64>(fail_result).unwrap_or(19);
 
   return option_map + option_map_none + option_then + option_then_none +
+         option_or_some + option_or_none + option_or_else_some +
+         option_or_else_none + option_or_else_still_none +
          result_map + result_map_err_passthrough + result_err_changed +
-         result_ok_passthrough;
+         result_ok_passthrough + result_then_ok + result_then_err +
+         result_or_else_ok + result_or_else_err + result_or_else_still_err;
 }

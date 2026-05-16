@@ -24,6 +24,20 @@ pub impl[T] std::Option[T] {
     };
   }
 
+  fn or(self, fallback: std::Option[T]) -> std::Option[T] {
+    return match self {
+      std::Some(value) => std::Some<T>(value),
+      std::None => fallback;
+    };
+  }
+
+  fn or_else(self, op: fn() -> std::Option[T]) -> std::Option[T] {
+    return match self {
+      std::Some(value) => std::Some<T>(value),
+      std::None => op();
+    };
+  }
+
   fn and_then[U](self, op: fn(T) -> std::Option[U]) -> std::Option[U] {
     return match self {
       std::Some(value) => op(value),
