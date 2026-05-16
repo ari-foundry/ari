@@ -688,8 +688,9 @@ Checklist:
       helpers, mutable local array/Vec `as_slice()` view creation,
       `view[start..end]` / `view[start..=end]` range slicing, checked
       `first`/`last`/`get`, element search, and `Slice[T]` exact/prefix/suffix
-      checks, plus `copy_to(ref mut Zone)` into source `std::vec::Vec<T>`;
-      the same positive read/view surface now runs through the raw freestanding
+      checks, provenance-preserving `as_ptr`, plus `copy_to(ref mut Zone)` into
+      source `std::vec::Vec<T>`; the same positive read/view surface now runs
+      through the raw freestanding
       backend to cover local Slice pointer/length lowering and
       aggregate-argument register spills
 - [x] reject reserved root smart-pointer surfaces `Unique`, `Shared`, and

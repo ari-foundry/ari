@@ -60,6 +60,7 @@ fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matri
 fn std::zone::new[T]|placement construction tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::promote[T]|scratch promotion tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::reset|zone reset invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
+method Slice[T]::as_ptr|check-prelude prelude-slice-as-ptr borrowed receiver and provenance tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 method Slice[T]::contains|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::count|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::ends_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row

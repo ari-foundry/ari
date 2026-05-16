@@ -1,0 +1,26 @@
+fn main() -> i64 {
+  var fixed = [1, 2, 3];
+  let fixed_view = fixed.as_slice();
+  let fixed_raw = fixed_view.as_ptr();
+  ptr_store(ptr_add(fixed_raw, 1), 4);
+  let fixed_total = ptr_load(fixed_raw) + fixed_view.get(1) + fixed_view.len();
+
+  var local_vec: Vec[i64] = [5, 6];
+  let local_view = local_vec.as_slice();
+  let local_raw = local_view.as_ptr();
+  ptr_store(local_raw, 7);
+  let local_total = ptr_load(local_raw) + local_view.get(1) + local_view.len();
+
+  var zone = zone::create(64);
+  var vec = std::vec::new<i64>(ref mut zone, 2);
+  vec.push(10);
+  vec.push(11);
+
+  let view = vec.as_slice();
+  let raw = view.as_ptr();
+  ptr_store(ptr_add(raw, 1), 12);
+  let total = ptr_load(raw) + view.get(1) + view.len();
+
+  zone::destroy(zone);
+  return fixed_total + local_total + total;
+}

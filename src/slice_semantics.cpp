@@ -20,6 +20,11 @@ IrType i64_type(SourceLocation loc) {
     return primitive_type(IrPrimitiveKind::I64, "i64", loc);
 }
 
+IrType value_qualified_slice_type(IrType type) {
+    type.qualifier = TypeQualifier::Value;
+    return type;
+}
+
 [[noreturn]] void fail(SourceLocation loc, const std::string& message) {
     throw CompileError(where(loc) + ": " + message);
 }
@@ -48,6 +53,13 @@ IrType make_prelude_slice_type(SourceLocation loc, const IrType& element) {
     type.field_types.push_back(i64_type(loc));
     type.field_mutable.push_back(false);
     return type;
+}
+
+bool slice_pointer_result_preserves_receiver_zone(const IrExpr& call) {
+    return call.kind == IrExprKind::Call &&
+           call.type.qualifier == TypeQualifier::Ptr &&
+           !call.args.empty() &&
+           is_prelude_slice_type(value_qualified_slice_type(call.args[0]->type));
 }
 
 void require_slice_element_materializable(SourceLocation loc,

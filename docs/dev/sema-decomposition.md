@@ -47,7 +47,8 @@ adding more narrow syntax-specific `*_semantics` siblings.
   reads
 - `slice_semantics` for shared `Slice[T]` type recognition, source-prelude Slice
   view type construction, and the scalar/plain-aggregate element materialization
-  checks used by sema, Vec `as_slice` lowering, and both backends. Zone
+  checks used by sema, Vec `as_slice` lowering, both backends, and
+  provenance-preserving pointer-return methods such as `Slice.as_ptr()`. Zone
   provenance for source `Slice[T]` views is tracked through
   `zone_pointer_semantics` alongside pointer and source `std::string` /
   `std::vec` handles, including the helper code that stores source/generation

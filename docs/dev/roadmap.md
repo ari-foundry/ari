@@ -377,9 +377,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `view[index]`, `view[index] = value`, local array/Vec `as_slice()`,
     `view[start..end]` / `view[start..=end]` range slicing, checked
     `first`/`last`/`get`, element search, and exact/prefix/suffix Slice
-    comparisons. It can also copy itself into target-zone `std::vec::Vec<T>`
-    storage through `copy_to(ref mut Zone)`. It is non-owning and still relies
-    on explicit raw-pointer discipline.
+    comparisons. It can also expose the stored raw pointer through
+    provenance-preserving `as_ptr()` and copy itself into target-zone
+    `std::vec::Vec<T>` storage through `copy_to(ref mut Zone)`. It is
+    non-owning and still relies on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
     Allocator-backed unique `Box[T]` ownership remains promoted into the
@@ -391,9 +392,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
-    - [slice-as-ptr-provenance] decide whether `Slice.as_ptr()` should expose
-      the stored pointer directly; add it only with explicit provenance rules
-      for local-array, local-Vec, and zone-backed views.
 5. Design `std` smart-pointer and explicit move surfaces.
     Ari's core memory model is zone/capability-oriented rather than strictly
     borrow-safe, but the standard library still needs clear ownership helpers

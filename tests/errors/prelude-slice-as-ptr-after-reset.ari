@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var vec = std::vec::new<i64>(ref mut zone, 1);
+  vec.push(11);
+  let view = vec.as_slice();
+  let raw = view.as_ptr();
+  zone::reset(ref mut zone);
+  return ptr_load(raw);
+}

@@ -639,10 +639,10 @@ same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone
 simple search, `Slice[T]` exact/prefix/suffix checks, target-zone `copy_to`,
 and `as_slice` calls over the stored raw handle. Read-only metadata, checked
 reads, search, Slice comparison, `copy_to`, and `as_ptr` borrow that source
-handle receiver. The resulting `Slice[T]` keeps the same
-zone provenance, so using it after `zone::reset` or `zone::destroy` is
-rejected. `as_ptr()` raw pointers and copied Vec handles track their source or
-target zone respectively. The root
+handle receiver. The resulting `Slice[T]` and its `as_ptr()` pointer keep the
+same zone provenance, so using either after `zone::reset` or `zone::destroy`
+is rejected. `as_ptr()` raw pointers and copied Vec handles track their source
+or target zone respectively. The root
 `Vec[T]` type and its current local method set remain fixed-local until runtime
 growth is ported. Root `Vec[T]` therefore cannot cross non-local ABI or storage
 boundaries yet: function and extern parameters/returns, struct fields, and impl
@@ -775,9 +775,11 @@ existing element. `first()`, `last()`, and `get(index)` are checked read-only
 element accessors over the stored pointer and length. `contains(value)`,
 `index_of(value)`, and `count(value)` scan comparable elements. `equals(view)`,
 `starts_with(view)`, and `ends_with(view)` compare against another borrowed
-`Slice[T]` view. `copy_to(ref mut Zone)` copies the current view into a new
-target-zone `std::vec::Vec<T>` handle; the copied handle is invalidated with
-the target zone, not with the source view's backing storage. The raw
+`Slice[T]` view. `as_ptr()` returns the stored `ptr T` and preserves the
+view's zone provenance when the view came from tracked zone-backed storage.
+`copy_to(ref mut Zone)` copies the current view into a new target-zone
+`std::vec::Vec<T>` handle; the copied handle is invalidated with the target
+zone, not with the source view's backing storage. The raw
 freestanding backend uses the same pointer/length metadata for local Slice
 indexing, indexed assignment, range slicing, and read-only Slice methods.
 Slice patterns are still planned after the binding policy is nailed down.

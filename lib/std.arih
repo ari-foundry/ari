@@ -66,6 +66,10 @@ pub impl[T] Slice[T] {
     return ptr_load(ptr_add(self.data, index));
   }
 
+  fn as_ptr(self: ref Self) -> ptr T {
+    return self.data;
+  }
+
   fn index_of(self: ref Self, value: T) -> i64 {
     var index = 0;
     while index < self.len {
