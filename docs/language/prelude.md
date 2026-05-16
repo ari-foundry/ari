@@ -852,17 +852,20 @@ enum Result[T, E] {
 
 They are available without `std::` through the implicit prelude. Ari keeps the
 standard absence type to one spelling, `Option[T]`; there is no `Maybe[T]`
-alias. `Option[T]` has value-receiver `is_some()`, `is_none()`,
+alias. `Option[T]` has borrowed-receiver `is_some()` and `is_none()`
+predicates that can inspect a local or other place value without consuming it.
 `unwrap_or(fallback)`, `map[U](fn(T) -> U)`, and
-`and_then[U](fn(T) -> Option[U])` methods. `Result[T, E]` has value-receiver
-`is_ok()`, `is_err()`, `unwrap_or(fallback)`, `map[U](fn(T) -> U)`, and
-`map_err[F](fn(E) -> F)` methods. Use explicit paths such as `std::Option[i64]`,
-`std::Some(1)`, or `std::Ok<i64, i32>(1)` when you want to spell the source
-module. The method implementations live in `std::option` and `std::result`,
-while the enum names and cases stay at the `std` root. Postfix
-`?` and `??` recognize the same Option/Result-style enum shapes on the LLVM
-backend path; the freestanding backend still needs the broader aggregate enum
-return/value ABI work.
+`and_then[U](fn(T) -> Option[U])` still consume the `Option[T]` value.
+`Result[T, E]` follows the same split: borrowed-receiver `is_ok()` and
+`is_err()` predicates, plus consuming `unwrap_or(fallback)`,
+`map[U](fn(T) -> U)`, and `map_err[F](fn(E) -> F)`. Bind function-call results
+to a local before calling these borrowed predicate methods. Use explicit paths
+such as `std::Option[i64]`, `std::Some(1)`, or `std::Ok<i64, i32>(1)` when you
+want to spell the source module. The method implementations live in
+`std::option` and `std::result`, while the enum names and cases stay at the
+`std` root. Postfix `?` and `??` recognize the same Option/Result-style enum
+shapes on the LLVM backend path; the freestanding backend still needs the
+broader aggregate enum return/value ABI work.
 
 Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 

@@ -1509,6 +1509,8 @@ private:
                 return emit_try(expr);
             case IrExprKind::NullCoalesce:
                 return emit_null_coalesce(expr);
+            case IrExprKind::EnumTag:
+                return emit_enum_tag_expr(expr);
             case IrExprKind::EnumConstruct:
                 return emit_enum_construct(expr);
             case IrExprKind::Tuple:
@@ -2382,6 +2384,34 @@ private:
         std::string tag = temp();
         line("  " + tag + " = extractvalue " + value.type + " " + value.name + ", 0");
         return Value{"i32", tag, enum_tag_storage_type(loc)};
+    }
+
+    Value emit_enum_tag_expr(const IrExpr& expr) {
+        const IrExpr& operand_expr = *ir_expr_operand(expr);
+        std::string tag32;
+        if (is_reference_like_lvalue_type(operand_expr.type)) {
+            Value pointer = emit_expr(operand_expr);
+            IrType storage_type = lvalue_pointee_type(operand_expr.type);
+            if (has_aggregate_enum_layout(storage_type)) {
+                std::string tag_ptr = temp();
+                line("  " + tag_ptr + " = getelementptr inbounds " + llvm_type(storage_type) +
+                     ", ptr " + pointer.name + ", i32 0, i32 0");
+                tag32 = temp();
+                line("  " + tag32 + " = load i32, ptr " + tag_ptr);
+            } else {
+                std::string loaded = temp();
+                line("  " + loaded + " = load " + llvm_type(storage_type) + ", ptr " + pointer.name);
+                tag32 = temp();
+                line("  " + tag32 + " = trunc " + llvm_type(storage_type) + " " + loaded + " to i32");
+            }
+        } else {
+            Value value = emit_expr(operand_expr);
+            tag32 = emit_enum_tag_value(expr.loc, value).name;
+        }
+
+        std::string out = temp();
+        line("  " + out + " = zext i32 " + tag32 + " to i64");
+        return Value{"i64", out, expr.type};
     }
 
     Value emit_enum_payload_slot(SourceLocation loc, const Value& value, std::uint32_t index) {

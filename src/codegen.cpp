@@ -2331,6 +2331,9 @@ private:
             case IrExprKind::NullCoalesce:
                 emit_null_coalesce(expr);
                 break;
+            case IrExprKind::EnumTag:
+                emit_enum_tag_expr(expr);
+                break;
             case IrExprKind::EnumConstruct:
                 emit_enum_construct(expr);
                 break;
@@ -3959,6 +3962,29 @@ private:
         emit_shl_rax_imm8(32);
         emit_mov_reg_imm64(Reg::RCX, ir_expr_enum_tag(expr));
         emit_or_reg_reg(Reg::RAX, Reg::RCX);
+    }
+
+    void emit_enum_tag_expr(const IrExpr& expr) {
+        const IrExpr& operand = *ir_expr_operand(expr);
+        if (is_reference_like_lvalue_type(operand.type)) {
+            IrType storage_type = lvalue_storage_type(operand.type);
+            emit_expr(operand);
+            if (has_aggregate_enum_layout(storage_type)) {
+                emit_load_rax_from_ptr(Reg::RAX, storage_type.field_types[0]);
+                return;
+            }
+            emit_load_rax_from_ptr(Reg::RAX, storage_type);
+            emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
+            emit_and_reg_reg(Reg::RAX, Reg::RCX);
+            return;
+        }
+
+        if (has_aggregate_enum_layout(operand.type)) {
+            throw CompileError(where(expr.loc) + ": freestanding backend does not materialize aggregate enum tags from values yet");
+        }
+        emit_expr(operand);
+        emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
+        emit_and_reg_reg(Reg::RAX, Reg::RCX);
     }
 
     void emit_try(const IrExpr& expr) {

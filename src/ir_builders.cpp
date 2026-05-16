@@ -282,6 +282,15 @@ IrExprPtr make_pointer_store_expr(SourceLocation loc, IrExprPtr pointer, IrExprP
     return expr;
 }
 
+IrExprPtr make_enum_tag_expr(SourceLocation loc, IrExprPtr value) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::EnumTag;
+    expr->loc = loc;
+    expr->type = IrType{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, loc};
+    set_ir_expr_operand(*expr, std::move(value));
+    return expr;
+}
+
 IrExprPtr make_ir_try_expr(SourceLocation loc,
                            IrExprPtr operand,
                            IrType success_payload_type,

@@ -1,13 +1,13 @@
+fn __is_some[T](value: ref std::Option[T]) -> bool;
+fn __is_none[T](value: ref std::Option[T]) -> bool;
+
 pub impl[T] std::Option[T] {
-  fn is_some(self) -> bool {
-    return match self {
-      std::Some(_) => true,
-      std::None => false;
-    };
+  fn is_some(self: ref Self) -> bool {
+    return __is_some<T>(self);
   }
 
-  fn is_none(self) -> bool {
-    return !self.is_some();
+  fn is_none(self: ref Self) -> bool {
+    return __is_none<T>(self);
   }
 
   fn unwrap_or(self, fallback: T) -> T {

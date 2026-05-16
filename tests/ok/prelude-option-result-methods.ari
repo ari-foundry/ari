@@ -13,20 +13,27 @@ fn result(flag: bool) -> Result[i64, i32] {
 }
 
 fn main() -> i64 {
+  let some_value = maybe(true);
+  let none_value = maybe(false);
   let option_flags =
-    (if maybe(true).is_some() { 1 } else { 0 }) +
-    (if maybe(false).is_none() { 2 } else { 0 });
+    (if some_value.is_some() { 1 } else { 0 }) +
+    (if none_value.is_none() { 2 } else { 0 });
   let option_values =
-    maybe(true).unwrap_or(5) +
-    maybe(false).unwrap_or(7);
+    some_value.unwrap_or(5) +
+    none_value.unwrap_or(7);
 
+  let ok_value = result(true);
+  let err_value = result(false);
   let result_flags =
-    (if result(true).is_ok() { 4 } else { 0 }) +
-    (if result(false).is_err() { 8 } else { 0 });
+    (if ok_value.is_ok() { 4 } else { 0 }) +
+    (if err_value.is_err() { 8 } else { 0 });
   let result_values =
-    result(true).unwrap_or(9) +
-    result(false).unwrap_or(11);
+    ok_value.unwrap_or(9) +
+    err_value.unwrap_or(11);
 
   let qualified: std::Option[i64] = std::Some(13);
-  return option_flags + option_values + result_flags + result_values + qualified.unwrap_or(17);
+  let qualified_flag = if qualified.is_some() { 16 } else { 0 };
+
+  return option_flags + option_values + result_flags + result_values +
+         qualified_flag + qualified.unwrap_or(17);
 }

@@ -402,10 +402,12 @@ check-prelude: $(TARGET)
 	$(TARGET) --freestanding tests/ok/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.raw
 	$(BUILD_DIR)/prelude/prelude-slice-methods.raw; code=$$?; test $$code -eq 105
 	$(TARGET) tests/ok/prelude-option-result-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
-	grep -F -q 'Option_i64_8inherent7is_some' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
+	grep -F -q 'define i1 @"_ARNv4impl16std__Option_i64_8inherent7is_some"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
-	grep -F -q 'Result_i64__i32_8inherent5is_ok' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
+	grep -F -q 'define i1 @"_ARNv4impl21std__Result_i64__i32_8inherent5is_ok"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Result_i64__i32_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
+	$(TARGET) --freestanding tests/ok/prelude-option-result-methods.ari -o $(BUILD_DIR)/prelude/prelude-option-result-methods.raw
+	$(BUILD_DIR)/prelude/prelude-option-result-methods.raw; code=$$?; test $$code -eq 91
 	$(TARGET) tests/ok/prelude-option-result-combinators.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent10map__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent15and_then__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll

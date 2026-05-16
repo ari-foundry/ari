@@ -36,6 +36,7 @@
 #include "range_semantics.hpp"
 #include "slice_semantics.hpp"
 #include "std_box_semantics.hpp"
+#include "std_enum_probe_semantics.hpp"
 #include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
 #include "symbol_mangle.hpp"
@@ -15672,6 +15673,44 @@ private:
         return nullptr;
     }
 
+    std::uint32_t require_enum_case_tag(SourceLocation loc,
+                                        const IrType& enum_type,
+                                        const std::string& case_name) const {
+        auto found = enum_cases_.find(case_name);
+        if (found == enum_cases_.end() || found->second.enum_name != enum_type.name) {
+            fail(loc, "internal std enum probe helper expected case '" + case_name +
+                      "' for " + type_name(enum_type));
+        }
+        return found->second.tag;
+    }
+
+    IrExprPtr check_std_option_result_probe_helper_call(SourceLocation loc,
+                                                        const std::string& resolved_name,
+                                                        std::vector<IrExprPtr> args,
+                                                        std::size_t borrow_mark) {
+        if (args.size() != 1) {
+            fail(loc, "std enum probe helper expects one borrowed enum value");
+        }
+        if (!is_borrow_type(args[0]->type)) {
+            fail(loc, "std enum probe helper expects a borrowed enum value, got " + type_name(args[0]->type));
+        }
+
+        IrType enum_type = value_qualified_type(args[0]->type);
+        std::optional<StdEnumProbeHelper> helper = std_enum_probe_helper_for_name(resolved_name);
+        if (!helper) {
+            throw CompileError("internal error: unknown std enum probe helper '" + resolved_name + "'");
+        }
+        if (enum_type.name != helper->enum_name || enum_type.primitive != IrPrimitiveKind::Enum) {
+            fail(loc, "std enum probe helper expected " + helper->enum_name + ", got " + type_name(enum_type));
+        }
+
+        std::uint32_t tag = require_enum_case_tag(loc, enum_type, helper->case_name);
+        IrExprPtr tag_expr = make_enum_tag_expr(loc, std::move(args[0]));
+        IrExprPtr expected = make_integer_literal(loc, i64_type(loc), tag);
+        release_temporary_borrows(borrow_mark);
+        return make_bool_binary_expr(loc, IrBinaryOp::Eq, std::move(tag_expr), std::move(expected));
+    }
+
     IrExprPtr check_assert_compare_macro(const Expr& expr, PreludeMacroKind kind, std::vector<ExprPtr> args) {
         if (args.size() != 2) fail(expr.loc, "wrong argument count for '" + expr.name + "!'");
 
@@ -15823,6 +15862,14 @@ private:
         set_function_return_contracts(call_sig);
         apply_explicit_borrow_return_contract(call_sig, fn);
         set_function_borrow_return_path_hint(call_sig, fn);
+
+        if (std_enum_probe_helper_for_name(resolved_name)) {
+            return check_std_option_result_probe_helper_call(
+                expr.loc,
+                resolved_name,
+                std::move(args),
+                borrow_mark);
+        }
 
         if (!queued_specializations_.count(specialized_name)) {
             functions_.emplace(specialized_name, call_sig);

@@ -210,13 +210,14 @@ constructor subset documented in the language guide.
    replacement and swapping are deliberately out of scope until Ari has a safe
    generic place-move contract.
    Source `Option[T]` and `Result[T, E]` also have their first ordinary library
-   method surface now: value-receiver presence/status predicates, `unwrap_or`,
-   and consuming `map`/`and_then`/`map_err` combinators, implemented in focused
+   method surface now: borrowed-receiver presence/status predicates that lower
+   to tag-only enum probes, consuming `unwrap_or`, and consuming
+   `map`/`and_then`/`map_err` combinators, implemented in focused
    `std::option` and `std::result` child modules while the enum types and cases
    remain at the `std` root. The raw freestanding backend now preserves caller
    pointer bases while aggregate-valued match/control-flow results evaluate
-   aggregate-returning callees, so these combinators run on both LLVM-host and
-   raw paths.
+   aggregate-returning callees, so these predicates and combinators run on both
+   LLVM-host and raw paths.
    Source `std::cmp` now has small generic value helpers
    (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
    re-exports for ordinary library code. This covers another ordinary-library
@@ -265,10 +266,6 @@ constructor subset documented in the language guide.
      to the heap-storage release contract once that root handle exists. The
      current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract
      intentionally leaves storage release with `zone::reset` / `zone::destroy`.
-   - [option-result-borrow-methods] add borrowed-receiver probes for
-     `Option[T]` and `Result[T, E]` after enum ref-pattern matching has a
-     settled ownership/binding contract; today's methods intentionally consume
-     the enum value.
    Explicit-zone formatted strings are now settled for the 0.x source-`std`
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
    string/signed and unsigned integer/bool/float formatting and `{:.N}` float
@@ -400,10 +397,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
     prelude and connected to
-    `?`/`??` on the LLVM aggregate-enum path; their initial value-receiver
-    predicate and `unwrap_or` methods have been promoted into the Near-Term
-    source-`std` library-prep checklist. `Slice[T]` is now a source `std`
-    view struct implemented on both LLVM and the raw freestanding backend for
+    `?`/`??` on the LLVM aggregate-enum path; their borrowed-receiver
+    predicates and consuming `unwrap_or`/combinator methods have been promoted
+    into the Near-Term source-`std` library-prep checklist. `Slice[T]` is now
+    a source `std` view struct implemented on both LLVM and the raw
+    freestanding backend for
     `slice(data, len)`, `len(view)`, `view.len()`, `view.is_empty()`,
     `view[index]`, `view[index] = value`, local array/Vec `as_slice()`,
     `view[start..end]` / `view[start..=end]` range slicing, checked

@@ -284,6 +284,7 @@ enum class IrExprKind {
     PointerStore,
     Try,
     NullCoalesce,
+    EnumTag,
     EnumConstruct,
     Tuple,
     TupleIndex,

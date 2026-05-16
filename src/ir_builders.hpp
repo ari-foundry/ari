@@ -53,6 +53,7 @@ IrExprPtr make_pointer_offset_expr(SourceLocation loc, IrExprPtr pointer, IrExpr
 IrExprPtr make_pointer_add_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset);
 IrExprPtr make_pointer_load_expr(SourceLocation loc, IrExprPtr pointer, const IrType& result);
 IrExprPtr make_pointer_store_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr value);
+IrExprPtr make_enum_tag_expr(SourceLocation loc, IrExprPtr value);
 IrExprPtr make_ir_try_expr(SourceLocation loc,
                            IrExprPtr operand,
                            IrType success_payload_type,

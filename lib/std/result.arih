@@ -1,13 +1,13 @@
+fn __is_ok[T, E](value: ref std::Result[T, E]) -> bool;
+fn __is_err[T, E](value: ref std::Result[T, E]) -> bool;
+
 pub impl[T, E] std::Result[T, E] {
-  fn is_ok(self) -> bool {
-    return match self {
-      std::Ok(_) => true,
-      std::Err(_) => false;
-    };
+  fn is_ok(self: ref Self) -> bool {
+    return __is_ok<T, E>(self);
   }
 
-  fn is_err(self) -> bool {
-    return !self.is_ok();
+  fn is_err(self: ref Self) -> bool {
+    return __is_err<T, E>(self);
   }
 
   fn unwrap_or(self, fallback: T) -> T {
