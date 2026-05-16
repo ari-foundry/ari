@@ -28,11 +28,16 @@ User-defined `meta fn` macro syntax is also stable for the current lint-facing
 surface: expression, item, type, pattern, and attribute-position
 `ident!(...)` expansion now covers the bounded token-stream and explicit AST
 constructor subset documented in the language guide.
-One trait-library prerequisite from the Medium-Term associated-item work has
-also moved forward: associated type projections can resolve through a unique
-generic supertrait application, so `Child[T]::Item` may use an inherited
-`Parent[...]::Item` witness when that inherited associated type is unambiguous.
-Ambiguous inherited associated type names are rejected before witness lookup.
+The trait-associated-item and composition goal that used to sit in Medium-Term
+is now covered by the current front-end surface. Supertraits parse and require
+matching impls, child-trait bounds can statically dispatch inherited methods,
+trait-qualified associated function calls use explicit or expected-result
+implementing types, associated type projections resolve through unique impl
+witnesses and unique generic supertrait applications, and LLVM `dyn Child`
+trait objects include inherited object-safe methods plus dyn-to-supertrait
+upcasts. Ambiguous associated functions, inherited methods, inherited
+associated type names, and unrelated dyn upcasts are rejected with focused
+diagnostics.
 
 1. Start allocator-backed growable `Vec[T]`.
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
@@ -344,27 +349,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Medium-Term Language Work
 
-1. Extend associated items on traits.
-   The near-term trait-composition surface is complete for method lookup:
-   `trait Child: Parent` parses and checks, supertrait impls are required,
-   generic child-trait bounds can statically dispatch parent methods,
-   trait-qualified method calls disambiguate static dispatch, and LLVM
-   `dyn Child` values include object-safe supertrait methods with dyn-to-dyn
-   upcasts to inherited supertraits. Trait-qualified associated function calls
-   such as `Trait::make<SelfType>(...)`, `Trait<T>::make<SelfType>(...)`, and
-   expected-result forms like `let x: SelfType = Trait<T>::make(...)` now
-   disambiguate same-named trait associated functions without adopting Rust's
-   full `<T as Trait>::item` spelling, including expected-result propagation
-   through `if`, `if let`, `match`, block, and labeled-block expression result
-   arms, plus tuple, named-struct, tuple-struct, fixed-array, and `Vec` literal
-   elements, plus generic enum constructor payloads such as `Some(...)` and
-   `Ok(...)`. Keep Ari on trait composition instead of struct inheritance:
-   structs remain explicit data layouts with field embedding rather than hidden
-   base-object layout. Associated type projections also walk unique generic
-   supertrait applications, so child trait paths can use inherited associated
-   type witnesses without spelling the parent trait when the name is
-   unambiguous.
-2. Extend pattern binding modes beyond value bindings.
+1. Extend pattern binding modes beyond value bindings.
    The parser now reserves `ref`, `ref mut`, `&`, `&mut`, and `mut`
    binding-mode spellings as Near-Term syntax-stability work. This Medium-Term
    item is the semantic lowering phase for those reserved forms.
@@ -389,7 +374,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      lives in `for_pattern_semantics`, with a shared sema lowering helper for
      range, list-literal, and stored-vector loop heads; reference/ownership
      binding modes still need shared lowering.
-3. Expand aggregate enum payload storage beyond the nested-enum MVP.
+2. Expand aggregate enum payload storage beyond the nested-enum MVP.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values, and
    LLVM homogeneous nested aggregate-enum values today. Nested enum-case
@@ -408,7 +393,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      aggregate enum payloads after payload ABI and aliasing rules are explicit
    - [repr-c-payloads] define C tagged-union layout and C header emission for
      payload-bearing `@repr(C)` enums after aggregate enum payload ABI is stable
-4. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
+3. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
     `RangeInclusive[T]` local values are implemented today. `Option[T]` and
     `Result[T, E]` are source `std` generic enums exposed through the implicit
     prelude and connected to
@@ -436,7 +421,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.
-5. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
+4. Extend allocator-backed growable `Vec[T]` after the MVP. Non-empty `[...]` now defaults to
     fixed array literals unless a `Vec[T]` expected type is present. Local
     stack-backed vector literal storage, checked indexing, literal reassignment
     with changing runtime length, typed empty local vectors, length queries,
@@ -452,7 +437,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     temporary compiler-known local API does not become permanent surface area.
     - [iteration] lower iterator primitives for allocator-backed vectors
     - [patterns] connect fixed-length and rest vector patterns such as `[head, tail @ ..]` to stored vectors after runtime layout exists
-6. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+5. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot

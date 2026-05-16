@@ -21,6 +21,16 @@ std::string unqualified_name(const std::string& name) {
     return name.substr(split + 2);
 }
 
+bool is_std_module_name(const std::string& module_name) {
+    return module_name == "std" ||
+           (module_name.size() > 5 && module_name.compare(0, 5, "std::") == 0);
+}
+
+bool should_emit_function_prototype(const IrFunction& fn) {
+    if (!fn.shared_export) return false;
+    return !is_std_module_name(fn.module_name) || !fn.link_name.empty();
+}
+
 struct CRecordInfo {
     std::string c_name;
     bool opaque = false;
@@ -271,7 +281,7 @@ std::vector<CConcreteRecord> collect_concrete_records(const IrProgram& program,
                                                       const CRecordNames& c_record_names) {
     std::map<std::string, CConcreteRecord> by_key;
     for (const auto& fn : program.functions) {
-        if (!fn.shared_export) continue;
+        if (!should_emit_function_prototype(fn)) continue;
         collect_concrete_record_type(fn.return_type, c_record_names, by_key);
         for (const auto& param : fn.params) {
             collect_concrete_record_type(param.type, c_record_names, by_key);
@@ -411,7 +421,7 @@ std::string emit_c_header(const IrProgram& program) {
     require_unique_concrete_c_type_names(program, c_concrete_records);
     CConcreteRecordNames c_concrete_record_names = collect_concrete_record_names(c_concrete_records);
     for (const auto& fn : program.functions) {
-        if (!fn.shared_export) continue;
+        if (!should_emit_function_prototype(fn)) continue;
         require_direct_function_record_abi(fn, target);
     }
 
@@ -449,7 +459,7 @@ std::string emit_c_header(const IrProgram& program) {
     out << "#endif\n\n";
 
     for (const auto& fn : program.functions) {
-        if (!fn.shared_export) continue;
+        if (!should_emit_function_prototype(fn)) continue;
         out << function_prototype(fn, c_record_names, c_concrete_record_names, c_enum_names) << "\n";
     }
 
