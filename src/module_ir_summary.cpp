@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <map>
 #include <string>
 #include <utility>
 #include <vector>
@@ -20,6 +21,11 @@ namespace {
 
 struct IrSummaryCounts {
     std::uint64_t function_count = 0;
+};
+
+struct IrBodyShape {
+    std::map<std::string, std::uint64_t> statements;
+    std::map<std::string, std::uint64_t> expressions;
 };
 
 std::string bool_key(bool value) {
@@ -50,6 +56,147 @@ void append_type(std::string& out, const IrType& type) {
     append_field(out, type_name(type));
 }
 
+std::string stmt_kind_name(IrStmtKind kind) {
+    switch (kind) {
+        case IrStmtKind::Block: return "block";
+        case IrStmtKind::VarDecl: return "var";
+        case IrStmtKind::Assign: return "assign";
+        case IrStmtKind::ExprStmt: return "expr";
+        case IrStmtKind::Return: return "return";
+        case IrStmtKind::If: return "if";
+        case IrStmtKind::While: return "while";
+        case IrStmtKind::WhileLet: return "while-let";
+        case IrStmtKind::ForRange: return "for-range";
+        case IrStmtKind::ForVector: return "for-vector";
+        case IrStmtKind::InitWhile: return "init-while";
+        case IrStmtKind::Continue: return "continue";
+        case IrStmtKind::Break: return "break";
+        case IrStmtKind::Match: return "match";
+        case IrStmtKind::Drop: return "drop";
+    }
+    return "unknown";
+}
+
+std::string expr_kind_name(IrExprKind kind) {
+    switch (kind) {
+        case IrExprKind::Integer: return "integer";
+        case IrExprKind::Float: return "float";
+        case IrExprKind::String: return "string";
+        case IrExprKind::Bool: return "bool";
+        case IrExprKind::Null: return "null";
+        case IrExprKind::FunctionRef: return "function-ref";
+        case IrExprKind::Local: return "local";
+        case IrExprKind::Borrow: return "borrow";
+        case IrExprKind::Unary: return "unary";
+        case IrExprKind::Cast: return "cast";
+        case IrExprKind::PointerOffset: return "pointer-offset";
+        case IrExprKind::PointerAdd: return "pointer-add";
+        case IrExprKind::PointerLoad: return "pointer-load";
+        case IrExprKind::PointerStore: return "pointer-store";
+        case IrExprKind::Try: return "try";
+        case IrExprKind::NullCoalesce: return "null-coalesce";
+        case IrExprKind::EnumTag: return "enum-tag";
+        case IrExprKind::EnumConstruct: return "enum-construct";
+        case IrExprKind::Tuple: return "tuple";
+        case IrExprKind::TupleIndex: return "tuple-index";
+        case IrExprKind::Index: return "index";
+        case IrExprKind::SliceRange: return "slice-range";
+        case IrExprKind::Vector: return "vector";
+        case IrExprKind::VectorPush: return "vector-push";
+        case IrExprKind::VectorPop: return "vector-pop";
+        case IrExprKind::VectorReserve: return "vector-reserve";
+        case IrExprKind::VectorClear: return "vector-clear";
+        case IrExprKind::VectorTruncate: return "vector-truncate";
+        case IrExprKind::VectorSet: return "vector-set";
+        case IrExprKind::VectorSwap: return "vector-swap";
+        case IrExprKind::VectorRemove: return "vector-remove";
+        case IrExprKind::VectorInsert: return "vector-insert";
+        case IrExprKind::VectorContains: return "vector-contains";
+        case IrExprKind::VectorIndexOf: return "vector-index-of";
+        case IrExprKind::VectorCount: return "vector-count";
+        case IrExprKind::Noop: return "noop";
+        case IrExprKind::FormatPrint: return "format-print";
+        case IrExprKind::Match: return "match";
+        case IrExprKind::If: return "if";
+        case IrExprKind::Block: return "block";
+        case IrExprKind::IndirectCall: return "indirect-call";
+        case IrExprKind::TraitObjectCall: return "trait-object-call";
+        case IrExprKind::Binary: return "binary";
+        case IrExprKind::Call: return "call";
+    }
+    return "unknown";
+}
+
+void collect_body_shape_expr(IrBodyShape& shape, const IrExprPtr& expr);
+void collect_body_shape_stmts(IrBodyShape& shape, const std::vector<IrStmtPtr>& statements);
+
+void collect_body_shape_exprs(IrBodyShape& shape, const std::vector<IrExprPtr>& expressions) {
+    for (const auto& expr : expressions) collect_body_shape_expr(shape, expr);
+}
+
+void collect_body_shape_stmts(IrBodyShape& shape, const std::vector<IrStmtPtr>& statements) {
+    for (const auto& statement : statements) {
+        if (!statement) continue;
+        ++shape.statements[stmt_kind_name(statement->kind)];
+        collect_body_shape_expr(shape, statement->binding.init);
+        collect_body_shape_expr(shape, ir_stmt_assign_target(*statement));
+        collect_body_shape_expr(shape, ir_stmt_assign_rhs(*statement));
+        collect_body_shape_expr(shape, statement->expr);
+        collect_body_shape_expr(shape, statement->condition);
+        collect_body_shape_stmts(shape, ir_stmt_statements(*statement));
+        collect_body_shape_stmts(shape, ir_stmt_then_body(*statement));
+        collect_body_shape_stmts(shape, ir_stmt_else_body(*statement));
+        collect_body_shape_stmts(shape, ir_stmt_loop_body(*statement));
+        collect_body_shape_expr(shape, ir_stmt_for_start(*statement));
+        collect_body_shape_expr(shape, ir_stmt_for_end(*statement));
+        collect_body_shape_exprs(shape, ir_stmt_for_values(*statement));
+        collect_body_shape_expr(shape, statement->match_value);
+        for (const auto& binding : statement->init_bindings) collect_body_shape_expr(shape, binding.init);
+        collect_body_shape_exprs(shape, statement->updates);
+        for (const auto& arm : ir_stmt_match_arms(*statement)) collect_body_shape_stmts(shape, arm.body);
+        collect_body_shape_expr(shape, ir_stmt_break_value(*statement));
+    }
+}
+
+void collect_body_shape_expr(IrBodyShape& shape, const IrExprPtr& expr) {
+    if (!expr) return;
+    ++shape.expressions[expr_kind_name(expr->kind)];
+    collect_body_shape_expr(shape, ir_expr_operand(*expr));
+    collect_body_shape_expr(shape, ir_expr_left(*expr));
+    collect_body_shape_expr(shape, ir_expr_right(*expr));
+    collect_body_shape_expr(shape, ir_expr_payload(*expr));
+    for (const auto& arg : expr->args) collect_body_shape_expr(shape, arg);
+    collect_body_shape_expr(shape, ir_expr_if_condition(*expr));
+    collect_body_shape_stmts(shape, ir_expr_if_then_body(*expr));
+    collect_body_shape_expr(shape, ir_expr_if_then_value(*expr));
+    collect_body_shape_stmts(shape, ir_expr_if_else_body(*expr));
+    collect_body_shape_expr(shape, ir_expr_if_else_value(*expr));
+    collect_body_shape_expr(shape, ir_expr_block_value(*expr));
+    collect_body_shape_stmts(shape, ir_expr_block_body(*expr));
+    collect_body_shape_expr(shape, ir_expr_match_value(*expr));
+    for (const auto& arm : ir_expr_match_arms(*expr)) {
+        collect_body_shape_stmts(shape, arm.body);
+        collect_body_shape_expr(shape, arm.value);
+    }
+    collect_body_shape_stmts(shape, ir_expr_try_residual_cleanup(*expr));
+}
+
+void append_count_map(std::string& out, const std::map<std::string, std::uint64_t>& counts) {
+    append_count(out, counts.size());
+    for (const auto& item : counts) {
+        append_field(out, item.first);
+        append_count(out, item.second);
+    }
+}
+
+void append_body_shape(std::string& out, const std::vector<IrStmtPtr>& body) {
+    IrBodyShape shape;
+    collect_body_shape_stmts(shape, body);
+    out += "B;";
+    append_count_map(out, shape.statements);
+    append_count_map(out, shape.expressions);
+}
+
 void append_function_summary(std::string& out, const IrFunction& fn) {
     out += "F;";
     append_field(out, fn.name);
@@ -62,6 +209,7 @@ void append_function_summary(std::string& out, const IrFunction& fn) {
         append_type(out, param.type);
     }
     append_count(out, fn.body.size());
+    append_body_shape(out, fn.body);
     append_field(out, bool_key(fn.shared_export));
 }
 
@@ -152,10 +300,30 @@ private:
             read_field(); // parameter type
         }
         read_count(); // body statement count
+        if (peek("B;")) read_body_shape();
         std::string shared_export = read_field();
         if (shared_export != "0" && shared_export != "1") {
             fail("expected shared-export boolean 0 or 1");
         }
+    }
+
+    bool peek(const std::string& expected) const {
+        return text_.compare(pos_, expected.size(), expected) == 0;
+    }
+
+    void read_count_map(const std::string& label) {
+        std::uint64_t entry_count = read_count();
+        for (std::uint64_t i = 0; i < entry_count; ++i) {
+            std::string name = read_field();
+            if (name.empty()) fail(label + " kind cannot be empty");
+            read_count();
+        }
+    }
+
+    void read_body_shape() {
+        expect("B;");
+        read_count_map("statement");
+        read_count_map("expression");
     }
 };
 

@@ -109,15 +109,16 @@ body that was checked only with the owner alive.
    statement, and pattern surface is covered by that path. The V0 cache family
    is centralized on `ari-module-metadata-v0`, `ari-module-cache-v0`,
    `ari-ast-decls-v0`, and optional `ari-ir-summary-v0` sidecars. Cache
-   emission now writes the IR sidecars after semantic checking and cache parsing
-   validates duplicate, header-version, hash, source-hash, and function-count
-   mismatches when sidecars are present. The loader still uses AST summaries for
-   dependency parse skipping, so the remaining work is the actual IR
-   materialization path for future executable bodies that cannot round-trip
-   through the compact AST summary format.
-   - [ir-body-payload] extend `ari-ir-summary-v0` beyond the current lowered
-     function-surface sidecar when a future executable body form first needs an
-     IR-level payload
+   emission now writes IR sidecars with lowered function surfaces and body-shape
+   payloads after semantic checking, and cache parsing validates duplicate,
+   header-version, hash, source-hash, and function-count mismatches when
+   sidecars are present. The loader still uses AST summaries for dependency
+   parse skipping, so the remaining work is the actual IR materialization path
+   for future executable bodies that cannot round-trip through the compact AST
+   summary format.
+   - [ir-body-materialize-payload] extend `ari-ir-summary-v0` from body-shape
+     inventories to operand-level body payloads when a future executable body
+     form first needs IR-level materialization
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies whose executable function or impl bodies
      use forms outside the AST summary subset
