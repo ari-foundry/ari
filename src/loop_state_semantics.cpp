@@ -16,6 +16,48 @@ LocalState snapshot_state_or_alive(const StateSnapshot& snapshot, const std::str
     return found->second.state;
 }
 
+const StateSnapshotEntry& snapshot_entry_or_default(
+    const StateSnapshot& snapshot,
+    const std::string& key,
+    const StateSnapshotEntry& default_entry
+) {
+    auto found = snapshot.find(key);
+    return found == snapshot.end() ? default_entry : found->second;
+}
+
+bool compatible_unavailable_owner_states(LocalState left, LocalState right) {
+    return left != LocalState::Alive && right != LocalState::Alive;
+}
+
+LocalState merged_unavailable_owner_state(LocalState left, LocalState right) {
+    return left == LocalState::Dropped && right == LocalState::Dropped
+        ? LocalState::Dropped
+        : LocalState::Moved;
+}
+
+std::optional<std::string> merge_loop_exit_state_snapshot(
+    StateSnapshot& merged,
+    const StateSnapshot& snapshot,
+    const std::string& message
+) {
+    StateSnapshotEntry default_entry;
+    for (auto& item : merged) {
+        const StateSnapshotEntry& actual = snapshot_entry_or_default(snapshot, item.first, default_entry);
+        if (item.second.state != actual.state) {
+            if (!compatible_unavailable_owner_states(item.second.state, actual.state)) {
+                return "binding '" + item.first + "' " + message;
+            }
+            item.second.state = merged_unavailable_owner_state(item.second.state, actual.state);
+        }
+        if (item.first.find("#field:") != std::string::npos) continue;
+        if (!state_snapshot_entry_borrow_state_equal(item.second, actual)) {
+            return "binding '" + item.first + "' has incompatible borrow states";
+        }
+    }
+    merge_existing_zone_generations_into(merged, snapshot);
+    return std::nullopt;
+}
+
 } // namespace
 
 std::optional<std::string> loop_state_mismatch_error_ignoring_bindings(
@@ -38,7 +80,12 @@ std::optional<std::string> merge_loop_exit_states(
     const std::vector<StateSnapshot>& break_states,
     const std::string& message
 ) {
-    return merge_loop_state_snapshots(merged, break_states, message);
+    for (const auto& snapshot : break_states) {
+        if (auto error = merge_loop_exit_state_snapshot(merged, snapshot, message)) {
+            return error;
+        }
+    }
+    return std::nullopt;
 }
 
 std::optional<std::string> merge_loop_state_snapshots(

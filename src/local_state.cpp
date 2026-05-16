@@ -349,8 +349,8 @@ static bool field_borrow_counts_equal(
     return true;
 }
 
-static bool borrow_state_equal(const StateSnapshotEntry& left,
-                               const StateSnapshotEntry& right) {
+bool state_snapshot_entry_borrow_state_equal(const StateSnapshotEntry& left,
+                                             const StateSnapshotEntry& right) {
     return left.immutable_borrows == right.immutable_borrows &&
            left.mutable_borrows == right.mutable_borrows &&
            field_borrow_counts_equal(left.field_borrows, right.field_borrows) &&
@@ -372,7 +372,7 @@ std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& le
         auto found = right.find(item.first);
         StateSnapshotEntry default_entry;
         const StateSnapshotEntry& actual = found == right.end() ? default_entry : found->second;
-        if (!borrow_state_equal(item.second, actual)) {
+        if (!state_snapshot_entry_borrow_state_equal(item.second, actual)) {
             return "binding '" + item.first + "' has incompatible borrow states";
         }
     }

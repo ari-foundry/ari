@@ -137,6 +137,8 @@ std::optional<std::string> local_method_mutability_error(const std::string& name
 std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& left,
                                                          const StateSnapshot& right,
                                                          const std::string& message);
+bool state_snapshot_entry_borrow_state_equal(const StateSnapshotEntry& left,
+                                             const StateSnapshotEntry& right);
 void merge_zone_generations_into(StateSnapshot& target, const StateSnapshot& source);
 void merge_existing_zone_generations_into(StateSnapshot& target, const StateSnapshot& source);
 StateSnapshot merge_zone_generations(StateSnapshot target, const StateSnapshot& source);

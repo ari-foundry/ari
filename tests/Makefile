@@ -797,6 +797,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/break-statement-payloads.raw; code=$$?; test $$code -eq 9
 	$(TARGET) --freestanding tests/ok/while-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-true-break-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/loop-break-owner-unavailable-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw
+	$(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/while-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/while-true-return-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-return-owner-state.raw
@@ -922,6 +924,8 @@ check-control-flow: $(TARGET)
 	grep -q "while.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll
 	$(TARGET) tests/ok/while-true-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
+	$(TARGET) tests/ok/loop-break-owner-unavailable-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
+	grep -q "while.end" $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
 	$(TARGET) tests/ok/while-true-continue-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.ll
 	$(TARGET) tests/ok/while-true-return-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-return-owner-state.ll

@@ -417,6 +417,12 @@ required for that path. `continue` paths inside such loops are checked against
 the next-iteration state instead of the post-loop `break` state, so a loop can
 continue with an owner still live and later break after consuming it.
 
+If every reachable `break` exit has already consumed the same owner, Ari can
+merge `moved` and `dropped` states as one unavailable post-loop state. This lets
+different branches transfer or drop an owner before breaking without requiring
+identical terminal spelling. The owner still cannot be used after the loop, and
+`continue` paths remain exact next-iteration checks.
+
 Because `break` leaves the current nested scopes, any owning binding declared in
 those scopes must be moved or dropped before the jump.
 

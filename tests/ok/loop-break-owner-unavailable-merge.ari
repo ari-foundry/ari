@@ -1,0 +1,25 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume(value: own i64) -> i64 {
+  drop value;
+  return 5;
+}
+
+fn main() -> i64 {
+  let token = make_owned(7);
+  let choose_move = false;
+
+  while true {
+    if choose_move {
+      consume(token);
+      break;
+    } else {
+      drop token;
+      break;
+    }
+  }
+
+  return 13;
+}
