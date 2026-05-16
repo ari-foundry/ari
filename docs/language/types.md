@@ -513,11 +513,12 @@ stack-backed executable subset. Other compiler-known collection conveniences
 are reserved for the future allocator-backed std library design.
 The root `Vec[T]`/`std::Vec[T]` value is local-only in this phase: it can be a
 local binding, local expression result, or local vector view source, but it does
-not have a non-local runtime ABI. Function and extern parameters/returns,
-function pointer signatures, trait method signatures, struct fields, and impl
-receivers reject root `Vec[T]` until the runtime-capacity layout is defined.
-Use `std::vec::Vec<T>` when a value must be passed as an explicit-zone heap
-handle, or pass `Slice[T]` for a borrowed view.
+not have a non-local runtime ABI. Direct and generic-specialized function
+parameters/returns, extern parameters/returns, function pointer signatures,
+trait method signatures, struct fields, and impl receivers reject root `Vec[T]`
+until the runtime-capacity layout is defined. Use `std::vec::Vec<T>` when a
+value must be passed as an explicit-zone heap handle, or pass `Slice[T]` for a
+borrowed view.
 
 For the allocator-backed path, `std::vec::alloc_buffer<T>(ref mut zone,
 capacity)` now provides the raw element-buffer seed. It takes an explicit

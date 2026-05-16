@@ -674,10 +674,11 @@ is rejected. `as_ptr()` raw pointers and copied Vec handles track their source
 or target zone respectively. The root
 `Vec[T]` type and its current local method set remain fixed-local until runtime
 growth is ported. Root `Vec[T]` therefore cannot cross non-local ABI or storage
-boundaries yet: function and extern parameters/returns, function pointer
-signatures, trait method signatures, struct fields, and impl receivers reject it
-with a dedicated diagnostic. Use `std::vec::Vec<T>` for an explicit-zone heap
-handle or `Slice[T]` for a borrowed view.
+boundaries yet: direct and generic-specialized function parameters/returns,
+extern parameters/returns, function pointer signatures, trait method signatures,
+struct fields, and impl receivers reject it with a dedicated diagnostic. Use
+`std::vec::Vec<T>` for an explicit-zone heap handle or `Slice[T]` for a
+borrowed view.
 
 `std::boxed::Box<T>` is the source `std` allocation seed for a single
 zone-backed value:

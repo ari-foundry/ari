@@ -3816,6 +3816,17 @@ private:
         });
     }
 
+    void require_function_signature_root_vector_runtime_abi(const FunctionDecl& fn,
+                                                           const std::vector<IrType>& param_types,
+                                                           const IrType& result) const {
+        for (std::size_t i = 0; i < param_types.size(); ++i) {
+            require_root_vector_runtime_abi(fn.params[i].type.loc, param_types[i], "a function parameter");
+        }
+        if (fn.has_return_type) {
+            require_root_vector_runtime_abi(fn.return_type.loc, result, "a function return type");
+        }
+    }
+
     void collect_extern_function_signature(const FunctionDecl& fn) {
         if (fn.params.size() > std::numeric_limits<std::uint16_t>::max()) {
             fail(fn.loc, "functions support up to 65535 parameters");
@@ -15969,6 +15980,7 @@ private:
             param_types.push_back(param_type);
         }
         IrType result = fn.has_return_type ? resolve_type_with_substitutions(fn.return_type, substitutions) : void_type(fn.loc);
+        require_function_signature_root_vector_runtime_abi(fn, param_types, result);
 
         std::string specialized_name = generic_specialization_name(fn, substitutions);
         FunctionSig call_sig;
@@ -16015,6 +16027,7 @@ private:
         FunctionSig sig;
         sig.params = std::move(param_types);
         sig.result = result;
+        require_function_signature_root_vector_runtime_abi(fn, sig.params, sig.result);
         sig.module_name = fn.module_name;
         sig.is_public = fn.is_public;
         sig.loc = fn.loc;
