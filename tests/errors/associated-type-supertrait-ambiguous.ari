@@ -1,0 +1,29 @@
+struct Thing {
+}
+
+trait Left[T] {
+  type Item;
+}
+
+trait Right[T] {
+  type Item;
+}
+
+trait Both[T]: Left[T] + Right[T] {
+}
+
+impl Left[i64] for Thing {
+  type Item = i64;
+}
+
+impl Right[i64] for Thing {
+  type Item = i64;
+}
+
+impl Both[i64] for Thing {
+}
+
+fn main() -> i64 {
+  let value: Both[i64]::Item = 1;
+  return value;
+}

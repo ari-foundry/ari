@@ -2308,6 +2308,69 @@ private:
         return bounds;
     }
 
+    void collect_associated_projection_targets(
+        SourceLocation loc,
+        const TraitInfo& trait,
+        const std::vector<IrType>& trait_args,
+        const std::string& associated_name,
+        std::vector<GenericTraitBound>& targets,
+        std::set<std::string>& visiting
+    ) const {
+        std::string key =
+            trait_application_display(trait.name, trait_args) + "::" + associated_name;
+        if (!visiting.insert(key).second) return;
+
+        if (trait.associated_types.count(associated_name)) {
+            GenericTraitBound target;
+            target.trait_name = trait.name;
+            target.trait_args = trait_args;
+            target.loc = loc;
+            targets.push_back(std::move(target));
+            visiting.erase(key);
+            return;
+        }
+
+        for (const auto& supertrait : instantiated_supertrait_bounds(trait, trait_args)) {
+            auto super_found = traits_.find(supertrait.trait_name);
+            if (super_found == traits_.end()) continue;
+            collect_associated_projection_targets(
+                loc,
+                super_found->second,
+                supertrait.trait_args,
+                associated_name,
+                targets,
+                visiting);
+        }
+
+        visiting.erase(key);
+    }
+
+    std::vector<GenericTraitBound> associated_projection_targets(
+        SourceLocation loc,
+        const TraitInfo& trait,
+        const std::vector<IrType>& trait_args,
+        const std::string& associated_name
+    ) const {
+        std::vector<GenericTraitBound> targets;
+        std::set<std::string> visiting;
+        collect_associated_projection_targets(
+            loc,
+            trait,
+            trait_args,
+            associated_name,
+            targets,
+            visiting);
+
+        std::vector<GenericTraitBound> unique_targets;
+        std::set<std::string> seen;
+        for (auto& target : targets) {
+            std::string key = trait_application_display(target.trait_name, target.trait_args);
+            if (!seen.insert(key).second) continue;
+            unique_targets.push_back(std::move(target));
+        }
+        return unique_targets;
+    }
+
     bool trait_application_implies_trait(
         const std::string& source_trait_name,
         const std::vector<IrType>& source_trait_args,
@@ -4037,14 +4100,22 @@ private:
                  "trait '" + trait.name + "' expects " + std::to_string(trait.generic_arity) +
                      " type argument" + (trait.generic_arity == 1 ? "" : "s"));
         }
-        if (!trait.associated_types.count(ast_type.associated_projection)) {
-            fail(ast_type.loc,
-                 "trait '" + trait.name + "' has no associated type '" + ast_type.associated_projection + "'");
-        }
-
         std::vector<IrType> trait_args;
         trait_args.reserve(ast_type.args.size());
         for (const auto& arg : ast_type.args) trait_args.push_back(resolve_executable_type(arg));
+
+        std::vector<GenericTraitBound> projection_targets =
+            associated_projection_targets(ast_type.loc, trait, trait_args, ast_type.associated_projection);
+        if (projection_targets.empty()) {
+            fail(ast_type.loc,
+                 "trait '" + trait.name + "' has no associated type '" + ast_type.associated_projection + "'");
+        }
+        if (projection_targets.size() > 1) {
+            fail(ast_type.loc,
+                 "associated type projection '" + type_ref_key(ast_type) +
+                     "' is ambiguous across supertraits");
+        }
+        const GenericTraitBound& projection_target = projection_targets.front();
 
         std::vector<IrType> candidates;
         for_each_impl_decl([&](const ImplDecl& impl) {
@@ -4058,19 +4129,23 @@ private:
 
             bool matches = false;
             std::map<std::string, IrType> inferred;
-            if (resolve_trait_name(impl.trait_type.name) == trait.name &&
-                impl.trait_type.args.size() == trait_args.size()) {
+            if (resolve_trait_name(impl.trait_type.name) == projection_target.trait_name &&
+                impl.trait_type.args.size() == projection_target.trait_args.size()) {
                 std::vector<IrType> impl_trait_args;
                 impl_trait_args.reserve(impl.trait_type.args.size());
                 for (const auto& arg : impl.trait_type.args) impl_trait_args.push_back(resolve_executable_type(arg));
                 if (impl.generics.empty()) {
-                    matches = same_type_list(impl_trait_args, trait_args);
+                    matches = same_type_list(impl_trait_args, projection_target.trait_args);
                 } else {
                     matches = true;
                     std::vector<std::string> generic_names;
                     for (const auto& generic : impl.generics) generic_names.push_back(generic.name);
                     for (std::size_t i = 0; i < impl_trait_args.size(); ++i) {
-                        if (!infer_generic_pattern_type(impl_trait_args[i], trait_args[i], generic_names, inferred)) {
+                        if (!infer_generic_pattern_type(
+                                impl_trait_args[i],
+                                projection_target.trait_args[i],
+                                generic_names,
+                                inferred)) {
                             matches = false;
                             break;
                         }

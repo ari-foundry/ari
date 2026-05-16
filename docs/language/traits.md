@@ -131,6 +131,11 @@ let value = AddAs<i64>::add_as(20, 2)
 A child trait can name a unique inherited supertrait method, such as
 `Child::base(value)`. If more than one supertrait exposes the same method name,
 name the specific supertrait instead.
+Associated type projections follow the same unique-inheritance rule. If
+`trait Child[T]: Source[Option[T]]`, then `Child[i64]::Item` can resolve the
+inherited `Source[Option[i64]]::Item` witness when only one supertrait path
+provides `Item`. If multiple supertraits provide an associated type with that
+name, spell the parent trait projection directly.
 
 This is behavior composition, not struct inheritance. Ari keeps structs as data
 layout declarations; use named fields, tuple structs, or explicit embedding for
@@ -351,8 +356,11 @@ The spelling is Ari-style `Trait[T]::Item`, not Rust's
 projections in the AST and module cache so lint and language-server tooling can
 treat them as stable. During semantic lowering, a projection resolves to the
 impl witness type when exactly one visible impl witness matches the trait
-application. If no witness matches, or more than one impl witness matches, Ari
-rejects the projection with a focused diagnostic instead of guessing a type.
+application. Projection lookup also walks unique generic supertrait
+applications, so a child trait can expose one inherited associated type name.
+If no witness matches, more than one impl witness matches, or multiple
+supertraits provide the same associated type name, Ari rejects the projection
+with a focused diagnostic instead of guessing a type.
 
 Inside modules, methods are private by default. Mark the method `pub`, or mark
 the whole `impl` block `pub`, to make its methods callable from outside the

@@ -1,0 +1,22 @@
+struct Box[T] {
+  value: T,
+}
+
+trait Source[T] {
+  type Item;
+}
+
+trait Child[T]: Source[Option[T]] {
+}
+
+impl[T] Source[Option[T]] for Box[T] {
+  type Item = Option[T];
+}
+
+impl[T] Child[T] for Box[T] {
+}
+
+fn main() -> i64 {
+  let value: Child[i64]::Item = Some(41);
+  return value.unwrap_or(0) + 1;
+}

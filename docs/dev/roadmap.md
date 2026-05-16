@@ -28,6 +28,11 @@ User-defined `meta fn` macro syntax is also stable for the current lint-facing
 surface: expression, item, type, pattern, and attribute-position
 `ident!(...)` expansion now covers the bounded token-stream and explicit AST
 constructor subset documented in the language guide.
+One trait-library prerequisite from the Medium-Term associated-item work has
+also moved forward: associated type projections can resolve through a unique
+generic supertrait application, so `Child[T]::Item` may use an inherited
+`Parent[...]::Item` witness when that inherited associated type is unambiguous.
+Ambiguous inherited associated type names are rejected before witness lookup.
 
 1. Start allocator-backed growable `Vec[T]`.
    Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
@@ -345,10 +350,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    elements, plus generic enum constructor payloads such as `Some(...)` and
    `Ok(...)`. Keep Ari on trait composition instead of struct inheritance:
    structs remain explicit data layouts with field embedding rather than hidden
-   base-object layout.
-   - [generic-supertrait-inference] handle richer generic supertrait
-     applications now that associated type declarations, witnesses, and
-     unique-witness projections exist
+   base-object layout. Associated type projections also walk unique generic
+   supertrait applications, so child trait paths can use inherited associated
+   type witnesses without spelling the parent trait when the name is
+   unambiguous.
 2. Extend pattern binding modes beyond value bindings.
    The parser now reserves `ref`, `ref mut`, `&`, `&mut`, and `mut`
    binding-mode spellings as Near-Term syntax-stability work. This Medium-Term

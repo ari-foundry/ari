@@ -1948,6 +1948,8 @@ check-traits: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/generic-trait-associated.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/generic-trait-associated.elf; $(BUILD_DIR)/traits/generic-trait-associated.elf; code=$$?; test $$code -eq 21; fi
 	$(TARGET) --freestanding tests/ok/associated-type-projection.ari -o $(BUILD_DIR)/traits/associated-type-projection.raw
 	$(BUILD_DIR)/traits/associated-type-projection.raw; code=$$?; test $$code -eq 42
+	$(TARGET) --freestanding tests/ok/associated-type-supertrait-projection.ari -o $(BUILD_DIR)/traits/associated-type-supertrait-projection.raw
+	$(BUILD_DIR)/traits/associated-type-supertrait-projection.raw; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/generic-trait-method.ari --emit-llvm $(BUILD_DIR)/traits/generic-trait-method.ll
 	grep -q "keep__G_i64" $(BUILD_DIR)/traits/generic-trait-method.ll
 	grep -q "keep__G_bool" $(BUILD_DIR)/traits/generic-trait-method.ll
@@ -2016,6 +2018,8 @@ check-traits: $(TARGET)
 	grep -q "impl of trait 'Source' for i64 is missing associated type 'Item'" $(BUILD_DIR)/traits/associated-type-missing-witness.err
 	if $(TARGET) tests/errors/associated-type-projection-ambiguous.ari -o $(BUILD_DIR)/traits/associated-type-projection-ambiguous.elf >$(BUILD_DIR)/traits/associated-type-projection-ambiguous.err 2>&1; then exit 1; fi
 	grep -q "associated type projection 'Source\\[i64\\]::Item' is ambiguous across impl witnesses" $(BUILD_DIR)/traits/associated-type-projection-ambiguous.err
+	if $(TARGET) tests/errors/associated-type-supertrait-ambiguous.ari -o $(BUILD_DIR)/traits/associated-type-supertrait-ambiguous.elf >$(BUILD_DIR)/traits/associated-type-supertrait-ambiguous.err 2>&1; then exit 1; fi
+	grep -q "associated type projection 'Both\\[i64\\]::Item' is ambiguous across supertraits" $(BUILD_DIR)/traits/associated-type-supertrait-ambiguous.err
 	if $(TARGET) tests/errors/trait-qualified-associated-missing-self.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-missing-self.elf >$(BUILD_DIR)/traits/trait-qualified-associated-missing-self.err 2>&1; then exit 1; fi
 	grep -q "trait-qualified associated function call 'Build::build' requires an explicit implementing type argument" $(BUILD_DIR)/traits/trait-qualified-associated-missing-self.err
 	if $(TARGET) tests/errors/trait-qualified-associated-missing-impl.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-missing-impl.elf >$(BUILD_DIR)/traits/trait-qualified-associated-missing-impl.err 2>&1; then exit 1; fi
