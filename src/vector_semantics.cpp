@@ -122,7 +122,7 @@ bool is_vector_storage_type(const IrType& type) {
 }
 
 bool contains_root_vector_without_runtime_abi(const IrType& type) {
-    if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1) return true;
+    if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size == 0) return true;
     for (const auto& arg : type.args) {
         if (contains_root_vector_without_runtime_abi(arg)) return true;
     }

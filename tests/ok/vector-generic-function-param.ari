@@ -5,5 +5,5 @@ fn identity[T](value: T) -> T {
 fn main() -> i64 {
   let values: Vec[i64] = [1, 2, 3];
   let copied = identity(values);
-  return len(copied);
+  return len(copied) + copied[0] + copied[2];
 }

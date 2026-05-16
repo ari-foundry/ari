@@ -168,9 +168,12 @@ diagnostics.
    handle and runs the stored value through normal Drop lowering, and the root
    `Box[T]`/`std::Box[T]` spelling now aliases that explicit-zone source
    handle. Allocator-backed unique `Box[T]` ownership remains future work.
-   Root `Vec[T]` now has an explicit non-local rule while runtime capacity is
-   still absent: it remains a fixed-local value only, and sema rejects root
-   `Vec[T]` in direct or generic-specialized function parameters/returns,
+   Root `Vec[T]` now has an explicit boundary rule while runtime capacity is
+   still absent: it remains stack-backed fixed-capacity storage, but ordinary
+   direct function parameters are allowed by specializing the lowered function
+   to each caller's concrete local Vec capacity. Generic function
+   specializations also carry the concrete capacity when a type parameter
+   resolves to a local Vec. Sema still rejects unsized root `Vec[T]` returns,
    extern parameters/returns, function pointer signatures, trait method
    signatures, struct fields, and impl receivers. Cross-boundary heap-capacity
    handles should use
@@ -178,9 +181,9 @@ diagnostics.
    `Slice[T]`.
    - [capacity] replace the fixed-local
      literal/const/static-expr/known-local/runtime-checked root
-     `Vec[T].reserve(capacity)` path with runtime heap capacity growth; the
-     non-local ABI guard now also covers generic function specializations,
-     function pointer signatures, and trait method signatures, and source
+     `Vec[T].reserve(capacity)` path with runtime heap capacity growth; function
+     return, function pointer, trait, extern, struct-field, and impl-receiver
+     boundaries still need a stable root Vec runtime ABI, and source
      `std::vec::Vec<T>` growth already uses centralized explicit-zone helpers
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place
