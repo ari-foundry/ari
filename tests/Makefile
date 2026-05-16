@@ -589,7 +589,9 @@ check-prelude: $(TARGET)
 	if $(TARGET) tests/errors/prelude-take-non-place.ari -o $(BUILD_DIR)/prelude/prelude-take-non-place.elf >$(BUILD_DIR)/prelude/prelude-take-non-place.err 2>&1; then exit 1; fi
 	grep -q "take expects a local binding, field, tuple index, or index expression" $(BUILD_DIR)/prelude/prelude-take-non-place.err
 	if $(TARGET) tests/errors/std-mem-replace-own.ari -o $(BUILD_DIR)/prelude/std-mem-replace-own.elf >$(BUILD_DIR)/prelude/std-mem-replace-own.err 2>&1; then exit 1; fi
-	grep -q "ptr_load cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-replace-own.err
+	grep -q "std::mem::replace cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-replace-own.err
+	if $(TARGET) tests/errors/std-mem-swap-own.ari -o $(BUILD_DIR)/prelude/std-mem-swap-own.elf >$(BUILD_DIR)/prelude/std-mem-swap-own.err 2>&1; then exit 1; fi
+	grep -q "std::mem::swap cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/prelude/std-mem-swap-own.err
 	if $(TARGET) tests/errors/prelude-move-borrow-result.ari -o $(BUILD_DIR)/prelude/prelude-move-borrow-result.elf >$(BUILD_DIR)/prelude/prelude-move-borrow-result.err 2>&1; then exit 1; fi
 	grep -q "move cannot return borrow-valued expressions" $(BUILD_DIR)/prelude/prelude-move-borrow-result.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-trait-without-std.ari -o $(BUILD_DIR)/prelude/prelude-trait-without-std.elf >$(BUILD_DIR)/prelude/prelude-trait-without-std.err 2>&1; then exit 1; fi

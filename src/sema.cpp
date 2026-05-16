@@ -16665,7 +16665,7 @@ private:
         }
         IrType pointer_type = has_explicit_type ? explicit_type : inferred;
         pointer_type.qualifier = TypeQualifier::Ptr;
-        (void)require_raw_pointer_materializable_type(loc, pointer_type, "ptr_load");
+        (void)require_raw_pointer_materializable_type(loc, pointer_type, operation);
     }
 
     static IrStmtPtr make_ir_expr_stmt(SourceLocation loc, IrExprPtr expr) {

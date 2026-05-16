@@ -135,7 +135,9 @@ pointers to Ari aggregate layouts can address scalar fields and elements with
 `(*pointer).field`, `(*pointer).0`, and `(*pointer)[index]`.
 `std::mem::replace<T>(ref mut target, value)` and
 `std::mem::swap<T>(ref mut left, ref mut right)` are source helpers over the
-same scalar/plain-aggregate raw-place materialization rules.
+same scalar/plain-aggregate raw-place materialization rules. They intentionally
+reject ownership- or borrow-valued `T` for the 0.x library-prep surface because
+they use raw-copy materialization rather than a move-aware place contract.
 `size_of<T>()` and `align_of<T>()` expose the current scalar and Ari-layout
 aggregate size/alignment model for explicit pointer code. The raw
 `--freestanding` backend uses those same Ari byte offsets for tuple, struct,

@@ -206,7 +206,9 @@ constructor subset documented in the language guide.
    aggregate values, with root prelude re-exports. They lower through the same
    raw-pointer materialization path as `ptr_load` / `ptr_store`, and that path
    now rejects ownership- or borrow-valued values instead of allowing accidental
-   raw copies before a move-aware place contract exists.
+   raw copies. For the 0.x library-prep surface, move-aware owning-place
+   replacement and swapping are deliberately out of scope until Ari has a safe
+   generic place-move contract.
    Source `Option[T]` and `Result[T, E]` also have their first ordinary library
    method surface now: value-receiver presence/status predicates, `unwrap_or`,
    and consuming `map`/`and_then`/`map_err` combinators, implemented in focused
@@ -263,10 +265,6 @@ constructor subset documented in the language guide.
      to the heap-storage release contract once that root handle exists. The
      current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract
      intentionally leaves storage release with `zone::reset` / `zone::destroy`.
-   - [mem-owning-places] decide whether `std::mem::replace` and `std::mem::swap`
-     should become move-aware for owning values once Ari has a safe generic
-     place-move contract. Today's helpers intentionally stay on the
-     copyable/plain-value raw-pointer path.
    - [option-result-borrow-methods] add borrowed-receiver probes for
      `Option[T]` and `Result[T, E]` after enum ref-pattern matching has a
      settled ownership/binding contract; today's methods intentionally consume
