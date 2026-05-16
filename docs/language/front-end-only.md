@@ -439,7 +439,32 @@ Shape counters are also available as
 `decl_field_count(input)` / `input.field_count()`,
 `decl_case_count(input)` / `input.case_count()`,
 `decl_method_count(input)` / `input.method_count()`, and
-`decl_associated_type_count(input)` / `input.associated_type_count()`:
+`decl_associated_type_count(input)` / `input.associated_type_count()`.
+Member summaries can be tested with `decl_has_generic(input, "T")` /
+`input.has_generic("T")`, `decl_has_param(input, "name")` /
+`input.has_param("name")`, `decl_has_field(input, "name")` /
+`input.has_field("name")`, `decl_has_case(input, "Case")` /
+`input.has_case("Case")`, `decl_has_method(input, "name")` /
+`input.has_method("name")`, and
+`decl_has_associated_type(input, "Item")` /
+`input.has_associated_type("Item")`. Type summaries are string-valued and can
+be compared in the same branch conditions: `decl_return_type(input)` /
+`input.return_type()`, `decl_trait_type(input)` / `input.trait_type()`,
+`decl_param_type(input, "name")` / `input.param_type("name")`,
+`decl_field_type(input, "name")` / `input.field_type("name")`,
+`decl_case_payload_type(input, "Case", 0)` /
+`input.case_payload_type("Case", 0)`, `decl_method_return_type(input, "name")`
+/ `input.method_return_type("name")`, `decl_method_param_type(input, "method",
+"param")` / `input.method_param_type("method", "param")`, and
+`decl_associated_type_type(input, "Item")` /
+`input.associated_type_type("Item")`. Member integer summaries are available as
+`decl_case_payload_count(input, "Case")` /
+`input.case_payload_count("Case")`,
+`decl_method_generic_count(input, "name")` /
+`input.method_generic_count("name")`, and
+`decl_method_param_count(input, "name")` /
+`input.method_param_count("name")`. Missing members evaluate as false, zero, or
+an empty string depending on the helper:
 
 ```ari
 meta fn add_for_struct(input: ast) -> ast {

@@ -1,0 +1,167 @@
+meta fn inspect_function_members(input: ast) -> ast {
+  return if input.is("fn") &&
+            input.has_generic("T") &&
+            input.has_param("value") &&
+            decl_has_param(input, "flag") &&
+            input.param_type("value") == "T" &&
+            decl_param_type(input, "flag") == "bool" &&
+            input.return_type() == "T" {
+    decl!(
+      input
+
+      fn function_member_score() -> i64 {
+        return 5;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn function_member_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_struct_members(input: ast) -> ast {
+  return if input.is("struct") &&
+            decl_has_generic(input, "T") &&
+            input.has_field("value") &&
+            decl_has_field(input, "tag") &&
+            input.field_type("value") == "T" &&
+            decl_field_type(input, "tag") == "i64" {
+    decl!(
+      input
+
+      fn struct_member_score() -> i64 {
+        return 7;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn struct_member_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_enum_members(input: ast) -> ast {
+  return if input.is("enum") &&
+            input.has_generic("T") &&
+            input.has_case("Missing") &&
+            decl_has_case(input, "Present") &&
+            input.case_payload_count("Present") == 1 &&
+            decl_case_payload_type(input, "Present", 0) == "T" {
+    decl!(
+      input
+
+      fn enum_member_score() -> i64 {
+        return 11;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn enum_member_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_trait_members(input: ast) -> ast {
+  return if input.is("trait") &&
+            input.has_generic("T") &&
+            input.has_associated_type("Item") &&
+            decl_has_method(input, "map") &&
+            input.method_generic_count("map") == 0 &&
+            decl_method_param_count(input, "map") == 2 &&
+            input.method_param_type("map", "self") == "Self" &&
+            decl_method_param_type(input, "map", "value") == "T" &&
+            input.method_return_type("map") == "i64" {
+    decl!(
+      input
+
+      fn trait_member_score() -> i64 {
+        return 13;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn trait_member_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_impl_members(input: ast) -> ast {
+  return if input.is("impl") &&
+            input.trait_type() == "Mapper[i64]" &&
+            input.has_associated_type("Item") &&
+            decl_associated_type_type(input, "Item") == "i64" &&
+            input.has_method("map") &&
+            input.method_param_type("map", "value") == "i64" &&
+            decl_method_return_type(input, "map") == "i64" {
+    decl!(
+      input
+
+      fn impl_member_score() -> i64 {
+        return 17;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn impl_member_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+inspect_function_members!(fn generic_identity[T](value: T, flag: bool) -> T {
+  return value;
+});
+
+inspect_struct_members!(struct Holder[T] {
+  value: T,
+  tag: i64,
+});
+
+inspect_enum_members!(enum Maybe[T] {
+  Missing,
+  Present(T),
+});
+
+inspect_trait_members!(trait Mapper[T] {
+  type Item;
+  fn map(self, value: T) -> i64
+});
+
+inspect_impl_members!(impl Mapper[i64] for i64 {
+  type Item = i64;
+
+  fn map(self, value: i64) -> i64 {
+    return self + value;
+  }
+});
+
+fn main() -> i64 {
+  let holder = Holder<i64> { value: generic_identity<i64>(40, true), tag: 1 };
+  let maybe: Maybe[i64] = Present<i64>(2);
+  let maybe_score = match maybe {
+    Missing => 0,
+    Present(value) => value,
+  };
+  return function_member_score() + struct_member_score() + enum_member_score() +
+         trait_member_score() + impl_member_score() + holder.value + holder.tag + maybe_score;
+}

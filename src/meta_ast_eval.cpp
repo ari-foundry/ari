@@ -2,13 +2,10 @@
 
 #include "common.hpp"
 #include "meta_token_eval.hpp"
-#include "module_path.hpp"
-#include "type_semantics.hpp"
 
 #include <cstdint>
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace ari {
@@ -59,6 +56,37 @@ bool is_decl_method_call(const Expr& expr,
            expr_operand(expr) &&
            is_meta_input_name(*expr_operand(expr), input_name) &&
            expr.args.size() == arg_count;
+}
+
+bool is_string_literal(const Expr& expr) {
+    return expr.kind == ExprKind::String;
+}
+
+bool is_non_negative_integer_literal(const Expr& expr) {
+    return expr.kind == ExprKind::Integer && !expr.int_negative;
+}
+
+bool is_free_decl_member_call(const Expr& expr,
+                              const std::string& name,
+                              const std::string& input_name,
+                              std::size_t arg_count) {
+    return is_free_decl_call(expr, name, input_name, arg_count);
+}
+
+bool is_decl_member_method_call(const Expr& expr,
+                                const std::string& name,
+                                const std::string& input_name,
+                                std::size_t arg_count) {
+    return is_decl_method_call(expr, name, input_name, arg_count);
+}
+
+const Expr* decl_member_arg(const Expr& expr, std::size_t index) {
+    if (index >= expr.args.size()) return nullptr;
+    return expr.args[index].get();
+}
+
+const Expr* decl_member_payload_arg(const Expr& expr, std::size_t free_index, std::size_t method_index) {
+    return expr.kind == ExprKind::Call ? decl_member_arg(expr, free_index) : decl_member_arg(expr, method_index);
 }
 
 bool is_decl_kind_expr(const Expr& expr, const std::string& input_name) {
@@ -132,20 +160,231 @@ bool is_decl_is_expr(const Expr& expr, const std::string& input_name) {
            expr.args[0]->kind == ExprKind::String;
 }
 
+enum class DeclNamedBoolProperty {
+    Generic,
+    Param,
+    Field,
+    Case,
+    Method,
+    AssociatedType
+};
+
+struct DeclNamedBoolQuery {
+    DeclNamedBoolProperty property;
+    std::string name;
+};
+
+bool is_decl_named_bool_property_expr(const Expr& expr,
+                                      const std::string& input_name,
+                                      const std::string& free_name,
+                                      const std::string& method_name) {
+    if (!is_free_decl_member_call(expr, free_name, input_name, 2) &&
+        !is_decl_member_method_call(expr, method_name, input_name, 1)) {
+        return false;
+    }
+    const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+    return name_arg && is_string_literal(*name_arg);
+}
+
+std::optional<DeclNamedBoolQuery> decl_named_bool_property_expr(const Expr& expr,
+                                                               const std::string& input_name) {
+    struct Candidate {
+        DeclNamedBoolProperty property;
+        const char* free_name;
+        const char* method_name;
+    };
+    static const Candidate candidates[] = {
+        {DeclNamedBoolProperty::Generic, "decl_has_generic", "has_generic"},
+        {DeclNamedBoolProperty::Param, "decl_has_param", "has_param"},
+        {DeclNamedBoolProperty::Field, "decl_has_field", "has_field"},
+        {DeclNamedBoolProperty::Case, "decl_has_case", "has_case"},
+        {DeclNamedBoolProperty::Method, "decl_has_method", "has_method"},
+        {DeclNamedBoolProperty::AssociatedType, "decl_has_associated_type", "has_associated_type"}
+    };
+    for (const auto& candidate : candidates) {
+        if (!is_decl_named_bool_property_expr(expr, input_name, candidate.free_name, candidate.method_name)) {
+            continue;
+        }
+        const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+        return DeclNamedBoolQuery{candidate.property, name_arg->string_value};
+    }
+    return std::nullopt;
+}
+
+enum class DeclStringProperty {
+    ReturnType,
+    TraitType,
+    ParamType,
+    FieldType,
+    CasePayloadType,
+    MethodReturnType,
+    MethodParamType,
+    AssociatedTypeType
+};
+
+struct DeclStringQuery {
+    DeclStringProperty property;
+    std::string name;
+    std::string nested_name;
+    std::size_t index = 0;
+};
+
+bool is_decl_zero_arg_string_property_expr(const Expr& expr,
+                                           const std::string& input_name,
+                                           const std::string& free_name,
+                                           const std::string& method_name) {
+    return is_free_decl_member_call(expr, free_name, input_name, 1) ||
+           is_decl_member_method_call(expr, method_name, input_name, 0);
+}
+
+bool is_decl_named_string_property_expr(const Expr& expr,
+                                        const std::string& input_name,
+                                        const std::string& free_name,
+                                        const std::string& method_name) {
+    if (!is_free_decl_member_call(expr, free_name, input_name, 2) &&
+        !is_decl_member_method_call(expr, method_name, input_name, 1)) {
+        return false;
+    }
+    const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+    return name_arg && is_string_literal(*name_arg);
+}
+
+bool is_decl_nested_string_property_expr(const Expr& expr,
+                                         const std::string& input_name,
+                                         const std::string& free_name,
+                                         const std::string& method_name) {
+    if (!is_free_decl_member_call(expr, free_name, input_name, 3) &&
+        !is_decl_member_method_call(expr, method_name, input_name, 2)) {
+        return false;
+    }
+    const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+    const Expr* nested_arg = decl_member_payload_arg(expr, 2, 1);
+    return name_arg && nested_arg && is_string_literal(*name_arg) && is_string_literal(*nested_arg);
+}
+
+bool is_decl_indexed_string_property_expr(const Expr& expr,
+                                          const std::string& input_name,
+                                          const std::string& free_name,
+                                          const std::string& method_name) {
+    if (!is_free_decl_member_call(expr, free_name, input_name, 3) &&
+        !is_decl_member_method_call(expr, method_name, input_name, 2)) {
+        return false;
+    }
+    const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+    const Expr* index_arg = decl_member_payload_arg(expr, 2, 1);
+    return name_arg && index_arg && is_string_literal(*name_arg) && is_non_negative_integer_literal(*index_arg);
+}
+
+std::optional<DeclStringQuery> decl_string_property_expr(const Expr& expr,
+                                                        const std::string& input_name) {
+    if (is_decl_zero_arg_string_property_expr(expr, input_name, "decl_return_type", "return_type")) {
+        return DeclStringQuery{DeclStringProperty::ReturnType, "", "", 0};
+    }
+    if (is_decl_zero_arg_string_property_expr(expr, input_name, "decl_trait_type", "trait_type")) {
+        return DeclStringQuery{DeclStringProperty::TraitType, "", "", 0};
+    }
+    struct NamedCandidate {
+        DeclStringProperty property;
+        const char* free_name;
+        const char* method_name;
+    };
+    static const NamedCandidate named_candidates[] = {
+        {DeclStringProperty::ParamType, "decl_param_type", "param_type"},
+        {DeclStringProperty::FieldType, "decl_field_type", "field_type"},
+        {DeclStringProperty::MethodReturnType, "decl_method_return_type", "method_return_type"},
+        {DeclStringProperty::AssociatedTypeType, "decl_associated_type_type", "associated_type_type"}
+    };
+    for (const auto& candidate : named_candidates) {
+        if (!is_decl_named_string_property_expr(expr, input_name, candidate.free_name, candidate.method_name)) {
+            continue;
+        }
+        const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+        return DeclStringQuery{candidate.property, name_arg->string_value, "", 0};
+    }
+    if (is_decl_indexed_string_property_expr(expr, input_name, "decl_case_payload_type", "case_payload_type")) {
+        const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+        const Expr* index_arg = decl_member_payload_arg(expr, 2, 1);
+        return DeclStringQuery{
+            DeclStringProperty::CasePayloadType,
+            name_arg->string_value,
+            "",
+            static_cast<std::size_t>(index_arg->int_value)
+        };
+    }
+    if (is_decl_nested_string_property_expr(expr, input_name, "decl_method_param_type", "method_param_type")) {
+        const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+        const Expr* nested_arg = decl_member_payload_arg(expr, 2, 1);
+        return DeclStringQuery{
+            DeclStringProperty::MethodParamType,
+            name_arg->string_value,
+            nested_arg->string_value,
+            0
+        };
+    }
+    return std::nullopt;
+}
+
+enum class DeclNamedIntProperty {
+    CasePayloadCount,
+    MethodGenericCount,
+    MethodParamCount
+};
+
+struct DeclNamedIntQuery {
+    DeclNamedIntProperty property;
+    std::string name;
+};
+
+bool is_decl_named_int_property_expr(const Expr& expr,
+                                     const std::string& input_name,
+                                     const std::string& free_name,
+                                     const std::string& method_name) {
+    if (!is_free_decl_member_call(expr, free_name, input_name, 2) &&
+        !is_decl_member_method_call(expr, method_name, input_name, 1)) {
+        return false;
+    }
+    const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+    return name_arg && is_string_literal(*name_arg);
+}
+
+std::optional<DeclNamedIntQuery> decl_named_int_property_expr(const Expr& expr,
+                                                             const std::string& input_name) {
+    struct Candidate {
+        DeclNamedIntProperty property;
+        const char* free_name;
+        const char* method_name;
+    };
+    static const Candidate candidates[] = {
+        {DeclNamedIntProperty::CasePayloadCount, "decl_case_payload_count", "case_payload_count"},
+        {DeclNamedIntProperty::MethodGenericCount, "decl_method_generic_count", "method_generic_count"},
+        {DeclNamedIntProperty::MethodParamCount, "decl_method_param_count", "method_param_count"}
+    };
+    for (const auto& candidate : candidates) {
+        if (!is_decl_named_int_property_expr(expr, input_name, candidate.free_name, candidate.method_name)) {
+            continue;
+        }
+        const Expr* name_arg = decl_member_payload_arg(expr, 1, 0);
+        return DeclNamedIntQuery{candidate.property, name_arg->string_value};
+    }
+    return std::nullopt;
+}
+
 bool is_decl_string_expr(const Expr& expr, const std::string& input_name) {
     return expr.kind == ExprKind::String ||
            is_decl_kind_expr(expr, input_name) ||
-           is_decl_name_expr(expr, input_name);
+           is_decl_name_expr(expr, input_name) ||
+           decl_string_property_expr(expr, input_name).has_value();
 }
 
 bool is_decl_int_expr(const Expr& expr, const std::string& input_name) {
     return (expr.kind == ExprKind::Integer && !expr.int_negative) ||
-           decl_int_property_expr(expr, input_name).has_value();
+           decl_int_property_expr(expr, input_name).has_value() ||
+           decl_named_int_property_expr(expr, input_name).has_value();
 }
 
 std::string decl_condition_support_message() {
     return
-        "ast declaration meta branch conditions currently support bool literals, !, &&, ||, decl_is_public(input), input.is_public(), decl_is(input, \"kind\"), input.is(\"kind\"), string comparisons over decl_kind(input)/input.kind()/decl_name(input)/input.name(), and integer comparisons over decl_count(input)/input.count(), decl_generic_count(input)/input.generic_count(), decl_param_count(input)/input.param_count(), decl_field_count(input)/input.field_count(), decl_case_count(input)/input.case_count(), decl_method_count(input)/input.method_count(), and decl_associated_type_count(input)/input.associated_type_count()";
+        "ast declaration meta branch conditions currently support bool literals, !, &&, ||, declaration kind/name/visibility/count checks, named member predicates such as input.has_field(\"name\") and decl_has_method(input, \"name\"), type-summary string comparisons such as input.field_type(\"name\") and decl_case_payload_type(input, \"Case\", 0), and member integer comparisons such as input.case_payload_count(\"Case\") and input.method_param_count(\"method\")";
 }
 
 bool supported_decl_condition(const Expr& expr, const std::string& input_name, std::string& reason);
@@ -194,7 +433,11 @@ bool supported_decl_condition(const Expr& expr, const std::string& input_name, s
             return supported_decl_comparison(*expr_left(expr), *expr_right(expr), expr.op, input_name, reason);
         case ExprKind::Call:
         case ExprKind::MethodCall:
-            if (is_decl_public_expr(expr, input_name) || is_decl_is_expr(expr, input_name)) return true;
+            if (is_decl_public_expr(expr, input_name) ||
+                is_decl_is_expr(expr, input_name) ||
+                decl_named_bool_property_expr(expr, input_name).has_value()) {
+                return true;
+            }
             break;
         default:
             break;
@@ -203,12 +446,115 @@ bool supported_decl_condition(const Expr& expr, const std::string& input_name, s
     return false;
 }
 
+bool has_name(const std::vector<std::string>& names, const std::string& name) {
+    for (const auto& item : names) {
+        if (item == name) return true;
+    }
+    return false;
+}
+
+const MetaAstNameTypeSummary* find_named_type(const std::vector<MetaAstNameTypeSummary>& items,
+                                              const std::string& name) {
+    for (const auto& item : items) {
+        if (item.name == name) return &item;
+    }
+    return nullptr;
+}
+
+const MetaAstCallableSummary* find_method(const MetaAstDeclInput& input, const std::string& name) {
+    for (const auto& method : input.methods) {
+        if (method.name == name) return &method;
+    }
+    return nullptr;
+}
+
+const MetaAstEnumCaseSummary* find_case(const MetaAstDeclInput& input, const std::string& name) {
+    for (const auto& item : input.cases) {
+        if (item.name == name) return &item;
+    }
+    return nullptr;
+}
+
+bool evaluate_decl_named_bool_query(const DeclNamedBoolQuery& query, const MetaAstDeclInput& input) {
+    switch (query.property) {
+        case DeclNamedBoolProperty::Generic:
+            return has_name(input.generics, query.name);
+        case DeclNamedBoolProperty::Param:
+            return find_named_type(input.params, query.name) != nullptr;
+        case DeclNamedBoolProperty::Field:
+            return find_named_type(input.fields, query.name) != nullptr;
+        case DeclNamedBoolProperty::Case:
+            return find_case(input, query.name) != nullptr;
+        case DeclNamedBoolProperty::Method:
+            return find_method(input, query.name) != nullptr;
+        case DeclNamedBoolProperty::AssociatedType:
+            return find_named_type(input.associated_types, query.name) != nullptr;
+    }
+    return false;
+}
+
+std::string evaluate_decl_string_query(const DeclStringQuery& query, const MetaAstDeclInput& input) {
+    switch (query.property) {
+        case DeclStringProperty::ReturnType:
+            return input.return_type;
+        case DeclStringProperty::TraitType:
+            return input.trait_type;
+        case DeclStringProperty::ParamType:
+            if (const auto* item = find_named_type(input.params, query.name)) return item->type;
+            return "";
+        case DeclStringProperty::FieldType:
+            if (const auto* item = find_named_type(input.fields, query.name)) return item->type;
+            return "";
+        case DeclStringProperty::CasePayloadType: {
+            const auto* item = find_case(input, query.name);
+            if (!item || query.index >= item->payload_types.size()) return "";
+            return item->payload_types[query.index];
+        }
+        case DeclStringProperty::MethodReturnType:
+            if (const auto* method = find_method(input, query.name)) return method->return_type;
+            return "";
+        case DeclStringProperty::MethodParamType:
+            if (const auto* method = find_method(input, query.name)) {
+                if (const auto* param = find_named_type(method->params, query.nested_name)) return param->type;
+            }
+            return "";
+        case DeclStringProperty::AssociatedTypeType:
+            if (const auto* item = find_named_type(input.associated_types, query.name)) return item->type;
+            return "";
+    }
+    return "";
+}
+
+std::uint64_t evaluate_decl_named_int_query(const DeclNamedIntQuery& query, const MetaAstDeclInput& input) {
+    switch (query.property) {
+        case DeclNamedIntProperty::CasePayloadCount:
+            if (const auto* item = find_case(input, query.name)) {
+                return static_cast<std::uint64_t>(item->payload_types.size());
+            }
+            return 0;
+        case DeclNamedIntProperty::MethodGenericCount:
+            if (const auto* method = find_method(input, query.name)) {
+                return static_cast<std::uint64_t>(method->generic_count);
+            }
+            return 0;
+        case DeclNamedIntProperty::MethodParamCount:
+            if (const auto* method = find_method(input, query.name)) {
+                return static_cast<std::uint64_t>(method->params.size());
+            }
+            return 0;
+    }
+    return 0;
+}
+
 std::string evaluate_decl_string_expr(const Expr& expr,
                                       const std::string& input_name,
                                       const MetaAstDeclInput& input) {
     if (expr.kind == ExprKind::String) return expr.string_value;
     if (is_decl_kind_expr(expr, input_name)) return input.kind;
     if (is_decl_name_expr(expr, input_name)) return input.name;
+    if (auto query = decl_string_property_expr(expr, input_name)) {
+        return evaluate_decl_string_query(*query, input);
+    }
     fail_eval(expr.loc, "internal error: unsupported ast declaration string expression");
 }
 
@@ -233,6 +579,9 @@ std::uint64_t evaluate_decl_int_expr(const Expr& expr,
             case DeclIntProperty::AssociatedTypeCount:
                 return static_cast<std::uint64_t>(input.associated_type_count);
         }
+    }
+    if (auto query = decl_named_int_property_expr(expr, input_name)) {
+        return evaluate_decl_named_int_query(*query, input);
     }
     fail_eval(expr.loc, "internal error: unsupported ast declaration integer expression");
 }
@@ -296,6 +645,9 @@ bool evaluate_decl_condition(const Expr& expr, const std::string& input_name, co
                     expr.kind == ExprKind::Call ? *expr.args[1] : *expr.args[0];
                 return input.kind == kind_arg.string_value;
             }
+            if (auto query = decl_named_bool_property_expr(expr, input_name)) {
+                return evaluate_decl_named_bool_query(*query, input);
+            }
             break;
         default:
             break;
@@ -343,134 +695,7 @@ std::vector<Token> evaluate_decl_return_expr(const Expr& expr,
     fail_eval(expr.loc, "internal error: unsupported ast declaration return expression");
 }
 
-struct DeclSummary {
-    std::string kind;
-    std::string name;
-    bool is_public = false;
-    std::size_t generic_count = 0;
-    std::size_t param_count = 0;
-    std::size_t field_count = 0;
-    std::size_t case_count = 0;
-    std::size_t method_count = 0;
-    std::size_t associated_type_count = 0;
-};
-
-struct DeclShape {
-    std::size_t generic_count = 0;
-    std::size_t param_count = 0;
-    std::size_t field_count = 0;
-    std::size_t case_count = 0;
-    std::size_t method_count = 0;
-    std::size_t associated_type_count = 0;
-};
-
-void append_summary(std::vector<DeclSummary>& summaries,
-                    std::string kind,
-                    std::string name,
-                    bool is_public,
-                    DeclShape shape = {}) {
-    summaries.push_back({
-        std::move(kind),
-        std::move(name),
-        is_public,
-        shape.generic_count,
-        shape.param_count,
-        shape.field_count,
-        shape.case_count,
-        shape.method_count,
-        shape.associated_type_count
-    });
-}
-
-void add_shape_to_input(MetaAstDeclInput& input, const DeclSummary& summary) {
-    input.generic_count += summary.generic_count;
-    input.param_count += summary.param_count;
-    input.field_count += summary.field_count;
-    input.case_count += summary.case_count;
-    input.method_count += summary.method_count;
-    input.associated_type_count += summary.associated_type_count;
-}
-
 } // namespace
-
-MetaAstDeclInput summarize_meta_ast_decl_input(const std::vector<Token>& input_tokens,
-                                               const Program& parsed_input) {
-    std::vector<DeclSummary> summaries;
-    for (const auto& decl : parsed_input.uses) {
-        append_summary(summaries, "use", decl.alias.empty() ? qualified_basename(decl.path) : decl.alias, decl.is_public);
-    }
-    for (const auto& decl : parsed_input.module_imports) {
-        append_summary(summaries, "module_import", qualified_basename(decl.name), decl.is_public);
-    }
-    for (const auto& decl : parsed_input.modules) {
-        append_summary(summaries, "module", qualified_basename(decl.name), decl.is_public);
-    }
-    for (const auto& decl : parsed_input.item_macros) {
-        append_summary(summaries, "item_macro", decl.name, decl.is_public);
-    }
-    for (const auto& decl : parsed_input.constants) {
-        append_summary(summaries, "const", qualified_basename(decl.name), decl.is_public);
-    }
-    for (const auto& decl : parsed_input.functions) {
-        append_summary(
-            summaries,
-            decl.meta ? "meta_fn" : "fn",
-            qualified_basename(decl.name),
-            decl.is_public,
-            DeclShape{decl.generics.size(), decl.params.size()});
-    }
-    for (const auto& decl : parsed_input.structs) {
-        append_summary(
-            summaries,
-            "struct",
-            qualified_basename(decl.name),
-            decl.is_public,
-            DeclShape{decl.generics.size(), 0, decl.fields.size()});
-    }
-    for (const auto& decl : parsed_input.enums) {
-        append_summary(
-            summaries,
-            "enum",
-            qualified_basename(decl.name),
-            decl.is_public,
-            DeclShape{decl.generics.size(), 0, 0, decl.cases.size()});
-    }
-    for (const auto& decl : parsed_input.traits) {
-        append_summary(
-            summaries,
-            "trait",
-            qualified_basename(decl.name),
-            decl.is_public,
-            DeclShape{decl.generics.size(), 0, 0, 0, decl.methods.size(), decl.associated_types.size()});
-    }
-    for (const auto& decl : parsed_input.impls) {
-        append_summary(
-            summaries,
-            "impl",
-            type_ref_key(decl.for_type),
-            decl.is_public,
-            DeclShape{decl.generics.size(), 0, 0, 0, decl.methods.size(), decl.associated_type_witnesses.size()});
-    }
-
-    MetaAstDeclInput input;
-    input.tokens = input_tokens;
-    input.count = summaries.size();
-    for (const auto& summary : summaries) {
-        add_shape_to_input(input, summary);
-    }
-    if (summaries.empty()) {
-        input.kind = "empty";
-        return input;
-    }
-    if (summaries.size() == 1) {
-        input.kind = summaries.front().kind;
-        input.name = summaries.front().name;
-        input.is_public = summaries.front().is_public;
-        return input;
-    }
-    input.kind = "mixed";
-    return input;
-}
 
 bool is_supported_meta_decl_return_expr(const Expr& expr,
                                         const std::string& input_name,

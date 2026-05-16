@@ -32,8 +32,11 @@ constructor subset documented in the language guide.
 The first richer AST declaration-reflection slice has also landed for
 library-prep macros: declaration-returning `ast -> ast` macros can inspect
 generic, parameter, field, enum-case, method, and associated-type counts through
-both free helper functions and `input.*_count()` methods before choosing a
-`decl!(...)` output.
+both free helper functions and `input.*_count()` methods. Named declaration
+member inspection is also complete for the current summary surface: macros can
+test generic, parameter, field, enum-case, method, and associated-type presence
+and compare parameter, field, payload, method, return, trait, and associated
+type witness summaries before choosing a `decl!(...)` output.
 The trait-associated-item and composition goal that used to sit in Medium-Term
 is now covered by the current front-end surface. Supertraits parse and require
 matching impls, child-trait bounds can statically dispatch inherited methods,
@@ -84,16 +87,14 @@ fallthrough paths is now tracked as Medium-Term dataflow work because it must
 revalidate the loop body under the widened entry state instead of accepting a
 body that was checked only with the owner alive.
 
-1. Extend AST declaration reflection to named declaration members.
-   Declaration-returning `ast -> ast` macros can now branch on declaration
-   kind, name, count, visibility, and top-level shape counters. The next
-   library-prep slice should expose named fields, methods, associated types,
-   enum cases, and parameter/type summaries without opening the full
-   compile-time value surface.
-   - [ast-member-inspection] add structured named field/method/case/type
-     summary inspection for declaration-generating macros
-   - [ast-dynamic-ident] add dynamic identifier construction once declaration
-     member inspection has a stable data model
+1. Add dynamic identifier construction for declaration-generating macros.
+   Declaration reflection can now inspect the stable summary data that
+   library-prep macros need, but generated names still have to be literal tokens
+   inside `decl!(...)`. Add a bounded identifier-construction mechanism that
+   can derive new declaration names from inspected input without exposing a
+   general string runtime at compile time.
+   - [ast-dynamic-ident] add dynamic identifier construction on top of the
+     stable declaration-member summary model
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

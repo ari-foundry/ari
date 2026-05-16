@@ -255,8 +255,22 @@ declaration shape counters such as `decl_field_count(input)` /
 `input.field_count()`, `decl_param_count(input)` / `input.param_count()`,
 `decl_case_count(input)` / `input.case_count()`, `decl_method_count(input)` /
 `input.method_count()`, `decl_generic_count(input)` / `input.generic_count()`,
-and `decl_associated_type_count(input)` / `input.associated_type_count()`
-before choosing a `decl!(...)` output. When a macro output declaration carries a
+and `decl_associated_type_count(input)` / `input.associated_type_count()`.
+Declaration members can also be inspected by name with predicates such as
+`decl_has_field(input, "field")` / `input.has_field("field")`,
+`decl_has_case(input, "Case")` / `input.has_case("Case")`,
+`decl_has_method(input, "method")` / `input.has_method("method")`, and
+`decl_has_associated_type(input, "Item")` /
+`input.has_associated_type("Item")`. Type-summary helpers include
+`decl_param_type`, `decl_field_type`, `decl_case_payload_type`,
+`decl_method_param_type`, `decl_method_return_type`, `decl_return_type`,
+`decl_trait_type`, and `decl_associated_type_type`, with matching
+`input.*(...)` method forms. Member integer summaries include
+`decl_case_payload_count`, `decl_method_generic_count`, and
+`decl_method_param_count`, again with matching `input.*(...)` forms. Missing
+members evaluate as false, zero, or an empty string depending on the helper
+before choosing a `decl!(...)` output.
+When a macro output declaration carries a
 rewriting attribute, Ari expands that generated attribute before later
 declaration collection; accidental self-generating chains stop at a recursion
 limit.
