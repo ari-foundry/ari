@@ -1,6 +1,7 @@
 #include "meta_semantics.hpp"
 
 #include "meta_ast_eval.hpp"
+#include "meta_ast_value_eval.hpp"
 #include "meta_token_eval.hpp"
 #include "type_semantics.hpp"
 
@@ -261,7 +262,11 @@ bool supported_ast_return_expr(const Expr& expr,
             reason = "malformed ast meta return expression";
             return false;
         }
-        if (!supported_ast_return_expr(*expr_if_condition(expr), input_name, local_names, reason)) return false;
+        std::string condition_reason;
+        if (!is_supported_meta_ast_expression_condition(*expr_if_condition(expr), input_name, condition_reason) &&
+            !supported_ast_return_expr(*expr_if_condition(expr), input_name, local_names, reason)) {
+            return false;
+        }
         std::set<std::string> then_names = local_names;
         if (expr_if_condition_pattern(expr)) {
             collect_pattern_binding_names(*expr_if_condition_pattern(expr), then_names);
@@ -324,8 +329,16 @@ bool supported_ast_return_expr(const Expr& expr,
         case ExprKind::NullCoalesce:
             return require_binary();
         case ExprKind::Call:
+            if (is_meta_ast_expression_value_helper(expr, input_name)) {
+                reason = meta_ast_expression_value_helper_scope_message();
+                return false;
+            }
             return require_args();
         case ExprKind::MethodCall:
+            if (is_meta_ast_expression_value_helper(expr, input_name)) {
+                reason = meta_ast_expression_value_helper_scope_message();
+                return false;
+            }
             return require_operand(expr_operand(expr)) && require_args();
         case ExprKind::Name:
             if (expr.name == input_name || local_names.count(expr.name)) {

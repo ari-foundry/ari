@@ -1,8 +1,8 @@
 #include "meta_expansion.hpp"
 
-#include "ast_clone.hpp"
 #include "common.hpp"
 #include "meta_ast_eval.hpp"
+#include "meta_ast_value_eval.hpp"
 #include "meta_token_eval.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
@@ -236,7 +236,7 @@ ExprPtr expand_ast_expression_return(const Expr& returned_ast,
                                       const std::string& input_name,
                                       const Expr& input_ast,
                                       SourceLocation invocation_loc) {
-    return clone_expression_tree_substituting_name_hygienic(
+    return expand_meta_ast_expression_return(
         returned_ast,
         input_name,
         input_ast,

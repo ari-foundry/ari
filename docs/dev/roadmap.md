@@ -42,6 +42,14 @@ Dynamic declaration identifier construction is also available through
 derive new names from `input.name()` / `decl_name(input)` or
 `input.kind()` / `decl_kind(input)` plus literal pieces without exposing a
 general compile-time string runtime.
+The non-declaration AST compile-time value policy is now fixed for the current
+0.x macro surface. Expression-position `ast -> ast` macros can branch on the
+input expression kind through compile-time-only `input.kind()` /
+`ast_kind(input)` and `input.is("kind")` / `ast_is(input, "kind")`
+conditions, while generated output still uses explicit expression constructors
+and hygienic input/local substitution. Pattern and type AST inputs deliberately
+do not expose general compile-time values yet, and expression helpers cannot be
+returned as generated runtime AST.
 The trait-associated-item and composition goal that used to sit in Medium-Term
 is now covered by the current front-end surface. Supertraits parse and require
 matching impls, child-trait bounds can statically dispatch inherited methods,
@@ -92,23 +100,6 @@ fallthrough paths is now tracked as Medium-Term dataflow work because it must
 revalidate the loop body under the widened entry state instead of accepting a
 body that was checked only with the owner alive.
 
-1. Decide the general compile-time value surface for non-declaration AST input.
-   Declaration reflection now has the bounded library-prep surface, including
-   dynamic declaration-name construction. Keep broader expression, pattern, and
-   type AST value operations out of the fixed syntax surface until their policy
-   and hygiene model are explicit.
-   - [ast-general-values] decide which compile-time value operations are
-     allowed for non-declaration AST inputs before broadening expression
-     rewriting beyond today's explicit constructors and hygienic substitution
-   - [hygiene-policy] document which generated names are intentionally
-     user-visible and which remain compiler-hygienic before adding more AST
-     value constructors
-
-See also [Semantic Checker Decomposition](sema-decomposition.md) for the
-maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
-
-## Medium-Term Compiler Work
-
 1. Promote IR package-cache summaries when future executable forms outgrow AST
    summaries.
    Source-snapshot module caches currently validate cfg/search-path/source
@@ -126,7 +117,13 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [cache-skip] once IR summaries exist, avoid reparsing those dependencies
      when metadata and source hashes match the current source graph and
      cfg/search-path inputs
-2. Prove loop owner-state widening with a loop dataflow recheck.
+
+See also [Semantic Checker Decomposition](sema-decomposition.md) for the
+maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
+
+## Medium-Term Compiler Work
+
+1. Prove loop owner-state widening with a loop dataflow recheck.
    Borrow-release widening is safe with the current same-provenance merge
    because it keeps the source conservatively borrowed. Owner-state widening is
    different: a body checked with an `Alive` owner cannot simply be reused for a

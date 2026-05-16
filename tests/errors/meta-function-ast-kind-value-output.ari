@@ -1,0 +1,7 @@
+meta fn bad(input: ast) -> ast {
+  return input.kind();
+}
+
+fn main() -> i64 {
+  return bad!(1);
+}

@@ -385,6 +385,16 @@ meta fn bumped(input: ast) -> ast {
   return input.bump(2);
 }
 
+meta fn classify(input: ast) -> ast {
+  return if input.is("integer") {
+    input + 1
+  } else if ast_kind(input) == "call" {
+    input + 2
+  } else {
+    0
+  };
+}
+
 fn main() -> i64 {
   return add_one!(40 + 1)
 }
@@ -398,8 +408,24 @@ names other than the meta input parameter are rejected in returned expression
 ASTs unless they are generated local bindings in the returned statement body or
 pattern-bound names inside the current `if let` or `match` arm. Generated local
 and pattern bindings are renamed internally so repeated macro calls do not
-collide with Ari's local-name rules. Item-position `ast -> ast` macros can return
-declaration AST output with the meta-body-only `decl!(...)` constructor:
+collide with Ari's local-name rules.
+
+Expression AST inputs also expose one bounded compile-time value surface for
+branching before substitution. A meta-level `if` condition in an expression
+`ast -> ast` return can call `input.kind()` / `ast_kind(input)` to get a stable
+expression-kind string, or `input.is("kind")` / `ast_is(input, "kind")` to test
+one. Supported kind names are `integer`, `float`, `string`, `bool`, `null`,
+`name`, `borrow`, `unary`, `cast`, `try`, `null-coalesce`, `tuple`,
+`tuple-index`, `index`, `field`, `struct`, `qualified-struct`, `vector`,
+`macro-call`, `method-call`, `qualified-method-call`, `match-expr`, `if-expr`,
+`block-expr`, `binary`, `call`, `qualified-call`, and `indirect-call`.
+Conditions may use bool literals, `!`, `&&`, `||`, and `==` / `!=` string
+comparisons around those helpers. The helpers are compile-time-only and cannot
+be returned as generated expression AST. Pattern and type AST inputs do not
+have a general compile-time value surface yet.
+
+Item-position `ast -> ast` macros can return declaration AST output with the
+meta-body-only `decl!(...)` constructor:
 
 ```ari
 meta fn make_answer(input: ast) -> ast {
