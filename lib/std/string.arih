@@ -164,6 +164,10 @@ pub impl std::string::String {
     append_byte_in(self, zone, 101 as u8);
   }
 
+  fn append_f32_in(self: ref mut Self, zone: ref mut Zone, value: f32, precision: i64) -> void {
+    self.append_f64_in(zone, value as f64, precision);
+  }
+
   fn append_f64_in(self: ref mut Self, zone: ref mut Zone, value: f64, precision: i64) -> void {
     std::assert(precision >= 0);
     std::assert(precision <= 64);

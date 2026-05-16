@@ -116,7 +116,7 @@ slice into a new target-zone string handle. It supports checked byte
 `first`/`last`/`get`/`set`/`replace`, fixed-capacity `push`/`pop`/`insert`, same-zone
 grow-on-demand `reserve`, `reserve_extra`, `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in`, plus `append_string_in`,
-`append_i64_in`, `append_bool_in`, `append_f64_in`, `truncate`, `clear`,
+`append_i64_in`, `append_bool_in`, `append_f32_in`, `append_f64_in`, `truncate`, `clear`,
 byte search with `contains`, `index_of`, and `count`, `as_ptr`, `as_slice`,
 `equals(Slice[u8])`, `starts_with(Slice[u8])`, `ends_with(Slice[u8])`,
 method-style `copy_to(ref mut Zone)`, and top-level

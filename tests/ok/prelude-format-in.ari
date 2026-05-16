@@ -11,7 +11,7 @@ fn label() -> string {
 }
 
 fn main() -> i64 {
-  var zone = zone::create(64);
+  var zone = zone::create(192);
   let value = -7;
   let ok = true;
   var text: String = format_in!(ref mut zone, "ari={} ok={} {{}} {}", value, ok, "done");

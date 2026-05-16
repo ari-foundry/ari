@@ -14811,13 +14811,6 @@ private:
         fail(loc, "format_in! could not infer a supported value type for '" + name + "'");
     }
 
-    static TypeRef format_in_f64_type_ref(SourceLocation loc) {
-        TypeRef type;
-        type.loc = loc;
-        type.name = "f64";
-        return type;
-    }
-
     static std::uint64_t format_in_initial_capacity(const ParsedFormatString& format_string) {
         std::uint64_t capacity = 0;
         for (const auto& part : format_string.parts) capacity += part.size();
@@ -14849,11 +14842,8 @@ private:
                                        const IrFormatSpec& spec) {
         std::vector<ExprPtr> args;
         args.push_back(clone_expression_tree(zone_arg));
-        if (format_in_append_target_is_f64(target)) {
-            value_arg = make_ast_cast_expr(loc, std::move(value_arg), format_in_f64_type_ref(loc));
-        }
         args.push_back(std::move(value_arg));
-        if (format_in_append_target_is_f64(target)) {
+        if (format_in_append_target_is_float(target)) {
             args.push_back(make_ast_integer_expr(
                 loc,
                 static_cast<std::uint64_t>(spec.precision >= 0 ? spec.precision : 6)
@@ -14951,7 +14941,7 @@ private:
                 false
             ), statements);
             FormatInAppendTarget target = format_in_append_target_for_local(args[i + 2]->loc, value_name);
-            if (format_string.specs[i].precision >= 0 && !format_in_append_target_is_f64(target)) {
+            if (format_string.specs[i].precision >= 0 && !format_in_append_target_is_float(target)) {
                 const LocalInfo* local = find_local_slot(value_name);
                 if (!local) throw CompileError("internal error: missing format_in! value local '" + value_name + "'");
                 fail(args[i + 2]->loc,

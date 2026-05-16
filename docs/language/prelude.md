@@ -124,8 +124,9 @@ source string handle supports `len`, `capacity`,
 `is_empty`, checked byte `first`/`last`/`get`/`set`/`replace`, fixed-capacity
 `push`/`pop`/`insert`, same-zone growth through `reserve`, `reserve_extra`,
 `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, append helpers
-for lowercase `string`, `i64`, bool, and `f64` values through
-`append_string_in`, `append_i64_in`, `append_bool_in`, and `append_f64_in`, plus
+for lowercase `string`, `i64`, bool, `f32`, and `f64` values through
+`append_string_in`, `append_i64_in`, `append_bool_in`, `append_f32_in`, and
+`append_f64_in`, plus
 `truncate`, `clear`, byte search with `contains`, `index_of`, and `count`,
 `equals(Slice[u8])`, `starts_with(Slice[u8])`, `ends_with(Slice[u8])`,
 `copy_to(ref mut zone)`, `as_ptr`, and `as_slice`.
@@ -695,6 +696,7 @@ var text = std::string::from_string(ref mut zone, "ari")
 text.append_string_in(ref mut zone, "=")
 text.append_i64_in(ref mut zone, 42)
 text.append_bool_in(ref mut zone, true)
+text.append_f32_in(ref mut zone, 1.5f32, 1)
 text.append_f64_in(ref mut zone, 3.14159f64, 2)
 let rendered = format_in!(ref mut zone, "ari={} ok={} pi={:.2}", 42, true, 3.14159f64)
 let raw = text.as_ptr()
@@ -712,8 +714,8 @@ additional)` for explicit growth, `push_in(ref mut Zone, byte)` and
 `insert_in(ref mut Zone, index, byte)` for grow-on-demand writes,
 `extend_from_slice_in(ref mut Zone, Slice[u8])` for bulk byte appends, and
 `resize_in(ref mut Zone, length, byte)` to grow or shrink. `append_string_in`,
-`append_i64_in`, `append_bool_in`, and `append_f64_in` build text from the
-scalar values needed by explicit formatting, and
+`append_i64_in`, `append_bool_in`, `append_f32_in`, and `append_f64_in` build
+text from the scalar values needed by explicit formatting, and
 `format_in!(ref mut Zone, "...", values...)` wraps those helpers in a single
 expression for `{}` string/integer/bool/float formatting plus `{:.N}` float
 precision, with each formatted value evaluated once before append dispatch.

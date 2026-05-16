@@ -219,7 +219,7 @@ constructor subset documented in the language guide.
    explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
    `insert_in`, `extend_from_slice_in`, and `resize_in`,
    same-zone text construction helpers through `append_string_in`,
-   `append_i64_in`, `append_bool_in`, and `append_f64_in`,
+   `append_i64_in`, `append_bool_in`, `append_f32_in`, and `append_f64_in`,
    `String.copy_to(ref mut Zone)` and
    `std::string::copy_to(ref value, ref mut Zone)` borrowed-source target-zone
    copying, `std::string::from_slice_in(ref mut Zone, Slice[u8])` target-zone

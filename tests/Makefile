@@ -273,11 +273,16 @@ check-prelude: $(TARGET)
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/std-string-append.ll
+	$(TARGET) tests/ok/std-string-append-f32.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append-f32.ll
+	grep -F -q 'define void @"_ARNv4impl19std__string__String8inherent13append_f32_in"(ptr %arg0, ptr %arg1, float %arg2, i64 %arg3)' $(BUILD_DIR)/prelude/std-string-append-f32.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-append-f32.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-append-f32.elf; $(BUILD_DIR)/prelude/std-string-append-f32.elf; code=$$?; test $$code -eq 8; fi
 	$(TARGET) tests/ok/prelude-format-in.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_bool_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
+	grep -q 'append_f32_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
 	grep -q 'append_f64_in' $(BUILD_DIR)/prelude/prelude-format-in.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-format-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-format-in.elf; $(BUILD_DIR)/prelude/prelude-format-in.elf; code=$$?; test $$code -eq 155; fi
 	$(TARGET) tests/ok/prelude-format-in-display.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	grep -F -q 'std__fmt__Display9format_in"(ptr' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
 	grep -E -q 'getelementptr inbounds \{ i64, i64 \}, ptr %t[0-9]+, i32 0, i32 0' $(BUILD_DIR)/prelude/prelude-format-in-display.ll
@@ -516,6 +521,8 @@ check-prelude: $(TARGET)
 	grep -q "std::string::String.append_i64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-different-zone.err
 	if $(TARGET) tests/errors/std-string-append-f64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_f64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err
+	if $(TARGET) tests/errors/std-string-append-f32-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f32-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f32-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::string::String.append_f32_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-f32-different-zone.err
 	if $(TARGET) tests/errors/prelude-string-type-args.ari -o $(BUILD_DIR)/prelude/prelude-string-type-args.elf >$(BUILD_DIR)/prelude/prelude-string-type-args.err 2>&1; then exit 1; fi
 	grep -q "struct 'std::string::String' expects 0 type arguments" $(BUILD_DIR)/prelude/prelude-string-type-args.err
 	if $(TARGET) tests/errors/prelude-string-root-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-string-root-after-reset.elf >$(BUILD_DIR)/prelude/prelude-string-root-after-reset.err 2>&1; then exit 1; fi
