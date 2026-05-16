@@ -1305,6 +1305,7 @@ check-modules: $(TARGET)
 	grep -Eq "ast-summary.*package_math.*tests/packages/package_math.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -Eq "ir-summary.*package_math.*tests/packages/package_math.ari.*ari-ir-summary-v0" $(BUILD_DIR)/modules/package-module-main.aricache
 	grep -Eq "ir-summary.*package_math.*B;" $(BUILD_DIR)/modules/package-module-main.aricache
+	grep -Eq "ir-summary.*package_math.*T;" $(BUILD_DIR)/modules/package-module-main.aricache
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-module-main-cache.ll $(BUILD_DIR)/modules/package-module-main-cache-use.ll
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache.ll
