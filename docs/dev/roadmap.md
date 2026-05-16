@@ -169,22 +169,26 @@ diagnostics.
    `Box[T]`/`std::Box[T]` spelling now aliases that explicit-zone source
    handle. Allocator-backed unique `Box[T]` ownership remains future work.
    Root `Vec[T]` now has an explicit boundary rule while runtime capacity is
-   still absent: it remains stack-backed fixed-capacity storage, but ordinary
-   direct function parameters are allowed by specializing the lowered function
-   to each caller's concrete local Vec capacity. Generic function
-   specializations also carry the concrete capacity when a type parameter
-   resolves to a local Vec. Sema still rejects unsized root `Vec[T]` returns,
-   extern parameters/returns, function pointer signatures, trait method
+   still absent: it remains stack-backed fixed-capacity storage locally, while
+   ordinary Ari function parameters and `fn(Vec[T]) -> R` function pointer
+   parameters lower to the same borrowed `{data, len}` ABI as `Slice[T]`. Calls
+   from local Vec or array bindings create that view at the call edge, so a
+   single function body works across caller capacities. Generic functions whose
+   source parameter is `Vec[T]` reuse one specialization per element type with
+   this view ABI; generic by-value `T` parameters still carry concrete local Vec
+   capacity when `T` itself resolves to local Vec storage. Sema still rejects
+   unsized root `Vec[T]` returns, extern parameters/returns, trait method
    signatures, struct fields, and impl receivers. Cross-boundary heap-capacity
-   handles should use
-   `std::vec::Vec<T>` with an explicit `Zone`, while borrowed views should use
-   `Slice[T]`.
+   handles should use `std::vec::Vec<T>` with an explicit `Zone`, while borrowed
+   views can use `Slice[T]` directly.
    - [capacity] replace the fixed-local
      literal/const/static-expr/known-local/runtime-checked root
      `Vec[T].reserve(capacity)` path with runtime heap capacity growth; function
-     return, function pointer, trait, extern, struct-field, and impl-receiver
-     boundaries still need a stable root Vec runtime ABI, and source
+     return, trait, extern, struct-field, and impl-receiver boundaries still
+     need a stable owned root Vec runtime ABI, and source
      `std::vec::Vec<T>` growth already uses centralized explicit-zone helpers
+   - [follow-up] materialize temporary Vec literals/expressions for `Vec[T]`
+     parameter calls so `sum([1, 2, 3])` does not require a named local binding
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place
 2. Prepare source `std` library foundations before broad library expansion.

@@ -1505,6 +1505,12 @@ check-generics: $(TARGET)
 	$(BUILD_DIR)/generics/function-generic-call.raw; code=$$?; test $$code -eq 22
 	$(TARGET) tests/ok/vector-generic-function-param.ari --emit-llvm $(BUILD_DIR)/generics/vector-generic-function-param.ll
 	grep -q "identity__G_Vec" $(BUILD_DIR)/generics/vector-generic-function-param.ll
+	$(TARGET) tests/ok/vector-generic-root-param.ari --emit-llvm $(BUILD_DIR)/generics/vector-generic-root-param.ll
+	grep -q "length_of__G_i64" $(BUILD_DIR)/generics/vector-generic-root-param.ll
+	grep -Fq 'define i64 @"_ARNv16length_of__G_i64"({ ptr, i64 } %arg0)' $(BUILD_DIR)/generics/vector-generic-root-param.ll
+	! grep -q "length_of__G_.*cap" $(BUILD_DIR)/generics/vector-generic-root-param.ll
+	$(TARGET) --freestanding tests/ok/vector-generic-root-param.ari -o $(BUILD_DIR)/generics/vector-generic-root-param.raw
+	$(BUILD_DIR)/generics/vector-generic-root-param.raw; code=$$?; test $$code -eq 5
 	$(TARGET) --freestanding tests/ok/generic-function-specializations.ari -o $(BUILD_DIR)/generics/generic-function-specializations.raw
 	$(BUILD_DIR)/generics/generic-function-specializations.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/generic-function-pointer.ari -o $(BUILD_DIR)/generics/generic-function-pointer.raw
@@ -2887,7 +2893,15 @@ check-functions: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/function-generic-companion.ari -o $(BUILD_DIR)/functions/function-generic-companion.elf
 	$(BUILD_DIR)/functions/function-generic-companion.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/vector-function-param.ari --emit-llvm $(BUILD_DIR)/functions/vector-function-param.ll
-	grep -q "edge_sum__V" $(BUILD_DIR)/functions/vector-function-param.ll
+	grep -Fq 'define i64 @"_ARNv8edge_sum"({ ptr, i64 } %arg0)' $(BUILD_DIR)/functions/vector-function-param.ll
+	! grep -q "edge_sum__V" $(BUILD_DIR)/functions/vector-function-param.ll
+	$(TARGET) --freestanding tests/ok/vector-function-param.ari -o $(BUILD_DIR)/functions/vector-function-param.raw
+	$(BUILD_DIR)/functions/vector-function-param.raw; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/vector-function-pointer-param.ari --emit-llvm $(BUILD_DIR)/functions/vector-function-pointer-param.ll
+	grep -Fq 'define i64 @"_ARNv7call_it"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/functions/vector-function-pointer-param.ll
+	grep -q 'call i64 %' $(BUILD_DIR)/functions/vector-function-pointer-param.ll
+	$(TARGET) --freestanding tests/ok/vector-function-pointer-param.ari -o $(BUILD_DIR)/functions/vector-function-pointer-param.raw
+	$(BUILD_DIR)/functions/vector-function-pointer-param.raw; code=$$?; test $$code -eq 34
 	$(TARGET) --freestanding tests/ok/function-pointer-call.ari -o $(BUILD_DIR)/functions/function-pointer-call.raw
 	$(BUILD_DIR)/functions/function-pointer-call.raw; code=$$?; test $$code -eq 7
 	$(TARGET) tests/ok/function-pointer-call.ari --emit-llvm $(BUILD_DIR)/functions/function-pointer-call.ll
@@ -2921,8 +2935,6 @@ check-function-errors: $(TARGET)
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/functions/errors/function-arg-type-mismatch.err
 	if $(TARGET) tests/errors/vector-function-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err 2>&1; then exit 1; fi
 	grep -Fq "root Vec[T] cannot be used as a function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err
-	if $(TARGET) tests/errors/vector-function-pointer-param-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-pointer-param-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-pointer-param-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as a function pointer parameter until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-pointer-param-runtime-abi.err
 	if $(TARGET) tests/errors/vector-function-pointer-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.err 2>&1; then exit 1; fi
 	grep -Fq "root Vec[T] cannot be used as a function pointer return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.err
 	if $(TARGET) tests/errors/vector-generic-function-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-generic-function-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-generic-function-return-runtime-abi.err 2>&1; then exit 1; fi

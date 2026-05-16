@@ -1,0 +1,13 @@
+fn edge_sum(values: Vec[i64]) -> i64 {
+  return len(values) + values[0] + values[len(values) - 1];
+}
+
+fn call_it(op: fn(Vec[i64]) -> i64, values: Vec[i64]) -> i64 {
+  return op(values);
+}
+
+fn main() -> i64 {
+  let values: Vec[i64] = [6, 7, 8];
+  let op: fn(Vec[i64]) -> i64 = edge_sum;
+  return op(values) + call_it(edge_sum, values);
+}

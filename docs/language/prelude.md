@@ -674,12 +674,14 @@ is rejected. `as_ptr()` raw pointers and copied Vec handles track their source
 or target zone respectively. The root
 `Vec[T]` type and its current local method set remain fixed-local until runtime
 growth is ported. Root `Vec[T]` can be used as an ordinary direct function
-parameter; sema specializes the lowered function body to the caller's concrete
-local Vec capacity, and generic function specializations keep that concrete
-capacity when `T` resolves to local Vec storage. Root `Vec[T]` returns, extern
-parameters/returns, function pointer signatures, trait method signatures,
-struct fields, and impl receivers still reject it with a dedicated diagnostic
-until the runtime-capacity ABI is defined. Use `std::vec::Vec<T>` for an
+parameter or as a function pointer parameter in `fn(Vec[T]) -> R`; sema lowers
+those slots to the same borrowed `{data, len}` shape as `Slice[T]`, so one
+callee works across caller capacities. Generic functions whose source parameter
+is `Vec[T]` use that same view ABI, while by-value generic `T` parameters still
+carry concrete local Vec capacity when `T` resolves to local Vec storage. Root
+`Vec[T]` returns, extern parameters/returns, trait method signatures, struct
+fields, and impl receivers still reject it with a dedicated diagnostic until
+the runtime-capacity ABI is defined. Use `std::vec::Vec<T>` for an
 explicit-zone heap handle or `Slice[T]` for a borrowed view.
 
 `std::boxed::Box<T>` is the source `std` allocation seed for a single

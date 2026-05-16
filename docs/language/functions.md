@@ -298,13 +298,15 @@ Refutable enum-case and `Slice[T]` sequence parameters panic if the caller
 passes a non-matching case or length. Owning and borrow-valued parameter
 patterns are still rejected until ownership behavior for parameter
 destructuring is defined. Root `Vec[T]` function parameters are allowed in
-ordinary direct calls: the compiler lowers each called function body with the
-caller's concrete local Vec capacity, so a parameter such as `Vec[i64]` can be
-used with `len`, indexing, and other local-vector reads. Generic function
-specializations carry that same concrete capacity when a type parameter
-resolves to a local Vec. Root `Vec[T]` function returns, function pointer
-signatures such as `fn(Vec[T]) -> R`, and trait method signatures still wait
-for the runtime-capacity Vec ABI.
+ordinary direct calls and in function pointer parameter positions such as
+`fn(Vec[T]) -> R`: the compiler lowers those parameter slots to a borrowed
+`Slice[T]`-shaped ABI, so one function body works for local Vec values with
+different caller capacities. Calls currently create the ABI view from named
+local Vec or array bindings. Generic functions whose source parameter is
+`Vec[T]` use the same view ABI and specialize by element type; generic by-value
+`T` parameters still carry concrete Vec capacity when `T` itself resolves to
+local Vec storage. Root `Vec[T]` function returns and trait method signatures
+still wait for the runtime-capacity Vec ABI.
 Parameter patterns are value-binding-only for now:
 `ref`, `ref mut`, `&`, `&mut`, and `mut` binding-mode patterns are
 reserved and rejected. Trait and extern function signatures must keep named

@@ -265,7 +265,6 @@ public:
         collect_ir_c_records(ir);
         for_each_function_decl([&](const FunctionDecl& fn) {
             if (is_executable_function(fn) &&
-                !vec_param_specialized_functions_.count(fn.name) &&
                 !(options_.test_mode && fn.name == "main")) {
                 ir.functions.push_back(check_function(fn));
             }
@@ -404,8 +403,6 @@ private:
     SemaOptions options_;
     TargetInfo target_ = resolve_target_info(options_.target_triple);
     std::map<std::string, FunctionSig> functions_;
-    std::map<std::string, const FunctionDecl*> function_decls_;
-    std::set<std::string> vec_param_specialized_functions_;
     std::map<std::string, const FunctionDecl*> generic_functions_;
     std::map<std::string, MetaFunctionInfo> meta_functions_;
     std::map<std::string, ConstantInfo> constants_;
@@ -3803,7 +3800,12 @@ private:
             current_module_name_ = fn.module_name;
             for (const auto& param : fn.params) {
                 IrType param_type = resolve_executable_type(param.type);
-                sig.params.push_back(param_type);
+                bool vec_view = false;
+                sig.params.push_back(function_parameter_abi_type(
+                    param.type.loc,
+                    param_type,
+                    "a function parameter",
+                    vec_view));
             }
             sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
             if (fn.has_return_type) {
@@ -3816,10 +3818,6 @@ private:
 
             auto inserted = functions_.emplace(fn.name, std::move(sig));
             if (!inserted.second) fail(fn.loc, "duplicate executable function '" + fn.name + "'");
-            function_decls_.emplace(fn.name, &fn);
-            if (function_signature_needs_vec_param_specialization(inserted.first->second)) {
-                vec_param_specialized_functions_.insert(fn.name);
-            }
         });
     }
 
@@ -3838,54 +3836,21 @@ private:
         return is_vector_storage_type(type) && type.array_size == 0;
     }
 
-    static bool contains_unsized_vector_storage_type(const IrType& type) {
-        if (is_unsized_vector_storage_type(type)) return true;
-        for (const auto& arg : type.args) {
-            if (contains_unsized_vector_storage_type(arg)) return true;
-        }
-        for (const auto& field : type.field_types) {
-            if (contains_unsized_vector_storage_type(field)) return true;
-        }
-        return false;
-    }
-
-    static bool function_signature_needs_vec_param_specialization(const FunctionSig& sig) {
-        for (const auto& param : sig.params) {
-            if (contains_unsized_vector_storage_type(param)) return true;
-        }
-        return false;
-    }
-
-    static bool same_vector_element_type(const IrType& left, const IrType& right) {
-        return left.args.size() == 1 && right.args.size() == 1 && same_type(left.args[0], right.args[0]);
-    }
-
-    IrType specialize_vec_param_from_argument(SourceLocation loc,
-                                             const IrType& expected,
-                                             const IrType& actual) const {
-        if (!contains_unsized_vector_storage_type(expected)) return expected;
-        if (is_unsized_vector_storage_type(expected)) {
-            if (!is_vector_storage_type(actual) || !same_vector_element_type(expected, actual)) {
-                fail(loc, "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
+    IrType function_parameter_abi_type(SourceLocation loc,
+                                       const IrType& source,
+                                       const std::string& context,
+                                       bool& vec_view) const {
+        vec_view = false;
+        if (is_unsized_vector_storage_type(source)) {
+            if (source.args.size() != 1) {
+                fail(loc, "Vec parameter ABI requires exactly one element type");
             }
-            return actual;
+            require_slice_element_materializable(loc, source.args[0], "Vec parameter ABI");
+            vec_view = true;
+            return make_prelude_slice_type(loc, source.args[0]);
         }
-        if (expected.qualifier != actual.qualifier ||
-            expected.primitive != actual.primitive ||
-            expected.name != actual.name ||
-            expected.args.size() != actual.args.size() ||
-            expected.field_types.size() != actual.field_types.size()) {
-            fail(loc, "type mismatch: expected " + type_name(expected) + ", got " + type_name(actual));
-        }
-        IrType specialized = expected;
-        for (std::size_t i = 0; i < specialized.args.size(); ++i) {
-            specialized.args[i] = specialize_vec_param_from_argument(loc, expected.args[i], actual.args[i]);
-        }
-        for (std::size_t i = 0; i < specialized.field_types.size(); ++i) {
-            specialized.field_types[i] =
-                specialize_vec_param_from_argument(loc, expected.field_types[i], actual.field_types[i]);
-        }
-        return specialized;
+        require_root_vector_runtime_abi(loc, source, context);
+        return source;
     }
 
     void collect_extern_function_signature(const FunctionDecl& fn) {
@@ -4361,13 +4326,19 @@ private:
             type.primitive = IrPrimitiveKind::Function;
             type.name = "fn";
             type.array_size = ast_type.array_size;
-            for (const auto& arg : ast_type.args) type.args.push_back(resolve_executable_type(arg));
             for (std::size_t i = 0; i < type.array_size; ++i) {
-                require_root_vector_runtime_abi(ast_type.args[i].loc, type.args[i], "a function pointer parameter");
+                IrType param_type = resolve_executable_type(ast_type.args[i]);
+                bool vec_view = false;
+                type.args.push_back(function_parameter_abi_type(
+                    ast_type.args[i].loc,
+                    param_type,
+                    "a function pointer parameter",
+                    vec_view));
                 if (is_void_value_type(type.args[i])) {
                     fail(ast_type.args[i].loc, "function pointer parameter cannot have void type");
                 }
             }
+            type.args.push_back(resolve_executable_type(ast_type.args[type.array_size]));
             require_root_vector_runtime_abi(
                 ast_type.args[type.array_size].loc,
                 type.args[type.array_size],
@@ -4626,10 +4597,17 @@ private:
         std::vector<IrStmtPtr> parameter_pattern_prelude;
         for (std::size_t param_index = 0; param_index < fn.params.size(); ++param_index) {
             const auto& param = fn.params[param_index];
-            IrType type = active_sig && param_index < active_sig->params.size()
-                ? active_sig->params[param_index]
-                : resolve_executable_type(param.type);
-            require_root_vector_runtime_abi(param.type.loc, type, "a function parameter");
+            IrType type;
+            if (active_sig && param_index < active_sig->params.size()) {
+                type = active_sig->params[param_index];
+            } else {
+                bool vec_view = false;
+                type = function_parameter_abi_type(
+                    param.type.loc,
+                    resolve_executable_type(param.type),
+                    "a function parameter",
+                    vec_view);
+            }
             const Pattern* param_pattern = param.has_pattern ? &expanded_pattern(param.pattern) : nullptr;
             if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Void) {
                 fail(fn.loc, "parameter cannot have void type");
@@ -15343,15 +15321,6 @@ private:
         return name;
     }
 
-    std::string vec_param_specialization_name(const std::string& function_name,
-                                              const std::vector<IrType>& params) const {
-        std::string name = function_name + "__V";
-        for (const auto& param : params) {
-            name += "_" + mangle_type_key(param);
-        }
-        return name;
-    }
-
     IrType resolve_type_with_substitutions(const TypeRef& type, const std::map<std::string, IrType>& substitutions) {
         std::map<std::string, IrType> previous = std::move(current_type_substitutions_);
         current_type_substitutions_ = substitutions;
@@ -16068,8 +16037,23 @@ private:
         std::vector<IrType> param_types;
         param_types.reserve(fn.params.size());
         for (std::size_t i = 0; i < fn.params.size(); ++i) {
-            IrType param_type = resolve_type_with_substitutions(fn.params[i].type, substitutions);
-            coerce_expr_to_expected(*args[i], param_type);
+            IrType source_param_type = resolve_type_with_substitutions(fn.params[i].type, substitutions);
+            bool vec_view = false;
+            IrType param_type = function_parameter_abi_type(
+                fn.params[i].type.loc,
+                source_param_type,
+                "a function parameter",
+                vec_view);
+            if (vec_view) {
+                IrExprPtr slice_arg = try_make_implicit_slice_argument(*expr.args[i], param_type);
+                if (!slice_arg) {
+                    fail(expr.args[i]->loc,
+                         "Vec parameter arguments currently require a local array or Vec binding; bind the value to a local first");
+                }
+                args[i] = std::move(slice_arg);
+            } else {
+                coerce_expr_to_expected(*args[i], param_type);
+            }
             require_assignable(expr.loc, param_type, args[i]->type);
             param_types.push_back(param_type);
         }
@@ -16133,15 +16117,6 @@ private:
         queued_specializations_.insert(specialized_name);
     }
 
-    void queue_vec_param_function_specialization(const FunctionDecl& fn,
-                                                const std::string& specialized_name,
-                                                FunctionSig sig) {
-        if (queued_specializations_.count(specialized_name)) return;
-        functions_.emplace(specialized_name, std::move(sig));
-        pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, {}});
-        queued_specializations_.insert(specialized_name);
-    }
-
     IrExprPtr check_generic_function_ref_with_expected(
         const Expr& expr,
         const FunctionDecl& fn,
@@ -16189,7 +16164,13 @@ private:
         std::vector<IrType> param_types;
         param_types.reserve(fn.params.size());
         for (const auto& param : fn.params) {
-            param_types.push_back(resolve_type_with_substitutions(param.type, substitutions));
+            IrType source_param_type = resolve_type_with_substitutions(param.type, substitutions);
+            bool vec_view = false;
+            param_types.push_back(function_parameter_abi_type(
+                param.type.loc,
+                source_param_type,
+                "a function pointer parameter",
+                vec_view));
         }
         IrType result = fn.has_return_type
             ? resolve_type_with_substitutions(fn.return_type, substitutions)
@@ -16369,6 +16350,82 @@ private:
             std::move(length),
             make_prelude_slice_type(expr.loc, element)
         );
+    }
+
+    IrExprPtr make_slice_view_from_local_binding(SourceLocation loc,
+                                                 SourceLocation receiver_loc,
+                                                 const std::string& name,
+                                                 const LocalInfo& local,
+                                                 const IrType& slice_type) {
+        if (!is_prelude_slice_type(slice_type) || slice_type.args.size() != 1) {
+            fail(loc, "internal error: implicit Slice argument requires a Slice[T] parameter");
+        }
+        if (local.type.primitive != IrPrimitiveKind::Array &&
+            local.type.primitive != IrPrimitiveKind::Vector) {
+            fail(loc, "implicit Slice argument requires a local array or Vec binding");
+        }
+        if (local.type.args.size() != 1 || !same_type(slice_type.args[0], local.type.args[0])) {
+            fail(loc, "type mismatch: expected " + type_name(slice_type) + ", got " + type_name(local.type));
+        }
+        if (contains_borrow_type(local.type) || is_owner_type(local.type.args[0])) {
+            fail(loc, "implicit Slice arguments currently support copyable element arrays and vectors only");
+        }
+        require_slice_element_materializable(loc, local.type.args[0], "implicit Slice argument");
+        require_not_borrowed(loc, name, local, "create Slice from");
+
+        const IrType& element = local.type.args[0];
+        IrExprPtr data;
+        IrExprPtr length;
+        if (local.type.primitive == IrPrimitiveKind::Array) {
+            data = make_slice_data_pointer_expr(
+                loc,
+                make_local_lvalue_expr(receiver_loc, name, local.type),
+                element);
+            length = make_integer_literal(loc, i64_type(loc), local.type.array_size);
+        } else {
+            data = make_slice_data_pointer_expr(
+                loc,
+                make_vec_storage_lvalue_expr(receiver_loc, name, local.type),
+                element);
+            length = make_local_vec_len_expr(
+                loc,
+                make_vec_local_lvalue(receiver_loc, name, local.type),
+                local_vector_known_length(local));
+        }
+        return make_slice_view_expr(loc, std::move(data), std::move(length), slice_type);
+    }
+
+    IrExprPtr try_make_implicit_slice_argument(const Expr& arg_expr, const IrType& expected) {
+        if (is_prelude_slice_type(expected) && arg_expr.kind == ExprKind::Name) {
+            if (LocalInfo* local = find_local_slot(arg_expr.name)) {
+                if (local->type.primitive == IrPrimitiveKind::Array ||
+                    local->type.primitive == IrPrimitiveKind::Vector) {
+                    if (auto error = local_unavailable_binding_error(arg_expr.name, *local)) {
+                        fail(arg_expr.loc, *error);
+                    }
+                    require_can_read_borrow_path(arg_expr.loc, arg_expr.name, *local, "");
+                    require_zone_pointer_valid(arg_expr.loc, arg_expr.name, *local);
+                    copy_aggregate_borrow_sources_to_temporaries(arg_expr.loc, arg_expr.name, *local);
+                    return make_slice_view_from_local_binding(
+                        arg_expr.loc,
+                        arg_expr.loc,
+                        arg_expr.name,
+                        *local,
+                        expected);
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    IrExprPtr check_call_argument_for_expected(const Expr& arg_expr, const IrType& expected) {
+        if (IrExprPtr slice_view = try_make_implicit_slice_argument(arg_expr, expected)) {
+            return slice_view;
+        }
+        IrExprPtr arg = check_expr_with_expected(arg_expr, expected);
+        coerce_expr_to_expected(*arg, expected);
+        require_assignable(arg_expr.loc, expected, arg->type);
+        return arg;
     }
 
     IrExprPtr check_vec_len_call(const Expr& expr, IrExprPtr lowered) {
@@ -17711,8 +17768,7 @@ private:
         lowered->args.reserve(arg_exprs.size());
         std::size_t borrow_mark = temporary_borrow_mark();
         for (std::size_t i = 0; i < arg_exprs.size(); ++i) {
-            IrExprPtr arg = check_expr(*arg_exprs[i]);
-            coerce_expr_to_expected(*arg, ir_expr_operand(*lowered)->type.args[i]);
+            IrExprPtr arg = check_call_argument_for_expected(*arg_exprs[i], ir_expr_operand(*lowered)->type.args[i]);
             require_assignable(arg_exprs[i]->loc, ir_expr_operand(*lowered)->type.args[i], arg->type);
             require_no_zone_pointer_escape(arg_exprs[i]->loc, *arg, "function pointer call argument");
             lowered->args.push_back(std::move(arg));
@@ -17994,22 +18050,15 @@ private:
             fail(expr.loc, "function calls support up to 65535 arguments");
         }
 
-        FunctionSig call_sig = sig;
-        bool specialize_vec_params = vec_param_specialized_functions_.count(function_name) != 0;
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size());
         std::size_t borrow_mark = temporary_borrow_mark();
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = i < sig.params.size()
-                ? check_expr_with_expected(*expr.args[i], sig.params[i])
+                ? check_call_argument_for_expected(*expr.args[i], sig.params[i])
                 : check_expr(*expr.args[i]);
             if (i < sig.params.size()) {
-                coerce_expr_to_expected(*arg, sig.params[i]);
-                if (specialize_vec_params) {
-                    call_sig.params[i] =
-                        specialize_vec_param_from_argument(expr.args[i]->loc, sig.params[i], arg->type);
-                }
-                require_assignable(expr.loc, call_sig.params[i], arg->type);
+                require_assignable(expr.loc, sig.params[i], arg->type);
             } else if (!is_c_vararg_value_type(arg->type)) {
                 fail(expr.args[i]->loc, "C variadic argument type is not supported: " + type_name(arg->type));
             } else {
@@ -18025,20 +18074,11 @@ private:
             }
             args.push_back(std::move(arg));
         }
-        std::string lowered_name = function_name;
-        if (specialize_vec_params) {
-            auto decl_found = function_decls_.find(function_name);
-            if (decl_found == function_decls_.end()) {
-                throw CompileError("internal error: missing Vec-specialized function declaration '" + function_name + "'");
-            }
-            lowered_name = vec_param_specialization_name(function_name, call_sig.params);
-            queue_vec_param_function_specialization(*decl_found->second, lowered_name, call_sig);
-        }
         IrExprPtr call = finish_tracked_call(
             expr.loc,
             function_name,
-            std::move(lowered_name),
-            call_sig,
+            function_name,
+            sig,
             std::move(args),
             borrow_mark);
         mark_zone_reset_call(*call);
