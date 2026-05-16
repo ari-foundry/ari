@@ -470,7 +470,12 @@ provenance too. A `std::boxed::Box<T>`, `std::string::String`, or
 the target zone, not the original source zone. When a
 source `std::string::String` or `std::vec::Vec<T>` grows through an explicit
 zone argument, that argument must be the same source zone that created the
-handle. Read-only `std::string::String` and `std::vec::Vec<T>` handle methods
+handle. A tracked local `std::vec::Vec<T>` receiver can also infer that same
+zone for `push(value)`, `insert(index, value)`, `reserve(capacity)`,
+`reserve_extra(additional)`, `extend_from_slice(values)`, and
+`resize(length, value)`, so callers do not have to thread the zone through
+every capacity-growing Vec operation. Read-only `std::string::String` and
+`std::vec::Vec<T>` handle methods
 borrow the receiver, so metadata, checked endpoint/indexed reads, source
 string/Vec search, source string exact/prefix/suffix checks, target-zone copy,
 and raw-pointer recovery do not copy the handle itself.

@@ -5336,6 +5336,68 @@ private:
         }
     }
 
+    ExprPtr make_zone_argument_expr_from_source(SourceLocation loc,
+                                                const std::string& source_name,
+                                                const std::string& context) {
+        if (source_name == "<multiple zones>") {
+            fail(loc, context + " receiver must have one tracked allocation zone");
+        }
+        const LocalInfo* zone = find_local_slot(source_name);
+        if (!zone || !is_zone_source_type(zone->type)) {
+            fail(loc, context + " tracked zone source '" + source_name + "' is not available");
+        }
+        if (is_zone_borrow_type(zone->type)) {
+            if (zone->type.qualifier != TypeQualifier::MutRef) {
+                fail(loc, context + " requires a mutable zone source");
+            }
+            return make_ast_name_expr(loc, source_name);
+        }
+        return make_ast_borrow_expr(loc, make_ast_name_expr(loc, source_name), true);
+    }
+
+    LocalInfo* std_vec_implicit_zone_receiver_local(const Expr& expr) {
+        const Expr* receiver = expr_operand(expr).get();
+        if (!receiver || receiver->kind != ExprKind::Name) return nullptr;
+        LocalInfo* local = find_local_slot(receiver->name);
+        if (!local) return nullptr;
+        if (!is_std_vec_handle_type(value_qualified_type(local->type))) return nullptr;
+        return local;
+    }
+
+    ExprPtr rewrite_std_vec_implicit_zone_method_call(const Expr& expr) {
+        if (current_module_name_ == "std::vec") return nullptr;
+        std::optional<StdVecImplicitZoneMethod> implicit =
+            std_vec_implicit_zone_method_for_call(expr.name, expr.args.size());
+        if (!implicit || !expr_type_args(expr).empty()) return nullptr;
+
+        LocalInfo* receiver = std_vec_implicit_zone_receiver_local(expr);
+        if (!receiver) return nullptr;
+        const std::string context = "std::vec::Vec." + expr.name;
+        if (!receiver->zone_pointer || receiver->zone_pointer_source.empty()) {
+            if (implicit->allow_untracked_fallback) return nullptr;
+            fail(expr.loc,
+                 context +
+                     " receiver must come from a tracked zone allocation to infer its zone; pass an explicit zone argument instead");
+        }
+
+        std::vector<ExprPtr> args;
+        args.reserve(expr.args.size() + 1);
+        args.push_back(make_zone_argument_expr_from_source(
+            expr.loc,
+            receiver->zone_pointer_source,
+            context));
+        for (const auto& arg : expr.args) {
+            args.push_back(clone_expression_tree(*arg));
+        }
+
+        return make_ast_method_call_expr(
+            expr.loc,
+            clone_expression_tree(*expr_operand(expr)),
+            implicit->lowered_name,
+            {},
+            std::move(args));
+    }
+
     void set_zone_pointer_source_from_expr(LocalInfo& target, const IrExpr& value) {
         ari::set_zone_pointer_source_from_expr(
             target,
@@ -19025,6 +19087,10 @@ private:
                 case LocalVecMethod::Unknown:
                     break;
             }
+        }
+
+        if (ExprPtr implicit_vec_call = rewrite_std_vec_implicit_zone_method_call(expr)) {
+            return check_method_call(*implicit_vec_call, std::move(lowered));
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();

@@ -1,0 +1,27 @@
+fn build(zone: ref mut Zone) -> std::Vec[i64] {
+  var values = Vec!(i64, zone, 0);
+  values.push(4);
+  values.push(6);
+  values.reserve(5);
+  values.reserve_extra(3);
+  values.insert(1, 5);
+
+  var extra: Vec[i64] = [7, 8];
+  values.extend_from_slice(extra.as_slice());
+  values.resize(7, 9);
+  values.resize(4, 0);
+  return values;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var values = build(ref mut zone);
+  let total = values.len()
+    + values.capacity()
+    + values.get(0)
+    + values.get(1)
+    + values.get(2)
+    + values.get(3);
+  zone::destroy(zone);
+  return total;
+}

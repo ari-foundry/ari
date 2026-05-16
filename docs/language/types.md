@@ -566,11 +566,11 @@ var vec = Vec!(i64, ref mut zone, 4)
 vec.push(10)
 vec.push(20)
 vec.push_in(ref mut zone, 30)
-vec.reserve(ref mut zone, 8)
-vec.reserve_extra(ref mut zone, 2)
+vec.reserve(8)
+vec.reserve_extra(2)
 vec.insert(1, 15)
 vec.insert_in(ref mut zone, 2, 18)
-vec.resize_in(ref mut zone, 8, 0)
+vec.resize(8, 0)
 vec.set(0, 25)
 let old = vec.replace(1, 16)
 vec.swap(0, 2)
@@ -585,7 +585,7 @@ let same = vec.equals(view)
 let has_prefix = vec.starts_with(view)
 let has_suffix = vec.ends_with(view)
 let copied_from_view = std::vec::from_slice_in<i64>(ref mut other_zone, view)
-vec.extend_from_slice_in(ref mut zone, view)
+vec.extend_from_slice(view)
 let cursor = vec.iter()
 let removed = vec.remove(1)
 let popped = vec.pop()
@@ -614,6 +614,13 @@ shifting later elements.
 slice element through that same growth path. `std::vec::Vec<T>.resize_in(ref
 mut Zone, length, value)` shrinks by dropping removed tail values and reducing
 `len`, or grows by appending copies of `value`.
+For tracked receiver locals, the checker can infer that source zone from the
+handle metadata/provenance. `push(value)` and `insert(index, value)` use the
+grow-on-demand same-zone paths, and `reserve(capacity)`,
+`reserve_extra(additional)`, `extend_from_slice(values)`, and
+`resize(length, value)` lower to the corresponding explicit-zone methods with
+the hidden zone argument synthesized. The explicit `_in` forms are still useful
+for untracked handles or when code should show the capability at the call site.
 `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` builds a new target-zone
 source `Vec<T>` by copying the borrowed slice elements into fresh zone storage.
 `set(index, value)` drops the previous element after storing the new value,

@@ -161,6 +161,30 @@ bool std_vec_method_requires_same_zone_argument(const std::string& method_name) 
            method_name == "resize_in";
 }
 
+std::optional<StdVecImplicitZoneMethod> std_vec_implicit_zone_method_for_call(
+    const std::string& method_name,
+    std::size_t user_arg_count) {
+    if (method_name == "push" && user_arg_count == 1) {
+        return StdVecImplicitZoneMethod{"push_in", true};
+    }
+    if (method_name == "insert" && user_arg_count == 2) {
+        return StdVecImplicitZoneMethod{"insert_in", true};
+    }
+    if (method_name == "reserve" && user_arg_count == 1) {
+        return StdVecImplicitZoneMethod{"reserve", false};
+    }
+    if (method_name == "reserve_extra" && user_arg_count == 1) {
+        return StdVecImplicitZoneMethod{"reserve_extra", false};
+    }
+    if (method_name == "extend_from_slice" && user_arg_count == 1) {
+        return StdVecImplicitZoneMethod{"extend_from_slice_in", false};
+    }
+    if (method_name == "resize" && user_arg_count == 2) {
+        return StdVecImplicitZoneMethod{"resize_in", false};
+    }
+    return std::nullopt;
+}
+
 bool std_vec_pointer_result_preserves_receiver_zone(const IrExpr& call) {
     return call.kind == IrExprKind::Call &&
            call.type.qualifier == TypeQualifier::Ptr &&

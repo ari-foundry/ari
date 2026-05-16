@@ -384,6 +384,13 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-vec-growth-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec23grow_to_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
 	grep -q '_ARNv3std3vec28ensure_spare_capacity__G_i64' $(BUILD_DIR)/prelude/std-vec-growth-paths.ll
+	$(TARGET) tests/ok/std-vec-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7reserve' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9insert_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent9resize_in' $(BUILD_DIR)/prelude/std-vec-implicit-zone.ll
 	$(TARGET) tests/ok/std-vec-try-pop.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7try_pop' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
@@ -524,6 +531,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; $(BUILD_DIR)/prelude/std-vec-from-slice-in.elf; code=$$?; test $$code -eq 40; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-resize-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-resize-in.elf; $(BUILD_DIR)/prelude/std-vec-resize-in.elf; code=$$?; test $$code -eq 37; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-growth-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; $(BUILD_DIR)/prelude/std-vec-growth-paths.elf; code=$$?; test $$code -eq 135; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; $(BUILD_DIR)/prelude/std-vec-implicit-zone.elf; code=$$?; test $$code -eq 36; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-try-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-pop.elf; $(BUILD_DIR)/prelude/std-vec-try-pop.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-shrink-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; code=$$?; test $$code -eq 13; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-drop-value.elf; code=$$?; test $$code -eq 0; fi
@@ -588,6 +596,8 @@ check-prelude: $(TARGET)
 	grep -q "std::vec::Vec.reserve zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-different-zone.err
 	if $(TARGET) tests/errors/std-vec-reserve-untracked-receiver.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.elf >$(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.reserve receiver must come from a tracked zone allocation" $(BUILD_DIR)/prelude/std-vec-reserve-untracked-receiver.err
+	if $(TARGET) tests/errors/std-vec-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.err 2>&1; then exit 1; fi
+	grep -q "std::vec::Vec.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-vec-implicit-zone-untracked.err
 	if $(TARGET) tests/errors/std-vec-reserve-extra-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::vec::Vec.reserve_extra zone argument must match the vector allocation zone" $(BUILD_DIR)/prelude/std-vec-reserve-extra-different-zone.err
 	if $(TARGET) tests/errors/std-vec-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-vec-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-vec-push-in-different-zone.err 2>&1; then exit 1; fi

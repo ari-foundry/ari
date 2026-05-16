@@ -98,7 +98,16 @@ they need the broader non-local aggregate and allocation capability design.
    `drop vec` drops each current element and leaves buffer release to the zone,
    while overwrite and shrink helpers drop removed elements before reducing the
    live length. `vec.try_pop()` returns `Option<T>` for empty-aware last-element
-   move-out.
+   move-out. The small goal [std-vec-inferred-zone-growth] is now complete:
+   tracked local `std::vec::Vec<T>` / `std::Vec<T>` receiver provenance
+   synthesizes the same source-zone argument for `push`, `insert`,
+   one-argument `reserve`/`reserve_extra`, `extend_from_slice`, and `resize`.
+   Explicit `_in` forms remain available, and untracked manually assembled
+   handles still get a targeted diagnostic instead of a hidden allocation
+   capability.
+   Small goal [source-string-inferred-zone-growth]: consider mirroring the same
+   receiver-provenance convenience for source `std::string::String` growth and
+   append helpers once the Vec path has settled under library use.
    Source `std::mem::replace<T>` and `std::mem::swap<T>` now provide
    mutable-place value helpers for copyable scalar and plain Ari-layout
    aggregate values, with root prelude re-exports. They lower through the same

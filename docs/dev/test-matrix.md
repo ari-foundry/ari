@@ -361,6 +361,10 @@ Checklist:
       `push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in` share
       one private capacity/copy growth path, covered by
       `std-vec-growth-paths`
+- [x] tracked source `std::vec::Vec<T>` receiver locals infer the same source
+      zone for `push`, `insert`, one-argument `reserve`/`reserve_extra`,
+      `extend_from_slice`, and `resize`, while untracked receivers get a
+      targeted diagnostic instead of a hidden allocation capability
 - [x] source `std::vec::Vec<T>.as_slice()` returns a mutable `Slice<T>` view
       whose zone provenance is invalidated after reset/destroy
 - [x] source `std::vec::Vec<T>.copy_to(ref mut Zone)` copies the current

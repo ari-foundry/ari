@@ -99,6 +99,15 @@ not the final root `Vec[T]` method API. `set`, shrinking `resize_in`,
 before the handle forgets them; the explicit zone still releases the backing
 bytes. `try_pop()` returns `Option[T]`, using `None` for an empty handle instead
 of asserting.
+When the receiver is a tracked local `std::vec::Vec<T>` handle, the checker can
+infer that same source zone for common growth calls. `vec.push(value)` and
+`vec.insert(index, value)` lower to the grow-on-demand same-zone paths, while
+`vec.reserve(capacity)`, `vec.reserve_extra(additional)`,
+`vec.extend_from_slice(values)`, and `vec.resize(length, value)` synthesize the
+hidden zone argument from the handle's provenance. The explicit `_in` forms and
+two-argument `reserve`/`reserve_extra` calls remain available for code that
+wants to name the capability directly. Manually assembled untracked handles
+cannot use the inferred-zone forms.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
@@ -635,6 +644,11 @@ existing elements into a larger zone allocation when growth is needed and keep
 old storage under the zone's bulk lifetime. Dropping the source `Vec<T>` handle
 consumes it and drops each current element while leaving all backing storage
 under the explicit zone's bulk lifetime. Callers can still use
+the inferred-zone forms on tracked receiver locals:
+`push(value)`, `insert(index, value)`, `reserve(capacity)`,
+`reserve_extra(additional)`, `extend_from_slice(values)`, and
+`resize(length, value)` lower to those same same-zone operations. Callers can
+also keep using
 `vec.raw.data` with `ptr_store`, `ptr_load`, and `ptr_add` directly for
 lower-level experiments.
 `std::string::alloc_buffer(ref mut Zone, capacity)` is the analogous raw
