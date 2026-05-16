@@ -75,13 +75,16 @@ allocation runtime exists.
    fallthrough merge points. It rejects incompatible ownership states, live
    loop-local owners across jumps, and borrow-state changes that are not exact
    fixed points. Literal-true `break` exits now merge moved/dropped owner states
-   when every exit has already consumed the same owner. Further work is
-   precision, not basic loop-state tracking.
+   when every exit has already consumed the same owner, and `break` exit
+   merging can conservatively keep same-provenance borrows active when only
+   last-use release state differs across exits. Further work is precision, not
+   basic loop-state tracking.
    - [owner-widen] prove non-trivial next-iteration and fallthrough ownership
      fixed points where later iterations intentionally start from a changed but
      compatible state
-   - [borrow-widen] merge compatible borrow-state transitions beyond exact
-     snapshot equality without weakening source-borrow diagnostics
+   - [borrow-widen] extend same-provenance conservative borrow merging to
+     next-iteration and fallthrough fixed points without weakening source-borrow
+     diagnostics
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

@@ -8,7 +8,7 @@
 
 namespace ari {
 
-static bool state_snapshot_key_is_field(const std::string& key) {
+bool state_snapshot_key_is_field(const std::string& key) {
     return key.find("#field:") != std::string::npos;
 }
 
@@ -349,6 +349,17 @@ static bool field_borrow_counts_equal(
     return true;
 }
 
+static void merge_field_borrow_counts_conservatively(
+    std::map<std::string, LocalInfo::FieldBorrowCounts>& target,
+    const std::map<std::string, LocalInfo::FieldBorrowCounts>& source
+) {
+    for (const auto& item : source) {
+        LocalInfo::FieldBorrowCounts& counts = target[item.first];
+        counts.immutable = std::max(counts.immutable, item.second.immutable);
+        counts.mutable_ = std::max(counts.mutable_, item.second.mutable_);
+    }
+}
+
 bool state_snapshot_entry_borrow_state_equal(const StateSnapshotEntry& left,
                                              const StateSnapshotEntry& right) {
     return left.immutable_borrows == right.immutable_borrows &&
@@ -359,6 +370,22 @@ bool state_snapshot_entry_borrow_state_equal(const StateSnapshotEntry& left,
            left.borrow_source_mutable == right.borrow_source_mutable &&
            left.borrow_sources_released == right.borrow_sources_released &&
            borrow_sources_equal(left.aggregate_borrow_sources, right.aggregate_borrow_sources);
+}
+
+bool merge_state_snapshot_entry_borrow_state_conservatively(StateSnapshotEntry& target,
+                                                            const StateSnapshotEntry& source) {
+    if (state_snapshot_entry_borrow_state_equal(target, source)) return true;
+    if (target.borrow_source != source.borrow_source ||
+        target.borrow_source_path != source.borrow_source_path ||
+        target.borrow_source_mutable != source.borrow_source_mutable ||
+        !borrow_sources_equal(target.aggregate_borrow_sources, source.aggregate_borrow_sources)) {
+        return false;
+    }
+    target.immutable_borrows = std::max(target.immutable_borrows, source.immutable_borrows);
+    target.mutable_borrows = std::max(target.mutable_borrows, source.mutable_borrows);
+    merge_field_borrow_counts_conservatively(target.field_borrows, source.field_borrows);
+    target.borrow_sources_released = target.borrow_sources_released && source.borrow_sources_released;
+    return true;
 }
 
 std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& left,

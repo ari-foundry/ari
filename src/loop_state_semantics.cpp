@@ -49,8 +49,8 @@ std::optional<std::string> merge_loop_exit_state_snapshot(
             }
             item.second.state = merged_unavailable_owner_state(item.second.state, actual.state);
         }
-        if (item.first.find("#field:") != std::string::npos) continue;
-        if (!state_snapshot_entry_borrow_state_equal(item.second, actual)) {
+        if (state_snapshot_key_is_field(item.first)) continue;
+        if (!merge_state_snapshot_entry_borrow_state_conservatively(item.second, actual)) {
             return "binding '" + item.first + "' has incompatible borrow states";
         }
     }

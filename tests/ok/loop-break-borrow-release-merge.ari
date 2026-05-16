@@ -1,0 +1,22 @@
+fn inspect(value: ref i64) -> i64 {
+  return 3;
+}
+
+fn main() -> i64 {
+  var number = 7;
+  let shared = ref number;
+  let use_shared = number == 7;
+  var total = 0;
+
+  while true {
+    if use_shared {
+      total = total + inspect(shared);
+      break;
+    } else {
+      break;
+    }
+  }
+
+  return total + number;
+}
+
