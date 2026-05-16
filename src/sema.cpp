@@ -2165,6 +2165,18 @@ private:
         return same_type(value_qualified_type(left), value_qualified_type(right));
     }
 
+    static bool can_weaken_mut_receiver_to_shared(const IrType& expected, const IrType& actual) {
+        return expected.qualifier == TypeQualifier::Ref &&
+               actual.qualifier == TypeQualifier::MutRef &&
+               same_receiver_base_type(expected, actual);
+    }
+
+    static void weaken_mut_receiver_to_shared_if_needed(IrExpr& receiver, const IrType& expected) {
+        if (!can_weaken_mut_receiver_to_shared(expected, receiver.type)) return;
+        receiver.type = expected;
+        receiver.mutable_borrow = false;
+    }
+
     static bool borrowed_receiver_matches_value(const IrType& expected,
                                                 const IrType& receiver_type,
                                                 bool& mutable_borrow) {
@@ -18506,6 +18518,7 @@ private:
             receiver = check_expr(*borrow_expr);
         }
 
+        weaken_mut_receiver_to_shared_if_needed(*receiver, sig.params[0]);
         coerce_expr_to_expected(*receiver, sig.params[0]);
         require_assignable(expr.loc, sig.params[0], receiver->type);
 
@@ -18962,6 +18975,7 @@ private:
             receiver = check_expr(*borrow_expr);
         }
 
+        weaken_mut_receiver_to_shared_if_needed(*receiver, sig.params[0]);
         coerce_expr_to_expected(*receiver, sig.params[0]);
         require_assignable(expr.loc, sig.params[0], receiver->type);
 

@@ -265,6 +265,11 @@ diagnostics.
    with the control-flow helpers rather than adding one-off `sema.cpp` special
    cases, so expression-valued `if`/`match` arms can use those stop calls while
    reachable arms determine the result type.
+   Method receiver borrow weakening now lets a `ref mut Self` receiver call
+   `ref Self` methods directly, including trait-qualified calls. This keeps
+   source `std` internals from duplicating read-only predicates inside mutable
+   methods while preserving the stricter explicit borrow rules for ordinary
+   borrow-valued bindings.
    Source `std::cmp` now has small generic value helpers
    (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
    re-exports for ordinary library code. This covers another ordinary-library
@@ -316,9 +321,6 @@ diagnostics.
      allocator-backed root handle layout, allocator/capability construction,
      move-only ownership rules for the root handle, and integration with heap
      release.
-     Small follow-up: once receiver borrow coercions are available, simplify
-     source std internals so `ref mut Self` methods can reuse borrowed
-     `ref Self` predicates without direct field checks.
    - [owned-box-release] connect the allocator-backed unique `Box[T]` Drop path
      to the heap-storage release contract once that root handle exists. The
      current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract

@@ -1,0 +1,36 @@
+struct Cell {
+  mut value: i64,
+}
+
+trait Peek {
+  fn peek(self: ref Self) -> i64
+}
+
+impl Peek for Cell {
+  fn peek(self: ref Self) -> i64 {
+    self.value + 20
+  }
+}
+
+impl Cell {
+  fn read(self: ref Self) -> i64 {
+    self.value
+  }
+
+  fn bump_then_peek(self: ref mut Self) -> i64 {
+    self.value = self.value + 1;
+    return self.read();
+  }
+
+  fn bump_then_trait_peek(self: ref mut Self) -> i64 {
+    self.value = self.value + 1;
+    return Peek::peek(self);
+  }
+}
+
+fn main() -> i64 {
+  var cell = Cell { value: 10 };
+  let inherent = cell.bump_then_peek();
+  let qualified = cell.bump_then_trait_peek();
+  return inherent + qualified;
+}

@@ -3081,6 +3081,9 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-reborrow-paths.ari -o $(BUILD_DIR)/errors/borrow-reborrow-paths.raw
 	$(BUILD_DIR)/errors/borrow-reborrow-paths.raw; code=$$?; test $$code -eq 61
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-reborrow-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-reborrow-paths.elf; $(BUILD_DIR)/errors/borrow-reborrow-paths.elf; code=$$?; test $$code -eq 61; fi
+	$(TARGET) --freestanding tests/ok/method-ref-mut-to-shared-receiver.ari -o $(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.raw
+	$(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.raw; code=$$?; test $$code -eq 43
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/method-ref-mut-to-shared-receiver.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.elf; $(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.elf; code=$$?; test $$code -eq 43; fi
 	$(TARGET) --freestanding tests/ok/borrow-control-flow-result.ari -o $(BUILD_DIR)/errors/borrow-control-flow-result.raw
 	$(BUILD_DIR)/errors/borrow-control-flow-result.raw; code=$$?; test $$code -eq 4
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-control-flow-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-control-flow-result.elf; $(BUILD_DIR)/errors/borrow-control-flow-result.elf; code=$$?; test $$code -eq 4; fi

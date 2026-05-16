@@ -795,6 +795,8 @@ Meanings:
 - `own T`: unique owner, moved or dropped exactly once
 - `ref T`: immutable borrow
 - `ref mut T`: exclusive mutable borrow; `mut ref T` is an equivalent spelling
+  and can be weakened for method receivers when calling a read-only
+  `self: ref Self` method through a `self: ref mut Self` receiver
 - `ptr T`: raw pointer surface for FFI and explicit memory code
 - `T?`: nullable raw-pointer spelling for `ptr T`
 - `null`: nullable raw-pointer literal; it defaults to `ptr c_void` unless a

@@ -29,19 +29,19 @@ pub impl[T] std::boxed::Box[T] {
   }
 
   fn set(self: ref mut Self, value: T) -> void {
-    std::assert(has_data<T>(self.data));
+    std::assert(!self.is_empty());
     ptr_store(self.data, value);
   }
 
   fn replace(self: ref mut Self, value: T) -> T {
-    std::assert(has_data<T>(self.data));
+    std::assert(!self.is_empty());
     let previous = ptr_load(self.data);
     ptr_store(self.data, value);
     return previous;
   }
 
   fn take(self: ref mut Self) -> T {
-    std::assert(has_data<T>(self.data));
+    std::assert(!self.is_empty());
     let value = ptr_load(self.data);
     self.data = empty_data<T>();
     return value;
@@ -52,8 +52,8 @@ pub impl[T] std::boxed::Box[T] {
   }
 
   fn swap(self: ref mut Self, other: ref mut Self) -> void {
-    std::assert(has_data<T>(self.data));
-    std::assert(has_data<T>(other.data));
+    std::assert(!self.is_empty());
+    std::assert(!other.is_empty());
     let temporary = ptr_load(self.data);
     ptr_store(self.data, ptr_load(other.data));
     ptr_store(other.data, temporary);

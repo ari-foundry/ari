@@ -130,6 +130,9 @@ Rules currently checked:
 - fields behind a `ref Struct` parameter can be read through the borrow, and
   fields behind a `ref mut Struct` parameter can also be assigned through the
   borrow, subject to the struct field's own `mut` marker
+- inside a method with `self: ref mut Self`, read-only methods whose receiver is
+  `self: ref Self` can be called directly through `self`; this also applies to
+  trait-qualified calls such as `Trait::method(self)`
 - a named borrow keeps the source borrowed until its last visible use in the
   current straight-line statement scope, or until the binding's block exits
   when the checker cannot shorten it
