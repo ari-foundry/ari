@@ -153,7 +153,8 @@ read-back validation, including non-V0 metadata-version and duplicate-record
 rejection. Source-snapshot module cache emission/use is covered here too, with
 stale cfg, source-hash, import-resolution, AST declaration-fingerprint, and
 AST declaration-payload rejection checks plus malformed duplicate source-record,
-AST-summary, and summary count/payload disagreement rejection.
+AST-summary, IR-summary, summary count/payload disagreement, and mismatched
+IR lowered-function surface rejection.
 
 `make check-structs` runs struct and ADT-focused tests for struct declarations,
 generic struct field resolution, named struct literals, tuple-struct

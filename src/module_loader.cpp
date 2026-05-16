@@ -4,6 +4,7 @@
 #include "lexer.hpp"
 #include "module_ast_summary.hpp"
 #include "module_cache.hpp"
+#include "module_ir_summary.hpp"
 #include "module_metadata.hpp"
 #include "module_path.hpp"
 #include "parser.hpp"
@@ -143,6 +144,26 @@ void append_program(Program& dst, Program&& src) {
     move_append(dst.impls, src.impls);
 }
 
+bool is_summary_cached_executable_function(const FunctionDecl& fn) {
+    return !fn.meta && !fn.is_extern && fn.has_body && fn.has_body_summary && fn.generics.empty();
+}
+
+void require_ir_summary_covers_ast_summary_functions(const Program& declarations,
+                                                     const ModuleCacheIrSummary& summary,
+                                                     const std::string& path) {
+    std::vector<ModuleCacheIrFunctionSummary> ir_functions =
+        materialize_module_cache_ir_summary_functions(summary, path);
+    std::set<std::string> lowered_function_names;
+    for (const auto& fn : ir_functions) lowered_function_names.insert(fn.name);
+
+    for (const auto& fn : declarations.functions) {
+        if (!is_summary_cached_executable_function(fn)) continue;
+        if (lowered_function_names.count(fn.name)) continue;
+        throw CompileError("module cache IR summary for '" + path +
+                           "' is missing lowered function '" + fn.name + "'");
+    }
+}
+
 ParsedModuleFile parse_file_in_module(const std::string& path,
                                       const std::vector<std::string>& module_path,
                                       const std::set<std::string>& cfg_features,
@@ -158,6 +179,14 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
             if (summary) {
                 Program declarations = materialize_module_cache_ast_summary_declarations(*summary, path);
                 if (can_load_module_cache_ast_summary_declarations(declarations)) {
+                    const ModuleCacheIrSummary* ir_summary =
+                        find_module_cache_ir_summary(*input_cache, path);
+                    if (ir_summary) {
+                        require_ir_summary_covers_ast_summary_functions(
+                            declarations,
+                            *ir_summary,
+                            path);
+                    }
                     return ParsedModuleFile{
                         std::move(declarations),
                         summary->content_hash,

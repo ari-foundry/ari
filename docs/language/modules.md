@@ -353,10 +353,13 @@ function surface, body shape, and operand-tree payload for each source. The V0
 IR sidecar requires both the body-shape section and the operand-tree section.
 They are validated as part of cache parsing: the payload header, hash, required
 body payload sections, and function count must agree with the cache record, and
-the source hash must still match the embedded metadata. Today the module loader
-still uses AST summaries to decide whether a dependency can skip parsing; the IR
-sidecar is the reserved V0 bridge for future executable bodies that no longer
-fit in the compact source-level AST summary.
+the source hash must still match the embedded metadata. When a dependency can
+skip parsing through its AST summary and a matching IR sidecar is present, the
+loader also parses the lowered function surface from that sidecar and checks
+that summary-backed non-generic free functions are present there. This keeps the
+AST skip path tied to the sema-produced IR surface before full IR body
+materialization exists. The IR sidecar remains the reserved V0 bridge for future
+executable bodies that no longer fit in the compact source-level AST summary.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant
@@ -390,7 +393,9 @@ can do the same when every body has a supported summary payload. Dependencies
 with future unsupported executable bodies or unsupported constant initializer
 summaries still parse the cached source snapshot. The AST summary records and
 validated IR sidecars together form the bridge toward a future IR-materialization
-cache path for language forms that outgrow source-level body summaries.
+cache path for language forms that outgrow source-level body summaries; current
+cache use already rejects an IR sidecar whose lowered function surface no longer
+covers an AST-summary-loaded executable dependency function.
 
 ## Nested Modules
 

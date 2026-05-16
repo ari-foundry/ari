@@ -529,6 +529,9 @@ Checklist:
       records with required lowered body-shape and operand-tree payloads, and
       validates duplicate, version, hash, and function-count mismatches when
       present
+- [x] AST-summary cache skip parses matching IR sidecars and rejects lowered
+      free-function surfaces that no longer cover summary-loaded executable
+      bodies
 - [x] AST summary records include declaration fingerprints and declaration
       payloads, then reject tampered fingerprints, payloads, or count/payload
       disagreement

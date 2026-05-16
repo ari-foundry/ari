@@ -114,16 +114,17 @@ body that was checked only with the owner alive.
    checking. The body payload serializer is split from the sidecar record layer,
    and cache parsing validates duplicate, header-version, hash, source-hash,
    required body-section, and function-count mismatches when sidecars are
-   present. The loader still uses AST summaries for dependency parse skipping,
-   so the remaining work is the actual IR materialization path for future
-   executable bodies that cannot round-trip through the compact AST summary
-   format.
-   - [ir-materialize] feed future IR-summary declarations/bodies into the
-     module loader for dependencies whose executable function or impl bodies
-     use forms outside the AST summary subset
-   - [cache-skip] once IR materialization consumes sidecars, avoid reparsing
-     those dependencies when metadata and source hashes match the current
-     source graph and cfg/search-path inputs
+   present. The loader now parses validated IR sidecars on the AST-summary
+   dependency-skip path and rejects sidecars whose lowered free-function surface
+   no longer covers the AST-summary executable bodies. The remaining work is the
+   actual IR body materialization path for future executable bodies that cannot
+   round-trip through the compact AST summary format.
+   - [ir-body-materialize] materialize validated IR-summary operand-tree bodies
+     for dependencies whose executable function or impl bodies use forms
+     outside the AST summary subset
+   - [cache-skip] once IR body materialization supplies those bodies, skip
+     reparsing the cached source snapshot for such dependencies when metadata
+     and source hashes match the current source graph and cfg/search-path inputs
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
