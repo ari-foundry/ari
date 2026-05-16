@@ -4253,10 +4253,15 @@ private:
             type.array_size = ast_type.array_size;
             for (const auto& arg : ast_type.args) type.args.push_back(resolve_executable_type(arg));
             for (std::size_t i = 0; i < type.array_size; ++i) {
+                require_root_vector_runtime_abi(ast_type.args[i].loc, type.args[i], "a function pointer parameter");
                 if (is_void_value_type(type.args[i])) {
                     fail(ast_type.args[i].loc, "function pointer parameter cannot have void type");
                 }
             }
+            require_root_vector_runtime_abi(
+                ast_type.args[type.array_size].loc,
+                type.args[type.array_size],
+                "a function pointer return type");
         } else if (type.name == "i8") {
             reject_type_args(ast_type);
             type.primitive = IrPrimitiveKind::I8;

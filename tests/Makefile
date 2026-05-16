@@ -2915,6 +2915,10 @@ check-function-errors: $(TARGET)
 	grep -Fq "root Vec[T] cannot be used as a function parameter until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-param-runtime-abi.err
 	if $(TARGET) tests/errors/vector-function-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err 2>&1; then exit 1; fi
 	grep -Fq "root Vec[T] cannot be used as a function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err
+	if $(TARGET) tests/errors/vector-function-pointer-param-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-pointer-param-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-pointer-param-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as a function pointer parameter until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-pointer-param-runtime-abi.err
+	if $(TARGET) tests/errors/vector-function-pointer-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as a function pointer return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.err
 	if $(TARGET) tests/errors/function-param-pattern.ari -o $(BUILD_DIR)/functions/errors/function-param-pattern.elf >$(BUILD_DIR)/functions/errors/function-param-pattern.err 2>&1; then exit 1; fi
 	grep -q "tuple binding pattern requires a tuple value, got i64" $(BUILD_DIR)/functions/errors/function-param-pattern.err
 	if $(TARGET) tests/errors/function-overload-params.ari -o $(BUILD_DIR)/functions/errors/function-overload-params.elf >$(BUILD_DIR)/functions/errors/function-overload-params.err 2>&1; then exit 1; fi
