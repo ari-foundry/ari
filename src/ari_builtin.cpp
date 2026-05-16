@@ -66,6 +66,18 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::alloc", "ari_builtin_zone_alloc"},
         {"zone::alloc", "ari_builtin_zone_alloc"},
         {"std::zone::alloc", "ari_builtin_zone_alloc"},
+        {"allocation_zone", "ari_builtin_zone_allocation_zone"},
+        {"std::allocation_zone", "ari_builtin_zone_allocation_zone"},
+        {"zone::allocation_zone", "ari_builtin_zone_allocation_zone"},
+        {"std::zone::allocation_zone", "ari_builtin_zone_allocation_zone"},
+        {"allocation_size", "ari_builtin_zone_allocation_size"},
+        {"std::allocation_size", "ari_builtin_zone_allocation_size"},
+        {"zone::allocation_size", "ari_builtin_zone_allocation_size"},
+        {"std::zone::allocation_size", "ari_builtin_zone_allocation_size"},
+        {"allocation_align", "ari_builtin_zone_allocation_align"},
+        {"std::allocation_align", "ari_builtin_zone_allocation_align"},
+        {"zone::allocation_align", "ari_builtin_zone_allocation_align"},
+        {"std::zone::allocation_align", "ari_builtin_zone_allocation_align"},
         {"string::alloc_buffer", "ari_builtin_string_alloc_buffer"},
         {"std::string::alloc_buffer", "ari_builtin_string_alloc_buffer"},
         {"string::with_capacity", "ari_builtin_string_with_capacity"},
@@ -119,6 +131,9 @@ bool is_ari_builtin_symbol(const std::string& symbol) {
            symbol == "ari_builtin_read_line_owned" ||
            symbol == "ari_builtin_zone_create" ||
            symbol == "ari_builtin_zone_alloc" ||
+           symbol == "ari_builtin_zone_allocation_zone" ||
+           symbol == "ari_builtin_zone_allocation_size" ||
+           symbol == "ari_builtin_zone_allocation_align" ||
            symbol == "ari_builtin_string_alloc_buffer" ||
            symbol == "ari_builtin_string_with_capacity" ||
            symbol == "ari_builtin_string_new" ||
@@ -164,6 +179,9 @@ std::optional<std::string> ari_builtin_freestanding_blocked_feature(const std::s
     }
     if (*symbol == "ari_builtin_zone_create" ||
         *symbol == "ari_builtin_zone_alloc" ||
+        *symbol == "ari_builtin_zone_allocation_zone" ||
+        *symbol == "ari_builtin_zone_allocation_size" ||
+        *symbol == "ari_builtin_zone_allocation_align" ||
         *symbol == "ari_builtin_string_alloc_buffer" ||
         *symbol == "ari_builtin_string_with_capacity" ||
         *symbol == "ari_builtin_string_new" ||

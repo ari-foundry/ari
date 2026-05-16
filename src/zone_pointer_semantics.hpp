@@ -65,6 +65,8 @@ std::optional<std::string> zone_pointer_invalid_error(const std::string& pointer
                                                       const LocalInfo& pointer,
                                                       const ZonePointerLocalAdapter& locals);
 bool mark_zone_reset_call(const IrExpr& call, const ZonePointerLocalAdapter& locals);
+bool zone_metadata_extern_builtin_allows_zone_pointer_argument(const std::string& function_name,
+                                                               std::size_t arg_index);
 bool temporary_zone_source_from_expr(const IrExpr& value,
                                      const ZonePointerSourceResolver& resolver,
                                      const ZonePointerLocalAdapter& locals,

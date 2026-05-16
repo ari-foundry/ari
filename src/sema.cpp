@@ -18631,7 +18631,8 @@ private:
                 const char* escape_context = sig.extern_abi == "ari"
                     ? "extern ari builtin call argument"
                     : "extern C call argument";
-                if (!std_string_extern_builtin_allows_zone_pointer_argument(function_name, i)) {
+                if (!std_string_extern_builtin_allows_zone_pointer_argument(function_name, i) &&
+                    !zone_metadata_extern_builtin_allows_zone_pointer_argument(function_name, i)) {
                     require_no_zone_pointer_escape(expr.args[i]->loc, *arg, escape_context);
                 }
             }

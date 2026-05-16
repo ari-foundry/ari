@@ -251,6 +251,16 @@ bool mark_zone_reset_call(const IrExpr& call, const ZonePointerLocalAdapter& loc
     return true;
 }
 
+bool zone_metadata_extern_builtin_allows_zone_pointer_argument(const std::string& function_name,
+                                                               std::size_t arg_index) {
+    if (arg_index != 0) return false;
+    std::optional<std::string> builtin_symbol = ari_builtin_symbol_for_source_name(function_name);
+    return builtin_symbol &&
+           (*builtin_symbol == "ari_builtin_zone_allocation_zone" ||
+            *builtin_symbol == "ari_builtin_zone_allocation_size" ||
+            *builtin_symbol == "ari_builtin_zone_allocation_align");
+}
+
 bool temporary_zone_source_from_expr(const IrExpr& value,
                                      const ZonePointerSourceResolver& resolver,
                                      const ZonePointerLocalAdapter& locals,

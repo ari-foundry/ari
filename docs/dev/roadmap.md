@@ -59,22 +59,27 @@ source Box/String/Vec/Slice/Option/Result/cmp/mem/fmt/IO contracts are covered,
 and source Vec/String growth can infer a tracked receiver's zone without
 inventing an ambient heap.
 
-1. Design zone allocation-header metadata before making runtime growth recover
-   allocation capabilities from raw pointers.
-   The current 0.x source-std implementation uses semantic provenance to
-   synthesize same-zone arguments for tracked source Vec/String receiver locals.
-   A runtime header design such as `[zone metadata][user allocation]`, where
-   growth can recover the owning zone from a pointer-adjacent header, needs a
-   deliberate ABI contract before it replaces or supplements sema provenance.
-   - [zone-header-layout] define the host and freestanding allocation-header
-     layout, including stored zone pointer, requested size/capacity metadata,
-     payload alignment, and the exact user pointer returned by `zone::alloc`.
-   - [zone-header-builtins] add narrow builtin operations for recovering the
-     allocation zone/header from `ptr T` without exposing unsafe pointer math as
-     normal source API.
-   - [zone-header-migration] preserve existing reset/destroy diagnostics and
-     source-handle provenance while deciding whether zero-capacity handles keep
-     a null pointer or a sentinel header.
+Zone allocation-header metadata is fixed for the host 0.x ABI and is no longer
+tracked as active Near-Term work. Every non-empty host `zone::alloc` payload has
+a 24-byte header immediately before the returned user pointer: payload size at
+`ptr - 24`, requested alignment at `ptr - 16`, and the raw zone handle at
+`ptr - 8`. `zone::allocation_zone`, `zone::allocation_size`, and
+`zone::allocation_align` expose that metadata as narrow Ari builtins, while
+zero-capacity source handles may still keep null buffer pointers and
+reset/destroy diagnostics continue to use semantic provenance. Freestanding
+zone allocation remains deliberately rejected until a raw-backend allocation
+runtime exists.
+
+1. Improve loop fixed-point precision beyond exact snapshots.
+   The near-term loop checker now tracks ownership and borrow state at
+   `break`, `continue`, zero-iteration, literal-true next-iteration, and
+   fallthrough merge points. It rejects incompatible ownership states, live
+   loop-local owners across jumps, and borrow-state changes that are not exact
+   fixed points. Further work is precision, not basic loop-state tracking.
+   - [owner-widen] prove non-trivial ownership fixed points where later
+     iterations intentionally start from a changed but compatible state
+   - [borrow-widen] merge compatible borrow-state transitions beyond exact
+     snapshot equality without weakening source-borrow diagnostics
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -98,17 +103,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [cache-skip] once IR summaries exist, avoid reparsing those dependencies
      when metadata and source hashes match the current source graph and
      cfg/search-path inputs
-2. Improve loop fixed-point precision beyond exact snapshots.
-   The near-term loop checker now tracks ownership and borrow state at
-   `break`, `continue`, zero-iteration, literal-true next-iteration, and
-   fallthrough merge points. It rejects incompatible ownership states, live
-   loop-local owners across jumps, and borrow-state changes that are not exact
-   fixed points. Further work is precision, not basic loop-state tracking.
-   - [owner-widen] prove non-trivial ownership fixed points where later
-     iterations intentionally start from a changed but compatible state
-   - [borrow-widen] merge compatible borrow-state transitions beyond exact
-     snapshot equality without weakening source-borrow diagnostics
-3. Extend the meta AST evaluator beyond the lint-stable constructor subset.
+2. Extend the meta AST evaluator beyond the lint-stable constructor subset.
    Near-Term `ast -> ast` macros can generate declaration, expression, pattern,
    and type AST output through explicit constructors and can inspect declaration
    input by kind, name, count, and visibility. Keep richer compile-time AST

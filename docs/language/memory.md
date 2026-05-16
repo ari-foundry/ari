@@ -383,6 +383,9 @@ Available functions:
 zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
+zone::allocation_zone(data: ptr u8) -> ptr c_void
+zone::allocation_size(data: ptr u8) -> i64
+zone::allocation_align(data: ptr u8) -> i64
 zone::alloc<T>(zone: ref mut Zone) -> ptr T
 zone::new<T>(zone: ref mut Zone, value: T) -> ptr T
 zone::scratch<T>(capacity: i64, value: T) -> ptr T
@@ -399,6 +402,18 @@ pointer; it is still allocation only. `zone::new<T>` allocates enough space for
 `T`, stores the provided value into that memory, and returns `ptr T`. It is
 placement construction only: it does not register a destructor or track that the
 zone contains a live `T`.
+
+On the LLVM host backend, every non-empty `zone::alloc` result has a fixed
+24-byte allocation header immediately before the returned user pointer:
+`size` is stored at `ptr - 24`, requested `align` at `ptr - 16`, and the raw
+zone handle at `ptr - 8`. The user pointer remains the real payload pointer;
+normal loads, stores, and casts use it directly. `zone::allocation_zone`,
+`zone::allocation_size`, and `zone::allocation_align` expose that metadata
+without requiring source code to do pointer-adjacent arithmetic. The returned
+zone handle is opaque (`ptr c_void`) and is meant for capability recovery in
+runtime helpers, not for bypassing the typed `Zone` API. Empty source String
+and Vec buffers may still use a null data pointer, so metadata queries require
+a non-null allocation pointer.
 
 `zone::scratch<T>(capacity, value)` is local-binding sugar for the common
 temporary-object case. It can only appear as the initializer of a local `let` or

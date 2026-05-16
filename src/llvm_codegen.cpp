@@ -6,6 +6,7 @@
 #include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "target.hpp"
+#include "zone_runtime_layout.hpp"
 
 #include <cctype>
 #include <cstddef>
@@ -61,6 +62,11 @@ static bool is_llvm_float_type(const IrType& type) {
     return type.primitive == IrPrimitiveKind::F32 ||
            type.primitive == IrPrimitiveKind::F64 ||
            type.primitive == IrPrimitiveKind::F128;
+}
+
+static bool is_void_value_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Void;
 }
 
 static int float_bits(const IrType& type) {
@@ -319,7 +325,7 @@ private:
     }
 
     std::string default_value(const IrType& type) const {
-        if (type.primitive == IrPrimitiveKind::Void) return "";
+        if (is_void_value_type(type)) return "";
         if (type.primitive == IrPrimitiveKind::Tuple ||
             type.primitive == IrPrimitiveKind::Array ||
             type.primitive == IrPrimitiveKind::Struct ||
@@ -371,6 +377,9 @@ private:
         }
         if (symbol == "ari_builtin_zone_alloc" || symbol == "ari_builtin_string_alloc_buffer") {
             return IrType{TypeQualifier::Ptr, IrPrimitiveKind::U8, "u8", {}, {}, {}, {}, loc};
+        }
+        if (symbol == "ari_builtin_zone_allocation_zone") {
+            return IrType{TypeQualifier::Ptr, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_context_arg" || symbol == "ari_builtin_read_line") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
@@ -432,6 +441,15 @@ private:
         std::string fmt_bool = string_ptr("%d");
         std::string empty = string_ptr("");
         std::string line_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_line_buffer, i64 0, i64 0)";
+        const std::string zone_struct_bytes = std::to_string(kZoneRuntimeZoneStructBytes);
+        const std::string zone_max_capacity = std::to_string(kZoneRuntimeMaxCreateCapacity);
+        const std::string zone_arena_scale = std::to_string(kZoneRuntimeArenaReserveScale);
+        const std::string zone_arena_slack = std::to_string(kZoneRuntimeArenaReserveSlack);
+        const std::string zone_min_payload_align = std::to_string(kZoneRuntimeMinimumPayloadAlign);
+        const std::string zone_header_bytes = std::to_string(kZoneAllocationHeaderBytes);
+        const std::string zone_header_zone_offset = std::to_string(kZoneAllocationHeaderZoneOffset);
+        const std::string zone_header_size_offset = std::to_string(kZoneAllocationHeaderSizeOffset);
+        const std::string zone_header_align_offset = std::to_string(kZoneAllocationHeaderAlignOffset);
 
         line("define " + runtime_visibility + "void @ari_context_init(i32 %argc, ptr %argv) {");
         line("entry:");
@@ -553,14 +571,18 @@ private:
 
         line("define " + runtime_visibility + "ptr @ari_builtin_zone_create(i64 %capacity) {");
         line("entry:");
-        line("  %bad.capacity = icmp sle i64 %capacity, 0");
+        line("  %nonpositive.capacity = icmp sle i64 %capacity, 0");
+        line("  %too.large.capacity = icmp ugt i64 %capacity, " + zone_max_capacity);
+        line("  %bad.capacity = or i1 %nonpositive.capacity, %too.large.capacity");
         line("  br i1 %bad.capacity, label %fail, label %alloc.data");
         line("alloc.data:");
-        line("  %data = call ptr @malloc(i64 %capacity)");
+        line("  %raw.scaled = mul i64 %capacity, " + zone_arena_scale);
+        line("  %raw.capacity = add i64 %raw.scaled, " + zone_arena_slack);
+        line("  %data = call ptr @malloc(i64 %raw.capacity)");
         line("  %data.null = icmp eq ptr %data, null");
         line("  br i1 %data.null, label %fail, label %alloc.zone");
         line("alloc.zone:");
-        line("  %zone = call ptr @malloc(i64 24)");
+        line("  %zone = call ptr @malloc(i64 " + zone_struct_bytes + ")");
         line("  %zone.null = icmp eq ptr %zone, null");
         line("  br i1 %zone.null, label %free.data, label %init");
         line("free.data:");
@@ -573,6 +595,10 @@ private:
         line("  store i64 0, ptr %offset.slot");
         line("  %data.slot = getelementptr i8, ptr %zone, i64 16");
         line("  store ptr %data, ptr %data.slot");
+        line("  %used.slot = getelementptr i64, ptr %zone, i64 3");
+        line("  store i64 0, ptr %used.slot");
+        line("  %raw.capacity.slot = getelementptr i64, ptr %zone, i64 4");
+        line("  store i64 %raw.capacity, ptr %raw.capacity.slot");
         line("  ret ptr %zone");
         line("fail:");
         line("  call void @exit(i32 1)");
@@ -597,22 +623,94 @@ private:
         line("load:");
         line("  %capacity.slot = getelementptr i64, ptr %zone, i64 0");
         line("  %capacity = load i64, ptr %capacity.slot");
-        line("  %offset.slot = getelementptr i64, ptr %zone, i64 1");
-        line("  %offset = load i64, ptr %offset.slot");
-        line("  %biased = add i64 %offset, %mask");
-        line("  %neg.align = sub i64 0, %align");
-        line("  %aligned = and i64 %biased, %neg.align");
-        line("  %new.offset = add i64 %aligned, %bytes");
-        line("  %overflow = icmp ult i64 %new.offset, %aligned");
-        line("  %too.big = icmp ugt i64 %new.offset, %capacity");
-        line("  %bad.size = or i1 %overflow, %too.big");
-        line("  br i1 %bad.size, label %fail, label %commit");
+        line("  %raw.offset.slot = getelementptr i64, ptr %zone, i64 1");
+        line("  %raw.offset = load i64, ptr %raw.offset.slot");
+        line("  %logical.used.slot = getelementptr i64, ptr %zone, i64 3");
+        line("  %logical.used = load i64, ptr %logical.used.slot");
+        line("  %raw.capacity.slot = getelementptr i64, ptr %zone, i64 4");
+        line("  %raw.capacity = load i64, ptr %raw.capacity.slot");
+        line("  %logical.new = add i64 %logical.used, %bytes");
+        line("  %logical.overflow = icmp ult i64 %logical.new, %logical.used");
+        line("  %logical.too.big = icmp ugt i64 %logical.new, %capacity");
+        line("  %bad.logical = or i1 %logical.overflow, %logical.too.big");
+        line("  br i1 %bad.logical, label %fail, label %layout");
+        line("layout:");
+        line("  %needs.min.align = icmp ult i64 %align, " + zone_min_payload_align);
+        line("  %effective.align = select i1 %needs.min.align, i64 " + zone_min_payload_align + ", i64 %align");
+        line("  %effective.mask = sub i64 %effective.align, 1");
+        line("  %payload.unaligned = add i64 %raw.offset, " + zone_header_bytes);
+        line("  %payload.unaligned.overflow = icmp ult i64 %payload.unaligned, %raw.offset");
+        line("  %payload.biased = add i64 %payload.unaligned, %effective.mask");
+        line("  %payload.biased.overflow = icmp ult i64 %payload.biased, %payload.unaligned");
+        line("  %neg.effective.align = sub i64 0, %effective.align");
+        line("  %payload.offset = and i64 %payload.biased, %neg.effective.align");
+        line("  %header.offset = sub i64 %payload.offset, " + zone_header_bytes);
+        line("  %raw.new = add i64 %payload.offset, %bytes");
+        line("  %raw.overflow = icmp ult i64 %raw.new, %payload.offset");
+        line("  %raw.too.big = icmp ugt i64 %raw.new, %raw.capacity");
+        line("  %bad.raw.0 = or i1 %payload.unaligned.overflow, %payload.biased.overflow");
+        line("  %bad.raw.1 = or i1 %raw.overflow, %raw.too.big");
+        line("  %bad.raw = or i1 %bad.raw.0, %bad.raw.1");
+        line("  br i1 %bad.raw, label %fail, label %commit");
         line("commit:");
-        line("  store i64 %new.offset, ptr %offset.slot");
+        line("  store i64 %raw.new, ptr %raw.offset.slot");
+        line("  store i64 %logical.new, ptr %logical.used.slot");
         line("  %data.slot = getelementptr i8, ptr %zone, i64 16");
         line("  %data = load ptr, ptr %data.slot");
-        line("  %out = getelementptr i8, ptr %data, i64 %aligned");
+        line("  %header = getelementptr i8, ptr %data, i64 %header.offset");
+        line("  %size.slot = getelementptr i8, ptr %header, i64 0");
+        line("  store i64 %bytes, ptr %size.slot");
+        line("  %align.slot = getelementptr i8, ptr %header, i64 8");
+        line("  store i64 %align, ptr %align.slot");
+        line("  %zone.header.slot = getelementptr i8, ptr %header, i64 16");
+        line("  store ptr %zone, ptr %zone.header.slot");
+        line("  %out = getelementptr i8, ptr %data, i64 %payload.offset");
         line("  ret ptr %out");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_zone_allocation_zone(ptr %data) {");
+        line("entry:");
+        line("  %null = icmp eq ptr %data, null");
+        line("  br i1 %null, label %fail, label %load");
+        line("load:");
+        line("  %zone.slot = getelementptr i8, ptr %data, i64 " + zone_header_zone_offset);
+        line("  %zone = load ptr, ptr %zone.slot");
+        line("  %zone.null = icmp eq ptr %zone, null");
+        line("  br i1 %zone.null, label %fail, label %ok");
+        line("ok:");
+        line("  ret ptr %zone");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_zone_allocation_size(ptr %data) {");
+        line("entry:");
+        line("  %null = icmp eq ptr %data, null");
+        line("  br i1 %null, label %fail, label %load");
+        line("load:");
+        line("  %size.slot = getelementptr i8, ptr %data, i64 " + zone_header_size_offset);
+        line("  %size = load i64, ptr %size.slot");
+        line("  ret i64 %size");
+        line("fail:");
+        line("  call void @exit(i32 1)");
+        line("  unreachable");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_zone_allocation_align(ptr %data) {");
+        line("entry:");
+        line("  %null = icmp eq ptr %data, null");
+        line("  br i1 %null, label %fail, label %load");
+        line("load:");
+        line("  %align.slot = getelementptr i8, ptr %data, i64 " + zone_header_align_offset);
+        line("  %align = load i64, ptr %align.slot");
+        line("  ret i64 %align");
         line("fail:");
         line("  call void @exit(i32 1)");
         line("  unreachable");
@@ -734,6 +832,8 @@ private:
         line("reset:");
         line("  %offset.slot = getelementptr i64, ptr %zone, i64 1");
         line("  store i64 0, ptr %offset.slot");
+        line("  %used.slot = getelementptr i64, ptr %zone, i64 3");
+        line("  store i64 0, ptr %used.slot");
         line("  ret void");
         line("fail:");
         line("  call void @exit(i32 1)");
@@ -855,7 +955,7 @@ private:
                 }
                 call += ")";
 
-                if (method.result_type.primitive == IrPrimitiveKind::Void) {
+                if (is_void_value_type(method.result_type)) {
                     line("  " + call);
                     line("  ret void");
                 } else {
@@ -1019,7 +1119,7 @@ private:
 
         emit_statements(fn.body);
         if (!block_terminated_) {
-            if (fn.return_type.primitive == IrPrimitiveKind::Void) line("  ret void");
+            if (is_void_value_type(fn.return_type)) line("  ret void");
             else line("  ret " + llvm_type(fn.return_type) + " " + default_value(fn.return_type));
         }
         line("}");
@@ -2832,7 +2932,7 @@ private:
         }
         call += ")";
 
-        if (expr.type.primitive == IrPrimitiveKind::Void) {
+        if (is_void_value_type(expr.type)) {
             line("  " + call);
             return Value{"void", "", expr.type};
         }
@@ -3134,7 +3234,7 @@ private:
             call += args[i].type + " " + args[i].name;
         }
         call += ")";
-        if (result.primitive == IrPrimitiveKind::Void) {
+        if (is_void_value_type(result)) {
             line("  " + call);
             return Value{"void", "", result};
         }
@@ -3211,7 +3311,7 @@ private:
             call += args[i].type + " " + args[i].name;
         }
         call += ")";
-        if (result.primitive == IrPrimitiveKind::Void) {
+        if (is_void_value_type(result)) {
             line("  " + call);
             if (is_diverging_builtin_call(expr)) {
                 line("  unreachable");

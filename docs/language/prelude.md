@@ -589,6 +589,9 @@ Zone
 zone::create(capacity: i64) -> own Zone
 zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
+zone::allocation_zone(data: ptr u8) -> ptr c_void
+zone::allocation_size(data: ptr u8) -> i64
+zone::allocation_align(data: ptr u8) -> i64
 zone::alloc<T>(zone: ref mut Zone) -> ptr T
 zone::new<T>(zone: ref mut Zone, value: T) -> ptr T
 zone::scratch<T>(capacity: i64, value: T) -> ptr T
@@ -615,14 +618,20 @@ automatically when its declaring scope falls through, before returns, and before
 rejected to avoid hiding the bulk free. Zone allocation is host-backed today;
 the freestanding backend rejects it until a raw-backend allocation runtime
 exists.
+Host zone allocations carry a compiler-defined 24-byte header immediately
+before the returned user pointer. `zone::allocation_zone`, `allocation_size`,
+and `allocation_align` recover the owning raw zone handle, requested byte size,
+and requested payload alignment from that header. These helpers are the
+intended low-level bridge for future runtime growth helpers that need to infer
+the allocation capability from a stored buffer pointer.
 Pointers allocated from a temporary zone are lexical too: returning them,
 storing them into longer-lived bindings or aggregates, or sending them through
 escape-prone calls is rejected with a diagnostic that names the pointer and the
 temporary zone.
 
 The source header `lib/std.arih` exposes the declaration-shaped zone API:
-`std::zone::create`, raw and typed `alloc`, `new`, `promote`, `reset`, and
-`destroy`. `zone::temp` and `zone::scratch` remain compiler-known lexical
+`std::zone::create`, raw and typed `alloc`, allocation-header metadata helpers,
+`new`, `promote`, `reset`, and `destroy`. `zone::temp` and `zone::scratch` remain compiler-known lexical
 helpers until source declarations can express their hidden lifetime cleanup.
 `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` is the raw
 vector-allocation seed. `std::vec::with_capacity<T>(ref mut Zone, capacity)`
