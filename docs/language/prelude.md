@@ -771,10 +771,15 @@ runtime length, so later vector length changes do not update an existing view.
 `view[start..end]` and `view[start..=end]` produce another `Slice[T]` with
 bounds checks against the source view; exclusive ranges allow empty slices when
 `start == end`, while inclusive ranges require the end index to name an
-existing element. The raw freestanding backend uses the same pointer/length
-metadata for local Slice indexing, indexed assignment, and range slicing. Slice
-patterns are still planned after the binding policy is nailed down.
-`len(view)`, `view.len()`, and `view.is_empty()` read the stored length.
+existing element. `first()`, `last()`, and `get(index)` are checked read-only
+element accessors over the stored pointer and length. `contains(value)`,
+`index_of(value)`, and `count(value)` scan comparable elements. `equals(view)`,
+`starts_with(view)`, and `ends_with(view)` compare against another borrowed
+`Slice[T]` view. The raw freestanding backend uses the same pointer/length
+metadata for local Slice indexing, indexed assignment, range slicing, and
+read-only Slice methods. Slice patterns are still planned after the binding
+policy is nailed down. `len(view)`, `view.len()`, and `view.is_empty()` read
+the stored length.
 
 Ranges are compiler-known two-field values:
 

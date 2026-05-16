@@ -23,6 +23,94 @@ pub fn slice[T](data: ptr T, len: i64) -> Slice[T] {
   return Slice<T> { data: data, len: len };
 }
 
+pub impl[T] Slice[T] {
+  fn first(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    return ptr_load(self.data);
+  }
+
+  fn last(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    return ptr_load(ptr_add(self.data, self.len - 1));
+  }
+
+  fn get(self: ref Self, index: i64) -> T {
+    std::assert(index >= 0);
+    std::assert(index < self.len);
+    return ptr_load(ptr_add(self.data, index));
+  }
+
+  fn index_of(self: ref Self, value: T) -> i64 {
+    var index = 0;
+    while index < self.len {
+      if ptr_load(ptr_add(self.data, index)) == value {
+        return index;
+      }
+      index = index + 1;
+    }
+    return -1;
+  }
+
+  fn contains(self: ref Self, value: T) -> bool {
+    return self.index_of(value) >= 0;
+  }
+
+  fn count(self: ref Self, value: T) -> i64 {
+    var total = 0;
+    var index = 0;
+    while index < self.len {
+      if ptr_load(ptr_add(self.data, index)) == value {
+        total = total + 1;
+      }
+      index = index + 1;
+    }
+    return total;
+  }
+
+  fn starts_with(self: ref Self, values: Slice[T]) -> bool {
+    if values.len > self.len {
+      return false;
+    }
+    var index = 0;
+    while index < values.len {
+      if ptr_load(ptr_add(self.data, index)) != values[index] {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
+  fn ends_with(self: ref Self, values: Slice[T]) -> bool {
+    if values.len > self.len {
+      return false;
+    }
+    let offset = self.len - values.len;
+    var index = 0;
+    while index < values.len {
+      if ptr_load(ptr_add(self.data, offset + index)) != values[index] {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+
+  fn equals(self: ref Self, values: Slice[T]) -> bool {
+    if self.len != values.len {
+      return false;
+    }
+    var index = 0;
+    while index < values.len {
+      if ptr_load(ptr_add(self.data, index)) != values[index] {
+        return false;
+      }
+      index = index + 1;
+    }
+    return true;
+  }
+}
+
 pub fn move[T](value: T) -> T;
 pub fn take[T](place: T) -> T;
 

@@ -349,10 +349,23 @@ check-prelude: $(TARGET)
 	grep -q "store i64 8" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 7" $(BUILD_DIR)/prelude/prelude-slice-view.ll
 	grep -q "store i64 5" $(BUILD_DIR)/prelude/prelude-slice-view.ll
+	$(TARGET) tests/ok/prelude-slice-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i64 @"_ARNv4impl15std__Slice_i64_8inherent5first"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i64 @"_ARNv4impl15std__Slice_i64_8inherent4last"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i64 @"_ARNv4impl15std__Slice_i64_8inherent3get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent8contains"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i64 @"_ARNv4impl15std__Slice_i64_8inherent8index_of"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i64 @"_ARNv4impl15std__Slice_i64_8inherent5count"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	$(TARGET) --freestanding tests/ok/prelude-slice-view.ari -o $(BUILD_DIR)/prelude/prelude-slice-view.raw
 	$(BUILD_DIR)/prelude/prelude-slice-view.raw; code=$$?; test $$code -eq 101
+	$(TARGET) --freestanding tests/ok/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.raw
+	$(BUILD_DIR)/prelude/prelude-slice-methods.raw; code=$$?; test $$code -eq 105
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-view.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-view.elf; $(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-slice-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf; $(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then \
 		$(TARGET) tests/ok/prelude-header-main.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-header-main.elf; \
 		$(BUILD_DIR)/prelude/prelude-header-main.elf >$(BUILD_DIR)/prelude/prelude-header-main.out; \

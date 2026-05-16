@@ -60,6 +60,15 @@ fn std::zone::destroy|zone lifecycle and invalidation tests; docs/dev/test-matri
 fn std::zone::new[T]|placement construction tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::promote[T]|scratch promotion tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::zone::reset|zone reset invalidation tests; docs/dev/test-matrix.md Explicit memory zones row
+method Slice[T]::contains|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::count|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::ends_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::equals|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::first|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::starts_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
 method std::boxed::Box[T]::as_ptr|check-prelude std-boxed-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::copy_to|check-prelude std-boxed-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::get|check-prelude std-boxed-box borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row

@@ -141,9 +141,9 @@ constructor subset documented in the language guide.
    the stored data pointer through provenance-preserving `as_ptr()` and
    `copy_to(ref mut Zone)` into a new target-zone handle; read-only metadata,
    read, search, Slice comparison, target-zone copy, and raw-pointer methods
-   borrow their receiver rather than copying the handle. Its `Drop` impl consumes the handle
-   and drops each current element while the explicit zone keeps responsibility
-   for releasing the backing storage. Runtime heap growth for
+   borrow their receiver rather than copying the handle. Its `Drop` impl
+   consumes the handle and drops each current element while the explicit zone
+   keeps responsibility for releasing the backing storage. Runtime heap growth for
    root/local `Vec[T]` and the root
    `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
@@ -185,7 +185,10 @@ constructor subset documented in the language guide.
    `Box[T]`/`std::Box[T]` spelling currently aliases the explicit-zone source
    `std::boxed::Box<T>` handle; `Unique[T]` stays reserved for policy
    compatibility, and `Shared[T]` / `Weak[T]` are reserved for
-   reference-counted ownership. New
+   reference-counted ownership. Source `Slice[T]` now has checked
+   `first`/`last`/`get`, element search, and borrowed `Slice[T]`
+   exact/prefix/suffix comparison methods so early library code can use
+   borrowed views without adding one-off helpers. New
    source `std` APIs are now guarded by `make check-std-api`, which compares the
    extracted public `lib/std` surface with `tests/std_api_manifest.txt` and
    requires a focused coverage note beside the API entry. Generic `Drop` impls
@@ -370,9 +373,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     `?`/`??` on the LLVM aggregate-enum path. `Slice[T]` is now a source `std`
     view struct implemented on both LLVM and the raw freestanding backend for
     `slice(data, len)`, `len(view)`, `view.len()`, `view.is_empty()`,
-    `view[index]`, `view[index] = value`, local array/Vec `as_slice()`, and
-    `view[start..end]` / `view[start..=end]` range slicing. It is non-owning
-    and still relies on explicit raw-pointer discipline.
+    `view[index]`, `view[index] = value`, local array/Vec `as_slice()`,
+    `view[start..end]` / `view[start..=end]` range slicing, checked
+    `first`/`last`/`get`, element search, and exact/prefix/suffix Slice
+    comparisons. It is non-owning and still relies on explicit raw-pointer
+    discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
     Allocator-backed unique `Box[T]` ownership remains promoted into the
