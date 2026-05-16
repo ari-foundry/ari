@@ -127,6 +127,48 @@ bool std_string_method_requires_same_zone_argument(const std::string& method_nam
            method_name == "resize_in";
 }
 
+std::optional<StdStringImplicitZoneMethod> std_string_implicit_zone_method_for_call(
+    const std::string& method_name,
+    std::size_t user_arg_count) {
+    if (method_name == "push" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"push_in", true};
+    }
+    if (method_name == "insert" && user_arg_count == 2) {
+        return StdStringImplicitZoneMethod{"insert_in", true};
+    }
+    if (method_name == "reserve" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"reserve", false};
+    }
+    if (method_name == "reserve_extra" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"reserve_extra", false};
+    }
+    if (method_name == "extend_from_slice" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"extend_from_slice_in", false};
+    }
+    if (method_name == "resize" && user_arg_count == 2) {
+        return StdStringImplicitZoneMethod{"resize_in", false};
+    }
+    if (method_name == "append_string" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"append_string_in", false};
+    }
+    if (method_name == "append_i64" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"append_i64_in", false};
+    }
+    if (method_name == "append_u64" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"append_u64_in", false};
+    }
+    if (method_name == "append_bool" && user_arg_count == 1) {
+        return StdStringImplicitZoneMethod{"append_bool_in", false};
+    }
+    if (method_name == "append_f32" && user_arg_count == 2) {
+        return StdStringImplicitZoneMethod{"append_f32_in", false};
+    }
+    if (method_name == "append_f64" && user_arg_count == 2) {
+        return StdStringImplicitZoneMethod{"append_f64_in", false};
+    }
+    return std::nullopt;
+}
+
 std::optional<std::string> std_string_same_zone_method_violation(
     const std::string& method_name,
     const IrType& receiver_type,

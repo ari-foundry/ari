@@ -123,6 +123,14 @@ byte search with `contains`, `index_of`, and `count`, `as_ptr`, `as_slice`,
 method-style `copy_to(ref mut Zone)`, and top-level
 `std::string::copy_to(ref value, ref mut Zone)`. The zone argument passed to a
 grow or append method must be the same source zone that created the handle.
+Tracked local `std::string::String` receivers can infer that zone for common
+growth and append calls: `push(byte)`, `insert(index, byte)`,
+`reserve(capacity)`, `reserve_extra(additional)`, `extend_from_slice(values)`,
+`resize(length, byte)`, `append_string(text)`, `append_i64(value)`,
+`append_u64(value)`, `append_bool(value)`, `append_f32(value, precision)`, and
+`append_f64(value, precision)` lower to the corresponding explicit same-zone
+methods. The explicit `_in` forms remain available when code should name the
+capability directly or when a handle was assembled without tracked provenance.
 Metadata, checked byte `first`/`last`/`get`, byte search, exact/prefix/suffix
 checks, `as_ptr`, and target-zone copy borrow the string handle instead of
 copying it. `String` is still an

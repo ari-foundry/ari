@@ -313,6 +313,11 @@ Checklist:
       and `append_f64_in` build through that same private byte-append growth path
       explicit-zone owned text for the values the future formatted-string
       surface needs first
+- [x] tracked source `std::string::String` receiver locals infer the same
+      source zone for `push`, `insert`, one-argument `reserve`/`reserve_extra`,
+      `extend_from_slice`, `resize`, and the non-`_in` append helpers, while
+      untracked receivers get a targeted diagnostic instead of a hidden
+      allocation capability
 - [x] expose the source `std::string::String` handle as root `String` and
       `std::String` while preserving zone reset/destroy invalidation
 - [x] `std::vec::with_capacity<T>(ref mut Zone, capacity)` wraps that pointer

@@ -1,0 +1,35 @@
+fn build(zone: ref mut Zone) -> String {
+  var text = std::string::new(zone, 0);
+  text.append_string("x");
+  text.append_i64(-7);
+  text.append_u64(8u64);
+  text.append_bool(true);
+  text.append_f32(1.25f32, 2);
+  text.append_f64(2.5f64, 1);
+
+  text.clear();
+  text.push(65u8);
+  text.append_string("ri");
+  text.reserve(6);
+  text.reserve_extra(3);
+  text.insert(1, 45u8);
+
+  var suffix: Vec[u8] = [33u8, 63u8];
+  text.extend_from_slice(suffix.as_slice());
+  text.resize(8, 46u8);
+  text.resize(6, 0u8);
+  return text;
+}
+
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var text = build(ref mut zone);
+  let total = text.len()
+    + (text.first() as i64)
+    + (text.last() as i64)
+    + (text.get(1) as i64)
+    + (text.get(2) as i64)
+    + (text.get(3) as i64);
+  zone::destroy(zone);
+  return total;
+}

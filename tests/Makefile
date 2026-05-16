@@ -281,8 +281,11 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent4last"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-first-last.ll
 	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent3get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -F -q 'define ptr @"_ARNv4impl19std__string__String8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
-	grep -q '_ARNv4impl19std__string__String8inherent4push' $(BUILD_DIR)/prelude/std-string-handle.ll
+	grep -q '_ARNv4impl19std__string__String8inherent7push_in' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-handle.ll
+	$(TARGET) tests/ok/std-string-fixed-push.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-fixed-push.ll
+	grep -q '_ARNv4impl19std__string__String8inherent4push' $(BUILD_DIR)/prelude/std-string-fixed-push.ll
+	grep -q '_ARNv4impl19std__string__String8inherent6insert' $(BUILD_DIR)/prelude/std-string-fixed-push.ll
 	$(TARGET) tests/ok/std-string-search.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-search.ll
 	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent8index_of"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
 	grep -F -q 'define i1 @"_ARNv4impl19std__string__String8inherent8contains"(ptr %arg0, i8 %arg1)' $(BUILD_DIR)/prelude/std-string-search.ll
@@ -312,6 +315,19 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl19std__string__String8inherent9resize_in' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv3std6string16grow_to_capacity' $(BUILD_DIR)/prelude/std-string-grow.ll
 	grep -q '_ARNv3std6string21ensure_spare_capacity' $(BUILD_DIR)/prelude/std-string-grow.ll
+	$(TARGET) tests/ok/std-string-implicit-zone.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent7reserve' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent13reserve_extra' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent7push_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent9insert_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent20extend_from_slice_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent9resize_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent16append_string_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent13append_i64_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent13append_u64_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent14append_bool_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent13append_f32_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
+	grep -q '_ARNv4impl19std__string__String8inherent13append_f64_in' $(BUILD_DIR)/prelude/std-string-implicit-zone.ll
 	$(TARGET) tests/ok/std-string-append.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_string_in' $(BUILD_DIR)/prelude/std-string-append.ll
 	grep -q 'append_i64_in' $(BUILD_DIR)/prelude/std-string-append.ll
@@ -507,6 +523,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-box-root.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-box-root.elf; $(BUILD_DIR)/prelude/prelude-box-root.elf; code=$$?; test $$code -eq 43; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; code=$$?; test $$code -eq 6; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-handle.elf; $(BUILD_DIR)/prelude/std-string-handle.elf; code=$$?; test $$code -eq 153; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-fixed-push.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-fixed-push.elf; $(BUILD_DIR)/prelude/std-string-fixed-push.elf; code=$$?; test $$code -eq 179; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-first-last.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-first-last.elf; $(BUILD_DIR)/prelude/std-string-first-last.elf; code=$$?; test $$code -eq 239; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-search.elf; $(BUILD_DIR)/prelude/std-string-search.elf; code=$$?; test $$code -eq 77; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-prefix-suffix.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; $(BUILD_DIR)/prelude/std-string-prefix-suffix.elf; code=$$?; test $$code -eq 143; fi
@@ -515,6 +532,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-copy-to-method.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; $(BUILD_DIR)/prelude/std-string-copy-to-method.elf; code=$$?; test $$code -eq 104; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-from-slice-in.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; $(BUILD_DIR)/prelude/std-string-from-slice-in.elf; code=$$?; test $$code -eq 103; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-grow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-grow.elf; $(BUILD_DIR)/prelude/std-string-grow.elf; code=$$?; test $$code -eq 177; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-implicit-zone.elf; $(BUILD_DIR)/prelude/std-string-implicit-zone.elf; code=$$?; test $$code -eq 142; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-slice-compare.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; code=$$?; test $$code -eq 221; fi
@@ -646,6 +664,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.err
 	if $(TARGET) tests/errors/std-string-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-string-push-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.push_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-push-in-different-zone.err
+	if $(TARGET) tests/errors/std-string-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.err 2>&1; then exit 1; fi
+	grep -q "std::string::String.reserve receiver must come from a tracked zone allocation to infer its zone" $(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.err
 	if $(TARGET) tests/errors/std-string-append-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.append_i64_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-append-different-zone.err
 	if $(TARGET) tests/errors/std-string-append-f64-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-append-f64-different-zone.elf >$(BUILD_DIR)/prelude/std-string-append-f64-different-zone.err 2>&1; then exit 1; fi

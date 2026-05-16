@@ -49,170 +49,32 @@ a public alias for the explicit-zone `std::vec::Vec[T]` source handle and
 permanent root method surface are tracked in Medium-Term/Backend work, because
 they need the broader non-local aggregate and allocation capability design.
 
-1. Prepare source `std` library foundations before broad library expansion.
-   Keep the library-facing contracts near-term before adding many owned
-   collection, string, or smart-pointer APIs. This keeps the source prelude from
-   growing into a pile of one-off compiler hooks. The current source `std`
-   child modules now live as package files under `lib/std/`, so the root
-   `lib/std.arih` stays focused on root types, root traits, builtin declarations,
-   and re-exports while future child modules can start in their own files.
-   Zone-provenance rules for source handles and pointer-returning methods now
-   stay in focused helpers such as `std_box_semantics`, `std_vec_semantics`,
-   `slice_semantics`, and `zone_pointer_semantics` instead of growing more
-   bespoke checks in `sema.cpp`. The root `std::Vec[T]` spelling now aliases the
-   explicit-zone `std::vec::Vec[T]` source handle rather than the temporary
-   compiler-known local vector type, and the `Vec!` macro still lowers to
-   `std::vec::new<T>` as constructor sugar. The `std::vec::Vec` same-zone
-   method contract lives in `std_vec_semantics`, and source-handle/pointer
-   provenance expression tracing for locals, tuple fields, calls, slices, and
-   control-flow expressions lives in `zone_pointer_semantics`. Zone
-   source/generation assignment, named
-   zone-borrow reset recognition, reset invalidation, validity diagnostics,
-   temporary-zone escape diagnostics, temporary-zone `zone::destroy` IR cleanup,
-   and cleanup-before-exit value materialization for returns, labeled breaks,
-   and `init while` continue values are centralized there. The root
-   `Box[T]`/`std::Box[T]` spelling currently aliases the explicit-zone source
-   `std::boxed::Box<T>` handle; `Unique[T]` stays reserved for policy
-   compatibility, and `Shared[T]` / `Weak[T]` are reserved for
-   reference-counted ownership. Source `Slice[T]` now has checked
-   `first`/`last`/`get`, element search, and borrowed `Slice[T]`
-   exact/prefix/suffix comparison methods, plus
-   `copy_to(ref mut Zone)` into a target-zone `std::vec::Vec<T>`, so early
-   library code can use borrowed views without adding one-off helpers. New
-   source `std` APIs are now guarded by `make check-std-api`, which compares the
-   extracted public `lib/std` surface with `tests/std_api_manifest.txt` and
-   requires a focused coverage note beside the API entry. Generic `Drop` impls
-   are now selected during explicit drop lowering, and the existing
-   `std::boxed::Box<T>` source seed, including the root `Box[T]` alias, has a
-   concrete value-drop contract:
-   `drop boxed` consumes the handle binding and runs the pointed-to value
-   through normal Drop lowering when the handle is not empty. `boxed.set(value)`
-   drops the overwritten value, `boxed.take()` moves the value out and empties
-   the handle so a later handle drop skips that value; `boxed.try_take()`
-   returns `Option<T>` for the same path; `boxed.clear()` drops
-   the current value and empties the handle;
-   `boxed.put_in(ref mut zone, value)` refills that empty handle only with the
-   same tracked source zone, while storage release remains the
-   explicit zone's responsibility through `zone::reset` or `zone::destroy`. Source
-   `std::vec::Vec<T>` follows the same explicit-zone value-drop policy:
-   `drop vec` drops each current element and leaves buffer release to the zone,
-   while overwrite and shrink helpers drop removed elements before reducing the
-   live length. `vec.try_pop()` returns `Option<T>` for empty-aware last-element
-   move-out. The small goal [std-vec-inferred-zone-growth] is now complete:
-   tracked local `std::vec::Vec<T>` / `std::Vec<T>` receiver provenance
-   synthesizes the same source-zone argument for `push`, `insert`,
-   one-argument `reserve`/`reserve_extra`, `extend_from_slice`, and `resize`.
-   Explicit `_in` forms remain available, and untracked manually assembled
-   handles still get a targeted diagnostic instead of a hidden allocation
-   capability.
-   Small goal [source-string-inferred-zone-growth]: consider mirroring the same
-   receiver-provenance convenience for source `std::string::String` growth and
-   append helpers once the Vec path has settled under library use.
-   Source `std::mem::replace<T>` and `std::mem::swap<T>` now provide
-   mutable-place value helpers for copyable scalar and plain Ari-layout
-   aggregate values, with root prelude re-exports. They lower through the same
-   raw-pointer materialization path as `ptr_load` / `ptr_store`, and that path
-   now rejects ownership- or borrow-valued values instead of allowing accidental
-   raw copies. For the 0.x library-prep surface, move-aware owning-place
-   replacement and swapping are deliberately out of scope until Ari has a safe
-   generic place-move contract.
-   Source `Option[T]` and `Result[T, E]` also have their first ordinary library
-   method surface now: borrowed-receiver presence/status predicates that lower
-   to tag-only enum probes, consuming panic-style `unwrap`/`expect` helpers,
-   `unwrap_or`, and consuming Option `map`/`or`/`or_else`/`and_then` plus Result
-   `map`/`map_err`/`and_then`/`or_else`/`unwrap_err`/`expect_err` helpers,
-   implemented in focused
-   `std::option` and `std::result` child modules while the enum types and cases
-   remain at the `std` root. The raw freestanding backend now preserves caller
-   pointer bases while aggregate-valued match/control-flow results evaluate
-   aggregate-returning callees, so these predicates and combinators run on both
-   LLVM-host and raw paths. Statement-position and expression-arm
-   `panic`/`todo`/`unreachable` noreturn recognition, including source builtin
-   aliases, Ari builtin symbols, and block-wrapped bottom-like values, lives
-   with the control-flow helpers rather than adding one-off `sema.cpp` special
-   cases, so expression-valued `if`/`match` arms can use those stop calls while
-   reachable arms determine the result type.
-   Method receiver borrow weakening now lets a `ref mut Self` receiver call
-   `ref Self` methods directly, including trait-qualified calls. This keeps
-   source `std` internals from duplicating read-only predicates inside mutable
-   methods while preserving the stricter explicit borrow rules for ordinary
-   borrow-valued bindings.
-   Source `std::cmp` now has small generic value helpers
-   (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
-   re-exports for ordinary library code. This covers another ordinary-library
-   API without adding compiler-known hooks.
-   The Drop
-   trait/method shape checks and shared diagnostics for explicit destructor
-   lowering now live in `drop_semantics`, keeping this ownership/destructor
-   phase out of the central expression-lowering code.
-   Owned string work has a source-handle root spelling now:
-   `std::string::alloc_buffer(ref mut Zone, capacity) -> ptr u8` validates a
-   non-negative byte capacity, allocates bytes through the explicit zone
-   capability, and returns a tracked pointer that is invalidated by
-   `zone::reset`/`zone::destroy`. `std::string::RawString` and
-   `std::string::String` now wrap that storage in a tracked source handle with
-   `data`, `len`, and `capacity` metadata, borrowed receiver lowering for
-   metadata, endpoint byte reads, indexed byte reads, byte search,
-   `Slice[u8]` exact/prefix/suffix checks, and raw-pointer views,
-   fixed-capacity byte push/pop,
-   checked get/set/replace, truncate/clear, slice views,
-   explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
-   `insert_in`, `extend_from_slice_in`, and `resize_in`,
-   same-zone text construction helpers through `append_string_in`,
-   `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`, and
-   `append_f64_in`; all string growth now goes through private capacity
-   helpers that centralize the reallocation/copy path before later string
-   builder APIs are added,
-   `String.copy_to(ref mut Zone)` and
-   `std::string::copy_to(ref value, ref mut Zone)` borrowed-source target-zone
-   copying, `std::string::from_slice_in(ref mut Zone, Slice[u8])` target-zone
-   construction from a borrowed byte slice, and
-   `from_string(ref mut Zone, string)` copying from today's borrowed lowercase
-   `string` values. Host line input now has explicit-zone owned helpers
-   (`read_line_owned`, `std::io::read_line_owned`, `input_owned`, and
-   `std::input::owned_line`) that copy the borrowed line buffer into
-   `std::string::String` storage before later input can overwrite it. The root
-   `String`/`std::String` spelling now aliases that explicit-zone source
-   string handle; storage is still released by `zone::reset`/`zone::destroy`,
-   and the current `Drop` impl only ends the binding.
-   - [owned-box-unique] define and implement allocator-backed unique `Box[T]`
-     ownership and construction before std APIs start returning owning heap
-     handles. Today's root `Box[T]`/`std::Box[T]` spelling is an alias for the
-     explicit-zone `std::boxed::Box<T>` source seed, with associated
-     construction through `Box::new<T>(ref mut Zone, value)`, borrowed
-     read-only method receivers, zone-provenance tracking, use-after-drop
-     checking, and a generic Drop impl that runs the stored value's Drop path.
-     The explicit-zone seed now also has the first value move-out contract:
-     `set(value)` drops the overwritten value, `take()` returns the stored value,
-     leaves the handle empty, `try_take()` returns `Option<T>` for the same
-     path, `is_empty()` exposes that state,
-     `put_in(ref mut Zone, value)` refills the empty handle under same-zone
-     provenance checks, `clear()` drops and empties a non-empty handle while
-     treating an already empty handle as a no-op, and Drop skips empty handles.
-     Remaining work is the allocator-backed root handle layout,
-     allocator/capability construction, move-only ownership rules for the root
-     handle, provenance updates for any future cross-zone handle mutation, and
-     integration with heap release.
-   - [owned-box-release] connect the allocator-backed unique `Box[T]` Drop path
-     to the heap-storage release contract once that root handle exists. The
-     current source `std::boxed::Box<T>` / root `Box[T]` value-drop contract
-     intentionally leaves storage release with `zone::reset` / `zone::destroy`.
-   Explicit-zone formatted strings are now settled for the 0.x source-`std`
-   surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
-   string/signed and unsigned integer/bool/float formatting and `{:.N}` float
-   precision to source
-   `String` construction plus same-zone append helpers, and evaluates each
-   formatted value once before selecting the append target from the lowered
-   value type. User-defined value types can implement borrowed-receiver
-   `Display::format_in` or `fmt::Display::format_in` to return a source
-   `String` in the same explicit zone, so formatting no longer needs new
-   macro-only cases for every library type. Plain `format!` remains a reserved
-   spelling with a targeted
-   no-implicit-allocation-zone diagnostic, keeping Ari away from a magical
-   global heap while the library surface stays explicit-capability based.
-   `print`/`println` and source IO now have a `u64` runtime formatting path
-   through `ari_builtin_write_u64` / `std::io::write_u64`, matching the
-   explicit-zone `format_in!` unsigned integer support.
+The source `std` library foundations goal is complete for the current 0.x
+library-expansion surface and has been removed from active Near-Term work.
+The completed surface is documented in `docs/language/prelude.md`,
+`docs/language/types.md`, `docs/language/memory.md`, and the Explicit memory
+zones / Prelude rows in `docs/dev/test-matrix.md`: source child modules live
+under `lib/std/`, public source APIs are guarded by `make check-std-api`,
+source Box/String/Vec/Slice/Option/Result/cmp/mem/fmt/IO contracts are covered,
+and source Vec/String growth can infer a tracked receiver's zone without
+inventing an ambient heap.
+
+1. Design zone allocation-header metadata before making runtime growth recover
+   allocation capabilities from raw pointers.
+   The current 0.x source-std implementation uses semantic provenance to
+   synthesize same-zone arguments for tracked source Vec/String receiver locals.
+   A runtime header design such as `[zone metadata][user allocation]`, where
+   growth can recover the owning zone from a pointer-adjacent header, needs a
+   deliberate ABI contract before it replaces or supplements sema provenance.
+   - [zone-header-layout] define the host and freestanding allocation-header
+     layout, including stored zone pointer, requested size/capacity metadata,
+     payload alignment, and the exact user pointer returned by `zone::alloc`.
+   - [zone-header-builtins] add narrow builtin operations for recovering the
+     allocation zone/header from `ptr T` without exposing unsafe pointer math as
+     normal source API.
+   - [zone-header-migration] preserve existing reset/destroy diagnostics and
+     source-handle provenance while deciding whether zero-capacity handles keep
+     a null pointer or a sentinel header.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -323,12 +185,15 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     non-owning and still relies on explicit raw-pointer discipline.
     Nullable `T?` remains a raw-pointer spelling for `ptr T`; non-pointer
     absence stays on the explicit `Option[T]` ADT path.
-    Allocator-backed unique `Box[T]` ownership remains promoted into the
-    Near-Term source-`std` library-prep checklist because broad library APIs
-    should not return owning heap handles until their construction, provenance,
-    move, and drop contracts are explicit. The explicit-zone formatted string
-    construction path is already in the Near-Term completed surface through
-    `format_in!` and `Display::format_in`.
+    Allocator-backed unique `Box[T]` ownership stays Medium-Term: the current
+    root `Box[T]` / `std::Box[T]` spelling is the explicit-zone
+    `std::boxed::Box<T>` source handle with value-drop, empty-state, and
+    same-zone refill semantics, while a future owning heap handle still needs
+    root layout, allocator/capability construction, move-only ownership rules,
+    provenance updates for cross-zone mutation, and storage-release Drop
+    integration. The explicit-zone formatted string construction path is
+    already in the completed 0.x source-std surface through `format_in!` and
+    `Display::format_in`.
     Slice pattern follow-ups live with the shared pattern binding-mode work
     because they depend on reference/ownership binding policy, not allocator
     ownership.

@@ -473,9 +473,12 @@ zone argument, that argument must be the same source zone that created the
 handle. A tracked local `std::vec::Vec<T>` receiver can also infer that same
 zone for `push(value)`, `insert(index, value)`, `reserve(capacity)`,
 `reserve_extra(additional)`, `extend_from_slice(values)`, and
-`resize(length, value)`, so callers do not have to thread the zone through
-every capacity-growing Vec operation. Read-only `std::string::String` and
-`std::vec::Vec<T>` handle methods
+`resize(length, value)`. A tracked local `std::string::String` receiver does
+the same for those byte growth methods and for
+`append_string`/`append_i64`/`append_u64`/`append_bool`/`append_f32`/`append_f64`.
+Callers therefore do not have to thread the zone through every ordinary
+capacity-growing source Vec or String operation. Read-only
+`std::string::String` and `std::vec::Vec<T>` handle methods
 borrow the receiver, so metadata, checked endpoint/indexed reads, source
 string/Vec search, source string exact/prefix/suffix checks, target-zone copy,
 and raw-pointer recovery do not copy the handle itself.

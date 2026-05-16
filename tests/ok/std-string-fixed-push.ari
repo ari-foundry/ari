@@ -1,0 +1,19 @@
+fn main() -> i64 {
+  var backing: Vec[u8] = [0u8, 0u8, 0u8, 0u8];
+  var text = std::string::String {
+    raw: std::string::RawString {
+      data: backing.as_slice().data,
+      len: 0,
+      capacity: 4,
+    },
+  };
+
+  text.push(65u8);
+  text.push(66u8);
+  text.insert(1, 45u8);
+
+  return text.len()
+    + (text.get(0) as i64)
+    + (text.get(1) as i64)
+    + (text.get(2) as i64);
+}

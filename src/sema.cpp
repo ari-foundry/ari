@@ -5355,12 +5355,13 @@ private:
         return make_ast_borrow_expr(loc, make_ast_name_expr(loc, source_name), true);
     }
 
-    LocalInfo* std_vec_implicit_zone_receiver_local(const Expr& expr) {
+    LocalInfo* implicit_zone_receiver_local(const Expr& expr,
+                                            bool (*is_handle_type)(const IrType&)) {
         const Expr* receiver = expr_operand(expr).get();
         if (!receiver || receiver->kind != ExprKind::Name) return nullptr;
         LocalInfo* local = find_local_slot(receiver->name);
         if (!local) return nullptr;
-        if (!is_std_vec_handle_type(value_qualified_type(local->type))) return nullptr;
+        if (!is_handle_type(value_qualified_type(local->type))) return nullptr;
         return local;
     }
 
@@ -5370,9 +5371,43 @@ private:
             std_vec_implicit_zone_method_for_call(expr.name, expr.args.size());
         if (!implicit || !expr_type_args(expr).empty()) return nullptr;
 
-        LocalInfo* receiver = std_vec_implicit_zone_receiver_local(expr);
+        LocalInfo* receiver = implicit_zone_receiver_local(expr, is_std_vec_handle_type);
         if (!receiver) return nullptr;
         const std::string context = "std::vec::Vec." + expr.name;
+        if (!receiver->zone_pointer || receiver->zone_pointer_source.empty()) {
+            if (implicit->allow_untracked_fallback) return nullptr;
+            fail(expr.loc,
+                 context +
+                     " receiver must come from a tracked zone allocation to infer its zone; pass an explicit zone argument instead");
+        }
+
+        std::vector<ExprPtr> args;
+        args.reserve(expr.args.size() + 1);
+        args.push_back(make_zone_argument_expr_from_source(
+            expr.loc,
+            receiver->zone_pointer_source,
+            context));
+        for (const auto& arg : expr.args) {
+            args.push_back(clone_expression_tree(*arg));
+        }
+
+        return make_ast_method_call_expr(
+            expr.loc,
+            clone_expression_tree(*expr_operand(expr)),
+            implicit->lowered_name,
+            {},
+            std::move(args));
+    }
+
+    ExprPtr rewrite_std_string_implicit_zone_method_call(const Expr& expr) {
+        if (current_module_name_ == "std::string") return nullptr;
+        std::optional<StdStringImplicitZoneMethod> implicit =
+            std_string_implicit_zone_method_for_call(expr.name, expr.args.size());
+        if (!implicit || !expr_type_args(expr).empty()) return nullptr;
+
+        LocalInfo* receiver = implicit_zone_receiver_local(expr, is_std_string_handle_type);
+        if (!receiver) return nullptr;
+        const std::string context = "std::string::String." + expr.name;
         if (!receiver->zone_pointer || receiver->zone_pointer_source.empty()) {
             if (implicit->allow_untracked_fallback) return nullptr;
             fail(expr.loc,
@@ -19091,6 +19126,9 @@ private:
 
         if (ExprPtr implicit_vec_call = rewrite_std_vec_implicit_zone_method_call(expr)) {
             return check_method_call(*implicit_vec_call, std::move(lowered));
+        }
+        if (ExprPtr implicit_string_call = rewrite_std_string_implicit_zone_method_call(expr)) {
+            return check_method_call(*implicit_string_call, std::move(lowered));
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();

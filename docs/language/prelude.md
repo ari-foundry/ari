@@ -174,6 +174,16 @@ API; allocations are released by `zone::reset` or `zone::destroy`, and the
 string handle's `Drop` impl only ends the binding. The
 same-zone append and growth helpers must receive the zone that created the
 handle.
+As with source Vec handles, tracked local string receivers can synthesize that
+same zone for the common method surface. `text.push(byte)`,
+`text.insert(index, byte)`, `text.reserve(capacity)`,
+`text.reserve_extra(additional)`, `text.extend_from_slice(values)`,
+`text.resize(length, byte)`, `text.append_string(value)`,
+`text.append_i64(value)`, `text.append_u64(value)`, `text.append_bool(value)`,
+`text.append_f32(value, precision)`, and
+`text.append_f64(value, precision)` lower to the same explicit-zone helpers.
+The `_in` forms remain the spelling for untracked handles and for code that
+wants to pass the zone visibly.
 
 Pass `--no-implicit-std` when testing the source header as ordinary module
 code only. In that mode `use std::...` does not load anything by itself; import
@@ -792,12 +802,12 @@ seed, use `std::string::new(ref mut Zone, capacity)` or
 
 ```ari
 var text = std::string::from_string(ref mut zone, "ari")
-text.append_string_in(ref mut zone, "=")
-text.append_i64_in(ref mut zone, 42)
-text.append_u64_in(ref mut zone, 42u64)
-text.append_bool_in(ref mut zone, true)
-text.append_f32_in(ref mut zone, 1.5f32, 1)
-text.append_f64_in(ref mut zone, 3.14159f64, 2)
+text.append_string("=")
+text.append_i64(42)
+text.append_u64(42u64)
+text.append_bool(true)
+text.append_f32(1.5f32, 1)
+text.append_f64(3.14159f64, 2)
 let rendered = format_in!(ref mut zone, "ari={} ok={} pi={:.2}", 42, true, 3.14159f64)
 let raw = text.as_ptr()
 let view = text.as_slice()

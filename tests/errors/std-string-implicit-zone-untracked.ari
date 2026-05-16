@@ -1,0 +1,12 @@
+fn main() -> i64 {
+  var text = std::string::String {
+    raw: std::string::RawString {
+      data: 0u64 as ptr u8,
+      len: 0,
+      capacity: 0,
+    },
+  };
+
+  text.reserve(1);
+  return 0;
+}
