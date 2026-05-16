@@ -37,6 +37,11 @@ member inspection is also complete for the current summary surface: macros can
 test generic, parameter, field, enum-case, method, and associated-type presence
 and compare parameter, field, payload, method, return, trait, and associated
 type witness summaries before choosing a `decl!(...)` output.
+Dynamic declaration identifier construction is also available through
+`meta_ident!(...)` inside `decl!(...)`, so declaration-generating macros can
+derive new names from `input.name()` / `decl_name(input)` or
+`input.kind()` / `decl_kind(input)` plus literal pieces without exposing a
+general compile-time string runtime.
 The trait-associated-item and composition goal that used to sit in Medium-Term
 is now covered by the current front-end surface. Supertraits parse and require
 matching impls, child-trait bounds can statically dispatch inherited methods,
@@ -87,14 +92,17 @@ fallthrough paths is now tracked as Medium-Term dataflow work because it must
 revalidate the loop body under the widened entry state instead of accepting a
 body that was checked only with the owner alive.
 
-1. Add dynamic identifier construction for declaration-generating macros.
-   Declaration reflection can now inspect the stable summary data that
-   library-prep macros need, but generated names still have to be literal tokens
-   inside `decl!(...)`. Add a bounded identifier-construction mechanism that
-   can derive new declaration names from inspected input without exposing a
-   general string runtime at compile time.
-   - [ast-dynamic-ident] add dynamic identifier construction on top of the
-     stable declaration-member summary model
+1. Decide the general compile-time value surface for non-declaration AST input.
+   Declaration reflection now has the bounded library-prep surface, including
+   dynamic declaration-name construction. Keep broader expression, pattern, and
+   type AST value operations out of the fixed syntax surface until their policy
+   and hygiene model are explicit.
+   - [ast-general-values] decide which compile-time value operations are
+     allowed for non-declaration AST inputs before broadening expression
+     rewriting beyond today's explicit constructors and hygienic substitution
+   - [hygiene-policy] document which generated names are intentionally
+     user-visible and which remain compiler-hygienic before adding more AST
+     value constructors
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -118,15 +126,7 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [cache-skip] once IR summaries exist, avoid reparsing those dependencies
      when metadata and source hashes match the current source graph and
      cfg/search-path inputs
-2. Decide the general compile-time value surface for non-declaration AST input.
-   Near-Term declaration reflection is intentionally limited to stable summary
-   queries that library-prep macros need. Keep broader expression, pattern, and
-   type AST value operations out of the fixed syntax surface until their policy
-   and hygiene model are explicit.
-   - [ast-general-values] decide which compile-time value operations are
-     allowed for non-declaration AST inputs before broadening expression
-     rewriting beyond today's explicit constructors and hygienic substitution
-3. Prove loop owner-state widening with a loop dataflow recheck.
+2. Prove loop owner-state widening with a loop dataflow recheck.
    Borrow-release widening is safe with the current same-provenance merge
    because it keeps the source conservatively borrowed. Owner-state widening is
    different: a body checked with an `Alive` owner cannot simply be reused for a

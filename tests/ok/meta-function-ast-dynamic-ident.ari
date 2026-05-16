@@ -1,0 +1,29 @@
+meta fn add_named_helpers(input: ast) -> ast {
+  return if input.is("fn") && input.name() == "base" {
+    decl!(
+      input
+
+      fn meta_ident!(input.name(), _score)() -> i64 {
+        return 20;
+      }
+
+      fn meta_ident!("call_", decl_name(input))() -> i64 {
+        return base() + 2;
+      }
+
+      fn meta_ident!(input.kind(), _marker)() -> i64 {
+        return 0;
+      }
+    )
+  } else {
+    decl!(input)
+  };
+}
+
+add_named_helpers!(fn base() -> i64 {
+  return 20;
+});
+
+fn main() -> i64 {
+  return base_score() + call_base() + fn_marker();
+}

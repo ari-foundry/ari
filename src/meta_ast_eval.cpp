@@ -1,7 +1,7 @@
 #include "meta_ast_eval.hpp"
 
 #include "common.hpp"
-#include "meta_token_eval.hpp"
+#include "meta_ast_identifier_eval.hpp"
 
 #include <cstdint>
 #include <optional>
@@ -683,7 +683,7 @@ std::vector<Token> evaluate_decl_return_expr(const Expr& expr,
                                              const MetaAstDeclInput& input) {
     std::string reason;
     if (supported_decl_constructor(expr, reason)) {
-        return substitute_meta_input_tokens(*expr.macro_tokens, input_name, input.tokens);
+        return substitute_meta_decl_tokens(*expr.macro_tokens, input_name, input);
     }
     if (expr.kind == ExprKind::If) {
         bool take_then = evaluate_decl_condition(*expr_if_condition(expr), input_name, input);

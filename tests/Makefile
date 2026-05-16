@@ -1890,6 +1890,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/meta-function-ast-decl-shape-inspection.raw; code=$$?; test $$code -eq 59
 	$(TARGET) --freestanding tests/ok/meta-function-ast-decl-member-inspection.ari -o $(BUILD_DIR)/meta/meta-function-ast-decl-member-inspection.raw
 	$(BUILD_DIR)/meta/meta-function-ast-decl-member-inspection.raw; code=$$?; test $$code -eq 96
+	$(TARGET) --freestanding tests/ok/meta-function-ast-dynamic-ident.ari -o $(BUILD_DIR)/meta/meta-function-ast-dynamic-ident.raw
+	$(BUILD_DIR)/meta/meta-function-ast-dynamic-ident.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/attribute-macro-function-decl.ari -o $(BUILD_DIR)/meta/attribute-macro-function-decl.raw
 	$(BUILD_DIR)/meta/attribute-macro-function-decl.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/attribute-macro-args-token.ari -o $(BUILD_DIR)/meta/attribute-macro-args-token.raw

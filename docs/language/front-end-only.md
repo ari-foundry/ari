@@ -416,16 +416,30 @@ used only as the return value of an `ast -> ast` meta function that is invoked
 from an item macro site or from a top-level declaration attribute macro. A bare
 token that matches the meta parameter name inside `decl!(...)` is replaced with
 the item macro invocation's declaration input tokens or the annotated
-declaration tokens:
+declaration tokens. `decl!(...)` can also build one generated identifier token
+with `meta_ident!(...)`. Its parts are string or identifier literals plus the
+stable declaration-name helpers `input.name()` / `decl_name(input)` and
+`input.kind()` / `decl_kind(input)`. The concatenated result must be a normal
+Ari identifier and cannot be a keyword:
 
 ```ari
 meta fn append_generated(input: ast) -> ast {
-  return decl!(input const GENERATED: i64 = 1;);
+  return decl!(
+    input
+
+    fn meta_ident!(input.name(), _generated)() -> i64 {
+      return 1;
+    }
+  );
 }
 
 append_generated!(fn original() -> i64 {
   return 41;
 });
+
+fn main() -> i64 {
+  return original_generated();
+}
 ```
 
 Declaration-returning `ast -> ast` meta functions can branch on structured
