@@ -13,6 +13,9 @@ std::optional<FormatInAppendTarget> builtin_format_in_append_target_from_type(co
     if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Bool) {
         return FormatInAppendTarget{FormatInAppendKind::Bool, {}};
     }
+    if (is_value_integer_type(type) && is_unsigned_integer_primitive(type.primitive)) {
+        return FormatInAppendTarget{FormatInAppendKind::U64, {}};
+    }
     if (is_value_integer_type(type)) {
         return FormatInAppendTarget{FormatInAppendKind::I64, {}};
     }
@@ -42,6 +45,7 @@ const char* format_in_builtin_append_method_name(const FormatInAppendTarget& tar
     switch (target.kind) {
         case FormatInAppendKind::String: return "append_string_in";
         case FormatInAppendKind::I64: return "append_i64_in";
+        case FormatInAppendKind::U64: return "append_u64_in";
         case FormatInAppendKind::Bool: return "append_bool_in";
         case FormatInAppendKind::F32: return "append_f32_in";
         case FormatInAppendKind::F64: return "append_f64_in";

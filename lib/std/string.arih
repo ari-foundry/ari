@@ -149,6 +149,31 @@ pub impl std::string::String {
     }
   }
 
+  fn append_u64_in(self: ref mut Self, zone: ref mut Zone, value: u64) -> void {
+    if value == 0u64 {
+      append_byte_in(self, zone, 48 as u8);
+      return;
+    }
+
+    var remaining = value;
+    let digit_start = self.raw.len;
+    while remaining != 0u64 {
+      let digit = remaining % 10u64;
+      append_byte_in(self, zone, ((digit as i64) + 48) as u8);
+      remaining = remaining / 10u64;
+    }
+
+    var left = digit_start;
+    var right = self.raw.len - 1;
+    while left < right {
+      let temporary = ptr_load(ptr_add(self.raw.data, left));
+      ptr_store(ptr_add(self.raw.data, left), ptr_load(ptr_add(self.raw.data, right)));
+      ptr_store(ptr_add(self.raw.data, right), temporary);
+      left = left + 1;
+      right = right - 1;
+    }
+  }
+
   fn append_bool_in(self: ref mut Self, zone: ref mut Zone, value: bool) -> void {
     if value {
       append_byte_in(self, zone, 116 as u8);

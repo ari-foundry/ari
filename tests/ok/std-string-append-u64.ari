@@ -1,0 +1,17 @@
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var text: String = std::string::new(ref mut zone, 2);
+
+  text.append_string_in(ref mut zone, "u64=");
+  text.append_u64_in(ref mut zone, 18446744073709551615u64);
+
+  assert_eq_i64(text.len(), 24);
+  assert_eq_i64(text.get(0) as i64, 117);
+  assert_eq_i64(text.get(3) as i64, 61);
+  assert_eq_i64(text.get(4) as i64, 49);
+  assert_eq_i64(text.get(23) as i64, 53);
+
+  let total = text.len();
+  zone::destroy(zone);
+  return total;
+}

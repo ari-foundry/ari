@@ -118,6 +118,7 @@ bool std_string_method_requires_same_zone_argument(const std::string& method_nam
            method_name == "push_in" ||
            method_name == "append_string_in" ||
            method_name == "append_i64_in" ||
+           method_name == "append_u64_in" ||
            method_name == "append_bool_in" ||
            method_name == "append_f32_in" ||
            method_name == "append_f64_in" ||

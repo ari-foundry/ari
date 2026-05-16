@@ -83,6 +83,7 @@ method std::string::String::append_f32_in|check-prelude std-string-append-f32 an
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_i64_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_string_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::string::String::append_u64_in|check-prelude std-string-append-u64, prelude-format-in-u64, and std-string-append-u64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::as_ptr|check-prelude std-string-handle borrowed receiver and as-ptr provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::as_slice|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::capacity|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row

@@ -123,10 +123,10 @@ tracked `RawString` handle with `data`, `len`, and `capacity` fields, and
 source string handle supports `len`, `capacity`,
 `is_empty`, checked byte `first`/`last`/`get`/`set`/`replace`, fixed-capacity
 `push`/`pop`/`insert`, same-zone growth through `reserve`, `reserve_extra`,
-`push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, append helpers
-for lowercase `string`, `i64`, bool, `f32`, and `f64` values through
-`append_string_in`, `append_i64_in`, `append_bool_in`, `append_f32_in`, and
-`append_f64_in`, plus
+`push_in`, `insert_in`, `extend_from_slice_in`, and `resize_in`, append
+helpers for lowercase `string`, signed/unsigned integer, bool, `f32`, and
+`f64` values through `append_string_in`, `append_i64_in`, `append_u64_in`,
+`append_bool_in`, `append_f32_in`, and `append_f64_in`, plus
 `truncate`, `clear`, byte search with `contains`, `index_of`, and `count`,
 `equals(Slice[u8])`, `starts_with(Slice[u8])`, `ends_with(Slice[u8])`,
 `copy_to(ref mut zone)`, `as_ptr`, and `as_slice`.
@@ -188,7 +188,8 @@ Formatting rules:
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the placeholder count is checked at compile time
-- formatted print values currently support integers, bool, `f32`, and `f64`
+- formatted print values currently support integers except `u64`, bool, `f32`,
+  and `f64`
 - `println` appends one newline
 - `print` does not append a newline
 
@@ -308,8 +309,9 @@ bool-valued pattern test using the same pattern engine as `match`, so enum,
 scalar, tuple, array, struct, tuple-struct, alias, and or-pattern forms follow
 the same rules. `format_in!(ref mut zone, "...", values...)` builds a source
 `String` in the explicit zone and lowers `{}` placeholders for lowercase
-`string`, integer, bool, `f32`, and `f64` values through the same checked append
-helpers as manual text construction. User-defined value types can participate
+`string`, signed/unsigned integer, bool, `f32`, and `f64` values through the
+same checked append helpers as manual text construction. User-defined value
+types can participate
 by implementing borrowed-receiver `Display::format_in` or
 `fmt::Display::format_in`, returning a source `String` in the same explicit
 zone. `{:.N}` placeholders format
@@ -695,6 +697,7 @@ seed, use `std::string::new(ref mut Zone, capacity)` or
 var text = std::string::from_string(ref mut zone, "ari")
 text.append_string_in(ref mut zone, "=")
 text.append_i64_in(ref mut zone, 42)
+text.append_u64_in(ref mut zone, 42u64)
 text.append_bool_in(ref mut zone, true)
 text.append_f32_in(ref mut zone, 1.5f32, 1)
 text.append_f64_in(ref mut zone, 3.14159f64, 2)
@@ -714,11 +717,13 @@ additional)` for explicit growth, `push_in(ref mut Zone, byte)` and
 `insert_in(ref mut Zone, index, byte)` for grow-on-demand writes,
 `extend_from_slice_in(ref mut Zone, Slice[u8])` for bulk byte appends, and
 `resize_in(ref mut Zone, length, byte)` to grow or shrink. `append_string_in`,
-`append_i64_in`, `append_bool_in`, `append_f32_in`, and `append_f64_in` build
+`append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`, and
+`append_f64_in` build
 text from the scalar values needed by explicit formatting, and
 `format_in!(ref mut Zone, "...", values...)` wraps those helpers in a single
-expression for `{}` string/integer/bool/float formatting plus `{:.N}` float
-precision, with each formatted value evaluated once before append dispatch.
+expression for `{}` string/signed and unsigned integer/bool/float formatting
+plus `{:.N}` float precision, with each formatted value evaluated once before
+append dispatch.
 For user-defined value types, `format_in!` calls `Display::format_in` or
 `fmt::Display::format_in` with a shared borrow of the value and the same
 explicit zone, then appends the returned source string into the final output.

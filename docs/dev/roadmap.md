@@ -219,7 +219,8 @@ constructor subset documented in the language guide.
    explicit same-zone growth through `reserve`, `reserve_extra`, `push_in`,
    `insert_in`, `extend_from_slice_in`, and `resize_in`,
    same-zone text construction helpers through `append_string_in`,
-   `append_i64_in`, `append_bool_in`, `append_f32_in`, and `append_f64_in`,
+   `append_i64_in`, `append_u64_in`, `append_bool_in`, `append_f32_in`, and
+   `append_f64_in`,
    `String.copy_to(ref mut Zone)` and
    `std::string::copy_to(ref value, ref mut Zone)` borrowed-source target-zone
    copying, `std::string::from_slice_in(ref mut Zone, Slice[u8])` target-zone
@@ -246,7 +247,8 @@ constructor subset documented in the language guide.
      intentionally leaves storage release with `zone::reset` / `zone::destroy`.
    Explicit-zone formatted strings are now settled for the 0.x source-`std`
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
-   string/integer/bool/float formatting and `{:.N}` float precision to source
+   string/signed and unsigned integer/bool/float formatting and `{:.N}` float
+   precision to source
    `String` construction plus same-zone append helpers, and evaluates each
    formatted value once before selecting the append target from the lowered
    value type. User-defined value types can implement borrowed-receiver
@@ -256,6 +258,9 @@ constructor subset documented in the language guide.
    spelling with a targeted
    no-implicit-allocation-zone diagnostic, keeping Ari away from a magical
    global heap while the library surface stays explicit-capability based.
+   - [format-u64-print] add a `u64`-aware `print`/`println` runtime formatting
+     path after deciding the builtin ABI; explicit-zone `format_in!` already
+     formats unsigned integers through source `String.append_u64_in`.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
