@@ -17,6 +17,50 @@ pub impl[T, E] std::Result[T, E] {
     };
   }
 
+  fn unwrap(self) -> T {
+    match self {
+      std::Ok(value) => {
+        return value;
+      }
+      std::Err(_) => {
+        std::panic();
+      }
+    }
+  }
+
+  fn expect(self, message: string) -> T {
+    match self {
+      std::Ok(value) => {
+        return value;
+      }
+      std::Err(_) => {
+        std::panic();
+      }
+    }
+  }
+
+  fn unwrap_err(self) -> E {
+    match self {
+      std::Ok(_) => {
+        std::panic();
+      }
+      std::Err(error) => {
+        return error;
+      }
+    }
+  }
+
+  fn expect_err(self, message: string) -> E {
+    match self {
+      std::Ok(_) => {
+        std::panic();
+      }
+      std::Err(error) => {
+        return error;
+      }
+    }
+  }
+
   fn map[U](self, op: fn(T) -> U) -> std::Result[U, E] {
     return match self {
       std::Ok(value) => std::Ok<U, E>(op(value)),

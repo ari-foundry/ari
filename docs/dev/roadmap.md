@@ -244,17 +244,21 @@ diagnostics.
    generic place-move contract.
    Source `Option[T]` and `Result[T, E]` also have their first ordinary library
    method surface now: borrowed-receiver presence/status predicates that lower
-   to tag-only enum probes, consuming `unwrap_or`, and consuming Option
-   `map`/`or`/`or_else`/`and_then` plus Result
-   `map`/`map_err`/`and_then`/`or_else` combinators, implemented in focused
+   to tag-only enum probes, consuming panic-style `unwrap`/`expect` helpers,
+   `unwrap_or`, and consuming Option `map`/`or`/`or_else`/`and_then` plus Result
+   `map`/`map_err`/`and_then`/`or_else`/`unwrap_err`/`expect_err` helpers,
+   implemented in focused
    `std::option` and `std::result` child modules while the enum types and cases
    remain at the `std` root. The raw freestanding backend now preserves caller
    pointer bases while aggregate-valued match/control-flow results evaluate
    aggregate-returning callees, so these predicates and combinators run on both
-   LLVM-host and raw paths.
-   - [follow-up] expose panic-style `unwrap`/`expect` only after Ari has a
-     proper bottom/noreturn typing rule; until then, `unwrap_or` and the
-     non-panicking combinators keep this surface source-library-only
+   LLVM-host and raw paths. Statement-position `panic`/`todo`/`unreachable`
+   noreturn recognition lives with the control-flow helpers rather than adding
+   one-off `sema.cpp` special cases.
+   - [noreturn-expr] allow diverging calls to type as bottom-like expression
+     values in expression-valued `if`/`match` arms; today the supported
+     contract is statement-position control flow, which is enough for source
+     `unwrap`/`expect`
    Source `std::cmp` now has small generic value helpers
    (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
    re-exports for ordinary library code. This covers another ordinary-library

@@ -5547,6 +5547,9 @@ private:
                 if (is_owner_type(lowered->expr->type)) {
                     fail(stmt.loc, "owning expression result must be bound, returned, passed, or dropped");
                 }
+                if (is_diverging_builtin_call(*lowered->expr)) {
+                    flow = Flow::Stops;
+                }
                 break;
             case StmtKind::Return:
                 check_return(stmt, *lowered);

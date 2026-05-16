@@ -1,8 +1,10 @@
 #include "control_flow_semantics.hpp"
 
+#include "ari_builtin.hpp"
 #include "ir_builders.hpp"
 
 #include <cstddef>
+#include <optional>
 #include <utility>
 
 namespace ari {
@@ -67,6 +69,12 @@ IrExprPtr build_tuple_match_if_expr_chain(
         );
     }
     return current;
+}
+
+bool is_diverging_builtin_call(const IrExpr& expr) {
+    if (expr.kind != IrExprKind::Call) return false;
+    std::optional<std::string> symbol = ari_builtin_symbol_for_source_name(ir_expr_name(expr));
+    return symbol && *symbol == "ari_builtin_panic";
 }
 
 } // namespace ari

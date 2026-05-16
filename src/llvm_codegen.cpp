@@ -2,6 +2,7 @@
 #include "llvm_codegen.hpp"
 
 #include "common.hpp"
+#include "control_flow_semantics.hpp"
 #include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "target.hpp"
@@ -3186,6 +3187,10 @@ private:
         call += ")";
         if (result.primitive == IrPrimitiveKind::Void) {
             line("  " + call);
+            if (is_diverging_builtin_call(expr)) {
+                line("  unreachable");
+                block_terminated_ = true;
+            }
             return Value{"void", "", result};
         }
         std::string out = temp();

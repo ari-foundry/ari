@@ -291,6 +291,9 @@ unreachable() -> void
 ```
 
 Failed assertions and stop helpers terminate the process with status `1`.
+The stop helpers are treated as non-continuing when used as expression
+statements, so a statement `if` or `match` arm can end with `panic()`,
+`todo()`, or `unreachable()` without adding a dummy `return`.
 
 Rust-style macro forms are available for the executable assertion, stop, and
 printing helpers:
@@ -867,11 +870,12 @@ They are available without `std::` through the implicit prelude. Ari keeps the
 standard absence type to one spelling, `Option[T]`; there is no `Maybe[T]`
 alias. `Option[T]` has borrowed-receiver `is_some()` and `is_none()`
 predicates that can inspect a local or other place value without consuming it.
-`unwrap_or(fallback)`, `map[U](fn(T) -> U)`, `or(Option[T])`,
-`or_else(fn() -> Option[T])`, and `and_then[U](fn(T) -> Option[U])` still
-consume the `Option[T]` value.
+`unwrap()`, `expect(message)`, `unwrap_or(fallback)`, `map[U](fn(T) -> U)`,
+`or(Option[T])`, `or_else(fn() -> Option[T])`, and
+`and_then[U](fn(T) -> Option[U])` still consume the `Option[T]` value.
 `Result[T, E]` follows the same split: borrowed-receiver `is_ok()` and
-`is_err()` predicates, plus consuming `unwrap_or(fallback)`,
+`is_err()` predicates, plus consuming `unwrap()`, `expect(message)`,
+`unwrap_err()`, `expect_err(message)`, `unwrap_or(fallback)`,
 `map[U](fn(T) -> U)`, `map_err[F](fn(E) -> F)`,
 `and_then[U](fn(T) -> Result[U, E])`, and
 `or_else[F](fn(E) -> Result[T, F])`. Bind function-call results to a local

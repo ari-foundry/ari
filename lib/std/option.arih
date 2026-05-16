@@ -17,6 +17,28 @@ pub impl[T] std::Option[T] {
     };
   }
 
+  fn unwrap(self) -> T {
+    match self {
+      std::Some(value) => {
+        return value;
+      }
+      std::None => {
+        std::panic();
+      }
+    }
+  }
+
+  fn expect(self, message: string) -> T {
+    match self {
+      std::Some(value) => {
+        return value;
+      }
+      std::None => {
+        std::panic();
+      }
+    }
+  }
+
   fn map[U](self, op: fn(T) -> U) -> std::Option[U] {
     return match self {
       std::Some(value) => std::Some<U>(op(value)),
