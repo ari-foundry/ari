@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "module_ast_summary.hpp"
 #include "module_cache_format.hpp"
+#include "module_ir_summary.hpp"
 #include "module_loader.hpp"
 #include "module_path.hpp"
 
@@ -225,6 +226,14 @@ std::map<std::string, const ModuleCacheAstSummary*> cache_ast_summaries_by_key(c
     return by_key;
 }
 
+std::map<std::string, const ModuleCacheIrSummary*> cache_ir_summaries_by_key(const ModuleCache& cache) {
+    std::map<std::string, const ModuleCacheIrSummary*> by_key;
+    for (const auto& summary : cache.ir_summaries) {
+        by_key.emplace(source_key(summary.module_name, summary.path, summary.is_root), &summary);
+    }
+    return by_key;
+}
+
 std::string count_key(std::uint64_t value) {
     return std::to_string(value);
 }
@@ -288,6 +297,18 @@ std::string serialize_module_cache(const ModuleCache& cache) {
             count_key(summary.impl_count),
         });
     }
+    for (const auto& summary : cache.ir_summaries) {
+        write_line(out, {
+            "ir-summary",
+            summary.module_name,
+            summary.path,
+            summary.is_root ? "1" : "0",
+            summary.content_hash,
+            summary.ir_hash,
+            summary.ir_summary,
+            count_key(summary.function_count),
+        });
+    }
     return out.str();
 }
 
@@ -300,6 +321,7 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
     bool saw_metadata = false;
     std::set<std::string> seen_sources;
     std::set<std::string> seen_ast_summaries;
+    std::set<std::string> seen_ir_summaries;
 
     while (std::getline(in, line)) {
         ++line_number;
@@ -379,6 +401,30 @@ ModuleCache parse_module_cache_text(const std::string& text, const std::string& 
             };
             require_valid_module_cache_ast_summary_payload(summary, display_path);
             cache.ast_summaries.push_back(std::move(summary));
+        } else if (tag == "ir-summary") {
+            if (fields.size() != 8) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) + ": malformed ir-summary record");
+            }
+            bool is_root = parse_bool_field(fields[3], display_path, line_number);
+            std::string key = source_key(fields[1], fields[2], is_root);
+            if (!seen_ir_summaries.insert(key).second) {
+                throw CompileError("invalid module cache '" + display_path + "' at line " +
+                                   std::to_string(line_number) +
+                                   ": duplicate ir-summary record for module '" +
+                                   display_module_name(fields[1]) + "' at '" + fields[2] + "'");
+            }
+            ModuleCacheIrSummary summary{
+                fields[1],
+                fields[2],
+                fields[4],
+                fields[5],
+                fields[6],
+                is_root,
+                parse_count_field(fields[7], display_path, line_number),
+            };
+            require_valid_module_cache_ir_summary_payload(summary, display_path);
+            cache.ir_summaries.push_back(std::move(summary));
         } else {
             throw CompileError("invalid module cache '" + display_path + "' at line " +
                                std::to_string(line_number) + ": unknown record");
@@ -413,6 +459,14 @@ const ModuleCacheSource* find_module_cache_source(const ModuleCache& cache, cons
 const ModuleCacheAstSummary* find_module_cache_ast_summary(const ModuleCache& cache,
                                                            const std::string& path) {
     for (const auto& summary : cache.ast_summaries) {
+        if (summary.path == path) return &summary;
+    }
+    return nullptr;
+}
+
+const ModuleCacheIrSummary* find_module_cache_ir_summary(const ModuleCache& cache,
+                                                         const std::string& path) {
+    for (const auto& summary : cache.ir_summaries) {
         if (summary.path == path) return &summary;
     }
     return nullptr;
@@ -487,11 +541,15 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
 
     const auto by_key = cache_sources_by_key(cache);
     const auto summaries_by_key = cache_ast_summaries_by_key(cache);
+    const auto ir_summaries_by_key = cache_ir_summaries_by_key(cache);
     std::set<std::string> metadata_source_keys;
+    std::map<std::string, std::string> metadata_source_hashes;
     std::map<std::string, std::string> source_path_by_module;
     bool matched_root = false;
     for (const auto& source : cache.metadata.sources) {
-        metadata_source_keys.insert(source_key(source.module_name, source.path, source.is_root));
+        std::string key = source_key(source.module_name, source.path, source.is_root);
+        metadata_source_keys.insert(key);
+        metadata_source_hashes.emplace(key, source.content_hash);
         if (source.is_root) {
             matched_root = matched_root || source.path == root_input;
         }
@@ -525,6 +583,16 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
                        " hash does not match embedded metadata");
         }
 
+        auto ir_summary_it = ir_summaries_by_key.find(key);
+        if (ir_summary_it != ir_summaries_by_key.end()) {
+            const ModuleCacheIrSummary& ir_summary = *ir_summary_it->second;
+            if (ir_summary.content_hash != source.content_hash) {
+                fail_stale(display_path, "IR summary for cached source " +
+                           source_display(source.module_name, source.path) +
+                           " hash does not match embedded metadata");
+            }
+        }
+
         std::string current = read_file(source.path);
         std::string current_hash = module_metadata_source_hash(current);
         if (current_hash != source.content_hash) {
@@ -549,6 +617,21 @@ void require_matching_module_cache_inputs(const ModuleCache& cache,
             fail_stale(display_path, "cached AST summary for " +
                        source_display(summary.module_name, summary.path) +
                        " is not listed by embedded metadata");
+        }
+    }
+
+    for (const auto& summary : cache.ir_summaries) {
+        std::string key = source_key(summary.module_name, summary.path, summary.is_root);
+        auto hash_it = metadata_source_hashes.find(key);
+        if (hash_it == metadata_source_hashes.end()) {
+            fail_stale(display_path, "cached IR summary for " +
+                       source_display(summary.module_name, summary.path) +
+                       " is not listed by embedded metadata");
+        }
+        if (summary.content_hash != hash_it->second) {
+            fail_stale(display_path, "cached IR summary for " +
+                       source_display(summary.module_name, summary.path) +
+                       " hash does not match embedded metadata");
         }
     }
 

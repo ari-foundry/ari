@@ -100,23 +100,30 @@ fallthrough paths is now tracked as Medium-Term dataflow work because it must
 revalidate the loop body under the widened entry state instead of accepting a
 body that was checked only with the owner alive.
 
-1. Promote IR package-cache summaries when future executable forms outgrow AST
+1. Use IR package-cache summaries when future executable forms outgrow AST
    summaries.
    Source-snapshot module caches currently validate cfg/search-path/source
    hashes/imports and can materialize declaration-safe headers plus
    summary-safe executable dependency bodies from AST summaries without parsing
    the cached source snapshot. The current source-level AST expression,
    statement, and pattern surface is covered by that path. The V0 cache family
-   is centralized on `ari-module-metadata-v0`, `ari-module-cache-v0`, and
-   `ari-ast-decls-v0`; add IR summaries later for future executable bodies that
-   cannot round-trip through the compact AST summary format without changing the
-   V0 header by default.
+   is centralized on `ari-module-metadata-v0`, `ari-module-cache-v0`,
+   `ari-ast-decls-v0`, and optional `ari-ir-summary-v0` sidecars. Cache
+   emission now writes the IR sidecars after semantic checking and cache parsing
+   validates duplicate, header-version, hash, source-hash, and function-count
+   mismatches when sidecars are present. The loader still uses AST summaries for
+   dependency parse skipping, so the remaining work is the actual IR
+   materialization path for future executable bodies that cannot round-trip
+   through the compact AST summary format.
+   - [ir-body-payload] extend `ari-ir-summary-v0` beyond the current lowered
+     function-surface sidecar when a future executable body form first needs an
+     IR-level payload
    - [ir-materialize] feed future IR-summary declarations/bodies into the
      module loader for dependencies whose executable function or impl bodies
      use forms outside the AST summary subset
-   - [cache-skip] once IR summaries exist, avoid reparsing those dependencies
-     when metadata and source hashes match the current source graph and
-     cfg/search-path inputs
+   - [cache-skip] once IR materialization consumes sidecars, avoid reparsing
+     those dependencies when metadata and source hashes match the current
+     source graph and cfg/search-path inputs
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

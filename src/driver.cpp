@@ -6,6 +6,7 @@
 #include "elf.hpp"
 #include "llvm_codegen.hpp"
 #include "module_cache.hpp"
+#include "module_ir_summary.hpp"
 #include "module_loader.hpp"
 #include "module_metadata.hpp"
 #include "parser.hpp"
@@ -218,10 +219,6 @@ int run(int argc, char** argv) {
         write_text_file(metadata_output, serialize_module_metadata(loaded.metadata));
         std::cout << "wrote " << metadata_output << " (module metadata)\n";
     }
-    if (!module_cache_output.empty()) {
-        write_text_file(module_cache_output, serialize_module_cache(loaded.cache));
-        std::cout << "wrote " << module_cache_output << " (module cache)\n";
-    }
     Program program = std::move(loaded.program);
     SemaOptions sema_options;
     sema_options.require_main = !shared_library && !test_mode && !check_only;
@@ -232,6 +229,11 @@ int run(int argc, char** argv) {
     IrProgram ir = check_program(program, std::move(sema_options));
     for (const auto& warning : ir.warnings) {
         std::cerr << warning << "\n";
+    }
+    if (!module_cache_output.empty()) {
+        attach_module_cache_ir_summaries(loaded.cache, ir);
+        write_text_file(module_cache_output, serialize_module_cache(loaded.cache));
+        std::cout << "wrote " << module_cache_output << " (module cache)\n";
     }
     if (check_only) {
         return 0;

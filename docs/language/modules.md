@@ -316,13 +316,15 @@ ari app.ari -I packages --emit-module-cache build/app.aricache --emit-llvm build
 ```
 
 The cache embeds the same metadata summary, the source text for every file in
-the resolved graph, and a compact AST summary for each cached source. Current
-caches are written as `ari-module-cache-v0`, with declaration summaries using
-`ari-ast-decls-v0`. Ari accepts only this V0 cache family until the cache format
-is explicitly allowed to advance; any other cache or declaration-summary header
-is rejected and should be regenerated. The three V0 headers are treated as one
-format family inside the compiler. A later build can validate the cache and
-parse from that snapshot:
+the resolved graph, a compact AST summary for each cached source, and an
+optional sema-produced IR summary sidecar for each source. Current caches are
+written as `ari-module-cache-v0`, with declaration summaries using
+`ari-ast-decls-v0` and IR summary sidecars using `ari-ir-summary-v0`. Ari
+accepts only this V0 cache family until the cache format is explicitly allowed
+to advance; any other cache, declaration-summary, or IR-summary header is
+rejected and should be regenerated. These V0 headers are treated as one format
+family inside the compiler. A later build can validate the cache and parse from
+that snapshot:
 
 ```sh
 ari app.ari -I packages --use-module-cache build/app.aricache --emit-llvm build/app.ll
@@ -333,9 +335,9 @@ features, selected target triple, implicit `std` mode, current source content
 hashes, and whether each cached `mod` import still resolves to the same file.
 If any input changed, Ari rejects the cache and asks you to regenerate it with
 `--emit-module-cache`.
-Malformed caches that repeat a source snapshot or AST summary for the same
-module/path/root record are rejected before validation. The embedded metadata
-summary is parsed with the same duplicate-record checks as a standalone
+Malformed caches that repeat a source snapshot, AST summary, or IR summary for
+the same module/path/root record are rejected before validation. The embedded
+metadata summary is parsed with the same duplicate-record checks as a standalone
 `.arimeta` file.
 After validation succeeds, file-backed module imports are resolved from the
 validated cache import table instead of searching candidate paths again.
@@ -346,6 +348,13 @@ compact declaration payload for the source-level item surface, including
 function parameter patterns and local binding patterns in summary-safe bodies.
 Cache loading parses that payload and checks its hash and counts, so edited or
 corrupted summaries are caught before semantic checking relies on them.
+IR summary sidecars are emitted after semantic checking from the lowered IR
+function surface for each source. They are validated as part of cache parsing:
+the payload header, hash, and function count must agree with the cache record,
+and the source hash must still match the embedded metadata. Today the module
+loader still uses AST summaries to decide whether a dependency can skip parsing;
+the IR sidecar is the reserved V0 bridge for future executable bodies that no
+longer fit in the compact source-level AST summary.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant
@@ -369,16 +378,17 @@ expressions, pointer dereferences, indirect function-pointer calls, postfix
 expression statements over the same expression forms, including tuple, vector,
 and aggregate literals, can also be materialized from the AST summary.
 Future language forms that cannot be represented in this AST-summary format
-will need a later IR body-summary cache.
+will need a later IR materialization path that consumes the validated IR
+sidecars.
 
 This cache format skips dependency source discovery after validation and reads
 module source text from the cached snapshot. Header-like dependencies can skip
 parsing through materialized AST summaries, and simple executable dependencies
 can do the same when every body has a supported summary payload. Dependencies
 with future unsupported executable bodies or unsupported constant initializer
-summaries still parse the cached source snapshot. The AST summary records are
-the stable bridge toward a future IR-summary cache for language forms that
-outgrow source-level body summaries.
+summaries still parse the cached source snapshot. The AST summary records and
+validated IR sidecars together form the bridge toward a future IR-materialization
+cache path for language forms that outgrow source-level body summaries.
 
 ## Nested Modules
 

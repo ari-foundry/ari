@@ -36,11 +36,22 @@ struct ModuleCacheAstSummary {
     std::uint64_t impl_count = 0;
 };
 
+struct ModuleCacheIrSummary {
+    std::string module_name;
+    std::string path;
+    std::string content_hash;
+    std::string ir_hash;
+    std::string ir_summary;
+    bool is_root = false;
+    std::uint64_t function_count = 0;
+};
+
 struct ModuleCache {
     int format_version = 0;
     ModuleMetadata metadata;
     std::vector<ModuleCacheSource> sources;
     std::vector<ModuleCacheAstSummary> ast_summaries;
+    std::vector<ModuleCacheIrSummary> ir_summaries;
 };
 
 std::string serialize_module_cache(const ModuleCache& cache);
@@ -49,6 +60,8 @@ ModuleCache read_module_cache_file(const std::string& path);
 const ModuleCacheSource* find_module_cache_source(const ModuleCache& cache, const std::string& path);
 const ModuleCacheAstSummary* find_module_cache_ast_summary(const ModuleCache& cache,
                                                            const std::string& path);
+const ModuleCacheIrSummary* find_module_cache_ir_summary(const ModuleCache& cache,
+                                                         const std::string& path);
 void require_matching_module_cache_ast_summary(const ModuleCacheAstSummary& expected,
                                                const ModuleCacheAstSummary& actual);
 const ModuleMetadataImport* find_module_cache_import(const ModuleCache& cache, const ModuleImport& import);
