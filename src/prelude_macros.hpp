@@ -17,7 +17,8 @@ enum class PreludeMacroKind {
     Println,
     Format,
     FormatIn,
-    Matches
+    Matches,
+    Vec
 };
 
 PreludeMacroKind prelude_macro_kind(const std::string& name);

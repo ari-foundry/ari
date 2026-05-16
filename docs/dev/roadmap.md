@@ -136,6 +136,10 @@ diagnostics.
    sema still tracks the handle as tied to the source zone. The source
    `std::vec::Vec<T>` handle and `std::vec::new<T>(ref mut Zone, capacity)`
    now connect that raw seed to a public allocator/capability creation surface.
+   `Vec!(T, ref mut Zone, capacity)` is the short prelude constructor spelling
+   for the same source handle, so early library code can avoid spelling the
+   full `std::vec::new<T>` path without confusing it with root local
+   `Vec[T]` storage.
    The source handle also has metadata, checked read/write/replace, push/pop,
    insert/remove, swap, truncate/clear, simple linear search plus
    `Slice<T>` exact/prefix/suffix checks, grow-only

@@ -554,10 +554,12 @@ pub struct Vec[T] {
 ```
 
 This source `std::vec::Vec<T>` handle is the allocator-backed construction
-seed. It exposes checked methods over the raw handle:
+seed. The prelude `Vec!(T, ref mut zone, capacity)` macro lowers to
+`std::vec::new<T>(ref mut zone, capacity)` and keeps the same explicit-zone
+provenance:
 
 ```ari
-var vec = std::vec::new<i64>(ref mut zone, 4)
+var vec = Vec!(i64, ref mut zone, 4)
 vec.push(10)
 vec.push(20)
 vec.push_in(ref mut zone, 30)
@@ -586,6 +588,10 @@ let popped = vec.pop()
 vec.truncate(1)
 vec.clear()
 ```
+
+It is constructor sugar for the source handle, not a workaround for passing the
+root stack-backed `Vec[T]` type across function boundaries. The handle exposes
+checked methods over the raw allocation.
 
 The root `Vec[T]`/`std::Vec[T]` type is still the current local vector literal
 storage until runtime heap growth is ported. Source `std::vec::Vec<T>.reserve`

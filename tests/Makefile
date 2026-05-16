@@ -226,6 +226,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-vec-new-handle.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-new-handle.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-new-handle.ll
 	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-vec-new-handle.ll
+	$(TARGET) tests/ok/std-vec-macro-new.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-macro-new.ll
+	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-macro-new.ll
+	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-vec-macro-new.ll
 	$(TARGET) tests/ok/std-boxed-box.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -q '_ARNv3std5boxed10new__G_i64' $(BUILD_DIR)/prelude/std-boxed-box.ll
@@ -436,6 +439,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-vec-alloc-buffer.elf; code=$$?; test $$code -eq 41; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-with-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; code=$$?; test $$code -eq 46; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-new-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-new-handle.elf; $(BUILD_DIR)/prelude/std-vec-new-handle.elf; code=$$?; test $$code -eq 40; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-macro-new.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-macro-new.elf; $(BUILD_DIR)/prelude/std-vec-macro-new.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-box.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-box.elf; $(BUILD_DIR)/prelude/std-boxed-box.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-replace.elf; $(BUILD_DIR)/prelude/std-boxed-replace.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; code=$$?; test $$code -eq 51; fi
@@ -516,6 +520,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-with-capacity-after-reset.err
 	if $(TARGET) tests/errors/std-vec-new-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-new-handle-after-reset.err
+	if $(TARGET) tests/errors/std-vec-macro-new-shape.ari -o $(BUILD_DIR)/prelude/std-vec-macro-new-shape.elf >$(BUILD_DIR)/prelude/std-vec-macro-new-shape.err 2>&1; then exit 1; fi
+	grep -q "Vec! expects Vec!(T, ref mut zone, capacity)" $(BUILD_DIR)/prelude/std-vec-macro-new-shape.err
 	if $(TARGET) tests/errors/std-vec-metadata-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err
 	if $(TARGET) tests/errors/std-vec-if-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.err 2>&1; then exit 1; fi

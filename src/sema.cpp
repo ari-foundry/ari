@@ -15931,6 +15931,87 @@ private:
         return make_builtin_call(expr.loc, function_name, std::move(lowered_args), i64_type(expr.loc));
     }
 
+    static TokenKind macro_matching_delimiter(TokenKind kind) {
+        if (kind == TokenKind::LParen) return TokenKind::RParen;
+        if (kind == TokenKind::LBrace) return TokenKind::RBrace;
+        if (kind == TokenKind::LBracket) return TokenKind::RBracket;
+        return TokenKind::End;
+    }
+
+    static bool macro_is_closing_delimiter(TokenKind kind) {
+        return kind == TokenKind::RParen || kind == TokenKind::RBrace || kind == TokenKind::RBracket;
+    }
+
+    static std::vector<std::vector<Token>> split_macro_top_level_arguments(
+        const std::vector<Token>& tokens,
+        SourceLocation loc,
+        const std::string& macro_name
+    ) {
+        std::vector<std::vector<Token>> args(1);
+        std::vector<TokenKind> closing_stack;
+        for (const Token& token : tokens) {
+            if (closing_stack.empty() && token.kind == TokenKind::Comma) {
+                args.emplace_back();
+                continue;
+            }
+            if (!closing_stack.empty() && token.kind == closing_stack.back()) {
+                args.back().push_back(token);
+                closing_stack.pop_back();
+                continue;
+            }
+            TokenKind matching = macro_matching_delimiter(token.kind);
+            if (matching != TokenKind::End) {
+                args.back().push_back(token);
+                closing_stack.push_back(matching);
+                continue;
+            }
+            if (macro_is_closing_delimiter(token.kind)) {
+                fail(token.loc, "mismatched delimiter in " + macro_name + "! invocation");
+            }
+            args.back().push_back(token);
+        }
+        if (!closing_stack.empty()) fail(loc, "unterminated " + macro_name + "! invocation");
+        return args;
+    }
+
+    static void require_non_empty_macro_arguments(
+        const std::vector<std::vector<Token>>& args,
+        SourceLocation loc,
+        const std::string& message
+    ) {
+        for (const auto& arg : args) {
+            if (arg.empty()) fail(loc, message);
+        }
+    }
+
+    IrExprPtr check_vec_macro_call(const Expr& expr) {
+        if (!expr.macro_tokens) {
+            fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
+        }
+        std::string usage = "Vec! expects Vec!(T, ref mut zone, capacity)";
+        std::vector<std::vector<Token>> parts =
+            split_macro_top_level_arguments(*expr.macro_tokens, expr.loc, expr.name);
+        if (parts.size() != 3) fail(expr.loc, usage);
+        require_non_empty_macro_arguments(parts, expr.loc, usage);
+
+        TypeRef element_type = parse_macro_type_ref(std::move(parts[0]), expr.loc);
+        std::vector<ExprPtr> args;
+        args.reserve(2);
+        args.push_back(parse_macro_expression(std::move(parts[1]), expr.loc));
+        args.push_back(parse_macro_expression(std::move(parts[2]), expr.loc));
+
+        Expr call;
+        call.kind = ExprKind::Call;
+        call.loc = expr.loc;
+        call.name = "std::vec::new";
+        call.args = std::move(args);
+        set_expr_type_args(call, {std::move(element_type)});
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->loc = expr.loc;
+        return check_call(call, std::move(lowered));
+    }
+
     IrExprPtr check_prelude_macro_call(const Expr& expr, PreludeMacroKind kind) {
         if (kind == PreludeMacroKind::Format) {
             fail(expr.loc, "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings");
@@ -15943,6 +16024,9 @@ private:
         }
         if (kind == PreludeMacroKind::Matches) {
             fail(expr.loc, "prelude macro 'matches!' needs pattern-position macro expansion before it can be lowered");
+        }
+        if (kind == PreludeMacroKind::Vec) {
+            return check_vec_macro_call(expr);
         }
         if (!is_supported_prelude_macro(kind)) {
             fail(expr.loc, "prelude macro '" + expr.name + "!' is reserved but macro expansion is not supported yet");

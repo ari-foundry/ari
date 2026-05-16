@@ -71,6 +71,9 @@ capability and returns a tracked `ptr T`; `std::vec::with_capacity<T>(ref mut
 zone, capacity)` wraps that pointer in a tracked `RawVec<T>` handle with
 `data`, mutable `len`, and `capacity` fields. `std::vec::new<T>(ref mut zone,
 capacity)` wraps that raw handle in the public source `std::vec::Vec<T>` seed.
+The prelude expression macro `Vec!(T, ref mut zone, capacity)` is shorthand for
+that `std::vec::new<T>(ref mut zone, capacity)` constructor; it is allocator
+construction sugar, not a root `Vec[T]` ABI workaround.
 The source handle currently exposes element methods: `len`, `capacity`,
 `is_empty`, `first`, `last`, `get`, `set`, `replace`, `swap`, `push`,
 `push_in(ref mut zone, value)`, grow-only same-zone `reserve`,
@@ -581,7 +584,9 @@ helpers until source declarations can express their hidden lifetime cleanup.
 vector-allocation seed. `std::vec::with_capacity<T>(ref mut Zone, capacity)`
 builds a source `RawVec<T>` handle around that allocation, and
 `std::vec::new<T>(ref mut Zone, capacity)` wraps it in source
-`std::vec::Vec<T>`. The source handle has methods for metadata, checked
+`std::vec::Vec<T>`. `Vec!(T, ref mut Zone, capacity)` lowers to the same source
+constructor and keeps the same zone provenance. The source handle has methods
+for metadata, checked
 read/write/replace, push/pop, grow-on-demand
 `push_in(ref mut Zone, value)`, grow-only explicit
 `reserve(ref mut Zone, capacity)`, `reserve_extra(ref mut Zone, additional)`,
@@ -660,7 +665,9 @@ an explicit-allocator feature for later. The lower-level
 `std::vec::with_capacity<T>(ref mut Zone, capacity)` helpers already exercise
 the explicit allocator path for future Vec storage, and
 `std::vec::new<T>(ref mut Zone, capacity)` exposes that seed as source
-`std::vec::Vec<T>`. The source handle supports metadata, read/write/replace,
+`std::vec::Vec<T>`. `Vec!(T, ref mut Zone, capacity)` is the short prelude
+constructor spelling for that same source handle. The source handle supports
+metadata, read/write/replace,
 push/pop, same-zone `push_in` growth, same-zone grow-only `reserve`,
 insert/remove, swap,
 same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone

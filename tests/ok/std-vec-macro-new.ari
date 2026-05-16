@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var vec = Vec!(i64, ref mut zone, 3);
+
+  vec.push(11);
+  vec.push(13);
+
+  let total = vec.len() + vec.capacity() + vec.get(0) + vec.get(1);
+  zone::destroy(zone);
+  return total;
+}
