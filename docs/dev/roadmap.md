@@ -258,9 +258,9 @@ constructor subset documented in the language guide.
    spelling with a targeted
    no-implicit-allocation-zone diagnostic, keeping Ari away from a magical
    global heap while the library surface stays explicit-capability based.
-   - [format-u64-print] add a `u64`-aware `print`/`println` runtime formatting
-     path after deciding the builtin ABI; explicit-zone `format_in!` already
-     formats unsigned integers through source `String.append_u64_in`.
+   `print`/`println` and source IO now have a `u64` runtime formatting path
+   through `ari_builtin_write_u64` / `std::io::write_u64`, matching the
+   explicit-zone `format_in!` unsigned integer support.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.

@@ -188,8 +188,7 @@ Formatting rules:
 - `{{` writes a literal `{`
 - `}}` writes a literal `}`
 - the placeholder count is checked at compile time
-- formatted print values currently support integers except `u64`, bool, `f32`,
-  and `f64`
+- formatted print values currently support integers, bool, `f32`, and `f64`
 - `println` appends one newline
 - `print` does not append a newline
 
@@ -220,6 +219,7 @@ available through that alias, such as `use std as core; core::println("x={}", 1)
 
 ```ari
 io::write_i64(42)
+io::write_u64(42u64)
 io::write_bool(true)
 io::write_byte(65 as u8)
 io::newline()
@@ -230,6 +230,7 @@ Unqualified aliases are also available:
 
 ```ari
 write_i64(42)
+write_u64(42u64)
 write_bool(true)
 write_byte(65 as u8)
 newline()
@@ -344,6 +345,7 @@ std::println(format: string, ...) -> i64
 std::io::print(format: string, ...) -> i64
 std::io::println(format: string, ...) -> i64
 io::write_i64(value: i64) -> i64
+io::write_u64(value: u64) -> i64
 io::write_bool(value: bool) -> i64
 io::write_byte(value: u8) -> i64
 io::newline() -> i64
@@ -351,6 +353,7 @@ io::read_byte() -> i64
 io::read_line() -> string
 io::read_line_owned(ref mut Zone) -> std::string::String
 write_i64(value: i64) -> i64
+write_u64(value: u64) -> i64
 write_bool(value: bool) -> i64
 write_byte(value: u8) -> i64
 newline() -> i64

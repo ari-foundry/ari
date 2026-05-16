@@ -79,11 +79,11 @@ the raw backend has runtime string storage.
 The compiler keeps Ari-owned builtin source aliases and their `ari_builtin_*`
 symbols in one runtime table. That table is used by `extern "ari"` validation,
 LLVM builtin calls, and freestanding builtin offsets, so root re-export forms
-such as `std::write_i64` and direct forms such as `write_i64` share the same
-backend hook. Semantic lowering also marks those declarations with an explicit
-Ari builtin ABI in IR, separate from ordinary C extern functions, so host LLVM
-output never has to guess from the symbol spelling whether a hook is foreign C
-or Ari runtime-owned.
+such as `std::write_i64` / `std::write_u64` and direct forms such as
+`write_i64` / `write_u64` share the same backend hook. Semantic lowering also
+marks those declarations with an explicit Ari builtin ABI in IR, separate from
+ordinary C extern functions, so host LLVM output never has to guess from the
+symbol spelling whether a hook is foreign C or Ari runtime-owned.
 
 `print` and `println` are special IR forms after semantic checking because the
 format string must be known at compile time.

@@ -58,6 +58,7 @@ assertions, context, and zones:
 
 ```ari
 extern "ari" fn write_i64(value: i64) -> i64 = "ari_builtin_write_i64";
+extern "ari" fn write_u64(value: u64) -> i64 = "ari_builtin_write_u64";
 ```
 
 These declarations must name a known `ari_builtin_*` symbol explicitly. They

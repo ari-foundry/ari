@@ -29,6 +29,7 @@ fn std::io::read_line_owned|prelude owned read_line tests; docs/dev/test-matrix.
 fn std::io::write_bool|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
+fn std::io::write_u64|prelude IO and u64 format tests; docs/dev/test-matrix.md Prelude row
 fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
@@ -246,3 +247,4 @@ use std::size_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C
 use std::write_bool|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::write_byte|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::write_i64|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::write_u64|std root re-export tests; docs/dev/test-matrix.md Prelude row

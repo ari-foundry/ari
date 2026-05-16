@@ -8,6 +8,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::write_i64", "ari_builtin_write_i64"},
         {"io::write_i64", "ari_builtin_write_i64"},
         {"std::io::write_i64", "ari_builtin_write_i64"},
+        {"write_u64", "ari_builtin_write_u64"},
+        {"std::write_u64", "ari_builtin_write_u64"},
+        {"io::write_u64", "ari_builtin_write_u64"},
+        {"std::io::write_u64", "ari_builtin_write_u64"},
         {"write_bool", "ari_builtin_write_bool"},
         {"std::write_bool", "ari_builtin_write_bool"},
         {"io::write_bool", "ari_builtin_write_bool"},
@@ -106,6 +110,7 @@ bool is_ari_builtin_symbol(const std::string& symbol) {
     return symbol == "ari_builtin_context_argc" ||
            symbol == "ari_builtin_context_arg" ||
            symbol == "ari_builtin_write_i64" ||
+           symbol == "ari_builtin_write_u64" ||
            symbol == "ari_builtin_write_bool" ||
            symbol == "ari_builtin_write_byte" ||
            symbol == "ari_builtin_newline" ||

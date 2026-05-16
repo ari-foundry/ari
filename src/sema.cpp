@@ -14734,9 +14734,6 @@ private:
             if (is_owner_type(arg->type)) {
                 fail(expr.args[i]->loc, "format arguments cannot move owning values yet");
             }
-            if (arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::U64) {
-                fail(expr.args[i]->loc, "format arguments do not support u64 yet");
-            }
             bool is_bool = arg->type.qualifier == TypeQualifier::Value && arg->type.primitive == IrPrimitiveKind::Bool;
             bool is_supported_float =
                 arg->type.qualifier == TypeQualifier::Value &&

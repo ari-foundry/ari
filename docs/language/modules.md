@@ -67,11 +67,11 @@ before parsing loops indefinitely.
 
 The standard library prelude is special-cased before general library loading:
 when `lib/std.arih` exists, the compiler auto-loads it as the public `std`
-module. User code can write `std::io::write_i64` or
+module. User code can write `std::io::write_i64`, `std::io::write_u64`, or
 `use std::mem::size_of;` without declaring `mod std;`. Rust-like implicit
 prelude aliases also bring the public `std` root items and root re-exports into
 ordinary module scopes, so names such as `Vec`, `Range`, `Iterator`, `range`,
-`size_of`, `write_i64`, `create`, and `new` can be used without `std::`.
+`size_of`, `write_i64`, `write_u64`, `create`, and `new` can be used without `std::`.
 Local declarations or explicit `use` aliases take priority. If code wants a
 namespace handle for clarity or collision management, write `use std as core`
 and call through `core::...`. Other library modules still require normal

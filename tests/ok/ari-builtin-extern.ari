@@ -1,8 +1,10 @@
 extern "ari" fn out(value: i64) -> i64 = "ari_builtin_write_i64";
+extern "ari" fn out_u64(value: u64) -> i64 = "ari_builtin_write_u64";
 extern "ari" fn nl() -> i64 = "ari_builtin_newline";
 
 fn main() -> i64 {
   out(4);
+  out_u64(5u64);
   nl();
   return 4;
 }

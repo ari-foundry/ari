@@ -3621,6 +3621,11 @@ private:
             emit_direct_call("write_bool");
             return;
         }
+        if (expr.type.qualifier == TypeQualifier::Value && expr.type.primitive == IrPrimitiveKind::U64) {
+            emit_mov_reg_reg(Reg::RDI, Reg::RAX);
+            emit_direct_call("write_u64");
+            return;
+        }
         emit_cast_to_type(expr.loc, expr.type);
         emit_mov_reg_reg(Reg::RDI, Reg::RAX);
         emit_direct_call("write_i64");
@@ -4686,7 +4691,7 @@ private:
         emit_builtin_epilogue();
     }
 
-    void emit_builtin_write_i64() {
+    void emit_builtin_write_integer(bool signed_value) {
         emit_builtin_prologue(64);
         code_.u8(0x48);
         code_.u8(0x89);
@@ -4695,17 +4700,19 @@ private:
         code_.u8(0x8D);
         code_.u8(0x75);
         code_.u8(0xFF);
-        emit_mov_r9_imm64(0);
-        code_.u8(0x48);
-        code_.u8(0x83);
-        code_.u8(0xF8);
-        code_.u8(0x00);
-        std::size_t positive = emit_jcc_placeholder(0x8D);
-        emit_mov_r9_imm64(1);
-        code_.u8(0x48);
-        code_.u8(0xF7);
-        code_.u8(0xD8);
-        patch_rel32(positive, code_.size());
+        if (signed_value) {
+            emit_mov_r9_imm64(0);
+            code_.u8(0x48);
+            code_.u8(0x83);
+            code_.u8(0xF8);
+            code_.u8(0x00);
+            std::size_t positive = emit_jcc_placeholder(0x8D);
+            emit_mov_r9_imm64(1);
+            code_.u8(0x48);
+            code_.u8(0xF7);
+            code_.u8(0xD8);
+            patch_rel32(positive, code_.size());
+        }
 
         code_.u8(0x48);
         code_.u8(0xBB);
@@ -4748,19 +4755,20 @@ private:
 
         std::size_t after_digits = code_.size();
         patch_rel32(after_digits_zero, after_digits);
-        code_.u8(0x49);
-        code_.u8(0x83);
-        code_.u8(0xF9);
-        code_.u8(0x00);
-        std::size_t emit_number = emit_jcc_placeholder(0x84);
-        code_.u8(0xC6);
-        code_.u8(0x06);
-        code_.u8(static_cast<std::uint8_t>('-'));
-        code_.u8(0x48);
-        code_.u8(0xFF);
-        code_.u8(0xCE);
-
-        patch_rel32(emit_number, code_.size());
+        if (signed_value) {
+            code_.u8(0x49);
+            code_.u8(0x83);
+            code_.u8(0xF9);
+            code_.u8(0x00);
+            std::size_t emit_number = emit_jcc_placeholder(0x84);
+            code_.u8(0xC6);
+            code_.u8(0x06);
+            code_.u8(static_cast<std::uint8_t>('-'));
+            code_.u8(0x48);
+            code_.u8(0xFF);
+            code_.u8(0xCE);
+            patch_rel32(emit_number, code_.size());
+        }
         code_.u8(0x48);
         code_.u8(0xFF);
         code_.u8(0xC6);
@@ -4775,6 +4783,14 @@ private:
         code_.u8(0x0F);
         code_.u8(0x05);
         emit_builtin_epilogue();
+    }
+
+    void emit_builtin_write_i64() {
+        emit_builtin_write_integer(true);
+    }
+
+    void emit_builtin_write_u64() {
+        emit_builtin_write_integer(false);
     }
 
     void emit_builtin_write_f64() {
@@ -4957,6 +4973,10 @@ private:
         std::size_t write_i64 = code_.size();
         register_builtin_aliases("ari_builtin_write_i64", write_i64);
         emit_builtin_write_i64();
+
+        std::size_t write_u64 = code_.size();
+        register_builtin_aliases("ari_builtin_write_u64", write_u64);
+        emit_builtin_write_u64();
 
         std::size_t write_f64 = code_.size();
         function_offsets_["write_f64"] = write_f64;

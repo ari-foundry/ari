@@ -427,6 +427,7 @@ private:
         out_ = &runtime_;
         const std::string runtime_visibility = options_.shared_library ? "hidden " : "";
         std::string fmt_i64 = string_ptr("%lld");
+        std::string fmt_u64 = string_ptr("%llu");
         std::string fmt_bool = string_ptr("%d");
         std::string empty = string_ptr("");
         std::string line_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_line_buffer, i64 0, i64 0)";
@@ -474,6 +475,13 @@ private:
         line("define " + runtime_visibility + "i64 @ari_builtin_write_i64(i64 %value) {");
         line("entry:");
         line("  call i32 (ptr, ...) @printf(ptr " + fmt_i64 + ", i64 %value)");
+        line("  ret i64 0");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_write_u64(i64 %value) {");
+        line("entry:");
+        line("  call i32 (ptr, ...) @printf(ptr " + fmt_u64 + ", i64 %value)");
         line("  ret i64 0");
         line("}");
         line();
@@ -3020,6 +3028,8 @@ private:
                 } else if (arg.ir_type.primitive == IrPrimitiveKind::U8 || arg.ir_type.primitive == IrPrimitiveKind::I8) {
                     Value byte = cast_value(arg, IrType{TypeQualifier::Value, IrPrimitiveKind::U8, "u8", {}, {}, {}, {}, expr.loc});
                     line("  call i64 @ari_builtin_write_byte(i8 " + byte.name + ")");
+                } else if (arg.ir_type.primitive == IrPrimitiveKind::U64) {
+                    line("  call i64 @ari_builtin_write_u64(i64 " + arg.name + ")");
                 } else {
                     Value wide = cast_value(arg, IrType{TypeQualifier::Value, IrPrimitiveKind::I64, "i64", {}, {}, {}, {}, expr.loc});
                     line("  call i64 @ari_builtin_write_i64(i64 " + wide.name + ")");

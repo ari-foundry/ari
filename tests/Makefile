@@ -21,6 +21,9 @@ check: check-std-api $(TARGET) check-cli check-tools check-prelude check-control
 	$(TARGET) tests/ok/format-print.ari --emit-llvm $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_write_i64" $(BUILD_DIR)/ir/format-print.ll
 	grep -q "@ari_builtin_newline" $(BUILD_DIR)/ir/format-print.ll
+	$(TARGET) tests/ok/format-print-u64.ari --emit-llvm $(BUILD_DIR)/ir/format-print-u64.ll
+	grep -q "@ari_builtin_write_u64" $(BUILD_DIR)/ir/format-print-u64.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/format-print-u64.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/format-print-u64.elf; $(BUILD_DIR)/format-print-u64.elf >$(BUILD_DIR)/format-print-u64.out; grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/format-print-u64.out; grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/format-print-u64.out; fi
 	$(TARGET) tests/ok/format-float-precision.ari --emit-llvm $(BUILD_DIR)/ir/format-float-precision.ll
 	grep -F -q "\\25\\2E\\32\\66" $(BUILD_DIR)/ir/format-float-precision.ll
 	grep -q "fpext float" $(BUILD_DIR)/ir/format-float-precision.ll
@@ -149,6 +152,7 @@ check-prelude: $(TARGET)
 	$(TARGET) --freestanding tests/ok/prelude-std-root-builtins.ari -o $(BUILD_DIR)/prelude/prelude-std-root-builtins.raw
 	$(BUILD_DIR)/prelude/prelude-std-root-builtins.raw >$(BUILD_DIR)/prelude/prelude-std-root-builtins.out; code=$$?; test $$code -eq 9
 	grep -qx "4" $(BUILD_DIR)/prelude/prelude-std-root-builtins.out
+	grep -qx "5" $(BUILD_DIR)/prelude/prelude-std-root-builtins.out
 	$(TARGET) --freestanding tests/ok/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.raw
 	$(BUILD_DIR)/prelude/prelude-macros.raw >$(BUILD_DIR)/prelude/prelude-macros.out; code=$$?; test $$code -eq 7
 	grep -q "macro=5 ok=1" $(BUILD_DIR)/prelude/prelude-macros.out
@@ -156,6 +160,10 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/format-float-freestanding.raw >$(BUILD_DIR)/prelude/format-float-freestanding.out
 	grep -qx "value=1.3 default=1.500000 whole=6" $(BUILD_DIR)/prelude/format-float-freestanding.out
 	grep -qx "round=1.13 carry=10 neg=-2.5" $(BUILD_DIR)/prelude/format-float-freestanding.out
+	$(TARGET) --freestanding tests/ok/format-print-u64.ari -o $(BUILD_DIR)/prelude/format-print-u64.raw
+	$(BUILD_DIR)/prelude/format-print-u64.raw >$(BUILD_DIR)/prelude/format-print-u64.out
+	grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/prelude/format-print-u64.out
+	grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/prelude/format-print-u64.out
 	$(TARGET) tests/ok/prelude-macros.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_bool" $(BUILD_DIR)/prelude/prelude-macros.ll
@@ -340,8 +348,10 @@ check-prelude: $(TARGET)
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
 	$(TARGET) tests/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
+	grep -q 'call i64 @"ari_builtin_write_u64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_newline"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	if grep -q 'declare i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
+	if grep -q 'declare i64 @"ari_builtin_write_u64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
 	if grep -q 'declare i64 @"ari_builtin_newline"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll; then exit 1; fi
 	$(TARGET) tests/ok/std-prelude-unqualified.ari --emit-llvm $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
 	grep -q 'call i64 @"_ARNv10span_score"' $(BUILD_DIR)/prelude/std-prelude-unqualified.ll
@@ -454,7 +464,9 @@ check-prelude: $(TARGET)
 	grep -q 'source	std::convert	lib/std/convert.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::convert	convert	lib/std/convert.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'item	std::io	extern-ari-fn	std::io::write_i64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'item	std::io	extern-ari-fn	std::io::write_u64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
+	grep -q 'call i64 @"ari_builtin_write_u64"' $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
 	if $(TARGET) --no-implicit-std tests/errors/std-use-without-implicit.ari -o $(BUILD_DIR)/prelude/std-use-without-implicit.elf >$(BUILD_DIR)/prelude/std-use-without-implicit.err 2>&1; then exit 1; fi
 	grep -q "unknown function or enum case 'write_i64'" $(BUILD_DIR)/prelude/std-use-without-implicit.err
 	if $(TARGET) --no-implicit-std tests/errors/prelude-bare-without-std.ari -o $(BUILD_DIR)/prelude/prelude-bare-without-std.elf >$(BUILD_DIR)/prelude/prelude-bare-without-std.err 2>&1; then exit 1; fi
