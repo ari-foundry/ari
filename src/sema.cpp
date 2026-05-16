@@ -16479,8 +16479,32 @@ private:
         return make_slice_view_expr(loc, std::move(data), std::move(length), slice_type);
     }
 
+    bool can_materialize_implicit_slice_temporary(const Expr& expr) const {
+        switch (expr.kind) {
+            case ExprKind::Vector:
+                return true;
+            case ExprKind::If:
+                return expr_if_then_value(expr) &&
+                       expr_if_else_value(expr) &&
+                       can_materialize_implicit_slice_temporary(*expr_if_then_value(expr)) &&
+                       can_materialize_implicit_slice_temporary(*expr_if_else_value(expr));
+            case ExprKind::Block:
+                return expr_block_value(expr) &&
+                       can_materialize_implicit_slice_temporary(*expr_block_value(expr));
+            case ExprKind::Match:
+                if (expr_match_arms(expr).empty()) return false;
+                for (const auto& arm : expr_match_arms(expr)) {
+                    if (!arm.value || !can_materialize_implicit_slice_temporary(*arm.value)) return false;
+                }
+                return true;
+            default:
+                return false;
+        }
+    }
+
     IrExprPtr try_make_implicit_slice_argument(const Expr& arg_expr, const IrType& expected) {
-        if (is_prelude_slice_type(expected) && arg_expr.kind == ExprKind::Name) {
+        if (!is_prelude_slice_type(expected) || expected.args.size() != 1) return nullptr;
+        if (arg_expr.kind == ExprKind::Name) {
             if (LocalInfo* local = find_local_slot(arg_expr.name)) {
                 if (local->type.primitive == IrPrimitiveKind::Array ||
                     local->type.primitive == IrPrimitiveKind::Vector) {
@@ -16498,8 +16522,50 @@ private:
                         expected);
                 }
             }
+            return nullptr;
         }
-        return nullptr;
+        if (!can_materialize_implicit_slice_temporary(arg_expr)) return nullptr;
+
+        IrType vector_type = make_vector_storage_type(
+            arg_expr.loc,
+            expected.args[0],
+            vector_storage_capacity_from_source_expr(arg_expr));
+        IrExprPtr vector_value = check_expr_with_expected(arg_expr, vector_type);
+        coerce_expr_to_expected(*vector_value, vector_type);
+        require_assignable(arg_expr.loc, vector_type, vector_value->type);
+
+        std::string temp_name = make_hidden_local("$slice_vec");
+        declare_local(arg_expr.loc, temp_name, vector_type, false);
+        IrStmtPtr temp_decl = make_ir_var_decl(
+            arg_expr.loc,
+            temp_name,
+            vector_type,
+            std::move(vector_value),
+            false);
+        IrStmt* temp_decl_ptr = temp_decl.get();
+
+        LocalInfo& local = local_slot_by_name(temp_name);
+        local.ir_storage_type = &temp_decl_ptr->binding.type;
+        local.ir_init_expr = temp_decl_ptr->binding.init.get();
+        set_local_vector_known_length(
+            local,
+            vector_known_length_from_source_expr(vector_type, arg_expr, *local.ir_init_expr));
+
+        IrExprPtr slice_view = make_slice_view_from_local_binding(
+            arg_expr.loc,
+            arg_expr.loc,
+            temp_name,
+            local,
+            expected);
+
+        auto block = std::make_unique<IrExpr>();
+        block->kind = IrExprKind::Block;
+        block->loc = arg_expr.loc;
+        block->type = expected;
+        std::vector<IrStmtPtr> body;
+        body.push_back(std::move(temp_decl));
+        set_ir_expr_block_payload(*block, "", std::move(body), std::move(slice_view));
+        return block;
     }
 
     IrExprPtr check_call_argument_for_expected(const Expr& arg_expr, const IrType& expected) {

@@ -301,8 +301,9 @@ destructuring is defined. Root `Vec[T]` function parameters are allowed in
 ordinary direct calls and in function pointer parameter positions such as
 `fn(Vec[T]) -> R`: the compiler lowers those parameter slots to a borrowed
 `Slice[T]`-shaped ABI, so one function body works for local Vec values with
-different caller capacities. Calls currently create the ABI view from named
-local Vec or array bindings. Generic functions whose source parameter is
+different caller capacities. Calls create the ABI view from named local Vec or
+array bindings, and from temporary Vec literals or Vec-valued control-flow
+expressions such as `sum([1, 2, 3])`. Generic functions whose source parameter is
 `Vec[T]` use the same view ABI and specialize by element type; generic by-value
 `T` parameters still carry concrete Vec capacity when `T` itself resolves to
 local Vec storage. Root `Vec[T]` function returns and trait method signatures

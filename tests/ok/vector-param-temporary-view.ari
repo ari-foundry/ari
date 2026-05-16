@@ -1,0 +1,24 @@
+fn sum(values: Vec[i64]) -> i64 {
+  return len(values) + values[0] + values[1];
+}
+
+fn len_of[T](values: Vec[T]) -> i64 {
+  return len(values);
+}
+
+fn apply(values: Vec[i64], f: fn(Vec[i64]) -> i64) -> i64 {
+  return f(values);
+}
+
+fn len_i64(values: Vec[i64]) -> i64 {
+  return len(values);
+}
+
+fn main() -> i64 {
+  let from_literal = sum([1, 2]);
+  let from_generic = len_of([3, 4, 5]);
+  let from_pointer = apply([6, 7], sum);
+  let from_if = sum(if true { [8, 9] } else { [10, 11] });
+  let from_empty = len_i64([]);
+  return from_literal + from_generic + from_pointer + from_if + from_empty;
+}

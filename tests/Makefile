@@ -2903,6 +2903,10 @@ check-functions: $(TARGET) check-function-errors
 	! grep -q "edge_sum__V" $(BUILD_DIR)/functions/vector-function-param.ll
 	$(TARGET) --freestanding tests/ok/vector-function-param.ari -o $(BUILD_DIR)/functions/vector-function-param.raw
 	$(BUILD_DIR)/functions/vector-function-param.raw; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/vector-param-temporary-view.ari --emit-llvm $(BUILD_DIR)/functions/vector-param-temporary-view.ll
+	grep -Fq 'define i64 @"_ARNv3sum"({ ptr, i64 } %arg0)' $(BUILD_DIR)/functions/vector-param-temporary-view.ll
+	$(TARGET) --freestanding tests/ok/vector-param-temporary-view.ari -o $(BUILD_DIR)/functions/vector-param-temporary-view.raw
+	$(BUILD_DIR)/functions/vector-param-temporary-view.raw; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/vector-function-pointer-param.ari --emit-llvm $(BUILD_DIR)/functions/vector-function-pointer-param.ll
 	grep -Fq 'define i64 @"_ARNv7call_it"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/functions/vector-function-pointer-param.ll
 	grep -q 'call i64 %' $(BUILD_DIR)/functions/vector-function-pointer-param.ll

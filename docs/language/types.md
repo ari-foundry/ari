@@ -517,8 +517,9 @@ function parameter. Function parameters and `fn(Vec[T]) -> R` function pointer
 parameters use a borrowed view ABI shaped like `Slice[T]`, so
 `fn sum(values: Vec[i64]) -> i64` can read `values` with `len`, indexing, range
 indexing, and other Slice-style reads without depending on the caller's local
-capacity. Calls currently create that view from a named local Vec or array
-binding. Generic functions whose source parameter is `Vec[T]` reuse one
+capacity. Calls create that view from a named local Vec or array binding, or
+from a temporary Vec literal / Vec-valued control-flow expression such as
+`sum([1, 2, 3])`. Generic functions whose source parameter is `Vec[T]` reuse one
 specialization per element type with the same view ABI; generic by-value
 `T` parameters still preserve concrete local Vec capacity when `T` itself
 resolves to local Vec storage. Root `Vec[T]` returns, extern parameters/returns,

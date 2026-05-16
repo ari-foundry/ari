@@ -185,14 +185,16 @@ diagnostics.
    signatures, struct fields, and impl receivers. Cross-boundary heap-capacity
    handles should use `std::vec::Vec<T>` with an explicit `Zone`, while borrowed
    views can use `Slice[T]` directly.
+   Temporary Vec literals and Vec-valued `if`/`match`/block expressions now
+   materialize into hidden local storage at the call edge before creating that
+   same Slice-shaped parameter view, so `sum([1, 2, 3])` no longer requires a
+   named local binding.
    - [capacity] replace the fixed-local
      literal/const/static-expr/known-local/runtime-checked root
      `Vec[T].reserve(capacity)` path with runtime heap capacity growth; function
      return, trait, extern, struct-field, and impl-receiver boundaries still
      need a stable owned root Vec runtime ABI, and source
      `std::vec::Vec<T>` growth already uses centralized explicit-zone helpers
-   - [follow-up] materialize temporary Vec literals/expressions for `Vec[T]`
-     parameter calls so `sum([1, 2, 3])` does not require a named local binding
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place
 2. Prepare source `std` library foundations before broad library expansion.
