@@ -861,7 +861,10 @@ private:
              value.kind == IrExprKind::Match) &&
             is_aggregate_type(value.type)) {
             int temp_offset = aggregate_result_temp_offset(value.loc, value);
+            // Callees use RBX as scratch, so preserve the pointer base across arm evaluation.
+            emit_push(Reg::RBX);
             emit_store_value_to_offset(target_type, value, temp_offset);
+            emit_pop(Reg::RBX);
             copy_local_bytes_to_pointer_base(value.loc, temp_offset, target_type, byte_offset);
             return;
         }

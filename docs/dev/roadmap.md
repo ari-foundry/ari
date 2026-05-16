@@ -211,7 +211,10 @@ constructor subset documented in the language guide.
    method surface now: value-receiver presence/status predicates, `unwrap_or`,
    and consuming `map`/`and_then`/`map_err` combinators, implemented in focused
    `std::option` and `std::result` child modules while the enum types and cases
-   remain at the `std` root.
+   remain at the `std` root. The raw freestanding backend now preserves caller
+   pointer bases while aggregate-valued match/control-flow results evaluate
+   aggregate-returning callees, so these combinators run on both LLVM-host and
+   raw paths.
    Source `std::cmp` now has small generic value helpers
    (`min`, `max`, and `clamp`) over its `cmp::Ord[T]` trait, with root prelude
    re-exports for ordinary library code. This covers another ordinary-library
@@ -268,10 +271,6 @@ constructor subset documented in the language guide.
      `Option[T]` and `Result[T, E]` after enum ref-pattern matching has a
      settled ownership/binding contract; today's methods intentionally consume
      the enum value.
-   - [raw-option-result-combinators] extend freestanding coverage for source
-     `Option[T]` / `Result[T, E]` combinators that pass aggregate enums through
-     function-pointer callbacks; LLVM-host coverage exists today, while the raw
-     backend still needs a focused ABI pass for this shape.
    Explicit-zone formatted strings are now settled for the 0.x source-`std`
    surface: `format_in!(ref mut Zone, "...", values...)` lowers `{}`
    string/signed and unsigned integer/bool/float formatting and `{:.N}` float

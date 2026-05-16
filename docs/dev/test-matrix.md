@@ -146,6 +146,8 @@ Checklist:
       caller-provided result storage
 - [x] materialize discarded freestanding aggregate-returning direct and
       function-pointer calls into hidden temporaries
+- [x] preserve freestanding caller pointer bases while aggregate-valued
+      block/if/match results evaluate aggregate-returning callees
 - [x] accept generic function syntax as a parsed surface
 - [x] monomorphize simple generic function calls
 - [x] monomorphize explicit generic function calls such as `identity<i64>(value)`
