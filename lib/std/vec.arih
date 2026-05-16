@@ -66,6 +66,18 @@ fn ensure_spare_capacity[T](value: ref mut std::vec::Vec[T], zone: ref mut Zone)
   }
 }
 
+fn shrink_to_len[T](value: ref mut std::vec::Vec[T], length: i64) -> void {
+  std::assert(length >= 0);
+  std::assert(length <= value.raw.len);
+  var index = length;
+  while index < value.raw.len {
+    let removed = ptr_load(ptr_add(value.raw.data, index));
+    drop removed;
+    index = index + 1;
+  }
+  value.raw.len = length;
+}
+
 pub impl[T] std::Slice[T] {
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::vec::Vec[T] {
     let current = super::Slice<T> { data: self.data, len: self.len };
@@ -105,7 +117,9 @@ pub impl[T] std::vec::Vec[T] {
   fn set(self: ref mut Self, index: i64, value: T) -> void {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);
+    let previous = ptr_load(ptr_add(self.raw.data, index));
     ptr_store(ptr_add(self.raw.data, index), value);
+    drop previous;
   }
 
   fn replace(self: ref mut Self, index: i64, value: T) -> T {
@@ -156,7 +170,7 @@ pub impl[T] std::vec::Vec[T] {
   fn resize_in(self: ref mut Self, zone: ref mut Zone, length: i64, value: T) -> void {
     std::assert(length >= 0);
     if length <= self.raw.len {
-      self.raw.len = length;
+      shrink_to_len<T>(self, length);
       return;
     }
     while self.raw.len < length {
@@ -226,13 +240,11 @@ pub impl[T] std::vec::Vec[T] {
   }
 
   fn clear(self: ref mut Self) -> void {
-    self.raw.len = 0;
+    shrink_to_len<T>(self, 0);
   }
 
   fn truncate(self: ref mut Self, length: i64) -> void {
-    std::assert(length >= 0);
-    std::assert(length <= self.raw.len);
-    self.raw.len = length;
+    shrink_to_len<T>(self, length);
   }
 
   fn index_of(self: ref Self, value: T) -> i64 {

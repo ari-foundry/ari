@@ -473,8 +473,9 @@ borrow the receiver, so metadata, checked endpoint/indexed reads, source
 string/Vec search, source string exact/prefix/suffix checks, target-zone copy,
 and raw-pointer recovery do not copy the handle itself.
 Dropping a tracked source `std::vec::Vec<T>`
-consumes the handle and drops each current element, while the explicit zone
-still owns the backing bytes. When a
+consumes the handle and drops each current element, while overwrite and shrink
+helpers drop removed elements before reducing the live length. The explicit
+zone still owns the backing bytes. When a
 control-flow expression selects tracked handles from the same source zone, the
 selected handle keeps that provenance. Different-source selections are not
 modeled as a single-source handle; keep those values local

@@ -609,11 +609,14 @@ index, value)` follows the same explicit-zone growth rule before inserting and
 shifting later elements.
 `std::vec::Vec<T>.extend_from_slice_in(ref mut Zone, Slice<T>)` appends each
 slice element through that same growth path. `std::vec::Vec<T>.resize_in(ref
-mut Zone, length, value)` shrinks by setting `len` or grows by appending copies
-of `value`. `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` builds a new
-target-zone source `Vec<T>` by copying the borrowed slice elements into fresh
-zone storage. `replace(index, value)` returns the previous element at `index`
-after storing the new value. Passing a different zone borrow to `reserve`,
+mut Zone, length, value)` shrinks by dropping removed tail values and reducing
+`len`, or grows by appending copies of `value`.
+`std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)` builds a new target-zone
+source `Vec<T>` by copying the borrowed slice elements into fresh zone storage.
+`set(index, value)` drops the previous element after storing the new value,
+while `replace(index, value)` returns the previous element instead.
+`truncate(length)` and `clear()` drop removed elements before reducing the live
+length. Passing a different zone borrow to `reserve`,
 `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`, or
 `resize_in` is rejected because the source handle remains tied to the zone that
 created it. Dropping the source `Vec<T>` handle runs `drop` on each current

@@ -163,7 +163,9 @@ diagnostics.
    `extend_from_slice_in`, and `resize_in` share one explicit-zone growth
    implementation instead of carrying separate buffer-copy loops. Its `Drop` impl
    consumes the handle and drops each current element while the explicit zone
-   keeps responsibility for releasing the backing storage. Runtime heap growth for
+   keeps responsibility for releasing the backing storage. `set`, `clear`,
+   `truncate`, and shrinking `resize_in` now run removed values through normal
+   Drop lowering before the handle forgets those elements. Runtime heap growth for
    root/local `Vec[T]` and the root
    `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed
    has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
@@ -244,7 +246,9 @@ diagnostics.
    same tracked source zone, while storage release remains the
    explicit zone's responsibility through `zone::reset` or `zone::destroy`. Source
    `std::vec::Vec<T>` follows the same explicit-zone value-drop policy:
-   `drop vec` drops each current element and leaves buffer release to the zone.
+   `drop vec` drops each current element and leaves buffer release to the zone,
+   while overwrite and shrink helpers drop removed elements before reducing the
+   live length.
    Source `std::mem::replace<T>` and `std::mem::swap<T>` now provide
    mutable-place value helpers for copyable scalar and plain Ari-layout
    aggregate values, with root prelude re-exports. They lower through the same

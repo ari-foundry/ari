@@ -93,7 +93,10 @@ a new handle tied to the target zone. `as_ptr()` returns the stored element
 pointer with the source zone provenance preserved. `iter()` returns a tracked
 `std::vec::Iter<T>` that implements `Iterator[T]`, and the Vec handle also
 implements `IntoIterator[T]` for direct `for value in vec` lowering. This is
-not the final root `Vec[T]` method API.
+not the final root `Vec[T]` method API. `set`, shrinking `resize_in`,
+`truncate`, and `clear` run removed element values through normal Drop lowering
+before the handle forgets them; the explicit zone still releases the backing
+bytes.
 
 The `std::boxed` module exposes `std::boxed::new<T>(ref mut zone, value)` for a
 tracked source `std::boxed::Box<T>` handle over one value placed in a zone. Its
@@ -696,7 +699,9 @@ reads, search, Slice comparison, `copy_to`, and `as_ptr` borrow that source
 handle receiver. The resulting `Slice[T]` and its `as_ptr()` pointer keep the
 same zone provenance, so using either after `zone::reset` or `zone::destroy`
 is rejected. `as_ptr()` raw pointers and copied Vec handles track their source
-or target zone respectively. The root
+or target zone respectively. Mutating overwrite/shrink helpers drop removed
+element values before reducing the live length, while buffer release remains
+with the explicit zone. The root
 `Vec[T]` type and its current local method set remain fixed-local until runtime
 growth is ported. Root `Vec[T]` can be used as an ordinary direct function
 parameter or as a function pointer parameter in `fn(Vec[T]) -> R`; sema lowers
