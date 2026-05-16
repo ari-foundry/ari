@@ -1,0 +1,14 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var boxed = Box::new<i64>(ref mut zone, 21);
+
+  let value = boxed.take();
+  var score = value;
+  if boxed.is_empty() {
+    score = score + 3;
+  }
+
+  drop boxed;
+  zone::destroy(zone);
+  return score;
+}

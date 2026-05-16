@@ -1,9 +1,17 @@
 pub struct Box[T] {
-  data: ptr T,
+  mut data: ptr T,
 }
 
 pub fn new[T](zone: ref mut Zone, value: T) -> std::boxed::Box[T] {
   return std::boxed::Box<T> { data: std::zone::new<T>(zone, value) };
+}
+
+fn empty_data[T]() -> ptr T {
+  return 0u64 as ptr T;
+}
+
+fn has_data[T](data: ptr T) -> bool {
+  return (data as u64) != 0u64;
 }
 
 pub impl[T] std::boxed::Box[T] {
@@ -11,18 +19,32 @@ pub impl[T] std::boxed::Box[T] {
     return std::boxed::new<T>(zone, value);
   }
 
+  fn is_empty(self: ref Self) -> bool {
+    return !has_data<T>(self.data);
+  }
+
   fn get(self: ref Self) -> T {
+    std::assert(!self.is_empty());
     return ptr_load(self.data);
   }
 
   fn set(self: ref mut Self, value: T) -> void {
+    std::assert(has_data<T>(self.data));
     ptr_store(self.data, value);
   }
 
   fn replace(self: ref mut Self, value: T) -> T {
+    std::assert(has_data<T>(self.data));
     let previous = ptr_load(self.data);
     ptr_store(self.data, value);
     return previous;
+  }
+
+  fn take(self: ref mut Self) -> T {
+    std::assert(has_data<T>(self.data));
+    let value = ptr_load(self.data);
+    self.data = empty_data<T>();
+    return value;
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::boxed::Box[T] {
@@ -30,18 +52,24 @@ pub impl[T] std::boxed::Box[T] {
   }
 
   fn swap(self: ref mut Self, other: ref mut Self) -> void {
+    std::assert(has_data<T>(self.data));
+    std::assert(has_data<T>(other.data));
     let temporary = ptr_load(self.data);
     ptr_store(self.data, ptr_load(other.data));
     ptr_store(other.data, temporary);
   }
 
   fn as_ptr(self: ref Self) -> ptr T {
+    std::assert(!self.is_empty());
     return self.data;
   }
 }
 
 impl[T] std::Drop for std::boxed::Box[T] {
   fn drop(self) -> void {
+    if !has_data<T>(self.data) {
+      return;
+    }
     let value = ptr_load(self.data);
     drop value;
     return;

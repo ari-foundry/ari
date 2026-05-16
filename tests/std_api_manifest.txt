@@ -100,10 +100,12 @@ method std::Slice[T]::copy_to|check-prelude prelude-slice-copy-to borrowed recei
 method std::boxed::Box[T]::as_ptr|check-prelude std-boxed-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::copy_to|check-prelude std-boxed-copy-to borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::get|check-prelude std-boxed-box borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::is_empty|check-prelude std-boxed-take empty handle contract; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::new|check-prelude prelude-box-root; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::replace|check-prelude std-boxed-replace; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::set|check-prelude std-boxed-box; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
+method std::boxed::Box[T]::take|check-prelude std-boxed-take value move-out leaves empty handle; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows

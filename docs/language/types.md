@@ -837,7 +837,8 @@ Meanings:
   `std::Box::new<T>(ref mut Zone, value)`, or
   `std::boxed::new<T>(ref mut Zone, value)`; the handle's `Drop` path runs the
   stored value's destructor when one exists, but the explicit zone still owns
-  and releases the backing bytes.
+  and releases the backing bytes. `take()` moves the value out and leaves the
+  handle empty, so a later handle drop does not drop that value again.
 - `Unique[T]`, `Shared[T]`, and `Weak[T]`: reserved root smart-pointer names.
   `Unique[T]` remains reserved for policy compatibility, and `Shared[T]` /
   `Weak[T]` are reserved for future reference-counted ownership.

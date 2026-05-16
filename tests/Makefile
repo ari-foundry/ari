@@ -242,6 +242,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-boxed-swap.ll
 	$(TARGET) tests/ok/std-boxed-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
+	$(TARGET) tests/ok/std-boxed-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-take.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4take' $(BUILD_DIR)/prelude/std-boxed-take.ll
+	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent8is_empty' $(BUILD_DIR)/prelude/std-boxed-take.ll
 	$(TARGET) tests/ok/std-boxed-drop.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-boxed-drop.ll
 	$(TARGET) tests/ok/std-boxed-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-drop-value.ll
@@ -463,6 +466,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; code=$$?; test $$code -eq 51; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-take.elf; $(BUILD_DIR)/prelude/std-boxed-take.elf; code=$$?; test $$code -eq 24; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-drop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-drop.elf; $(BUILD_DIR)/prelude/std-boxed-drop.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-box-root.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-box-root.elf; $(BUILD_DIR)/prelude/prelude-box-root.elf; code=$$?; test $$code -eq 43; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-alloc-buffer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; $(BUILD_DIR)/prelude/std-string-alloc-buffer.elf; code=$$?; test $$code -eq 6; fi

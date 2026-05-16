@@ -101,9 +101,12 @@ source lives in `lib/std/boxed.arih`, and the same handle is available through
 the root `Box[T]` / `std::Box[T]` alias. The handle also has associated
 constructors through `Box::new<T>(ref mut zone, value)` and
 `std::Box::new<T>(ref mut zone, value)`. It exposes `get()`, `set(value)`,
-`replace(value)`, `copy_to(ref mut zone)`, `swap(ref mut other)`, and
-`as_ptr()` methods for copyable, zone-placeable values. `replace(value)` stores
-a new value and returns the previous one.
+`replace(value)`, `take()`, `is_empty()`, `copy_to(ref mut zone)`,
+`swap(ref mut other)`, and `as_ptr()` methods for copyable, zone-placeable
+values. `replace(value)` stores a new value and returns the previous one.
+`take()` moves the current value out of the handle and leaves the handle empty;
+`is_empty()` reports that state, and dropping an empty handle does not drop a
+value again.
 `get()`, `copy_to(ref mut zone)`, and `as_ptr()` borrow the handle receiver
 instead of copying it; the mutating methods borrow it mutably.
 `copy_to(ref mut zone)` copies the current value into another explicit zone and
@@ -114,9 +117,11 @@ the same zone provenance as the handle, so using that pointer after the source
 zone is reset or destroyed is also rejected by the checker. The handle has a
 generic `Drop` impl: dropping it consumes the handle binding and runs the
 stored value's `Drop` path when one exists, while the backing bytes stay owned
-by the explicit zone and are released by `zone::reset` or `zone::destroy`. The
-dropped handle binding cannot be used again. This root spelling is still not
-the final allocator-backed unique owning smart pointer.
+by the explicit zone and are released by `zone::reset` or `zone::destroy`.
+Reading, writing, copying, swapping, or exposing a raw pointer from an empty
+handle traps through `std::assert`; the dropped handle binding cannot be used
+again. This root spelling is still not the final allocator-backed unique owning
+smart pointer.
 
 The `std::string` module exposes the source-level seed for owned text storage.
 `std::string::alloc_buffer(ref mut zone, capacity) -> ptr u8` validates a
@@ -717,16 +722,21 @@ let replaced = boxed.replace(12)
 var copied = boxed.copy_to(ref mut other_zone)
 boxed.swap(ref mut copied)
 let raw = boxed.as_ptr()
+let moved = boxed.take()
+let empty = boxed.is_empty()
 ```
 
 The handle stores a raw pointer returned by `zone::new<T>` and keeps the same
 zone provenance, so reset/destroy invalidation applies to the handle and to raw
 pointers recovered through `as_ptr()`. `get()`, `copy_to(ref mut Zone)`, and
 `as_ptr()` are read-only borrows of the handle; `set`, `replace`, and `swap`
-take mutable borrows. Explicit `drop boxed` consumes the handle binding and
-loads the pointed-to value through the normal `Drop` path, so a stored type with
-a `Drop` impl gets its destructor call. The zone still owns the backing bytes;
-memory is released with `zone::reset` or `zone::destroy`.
+take mutable borrows. `take()` also takes a mutable borrow: it loads the
+pointed-to value and clears the handle's data pointer so `drop boxed` will not
+drop the same value again. Explicit `drop boxed` consumes the handle binding and
+loads the pointed-to value through the normal `Drop` path when the handle is not
+empty, so a stored type with a `Drop` impl gets its destructor call. The zone
+still owns the backing bytes; memory is released with `zone::reset` or
+`zone::destroy`.
 
 `std::string::alloc_buffer(ref mut Zone, capacity)` allocates byte storage for
 future owned strings:
@@ -799,7 +809,10 @@ result, or slice view after its source zone is reset or destroyed is rejected.
 `std::boxed::Box<T>` source handle. It is useful for source library APIs that
 need a one-value handle before the final owning smart pointer ABI exists, but
 it still takes explicit zone construction through `Box::new<T>` or
-`std::boxed::new<T>`, and the zone still releases the backing bytes.
+`std::boxed::new<T>`, and the zone still releases the backing bytes. Its
+`take()` method is the current explicit-zone value move-out contract; the
+allocator-backed unique owner will keep the root `Box[T]` spelling once heap
+release is part of the handle.
 `Unique[T]` remains reserved as
 policy/design space, but the eventual unique owner should use the `Box[T]`
 spelling once it grows allocator-backed ownership. `Shared[T]` is reserved for
