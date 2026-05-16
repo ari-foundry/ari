@@ -689,13 +689,15 @@ or target zone respectively. The root
 growth is ported. Root `Vec[T]` can be used as an ordinary direct function
 parameter or as a function pointer parameter in `fn(Vec[T]) -> R`; sema lowers
 those slots to the same borrowed `{data, len}` shape as `Slice[T]`, so one
-callee works across caller capacities. Generic functions whose source parameter
-is `Vec[T]` use that same view ABI, while by-value generic `T` parameters still
-carry concrete local Vec capacity when `T` resolves to local Vec storage. Root
-`Vec[T]` returns, extern parameters/returns, trait method signatures, struct
-fields, and impl receivers still reject it with a dedicated diagnostic until
-the runtime-capacity ABI is defined. Use `std::vec::Vec<T>` for an
-explicit-zone heap handle or `Slice[T]` for a borrowed view.
+callee works across caller capacities. Trait and impl method parameters use the
+same view ABI for ordinary non-return parameter slots. Generic functions whose
+source parameter is `Vec[T]` use that same view ABI, while by-value generic `T`
+parameters still carry concrete local Vec capacity when `T` resolves to local
+Vec storage. Root `Vec[T]` returns, extern parameters/returns, trait method
+return types, struct fields, and impl receivers still reject it with a
+dedicated diagnostic until the runtime-capacity ABI is defined. Use
+`std::vec::Vec<T>` for an explicit-zone heap handle or `Slice[T]` for a borrowed
+view.
 
 `std::boxed::Box<T>` is the source `std` allocation seed for a single
 zone-backed value:

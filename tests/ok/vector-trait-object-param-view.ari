@@ -1,0 +1,14 @@
+trait UsesVecObject {
+  fn take(self, values: Vec[i64]) -> i64
+}
+
+impl UsesVecObject for i64 {
+  fn take(self, values: Vec[i64]) -> i64 {
+    return self + len(values) + values[0] + values[1];
+  }
+}
+
+fn main() -> i64 {
+  let object = 5i64 as dyn UsesVecObject;
+  return object.take([1, 2]);
+}

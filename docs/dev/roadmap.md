@@ -175,16 +175,18 @@ diagnostics.
    Root `Vec[T]` now has an explicit boundary rule while runtime capacity is
    still absent: it remains stack-backed fixed-capacity storage locally, while
    ordinary Ari function parameters and `fn(Vec[T]) -> R` function pointer
-   parameters lower to the same borrowed `{data, len}` ABI as `Slice[T]`. Calls
-   from local Vec or array bindings create that view at the call edge, so a
-   single function body works across caller capacities. Generic functions whose
-   source parameter is `Vec[T]` reuse one specialization per element type with
-   this view ABI; generic by-value `T` parameters still carry concrete local Vec
-   capacity when `T` itself resolves to local Vec storage. Sema still rejects
-   unsized root `Vec[T]` returns, extern parameters/returns, trait method
-   signatures, struct fields, and impl receivers. Cross-boundary heap-capacity
-   handles should use `std::vec::Vec<T>` with an explicit `Zone`, while borrowed
-   views can use `Slice[T]` directly.
+   parameters lower to the same borrowed `{data, len}` ABI as `Slice[T]`. Trait
+   and impl method parameters now use that same view ABI for ordinary
+   non-return parameter slots. Calls from local Vec or array bindings create
+   that view at the call edge, so a single function body works across caller
+   capacities. Generic functions whose source parameter is `Vec[T]` reuse one
+   specialization per element type with this view ABI; generic by-value `T`
+   parameters still carry concrete local Vec capacity when `T` itself resolves
+   to local Vec storage. Sema still rejects unsized root `Vec[T]` returns,
+   extern parameters/returns, trait method return types, struct fields, and impl
+   receivers. Cross-boundary heap-capacity handles should use
+   `std::vec::Vec<T>` with an explicit `Zone`, while borrowed views can use
+   `Slice[T]` directly.
    Temporary Vec literals and Vec-valued `if`/`match`/block expressions now
    materialize into hidden local storage at the call edge before creating that
    same Slice-shaped parameter view, so `sum([1, 2, 3])` no longer requires a
@@ -192,8 +194,8 @@ diagnostics.
    - [capacity] replace the fixed-local
      literal/const/static-expr/known-local/runtime-checked root
      `Vec[T].reserve(capacity)` path with runtime heap capacity growth; function
-     return, trait, extern, struct-field, and impl-receiver boundaries still
-     need a stable owned root Vec runtime ABI, and source
+     returns, trait method returns, extern, struct-field, and impl-receiver
+     boundaries still need a stable owned root Vec runtime ABI, and source
      `std::vec::Vec<T>` growth already uses centralized explicit-zone helpers
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place

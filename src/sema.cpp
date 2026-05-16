@@ -2126,7 +2126,12 @@ private:
 
                 for (const auto& param : method.params) {
                     IrType param_type = resolve_executable_type(param.type);
-                    require_root_vector_runtime_abi(param.type.loc, param_type, "a trait method parameter");
+                    bool vec_view = false;
+                    (void)function_parameter_abi_type(
+                        param.type.loc,
+                        param_type,
+                        "a trait method parameter",
+                        vec_view);
                 }
                 if (method.has_return_type) {
                     IrType result_type = resolve_executable_type(method.return_type);
@@ -3468,8 +3473,12 @@ private:
                 sig.is_public = false;
                 for (const auto& param : method.params) {
                     IrType param_type = resolve_executable_type(param.type);
-                    require_root_vector_runtime_abi(param.type.loc, param_type, "an impl method parameter");
-                    sig.params.push_back(param_type);
+                    bool vec_view = false;
+                    sig.params.push_back(function_parameter_abi_type(
+                        param.type.loc,
+                        param_type,
+                        "an impl method parameter",
+                        vec_view));
                 }
                 sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
                 if (method.has_return_type) {
@@ -15592,8 +15601,12 @@ private:
         sig.is_public = method.is_public;
         for (const auto& param : method.fn->params) {
             IrType param_type = resolve_type_with_substitutions(param.type, substitutions);
-            require_root_vector_runtime_abi(param.type.loc, param_type, "an impl method parameter");
-            sig.params.push_back(param_type);
+            bool vec_view = false;
+            sig.params.push_back(function_parameter_abi_type(
+                param.type.loc,
+                param_type,
+                "an impl method parameter",
+                vec_view));
         }
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
@@ -15640,8 +15653,12 @@ private:
         sig.is_public = method.is_public;
         for (const auto& param : method.fn->params) {
             IrType param_type = resolve_type_with_substitutions(param.type, substitutions);
-            require_root_vector_runtime_abi(param.type.loc, param_type, "an impl method parameter");
-            sig.params.push_back(param_type);
+            bool vec_view = false;
+            sig.params.push_back(function_parameter_abi_type(
+                param.type.loc,
+                param_type,
+                "an impl method parameter",
+                vec_view));
         }
         sig.result = method.fn->has_return_type
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
@@ -16723,6 +16740,17 @@ private:
         coerce_expr_to_expected(*arg, expected);
         require_assignable(arg_expr.loc, expected, arg->type);
         return arg;
+    }
+
+    IrExprPtr coerce_checked_call_argument_or_implicit_slice(const Expr& arg_expr,
+                                                             IrExprPtr checked,
+                                                             const IrType& expected) {
+        if (IrExprPtr slice_view = try_make_implicit_slice_argument(arg_expr, expected)) {
+            return slice_view;
+        }
+        coerce_expr_to_expected(*checked, expected);
+        require_assignable(arg_expr.loc, expected, checked->type);
+        return checked;
     }
 
     IrExprPtr check_vec_len_call(const Expr& expr, IrExprPtr lowered) {
@@ -18487,9 +18515,10 @@ private:
         args.reserve(expr.args.size());
         args.push_back(std::move(receiver));
         for (std::size_t i = 1; i < expr.args.size(); ++i) {
-            IrExprPtr arg = std::move(checked_args[i - 1]);
-            coerce_expr_to_expected(*arg, sig.params[i]);
-            require_assignable(expr.loc, sig.params[i], arg->type);
+            IrExprPtr arg = coerce_checked_call_argument_or_implicit_slice(
+                *expr.args[i],
+                std::move(checked_args[i - 1]),
+                sig.params[i]);
             args.push_back(std::move(arg));
         }
         return finish_tracked_call(
@@ -18600,9 +18629,10 @@ private:
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = std::move(checked_args[i]);
-            coerce_expr_to_expected(*arg, sig.params[i]);
-            require_assignable(expr.loc, sig.params[i], arg->type);
+            IrExprPtr arg = coerce_checked_call_argument_or_implicit_slice(
+                *expr.args[i],
+                std::move(checked_args[i]),
+                sig.params[i]);
             args.push_back(std::move(arg));
         }
         return finish_tracked_call(
@@ -18709,9 +18739,10 @@ private:
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = std::move(checked_args[i]);
-            coerce_expr_to_expected(*arg, sig.params[i]);
-            require_assignable(expr.loc, sig.params[i], arg->type);
+            IrExprPtr arg = coerce_checked_call_argument_or_implicit_slice(
+                *expr.args[i],
+                std::move(checked_args[i]),
+                sig.params[i]);
             args.push_back(std::move(arg));
         }
         return finish_tracked_call(
@@ -18767,7 +18798,13 @@ private:
         std::vector<IrType> expected_args;
         expected_args.reserve(expr.args.size());
         for (std::size_t i = 1; i < method.params.size(); ++i) {
-            IrType param = resolve_type_with_substitutions(method.params[i], substitutions);
+            IrType source_param = resolve_type_with_substitutions(method.params[i], substitutions);
+            bool vec_view = false;
+            IrType param = function_parameter_abi_type(
+                method.params[i].loc,
+                source_param,
+                "a trait object method parameter",
+                vec_view);
             erased_params.push_back(param);
             expected_args.push_back(std::move(param));
         }
@@ -18779,8 +18816,7 @@ private:
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size());
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = check_expr_with_expected(*expr.args[i], expected_args[i]);
-            coerce_expr_to_expected(*arg, expected_args[i]);
+            IrExprPtr arg = check_call_argument_for_expected(*expr.args[i], expected_args[i]);
             require_assignable(expr.args[i]->loc, expected_args[i], arg->type);
             args.push_back(std::move(arg));
         }
@@ -18935,8 +18971,12 @@ private:
         args.reserve(expr.args.size() + 1);
         args.push_back(std::move(receiver));
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
-            IrExprPtr arg = has_generic_selected ? std::move(generic_args[i]) : check_expr(*expr.args[i]);
-            coerce_expr_to_expected(*arg, sig.params[i + 1]);
+            IrExprPtr arg = has_generic_selected
+                ? coerce_checked_call_argument_or_implicit_slice(
+                      *expr.args[i],
+                      std::move(generic_args[i]),
+                      sig.params[i + 1])
+                : check_call_argument_for_expected(*expr.args[i], sig.params[i + 1]);
             require_assignable(expr.loc, sig.params[i + 1], arg->type);
             args.push_back(std::move(arg));
         }

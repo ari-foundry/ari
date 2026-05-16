@@ -248,10 +248,12 @@ Checklist:
 - [x] checked local `Vec.swap(a, b)` on the LLVM backend, including known-empty
       runtime-index rejection
 - [x] frozen local `Vec[T]` API rejects unsupported compiler-known methods with allocator-backed std guidance
-- [x] root `Vec[T]` direct/function-pointer parameters lower through the
-      Slice-shaped view ABI, while returns, extern parameters/returns, trait
-      method signatures, direct or generic-instantiated struct fields, and impl
-      receivers stay rejected until the owned runtime-capacity layout is defined
+- [x] root `Vec[T]` direct/function-pointer parameters plus trait/impl method
+      parameter slots lower through the Slice-shaped view ABI, while returns,
+      extern parameters/returns, trait method return types, direct or
+      generic-instantiated struct fields, and impl receivers stay rejected until
+      the owned runtime-capacity layout is defined; dyn dispatch erases those
+      trait method parameters to the same view ABI
 - [x] `std::vec::alloc_buffer<T>(ref mut Zone, capacity)` seeds future
       allocator-backed Vec storage with a tracked zone-backed element pointer
 - [x] `std::boxed::new<T>(ref mut Zone, value)` wraps placement construction in

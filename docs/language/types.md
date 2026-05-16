@@ -522,11 +522,12 @@ from a temporary Vec literal / Vec-valued control-flow expression such as
 `sum([1, 2, 3])`. Generic functions whose source parameter is `Vec[T]` reuse one
 specialization per element type with the same view ABI; generic by-value
 `T` parameters still preserve concrete local Vec capacity when `T` itself
-resolves to local Vec storage. Root `Vec[T]` returns, extern parameters/returns,
-trait method signatures, struct fields, and impl receivers still reject root
-`Vec[T]` until the runtime-capacity layout is defined. Use `std::vec::Vec<T>`
-when a value must be passed as an explicit-zone heap handle, or pass `Slice[T]`
-for a borrowed view.
+resolves to local Vec storage. Trait and impl method parameters use the same
+view ABI for ordinary parameter slots, including trait-qualified calls. Root
+`Vec[T]` returns, extern parameters/returns, trait method return types, struct
+fields, and impl receivers still reject root `Vec[T]` until the
+runtime-capacity layout is defined. Use `std::vec::Vec<T>` when a value must be
+passed as an explicit-zone heap handle, or pass `Slice[T]` for a borrowed view.
 
 For the allocator-backed path, `std::vec::alloc_buffer<T>(ref mut zone,
 capacity)` now provides the raw element-buffer seed. It takes an explicit

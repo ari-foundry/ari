@@ -306,8 +306,9 @@ array bindings, and from temporary Vec literals or Vec-valued control-flow
 expressions such as `sum([1, 2, 3])`. Generic functions whose source parameter is
 `Vec[T]` use the same view ABI and specialize by element type; generic by-value
 `T` parameters still carry concrete Vec capacity when `T` itself resolves to
-local Vec storage. Root `Vec[T]` function returns and trait method signatures
-still wait for the runtime-capacity Vec ABI.
+local Vec storage. Trait and impl method parameters use the same view ABI for
+ordinary parameter slots, while root `Vec[T]` function returns and trait method
+return types still wait for the runtime-capacity Vec ABI.
 Parameter patterns are value-binding-only for now:
 `ref`, `ref mut`, `&`, `&mut`, and `mut` binding-mode patterns are
 reserved and rejected. Trait and extern function signatures must keep named

@@ -1,0 +1,22 @@
+trait UsesVec {
+  fn take(self, values: Vec[i64]) -> i64
+  fn sum(values: Vec[i64]) -> i64
+}
+
+impl UsesVec for i64 {
+  fn take(self, values: Vec[i64]) -> i64 {
+    return self + len(values) + values[0] + values[1];
+  }
+
+  fn sum(values: Vec[i64]) -> i64 {
+    return len(values) + values[0] + values[1];
+  }
+}
+
+fn main() -> i64 {
+  var values: Vec[i64] = [1, 2];
+  let direct = 5i64.take(values);
+  let qualified_method = UsesVec::take(6i64, [3, 4]);
+  let associated = UsesVec::sum<i64>(if true { [7, 8] } else { [9, 10] });
+  return direct + qualified_method + associated;
+}
