@@ -244,6 +244,7 @@ public:
         collect_constant_decls();
         validate_struct_decls();
         resolve_trait_supertraits();
+        validate_trait_method_decls();
         validate_generic_constraints();
         validate_impls();
         validate_supertrait_impls();
@@ -2097,6 +2098,43 @@ private:
         for (const auto& item : traits_) {
             detect_supertrait_cycle_from(item.first, stack, visiting, visited);
         }
+    }
+
+    void validate_trait_method_decls() {
+        for_each_trait_decl([&](const TraitDecl& decl) {
+            std::map<std::string, IrType> trait_substitutions =
+                generic_placeholder_substitutions(decl.generics);
+            IrType self_placeholder;
+            self_placeholder.qualifier = TypeQualifier::Value;
+            self_placeholder.primitive = IrPrimitiveKind::Unknown;
+            self_placeholder.name = "Self";
+            self_placeholder.loc = decl.loc;
+            trait_substitutions.emplace("Self", self_placeholder);
+
+            std::string previous_module = current_module_name_;
+            std::map<std::string, IrType> previous_substitutions = std::move(current_type_substitutions_);
+            current_module_name_ = decl.module_name;
+
+            for (const auto& method : decl.methods) {
+                std::map<std::string, IrType> method_substitutions = trait_substitutions;
+                for (const auto& item : generic_placeholder_substitutions(method.generics)) {
+                    method_substitutions.emplace(item.first, item.second);
+                }
+                current_type_substitutions_ = std::move(method_substitutions);
+
+                for (const auto& param : method.params) {
+                    IrType param_type = resolve_executable_type(param.type);
+                    require_root_vector_runtime_abi(param.type.loc, param_type, "a trait method parameter");
+                }
+                if (method.has_return_type) {
+                    IrType result_type = resolve_executable_type(method.return_type);
+                    require_root_vector_runtime_abi(method.return_type.loc, result_type, "a trait method return type");
+                }
+            }
+
+            current_type_substitutions_ = std::move(previous_substitutions);
+            current_module_name_ = previous_module;
+        });
     }
 
     static bool same_type_list(const std::vector<IrType>& left, const std::vector<IrType>& right) {

@@ -1,0 +1,7 @@
+trait MakesVec {
+  fn make() -> Vec[i64]
+}
+
+fn main() -> i64 {
+  return 0;
+}

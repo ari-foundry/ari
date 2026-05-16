@@ -301,7 +301,8 @@ destructuring is defined. Root `Vec[T]` function parameters are still rejected
 until the runtime-capacity Vec ABI is defined; pass `Slice[T]` when a callee
 only needs a borrowed sequence view. The same temporary non-local ABI rule
 applies inside function pointer signatures such as `fn(Vec[T]) -> R` and
-`fn(T) -> Vec[U]`. Parameter patterns are value-binding-only for now:
+`fn(T) -> Vec[U]`, and inside trait method signatures. Parameter patterns are
+value-binding-only for now:
 `ref`, `ref mut`, `&`, `&mut`, and `mut` binding-mode patterns are
 reserved and rejected. Trait and extern function signatures must keep named
 parameters.

@@ -171,15 +171,16 @@ diagnostics.
    Root `Vec[T]` now has an explicit non-local rule while runtime capacity is
    still absent: it remains a fixed-local value only, and sema rejects root
    `Vec[T]` in function/extern parameters or returns, function pointer
-   signatures, struct fields, and impl receivers. Cross-boundary heap-capacity
-   handles should use
+   signatures, trait method signatures, struct fields, and impl receivers.
+   Cross-boundary heap-capacity handles should use
    `std::vec::Vec<T>` with an explicit `Zone`, while borrowed views should use
    `Slice[T]`.
    - [capacity] replace the fixed-local
      literal/const/static-expr/known-local/runtime-checked root
      `Vec[T].reserve(capacity)` path with runtime heap capacity growth; the
-     non-local ABI guard now also covers function pointer signatures, and
-     source `std::vec::Vec<T>` growth already uses centralized explicit-zone helpers
+     non-local ABI guard now also covers function pointer and trait method
+     signatures, and source `std::vec::Vec<T>` growth already uses centralized
+     explicit-zone helpers
    - [ops-runtime] port the root `Vec[T]` public method surface to
      allocator-backed storage once runtime growth is in place
 2. Prepare source `std` library foundations before broad library expansion.

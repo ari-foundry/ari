@@ -1,0 +1,7 @@
+trait UsesVec {
+  fn take(values: Vec[i64]) -> i64
+}
+
+fn main() -> i64 {
+  return 0;
+}

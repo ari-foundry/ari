@@ -1994,6 +1994,10 @@ check-traits: $(TARGET)
 	grep -q "duplicate impl of trait 'std::Iterable' for Bag" $(BUILD_DIR)/traits/duplicate-trait-impl.err
 	if $(TARGET) tests/errors/vector-impl-runtime-abi.ari -o $(BUILD_DIR)/traits/vector-impl-runtime-abi.elf >$(BUILD_DIR)/traits/vector-impl-runtime-abi.err 2>&1; then exit 1; fi
 	grep -Fq "root Vec[T] cannot be used as an impl receiver until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/traits/vector-impl-runtime-abi.err
+	if $(TARGET) tests/errors/vector-trait-method-param-runtime-abi.ari -o $(BUILD_DIR)/traits/vector-trait-method-param-runtime-abi.elf >$(BUILD_DIR)/traits/vector-trait-method-param-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as a trait method parameter until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/traits/vector-trait-method-param-runtime-abi.err
+	if $(TARGET) tests/errors/vector-trait-method-return-runtime-abi.ari -o $(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.elf >$(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.err 2>&1; then exit 1; fi
+	grep -Fq "root Vec[T] cannot be used as a trait method return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.err
 	if $(TARGET) tests/errors/trait-duplicate-decl.ari -o $(BUILD_DIR)/traits/trait-duplicate-decl.elf >$(BUILD_DIR)/traits/trait-duplicate-decl.err 2>&1; then exit 1; fi
 	grep -q "duplicate trait 'Show'" $(BUILD_DIR)/traits/trait-duplicate-decl.err
 	if $(TARGET) tests/errors/trait-duplicate-method.ari -o $(BUILD_DIR)/traits/trait-duplicate-method.elf >$(BUILD_DIR)/traits/trait-duplicate-method.err 2>&1; then exit 1; fi
