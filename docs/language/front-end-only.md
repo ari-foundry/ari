@@ -432,7 +432,14 @@ Declaration-returning `ast -> ast` meta functions can branch on structured
 declaration input before choosing a `decl!(...)` output. The supported
 inspection helpers are `decl_kind(input)` / `input.kind()`, `decl_name(input)` /
 `input.name()`, `decl_count(input)` / `input.count()`, `decl_is_public(input)` /
-`input.is_public()`, and `decl_is(input, "kind")` / `input.is("kind")`:
+`input.is_public()`, and `decl_is(input, "kind")` / `input.is("kind")`.
+Shape counters are also available as
+`decl_generic_count(input)` / `input.generic_count()`,
+`decl_param_count(input)` / `input.param_count()`,
+`decl_field_count(input)` / `input.field_count()`,
+`decl_case_count(input)` / `input.case_count()`,
+`decl_method_count(input)` / `input.method_count()`, and
+`decl_associated_type_count(input)` / `input.associated_type_count()`:
 
 ```ari
 meta fn add_for_struct(input: ast) -> ast {

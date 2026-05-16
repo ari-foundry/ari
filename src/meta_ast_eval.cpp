@@ -6,6 +6,7 @@
 #include "type_semantics.hpp"
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -75,6 +76,48 @@ bool is_decl_count_expr(const Expr& expr, const std::string& input_name) {
            is_decl_method_call(expr, "count", input_name, 0);
 }
 
+enum class DeclIntProperty {
+    DeclarationCount,
+    GenericCount,
+    ParamCount,
+    FieldCount,
+    CaseCount,
+    MethodCount,
+    AssociatedTypeCount
+};
+
+bool is_decl_int_property_expr(const Expr& expr,
+                               const std::string& input_name,
+                               const std::string& free_name,
+                               const std::string& method_name) {
+    return is_free_decl_call(expr, free_name, input_name, 1) ||
+           is_decl_method_call(expr, method_name, input_name, 0);
+}
+
+std::optional<DeclIntProperty> decl_int_property_expr(const Expr& expr,
+                                                      const std::string& input_name) {
+    if (is_decl_count_expr(expr, input_name)) return DeclIntProperty::DeclarationCount;
+    if (is_decl_int_property_expr(expr, input_name, "decl_generic_count", "generic_count")) {
+        return DeclIntProperty::GenericCount;
+    }
+    if (is_decl_int_property_expr(expr, input_name, "decl_param_count", "param_count")) {
+        return DeclIntProperty::ParamCount;
+    }
+    if (is_decl_int_property_expr(expr, input_name, "decl_field_count", "field_count")) {
+        return DeclIntProperty::FieldCount;
+    }
+    if (is_decl_int_property_expr(expr, input_name, "decl_case_count", "case_count")) {
+        return DeclIntProperty::CaseCount;
+    }
+    if (is_decl_int_property_expr(expr, input_name, "decl_method_count", "method_count")) {
+        return DeclIntProperty::MethodCount;
+    }
+    if (is_decl_int_property_expr(expr, input_name, "decl_associated_type_count", "associated_type_count")) {
+        return DeclIntProperty::AssociatedTypeCount;
+    }
+    return std::nullopt;
+}
+
 bool is_decl_public_expr(const Expr& expr, const std::string& input_name) {
     return is_free_decl_call(expr, "decl_is_public", input_name, 1) ||
            is_decl_method_call(expr, "is_public", input_name, 0);
@@ -97,7 +140,12 @@ bool is_decl_string_expr(const Expr& expr, const std::string& input_name) {
 
 bool is_decl_int_expr(const Expr& expr, const std::string& input_name) {
     return (expr.kind == ExprKind::Integer && !expr.int_negative) ||
-           is_decl_count_expr(expr, input_name);
+           decl_int_property_expr(expr, input_name).has_value();
+}
+
+std::string decl_condition_support_message() {
+    return
+        "ast declaration meta branch conditions currently support bool literals, !, &&, ||, decl_is_public(input), input.is_public(), decl_is(input, \"kind\"), input.is(\"kind\"), string comparisons over decl_kind(input)/input.kind()/decl_name(input)/input.name(), and integer comparisons over decl_count(input)/input.count(), decl_generic_count(input)/input.generic_count(), decl_param_count(input)/input.param_count(), decl_field_count(input)/input.field_count(), decl_case_count(input)/input.case_count(), decl_method_count(input)/input.method_count(), and decl_associated_type_count(input)/input.associated_type_count()";
 }
 
 bool supported_decl_condition(const Expr& expr, const std::string& input_name, std::string& reason);
@@ -121,8 +169,7 @@ bool supported_decl_comparison(const Expr& left,
         is_decl_int_expr(right, input_name)) {
         return true;
     }
-    reason =
-        "ast declaration meta branch conditions currently support bool literals, !, &&, ||, decl_is_public(input), input.is_public(), decl_is(input, \"kind\"), input.is(\"kind\"), string comparisons over decl_kind(input)/input.kind()/decl_name(input)/input.name(), and integer comparisons over decl_count(input)/input.count()";
+    reason = decl_condition_support_message();
     return false;
 }
 
@@ -152,8 +199,7 @@ bool supported_decl_condition(const Expr& expr, const std::string& input_name, s
         default:
             break;
     }
-    reason =
-        "ast declaration meta branch conditions currently support bool literals, !, &&, ||, decl_is_public(input), input.is_public(), decl_is(input, \"kind\"), input.is(\"kind\"), string comparisons over decl_kind(input)/input.kind()/decl_name(input)/input.name(), and integer comparisons over decl_count(input)/input.count()";
+    reason = decl_condition_support_message();
     return false;
 }
 
@@ -170,7 +216,24 @@ std::uint64_t evaluate_decl_int_expr(const Expr& expr,
                                      const std::string& input_name,
                                      const MetaAstDeclInput& input) {
     if (expr.kind == ExprKind::Integer && !expr.int_negative) return expr.int_value;
-    if (is_decl_count_expr(expr, input_name)) return static_cast<std::uint64_t>(input.count);
+    if (auto property = decl_int_property_expr(expr, input_name)) {
+        switch (*property) {
+            case DeclIntProperty::DeclarationCount:
+                return static_cast<std::uint64_t>(input.count);
+            case DeclIntProperty::GenericCount:
+                return static_cast<std::uint64_t>(input.generic_count);
+            case DeclIntProperty::ParamCount:
+                return static_cast<std::uint64_t>(input.param_count);
+            case DeclIntProperty::FieldCount:
+                return static_cast<std::uint64_t>(input.field_count);
+            case DeclIntProperty::CaseCount:
+                return static_cast<std::uint64_t>(input.case_count);
+            case DeclIntProperty::MethodCount:
+                return static_cast<std::uint64_t>(input.method_count);
+            case DeclIntProperty::AssociatedTypeCount:
+                return static_cast<std::uint64_t>(input.associated_type_count);
+        }
+    }
     fail_eval(expr.loc, "internal error: unsupported ast declaration integer expression");
 }
 
@@ -284,13 +347,48 @@ struct DeclSummary {
     std::string kind;
     std::string name;
     bool is_public = false;
+    std::size_t generic_count = 0;
+    std::size_t param_count = 0;
+    std::size_t field_count = 0;
+    std::size_t case_count = 0;
+    std::size_t method_count = 0;
+    std::size_t associated_type_count = 0;
+};
+
+struct DeclShape {
+    std::size_t generic_count = 0;
+    std::size_t param_count = 0;
+    std::size_t field_count = 0;
+    std::size_t case_count = 0;
+    std::size_t method_count = 0;
+    std::size_t associated_type_count = 0;
 };
 
 void append_summary(std::vector<DeclSummary>& summaries,
                     std::string kind,
                     std::string name,
-                    bool is_public) {
-    summaries.push_back({std::move(kind), std::move(name), is_public});
+                    bool is_public,
+                    DeclShape shape = {}) {
+    summaries.push_back({
+        std::move(kind),
+        std::move(name),
+        is_public,
+        shape.generic_count,
+        shape.param_count,
+        shape.field_count,
+        shape.case_count,
+        shape.method_count,
+        shape.associated_type_count
+    });
+}
+
+void add_shape_to_input(MetaAstDeclInput& input, const DeclSummary& summary) {
+    input.generic_count += summary.generic_count;
+    input.param_count += summary.param_count;
+    input.field_count += summary.field_count;
+    input.case_count += summary.case_count;
+    input.method_count += summary.method_count;
+    input.associated_type_count += summary.associated_type_count;
 }
 
 } // namespace
@@ -314,24 +412,52 @@ MetaAstDeclInput summarize_meta_ast_decl_input(const std::vector<Token>& input_t
         append_summary(summaries, "const", qualified_basename(decl.name), decl.is_public);
     }
     for (const auto& decl : parsed_input.functions) {
-        append_summary(summaries, decl.meta ? "meta_fn" : "fn", qualified_basename(decl.name), decl.is_public);
+        append_summary(
+            summaries,
+            decl.meta ? "meta_fn" : "fn",
+            qualified_basename(decl.name),
+            decl.is_public,
+            DeclShape{decl.generics.size(), decl.params.size()});
     }
     for (const auto& decl : parsed_input.structs) {
-        append_summary(summaries, "struct", qualified_basename(decl.name), decl.is_public);
+        append_summary(
+            summaries,
+            "struct",
+            qualified_basename(decl.name),
+            decl.is_public,
+            DeclShape{decl.generics.size(), 0, decl.fields.size()});
     }
     for (const auto& decl : parsed_input.enums) {
-        append_summary(summaries, "enum", qualified_basename(decl.name), decl.is_public);
+        append_summary(
+            summaries,
+            "enum",
+            qualified_basename(decl.name),
+            decl.is_public,
+            DeclShape{decl.generics.size(), 0, 0, decl.cases.size()});
     }
     for (const auto& decl : parsed_input.traits) {
-        append_summary(summaries, "trait", qualified_basename(decl.name), decl.is_public);
+        append_summary(
+            summaries,
+            "trait",
+            qualified_basename(decl.name),
+            decl.is_public,
+            DeclShape{decl.generics.size(), 0, 0, 0, decl.methods.size(), decl.associated_types.size()});
     }
     for (const auto& decl : parsed_input.impls) {
-        append_summary(summaries, "impl", type_ref_key(decl.for_type), decl.is_public);
+        append_summary(
+            summaries,
+            "impl",
+            type_ref_key(decl.for_type),
+            decl.is_public,
+            DeclShape{decl.generics.size(), 0, 0, 0, decl.methods.size(), decl.associated_type_witnesses.size()});
     }
 
     MetaAstDeclInput input;
     input.tokens = input_tokens;
     input.count = summaries.size();
+    for (const auto& summary : summaries) {
+        add_shape_to_input(input, summary);
+    }
     if (summaries.empty()) {
         input.kind = "empty";
         return input;

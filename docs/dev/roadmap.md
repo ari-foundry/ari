@@ -29,6 +29,11 @@ User-defined `meta fn` macro syntax is also stable for the current lint-facing
 surface: expression, item, type, pattern, and attribute-position
 `ident!(...)` expansion now covers the bounded token-stream and explicit AST
 constructor subset documented in the language guide.
+The first richer AST declaration-reflection slice has also landed for
+library-prep macros: declaration-returning `ast -> ast` macros can inspect
+generic, parameter, field, enum-case, method, and associated-type counts through
+both free helper functions and `input.*_count()` methods before choosing a
+`decl!(...)` output.
 The trait-associated-item and composition goal that used to sit in Medium-Term
 is now covered by the current front-end surface. Supertraits parse and require
 matching impls, child-trait bounds can statically dispatch inherited methods,
@@ -69,20 +74,26 @@ pointers and reset/destroy diagnostics continue to use semantic provenance.
 Freestanding zone allocation remains deliberately rejected until a raw-backend
 allocation runtime exists.
 
-1. Improve loop fixed-point precision beyond exact snapshots.
-   The near-term loop checker now tracks ownership and borrow state at
-   `break`, `continue`, zero-iteration, literal-true next-iteration, and
-   fallthrough merge points. It rejects incompatible ownership states, live
-   loop-local owners across jumps, and borrow-state changes that are not exact
-   fixed points. Literal-true `break` exits now merge moved/dropped owner states
-   when every exit has already consumed the same owner, and `break` exit
-   merging can conservatively keep same-provenance borrows active when only
-   last-use release state differs across exits. Same-provenance conservative
-   borrow merging also covers next-iteration and fallthrough fixed points.
-   Further work is ownership precision, not basic loop-state tracking.
-   - [owner-widen] prove non-trivial next-iteration and fallthrough ownership
-     fixed points where later iterations intentionally start from a changed but
-     compatible state
+The loop fixed-point precision goal has been removed from active Near-Term
+tracking. The current loop checker tracks ownership and borrow state at
+`break`, `continue`, zero-iteration, literal-true next-iteration, and
+fallthrough merge points, including conservative same-provenance borrow-release
+joins and literal-true `break` exits that merge moved/dropped unavailable owner
+states. General `Alive -> unavailable` owner widening for next-iteration or
+fallthrough paths is now tracked as Medium-Term dataflow work because it must
+revalidate the loop body under the widened entry state instead of accepting a
+body that was checked only with the owner alive.
+
+1. Extend AST declaration reflection to named declaration members.
+   Declaration-returning `ast -> ast` macros can now branch on declaration
+   kind, name, count, visibility, and top-level shape counters. The next
+   library-prep slice should expose named fields, methods, associated types,
+   enum cases, and parameter/type summaries without opening the full
+   compile-time value surface.
+   - [ast-member-inspection] add structured named field/method/case/type
+     summary inspection for declaration-generating macros
+   - [ast-dynamic-ident] add dynamic identifier construction once declaration
+     member inspection has a stable data model
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -106,17 +117,24 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [cache-skip] once IR summaries exist, avoid reparsing those dependencies
      when metadata and source hashes match the current source graph and
      cfg/search-path inputs
-2. Extend the meta AST evaluator beyond the lint-stable constructor subset.
-   Near-Term `ast -> ast` macros can generate declaration, expression, pattern,
-   and type AST output through explicit constructors and can inspect declaration
-   input by kind, name, count, and visibility. Keep richer compile-time AST
-   reflection out of the fixed syntax surface until its policy is explicit.
-   - [ast-rich-construction] add structured field/method/type inspection and
-     dynamic identifier construction for declaration-generating macros once the
-     evaluator's data model is defined
+2. Decide the general compile-time value surface for non-declaration AST input.
+   Near-Term declaration reflection is intentionally limited to stable summary
+   queries that library-prep macros need. Keep broader expression, pattern, and
+   type AST value operations out of the fixed syntax surface until their policy
+   and hygiene model are explicit.
    - [ast-general-values] decide which compile-time value operations are
      allowed for non-declaration AST inputs before broadening expression
      rewriting beyond today's explicit constructors and hygienic substitution
+3. Prove loop owner-state widening with a loop dataflow recheck.
+   Borrow-release widening is safe with the current same-provenance merge
+   because it keeps the source conservatively borrowed. Owner-state widening is
+   different: a body checked with an `Alive` owner cannot simply be reused for a
+   later iteration that starts with that owner moved or dropped. Add a
+   revalidation/dataflow pass before accepting non-trivial next-iteration or
+   fallthrough ownership fixed points.
+   - [owner-widen] recheck loop bodies under candidate widened owner states
+     before accepting `Alive -> moved/dropped` next-iteration or fallthrough
+     joins
 
 ## Medium-Term Language Work
 

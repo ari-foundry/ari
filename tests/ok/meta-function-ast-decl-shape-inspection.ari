@@ -1,0 +1,138 @@
+meta fn inspect_function_shape(input: ast) -> ast {
+  return if input.is("fn") && input.name() == "generic_identity" && input.generic_count() == 1 && input.param_count() == 1 {
+    decl!(
+      input
+
+      fn function_shape_score() -> i64 {
+        return 5;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn function_shape_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_struct_shape(input: ast) -> ast {
+  return if decl_kind(input) == "struct" && decl_field_count(input) == 2 && decl_generic_count(input) == 0 {
+    decl!(
+      input
+
+      fn struct_shape_score() -> i64 {
+        return 7;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn struct_shape_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_enum_shape(input: ast) -> ast {
+  return if input.is("enum") && input.case_count() == 2 {
+    decl!(
+      input
+
+      fn enum_shape_score() -> i64 {
+        return 11;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn enum_shape_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_trait_shape(input: ast) -> ast {
+  return if input.is("trait") && input.method_count() == 1 && input.associated_type_count() == 1 {
+    decl!(
+      input
+
+      fn trait_shape_score() -> i64 {
+        return 13;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn trait_shape_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+meta fn inspect_impl_shape(input: ast) -> ast {
+  return if input.is("impl") && input.method_count() == 1 && input.associated_type_count() == 1 {
+    decl!(
+      input
+
+      fn impl_shape_score() -> i64 {
+        return 17;
+      }
+    )
+  } else {
+    decl!(
+      input
+
+      fn impl_shape_score() -> i64 {
+        return 0;
+      }
+    )
+  };
+}
+
+inspect_function_shape!(fn generic_identity[T](value: T) -> T {
+  return value;
+});
+
+inspect_struct_shape!(struct Pair {
+  left: i64,
+  right: i64,
+});
+
+inspect_enum_shape!(enum Status {
+  Ready,
+  Done(i64),
+});
+
+inspect_trait_shape!(trait Source {
+  type Item;
+  fn score(self) -> i64
+});
+
+inspect_impl_shape!(impl Source for i64 {
+  type Item = i64;
+
+  fn score(self) -> i64 {
+    return self;
+  }
+});
+
+fn main() -> i64 {
+  let pair = Pair { left: 1, right: 2 };
+  let status = Done(3);
+  let status_score = match status {
+    Ready => 0,
+    Done(value) => value,
+  };
+  return function_shape_score() + struct_shape_score() + enum_shape_score() +
+         trait_shape_score() + impl_shape_score() + generic_identity<i64>(pair.left) +
+         pair.right + status_score;
+}

@@ -250,8 +250,13 @@ with `decl!(...)`, and at pattern macro sites, where a body can return pattern
 AST output with `pattern!(...)`. Declaration-returning `ast -> ast` bodies can
 branch on `decl_kind(input)` / `input.kind()`, `decl_name(input)` /
 `input.name()`, `decl_count(input)` / `input.count()`, `decl_is_public(input)` /
-`input.is_public()`, and `decl_is(input, "kind")` / `input.is("kind")` before
-choosing a `decl!(...)` output. When a macro output declaration carries a
+`input.is_public()`, `decl_is(input, "kind")` / `input.is("kind")`, and
+declaration shape counters such as `decl_field_count(input)` /
+`input.field_count()`, `decl_param_count(input)` / `input.param_count()`,
+`decl_case_count(input)` / `input.case_count()`, `decl_method_count(input)` /
+`input.method_count()`, `decl_generic_count(input)` / `input.generic_count()`,
+and `decl_associated_type_count(input)` / `input.associated_type_count()`
+before choosing a `decl!(...)` output. When a macro output declaration carries a
 rewriting attribute, Ari expands that generated attribute before later
 declaration collection; accidental self-generating chains stop at a recursion
 limit.

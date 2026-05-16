@@ -14,6 +14,12 @@ struct MetaAstDeclInput {
     std::string kind = "empty";
     std::string name;
     bool is_public = false;
+    std::size_t generic_count = 0;
+    std::size_t param_count = 0;
+    std::size_t field_count = 0;
+    std::size_t case_count = 0;
+    std::size_t method_count = 0;
+    std::size_t associated_type_count = 0;
 };
 
 MetaAstDeclInput summarize_meta_ast_decl_input(const std::vector<Token>& input_tokens,
