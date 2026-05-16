@@ -138,7 +138,7 @@ void require_root_vector_runtime_abi(SourceLocation loc,
     if (!contains_root_vector_without_runtime_abi(type)) return;
     fail(loc,
          "root Vec[T] cannot be used as " + context +
-             " until the runtime-capacity Vec ABI is defined; use std::vec::Vec[T] with an explicit Zone handle or pass Slice[T]");
+             " until the runtime-capacity Vec ABI is defined; use std::Vec[T] / std::vec::Vec[T] with an explicit Zone handle or pass Slice[T]");
 }
 
 IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {

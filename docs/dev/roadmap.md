@@ -40,175 +40,16 @@ upcasts. Ambiguous associated functions, inherited methods, inherited
 associated type names, and unrelated dyn upcasts are rejected with focused
 diagnostics.
 
-1. Start allocator-backed growable `Vec[T]`.
-   Local vector literal storage and local `Vec.reserve(n)`/`Vec.push(value)` /
-   `Vec.pop()` / `Vec.first()` / `Vec.last()` / `Vec.capacity()` /
-   `Vec.is_empty()` / `Vec.clear()` / `Vec.truncate(n)` /
-   `Vec.get(index)` / `Vec.set(index, value)` / `Vec.swap(a, b)` /
-   `Vec.remove(index)` / `Vec.insert(index, value)` /
-   `Vec.contains(value)` / `Vec.index_of(value)` / `Vec.count(value)` lower
-   today on the LLVM backend as stack-backed values with compile-time capacity,
-   runtime length checks, and linear search over copyable comparable elements.
-   Local `push` and `insert` now auto-widen stack storage when sema can track
-   the current length, so empty `Vec[T]` locals can grow through
-   straight-line appends/inserts without an explicit `reserve`.
-   Runtime `reserve(n)` values now lower to a local-capacity guard, so the
-   call no longer requires a literal. Integer constants, static integer
-   arithmetic/bitwise/shift expressions over constants and literals, and
-   immutable local integer bindings initialized from those static expressions
-   are also folded into the local capacity decision. Static truncate lengths,
-   including immutable locals initialized from those expressions, keep the
-   compiler-known local length precise for later `push`/`insert` capacity
-   decisions, and negative static truncate lengths now use the shared
-   non-negative operand diagnostic. This still does not allocate or grow beyond
-   the fixed local stack storage.
-   This local API is now frozen as a temporary executable subset: do not add
-   more compiler-known `Vec` convenience methods before the allocator-backed
-   library design lands. Unsupported local `Vec` method calls now get a
-   dedicated diagnostic that points users at the future allocator-backed std
-   collection APIs instead of falling through to the generic unknown-method
-   error. Vec storage helper logic is split out of `sema.cpp` into
-   `vector_semantics`, including local storage type construction, typed empty
-   vector literal construction, the frozen temporary local method list used by
-   sema dispatch, local method shape diagnostics, and the shared `len`,
-   `is_empty`, and `as_slice` builtin/method shape checks. Shared collection
-   `len` lowering for arrays, local Vec storage, and Slice views is centralized
-   there as well, along with `as_slice` data-pointer, Vec storage view, and
-   Slice view construction. Local Vec integer and non-negative operand
-   diagnostics for index/capacity/length arguments are also centralized there;
-   static negative and known-out-of-range method indexes now use those shared
-   diagnostics before lowering to runtime bounds checks. Known-empty
-   `first`, `last`, `pop`, runtime-indexed `get`, `set`, `swap`, and
-   `remove` calls, and direct `values[index]` expressions are rejected before
-   lowering instead of deferring to guaranteed runtime empty-vector checks.
-   Direct local `Vec` indexing also uses compiler-known current length for
-   static out-of-range diagnostics after operations such as `truncate` and
-   `clear`.
-   Local Vec IR construction helpers include `first`, `last`, and `push`
-   alongside the other method lowerings. Known-length updates for local `push`,
-   `insert`, `pop`, `remove`, `clear`, and `truncate` now use small
-   `vector_semantics` transition helpers, and local `Vec` `len`/`is_empty`
-   calls plus `as_slice` view lengths and stored-vector `for` loop bounds fold
-   to constants when the current length is compiler-known. `len(...)`,
-   `.len()`, `.is_empty()`, and direct indexing of Vec-valued control-flow
-   expressions also use source-known local branch lengths for constants and
-   static out-of-range diagnostics, and stored-vector `for` loops use the same
-   source-known branch lengths for constant loop bounds. Local `Vec`
-   initialization and assignment from another local `Vec` also preserve that
-   compiler-known current length when the source binding is still precise, and
-   assignment from another local `Vec` widens the fixed local target storage to
-   the source storage capacity before the copy. Vec-valued `if`, block, and
-   labeled-block expressions now feed their nested fixed local storage capacity
-   and same-length result paths into the same assignment/initialization
-   tracking, including `break label value` paths and branch results that copy
-   local Vec bindings whose current lengths are still compiler-known;
-   Vec-valued `match` and `if let` expression arms do the same after sema sizes
-   their expected result storage before branch result materialization, including
-   arms whose result is a labeled block with typed Vec breaks.
-   The raw freestanding backend now materializes fixed-capacity stored local
-   `Vec[T]` values as Ari-layout local aggregates, so direct literals, local
-   copies, checked scalar indexing, `len`/`is_empty`, read-only
-   `capacity`/`first`/`last`/`get`, `contains`/`index_of`/`count`, and
-   the fixed-capacity `reserve`/`push`/`insert`/`pop`/`remove`/`clear`/
-   `truncate`/`set`/`swap` method surface work there, along with
-   stored-vector `for` loops. Raw `Slice[T]` views over mutable local arrays,
-   local vectors, and explicit `slice(data, len)` values also lower through
-   their stored pointer/length metadata for `len`, `is_empty`, checked scalar
-   indexing, indexed assignment, and exclusive/inclusive range slicing. These
-   fixed-local methods still need an allocator-backed runtime storage path once
-   `Vec[T]` stops being a fixed local buffer.
-   The
-   shared constant
-   value model,
-   constant-to-IR literal
-   construction, scalar literal folding, constant binary result evaluation, and
-   static integer folding for local Vec capacity and length decisions now live in
-   `constant_semantics`;
-   this keeps
-   allocator-backed work from growing the main semantic checker. Introduce the
-   explicit allocation/capability path before broadening vector patterns or std
-   collection APIs. The allocator-facing seed now lives in the source prelude
-   as `std::vec::alloc_buffer<T>(ref mut Zone, capacity) -> ptr T`; it
-   validates the capacity, allocates an element buffer through the explicit
-   zone capability, and keeps the returned pointer tied to zone reset/destroy
-   invalidation checks. `std::vec::RawVec<T>` and
-   `std::vec::with_capacity<T>(ref mut Zone, capacity)` now wrap that buffer
-   in a source-level handle with `data`, `len`, and `capacity` metadata while
-   sema still tracks the handle as tied to the source zone. The source
-   `std::vec::Vec<T>` handle and `std::vec::new<T>(ref mut Zone, capacity)`
-   now connect that raw seed to a public allocator/capability creation surface.
-   `Vec!(T, ref mut Zone, capacity)` is the short prelude constructor spelling
-   for the same source handle, so early library code can avoid spelling the
-   full `std::vec::new<T>` path without confusing it with root local
-   `Vec[T]` storage.
-   The source handle also has metadata, checked read/write/replace, push/pop/try-pop,
-   insert/remove, swap, truncate/clear, simple linear search plus
-   `Slice<T>` exact/prefix/suffix checks, grow-only
-   explicit `reserve(ref mut Zone, capacity)`,
-   `reserve_extra(ref mut Zone, additional)` capacity growth to
-   `len + additional`, same-zone grow-on-demand
-   `push_in(ref mut Zone, value)` and `insert_in(ref mut Zone, index, value)`,
-   slice extension with `extend_from_slice_in(ref mut Zone, Slice<T>)`,
-   target-zone construction from an existing slice with
-   `from_slice_in<T>(ref mut Zone, Slice<T>)`, grow-or-shrink
-   `resize_in(ref mut Zone, length, value)`, and
-   tracked `as_slice` views over its allocated buffer. It can also expose
-   the stored data pointer through provenance-preserving `as_ptr()`,
-   produce a tracked `std::vec::Iter<T>` through `iter()` / `IntoIterator`,
-   and `copy_to(ref mut Zone)` into a new target-zone handle; read-only metadata,
-   read, search, Slice comparison, iterator, target-zone copy, and raw-pointer methods
-   borrow their receiver rather than copying the handle. The source Vec
-   reallocation/copy path is now centralized behind private capacity helpers,
-   so `reserve`, `reserve_extra`, `push_in`, `insert_in`,
-   `extend_from_slice_in`, and `resize_in` share one explicit-zone growth
-   implementation instead of carrying separate buffer-copy loops. Its `Drop` impl
-   consumes the handle and drops each current element while the explicit zone
-   keeps responsibility for releasing the backing storage. `set`, `clear`,
-   `truncate`, and shrinking `resize_in` now run removed values through normal
-   Drop lowering before the handle forgets those elements. Runtime heap growth for
-   root/local `Vec[T]` and the root
-   `Vec[T]` public surface still remain. A small Medium-Term allocation ADT seed
-   has also been pulled forward: `std::boxed::new<T>(ref mut Zone, value)` now
-   returns a tracked source `std::boxed::Box<T>` handle with associated
-   `Box::new<T>` construction plus `get`, `set`, `replace`, `take`,
-   `try_take`, `clear`, `is_empty`, `copy_to`, `swap`, and `as_ptr` methods; read-only `get`,
-   `is_empty`, `copy_to`, and `as_ptr` borrow their receiver instead of copying
-   the handle. `set` drops the overwritten value, `take` moves the current value
-   out and leaves an empty handle, `try_take` returns `Option<T>` for that
-   empty-aware move-out path, `clear` drops the current value and leaves
-   the same empty state, and its generic `Drop` impl consumes the handle, skips
-   empty handles, and runs the stored value through normal Drop lowering
-   otherwise. The root
-   `Box[T]`/`std::Box[T]` spelling now aliases that explicit-zone source
-   handle. Allocator-backed unique `Box[T]` ownership remains future work.
-   Root `Vec[T]` now has an explicit boundary rule while runtime capacity is
-   still absent: it remains stack-backed fixed-capacity storage locally, while
-   ordinary Ari function parameters and `fn(Vec[T]) -> R` function pointer
-   parameters lower to the same borrowed `{data, len}` ABI as `Slice[T]`. Trait
-   and impl method parameters now use that same view ABI for ordinary
-   non-return parameter slots. Calls from local Vec or array bindings create
-   that view at the call edge, so a single function body works across caller
-   capacities. Generic functions whose source parameter is `Vec[T]` reuse one
-   specialization per element type with this view ABI; generic by-value `T`
-   parameters still carry concrete local Vec capacity when `T` itself resolves
-   to local Vec storage. Sema still rejects unsized root `Vec[T]` returns,
-   extern parameters/returns, trait method return types, struct fields, and impl
-   receivers. Cross-boundary heap-capacity handles should use
-   `std::vec::Vec<T>` with an explicit `Zone`, while borrowed views can use
-   `Slice[T]` directly.
-   Temporary Vec literals and Vec-valued `if`/`match`/block expressions now
-   materialize into hidden local storage at the call edge before creating that
-   same Slice-shaped parameter view, so `sum([1, 2, 3])` no longer requires a
-   named local binding.
-   - [capacity] replace the fixed-local
-     literal/const/static-expr/known-local/runtime-checked root
-     `Vec[T].reserve(capacity)` path with runtime heap capacity growth; function
-     returns, trait method returns, extern, struct-field, and impl-receiver
-     boundaries still need a stable owned root Vec runtime ABI, and source
-     `std::vec::Vec<T>` growth already uses centralized explicit-zone helpers
-   - [ops-runtime] port the root `Vec[T]` public method surface to
-     allocator-backed storage once runtime growth is in place
-2. Prepare source `std` library foundations before broad library expansion.
+Allocator-backed vector library prep is no longer tracked as a Near-Term goal.
+The current 0.x surface keeps bare `Vec[T]` as fixed local storage plus the
+Slice-shaped direct/function-pointer parameter ABI, while `std::Vec[T]` is now
+a public alias for the explicit-zone `std::vec::Vec[T]` source handle and
+`Vec!(T, ref mut Zone, capacity)` remains constructor sugar for
+`std::vec::new<T>`. The remaining owned root `Vec[T]` runtime-capacity ABI and
+permanent root method surface are tracked in Medium-Term/Backend work, because
+they need the broader non-local aggregate and allocation capability design.
+
+1. Prepare source `std` library foundations before broad library expansion.
    Keep the library-facing contracts near-term before adding many owned
    collection, string, or smart-pointer APIs. This keeps the source prelude from
    growing into a pile of one-off compiler hooks. The current source `std`
@@ -218,10 +59,14 @@ diagnostics.
    Zone-provenance rules for source handles and pointer-returning methods now
    stay in focused helpers such as `std_box_semantics`, `std_vec_semantics`,
    `slice_semantics`, and `zone_pointer_semantics` instead of growing more
-   bespoke checks in `sema.cpp`. The `std::vec::Vec` same-zone method contract
-   lives in `std_vec_semantics`, and source-handle/pointer provenance expression
-   tracing for locals, tuple fields, calls, slices, and control-flow expressions
-   lives in `zone_pointer_semantics`. Zone source/generation assignment, named
+   bespoke checks in `sema.cpp`. The root `std::Vec[T]` spelling now aliases the
+   explicit-zone `std::vec::Vec[T]` source handle rather than the temporary
+   compiler-known local vector type, and the `Vec!` macro still lowers to
+   `std::vec::new<T>` as constructor sugar. The `std::vec::Vec` same-zone
+   method contract lives in `std_vec_semantics`, and source-handle/pointer
+   provenance expression tracing for locals, tuple fields, calls, slices, and
+   control-flow expressions lives in `zone_pointer_semantics`. Zone
+   source/generation assignment, named
    zone-borrow reset recognition, reset invalidation, validity diagnostics,
    temporary-zone escape diagnostics, temporary-zone `zone::destroy` IR cleanup,
    and cleanup-before-exit value materialization for returns, labeled breaks,
@@ -487,11 +332,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     element values. The current local vector storage grows to the largest
     literal, reserve capacity, or compiler-tracked push/insert capacity seen in
     the binding, while the stored length still shrinks and expands per
-    assignment. The allocator, runtime capacity, and real grow-on-push behavior
-    remain near-term.
-    The root runtime-capacity and permanent public API decisions are now also
-    tracked in the Near-Term source-`std` library-prep checklist, so the
-    temporary compiler-known local API does not become permanent surface area.
+    assignment. Explicit-zone growth is available through `std::Vec[T]` /
+    `std::vec::Vec[T]`; the remaining owned root `Vec[T]` runtime-capacity ABI,
+    non-local aggregate layout, and permanent root public API are Medium-Term
+    work shared with the Backend vectors item. The temporary compiler-known
+    local API should not grow new convenience methods before that owned root
+    layout exists.
 5. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`

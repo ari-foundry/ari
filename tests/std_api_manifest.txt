@@ -192,7 +192,6 @@ module std::zone|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory z
 struct std::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
-struct std::Vec[T]|temporary root Vec tests; docs/dev/test-matrix.md Variables row
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
@@ -257,6 +256,7 @@ trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/d
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::alloc|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::arg|std root re-export tests; docs/dev/test-matrix.md Prelude and Context runtime rows

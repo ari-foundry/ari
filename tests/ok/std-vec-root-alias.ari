@@ -1,0 +1,17 @@
+fn make_alias(zone: ref mut Zone) -> std::Vec[i64] {
+  var values = Vec!(i64, zone, 1);
+  values.push(4);
+  values.push_in(zone, 6);
+  return values;
+}
+
+fn score(values: std::Vec[i64]) -> i64 {
+  return values.len() + values.capacity() + values.get(0) + values.get(1);
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let total = score(make_alias(ref mut zone));
+  zone::destroy(zone);
+  return total;
+}

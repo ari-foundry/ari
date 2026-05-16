@@ -511,7 +511,7 @@ values.clear()
 That local method list is intentionally frozen while `Vec[T]` is still a
 stack-backed executable subset. Other compiler-known collection conveniences
 are reserved for the future allocator-backed std library design.
-The root `Vec[T]`/`std::Vec[T]` value is stack-backed in this phase: it can be a
+The bare root `Vec[T]` value is stack-backed in this phase: it can be a
 local binding, local expression result, local vector view source, or ordinary
 function parameter. Function parameters and `fn(Vec[T]) -> R` function pointer
 parameters use a borrowed view ABI shaped like `Slice[T]`, so
@@ -526,8 +526,9 @@ resolves to local Vec storage. Trait and impl method parameters use the same
 view ABI for ordinary parameter slots, including trait-qualified calls. Root
 `Vec[T]` returns, extern parameters/returns, trait method return types, struct
 fields, and impl receivers still reject root `Vec[T]` until the
-runtime-capacity layout is defined. Use `std::vec::Vec<T>` when a value must be
-passed as an explicit-zone heap handle, or pass `Slice[T]` for a borrowed view.
+runtime-capacity layout is defined. Use `std::Vec<T>` /
+`std::vec::Vec<T>` when a value must be passed as an explicit-zone heap handle,
+or pass `Slice[T]` for a borrowed view.
 
 For the allocator-backed path, `std::vec::alloc_buffer<T>(ref mut zone,
 capacity)` now provides the raw element-buffer seed. It takes an explicit
@@ -547,7 +548,7 @@ pub struct RawVec[T] {
 ```
 
 `std::vec::new<T>(ref mut zone, capacity)` wraps that raw handle in a tracked
-source `std::vec::Vec<T>` seed:
+source `std::vec::Vec<T>` seed, also exported as `std::Vec<T>`:
 
 ```ari
 pub struct Vec[T] {
@@ -594,11 +595,12 @@ vec.clear()
 ```
 
 It is constructor sugar for the source handle, not a workaround for passing the
-root stack-backed `Vec[T]` type across function boundaries. The handle exposes
-checked methods over the raw allocation.
+bare root stack-backed `Vec[T]` type across function boundaries. The handle
+exposes checked methods over the raw allocation.
 
-The root `Vec[T]`/`std::Vec[T]` type is still the current local vector literal
-storage until runtime heap growth is ported. Source `std::vec::Vec<T>.reserve`
+The bare root `Vec[T]` type is still the current local vector literal
+storage until runtime heap growth is ported. `std::Vec[T]` is instead the
+explicit-zone source handle alias. Source `std::vec::Vec<T>.reserve`
 is grow-only: it allocates a larger buffer from the same explicit zone, copies
 the current elements, preserves `len`, and leaves the old buffer to the zone's
 bulk lifetime. `std::vec::Vec<T>.reserve_extra(ref mut Zone, additional)`

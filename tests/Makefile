@@ -229,6 +229,9 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/ok/std-vec-macro-new.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-macro-new.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-vec-macro-new.ll
 	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-vec-macro-new.ll
+	$(TARGET) tests/ok/std-vec-root-alias.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-root-alias.ll
+	grep -q '_ARNv3std3vec10new__G_i64' $(BUILD_DIR)/prelude/std-vec-root-alias.ll
+	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7push_in' $(BUILD_DIR)/prelude/std-vec-root-alias.ll
 	$(TARGET) tests/ok/std-boxed-box.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/std-boxed-box.ll
 	grep -q '_ARNv3std5boxed10new__G_i64' $(BUILD_DIR)/prelude/std-boxed-box.ll
@@ -482,6 +485,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-with-capacity.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; $(BUILD_DIR)/prelude/std-vec-with-capacity.elf; code=$$?; test $$code -eq 46; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-new-handle.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-new-handle.elf; $(BUILD_DIR)/prelude/std-vec-new-handle.elf; code=$$?; test $$code -eq 40; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-macro-new.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-macro-new.elf; $(BUILD_DIR)/prelude/std-vec-macro-new.elf; code=$$?; test $$code -eq 29; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-root-alias.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-root-alias.elf; $(BUILD_DIR)/prelude/std-vec-root-alias.elf; code=$$?; test $$code -eq 14; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-box.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-box.elf; $(BUILD_DIR)/prelude/std-boxed-box.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-set-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-set-drop-value.elf; $(BUILD_DIR)/prelude/std-boxed-set-drop-value.elf; code=$$?; test $$code -eq 34; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-replace.elf; $(BUILD_DIR)/prelude/std-boxed-replace.elf; code=$$?; test $$code -eq 29; fi

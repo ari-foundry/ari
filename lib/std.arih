@@ -52,6 +52,7 @@ pub mod string;
 pub use string::String;
 
 pub mod vec;
+pub use vec::Vec;
 
 pub impl[T] Slice[T] {
   fn first(self: ref Self) -> T {
@@ -152,9 +153,6 @@ pub mod fmt;
 pub mod cmp;
 
 pub mod convert;
-
-pub struct Vec[T] {
-}
 
 pub struct Range[T] {
   start: T,

@@ -43,8 +43,9 @@ to the source `std` module, even when a root re-export such as `input()` shares
 the prefix.
 The explicit paths still exist as `std::Vec`, `std::iter::range`,
 `std::mem::size_of`, and `std::zone::new`. `std::vec::Vec` names the
-source-backed allocator seed handle while the root `Vec`/`std::Vec` spelling is
-still the current compiler-known local vector type. `std::boxed::Box` names the
+source-backed allocator seed handle, and `std::Vec[T]` is a public alias for
+that same explicit-zone handle. Bare root `Vec[T]` remains the current
+compiler-known local vector type. `std::boxed::Box` names the
 source zone-backed box seed, and the root `Box[T]`/`std::Box[T]` spelling is a
 public alias for that same explicit-zone source handle. `std::string` names the
 early allocator-backed byte-buffer seed for owned strings. The root
@@ -662,8 +663,9 @@ let data_view: Slice[i64] = data.as_slice()
 ```
 
 These names are available without `std::` when implicit `std` loading is on.
-Use explicit paths only when you want to show the source module, for example
-`std::Vec[i64]` or `std::iter::range(1, 4)`.
+Use explicit paths when you want to show the source module or select an
+explicit-zone handle, for example `std::Vec[i64]` or
+`std::iter::range(1, 4)`.
 
 Tuples, fixed arrays, local vector values, and prelude ranges lower as local
 stack aggregate values. Non-empty `[...]` defaults to a fixed array when no
@@ -691,9 +693,9 @@ an explicit-allocator feature for later. The lower-level
 `std::vec::with_capacity<T>(ref mut Zone, capacity)` helpers already exercise
 the explicit allocator path for future Vec storage, and
 `std::vec::new<T>(ref mut Zone, capacity)` exposes that seed as source
-`std::vec::Vec<T>`. `Vec!(T, ref mut Zone, capacity)` is the short prelude
-constructor spelling for that same source handle. The source handle supports
-metadata, read/write/replace,
+`std::vec::Vec<T>` / `std::Vec<T>`. `Vec!(T, ref mut Zone, capacity)` is the
+short prelude constructor spelling for that same source handle. The source
+handle supports metadata, read/write/replace,
 push/pop, same-zone `push_in` growth, same-zone grow-only `reserve`,
 `try_pop`, insert/remove, swap,
 same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone
@@ -707,9 +709,9 @@ is rejected. `as_ptr()` raw pointers and copied Vec handles track their source
 or target zone respectively. Mutating overwrite/shrink helpers drop removed
 element values before reducing the live length, while buffer release remains
 with the explicit zone. `try_pop()` returns `Option[T]` instead of asserting on
-empty handles. The root
-`Vec[T]` type and its current local method set remain fixed-local until runtime
-growth is ported. Root `Vec[T]` can be used as an ordinary direct function
+empty handles. The bare `Vec[T]` type and its current local method set remain
+fixed-local until runtime growth is ported. Bare root `Vec[T]` can be used as
+an ordinary direct function
 parameter or as a function pointer parameter in `fn(Vec[T]) -> R`; sema lowers
 those slots to the same borrowed `{data, len}` shape as `Slice[T]`, so one
 callee works across caller capacities. Trait and impl method parameters use the
@@ -719,8 +721,8 @@ parameters still carry concrete local Vec capacity when `T` resolves to local
 Vec storage. Root `Vec[T]` returns, extern parameters/returns, trait method
 return types, struct fields, and impl receivers still reject it with a
 dedicated diagnostic until the runtime-capacity ABI is defined. Use
-`std::vec::Vec<T>` for an explicit-zone heap handle or `Slice[T]` for a borrowed
-view.
+`std::Vec<T>` / `std::vec::Vec<T>` for an explicit-zone heap handle or
+`Slice[T]` for a borrowed view.
 
 `std::boxed::Box<T>` is the source `std` allocation seed for a single
 zone-backed value:

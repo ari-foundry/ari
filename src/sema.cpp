@@ -933,11 +933,15 @@ private:
     }
 
     bool has_source_std_surface() const {
-        bool found = false;
+        bool found_slice = false;
+        bool found_option = false;
         for_each_struct_decl([&](const StructDecl& decl) {
-            if (decl.name == "std::Vec") found = true;
+            if (decl.name == "std::Slice") found_slice = true;
         });
-        return found;
+        for_each_enum_decl([&](const EnumDecl& decl) {
+            if (decl.name == "std::Option") found_option = true;
+        });
+        return found_slice && found_option;
     }
 
     bool prelude_specials_available() const {
@@ -1115,6 +1119,7 @@ private:
         std::string base = basename_of_qualified_name(name);
         PreludeMacroKind kind = prelude_macro_kind(base);
         if (kind == PreludeMacroKind::None) return PreludeMacroKind::None;
+        if (kind == PreludeMacroKind::Vec && name == "std::vec::Vec") return kind;
         if (name == base || name == "std::" + base) return kind;
         return PreludeMacroKind::None;
     }
@@ -4443,7 +4448,7 @@ private:
                 type.field_types.push_back(element);
                 type.field_mutable.push_back(false);
             }
-        } else if (type.name == "Vec" || type.name == "std::Vec" || type.name == "prelude::Vec") {
+        } else if (type.name == "Vec" || type.name == "prelude::Vec") {
             if (ast_type.args.size() != 1) fail(type.loc, "Vec requires exactly one element type");
             type.primitive = IrPrimitiveKind::Vector;
             type.name = "Vec";
