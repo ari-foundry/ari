@@ -130,14 +130,21 @@ trees into pre-lowered `IrFunction` bodies, replay named struct/enum/fixed
 array/vector-capacity type shapes from declarations plus cache-only type
 metadata, skip semantic body lowering for cached dependency functions, and
 append those replayed bodies to the final IR in the same order as the normal
-sema path. The cache-use path can therefore skip parsing summary-safe
-dependencies after metadata/source-hash validation while still producing the
-same LLVM IR as a fresh sema lowering. Hash-valid but malformed replay
-payloads are reported as module-cache IR replay diagnostics tied to the lowered
-function being reconstructed, before backend emission. A focused cache layout
-guard now keeps cache-only local `Vec[T; capacity]` type metadata covered with
-fresh/cache-use LLVM byte-for-byte comparison, so new layout-bearing IR type
-metadata must grow that guard instead of relying only on broad cache-body tests.
+sema path. The V0 sidecar now also carries an explicit layout-descriptor section
+inside the existing cache family: `L;...D;...` entries currently describe
+cache-only local `Vec[T; capacity]` storage as `vector-storage` descriptors
+with the normalized vector type, element type, and slot count. Cache parsing
+rejects missing, unused, duplicate, unknown, or mismatched layout descriptors
+before replay, so layout-bearing metadata no longer has to be inferred from
+body replay accidents. The cache-use path can therefore skip parsing
+summary-safe dependencies after metadata/source-hash validation while still
+producing the same LLVM IR as a fresh sema lowering. Hash-valid but malformed
+replay payloads are reported as module-cache IR replay diagnostics tied to the
+lowered function being reconstructed, before backend emission. The focused
+cache layout guard now checks both the descriptor payload and fresh/cache-use
+LLVM byte-for-byte output for cache-only local `Vec[T; capacity]` metadata, so
+new layout-bearing IR type metadata must add a descriptor and grow that guard
+instead of relying only on broad cache-body tests.
 
 The direct fixed-array export ABI slice promoted from Medium-Term is complete
 for the current 0.x shared LLVM surface and has been removed from active
@@ -152,36 +159,30 @@ scalar/raw-pointer import path promoted below lands.
 
 Active Near-Term work promoted from Medium-Term and Backend Work:
 
-1. [ir-cache-layouts] add explicit cache layout descriptors for any
-   layout-bearing IR type metadata that is no longer reconstructible from the
-   current declaration-shaped replay. Keep this inside the V0/0.x cache family:
-   focused fresh/cache-use LLVM byte-for-byte guards must grow with each new
-   descriptor, and generic/impl body replay still waits for a deliberate cache
-   identity/version bump.
-2. [enum-mixed-slots] define and test the stored payload rule for aggregate
+1. [enum-mixed-slots] define and test the stored payload rule for aggregate
    enum cases that mix homogeneous nested aggregate-enum slots with scalar or
    pointer-shaped slots. The goal is a precise layout/materialization rule, not
    broad owned/vector payload support.
-3. [enum-payload-pointers] once `[enum-mixed-slots]` fixes the payload layout
+2. [enum-payload-pointers] once `[enum-mixed-slots]` fixes the payload layout
    rule, lower direct payload field pointer access for aggregate enum payloads
    on the LLVM path and the already-supported freestanding local/pointer-backed
    value paths.
-4. [raw-enum-materialization] finish freestanding direct value materialization
+3. [raw-enum-materialization] finish freestanding direct value materialization
    for multi-payload aggregate enums before defining their external FFI ABI.
-5. [aggregate-layout-service] finish sharing field-layout and aggregate layout
+4. [aggregate-layout-service] finish sharing field-layout and aggregate layout
    decisions between sema and both backends. This should be a broad layout
    service/refactor, not another syntax-specific sema helper.
-6. [raw-c-imports-scalar] implement the first real raw/freestanding imported
+5. [raw-c-imports-scalar] implement the first real raw/freestanding imported
    `extern "C"` path for scalar and raw-pointer signatures only. Keep
    aggregate, varargs, platform float-C ABI, and libc discovery outside this
    slice until the scalar link/call path is boring.
-7. [raw-runtime-strings] add freestanding runtime string storage sufficient for
+6. [raw-runtime-strings] add freestanding runtime string storage sufficient for
    string literals, byte writes, and the currently documented line-input
    rejection boundary without depending on the host C runtime.
-8. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
+7. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
    vtable-slot dispatch in the raw backend, leaving `own` and borrow-valued dyn
    data-pointer policy in Medium-Term.
-9. [raw-relocatable-objects] emit native relocatable object files for the raw
+8. [raw-relocatable-objects] emit native relocatable object files for the raw
     backend using the current Ari symbol table/export model. Treat C ABI
     relocations and host linker integration as follow-ups to `[raw-c-imports-scalar]`.
 
@@ -194,8 +195,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    V0 replay covers non-generic free-function dependency bodies and the
    generated impl specializations needed by those bodies. Keep the cache family
    on 0.x/V0 until a deliberate version bump is approved, then extend the
-   sidecar format for richer stable identities. Cache layout descriptors that
-   fit the current V0 family moved to Near-Term `[ir-cache-layouts]`.
+   sidecar format for richer stable identities. V0 local vector-storage layout
+   descriptors are complete in the current IR sidecar; richer generic/impl
+   replay and any identity-bearing descriptor expansion still wait for a
+   deliberate cache identity/version bump.
    - [ir-replay-generics] replay generic, impl, and trait-specialized bodies
      directly from cache once their stable sidecar identity is versioned
 

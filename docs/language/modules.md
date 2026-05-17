@@ -350,22 +350,30 @@ Cache loading parses that payload and checks its hash and counts, so edited or
 corrupted summaries are caught before semantic checking relies on them.
 IR summary sidecars are emitted after semantic checking from the lowered IR
 function surface, body shape, and operand-tree payload for each source. The V0
-IR sidecar requires both the body-shape section and the operand-tree section.
-They are validated as part of cache parsing: the payload header, hash, required
-body payload sections, and function count must agree with the cache record, and
-the source hash must still match the embedded metadata. When a dependency can
-skip parsing through its AST summary and a matching IR sidecar is present, the
-loader parses the lowered function surface, materializes the lowered
-statement/expression summary tree, replays named struct/enum/fixed-array and
-local-`Vec` capacity type shapes, and injects pre-lowered dependency bodies into
-the final IR while skipping semantic body lowering for those cached functions.
+IR sidecar requires both the body-shape section and the operand-tree section,
+and may carry explicit layout descriptors before the function summaries. Layout
+descriptors use `L;...D;...` records inside `ari-ir-summary-v0`; the current
+descriptor kind is `vector-storage`, which records the normalized
+`Vec[T; capacity]` storage type, element type, and slot count for cache-only
+local vector layouts. They are validated as part of cache parsing: the payload
+header, hash, required body payload sections, layout descriptor inventory, and
+function count must agree with the cache record, and the source hash must still
+match the embedded metadata. When a dependency can skip parsing through its AST
+summary and a matching IR sidecar is present, the loader parses the lowered
+function surface, materializes the lowered statement/expression summary tree,
+replays named struct/enum/fixed-array and local-`Vec` capacity type shapes, and
+injects pre-lowered dependency bodies into the final IR while skipping semantic
+body lowering for those cached functions.
 The replayed IR must match the fresh sema path's lowered function surface; stale
 or tampered sidecars are rejected before backend emission. If a hash-valid
 sidecar still cannot be replayed into the current IR model, the compiler
 reports the lowered function that failed replay rather than continuing to
 backend emission. Cache-use replay also preserves cache-only layout metadata
-such as inferred local `Vec[T; capacity]` storage, so the lowered LLVM storage
-shape remains byte-for-byte identical to fresh semantic lowering.
+such as inferred local `Vec[T; capacity]` storage through those descriptors, so
+the lowered LLVM storage shape remains byte-for-byte identical to fresh
+semantic lowering. Missing, duplicate, unknown, unused, or mismatched layout
+descriptors make the cache invalid instead of falling through to backend
+emission.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant

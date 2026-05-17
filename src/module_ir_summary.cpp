@@ -1,6 +1,7 @@
 #include "module_ir_summary.hpp"
 
 #include "common.hpp"
+#include "module_ir_layout_summary.hpp"
 #include "module_ir_type_summary.hpp"
 #include "module_cache_format.hpp"
 #include "module_ir_summary_body.hpp"
@@ -26,6 +27,7 @@ struct IrSummaryCounts {
 
 struct IrSummaryParseResult {
     IrSummaryCounts counts;
+    std::vector<ModuleCacheIrLayoutDescriptor> layout_descriptors;
     std::vector<ModuleCacheIrFunctionSummary> functions;
 };
 
@@ -57,6 +59,14 @@ void append_type(std::string& out, const IrType& type) {
     append_field(out, module_cache_ir_type_name(type));
 }
 
+void append_layout_descriptor(std::string& out, const ModuleCacheIrLayoutDescriptor& descriptor) {
+    out += "D;";
+    append_field(out, descriptor.kind);
+    append_field(out, descriptor.type);
+    append_field(out, descriptor.element_type);
+    append_count(out, descriptor.slot_count);
+}
+
 void append_function_summary(std::string& out, const IrFunction& fn) {
     out += "F;";
     append_field(out, fn.name);
@@ -76,6 +86,11 @@ void append_function_summary(std::string& out, const IrFunction& fn) {
 
 std::string ir_summary_payload(const std::vector<const IrFunction*>& functions) {
     std::string out = kModuleIrSummaryPayloadHeader;
+    std::vector<ModuleCacheIrLayoutDescriptor> descriptors =
+        module_cache_ir_layout_descriptors(functions);
+    out += "L;";
+    append_count(out, descriptors.size());
+    for (const auto& descriptor : descriptors) append_layout_descriptor(out, descriptor);
     append_count(out, functions.size());
     for (const IrFunction* fn : functions) append_function_summary(out, *fn);
     return out;
@@ -88,8 +103,10 @@ public:
 
     IrSummaryParseResult parse() {
         expect(kModuleIrSummaryPayloadHeader);
+        if (consume("L;")) read_layout_descriptors();
         result_.counts.function_count = read_count();
         for (std::uint64_t i = 0; i < result_.counts.function_count; ++i) read_function();
+        validate_module_cache_ir_layout_descriptors(result_.layout_descriptors, result_.functions);
         if (pos_ != text_.size()) fail("trailing data in IR summary");
         return std::move(result_);
     }
@@ -108,6 +125,12 @@ private:
             fail("expected '" + expected + "' header");
         }
         pos_ += expected.size();
+    }
+
+    bool consume(const std::string& expected) {
+        if (text_.compare(pos_, expected.size(), expected) != 0) return false;
+        pos_ += expected.size();
+        return true;
     }
 
     void expect_char(char expected) {
@@ -153,6 +176,19 @@ private:
         std::string value = read_field();
         if (value != "0" && value != "1") fail("expected " + label + " boolean 0 or 1");
         return value == "1";
+    }
+
+    void read_layout_descriptors() {
+        std::uint64_t descriptor_count = read_count();
+        for (std::uint64_t i = 0; i < descriptor_count; ++i) {
+            expect("D;");
+            ModuleCacheIrLayoutDescriptor descriptor;
+            descriptor.kind = read_field();
+            descriptor.type = read_field();
+            descriptor.element_type = read_field();
+            descriptor.slot_count = read_count();
+            result_.layout_descriptors.push_back(std::move(descriptor));
+        }
     }
 
     void read_function() {
