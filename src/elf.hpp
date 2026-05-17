@@ -15,5 +15,7 @@ struct ElfSymbol {
 std::vector<std::uint8_t> write_elf_executable(const std::vector<std::uint8_t>& code,
                                                const std::vector<ElfSymbol>& symbols);
 std::vector<std::uint8_t> write_elf_executable(const std::vector<std::uint8_t>& code);
+std::vector<std::uint8_t> write_elf_relocatable_object(const std::vector<std::uint8_t>& code,
+                                                       const std::vector<ElfSymbol>& symbols);
 
 } // namespace ari

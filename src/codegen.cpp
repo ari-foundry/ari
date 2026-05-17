@@ -4604,7 +4604,7 @@ public:
     EmittedProgram emit() {
         collect_extern_abis();
         collect_ir_functions();
-        emit_entry();
+        if (program_.require_main) emit_entry();
         enqueue_initial_functions();
         emit_queued_functions();
         emit_builtin_functions();

@@ -96,7 +96,9 @@ src/codegen.hpp
 The default host codegen emits LLVM IR and relies on an LLVM driver such as
 `clang` for glibc linking, FFI, and shared-library output. `--emit-llvm` writes
 `.ll` and stops. The freestanding codegen emits x86-64 machine code directly.
-No backend should need to know about source parser details.
+`--freestanding --emit-obj` wraps that raw code stream as an ELF64 relocatable
+object instead of an executable. No backend should need to know about source
+parser details.
 
 If an IR kind is front-end only, codegen should reject it with a clear message
 until runtime lowering exists.
@@ -110,8 +112,10 @@ src/elf.cpp
 src/elf.hpp
 ```
 
-The ELF writer creates a minimal Linux x86-64 ET_EXEC file with an executable
-load segment.
+The ELF writer creates minimal Linux x86-64 ET_EXEC files with executable load
+segments and ET_REL object files with `.text`, `.symtab`, `.strtab`, and
+`.shstrtab` sections.
 
 The driver writes freestanding ELF outputs with normal executable permissions,
-so no manual `chmod +x` step is needed. There is no relocation handling yet.
+so no manual `chmod +x` step is needed. Relocatable object outputs are ordinary
+non-executable binary files. There is no external C relocation handling yet.

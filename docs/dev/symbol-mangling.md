@@ -31,9 +31,10 @@ When emitting host LLVM IR for `--shared`, public Ari functions and explicit
 `@export`/`@no_mangle` functions keep default visibility. Private Ari helper
 functions and Ari-owned runtime helpers are emitted with hidden LLVM
 visibility, so they are not intended to be part of the dynamic library ABI.
-Raw `--freestanding` ELF output also records `@export`/`@no_mangle` names in
-the static symbol table. The raw backend still rejects imported `extern "C"`
-calls until a real native C ABI and link path exists.
+Raw `--freestanding` ELF executable output and
+`--freestanding --emit-obj` relocatable object output also record
+`@export`/`@no_mangle` names in the symbol table. The raw backend still rejects
+imported `extern "C"` calls until a real native C ABI and link path exists.
 
 This mangling is intentionally still a v0 ABI. Future ABI versioning work may
 revise symbol identity rules, but argument-based source-level overloading is not

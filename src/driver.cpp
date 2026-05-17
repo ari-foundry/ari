@@ -64,6 +64,7 @@ static std::string shell_quote(const std::string& text) {
 
 static void usage() {
     std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path] [--freestanding]\n"
+                 "           [--emit-obj path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
                  "           [--emit-c-header path]\n"
@@ -83,6 +84,7 @@ int run(int argc, char** argv) {
     std::string input;
     std::string output = "a.out";
     std::string llvm_output;
+    std::string object_output;
     std::string c_header_output;
     std::string llvm_compiler = default_llvm_compiler();
     std::string metadata_output;
@@ -130,6 +132,9 @@ int run(int argc, char** argv) {
             if (i + 1 >= argc) throw CompileError("--emit-llvm expects a path");
             llvm_output = argv[++i];
             emit_llvm_only = true;
+        } else if (arg == "--emit-obj" || arg == "--emit-object") {
+            if (i + 1 >= argc) throw CompileError(arg + " expects a path");
+            object_output = argv[++i];
         } else if (arg == "--emit-c-header") {
             if (i + 1 >= argc) throw CompileError("--emit-c-header expects a path");
             c_header_output = argv[++i];
@@ -183,8 +188,15 @@ int run(int argc, char** argv) {
         throw CompileError("--test cannot be combined with --shared");
     }
     if (check_only && (output_explicit || emit_llvm_only || freestanding || shared_library ||
+                       !object_output.empty() ||
                        !c_header_output.empty() || llvm_compiler_explicit || !link_args.empty())) {
         throw CompileError("--check cannot be combined with backend output or linking options");
+    }
+    if (!object_output.empty() && !freestanding) {
+        throw CompileError("--emit-obj requires --freestanding");
+    }
+    if (!object_output.empty() && shared_library) {
+        throw CompileError("--emit-obj cannot be combined with --shared");
     }
     if (freestanding && (emit_llvm_only || shared_library)) {
         throw CompileError("--freestanding cannot be combined with --emit-llvm or --shared");
@@ -222,7 +234,7 @@ int run(int argc, char** argv) {
     }
     Program program = std::move(loaded.program);
     SemaOptions sema_options;
-    sema_options.require_main = !shared_library && !test_mode && !check_only;
+    sema_options.require_main = !shared_library && !test_mode && !check_only && object_output.empty();
     sema_options.test_mode = test_mode;
     sema_options.implicit_std = implicit_std;
     sema_options.cfg_features = cfg_features;
@@ -255,6 +267,13 @@ int run(int argc, char** argv) {
         symbols.reserve(emitted.symbols.size());
         for (const auto& symbol : emitted.symbols) {
             symbols.push_back(ElfSymbol{symbol.name, symbol.offset, symbol.size});
+        }
+        if (!object_output.empty()) {
+            std::vector<std::uint8_t> object = write_elf_relocatable_object(emitted.code, symbols);
+            write_file(object_output, object, false);
+            std::cout << "wrote " << object_output << " (" << object.size()
+                      << " bytes, freestanding object)\n";
+            return 0;
         }
         std::vector<std::uint8_t> elf = write_elf_executable(emitted.code, symbols);
         write_file(output, elf, true);

@@ -103,6 +103,8 @@ check-cli: $(TARGET)
 	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
 	if $(TARGET) examples/count.ari --check --emit-llvm $(BUILD_DIR)/cli/check-bad.ll >$(BUILD_DIR)/cli/check-output-option.err 2>&1; then exit 1; fi
 	grep -q -- "--check cannot be combined with backend output or linking options" $(BUILD_DIR)/cli/check-output-option.err
+	if $(TARGET) examples/count.ari --emit-obj $(BUILD_DIR)/cli/count.o >$(BUILD_DIR)/cli/emit-obj-without-freestanding.err 2>&1; then exit 1; fi
+	grep -q -- "--emit-obj requires --freestanding" $(BUILD_DIR)/cli/emit-obj-without-freestanding.err
 	$(TARGET) --freestanding examples/count.ari -o $(BUILD_DIR)/cli/count.raw
 	test -x $(BUILD_DIR)/cli/count.raw
 	$(BUILD_DIR)/cli/count.raw; code=$$?; test $$code -eq 5
@@ -1946,6 +1948,23 @@ check-meta: $(TARGET)
 	grep -q 'increment' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
 	grep -q 'zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
 	if grep -Eq '_ARNv3add|_ARNv9increment|_ARNv4zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym; then exit 1; fi
+	$(TARGET) --freestanding --emit-obj $(BUILD_DIR)/meta/library-export.o tests/ok/library-export.ari
+	readelf -h $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.header
+	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/meta/library-export-object.header
+	readelf -SW $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.sections
+	grep -q '\.text' $(BUILD_DIR)/meta/library-export-object.sections
+	grep -q '\.symtab' $(BUILD_DIR)/meta/library-export-object.sections
+	readelf -sW $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.sym
+	grep -q '_ARNv3add' $(BUILD_DIR)/meta/library-export-object.sym
+	if grep -q '_ARNv4main' $(BUILD_DIR)/meta/library-export-object.sym; then exit 1; fi
+	$(TARGET) --freestanding --emit-obj $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.o tests/ok/attribute-export-symbols-freestanding.ari
+	readelf -h $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.o >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.header
+	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.header
+	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.o >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym
+	grep -q 'ari_public_add' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym
+	grep -q 'increment' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym
+	grep -q 'zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym
+	if grep -Eq '_ARNv3add|_ARNv9increment|_ARNv4zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym; then exit 1; fi
 	$(TARGET) tests/ok/shared-visibility.ari --shared --emit-llvm $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define hidden i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define i64 @"_ARNv10public_api"' $(BUILD_DIR)/meta/shared-visibility.ll

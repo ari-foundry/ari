@@ -16,11 +16,7 @@ changing the long-term language contract.
    `extern "C"` path for scalar and raw-pointer signatures only. Keep
    aggregate, varargs, platform float-C ABI, and libc discovery outside this
    slice until scalar linking and calls are boring.
-2. [raw-relocatable-objects] Emit native relocatable object files for the raw
-   backend using the current Ari symbol table/export model. Treat C ABI
-   relocations and host linker integration as follow-ups to
-   `[raw-c-imports-scalar]`.
-3. [ir-replay-generics] Replay generic free functions and generated impl
+2. [ir-replay-generics] Replay generic free functions and generated impl
    specializations from V0 IR sidecars once their stable specialization identity
    is versioned. Keep trait-specialized replay and broader identity descriptor
    expansion behind the same 0.x cache-version policy.

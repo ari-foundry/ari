@@ -104,6 +104,10 @@ Checklist:
 - [x] reject removed generated-C++ options
 - [x] compile and run a raw Linux executable with `--freestanding`
 - [x] freestanding output is executable without a test-side `chmod +x`
+- [x] emit raw x86-64 ELF relocatable objects with
+      `--freestanding --emit-obj`
+- [x] inspect raw object `.text`, `.symtab`, mangled Ari symbols, and
+      `@export`/`@no_mangle` symbol names
 - [x] compile a shared library with `--shared`
 - [x] emit hidden LLVM visibility for private Ari helpers under `--shared`
 - [x] inspect linked shared-library dynamic symbols for public/exported-only

@@ -117,3 +117,8 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   supertrait methods, and dyn-to-supertrait vtable upcasts.
 - Freestanding `f32`/`f64` local storage, raw pointer load/store/dereference,
   arithmetic, ordered comparisons, and direct Ari calls are implemented.
+- The raw backend can emit native x86-64 ELF relocatable object files through
+  `--freestanding --emit-obj path`. These objects contain a `.text` section and
+  a symbol table using the same Ari mangled or explicit `@export`/`@no_mangle`
+  symbols as raw executable output. C ABI relocations and host linker
+  integration remain separate follow-up work.

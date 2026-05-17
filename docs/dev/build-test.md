@@ -56,7 +56,7 @@ with a focused coverage note, add or extend the relevant test, and update
 
 `make check-cli` runs just the compiler invocation and build-mode checks:
 LLVM IR output, optional LLVM-driver linked output when `clang` is installed,
-freestanding output, and common bad CLI argument paths.
+freestanding executable and object output, and common bad CLI argument paths.
 
 `make check-tools` builds `ari-lint` and `ari-lsp`, checks lint's human and JSON
 diagnostic output, and runs a small JSON-RPC smoke test for

@@ -199,6 +199,88 @@ public:
 
         return file;
     }
+
+    static std::vector<std::uint8_t> write_relocatable_object(const std::vector<std::uint8_t>& code,
+                                                              const std::vector<ElfSymbol>& symbols) {
+        std::vector<std::uint8_t> file(64, 0);
+        align_file(file, 16);
+        std::uint64_t text_offset = static_cast<std::uint64_t>(file.size());
+        file.insert(file.end(), code.begin(), code.end());
+
+        std::vector<std::uint8_t> strtab;
+        strtab.push_back(0);
+        std::vector<std::uint32_t> symbol_name_offsets;
+        symbol_name_offsets.reserve(symbols.size());
+        for (const auto& symbol : symbols) {
+            symbol_name_offsets.push_back(add_string(strtab, symbol.name));
+        }
+
+        align_file(file, 8);
+        std::uint64_t symtab_offset = static_cast<std::uint64_t>(file.size());
+        Writer writer(file);
+        writer.seek(file.size());
+        write_symbol(writer, 0, 0, 0, 0, 0);
+        for (std::size_t i = 0; i < symbols.size(); ++i) {
+            const ElfSymbol& symbol = symbols[i];
+            write_symbol(writer,
+                         symbol_name_offsets[i],
+                         static_cast<std::uint8_t>((1 << 4) | 2),
+                         1,
+                         symbol.offset,
+                         symbol.size);
+        }
+        std::uint64_t symtab_size = static_cast<std::uint64_t>(writer.tell()) - symtab_offset;
+
+        std::uint64_t strtab_offset = static_cast<std::uint64_t>(file.size());
+        file.insert(file.end(), strtab.begin(), strtab.end());
+        std::uint64_t strtab_size = static_cast<std::uint64_t>(strtab.size());
+
+        std::vector<std::uint8_t> shstrtab;
+        shstrtab.push_back(0);
+        std::uint32_t sh_text = add_string(shstrtab, ".text");
+        std::uint32_t sh_symtab = add_string(shstrtab, ".symtab");
+        std::uint32_t sh_strtab = add_string(shstrtab, ".strtab");
+        std::uint32_t sh_shstrtab = add_string(shstrtab, ".shstrtab");
+
+        std::uint64_t shstrtab_offset = static_cast<std::uint64_t>(file.size());
+        file.insert(file.end(), shstrtab.begin(), shstrtab.end());
+        std::uint64_t shstrtab_size = static_cast<std::uint64_t>(shstrtab.size());
+
+        align_file(file, 8);
+        std::uint64_t section_header_offset = static_cast<std::uint64_t>(file.size());
+        writer.seek(file.size());
+        write_section_header(writer, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+        write_section_header(writer, sh_text, 1, 0x6, 0, text_offset, code.size(), 0, 0, 16, 0);
+        write_section_header(writer, sh_symtab, 2, 0, 0, symtab_offset, symtab_size, 3, 1, 8, 24);
+        write_section_header(writer, sh_strtab, 3, 0, 0, strtab_offset, strtab_size, 0, 0, 1, 0);
+        write_section_header(writer, sh_shstrtab, 3, 0, 0, shstrtab_offset, shstrtab_size, 0, 0, 1, 0);
+
+        writer.seek(0);
+        writer.byte(0x7f);
+        writer.byte('E');
+        writer.byte('L');
+        writer.byte('F');
+        writer.byte(2);
+        writer.byte(1);
+        writer.byte(1);
+        writer.byte(0);
+        for (int i = 0; i < 8; ++i) writer.byte(0);
+        writer.u16(1);
+        writer.u16(62);
+        writer.u32(1);
+        writer.u64(0);
+        writer.u64(0);
+        writer.u64(section_header_offset);
+        writer.u32(0);
+        writer.u16(64);
+        writer.u16(0);
+        writer.u16(0);
+        writer.u16(64);
+        writer.u16(5);
+        writer.u16(4);
+
+        return file;
+    }
 };
 
 } // namespace
@@ -210,6 +292,11 @@ std::vector<std::uint8_t> write_elf_executable(const std::vector<std::uint8_t>& 
 
 std::vector<std::uint8_t> write_elf_executable(const std::vector<std::uint8_t>& code) {
     return ElfWriter::write_executable(code, {});
+}
+
+std::vector<std::uint8_t> write_elf_relocatable_object(const std::vector<std::uint8_t>& code,
+                                                       const std::vector<ElfSymbol>& symbols) {
+    return ElfWriter::write_relocatable_object(code, symbols);
 }
 
 } // namespace ari

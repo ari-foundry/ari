@@ -62,9 +62,10 @@ keep the previous default visibility.
 The freestanding backend still uses the small internal integer/bool calling
 convention: the first six scalar arguments use registers and later arguments use
 caller-provided stack slots. Sema caps functions and calls at 65,535
-parameters/arguments. Raw ELF output records `@export`/`@no_mangle` function
-names in `.symtab`, but imported `extern "C"` calls remain rejected until the
-native backend has a real platform C ABI and link path.
+parameters/arguments. Raw ELF executable and object output records
+`@export`/`@no_mangle` function names in `.symtab`, but imported `extern "C"`
+calls remain rejected until the native backend has a real platform C ABI and
+link path.
 
 ## Prelude IO, Input, And Stops
 
@@ -121,6 +122,19 @@ This path emits raw x86-64 machine code and wraps it in a minimal Linux ELF64
 file without glibc, a dynamic linker, an assembler, or an external linker.
 The driver marks the file with normal executable permissions when it is written.
 
+For native backend inspection or later linker work, the same raw code stream can
+be written as an ELF64 relocatable object:
+
+```sh
+ari app.ari --freestanding --emit-obj app.o
+```
+
+Object output uses `ET_REL`, writes generated code into `.text`, and emits
+`.symtab` / `.strtab` entries for the same Ari mangled or explicit
+`@export`/`@no_mangle` symbols used by raw executable output. It does not
+introduce platform C ABI relocations or host linker integration; imported
+`extern "C"` calls are still rejected on the freestanding path.
+
 ## Known Backend Limits
 
 The backends still intentionally reject or do not ABI-lower:
@@ -135,6 +149,6 @@ The backends still intentionally reject or do not ABI-lower:
 
 ## Next Backend Work
 
-1. Add object-file output for the freestanding/backend-native path.
-2. Define non-local aggregate ABI layouts for tuples, structs, and vectors.
+1. Define non-local aggregate ABI layouts for tuples, structs, and vectors.
+2. Add raw C import relocations and host linker integration.
 3. Move compiler-known prelude stubs toward Ari source modules where possible.
