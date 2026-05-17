@@ -143,7 +143,50 @@ parameters, and direct by-value `[T, N]` exported parameters/returns through
 generated wrapper typedefs such as `AriArray_i64_2`. Those direct fixed-array
 exports share the same 64-bit Unix, 16-byte, 8-byte-alignment guard as other
 direct C aggregate ABI values. Raw/freestanding imported C array calls stay
-with Backend Work `[raw-c-imports]`.
+with the aggregate follow-ups under Backend Work `[raw-c-imports]`, after the
+scalar/raw-pointer import path promoted below lands.
+
+Active Near-Term work promoted from Medium-Term and Backend Work:
+
+1. [ir-cache-layouts] add explicit cache layout descriptors for any
+   layout-bearing IR type metadata that is no longer reconstructible from the
+   current declaration-shaped replay. Keep this inside the V0/0.x cache family:
+   focused fresh/cache-use LLVM byte-for-byte guards must grow with each new
+   descriptor, and generic/impl body replay still waits for a deliberate cache
+   identity/version bump.
+2. [pattern-reference-bindings] lower the first reference binding-mode slice on
+   top of the shared pattern engine. Start with local declaration patterns such
+   as `let ref x = value` and `let ref mut x = value`, plus tuple/array/struct
+   destructuring over direct local values where the borrow source path is
+   explicit. Keep `&`/`&mut` shorthand, function-parameter reference patterns,
+   and ownership-carrying aggregate binding modes out until this local slice is
+   proven.
+3. [enum-mixed-slots] define and test the stored payload rule for aggregate
+   enum cases that mix homogeneous nested aggregate-enum slots with scalar or
+   pointer-shaped slots. The goal is a precise layout/materialization rule, not
+   broad owned/vector payload support.
+4. [enum-payload-pointers] once `[enum-mixed-slots]` fixes the payload layout
+   rule, lower direct payload field pointer access for aggregate enum payloads
+   on the LLVM path and the already-supported freestanding local/pointer-backed
+   value paths.
+5. [raw-enum-materialization] finish freestanding direct value materialization
+   for multi-payload aggregate enums before defining their external FFI ABI.
+6. [aggregate-layout-service] finish sharing field-layout and aggregate layout
+   decisions between sema and both backends. This should be a broad layout
+   service/refactor, not another syntax-specific sema helper.
+7. [raw-c-imports-scalar] implement the first real raw/freestanding imported
+   `extern "C"` path for scalar and raw-pointer signatures only. Keep
+   aggregate, varargs, platform float-C ABI, and libc discovery outside this
+   slice until the scalar link/call path is boring.
+8. [raw-runtime-strings] add freestanding runtime string storage sufficient for
+   string literals, byte writes, and the currently documented line-input
+   rejection boundary without depending on the host C runtime.
+9. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
+   vtable-slot dispatch in the raw backend, leaving `own` and borrow-valued dyn
+   data-pointer policy in Medium-Term.
+10. [raw-relocatable-objects] emit native relocatable object files for the raw
+    backend using the current Ari symbol table/export model. Treat C ABI
+    relocations and host linker integration as follow-ups to `[raw-c-imports-scalar]`.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -154,21 +197,22 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    V0 replay covers non-generic free-function dependency bodies and the
    generated impl specializations needed by those bodies. Keep the cache family
    on 0.x/V0 until a deliberate version bump is approved, then extend the
-   sidecar format for richer stable identities and layout descriptors.
+   sidecar format for richer stable identities. Cache layout descriptors that
+   fit the current V0 family moved to Near-Term `[ir-cache-layouts]`.
    - [ir-replay-generics] replay generic, impl, and trait-specialized bodies
      directly from cache once their stable sidecar identity is versioned
-   - [ir-cache-layouts] add explicit cached layout descriptors only when the
-     current declaration-shaped replay is no longer enough
 
 ## Medium-Term Language Work
 
 1. Extend pattern binding modes beyond value bindings.
    Declaration-level `let mut PATTERN = value` is implemented as the mutable
    value-binding slice. The parser still reserves `ref`, `ref mut`, `&`, and
-   `&mut` binding-mode spellings as syntax-stability work. This Medium-Term
-   item is now the semantic lowering phase for those reference/ownership
-   binding forms.
-   - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
+   `&mut` binding-mode spellings as syntax-stability work. The first local
+   reference binding slice moved to Near-Term `[pattern-reference-bindings]`.
+   This Medium-Term item now tracks shorthand and ownership-aware binding forms
+   that need broader source-path and aggregate ownership policy.
+   - [reference-shorthand] design `&` and `&mut` pattern shorthand after
+     explicit `ref`/`ref mut` local patterns are stable
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share
    same-name/same-type or-pattern bindings through the product pattern engine.
@@ -204,12 +248,8 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    values, including homogeneous nested aggregate-enum payload values and
    direct enum-constructor stores through raw pointers. The stored payload
    universe is still intentionally narrow.
-   - [mixed-slots] define an explicit ABI rule for payload slots that mix
-     nested aggregate enums with scalar or pointer-shaped values
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
-   - [payload-pointers] lower direct payload field pointer access for
-     aggregate enum payloads after payload ABI and aliasing rules are explicit
    - [repr-c-payloads] define C tagged-union layout and C header emission for
      payload-bearing `@repr(C)` enums after aggregate enum payload ABI is stable
 3. Lower remaining allocation-backed prelude ADTs. Integer `Range[T]` and
@@ -268,30 +308,36 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     preserving the data pointer and offsetting the vtable pointer; unrelated
     dyn casts remain rejected.
     - [ownership] define dyn object data-pointer ownership for `own` and
-      borrow-valued source types
-    - [freestanding] lower trait-object values and dispatch in the raw backend
+      borrow-valued source types; copyable raw backend dispatch moved to
+      Near-Term `[raw-dyn-dispatch]`
 
 ## Backend Work
 
 1. Emit relocatable object files for the native backend.
+   The first Ari-symbol-table-only slice moved to Near-Term
+   `[raw-relocatable-objects]`; keep C ABI relocations and host linker polish
+   tied to the raw C import path.
 2. Define non-local aggregate ABI layouts for external ABI surfaces and
    vectors. Fixed-size local tuple/array/vector stack layout,
    direct raw aggregate parameters/returns through hidden pointers, LLVM
    aggregate enum layout, tuple/array/vector index access, raw aggregate
    expression results, and raw `@export`/`@no_mangle` ELF symbols are
    implemented.
-   - [structs] finish sharing all field-layout decisions between sema and
-     backends
-   - [raw-c-imports] define a real C ABI/link path for imported `extern "C"`
-     symbols on raw/freestanding targets; direct C extern calls remain rejected
-     there until this exists
+   - [structs] broad field-layout sharing moved to Near-Term
+     `[aggregate-layout-service]`
+   - [raw-c-imports] scalar/raw-pointer imported `extern "C"` support moved to
+     Near-Term `[raw-c-imports-scalar]`; aggregate, varargs, platform float-C
+     ABI, and libc discovery remain here until the scalar path exists
    - [vectors] define the growable root `Vec[T]` runtime ABI and backend
      lowering after allocator-backed storage exists; fixed-local root `Vec[T]`
      remains rejected at non-local boundaries until then
-   - [enums] finish direct value materialization for multi-payload aggregate
-     enums in the freestanding backend and define their external FFI ABI
+   - [enums] external aggregate-enum FFI ABI remains after Near-Term
+     `[enum-mixed-slots]`, `[enum-payload-pointers]`, and
+     `[raw-enum-materialization]`
 3. Add freestanding runtime string storage so raw ELF output can lower string
    values and line input helpers without relying on the host C runtime.
+   The first storage/runtime slice moved to Near-Term `[raw-runtime-strings]`;
+   keep richer hosted IO compatibility and allocator integration as follow-ups.
 4. Lower floating-point scalar values and calls in the freestanding backend.
    Raw local `f32`/`f64` literals and assignments can now be materialized as
    IEEE bit-pattern scalar storage, and raw pointer load/store/dereference of
