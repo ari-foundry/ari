@@ -5341,6 +5341,26 @@ private:
         return start_i64 + 1 == end_i64;
     }
 
+    static bool range_bounds_have_at_least_one_iteration(
+        const IrExpr& start,
+        const IrExpr& end,
+        bool inclusive
+    ) {
+        StaticIntegerValue start_value;
+        StaticIntegerValue end_value;
+        if (!try_fold_static_integer_value(start, start_value) ||
+            !try_fold_static_integer_value(end, end_value)) {
+            return false;
+        }
+        std::int64_t start_i64 = 0;
+        std::int64_t end_i64 = 0;
+        if (!static_integer_value_to_i64(start_value, start_i64) ||
+            !static_integer_value_to_i64(end_value, end_i64)) {
+            return false;
+        }
+        return inclusive ? start_i64 <= end_i64 : start_i64 < end_i64;
+    }
+
     static std::optional<bool> literal_bool_condition_value(const IrExpr& condition) {
         if (condition.kind != IrExprKind::Bool) return std::nullopt;
         return condition.bool_value;
@@ -11710,12 +11730,19 @@ private:
 
     const IrExpr* known_enum_construct_for_while_let_match_value(const IrExpr& match_value) {
         if (match_value.kind == IrExprKind::EnumConstruct) return &match_value;
-        if (match_value.kind != IrExprKind::Local) return nullptr;
 
-        LocalInfo* local = find_local_slot(ir_expr_name(match_value));
-        if (!local || local->mutable_binding || !local->ir_init_expr) return nullptr;
-        if (local->ir_init_expr->kind != IrExprKind::EnumConstruct) return nullptr;
-        return local->ir_init_expr;
+        std::set<std::string> seen_locals;
+        const IrExpr* current = &match_value;
+        while (current && current->kind == IrExprKind::Local) {
+            const std::string& local_name = ir_expr_name(*current);
+            if (!seen_locals.insert(local_name).second) return nullptr;
+
+            LocalInfo* local = find_local_slot(local_name);
+            if (!local || local->mutable_binding || !local->ir_init_expr) return nullptr;
+            current = local->ir_init_expr;
+            if (current->kind == IrExprKind::EnumConstruct) return current;
+        }
+        return nullptr;
     }
 
     bool enum_match_value_is_known_match_for_while_let(
@@ -12631,7 +12658,8 @@ private:
         IrExprPtr start = std::move(range->args[0]);
         IrExprPtr end = std::move(range->args[1]);
         bool exact_once_loop = range_bounds_exactly_one_iteration(*start, *end, inclusive);
-        finish_for_range(stmt, lowered, std::move(start), std::move(end), inclusive, exact_once_loop);
+        bool known_nonempty_loop = exact_once_loop || range_bounds_have_at_least_one_iteration(*start, *end, inclusive);
+        finish_for_range(stmt, lowered, std::move(start), std::move(end), inclusive, exact_once_loop, known_nonempty_loop);
     }
 
     void check_for_range_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
@@ -12657,7 +12685,8 @@ private:
         IrExprPtr start,
         IrExprPtr end,
         bool inclusive,
-        bool exact_once_loop = false
+        bool exact_once_loop = false,
+        bool known_nonempty_loop = false
     ) {
         const Pattern& for_pattern = expanded_pattern(*stmt.for_pattern);
         IrType bound_type = start->type;
@@ -12705,7 +12734,13 @@ private:
 
         restore_states(exact_once_loop
             ? checked_exact_once_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow)
-            : checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
+            : checked_loop_exit_state(
+                stmt.loc,
+                loop_input,
+                loop_body_state,
+                loop_state,
+                body.flow,
+                !known_nonempty_loop));
     }
 
     void check_for_vector(const Stmt& stmt, IrStmt& lowered) {
@@ -12722,6 +12757,7 @@ private:
         for_loop.binding_type = iterable->type.args[0];
         for_loop.values = iterable->args.take();
         const bool exact_once_loop = for_loop.values.size() == 1;
+        const bool known_nonempty_loop = !for_loop.values.empty();
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop;
@@ -12754,7 +12790,13 @@ private:
 
         restore_states(exact_once_loop
             ? checked_exact_once_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow)
-            : checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
+            : checked_loop_exit_state(
+                stmt.loc,
+                loop_input,
+                loop_body_state,
+                loop_state,
+                body.flow,
+                !known_nonempty_loop));
     }
 
     void check_for_vector_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
@@ -12769,6 +12811,7 @@ private:
         VectorKnownLength current_length =
             vector_known_length_from_source_expr(vector_type, *stmt.for_iterable, *iterable);
         const bool exact_once_loop = current_length.known && current_length.length == 1;
+        const bool known_nonempty_loop = current_length.known && current_length.length > 0;
 
         lowered.kind = IrStmtKind::Block;
         std::string vector_name = make_hidden_local("$for_vec");
@@ -12828,7 +12871,13 @@ private:
 
         restore_states(exact_once_loop
             ? checked_exact_once_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow)
-            : checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
+            : checked_loop_exit_state(
+                stmt.loc,
+                loop_input,
+                loop_body_state,
+                loop_state,
+                body.flow,
+                !known_nonempty_loop));
         ir_stmt_statements(lowered).push_back(std::move(loop));
     }
 

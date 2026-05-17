@@ -1,0 +1,21 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let half_open_token: own i64 = make_owned(1);
+  for value in range(4, 6) {
+    let seen = value;
+    drop half_open_token;
+    break;
+  }
+
+  let inclusive_token: own i64 = make_owned(2);
+  for item in 7..=8 {
+    let inclusive_seen = item;
+    drop inclusive_token;
+    break;
+  }
+
+  return 0;
+}

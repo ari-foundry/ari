@@ -767,6 +767,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/for-range-inclusive.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/for-range-exact-once-owner-state.ari -o $(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.raw
 	$(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/for-range-known-nonempty-break-owner-state.ari -o $(BUILD_DIR)/control-flow/for-range-known-nonempty-break-owner-state.raw
+	$(BUILD_DIR)/control-flow/for-range-known-nonempty-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/range-values.ari -o $(BUILD_DIR)/control-flow/range-values.raw
 	$(BUILD_DIR)/control-flow/range-values.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/for-range-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-range-alias-pattern.raw
@@ -779,6 +781,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw; code=$$?; test $$code -eq 75
 	$(TARGET) --freestanding tests/ok/for-vector-exact-once-owner-state.ari -o $(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.raw
 	$(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/for-vector-known-nonempty-break-owner-state.ari -o $(BUILD_DIR)/control-flow/for-vector-known-nonempty-break-owner-state.raw
+	$(BUILD_DIR)/control-flow/for-vector-known-nonempty-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/ir-for-loop-payloads.ari -o $(BUILD_DIR)/control-flow/ir-for-loop-payloads.raw
 	$(BUILD_DIR)/control-flow/ir-for-loop-payloads.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/if-while-let.ari -o $(BUILD_DIR)/control-flow/if-while-let.raw
@@ -793,6 +797,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/while-let-local-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/while-let-local-alias-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-local-alias-enum-owner-state.raw
+	$(BUILD_DIR)/control-flow/while-let-local-alias-enum-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/init-while-owning.ari -o $(BUILD_DIR)/control-flow/init-while-owning.raw
 	$(BUILD_DIR)/control-flow/init-while-owning.raw; code=$$?; test $$code -eq 22
 	$(TARGET) --freestanding tests/ok/init-while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-false-owner-state.raw
@@ -856,6 +862,8 @@ check-control-flow: $(TARGET)
 	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.ll
 	$(TARGET) tests/ok/while-let-local-enum-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.ll
 	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.ll
+	$(TARGET) tests/ok/while-let-local-alias-enum-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-local-alias-enum-owner-state.ll
+	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-local-alias-enum-owner-state.ll
 	$(TARGET) tests/ok/while-let-static-payload-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-static-payload-owner-state.ll
 	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-static-payload-owner-state.ll
 	$(TARGET) tests/ok/while-let-static-nested-payload-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-static-nested-payload-owner-state.ll
@@ -869,6 +877,8 @@ check-control-flow: $(TARGET)
 	grep -q "icmp sle" $(BUILD_DIR)/control-flow/for-range-inclusive.ll
 	$(TARGET) tests/ok/for-range-exact-once-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.ll
 	grep -q "for.end" $(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.ll
+	$(TARGET) tests/ok/for-range-known-nonempty-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-known-nonempty-break-owner-state.ll
+	grep -q "for.end" $(BUILD_DIR)/control-flow/for-range-known-nonempty-break-owner-state.ll
 	$(TARGET) tests/ok/range-values.ari --emit-llvm $(BUILD_DIR)/control-flow/range-values.ll
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/range-values.ll
 	$(TARGET) tests/ok/for-range-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-alias-pattern.ll
@@ -892,6 +902,8 @@ check-control-flow: $(TARGET)
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/for-vector-alias-pattern.ll
 	$(TARGET) tests/ok/for-vector-exact-once-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.ll
 	grep -q "for.end" $(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.ll
+	$(TARGET) tests/ok/for-vector-known-nonempty-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-known-nonempty-break-owner-state.ll
+	grep -q "for.end" $(BUILD_DIR)/control-flow/for-vector-known-nonempty-break-owner-state.ll
 	$(TARGET) tests/ok/for-vector-stored.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-stored.ll
 	grep -q "getelementptr inbounds { i64, \\[3 x i64\\] }" $(BUILD_DIR)/control-flow/for-vector-stored.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/control-flow/for-vector-stored.ll
@@ -3192,6 +3204,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-local-enum-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-local-enum-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-local-enum-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-local-enum-owner-widen-recheck.err
+	if $(TARGET) tests/errors/while-let-local-alias-enum-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-local-alias-enum-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-local-alias-enum-owner-widen-recheck.err 2>&1; then exit 1; fi
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-local-alias-enum-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-static-payload-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-static-payload-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-static-payload-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-static-payload-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-static-nested-payload-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.err 2>&1; then exit 1; fi

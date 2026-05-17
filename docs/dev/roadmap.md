@@ -106,10 +106,13 @@ dataflow recheck:
    revalidation/dataflow pass before accepting non-trivial next-iteration or
    fallthrough ownership fixed points. The plain `while`, `init while`,
    irrefutable aggregate/runtime-sequence `while let`, direct or immutable
-   local enum-constructor `while let` with statically satisfied payload
+   local/alias enum-constructor `while let` with statically satisfied payload
    literal/range/nested-enum tests, and exact-once range/list/stored-`Vec`
    `for` slices now recheck no-zero or exact-once next-iteration states under
    a candidate `Alive -> moved/dropped` owner widening before accepting them.
+   Known-nonempty range/list/stored-`Vec` `for` loops also drop the
+   zero-iteration exit from post-loop owner merges, while still rejecting body
+   fallthrough or `continue` owner changes unless they are exact-once.
    The plain `while` and `init while` slices also treat immutable local bool
    conditions initialized directly from literals like literal `true`/`false`
    as proven loop conditions, and fold those conditions into literal IR branch

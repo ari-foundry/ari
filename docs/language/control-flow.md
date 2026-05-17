@@ -420,10 +420,11 @@ continue with an owner still live and later break after consuming it. If a
 plain `while` next-iteration state widens an owner from live to moved/dropped,
 the body is rechecked under that widened state before the loop is accepted.
 The same recheck applies to `while let` over a direct enum constructor, or an
-immutable local initialized directly from one, when the constructor case is
-covered and any literal or range payload tests are statically satisfied,
-including nested enum payload tag/literal/range tests that are statically
-satisfied, because that loop is known to enter at least once.
+immutable local whose initializer resolves through immutable local aliases to
+one, when the constructor case is covered and any literal or range payload
+tests are statically satisfied, including nested enum payload
+tag/literal/range tests that are statically satisfied, because that loop is
+known to enter at least once.
 
 If every reachable `break` exit has already consumed the same owner, Ari can
 merge `moved` and `dropped` states as one unavailable post-loop state. This lets
@@ -627,10 +628,12 @@ bindings.
   `let` conditions initialized directly from `false`, are treated as
   zero-iteration loops.
 - Direct range expressions and list-literal or stored-`Vec` `for` loops with a
-  known iteration count of exactly one are exact-once loops, so their body,
-  `continue`, and `break` exit ownership states are merged as post-loop exits
-  instead of being treated as maybe-zero.
-- `while let` over a direct enum constructor, or an immutable local initialized
-  directly from one, is also treated as no-zero when the constructor case is
-  covered by the pattern and any literal or range payload tests are statically
-  satisfied, including statically satisfied nested enum payload tests.
+  known non-empty iteration count are not treated as zero-iteration loops, so
+  `break` exits can define the post-loop owner state. When the known count is
+  exactly one, body fallthrough, `continue`, and `break` states are all merged
+  as exact-once post-loop exits.
+- `while let` over a direct enum constructor, or an immutable local whose
+  initializer resolves through immutable local aliases to one, is also treated
+  as no-zero when the constructor case is covered by the pattern and any
+  literal or range payload tests are statically satisfied, including statically
+  satisfied nested enum payload tests.
