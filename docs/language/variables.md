@@ -163,8 +163,10 @@ tuple, fixed-array, and struct subpatterns such as
 `let ref mut [(left, right), .., (tail_left, tail_right)] = view`. Local/path
 reference patterns can destructure ownership-carrying tuple, fixed-array, and
 struct values when the source is tracked: skipped owned fields are left in
-place, and borrowed owned fields must still be live. Nested shared reference
-binding modes are supported in enum `match`, enum `if let`, and enum
+place, and borrowed owned fields must still be live. Exact local `Vec[T]`
+reference patterns without `..` can also borrow ownership-carrying element
+slots when each selected element path is statically known. Nested shared
+reference binding modes are supported in enum `match`, enum `if let`, and enum
 `while let` patterns, including same-name/same-type enum `while let`
 or-pattern alternatives. Mutable enum payload reference bindings are supported
 in enum statement/expression `match`, enum `if let`, and enum `while let` when
@@ -175,8 +177,9 @@ aggregate `while let` when the matched subject is addressable. Runtime-sequence
 `Slice[T]`/`Vec[T]` control-flow patterns support mutable element reference
 bindings in statement/expression `match`, `if let`, and `while let` when the
 matched subject is addressable. Ownership-aware value/move pattern bindings,
-function-parameter owner destructuring, and ownership-carrying runtime-sequence
-patterns remain planned.
+function-parameter owner destructuring, and ownership-carrying `Slice[T]`,
+vector rest/dynamic, and nested ownership-aggregate sequence patterns remain
+planned.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

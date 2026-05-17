@@ -3447,6 +3447,8 @@ check-errors: $(TARGET) check-function-errors
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-ref-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; code=$$?; test $$code -eq 146; fi
 	$(TARGET) tests/ok/pattern-ref-ownership-aggregate.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-aggregate.elf
 	$(BUILD_DIR)/errors/pattern-ref-ownership-aggregate.elf; code=$$?; test $$code -eq 54
+	$(TARGET) tests/ok/pattern-ref-ownership-vector.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector.elf
+	$(BUILD_DIR)/errors/pattern-ref-ownership-vector.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf
 	$(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-amp-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238; fi
@@ -3462,6 +3464,10 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot mutably borrow immutable binding 'value'" $(BUILD_DIR)/errors/pattern-ref-mut-immutable.err
 	if $(TARGET) tests/errors/pattern-ref-ownership-moved-field.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-moved-field.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-moved-field.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved owned field 'holder.0'" $(BUILD_DIR)/errors/pattern-ref-ownership-moved-field.err
+	if $(TARGET) tests/errors/pattern-ref-ownership-vector-moved-field.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-moved-field.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-moved-field.err 2>&1; then exit 1; fi
+	grep -q "cannot use moved owned field 'values.0'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-moved-field.err
+	if $(TARGET) tests/errors/pattern-ref-ownership-vector-rest.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err 2>&1; then exit 1; fi
+	grep -q "ownership-carrying runtime sequence reference patterns currently require exact local Vec\\[T\\] storage patterns without .." $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi
 	grep -q "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index" $(BUILD_DIR)/errors/pattern-ref-temporary.err
 	$(TARGET) tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.elf

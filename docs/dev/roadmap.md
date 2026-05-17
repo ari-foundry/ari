@@ -34,9 +34,12 @@ changing the long-term language contract.
    addressable `Slice[T]`/`Vec[T]` subjects while hidden sequence storage drives
    length and element tests. Local/path `let ref` and `let ref mut` bindings can
    destructure ownership-carrying tuple, fixed-array, and struct values when
-   owned fields are skipped or borrowed through live tracked paths. Finish
-   value/move binding modes and ownership-aware enum, slice, and vector
-   sequence patterns, including the parameter-destructuring ownership story.
+   owned fields are skipped or borrowed through live tracked paths, and exact
+   local `Vec[T]` reference patterns can borrow ownership-carrying element
+   slots when the element path is statically known. Finish value/move binding
+   modes plus ownership-aware enum, `Slice[T]`, vector rest/dynamic, and nested
+   ownership-aggregate sequence patterns, including the parameter-destructuring
+   ownership story.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
 3. Expand aggregate enum payload storage.
@@ -74,6 +77,9 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
 
 - [llvm-object-fixtures] Add one minimal external-link fixture around
   `--emit-obj` when the library ABI surface grows beyond scalar exports.
+- [owning-aggregate-vector-storage] Audit direct local `Vec[T]` storage when
+  `T` is itself an ownership-carrying aggregate before enabling nested owner
+  aggregate sequence reference patterns.
 
 ## Bootstrap Direction
 

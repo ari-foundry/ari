@@ -7001,8 +7001,10 @@ private:
                  "runtime sequence reference patterns currently require direct local Vec[T] storage or Slice[T] view bindings");
         }
         if (is_owner_type(shape_type)) {
-            fail(pattern.loc,
-                 "reference pattern destructuring of ownership-carrying runtime sequence elements is planned after ownership-through-aggregates is implemented");
+            if (!is_vector_storage_type(shape_type) || pattern.has_rest) {
+                fail(pattern.loc,
+                     "ownership-carrying runtime sequence reference patterns currently require exact local Vec[T] storage patterns without ..");
+            }
         }
 
         const IrType& element_type = runtime_sequence_element_type(pattern.loc, shape_type);

@@ -1,0 +1,12 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  var values: Vec[own i64] = [make_owned(1), make_owned(2)];
+  let moved = values[0];
+  let ref [borrowed, _] = values;
+  drop moved;
+  drop values;
+  return 0;
+}

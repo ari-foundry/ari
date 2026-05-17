@@ -618,10 +618,12 @@ let nested_struct = match (point, color) {
 };
 ```
 
-Ownership binding modes for sequence patterns remain planned for the shared
-richer pattern engine. Local `let ref` and function-entry reference patterns
-can borrow supported `Vec[T]`/`Slice[T]` elements today; nested reference modes
-inside enum `while let` support shared borrows for enum-case patterns and
+Ownership value/move binding modes for sequence patterns remain planned for the
+shared richer pattern engine. Local `let ref` can borrow exact local
+`Vec[own T]` element slots when each selected element path is statically known,
+and local `let ref` plus function-entry reference patterns can borrow supported
+non-owning `Vec[T]`/`Slice[T]` elements today. Nested reference modes inside
+enum `while let` support shared borrows for enum-case patterns and
 same-name/same-type or-pattern alternatives.
 Pattern-position macro invocation uses reserved Rust-style `ident!(...)`
 syntax and preserves a balanced token tree in the AST and module summaries. The
