@@ -266,7 +266,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    implemented.
    - [structs] finish sharing all field-layout decisions between sema and
      backends
-   - [arrays] pass fixed-size arrays across FFI boundaries
+   - [arrays] C headers now emit fixed-size array fields in public `@repr(C)`
+     structs and explicit `ptr/ref/ref mut [T, N]` pointer-to-array function
+     parameters. Remaining work is direct by-value fixed-array
+     parameter/return C ABI classification plus raw imported C lowering.
    - [raw-c-imports] define a real C ABI/link path for imported `extern "C"`
      symbols on raw/freestanding targets; direct C extern calls remain rejected
      there until this exists

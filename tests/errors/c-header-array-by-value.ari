@@ -1,0 +1,4 @@
+@export("ari_take_array")
+pub fn take_array(values: [i64, 2]) -> i64 {
+  return values[0] + values[1];
+}

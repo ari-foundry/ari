@@ -1,0 +1,4 @@
+@export("ari_make_array")
+pub fn make_array() -> [i64, 2] {
+  return [1, 2];
+}

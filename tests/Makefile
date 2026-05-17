@@ -1897,6 +1897,18 @@ check-meta: $(TARGET)
 	if grep -q 'HiddenSlots' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	if grep -q 'HiddenStatus' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
 	if grep -q 'struct GenericHandle {' $(BUILD_DIR)/meta/c-header-repr-struct.h; then exit 1; fi
+	$(TARGET) tests/ok/c-header-repr-array-fields.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-repr-array-fields.h --emit-llvm $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
+	grep -q 'typedef struct ApiArrayFields ApiArrayFields;' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'typedef struct ApiPairArray ApiPairArray;' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'uint8_t bytes\[4\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t words\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t (\*word_ptr)\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'const int64_t (\*word_ref)\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t (\*word_mut)\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t ari_array_fields(ApiArrayFields\* arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t ari_array_pair_sum(ApiPairArray arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t ari_array_ptr(int64_t (\*arg0)\[2\]);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t ari_array_ref(const int64_t (\*arg0)\[2\]);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw
 	$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw; code=$$?; test $$code -eq 10
 	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
@@ -2036,6 +2048,10 @@ check-meta: $(TARGET)
 	grep -q "C header emission for by-value parameter Wide is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-aggregate-by-value.err
 	if $(TARGET) --target x86_64-pc-windows-msvc tests/errors/c-header-target-aggregate-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-target-aggregate-by-value.h >$(BUILD_DIR)/meta/c-header-target-aggregate-by-value.err 2>&1; then exit 1; fi
 	grep -q "C header emission for by-value parameter ApiPair is currently supported only on 64-bit Unix targets" $(BUILD_DIR)/meta/c-header-target-aggregate-by-value.err
+	if $(TARGET) tests/errors/c-header-array-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-array-by-value.h >$(BUILD_DIR)/meta/c-header-array-by-value.err 2>&1; then exit 1; fi
+	grep -q "C header emission does not support by-value fixed-array parameter \\[i64, 2\\]; use ptr \\[i64, 2\\] or wrap it in a public @repr(C) struct" $(BUILD_DIR)/meta/c-header-array-by-value.err
+	if $(TARGET) tests/errors/c-header-array-return-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-array-return-by-value.h >$(BUILD_DIR)/meta/c-header-array-return-by-value.err 2>&1; then exit 1; fi
+	grep -q "C header emission does not support by-value fixed-array return type \\[i64, 2\\]; use ptr \\[i64, 2\\] or wrap it in a public @repr(C) struct" $(BUILD_DIR)/meta/c-header-array-return-by-value.err
 	if $(TARGET) tests/errors/attribute-cfg-argument.ari -o $(BUILD_DIR)/meta/attribute-cfg-argument.elf >$(BUILD_DIR)/meta/attribute-cfg-argument.err 2>&1; then exit 1; fi
 	grep -q "unknown cfg predicate 'enabled'" $(BUILD_DIR)/meta/attribute-cfg-argument.err
 	if $(TARGET) tests/errors/attribute-deprecated-argument.ari -o $(BUILD_DIR)/meta/attribute-deprecated-argument.elf >$(BUILD_DIR)/meta/attribute-deprecated-argument.err 2>&1; then exit 1; fi

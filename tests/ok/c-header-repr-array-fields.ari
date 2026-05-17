@@ -1,0 +1,33 @@
+@repr(C)
+pub struct ApiArrayFields {
+  bytes: [u8, 4],
+  words: [i64, 2],
+  word_ptr: ptr [i64, 2],
+  word_ref: ref [i64, 2],
+  word_mut: ref mut [i64, 2],
+}
+
+@repr(C)
+pub struct ApiPairArray {
+  words: [i64, 2],
+}
+
+@export("ari_array_fields")
+pub fn array_fields(value: ptr ApiArrayFields) -> i64 {
+  return 0;
+}
+
+@export("ari_array_pair_sum")
+pub fn array_pair_sum(value: ApiPairArray) -> i64 {
+  return value.words[0] + value.words[1];
+}
+
+@export("ari_array_ptr")
+pub fn array_ptr(values: ptr [i64, 2]) -> i64 {
+  return 0;
+}
+
+@export("ari_array_ref")
+pub fn array_ref(values: ref [i64, 2]) -> i64 {
+  return 0;
+}

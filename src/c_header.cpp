@@ -52,6 +52,13 @@ std::string c_type_name(const IrType& type,
                         const CConcreteRecordNames& c_concrete_record_names,
                         const CEnumNames& c_enum_names,
                         bool allow_record_values);
+std::string c_declaration(const IrType& type,
+                          const CRecordNames& c_record_names,
+                          const CConcreteRecordNames& c_concrete_record_names,
+                          const CEnumNames& c_enum_names,
+                          const std::string& declarator,
+                          bool allow_record_values,
+                          bool const_value = false);
 std::string c_record_type_name(const IrType& type, const CRecordNames& c_record_names);
 
 std::string c_identifier_suffix(const std::string& text) {
@@ -127,6 +134,10 @@ std::string c_enum_type_name(const IrType& type, const CEnumNames& c_enum_names)
                        "; expose a public non-generic fieldless @repr(C) enum or an explicit scalar ABI");
 }
 
+bool is_value_array_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Array;
+}
+
 std::string c_type_name(const IrType& type,
                         const CRecordNames& c_record_names,
                         const CConcreteRecordNames& c_concrete_record_names,
@@ -154,6 +165,10 @@ std::string c_type_name(const IrType& type,
             return c_pointer_type_name(c_enum_type_name(pointee, c_enum_names),
                                        const_pointee);
         }
+        if (pointee.primitive == IrPrimitiveKind::Array) {
+            throw CompileError("C header emission needs a declarator for pointer-to-array type " +
+                               type_name(type));
+        }
         return c_pointer_type_name(c_scalar_type_name(pointee), const_pointee);
     }
 
@@ -177,11 +192,85 @@ std::string c_type_name(const IrType& type,
     if (type.primitive == IrPrimitiveKind::Enum) {
         return c_enum_type_name(type, c_enum_names);
     }
+    if (type.primitive == IrPrimitiveKind::Array) {
+        throw CompileError("C header emission needs a declarator for fixed-array type " +
+                           type_name(type));
+    }
     return c_scalar_type_name(type);
+}
+
+std::string c_declaration(const IrType& type,
+                          const CRecordNames& c_record_names,
+                          const CConcreteRecordNames& c_concrete_record_names,
+                          const CEnumNames& c_enum_names,
+                          const std::string& declarator,
+                          bool allow_record_values,
+                          bool const_value) {
+    if (type.qualifier == TypeQualifier::Own) {
+        throw CompileError("C header emission does not support ownership-qualified type " + type_name(type) +
+                           "; expose an explicit raw pointer or scalar ABI instead");
+    }
+
+    if (type.qualifier == TypeQualifier::Ptr ||
+        type.qualifier == TypeQualifier::Ref ||
+        type.qualifier == TypeQualifier::MutRef) {
+        IrType pointee = type;
+        pointee.qualifier = TypeQualifier::Value;
+        if (!is_value_array_type(pointee)) {
+            return c_type_name(
+                type,
+                c_record_names,
+                c_concrete_record_names,
+                c_enum_names,
+                allow_record_values) + " " + declarator;
+        }
+        std::string pointer_declarator = "(*" + declarator + ")";
+        return c_declaration(
+            pointee,
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            pointer_declarator,
+            allow_record_values,
+            type.qualifier == TypeQualifier::Ref);
+    }
+
+    if (type.primitive == IrPrimitiveKind::Array) {
+        if (type.args.size() != 1) {
+            throw CompileError("C header emission cannot render malformed fixed-array type " +
+                               type_name(type));
+        }
+        return c_declaration(
+            type.args[0],
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            declarator + "[" + std::to_string(type.array_size) + "]",
+            allow_record_values,
+            const_value);
+    }
+
+    std::string base = c_type_name(
+        type,
+        c_record_names,
+        c_concrete_record_names,
+        c_enum_names,
+        allow_record_values);
+    if (const_value) base = "const " + base;
+    return base + " " + declarator;
 }
 
 std::string emitted_function_symbol(const IrFunction& fn) {
     return fn.link_name.empty() ? mangle_function_name(fn.name) : fn.link_name;
+}
+
+void require_no_direct_array_function_abi(SourceLocation loc,
+                                          const IrType& type,
+                                          const std::string& context) {
+    if (!is_value_array_type(type)) return;
+    throw CompileError(where(loc) + ": C header emission does not support by-value fixed-array " +
+                       context + " " + type_name(type) +
+                       "; use ptr " + type_name(type) + " or wrap it in a public @repr(C) struct");
 }
 
 std::string function_prototype(const IrFunction& fn,
@@ -193,8 +282,13 @@ std::string function_prototype(const IrFunction& fn,
         << " " << emitted_function_symbol(fn) << "(";
     for (std::size_t i = 0; i < fn.params.size(); ++i) {
         if (i > 0) out << ", ";
-        out << c_type_name(fn.params[i].type, c_record_names, c_concrete_record_names, c_enum_names, true)
-            << " arg" << i;
+        out << c_declaration(
+            fn.params[i].type,
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            "arg" + std::to_string(i),
+            true);
     }
     if (fn.params.empty()) out << "void";
     out << ");";
@@ -248,6 +342,10 @@ CEnumNames collect_c_enum_names(const IrProgram& program) {
 void collect_concrete_record_type(const IrType& type,
                                   const CRecordNames& c_record_names,
                                   std::map<std::string, CConcreteRecord>& records) {
+    if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Array && type.args.size() == 1) {
+        collect_concrete_record_type(type.args[0], c_record_names, records);
+        return;
+    }
     if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Struct) return;
     const CRecordInfo& source = c_record_info(type, c_record_names);
     if (!source.opaque || type.args.empty()) return;
@@ -336,8 +434,10 @@ void require_direct_record_abi(SourceLocation loc,
 }
 
 void require_direct_function_record_abi(const IrFunction& fn, const TargetInfo& target) {
+    require_no_direct_array_function_abi(fn.loc, fn.return_type, "return type");
     require_direct_record_abi(fn.loc, fn.return_type, target, "return type");
     for (const auto& param : fn.params) {
+        require_no_direct_array_function_abi(fn.loc, param.type, "parameter");
         require_direct_record_abi(fn.loc, param.type, target, "parameter");
     }
 }
@@ -389,8 +489,13 @@ std::string record_definition(const IrCRecord& record,
     std::ostringstream out;
     out << "struct " << c_name << " {\n";
     for (const auto& field : record.fields) {
-        out << "    " << c_type_name(field.type, c_record_names, c_concrete_record_names, c_enum_names, false)
-            << " " << field.name << ";\n";
+        out << "    " << c_declaration(
+            field.type,
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            field.name,
+            false) << ";\n";
     }
     out << "};";
     return out.str();
@@ -403,8 +508,13 @@ std::string concrete_record_definition(const CConcreteRecord& record,
     std::ostringstream out;
     out << "struct " << record.c_name << " {\n";
     for (const auto& field : record.fields) {
-        out << "    " << c_type_name(field.type, c_record_names, c_concrete_record_names, c_enum_names, false)
-            << " " << field.name << ";\n";
+        out << "    " << c_declaration(
+            field.type,
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            field.name,
+            false) << ";\n";
     }
     out << "};";
     return out.str();

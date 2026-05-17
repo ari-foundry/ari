@@ -400,7 +400,10 @@ ari api.ari --shared --emit-c-header api.h --emit-llvm api.ll
 Explicit `@export("symbol")` and `@no_mangle` functions use that C symbol.
 Public functions without an explicit export use Ari's mangled symbol, matching
 the shared-library output. Immutable `ref` slots are written as `const T*` in
-C headers, while `ref mut T` and `ptr T` are written as mutable `T*`. Fieldless
+C headers, while `ref mut T` and `ptr T` are written as mutable `T*`. Fixed-size
+array fields inside public `@repr(C)` structs are emitted as C array
+declarators, and explicit `ptr [T, N]`, `ref [T, N]`, and `ref mut [T, N]`
+parameters or fields are emitted as pointer-to-array declarators. Fieldless
 enum declarations are emitted as
 `typedef int64_t Name;` plus prefixed integer constants such as `Name_Case = 0`
 so the header matches Ari's current fixed tag ABI instead of relying on C's
@@ -412,11 +415,12 @@ are not emitted. Generic `@repr(C)` structs still keep the source-name opaque
 by-value instantiations use separate typedefs/definitions keyed by their type
 arguments. By-value struct parameters and returns are emitted only for direct
 aggregate ABI values on 64-bit Unix targets, currently up to 16 bytes with at
-most 8-byte alignment. Larger records or non-Unix targets should expose an
-explicit pointer ABI. Header generation currently rejects Ari-only values such
-as `string`, ownership-qualified values, and non-`repr(C)` aggregate parameters
-or returns; expose a `ptr c_char`, `ptr c_void`, or other scalar/raw pointer C
-ABI type until those layouts are defined.
+most 8-byte alignment. Larger records, direct by-value fixed-size array
+parameters or returns, and non-Unix targets should expose an explicit pointer
+ABI. Header generation currently rejects Ari-only values such as `string`,
+ownership-qualified values, and non-`repr(C)` aggregate parameters or returns;
+expose a `ptr c_char`, `ptr c_void`, or other scalar/raw pointer C ABI type
+until those layouts are defined.
 
 ## Runtime Entry
 

@@ -19,14 +19,15 @@ struct Point {
 
 `@repr(C)` may be used on structs and enums. The compiler validates that the
 current aggregate surface can use C layout. `@repr(C)` struct fields may use
-value, raw pointer, `ref`, or `ref mut` types.
+value, fixed-size array, raw pointer, `ref`, or `ref mut` types.
 Generic structs may store generic fields by value; each concrete instantiation
 resolves those fields to concrete layout slots before IR emission. Generic
 `ptr T`, `ref T`, and `ref mut T` fields remain pointer-sized slots. C header
 emission renders `ref T` as `const T*`; `ptr T` and `ref mut T` remain mutable
-pointer spellings. `own` fields are rejected because the C ABI cannot carry
-Ari ownership; expose ownership-sensitive values through an explicit `ptr` or
-`ref` ABI instead.
+pointer spellings, with `[T, N]` fields and pointer-to-array slots using C array
+declarators. `own` fields are rejected because the C ABI cannot carry Ari
+ownership; expose ownership-sensitive values through an explicit `ptr` or `ref`
+ABI instead.
 `@repr(C)` enums currently must be fieldless, including generic enums; generic
 parameters are accepted only when they do not appear in payload storage.
 
@@ -110,10 +111,13 @@ functions are ABI-visible; private Ari helpers are emitted with hidden LLVM
 visibility, as are Ari-owned runtime helpers.
 Use `--emit-c-header path` with the LLVM/shared path to write a small C header
 for exported scalar/raw-pointer functions, public non-generic `@repr(C)` struct
-declarations whose fields are scalar, raw pointer, `ref`, or `ref mut` slots,
-public non-generic `@repr(C)` structs passed or returned by value, and public
-fieldless `@repr(C)` enums. Immutable `ref` fields and exported parameters are
-written as `const` C pointers in the header. Fieldless generic enum type
+declarations whose fields are scalar, fixed-size arrays, raw pointer, `ref`, or
+`ref mut` slots, public non-generic `@repr(C)` structs passed or returned by
+value, and public fieldless `@repr(C)` enums. Immutable `ref` fields and
+exported parameters are written as `const` C pointers in the header, including
+`ref [T, N]` parameters and fields rendered as `const T (*)[N]`. `ptr [T, N]`
+and `ref mut [T, N]` are rendered as mutable C pointer-to-array declarators.
+Fieldless generic enum type
 parameters do not affect layout, so the C header emits one erased tag typedef
 for the source enum name. Enum headers use Ari's current fixed tag ABI by
 emitting `typedef int64_t Name;` plus prefixed integer constants such as
@@ -125,8 +129,9 @@ typedefs/definitions such as `GenericHandle_i64`. By-value struct parameters
 and returns are emitted only for direct aggregate ABI values on 64-bit Unix
 targets, currently up to 16 bytes with at most 8-byte alignment; larger or
 target-specific cases should use an explicit pointer ABI. Header generation
-rejects Ari-only values such as `string`, owned values, and aggregate values
-whose C ABI policy is not explicit.
+rejects Ari-only values such as `string`, owned values, direct by-value
+fixed-size array parameters or returns, and aggregate values whose C ABI policy
+is not explicit.
 Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.
