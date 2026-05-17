@@ -959,8 +959,8 @@ before calling these borrowed predicate methods. Use explicit paths such as
 spell the source module. The method implementations live in
 `std::option` and `std::result`, while the enum names and cases stay at the
 `std` root. Postfix `?` and `??` recognize the same Option/Result-style enum
-shapes on the LLVM backend path; the freestanding backend still needs the
-broader aggregate enum return/value ABI work.
+shapes on the LLVM backend path; the freestanding backend still rejects
+aggregate-enum residual conversion until the raw `?`/`??` lowering is defined.
 
 Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 

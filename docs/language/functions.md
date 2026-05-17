@@ -56,6 +56,9 @@ tuple, struct, fixed-array, and currently supported aggregate enum values
 through hidden pointer slots.
 Aggregate parameters are copied into callee-local storage at function entry, so
 mutating a parameter copy does not mutate the caller's value.
+Aggregate enum call results can also be used directly as freestanding `match`
+inputs; the raw backend materializes the result into hidden stack storage before
+reading tag and payload slots.
 
 ## Return
 

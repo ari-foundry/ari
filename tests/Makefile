@@ -1225,6 +1225,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-direct-store.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw; code=$$?; test $$code -eq 23
+	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-materialization.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-materialization.raw
+	$(BUILD_DIR)/match/freestanding-aggregate-enum-materialization.raw; code=$$?; test $$code -eq 65
 	$(TARGET) tests/ok/enum-payload-pointer-access.ari --emit-llvm $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	grep -q "getelementptr inbounds { i32, i64 }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	grep -q "getelementptr inbounds { i32, { i32, i64, i64 } }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll

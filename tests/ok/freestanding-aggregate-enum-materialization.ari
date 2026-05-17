@@ -1,0 +1,68 @@
+enum Packet {
+  Pair(i64, i64),
+  One(i64),
+  Empty,
+}
+
+fn make_pair(left: i64, right: i64) -> Packet {
+  return Pair(left, right);
+}
+
+fn make_branch(flag: bool) -> Packet {
+  if flag {
+    return Pair(5, 6);
+  }
+  return One(9);
+}
+
+fn score(value: Packet) -> i64 {
+  return match value {
+    Pair(left, right) => left + right,
+    One(amount) => amount,
+    Empty => 0;
+  };
+}
+
+fn direct_constructor() -> i64 {
+  return match Pair(3, 4) {
+    Pair(left, right) => left + right,
+    One(amount) => amount,
+    Empty => 0;
+  };
+}
+
+fn direct_call() -> i64 {
+  return match make_pair(8, 9) {
+    Pair(left, right) => left + right,
+    One(amount) => amount,
+    Empty => 0;
+  };
+}
+
+fn direct_if_value() -> i64 {
+  return match if true { make_branch(true) } else { One(2) } {
+    Pair(left, right) => left + right,
+    One(amount) => amount,
+    Empty => 0;
+  };
+}
+
+fn direct_pointer_value() -> i64 {
+  var slot: Packet = Empty;
+  let raw: ptr Packet = (ref mut slot) as ptr Packet;
+  *raw = Pair(13, 14);
+  return match *raw {
+    Pair(left, right) => left + right,
+    One(amount) => amount,
+    Empty => 0;
+  };
+}
+
+fn discarded_constructor() -> i64 {
+  Pair(1, 2);
+  return 0;
+}
+
+fn main() -> i64 {
+  return direct_constructor() + direct_call() + direct_if_value() + direct_pointer_value() + score(One(3)) + discarded_constructor();
+}

@@ -131,7 +131,11 @@ index. This access does not test the active case. Scalar, pointer-shaped, and
 one-word enum payload slots expose the stored `u64` payload word, while nested
 aggregate-enum slots expose the nested enum storage itself.
 Direct freestanding calls can pass and return aggregate enum values through
-hidden pointer slots.
+hidden pointer slots. The freestanding backend also materializes direct
+aggregate enum `match` inputs through hidden stack slots, so constructors,
+aggregate-returning calls, `if`/`match`/block expression results, and
+raw-pointer-backed loads such as `*raw` can be matched without first binding a
+named local.
 
 ## Passing And Returning
 
@@ -656,8 +660,9 @@ the reachable value arms determine the match result type and merged ownership
 state. Tuple-valued and aggregate-enum match arm results lower on the LLVM
 backend and on the freestanding backend when the raw backend already supports
 the matched value and arm-result storage. Freestanding arm results work for
-local aggregate enum matches that use tag checks and payload bindings, scalar
-payload literal/range checks, or one-level compact enum-case payload checks.
+local or directly materialized aggregate enum matches that use tag checks and
+payload bindings, scalar payload literal/range checks, or one-level compact
+enum-case payload checks.
 
 ## Match Diagnostics
 

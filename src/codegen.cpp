@@ -396,7 +396,10 @@ private:
             expr.kind == IrExprKind::If ||
             expr.kind == IrExprKind::Match ||
             expr.kind == IrExprKind::Block ||
-            expr.kind == IrExprKind::SliceRange) {
+            expr.kind == IrExprKind::SliceRange ||
+            expr.kind == IrExprKind::EnumConstruct ||
+            expr.kind == IrExprKind::PointerLoad ||
+            expr.kind == IrExprKind::TupleIndex) {
             if (is_aggregate_type(expr.type)) add_aggregate_result_temp(expr);
         }
         if (expr.kind == IrExprKind::Call || expr.kind == IrExprKind::IndirectCall) {
@@ -2031,11 +2034,34 @@ private:
         for (std::size_t patch : end_patches) patch_rel32(patch, end);
     }
 
-    int aggregate_enum_match_base_offset(const IrExpr& value) const {
+    int aggregate_enum_match_base_offset(const IrExpr& value) {
         if (value.kind == IrExprKind::Local) return local_offset(value.loc, ir_expr_name(value));
-        if (value.kind == IrExprKind::TupleIndex && ir_expr_operand(value)) return lvalue_offset(value);
-        throw CompileError(where(value.loc) +
-                           ": freestanding backend can only match local multi-payload enum values yet");
+        if (value.kind == IrExprKind::TupleIndex && ir_expr_operand(value) &&
+            !is_pointer_backed_lvalue(value)) {
+            return lvalue_offset(value);
+        }
+        int temp_offset = aggregate_result_temp_offset(value.loc, value);
+        emit_store_value_to_offset(value.type, value, temp_offset);
+        return temp_offset;
+    }
+
+    void emit_aggregate_value_address(const IrExpr& value) {
+        if (value.kind == IrExprKind::Local) {
+            emit_lea_reg_local(Reg::RAX, local_offset(value.loc, ir_expr_name(value)));
+            return;
+        }
+        if (value.kind == IrExprKind::TupleIndex && ir_expr_operand(value) &&
+            !is_pointer_backed_lvalue(value)) {
+            emit_lea_reg_local(Reg::RAX, lvalue_offset(value));
+            return;
+        }
+        if (is_pointer_backed_lvalue(value)) {
+            emit_pointer_lvalue_address(value);
+            return;
+        }
+        int temp_offset = aggregate_result_temp_offset(value.loc, value);
+        emit_store_value_to_offset(value.type, value, temp_offset);
+        emit_lea_reg_local(Reg::RAX, temp_offset);
     }
 
     template <typename Arm>
@@ -4030,7 +4056,10 @@ private:
 
     void emit_enum_construct(const IrExpr& expr) {
         if (has_aggregate_enum_layout(expr.type)) {
-            throw CompileError(where(expr.loc) + ": freestanding backend does not lower multi-payload enum values yet");
+            int temp_offset = aggregate_result_temp_offset(expr.loc, expr);
+            emit_store_aggregate_enum_construct_to_offset(expr.type, expr, temp_offset);
+            emit_lea_reg_local(Reg::RAX, temp_offset);
+            return;
         }
         if (!ir_expr_has_enum_payload(expr)) {
             emit_mov_reg_imm64(Reg::RAX, ir_expr_enum_tag(expr));
@@ -4060,7 +4089,9 @@ private:
         }
 
         if (has_aggregate_enum_layout(operand.type)) {
-            throw CompileError(where(expr.loc) + ": freestanding backend does not materialize aggregate enum tags from values yet");
+            emit_aggregate_value_address(operand);
+            emit_load_rax_from_ptr(Reg::RAX, operand.type.field_types[0]);
+            return;
         }
         emit_expr(operand);
         emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
