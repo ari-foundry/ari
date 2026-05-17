@@ -15,9 +15,10 @@ changing the long-term language contract.
 1. Expand IR package-cache replay beyond generic/impl specialization replay.
    The current V0 cache family should stay V0 until a deliberate cache version
    bump is approved. Generic free-function and impl-method specialization
-   records now validate their origin names against the cached AST surface before
-   replay. The next useful work is trait-specialized replay and richer identity
-   descriptors for lowered bodies that still depend on trait-resolution context.
+   records now validate their origin names and generic argument names against
+   the cached AST surface before replay. The next useful work is
+   trait-specialized replay and richer identity descriptors for lowered bodies
+   that still depend on trait-resolution context.
 2. Keep sema extraction phase-oriented.
    `pattern_semantics` already owns pure pattern tree queries, or-pattern
    expansion, positional product mapping, and runtime-sequence irrefutability

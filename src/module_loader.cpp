@@ -100,6 +100,37 @@ bool split_impl_specialization_origin(const std::string& origin,
     return !method_name.empty();
 }
 
+std::set<std::string> generic_param_name_set(const std::vector<GenericParam>& generics) {
+    std::set<std::string> names;
+    for (const auto& generic : generics) names.insert(generic.name);
+    return names;
+}
+
+void add_generic_param_names(std::set<std::string>& names,
+                             const std::vector<GenericParam>& generics) {
+    for (const auto& generic : generics) names.insert(generic.name);
+}
+
+void require_known_specialization_args(const ModuleCacheIrFunctionSummary& fn,
+                                       const std::set<std::string>& allowed_names,
+                                       const std::string& path) {
+    std::set<std::string> seen;
+    for (const auto& arg : fn.specialization_args) {
+        if (!seen.insert(arg.name).second) {
+            throw CompileError("module cache IR summary for '" + path +
+                               "' has specialization '" + fn.name +
+                               "' with duplicate generic argument '" +
+                               arg.name + "'");
+        }
+        if (!allowed_names.count(arg.name)) {
+            throw CompileError("module cache IR summary for '" + path +
+                               "' has specialization '" + fn.name +
+                               "' with unknown generic argument '" +
+                               arg.name + "'");
+        }
+    }
+}
+
 ModuleFileSearch find_module_file(const ModuleImport& import,
                                   const std::string& base_dir,
                                   const std::vector<std::string>& module_search_paths) {
@@ -187,42 +218,56 @@ void require_ir_summary_specializations_match_ast_summary(
     const Program& declarations,
     const std::vector<ModuleCacheIrFunctionSummary>& ir_functions,
     const std::string& path) {
-    std::set<std::string> generic_function_names;
+    std::map<std::string, std::set<std::string>> generic_function_params;
     for (const auto& fn : declarations.functions) {
-        if (!fn.generics.empty()) generic_function_names.insert(fn.name);
+        if (!fn.generics.empty()) {
+            generic_function_params.emplace(fn.name, generic_param_name_set(fn.generics));
+        }
     }
-    std::set<std::string> impl_specialization_method_names;
+    std::map<std::string, std::set<std::string>> impl_specialization_method_params;
     for (const auto& impl : declarations.impls) {
         for (const auto& method : impl.methods) {
-            impl_specialization_method_names.insert(basename_of_name(method.name));
+            std::set<std::string>& names =
+                impl_specialization_method_params[basename_of_name(method.name)];
+            add_generic_param_names(names, impl.generics);
+            add_generic_param_names(names, method.generics);
         }
     }
     for (const auto& trait : declarations.traits) {
         for (const auto& method : trait.methods) {
-            impl_specialization_method_names.insert(basename_of_name(method.name));
+            std::set<std::string>& names =
+                impl_specialization_method_params[basename_of_name(method.name)];
+            add_generic_param_names(names, trait.generics);
+            add_generic_param_names(names, method.generics);
         }
     }
 
     for (const auto& fn : ir_functions) {
         if (fn.specialization_kind.empty()) continue;
         if (fn.specialization_kind == "generic-function") {
-            if (!generic_function_names.count(fn.specialization_origin)) {
+            auto origin = generic_function_params.find(fn.specialization_origin);
+            if (origin == generic_function_params.end()) {
                 throw CompileError("module cache IR summary for '" + path +
                                    "' has generic specialization '" + fn.name +
                                    "' for unknown generic function '" +
                                    fn.specialization_origin + "'");
             }
+            require_known_specialization_args(fn, origin->second, path);
             continue;
         }
         if (fn.specialization_kind == "impl-method") {
             std::string method_name;
-            if (!split_impl_specialization_origin(fn.specialization_origin, method_name) ||
-                !impl_specialization_method_names.count(method_name)) {
+            bool has_method_origin = split_impl_specialization_origin(fn.specialization_origin, method_name);
+            auto method = has_method_origin
+                ? impl_specialization_method_params.find(method_name)
+                : impl_specialization_method_params.end();
+            if (!has_method_origin || method == impl_specialization_method_params.end()) {
                 throw CompileError("module cache IR summary for '" + path +
                                    "' has impl-method specialization '" + fn.name +
                                    "' for unknown impl method origin '" +
                                    fn.specialization_origin + "'");
             }
+            require_known_specialization_args(fn, method->second, path);
             continue;
         }
         throw CompileError("module cache IR summary for '" + path +

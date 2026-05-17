@@ -1455,6 +1455,9 @@ check-modules: $(TARGET)
 	if $(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.ll >$(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.err 2>&1; then exit 1; fi
 	grep -q "has impl-method specialization" $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.err
 	grep -q "unknown impl method origin" $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.err
+	python3 tests/tamper_module_cache_ir_summary.py $(BUILD_DIR)/modules/package-cache-generics.aricache $(BUILD_DIR)/modules/package-cache-generics-arg-tampered.aricache cache_generics 'G;16:generic-function;24:cache_generics::identity;1;1:T;3:i64;' 'G;16:generic-function;24:cache_generics::identity;1;1:Z;3:i64;'
+	if $(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics-arg-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-generics-arg-tampered.ll >$(BUILD_DIR)/modules/package-cache-generics-arg-tampered.err 2>&1; then exit 1; fi
+	grep -q "with unknown generic argument 'Z'" $(BUILD_DIR)/modules/package-cache-generics-arg-tampered.err
 	$(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics.aricache -o $(BUILD_DIR)/modules/package-cache-generics.elf
 	$(BUILD_DIR)/modules/package-cache-generics.elf; code=$$?; test $$code -eq 16
 	$(TARGET) -Itests/packages tests/ok/package-cache-host-literals-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-host-literals.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-host-literals-cache.ll
