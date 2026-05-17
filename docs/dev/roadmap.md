@@ -131,6 +131,14 @@ guard now keeps cache-only local `Vec[T; capacity]` type metadata covered with
 fresh/cache-use LLVM byte-for-byte comparison, so new layout-bearing IR type
 metadata must grow that guard instead of relying only on broad cache-body tests.
 
+Promoted from Medium-Term: direct fixed-array export ABI is the next active
+Near-Term backend slice. The C header emitter now handles fixed-size array
+fields in public `@repr(C)` structs and explicit `ptr/ref/ref mut [T, N]`
+pointer-to-array parameters. The remaining work is to define and test direct
+by-value `[T, N]` parameter/return C ABI classification for shared LLVM
+exports, then remove the temporary C-header rejection. Raw/freestanding
+imported C array calls stay with Backend Work `[raw-c-imports]`.
+
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
@@ -266,10 +274,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    implemented.
    - [structs] finish sharing all field-layout decisions between sema and
      backends
-   - [arrays] C headers now emit fixed-size array fields in public `@repr(C)`
-     structs and explicit `ptr/ref/ref mut [T, N]` pointer-to-array function
-     parameters. Remaining work is direct by-value fixed-array
-     parameter/return C ABI classification plus raw imported C lowering.
    - [raw-c-imports] define a real C ABI/link path for imported `extern "C"`
      symbols on raw/freestanding targets; direct C extern calls remain rejected
      there until this exists
