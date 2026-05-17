@@ -2,6 +2,7 @@
 
 #include "ast.hpp"
 #include "module_cache.hpp"
+#include "module_ir_summary.hpp"
 #include "module_metadata.hpp"
 
 #include <set>
@@ -14,6 +15,7 @@ struct ModuleLoadResult {
     Program program;
     ModuleMetadata metadata;
     ModuleCache cache;
+    std::vector<ModuleCacheIrFunctionSummary> cached_ir_functions;
 };
 
 struct ModuleLoadOptions {

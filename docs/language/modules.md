@@ -355,15 +355,12 @@ They are validated as part of cache parsing: the payload header, hash, required
 body payload sections, and function count must agree with the cache record, and
 the source hash must still match the embedded metadata. When a dependency can
 skip parsing through its AST summary and a matching IR sidecar is present, the
-loader also parses the lowered function surface from that sidecar and checks
-that summary-backed non-generic free functions are present there. This keeps the
-AST skip path tied to the sema-produced IR surface before full IR body
-materialization exists. The body payload reader also materializes the lowered
-body-shape and operand-tree sections into a structured statement/expression
-summary tree and rechecks that the shape inventory matches that tree, so cache
-parsing no longer treats the IR body as opaque text. The IR sidecar remains the
-reserved V0 bridge for future executable bodies that no longer fit in the
-compact source-level AST summary.
+loader parses the lowered function surface, materializes the lowered
+statement/expression summary tree, replays named struct/enum/fixed-array and
+local-`Vec` capacity type shapes, and injects pre-lowered dependency bodies into
+the final IR while skipping semantic body lowering for those cached functions.
+The replayed IR must match the fresh sema path's lowered function surface; stale
+or tampered sidecars are rejected before backend emission.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant
@@ -391,16 +388,13 @@ will need a later IR materialization path that consumes the validated IR
 sidecars.
 
 This cache format skips dependency source discovery after validation and reads
-module source text from the cached snapshot. Header-like dependencies can skip
-parsing through materialized AST summaries, and simple executable dependencies
-can do the same when every body has a supported summary payload. Dependencies
-with future unsupported executable bodies or unsupported constant initializer
-summaries still parse the cached source snapshot. The AST summary records and
-validated IR sidecars together form the bridge toward a future IR-materialization
-cache path for language forms that outgrow source-level body summaries; current
-cache use already rejects an IR sidecar whose lowered function surface no longer
-covers an AST-summary-loaded executable dependency function and materializes the
-sidecar's body payload into a structured summary tree.
+module source text from the cached snapshot only when a dependency cannot be
+materialized from summaries. Header-like dependencies can skip parsing through
+materialized AST summaries, and simple executable dependencies can skip parsing
+when every body has a supported AST/IR summary payload. Unsupported constant
+initializer summaries still parse the cached source snapshot. Future executable
+forms that outgrow the current V0 free-function replay surface need a deliberate
+0.x cache-format extension rather than a silent `ari-ir-summary-v1` drift.
 
 ## Nested Modules
 

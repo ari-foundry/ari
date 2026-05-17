@@ -91,7 +91,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   `module_ir_summary_body` owns the lowered IR summary body-shape and
   operand-tree payload serialization plus structured body payload reading, so
   `module_ir_summary` can stay focused on per-module sidecar records, hashing,
-  record validation, and validated lowered function-surface materialization
+  record validation, and validated lowered function-surface materialization;
+  `module_ir_replay` owns cache-side type-shape replay and pre-lowered
+  dependency `IrFunction` reconstruction so sema does not need to re-lower
+  cached dependency bodies
 - `product_coverage` for symbolic product-rectangle coverage math used by
   aggregate pattern exhaustiveness diagnostics
 - `pattern_coverage` for scalar integer match interval coverage, including

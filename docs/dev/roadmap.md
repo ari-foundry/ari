@@ -100,34 +100,23 @@ fallthrough paths is now tracked as Medium-Term dataflow work because it must
 revalidate the loop body under the widened entry state instead of accepting a
 body that was checked only with the owner alive.
 
-1. Use IR package-cache summaries when future executable forms outgrow AST
-   summaries.
-   Source-snapshot module caches currently validate cfg/search-path/source
-   hashes/imports and can materialize declaration-safe headers plus
-   summary-safe executable dependency bodies from AST summaries without parsing
-   the cached source snapshot. The current source-level AST expression,
-   statement, and pattern surface is covered by that path. The V0 cache family
-   is centralized on `ari-module-metadata-v0`, `ari-module-cache-v0`,
-   `ari-ast-decls-v0`, and optional `ari-ir-summary-v0` sidecars. Cache
-   emission now writes IR sidecars with lowered function surfaces, required
-   body-shape inventories, and required operand-tree payloads after semantic
-   checking. The body payload serializer is split from the sidecar record layer,
-   and cache parsing validates duplicate, header-version, hash, source-hash,
-   required body-section, and function-count mismatches when sidecars are
-   present. The loader now parses validated IR sidecars on the AST-summary
-   dependency-skip path and rejects sidecars whose lowered free-function surface
-   no longer covers the AST-summary executable bodies. IR summary body payloads
-   are also materialized into structured statement/expression summary trees in
-   the body layer instead of being discarded after validation. The remaining
-   work is wiring those materialized bodies into the executable dependency path
-   for future function bodies that cannot round-trip through the compact AST
-   summary format.
-   - [ir-body-inject] convert materialized IR-summary statement/expression
-     trees into reusable pre-lowered dependency bodies, including the type replay
-     needed for named aggregate and enum values
-   - [cache-skip] once IR body materialization supplies those bodies, skip
-     reparsing the cached source snapshot for such dependencies when metadata
-     and source hashes match the current source graph and cfg/search-path inputs
+IR package-cache replay is complete for the current V0 0.x executable cache
+surface and has been removed from active Near-Term work. Validated
+`ari-ir-summary-v0` sidecars now materialize lowered statement/expression body
+trees into pre-lowered `IrFunction` bodies, replay named struct/enum/fixed
+array/vector-capacity type shapes from declarations plus cache-only type
+metadata, skip semantic body lowering for cached dependency functions, and
+append those replayed bodies to the final IR in the same order as the normal
+sema path. The cache-use path can therefore skip parsing summary-safe
+dependencies after metadata/source-hash validation while still producing the
+same LLVM IR as a fresh sema lowering.
+
+Small follow-up labels that are useful but not large Near-Term goals:
+- [cache-type-guard] when a new layout-bearing IR type is added, add a focused
+  cache replay test that proves its cache-only metadata survives a cache-use
+  LLVM byte-for-byte comparison
+- [cache-replay-errors] replace any future replay shape mismatch crash with a
+  narrow cache diagnostic before backend emission
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -144,6 +133,15 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    - [owner-widen] recheck loop bodies under candidate widened owner states
      before accepting `Alive -> moved/dropped` next-iteration or fallthrough
      joins
+2. Expand IR package-cache replay after the current V0 free-function surface.
+   V0 replay covers non-generic free-function dependency bodies and the
+   generated impl specializations needed by those bodies. Keep the cache family
+   on 0.x/V0 until a deliberate version bump is approved, then extend the
+   sidecar format for richer stable identities and layout descriptors.
+   - [ir-replay-generics] replay generic, impl, and trait-specialized bodies
+     directly from cache once their stable sidecar identity is versioned
+   - [ir-cache-layouts] add explicit cached layout descriptors only when the
+     current declaration-shaped replay is no longer enough
 
 ## Medium-Term Language Work
 

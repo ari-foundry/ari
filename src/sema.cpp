@@ -265,6 +265,7 @@ public:
         collect_ir_c_records(ir);
         for_each_function_decl([&](const FunctionDecl& fn) {
             if (is_executable_function(fn) &&
+                !options_.cached_ir_function_names.count(fn.name) &&
                 !(options_.test_mode && fn.name == "main")) {
                 ir.functions.push_back(check_function(fn));
             }

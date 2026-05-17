@@ -32,6 +32,7 @@ struct ParsedModuleFile {
     Program program;
     std::string content_hash;
     std::string source;
+    std::vector<ModuleCacheIrFunctionSummary> cached_ir_functions;
 };
 
 std::string read_file(const std::string& path) {
@@ -144,24 +145,51 @@ void append_program(Program& dst, Program&& src) {
     move_append(dst.impls, src.impls);
 }
 
-bool is_summary_cached_executable_function(const FunctionDecl& fn) {
-    return !fn.meta && !fn.is_extern && fn.has_body && fn.has_body_summary && fn.generics.empty();
+bool is_cache_backed_executable_function(const FunctionDecl& fn) {
+    return !fn.meta && !fn.is_extern && fn.has_body && fn.generics.empty();
 }
 
 void require_ir_summary_covers_ast_summary_functions(const Program& declarations,
-                                                     const ModuleCacheIrSummary& summary,
+                                                     const std::vector<ModuleCacheIrFunctionSummary>& ir_functions,
                                                      const std::string& path) {
-    std::vector<ModuleCacheIrFunctionSummary> ir_functions =
-        materialize_module_cache_ir_summary_functions(summary, path);
     std::set<std::string> lowered_function_names;
     for (const auto& fn : ir_functions) lowered_function_names.insert(fn.name);
 
     for (const auto& fn : declarations.functions) {
-        if (!is_summary_cached_executable_function(fn)) continue;
+        if (!is_cache_backed_executable_function(fn)) continue;
         if (lowered_function_names.count(fn.name)) continue;
         throw CompileError("module cache IR summary for '" + path +
                            "' is missing lowered function '" + fn.name + "'");
     }
+}
+
+bool can_load_module_cache_declarations_with_ir_functions(
+    const Program& declarations,
+    const std::vector<ModuleCacheIrFunctionSummary>& ir_functions) {
+    if (!declarations.item_macros.empty()) return false;
+    for (const auto& decl : declarations.constants) {
+        if (!decl.init) return false;
+    }
+
+    std::set<std::string> lowered_function_names;
+    for (const auto& fn : ir_functions) lowered_function_names.insert(fn.name);
+
+    for (const auto& fn : declarations.functions) {
+        if (!fn.has_body || fn.is_extern || fn.has_body_summary) continue;
+        if (!is_cache_backed_executable_function(fn)) return false;
+        if (!lowered_function_names.count(fn.name)) return false;
+    }
+    for (const auto& trait : declarations.traits) {
+        for (const auto& method : trait.methods) {
+            if (method.has_body && !method.is_extern && !method.has_body_summary) return false;
+        }
+    }
+    for (const auto& impl : declarations.impls) {
+        for (const auto& method : impl.methods) {
+            if (method.has_body && !method.is_extern && !method.has_body_summary) return false;
+        }
+    }
+    return true;
 }
 
 ParsedModuleFile parse_file_in_module(const std::string& path,
@@ -178,19 +206,20 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
             const ModuleCacheAstSummary* summary = find_module_cache_ast_summary(*input_cache, path);
             if (summary) {
                 Program declarations = materialize_module_cache_ast_summary_declarations(*summary, path);
-                if (can_load_module_cache_ast_summary_declarations(declarations)) {
-                    const ModuleCacheIrSummary* ir_summary =
-                        find_module_cache_ir_summary(*input_cache, path);
-                    if (ir_summary) {
-                        require_ir_summary_covers_ast_summary_functions(
-                            declarations,
-                            *ir_summary,
-                            path);
-                    }
+                std::vector<ModuleCacheIrFunctionSummary> ir_functions;
+                const ModuleCacheIrSummary* ir_summary =
+                    find_module_cache_ir_summary(*input_cache, path);
+                if (ir_summary) {
+                    ir_functions = materialize_module_cache_ir_summary_functions(*ir_summary, path);
+                    require_ir_summary_covers_ast_summary_functions(declarations, ir_functions, path);
+                }
+                if (can_load_module_cache_ast_summary_declarations(declarations) ||
+                    can_load_module_cache_declarations_with_ir_functions(declarations, ir_functions)) {
                     return ParsedModuleFile{
                         std::move(declarations),
                         summary->content_hash,
                         cached->source,
+                        std::move(ir_functions),
                     };
                 }
             }
@@ -205,6 +234,7 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
         parse_tokens_in_module(std::move(tokens), module_path, cfg_features, target_triple),
         std::move(content_hash),
         std::move(source),
+        {},
     };
 }
 
@@ -227,7 +257,12 @@ public:
         cache.metadata = metadata_;
         cache.sources = std::move(cache_sources_);
         cache.ast_summaries = std::move(cache_ast_summaries_);
-        return ModuleLoadResult{std::move(program), std::move(metadata_), std::move(cache)};
+        return ModuleLoadResult{
+            std::move(program),
+            std::move(metadata_),
+            std::move(cache),
+            std::move(cached_ir_functions_),
+        };
     }
 
 private:
@@ -235,6 +270,7 @@ private:
     ModuleMetadata metadata_;
     std::vector<ModuleCacheSource> cache_sources_;
     std::vector<ModuleCacheAstSummary> cache_ast_summaries_;
+    std::vector<ModuleCacheIrFunctionSummary> cached_ir_functions_;
     std::map<std::string, std::string> loaded_modules_;
     std::set<std::string> loading_modules_;
 
@@ -282,6 +318,7 @@ private:
         ParsedModuleFile standard_file = parse_file_in_module(*path, module_path, options_.cfg_features, options_.target_triple, options_.input_cache, true);
         Program standard = std::move(standard_file.program);
         collect_source(*path, standard_file, module_path, standard, false);
+        move_append(cached_ir_functions_, standard_file.cached_ir_functions);
         loaded_modules_.emplace(name, *path);
         resolve_imports(standard, dirname(*path));
         append_program(program, std::move(standard));
@@ -324,6 +361,7 @@ private:
             ParsedModuleFile child_file = parse_file_in_module(source_path, module_path, options_.cfg_features, options_.target_triple, options_.input_cache, true);
             Program child = std::move(child_file.program);
             collect_source(source_path, child_file, module_path, child, false);
+            move_append(cached_ir_functions_, child_file.cached_ir_functions);
             resolve_imports(child, dirname(source_path));
             loading_modules_.erase(import.name);
             loaded_modules_.emplace(import.name, source_path);

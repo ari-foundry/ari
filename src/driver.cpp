@@ -6,6 +6,7 @@
 #include "elf.hpp"
 #include "llvm_codegen.hpp"
 #include "module_cache.hpp"
+#include "module_ir_replay.hpp"
 #include "module_ir_summary.hpp"
 #include "module_loader.hpp"
 #include "module_metadata.hpp"
@@ -225,8 +226,13 @@ int run(int argc, char** argv) {
     sema_options.test_mode = test_mode;
     sema_options.implicit_std = implicit_std;
     sema_options.cfg_features = cfg_features;
+    sema_options.cached_ir_function_names =
+        module_cache_ir_function_names(loaded.cached_ir_functions);
     sema_options.target_triple = target.triple;
     IrProgram ir = check_program(program, std::move(sema_options));
+    std::vector<IrFunction> cached_ir_functions =
+        replay_module_cache_ir_functions(loaded.cached_ir_functions, program);
+    for (auto& fn : cached_ir_functions) ir.functions.push_back(std::move(fn));
     for (const auto& warning : ir.warnings) {
         std::cerr << warning << "\n";
     }

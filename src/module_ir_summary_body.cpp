@@ -1,6 +1,7 @@
 #include "module_ir_summary_body.hpp"
 
 #include "common.hpp"
+#include "module_ir_type_summary.hpp"
 
 #include <cctype>
 #include <cstddef>
@@ -37,7 +38,7 @@ void append_field(std::string& out, const std::string& value) {
 }
 
 void append_type(std::string& out, const IrType& type) {
-    append_field(out, type_name(type));
+    append_field(out, module_cache_ir_type_name(type));
 }
 
 std::string stmt_kind_name(IrStmtKind kind) {

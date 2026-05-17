@@ -1,6 +1,7 @@
 #include "module_ir_summary.hpp"
 
 #include "common.hpp"
+#include "module_ir_type_summary.hpp"
 #include "module_cache_format.hpp"
 #include "module_ir_summary_body.hpp"
 #include "module_metadata.hpp"
@@ -53,7 +54,7 @@ void append_field(std::string& out, const std::string& value) {
 }
 
 void append_type(std::string& out, const IrType& type) {
-    append_field(out, type_name(type));
+    append_field(out, module_cache_ir_type_name(type));
 }
 
 void append_function_summary(std::string& out, const IrFunction& fn) {

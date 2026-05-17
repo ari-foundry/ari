@@ -13,6 +13,7 @@ struct SemaOptions {
     bool test_mode = false;
     bool implicit_std = true;
     std::set<std::string> cfg_features;
+    std::set<std::string> cached_ir_function_names;
     std::string target_triple;
 };
 

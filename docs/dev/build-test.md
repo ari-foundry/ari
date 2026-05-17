@@ -156,8 +156,9 @@ AST declaration-payload rejection checks plus malformed duplicate source-record,
 AST-summary, IR-summary, summary count/payload disagreement, and mismatched
 IR lowered-function surface rejection. These cache-use tests also exercise the
 structured IR body payload reader because validated sidecars now materialize the
-body-shape and operand-tree sections, then recheck their structural agreement
-while loading summary-safe dependencies.
+body-shape and operand-tree sections, recheck their structural agreement, and
+replay cached dependency `IrFunction` bodies so cache-use LLVM output matches a
+fresh sema lowering byte-for-byte for summary-safe dependencies.
 
 `make check-structs` runs struct and ADT-focused tests for struct declarations,
 generic struct field resolution, named struct literals, tuple-struct

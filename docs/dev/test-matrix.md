@@ -535,6 +535,10 @@ Checklist:
 - [x] IR summary body payload parsing materializes lowered body-shape maps and
       operand-tree statement/expression summaries, then rechecks that the shape
       inventory matches the materialized tree
+- [x] validated IR sidecars replay summary-safe dependency `IrFunction` bodies,
+      preserve named aggregate/enum/fixed-array and local-Vec capacity type
+      shapes, skip cached semantic body lowering, and match fresh cache-emission
+      LLVM output byte-for-byte
 - [x] AST summary records include declaration fingerprints and declaration
       payloads, then reject tampered fingerprints, payloads, or count/payload
       disagreement
