@@ -858,6 +858,8 @@ check-control-flow: $(TARGET)
 	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.ll
 	$(TARGET) tests/ok/while-let-static-payload-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-static-payload-owner-state.ll
 	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-static-payload-owner-state.ll
+	$(TARGET) tests/ok/while-let-static-nested-payload-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-static-nested-payload-owner-state.ll
+	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-static-nested-payload-owner-state.ll
 	$(TARGET) tests/ok/condition-pattern-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
@@ -3192,6 +3194,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-local-enum-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-static-payload-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-static-payload-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-static-payload-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-static-payload-owner-widen-recheck.err
+	if $(TARGET) tests/errors/while-let-static-nested-payload-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.err 2>&1; then exit 1; fi
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'first'" $(BUILD_DIR)/errors/while-false-borrow-state.err
 	if $(TARGET) tests/errors/loop-borrow-state.ari -o $(BUILD_DIR)/errors/loop-borrow-state.elf >$(BUILD_DIR)/errors/loop-borrow-state.err 2>&1; then exit 1; fi

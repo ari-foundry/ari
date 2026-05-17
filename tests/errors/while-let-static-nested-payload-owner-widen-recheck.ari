@@ -1,0 +1,20 @@
+enum Inner {
+  Empty,
+  Small(i32),
+  Flag(bool),
+}
+
+enum Outer {
+  Wrap(Inner),
+  Other(i64),
+  None,
+}
+
+fn main() -> i64 {
+  let item: Outer = Wrap(Small(3i32));
+  let token: own i64 = 13;
+  while let Wrap(Small(2..=4)) = item {
+    drop token;
+  }
+  return 0;
+}

@@ -107,18 +107,18 @@ dataflow recheck:
    fallthrough ownership fixed points. The plain `while`, `init while`,
    irrefutable aggregate/runtime-sequence `while let`, direct or immutable
    local enum-constructor `while let` with statically satisfied payload
-   literal/range tests, and exact-once range/list/stored-`Vec` `for` slices now
-   recheck no-zero or exact-once next-iteration states under a candidate
-   `Alive -> moved/dropped` owner widening before accepting them. The plain
-   `while` and `init while` slices also treat immutable local bool conditions
-   initialized directly from literals like literal `true`/`false` as proven
-   loop conditions, and fold those conditions into literal IR branch conditions
-   during lowering.
+   literal/range/nested-enum tests, and exact-once range/list/stored-`Vec`
+   `for` slices now recheck no-zero or exact-once next-iteration states under
+   a candidate `Alive -> moved/dropped` owner widening before accepting them.
+   The plain `while` and `init while` slices also treat immutable local bool
+   conditions initialized directly from literals like literal `true`/`false`
+   as proven loop conditions, and fold those conditions into literal IR branch
+   conditions during lowering.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
      and exact-once loop bodies into remaining runtime-dependent refutable enum
-     `while let`/multi-iteration iterator-style bodies, nested enum payload
-     proof, and any future maybe-zero representation that can distinguish
-     definitely-live from maybe-unavailable owners after loop fallthrough
+     `while let`/multi-iteration iterator-style bodies and any future
+     maybe-zero representation that can distinguish definitely-live from
+     maybe-unavailable owners after loop fallthrough
 
 IR package-cache replay is complete for the current V0 0.x executable cache
 surface and has been removed from active Near-Term work. Validated

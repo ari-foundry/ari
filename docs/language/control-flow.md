@@ -422,8 +422,8 @@ the body is rechecked under that widened state before the loop is accepted.
 The same recheck applies to `while let` over a direct enum constructor, or an
 immutable local initialized directly from one, when the constructor case is
 covered and any literal or range payload tests are statically satisfied,
-because that loop is known to enter at least once. Nested enum payload tests
-remain runtime-dependent for this proof.
+including nested enum payload tag/literal/range tests that are statically
+satisfied, because that loop is known to enter at least once.
 
 If every reachable `break` exit has already consumed the same owner, Ari can
 merge `moved` and `dropped` states as one unavailable post-loop state. This lets
@@ -633,4 +633,4 @@ bindings.
 - `while let` over a direct enum constructor, or an immutable local initialized
   directly from one, is also treated as no-zero when the constructor case is
   covered by the pattern and any literal or range payload tests are statically
-  satisfied. Nested enum payload tests are not part of this no-zero proof yet.
+  satisfied, including statically satisfied nested enum payload tests.

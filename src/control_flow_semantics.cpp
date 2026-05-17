@@ -38,6 +38,27 @@ bool static_integer_payload_bits(const IrExpr& expr, const IrType& payload_type,
     return true;
 }
 
+bool static_integer_literal_payload_bits(
+    std::uint64_t value,
+    bool negative,
+    const IrType& payload_type,
+    std::uint64_t& bits
+) {
+    unsigned width = integer_primitive_bit_width(payload_type.primitive);
+    if (width == 0) return false;
+
+    std::uint64_t raw = negative ? 0 - value : value;
+    if (width < 64) {
+        std::uint64_t mask = (1ULL << width) - 1;
+        raw &= mask;
+        if (is_signed_integer_primitive(payload_type.primitive) && (raw & (1ULL << (width - 1)))) {
+            raw |= ~mask;
+        }
+    }
+    bits = raw;
+    return true;
+}
+
 bool static_payload_literal_matches(const IrExpr& payload, const IrPayloadLiteralCondition& condition) {
     if (condition.is_bool) {
         return payload.kind == IrExprKind::Bool && payload.bool_value == condition.bool_literal();
@@ -82,6 +103,57 @@ bool static_payload_range_matches(const IrExpr& payload, const IrPayloadRangeCon
                 : compare_signed_endpoint(value, end) < 0);
 }
 
+bool static_nested_payload_literal_matches(const IrExpr& payload, const IrPayloadEnumCondition& condition) {
+    if (condition.payload_literal_is_bool) {
+        return payload.kind == IrExprKind::Bool &&
+               payload.bool_value == condition.payload_literal.boolean;
+    }
+
+    std::uint64_t payload_bits = 0;
+    std::uint64_t condition_bits = 0;
+    return static_integer_payload_bits(payload, condition.payload_type, payload_bits) &&
+           static_integer_literal_payload_bits(
+               condition.payload_literal.integer,
+               condition.payload_literal_negative,
+               condition.payload_type,
+               condition_bits) &&
+           payload_bits == condition_bits;
+}
+
+bool static_nested_payload_range_matches(const IrExpr& payload, const IrPayloadEnumCondition& condition) {
+    if (payload.kind != IrExprKind::Integer) return false;
+    if (condition.range_is_unsigned) {
+        if (payload.int_negative) return false;
+        std::uint64_t value = payload.int_value;
+        std::uint64_t start = unsigned_range_endpoint(condition.range_start_int, condition.range_start_negative);
+        std::uint64_t end = unsigned_range_endpoint(condition.range_end_int, condition.range_end_negative);
+        return value >= start && (condition.range_inclusive ? value <= end : value < end);
+    }
+
+    SignedEndpoint value{payload.int_value, payload.int_negative};
+    SignedEndpoint start{condition.range_start_int, condition.range_start_negative};
+    SignedEndpoint end{condition.range_end_int, condition.range_end_negative};
+    return compare_signed_endpoint(value, start) >= 0 &&
+           (condition.range_inclusive
+                ? compare_signed_endpoint(value, end) <= 0
+                : compare_signed_endpoint(value, end) < 0);
+}
+
+bool static_payload_enum_condition_matches(const IrExpr& payload, const IrPayloadEnumCondition& condition) {
+    if (payload.kind != IrExprKind::EnumConstruct) return false;
+    if (ir_expr_enum_result_payload(payload).tag != condition.tag) return false;
+
+    if (condition.has_payload_literal) {
+        const IrExpr* nested_payload = enum_construct_payload_at(payload, condition.nested_payload_index);
+        return nested_payload && static_nested_payload_literal_matches(*nested_payload, condition);
+    }
+    if (condition.has_payload_range) {
+        const IrExpr* nested_payload = enum_construct_payload_at(payload, condition.nested_payload_index);
+        return nested_payload && static_nested_payload_range_matches(*nested_payload, condition);
+    }
+    return true;
+}
+
 bool compact_payload_literal_matches(const IrExpr& construct, const IrMatchArm& arm) {
     const IrExpr* payload = enum_construct_payload_at(construct, 0);
     if (!payload || arm.literal_negative || arm.literal_is_bool) return false;
@@ -109,7 +181,11 @@ bool enum_construct_matches_arm(const IrExpr& construct, const IrMatchArm& arm) 
         const IrExpr* payload = enum_construct_payload_at(construct, condition.index);
         if (!payload || !static_payload_range_matches(*payload, condition)) return false;
     }
-    return arm.payload_enum_conditions.empty();
+    for (const auto& condition : arm.payload_enum_conditions) {
+        const IrExpr* payload = enum_construct_payload_at(construct, condition.index);
+        if (!payload || !static_payload_enum_condition_matches(*payload, condition)) return false;
+    }
+    return true;
 }
 
 } // namespace
