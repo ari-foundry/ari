@@ -113,14 +113,14 @@ adding more narrow syntax-specific `*_semantics` siblings.
   coverage state, enum duplicate detection, and enum exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection,
   runtime-sequence irrefutability checks, positional product field mapping,
-  recursive reference binding-mode detection, or-pattern expansion helpers, and
+  recursive reference binding-mode detection, or-pattern expansion helpers,
   union-safe pattern cloning shared by match/or-pattern normalization and sema
-  iterator-filter rewrites
-- `for_pattern_semantics` for irrefutable non-iterator `for` loop-head pattern
-  validation shared by range, list-literal, and stored-vector loops
-- `format_string_semantics` for shared `{}` / `{:.N}` format-string parsing,
-  escaped-brace handling, placeholder count diagnostics, and precision
-  validation used by both print lowering and explicit-zone string formatting
+  iterator-filter rewrites, plus irrefutable non-iterator `for` loop-head
+  pattern validation shared by range, list-literal, and stored-vector loops
+- `format_semantics` for formatting target selection and shared `{}` /
+  `{:.N}` format-string parsing, escaped-brace handling, placeholder count
+  diagnostics, and precision validation used by both print lowering and
+  explicit-zone string formatting
 - `move_semantics` for pure helpers around explicit ownership-consumption
   syntax such as `take(place)` place-shape validation
 - `drop_semantics` for explicit destructor semantics that are independent of
@@ -131,11 +131,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   shape checks, including syntactic `self` receiver classification, shared by
   trait impl validation, method dispatch diagnostics, and future
   trait-resolution extraction
-- `aggregate_literal_semantics` for pure expected-element selection and shared
+- `value_construction_semantics` for pure expected-element selection and shared
   element diagnostics used by tuple, struct, fixed-array, and local `Vec[T]`
-  literal lowering
-- `enum_constructor_semantics` for expected-enum matching and final enum
-  constructor IR node assembly after payload semantic checks
+  literal lowering, plus expected-enum matching and final enum constructor IR
+  node assembly after payload semantic checks
 - `meta_token_eval` for token_stream meta return validation/evaluation,
   including meta-input token substitution and the current
   empty/count/boundary/wrapper/indexed-text/pattern branch evaluator plus
@@ -291,7 +290,7 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      direct builtin call nodes are already outside `sema.cpp`; format-print
      node assembly is also centralized there so its rare string-part payload is
      not a field on every IR expression. Enum constructor IR assembly now lives
-     with `enum_constructor_semantics` because it shares enum-specific layout
+     with `value_construction_semantics` because it shares enum-specific layout
      decisions.
    - Block, match, and if expression node assembly now also goes through
      `ir_builders`. Future builder moves should be opportunistic and tied to a
@@ -343,7 +342,7 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      `sema.cpp` still performs enum case resolution and payload type
      validation.
    - Irrefutable non-iterator `for` loop-head validation now lives in
-     `for_pattern_semantics`; `sema.cpp` only wires struct lookup callbacks and
+     `pattern_semantics`; `sema.cpp` only wires struct lookup callbacks and
      emits the actual loop binding locals while broader pattern-binding
      lowering stays stateful.
    - Move the remaining semantic-table callbacks for product pattern coverage
