@@ -523,23 +523,25 @@ The semantic checker accepts this only when the concrete source type has a
 matching impl. Implicit assignment from a concrete value to `dyn Trait` is still
 rejected.
 
-On the LLVM backend, concrete copyable non-borrow values are materialized as a
-pair of data pointer and vtable pointer. The vtable stores erased receiver
-thunks, so `value.score()` dispatches through the vtable slot while the thunk
-loads the concrete receiver and calls the original impl method. Generic impls
-such as `impl[T] Score[T] for Box[T]` can also be specialized into vtables for
-concrete object types such as `Box[i64] as dyn Score[i64]`. Generic trait
-methods are not object-safe: they remain available through static dispatch and
-are rejected at `as dyn` conversion or dyn method-call sites. A `dyn Child`
-value includes object-safe methods declared by `Child` and its supertraits, so
-`value.base()` can dispatch through a `dyn Child` vtable when `Child: Base`.
-If more than one supertrait exposes the same dyn method name, the method call is
-ambiguous; use static trait-qualified dispatch on the concrete value before
-erasing it. A dyn object can also be upcast to the same trait or one of its
-supertraits with `as dyn Base`; the data pointer is preserved and the vtable
-pointer is adjusted to the inherited supertrait method slots. Unrelated
-dyn-to-dyn casts remain rejected. `own`/borrow-valued dyn data pointers and raw
-`--freestanding` lowering are still planned.
+On the LLVM backend and the raw `--freestanding` backend, concrete copyable
+non-borrow values are materialized as a pair of data pointer and vtable pointer.
+The vtable stores erased receiver thunks, so `value.score()` dispatches through
+the vtable slot while the thunk loads the concrete receiver and calls the
+original impl method. Generic impls such as `impl[T] Score[T] for Box[T]` can
+also be specialized into vtables for concrete object types such as
+`Box[i64] as dyn Score[i64]`. On `--freestanding`, concrete-to-dyn conversions
+use hidden stack storage for the erased data pointer and static image vtables
+with relative thunk slots. Generic trait methods are not object-safe: they
+remain available through static dispatch and are rejected at `as dyn` conversion
+or dyn method-call sites. A `dyn Child` value includes object-safe methods
+declared by `Child` and its supertraits, so `value.base()` can dispatch through
+a `dyn Child` vtable when `Child: Base`. If more than one supertrait exposes the
+same dyn method name, the method call is ambiguous; use static trait-qualified
+dispatch on the concrete value before erasing it. A dyn object can also be
+upcast to the same trait or one of its supertraits with `as dyn Base`; the data
+pointer is preserved and the vtable pointer is adjusted to the inherited
+supertrait method slots. Unrelated dyn-to-dyn casts remain rejected.
+`own`/borrow-valued dyn data pointers are still planned.
 
 ## Current Status
 
@@ -551,10 +553,10 @@ generic impl bounds, trait impl coherence checks, inherent associated functions
 such as `T::new(...)` and `Box::new<i64>(...)`, and trait impl associated
 functions such as `Box::make<i64>(...)` are executable. Generic trait methods
 with method-level bounds are executable. `dyn Trait[...]` type syntax resolves,
-and explicit concrete-to-`dyn` conversions plus LLVM vtable dispatch are
-executable for concrete copyable source values, including vtables built from
-generic impl specializations and inherited object-safe supertrait methods.
-Generic trait methods are deliberately static-only for dyn objects. Associated
-types, non-copy dyn data ownership, and raw backend dyn dispatch are still
-planned. Dyn-to-dyn upcasts are executable when the target is the same trait or
-an inherited supertrait; unrelated dyn casts are rejected.
+and explicit concrete-to-`dyn` conversions plus vtable dispatch are executable
+for concrete copyable source values on LLVM and raw `--freestanding`, including
+vtables built from generic impl specializations and inherited object-safe
+supertrait methods. Generic trait methods are deliberately static-only for dyn
+objects. Associated types and non-copy dyn data ownership are still planned.
+Dyn-to-dyn upcasts are executable when the target is the same trait or an
+inherited supertrait; unrelated dyn casts are rejected.

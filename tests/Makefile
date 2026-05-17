@@ -2164,20 +2164,30 @@ check-traits: $(TARGET)
 	$(TARGET) tests/ok/trait-object-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_AddTo_i64_" $(BUILD_DIR)/traits/trait-object-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-dispatch.elf; $(BUILD_DIR)/traits/trait-object-dispatch.elf; code=$$?; test $$code -eq 11; fi
+	$(TARGET) --freestanding tests/ok/trait-object-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-dispatch.raw
+	$(BUILD_DIR)/traits/trait-object-dispatch.raw; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-object-multi-arg-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_Mix_i64_" $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
 	grep -q "call i64 .*ptr .* i64 3, i64 4" $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-multi-arg-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.elf; $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.elf; code=$$?; test $$code -eq 36; fi
+	$(TARGET) --freestanding tests/ok/trait-object-multi-arg-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.raw
+	$(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.raw; code=$$?; test $$code -eq 36
 	$(TARGET) tests/ok/trait-object-generic-impl-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
 	grep -q "dyn::vtable::Box_i64_::dyn_Score_i64_" $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
 	grep -q "_ARNv4impl8Box_i64_5Score5score" $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-generic-impl-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; code=$$?; test $$code -eq 11; fi
+	$(TARGET) --freestanding tests/ok/trait-object-generic-impl-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.raw
+	$(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.raw; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-object-supertrait-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_ChildScore" $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-supertrait-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.elf; $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.elf; code=$$?; test $$code -eq 26; fi
+	$(TARGET) --freestanding tests/ok/trait-object-supertrait-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.raw
+	$(BUILD_DIR)/traits/trait-object-supertrait-dispatch.raw; code=$$?; test $$code -eq 26
 	$(TARGET) tests/ok/trait-object-supertrait-upcast.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-supertrait-upcast.ll
 	grep -q "getelementptr ptr, ptr .* i64 1" $(BUILD_DIR)/traits/trait-object-supertrait-upcast.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-supertrait-upcast.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; code=$$?; test $$code -eq 12; fi
+	$(TARGET) --freestanding tests/ok/trait-object-supertrait-upcast.ari -o $(BUILD_DIR)/traits/trait-object-supertrait-upcast.raw
+	$(BUILD_DIR)/traits/trait-object-supertrait-upcast.raw; code=$$?; test $$code -eq 12
 	$(TARGET) --freestanding tests/ok/trait-bound-static-dispatch.ari -o $(BUILD_DIR)/traits/trait-bound-static-dispatch.raw
 	$(BUILD_DIR)/traits/trait-bound-static-dispatch.raw; code=$$?; test $$code -eq 6
 	$(TARGET) --freestanding tests/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.raw
@@ -2191,6 +2201,8 @@ check-traits: $(TARGET)
 	grep -Fq 'define i64 @"_ARNv4impl3i647UsesVec3sum"({ ptr, i64 } %arg0)' $(BUILD_DIR)/traits/vector-trait-method-param-view.ll
 	$(TARGET) tests/ok/vector-trait-object-param-view.ari --emit-llvm $(BUILD_DIR)/traits/vector-trait-object-param-view.ll
 	grep -Fq 'define private i64 @"dyn::vtable::i64::dyn_UsesVecObject::UsesVecObject::take"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/traits/vector-trait-object-param-view.ll
+	$(TARGET) --freestanding tests/ok/vector-trait-object-param-view.ari -o $(BUILD_DIR)/traits/vector-trait-object-param-view.raw
+	$(BUILD_DIR)/traits/vector-trait-object-param-view.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --freestanding tests/ok/trait-qualified-associated-call.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-call.raw
 	$(BUILD_DIR)/traits/trait-qualified-associated-call.raw; code=$$?; test $$code -eq 96
 	$(TARGET) --freestanding tests/ok/trait-qualified-receiver-type-args.ari -o $(BUILD_DIR)/traits/trait-qualified-receiver-type-args.raw

@@ -2,8 +2,10 @@
 
 #include "ari_builtin.hpp"
 #include "enum_payload_layout.hpp"
+#include "ir_builders.hpp"
 #include "layout.hpp"
 #include "raw_string_pool.hpp"
+#include "raw_vtable_pool.hpp"
 #include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 
@@ -38,6 +40,11 @@ public:
         std::uint32_t bits = static_cast<std::uint32_t>(value);
         for (int i = 0; i < 4; ++i) bytes[at + static_cast<std::size_t>(i)] = static_cast<std::uint8_t>((bits >> (i * 8)) & 0xff);
     }
+
+    void patch64(std::size_t at, std::int64_t value) {
+        std::uint64_t bits = static_cast<std::uint64_t>(value);
+        for (int i = 0; i < 8; ++i) bytes[at + static_cast<std::size_t>(i)] = static_cast<std::uint8_t>((bits >> (i * 8)) & 0xff);
+    }
 };
 
 enum class Reg : std::uint8_t {
@@ -68,6 +75,7 @@ struct CompiledFunction {
     std::vector<CallPatch> calls;
     std::vector<CallPatch> addresses;
     std::vector<RawStringReference> strings;
+    std::vector<RawVTableReference> vtables;
 };
 
 class FunctionEmitter {
@@ -99,6 +107,7 @@ public:
         compiled.calls = std::move(calls_);
         compiled.addresses = std::move(addresses_);
         compiled.strings = std::move(string_refs_);
+        compiled.vtables = std::move(vtable_refs_);
         return compiled;
     }
 
@@ -125,6 +134,7 @@ private:
     std::map<std::string, IrType> local_types_;
     std::map<const IrExpr*, int> aggregate_argument_temps_;
     std::map<const IrExpr*, int> aggregate_result_temps_;
+    std::map<const IrExpr*, int> trait_object_data_temps_;
     int stack_offset_ = 0;
     int stack_size_ = 0;
     int aggregate_return_pointer_offset_ = 0;
@@ -132,6 +142,7 @@ private:
     std::vector<CallPatch> calls_;
     std::vector<CallPatch> addresses_;
     std::vector<RawStringReference> string_refs_;
+    std::vector<RawVTableReference> vtable_refs_;
     std::vector<LoopLabels> loops_;
 
     static int align_to(int value, int alignment) {
@@ -167,6 +178,11 @@ private:
 
     static bool is_aggregate_type(const IrType& type) {
         return ari_is_aggregate_layout_type(type);
+    }
+
+    static bool is_trait_object_type(const IrType& type) {
+        return type.qualifier == TypeQualifier::Value &&
+               type.primitive == IrPrimitiveKind::TraitObject;
     }
 
     bool has_aggregate_return() const {
@@ -361,6 +377,15 @@ private:
         stack_offset_ += size;
     }
 
+    void add_trait_object_data_temp(const IrExpr& expr, const IrType& data_type) {
+        if (trait_object_data_temps_.count(&expr)) return;
+        int size = local_size_bytes(data_type);
+        int align = local_align_bytes(data_type);
+        stack_offset_ = align_to(stack_offset_, align);
+        trait_object_data_temps_[&expr] = stack_offset_ + size;
+        stack_offset_ += size;
+    }
+
     void collect_locals(const std::vector<IrStmtPtr>& statements) {
         for (const auto& stmt : statements) collect_locals(*stmt);
     }
@@ -392,10 +417,20 @@ private:
             expr.kind == IrExprKind::SliceRange ||
             expr.kind == IrExprKind::EnumConstruct ||
             expr.kind == IrExprKind::PointerLoad ||
+            (expr.kind == IrExprKind::Cast && is_trait_object_type(expr.type)) ||
+            expr.kind == IrExprKind::TraitObjectCall ||
             expr.kind == IrExprKind::TupleIndex) {
             if (is_aggregate_type(expr.type)) add_aggregate_result_temp(expr);
         }
-        if (expr.kind == IrExprKind::Call || expr.kind == IrExprKind::IndirectCall) {
+        if (expr.kind == IrExprKind::Cast &&
+            is_trait_object_type(expr.type) &&
+            ir_expr_operand(expr) &&
+            !is_trait_object_type(ir_expr_operand(expr)->type)) {
+            add_trait_object_data_temp(expr, ir_expr_operand(expr)->type);
+        }
+        if (expr.kind == IrExprKind::Call ||
+            expr.kind == IrExprKind::IndirectCall ||
+            expr.kind == IrExprKind::TraitObjectCall) {
             for (const auto& arg : expr.args) {
                 if (is_aggregate_type(arg->type)) add_aggregate_argument_temp(*arg);
             }
@@ -521,6 +556,14 @@ private:
         return found->second;
     }
 
+    int trait_object_data_temp_offset(SourceLocation loc, const IrExpr& expr) const {
+        auto found = trait_object_data_temps_.find(&expr);
+        if (found == trait_object_data_temps_.end()) {
+            throw CompileError(where(loc) + ": missing trait object data temporary during codegen");
+        }
+        return found->second;
+    }
+
     void copy_local_bytes_to_offset(SourceLocation loc, int source_offset, int target_offset, const IrType& target_type) {
         int size = layout_size_bytes(loc, target_type);
         IrType byte_type = u8_type(loc);
@@ -596,6 +639,60 @@ private:
             emit_add_pointer_offset_reg(Reg::RCX, byte_offset + byte);
             emit_store_rax_to_ptr(Reg::RCX, byte_type);
         }
+    }
+
+    int materialize_aggregate_value_for_read(const IrExpr& value) {
+        if ((value.kind == IrExprKind::Local || value.kind == IrExprKind::TupleIndex) &&
+            !is_pointer_backed_lvalue(value)) {
+            return lvalue_offset(value);
+        }
+        int temp_offset = aggregate_result_temp_offset(value.loc, value);
+        emit_store_value_to_offset(value.type, value, temp_offset);
+        return temp_offset;
+    }
+
+    void emit_vtable_address(const std::string& name) {
+        out_.u8(0x48);
+        out_.u8(0x8D);
+        out_.u8(0x05);
+        std::size_t pos = out_.size();
+        out_.u32(0);
+        vtable_refs_.push_back(RawVTableReference{pos, name});
+    }
+
+    void emit_store_trait_object_cast_to_offset(const IrExpr& value, int target_offset) {
+        const IrExpr* operand = ir_expr_operand(value).get();
+        if (!operand) {
+            throw CompileError(where(value.loc) + ": malformed trait object cast during freestanding lowering");
+        }
+
+        int data_offset = aggregate_lvalue_field_offset(value.loc, target_offset, value.type, 0);
+        int vtable_offset = aggregate_lvalue_field_offset(value.loc, target_offset, value.type, 1);
+        const std::vector<IrType>& fields = aggregate_field_types(value.type);
+
+        if (is_trait_object_type(operand->type)) {
+            int source_offset = materialize_aggregate_value_for_read(*operand);
+            int source_data_offset = aggregate_lvalue_field_offset(operand->loc, source_offset, operand->type, 0);
+            int source_vtable_offset = aggregate_lvalue_field_offset(operand->loc, source_offset, operand->type, 1);
+
+            emit_load_rax_from_local(source_data_offset, aggregate_field_types(operand->type)[0]);
+            emit_store_rax_to_local(data_offset, fields[0]);
+
+            emit_load_rax_from_local(source_vtable_offset, aggregate_field_types(operand->type)[1]);
+            if (value.tuple_index != 0) {
+                emit_add_pointer_offset_reg(Reg::RAX, static_cast<int>(value.tuple_index * 8));
+            }
+            emit_store_rax_to_local(vtable_offset, fields[1]);
+            return;
+        }
+
+        int concrete_offset = trait_object_data_temp_offset(value.loc, value);
+        emit_store_value_to_offset(operand->type, *operand, concrete_offset);
+        emit_lea_reg_local(Reg::RAX, concrete_offset);
+        emit_store_rax_to_local(data_offset, fields[0]);
+
+        emit_vtable_address(ir_expr_name(value));
+        emit_store_rax_to_local(vtable_offset, fields[1]);
     }
 
     void emit_normalize_aggregate_enum_payload_value(SourceLocation loc, const IrType& type) {
@@ -895,6 +992,13 @@ private:
             return;
         }
 
+        if (value.kind == IrExprKind::TraitObjectCall && is_aggregate_type(value.type)) {
+            int temp_offset = aggregate_result_temp_offset(value.loc, value);
+            emit_trait_object_call_with_sret_to_offset(value, temp_offset);
+            copy_local_bytes_to_pointer_base(value.loc, temp_offset, target_type, byte_offset);
+            return;
+        }
+
         if ((value.kind == IrExprKind::Block ||
              value.kind == IrExprKind::If ||
              value.kind == IrExprKind::Match) &&
@@ -904,6 +1008,15 @@ private:
             emit_push(Reg::RBX);
             emit_store_value_to_offset(target_type, value, temp_offset);
             emit_pop(Reg::RBX);
+            copy_local_bytes_to_pointer_base(value.loc, temp_offset, target_type, byte_offset);
+            return;
+        }
+
+        if (is_trait_object_type(target_type) &&
+            value.kind == IrExprKind::Cast &&
+            is_trait_object_type(value.type)) {
+            int temp_offset = aggregate_result_temp_offset(value.loc, value);
+            emit_store_trait_object_cast_to_offset(value, temp_offset);
             copy_local_bytes_to_pointer_base(value.loc, temp_offset, target_type, byte_offset);
             return;
         }
@@ -969,6 +1082,11 @@ private:
             return;
         }
 
+        if (value.kind == IrExprKind::TraitObjectCall && is_aggregate_type(value.type)) {
+            emit_trait_object_call_with_sret_to_offset(value, target_offset);
+            return;
+        }
+
         if (value.kind == IrExprKind::Block) {
             emit_block_expr_to_offset(value, target_type, target_offset);
             return;
@@ -981,6 +1099,13 @@ private:
 
         if (value.kind == IrExprKind::Match) {
             emit_match_expr_to_offset(value, target_type, target_offset);
+            return;
+        }
+
+        if (is_trait_object_type(target_type) &&
+            value.kind == IrExprKind::Cast &&
+            is_trait_object_type(value.type)) {
+            emit_store_trait_object_cast_to_offset(value, target_offset);
             return;
         }
 
@@ -2415,6 +2540,12 @@ private:
                 emit_unary(expr);
                 break;
             case IrExprKind::Cast:
+                if (is_trait_object_type(expr.type)) {
+                    int temp_offset = aggregate_result_temp_offset(expr.loc, expr);
+                    emit_store_trait_object_cast_to_offset(expr, temp_offset);
+                    emit_lea_reg_local(Reg::RAX, temp_offset);
+                    break;
+                }
                 emit_cast(expr);
                 break;
             case IrExprKind::PointerOffset:
@@ -2532,7 +2663,8 @@ private:
                 emit_indirect_call(expr);
                 break;
             case IrExprKind::TraitObjectCall:
-                throw CompileError(where(expr.loc) + ": backend does not lower trait object dispatch yet");
+                emit_trait_object_call(expr);
+                break;
             case IrExprKind::Call:
                 emit_call(expr);
                 break;
@@ -3544,6 +3676,82 @@ private:
         emit_cleanup_call_stack(total_args);
     }
 
+    void emit_trait_object_callee_from_offset(SourceLocation loc,
+                                              const IrType& object_type,
+                                              int object_offset,
+                                              std::uint64_t slot) {
+        int vtable_offset = aggregate_lvalue_field_offset(loc, object_offset, object_type, 1);
+        emit_load_rax_from_local(vtable_offset, aggregate_field_types(object_type)[1]);
+        emit_mov_reg_reg(Reg::RCX, Reg::RAX);
+        if (slot != 0) emit_add_pointer_offset_reg(Reg::RCX, static_cast<int>(slot * 8));
+        emit_load_rax_from_ptr(Reg::RCX, i64_type(loc));
+        emit_add_reg_reg(Reg::RAX, Reg::RCX);
+    }
+
+    void emit_trait_object_call_arguments_to_stack(const IrExpr& expr,
+                                                   int object_offset,
+                                                   std::size_t abi_shift) {
+        int data_offset = aggregate_lvalue_field_offset(expr.loc, object_offset, ir_expr_operand(expr)->type, 0);
+        emit_load_rax_from_local(data_offset, aggregate_field_types(ir_expr_operand(expr)->type)[0]);
+        emit_mov_mem_rsp_reg(static_cast<int>(abi_shift * 8), Reg::RAX);
+
+        for (std::size_t i = 0; i < expr.args.size(); ++i) {
+            std::size_t abi_index = abi_shift + 1 + i;
+            if (is_aggregate_type(expr.args[i]->type)) {
+                int temp_offset = aggregate_argument_temp_offset(expr.args[i]->loc, *expr.args[i]);
+                emit_store_value_to_offset(expr.args[i]->type, *expr.args[i], temp_offset);
+                emit_lea_reg_local(Reg::RAX, temp_offset);
+                emit_mov_mem_rsp_reg(static_cast<int>(abi_index * 8), Reg::RAX);
+                continue;
+            }
+            if (expr.args[i]->type.qualifier == TypeQualifier::Value &&
+                expr.args[i]->type.primitive == IrPrimitiveKind::F128) {
+                throw CompileError(where(expr.args[i]->loc) +
+                                   ": freestanding backend does not lower f128 call arguments yet");
+            }
+            emit_expr(*expr.args[i]);
+            emit_mov_mem_rsp_reg(static_cast<int>(abi_index * 8), Reg::RAX);
+        }
+    }
+
+    void emit_trait_object_call_with_optional_sret(const IrExpr& expr, int target_offset, bool has_sret) {
+        if (!ir_expr_operand(expr) || !is_trait_object_type(ir_expr_operand(expr)->type)) {
+            throw CompileError(where(expr.loc) + ": malformed trait object call during freestanding lowering");
+        }
+        const std::vector<IrType>& call_param_types = ir_expr_call_param_types(expr);
+        if (call_param_types.empty()) {
+            throw CompileError(where(expr.loc) + ": malformed trait object call");
+        }
+        if (expr.type.qualifier == TypeQualifier::Value &&
+            expr.type.primitive == IrPrimitiveKind::F128) {
+            throw CompileError(where(expr.loc) +
+                               ": freestanding backend does not lower f128 call return values yet");
+        }
+
+        int object_offset = materialize_aggregate_value_for_read(*ir_expr_operand(expr));
+        std::size_t abi_shift = has_sret ? 1 : 0;
+        std::size_t total_args = abi_shift + 1 + expr.args.size();
+        if (total_args > static_cast<std::size_t>(0xffff)) {
+            throw CompileError(where(expr.loc) + ": backend supports up to 65535 call arguments");
+        }
+
+        emit_sub_rsp(static_cast<int>(total_args * 8));
+        if (has_sret) {
+            emit_lea_reg_local(Reg::RAX, target_offset);
+            emit_mov_mem_rsp_reg(0, Reg::RAX);
+        }
+        emit_trait_object_call_arguments_to_stack(expr, object_offset, abi_shift);
+        emit_trait_object_callee_from_offset(expr.loc, ir_expr_operand(expr)->type, object_offset, expr.tuple_index);
+        emit_prepare_call_from_stack(total_args);
+        out_.u8(0xFF);
+        out_.u8(0xD0);
+        emit_cleanup_call_stack(total_args);
+    }
+
+    void emit_trait_object_call_with_sret_to_offset(const IrExpr& expr, int target_offset) {
+        emit_trait_object_call_with_optional_sret(expr, target_offset, true);
+    }
+
     void emit_call_with_sret_to_offset(const IrExpr& expr, int target_offset) {
         const std::string& name = ir_expr_name(expr);
         reject_c_extern_use(expr.loc, name, "call");
@@ -3646,6 +3854,16 @@ private:
         if (arg_area > 0) emit_sub_rsp(arg_area);
         emit_call_arguments_to_stack(expr, 0);
         emit_direct_call_from_prepared_stack(name, expr.args.size());
+    }
+
+    void emit_trait_object_call(const IrExpr& expr) {
+        if (is_aggregate_type(expr.type)) {
+            int temp_offset = aggregate_result_temp_offset(expr.loc, expr);
+            emit_trait_object_call_with_sret_to_offset(expr, temp_offset);
+            emit_lea_reg_local(Reg::RAX, temp_offset);
+            return;
+        }
+        emit_trait_object_call_with_optional_sret(expr, 0, false);
     }
 
     void emit_function_ref(const IrExpr& expr) {
@@ -4392,6 +4610,7 @@ public:
         emit_builtin_functions();
         emit_static_data();
         patch_calls();
+        patch_vtable_entries();
         return EmittedProgram{std::move(code_.bytes), std::move(symbols_)};
     }
 
@@ -4405,8 +4624,11 @@ private:
     std::vector<CallPatch> global_calls_;
     std::vector<CallPatch> global_addresses_;
     std::vector<RawStringReference> global_strings_;
+    std::vector<RawVTableReference> global_vtables_;
     std::vector<CodeSymbol> symbols_;
+    std::vector<IrFunction> trait_object_thunks_;
     RawStringPool string_pool_;
+    RawVTablePool vtable_pool_;
 
     void collect_extern_abis() {
         for (const auto& fn : program_.extern_functions) {
@@ -4417,6 +4639,89 @@ private:
     void collect_ir_functions() {
         for (const auto& fn : program_.functions) {
             ir_functions_[fn.name] = &fn;
+        }
+        collect_trait_object_thunks();
+    }
+
+    static IrType pointer_to(IrType type) {
+        type.qualifier = TypeQualifier::Ptr;
+        return type;
+    }
+
+    static IrExprPtr make_trait_object_thunk_receiver(SourceLocation loc,
+                                                      const IrType& erased_data_type,
+                                                      const IrType& concrete_type) {
+        IrExprPtr data = make_local_lvalue_expr(loc, "arg0", erased_data_type);
+        IrExprPtr typed_data = make_cast_expr(loc, std::move(data), pointer_to(concrete_type));
+        return make_pointer_load_expr(loc, std::move(typed_data), concrete_type);
+    }
+
+    static IrFunction make_trait_object_thunk(const IrTraitObjectVTable& table,
+                                              const IrTraitObjectVTableMethod& method) {
+        if (method.erased_params.empty()) {
+            throw CompileError(where(table.loc) + ": trait object thunk is missing an erased receiver parameter");
+        }
+
+        IrFunction thunk;
+        thunk.name = method.thunk_name;
+        thunk.module_name = "dyn";
+        thunk.link_name = method.thunk_name;
+        thunk.return_type = method.result_type;
+        thunk.loc = table.loc;
+
+        thunk.params.reserve(method.erased_params.size());
+        for (std::size_t i = 0; i < method.erased_params.size(); ++i) {
+            IrParam param;
+            param.name = "arg" + std::to_string(i);
+            param.type = method.erased_params[i];
+            thunk.params.push_back(std::move(param));
+        }
+
+        std::vector<IrExprPtr> args;
+        args.reserve(method.impl_params.size());
+        args.push_back(make_trait_object_thunk_receiver(
+            table.loc,
+            method.erased_params[0],
+            method.concrete_receiver_type));
+        for (std::size_t i = 1; i < method.impl_params.size(); ++i) {
+            args.push_back(make_local_lvalue_expr(
+                table.loc,
+                "arg" + std::to_string(i),
+                method.impl_params[i]));
+        }
+
+        IrExprPtr call = make_ir_call_expr(table.loc, method.impl_name, method.result_type, std::move(args));
+        if (method.result_type.qualifier == TypeQualifier::Value &&
+            method.result_type.primitive == IrPrimitiveKind::Void) {
+            auto call_stmt = std::make_unique<IrStmt>();
+            call_stmt->kind = IrStmtKind::ExprStmt;
+            call_stmt->loc = table.loc;
+            call_stmt->expr = std::move(call);
+            thunk.body.push_back(std::move(call_stmt));
+
+            auto ret = std::make_unique<IrStmt>();
+            ret->kind = IrStmtKind::Return;
+            ret->loc = table.loc;
+            thunk.body.push_back(std::move(ret));
+        } else {
+            auto ret = std::make_unique<IrStmt>();
+            ret->kind = IrStmtKind::Return;
+            ret->loc = table.loc;
+            ret->expr = std::move(call);
+            thunk.body.push_back(std::move(ret));
+        }
+
+        return thunk;
+    }
+
+    void collect_trait_object_thunks() {
+        for (const auto& table : program_.trait_object_vtables) {
+            for (const auto& method : table.methods) {
+                trait_object_thunks_.push_back(make_trait_object_thunk(table, method));
+            }
+        }
+        for (const auto& thunk : trait_object_thunks_) {
+            ir_functions_[thunk.name] = &thunk;
         }
     }
 
@@ -4442,6 +4747,7 @@ private:
         for (const auto& fn : program_.functions) {
             if (should_emit_initially(fn)) enqueue_function(fn.name);
         }
+        for (const auto& thunk : trait_object_thunks_) enqueue_function(thunk.name);
     }
 
     void emit_queued_functions() {
@@ -4470,6 +4776,12 @@ private:
                 global_strings_.push_back(RawStringReference{
                     function_offsets_[fn.name] + string_ref.imm_offset,
                     string_ref.value
+                });
+            }
+            for (const auto& vtable_ref : fn.vtables) {
+                global_vtables_.push_back(RawVTableReference{
+                    function_offsets_[fn.name] + vtable_ref.imm_offset,
+                    vtable_ref.name
                 });
             }
         }
@@ -5154,6 +5466,8 @@ private:
     }
 
     void emit_static_data() {
+        vtable_pool_.emit_tables(code_.bytes, program_.trait_object_vtables);
+        vtable_pool_.patch_references(code_.bytes, global_vtables_);
         string_pool_.patch_references(code_.bytes, global_strings_);
     }
 
@@ -5169,6 +5483,18 @@ private:
             if (found == function_offsets_.end()) throw CompileError("backend cannot find function '" + address.name + "'");
             std::int64_t rel = static_cast<std::int64_t>(found->second) - static_cast<std::int64_t>(address.imm_offset + 4);
             code_.patch32(address.imm_offset, static_cast<std::int32_t>(rel));
+        }
+    }
+
+    void patch_vtable_entries() {
+        for (const auto& entry : vtable_pool_.entry_patches()) {
+            auto found = function_offsets_.find(entry.target_name);
+            if (found == function_offsets_.end()) {
+                throw CompileError("backend cannot find trait-object thunk '" + entry.target_name + "'");
+            }
+            std::int64_t rel = static_cast<std::int64_t>(found->second) -
+                               static_cast<std::int64_t>(entry.entry_offset);
+            code_.patch64(entry.entry_offset, rel);
         }
     }
 };

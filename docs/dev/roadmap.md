@@ -207,18 +207,34 @@ to `write_byte` without requiring the host C runtime. Line-oriented input still
 stays rejected on `--freestanding`; that boundary is now an input-buffer and
 owned-line policy problem, not a missing static string-literal storage path.
 
+The freestanding trait-object dispatch slice is complete for the same copyable
+non-borrow surface as the LLVM path and is no longer tracked as active
+Near-Term work. The raw backend now lowers `dyn Trait[...]` values as
+`{data ptr, vtable ptr}` aggregates, materializes concrete values into hidden
+stack storage for the erased data pointer, emits synthetic erased-receiver
+thunks, and writes per-image static vtables whose slots hold relative thunk
+targets. Concrete impls, generic impl specializations, multi-argument dyn
+calls, aggregate argument views such as `Vec[T]`, inherited object-safe
+supertrait methods, and dyn-to-supertrait vtable upcasts all execute on
+`--freestanding`. `own` and borrow-valued dyn data-pointer policy remains
+Medium-Term work.
+
 Active Near-Term work promoted from Medium-Term and Backend Work:
 
 1. [raw-c-imports-scalar] implement the first real raw/freestanding imported
    `extern "C"` path for scalar and raw-pointer signatures only. Keep
    aggregate, varargs, platform float-C ABI, and libc discovery outside this
    slice until the scalar link/call path is boring.
-2. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
-   vtable-slot dispatch in the raw backend, leaving `own` and borrow-valued dyn
-   data-pointer policy in Medium-Term.
-3. [raw-relocatable-objects] emit native relocatable object files for the raw
-    backend using the current Ari symbol table/export model. Treat C ABI
-    relocations and host linker integration as follow-ups to `[raw-c-imports-scalar]`.
+2. [raw-relocatable-objects] emit native relocatable object files for the raw
+   backend using the current Ari symbol table/export model. Treat C ABI
+   relocations and host linker integration as follow-ups to
+   `[raw-c-imports-scalar]`.
+3. [reference-params] carry explicit `ref` / `ref mut` binding modes through
+   function parameter patterns now that declaration-level local reference
+   patterns and value-mode function-parameter destructuring are stable. Keep
+   `&`/`&mut` shorthand and ownership-through-aggregate binding modes in
+   Medium-Term until the shared source-path and aggregate ownership policy is
+   ready.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -247,9 +263,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    need broader source-path and aggregate ownership policy.
    - [reference-shorthand] design `&` and `&mut` pattern shorthand after
      explicit `ref`/`ref mut` local patterns are stable
-   - [reference-params] carry explicit reference binding modes through function
-     parameter patterns once the parameter ABI and source-path contracts are
-     shared with local declarations
+   - [reference-params] explicit reference binding modes for function parameter
+     patterns moved to Near-Term `[reference-params]`; shorthand and
+     ownership-aware parameter binding modes remain here
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share
    same-name/same-type or-pattern bindings through the product pattern engine.
@@ -343,18 +359,18 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
     work shared with the Backend vectors item. The temporary compiler-known
     local API should not grow new convenience methods before that owned root
     layout exists.
-5. Extend trait-object dispatch beyond the concrete/generic-impl copyable LLVM
+5. Extend trait-object dispatch beyond the concrete/generic-impl copyable dyn
     subset.
     Explicit `dyn Trait[...]` object types, explicit `value as dyn Trait[...]`
     conversions, per-impl vtables, erased receiver thunks, and vtable-slot
     method calls are implemented for concrete and generic-impl-specialized,
-    copyable, non-borrow source values on the LLVM backend. Dyn-to-dyn upcasts
-    to the same trait or an inherited supertrait are implemented on LLVM by
-    preserving the data pointer and offsetting the vtable pointer; unrelated
-    dyn casts remain rejected.
+    copyable, non-borrow source values on both LLVM and the raw freestanding
+    backend. Dyn-to-dyn upcasts to the same trait or an inherited supertrait are
+    implemented by preserving the data pointer and offsetting the vtable
+    pointer; unrelated dyn casts remain rejected.
     - [ownership] define dyn object data-pointer ownership for `own` and
-      borrow-valued source types; copyable raw backend dispatch moved to
-      Near-Term `[raw-dyn-dispatch]`
+      borrow-valued source types, including the durable storage rule for dyn
+      objects that can outlive a hidden stack materialization
 
 ## Backend Work
 
