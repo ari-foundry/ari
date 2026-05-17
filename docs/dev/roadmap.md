@@ -157,32 +157,38 @@ direct C aggregate ABI values. Raw/freestanding imported C array calls stay
 with the aggregate follow-ups under Backend Work `[raw-c-imports]`, after the
 scalar/raw-pointer import path promoted below lands.
 
+Mixed scalar/pointer-shaped and nested aggregate-enum payload slots are fixed
+for the current aggregate enum ABI and are no longer tracked as active
+Near-Term work. When one payload position mixes ordinary payload-word values
+(`i64`/`u64`, smaller integers, bool, `string`, `ptr T`, `fn(...)`, or a
+one-word enum) with one nested aggregate enum type, Ari stores the outer slot
+as that nested aggregate enum layout. Payload-word cases zero-initialize the
+nested storage and write their value into the nested enum's first payload word
+lane; nested enum cases store the full nested value. This gives LLVM and the
+freestanding local/pointer-backed paths one precise layout rule without
+opening tuple, struct, vector, owned, or multiple-nested-enum payload storage.
+
 Active Near-Term work promoted from Medium-Term and Backend Work:
 
-1. [enum-mixed-slots] define and test the stored payload rule for aggregate
-   enum cases that mix homogeneous nested aggregate-enum slots with scalar or
-   pointer-shaped slots. The goal is a precise layout/materialization rule, not
-   broad owned/vector payload support.
-2. [enum-payload-pointers] once `[enum-mixed-slots]` fixes the payload layout
-   rule, lower direct payload field pointer access for aggregate enum payloads
-   on the LLVM path and the already-supported freestanding local/pointer-backed
-   value paths.
-3. [raw-enum-materialization] finish freestanding direct value materialization
+1. [enum-payload-pointers] lower direct payload field pointer access for
+   aggregate enum payloads on the LLVM path and the already-supported
+   freestanding local/pointer-backed value paths.
+2. [raw-enum-materialization] finish freestanding direct value materialization
    for multi-payload aggregate enums before defining their external FFI ABI.
-4. [aggregate-layout-service] finish sharing field-layout and aggregate layout
+3. [aggregate-layout-service] finish sharing field-layout and aggregate layout
    decisions between sema and both backends. This should be a broad layout
    service/refactor, not another syntax-specific sema helper.
-5. [raw-c-imports-scalar] implement the first real raw/freestanding imported
+4. [raw-c-imports-scalar] implement the first real raw/freestanding imported
    `extern "C"` path for scalar and raw-pointer signatures only. Keep
    aggregate, varargs, platform float-C ABI, and libc discovery outside this
    slice until the scalar link/call path is boring.
-6. [raw-runtime-strings] add freestanding runtime string storage sufficient for
+5. [raw-runtime-strings] add freestanding runtime string storage sufficient for
    string literals, byte writes, and the currently documented line-input
    rejection boundary without depending on the host C runtime.
-7. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
+6. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
    vtable-slot dispatch in the raw backend, leaving `own` and borrow-valued dyn
    data-pointer policy in Medium-Term.
-8. [raw-relocatable-objects] emit native relocatable object files for the raw
+7. [raw-relocatable-objects] emit native relocatable object files for the raw
     backend using the current Ari symbol table/export model. Treat C ABI
     relocations and host linker integration as follow-ups to `[raw-c-imports-scalar]`.
 
@@ -243,14 +249,16 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 2. Expand aggregate enum payload storage beyond the nested-enum MVP.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values, and
-   LLVM homogeneous nested aggregate-enum values today. Nested enum-case
-   subpatterns can inspect one-word enum payload slots on the LLVM and
-   freestanding local-value paths, and can inspect homogeneous nested
-   aggregate-enum payload slots on the LLVM and freestanding paths. The
-   freestanding backend can store/copy local and pointer-backed aggregate enum
-   values, including homogeneous nested aggregate-enum payload values and
-   direct enum-constructor stores through raw pointers. The stored payload
-   universe is still intentionally narrow.
+   nested aggregate-enum values today. A slot may also mix payload-word cases
+   with a single nested aggregate enum when that nested layout has a first
+   payload-word lane. Nested enum-case subpatterns can inspect one-word enum
+   payload slots on the LLVM and freestanding local-value paths, and can
+   inspect homogeneous or mixed-lane nested aggregate-enum payload slots on the
+   LLVM and freestanding paths. The freestanding backend can store/copy local
+   and pointer-backed aggregate enum values, including homogeneous or mixed
+   nested aggregate-enum payload values and direct enum-constructor stores
+   through raw pointers. The stored payload universe is still intentionally
+   narrow.
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
    - [repr-c-payloads] define C tagged-union layout and C header emission for

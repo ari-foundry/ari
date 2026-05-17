@@ -1,0 +1,30 @@
+enum Inner {
+  Empty,
+  Big(i64),
+  Pair(i64, i64),
+}
+
+enum Mixed {
+  Number(i64),
+  Wrapped(Inner),
+  Other,
+}
+
+fn score(value: Mixed) -> i64 {
+  return match value {
+    Number(number_amount) => number_amount,
+    Wrapped(Big(big_amount)) => big_amount + 10,
+    Wrapped(Pair(left, right)) => left + right + 20,
+    Wrapped(Empty) => 1,
+    Wrapped(_) => 0,
+    Other => 0,
+  };
+}
+
+fn main() -> i64 {
+  return score(Number(5)) +
+         score(Wrapped(Big(2))) +
+         score(Wrapped(Pair(1, 3))) +
+         score(Wrapped(Empty)) +
+         score(Other);
+}

@@ -1,6 +1,7 @@
 #include "codegen.hpp"
 
 #include "ari_builtin.hpp"
+#include "enum_payload_layout.hpp"
 #include "layout.hpp"
 #include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
@@ -641,6 +642,26 @@ private:
                            type_name(type) + " yet");
     }
 
+    int aggregate_enum_scalar_lane_local_offset(SourceLocation loc,
+                                                int slot_offset,
+                                                const IrType& slot_type) const {
+        const IrType* lane_type = enum_payload_slot_scalar_lane_type(slot_type);
+        if (!lane_type) {
+            throw CompileError(where(loc) + ": aggregate enum payload slot has no scalar storage lane");
+        }
+        return aggregate_lvalue_field_offset(loc, slot_offset, slot_type, 1);
+    }
+
+    int aggregate_enum_scalar_lane_pointer_offset(SourceLocation loc,
+                                                  int slot_offset,
+                                                  const IrType& slot_type) const {
+        const IrType* lane_type = enum_payload_slot_scalar_lane_type(slot_type);
+        if (!lane_type) {
+            throw CompileError(where(loc) + ": aggregate enum payload slot has no scalar storage lane");
+        }
+        return slot_offset + field_offset_bytes(loc, slot_type, 1);
+    }
+
     void emit_store_aggregate_enum_construct_to_offset(const IrType& target_type,
                                                        const IrExpr& value,
                                                        int target_offset) {
@@ -668,13 +689,22 @@ private:
                 throw CompileError(where(value.loc) + ": aggregate enum payload slot is missing during codegen");
             }
             int payload_offset = aggregate_lvalue_field_offset(value.loc, target_offset, target_type, field_index);
-            if (is_aggregate_type(target_type.field_types[field_index])) {
-                emit_store_value_to_offset(target_type.field_types[field_index], *value.args[i], payload_offset);
+            const IrType& slot_type = target_type.field_types[field_index];
+            if (enum_payload_slot_uses_scalar_lane(slot_type, value.args[i]->type)) {
+                const IrType* lane_type = enum_payload_slot_scalar_lane_type(slot_type);
+                int lane_offset = aggregate_enum_scalar_lane_local_offset(value.args[i]->loc, payload_offset, slot_type);
+                emit_expr(*value.args[i]);
+                emit_normalize_aggregate_enum_payload_value(value.args[i]->loc, value.args[i]->type);
+                emit_store_rax_to_local(lane_offset, *lane_type);
+                continue;
+            }
+            if (is_aggregate_type(slot_type)) {
+                emit_store_value_to_offset(slot_type, *value.args[i], payload_offset);
                 continue;
             }
             emit_expr(*value.args[i]);
             emit_normalize_aggregate_enum_payload_value(value.args[i]->loc, value.args[i]->type);
-            emit_store_rax_to_local(payload_offset, target_type.field_types[field_index]);
+            emit_store_rax_to_local(payload_offset, slot_type);
         }
     }
 
@@ -709,8 +739,21 @@ private:
                 throw CompileError(where(value.loc) + ": aggregate enum payload slot is missing during codegen");
             }
             int payload_offset = byte_offset + field_offset_bytes(value.loc, target_type, field_index);
-            if (is_aggregate_type(target_type.field_types[field_index])) {
-                emit_store_value_to_pointer_base(value.args[i]->loc, *value.args[i], target_type.field_types[field_index], payload_offset);
+            const IrType& slot_type = target_type.field_types[field_index];
+            if (enum_payload_slot_uses_scalar_lane(slot_type, value.args[i]->type)) {
+                const IrType* lane_type = enum_payload_slot_scalar_lane_type(slot_type);
+                int lane_offset = aggregate_enum_scalar_lane_pointer_offset(value.args[i]->loc, payload_offset, slot_type);
+                emit_push(Reg::RBX);
+                emit_expr(*value.args[i]);
+                emit_normalize_aggregate_enum_payload_value(value.args[i]->loc, value.args[i]->type);
+                emit_pop(Reg::RCX);
+                emit_mov_reg_reg(Reg::RBX, Reg::RCX);
+                emit_add_pointer_offset_reg(Reg::RCX, lane_offset);
+                emit_store_rax_to_ptr(Reg::RCX, *lane_type);
+                continue;
+            }
+            if (is_aggregate_type(slot_type)) {
+                emit_store_value_to_pointer_base(value.args[i]->loc, *value.args[i], slot_type, payload_offset);
                 continue;
             }
             emit_push(Reg::RBX);
@@ -719,7 +762,7 @@ private:
             emit_pop(Reg::RCX);
             emit_mov_reg_reg(Reg::RBX, Reg::RCX);
             emit_add_pointer_offset_reg(Reg::RCX, payload_offset);
-            emit_store_rax_to_ptr(Reg::RCX, target_type.field_types[field_index]);
+            emit_store_rax_to_ptr(Reg::RCX, slot_type);
         }
     }
 
@@ -2013,7 +2056,11 @@ private:
         patches.push_back(emit_jcc_placeholder(0x85));
 
         for (const auto& condition : arm.payload_literal_conditions) {
-            emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+            emit_load_aggregate_enum_payload_slot_as_type(condition.index,
+                                                          arm.loc,
+                                                          match_base_offset,
+                                                          enum_type,
+                                                          ari::enum_payload_storage_type(arm.loc));
             emit_mov_reg_imm64(Reg::RCX, aggregate_payload_literal_bits(condition));
             emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
             patches.push_back(emit_jcc_placeholder(0x85));
@@ -2024,13 +2071,21 @@ private:
                 throw CompileError(where(arm.loc) +
                                    ": freestanding backend does not lower nested aggregate enum payload test patterns yet");
             }
-            emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+            emit_load_aggregate_enum_payload_slot_as_type(condition.index,
+                                                          arm.loc,
+                                                          match_base_offset,
+                                                          enum_type,
+                                                          condition.type);
             emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.type);
             emit_mov_reg_imm64(Reg::RCX, payload_range_start_bits(condition));
             emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
             patches.push_back(emit_jcc_placeholder(condition.is_unsigned ? 0x82 : 0x8C));
 
-            emit_load_aggregate_enum_payload_slot(condition.index, arm.loc, match_base_offset, enum_type);
+            emit_load_aggregate_enum_payload_slot_as_type(condition.index,
+                                                          arm.loc,
+                                                          match_base_offset,
+                                                          enum_type,
+                                                          condition.type);
             emit_cast_aggregate_enum_payload_slot_to_type(arm.loc, condition.type);
             emit_mov_reg_imm64(Reg::RCX, payload_range_end_bits(condition));
             emit_cmp_reg_reg(Reg::RAX, Reg::RCX);
@@ -2099,6 +2154,23 @@ private:
         emit_load_rax_from_local(payload_offset, enum_type.field_types[field_index]);
     }
 
+    void emit_load_aggregate_enum_payload_slot_as_type(std::uint32_t payload_index,
+                                                       SourceLocation loc,
+                                                       int match_base_offset,
+                                                       const IrType& enum_type,
+                                                       const IrType& payload_type) {
+        std::size_t field_index = aggregate_enum_payload_field_index(loc, enum_type, payload_index);
+        const IrType& slot_type = enum_type.field_types[field_index];
+        int payload_offset = aggregate_lvalue_field_offset(loc, match_base_offset, enum_type, field_index);
+        if (enum_payload_slot_uses_scalar_lane(slot_type, payload_type)) {
+            const IrType* lane_type = enum_payload_slot_scalar_lane_type(slot_type);
+            int lane_offset = aggregate_enum_scalar_lane_local_offset(loc, payload_offset, slot_type);
+            emit_load_rax_from_local(lane_offset, *lane_type);
+            return;
+        }
+        emit_load_rax_from_local(payload_offset, slot_type);
+    }
+
     int aggregate_enum_payload_offset(SourceLocation loc,
                                       int match_base_offset,
                                       const IrType& enum_type,
@@ -2118,7 +2190,11 @@ private:
             return;
         }
 
-        emit_load_aggregate_enum_payload_slot(condition.index, loc, match_base_offset, enum_type);
+        emit_load_aggregate_enum_payload_slot_as_type(condition.index,
+                                                      loc,
+                                                      match_base_offset,
+                                                      enum_type,
+                                                      condition.enum_type);
         emit_mov_reg_imm64(Reg::RCX, 0xffffffffULL);
         emit_and_reg_reg(Reg::RAX, Reg::RCX);
     }
@@ -2142,7 +2218,11 @@ private:
         if (nested_payload_index != 0) {
             throw CompileError(where(loc) + ": compact nested enum payload slot is missing during codegen");
         }
-        emit_load_aggregate_enum_payload_slot(condition.index, loc, match_base_offset, enum_type);
+        emit_load_aggregate_enum_payload_slot_as_type(condition.index,
+                                                      loc,
+                                                      match_base_offset,
+                                                      enum_type,
+                                                      condition.enum_type);
         emit_shr_rax_imm8(32);
     }
 
@@ -2180,7 +2260,11 @@ private:
             copy_local_bytes_to_offset(loc, payload_offset, local_offset(loc, name), type);
             return;
         }
-        emit_load_aggregate_enum_payload_slot(payload_index, loc, match_base_offset, enum_type);
+        emit_load_aggregate_enum_payload_slot_as_type(payload_index,
+                                                      loc,
+                                                      match_base_offset,
+                                                      enum_type,
+                                                      type);
         emit_cast_aggregate_enum_payload_slot_to_type(loc, type);
         emit_store_rax_to_local(local_offset(loc, name), type);
     }

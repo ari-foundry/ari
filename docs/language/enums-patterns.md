@@ -109,16 +109,21 @@ backend switches that enum to an aggregate layout:
 
 Aggregate enum payload slots currently accept integer, bool, pointer-shaped
 values such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values,
-and nested aggregate-enum values when every case that uses the same payload
-slot stores the same nested enum type. Tuples, structs, vectors, owned values,
-and mixed scalar/nested-enum payload slots remain planned. The freestanding
-backend can store and copy local aggregate enum values, then match local values
-by tag with positional payload bindings, scalar payload literal/range tests,
-and one-level enum-case payload tests for compact or homogeneous nested
-aggregate enum payloads. Pointer-backed aggregate enum copies work through
-`ptr_load`, `ptr_store`, and `*pointer` when the pointer is a `ptr EnumType`;
-storing a direct enum constructor through those pointer helpers is also
-supported, including homogeneous nested aggregate-enum payload values.
+and nested aggregate-enum values. If one payload position mixes payload-word
+values with one nested aggregate enum type, the slot uses the nested enum
+layout. Payload-word cases zero-initialize that nested storage and write the
+payload word into the nested enum's first payload slot, while nested enum cases
+store the full nested value. This mixed-slot rule covers ordinary scalar,
+pointer-shaped, and one-word enum payloads, but it does not allow tuples,
+structs, vectors, owned values, or multiple different nested aggregate enum
+types to share a slot. The freestanding backend can store and copy local
+aggregate enum values, then match local values by tag with positional payload
+bindings, scalar payload literal/range tests, and one-level enum-case payload
+tests for compact, homogeneous nested, or mixed-lane nested aggregate enum
+payloads. Pointer-backed aggregate enum copies work through `ptr_load`,
+`ptr_store`, and `*pointer` when the pointer is a `ptr EnumType`; storing a
+direct enum constructor through those pointer helpers is also supported,
+including homogeneous or mixed nested aggregate-enum payload values.
 Direct freestanding calls can pass and return aggregate enum values through
 hidden pointer slots.
 

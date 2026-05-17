@@ -1,0 +1,44 @@
+extern "C" fn strlen(text: string) -> u64;
+
+enum Inner {
+  Empty,
+  Big(i64),
+  Pair(i64, i64),
+}
+
+enum Mixed {
+  Number(i64),
+  Text(string),
+  Raw(ptr i64),
+  Call(fn(i64) -> i64),
+  Wrapped(Inner),
+}
+
+fn add_seven(value: i64) -> i64 {
+  return value + 7;
+}
+
+fn score(value: Mixed, input: i64) -> i64 {
+  return match value {
+    Number(number_amount) => number_amount,
+    Text(text_value) => strlen(text_value) as i64,
+    Raw(pointer) => *pointer,
+    Call(op) => op(input),
+    Wrapped(Big(big_amount)) => big_amount + 10,
+    Wrapped(Pair(left, right)) => left + right + 20,
+    Wrapped(Empty) => 1,
+    Wrapped(_) => 0,
+  };
+}
+
+fn main() -> i64 {
+  var number = 5;
+  let pointer: ptr i64 = (ref mut number) as ptr i64;
+  return score(Number(5), 0) +
+         score(Text("ari"), 0) +
+         score(Raw(pointer), 0) +
+         score(Call(add_seven), 4) +
+         score(Wrapped(Big(2)), 0) +
+         score(Wrapped(Pair(1, 3)), 0) +
+         score(Wrapped(Empty), 0);
+}

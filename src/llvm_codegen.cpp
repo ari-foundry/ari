@@ -3,6 +3,7 @@
 
 #include "common.hpp"
 #include "control_flow_semantics.hpp"
+#include "enum_payload_layout.hpp"
 #include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "target.hpp"
@@ -2496,11 +2497,56 @@ private:
         return Value{slot_type, payload, value.ir_type.field_types[field_index]};
     }
 
+    Value emit_enum_payload_scalar_lane(SourceLocation loc, const Value& payload) {
+        const IrType* lane_type = enum_payload_slot_scalar_lane_type(payload.ir_type);
+        if (!lane_type) {
+            throw CompileError(where(loc) + ": enum payload slot has no scalar storage lane during LLVM lowering");
+        }
+        std::string lane = temp();
+        line("  " + lane + " = extractvalue " + payload.type + " " + payload.name + ", 1");
+        return Value{llvm_type(*lane_type), lane, *lane_type};
+    }
+
+    Value materialize_enum_payload_for_slot(SourceLocation loc, Value payload, const IrType& slot_type) {
+        if (!enum_payload_slot_uses_scalar_lane(slot_type, payload.ir_type)) {
+            return cast_value(payload, slot_type);
+        }
+
+        const IrType* lane_type = enum_payload_slot_scalar_lane_type(slot_type);
+        if (!lane_type) {
+            throw CompileError(where(loc) + ": enum payload slot has no scalar storage lane during LLVM lowering");
+        }
+        Value lane = cast_value(payload, *lane_type);
+        std::string slot_value = temp();
+        std::string slot_llvm_type = llvm_type(slot_type);
+        line("  " + slot_value + " = insertvalue " + slot_llvm_type + " zeroinitializer, " +
+             lane.type + " " + lane.name + ", 1");
+        return Value{slot_llvm_type, slot_value, slot_type};
+    }
+
+    Value cast_enum_payload_slot_to_type(SourceLocation loc, Value payload, const IrType& target) {
+        if (enum_payload_slot_uses_scalar_lane(payload.ir_type, target)) {
+            payload = emit_enum_payload_scalar_lane(loc, payload);
+        }
+        return cast_value(payload, target);
+    }
+
+    Value payload_literal_test_value(SourceLocation loc, Value payload) {
+        IrType target = enum_payload_storage_type(loc);
+        if (enum_payload_slot_uses_scalar_lane(payload.ir_type, target)) {
+            return emit_enum_payload_scalar_lane(loc, payload);
+        }
+        return payload;
+    }
+
     Value emit_compact_enum_payload_value(SourceLocation loc,
                                           const Value& value,
                                           std::uint32_t index,
                                           const IrType& enum_type) {
         Value payload = emit_enum_payload_slot(loc, value, index);
+        if (enum_payload_slot_uses_scalar_lane(payload.ir_type, enum_type)) {
+            payload = emit_enum_payload_scalar_lane(loc, payload);
+        }
         return Value{llvm_type(enum_type), payload.name, enum_type};
     }
 
@@ -2523,14 +2569,14 @@ private:
                           binding.compact_enum_payload_index
                       )
                     : emit_enum_payload_slot(arm.loc, enum_value, binding.index);
-                payload = cast_value(payload, binding.type);
+                payload = cast_enum_payload_slot_to_type(arm.loc, payload, binding.type);
                 line("  store " + payload.type + " " + payload.name + ", ptr " + local_slot(arm.loc, binding.name));
             }
             return;
         }
         if (!arm.has_payload_binding) return;
         Value payload = emit_enum_payload_slot(arm.loc, enum_value, arm.payload_index);
-        payload = cast_value(payload, arm.payload_type);
+        payload = cast_enum_payload_slot_to_type(arm.loc, payload, arm.payload_type);
         line("  store " + payload.type + " " + payload.name + ", ptr " + local_slot(arm.loc, arm.payload_name));
     }
 
@@ -2629,6 +2675,7 @@ private:
         std::string condition = cmp;
         for (const auto& payload_condition : arm.payload_literal_conditions) {
             Value payload = emit_enum_payload_slot(arm.loc, value, payload_condition.index);
+            payload = payload_literal_test_value(arm.loc, payload);
             std::string payload_cmp = temp();
             std::string both = temp();
             line("  " + payload_cmp + " = icmp eq " + payload.type + " " + payload.name + ", " +
@@ -2638,7 +2685,7 @@ private:
         }
         for (const auto& payload_condition : arm.payload_range_conditions) {
             Value payload = emit_enum_payload_slot(arm.loc, value, payload_condition.index);
-            payload = cast_value(payload, payload_condition.type);
+            payload = cast_enum_payload_slot_to_type(arm.loc, payload, payload_condition.type);
             std::string lower = temp();
             std::string upper = temp();
             std::string range = temp();
@@ -2668,7 +2715,7 @@ private:
             if (payload_condition.has_payload_literal) {
                 Value nested_payload = emit_enum_payload_slot(
                     arm.loc, nested, payload_condition.nested_payload_index);
-                nested_payload = cast_value(nested_payload, payload_condition.payload_type);
+                nested_payload = cast_enum_payload_slot_to_type(arm.loc, nested_payload, payload_condition.payload_type);
                 std::string payload_cmp = temp();
                 std::string both = temp();
                 line("  " + payload_cmp + " = icmp eq " + nested_payload.type + " " + nested_payload.name + ", " +
@@ -2680,7 +2727,7 @@ private:
             if (payload_condition.has_payload_range) {
                 Value nested_payload = emit_enum_payload_slot(
                     arm.loc, nested, payload_condition.nested_payload_index);
-                nested_payload = cast_value(nested_payload, payload_condition.payload_type);
+                nested_payload = cast_enum_payload_slot_to_type(arm.loc, nested_payload, payload_condition.payload_type);
                 std::string lower = temp();
                 std::string upper = temp();
                 std::string range = temp();
@@ -3018,7 +3065,7 @@ private:
             value = with_tag;
             for (std::size_t i = 0; i < expr.args.size(); ++i) {
                 IrType slot_type = expr.type.field_types.at(i + 1);
-                Value payload = cast_value(emit_expr(*expr.args[i]), slot_type);
+                Value payload = materialize_enum_payload_for_slot(expr.args[i]->loc, emit_expr(*expr.args[i]), slot_type);
                 std::string next = temp();
                 line("  " + next + " = insertvalue " + enum_type + " " + value +
                      ", " + payload.type + " " + payload.name + ", " + std::to_string(i + 1));

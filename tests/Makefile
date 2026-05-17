@@ -1225,11 +1225,22 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-direct-store.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/enum-mixed-nested-scalar-payload-slot.ari --emit-llvm $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll
+	grep -q "insertvalue { i32, i64, i64 } zeroinitializer" $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll
+	grep -q "extractvalue { i32, i64, i64 }" $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-mixed-nested-scalar-payload-slot.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.elf; $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.elf; code=$$?; test $$code -eq 42; fi
+	$(TARGET) --freestanding tests/ok/enum-mixed-nested-scalar-payload-slot.ari -o $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.raw
+	$(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.raw; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/enum-pointer-shaped-payloads.ari --emit-llvm $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "ptrtoint ptr" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "inttoptr i64" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "call i64 %" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-pointer-shaped-payloads.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-pointer-shaped-payloads.elf; $(BUILD_DIR)/match/enum-pointer-shaped-payloads.elf; code=$$?; test $$code -eq 25; fi
+	$(TARGET) tests/ok/enum-mixed-nested-pointer-payload-slot.ari --emit-llvm $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.ll
+	grep -q "insertvalue { i32, i64, i64 } zeroinitializer" $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.ll
+	grep -q "ptrtoint ptr" $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.ll
+	grep -q "inttoptr i64" $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-mixed-nested-pointer-payload-slot.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.elf; $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.elf; code=$$?; test $$code -eq 61; fi
 	$(TARGET) --freestanding tests/ok/enum-multi-payload.ari -o $(BUILD_DIR)/match/enum-multi-payload.raw
 	$(BUILD_DIR)/match/enum-multi-payload.raw; code=$$?; test $$code -eq 33
 	$(TARGET) tests/ok/constant-patterns.ari --emit-llvm $(BUILD_DIR)/match/constant-patterns.ll
@@ -1317,8 +1328,6 @@ check-match: $(TARGET)
 	grep -q "array constant has 1 element but type expects 2" $(BUILD_DIR)/match/constant-aggregate-array-arity.err
 	if $(TARGET) tests/errors/array-pattern-arity.ari -o $(BUILD_DIR)/match/array-pattern-arity.elf >$(BUILD_DIR)/match/array-pattern-arity.err 2>&1; then exit 1; fi
 	grep -q "array match pattern has 2 elements but value has 3" $(BUILD_DIR)/match/array-pattern-arity.err
-	if $(TARGET) tests/errors/enum-nested-aggregate-payload-mixed-slot.ari -o $(BUILD_DIR)/match/enum-nested-aggregate-payload-mixed-slot.elf >$(BUILD_DIR)/match/enum-nested-aggregate-payload-mixed-slot.err 2>&1; then exit 1; fi
-	grep -q "mixed nested aggregate enum payload slots need an explicit ABI rule" $(BUILD_DIR)/match/enum-nested-aggregate-payload-mixed-slot.err
 
 check-modules: $(TARGET)
 	mkdir -p $(BUILD_DIR)/modules

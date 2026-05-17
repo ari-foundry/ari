@@ -1,6 +1,7 @@
 #include "module_ir_replay.hpp"
 
 #include "common.hpp"
+#include "enum_payload_layout.hpp"
 #include "type_semantics.hpp"
 
 #include <algorithm>
@@ -130,32 +131,6 @@ IrType replay_type_ref(const TypeRef& ref,
                        const ReplayTypeContext& context,
                        const std::map<std::string, IrType>& substitutions);
 
-IrType replay_primitive_type(IrPrimitiveKind primitive, std::string name, SourceLocation loc = replay_loc()) {
-    IrType type;
-    type.qualifier = TypeQualifier::Value;
-    type.primitive = primitive;
-    type.name = std::move(name);
-    type.loc = loc;
-    return type;
-}
-
-IrType replay_integer_type(IrPrimitiveKind primitive, SourceLocation loc = replay_loc()) {
-    return replay_primitive_type(primitive, primitive_name(primitive), loc);
-}
-
-IrType enum_tag_storage_type(SourceLocation loc = replay_loc()) {
-    return replay_integer_type(IrPrimitiveKind::I32, loc);
-}
-
-IrType enum_payload_storage_type(SourceLocation loc = replay_loc()) {
-    return replay_integer_type(IrPrimitiveKind::U64, loc);
-}
-
-IrType enum_payload_slot_storage_type(SourceLocation loc, const IrType& payload_type) {
-    if (has_aggregate_enum_layout(payload_type)) return payload_type;
-    return enum_payload_storage_type(loc);
-}
-
 void apply_aggregate_shape(IrType& type, const ReplayTypeContext& context) {
     if (type.primitive != IrPrimitiveKind::Struct) return;
     const auto* found = find_shape_by_name(context.struct_shapes, type.name);
@@ -221,8 +196,15 @@ void apply_enum_shape(IrType& type, const ReplayTypeContext& context) {
             if (!payload_slot_set[i]) {
                 payload_slot_types[i] = std::move(slot_type);
                 payload_slot_set[i] = true;
-            } else if (!same_type(payload_slot_types[i], slot_type)) {
-                throw CompileError("IR summary enum type replay found mixed payload slot storage in " + type.name);
+            } else {
+                std::string error;
+                if (!merge_enum_payload_slot_storage_type(item.payloads[i].loc,
+                                                          payload_slot_types[i],
+                                                          payload,
+                                                          error)) {
+                    throw CompileError("IR summary enum type replay found unsupported mixed payload slot storage in " +
+                                       type.name + ": " + error);
+                }
             }
         }
     }

@@ -25,6 +25,9 @@ adding more narrow syntax-specific `*_semantics` siblings.
 - `type_semantics` for shared type predicates, `TypeRef` diagnostic spelling,
   raw-pointer type checks, literal range checks, and assignability/operand
   diagnostics
+- `enum_payload_layout` for aggregate enum tag/payload storage selection and
+  mixed scalar/pointer-shaped plus nested aggregate-enum slot merge rules shared
+  by sema, module IR replay, and both backends
 - `type_inference` for generic type-name lookup, substitution maps, generic
   pattern unification, substitution, and diagnostic-aware inference used by
   generic functions, impl methods, trait-qualified associated functions, and
