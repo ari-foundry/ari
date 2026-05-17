@@ -279,12 +279,16 @@ public:
         while (impl_method_index < impl_methods_to_lower_.size() ||
                specialization_index < pending_specializations_.size()) {
             while (impl_method_index < impl_methods_to_lower_.size()) {
-                const ImplMethodInfo& item = impl_methods_to_lower_[impl_method_index++];
-                ir.functions.push_back(check_function_as(*item.fn, item.lowered_name, item.substitutions));
+                ImplMethodInfo item = impl_methods_to_lower_[impl_method_index++];
+                IrFunction lowered = check_function_as(*item.fn, item.lowered_name, item.substitutions);
+                attach_impl_method_specialization(lowered, item);
+                ir.functions.push_back(std::move(lowered));
             }
             while (specialization_index < pending_specializations_.size()) {
-                const PendingSpecialization& item = pending_specializations_[specialization_index++];
-                ir.functions.push_back(check_function_as(*item.fn, item.name, item.substitutions));
+                PendingSpecialization item = pending_specializations_[specialization_index++];
+                IrFunction lowered = check_function_as(*item.fn, item.name, item.substitutions);
+                attach_generic_function_specialization(lowered, *item.fn, item.substitutions);
+                ir.functions.push_back(std::move(lowered));
             }
         }
         ir.trait_object_vtables = trait_object_vtables_;
@@ -16734,6 +16738,54 @@ private:
         return name;
     }
 
+    bool cached_ir_function_available(const std::string& lowered_name) const {
+        return options_.cached_ir_function_names.count(lowered_name) != 0;
+    }
+
+    static std::vector<IrSpecializationArg> specialization_args_in_order(
+        const std::vector<std::string>& names,
+        const std::map<std::string, IrType>& substitutions
+    ) {
+        std::vector<IrSpecializationArg> args;
+        args.reserve(names.size());
+        for (const auto& name : names) {
+            auto found = substitutions.find(name);
+            if (found == substitutions.end()) continue;
+            args.push_back(IrSpecializationArg{name, found->second});
+        }
+        return args;
+    }
+
+    static void attach_generic_function_specialization(
+        IrFunction& lowered,
+        const FunctionDecl& fn,
+        const std::map<std::string, IrType>& substitutions
+    ) {
+        if (fn.generics.empty()) return;
+        std::vector<std::string> names;
+        names.reserve(fn.generics.size());
+        for (const auto& generic : fn.generics) names.push_back(generic.name);
+        lowered.specialization.kind = "generic-function";
+        lowered.specialization.origin = fn.name;
+        lowered.specialization.args = specialization_args_in_order(names, substitutions);
+    }
+
+    static std::string impl_specialization_origin(const ImplMethodInfo& method) {
+        std::string origin = method.lowered_name;
+        std::size_t generic_suffix = origin.find("__G");
+        if (generic_suffix != std::string::npos) origin.erase(generic_suffix);
+        return origin;
+    }
+
+    static void attach_impl_method_specialization(IrFunction& lowered, const ImplMethodInfo& method) {
+        if (method.generic_names.empty() && method.method_generic_names.empty()) return;
+        std::vector<std::string> names = method.generic_names;
+        names.insert(names.end(), method.method_generic_names.begin(), method.method_generic_names.end());
+        lowered.specialization.kind = "impl-method";
+        lowered.specialization.origin = impl_specialization_origin(method);
+        lowered.specialization.args = specialization_args_in_order(names, method.substitutions);
+    }
+
     std::string generic_specialization_name(const FunctionDecl& fn, const std::map<std::string, IrType>& substitutions) const {
         std::string name = fn.name + "__G";
         for (const auto& generic : fn.generics) {
@@ -17594,11 +17646,7 @@ private:
                 borrow_mark);
         }
 
-        if (!queued_specializations_.count(specialized_name)) {
-            functions_.emplace(specialized_name, call_sig);
-            pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
-            queued_specializations_.insert(specialized_name);
-        }
+        queue_generic_function_specialization_with_sig(fn, specialized_name, call_sig, substitutions);
         return finish_tracked_call(
             expr.loc,
             expr.name,
@@ -17608,6 +17656,19 @@ private:
             borrow_mark);
     }
 
+    void queue_generic_function_specialization_with_sig(
+        const FunctionDecl& fn,
+        const std::string& specialized_name,
+        const FunctionSig& sig,
+        const std::map<std::string, IrType>& substitutions
+    ) {
+        functions_.emplace(specialized_name, sig);
+        if (queued_specializations_.count(specialized_name)) return;
+        queued_specializations_.insert(specialized_name);
+        if (cached_ir_function_available(specialized_name)) return;
+        pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
+    }
+
     void queue_generic_function_specialization(
         const FunctionDecl& fn,
         const std::string& specialized_name,
@@ -17615,8 +17676,6 @@ private:
         const IrType& result,
         const std::map<std::string, IrType>& substitutions
     ) {
-        if (queued_specializations_.count(specialized_name)) return;
-
         FunctionSig sig;
         sig.params = std::move(param_types);
         sig.result = result;
@@ -17627,9 +17686,7 @@ private:
         set_function_return_contracts(sig);
         apply_explicit_borrow_return_contract(sig, fn);
         set_function_borrow_return_path_hint(sig, fn);
-        functions_.emplace(specialized_name, std::move(sig));
-        pending_specializations_.push_back(PendingSpecialization{&fn, specialized_name, substitutions});
-        queued_specializations_.insert(specialized_name);
+        queue_generic_function_specialization_with_sig(fn, specialized_name, sig, substitutions);
     }
 
     IrExprPtr check_generic_function_ref_with_expected(
@@ -17708,10 +17765,10 @@ private:
     }
 
     void queue_impl_method_for_lowering(const ImplMethodInfo& method) {
-        if (!queued_impl_methods_.count(method.lowered_name)) {
-            impl_methods_to_lower_.push_back(method);
-            queued_impl_methods_.insert(method.lowered_name);
-        }
+        if (queued_impl_methods_.count(method.lowered_name)) return;
+        queued_impl_methods_.insert(method.lowered_name);
+        if (cached_ir_function_available(method.lowered_name)) return;
+        impl_methods_to_lower_.push_back(method);
     }
 
     IrExprPtr check_range_call(const Expr& expr,

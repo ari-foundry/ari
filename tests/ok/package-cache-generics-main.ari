@@ -1,0 +1,8 @@
+mod cache_generics;
+
+fn main() -> i64 {
+  let direct = cache_generics::identity(5);
+  let boxed: cache_generics::CacheBox[i64] = cache_generics::CacheBox::new<i64>(7);
+  let widened: cache_generics::CacheBox[i64] = boxed.replace<i64>(11);
+  direct + widened.take()
+}

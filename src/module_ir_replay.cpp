@@ -1079,6 +1079,15 @@ IrFunction replay_function(const ModuleCacheIrFunctionSummary& summary,
     fn.return_type = replay_type(summary.return_type, context);
     fn.shared_export = summary.shared_export;
     fn.loc = replay_loc();
+    fn.specialization.kind = summary.specialization_kind;
+    fn.specialization.origin = summary.specialization_origin;
+    fn.specialization.args.reserve(summary.specialization_args.size());
+    for (const auto& arg : summary.specialization_args) {
+        fn.specialization.args.push_back(IrSpecializationArg{
+            arg.name,
+            replay_type(arg.type, context),
+        });
+    }
     fn.params.reserve(summary.params.size());
     for (const auto& param : summary.params) {
         fn.params.push_back(IrParam{param.name, replay_type(param.type, context)});

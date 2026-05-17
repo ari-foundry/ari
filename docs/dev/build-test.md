@@ -160,7 +160,10 @@ body-shape and operand-tree sections, recheck their structural agreement, and
 replay cached dependency `IrFunction` bodies so cache-use LLVM output matches a
 fresh sema lowering byte-for-byte for summary-safe dependencies. Hash-valid
 replay payloads whose body or type shape no longer fits the current IR model are
-reported as module-cache IR replay diagnostics before backend emission. A
+reported as module-cache IR replay diagnostics before backend emission. The
+module-cache generics fixture also checks that generic free-function and
+generated impl-method specializations are recorded in the IR sidecar, replayed
+only once during cache use, and still execute correctly through the LLVM path. A
 focused layout guard checks cache-only local `Vec[T; capacity]` type metadata by
 requiring an explicit `vector-storage` IR layout descriptor, rejecting a
 tampered descriptor, and comparing fresh and cache-use LLVM storage shapes.

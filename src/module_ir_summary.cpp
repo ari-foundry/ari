@@ -82,6 +82,16 @@ void append_function_summary(std::string& out, const IrFunction& fn) {
     append_ir_summary_body_shape(out, fn.body);
     append_ir_summary_body_tree(out, fn.body);
     append_field(out, bool_key(fn.shared_export));
+    if (!fn.specialization.kind.empty()) {
+        out += "G;";
+        append_field(out, fn.specialization.kind);
+        append_field(out, fn.specialization.origin);
+        append_count(out, fn.specialization.args.size());
+        for (const auto& arg : fn.specialization.args) {
+            append_field(out, arg.name);
+            append_type(out, arg.type);
+        }
+    }
 }
 
 std::string ir_summary_payload(const std::vector<const IrFunction*>& functions) {
@@ -213,6 +223,23 @@ private:
                  std::to_string(function.body.statements.size()));
         }
         function.shared_export = read_bool_field("shared-export");
+        if (consume("G;")) {
+            function.specialization_kind = read_field();
+            function.specialization_origin = read_field();
+            std::uint64_t arg_count = read_count();
+            for (std::uint64_t i = 0; i < arg_count; ++i) {
+                ModuleCacheIrSpecializationArgSummary arg;
+                arg.name = read_field();
+                arg.type = read_field();
+                function.specialization_args.push_back(std::move(arg));
+            }
+            if (function.specialization_kind.empty()) {
+                fail("function '" + function.name + "' has an empty specialization kind");
+            }
+            if (function.specialization_origin.empty()) {
+                fail("function '" + function.name + "' has an empty specialization origin");
+            }
+        }
         result_.functions.push_back(std::move(function));
     }
 };

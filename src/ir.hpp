@@ -695,6 +695,17 @@ struct IrParam {
     IrType type;
 };
 
+struct IrSpecializationArg {
+    std::string name;
+    IrType type;
+};
+
+struct IrFunctionSpecialization {
+    std::string kind;
+    std::string origin;
+    std::vector<IrSpecializationArg> args;
+};
+
 struct IrCRecordField {
     std::string name;
     IrType type;
@@ -1221,6 +1232,7 @@ struct IrFunction {
     IrType return_type;
     std::vector<IrStmtPtr> body;
     SourceLocation loc;
+    IrFunctionSpecialization specialization;
     bool shared_export = false;
 };
 

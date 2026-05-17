@@ -1,0 +1,21 @@
+pub struct CacheBox[T] {
+  value: T,
+}
+
+pub fn identity[T](value: T) -> T {
+  value
+}
+
+pub impl[T] CacheBox[T] {
+  fn new(value: T) -> CacheBox[T] {
+    CacheBox { value: value }
+  }
+
+  fn replace[U](self, value: U) -> CacheBox[U] {
+    CacheBox { value: value }
+  }
+
+  fn take(self) -> T {
+    self.value
+  }
+}

@@ -163,6 +163,34 @@ void require_ir_summary_covers_ast_summary_functions(const Program& declarations
     }
 }
 
+void require_ir_summary_specializations_match_ast_summary(
+    const Program& declarations,
+    const std::vector<ModuleCacheIrFunctionSummary>& ir_functions,
+    const std::string& path) {
+    std::set<std::string> generic_function_names;
+    for (const auto& fn : declarations.functions) {
+        if (!fn.generics.empty()) generic_function_names.insert(fn.name);
+    }
+
+    for (const auto& fn : ir_functions) {
+        if (fn.specialization_kind.empty()) continue;
+        if (fn.specialization_kind == "generic-function") {
+            if (!generic_function_names.count(fn.specialization_origin)) {
+                throw CompileError("module cache IR summary for '" + path +
+                                   "' has generic specialization '" + fn.name +
+                                   "' for unknown generic function '" +
+                                   fn.specialization_origin + "'");
+            }
+            continue;
+        }
+        if (fn.specialization_kind == "impl-method") continue;
+        throw CompileError("module cache IR summary for '" + path +
+                           "' has unknown specialization kind '" +
+                           fn.specialization_kind + "' for lowered function '" +
+                           fn.name + "'");
+    }
+}
+
 bool can_load_module_cache_declarations_with_ir_functions(
     const Program& declarations,
     const std::vector<ModuleCacheIrFunctionSummary>& ir_functions) {
@@ -212,6 +240,7 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
                 if (ir_summary) {
                     ir_functions = materialize_module_cache_ir_summary_functions(*ir_summary, path);
                     require_ir_summary_covers_ast_summary_functions(declarations, ir_functions, path);
+                    require_ir_summary_specializations_match_ast_summary(declarations, ir_functions, path);
                 }
                 if (can_load_module_cache_ast_summary_declarations(declarations) ||
                     can_load_module_cache_declarations_with_ir_functions(declarations, ir_functions)) {

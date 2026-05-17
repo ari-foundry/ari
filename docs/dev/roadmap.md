@@ -12,19 +12,16 @@ item as 1.0 work unless the whole language release is being scoped.
 These are the next compiler-sized slices that should be possible without
 changing the long-term language contract.
 
-1. [ir-replay-generics] Replay generic free functions and generated impl
-   specializations from V0 IR sidecars once their stable specialization identity
-   is versioned. Keep trait-specialized replay and broader identity descriptor
-   expansion behind the same 0.x cache-version policy.
-2. [abi-aggregate-classification] Define non-local aggregate ABI
+1. [abi-aggregate-classification] Define non-local aggregate ABI
    classification for public tuples, arrays, structs, vectors, and aggregate
    enums. This should settle the policy needed before raw C aggregate imports,
    richer C headers, and library-owned collection handles grow further.
-3. Expand IR package-cache replay after `[ir-replay-generics]`.
+2. Expand IR package-cache replay beyond generic/impl specialization replay.
    The current V0 cache family should stay V0 until a deliberate cache version
-   bump is approved. The next useful work after generic/impl replay is
-   trait-specialized replay and richer identity-bearing descriptors.
-4. Keep sema extraction phase-oriented.
+   bump is approved. The next useful work is trait-specialized replay and
+   richer identity descriptors for any replayed lowering that still depends on
+   trait-resolution context.
+3. Keep sema extraction phase-oriented.
    Prefer broad modules such as type inference, pattern semantics, ownership
    state, zone provenance, and IR lowering helpers. Avoid splitting one tiny
    file per syntax feature.

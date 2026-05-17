@@ -1443,6 +1443,16 @@ check-modules: $(TARGET)
 	grep -q "13:indirect-call" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-indirect-call-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-indirect-call.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-indirect-call-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-indirect-call-cache.ll $(BUILD_DIR)/modules/package-cache-indirect-call-cache-use.ll
+	$(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-generics.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-generics-cache.ll
+	grep -q "16:generic-function" $(BUILD_DIR)/modules/package-cache-generics.aricache
+	grep -q "11:impl-method" $(BUILD_DIR)/modules/package-cache-generics.aricache
+	$(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-generics-cache-use.ll
+	test $$(grep -c 'define i64 @"_ARNv14cache_generics15identity__G_i64"' $(BUILD_DIR)/modules/package-cache-generics-cache-use.ll) -eq 1
+	test $$(grep -c 'define { i64 } @"_ARNv4impl29cache_generics__CacheBox_i64_8inherent3new"' $(BUILD_DIR)/modules/package-cache-generics-cache-use.ll) -eq 1
+	test $$(grep -c 'define { i64 } @"_ARNv4impl29cache_generics__CacheBox_i64_8inherent14replace__G_i64"' $(BUILD_DIR)/modules/package-cache-generics-cache-use.ll) -eq 1
+	test $$(grep -c 'define i64 @"_ARNv4impl29cache_generics__CacheBox_i64_8inherent4take"' $(BUILD_DIR)/modules/package-cache-generics-cache-use.ll) -eq 1
+	$(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics.aricache -o $(BUILD_DIR)/modules/package-cache-generics.elf
+	$(BUILD_DIR)/modules/package-cache-generics.elf; code=$$?; test $$code -eq 16
 	$(TARGET) -Itests/packages tests/ok/package-cache-host-literals-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-host-literals.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-host-literals-cache.ll
 	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-host-literals.aricache
 	grep -q "6:string;5:cache;" $(BUILD_DIR)/modules/package-cache-host-literals.aricache

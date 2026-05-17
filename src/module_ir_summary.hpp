@@ -15,6 +15,11 @@ struct ModuleCacheIrParamSummary {
     std::string type;
 };
 
+struct ModuleCacheIrSpecializationArgSummary {
+    std::string name;
+    std::string type;
+};
+
 struct ModuleCacheIrFunctionSummary {
     std::string name;
     std::string module_name;
@@ -23,6 +28,9 @@ struct ModuleCacheIrFunctionSummary {
     std::vector<ModuleCacheIrParamSummary> params;
     std::uint64_t body_statement_count = 0;
     ModuleCacheIrBodySummary body;
+    std::string specialization_kind;
+    std::string specialization_origin;
+    std::vector<ModuleCacheIrSpecializationArgSummary> specialization_args;
     bool shared_export = false;
 };
 
