@@ -27,8 +27,11 @@ changing the long-term language contract.
    before match/or-pattern lowering and reference-binding detection. Mutable
    enum payload reference bindings now work in enum statement/expression
    `match`, enum `if let`, and enum `while let` when the matched subject is an
-   addressable local, field, or indexed element. Finish mutable aggregate
-   control-flow reference bindings and ownership-aware binding modes through
+   addressable local, field, or indexed element. Mutable tuple, fixed-array,
+   and struct control-flow reference bindings now borrow the original
+   addressable subject while hidden product storage drives pattern tests.
+   Finish mutable runtime-sequence control-flow reference bindings for
+   `Slice[T]`/`Vec[T]` patterns and ownership-aware binding modes through
    aggregate, enum, slice, and vector patterns.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.

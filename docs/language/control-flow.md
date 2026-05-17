@@ -113,8 +113,11 @@ let aggregate_score = if let (Point { y: py, .. }, Rgb(red, false)) = (point, co
 Aggregate `if let` supports the same tuple, fixed array, named struct, and
 tuple-struct patterns as `match`. Or-pattern alternatives may bind the same
 names with the same types, so `(left, 0) | (0, left)` binds `left` from the
-alternative that actually matched. Irrefutable aggregate patterns such as
-`(x, y)` do not need `if let`; Ari rejects them when an `else` arm is present.
+alternative that actually matched. `ref mut` field patterns borrow the
+original matched tuple, fixed array, or struct when it is an addressable local,
+field, or indexed element; non-addressable temporaries remain value-only for
+mutable field borrows. Irrefutable aggregate patterns such as `(x, y)` do not
+need `if let`; Ari rejects them when an `else` arm is present.
 
 ## Block Expressions
 
@@ -182,9 +185,11 @@ bindings before the body borrows the payload. `ref mut` payload patterns borrow
 the original matched subject when it is an addressable local, field, or indexed
 element; non-addressable temporaries remain value-only for mutable payload
 borrows. Aggregate `while let` supports tuple, fixed array, named struct, and
-tuple-struct or-pattern alternatives. It
-re-evaluates the aggregate expression each iteration, executes the first
-matching alternative, and exits the loop when no alternative matches.
+tuple-struct or-pattern alternatives. `ref mut` field patterns borrow the
+original matched tuple, fixed array, or struct when it is addressable while the
+per-iteration hidden value drives the pattern tests. It re-evaluates the
+aggregate expression each iteration, executes the first matching alternative,
+and exits the loop when no alternative matches.
 
 Loops currently cannot change the ownership state of an outer binding. That
 rule is conservative until the checker can track loop invariants. Loop

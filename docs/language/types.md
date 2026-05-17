@@ -959,7 +959,11 @@ enum statement/expression `match` arms plus enum `if let` and `while let` arms,
 including same-name/same-type enum `while let` or-pattern alternatives. Mutable
 nested enum payload borrows are supported in enum statement/expression
 `match`, enum `if let`, and enum `while let` arms when the matched subject is
-an addressable local, field, or indexed element.
+an addressable local, field, or indexed element. Tuple, fixed-array, and struct
+control-flow patterns also support `ref mut` field borrows in statement and
+expression `match`, aggregate `if let`, and aggregate `while let` when the
+matched subject is addressable; runtime-sequence `Slice[T]`/`Vec[T]`
+control-flow mutable field borrows remain planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

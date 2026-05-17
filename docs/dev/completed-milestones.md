@@ -58,6 +58,11 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   addressable local, field, or indexed element. Control-flow lowering still
   uses hidden value storage for tag tests while the borrow binding points at
   the original subject.
+- Tuple, fixed-array, and struct statement/expression `match`, aggregate
+  `if let`, and aggregate `while let` can use `ref mut` field patterns when
+  the matched subject is an addressable local, field, or indexed element.
+  Pattern tests still use hidden product storage while mutable field borrows
+  point at the original subject.
 - Compact and otherwise non-addressable enum payload reference patterns are
   rejected with payload-specific value-only diagnostics instead of falling
   through to a vague layout error.

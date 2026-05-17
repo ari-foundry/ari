@@ -1,0 +1,12 @@
+fn make() -> (i64, i64) {
+  return (1, 2);
+}
+
+fn main() -> i64 {
+  match make() {
+    (ref mut value, _) => {
+      return 1;
+    }
+  }
+  return 0;
+}

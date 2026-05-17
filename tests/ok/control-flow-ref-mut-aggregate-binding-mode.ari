@@ -1,0 +1,65 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+struct BoxedPair {
+  mut pair: Pair,
+  mut extra: i64,
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  var tuple = (10, 20);
+  match tuple {
+    (ref mut left, _) => {
+      write(left, 5);
+    }
+  }
+  total = total + tuple.0;
+
+  var pair = Pair { left: 3, right: 4 };
+  if let Pair { left: ref mut selected, right: 4 } = pair {
+    write(selected, 7);
+  } else {
+    total = total + 100;
+  }
+  total = total + pair.left;
+
+  var boxed = BoxedPair {
+    pair: Pair { left: 1, right: 2 },
+    extra: 9,
+  };
+  let match_expr = match boxed {
+    BoxedPair { pair: Pair { left: ref mut inner, right: 2 }, extra: 9 } => {
+      write(inner, 8);
+      30
+    }
+    _ => 0,
+  };
+  total = total + match_expr + boxed.pair.left;
+
+  var other = Pair { left: 2, right: 0 };
+  let if_expr = if let Pair { left: ref mut value, right: 0 } = other {
+    write(value, 6);
+    40
+  } else {
+    0
+  };
+  total = total + if_expr + other.left;
+
+  var loop_pair = (0, 11);
+  while let (0, ref mut tail) = loop_pair {
+    write(tail, 9);
+    break;
+  }
+  total = total + loop_pair.1;
+
+  return total;
+}

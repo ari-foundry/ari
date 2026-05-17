@@ -166,7 +166,11 @@ binding modes are supported in enum `match`, enum `if let`, and enum
 `while let` patterns, including same-name/same-type enum `while let`
 or-pattern alternatives. Mutable enum payload reference bindings are supported
 in enum statement/expression `match`, enum `if let`, and enum `while let` when
-the matched subject is an addressable local, field, or indexed element.
+the matched subject is an addressable local, field, or indexed element. Tuple,
+fixed-array, and struct control-flow patterns also support mutable field
+reference bindings in statement/expression `match`, aggregate `if let`, and
+aggregate `while let` when the matched subject is addressable. Runtime-sequence
+`Slice[T]`/`Vec[T]` control-flow mutable element borrows remain planned.
 Function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

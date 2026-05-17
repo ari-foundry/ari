@@ -8135,11 +8135,12 @@ private:
                                                                   const std::string& source_name,
                                                                   const IrType& source_type,
                                                                   std::vector<IrStmtPtr>& statements,
-                                                                  bool mutable_binding = false) {
+                                                                  bool mutable_binding = false,
+                                                                  bool skip_reference_bindings = false) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
             lower_runtime_sequence_match_pattern_bindings_from_local(
-                effective_pattern, source_name, source_type, statements, mutable_binding);
+                effective_pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         switch (pattern.kind) {
@@ -8169,7 +8170,8 @@ private:
                     source_name,
                     source_type,
                     statements,
-                    mutable_binding
+                    mutable_binding,
+                    skip_reference_bindings
                 );
                 return;
             case PatternKind::Or:
@@ -8213,7 +8215,8 @@ private:
                     "runtime sequence pattern binding"
                 ),
                 statements,
-                mutable_binding
+                mutable_binding,
+                skip_reference_bindings
             );
         }
     }
@@ -12081,13 +12084,21 @@ private:
                                           const IrType& value_type,
                                           IrExprPtr value,
                                           std::vector<IrStmtPtr>& statements,
-                                          bool mutable_binding = false) {
+                                          bool mutable_binding = false,
+                                          bool skip_reference_bindings = false) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
-            lower_tuple_match_value_bindings(effective_pattern, value_type, std::move(value), statements, mutable_binding);
+            lower_tuple_match_value_bindings(
+                effective_pattern,
+                value_type,
+                std::move(value),
+                statements,
+                mutable_binding,
+                skip_reference_bindings);
             return;
         }
         if (pattern.binding_mode != BindingMode::Value) {
+            if (skip_reference_bindings) return;
             if (pattern.binding_mode == BindingMode::RefMut) {
                 fail(pattern.loc, "ref mut match binding requires an addressable local, field, or indexed element");
             }
@@ -12115,7 +12126,13 @@ private:
                     std::string nested_name = make_hidden_local("$pattern");
                     declare_local(pattern.loc, nested_name, value_type, false);
                     statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
-                    lower_struct_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
+                    lower_struct_match_pattern_bindings_from_local(
+                        pattern,
+                        nested_name,
+                        value_type,
+                        statements,
+                        mutable_binding,
+                        skip_reference_bindings);
                 }
                 return;
             case PatternKind::Binding:
@@ -12136,7 +12153,8 @@ private:
                     pattern.alias_name,
                     value_type,
                     statements,
-                    mutable_binding
+                    mutable_binding,
+                    skip_reference_bindings
                 );
                 return;
             }
@@ -12144,7 +12162,13 @@ private:
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
-                lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
+                lower_tuple_match_pattern_bindings_from_local(
+                    pattern,
+                    nested_name,
+                    value_type,
+                    statements,
+                    mutable_binding,
+                    skip_reference_bindings);
                 return;
             }
             case PatternKind::Array: {
@@ -12157,18 +12181,31 @@ private:
                         nested_name,
                         value_type,
                         statements,
-                        mutable_binding
+                        mutable_binding,
+                        skip_reference_bindings
                     );
                     return;
                 }
-                lower_tuple_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
+                lower_tuple_match_pattern_bindings_from_local(
+                    pattern,
+                    nested_name,
+                    value_type,
+                    statements,
+                    mutable_binding,
+                    skip_reference_bindings);
                 return;
             }
             case PatternKind::Struct: {
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
-                lower_struct_match_pattern_bindings_from_local(pattern, nested_name, value_type, statements, mutable_binding);
+                lower_struct_match_pattern_bindings_from_local(
+                    pattern,
+                    nested_name,
+                    value_type,
+                    statements,
+                    mutable_binding,
+                    skip_reference_bindings);
                 return;
             }
             case PatternKind::Or:
@@ -12184,28 +12221,32 @@ private:
                                                          const std::string& source_name,
                                                          const IrType& source_type,
                                                          std::vector<IrStmtPtr>& statements,
-                                                         bool mutable_binding = false) {
+                                                         bool mutable_binding = false,
+                                                         bool skip_reference_bindings = false) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
             lower_product_match_pattern_bindings_from_local(
-                effective_pattern, source_name, source_type, statements, mutable_binding);
+                effective_pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         if (is_runtime_sequence_pattern_subject(source_type)) {
             lower_runtime_sequence_match_pattern_bindings_from_local(
-                pattern, source_name, source_type, statements, mutable_binding);
+                pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         if (source_type.primitive == IrPrimitiveKind::Tuple) {
-            lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
+            lower_tuple_match_pattern_bindings_from_local(
+                pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         if (source_type.primitive == IrPrimitiveKind::Array) {
-            lower_tuple_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
+            lower_tuple_match_pattern_bindings_from_local(
+                pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         if (source_type.primitive == IrPrimitiveKind::Struct) {
-            lower_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
+            lower_struct_match_pattern_bindings_from_local(
+                pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         switch (pattern.kind) {
@@ -12236,7 +12277,8 @@ private:
                     source_name,
                     source_type,
                     statements,
-                    mutable_binding
+                    mutable_binding,
+                    skip_reference_bindings
                 );
                 return;
             case PatternKind::Or:
@@ -12251,11 +12293,12 @@ private:
                                                                     const std::string& source_name,
                                                                     const IrType& source_type,
                                                                     std::vector<IrStmtPtr>& statements,
-                                                                    bool mutable_binding = false) {
+                                                                    bool mutable_binding = false,
+                                                                    bool skip_reference_bindings = false) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
             lower_positional_product_match_pattern_bindings_from_local(
-                effective_pattern, source_name, source_type, statements, mutable_binding);
+                effective_pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         const std::vector<IrType>& fields = aggregate_field_types(source_type);
@@ -12266,6 +12309,7 @@ private:
             if (item.kind == PatternKind::Wildcard) continue;
             std::size_t field_index = tuple_pattern_field_index(pattern, fields.size(), i);
             if (item.binding_mode != BindingMode::Value) {
+                if (skip_reference_bindings) continue;
                 lower_reference_binding_pattern_from_path(
                     item,
                     source_name,
@@ -12281,7 +12325,8 @@ private:
                 fields[field_index],
                 make_tuple_index_expr(item.loc, source_name, source_type, field_index),
                 statements,
-                mutable_binding
+                mutable_binding,
+                skip_reference_bindings
             );
         }
     }
@@ -12290,16 +12335,17 @@ private:
                                                        const std::string& source_name,
                                                        const IrType& source_type,
                                                        std::vector<IrStmtPtr>& statements,
-                                                       bool mutable_binding = false) {
+                                                       bool mutable_binding = false,
+                                                       bool skip_reference_bindings = false) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
             lower_tuple_match_pattern_bindings_from_local(
-                effective_pattern, source_name, source_type, statements, mutable_binding);
+                effective_pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         if (is_runtime_sequence_pattern_subject(source_type)) {
             lower_runtime_sequence_match_pattern_bindings_from_local(
-                pattern, source_name, source_type, statements, mutable_binding);
+                pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         switch (pattern.kind) {
@@ -12326,7 +12372,8 @@ private:
                     source_name,
                     source_type,
                     statements,
-                    mutable_binding
+                    mutable_binding,
+                    skip_reference_bindings
                 );
                 return;
             case PatternKind::Or:
@@ -12337,7 +12384,8 @@ private:
             case PatternKind::EnumCase:
             case PatternKind::Struct:
                 if (source_type.primitive == IrPrimitiveKind::Struct) {
-                    lower_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
+                    lower_struct_match_pattern_bindings_from_local(
+                        pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
                     return;
                 }
                 return;
@@ -12353,18 +12401,20 @@ private:
             fail(pattern.loc, std::string(pattern_name) + " match pattern requires a " +
                               pattern_name + " value, got " + type_name(source_type));
         }
-        lower_positional_product_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
+        lower_positional_product_match_pattern_bindings_from_local(
+            pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
     }
 
     void lower_tuple_struct_match_pattern_bindings_from_local(const Pattern& pattern,
                                                               const std::string& source_name,
                                                               const IrType& source_type,
                                                               std::vector<IrStmtPtr>& statements,
-                                                              bool mutable_binding = false) {
+                                                              bool mutable_binding = false,
+                                                              bool skip_reference_bindings = false) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
             lower_tuple_struct_match_pattern_bindings_from_local(
-                effective_pattern, source_name, source_type, statements, mutable_binding);
+                effective_pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         const StructInfo& info = require_struct_match_pattern_type(pattern.loc, pattern.case_name, source_type);
@@ -12377,7 +12427,8 @@ private:
         const std::vector<IrType>& fields = aggregate_field_types(source_type);
         const Pattern& payload = *pattern.payload_pattern;
         if (payload.kind == PatternKind::Tuple) {
-            lower_positional_product_match_pattern_bindings_from_local(payload, source_name, source_type, statements, mutable_binding);
+            lower_positional_product_match_pattern_bindings_from_local(
+                payload, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         if (fields.size() != 1) {
@@ -12386,6 +12437,7 @@ private:
                      std::to_string(fields.size()));
         }
         if (payload.binding_mode != BindingMode::Value) {
+            if (skip_reference_bindings) return;
             lower_reference_binding_pattern_from_path(
                 payload,
                 source_name,
@@ -12401,7 +12453,8 @@ private:
             fields[0],
             make_tuple_index_expr(payload.loc, source_name, source_type, 0),
             statements,
-            mutable_binding
+            mutable_binding,
+            skip_reference_bindings
         );
     }
 
@@ -12409,11 +12462,12 @@ private:
                                                         const std::string& source_name,
                                                         const IrType& source_type,
                                                         std::vector<IrStmtPtr>& statements,
-                                                        bool mutable_binding = false) {
+                                                        bool mutable_binding = false,
+                                                        bool skip_reference_bindings = false) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
             lower_struct_match_pattern_bindings_from_local(
-                effective_pattern, source_name, source_type, statements, mutable_binding);
+                effective_pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
             return;
         }
         switch (pattern.kind) {
@@ -12440,7 +12494,8 @@ private:
                     source_name,
                     source_type,
                     statements,
-                    mutable_binding
+                    mutable_binding,
+                    skip_reference_bindings
                 );
                 return;
             case PatternKind::Or:
@@ -12449,7 +12504,8 @@ private:
                 }
                 return;
             case PatternKind::EnumCase:
-                lower_tuple_struct_match_pattern_bindings_from_local(pattern, source_name, source_type, statements, mutable_binding);
+                lower_tuple_struct_match_pattern_bindings_from_local(
+                    pattern, source_name, source_type, statements, mutable_binding, skip_reference_bindings);
                 return;
             case PatternKind::Tuple:
                 fail(pattern.loc, "tuple patterns cannot match named struct values; use the tuple-struct name");
@@ -12475,6 +12531,7 @@ private:
             }
             std::size_t field_index = struct_field_index(pattern.elements[i].loc, source_type, field_name);
             if (pattern.elements[i].binding_mode != BindingMode::Value) {
+                if (skip_reference_bindings) continue;
                 lower_reference_binding_pattern_from_path(
                     pattern.elements[i],
                     source_name,
@@ -12494,7 +12551,8 @@ private:
                 source_type.field_types[field_index],
                 make_tuple_index_expr(pattern.elements[i].loc, source_name, source_type, field_index),
                 statements,
-                mutable_binding
+                mutable_binding,
+                skip_reference_bindings
             );
         }
     }
@@ -12738,6 +12796,16 @@ private:
     Flow check_aggregate_if_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
+        const bool needs_mutable_reference_pattern_bindings =
+            pattern_needs_mutable_reference_binding(condition_pattern);
+        std::optional<ReferenceBindingSubject> reference_subject;
+        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+            reference_subject = tracked_reference_binding_subject(
+                require_addressable_control_flow_ref_mut_subject(
+                    stmt.loc,
+                    *stmt.condition,
+                    "if-let"));
+        }
         lowered.kind = IrStmtKind::Block;
 
         std::string subject_name = make_hidden_local(
@@ -12786,7 +12854,22 @@ private:
             restore_states(branch_input);
             push_scope();
             local_scopes_.set_reusable_pattern_bindings(i == 0 ? std::set<std::string>{} : reusable_names);
-            lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
+            lower_product_match_pattern_bindings_from_local(
+                pattern,
+                subject_name,
+                subject_type,
+                lowered_arm.body,
+                false,
+                reference_subject.has_value());
+            if (reference_subject && expanded_pattern_has_reference_binding_mode(pattern)) {
+                lower_explicit_reference_bindings_from_path(
+                    pattern,
+                    reference_subject->base_name,
+                    reference_subject->base_type,
+                    reference_subject->source_type,
+                    reference_subject->path,
+                    lowered_arm.body);
+            }
             local_scopes_.clear_reusable_pattern_bindings();
             CheckedStatements then_checked = check_statements(stmt_then_body(stmt), false);
             for (auto& statement : then_checked.statements) {
@@ -12897,6 +12980,16 @@ private:
         if (!is_aggregate_type(subject_type) && !runtime_sequence_subject) {
             fail(stmt.loc, "aggregate match requires a tuple, array, or struct value, got " + type_name(subject_type));
         }
+        const bool needs_mutable_reference_pattern_bindings =
+            stmt_match_arms_need_mutable_reference_binding(stmt_match_arms(stmt));
+        std::optional<ReferenceBindingSubject> reference_subject;
+        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+            reference_subject = tracked_reference_binding_subject(
+                require_addressable_control_flow_ref_mut_subject(
+                    stmt.loc,
+                    *stmt.match_value,
+                    "match"));
+        }
 
         lowered.kind = IrStmtKind::Block;
         std::string subject_name = make_hidden_local(
@@ -12949,7 +13042,22 @@ private:
                 restore_states(branch_input);
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
-                lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
+                lower_product_match_pattern_bindings_from_local(
+                    pattern,
+                    subject_name,
+                    subject_type,
+                    lowered_arm.body,
+                    false,
+                    reference_subject.has_value());
+                if (reference_subject && expanded_pattern_has_reference_binding_mode(pattern)) {
+                    lower_explicit_reference_bindings_from_path(
+                        pattern,
+                        reference_subject->base_name,
+                        reference_subject->base_type,
+                        reference_subject->source_type,
+                        reference_subject->path,
+                        lowered_arm.body);
+                }
                 local_scopes_.clear_reusable_pattern_bindings();
                 CheckedStatements checked = check_statements(arm.body, false);
                 for (auto& statement : checked.statements) {
@@ -13642,6 +13750,7 @@ private:
         const std::set<std::string>& reusable_names,
         const std::string& subject_name,
         const IrType& subject_type,
+        const ReferenceBindingSubject* reference_subject,
         std::vector<IrStmtPtr>& lowered_body
     ) {
         push_scope();
@@ -13651,8 +13760,19 @@ private:
             alternative,
             subject_name,
             subject_type,
-            lowered_body
+            lowered_body,
+            false,
+            reference_subject != nullptr
         );
+        if (reference_subject && expanded_pattern_has_reference_binding_mode(alternative)) {
+            lower_explicit_reference_bindings_from_path(
+                alternative,
+                reference_subject->base_name,
+                reference_subject->base_type,
+                reference_subject->source_type,
+                reference_subject->path,
+                lowered_body);
+        }
         local_scopes_.clear_reusable_pattern_bindings();
 
         CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
@@ -13675,6 +13795,7 @@ private:
         const std::set<std::string>& reusable_names,
         const std::string& subject_name,
         const IrType& subject_type,
+        const ReferenceBindingSubject* reference_subject,
         const LoopInfo& loop,
         const StateSnapshot& recheck_state,
         const LocalScopeStack::NameState& name_state
@@ -13702,6 +13823,7 @@ private:
                 reusable_names,
                 subject_name,
                 subject_type,
+                reference_subject,
                 ignored_body
             );
         }
@@ -13718,6 +13840,16 @@ private:
     void check_aggregate_while_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
+        const bool needs_mutable_reference_pattern_bindings =
+            pattern_needs_mutable_reference_binding(condition_pattern);
+        std::optional<ReferenceBindingSubject> reference_subject;
+        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+            reference_subject = tracked_reference_binding_subject(
+                require_addressable_control_flow_ref_mut_subject(
+                    stmt.loc,
+                    *stmt.condition,
+                    "while-let"));
+        }
         lowered.kind = IrStmtKind::While;
         const std::string& label = stmt_label(stmt);
         set_ir_stmt_label(lowered, label);
@@ -13772,6 +13904,7 @@ private:
                 reusable_names,
                 subject_name,
                 subject_type,
+                reference_subject ? &*reference_subject : nullptr,
                 checked_arms[i].body
             );
 
@@ -13836,6 +13969,7 @@ private:
                     reusable_names,
                     subject_name,
                     subject_type,
+                    reference_subject ? &*reference_subject : nullptr,
                     loop_state,
                     next_iteration_state,
                     loop_name_state
@@ -15897,6 +16031,16 @@ private:
         if (!is_aggregate_type(subject_type) && !runtime_sequence_subject) {
             fail(expr.loc, "aggregate match requires a tuple, array, or struct value, got " + type_name(subject_type));
         }
+        const bool needs_mutable_reference_pattern_bindings =
+            expr_match_arms_need_mutable_reference_binding(expr_match_arms(expr));
+        std::optional<ReferenceBindingSubject> reference_subject;
+        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+            reference_subject = tracked_reference_binding_subject(
+                require_addressable_control_flow_ref_mut_subject(
+                    expr.loc,
+                    *expr_match_value(expr),
+                    "match"));
+        }
 
         lowered = make_ir_block_expr(expr.loc);
 
@@ -15957,7 +16101,22 @@ private:
                 restore_states(branch_input);
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
-                lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
+                lower_product_match_pattern_bindings_from_local(
+                    pattern,
+                    subject_name,
+                    subject_type,
+                    lowered_arm.body,
+                    false,
+                    reference_subject.has_value());
+                if (reference_subject && expanded_pattern_has_reference_binding_mode(pattern)) {
+                    lower_explicit_reference_bindings_from_path(
+                        pattern,
+                        reference_subject->base_name,
+                        reference_subject->base_type,
+                        reference_subject->source_type,
+                        reference_subject->path,
+                        lowered_arm.body);
+                }
                 local_scopes_.clear_reusable_pattern_bindings();
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 std::size_t borrow_mark = temporary_borrow_mark();
@@ -16751,6 +16910,16 @@ private:
     ) {
         IrType subject_type = subject->type;
         const Pattern& condition_pattern = expanded_pattern(*expr_if_condition_pattern(expr));
+        const bool needs_mutable_reference_pattern_bindings =
+            pattern_needs_mutable_reference_binding(condition_pattern);
+        std::optional<ReferenceBindingSubject> reference_subject;
+        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+            reference_subject = tracked_reference_binding_subject(
+                require_addressable_control_flow_ref_mut_subject(
+                    expr.loc,
+                    *expr_if_condition(expr),
+                    "if-let"));
+        }
         lowered = make_ir_block_expr(expr.loc);
 
         std::string subject_name = make_hidden_local(
@@ -16807,7 +16976,22 @@ private:
             restore_states(branch_input);
             push_scope();
             local_scopes_.set_reusable_pattern_bindings(i == 0 ? std::set<std::string>{} : reusable_names);
-            lower_product_match_pattern_bindings_from_local(pattern, subject_name, subject_type, lowered_arm.body);
+            lower_product_match_pattern_bindings_from_local(
+                pattern,
+                subject_name,
+                subject_type,
+                lowered_arm.body,
+                false,
+                reference_subject.has_value());
+            if (reference_subject && expanded_pattern_has_reference_binding_mode(pattern)) {
+                lower_explicit_reference_bindings_from_path(
+                    pattern,
+                    reference_subject->base_name,
+                    reference_subject->base_type,
+                    reference_subject->source_type,
+                    reference_subject->path,
+                    lowered_arm.body);
+            }
             local_scopes_.clear_reusable_pattern_bindings();
             CheckedStatements then_checked = check_statements(expr_if_then_body(expr), false);
             if (then_checked.flow == Flow::Returns) {
