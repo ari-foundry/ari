@@ -825,9 +825,11 @@ sequence patterns can also destructure tuple, fixed-array, and struct elements:
 let ref [(left, right), ..] = pair_view
 ```
 
-`ref mut` nested dynamic sequence subpatterns still wait for a more precise
-dynamic borrow-path model; use plain element bindings for mutable sequence
-element borrows.
+`ref mut` sequence patterns use the same per-element borrow paths for nested
+tuple, fixed-array, and struct subpatterns. Mutable borrows such as
+`let ref mut [(left, right), .., (tail_left, tail_right)] = pair_view` are
+accepted when the runtime length guard proves the selected elements are
+distinct.
 
 ## Ownership-Qualified Types
 
@@ -949,9 +951,10 @@ slice supports name, wildcard, tuple, fixed-array, and struct local patterns
 over tracked local places. Function parameter patterns support the same
 `ref PATTERN: T` / `ref mut PATTERN: T` and `&PATTERN: T` / `&mut PATTERN: T`
 forms over hidden function-entry parameter storage. Runtime sequence rest
-aliases and addressable aggregate enum payload slots can be borrowed by
-reference. Compact/non-addressable enum payloads and nested reference binding
-modes inside match/control-flow subpatterns remain planned.
+aliases, nested runtime-sequence element subpatterns, and addressable aggregate
+enum payload slots can be borrowed by reference. Compact/non-addressable enum
+payloads and nested reference binding modes inside match/control-flow
+subpatterns remain planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

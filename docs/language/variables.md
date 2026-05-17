@@ -157,15 +157,15 @@ immutable borrow bindings, matching `let unique = ref mut cell`. Reference
 patterns over direct local `Vec[T]` storage and `Slice[T]` view bindings use
 the same runtime length guard as value sequence patterns. Prefix elements
 before `..` and plain named suffix elements after `..` can be borrowed by
-reference, and `name @ ..` binds the skipped range as a `Slice[T]` view. `Vec`
-element borrows keep precise element paths; `Slice` element borrows keep a
-conservative borrow of the view binding because the view is already a borrowed
-pointer/length pair. Destructuring of ownership-carrying aggregates, nested
-`ref mut` dynamic sequence element subpatterns, and nested reference binding
-modes inside match/control-flow patterns remain planned. Function parameter
-patterns support `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and
-`&mut PATTERN: T` for the same name, wildcard, tuple, fixed-array, struct, and
-`Slice[T]` runtime-sequence shapes. Enum-case reference patterns work when the
+reference, and `name @ ..` binds the skipped range as a `Slice[T]` view.
+Runtime-sequence element borrows keep distinct element paths, including nested
+tuple, fixed-array, and struct subpatterns such as
+`let ref mut [(left, right), .., (tail_left, tail_right)] = view`. Destructuring
+of ownership-carrying aggregates and nested reference binding modes inside
+match/control-flow patterns remain planned. Function parameter patterns support
+`ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
+for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`
+runtime-sequence shapes. Enum-case reference patterns work when the
 matched enum stores the payload in an addressable aggregate slot, such as an
 `i64`/`u64` payload-word slot or a nested aggregate-enum payload slot. Compact
 small payloads remain value-only.

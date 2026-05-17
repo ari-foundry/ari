@@ -39,6 +39,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Shared `Slice[T]` reference sequence patterns can destructure tuple,
   fixed-array, and struct elements through the same access-path helper used by
   local aggregate reference patterns.
+- Dynamic runtime-sequence reference patterns keep distinct element borrow paths
+  for nested tuple, fixed-array, and struct subpatterns, so `ref mut` nested
+  element borrows can coexist when the sequence length guard proves the matched
+  elements are distinct.
 - Enum-case reference patterns borrow addressable aggregate enum payload slots,
   including 64-bit payload-word slots and nested aggregate-enum payload slots.
 - Function parameter reference patterns lower as function-entry borrows from

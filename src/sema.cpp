@@ -6669,6 +6669,31 @@ private:
 
     using ReferenceAccessBuilder = std::function<IrExprPtr(SourceLocation, const std::string&)>;
 
+    std::string runtime_sequence_reference_element_borrow_path(std::string element_path,
+                                                              const IrType& source_type) const {
+        if (is_prelude_slice_type(value_qualified_type(source_type))) return "0." + element_path;
+        return element_path;
+    }
+
+    std::string runtime_sequence_reference_static_borrow_path(std::size_t pattern_index,
+                                                             const IrType& source_type) const {
+        return runtime_sequence_reference_element_borrow_path(
+            "$seq" + std::to_string(pattern_index),
+            source_type);
+    }
+
+    std::string runtime_sequence_reference_borrow_path(const Pattern& sequence_pattern,
+                                                       std::size_t pattern_index,
+                                                       const IrType& source_type) const {
+        std::string element_path;
+        if (!sequence_pattern.has_rest || pattern_index < sequence_pattern.rest_index) {
+            element_path = "$seq" + std::to_string(pattern_index);
+        } else {
+            element_path = "$seq_tail" + std::to_string(pattern_index - sequence_pattern.rest_index);
+        }
+        return runtime_sequence_reference_element_borrow_path(std::move(element_path), source_type);
+    }
+
     void lower_reference_runtime_sequence_dynamic_element_binding(const Pattern& item,
                                                                   const Pattern& sequence_pattern,
                                                                   std::size_t pattern_index,
@@ -6702,6 +6727,7 @@ private:
             base_name,
             element_type,
             "",
+            runtime_sequence_reference_borrow_path(sequence_pattern, pattern_index, source_type),
             mutable_borrow,
             make_access,
             statements);
@@ -6711,6 +6737,7 @@ private:
                                                           const std::string& base_name,
                                                           const IrType& source_type,
                                                           const std::string& access_path,
+                                                          const std::string& borrow_path,
                                                           bool mutable_borrow,
                                                           const ReferenceAccessBuilder& make_access,
                                                           std::vector<IrStmtPtr>& statements,
@@ -6725,6 +6752,7 @@ private:
                 base_name,
                 source_type,
                 access_path,
+                borrow_path,
                 mutable_borrow,
                 make_access,
                 statements,
@@ -6733,11 +6761,6 @@ private:
                 final_field_label,
                 final_container_name);
             return;
-        }
-
-        if (mutable_borrow && pattern.kind != PatternKind::Wildcard && pattern.kind != PatternKind::Binding) {
-            fail(pattern.loc,
-                 "nested runtime sequence reference subpatterns with ref mut need precise dynamic borrow paths");
         }
 
         switch (pattern.kind) {
@@ -6749,7 +6772,7 @@ private:
                     pattern,
                     base_name,
                     source_type,
-                    "",
+                    borrow_path,
                     mutable_borrow,
                     std::move(access),
                     statements,
@@ -6806,6 +6829,7 @@ private:
                         base_name,
                         fields[field_index],
                         local_owned_field_path(access_path, field_index),
+                        local_owned_field_path(borrow_path, field_index),
                         mutable_borrow,
                         make_access,
                         statements);
@@ -6850,6 +6874,7 @@ private:
                         base_name,
                         shape_type.field_types[field_index],
                         local_owned_field_path(access_path, field_index),
+                        local_owned_field_path(borrow_path, field_index),
                         mutable_borrow,
                         make_access,
                         statements,
@@ -6905,6 +6930,7 @@ private:
             base_name,
             element_type,
             "",
+            runtime_sequence_reference_static_borrow_path(pattern_index, source_type),
             mutable_borrow,
             make_access,
             statements);
