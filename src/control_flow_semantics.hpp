@@ -38,5 +38,10 @@ bool is_diverging_builtin_symbol(const std::string& symbol);
 bool is_diverging_builtin_source_name(const std::string& source_name);
 bool is_diverging_builtin_call(const IrExpr& expr);
 bool is_diverging_control_flow_value(const IrExpr& expr);
+bool enum_match_arm_has_refutable_payload_condition(const IrMatchArm& arm);
+bool enum_construct_matches_arm_without_refutable_payload_conditions(
+    const IrExpr& match_value,
+    const std::vector<IrMatchArm>& pattern_arms
+);
 
 } // namespace ari

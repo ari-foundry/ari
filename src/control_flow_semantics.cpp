@@ -94,4 +94,28 @@ bool is_diverging_control_flow_value(const IrExpr& expr) {
     return false;
 }
 
+bool enum_match_arm_has_refutable_payload_condition(const IrMatchArm& arm) {
+    return arm.has_literal ||
+           arm.has_range ||
+           !arm.payload_literal_conditions.empty() ||
+           !arm.payload_range_conditions.empty() ||
+           !arm.payload_enum_conditions.empty();
+}
+
+bool enum_construct_matches_arm_without_refutable_payload_conditions(
+    const IrExpr& match_value,
+    const std::vector<IrMatchArm>& pattern_arms
+) {
+    if (match_value.kind != IrExprKind::EnumConstruct) return false;
+    const std::string& constructed_case = ir_expr_case_name(match_value);
+    if (constructed_case.empty()) return false;
+    for (const auto& arm : pattern_arms) {
+        if (arm.case_name == constructed_case &&
+            !enum_match_arm_has_refutable_payload_condition(arm)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace ari

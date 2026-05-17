@@ -11708,28 +11708,22 @@ private:
         return Flow::Continues;
     }
 
-    static bool enum_match_arm_has_refutable_payload_condition(const IrMatchArm& arm) {
-        return arm.has_literal ||
-               arm.has_range ||
-               !arm.payload_literal_conditions.empty() ||
-               !arm.payload_range_conditions.empty() ||
-               !arm.payload_enum_conditions.empty();
+    const IrExpr* known_enum_construct_for_while_let_match_value(const IrExpr& match_value) {
+        if (match_value.kind == IrExprKind::EnumConstruct) return &match_value;
+        if (match_value.kind != IrExprKind::Local) return nullptr;
+
+        LocalInfo* local = find_local_slot(ir_expr_name(match_value));
+        if (!local || local->mutable_binding || !local->ir_init_expr) return nullptr;
+        if (local->ir_init_expr->kind != IrExprKind::EnumConstruct) return nullptr;
+        return local->ir_init_expr;
     }
 
-    static bool enum_construct_is_known_match_for_while_let(
+    bool enum_match_value_is_known_match_for_while_let(
         const IrExpr& match_value,
         const std::vector<IrMatchArm>& pattern_arms
     ) {
-        if (match_value.kind != IrExprKind::EnumConstruct) return false;
-        const std::string& constructed_case = ir_expr_case_name(match_value);
-        if (constructed_case.empty()) return false;
-        for (const auto& arm : pattern_arms) {
-            if (arm.case_name == constructed_case &&
-                !enum_match_arm_has_refutable_payload_condition(arm)) {
-                return true;
-            }
-        }
-        return false;
+        const IrExpr* construct = known_enum_construct_for_while_let_match_value(match_value);
+        return construct && enum_construct_matches_arm_without_refutable_payload_conditions(*construct, pattern_arms);
     }
 
     Flow check_enum_while_let_body(
@@ -11817,7 +11811,7 @@ private:
             }
         }
         const bool no_zero_known_match =
-            enum_construct_is_known_match_for_while_let(*lowered.match_value, pattern_arms);
+            enum_match_value_is_known_match_for_while_let(*lowered.match_value, pattern_arms);
         StateSnapshot loop_input = snapshot_states();
         LocalScopeStack::NameState loop_name_state = local_scopes_.snapshot_name_state();
 

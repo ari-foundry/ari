@@ -105,11 +105,11 @@ dataflow recheck:
    later iteration that starts with that owner moved or dropped. Add a
    revalidation/dataflow pass before accepting non-trivial next-iteration or
    fallthrough ownership fixed points. The plain `while`, `init while`,
-   irrefutable aggregate/runtime-sequence `while let`, direct-covering
-   enum-constructor `while let`, and exact-once range/list/stored-`Vec` `for`
-   slices now recheck no-zero or exact-once next-iteration states under a
-   candidate `Alive -> moved/dropped` owner widening before accepting them. The
-   plain `while` and `init while` slices also treat immutable local bool
+   irrefutable aggregate/runtime-sequence `while let`, direct or immutable
+   local enum-constructor `while let`, and exact-once range/list/stored-`Vec`
+   `for` slices now recheck no-zero or exact-once next-iteration states under
+   a candidate `Alive -> moved/dropped` owner widening before accepting them.
+   The plain `while` and `init while` slices also treat immutable local bool
    conditions initialized directly from literals like literal `true`/`false`
    as proven loop conditions, and fold those conditions into literal IR branch
    conditions during lowering.
