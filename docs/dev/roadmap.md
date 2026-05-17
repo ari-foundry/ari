@@ -17,10 +17,10 @@ changing the long-term language contract.
    bump is approved. The next useful work is trait-specialized replay and
    richer identity descriptors for any replayed lowering that still depends on
    trait-resolution context.
-2. Extend C imports and generated C wrappers using the shared aggregate ABI
-   classifier. The next useful slices are direct aggregate C imports for
-   classifier-approved value types and explicit wrapper/header surfaces for
-   tuples, fixed-capacity vectors, and aggregate-layout enums.
+2. Add explicit generated C wrapper/header surfaces for aggregate values that
+   are not already C-spellable. The next useful slices are tuples,
+   fixed-capacity vectors, and aggregate-layout enums that the shared aggregate
+   ABI classifier already accepts.
 3. Keep sema extraction phase-oriented.
    Prefer broad modules such as type inference, pattern semantics, ownership
    state, zone provenance, and IR lowering helpers. Avoid splitting one tiny

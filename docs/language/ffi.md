@@ -150,13 +150,15 @@ enum value. For example, `value.0` and `(*raw).0` address payload slot 0 while
 the hidden tag remains an implementation field. This access is intentionally
 low-level: it does not check which case is currently active, and
 scalar/pointer-shaped payload slots expose their stored `u64` payload word.
-`--emit-obj` output can emit direct imported `extern "C"` calls for scalar and
-raw-pointer signatures as undefined C symbols with relocations. The supported
-imported-call slice covers integer and bool values,
-lowercase `string`/function-pointer slots, `ptr`/`ref`/`ref mut` pointer-shaped
-slots, and `c_void` returns. LLVM executable output still has no linker phase, so
-the same imported call is rejected unless object output is used and an external
-linker supplies the C symbol.
+`--emit-obj` output can emit direct imported `extern "C"` calls for scalar,
+raw-pointer, and classifier-approved small `@repr(C)` struct signatures as
+undefined C symbols with relocations. The supported imported-call slice covers
+integer and bool values, lowercase `string`/function-pointer slots,
+`ptr`/`ref`/`ref mut` pointer-shaped slots, `c_void` returns, and by-value
+`@repr(C)` struct parameters or returns that the shared aggregate ABI classifier
+accepts as direct on the selected target. Executable output uses the LLVM
+driver as the linker; symbols outside the host C library or Ari runtime must be
+provided through normal link arguments such as `-L`, `-l`, or `--link`.
 Host LLVM builds can allocate raw memory from explicit zones with
 `zone::create`, `zone::alloc`, `zone::reset`, and `zone::destroy`; the result of
 raw byte allocation is a `ptr u8` that can be cast and used with the same raw
@@ -383,10 +385,11 @@ null, bounds, alignment, aliasing, or lifetime validation. Whole raw-pointer
 copies of values that contain `own`, `ref`, or `ref mut` state are rejected
 until the ownership diagnostics for zone-backed memory are broadened.
 
-Tuple parameters/returns, vectors, generic types, and non-`repr(C)` structs are
-not C ABI-lowered yet. Fixed arrays have a limited by-value header wrapper
-surface when the shared aggregate ABI classifier accepts their size, alignment,
-and target. Local stack tuples are an executable-language feature, not a C FFI
+Tuple parameters/returns, vectors, fixed arrays outside generated wrapper
+types, aggregate-layout enums, and non-`repr(C)` structs are not direct C
+import types yet. Fixed arrays have a limited by-value header wrapper surface
+when the shared aggregate ABI classifier accepts their size, alignment, and
+target. Local stack tuples are an executable-language feature, not a C FFI
 layout promise. Aggregate raw-pointer field/element access follows Ari's
 current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 
@@ -451,7 +454,6 @@ shuts the context down afterward.
 
 ## Planned FFI Surface
 
-The next FFI pieces are direct aggregate C imports for classifier-approved
-value types, explicit C wrappers for tuple/vector/aggregate-enum values,
-payload-bearing enum C layouts, broader target-specific aggregate ABI support,
-and non-C ABI adapters via explicit C-compatible shims.
+The next FFI pieces are explicit C wrappers for tuple/vector/aggregate-enum
+values, payload-bearing enum C layouts, broader target-specific aggregate ABI
+support, and non-C ABI adapters via explicit C-compatible shims.

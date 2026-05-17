@@ -105,6 +105,11 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   8-byte aligned. Larger/aligned values are indirect, and unsupported
   target/layout/zero-sized cases are reported explicitly. C-header emission
   uses this shared classifier before rendering exported by-value prototypes.
+- Direct imported C aggregate calls use the shared classifier for by-value
+  `extern "C"` parameters and returns. The first supported import surface is
+  classifier-approved `@repr(C)` structs on 64-bit Unix targets; larger,
+  target-unsupported, and non-`repr(C)` aggregate spellings are rejected with
+  pointer-ABI diagnostics.
 - Direct fixed-array exports are implemented for the current 0.x shared LLVM
   surface, including fixed-array fields in public `@repr(C)` structs,
   pointer-to-array parameters, and by-value `[T, N]` exported

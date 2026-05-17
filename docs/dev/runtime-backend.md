@@ -107,12 +107,12 @@ The LLVM backend still intentionally rejects or does not ABI-lower:
 - generic type declarations beyond simple function-call monomorphization
 - C-facing tuple/vector/aggregate-enum wrappers
 - raw pointer operations outside scalar and plain Ari-layout aggregate local layouts
-- imported C aggregate calls beyond scalar/raw-pointer signatures
+- imported C aggregate calls beyond classifier-approved `@repr(C)` structs
 
 ## Next Backend Work
 
-1. Extend C imports with the shared aggregate ABI classifier and keep object output
-   aligned with the library ABI surface.
-2. Add explicit generated C wrapper/header surfaces for tuple,
+1. Add explicit generated C wrapper/header surfaces for tuple,
    fixed-capacity-vector, and aggregate-enum values that the classifier accepts.
+2. Keep LLVM object output aligned with the library ABI surface as imported and
+   exported aggregate wrappers grow.
 3. Move compiler-known prelude stubs toward Ari source modules where possible.

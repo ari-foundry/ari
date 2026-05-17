@@ -1,7 +1,21 @@
 #include <stdint.h>
 
+struct AriTestPair {
+    int64_t left;
+    int64_t right;
+};
+
 int64_t ari_test_add_i64(int64_t left, int64_t right) {
     return left + right;
+}
+
+struct AriTestPair ari_test_make_pair(int64_t seed) {
+    struct AriTestPair pair = {seed, seed + 4};
+    return pair;
+}
+
+int64_t ari_test_sum_pair(struct AriTestPair pair) {
+    return pair.left + pair.right;
 }
 
 int64_t ari_test_strlen(const char* text) {

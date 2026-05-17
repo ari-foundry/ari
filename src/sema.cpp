@@ -1,5 +1,6 @@
 #include "sema.hpp"
 
+#include "aggregate_abi.hpp"
 #include "ast_builders.hpp"
 #include "attribute_semantics.hpp"
 #include "borrow_return_semantics.hpp"
@@ -135,6 +136,7 @@ struct EnumInfo {
     bool is_public = false;
     bool deprecated = false;
     std::string deprecated_message;
+    bool repr_c = false;
 };
 
 struct StructInfo {
@@ -154,6 +156,7 @@ struct StructInfo {
     bool is_public = false;
     bool deprecated = false;
     std::string deprecated_message;
+    bool repr_c = false;
     SourceLocation loc;
 };
 
@@ -1906,6 +1909,7 @@ private:
             info.is_public = decl.is_public;
             info.deprecated = deprecated_attribute(decl.attributes) != nullptr;
             info.deprecated_message = deprecated_message(decl.attributes);
+            info.repr_c = find_attribute(decl.attributes, "repr") != nullptr;
             info.loc = decl.loc;
 
             std::set<std::string> generic_names;
@@ -3746,6 +3750,7 @@ private:
             info.is_public = decl.is_public;
             info.deprecated = deprecated_attribute(decl.attributes) != nullptr;
             info.deprecated_message = deprecated_message(decl.attributes);
+            info.repr_c = find_attribute(decl.attributes, "repr") != nullptr;
             for (const auto& generic : decl.generics) info.generic_names.push_back(generic.name);
 
             for (std::size_t i = 0; i < decl.cases.size(); ++i) {
@@ -3897,6 +3902,56 @@ private:
         return source;
     }
 
+    bool is_repr_c_struct_import_type(const IrType& type) const {
+        if (type.qualifier != TypeQualifier::Value ||
+            type.primitive != IrPrimitiveKind::Struct) {
+            return false;
+        }
+        auto found = structs_.find(type.name);
+        return found != structs_.end() && found->second.repr_c;
+    }
+
+    static std::string aggregate_pointer_abi_hint(const IrType& type) {
+        if (type.primitive == IrPrimitiveKind::Struct) return type.name;
+        return type_name(type);
+    }
+
+    void require_extern_c_direct_aggregate_abi(SourceLocation loc,
+                                               const IrType& type,
+                                               const std::string& context) const {
+        NonLocalAggregateAbi abi = classify_nonlocal_aggregate_abi(type, target_);
+        if (abi.kind == NonLocalAggregateAbiKind::NotAggregate) return;
+        if (abi.reason == NonLocalAggregateAbiReason::TargetUnsupported) {
+            fail(loc,
+                 "extern C import for by-value " + context + " " + type_name(type) +
+                     " is currently supported only on 64-bit Unix targets; use ptr " +
+                     aggregate_pointer_abi_hint(type) + " for a stable ABI on target '" +
+                     target_.triple + "'");
+        }
+        if (abi.reason == NonLocalAggregateAbiReason::LayoutUnavailable) {
+            fail(loc,
+                 "extern C import cannot compute layout for by-value " + context + " " +
+                     type_name(type) + "; use an explicit raw pointer ABI");
+        }
+        if (abi.reason == NonLocalAggregateAbiReason::ZeroSized) {
+            fail(loc,
+                 "extern C import does not support zero-sized by-value " + context + " " +
+                     type_name(type) + "; use ptr " + aggregate_pointer_abi_hint(type));
+        }
+        if (abi.kind == NonLocalAggregateAbiKind::Indirect) {
+            fail(loc,
+                 "extern C import for by-value " + context + " " + type_name(type) +
+                     " is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr " +
+                     aggregate_pointer_abi_hint(type));
+        }
+        if (abi.kind == NonLocalAggregateAbiKind::Direct &&
+            !is_repr_c_struct_import_type(type)) {
+            fail(loc,
+                 "extern C import for by-value aggregate " + context + " " + type_name(type) +
+                     " requires a @repr(C) struct; use an explicit C wrapper struct or raw pointer ABI");
+        }
+    }
+
     void collect_extern_function_signature(const FunctionDecl& fn) {
         if (fn.params.size() > std::numeric_limits<std::uint16_t>::max()) {
             fail(fn.loc, "functions support up to 65535 parameters");
@@ -3955,11 +4010,17 @@ private:
             if (param_type.qualifier == TypeQualifier::Value && param_type.primitive == IrPrimitiveKind::Void) {
                 fail(param.type.loc, "extern parameter cannot have void type; use ptr c_void for void*");
             }
+            if (is_c_abi) {
+                require_extern_c_direct_aggregate_abi(param.type.loc, param_type, "parameter");
+            }
             sig.params.push_back(param_type);
         }
         sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
         if (fn.has_return_type) {
             require_root_vector_runtime_abi(fn.return_type.loc, sig.result, "an extern function return type");
+            if (is_c_abi) {
+                require_extern_c_direct_aggregate_abi(fn.return_type.loc, sig.result, "return type");
+            }
         }
         set_function_return_contracts(sig);
         apply_explicit_borrow_return_contract(sig, fn);

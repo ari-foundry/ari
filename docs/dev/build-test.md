@@ -185,7 +185,8 @@ module externs, x86-64 C ABI type aliases, `ptr c_char` string arguments,
 promotions, nullable raw pointers, pointer casts, byte-wise and typed pointer
 offsets, layout queries, raw pointer load/store/dereference helpers, aggregate
 pointer field/index access, variadic function-pointer rejection, permanent
-generic-extern rejection, aggregate pointer layout helpers, and the by-value
+generic-extern rejection, aggregate pointer layout helpers, by-value direct
+`@repr(C)` struct imports, aggregate import ABI diagnostics, and the by-value
 `c_void` diagnostic. When `clang` and
 `ar` are available it also builds and links a small C helper library.
 

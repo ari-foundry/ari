@@ -1,0 +1,13 @@
+@repr(C)
+struct Wide {
+  a: i64,
+  b: i64,
+  c: i64,
+}
+
+extern "C" fn ari_test_take_wide(value: Wide) -> i64;
+
+fn main() -> i64 {
+  let value = Wide { a: 1, b: 2, c: 3 };
+  return ari_test_take_wide(value);
+}

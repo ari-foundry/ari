@@ -2889,6 +2889,9 @@ check-ffi: $(TARGET)
 	grep -q 'declare i64 @"ari_test_add_i64"(i64, i64)' $(BUILD_DIR)/ffi/ffi-c-types.ll
 	grep -q 'declare i64 @"ari_test_strlen"(ptr)' $(BUILD_DIR)/ffi/ffi-c-types.ll
 	grep -q 'declare void @"ari_test_inc_i64"(ptr)' $(BUILD_DIR)/ffi/ffi-c-types.ll
+	$(TARGET) tests/ok/ffi-c-aggregate-import.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-aggregate-import.ll
+	grep -q 'declare { i64, i64 } @"ari_test_make_pair"(i64)' $(BUILD_DIR)/ffi/ffi-c-aggregate-import.ll
+	grep -q 'declare i64 @"ari_test_sum_pair"({ i64, i64 })' $(BUILD_DIR)/ffi/ffi-c-aggregate-import.ll
 	$(TARGET) tests/ok/ffi-c-unsigned-aliases.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
 	grep -q 'alloca i1' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
 	grep -q 'alloca i8' $(BUILD_DIR)/ffi/ffi-c-unsigned-aliases.ll
@@ -3031,7 +3034,7 @@ check-ffi: $(TARGET)
 	$(TARGET) tests/ok/ffi-c-callback.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-callback.ll
 	grep -q 'declare i64 @"ari_test_apply_i64"(ptr, i64)' $(BUILD_DIR)/ffi/ffi-c-callback.ll
 	grep -q 'call i64 @"ari_test_apply_i64"(ptr @"_ARNv7add_ten", i64 5)' $(BUILD_DIR)/ffi/ffi-c-callback.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(LLVM_CC) -c tests/ffi/c_helpers.c -o $(BUILD_DIR)/ffi/c_helpers.o; ar rcs $(BUILD_DIR)/ffi/libari_testffi.a $(BUILD_DIR)/ffi/c_helpers.o; $(TARGET) tests/ok/ffi-c-types.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-types.elf; $(BUILD_DIR)/ffi/ffi-c-types.elf; code=$$?; test $$code -eq 36; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(LLVM_CC) -c tests/ffi/c_helpers.c -o $(BUILD_DIR)/ffi/c_helpers.o; ar rcs $(BUILD_DIR)/ffi/libari_testffi.a $(BUILD_DIR)/ffi/c_helpers.o; $(TARGET) tests/ok/ffi-c-types.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-types.elf; $(BUILD_DIR)/ffi/ffi-c-types.elf; code=$$?; test $$code -eq 36; $(TARGET) tests/ok/ffi-c-aggregate-import.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-aggregate-import.elf; $(BUILD_DIR)/ffi/ffi-c-aggregate-import.elf; code=$$?; test $$code -eq 36; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-null-pointer.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-null-pointer.elf; $(BUILD_DIR)/ffi/ffi-c-null-pointer.elf; code=$$?; test $$code -eq 3; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-borrow-return.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-borrow-return.elf; $(BUILD_DIR)/ffi/ffi-c-borrow-return.elf; code=$$?; test $$code -eq 33; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-casts.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/pointer-casts.elf; $(BUILD_DIR)/ffi/pointer-casts.elf; code=$$?; test $$code -eq 1; fi
@@ -3065,6 +3068,12 @@ check-ffi: $(TARGET)
 	grep -Fq "root Vec[T] cannot be used as an extern function parameter until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/ffi/vector-extern-param-runtime-abi.err
 	if $(TARGET) tests/errors/vector-extern-return-runtime-abi.ari -o $(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.elf >$(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.err 2>&1; then exit 1; fi
 	grep -Fq "root Vec[T] cannot be used as an extern function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.err
+	if $(TARGET) tests/errors/extern-c-large-aggregate-import.ari --emit-llvm $(BUILD_DIR)/ffi/extern-c-large-aggregate-import.ll >$(BUILD_DIR)/ffi/extern-c-large-aggregate-import.err 2>&1; then exit 1; fi
+	grep -q "extern C import for by-value parameter Wide is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/ffi/extern-c-large-aggregate-import.err
+	if $(TARGET) --target x86_64-pc-windows-msvc tests/errors/extern-c-target-aggregate-import.ari --emit-llvm $(BUILD_DIR)/ffi/extern-c-target-aggregate-import.ll >$(BUILD_DIR)/ffi/extern-c-target-aggregate-import.err 2>&1; then exit 1; fi
+	grep -q "extern C import for by-value parameter Pair is currently supported only on 64-bit Unix targets" $(BUILD_DIR)/ffi/extern-c-target-aggregate-import.err
+	if $(TARGET) tests/errors/extern-c-nonrepr-aggregate-import.ari --emit-llvm $(BUILD_DIR)/ffi/extern-c-nonrepr-aggregate-import.ll >$(BUILD_DIR)/ffi/extern-c-nonrepr-aggregate-import.err 2>&1; then exit 1; fi
+	grep -q "extern C import for by-value aggregate parameter Pair requires a @repr(C) struct" $(BUILD_DIR)/ffi/extern-c-nonrepr-aggregate-import.err
 	if $(TARGET) tests/errors/extern-varargs-nonextern.ari -o $(BUILD_DIR)/ffi/extern-varargs-nonextern.elf >$(BUILD_DIR)/ffi/extern-varargs-nonextern.err 2>&1; then exit 1; fi
 	grep -q "variadic parameters are only supported on extern \"C\" functions" $(BUILD_DIR)/ffi/extern-varargs-nonextern.err
 	if $(TARGET) tests/errors/extern-varargs-empty.ari -o $(BUILD_DIR)/ffi/extern-varargs-empty.elf >$(BUILD_DIR)/ffi/extern-varargs-empty.err 2>&1; then exit 1; fi

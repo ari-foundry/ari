@@ -1,0 +1,12 @@
+@repr(C)
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+extern "C" fn ari_test_sum_pair(pair: Pair) -> i64;
+
+fn main() -> i64 {
+  let pair = Pair { left: 7, right: 11 };
+  return ari_test_sum_pair(pair);
+}
