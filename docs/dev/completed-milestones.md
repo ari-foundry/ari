@@ -47,8 +47,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   skipped, and borrowed owned fields still use the tracked owned-field liveness
   checks before the borrow binding is introduced.
 - Exact local `Vec[T]` reference patterns without `..` can borrow
-  ownership-carrying element slots when each element path is statically known;
-  moved element slots still report the owned-field liveness diagnostic.
+  ownership-carrying element slots, including nested owned fields inside
+  aggregate elements, when each element path is statically known; moved element
+  slots still report the owned-field liveness diagnostic.
 - Shared `Slice[T]` reference sequence patterns can destructure tuple,
   fixed-array, and struct elements through the same access-path helper used by
   local aggregate reference patterns.

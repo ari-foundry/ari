@@ -137,6 +137,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   element diagnostics used by tuple, struct, fixed-array, and local `Vec[T]`
   literal lowering, plus expected-enum matching and final enum constructor IR
   node assembly after payload semantic checks
+- `ownership_semantics` for recursive owned-field state discovery over tuples,
+  fixed arrays, structs, and fixed-capacity local `Vec[T]` storage, keeping
+  ownership-state seeding out of central declaration lowering while
+  `local_state` owns the mutable state containers and path helpers
 - `meta_token_eval` for token_stream meta return validation/evaluation,
   including meta-input token substitution and the current
   empty/count/boundary/wrapper/indexed-text/pattern branch evaluator plus
@@ -155,10 +159,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   callbacks, scoped local iteration, auto-destroy cleanup traversal,
   return-owner traversal, LocalInfo construction, state setters, zone generation
   bumps, vector known-length accessors, static integer cache setters, and
-  owned-field path/state helpers, plus local assignment and immutable receiver
-  diagnostic helpers plus branch/loop state comparison and merged restore hooks,
-  borrow count/source helpers, aggregate borrow-source target paths, and
-  named/aggregate borrow-source release
+  owned-field path/state mutation helpers, plus local assignment and immutable
+  receiver diagnostic helpers plus branch/loop state comparison and merged
+  restore hooks, borrow count/source helpers, aggregate borrow-source target
+  paths, and named/aggregate borrow-source release
 - `loop_state_semantics` for loop-carried state comparison helpers that let
   sema ignore the bindings intentionally reinitialized by positional
   `init while` updates while still checking the surrounding ownership state, and

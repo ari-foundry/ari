@@ -25,6 +25,7 @@
 #include "meta_semantics.hpp"
 #include "module_path.hpp"
 #include "move_semantics.hpp"
+#include "ownership_semantics.hpp"
 #include "parser.hpp"
 #include "pattern_coverage.hpp"
 #include "pattern_semantics.hpp"
@@ -5502,45 +5503,6 @@ private:
         return body_flow != Flow::Returns && loop.break_state_snapshots.empty();
     }
 
-    void collect_owned_field_states(const IrType& type,
-                                    const std::string& path,
-                                    std::map<std::string, LocalState>& states) const {
-        if (type.qualifier == TypeQualifier::Own) {
-            if (!path.empty()) states.emplace(path, LocalState::Alive);
-            return;
-        }
-        if (type.qualifier != TypeQualifier::Value) {
-            return;
-        }
-
-        if (type.primitive == IrPrimitiveKind::Tuple ||
-            type.primitive == IrPrimitiveKind::Array ||
-            type.primitive == IrPrimitiveKind::Struct) {
-            const std::vector<IrType>& fields = aggregate_field_types(type);
-            for (std::size_t i = 0; i < fields.size(); ++i) {
-                std::string child_path = path.empty()
-                    ? std::to_string(i)
-                    : path + "." + std::to_string(i);
-                collect_owned_field_states(fields[i], child_path, states);
-            }
-            return;
-        }
-
-        if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size != 0) {
-            for (std::uint64_t i = 0; i < type.array_size; ++i) {
-                std::string child_path = path.empty()
-                    ? std::to_string(i)
-                    : path + "." + std::to_string(i);
-                collect_owned_field_states(type.args[0], child_path, states);
-            }
-        }
-    }
-
-    void initialize_owned_field_states(LocalInfo& local) const {
-        local.owned_field_states.clear();
-        collect_owned_field_states(local.type, "", local.owned_field_states);
-    }
-
     ZonePointerLocalAdapter zone_pointer_locals() {
         ZonePointerLocalAdapter locals;
         locals.find_local = [this](const std::string& name) {
@@ -6423,7 +6385,8 @@ private:
                 if (current.args.empty()) {
                     throw CompileError("internal error: vector path access without element type");
                 }
-                current = current.args[0];
+                IrType element_type = current.args[0];
+                current = std::move(element_type);
                 continue;
             }
             expr = make_tuple_index_expr(loc, std::move(expr), index);

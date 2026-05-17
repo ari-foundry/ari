@@ -18,7 +18,9 @@ changing the long-term language contract.
    checks, with the shared pattern-alternative set keeping or-pattern detection
    and expansion together before sema lowers bindings. Continue extracting
    broad modules such as type inference, ownership state, zone provenance, and
-   IR lowering helpers. Avoid splitting one tiny file per syntax feature.
+   IR lowering helpers. `ownership_semantics` now owns recursive owned-field
+   state seeding for locals and stack-backed vector storage. Avoid splitting
+   one tiny file per syntax feature.
 2. Finish the remaining pattern binding-mode surface.
    Nested shared reference binding modes now work through local/function
    parameter destructuring plus enum statement/expression `match` and enum
@@ -36,10 +38,11 @@ changing the long-term language contract.
    destructure ownership-carrying tuple, fixed-array, and struct values when
    owned fields are skipped or borrowed through live tracked paths, and exact
    local `Vec[T]` reference patterns can borrow ownership-carrying element
-   slots when the element path is statically known. Finish value/move binding
-   modes plus ownership-aware enum, `Slice[T]`, vector rest/dynamic, and nested
-   ownership-aggregate sequence patterns, including the parameter-destructuring
-   ownership story.
+   slots, including ownership-carrying aggregate element fields, when the
+   element path is statically known. Finish value/move binding modes plus
+   ownership-aware enum and non-static runtime sequence owner paths (`Slice[T]`
+   plus vector rest/dynamic), including the parameter-destructuring ownership
+   story.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
 3. Expand aggregate enum payload storage.
@@ -77,9 +80,6 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
 
 - [llvm-object-fixtures] Add one minimal external-link fixture around
   `--emit-obj` when the library ABI surface grows beyond scalar exports.
-- [owning-aggregate-vector-storage] Audit direct local `Vec[T]` storage when
-  `T` is itself an ownership-carrying aggregate before enabling nested owner
-  aggregate sequence reference patterns.
 
 ## Bootstrap Direction
 
