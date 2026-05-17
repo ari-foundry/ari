@@ -25,8 +25,8 @@ source text
   -> AST
   -> semantic checker
   -> typed IR
-  -> LLVM IR codegen or freestanding x86-64 codegen
-  -> LLVM driver or ELF writer
+  -> LLVM IR codegen
+  -> LLVM driver
   -> Linux executable or shared library
 ```
 
@@ -73,34 +73,18 @@ re-resolving source-level names. For example, enum constructor expressions carry
 case metadata after semantic resolution.
 
 Executable Ari aggregate layout is centralized in `src/layout.cpp`. Sema,
-shared IR builders, the LLVM backend, and the freestanding backend use that
-service for aggregate layout predicates, field lists, field counts, sizes,
-alignments, and byte offsets. Enum payload storage selection is still handled by
-`enum_payload_layout`; once those payload slot field types are present, byte
-layout comes from the shared layout service.
+shared IR builders, and the LLVM backend use that service for aggregate layout
+predicates, field lists, field counts, sizes, alignments, and byte offsets.
+Enum payload storage selection is still handled by `enum_payload_layout`; once
+those payload slot field types are present, byte layout comes from the shared
+layout service.
 
 ## Backends
 
-`src/llvm_codegen.cpp` is the default glibc-backed backend. It emits LLVM IR,
-declares FFI symbols, initializes Ari runtime context, and lets an LLVM driver
-such as `clang` link against glibc and user libraries. `--emit-llvm` writes the
-IR and stops.
-
-`src/codegen.cpp` is the freestanding backend. It emits raw x86-64 machine code
-into a flat code buffer. The ELF writer then wraps that buffer as a minimal
-direct-syscall executable and can attach a `.symtab` containing Ari mangled
-function symbols.
-
-`src/raw_string_pool.cpp` owns the freestanding static string-literal pool.
-Raw codegen emits RIP-relative references while lowering expressions; the
-program emitter appends deduplicated NUL-terminated literal bytes after the
-callable code and patches those references before the ELF writer sees the final
-image. This keeps lowercase `string` literal storage separate from expression
-lowering and from the ELF container.
-
-The freestanding backend currently assumes scalar stack slots are 64 bits.
-Source-level integer width is preserved in IR so later lowering can use exact
-layouts.
+`src/llvm_codegen.cpp` is the glibc-backed backend. It emits LLVM IR, declares
+FFI symbols, initializes Ari runtime context, and lets an LLVM driver such as
+`clang` link against glibc and user libraries. `--emit-llvm` writes the IR and
+stops; `--emit-obj` asks the LLVM driver to produce a relocatable object.
 
 ## Runtime
 
@@ -110,6 +94,3 @@ The host runtime is compiler-emitted LLVM IR:
 - enter `@ari_entry`, then call the `@"ari::main"` bridge for source `main`
 - shut down the thread-local context
 - prelude IO through C stdio
-
-The freestanding runtime still uses a raw ELF entry point, calls Ari `main`, and
-exits through Linux syscalls.

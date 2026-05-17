@@ -140,7 +140,7 @@ Ordinary statement blocks use the same `;` rule for expression statements.
 The result type is the type of the final expression. Borrow-valued block
 results are not supported yet.
 
-The freestanding backend materializes aggregate-valued `if`, `match`, and
+The LLVM backend materializes aggregate-valued `if`, `match`, and
 block expression results directly into their target storage, or into hidden
 temporaries when the expression result is discarded.
 
@@ -274,8 +274,8 @@ for item @ value in range(1, 4) {
 Bare empty `[]` cannot be iterated directly because it has no element type by
 itself. Give the value a typed local binding first, such as
 `let values: Vec[i64] = []`, when an empty vector should participate in normal
-stored-vector control flow. Stored local vector loops lower on the LLVM and raw
-freestanding backends.
+stored-vector control flow. Stored local vector loops lower on the LLVM
+backend.
 
 List-literal and stored-vector loops can additionally destructure irrefutable
 aggregate element patterns:

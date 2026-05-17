@@ -55,6 +55,7 @@ Useful options:
 ```sh
 --check             check source diagnostics only; do not emit or link
 --emit-llvm path    write generated LLVM IR and stop
+--emit-obj path     write an LLVM-driver object file and stop
 --module-path path  add a file-backed module search path
 -I path             same as --module-path
 --llvm-cc compiler  choose the LLVM IR compiler driver, usually clang
@@ -63,7 +64,6 @@ Useful options:
 -l name             link a library
 --link name         same as -l name
 --shared            build a shared library instead of an executable
---freestanding      use the raw direct-syscall ELF backend
 --test              build a generated test runner for @test functions
 --no-implicit-std   require explicit mod std; instead of auto-loading lib/std.arih
 --cfg-feature name  enable feature("name") inside @cfg(...)
@@ -71,9 +71,11 @@ Useful options:
 
 ## Runtime Model
 
-The default generated binary uses LLVM, the host dynamic linker, and glibc. The
-freestanding backend is still useful for inspecting direct machine-code output:
+The generated binary uses LLVM, the host dynamic linker, and glibc. Use
+`--emit-llvm` to inspect the IR before linking, or `--emit-obj` when you need a
+relocatable object for library/linker experiments:
 
 ```sh
-./build/ari examples/count.ari --freestanding -o build/count.raw
+./build/ari examples/count.ari --emit-llvm build/count.ll
+./build/ari examples/count.ari --emit-obj build/count.o
 ```

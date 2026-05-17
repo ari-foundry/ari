@@ -235,7 +235,7 @@ Formatting rules:
 - `print` does not append a newline
 
 `bool` currently prints as `1` or `0`.
-On the raw `--freestanding` backend, formatted `f32` and `f64` values use the
+On the LLVM backend, formatted `f32` and `f64` values use the
 same `{}` default precision and `{:.N}` fixed decimal precision surface as the
 LLVM host backend.
 
@@ -308,7 +308,7 @@ var fourth = input_owned(ref mut zone)
 
 Those helpers copy the line into a tracked `String` handle owned by the
 provided zone. Use lowercase `string` for today's borrowed pointer-shaped text
-values. The `--freestanding` backend supports static lowercase `string`
+values. The LLVM backend supports static lowercase `string`
 literals, but still rejects line input until that backend has a native
 input-buffer and owned-line allocation policy.
 
@@ -431,9 +431,7 @@ slice<T>(data: ptr T, len: i64) -> Slice[T]
 std::slice<T>(data: ptr T, len: i64) -> std::Slice[T]
 ```
 
-On the default LLVM/glibc host backend, IO builtins lower to C stdio calls. On
-`--freestanding`, byte-oriented IO builtins lower to Linux `read`/`write`
-syscalls.
+On the LLVM/glibc host backend, IO builtins lower to C stdio calls.
 
 ## Prelude Traits
 
@@ -614,9 +612,8 @@ explicit target zone and returns a pointer tied to the target zone.
 automatically when its declaring scope falls through, before returns, and before
 `break`, `continue`, or labeled-block exits that leave that scope. Other
 `own Zone` values must be released with `zone::destroy`; `drop zone` is
-rejected to avoid hiding the bulk free. Zone allocation is host-backed today;
-the freestanding backend rejects it until a raw-backend allocation runtime
-exists.
+rejected to avoid hiding the bulk free. Zone allocation is LLVM-hosted today and
+lowers through compiler-emitted `malloc`/`free` runtime helpers.
 Host zone allocations carry a compiler-defined 8-byte header immediately
 before the returned user pointer. That header stores only the owning raw zone
 handle at `ptr - 8`; allocation size and requested alignment are not pointer
@@ -905,7 +902,7 @@ view's zone provenance when the view came from tracked zone-backed storage.
 `copy_to(ref mut Zone)` copies the current view into a new target-zone
 `std::vec::Vec<T>` handle; the copied handle is invalidated with the target
 zone, not with the source view's backing storage. The raw
-freestanding backend uses the same pointer/length metadata for local Slice
+LLVM backend uses the same pointer/length metadata for local Slice
 indexing, indexed assignment, range slicing, and read-only Slice methods.
 Slice patterns are still planned after the binding policy is nailed down.
 `len(view)`, `view.len()`, and `view.is_empty()` read the stored length.
@@ -960,8 +957,8 @@ before calling these borrowed predicate methods. Use explicit paths such as
 spell the source module. The method implementations live in
 `std::option` and `std::result`, while the enum names and cases stay at the
 `std` root. Postfix `?` and `??` recognize the same Option/Result-style enum
-shapes on the LLVM backend path; the freestanding backend still rejects
-aggregate-enum residual conversion until the raw `?`/`??` lowering is defined.
+shapes on the LLVM backend path; aggregate-enum residual conversion is still
+pending until that lowering is defined.
 
 Additional Rust-like root standard surfaces are reserved with clear diagnostics:
 

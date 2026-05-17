@@ -23,7 +23,7 @@ copyable non-borrow values lower on the LLVM backend with vtable dispatch,
 including generic impl vtables specialized for concrete object types. The
 compiler rejects generic trait methods as non-object-safe at dyn conversion and
 dyn method-call sites. The remaining front-end-only/planned pieces are dyn
-upcasts, `own`/borrow-valued dyn data pointers, and freestanding backend
+upcasts, `own`/borrow-valued dyn data pointers, and LLVM backend
 lowering.
 
 ## Generic And Destructured Structs
@@ -731,7 +731,6 @@ dereference load/store syntax are executable today for scalar values and plain
 Ari-layout aggregates. Host LLVM builds also support explicit `Zone` allocation
 through `zone::create`, raw `zone::alloc`, typed `zone::alloc<T>`,
 placement `zone::new<T>`, local scratch `zone::scratch<T>`, explicit scratch
-promotion `zone::promote<T>`, `zone::reset`, and `zone::destroy`; the
-freestanding backend still rejects zones. Associated
+promotion `zone::promote<T>`, `zone::reset`, and `zone::destroy`. Associated
 constructor-style APIs are executable as ordinary inherent impl functions such
 as `T::new(ref mut Zone, ...)`.

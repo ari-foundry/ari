@@ -146,40 +146,4 @@ std::optional<std::string> ari_builtin_symbol_for_source_name(const std::string&
     return std::nullopt;
 }
 
-std::optional<std::string> ari_builtin_freestanding_blocked_feature(const std::string& source_name) {
-    if (source_name == "new" ||
-        source_name == "std::new" ||
-        source_name == "zone::new" ||
-        source_name == "std::zone::new" ||
-        source_name == "promote" ||
-        source_name == "std::promote" ||
-        source_name == "zone::promote" ||
-        source_name == "std::zone::promote") {
-        return "zone allocation";
-    }
-
-    std::optional<std::string> symbol = ari_builtin_symbol_for_source_name(source_name);
-    if (!symbol) return std::nullopt;
-    if (*symbol == "ari_builtin_read_line" ||
-        *symbol == "ari_builtin_read_line_owned") {
-        return "line input helpers";
-    }
-    if (*symbol == "ari_builtin_context_argc" || *symbol == "ari_builtin_context_arg") {
-        return "process argument helpers";
-    }
-    if (*symbol == "ari_builtin_zone_create" ||
-        *symbol == "ari_builtin_zone_alloc" ||
-        *symbol == "ari_builtin_zone_allocation_zone" ||
-        *symbol == "ari_builtin_string_alloc_buffer" ||
-        *symbol == "ari_builtin_string_with_capacity" ||
-        *symbol == "ari_builtin_string_new" ||
-        *symbol == "ari_builtin_string_from_string" ||
-        *symbol == "ari_builtin_string_copy_to" ||
-        *symbol == "ari_builtin_zone_reset" ||
-        *symbol == "ari_builtin_zone_destroy") {
-        return "zone allocation";
-    }
-    return std::nullopt;
-}
-
 } // namespace ari

@@ -140,7 +140,7 @@ reject ownership- or borrow-valued `T` for the 0.x library-prep surface because
 they use raw-copy materialization rather than a move-aware place contract.
 `size_of<T>()` and `align_of<T>()` expose the current scalar and Ari-layout
 aggregate size/alignment model for explicit pointer code. The raw
-`--freestanding` backend uses those same Ari byte offsets for tuple, struct,
+the LLVM backend uses those same Ari byte offsets for tuple, struct,
 tuple-struct, and fixed-array pointer field/element access; aggregate enum
 pointer loads and stores can copy the whole aggregate enum value, and direct
 enum-constructor stores such as `ptr_store(raw, Some(5))` or `*raw = Some(5)`
@@ -150,11 +150,11 @@ enum value. For example, `value.0` and `(*raw).0` address payload slot 0 while
 the hidden tag remains an implementation field. This access is intentionally
 low-level: it does not check which case is currently active, and
 scalar/pointer-shaped payload slots expose their stored `u64` payload word.
-Raw `--freestanding --emit-obj` output can emit direct imported `extern "C"`
-calls for scalar and raw-pointer signatures as undefined C symbols with ELF
-relocations. The supported raw-import slice covers integer and bool values,
+`--emit-obj` output can emit direct imported `extern "C"` calls for scalar and
+raw-pointer signatures as undefined C symbols with relocations. The supported
+imported-call slice covers integer and bool values,
 lowercase `string`/function-pointer slots, `ptr`/`ref`/`ref mut` pointer-shaped
-slots, and `c_void` returns. Raw executable output still has no linker phase, so
+slots, and `c_void` returns. LLVM executable output still has no linker phase, so
 the same imported call is rejected unless object output is used and an external
 linker supplies the C symbol.
 Host LLVM builds can allocate raw memory from explicit zones with
@@ -254,10 +254,10 @@ In `--shared` builds, `pub` Ari functions and explicit export/no-mangle
 functions remain default-visible. Private helper functions are emitted with
 hidden LLVM visibility, and Ari-owned runtime helpers are hidden as internal
 implementation details.
-Raw `--freestanding` ELF output records explicit export/no-mangle names in the
-static symbol table. Relocatable raw object output can additionally reference
-scalar/raw-pointer imported `extern "C"` symbols through `.rela.text` call
-relocations; direct raw executable output still rejects imported symbols.
+Relocatable LLVM object output records explicit export/no-mangle names in its
+symbol table and can additionally reference scalar/raw-pointer imported
+`extern "C"` symbols through relocations. Direct executable output still rejects
+unresolved imported symbols.
 
 ## Type Mapping
 

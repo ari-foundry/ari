@@ -56,7 +56,7 @@ with a focused coverage note, add or extend the relevant test, and update
 
 `make check-cli` runs just the compiler invocation and build-mode checks:
 LLVM IR output, optional LLVM-driver linked output when `clang` is installed,
-freestanding executable and object output, and common bad CLI argument paths.
+LLVM object output, and common bad CLI argument paths.
 
 `make check-tools` builds `ari-lint` and `ari-lsp`, checks lint's human and JSON
 diagnostic output, and runs a small JSON-RPC smoke test for
@@ -130,8 +130,8 @@ header, and builtin macro tests. It covers function and macro assertion forms,
 auto-loaded explicit `std::...` header calls, implicit Rust-like standard
 aliases such as `Vec`/`Range`/`range`, explicit `mod std;` loading under
 `--no-implicit-std`, `print!`/`println!`, host `read_line`/`input`,
-freestanding byte IO and formatted float output, explicit-zone `format_in!`
-string construction, and `format!` no-implicit-zone diagnostics.
+explicit-zone `format_in!` string construction, formatted float output, and
+`format!` no-implicit-zone diagnostics.
 
 `make check-traits` runs trait-focused tests for generic trait declarations,
 impl conformance, bare `self` signature inference, concrete method-call static
@@ -141,8 +141,8 @@ diagnostics.
 
 `make check-match` runs enum pattern-matching tests for exhaustive arms,
 payload binding, payload ignore, wildcard coverage, module-qualified cases,
-LLVM branch lowering, freestanding execution, and planned expression-valued
-`match` diagnostics.
+LLVM branch lowering, execution, and planned expression-valued `match`
+diagnostics.
 
 `make check-modules` runs module name-resolution tests for inline modules,
 file-backed modules, selected imports, glob imports, module aliases, public
@@ -178,18 +178,15 @@ bindings, host string/float bindings, and pattern bindings inside `match` arms.
 `make check-ffi` runs C FFI tests for libc declarations, explicit C link names,
 module externs, x86-64 C ABI type aliases, `ptr c_char` string arguments,
 `c_void` returns, `ref mut` pointer parameters, C varargs with default
-promotions, raw relocatable-object C import relocations, nullable raw pointers,
-pointer casts, byte-wise and typed pointer
+promotions, nullable raw pointers, pointer casts, byte-wise and typed pointer
 offsets, layout queries, raw pointer load/store/dereference helpers, aggregate
 pointer field/index access, variadic function-pointer rejection, permanent
 generic-extern rejection, and the by-value `c_void` diagnostic. When `clang` and
-`ar` are available it also builds and links a small C helper library; when
-`clang` is available it links a raw object through a tiny C harness.
+`ar` are available it also builds and links a small C helper library.
 
 `make check-functions` runs the function-focused suite: `main` rules, return
 checking, recursion, void functions, argument counts/types, generic calls,
-module visibility, host/freestanding arity behavior, and function symbol
-mangling.
+module visibility, LLVM arity behavior, and function symbol mangling.
 
 `check-sanitize` runs the compiler under ASan/UBSan. Leak detection is disabled
 in that target because LeakSanitizer can fail under this WSL/container-style
@@ -212,7 +209,7 @@ examples       small source files used by docs and smoke tests
 Example expectation:
 
 ```make
-$(TARGET) --freestanding tests/ok/name.ari -o $(BUILD_DIR)/name.elf
+$(TARGET) tests/ok/name.ari -o $(BUILD_DIR)/name.elf
 $(BUILD_DIR)/name.elf; code=$$?; test $$code -eq 7
 ```
 
@@ -222,8 +219,8 @@ should also be wired into `check-prelude` so supported builtin lowering, host
 execution where useful, and backend-boundary diagnostics stay together.
 
 Control-flow changes should be wired into `check-control-flow`; prefer a
-freestanding execution check plus an LLVM IR smoke check when the lowering adds
-new branch or loop shapes.
+runtime execution check plus an LLVM IR smoke check when the lowering adds new
+branch or loop shapes.
 
 ## Adding A Negative Test
 

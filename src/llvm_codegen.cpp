@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstring>
 #include <iomanip>
+#include <limits>
 #include <map>
 #include <sstream>
 #include <string>
@@ -117,6 +118,12 @@ static std::string fp128_literal_from_double(double value) {
     std::uint64_t high = (sign << 63) | (exp128 << 48) | (frac >> 4);
     std::uint64_t low = (frac & 0xfULL) << 60;
     return "0xL" + hex16(low) + hex16(high);
+}
+
+static std::string float_literal(double value) {
+    std::ostringstream out;
+    out << std::scientific << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
+    return out.str();
 }
 
 static int integer_bits(const IrType& type) {
@@ -1523,7 +1530,7 @@ private:
                 if (expr.type.primitive == IrPrimitiveKind::F128) {
                     return Value{llvm_type(expr.type), fp128_literal_from_double(expr.float_value), expr.type};
                 }
-                return Value{llvm_type(expr.type), std::to_string(expr.float_value), expr.type};
+                return Value{llvm_type(expr.type), float_literal(expr.float_value), expr.type};
             case IrExprKind::String:
                 return Value{"ptr", string_ptr(ir_expr_string_value(expr)), expr.type};
             case IrExprKind::Null:

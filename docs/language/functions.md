@@ -45,19 +45,16 @@ fn clamp(value: i64, low: i64, high: i64) -> i64 {
 ```
 
 Functions and calls are limited to 65,535 parameters/arguments at the language
-checking layer. The LLVM/glibc backend lowers calls as LLVM calls. The
-freestanding backend uses registers for the first six scalar arguments and stack
-slots for the rest. Narrow integer returns from freestanding functions are
-normalized at the return boundary, so `u8`, `u16`, and `u32` results wrap to
-their declared width before callers observe them. Freestanding direct calls can
-pass and return `f32`/`f64` values as raw IEEE bit patterns in the same scalar
-ABI slots. Freestanding direct and function-pointer calls can pass and return
-tuple, struct, fixed-array, and currently supported aggregate enum values
-through hidden pointer slots.
+checking layer. The LLVM/glibc backend lowers calls as LLVM calls. Narrow
+integer returns are normalized at the return boundary, so `u8`, `u16`, and
+`u32` results wrap to their declared width before callers observe them. Direct
+and function-pointer calls can pass `f32`/`f64` values, and the currently
+supported tuple, struct, fixed-array, and aggregate enum values lower through
+the LLVM ABI paths.
 Aggregate parameters are copied into callee-local storage at function entry, so
 mutating a parameter copy does not mutate the caller's value.
-Aggregate enum call results can also be used directly as freestanding `match`
-inputs; the raw backend materializes the result into hidden stack storage before
+Aggregate enum call results can also be used directly as LLVM `match`
+inputs; the LLVM backend materializes the result into hidden stack storage before
 reading tag and payload slots.
 
 ## Return

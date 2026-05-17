@@ -5,9 +5,8 @@ Ari is a small systems-language compiler prototype written in C++17.
 It explores a C/C++ replacement shape with value types, explicit ownership,
 traits, modules, ADT enums, pattern matching, local inference, C FFI, and a
 compiler-known prelude. The compiler implementation is C++17, but Ari programs
-are no longer generated as C++: host output goes through LLVM IR and an LLVM
-driver such as `clang`. The raw Linux x86-64 ELF backend is still available
-with `--freestanding`.
+are no longer generated as C++: output goes through LLVM IR and an LLVM driver
+such as `clang`.
 
 ## Quick Start
 
@@ -61,9 +60,9 @@ fn main() -> i64 {
 
 ## What Works Now
 
-- optional `--freestanding` Linux x86-64 ELF output without an assembler or linker
-- glibc-backed host output by default through LLVM IR
+- glibc-backed executable output through LLVM IR
 - LLVM IR output with `--emit-llvm`
+- LLVM object output with `--emit-obj`
 - functions, locals, assignment, `if`, `while`, `break`, `continue`
 - `for value in range(start, end)` loops
 - integer and bool scalar codegen
@@ -97,10 +96,9 @@ Legacy entry points still exist:
 
 ## Runtime Notes
 
-Generated Ari executables use the glibc-backed LLVM path by default. The
-compiler writes temporary LLVM IR, invokes `clang` or the driver selected with
-`--llvm-cc`, and links a normal dynamic Linux executable. Use `--freestanding`
-when you want the direct-syscall raw ELF backend.
+Generated Ari executables use the glibc-backed LLVM path. The compiler writes
+temporary LLVM IR, invokes `clang` or the driver selected with `--llvm-cc`, and
+links a normal dynamic Linux executable.
 
 Useful host options:
 
@@ -108,7 +106,7 @@ Useful host options:
 ./build/ari app.ari --check
 ./build/ari app.ari -o app
 ./build/ari app.ari --emit-llvm app.ll
+./build/ari app.ari --emit-obj app.o
 ./build/ari lib.ari --shared -o libari_app.so
 ./build/ari app.ari -L ./lib -l mylib
-./build/ari app.ari --freestanding -o app.raw
 ```

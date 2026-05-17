@@ -25,11 +25,11 @@ let delta: i32 = -10
 `256` is rejected for `u8`, and `-129` is rejected for `i8`.
 
 Both executable backends preserve the declared integer width when scalar locals
-are read or written. On the raw `--freestanding` backend this includes narrow
+are read or written. On the LLVM backend this includes narrow
 local reloads after explicit raw-pointer writes, so an `i8`, `i16`, or `i32`
 slot is sign-extended when read back through the local binding. Standalone
 scalar locals are placed with byte-sized offsets and their natural alignment on
-the raw backend. Local tuple, struct, tuple-struct, and fixed-array storage also
+the LLVM backend. Local tuple, struct, tuple-struct, and fixed-array storage also
 uses the shared Ari byte layout for field and element addressing. Direct raw
 calls can pass and return Ari-layout aggregate values through hidden pointer
 slots; foreign ABI classification is still planned.
@@ -75,14 +75,14 @@ let scientific = 1.0e+1
 ```
 
 The default LLVM host backend lowers `f32`, `f64`, and `f128` values as LLVM
-`float`, `double`, and `fp128`. The `--freestanding` backend can store and load
+`float`, `double`, and `fp128`. The LLVM backend can store and load
 local `f32`/`f64` literal values as raw IEEE bit patterns, including
 `ptr_load`, `ptr_store`, and `*pointer` access through `ptr f32` or `ptr f64`.
 It also lowers `f32`/`f64` arithmetic and ordered comparisons with SSE scalar
 instructions, including `f32`/`f64` width casts, integer/float casts, and
 direct Ari calls that pass or return `f32`/`f64`. `print` and `println` can
-format `f32`/`f64` values with `{}` or `{:.N}` on both the LLVM host and raw
-freestanding backends. It still rejects `f128` until the remaining native
+format `f32`/`f64` values with `{}` or `{:.N}` on the LLVM backend. It still
+rejects `f128` until the remaining native
 floating-point work is implemented.
 
 ## Strings
@@ -93,17 +93,17 @@ The front end recognizes `string` and string literals:
 let label: string = "count"
 ```
 
-The default LLVM host backend lowers `string` as an `i8*`/C string pointer,
-which makes string literals useful for C FFI, context arguments, and host
-`read_line` helpers. The raw `--freestanding` backend stores string literals in
-the generated image as NUL-terminated static bytes and lowers lowercase
-`string` values as raw pointers to that storage. Those literal pointers can be
-passed through Ari calls, returned, stored in locals, cast to `ptr u8` or
-`ptr c_char`, and read with raw-pointer helpers. Plain host line input returns a
+The LLVM backend lowers `string` as an `i8*`/C string pointer, which makes
+string literals useful for C FFI, context arguments, and host `read_line`
+helpers. String literals are emitted as NUL-terminated static bytes, and
+lowercase `string` values lower as raw pointers to that storage. Those literal
+pointers can be passed through Ari calls, returned, stored in locals, cast to
+`ptr u8` or `ptr c_char`, and read with raw-pointer helpers. Plain host line
+input returns a
 pointer into one internal reusable buffer, while `read_line_owned(ref mut Zone)`,
 `io::read_line_owned(ref mut Zone)`, `input::owned_line(ref mut Zone)`, and
 `input_owned(ref mut Zone)` copy that line into a tracked source
-`std::string::String` handle. The `--freestanding` backend still rejects line
+`std::string::String` handle. The LLVM backend still rejects line
 input until it has a native input-buffer and owned-line allocation policy.
 
 The uppercase root type `String` is now the public prelude alias for
@@ -166,7 +166,7 @@ normal expression, binding, and match syntax. Single-element tuple types and
 literals remain unsupported, so `(T)` and `(value)` are grouping forms rather
 than tuples.
 
-Direct freestanding calls can pass and return tuple values through hidden
+Direct LLVM calls can pass and return tuple values through hidden
 pointer slots. Tuple FFI layout and broader aggregate pattern matching remain
 planned.
 
@@ -376,7 +376,7 @@ let branched: Box[i64] = if ready { Make<i64>::make(1) } else { Make<i64>::make(
 Generic trait methods with method-level bounds are supported too. Generic
 inherent and trait impl associated functions are supported.
 
-Direct freestanding calls can pass and return struct and tuple-struct values
+Direct LLVM calls can pass and return struct and tuple-struct values
 through hidden pointer slots. Struct FFI layout and broader non-local aggregate
 materialization remain planned. Local struct values can be destructured in
 `let`/`var` bindings:
@@ -484,7 +484,7 @@ comparable elements, while `equals(view)`, `starts_with(view)`, and
 `ends_with(view)` compare against another `Slice[T]`. `copy_to(ref mut Zone)`
 copies the current view into a target-zone `std::vec::Vec<T>` handle whose
 reset/destroy provenance follows the target zone. The LLVM host backend and raw
-freestanding backend both lower the local Slice view surface for materializable
+the LLVM backend lowers the local Slice view surface for materializable
 element values; target-zone Slice copy is an LLVM host explicit-zone path.
 Array lengths, including direct array literal lengths, are folded directly:
 
@@ -724,7 +724,7 @@ explicit `reserve` capacity, or tracked `push` growth seen for that binding,
 but indexing checks the current runtime length, not the reserved capacity. The
 storage is deliberately not heap allocation yet. Allocator-backed growth,
 slicing, and non-local vector ABI are still planned. On the raw
-`--freestanding` backend, stored local vector literals, local copies, scalar
+the LLVM backend, stored local vector literals, local copies, scalar
 indexing, `len`, `is_empty`, `capacity`, `first`, `last`, `get`, `contains`,
 `index_of`, `count`, `reserve`, `push`, `insert`, `pop`, `remove`, `clear`,
 `truncate`, `set`, `swap`, and stored-vector `for` loops lower through the same
@@ -751,8 +751,7 @@ let second = values[index]
 let first = [10, 20, 30][0]
 ```
 
-Stored local vectors can be used as `for` loop iterables on the LLVM and raw
-freestanding backends:
+Stored local vectors can be used as `for` loop iterables on the LLVM backend:
 
 ```ari
 let values: Vec[i64] = [1, 2, 3]
@@ -888,7 +887,7 @@ Meanings:
   thunks. Generic impls can be specialized into vtables for concrete object
   types. Generic trait methods are not object-safe and stay statically
   dispatched. Dyn-to-dyn upcasts are rejected; non-copy dyn data ownership and
-  raw backend lowering are still planned.
+  LLVM backend lowering are still planned.
 
 The executable subset supports scalar `own` values, scalar and aggregate `ref`
 / `ref mut` values, and can preserve borrow qualifiers inside local tuple,
@@ -947,7 +946,7 @@ Aggregate layout queries use field order, natural scalar alignment, array
 element stride padding, and final aggregate padding to the maximum field
 alignment. They are Ari layout queries, not a C ABI promise; use `@repr(C)`
 surfaces for foreign layout once that ABI is fully specified. The raw
-`--freestanding` backend uses this Ari layout for local tuple, struct,
+the LLVM backend uses this Ari layout for local tuple, struct,
 tuple-struct, fixed-array, and fixed-capacity local vector storage, whole plain
 aggregate copies, and scalar field or element access through raw aggregate
 pointers. Local and

@@ -134,9 +134,9 @@ up to 16 bytes with at most 8-byte alignment; larger or target-specific cases
 should use an explicit pointer ABI. Header generation rejects Ari-only values
 such as `string`, owned values, and aggregate values whose C ABI policy is not
 explicit.
-Raw `--freestanding` ELF output records explicit export/no-mangle names in the
-static symbol table too. Imported `extern "C"` calls still require the LLVM host
-backend until the raw backend grows a native C link path.
+LLVM object and shared-library output record explicit export/no-mangle names in
+their symbol tables. Imported `extern "C"` calls are resolved through the LLVM
+driver and the normal host linker path.
 
 `@derive(Debug)`, `@derive(Copy)`, `@derive(Clone)`, `@derive(Eq)`,
 `@derive(PartialEq)`, `@derive(Ord)`, and `@derive(PartialOrd)` are supported

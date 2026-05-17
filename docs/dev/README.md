@@ -23,13 +23,11 @@ src/sema.cpp     resolves names, checks types, checks ownership, lowers to IR
 src/ir.hpp       typed IR data model
 src/symbol_mangle.cpp encodes IR function names as backend symbols
 src/llvm_codegen.cpp  emits LLVM IR from IR
-src/codegen.cpp       emits x86-64 machine code from IR
-src/elf.cpp           wraps code bytes in a Linux ELF64 executable
 src/driver.cpp        CLI pipeline and file IO
 ```
 
 ## Current Backend Contract
 
 The default backend emits LLVM IR, invokes an LLVM driver such as `clang`, and
-links a normal glibc-backed executable on Linux. The compiler also keeps a raw
-direct-syscall ELF backend behind `--freestanding` for low-level inspection.
+links a normal glibc-backed executable or shared library on Linux. Relocatable
+object output also goes through the LLVM driver.

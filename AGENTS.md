@@ -6,8 +6,8 @@ This file is the quick project map for coding agents.
 
 Ari is a C++17 compiler prototype for a small systems language. The default
 backend emits LLVM IR and invokes an LLVM driver such as `clang`, so generated
-Linux executables link glibc without a generated-C++ step. The raw
-direct-syscall ELF backend is kept behind `--freestanding`.
+Linux executables link glibc without a generated-C++ step. Object output also
+uses the LLVM driver.
 
 ## Commands
 
@@ -31,8 +31,6 @@ src/ast.hpp      parsed syntax model
 src/sema.cpp     names, modules, types, ownership, IR lowering
 src/ir.hpp       typed IR model
 src/llvm_codegen.cpp LLVM IR emitter
-src/codegen.cpp  x86-64 machine-code emitter
-src/elf.cpp      Linux ELF64 writer
 src/driver.cpp   CLI pipeline
 ```
 
@@ -58,7 +56,7 @@ Implemented executable subset:
 - `--shared` library builds
 - context initialization with argc/argv and thread id storage
 - simple generic function-call monomorphization
-- Ari mangled function symbols in LLVM IR and raw ELF output
+- Ari mangled function symbols in LLVM IR and LLVM object output
 - LLVM IR emission with `--emit-llvm`
 
 Front-end or planned surface:
@@ -79,7 +77,7 @@ Front-end or planned surface:
 - Keep unsupported features rejected with clear diagnostics.
 - Do not make codegen re-resolve source-level names if sema can lower metadata
   into IR.
-- Keep the host/glibc path and the raw `--freestanding` path separate.
+- Keep all executable and object emission on the LLVM path.
 - Keep allocation explicit and capability-oriented. Avoid a magical global heap.
 - Preserve user changes in a dirty worktree; do not revert unrelated files.
 

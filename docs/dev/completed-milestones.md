@@ -52,7 +52,7 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   expected-result implementing types.
 - Associated type projections resolve through unique impl witnesses and unique
   generic supertrait applications.
-- LLVM and freestanding `dyn Child` trait objects include inherited object-safe
+- LLVM `dyn Child` trait objects include inherited object-safe
   methods and dyn-to-supertrait upcasts.
 - Ambiguous associated functions, inherited methods, inherited associated type
   names, and unrelated dyn upcasts are rejected with focused diagnostics.
@@ -75,8 +75,8 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   pointer, storing only the raw zone handle at `ptr - 8`. Size and requested
   alignment are not pointer metadata.
 - `zone::allocation_zone` exposes the allocation's zone handle as a narrow
-  builtin. Freestanding zone allocation remains rejected until a raw-backend
-  allocation runtime exists.
+  builtin. Zone allocation is implemented on the LLVM runtime path through
+  explicit `malloc`/`free` calls and the fixed 8-byte zone-handle header.
 
 ## Modules And Cache
 
@@ -100,29 +100,31 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   parameters/returns through generated wrapper typedefs.
 - `src/layout.cpp` owns shared aggregate-layout predicates, field-list
   selection, field counts, byte sizes, alignments, and field offsets used by
-  sema, LLVM, raw backend, and related IR helpers.
+  sema, the LLVM backend, and related IR helpers.
 - Aggregate enum payload slots support integer, bool, pointer-shaped values,
   one-word enums, nested aggregate enums, and the current mixed payload-word
   plus nested-enum lane rule.
 - Aggregate enum payload slot access through `value.0` and `(*raw_enum).0`
   addresses payload slot 0 rather than the hidden tag field on local and
   raw-pointer-backed ABI paths.
-- The raw backend materializes supported direct aggregate enum values into
+- The LLVM backend materializes supported direct aggregate enum values into
   hidden stack storage before reading tags or payload slots.
-- The raw backend lowers lowercase `string` literals into a per-image static
+- The LLVM backend lowers lowercase `string` literals into a per-image static
   NUL-terminated byte pool.
-- Freestanding trait-object dispatch works for the copyable non-borrow dyn
-  surface, including concrete impls, generic impl specializations, multi-arg
-  dyn calls, Vec-shaped aggregate argument views, inherited object-safe
-  supertrait methods, and dyn-to-supertrait vtable upcasts.
-- Freestanding `f32`/`f64` local storage, raw pointer load/store/dereference,
+- LLVM trait-object dispatch works for the copyable non-borrow dyn surface,
+  including concrete impls, generic impl specializations, multi-arg dyn calls,
+  Vec-shaped aggregate argument views, inherited object-safe supertrait
+  methods, and dyn-to-supertrait vtable upcasts.
+- LLVM `f32`/`f64` local storage, raw pointer load/store/dereference,
   arithmetic, ordered comparisons, and direct Ari calls are implemented.
-- The raw backend can emit native x86-64 ELF relocatable object files through
-  `--freestanding --emit-obj path`. These objects contain a `.text` section and
+- Ari now has a single LLVM-backed codegen path for executables, shared
+  libraries, LLVM IR, and object output.
+- The LLVM backend can emit LLVM-driver relocatable object files through
+  `--emit-obj path`. These objects contain a `.text` section and
   a symbol table using the same Ari mangled or explicit `@export`/`@no_mangle`
-  symbols as raw executable output.
-- Raw relocatable object output supports direct imported `extern "C"` calls for
+  symbols as LLVM executable output.
+- LLVM relocatable object output supports direct imported `extern "C"` calls for
   integer, bool, string/function-pointer, raw-pointer/reference, and void-return
   scalar signatures by emitting undefined C symbols plus `R_X86_64_PLT32`
-  `.rela.text` relocations. Raw executable output still rejects imported C
+  `.rela.text` relocations. LLVM executable output still rejects imported C
   symbols because it has no linker phase.

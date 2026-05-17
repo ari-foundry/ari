@@ -64,20 +64,17 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
 
 ## Backend Work
 
-1. Extend raw C imports after the scalar relocatable-object path.
-   Add aggregate signatures, varargs, platform float-C ABI, libc discovery, and
-   external aggregate-enum FFI once aggregate ABI classification is stable.
-2. Add freestanding runtime string features beyond static literals.
-   Add line-input buffers, owned-line allocation, allocator-backed string
-   construction, and richer hosted IO compatibility.
-3. Complete freestanding floating-point lowering.
-   Add eventual `f128` values and foreign/platform C float ABI integration.
+1. Extend C imports after aggregate ABI classification.
+   Add aggregate signatures, platform float-C ABI refinements, libc discovery,
+   and external aggregate-enum FFI once aggregate ABI classification is stable.
+2. Keep LLVM object output library-ready.
+   Preserve explicit symbol names, C-header compatibility, and module-cache
+   replay behavior for object files produced with `--emit-obj`.
 
 ## Small Follow-Ups
 
-- [raw-object-gnu-stack-note] Add a non-executable-stack marker section to raw
-  relocatable objects so external linkers do not warn about a missing
-  `.note.GNU-stack` section.
+- [llvm-object-fixtures] Add one minimal external-link fixture around
+  `--emit-obj` when the library ABI surface grows beyond scalar exports.
 
 ## Bootstrap Direction
 
@@ -95,4 +92,4 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
 - garbage collection
 - C++ ABI dependency as a source-level FFI surface
 - ambient global heap as a language primitive
-- mixing host/glibc codegen assumptions into the raw freestanding backend
+- adding a second backend before the LLVM path is library-ready

@@ -20,6 +20,7 @@ Useful CLI:
 ari app.ari --check
 ari app.ari -o app
 ari app.ari --emit-llvm app.ll
+ari app.ari --emit-obj app.o
 ari app.ari --llvm-cc clang -o app
 ari app.ari --shared -o libari_app.so
 ari app.ari -L ./lib -l mylib
@@ -59,32 +60,20 @@ Ari helper functions and Ari-owned runtime helper functions with hidden
 visibility in that mode, while normal executable and plain `--emit-llvm` output
 keep the previous default visibility.
 
-The freestanding backend still uses the small internal integer/bool calling
-convention: the first six scalar arguments use registers and later arguments use
-caller-provided stack slots. Sema caps functions and calls at 65,535
-parameters/arguments. Raw ELF executable and object output records
-`@export`/`@no_mangle` function names in `.symtab`. Raw relocatable object
-output can also leave direct imported `extern "C"` scalar/raw-pointer calls as
-undefined C symbols with `R_X86_64_PLT32` `.rela.text` entries. Raw executable
-output still rejects those imported calls because it has no linker phase.
+Sema caps functions and calls at 65,535 parameters/arguments. Public functions
+and explicit `@export`/`@no_mangle` functions keep their requested symbol names
+in LLVM IR, shared-library output, and LLVM object output.
 
 ## Prelude IO, Input, And Stops
 
-On host output, formatting and IO builtins lower to C stdio. `read_byte`
+Formatting and IO builtins lower to C stdio. `read_byte`
 lowers to `getchar`, `read_line`/`input` lower to `fgets` over an internal
 reusable line buffer, and assertion/stop helpers lower to `exit(1)` on failure.
-On `--freestanding`, output lowers to direct Linux `write` syscalls,
-`read_byte` lowers to a direct Linux `read` syscall on stdin, and assertion/stop
-helpers use the Linux `exit` syscall. Lowercase `string` literals lower to
-static NUL-terminated bytes in the raw image and can be consumed through Ari
-calls, returns, raw-pointer casts, byte loads, and `write_byte`. Freestanding
-line input is still rejected until the raw backend has a native input-buffer and
-owned-line allocation policy.
 
 The compiler keeps Ari-owned builtin source aliases and their `ari_builtin_*`
 symbols in one runtime table. That table is used by `extern "ari"` validation,
-LLVM builtin calls, and freestanding builtin offsets, so root re-export forms
-such as `std::write_i64` / `std::write_u64` and direct forms such as
+and LLVM builtin calls, so root re-export forms such as
+`std::write_i64` / `std::write_u64` and direct forms such as
 `write_i64` / `write_u64` share the same backend hook. Semantic lowering also
 marks those declarations with an explicit Ari builtin ABI in IR, separate from
 ordinary C extern functions, so host LLVM output never has to guess from the
@@ -108,40 +97,11 @@ interop should be exposed through C wrapper functions. Generic C extern
 declarations are rejected permanently because Ari binds concrete C symbols
 rather than foreign template/generic definitions. `extern "ari"` is not FFI; it
 names known `ari_builtin_*` hooks supplied by the Ari runtime/backend and is
-carried through IR as a distinct builtin ABI. The freestanding backend does not
-link external symbols.
-
-## Freestanding Output
-
-Use:
-
-```sh
-ari app.ari --freestanding -o app.raw
-```
-
-This path emits raw x86-64 machine code and wraps it in a minimal Linux ELF64
-file without glibc, a dynamic linker, an assembler, or an external linker.
-The driver marks the file with normal executable permissions when it is written.
-
-For native backend inspection or later linker work, the same raw code stream can
-be written as an ELF64 relocatable object:
-
-```sh
-ari app.ari --freestanding --emit-obj app.o
-```
-
-Object output uses `ET_REL`, writes generated code into `.text`, and emits
-`.symtab` / `.strtab` entries for the same Ari mangled or explicit
-`@export`/`@no_mangle` symbols used by raw executable output. Direct imported
-`extern "C"` calls with integer, bool, string/function-pointer,
-raw-pointer/reference, or void-return scalar signatures are emitted as
-undefined symbols plus `.rela.text` call relocations, so an external linker can
-resolve them. Aggregates, varargs, platform float-C ABI details, libc
-discovery, and raw executable linking remain future work.
+carried through IR as a distinct builtin ABI.
 
 ## Known Backend Limits
 
-The backends still intentionally reject or do not ABI-lower:
+The LLVM backend still intentionally rejects or does not ABI-lower:
 
 - tuple values outside fixed-size local stack tuples
 - vector values
@@ -150,11 +110,10 @@ The backends still intentionally reject or do not ABI-lower:
 - multi-word enum payloads
 - raw pointer operations outside scalar and plain Ari-layout aggregate local layouts
 - tuple/vector/struct/fixed-array function and FFI ABI layout
-- raw executable linking for imported C symbols
 
 ## Next Backend Work
 
 1. Define non-local aggregate ABI layouts for tuples, structs, and vectors.
-2. Extend raw C imports beyond scalar object relocations and add host linker
-   integration.
+2. Extend C imports after aggregate ABI classification and keep object output
+   aligned with the library ABI surface.
 3. Move compiler-known prelude stubs toward Ari source modules where possible.

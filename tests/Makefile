@@ -40,18 +40,18 @@ check: check-std-api $(TARGET) check-cli check-tools check-prelude check-control
 	grep -q 'define i64 @"_ARNv3add"' $(BUILD_DIR)/ir/library-export.ll
 	if grep -q "__P" $(BUILD_DIR)/ir/library-export.ll; then exit 1; fi
 	if grep -q "__R" $(BUILD_DIR)/ir/library-export.ll; then exit 1; fi
-	$(TARGET) --freestanding examples/count.ari -o $(BUILD_DIR)/count.elf
+	$(TARGET) examples/count.ari -o $(BUILD_DIR)/count.elf
 	$(BUILD_DIR)/count.elf; code=$$?; test $$code -eq 5
-	$(TARGET) --freestanding tests/ok/own-return.ari -o $(BUILD_DIR)/own-return.elf
+	$(TARGET) tests/ok/own-return.ari -o $(BUILD_DIR)/own-return.elf
 	$(BUILD_DIR)/own-return.elf; code=$$?; test $$code -eq 3
-	$(TARGET) --freestanding tests/ok/bitwise.ari -o $(BUILD_DIR)/bitwise.elf
+	$(TARGET) tests/ok/bitwise.ari -o $(BUILD_DIR)/bitwise.elf
 	$(BUILD_DIR)/bitwise.elf; code=$$?; test $$code -eq 2
-	$(TARGET) --freestanding tests/ok/control-flow-freestanding.ari -o $(BUILD_DIR)/control-flow-freestanding.elf
-	$(BUILD_DIR)/control-flow-freestanding.elf; code=$$?; test $$code -eq 12
-	$(TARGET) --freestanding tests/ok/for-vector-freestanding.ari -o $(BUILD_DIR)/for-vector-freestanding.elf
-	$(BUILD_DIR)/for-vector-freestanding.elf; code=$$?; test $$code -eq 9
-	$(TARGET) --freestanding tests/ok/module-freestanding.ari -o $(BUILD_DIR)/module-freestanding.elf
-	$(BUILD_DIR)/module-freestanding.elf; code=$$?; test $$code -eq 3
+	$(TARGET) tests/ok/control-flow-llvm.ari -o $(BUILD_DIR)/control-flow-llvm.elf
+	$(BUILD_DIR)/control-flow-llvm.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/for-vector-llvm.ari -o $(BUILD_DIR)/for-vector-llvm.elf
+	$(BUILD_DIR)/for-vector-llvm.elf; code=$$?; test $$code -eq 9
+	$(TARGET) tests/ok/module-llvm.ari -o $(BUILD_DIR)/module-llvm.elf
+	$(BUILD_DIR)/module-llvm.elf; code=$$?; test $$code -eq 3
 
 check-std-api:
 	python3 tests/check_std_api_manifest.py
@@ -103,11 +103,14 @@ check-cli: $(TARGET)
 	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
 	if $(TARGET) examples/count.ari --check --emit-llvm $(BUILD_DIR)/cli/check-bad.ll >$(BUILD_DIR)/cli/check-output-option.err 2>&1; then exit 1; fi
 	grep -q -- "--check cannot be combined with backend output or linking options" $(BUILD_DIR)/cli/check-output-option.err
-	if $(TARGET) examples/count.ari --emit-obj $(BUILD_DIR)/cli/count.o >$(BUILD_DIR)/cli/emit-obj-without-freestanding.err 2>&1; then exit 1; fi
-	grep -q -- "--emit-obj requires --freestanding" $(BUILD_DIR)/cli/emit-obj-without-freestanding.err
-	$(TARGET) --freestanding examples/count.ari -o $(BUILD_DIR)/cli/count.raw
-	test -x $(BUILD_DIR)/cli/count.raw
-	$(BUILD_DIR)/cli/count.raw; code=$$?; test $$code -eq 5
+	$(TARGET) tests/ok/library-export.ari --emit-obj $(BUILD_DIR)/cli/library-export.o
+	test -s $(BUILD_DIR)/cli/library-export.o
+	if $(TARGET) examples/count.ari --emit-obj >$(BUILD_DIR)/cli/missing-emit-obj.err 2>&1; then exit 1; fi
+	grep -q -- "--emit-obj expects a path" $(BUILD_DIR)/cli/missing-emit-obj.err
+	if $(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/cli/count.ll --emit-obj $(BUILD_DIR)/cli/count.o >$(BUILD_DIR)/cli/emit-obj-emit-llvm.err 2>&1; then exit 1; fi
+	grep -q -- "--emit-obj cannot be combined with --emit-llvm" $(BUILD_DIR)/cli/emit-obj-emit-llvm.err
+	if $(TARGET) examples/count.ari --emit-obj $(BUILD_DIR)/cli/count.o -l c >$(BUILD_DIR)/cli/emit-obj-link.err 2>&1; then exit 1; fi
+	grep -q -- "--emit-obj cannot be combined with linker options" $(BUILD_DIR)/cli/emit-obj-link.err
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) examples/count.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/cli/output.elf; test -x $(BUILD_DIR)/cli/output.elf; $(BUILD_DIR)/cli/output.elf; code=$$?; test $$code -eq 5; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/library-export.ari --llvm-cc $(LLVM_CC) --shared -o $(BUILD_DIR)/cli/libari_cli.so; test -s $(BUILD_DIR)/cli/libari_cli.so; fi
 	if $(TARGET) >$(BUILD_DIR)/cli/missing-input.err 2>&1; then exit 1; fi
@@ -133,7 +136,7 @@ check-cli: $(TARGET)
 	if $(TARGET) tests/ok/package-module-main.ari -I >$(BUILD_DIR)/cli/missing-I.err 2>&1; then exit 1; fi
 	grep -q -- "-I expects a path" $(BUILD_DIR)/cli/missing-I.err
 	if $(TARGET) examples/count.ari --backend llvm >$(BUILD_DIR)/cli/backend-removed.err 2>&1; then exit 1; fi
-	grep -q -- "--backend was removed; LLVM IR is the only host backend" $(BUILD_DIR)/cli/backend-removed.err
+	grep -q -- "--backend was removed; LLVM is the only backend" $(BUILD_DIR)/cli/backend-removed.err
 	if $(TARGET) examples/count.ari --cc >$(BUILD_DIR)/cli/missing-cc.err 2>&1; then exit 1; fi
 	grep -q -- "--cc was removed; use --llvm-cc" $(BUILD_DIR)/cli/missing-cc.err
 	if $(TARGET) examples/count.ari --llvm-cc >$(BUILD_DIR)/cli/missing-llvm-cc.err 2>&1; then exit 1; fi
@@ -142,32 +145,30 @@ check-cli: $(TARGET)
 	grep -q -- "--target expects a target triple" $(BUILD_DIR)/cli/missing-target.err
 	if $(TARGET) examples/count.ari --target mystery-cpu --emit-llvm $(BUILD_DIR)/cli/bad-target.ll >$(BUILD_DIR)/cli/bad-target.err 2>&1; then exit 1; fi
 	grep -q "unsupported target triple 'mystery-cpu'" $(BUILD_DIR)/cli/bad-target.err
-	if $(TARGET) --freestanding examples/count.ari --emit-llvm $(BUILD_DIR)/cli/bad.ll >$(BUILD_DIR)/cli/freestanding-emit-llvm.err 2>&1; then exit 1; fi
-	grep -q -- "--freestanding cannot be combined with --emit-llvm or --shared" $(BUILD_DIR)/cli/freestanding-emit-llvm.err
 	if $(TARGET) examples/count.ari extra.ari >$(BUILD_DIR)/cli/unexpected-arg.err 2>&1; then exit 1; fi
 	grep -q "unexpected argument 'extra.ari'" $(BUILD_DIR)/cli/unexpected-arg.err
 
 check-prelude: $(TARGET)
 	mkdir -p $(BUILD_DIR)/prelude
-	$(TARGET) --freestanding tests/ok/prelude-builtins.ari -o $(BUILD_DIR)/prelude/prelude-builtins.raw
-	$(BUILD_DIR)/prelude/prelude-builtins.raw; code=$$?; test $$code -eq 7
-	$(TARGET) --freestanding tests/ok/prelude-std-root-builtins.ari -o $(BUILD_DIR)/prelude/prelude-std-root-builtins.raw
-	$(BUILD_DIR)/prelude/prelude-std-root-builtins.raw >$(BUILD_DIR)/prelude/prelude-std-root-builtins.out; code=$$?; test $$code -eq 9
+	$(TARGET) tests/ok/prelude-builtins.ari -o $(BUILD_DIR)/prelude/prelude-builtins.elf
+	$(BUILD_DIR)/prelude/prelude-builtins.elf; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/prelude-std-root-builtins.ari -o $(BUILD_DIR)/prelude/prelude-std-root-builtins.elf
+	$(BUILD_DIR)/prelude/prelude-std-root-builtins.elf >$(BUILD_DIR)/prelude/prelude-std-root-builtins.out; code=$$?; test $$code -eq 9
 	grep -qx "4" $(BUILD_DIR)/prelude/prelude-std-root-builtins.out
 	grep -qx "5" $(BUILD_DIR)/prelude/prelude-std-root-builtins.out
-	$(TARGET) --freestanding tests/ok/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.raw
-	$(BUILD_DIR)/prelude/prelude-macros.raw >$(BUILD_DIR)/prelude/prelude-macros.out; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/prelude-macros.ari -o $(BUILD_DIR)/prelude/prelude-macros.elf
+	$(BUILD_DIR)/prelude/prelude-macros.elf >$(BUILD_DIR)/prelude/prelude-macros.out; code=$$?; test $$code -eq 7
 	grep -q "macro=5 ok=1" $(BUILD_DIR)/prelude/prelude-macros.out
-	$(TARGET) --freestanding tests/ok/format-float-freestanding.ari -o $(BUILD_DIR)/prelude/format-float-freestanding.raw
-	$(BUILD_DIR)/prelude/format-float-freestanding.raw >$(BUILD_DIR)/prelude/format-float-freestanding.out
-	grep -qx "value=1.3 default=1.500000 whole=6" $(BUILD_DIR)/prelude/format-float-freestanding.out
-	grep -qx "round=1.13 carry=10 neg=-2.5" $(BUILD_DIR)/prelude/format-float-freestanding.out
-	$(TARGET) --freestanding tests/ok/format-print-u64.ari -o $(BUILD_DIR)/prelude/format-print-u64.raw
-	$(BUILD_DIR)/prelude/format-print-u64.raw >$(BUILD_DIR)/prelude/format-print-u64.out
+	$(TARGET) tests/ok/format-float-llvm.ari -o $(BUILD_DIR)/prelude/format-float-llvm.elf
+	$(BUILD_DIR)/prelude/format-float-llvm.elf >$(BUILD_DIR)/prelude/format-float-llvm.out
+	grep -qx "value=1.3 default=1.500000 whole=6" $(BUILD_DIR)/prelude/format-float-llvm.out
+	grep -qx "round=1.12 carry=10 neg=-2.5" $(BUILD_DIR)/prelude/format-float-llvm.out
+	$(TARGET) tests/ok/format-print-u64.ari -o $(BUILD_DIR)/prelude/format-print-u64.elf
+	$(BUILD_DIR)/prelude/format-print-u64.elf >$(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/prelude/format-print-u64.out
-	$(TARGET) --freestanding tests/ok/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.raw
-	$(BUILD_DIR)/prelude/raw-string-literals.raw >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141
+	$(TARGET) tests/ok/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.elf
+	$(BUILD_DIR)/prelude/raw-string-literals.elf >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141
 	grep -qx "A" $(BUILD_DIR)/prelude/raw-string-literals.out
 	grep -qx "B" $(BUILD_DIR)/prelude/raw-string-literals.out
 	$(TARGET) tests/ok/prelude-macros.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-macros.ll
@@ -202,23 +203,23 @@ check-prelude: $(TARGET)
 		grep -qx "delta" $(BUILD_DIR)/prelude/prelude-read-line.out; \
 	fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-read-line-owned.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; code=$$?; test $$code -eq 161; fi
-	$(TARGET) --freestanding tests/ok/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.raw
-	$(BUILD_DIR)/prelude/prelude-trait-surface.raw; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.elf
+	$(BUILD_DIR)/prelude/prelude-trait-surface.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/std-cmp-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp10min__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp10max__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp12clamp__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
-	$(TARGET) --freestanding tests/ok/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.raw
-	$(BUILD_DIR)/prelude/std-cmp-value-helpers.raw; code=$$?; test $$code -eq 111
+	$(TARGET) tests/ok/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf
+	$(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 111
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 111; fi
-	$(TARGET) --freestanding tests/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.raw
-	$(BUILD_DIR)/prelude/prelude-explicit-move.raw; code=$$?; test $$code -eq 32
+	$(TARGET) tests/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.elf
+	$(BUILD_DIR)/prelude/prelude-explicit-move.elf; code=$$?; test $$code -eq 32
 	$(TARGET) tests/ok/std-mem-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
 	grep -q '_mem_replace' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
 	grep -q '_mem_swap' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
 	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
-	$(TARGET) --freestanding tests/ok/std-mem-value-helpers.ari -o $(BUILD_DIR)/prelude/std-mem-value-helpers.raw
-	$(BUILD_DIR)/prelude/std-mem-value-helpers.raw; code=$$?; test $$code -eq 46
+	$(TARGET) tests/ok/std-mem-value-helpers.ari -o $(BUILD_DIR)/prelude/std-mem-value-helpers.elf
+	$(BUILD_DIR)/prelude/std-mem-value-helpers.elf; code=$$?; test $$code -eq 46
 	$(TARGET) tests/ok/prelude-header-main.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-main.ll
 	grep -q 'call ptr @"ari_builtin_zone_alloc"' $(BUILD_DIR)/prelude/prelude-header-main.ll
@@ -465,17 +466,17 @@ check-prelude: $(TARGET)
 	grep -F -q 'define ptr @"_ARNv4impl15std__Slice_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-as-ptr.ll
 	$(TARGET) tests/ok/prelude-slice-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl15std__Slice_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
-	$(TARGET) --freestanding tests/ok/prelude-slice-view.ari -o $(BUILD_DIR)/prelude/prelude-slice-view.raw
-	$(BUILD_DIR)/prelude/prelude-slice-view.raw; code=$$?; test $$code -eq 101
-	$(TARGET) --freestanding tests/ok/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.raw
-	$(BUILD_DIR)/prelude/prelude-slice-methods.raw; code=$$?; test $$code -eq 105
+	$(TARGET) tests/ok/prelude-slice-view.ari -o $(BUILD_DIR)/prelude/prelude-slice-view.elf
+	$(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101
+	$(TARGET) tests/ok/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf
+	$(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105
 	$(TARGET) tests/ok/prelude-option-result-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl16std__Option_i64_8inherent7is_some"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl21std__Result_i64__i32_8inherent5is_ok"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Result_i64__i32_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
-	$(TARGET) --freestanding tests/ok/prelude-option-result-methods.ari -o $(BUILD_DIR)/prelude/prelude-option-result-methods.raw
-	$(BUILD_DIR)/prelude/prelude-option-result-methods.raw; code=$$?; test $$code -eq 91
+	$(TARGET) tests/ok/prelude-option-result-methods.ari -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf
+	$(BUILD_DIR)/prelude/prelude-option-result-methods.elf; code=$$?; test $$code -eq 91
 	$(TARGET) tests/ok/prelude-option-result-combinators.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent10map__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent15and_then__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
@@ -485,8 +486,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'Result_i64__i32_8inherent14map_err__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Result_i64__i32_8inherent15and_then__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Result_i64__i32_8inherent14or_else__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
-	$(TARGET) --freestanding tests/ok/prelude-option-result-combinators.ari -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.raw
-	$(BUILD_DIR)/prelude/prelude-option-result-combinators.raw; code=$$?; test $$code -eq 218
+	$(TARGET) tests/ok/prelude-option-result-combinators.ari -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf
+	$(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; code=$$?; test $$code -eq 218
 	$(TARGET) tests/ok/prelude-option-result-unwrap.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'Option_i64_8inherent6unwrap' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'Option_i64_8inherent6expect' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
@@ -494,8 +495,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'Result_i64__i32_8inherent10unwrap_err' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'call void @"ari_builtin_panic"()' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
 	grep -F -q 'unreachable' $(BUILD_DIR)/prelude/prelude-option-result-unwrap.ll
-	$(TARGET) --freestanding tests/ok/prelude-option-result-unwrap-freestanding.ari -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap-freestanding.raw
-	$(BUILD_DIR)/prelude/prelude-option-result-unwrap-freestanding.raw; code=$$?; test $$code -eq 52
+	$(TARGET) tests/ok/prelude-option-result-unwrap-llvm.ari -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap-llvm.elf
+	$(BUILD_DIR)/prelude/prelude-option-result-unwrap-llvm.elf; code=$$?; test $$code -eq 52
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; code=$$?; test $$code -eq 91; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/prelude-option-result-combinators.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; code=$$?; test $$code -eq 218; fi
@@ -712,8 +713,6 @@ check-prelude: $(TARGET)
 	grep -q 'extern "ari" builtin declarations require an explicit builtin symbol' $(BUILD_DIR)/prelude/ari-builtin-missing-link.err
 	if $(TARGET) tests/errors/prelude-result-arity.ari -o $(BUILD_DIR)/prelude/prelude-result-arity.elf >$(BUILD_DIR)/prelude/prelude-result-arity.err 2>&1; then exit 1; fi
 	grep -q "enum 'std::Result' expects 2 type arguments" $(BUILD_DIR)/prelude/prelude-result-arity.err
-	if $(TARGET) --freestanding tests/errors/prelude-read-line-freestanding.ari -o $(BUILD_DIR)/prelude/prelude-read-line-freestanding.elf >$(BUILD_DIR)/prelude/prelude-read-line-freestanding.err 2>&1; then exit 1; fi
-	grep -q "freestanding backend does not lower line input helpers yet" $(BUILD_DIR)/prelude/prelude-read-line-freestanding.err
 	if $(TARGET) tests/errors/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'text' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err
 	if $(TARGET) tests/errors/prelude-macro-format-no-default-zone.ari -o $(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.elf >$(BUILD_DIR)/prelude/prelude-macro-format-no-default-zone.err 2>&1; then exit 1; fi
@@ -735,128 +734,128 @@ check-prelude: $(TARGET)
 
 check-control-flow: $(TARGET)
 	mkdir -p $(BUILD_DIR)/control-flow
-	$(TARGET) --freestanding tests/ok/control-flow-if-else-if.ari -o $(BUILD_DIR)/control-flow/control-flow-if-else-if.raw
-	$(BUILD_DIR)/control-flow/control-flow-if-else-if.raw; code=$$?; test $$code -eq 3
-	$(TARGET) --freestanding tests/ok/control-flow-boolish.ari -o $(BUILD_DIR)/control-flow/control-flow-boolish.raw
-	$(BUILD_DIR)/control-flow/control-flow-boolish.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --freestanding tests/ok/if-expression.ari -o $(BUILD_DIR)/control-flow/if-expression.raw
-	$(BUILD_DIR)/control-flow/if-expression.raw; code=$$?; test $$code -eq 13
-	$(TARGET) --freestanding tests/ok/noreturn-expression-arms.ari -o $(BUILD_DIR)/control-flow/noreturn-expression-arms.raw
-	$(BUILD_DIR)/control-flow/noreturn-expression-arms.raw; code=$$?; test $$code -eq 84
-	$(TARGET) --freestanding tests/ok/if-expression-payloads.ari -o $(BUILD_DIR)/control-flow/if-expression-payloads.raw
-	$(BUILD_DIR)/control-flow/if-expression-payloads.raw; code=$$?; test $$code -eq 37
-	$(TARGET) --freestanding tests/ok/if-let-expression.ari -o $(BUILD_DIR)/control-flow/if-let-expression.raw
-	$(BUILD_DIR)/control-flow/if-let-expression.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/if-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-or-pattern.raw
-	$(BUILD_DIR)/control-flow/if-let-or-pattern.raw; code=$$?; test $$code -eq 44
-	$(TARGET) --freestanding tests/ok/if-let-aggregate-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-aggregate-pattern.raw
-	$(BUILD_DIR)/control-flow/if-let-aggregate-pattern.raw; code=$$?; test $$code -eq 17
-	$(TARGET) --freestanding tests/ok/if-let-aggregate-or-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.raw
-	$(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.raw; code=$$?; test $$code -eq 36
-	$(TARGET) --freestanding tests/ok/block-expression.ari -o $(BUILD_DIR)/control-flow/block-expression.raw
-	$(BUILD_DIR)/control-flow/block-expression.raw; code=$$?; test $$code -eq 27
-	$(TARGET) --freestanding tests/ok/block-expression-payloads.ari -o $(BUILD_DIR)/control-flow/block-expression-payloads.raw
-	$(BUILD_DIR)/control-flow/block-expression-payloads.raw; code=$$?; test $$code -eq 26
-	$(TARGET) --freestanding tests/ok/statement-body-payloads.ari -o $(BUILD_DIR)/control-flow/statement-body-payloads.raw
-	$(BUILD_DIR)/control-flow/statement-body-payloads.raw; code=$$?; test $$code -eq 19
-	$(TARGET) --freestanding tests/ok/labeled-block-expression.ari -o $(BUILD_DIR)/control-flow/labeled-block-expression.raw
-	$(BUILD_DIR)/control-flow/labeled-block-expression.raw; code=$$?; test $$code -eq 17
-	$(TARGET) --freestanding tests/ok/labeled-block-aggregate.ari -o $(BUILD_DIR)/control-flow/labeled-block-aggregate.raw
-	$(BUILD_DIR)/control-flow/labeled-block-aggregate.raw; code=$$?; test $$code -eq 9
-	$(TARGET) --freestanding tests/ok/labeled-block-own-break.ari -o $(BUILD_DIR)/control-flow/labeled-block-own-break.raw
-	$(BUILD_DIR)/control-flow/labeled-block-own-break.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --freestanding tests/ok/control-flow-aggregate-expr-freestanding.ari -o $(BUILD_DIR)/control-flow/control-flow-aggregate-expr-freestanding.raw
-	$(BUILD_DIR)/control-flow/control-flow-aggregate-expr-freestanding.raw; code=$$?; test $$code -eq 82
-	$(TARGET) --freestanding tests/ok/for-range-operator.ari -o $(BUILD_DIR)/control-flow/for-range-operator.raw
-	$(BUILD_DIR)/control-flow/for-range-operator.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --freestanding tests/ok/for-range-inclusive.ari -o $(BUILD_DIR)/control-flow/for-range-inclusive.raw
-	$(BUILD_DIR)/control-flow/for-range-inclusive.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/for-range-exact-once-owner-state.ari -o $(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.raw
-	$(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/for-range-known-nonempty-break-owner-state.ari -o $(BUILD_DIR)/control-flow/for-range-known-nonempty-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/for-range-known-nonempty-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/range-values.ari -o $(BUILD_DIR)/control-flow/range-values.raw
-	$(BUILD_DIR)/control-flow/range-values.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/for-range-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-range-alias-pattern.raw
-	$(BUILD_DIR)/control-flow/for-range-alias-pattern.raw; code=$$?; test $$code -eq 28
-	$(TARGET) --freestanding tests/ok/range-generic-bounds.ari -o $(BUILD_DIR)/control-flow/range-generic-bounds.raw
-	$(BUILD_DIR)/control-flow/range-generic-bounds.raw; code=$$?; test $$code -eq 32
-	$(TARGET) --freestanding tests/ok/for-vector-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-pattern.raw
-	$(BUILD_DIR)/control-flow/for-vector-pattern.raw; code=$$?; test $$code -eq 50
-	$(TARGET) --freestanding tests/ok/for-vector-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw
-	$(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw; code=$$?; test $$code -eq 75
-	$(TARGET) --freestanding tests/ok/for-vector-exact-once-owner-state.ari -o $(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.raw
-	$(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/for-vector-known-nonempty-break-owner-state.ari -o $(BUILD_DIR)/control-flow/for-vector-known-nonempty-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/for-vector-known-nonempty-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/ir-for-loop-payloads.ari -o $(BUILD_DIR)/control-flow/ir-for-loop-payloads.raw
-	$(BUILD_DIR)/control-flow/ir-for-loop-payloads.raw; code=$$?; test $$code -eq 21
-	$(TARGET) --freestanding tests/ok/if-while-let.ari -o $(BUILD_DIR)/control-flow/if-while-let.raw
-	$(BUILD_DIR)/control-flow/if-while-let.raw; code=$$?; test $$code -eq 5
-	$(TARGET) --freestanding tests/ok/while-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/while-let-or-pattern.raw
-	$(BUILD_DIR)/control-flow/while-let-or-pattern.raw; code=$$?; test $$code -eq 55
-	$(TARGET) --freestanding tests/ok/while-let-aggregate-or-pattern.ari -o $(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.raw
-	$(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.raw; code=$$?; test $$code -eq 36
-	$(TARGET) --freestanding tests/ok/while-let-aggregate-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-aggregate-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-let-aggregate-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-let-direct-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-let-local-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-let-local-alias-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-local-alias-enum-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-let-local-alias-enum-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/init-while-owning.ari -o $(BUILD_DIR)/control-flow/init-while-owning.raw
-	$(BUILD_DIR)/control-flow/init-while-owning.raw; code=$$?; test $$code -eq 22
-	$(TARGET) --freestanding tests/ok/init-while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-false-owner-state.raw
-	$(BUILD_DIR)/control-flow/init-while-false-owner-state.raw; code=$$?; test $$code -eq 7
-	$(TARGET) --freestanding tests/ok/init-while-true-return.ari -o $(BUILD_DIR)/control-flow/init-while-true-return.raw
-	$(BUILD_DIR)/control-flow/init-while-true-return.raw; code=$$?; test $$code -eq 9
-	$(TARGET) --freestanding tests/ok/init-while-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-true-continue-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/init-while-true-continue-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/init-while-known-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/init-while-known-bool-alias-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.raw
-	$(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/labeled-break.ari -o $(BUILD_DIR)/control-flow/labeled-break.raw
-	$(BUILD_DIR)/control-flow/labeled-break.raw; code=$$?; test $$code -eq 2
-	$(TARGET) --freestanding tests/ok/break-statement-payloads.ari -o $(BUILD_DIR)/control-flow/break-statement-payloads.raw
-	$(BUILD_DIR)/control-flow/break-statement-payloads.raw; code=$$?; test $$code -eq 9
-	$(TARGET) --freestanding tests/ok/while-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-true-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-known-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-known-true-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-known-bool-alias-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/loop-break-owner-unavailable-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw
-	$(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw; code=$$?; test $$code -eq 13
-	$(TARGET) --freestanding tests/ok/loop-break-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.raw
-	$(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --freestanding tests/ok/loop-fallthrough-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-fallthrough-borrow-release-merge.raw
-	$(BUILD_DIR)/control-flow/loop-fallthrough-borrow-release-merge.raw; code=$$?; test $$code -eq 11
-	$(TARGET) --freestanding tests/ok/loop-continue-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-continue-borrow-release-merge.raw
-	$(BUILD_DIR)/control-flow/loop-continue-borrow-release-merge.raw; code=$$?; test $$code -eq 11
-	$(TARGET) --freestanding tests/ok/while-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-true-return-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-return-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-true-return-owner-state.raw; code=$$?; test $$code -eq 12
-	$(TARGET) --freestanding tests/ok/while-true-literal-if-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/while-false-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-false-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-known-false-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-false-owner-state.raw
-	$(BUILD_DIR)/control-flow/while-known-false-owner-state.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/while-false-borrow-state.ari -o $(BUILD_DIR)/control-flow/while-false-borrow-state.raw
-	$(BUILD_DIR)/control-flow/while-false-borrow-state.raw; code=$$?; test $$code -eq 4
+	$(TARGET) tests/ok/control-flow-if-else-if.ari -o $(BUILD_DIR)/control-flow/control-flow-if-else-if.elf
+	$(BUILD_DIR)/control-flow/control-flow-if-else-if.elf; code=$$?; test $$code -eq 3
+	$(TARGET) tests/ok/control-flow-boolish.ari -o $(BUILD_DIR)/control-flow/control-flow-boolish.elf
+	$(BUILD_DIR)/control-flow/control-flow-boolish.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/if-expression.ari -o $(BUILD_DIR)/control-flow/if-expression.elf
+	$(BUILD_DIR)/control-flow/if-expression.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/noreturn-expression-arms.ari -o $(BUILD_DIR)/control-flow/noreturn-expression-arms.elf
+	$(BUILD_DIR)/control-flow/noreturn-expression-arms.elf; code=$$?; test $$code -eq 84
+	$(TARGET) tests/ok/if-expression-payloads.ari -o $(BUILD_DIR)/control-flow/if-expression-payloads.elf
+	$(BUILD_DIR)/control-flow/if-expression-payloads.elf; code=$$?; test $$code -eq 37
+	$(TARGET) tests/ok/if-let-expression.ari -o $(BUILD_DIR)/control-flow/if-let-expression.elf
+	$(BUILD_DIR)/control-flow/if-let-expression.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/if-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-or-pattern.elf
+	$(BUILD_DIR)/control-flow/if-let-or-pattern.elf; code=$$?; test $$code -eq 44
+	$(TARGET) tests/ok/if-let-aggregate-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-aggregate-pattern.elf
+	$(BUILD_DIR)/control-flow/if-let-aggregate-pattern.elf; code=$$?; test $$code -eq 17
+	$(TARGET) tests/ok/if-let-aggregate-or-pattern.ari -o $(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.elf
+	$(BUILD_DIR)/control-flow/if-let-aggregate-or-pattern.elf; code=$$?; test $$code -eq 36
+	$(TARGET) tests/ok/block-expression.ari -o $(BUILD_DIR)/control-flow/block-expression.elf
+	$(BUILD_DIR)/control-flow/block-expression.elf; code=$$?; test $$code -eq 27
+	$(TARGET) tests/ok/block-expression-payloads.ari -o $(BUILD_DIR)/control-flow/block-expression-payloads.elf
+	$(BUILD_DIR)/control-flow/block-expression-payloads.elf; code=$$?; test $$code -eq 26
+	$(TARGET) tests/ok/statement-body-payloads.ari -o $(BUILD_DIR)/control-flow/statement-body-payloads.elf
+	$(BUILD_DIR)/control-flow/statement-body-payloads.elf; code=$$?; test $$code -eq 19
+	$(TARGET) tests/ok/labeled-block-expression.ari -o $(BUILD_DIR)/control-flow/labeled-block-expression.elf
+	$(BUILD_DIR)/control-flow/labeled-block-expression.elf; code=$$?; test $$code -eq 17
+	$(TARGET) tests/ok/labeled-block-aggregate.ari -o $(BUILD_DIR)/control-flow/labeled-block-aggregate.elf
+	$(BUILD_DIR)/control-flow/labeled-block-aggregate.elf; code=$$?; test $$code -eq 9
+	$(TARGET) tests/ok/labeled-block-own-break.ari -o $(BUILD_DIR)/control-flow/labeled-block-own-break.elf
+	$(BUILD_DIR)/control-flow/labeled-block-own-break.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/control-flow-aggregate-expr-llvm.ari -o $(BUILD_DIR)/control-flow/control-flow-aggregate-expr-llvm.elf
+	$(BUILD_DIR)/control-flow/control-flow-aggregate-expr-llvm.elf; code=$$?; test $$code -eq 82
+	$(TARGET) tests/ok/for-range-operator.ari -o $(BUILD_DIR)/control-flow/for-range-operator.elf
+	$(BUILD_DIR)/control-flow/for-range-operator.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/for-range-inclusive.ari -o $(BUILD_DIR)/control-flow/for-range-inclusive.elf
+	$(BUILD_DIR)/control-flow/for-range-inclusive.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/for-range-exact-once-owner-state.ari -o $(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.elf
+	$(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/for-range-known-nonempty-break-owner-state.ari -o $(BUILD_DIR)/control-flow/for-range-known-nonempty-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/for-range-known-nonempty-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/range-values.ari -o $(BUILD_DIR)/control-flow/range-values.elf
+	$(BUILD_DIR)/control-flow/range-values.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/for-range-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-range-alias-pattern.elf
+	$(BUILD_DIR)/control-flow/for-range-alias-pattern.elf; code=$$?; test $$code -eq 28
+	$(TARGET) tests/ok/range-generic-bounds.ari -o $(BUILD_DIR)/control-flow/range-generic-bounds.elf
+	$(BUILD_DIR)/control-flow/range-generic-bounds.elf; code=$$?; test $$code -eq 32
+	$(TARGET) tests/ok/for-vector-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-pattern.elf
+	$(BUILD_DIR)/control-flow/for-vector-pattern.elf; code=$$?; test $$code -eq 50
+	$(TARGET) tests/ok/for-vector-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-alias-pattern.elf
+	$(BUILD_DIR)/control-flow/for-vector-alias-pattern.elf; code=$$?; test $$code -eq 75
+	$(TARGET) tests/ok/for-vector-exact-once-owner-state.ari -o $(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.elf
+	$(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/for-vector-known-nonempty-break-owner-state.ari -o $(BUILD_DIR)/control-flow/for-vector-known-nonempty-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/for-vector-known-nonempty-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/ir-for-loop-payloads.ari -o $(BUILD_DIR)/control-flow/ir-for-loop-payloads.elf
+	$(BUILD_DIR)/control-flow/ir-for-loop-payloads.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/ok/if-while-let.ari -o $(BUILD_DIR)/control-flow/if-while-let.elf
+	$(BUILD_DIR)/control-flow/if-while-let.elf; code=$$?; test $$code -eq 5
+	$(TARGET) tests/ok/while-let-or-pattern.ari -o $(BUILD_DIR)/control-flow/while-let-or-pattern.elf
+	$(BUILD_DIR)/control-flow/while-let-or-pattern.elf; code=$$?; test $$code -eq 55
+	$(TARGET) tests/ok/while-let-aggregate-or-pattern.ari -o $(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.elf
+	$(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.elf; code=$$?; test $$code -eq 36
+	$(TARGET) tests/ok/while-let-aggregate-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-aggregate-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-let-aggregate-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-let-direct-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-let-local-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-let-local-enum-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-let-local-alias-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-local-alias-enum-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-let-local-alias-enum-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/init-while-owning.ari -o $(BUILD_DIR)/control-flow/init-while-owning.elf
+	$(BUILD_DIR)/control-flow/init-while-owning.elf; code=$$?; test $$code -eq 22
+	$(TARGET) tests/ok/init-while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-false-owner-state.elf
+	$(BUILD_DIR)/control-flow/init-while-false-owner-state.elf; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/init-while-true-return.ari -o $(BUILD_DIR)/control-flow/init-while-true-return.elf
+	$(BUILD_DIR)/control-flow/init-while-true-return.elf; code=$$?; test $$code -eq 9
+	$(TARGET) tests/ok/init-while-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-true-continue-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/init-while-true-continue-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/init-while-known-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/init-while-known-bool-alias-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.elf
+	$(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/labeled-break.ari -o $(BUILD_DIR)/control-flow/labeled-break.elf
+	$(BUILD_DIR)/control-flow/labeled-break.elf; code=$$?; test $$code -eq 2
+	$(TARGET) tests/ok/break-statement-payloads.ari -o $(BUILD_DIR)/control-flow/break-statement-payloads.elf
+	$(BUILD_DIR)/control-flow/break-statement-payloads.elf; code=$$?; test $$code -eq 9
+	$(TARGET) tests/ok/while-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-true-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-known-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-known-true-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-known-bool-alias-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/loop-break-owner-unavailable-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.elf
+	$(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/loop-break-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.elf
+	$(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/loop-fallthrough-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-fallthrough-borrow-release-merge.elf
+	$(BUILD_DIR)/control-flow/loop-fallthrough-borrow-release-merge.elf; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/loop-continue-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-continue-borrow-release-merge.elf
+	$(BUILD_DIR)/control-flow/loop-continue-borrow-release-merge.elf; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/while-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-true-continue-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-true-return-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-return-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-true-return-owner-state.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/while-true-literal-if-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/while-false-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-false-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-known-false-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-false-owner-state.elf
+	$(BUILD_DIR)/control-flow/while-known-false-owner-state.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/while-false-borrow-state.ari -o $(BUILD_DIR)/control-flow/while-false-borrow-state.elf
+	$(BUILD_DIR)/control-flow/while-false-borrow-state.elf; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/while-true-continue-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
 	$(TARGET) tests/ok/while-true-empty-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-empty-noreturn.ll
 	grep -q "while.cond" $(BUILD_DIR)/control-flow/while-true-empty-noreturn.ll
 	$(TARGET) tests/ok/while-true-if-false-break-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-if-false-break-noreturn.ll
 	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-true-if-false-break-noreturn.ll
-	$(TARGET) --freestanding tests/ok/statement-label-payloads.ari -o $(BUILD_DIR)/control-flow/statement-label-payloads.raw
-	$(BUILD_DIR)/control-flow/statement-label-payloads.raw; code=$$?; test $$code -eq 7
-	$(TARGET) --freestanding tests/ok/labeled-block.ari -o $(BUILD_DIR)/control-flow/labeled-block.raw
-	$(BUILD_DIR)/control-flow/labeled-block.raw; code=$$?; test $$code -eq 2
+	$(TARGET) tests/ok/statement-label-payloads.ari -o $(BUILD_DIR)/control-flow/statement-label-payloads.elf
+	$(BUILD_DIR)/control-flow/statement-label-payloads.elf; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/labeled-block.ari -o $(BUILD_DIR)/control-flow/labeled-block.elf
+	$(BUILD_DIR)/control-flow/labeled-block.elf; code=$$?; test $$code -eq 2
 	$(TARGET) tests/ok/if-while-let.ari --emit-llvm $(BUILD_DIR)/control-flow/if-while-let.ll
 	grep -q "whilelet.cond" $(BUILD_DIR)/control-flow/if-while-let.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/if-while-let.ll
@@ -1112,76 +1111,76 @@ check-control-flow: $(TARGET)
 
 check-match: $(TARGET)
 	mkdir -p $(BUILD_DIR)/match
-	$(TARGET) --freestanding tests/ok/enum-match.ari -o $(BUILD_DIR)/match/enum-match.raw
-	$(BUILD_DIR)/match/enum-match.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --freestanding tests/ok/match-patterns.ari -o $(BUILD_DIR)/match/match-patterns.raw
-	$(BUILD_DIR)/match/match-patterns.raw; code=$$?; test $$code -eq 34
-	$(TARGET) --freestanding tests/ok/match-wildcard.ari -o $(BUILD_DIR)/match/match-wildcard.raw
-	$(BUILD_DIR)/match/match-wildcard.raw; code=$$?; test $$code -eq 18
-	$(TARGET) --freestanding tests/ok/match-return-flow.ari -o $(BUILD_DIR)/match/match-return-flow.raw
-	$(BUILD_DIR)/match/match-return-flow.raw; code=$$?; test $$code -eq 18
-	$(TARGET) --freestanding tests/ok/match-freestanding.ari -o $(BUILD_DIR)/match/match-freestanding.raw
-	$(BUILD_DIR)/match/match-freestanding.raw; code=$$?; test $$code -eq 12
-	$(TARGET) --freestanding tests/ok/match-expression.ari -o $(BUILD_DIR)/match/match-expression.raw
-	$(BUILD_DIR)/match/match-expression.raw; code=$$?; test $$code -eq 12
-	$(TARGET) --freestanding tests/ok/match-expression-payloads.ari -o $(BUILD_DIR)/match/match-expression-payloads.raw
-	$(BUILD_DIR)/match/match-expression-payloads.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/match-literals.ari -o $(BUILD_DIR)/match/match-literals.raw
-	$(BUILD_DIR)/match/match-literals.raw; code=$$?; test $$code -eq 128
-	$(TARGET) --freestanding tests/ok/match-statement-payloads.ari -o $(BUILD_DIR)/match/match-statement-payloads.raw
-	$(BUILD_DIR)/match/match-statement-payloads.raw; code=$$?; test $$code -eq 30
-	$(TARGET) --freestanding tests/ok/pattern-payload-unions.ari -o $(BUILD_DIR)/match/pattern-payload-unions.raw
-	$(BUILD_DIR)/match/pattern-payload-unions.raw; code=$$?; test $$code -eq 41
-	$(TARGET) --freestanding tests/ok/match-tuple-pattern.ari -o $(BUILD_DIR)/match/match-tuple-pattern.raw
-	$(BUILD_DIR)/match/match-tuple-pattern.raw; code=$$?; test $$code -eq 32
-	$(TARGET) --freestanding tests/ok/match-struct-pattern.ari -o $(BUILD_DIR)/match/match-struct-pattern.raw
-	$(BUILD_DIR)/match/match-struct-pattern.raw; code=$$?; test $$code -eq 21
-	$(TARGET) --freestanding tests/ok/match-product-exhaustive.ari -o $(BUILD_DIR)/match/match-product-exhaustive.raw
-	$(BUILD_DIR)/match/match-product-exhaustive.raw; code=$$?; test $$code -eq 25
-	$(TARGET) --freestanding tests/ok/match-finite-product-domain.ari -o $(BUILD_DIR)/match/match-finite-product-domain.raw
-	$(BUILD_DIR)/match/match-finite-product-domain.raw; code=$$?; test $$code -eq 6
-	$(TARGET) --freestanding tests/ok/match-symbolic-product.ari -o $(BUILD_DIR)/match/match-symbolic-product.raw
-	$(BUILD_DIR)/match/match-symbolic-product.raw; code=$$?; test $$code -eq 9
+	$(TARGET) tests/ok/enum-match.ari -o $(BUILD_DIR)/match/enum-match.elf
+	$(BUILD_DIR)/match/enum-match.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/match-patterns.ari -o $(BUILD_DIR)/match/match-patterns.elf
+	$(BUILD_DIR)/match/match-patterns.elf; code=$$?; test $$code -eq 34
+	$(TARGET) tests/ok/match-wildcard.ari -o $(BUILD_DIR)/match/match-wildcard.elf
+	$(BUILD_DIR)/match/match-wildcard.elf; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/match-return-flow.ari -o $(BUILD_DIR)/match/match-return-flow.elf
+	$(BUILD_DIR)/match/match-return-flow.elf; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/match-llvm.ari -o $(BUILD_DIR)/match/match-llvm.elf
+	$(BUILD_DIR)/match/match-llvm.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/match-expression.ari -o $(BUILD_DIR)/match/match-expression.elf
+	$(BUILD_DIR)/match/match-expression.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/match-expression-payloads.ari -o $(BUILD_DIR)/match/match-expression-payloads.elf
+	$(BUILD_DIR)/match/match-expression-payloads.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/match-literals.ari -o $(BUILD_DIR)/match/match-literals.elf
+	$(BUILD_DIR)/match/match-literals.elf; code=$$?; test $$code -eq 128
+	$(TARGET) tests/ok/match-statement-payloads.ari -o $(BUILD_DIR)/match/match-statement-payloads.elf
+	$(BUILD_DIR)/match/match-statement-payloads.elf; code=$$?; test $$code -eq 30
+	$(TARGET) tests/ok/pattern-payload-unions.ari -o $(BUILD_DIR)/match/pattern-payload-unions.elf
+	$(BUILD_DIR)/match/pattern-payload-unions.elf; code=$$?; test $$code -eq 41
+	$(TARGET) tests/ok/match-tuple-pattern.ari -o $(BUILD_DIR)/match/match-tuple-pattern.elf
+	$(BUILD_DIR)/match/match-tuple-pattern.elf; code=$$?; test $$code -eq 32
+	$(TARGET) tests/ok/match-struct-pattern.ari -o $(BUILD_DIR)/match/match-struct-pattern.elf
+	$(BUILD_DIR)/match/match-struct-pattern.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/ok/match-product-exhaustive.ari -o $(BUILD_DIR)/match/match-product-exhaustive.elf
+	$(BUILD_DIR)/match/match-product-exhaustive.elf; code=$$?; test $$code -eq 25
+	$(TARGET) tests/ok/match-finite-product-domain.ari -o $(BUILD_DIR)/match/match-finite-product-domain.elf
+	$(BUILD_DIR)/match/match-finite-product-domain.elf; code=$$?; test $$code -eq 6
+	$(TARGET) tests/ok/match-symbolic-product.ari -o $(BUILD_DIR)/match/match-symbolic-product.elf
+	$(BUILD_DIR)/match/match-symbolic-product.elf; code=$$?; test $$code -eq 9
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-payload-literals.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; $(BUILD_DIR)/match/match-aggregate-enum-payload-literals.elf; code=$$?; test $$code -eq 64; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/match-aggregate-enum-nested-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.elf; $(BUILD_DIR)/match/match-aggregate-enum-nested-payload.elf; code=$$?; test $$code -eq 99; fi
-	$(TARGET) --freestanding tests/ok/match-or-binding.ari -o $(BUILD_DIR)/match/match-or-binding.raw
-	$(BUILD_DIR)/match/match-or-binding.raw; code=$$?; test $$code -eq 41
-	$(TARGET) --freestanding tests/ok/match-range-overlap.ari -o $(BUILD_DIR)/match/match-range-overlap.raw
-	$(BUILD_DIR)/match/match-range-overlap.raw; code=$$?; test $$code -eq 1
-	$(TARGET) --freestanding tests/ok/match-signed-range-coverage.ari -o $(BUILD_DIR)/match/match-signed-range-coverage.raw >$(BUILD_DIR)/match/match-signed-range-coverage.warn 2>&1
+	$(TARGET) tests/ok/match-or-binding.ari -o $(BUILD_DIR)/match/match-or-binding.elf
+	$(BUILD_DIR)/match/match-or-binding.elf; code=$$?; test $$code -eq 41
+	$(TARGET) tests/ok/match-range-overlap.ari -o $(BUILD_DIR)/match/match-range-overlap.elf
+	$(BUILD_DIR)/match/match-range-overlap.elf; code=$$?; test $$code -eq 1
+	$(TARGET) tests/ok/match-signed-range-coverage.ari -o $(BUILD_DIR)/match/match-signed-range-coverage.elf >$(BUILD_DIR)/match/match-signed-range-coverage.warn 2>&1
 	grep -q "warning: scalar match pattern is fully shadowed by earlier match arms" $(BUILD_DIR)/match/match-signed-range-coverage.warn
-	$(BUILD_DIR)/match/match-signed-range-coverage.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --freestanding tests/ok/match-shadow-warning.ari -o $(BUILD_DIR)/match/match-shadow-warning.raw >$(BUILD_DIR)/match/match-shadow-warning.warn 2>&1
+	$(BUILD_DIR)/match/match-signed-range-coverage.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/match-shadow-warning.ari -o $(BUILD_DIR)/match/match-shadow-warning.elf >$(BUILD_DIR)/match/match-shadow-warning.warn 2>&1
 	grep -q "warning: scalar match pattern is fully shadowed by earlier match arms" $(BUILD_DIR)/match/match-shadow-warning.warn
-	$(BUILD_DIR)/match/match-shadow-warning.raw; code=$$?; test $$code -eq 13
-	$(TARGET) --freestanding tests/ok/match-product-shadow-warning.ari -o $(BUILD_DIR)/match/match-product-shadow-warning.raw >$(BUILD_DIR)/match/match-product-shadow-warning.warn 2>&1
+	$(BUILD_DIR)/match/match-shadow-warning.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/match-product-shadow-warning.ari -o $(BUILD_DIR)/match/match-product-shadow-warning.elf >$(BUILD_DIR)/match/match-product-shadow-warning.warn 2>&1
 	grep -q "warning: aggregate match pattern is fully shadowed by earlier match arms" $(BUILD_DIR)/match/match-product-shadow-warning.warn
-	$(BUILD_DIR)/match/match-product-shadow-warning.raw; code=$$?; test $$code -eq 1
-	$(TARGET) --freestanding tests/ok/match-symbolic-product-shadow-warning.ari -o $(BUILD_DIR)/match/match-symbolic-product-shadow-warning.raw >$(BUILD_DIR)/match/match-symbolic-product-shadow-warning.warn 2>&1
+	$(BUILD_DIR)/match/match-product-shadow-warning.elf; code=$$?; test $$code -eq 1
+	$(TARGET) tests/ok/match-symbolic-product-shadow-warning.ari -o $(BUILD_DIR)/match/match-symbolic-product-shadow-warning.elf >$(BUILD_DIR)/match/match-symbolic-product-shadow-warning.warn 2>&1
 	grep -q "warning: aggregate match pattern is fully shadowed by earlier match arms" $(BUILD_DIR)/match/match-symbolic-product-shadow-warning.warn
-	$(BUILD_DIR)/match/match-symbolic-product-shadow-warning.raw; code=$$?; test $$code -eq 1
-	$(TARGET) --freestanding tests/ok/match-alias-pattern.ari -o $(BUILD_DIR)/match/match-alias-pattern.raw
-	$(BUILD_DIR)/match/match-alias-pattern.raw; code=$$?; test $$code -eq 28
-	$(TARGET) --freestanding tests/ok/match-alias-or-pattern.ari -o $(BUILD_DIR)/match/match-alias-or-pattern.raw
-	$(BUILD_DIR)/match/match-alias-or-pattern.raw; code=$$?; test $$code -eq 66
-	$(TARGET) --freestanding tests/ok/match-enum-payload-literals.ari -o $(BUILD_DIR)/match/match-enum-payload-literals.raw
-	$(BUILD_DIR)/match/match-enum-payload-literals.raw; code=$$?; test $$code -eq 66
-	$(TARGET) --freestanding tests/ok/constant-patterns.ari -o $(BUILD_DIR)/match/constant-patterns.raw
-	$(BUILD_DIR)/match/constant-patterns.raw; code=$$?; test $$code -eq 61
-	$(TARGET) --freestanding tests/ok/constant-enum-payload-patterns.ari -o $(BUILD_DIR)/match/constant-enum-payload-patterns.raw
-	$(BUILD_DIR)/match/constant-enum-payload-patterns.raw; code=$$?; test $$code -eq 65
-	$(TARGET) --freestanding tests/ok/constant-folding.ari -o $(BUILD_DIR)/match/constant-folding.raw
-	$(BUILD_DIR)/match/constant-folding.raw; code=$$?; test $$code -eq 32
-	$(TARGET) --freestanding tests/ok/constant-bitwise-folding.ari -o $(BUILD_DIR)/match/constant-bitwise-folding.raw
-	$(BUILD_DIR)/match/constant-bitwise-folding.raw; code=$$?; test $$code -eq 11
-	$(TARGET) --freestanding tests/ok/constant-aggregates.ari -o $(BUILD_DIR)/match/constant-aggregates.raw
-	$(BUILD_DIR)/match/constant-aggregates.raw; code=$$?; test $$code -eq 34
-	$(TARGET) --freestanding tests/ok/constant-direct-composite.ari -o $(BUILD_DIR)/match/constant-direct-composite.raw
-	$(BUILD_DIR)/match/constant-direct-composite.raw; code=$$?; test $$code -eq 22
-	$(TARGET) --freestanding tests/ok/array-patterns.ari -o $(BUILD_DIR)/match/array-patterns.raw
-	$(BUILD_DIR)/match/array-patterns.raw; code=$$?; test $$code -eq 25
-	$(TARGET) --freestanding tests/ok/runtime-sequence-patterns.ari -o $(BUILD_DIR)/match/runtime-sequence-patterns.raw
-	$(BUILD_DIR)/match/runtime-sequence-patterns.raw; code=$$?; test $$code -eq 166
+	$(BUILD_DIR)/match/match-symbolic-product-shadow-warning.elf; code=$$?; test $$code -eq 1
+	$(TARGET) tests/ok/match-alias-pattern.ari -o $(BUILD_DIR)/match/match-alias-pattern.elf
+	$(BUILD_DIR)/match/match-alias-pattern.elf; code=$$?; test $$code -eq 28
+	$(TARGET) tests/ok/match-alias-or-pattern.ari -o $(BUILD_DIR)/match/match-alias-or-pattern.elf
+	$(BUILD_DIR)/match/match-alias-or-pattern.elf; code=$$?; test $$code -eq 66
+	$(TARGET) tests/ok/match-enum-payload-literals.ari -o $(BUILD_DIR)/match/match-enum-payload-literals.elf
+	$(BUILD_DIR)/match/match-enum-payload-literals.elf; code=$$?; test $$code -eq 66
+	$(TARGET) tests/ok/constant-patterns.ari -o $(BUILD_DIR)/match/constant-patterns.elf
+	$(BUILD_DIR)/match/constant-patterns.elf; code=$$?; test $$code -eq 61
+	$(TARGET) tests/ok/constant-enum-payload-patterns.ari -o $(BUILD_DIR)/match/constant-enum-payload-patterns.elf
+	$(BUILD_DIR)/match/constant-enum-payload-patterns.elf; code=$$?; test $$code -eq 65
+	$(TARGET) tests/ok/constant-folding.ari -o $(BUILD_DIR)/match/constant-folding.elf
+	$(BUILD_DIR)/match/constant-folding.elf; code=$$?; test $$code -eq 32
+	$(TARGET) tests/ok/constant-bitwise-folding.ari -o $(BUILD_DIR)/match/constant-bitwise-folding.elf
+	$(BUILD_DIR)/match/constant-bitwise-folding.elf; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/constant-aggregates.ari -o $(BUILD_DIR)/match/constant-aggregates.elf
+	$(BUILD_DIR)/match/constant-aggregates.elf; code=$$?; test $$code -eq 34
+	$(TARGET) tests/ok/constant-direct-composite.ari -o $(BUILD_DIR)/match/constant-direct-composite.elf
+	$(BUILD_DIR)/match/constant-direct-composite.elf; code=$$?; test $$code -eq 22
+	$(TARGET) tests/ok/array-patterns.ari -o $(BUILD_DIR)/match/array-patterns.elf
+	$(BUILD_DIR)/match/array-patterns.elf; code=$$?; test $$code -eq 25
+	$(TARGET) tests/ok/runtime-sequence-patterns.ari -o $(BUILD_DIR)/match/runtime-sequence-patterns.elf
+	$(BUILD_DIR)/match/runtime-sequence-patterns.elf; code=$$?; test $$code -eq 166
 	$(TARGET) tests/ok/match-patterns.ari --emit-llvm $(BUILD_DIR)/match/match-patterns.ll
 	grep -q "match.arm" $(BUILD_DIR)/match/match-patterns.ll
 	grep -q "lshr" $(BUILD_DIR)/match/match-patterns.ll
@@ -1219,32 +1218,32 @@ check-match: $(TARGET)
 	grep -q "insertvalue { i32, i64, i64, i64 }" $(BUILD_DIR)/match/enum-multi-payload.ll
 	grep -q "extractvalue { i32, i64, i64, i64 }" $(BUILD_DIR)/match/enum-multi-payload.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-multi-payload.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-multi-payload.elf; $(BUILD_DIR)/match/enum-multi-payload.elf; code=$$?; test $$code -eq 33; fi
-	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-local.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-local.raw
-	$(BUILD_DIR)/match/freestanding-aggregate-enum-local.raw; code=$$?; test $$code -eq 30
-	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-payload-tests.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-payload-tests.raw
-	$(BUILD_DIR)/match/freestanding-aggregate-enum-payload-tests.raw; code=$$?; test $$code -eq 73
-	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-nested-payload.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-nested-payload.raw
-	$(BUILD_DIR)/match/freestanding-aggregate-enum-nested-payload.raw; code=$$?; test $$code -eq 99
-	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-nested-aggregate-payload.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-nested-aggregate-payload.raw
-	$(BUILD_DIR)/match/freestanding-aggregate-enum-nested-aggregate-payload.raw; code=$$?; test $$code -eq 49
-	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-pointer-copy.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw
-	$(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw; code=$$?; test $$code -eq 21
-	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-direct-store.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw
-	$(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-materialization.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-materialization.raw
-	$(BUILD_DIR)/match/freestanding-aggregate-enum-materialization.raw; code=$$?; test $$code -eq 65
+	$(TARGET) tests/ok/llvm-aggregate-enum-local.ari -o $(BUILD_DIR)/match/llvm-aggregate-enum-local.elf
+	$(BUILD_DIR)/match/llvm-aggregate-enum-local.elf; code=$$?; test $$code -eq 30
+	$(TARGET) tests/ok/llvm-aggregate-enum-payload-tests.ari -o $(BUILD_DIR)/match/llvm-aggregate-enum-payload-tests.elf
+	$(BUILD_DIR)/match/llvm-aggregate-enum-payload-tests.elf; code=$$?; test $$code -eq 73
+	$(TARGET) tests/ok/llvm-aggregate-enum-nested-payload.ari -o $(BUILD_DIR)/match/llvm-aggregate-enum-nested-payload.elf
+	$(BUILD_DIR)/match/llvm-aggregate-enum-nested-payload.elf; code=$$?; test $$code -eq 99
+	$(TARGET) tests/ok/llvm-aggregate-enum-nested-aggregate-payload.ari -o $(BUILD_DIR)/match/llvm-aggregate-enum-nested-aggregate-payload.elf
+	$(BUILD_DIR)/match/llvm-aggregate-enum-nested-aggregate-payload.elf; code=$$?; test $$code -eq 49
+	$(TARGET) tests/ok/llvm-aggregate-enum-pointer-copy.ari -o $(BUILD_DIR)/match/llvm-aggregate-enum-pointer-copy.elf
+	$(BUILD_DIR)/match/llvm-aggregate-enum-pointer-copy.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/ok/llvm-aggregate-enum-direct-store.ari -o $(BUILD_DIR)/match/llvm-aggregate-enum-direct-store.elf
+	$(BUILD_DIR)/match/llvm-aggregate-enum-direct-store.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/llvm-aggregate-enum-materialization.ari -o $(BUILD_DIR)/match/llvm-aggregate-enum-materialization.elf
+	$(BUILD_DIR)/match/llvm-aggregate-enum-materialization.elf; code=$$?; test $$code -eq 65
 	$(TARGET) tests/ok/enum-payload-pointer-access.ari --emit-llvm $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	grep -q "getelementptr inbounds { i32, i64 }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	grep -q "getelementptr inbounds { i32, { i32, i64, i64 } }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-payload-pointer-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-payload-pointer-access.elf; $(BUILD_DIR)/match/enum-payload-pointer-access.elf; code=$$?; test $$code -eq 65; fi
-	$(TARGET) --freestanding tests/ok/enum-payload-pointer-access.ari -o $(BUILD_DIR)/match/enum-payload-pointer-access.raw
-	$(BUILD_DIR)/match/enum-payload-pointer-access.raw; code=$$?; test $$code -eq 65
+	$(TARGET) tests/ok/enum-payload-pointer-access.ari -o $(BUILD_DIR)/match/enum-payload-pointer-access.elf
+	$(BUILD_DIR)/match/enum-payload-pointer-access.elf; code=$$?; test $$code -eq 65
 	$(TARGET) tests/ok/enum-mixed-nested-scalar-payload-slot.ari --emit-llvm $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll
 	grep -q "insertvalue { i32, i64, i64 } zeroinitializer" $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll
 	grep -q "extractvalue { i32, i64, i64 }" $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-mixed-nested-scalar-payload-slot.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.elf; $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.elf; code=$$?; test $$code -eq 42; fi
-	$(TARGET) --freestanding tests/ok/enum-mixed-nested-scalar-payload-slot.ari -o $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.raw
-	$(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/enum-mixed-nested-scalar-payload-slot.ari -o $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.elf
+	$(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/enum-pointer-shaped-payloads.ari --emit-llvm $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "ptrtoint ptr" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
 	grep -q "inttoptr i64" $(BUILD_DIR)/match/enum-pointer-shaped-payloads.ll
@@ -1255,8 +1254,8 @@ check-match: $(TARGET)
 	grep -q "ptrtoint ptr" $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.ll
 	grep -q "inttoptr i64" $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-mixed-nested-pointer-payload-slot.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.elf; $(BUILD_DIR)/match/enum-mixed-nested-pointer-payload-slot.elf; code=$$?; test $$code -eq 61; fi
-	$(TARGET) --freestanding tests/ok/enum-multi-payload.ari -o $(BUILD_DIR)/match/enum-multi-payload.raw
-	$(BUILD_DIR)/match/enum-multi-payload.raw; code=$$?; test $$code -eq 33
+	$(TARGET) tests/ok/enum-multi-payload.ari -o $(BUILD_DIR)/match/enum-multi-payload.elf
+	$(BUILD_DIR)/match/enum-multi-payload.elf; code=$$?; test $$code -eq 33
 	$(TARGET) tests/ok/constant-patterns.ari --emit-llvm $(BUILD_DIR)/match/constant-patterns.ll
 	grep -q "30064771072" $(BUILD_DIR)/match/constant-patterns.ll
 	grep -q "icmp eq i1" $(BUILD_DIR)/match/constant-patterns.ll
@@ -1345,26 +1344,26 @@ check-match: $(TARGET)
 
 check-modules: $(TARGET)
 	mkdir -p $(BUILD_DIR)/modules
-	$(TARGET) --freestanding tests/ok/modules.ari -o $(BUILD_DIR)/modules/modules.raw
-	$(BUILD_DIR)/modules/modules.raw; code=$$?; test $$code -eq 13
-	$(TARGET) --freestanding tests/ok/module-nested-alias.ari -o $(BUILD_DIR)/modules/module-nested-alias.raw
-	$(BUILD_DIR)/modules/module-nested-alias.raw; code=$$?; test $$code -eq 29
-	$(TARGET) --freestanding tests/ok/module-use-list.ari -o $(BUILD_DIR)/modules/module-use-list.raw
-	$(BUILD_DIR)/modules/module-use-list.raw; code=$$?; test $$code -eq 15
-	$(TARGET) --freestanding tests/ok/module-use-glob.ari -o $(BUILD_DIR)/modules/module-use-glob.raw
-	$(BUILD_DIR)/modules/module-use-glob.raw; code=$$?; test $$code -eq 7
-	$(TARGET) --freestanding tests/ok/module-use-alias-prefix.ari -o $(BUILD_DIR)/modules/module-use-alias-prefix.raw
-	$(BUILD_DIR)/modules/module-use-alias-prefix.raw; code=$$?; test $$code -eq 8
-	$(TARGET) --freestanding tests/ok/module-relative-paths.ari -o $(BUILD_DIR)/modules/module-relative-paths.raw
-	$(BUILD_DIR)/modules/module-relative-paths.raw; code=$$?; test $$code -eq 16
-	$(TARGET) --freestanding tests/ok/module-pub-reexport.ari -o $(BUILD_DIR)/modules/module-pub-reexport.raw
-	$(BUILD_DIR)/modules/module-pub-reexport.raw; code=$$?; test $$code -eq 16
-	$(TARGET) --freestanding tests/ok/module-pub-glob-reexport.ari -o $(BUILD_DIR)/modules/module-pub-glob-reexport.raw
-	$(BUILD_DIR)/modules/module-pub-glob-reexport.raw; code=$$?; test $$code -eq 5
-	$(TARGET) --freestanding tests/ok/file-module-alias-main.ari -o $(BUILD_DIR)/modules/file-module-alias-main.raw
-	$(BUILD_DIR)/modules/file-module-alias-main.raw; code=$$?; test $$code -eq 6
-	$(TARGET) --freestanding --module-path tests/packages tests/ok/package-module-main.ari -o $(BUILD_DIR)/modules/package-module-main.raw
-	$(BUILD_DIR)/modules/package-module-main.raw; code=$$?; test $$code -eq 31
+	$(TARGET) tests/ok/modules.ari -o $(BUILD_DIR)/modules/modules.elf
+	$(BUILD_DIR)/modules/modules.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/module-nested-alias.ari -o $(BUILD_DIR)/modules/module-nested-alias.elf
+	$(BUILD_DIR)/modules/module-nested-alias.elf; code=$$?; test $$code -eq 29
+	$(TARGET) tests/ok/module-use-list.ari -o $(BUILD_DIR)/modules/module-use-list.elf
+	$(BUILD_DIR)/modules/module-use-list.elf; code=$$?; test $$code -eq 15
+	$(TARGET) tests/ok/module-use-glob.ari -o $(BUILD_DIR)/modules/module-use-glob.elf
+	$(BUILD_DIR)/modules/module-use-glob.elf; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/module-use-alias-prefix.ari -o $(BUILD_DIR)/modules/module-use-alias-prefix.elf
+	$(BUILD_DIR)/modules/module-use-alias-prefix.elf; code=$$?; test $$code -eq 8
+	$(TARGET) tests/ok/module-relative-paths.ari -o $(BUILD_DIR)/modules/module-relative-paths.elf
+	$(BUILD_DIR)/modules/module-relative-paths.elf; code=$$?; test $$code -eq 16
+	$(TARGET) tests/ok/module-pub-reexport.ari -o $(BUILD_DIR)/modules/module-pub-reexport.elf
+	$(BUILD_DIR)/modules/module-pub-reexport.elf; code=$$?; test $$code -eq 16
+	$(TARGET) tests/ok/module-pub-glob-reexport.ari -o $(BUILD_DIR)/modules/module-pub-glob-reexport.elf
+	$(BUILD_DIR)/modules/module-pub-glob-reexport.elf; code=$$?; test $$code -eq 5
+	$(TARGET) tests/ok/file-module-alias-main.ari -o $(BUILD_DIR)/modules/file-module-alias-main.elf
+	$(BUILD_DIR)/modules/file-module-alias-main.elf; code=$$?; test $$code -eq 6
+	$(TARGET) --module-path tests/packages tests/ok/package-module-main.ari -o $(BUILD_DIR)/modules/package-module-main.elf
+	$(BUILD_DIR)/modules/package-module-main.elf; code=$$?; test $$code -eq 31
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --emit-llvm $(BUILD_DIR)/modules/package-module-main.ll
 	grep -q '_ARNv12package_math5value' $(BUILD_DIR)/modules/package-module-main.ll
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --emit-module-metadata $(BUILD_DIR)/modules/package-module-main.arimeta --emit-llvm $(BUILD_DIR)/modules/package-module-main-metadata.ll
@@ -1437,8 +1436,8 @@ check-modules: $(TARGET)
 	python3 tests/tamper_module_cache_ir_summary.py $(BUILD_DIR)/modules/package-cache-layout-types.aricache $(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.aricache cache_layout_types 'D;14:vector-storage;11:Vec[i64; 5];3:i64;5;' 'D;14:vector-storage;11:Vec[i64; 5];3:i64;4;'
 	if $(TARGET) -Itests/packages tests/ok/package-cache-layout-types-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.ll >$(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.err 2>&1; then exit 1; fi
 	grep -Fq "IR layout descriptor mismatch for Vec[i64; 5]" $(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.err
-	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.raw
-	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 14
+	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.elf
+	$(BUILD_DIR)/modules/package-cache-body.elf; code=$$?; test $$code -eq 14
 	$(TARGET) -Itests/packages tests/ok/package-cache-indirect-call-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-indirect-call.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-indirect-call-cache.ll
 	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache
 	grep -q "13:indirect-call" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache
@@ -1474,8 +1473,8 @@ check-modules: $(TARGET)
 	grep -q "5:index" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache.ll $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache-use.ll
-	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari -o $(BUILD_DIR)/modules/package-cache-const-aggregate-header.raw
-	$(BUILD_DIR)/modules/package-cache-const-aggregate-header.raw; code=$$?; test $$code -eq 64
+	$(TARGET) -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari -o $(BUILD_DIR)/modules/package-cache-const-aggregate-header.elf
+	$(BUILD_DIR)/modules/package-cache-const-aggregate-header.elf; code=$$?; test $$code -eq 64
 	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache.ll
 	grep -Eq "ast-summary.*extern_header.*tests/packages/extern_header.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-extern-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-extern-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-extern-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-extern-header-cache-use.ll
@@ -1581,32 +1580,32 @@ check-modules: $(TARGET)
 
 check-operators: $(TARGET)
 	mkdir -p $(BUILD_DIR)/operators
-	$(TARGET) --freestanding tests/ok/operators-numeric-suffixes.ari -o $(BUILD_DIR)/operators/operators-numeric-suffixes.raw
-	$(BUILD_DIR)/operators/operators-numeric-suffixes.raw; code=$$?; test $$code -eq 41
-	$(TARGET) --freestanding tests/ok/operators-numeric-bases.ari -o $(BUILD_DIR)/operators/operators-numeric-bases.raw
-	$(BUILD_DIR)/operators/operators-numeric-bases.raw; code=$$?; test $$code -eq 33
-	$(TARGET) --freestanding tests/ok/operators-float-suffixes.ari -o $(BUILD_DIR)/operators/operators-float-suffixes.raw
-	$(BUILD_DIR)/operators/operators-float-suffixes.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/operators-bitwise-not.ari -o $(BUILD_DIR)/operators/operators-bitwise-not.raw
-	$(BUILD_DIR)/operators/operators-bitwise-not.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/operators-compound-assignment.ari -o $(BUILD_DIR)/operators/operators-compound-assignment.raw
-	$(BUILD_DIR)/operators/operators-compound-assignment.raw; code=$$?; test $$code -eq 8
-	$(TARGET) --freestanding tests/ok/ast-builder-scalar-paths.ari -o $(BUILD_DIR)/operators/ast-builder-scalar-paths.raw
-	$(BUILD_DIR)/operators/ast-builder-scalar-paths.raw; code=$$?; test $$code -eq 5
-	$(TARGET) --freestanding tests/ok/ast-operand-helper-paths.ari -o $(BUILD_DIR)/operators/ast-operand-helper-paths.raw
-	$(BUILD_DIR)/operators/ast-operand-helper-paths.raw; code=$$?; test $$code -eq 34
-	$(TARGET) --freestanding tests/ok/ast-argument-payloads.ari -o $(BUILD_DIR)/operators/ast-argument-payloads.raw
-	$(BUILD_DIR)/operators/ast-argument-payloads.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/operators-try.ari -o $(BUILD_DIR)/operators/operators-try.raw
-	$(BUILD_DIR)/operators/operators-try.raw; code=$$?; test $$code -eq 52
-	$(TARGET) --freestanding tests/ok/operators-try-residual-conversion.ari -o $(BUILD_DIR)/operators/operators-try-residual-conversion.raw
-	$(BUILD_DIR)/operators/operators-try-residual-conversion.raw; code=$$?; test $$code -eq 65
-	$(TARGET) --freestanding tests/ok/ir-try-payloads.ari -o $(BUILD_DIR)/operators/ir-try-payloads.raw
-	$(BUILD_DIR)/operators/ir-try-payloads.raw; code=$$?; test $$code -eq 37
-	$(TARGET) --freestanding tests/ok/ir-enum-result-payloads.ari -o $(BUILD_DIR)/operators/ir-enum-result-payloads.raw
-	$(BUILD_DIR)/operators/ir-enum-result-payloads.raw; code=$$?; test $$code -eq 35
-	$(TARGET) --freestanding tests/ok/operators-null-coalescing.ari -o $(BUILD_DIR)/operators/operators-null-coalescing.raw
-	$(BUILD_DIR)/operators/operators-null-coalescing.raw; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/operators-numeric-suffixes.ari -o $(BUILD_DIR)/operators/operators-numeric-suffixes.elf
+	$(BUILD_DIR)/operators/operators-numeric-suffixes.elf; code=$$?; test $$code -eq 41
+	$(TARGET) tests/ok/operators-numeric-bases.ari -o $(BUILD_DIR)/operators/operators-numeric-bases.elf
+	$(BUILD_DIR)/operators/operators-numeric-bases.elf; code=$$?; test $$code -eq 33
+	$(TARGET) tests/ok/operators-float-suffixes.ari -o $(BUILD_DIR)/operators/operators-float-suffixes.elf
+	$(BUILD_DIR)/operators/operators-float-suffixes.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/operators-bitwise-not.ari -o $(BUILD_DIR)/operators/operators-bitwise-not.elf
+	$(BUILD_DIR)/operators/operators-bitwise-not.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/operators-compound-assignment.ari -o $(BUILD_DIR)/operators/operators-compound-assignment.elf
+	$(BUILD_DIR)/operators/operators-compound-assignment.elf; code=$$?; test $$code -eq 8
+	$(TARGET) tests/ok/ast-builder-scalar-paths.ari -o $(BUILD_DIR)/operators/ast-builder-scalar-paths.elf
+	$(BUILD_DIR)/operators/ast-builder-scalar-paths.elf; code=$$?; test $$code -eq 5
+	$(TARGET) tests/ok/ast-operand-helper-paths.ari -o $(BUILD_DIR)/operators/ast-operand-helper-paths.elf
+	$(BUILD_DIR)/operators/ast-operand-helper-paths.elf; code=$$?; test $$code -eq 34
+	$(TARGET) tests/ok/ast-argument-payloads.ari -o $(BUILD_DIR)/operators/ast-argument-payloads.elf
+	$(BUILD_DIR)/operators/ast-argument-payloads.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/operators-try.ari -o $(BUILD_DIR)/operators/operators-try.elf
+	$(BUILD_DIR)/operators/operators-try.elf; code=$$?; test $$code -eq 52
+	$(TARGET) tests/ok/operators-try-residual-conversion.ari -o $(BUILD_DIR)/operators/operators-try-residual-conversion.elf
+	$(BUILD_DIR)/operators/operators-try-residual-conversion.elf; code=$$?; test $$code -eq 65
+	$(TARGET) tests/ok/ir-try-payloads.ari -o $(BUILD_DIR)/operators/ir-try-payloads.elf
+	$(BUILD_DIR)/operators/ir-try-payloads.elf; code=$$?; test $$code -eq 37
+	$(TARGET) tests/ok/ir-enum-result-payloads.ari -o $(BUILD_DIR)/operators/ir-enum-result-payloads.elf
+	$(BUILD_DIR)/operators/ir-enum-result-payloads.elf; code=$$?; test $$code -eq 35
+	$(TARGET) tests/ok/operators-null-coalescing.ari -o $(BUILD_DIR)/operators/operators-null-coalescing.elf
+	$(BUILD_DIR)/operators/operators-null-coalescing.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/operators-numeric-suffixes.ari --emit-llvm $(BUILD_DIR)/operators/operators-numeric-suffixes.ll
 	grep -q "store i8 -8" $(BUILD_DIR)/operators/operators-numeric-suffixes.ll
 	grep -q "store i16 2" $(BUILD_DIR)/operators/operators-numeric-suffixes.ll
@@ -1621,8 +1620,8 @@ check-operators: $(TARGET)
 	$(TARGET) tests/ok/operators-float-suffixes.ari --emit-llvm $(BUILD_DIR)/operators/operators-float-suffixes.ll
 	grep -q "alloca float" $(BUILD_DIR)/operators/operators-float-suffixes.ll
 	grep -q "alloca double" $(BUILD_DIR)/operators/operators-float-suffixes.ll
-	grep -q "store float 1.000000" $(BUILD_DIR)/operators/operators-float-suffixes.ll
-	grep -q "store double 10.000000" $(BUILD_DIR)/operators/operators-float-suffixes.ll
+	grep -q "store float 1.00000000000000000e+00" $(BUILD_DIR)/operators/operators-float-suffixes.ll
+	grep -q "store double 1.00000000000000000e+01" $(BUILD_DIR)/operators/operators-float-suffixes.ll
 	$(TARGET) tests/ok/operators-float-llvm.ari --emit-llvm $(BUILD_DIR)/operators/operators-float-llvm.ll
 	grep -q "fadd float" $(BUILD_DIR)/operators/operators-float-llvm.ll
 	grep -q "fsub float" $(BUILD_DIR)/operators/operators-float-llvm.ll
@@ -1633,21 +1632,21 @@ check-operators: $(TARGET)
 	grep -q "fmul double" $(BUILD_DIR)/operators/operators-float-llvm.ll
 	grep -q "fdiv double" $(BUILD_DIR)/operators/operators-float-llvm.ll
 	grep -q "fcmp ogt double" $(BUILD_DIR)/operators/operators-float-llvm.ll
-	$(TARGET) --freestanding tests/ok/operators-float-llvm.ari -o $(BUILD_DIR)/operators/operators-float-llvm.raw
-	$(BUILD_DIR)/operators/operators-float-llvm.raw; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/operators-float-llvm.ari -o $(BUILD_DIR)/operators/operators-float-llvm.elf
+	$(BUILD_DIR)/operators/operators-float-llvm.elf; code=$$?; test $$code -eq 10
 	$(TARGET) tests/ok/operators-float-casts.ari --emit-llvm $(BUILD_DIR)/operators/operators-float-casts.ll
 	grep -q "fpext float" $(BUILD_DIR)/operators/operators-float-casts.ll
 	grep -q "fptrunc double" $(BUILD_DIR)/operators/operators-float-casts.ll
-	$(TARGET) --freestanding tests/ok/operators-float-casts.ari -o $(BUILD_DIR)/operators/operators-float-casts.raw
-	$(BUILD_DIR)/operators/operators-float-casts.raw; code=$$?; test $$code -eq 15
+	$(TARGET) tests/ok/operators-float-casts.ari -o $(BUILD_DIR)/operators/operators-float-casts.elf
+	$(BUILD_DIR)/operators/operators-float-casts.elf; code=$$?; test $$code -eq 15
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/operators-float-casts.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/operators/operators-float-casts.elf; $(BUILD_DIR)/operators/operators-float-casts.elf; code=$$?; test $$code -eq 15; fi
 	$(TARGET) tests/ok/operators-float-int-casts.ari --emit-llvm $(BUILD_DIR)/operators/operators-float-int-casts.ll
 	grep -q "sitofp i64" $(BUILD_DIR)/operators/operators-float-int-casts.ll
 	grep -q "uitofp i8" $(BUILD_DIR)/operators/operators-float-int-casts.ll
 	grep -q "fptosi double" $(BUILD_DIR)/operators/operators-float-int-casts.ll
 	grep -q "fptoui float" $(BUILD_DIR)/operators/operators-float-int-casts.ll
-	$(TARGET) --freestanding tests/ok/operators-float-int-casts.ari -o $(BUILD_DIR)/operators/operators-float-int-casts.raw
-	$(BUILD_DIR)/operators/operators-float-int-casts.raw; code=$$?; test $$code -eq 15
+	$(TARGET) tests/ok/operators-float-int-casts.ari -o $(BUILD_DIR)/operators/operators-float-int-casts.elf
+	$(BUILD_DIR)/operators/operators-float-int-casts.elf; code=$$?; test $$code -eq 15
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/operators-float-int-casts.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/operators/operators-float-int-casts.elf; $(BUILD_DIR)/operators/operators-float-int-casts.elf; code=$$?; test $$code -eq 15; fi
 	$(TARGET) tests/ok/operators-f128-llvm.ari --emit-llvm $(BUILD_DIR)/operators/operators-f128-llvm.ll
 	grep -q "alloca fp128" $(BUILD_DIR)/operators/operators-f128-llvm.ll
@@ -1730,44 +1729,44 @@ check-operators: $(TARGET)
 
 check-generics: $(TARGET)
 	mkdir -p $(BUILD_DIR)/generics
-	$(TARGET) --freestanding tests/ok/function-generic-call.ari -o $(BUILD_DIR)/generics/function-generic-call.raw
-	$(BUILD_DIR)/generics/function-generic-call.raw; code=$$?; test $$code -eq 22
+	$(TARGET) tests/ok/function-generic-call.ari -o $(BUILD_DIR)/generics/function-generic-call.elf
+	$(BUILD_DIR)/generics/function-generic-call.elf; code=$$?; test $$code -eq 22
 	$(TARGET) tests/ok/vector-generic-function-param.ari --emit-llvm $(BUILD_DIR)/generics/vector-generic-function-param.ll
 	grep -q "identity__G_Vec" $(BUILD_DIR)/generics/vector-generic-function-param.ll
 	$(TARGET) tests/ok/vector-generic-root-param.ari --emit-llvm $(BUILD_DIR)/generics/vector-generic-root-param.ll
 	grep -q "length_of__G_i64" $(BUILD_DIR)/generics/vector-generic-root-param.ll
 	grep -Fq 'define i64 @"_ARNv16length_of__G_i64"({ ptr, i64 } %arg0)' $(BUILD_DIR)/generics/vector-generic-root-param.ll
 	! grep -q "length_of__G_.*cap" $(BUILD_DIR)/generics/vector-generic-root-param.ll
-	$(TARGET) --freestanding tests/ok/vector-generic-root-param.ari -o $(BUILD_DIR)/generics/vector-generic-root-param.raw
-	$(BUILD_DIR)/generics/vector-generic-root-param.raw; code=$$?; test $$code -eq 5
-	$(TARGET) --freestanding tests/ok/generic-function-specializations.ari -o $(BUILD_DIR)/generics/generic-function-specializations.raw
-	$(BUILD_DIR)/generics/generic-function-specializations.raw; code=$$?; test $$code -eq 21
-	$(TARGET) --freestanding tests/ok/generic-function-pointer.ari -o $(BUILD_DIR)/generics/generic-function-pointer.raw
-	$(BUILD_DIR)/generics/generic-function-pointer.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/vector-generic-root-param.ari -o $(BUILD_DIR)/generics/vector-generic-root-param.elf
+	$(BUILD_DIR)/generics/vector-generic-root-param.elf; code=$$?; test $$code -eq 5
+	$(TARGET) tests/ok/generic-function-specializations.ari -o $(BUILD_DIR)/generics/generic-function-specializations.elf
+	$(BUILD_DIR)/generics/generic-function-specializations.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/ok/generic-function-pointer.ari -o $(BUILD_DIR)/generics/generic-function-pointer.elf
+	$(BUILD_DIR)/generics/generic-function-pointer.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/generic-function-pointer.ari --emit-llvm $(BUILD_DIR)/generics/generic-function-pointer.ll
 	grep -q "identity__G_i64" $(BUILD_DIR)/generics/generic-function-pointer.ll
 	grep -q "identity__G_bool" $(BUILD_DIR)/generics/generic-function-pointer.ll
 	grep -q 'call i64 %' $(BUILD_DIR)/generics/generic-function-pointer.ll
-	$(TARGET) --freestanding tests/ok/generic-any-name.ari -o $(BUILD_DIR)/generics/generic-any-name.raw
-	$(BUILD_DIR)/generics/generic-any-name.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/generic-explicit-type-args.ari -o $(BUILD_DIR)/generics/generic-explicit-type-args.raw
-	$(BUILD_DIR)/generics/generic-explicit-type-args.raw; code=$$?; test $$code -eq 27
+	$(TARGET) tests/ok/generic-any-name.ari -o $(BUILD_DIR)/generics/generic-any-name.elf
+	$(BUILD_DIR)/generics/generic-any-name.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/generic-explicit-type-args.ari -o $(BUILD_DIR)/generics/generic-explicit-type-args.elf
+	$(BUILD_DIR)/generics/generic-explicit-type-args.elf; code=$$?; test $$code -eq 27
 	$(TARGET) tests/ok/generic-explicit-type-args.ari --emit-llvm $(BUILD_DIR)/generics/generic-explicit-type-args.ll
 	grep -q "identity__G_i64" $(BUILD_DIR)/generics/generic-explicit-type-args.ll
 	grep -q "identity__G_bool" $(BUILD_DIR)/generics/generic-explicit-type-args.ll
-	$(TARGET) --freestanding tests/ok/ast-type-argument-payloads.ari -o $(BUILD_DIR)/generics/ast-type-argument-payloads.raw
-	$(BUILD_DIR)/generics/ast-type-argument-payloads.raw; code=$$?; test $$code -eq 41
+	$(TARGET) tests/ok/ast-type-argument-payloads.ari -o $(BUILD_DIR)/generics/ast-type-argument-payloads.elf
+	$(BUILD_DIR)/generics/ast-type-argument-payloads.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/ok/ast-type-argument-payloads.ari --emit-llvm $(BUILD_DIR)/generics/ast-type-argument-payloads.ll
 	grep -q "identity__G_i64" $(BUILD_DIR)/generics/ast-type-argument-payloads.ll
 	grep -q "insertvalue { i32, i64 }" $(BUILD_DIR)/generics/ast-type-argument-payloads.ll
-	$(TARGET) --freestanding tests/ok/generic-angle-call-index.ari -o $(BUILD_DIR)/generics/generic-angle-call-index.raw
-	$(BUILD_DIR)/generics/generic-angle-call-index.raw; code=$$?; test $$code -eq 22
-	$(TARGET) --freestanding tests/ok/struct-surface.ari -o $(BUILD_DIR)/generics/struct-surface.raw
-	$(BUILD_DIR)/generics/struct-surface.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/trait-generic-impl.ari -o $(BUILD_DIR)/generics/trait-generic-impl.raw
-	$(BUILD_DIR)/generics/trait-generic-impl.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/generic-adt-surface.ari -o $(BUILD_DIR)/generics/generic-adt-surface.raw
-	$(BUILD_DIR)/generics/generic-adt-surface.raw; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/generic-angle-call-index.ari -o $(BUILD_DIR)/generics/generic-angle-call-index.elf
+	$(BUILD_DIR)/generics/generic-angle-call-index.elf; code=$$?; test $$code -eq 22
+	$(TARGET) tests/ok/struct-surface.ari -o $(BUILD_DIR)/generics/struct-surface.elf
+	$(BUILD_DIR)/generics/struct-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/trait-generic-impl.ari -o $(BUILD_DIR)/generics/trait-generic-impl.elf
+	$(BUILD_DIR)/generics/trait-generic-impl.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/generic-adt-surface.ari -o $(BUILD_DIR)/generics/generic-adt-surface.elf
+	$(BUILD_DIR)/generics/generic-adt-surface.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/generic-enum-constructors.ari --emit-llvm $(BUILD_DIR)/generics/generic-enum-constructors.ll
 	grep -q "insertvalue { i32, i64 }" $(BUILD_DIR)/generics/generic-enum-constructors.ll
 	$(TARGET) tests/ok/generic-enum-try.ari --emit-llvm $(BUILD_DIR)/generics/generic-enum-try.ll
@@ -1775,13 +1774,13 @@ check-generics: $(TARGET)
 	grep -q "coalesce.ok" $(BUILD_DIR)/generics/generic-enum-try.ll
 	grep -q "extractvalue { i32, i64 }" $(BUILD_DIR)/generics/generic-enum-try.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/generic-enum-try.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/generics/generic-enum-try.elf; $(BUILD_DIR)/generics/generic-enum-try.elf; code=$$?; test $$code -eq 42; fi
-	$(TARGET) --freestanding tests/ok/generic-enum-patterns.ari -o $(BUILD_DIR)/generics/generic-enum-patterns.raw
-	$(BUILD_DIR)/generics/generic-enum-patterns.raw; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/generic-enum-patterns.ari -o $(BUILD_DIR)/generics/generic-enum-patterns.elf
+	$(BUILD_DIR)/generics/generic-enum-patterns.elf; code=$$?; test $$code -eq 23
 	$(TARGET) tests/ok/generic-enum-patterns.ari --emit-llvm $(BUILD_DIR)/generics/generic-enum-patterns.ll
 	grep -q "match.expr.arm" $(BUILD_DIR)/generics/generic-enum-patterns.ll
 	grep -q "lshr" $(BUILD_DIR)/generics/generic-enum-patterns.ll
-	$(TARGET) --freestanding tests/ok/generic-enum-constants.ari -o $(BUILD_DIR)/generics/generic-enum-constants.raw
-	$(BUILD_DIR)/generics/generic-enum-constants.raw; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/generic-enum-constants.ari -o $(BUILD_DIR)/generics/generic-enum-constants.elf
+	$(BUILD_DIR)/generics/generic-enum-constants.elf; code=$$?; test $$code -eq 7
 	if $(TARGET) tests/errors/generic-inference-conflict.ari -o $(BUILD_DIR)/generics/generic-inference-conflict.elf >$(BUILD_DIR)/generics/generic-inference-conflict.err 2>&1; then exit 1; fi
 	grep -q "generic type 'T' inferred as both i64 and bool" $(BUILD_DIR)/generics/generic-inference-conflict.err
 	if $(TARGET) tests/errors/generic-uninferred.ari -o $(BUILD_DIR)/generics/generic-uninferred.elf >$(BUILD_DIR)/generics/generic-uninferred.err 2>&1; then exit 1; fi
@@ -1813,36 +1812,36 @@ check-generics: $(TARGET)
 
 check-meta: $(TARGET)
 	mkdir -p $(BUILD_DIR)/meta
-	$(TARGET) --freestanding tests/ok/attributes-builtin.ari -o $(BUILD_DIR)/meta/attributes-builtin.raw
-	$(BUILD_DIR)/meta/attributes-builtin.raw; code=$$?; test $$code -eq 4
+	$(TARGET) tests/ok/attributes-builtin.ari -o $(BUILD_DIR)/meta/attributes-builtin.elf
+	$(BUILD_DIR)/meta/attributes-builtin.elf; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/attributes-builtin.ari --emit-llvm $(BUILD_DIR)/meta/attributes-builtin.ll >$(BUILD_DIR)/meta/attribute-deprecated.warn 2>&1
 	grep -q "warning: use of deprecated function 'old_value': use next_value" $(BUILD_DIR)/meta/attribute-deprecated.warn
-	$(TARGET) --freestanding tests/ok/attribute-derive-debug.ari -o $(BUILD_DIR)/meta/attribute-derive-debug.raw
-	$(BUILD_DIR)/meta/attribute-derive-debug.raw; code=$$?; test $$code -eq 3
-	$(TARGET) --freestanding tests/ok/attribute-derive-copy.ari -o $(BUILD_DIR)/meta/attribute-derive-copy.raw
-	$(BUILD_DIR)/meta/attribute-derive-copy.raw; code=$$?; test $$code -eq 4
-	$(TARGET) --freestanding tests/ok/attribute-derive-clone.ari -o $(BUILD_DIR)/meta/attribute-derive-clone.raw
-	$(BUILD_DIR)/meta/attribute-derive-clone.raw; code=$$?; test $$code -eq 22
-	$(TARGET) --freestanding tests/ok/attribute-derive-default.ari -o $(BUILD_DIR)/meta/attribute-derive-default.raw
-	$(BUILD_DIR)/meta/attribute-derive-default.raw; code=$$?; test $$code -eq 28
-	$(TARGET) --freestanding tests/ok/attribute-derive-enum-default.ari -o $(BUILD_DIR)/meta/attribute-derive-enum-default.raw
-	$(BUILD_DIR)/meta/attribute-derive-enum-default.raw; code=$$?; test $$code -eq 37
-	$(TARGET) --freestanding tests/ok/attribute-derive-eq.ari -o $(BUILD_DIR)/meta/attribute-derive-eq.raw
-	$(BUILD_DIR)/meta/attribute-derive-eq.raw; code=$$?; test $$code -eq 50
-	$(TARGET) --freestanding tests/ok/attribute-derive-eq-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-derive-eq-enum-payload.raw
-	$(BUILD_DIR)/meta/attribute-derive-eq-enum-payload.raw; code=$$?; test $$code -eq 56
-	$(TARGET) --freestanding tests/ok/attribute-derive-partial-eq.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-eq.raw
-	$(BUILD_DIR)/meta/attribute-derive-partial-eq.raw; code=$$?; test $$code -eq 50
-	$(TARGET) --freestanding tests/ok/attribute-derive-partial-eq-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.raw
-	$(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.raw; code=$$?; test $$code -eq 56
-	$(TARGET) --freestanding tests/ok/attribute-derive-ord.ari -o $(BUILD_DIR)/meta/attribute-derive-ord.raw
-	$(BUILD_DIR)/meta/attribute-derive-ord.raw; code=$$?; test $$code -eq 36
-	$(TARGET) --freestanding tests/ok/attribute-derive-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-ord-enum.raw
-	$(BUILD_DIR)/meta/attribute-derive-ord-enum.raw; code=$$?; test $$code -eq 78
-	$(TARGET) --freestanding tests/ok/attribute-derive-partial-ord.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord.raw
-	$(BUILD_DIR)/meta/attribute-derive-partial-ord.raw; code=$$?; test $$code -eq 36
-	$(TARGET) --freestanding tests/ok/attribute-derive-partial-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.raw
-	$(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.raw; code=$$?; test $$code -eq 78
+	$(TARGET) tests/ok/attribute-derive-debug.ari -o $(BUILD_DIR)/meta/attribute-derive-debug.elf
+	$(BUILD_DIR)/meta/attribute-derive-debug.elf; code=$$?; test $$code -eq 3
+	$(TARGET) tests/ok/attribute-derive-copy.ari -o $(BUILD_DIR)/meta/attribute-derive-copy.elf
+	$(BUILD_DIR)/meta/attribute-derive-copy.elf; code=$$?; test $$code -eq 4
+	$(TARGET) tests/ok/attribute-derive-clone.ari -o $(BUILD_DIR)/meta/attribute-derive-clone.elf
+	$(BUILD_DIR)/meta/attribute-derive-clone.elf; code=$$?; test $$code -eq 22
+	$(TARGET) tests/ok/attribute-derive-default.ari -o $(BUILD_DIR)/meta/attribute-derive-default.elf
+	$(BUILD_DIR)/meta/attribute-derive-default.elf; code=$$?; test $$code -eq 28
+	$(TARGET) tests/ok/attribute-derive-enum-default.ari -o $(BUILD_DIR)/meta/attribute-derive-enum-default.elf
+	$(BUILD_DIR)/meta/attribute-derive-enum-default.elf; code=$$?; test $$code -eq 37
+	$(TARGET) tests/ok/attribute-derive-eq.ari -o $(BUILD_DIR)/meta/attribute-derive-eq.elf
+	$(BUILD_DIR)/meta/attribute-derive-eq.elf; code=$$?; test $$code -eq 50
+	$(TARGET) tests/ok/attribute-derive-eq-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-derive-eq-enum-payload.elf
+	$(BUILD_DIR)/meta/attribute-derive-eq-enum-payload.elf; code=$$?; test $$code -eq 56
+	$(TARGET) tests/ok/attribute-derive-partial-eq.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-eq.elf
+	$(BUILD_DIR)/meta/attribute-derive-partial-eq.elf; code=$$?; test $$code -eq 50
+	$(TARGET) tests/ok/attribute-derive-partial-eq-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.elf
+	$(BUILD_DIR)/meta/attribute-derive-partial-eq-enum-payload.elf; code=$$?; test $$code -eq 56
+	$(TARGET) tests/ok/attribute-derive-ord.ari -o $(BUILD_DIR)/meta/attribute-derive-ord.elf
+	$(BUILD_DIR)/meta/attribute-derive-ord.elf; code=$$?; test $$code -eq 36
+	$(TARGET) tests/ok/attribute-derive-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-ord-enum.elf
+	$(BUILD_DIR)/meta/attribute-derive-ord-enum.elf; code=$$?; test $$code -eq 78
+	$(TARGET) tests/ok/attribute-derive-partial-ord.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord.elf
+	$(BUILD_DIR)/meta/attribute-derive-partial-ord.elf; code=$$?; test $$code -eq 36
+	$(TARGET) tests/ok/attribute-derive-partial-ord-enum.ari -o $(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.elf
+	$(BUILD_DIR)/meta/attribute-derive-partial-ord-enum.elf; code=$$?; test $$code -eq 78
 	$(TARGET) tests/ok/attribute-repr-borrow-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
 	grep -q "{ ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
 	grep -q "extractvalue { ptr, ptr, ptr }" $(BUILD_DIR)/meta/attribute-repr-borrow-fields.ll
@@ -1853,26 +1852,26 @@ check-meta: $(TARGET)
 	$(TARGET) tests/ok/attribute-repr-generic-value-fields.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-generic-value-fields.ll
 	grep -q "{ i64, i8 }" $(BUILD_DIR)/meta/attribute-repr-generic-value-fields.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/attribute-repr-generic-value-fields.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/meta/attribute-repr-generic-value-fields.elf; $(BUILD_DIR)/meta/attribute-repr-generic-value-fields.elf; code=$$?; test $$code -eq 42; fi
-	$(TARGET) --freestanding tests/ok/attribute-repr-generic-fieldless-enum.ari -o $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.raw
-	$(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.raw; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/attribute-repr-generic-fieldless-enum.ari -o $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.elf
+	$(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.elf; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/attribute-repr-generic-fieldless-enum.ari --emit-llvm $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.ll
 	grep -q "icmp eq i64" $(BUILD_DIR)/meta/attribute-repr-generic-fieldless-enum.ll
-	$(TARGET) --freestanding tests/ok/attributes-user-meta.ari -o $(BUILD_DIR)/meta/attributes-user-meta.raw
-	$(BUILD_DIR)/meta/attributes-user-meta.raw; code=$$?; test $$code -eq 9
+	$(TARGET) tests/ok/attributes-user-meta.ari -o $(BUILD_DIR)/meta/attributes-user-meta.elf
+	$(BUILD_DIR)/meta/attributes-user-meta.elf; code=$$?; test $$code -eq 9
 	$(TARGET) tests/ok/attributes-user-meta.ari --emit-module-cache $(BUILD_DIR)/meta/attributes-user-meta.aricache --emit-llvm $(BUILD_DIR)/meta/attributes-user-meta-cache.ll
 	grep -q "ari-module-cache-v0" $(BUILD_DIR)/meta/attributes-user-meta.aricache
 	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/meta/attributes-user-meta.aricache
 	grep -q "3:u32;" $(BUILD_DIR)/meta/attributes-user-meta.aricache
 	$(TARGET) tests/ok/attributes-user-meta.ari --use-module-cache $(BUILD_DIR)/meta/attributes-user-meta.aricache --emit-llvm $(BUILD_DIR)/meta/attributes-user-meta-cache-use.ll
 	cmp -s $(BUILD_DIR)/meta/attributes-user-meta-cache.ll $(BUILD_DIR)/meta/attributes-user-meta-cache-use.ll
-	$(TARGET) --freestanding tests/ok/attribute-cfg.ari -o $(BUILD_DIR)/meta/attribute-cfg.raw
-	$(BUILD_DIR)/meta/attribute-cfg.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --cfg-feature fast --freestanding tests/ok/attribute-cfg-feature.ari -o $(BUILD_DIR)/meta/attribute-cfg-feature.raw
-	$(BUILD_DIR)/meta/attribute-cfg-feature.raw; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/attribute-cfg.ari -o $(BUILD_DIR)/meta/attribute-cfg.elf
+	$(BUILD_DIR)/meta/attribute-cfg.elf; code=$$?; test $$code -eq 10
+	$(TARGET) --cfg-feature fast tests/ok/attribute-cfg-feature.ari -o $(BUILD_DIR)/meta/attribute-cfg-feature.elf
+	$(BUILD_DIR)/meta/attribute-cfg-feature.elf; code=$$?; test $$code -eq 13
 	$(TARGET) --target x86_64-pc-windows-msvc tests/ok/attribute-cfg-target.ari --emit-llvm $(BUILD_DIR)/meta/attribute-cfg-target.ll
 	grep -q 'target triple = "x86_64-pc-windows-msvc"' $(BUILD_DIR)/meta/attribute-cfg-target.ll
-	$(TARGET) --test --freestanding tests/ok/attribute-test-runner.ari -o $(BUILD_DIR)/meta/attribute-test-runner.raw
-	$(BUILD_DIR)/meta/attribute-test-runner.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --test tests/ok/attribute-test-runner.ari -o $(BUILD_DIR)/meta/attribute-test-runner.elf
+	$(BUILD_DIR)/meta/attribute-test-runner.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/attribute-export-symbols.ari --shared --emit-llvm $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"ari_public_add"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
 	grep -q 'define i64 @"increment"' $(BUILD_DIR)/meta/attribute-export-symbols.ll
@@ -1941,14 +1940,7 @@ check-meta: $(TARGET)
 	grep -q 'AriArray_i64_2 ari_make_array(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'define i64 @"ari_take_array"(\[2 x i64\] %arg0)' $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
 	grep -q 'define \[2 x i64\] @"ari_make_array"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
-	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw
-	$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw; code=$$?; test $$code -eq 10
-	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
-	grep -q 'ari_public_add' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
-	grep -q 'increment' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
-	grep -q 'zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
-	if grep -Eq '_ARNv3add|_ARNv9increment|_ARNv4zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym; then exit 1; fi
-	$(TARGET) --freestanding --emit-obj $(BUILD_DIR)/meta/library-export.o tests/ok/library-export.ari
+	$(TARGET) tests/ok/library-export.ari --emit-obj $(BUILD_DIR)/meta/library-export.o
 	readelf -h $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.header
 	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/meta/library-export-object.header
 	readelf -SW $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.sections
@@ -1957,14 +1949,6 @@ check-meta: $(TARGET)
 	readelf -sW $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.sym
 	grep -q '_ARNv3add' $(BUILD_DIR)/meta/library-export-object.sym
 	if grep -q '_ARNv4main' $(BUILD_DIR)/meta/library-export-object.sym; then exit 1; fi
-	$(TARGET) --freestanding --emit-obj $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.o tests/ok/attribute-export-symbols-freestanding.ari
-	readelf -h $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.o >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.header
-	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.header
-	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.o >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym
-	grep -q 'ari_public_add' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym
-	grep -q 'increment' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym
-	grep -q 'zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym
-	if grep -Eq '_ARNv3add|_ARNv9increment|_ARNv4zero' $(BUILD_DIR)/meta/attribute-export-symbols-freestanding-object.sym; then exit 1; fi
 	$(TARGET) tests/ok/shared-visibility.ari --shared --emit-llvm $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define hidden i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define i64 @"_ARNv10public_api"' $(BUILD_DIR)/meta/shared-visibility.ll
@@ -1973,104 +1957,104 @@ check-meta: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v nm >/dev/null 2>&1; then $(TARGET) tests/ok/shared-visibility.ari --shared --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/meta/shared-visibility.so; nm -D $(BUILD_DIR)/meta/shared-visibility.so >$(BUILD_DIR)/meta/shared-visibility.sym; grep -q '_ARNv10public_api' $(BUILD_DIR)/meta/shared-visibility.sym; grep -q 'ari_named_private' $(BUILD_DIR)/meta/shared-visibility.sym; if grep -Eq '_ARNv6helper|_ARNv4main|ari_builtin_' $(BUILD_DIR)/meta/shared-visibility.sym; then exit 1; fi; fi
 	$(TARGET) tests/ok/shared-visibility.ari --emit-llvm $(BUILD_DIR)/meta/shared-visibility-exe.ll
 	grep -q 'define i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility-exe.ll
-	$(TARGET) --freestanding tests/ok/meta-function-surface.ari -o $(BUILD_DIR)/meta/meta-function-surface.raw
-	$(BUILD_DIR)/meta/meta-function-surface.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/meta-function-identity-body.ari -o $(BUILD_DIR)/meta/meta-function-identity-body.raw
-	$(BUILD_DIR)/meta/meta-function-identity-body.raw; code=$$?; test $$code -eq 7
-	$(TARGET) --freestanding tests/ok/macro-token-tree-syntax.ari -o $(BUILD_DIR)/meta/macro-token-tree-syntax.raw
-	$(BUILD_DIR)/meta/macro-token-tree-syntax.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/macro-call-identity.ari -o $(BUILD_DIR)/meta/macro-call-identity.raw
-	$(BUILD_DIR)/meta/macro-call-identity.raw; code=$$?; test $$code -eq 13
-	$(TARGET) --freestanding tests/ok/meta-function-token-stream-return.ari -o $(BUILD_DIR)/meta/meta-function-token-stream-return.raw
-	$(BUILD_DIR)/meta/meta-function-token-stream-return.raw; code=$$?; test $$code -eq 40
-	$(TARGET) --freestanding tests/ok/meta-function-token-branch.ari -o $(BUILD_DIR)/meta/meta-function-token-branch.raw
-	$(BUILD_DIR)/meta/meta-function-token-branch.raw; code=$$?; test $$code -eq 43
-	$(TARGET) --freestanding tests/ok/meta-function-token-count.ari -o $(BUILD_DIR)/meta/meta-function-token-count.raw
-	$(BUILD_DIR)/meta/meta-function-token-count.raw; code=$$?; test $$code -eq 60
-	$(TARGET) --freestanding tests/ok/meta-function-token-match.ari -o $(BUILD_DIR)/meta/meta-function-token-match.raw
-	$(BUILD_DIR)/meta/meta-function-token-match.raw; code=$$?; test $$code -eq 70
-	$(TARGET) --freestanding tests/ok/meta-function-token-prefix.ari -o $(BUILD_DIR)/meta/meta-function-token-prefix.raw
-	$(BUILD_DIR)/meta/meta-function-token-prefix.raw; code=$$?; test $$code -eq 58
-	$(TARGET) --freestanding tests/ok/meta-function-token-nth.ari -o $(BUILD_DIR)/meta/meta-function-token-nth.raw
-	$(BUILD_DIR)/meta/meta-function-token-nth.raw; code=$$?; test $$code -eq 49
-	$(TARGET) --freestanding tests/ok/meta-function-token-suffix.ari -o $(BUILD_DIR)/meta/meta-function-token-suffix.raw
-	$(BUILD_DIR)/meta/meta-function-token-suffix.raw; code=$$?; test $$code -eq 61
-	$(TARGET) --freestanding tests/ok/meta-function-token-wrapped.ari -o $(BUILD_DIR)/meta/meta-function-token-wrapped.raw
-	$(BUILD_DIR)/meta/meta-function-token-wrapped.raw; code=$$?; test $$code -eq 69
-	$(TARGET) --freestanding tests/ok/meta-function-token-slice.ari -o $(BUILD_DIR)/meta/meta-function-token-slice.raw
-	$(BUILD_DIR)/meta/meta-function-token-slice.raw; code=$$?; test $$code -eq 44
-	$(TARGET) --freestanding tests/ok/meta-function-token-pattern.ari -o $(BUILD_DIR)/meta/meta-function-token-pattern.raw
-	$(BUILD_DIR)/meta/meta-function-token-pattern.raw; code=$$?; test $$code -eq 61
-	$(TARGET) --freestanding tests/ok/meta-function-token-capture.ari -o $(BUILD_DIR)/meta/meta-function-token-capture.raw
-	$(BUILD_DIR)/meta/meta-function-token-capture.raw; code=$$?; test $$code -eq 38
-	$(TARGET) --freestanding tests/ok/meta-function-token-span-capture.ari -o $(BUILD_DIR)/meta/meta-function-token-span-capture.raw
-	$(BUILD_DIR)/meta/meta-function-token-span-capture.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/item-macro-token-capture-splice.ari -o $(BUILD_DIR)/meta/item-macro-token-capture-splice.raw
-	$(BUILD_DIR)/meta/item-macro-token-capture-splice.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/meta-function-ast-return.ari -o $(BUILD_DIR)/meta/meta-function-ast-return.raw
-	$(BUILD_DIR)/meta/meta-function-ast-return.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/meta-function-ast-input-substitution.ari -o $(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw
-	$(BUILD_DIR)/meta/meta-function-ast-input-substitution.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/meta-function-ast-call-access.ari -o $(BUILD_DIR)/meta/meta-function-ast-call-access.raw
-	$(BUILD_DIR)/meta/meta-function-ast-call-access.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/meta-function-ast-method-call.ari -o $(BUILD_DIR)/meta/meta-function-ast-method-call.raw
-	$(BUILD_DIR)/meta/meta-function-ast-method-call.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/meta-function-ast-struct-literal.ari -o $(BUILD_DIR)/meta/meta-function-ast-struct-literal.raw
-	$(BUILD_DIR)/meta/meta-function-ast-struct-literal.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/meta-function-ast-borrow.ari -o $(BUILD_DIR)/meta/meta-function-ast-borrow.raw
-	$(BUILD_DIR)/meta/meta-function-ast-borrow.raw; code=$$?; test $$code -eq 41
-	$(TARGET) --freestanding tests/ok/meta-function-ast-try-null-coalescing.ari -o $(BUILD_DIR)/meta/meta-function-ast-try-null-coalescing.raw
-	$(BUILD_DIR)/meta/meta-function-ast-try-null-coalescing.raw; code=$$?; test $$code -eq 46
-	$(TARGET) --freestanding tests/ok/meta-function-ast-control-flow.ari -o $(BUILD_DIR)/meta/meta-function-ast-control-flow.raw
-	$(BUILD_DIR)/meta/meta-function-ast-control-flow.raw; code=$$?; test $$code -eq 53
-	$(TARGET) --freestanding tests/ok/meta-function-ast-expression-kind-branch.ari -o $(BUILD_DIR)/meta/meta-function-ast-expression-kind-branch.raw
-	$(BUILD_DIR)/meta/meta-function-ast-expression-kind-branch.raw; code=$$?; test $$code -eq 56
-	$(TARGET) --freestanding tests/ok/meta-function-ast-statement-body.ari -o $(BUILD_DIR)/meta/meta-function-ast-statement-body.raw
-	$(BUILD_DIR)/meta/meta-function-ast-statement-body.raw; code=$$?; test $$code -eq 62
-	$(TARGET) --freestanding tests/ok/item-macro-function-identity.ari -o $(BUILD_DIR)/meta/item-macro-function-identity.raw
-	$(BUILD_DIR)/meta/item-macro-function-identity.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/item-macro-ast-decl-return.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-return.raw
-	$(BUILD_DIR)/meta/item-macro-ast-decl-return.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/item-macro-ast-decl-input-substitution.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-input-substitution.raw
-	$(BUILD_DIR)/meta/item-macro-ast-decl-input-substitution.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/meta-function-ast-decl-input-inspection.ari -o $(BUILD_DIR)/meta/meta-function-ast-decl-input-inspection.raw
-	$(BUILD_DIR)/meta/meta-function-ast-decl-input-inspection.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/meta-function-ast-decl-shape-inspection.ari -o $(BUILD_DIR)/meta/meta-function-ast-decl-shape-inspection.raw
-	$(BUILD_DIR)/meta/meta-function-ast-decl-shape-inspection.raw; code=$$?; test $$code -eq 59
-	$(TARGET) --freestanding tests/ok/meta-function-ast-decl-member-inspection.ari -o $(BUILD_DIR)/meta/meta-function-ast-decl-member-inspection.raw
-	$(BUILD_DIR)/meta/meta-function-ast-decl-member-inspection.raw; code=$$?; test $$code -eq 96
-	$(TARGET) --freestanding tests/ok/meta-function-ast-dynamic-ident.ari -o $(BUILD_DIR)/meta/meta-function-ast-dynamic-ident.raw
-	$(BUILD_DIR)/meta/meta-function-ast-dynamic-ident.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/attribute-macro-function-decl.ari -o $(BUILD_DIR)/meta/attribute-macro-function-decl.raw
-	$(BUILD_DIR)/meta/attribute-macro-function-decl.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/attribute-macro-args-token.ari -o $(BUILD_DIR)/meta/attribute-macro-args-token.raw
-	$(BUILD_DIR)/meta/attribute-macro-args-token.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/attribute-macro-generated-attribute.ari -o $(BUILD_DIR)/meta/attribute-macro-generated-attribute.raw
-	$(BUILD_DIR)/meta/attribute-macro-generated-attribute.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/item-macro-const-identity.ari -o $(BUILD_DIR)/meta/item-macro-const-identity.raw
-	$(BUILD_DIR)/meta/item-macro-const-identity.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/item-macro-struct-identity.ari -o $(BUILD_DIR)/meta/item-macro-struct-identity.raw
-	$(BUILD_DIR)/meta/item-macro-struct-identity.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/item-macro-enum-identity.ari -o $(BUILD_DIR)/meta/item-macro-enum-identity.raw
-	$(BUILD_DIR)/meta/item-macro-enum-identity.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/item-macro-trait-impl-identity.ari -o $(BUILD_DIR)/meta/item-macro-trait-impl-identity.raw
-	$(BUILD_DIR)/meta/item-macro-trait-impl-identity.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/item-macro-module-use-identity.ari -o $(BUILD_DIR)/meta/item-macro-module-use-identity.raw
-	$(BUILD_DIR)/meta/item-macro-module-use-identity.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/type-macro-identity.ari -o $(BUILD_DIR)/meta/type-macro-identity.raw
-	$(BUILD_DIR)/meta/type-macro-identity.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/type-macro-type-return.ari -o $(BUILD_DIR)/meta/type-macro-type-return.raw
-	$(BUILD_DIR)/meta/type-macro-type-return.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/pattern-macro-identity.ari -o $(BUILD_DIR)/meta/pattern-macro-identity.raw
-	$(BUILD_DIR)/meta/pattern-macro-identity.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/pattern-macro-ast-return.ari -o $(BUILD_DIR)/meta/pattern-macro-ast-return.raw
-	$(BUILD_DIR)/meta/pattern-macro-ast-return.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-surface.ari -o $(BUILD_DIR)/meta/meta-function-surface.elf
+	$(BUILD_DIR)/meta/meta-function-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/meta-function-identity-body.ari -o $(BUILD_DIR)/meta/meta-function-identity-body.elf
+	$(BUILD_DIR)/meta/meta-function-identity-body.elf; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/macro-token-tree-syntax.ari -o $(BUILD_DIR)/meta/macro-token-tree-syntax.elf
+	$(BUILD_DIR)/meta/macro-token-tree-syntax.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/macro-call-identity.ari -o $(BUILD_DIR)/meta/macro-call-identity.elf
+	$(BUILD_DIR)/meta/macro-call-identity.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/meta-function-token-stream-return.ari -o $(BUILD_DIR)/meta/meta-function-token-stream-return.elf
+	$(BUILD_DIR)/meta/meta-function-token-stream-return.elf; code=$$?; test $$code -eq 40
+	$(TARGET) tests/ok/meta-function-token-branch.ari -o $(BUILD_DIR)/meta/meta-function-token-branch.elf
+	$(BUILD_DIR)/meta/meta-function-token-branch.elf; code=$$?; test $$code -eq 43
+	$(TARGET) tests/ok/meta-function-token-count.ari -o $(BUILD_DIR)/meta/meta-function-token-count.elf
+	$(BUILD_DIR)/meta/meta-function-token-count.elf; code=$$?; test $$code -eq 60
+	$(TARGET) tests/ok/meta-function-token-match.ari -o $(BUILD_DIR)/meta/meta-function-token-match.elf
+	$(BUILD_DIR)/meta/meta-function-token-match.elf; code=$$?; test $$code -eq 70
+	$(TARGET) tests/ok/meta-function-token-prefix.ari -o $(BUILD_DIR)/meta/meta-function-token-prefix.elf
+	$(BUILD_DIR)/meta/meta-function-token-prefix.elf; code=$$?; test $$code -eq 58
+	$(TARGET) tests/ok/meta-function-token-nth.ari -o $(BUILD_DIR)/meta/meta-function-token-nth.elf
+	$(BUILD_DIR)/meta/meta-function-token-nth.elf; code=$$?; test $$code -eq 49
+	$(TARGET) tests/ok/meta-function-token-suffix.ari -o $(BUILD_DIR)/meta/meta-function-token-suffix.elf
+	$(BUILD_DIR)/meta/meta-function-token-suffix.elf; code=$$?; test $$code -eq 61
+	$(TARGET) tests/ok/meta-function-token-wrapped.ari -o $(BUILD_DIR)/meta/meta-function-token-wrapped.elf
+	$(BUILD_DIR)/meta/meta-function-token-wrapped.elf; code=$$?; test $$code -eq 69
+	$(TARGET) tests/ok/meta-function-token-slice.ari -o $(BUILD_DIR)/meta/meta-function-token-slice.elf
+	$(BUILD_DIR)/meta/meta-function-token-slice.elf; code=$$?; test $$code -eq 44
+	$(TARGET) tests/ok/meta-function-token-pattern.ari -o $(BUILD_DIR)/meta/meta-function-token-pattern.elf
+	$(BUILD_DIR)/meta/meta-function-token-pattern.elf; code=$$?; test $$code -eq 61
+	$(TARGET) tests/ok/meta-function-token-capture.ari -o $(BUILD_DIR)/meta/meta-function-token-capture.elf
+	$(BUILD_DIR)/meta/meta-function-token-capture.elf; code=$$?; test $$code -eq 38
+	$(TARGET) tests/ok/meta-function-token-span-capture.ari -o $(BUILD_DIR)/meta/meta-function-token-span-capture.elf
+	$(BUILD_DIR)/meta/meta-function-token-span-capture.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/item-macro-token-capture-splice.ari -o $(BUILD_DIR)/meta/item-macro-token-capture-splice.elf
+	$(BUILD_DIR)/meta/item-macro-token-capture-splice.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-ast-return.ari -o $(BUILD_DIR)/meta/meta-function-ast-return.elf
+	$(BUILD_DIR)/meta/meta-function-ast-return.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-ast-input-substitution.ari -o $(BUILD_DIR)/meta/meta-function-ast-input-substitution.elf
+	$(BUILD_DIR)/meta/meta-function-ast-input-substitution.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-ast-call-access.ari -o $(BUILD_DIR)/meta/meta-function-ast-call-access.elf
+	$(BUILD_DIR)/meta/meta-function-ast-call-access.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-ast-method-call.ari -o $(BUILD_DIR)/meta/meta-function-ast-method-call.elf
+	$(BUILD_DIR)/meta/meta-function-ast-method-call.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-ast-struct-literal.ari -o $(BUILD_DIR)/meta/meta-function-ast-struct-literal.elf
+	$(BUILD_DIR)/meta/meta-function-ast-struct-literal.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-ast-borrow.ari -o $(BUILD_DIR)/meta/meta-function-ast-borrow.elf
+	$(BUILD_DIR)/meta/meta-function-ast-borrow.elf; code=$$?; test $$code -eq 41
+	$(TARGET) tests/ok/meta-function-ast-try-null-coalescing.ari -o $(BUILD_DIR)/meta/meta-function-ast-try-null-coalescing.elf
+	$(BUILD_DIR)/meta/meta-function-ast-try-null-coalescing.elf; code=$$?; test $$code -eq 46
+	$(TARGET) tests/ok/meta-function-ast-control-flow.ari -o $(BUILD_DIR)/meta/meta-function-ast-control-flow.elf
+	$(BUILD_DIR)/meta/meta-function-ast-control-flow.elf; code=$$?; test $$code -eq 53
+	$(TARGET) tests/ok/meta-function-ast-expression-kind-branch.ari -o $(BUILD_DIR)/meta/meta-function-ast-expression-kind-branch.elf
+	$(BUILD_DIR)/meta/meta-function-ast-expression-kind-branch.elf; code=$$?; test $$code -eq 56
+	$(TARGET) tests/ok/meta-function-ast-statement-body.ari -o $(BUILD_DIR)/meta/meta-function-ast-statement-body.elf
+	$(BUILD_DIR)/meta/meta-function-ast-statement-body.elf; code=$$?; test $$code -eq 62
+	$(TARGET) tests/ok/item-macro-function-identity.ari -o $(BUILD_DIR)/meta/item-macro-function-identity.elf
+	$(BUILD_DIR)/meta/item-macro-function-identity.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/item-macro-ast-decl-return.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-return.elf
+	$(BUILD_DIR)/meta/item-macro-ast-decl-return.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/item-macro-ast-decl-input-substitution.ari -o $(BUILD_DIR)/meta/item-macro-ast-decl-input-substitution.elf
+	$(BUILD_DIR)/meta/item-macro-ast-decl-input-substitution.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-ast-decl-input-inspection.ari -o $(BUILD_DIR)/meta/meta-function-ast-decl-input-inspection.elf
+	$(BUILD_DIR)/meta/meta-function-ast-decl-input-inspection.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/meta-function-ast-decl-shape-inspection.ari -o $(BUILD_DIR)/meta/meta-function-ast-decl-shape-inspection.elf
+	$(BUILD_DIR)/meta/meta-function-ast-decl-shape-inspection.elf; code=$$?; test $$code -eq 59
+	$(TARGET) tests/ok/meta-function-ast-decl-member-inspection.ari -o $(BUILD_DIR)/meta/meta-function-ast-decl-member-inspection.elf
+	$(BUILD_DIR)/meta/meta-function-ast-decl-member-inspection.elf; code=$$?; test $$code -eq 96
+	$(TARGET) tests/ok/meta-function-ast-dynamic-ident.ari -o $(BUILD_DIR)/meta/meta-function-ast-dynamic-ident.elf
+	$(BUILD_DIR)/meta/meta-function-ast-dynamic-ident.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/attribute-macro-function-decl.ari -o $(BUILD_DIR)/meta/attribute-macro-function-decl.elf
+	$(BUILD_DIR)/meta/attribute-macro-function-decl.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/attribute-macro-args-token.ari -o $(BUILD_DIR)/meta/attribute-macro-args-token.elf
+	$(BUILD_DIR)/meta/attribute-macro-args-token.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/attribute-macro-generated-attribute.ari -o $(BUILD_DIR)/meta/attribute-macro-generated-attribute.elf
+	$(BUILD_DIR)/meta/attribute-macro-generated-attribute.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/item-macro-const-identity.ari -o $(BUILD_DIR)/meta/item-macro-const-identity.elf
+	$(BUILD_DIR)/meta/item-macro-const-identity.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/item-macro-struct-identity.ari -o $(BUILD_DIR)/meta/item-macro-struct-identity.elf
+	$(BUILD_DIR)/meta/item-macro-struct-identity.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/item-macro-enum-identity.ari -o $(BUILD_DIR)/meta/item-macro-enum-identity.elf
+	$(BUILD_DIR)/meta/item-macro-enum-identity.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/item-macro-trait-impl-identity.ari -o $(BUILD_DIR)/meta/item-macro-trait-impl-identity.elf
+	$(BUILD_DIR)/meta/item-macro-trait-impl-identity.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/item-macro-module-use-identity.ari -o $(BUILD_DIR)/meta/item-macro-module-use-identity.elf
+	$(BUILD_DIR)/meta/item-macro-module-use-identity.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/type-macro-identity.ari -o $(BUILD_DIR)/meta/type-macro-identity.elf
+	$(BUILD_DIR)/meta/type-macro-identity.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/type-macro-type-return.ari -o $(BUILD_DIR)/meta/type-macro-type-return.elf
+	$(BUILD_DIR)/meta/type-macro-type-return.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/pattern-macro-identity.ari -o $(BUILD_DIR)/meta/pattern-macro-identity.elf
+	$(BUILD_DIR)/meta/pattern-macro-identity.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/pattern-macro-ast-return.ari -o $(BUILD_DIR)/meta/pattern-macro-ast-return.elf
+	$(BUILD_DIR)/meta/pattern-macro-ast-return.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/pattern-macro-identity.ari --emit-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache.ll
 	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/meta/pattern-macro-identity.aricache
 	$(TARGET) tests/ok/pattern-macro-identity.ari --use-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache-use.ll
 	cmp -s $(BUILD_DIR)/meta/pattern-macro-identity-cache.ll $(BUILD_DIR)/meta/pattern-macro-identity-cache-use.ll
-	$(TARGET) --freestanding tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.raw
-	$(BUILD_DIR)/meta/matches-macro.raw; code=$$?; test $$code -eq 15
+	$(TARGET) tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.elf
+	$(BUILD_DIR)/meta/matches-macro.elf; code=$$?; test $$code -eq 15
 	if $(TARGET) tests/errors/attribute-unknown.ari -o $(BUILD_DIR)/meta/attribute-unknown.elf >$(BUILD_DIR)/meta/attribute-unknown.err 2>&1; then exit 1; fi
 	grep -q "unknown attribute '@unknown'" $(BUILD_DIR)/meta/attribute-unknown.err
 	if $(TARGET) tests/errors/attribute-token-tree-mismatch.ari -o $(BUILD_DIR)/meta/attribute-token-tree-mismatch.elf >$(BUILD_DIR)/meta/attribute-token-tree-mismatch.err 2>&1; then exit 1; fi
@@ -2166,70 +2150,70 @@ check-meta: $(TARGET)
 
 check-traits: $(TARGET)
 	mkdir -p $(BUILD_DIR)/traits
-	$(TARGET) --freestanding tests/ok/trait-surface.ari -o $(BUILD_DIR)/traits/trait-surface.raw
-	$(BUILD_DIR)/traits/trait-surface.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/trait-object-type-surface.ari -o $(BUILD_DIR)/traits/trait-object-type-surface.raw
-	$(BUILD_DIR)/traits/trait-object-type-surface.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/trait-generic-impl.ari -o $(BUILD_DIR)/traits/trait-generic-impl.raw
-	$(BUILD_DIR)/traits/trait-generic-impl.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/trait-multi-generic-impl.ari -o $(BUILD_DIR)/traits/trait-multi-generic-impl.raw
-	$(BUILD_DIR)/traits/trait-multi-generic-impl.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/iterable-trait-surface.ari -o $(BUILD_DIR)/traits/iterable-trait-surface.raw
-	$(BUILD_DIR)/traits/iterable-trait-surface.raw; code=$$?; test $$code -eq 6
-	$(TARGET) --freestanding tests/ok/trait-method-call.ari -o $(BUILD_DIR)/traits/trait-method-call.raw
-	$(BUILD_DIR)/traits/trait-method-call.raw; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/trait-surface.ari -o $(BUILD_DIR)/traits/trait-surface.elf
+	$(BUILD_DIR)/traits/trait-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/trait-object-type-surface.ari -o $(BUILD_DIR)/traits/trait-object-type-surface.elf
+	$(BUILD_DIR)/traits/trait-object-type-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/trait-generic-impl.ari -o $(BUILD_DIR)/traits/trait-generic-impl.elf
+	$(BUILD_DIR)/traits/trait-generic-impl.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/trait-multi-generic-impl.ari -o $(BUILD_DIR)/traits/trait-multi-generic-impl.elf
+	$(BUILD_DIR)/traits/trait-multi-generic-impl.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/iterable-trait-surface.ari -o $(BUILD_DIR)/traits/iterable-trait-surface.elf
+	$(BUILD_DIR)/traits/iterable-trait-surface.elf; code=$$?; test $$code -eq 6
+	$(TARGET) tests/ok/trait-method-call.ari -o $(BUILD_DIR)/traits/trait-method-call.elf
+	$(BUILD_DIR)/traits/trait-method-call.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/trait-method-call.ari --emit-llvm $(BUILD_DIR)/traits/trait-method-call.ll
 	grep -q "_ARNv4impl3i647std__Eq2eq" $(BUILD_DIR)/traits/trait-method-call.ll
 	$(TARGET) tests/ok/trait-object-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_AddTo_i64_" $(BUILD_DIR)/traits/trait-object-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-dispatch.elf; $(BUILD_DIR)/traits/trait-object-dispatch.elf; code=$$?; test $$code -eq 11; fi
-	$(TARGET) --freestanding tests/ok/trait-object-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-dispatch.raw
-	$(BUILD_DIR)/traits/trait-object-dispatch.raw; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/trait-object-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-dispatch.elf
+	$(BUILD_DIR)/traits/trait-object-dispatch.elf; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-object-multi-arg-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_Mix_i64_" $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
 	grep -q "call i64 .*ptr .* i64 3, i64 4" $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-multi-arg-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.elf; $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.elf; code=$$?; test $$code -eq 36; fi
-	$(TARGET) --freestanding tests/ok/trait-object-multi-arg-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.raw
-	$(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.raw; code=$$?; test $$code -eq 36
+	$(TARGET) tests/ok/trait-object-multi-arg-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.elf
+	$(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.elf; code=$$?; test $$code -eq 36
 	$(TARGET) tests/ok/trait-object-generic-impl-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
 	grep -q "dyn::vtable::Box_i64_::dyn_Score_i64_" $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
 	grep -q "_ARNv4impl8Box_i64_5Score5score" $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-generic-impl-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; code=$$?; test $$code -eq 11; fi
-	$(TARGET) --freestanding tests/ok/trait-object-generic-impl-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.raw
-	$(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.raw; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/trait-object-generic-impl-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf
+	$(BUILD_DIR)/traits/trait-object-generic-impl-dispatch.elf; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-object-supertrait-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_ChildScore" $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-supertrait-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.elf; $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.elf; code=$$?; test $$code -eq 26; fi
-	$(TARGET) --freestanding tests/ok/trait-object-supertrait-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.raw
-	$(BUILD_DIR)/traits/trait-object-supertrait-dispatch.raw; code=$$?; test $$code -eq 26
+	$(TARGET) tests/ok/trait-object-supertrait-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-supertrait-dispatch.elf
+	$(BUILD_DIR)/traits/trait-object-supertrait-dispatch.elf; code=$$?; test $$code -eq 26
 	$(TARGET) tests/ok/trait-object-supertrait-upcast.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-supertrait-upcast.ll
 	grep -q "getelementptr ptr, ptr .* i64 1" $(BUILD_DIR)/traits/trait-object-supertrait-upcast.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-supertrait-upcast.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; code=$$?; test $$code -eq 12; fi
-	$(TARGET) --freestanding tests/ok/trait-object-supertrait-upcast.ari -o $(BUILD_DIR)/traits/trait-object-supertrait-upcast.raw
-	$(BUILD_DIR)/traits/trait-object-supertrait-upcast.raw; code=$$?; test $$code -eq 12
-	$(TARGET) --freestanding tests/ok/trait-bound-static-dispatch.ari -o $(BUILD_DIR)/traits/trait-bound-static-dispatch.raw
-	$(BUILD_DIR)/traits/trait-bound-static-dispatch.raw; code=$$?; test $$code -eq 6
-	$(TARGET) --freestanding tests/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.raw
-	$(BUILD_DIR)/traits/trait-supertrait-static.raw; code=$$?; test $$code -eq 56
-	$(TARGET) --freestanding tests/ok/trait-qualified-call.ari -o $(BUILD_DIR)/traits/trait-qualified-call.raw
-	$(BUILD_DIR)/traits/trait-qualified-call.raw; code=$$?; test $$code -eq 150
-	$(TARGET) --freestanding tests/ok/vector-trait-method-param-view.ari -o $(BUILD_DIR)/traits/vector-trait-method-param-view.raw
-	$(BUILD_DIR)/traits/vector-trait-method-param-view.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/trait-object-supertrait-upcast.ari -o $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf
+	$(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/trait-bound-static-dispatch.ari -o $(BUILD_DIR)/traits/trait-bound-static-dispatch.elf
+	$(BUILD_DIR)/traits/trait-bound-static-dispatch.elf; code=$$?; test $$code -eq 6
+	$(TARGET) tests/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.elf
+	$(BUILD_DIR)/traits/trait-supertrait-static.elf; code=$$?; test $$code -eq 56
+	$(TARGET) tests/ok/trait-qualified-call.ari -o $(BUILD_DIR)/traits/trait-qualified-call.elf
+	$(BUILD_DIR)/traits/trait-qualified-call.elf; code=$$?; test $$code -eq 150
+	$(TARGET) tests/ok/vector-trait-method-param-view.ari -o $(BUILD_DIR)/traits/vector-trait-method-param-view.elf
+	$(BUILD_DIR)/traits/vector-trait-method-param-view.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/vector-trait-method-param-view.ari --emit-llvm $(BUILD_DIR)/traits/vector-trait-method-param-view.ll
 	grep -Fq 'define i64 @"_ARNv4impl3i647UsesVec4take"(i64 %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/traits/vector-trait-method-param-view.ll
 	grep -Fq 'define i64 @"_ARNv4impl3i647UsesVec3sum"({ ptr, i64 } %arg0)' $(BUILD_DIR)/traits/vector-trait-method-param-view.ll
 	$(TARGET) tests/ok/vector-trait-object-param-view.ari --emit-llvm $(BUILD_DIR)/traits/vector-trait-object-param-view.ll
 	grep -Fq 'define private i64 @"dyn::vtable::i64::dyn_UsesVecObject::UsesVecObject::take"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/traits/vector-trait-object-param-view.ll
-	$(TARGET) --freestanding tests/ok/vector-trait-object-param-view.ari -o $(BUILD_DIR)/traits/vector-trait-object-param-view.raw
-	$(BUILD_DIR)/traits/vector-trait-object-param-view.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --freestanding tests/ok/trait-qualified-associated-call.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-call.raw
-	$(BUILD_DIR)/traits/trait-qualified-associated-call.raw; code=$$?; test $$code -eq 96
-	$(TARGET) --freestanding tests/ok/trait-qualified-receiver-type-args.ari -o $(BUILD_DIR)/traits/trait-qualified-receiver-type-args.raw
-	$(BUILD_DIR)/traits/trait-qualified-receiver-type-args.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/vector-trait-object-param-view.ari -o $(BUILD_DIR)/traits/vector-trait-object-param-view.elf
+	$(BUILD_DIR)/traits/vector-trait-object-param-view.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/trait-qualified-associated-call.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-call.elf
+	$(BUILD_DIR)/traits/trait-qualified-associated-call.elf; code=$$?; test $$code -eq 96
+	$(TARGET) tests/ok/trait-qualified-receiver-type-args.ari -o $(BUILD_DIR)/traits/trait-qualified-receiver-type-args.elf
+	$(BUILD_DIR)/traits/trait-qualified-receiver-type-args.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/trait-qualified-receiver-type-args.ari --emit-llvm $(BUILD_DIR)/traits/trait-qualified-receiver-type-args.ll
 	grep -q "Select" $(BUILD_DIR)/traits/trait-qualified-receiver-type-args.ll
-	$(TARGET) --freestanding tests/ok/trait-qualified-associated-expected-control-flow.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-expected-control-flow.raw
-	$(BUILD_DIR)/traits/trait-qualified-associated-expected-control-flow.raw; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/trait-qualified-associated-expected-control-flow.ari -o $(BUILD_DIR)/traits/trait-qualified-associated-expected-control-flow.elf
+	$(BUILD_DIR)/traits/trait-qualified-associated-expected-control-flow.elf; code=$$?; test $$code -eq 23
 	$(TARGET) tests/ok/trait-qualified-associated-expected-aggregates.ari --emit-llvm $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.ll
 	grep -q "Boxed" $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-qualified-associated-expected-aggregates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.elf; $(BUILD_DIR)/traits/trait-qualified-associated-expected-aggregates.elf; code=$$?; test $$code -eq 36; fi
@@ -2239,8 +2223,8 @@ check-traits: $(TARGET)
 	$(TARGET) tests/ok/trait-qualified-associated-expected-primitive.ari --emit-llvm $(BUILD_DIR)/traits/trait-qualified-associated-expected-primitive.ll
 	grep -q "Build" $(BUILD_DIR)/traits/trait-qualified-associated-expected-primitive.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-qualified-associated-expected-primitive.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-qualified-associated-expected-primitive.elf; $(BUILD_DIR)/traits/trait-qualified-associated-expected-primitive.elf; code=$$?; test $$code -eq 40; fi
-	$(TARGET) --freestanding tests/ok/trait-bound-generic-args.ari -o $(BUILD_DIR)/traits/trait-bound-generic-args.raw
-	$(BUILD_DIR)/traits/trait-bound-generic-args.raw; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/trait-bound-generic-args.ari -o $(BUILD_DIR)/traits/trait-bound-generic-args.elf
+	$(BUILD_DIR)/traits/trait-bound-generic-args.elf; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/trait-bound-static-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-bound-static-dispatch.ll
 	grep -q "LeftScore" $(BUILD_DIR)/traits/trait-bound-static-dispatch.ll
 	$(TARGET) tests/ok/generic-trait-impl.ari --emit-llvm $(BUILD_DIR)/traits/generic-trait-impl.ll
@@ -2258,10 +2242,10 @@ check-traits: $(TARGET)
 	grep -q "Box_i64_" $(BUILD_DIR)/traits/generic-trait-associated.ll
 	grep -q "Box_bool_" $(BUILD_DIR)/traits/generic-trait-associated.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/generic-trait-associated.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/generic-trait-associated.elf; $(BUILD_DIR)/traits/generic-trait-associated.elf; code=$$?; test $$code -eq 21; fi
-	$(TARGET) --freestanding tests/ok/associated-type-projection.ari -o $(BUILD_DIR)/traits/associated-type-projection.raw
-	$(BUILD_DIR)/traits/associated-type-projection.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/associated-type-supertrait-projection.ari -o $(BUILD_DIR)/traits/associated-type-supertrait-projection.raw
-	$(BUILD_DIR)/traits/associated-type-supertrait-projection.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/associated-type-projection.ari -o $(BUILD_DIR)/traits/associated-type-projection.elf
+	$(BUILD_DIR)/traits/associated-type-projection.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/associated-type-supertrait-projection.ari -o $(BUILD_DIR)/traits/associated-type-supertrait-projection.elf
+	$(BUILD_DIR)/traits/associated-type-supertrait-projection.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/generic-trait-method.ari --emit-llvm $(BUILD_DIR)/traits/generic-trait-method.ll
 	grep -q "keep__G_i64" $(BUILD_DIR)/traits/generic-trait-method.ll
 	grep -q "keep__G_bool" $(BUILD_DIR)/traits/generic-trait-method.ll
@@ -2355,21 +2339,21 @@ check-traits: $(TARGET)
 
 check-structs: $(TARGET)
 	mkdir -p $(BUILD_DIR)/structs
-	$(TARGET) --freestanding tests/ok/struct-surface.ari -o $(BUILD_DIR)/structs/struct-surface.raw
-	$(BUILD_DIR)/structs/struct-surface.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/struct-module-surface.ari -o $(BUILD_DIR)/structs/struct-module-surface.raw
-	$(BUILD_DIR)/structs/struct-module-surface.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/adt-enum-patterns.ari -o $(BUILD_DIR)/structs/adt-enum-patterns.raw
-	$(BUILD_DIR)/structs/adt-enum-patterns.raw; code=$$?; test $$code -eq 7
-	$(TARGET) --freestanding tests/ok/generic-adt-surface.ari -o $(BUILD_DIR)/structs/generic-adt-surface.raw
-	$(BUILD_DIR)/structs/generic-adt-surface.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/generic-struct-infer.ari -o $(BUILD_DIR)/structs/generic-struct-infer.raw
-	$(BUILD_DIR)/structs/generic-struct-infer.raw; code=$$?; test $$code -eq 40
+	$(TARGET) tests/ok/struct-surface.ari -o $(BUILD_DIR)/structs/struct-surface.elf
+	$(BUILD_DIR)/structs/struct-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/struct-module-surface.ari -o $(BUILD_DIR)/structs/struct-module-surface.elf
+	$(BUILD_DIR)/structs/struct-module-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/adt-enum-patterns.ari -o $(BUILD_DIR)/structs/adt-enum-patterns.elf
+	$(BUILD_DIR)/structs/adt-enum-patterns.elf; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/generic-adt-surface.ari -o $(BUILD_DIR)/structs/generic-adt-surface.elf
+	$(BUILD_DIR)/structs/generic-adt-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/generic-struct-infer.ari -o $(BUILD_DIR)/structs/generic-struct-infer.elf
+	$(BUILD_DIR)/structs/generic-struct-infer.elf; code=$$?; test $$code -eq 40
 	$(TARGET) tests/ok/generic-struct-infer.ari --emit-llvm $(BUILD_DIR)/structs/generic-struct-infer.ll
 	grep -q "insertvalue { i64 }" $(BUILD_DIR)/structs/generic-struct-infer.ll
 	grep -q "insertvalue { i64, i1 }" $(BUILD_DIR)/structs/generic-struct-infer.ll
-	$(TARGET) --freestanding tests/ok/struct-literal-field-name-payloads.ari -o $(BUILD_DIR)/structs/struct-literal-field-name-payloads.raw
-	$(BUILD_DIR)/structs/struct-literal-field-name-payloads.raw; code=$$?; test $$code -eq 84
+	$(TARGET) tests/ok/struct-literal-field-name-payloads.ari -o $(BUILD_DIR)/structs/struct-literal-field-name-payloads.elf
+	$(BUILD_DIR)/structs/struct-literal-field-name-payloads.elf; code=$$?; test $$code -eq 84
 	$(TARGET) tests/ok/struct-literal-field-name-payloads.ari --emit-llvm $(BUILD_DIR)/structs/struct-literal-field-name-payloads.ll
 	grep -q "insertvalue { i64, i64 }" $(BUILD_DIR)/structs/struct-literal-field-name-payloads.ll
 	$(TARGET) tests/ok/generic-impl-method.ari --emit-llvm $(BUILD_DIR)/structs/generic-impl-method.ll
@@ -2384,13 +2368,13 @@ check-structs: $(TARGET)
 	grep -q "replace__G_i64" $(BUILD_DIR)/structs/generic-method-infer.ll
 	grep -q "score_with__G_i64" $(BUILD_DIR)/structs/generic-method-infer.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/generic-method-infer.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/structs/generic-method-infer.elf; $(BUILD_DIR)/structs/generic-method-infer.elf; code=$$?; test $$code -eq 22; fi
-	$(TARGET) --freestanding tests/ok/tuple-layout.ari -o $(BUILD_DIR)/structs/tuple-layout.raw
-	$(BUILD_DIR)/structs/tuple-layout.raw; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/tuple-layout.ari -o $(BUILD_DIR)/structs/tuple-layout.elf
+	$(BUILD_DIR)/structs/tuple-layout.elf; code=$$?; test $$code -eq 13
 	$(TARGET) tests/ok/tuple-layout.ari --emit-llvm $(BUILD_DIR)/structs/tuple-layout.ll
 	grep -q "insertvalue { i64, i1 }" $(BUILD_DIR)/structs/tuple-layout.ll
 	grep -q "extractvalue { i64, i1 }" $(BUILD_DIR)/structs/tuple-layout.ll
-	$(TARGET) --freestanding tests/ok/struct-lowering.ari -o $(BUILD_DIR)/structs/struct-lowering.raw
-	$(BUILD_DIR)/structs/struct-lowering.raw; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/struct-lowering.ari -o $(BUILD_DIR)/structs/struct-lowering.elf
+	$(BUILD_DIR)/structs/struct-lowering.elf; code=$$?; test $$code -eq 18
 	$(TARGET) tests/ok/struct-lowering.ari --emit-llvm $(BUILD_DIR)/structs/struct-lowering.ll
 	grep -q "insertvalue { i64, i64, i1 }" $(BUILD_DIR)/structs/struct-lowering.ll
 	grep -q "extractvalue { i64, i64, i1 }" $(BUILD_DIR)/structs/struct-lowering.ll
@@ -2454,56 +2438,54 @@ check-structs: $(TARGET)
 
 check-variables: $(TARGET)
 	mkdir -p $(BUILD_DIR)/variables
-	$(TARGET) --freestanding tests/ok/variables-basic.ari -o $(BUILD_DIR)/variables/variables-basic.raw
-	$(BUILD_DIR)/variables/variables-basic.raw; code=$$?; test $$code -eq 12
-	$(TARGET) --freestanding tests/ok/variables-widths.ari -o $(BUILD_DIR)/variables/variables-widths.raw
-	$(BUILD_DIR)/variables/variables-widths.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/freestanding-scalar-width-local.ari -o $(BUILD_DIR)/variables/freestanding-scalar-width-local.raw
-	$(BUILD_DIR)/variables/freestanding-scalar-width-local.raw; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/freestanding-scalar-stack-pack.ari -o $(BUILD_DIR)/variables/freestanding-scalar-stack-pack.raw
-	$(BUILD_DIR)/variables/freestanding-scalar-stack-pack.raw; code=$$?; test $$code -eq 10
-	objdump -d $(BUILD_DIR)/variables/freestanding-scalar-stack-pack.raw >$(BUILD_DIR)/variables/freestanding-scalar-stack-pack.asm
-	grep -q 'sub.*0x10,%rsp' $(BUILD_DIR)/variables/freestanding-scalar-stack-pack.asm
-	$(TARGET) --freestanding tests/ok/variables-match-binding.ari -o $(BUILD_DIR)/variables/variables-match-binding.raw
-	$(BUILD_DIR)/variables/variables-match-binding.raw; code=$$?; test $$code -eq 42
-	$(TARGET) --freestanding tests/ok/variables-tuple-pattern.ari -o $(BUILD_DIR)/variables/variables-tuple-pattern.raw
-	$(BUILD_DIR)/variables/variables-tuple-pattern.raw; code=$$?; test $$code -eq 38
-	$(TARGET) --freestanding tests/ok/pattern-mut-binding-mode.ari -o $(BUILD_DIR)/variables/pattern-mut-binding-mode.raw
-	$(BUILD_DIR)/variables/pattern-mut-binding-mode.raw; code=$$?; test $$code -eq 36
-	$(TARGET) --freestanding tests/ok/unit-empty-tuple.ari -o $(BUILD_DIR)/variables/unit-empty-tuple.raw
-	$(BUILD_DIR)/variables/unit-empty-tuple.raw; code=$$?; test $$code -eq 10
-	$(TARGET) --freestanding tests/ok/variables-struct-pattern.ari -o $(BUILD_DIR)/variables/variables-struct-pattern.raw
-	$(BUILD_DIR)/variables/variables-struct-pattern.raw; code=$$?; test $$code -eq 25
-	$(TARGET) --freestanding tests/ok/variables-enum-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-enum-pattern-binding.raw
-	$(BUILD_DIR)/variables/variables-enum-pattern-binding.raw; code=$$?; test $$code -eq 13
-	$(TARGET) --freestanding tests/ok/variables-enum-or-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.raw
-	$(BUILD_DIR)/variables/variables-enum-or-pattern-binding.raw; code=$$?; test $$code -eq 33
-	$(TARGET) --freestanding tests/ok/variables-aggregate-or-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.raw
-	$(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.raw; code=$$?; test $$code -eq 41
-	$(TARGET) --freestanding tests/ok/ownership-aggregate-field-access.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-access.raw
-	$(BUILD_DIR)/variables/ownership-aggregate-field-access.raw; code=$$?; test $$code -eq 7
-	$(TARGET) --freestanding tests/ok/ownership-aggregate-field-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-move.raw
-	$(BUILD_DIR)/variables/ownership-aggregate-field-move.raw; code=$$?; test $$code -eq 12
-	$(TARGET) --freestanding tests/ok/ownership-aggregate-nested-field-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-nested-field-move.raw
-	$(BUILD_DIR)/variables/ownership-aggregate-nested-field-move.raw; code=$$?; test $$code -eq 13
-	$(TARGET) --freestanding tests/ok/ownership-array-element-move.ari -o $(BUILD_DIR)/variables/ownership-array-element-move.raw
-	$(BUILD_DIR)/variables/ownership-array-element-move.raw; code=$$?; test $$code -eq 6
-	$(TARGET) --freestanding tests/ok/drop-statement-payloads.ari -o $(BUILD_DIR)/variables/drop-statement-payloads.raw
-	$(BUILD_DIR)/variables/drop-statement-payloads.raw; code=$$?; test $$code -eq 9
-	$(TARGET) --freestanding tests/ok/assignment-statement-payloads.ari -o $(BUILD_DIR)/variables/assignment-statement-payloads.raw
-	$(BUILD_DIR)/variables/assignment-statement-payloads.raw; code=$$?; test $$code -eq 44
-	$(TARGET) --freestanding tests/ok/array-fixed.ari -o $(BUILD_DIR)/variables/array-fixed.raw
-	$(BUILD_DIR)/variables/array-fixed.raw; code=$$?; test $$code -eq 4
-	$(TARGET) --freestanding tests/ok/scalar-payload-unions.ari -o $(BUILD_DIR)/variables/scalar-payload-unions.raw
-	$(BUILD_DIR)/variables/scalar-payload-unions.raw; code=$$?; test $$code -eq 21
-	$(TARGET) --freestanding tests/ok/array-literal-default.ari -o $(BUILD_DIR)/variables/array-literal-default.raw
-	$(BUILD_DIR)/variables/array-literal-default.raw; code=$$?; test $$code -eq 14
-	$(TARGET) --freestanding tests/ok/array-dynamic-index.ari -o $(BUILD_DIR)/variables/array-dynamic-index.raw
-	$(BUILD_DIR)/variables/array-dynamic-index.raw; code=$$?; test $$code -eq 12
-	$(TARGET) --freestanding tests/ok/vector-local-freestanding.ari -o $(BUILD_DIR)/variables/vector-local-freestanding.raw
-	$(BUILD_DIR)/variables/vector-local-freestanding.raw; code=$$?; test $$code -eq 152
-	$(TARGET) --freestanding tests/ok/array-len-literal.ari -o $(BUILD_DIR)/variables/array-len-literal.raw
-	$(BUILD_DIR)/variables/array-len-literal.raw; code=$$?; test $$code -eq 4
+	$(TARGET) tests/ok/variables-basic.ari -o $(BUILD_DIR)/variables/variables-basic.elf
+	$(BUILD_DIR)/variables/variables-basic.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/variables-widths.ari -o $(BUILD_DIR)/variables/variables-widths.elf
+	$(BUILD_DIR)/variables/variables-widths.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/llvm-scalar-width-local.ari -o $(BUILD_DIR)/variables/llvm-scalar-width-local.elf
+	$(BUILD_DIR)/variables/llvm-scalar-width-local.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/llvm-scalar-stack-pack.ari -o $(BUILD_DIR)/variables/llvm-scalar-stack-pack.elf
+	$(BUILD_DIR)/variables/llvm-scalar-stack-pack.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/variables-match-binding.ari -o $(BUILD_DIR)/variables/variables-match-binding.elf
+	$(BUILD_DIR)/variables/variables-match-binding.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/variables-tuple-pattern.ari -o $(BUILD_DIR)/variables/variables-tuple-pattern.elf
+	$(BUILD_DIR)/variables/variables-tuple-pattern.elf; code=$$?; test $$code -eq 38
+	$(TARGET) tests/ok/pattern-mut-binding-mode.ari -o $(BUILD_DIR)/variables/pattern-mut-binding-mode.elf
+	$(BUILD_DIR)/variables/pattern-mut-binding-mode.elf; code=$$?; test $$code -eq 36
+	$(TARGET) tests/ok/unit-empty-tuple.ari -o $(BUILD_DIR)/variables/unit-empty-tuple.elf
+	$(BUILD_DIR)/variables/unit-empty-tuple.elf; code=$$?; test $$code -eq 10
+	$(TARGET) tests/ok/variables-struct-pattern.ari -o $(BUILD_DIR)/variables/variables-struct-pattern.elf
+	$(BUILD_DIR)/variables/variables-struct-pattern.elf; code=$$?; test $$code -eq 25
+	$(TARGET) tests/ok/variables-enum-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-enum-pattern-binding.elf
+	$(BUILD_DIR)/variables/variables-enum-pattern-binding.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/variables-enum-or-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-enum-or-pattern-binding.elf
+	$(BUILD_DIR)/variables/variables-enum-or-pattern-binding.elf; code=$$?; test $$code -eq 33
+	$(TARGET) tests/ok/variables-aggregate-or-pattern-binding.ari -o $(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.elf
+	$(BUILD_DIR)/variables/variables-aggregate-or-pattern-binding.elf; code=$$?; test $$code -eq 41
+	$(TARGET) tests/ok/ownership-aggregate-field-access.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-access.elf
+	$(BUILD_DIR)/variables/ownership-aggregate-field-access.elf; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/ownership-aggregate-field-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-field-move.elf
+	$(BUILD_DIR)/variables/ownership-aggregate-field-move.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/ownership-aggregate-nested-field-move.ari -o $(BUILD_DIR)/variables/ownership-aggregate-nested-field-move.elf
+	$(BUILD_DIR)/variables/ownership-aggregate-nested-field-move.elf; code=$$?; test $$code -eq 13
+	$(TARGET) tests/ok/ownership-array-element-move.ari -o $(BUILD_DIR)/variables/ownership-array-element-move.elf
+	$(BUILD_DIR)/variables/ownership-array-element-move.elf; code=$$?; test $$code -eq 6
+	$(TARGET) tests/ok/drop-statement-payloads.ari -o $(BUILD_DIR)/variables/drop-statement-payloads.elf
+	$(BUILD_DIR)/variables/drop-statement-payloads.elf; code=$$?; test $$code -eq 9
+	$(TARGET) tests/ok/assignment-statement-payloads.ari -o $(BUILD_DIR)/variables/assignment-statement-payloads.elf
+	$(BUILD_DIR)/variables/assignment-statement-payloads.elf; code=$$?; test $$code -eq 44
+	$(TARGET) tests/ok/array-fixed.ari -o $(BUILD_DIR)/variables/array-fixed.elf
+	$(BUILD_DIR)/variables/array-fixed.elf; code=$$?; test $$code -eq 4
+	$(TARGET) tests/ok/scalar-payload-unions.ari -o $(BUILD_DIR)/variables/scalar-payload-unions.elf
+	$(BUILD_DIR)/variables/scalar-payload-unions.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/ok/array-literal-default.ari -o $(BUILD_DIR)/variables/array-literal-default.elf
+	$(BUILD_DIR)/variables/array-literal-default.elf; code=$$?; test $$code -eq 14
+	$(TARGET) tests/ok/array-dynamic-index.ari -o $(BUILD_DIR)/variables/array-dynamic-index.elf
+	$(BUILD_DIR)/variables/array-dynamic-index.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/vector-local-llvm.ari -o $(BUILD_DIR)/variables/vector-local-llvm.elf
+	$(BUILD_DIR)/variables/vector-local-llvm.elf; code=$$?; test $$code -eq 152
+	$(TARGET) tests/ok/array-len-literal.ari -o $(BUILD_DIR)/variables/array-len-literal.elf
+	$(BUILD_DIR)/variables/array-len-literal.elf; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/variables-basic.ari --emit-llvm $(BUILD_DIR)/variables/variables-basic.ll
 	grep -q "alloca i64" $(BUILD_DIR)/variables/variables-basic.ll
 	grep -q "alloca i1" $(BUILD_DIR)/variables/variables-basic.ll
@@ -2522,8 +2504,8 @@ check-variables: $(TARGET)
 	grep -q "insertvalue { i64, i64 }" $(BUILD_DIR)/variables/ir-builder-aggregate-paths.ll
 	grep -q "insertvalue { { i64, i64 }, i64 }" $(BUILD_DIR)/variables/ir-builder-aggregate-paths.ll
 	grep -q "for.body" $(BUILD_DIR)/variables/ir-builder-aggregate-paths.ll
-	$(TARGET) --freestanding tests/ok/ir-argument-payloads.ari -o $(BUILD_DIR)/variables/ir-argument-payloads.raw
-	$(BUILD_DIR)/variables/ir-argument-payloads.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/ir-argument-payloads.ari -o $(BUILD_DIR)/variables/ir-argument-payloads.elf
+	$(BUILD_DIR)/variables/ir-argument-payloads.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/ir-argument-payloads.ari --emit-llvm $(BUILD_DIR)/variables/ir-argument-payloads.ll
 	grep -q 'call i64 @"_ARNv3inc"' $(BUILD_DIR)/variables/ir-argument-payloads.ll
 	grep -q "insertvalue { i64, i64 }" $(BUILD_DIR)/variables/ir-argument-payloads.ll
@@ -2532,7 +2514,7 @@ check-variables: $(TARGET)
 	grep -q "getelementptr inbounds \\[3 x i64\\]" $(BUILD_DIR)/variables/ir-builder-access-paths.ll
 	grep -q "getelementptr inbounds { i64, i64 }" $(BUILD_DIR)/variables/ir-builder-access-paths.ll
 	$(TARGET) tests/ok/ir-builder-literal-paths.ari --emit-llvm $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
-	grep -q "double 1.250000" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
+	grep -q "double 1.25000000000000000e+00" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "@.ari.str" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "ptr null" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
 	grep -q "insertvalue { double, ptr }" $(BUILD_DIR)/variables/ir-builder-literal-paths.ll
@@ -2572,7 +2554,7 @@ check-variables: $(TARGET)
 	$(TARGET) tests/ok/variables-host-scalars.ari --emit-llvm $(BUILD_DIR)/variables/variables-host-scalars.ll
 	grep -q "alloca ptr" $(BUILD_DIR)/variables/variables-host-scalars.ll
 	grep -q "alloca double" $(BUILD_DIR)/variables/variables-host-scalars.ll
-	grep -q "store double 10.000000" $(BUILD_DIR)/variables/variables-host-scalars.ll
+	grep -q "store double 1.00000000000000000e+01" $(BUILD_DIR)/variables/variables-host-scalars.ll
 	$(TARGET) tests/ok/ownership-aggregate-storage.ari --emit-llvm $(BUILD_DIR)/variables/ownership-aggregate-storage.ll
 	grep -q "alloca { i64, i64 }" $(BUILD_DIR)/variables/ownership-aggregate-storage.ll
 	grep -q "alloca { ptr, ptr }" $(BUILD_DIR)/variables/ownership-aggregate-storage.ll
@@ -2719,10 +2701,10 @@ check-variables: $(TARGET)
 	grep -q "getelementptr inbounds" $(BUILD_DIR)/variables/assignment-statement-payloads.ll
 	$(TARGET) tests/ok/array-dynamic-index-trap.ari --emit-llvm $(BUILD_DIR)/variables/array-dynamic-index-trap.ll
 	grep -q "array.bounds.fail" $(BUILD_DIR)/variables/array-dynamic-index-trap.ll
-	$(TARGET) --freestanding tests/ok/array-dynamic-index-trap.ari -o $(BUILD_DIR)/variables/array-dynamic-index-trap.raw
-	if $(BUILD_DIR)/variables/array-dynamic-index-trap.raw; then exit 1; fi
-	$(TARGET) --freestanding tests/ok/variables-enum-pattern-binding-trap.ari -o $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.raw
-	if $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.raw; then exit 1; fi
+	$(TARGET) tests/ok/array-dynamic-index-trap.ari -o $(BUILD_DIR)/variables/array-dynamic-index-trap.elf
+	if $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; then exit 1; fi
+	$(TARGET) tests/ok/variables-enum-pattern-binding-trap.ari -o $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.elf
+	if $(BUILD_DIR)/variables/variables-enum-pattern-binding-trap.elf; then exit 1; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-basic.elf; $(BUILD_DIR)/variables/variables-basic.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ir-builder-smoke.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/ir-builder-smoke.elf; $(BUILD_DIR)/variables/ir-builder-smoke.elf; code=$$?; test $$code -eq 16; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/ir-builder-call-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/ir-builder-call-paths.elf; $(BUILD_DIR)/variables/ir-builder-call-paths.elf; code=$$?; test $$code -eq 90; fi
@@ -2761,8 +2743,8 @@ check-variables: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-insert.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-insert.elf; $(BUILD_DIR)/variables/vector-insert.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-search.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-search.elf; $(BUILD_DIR)/variables/vector-search.elf; code=$$?; test $$code -eq 10; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/field-borrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/field-borrow.elf; $(BUILD_DIR)/variables/field-borrow.elf; code=$$?; test $$code -eq 42; fi
-	$(TARGET) --freestanding tests/ok/aggregate-borrow-field-assignment.ari -o $(BUILD_DIR)/variables/aggregate-borrow-field-assignment.raw
-	$(BUILD_DIR)/variables/aggregate-borrow-field-assignment.raw; code=$$?; test $$code -eq 32
+	$(TARGET) tests/ok/aggregate-borrow-field-assignment.ari -o $(BUILD_DIR)/variables/aggregate-borrow-field-assignment.elf
+	$(BUILD_DIR)/variables/aggregate-borrow-field-assignment.elf; code=$$?; test $$code -eq 32
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/array-dynamic-index-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; if $(BUILD_DIR)/variables/array-dynamic-index-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/vector-storage-shrink-trap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; if $(BUILD_DIR)/variables/vector-storage-shrink-trap.elf; then exit 1; fi; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/variables-enum-pattern-binding.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/variables/variables-enum-pattern-binding.elf; $(BUILD_DIR)/variables/variables-enum-pattern-binding.elf; code=$$?; test $$code -eq 13; fi
@@ -2780,8 +2762,8 @@ check-variables: $(TARGET)
 	grep -q "cannot assign to borrowed binding 'number'" $(BUILD_DIR)/variables/aggregate-borrow-source-assign.err
 	if $(TARGET) tests/errors/aggregate-borrow-reassigned-source.ari -o $(BUILD_DIR)/variables/aggregate-borrow-reassigned-source.elf >$(BUILD_DIR)/variables/aggregate-borrow-reassigned-source.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'second'" $(BUILD_DIR)/variables/aggregate-borrow-reassigned-source.err
-	$(TARGET) --freestanding tests/ok/aggregate-borrow-source-release.ari -o $(BUILD_DIR)/variables/aggregate-borrow-source-release.raw
-	$(BUILD_DIR)/variables/aggregate-borrow-source-release.raw; code=$$?; test $$code -eq 3
+	$(TARGET) tests/ok/aggregate-borrow-source-release.ari -o $(BUILD_DIR)/variables/aggregate-borrow-source-release.elf
+	$(BUILD_DIR)/variables/aggregate-borrow-source-release.elf; code=$$?; test $$code -eq 3
 	if $(TARGET) tests/errors/field-borrow-assign.ari -o $(BUILD_DIR)/variables/field-borrow-assign.elf >$(BUILD_DIR)/variables/field-borrow-assign.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed field 'pair.0'" $(BUILD_DIR)/variables/field-borrow-assign.err
 	if $(TARGET) tests/errors/field-borrow-conflict.ari -o $(BUILD_DIR)/variables/field-borrow-conflict.elf >$(BUILD_DIR)/variables/field-borrow-conflict.err 2>&1; then exit 1; fi
@@ -2913,25 +2895,25 @@ check-ffi: $(TARGET)
 	$(TARGET) tests/ok/nullable-type-pointer.ari --emit-llvm $(BUILD_DIR)/ffi/nullable-type-pointer.ll
 	grep -q 'load i64, ptr' $(BUILD_DIR)/ffi/nullable-type-pointer.ll
 	grep -q 'store ptr null' $(BUILD_DIR)/ffi/nullable-type-pointer.ll
-	$(TARGET) --freestanding tests/ok/nullable-type-pointer.ari -o $(BUILD_DIR)/ffi/nullable-type-pointer.raw
-	$(BUILD_DIR)/ffi/nullable-type-pointer.raw; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/nullable-type-pointer.ari -o $(BUILD_DIR)/ffi/nullable-type-pointer.elf
+	$(BUILD_DIR)/ffi/nullable-type-pointer.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/pointer-casts.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-casts.ll
 	grep -q 'ptrtoint ptr' $(BUILD_DIR)/ffi/pointer-casts.ll
 	grep -q 'inttoptr i64' $(BUILD_DIR)/ffi/pointer-casts.ll
 	$(TARGET) tests/ok/pointer-offset.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-offset.ll
 	grep -q 'getelementptr i8, ptr' $(BUILD_DIR)/ffi/pointer-offset.ll
 	grep -q 'ptrtoint ptr' $(BUILD_DIR)/ffi/pointer-offset.ll
-	$(TARGET) --freestanding tests/ok/pointer-offset.ari -o $(BUILD_DIR)/ffi/pointer-offset.raw
-	$(BUILD_DIR)/ffi/pointer-offset.raw; code=$$?; test $$code -eq 8
+	$(TARGET) tests/ok/pointer-offset.ari -o $(BUILD_DIR)/ffi/pointer-offset.elf
+	$(BUILD_DIR)/ffi/pointer-offset.elf; code=$$?; test $$code -eq 8
 	$(TARGET) tests/ok/layout-query.ari --emit-llvm $(BUILD_DIR)/ffi/layout-query.ll
 	grep -q 'getelementptr i8, ptr' $(BUILD_DIR)/ffi/layout-query.ll
-	$(TARGET) --freestanding tests/ok/layout-query.ari -o $(BUILD_DIR)/ffi/layout-query.raw
-	$(BUILD_DIR)/ffi/layout-query.raw; code=$$?; test $$code -eq 35
+	$(TARGET) tests/ok/layout-query.ari -o $(BUILD_DIR)/ffi/layout-query.elf
+	$(BUILD_DIR)/ffi/layout-query.elf; code=$$?; test $$code -eq 35
 	$(TARGET) tests/ok/layout-service-aggregate-consistency.ari --emit-llvm $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.ll
 	grep -q 'getelementptr inbounds { i8, i64, i16 }' $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.ll
 	grep -q 'extractvalue { i32, i64, i64 }' $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.ll
-	$(TARGET) --freestanding tests/ok/layout-service-aggregate-consistency.ari -o $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.raw
-	$(BUILD_DIR)/ffi/layout-service-aggregate-consistency.raw; code=$$?; test $$code -eq 152
+	$(TARGET) tests/ok/layout-service-aggregate-consistency.ari -o $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.elf
+	$(BUILD_DIR)/ffi/layout-service-aggregate-consistency.elf; code=$$?; test $$code -eq 152
 	$(TARGET) tests/ok/zone-allocation.ari --emit-llvm $(BUILD_DIR)/ffi/zone-allocation.ll
 	grep -q '@ari_builtin_zone_create' $(BUILD_DIR)/ffi/zone-allocation.ll
 	grep -q 'declare ptr @malloc' $(BUILD_DIR)/ffi/zone-allocation.ll
@@ -2971,57 +2953,57 @@ check-ffi: $(TARGET)
 	$(TARGET) tests/ok/pointer-add.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-add.ll
 	grep -q 'getelementptr i64, ptr' $(BUILD_DIR)/ffi/pointer-add.ll
 	grep -q 'getelementptr i8, ptr' $(BUILD_DIR)/ffi/pointer-add.ll
-	$(TARGET) --freestanding tests/ok/pointer-add.ari -o $(BUILD_DIR)/ffi/pointer-add.raw
-	$(BUILD_DIR)/ffi/pointer-add.raw; code=$$?; test $$code -eq 19
+	$(TARGET) tests/ok/pointer-add.ari -o $(BUILD_DIR)/ffi/pointer-add.elf
+	$(BUILD_DIR)/ffi/pointer-add.elf; code=$$?; test $$code -eq 19
 	$(TARGET) tests/ok/pointer-add-aggregate.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-add-aggregate.ll
 	grep -q 'getelementptr { i64, i64 }, ptr' $(BUILD_DIR)/ffi/pointer-add-aggregate.ll
 	grep -q 'getelementptr \[3 x i64\], ptr' $(BUILD_DIR)/ffi/pointer-add-aggregate.ll
-	$(TARGET) --freestanding tests/ok/pointer-add-aggregate.ari -o $(BUILD_DIR)/ffi/pointer-add-aggregate.raw
-	$(BUILD_DIR)/ffi/pointer-add-aggregate.raw; code=$$?; test $$code -eq 56
+	$(TARGET) tests/ok/pointer-add-aggregate.ari -o $(BUILD_DIR)/ffi/pointer-add-aggregate.elf
+	$(BUILD_DIR)/ffi/pointer-add-aggregate.elf; code=$$?; test $$code -eq 56
 	$(TARGET) tests/ok/pointer-explicit-type-args.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-explicit-type-args.ll
 	grep -q 'getelementptr i64, ptr' $(BUILD_DIR)/ffi/pointer-explicit-type-args.ll
 	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/ffi/pointer-explicit-type-args.ll
 	grep -q 'store { i64, i64 }' $(BUILD_DIR)/ffi/pointer-explicit-type-args.ll
-	$(TARGET) --freestanding tests/ok/pointer-explicit-type-args.ari -o $(BUILD_DIR)/ffi/pointer-explicit-type-args.raw
-	$(BUILD_DIR)/ffi/pointer-explicit-type-args.raw; code=$$?; test $$code -eq 41
+	$(TARGET) tests/ok/pointer-explicit-type-args.ari -o $(BUILD_DIR)/ffi/pointer-explicit-type-args.elf
+	$(BUILD_DIR)/ffi/pointer-explicit-type-args.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/ok/pointer-load-store.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-load-store.ll
 	grep -q 'load i64, ptr' $(BUILD_DIR)/ffi/pointer-load-store.ll
 	grep -q 'store i64' $(BUILD_DIR)/ffi/pointer-load-store.ll
-	$(TARGET) --freestanding tests/ok/pointer-load-store.ari -o $(BUILD_DIR)/ffi/pointer-load-store.raw
-	$(BUILD_DIR)/ffi/pointer-load-store.raw; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/pointer-load-store.ari -o $(BUILD_DIR)/ffi/pointer-load-store.elf
+	$(BUILD_DIR)/ffi/pointer-load-store.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/ir-operand-helper-paths.ari --emit-llvm $(BUILD_DIR)/ffi/ir-operand-helper-paths.ll
 	grep -q 'call i64 %' $(BUILD_DIR)/ffi/ir-operand-helper-paths.ll
 	grep -q 'getelementptr i64, ptr' $(BUILD_DIR)/ffi/ir-operand-helper-paths.ll
 	grep -q 'store i64' $(BUILD_DIR)/ffi/ir-operand-helper-paths.ll
-	$(TARGET) --freestanding tests/ok/ir-operand-helper-paths.ari -o $(BUILD_DIR)/ffi/ir-operand-helper-paths.raw
-	$(BUILD_DIR)/ffi/ir-operand-helper-paths.raw; code=$$?; test $$code -eq 16
+	$(TARGET) tests/ok/ir-operand-helper-paths.ari -o $(BUILD_DIR)/ffi/ir-operand-helper-paths.elf
+	$(BUILD_DIR)/ffi/ir-operand-helper-paths.elf; code=$$?; test $$code -eq 16
 	$(TARGET) tests/ok/pointer-float-load-store.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-float-load-store.ll
 	grep -q 'load float, ptr' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
 	grep -q 'store float' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
 	grep -q 'load double, ptr' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
 	grep -q 'store double' $(BUILD_DIR)/ffi/pointer-float-load-store.ll
-	$(TARGET) --freestanding tests/ok/pointer-float-load-store.ari -o $(BUILD_DIR)/ffi/pointer-float-load-store.raw
-	$(BUILD_DIR)/ffi/pointer-float-load-store.raw; code=$$?; test $$code -eq 2
+	$(TARGET) tests/ok/pointer-float-load-store.ari -o $(BUILD_DIR)/ffi/pointer-float-load-store.elf
+	$(BUILD_DIR)/ffi/pointer-float-load-store.elf; code=$$?; test $$code -eq 2
 	$(TARGET) tests/ok/pointer-deref.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-deref.ll
 	grep -q 'load i64, ptr' $(BUILD_DIR)/ffi/pointer-deref.ll
 	grep -q 'store i64' $(BUILD_DIR)/ffi/pointer-deref.ll
 	grep -q 'store i8' $(BUILD_DIR)/ffi/pointer-deref.ll
-	$(TARGET) --freestanding tests/ok/pointer-deref.ari -o $(BUILD_DIR)/ffi/pointer-deref.raw
-	$(BUILD_DIR)/ffi/pointer-deref.raw; code=$$?; test $$code -eq 15
+	$(TARGET) tests/ok/pointer-deref.ari -o $(BUILD_DIR)/ffi/pointer-deref.elf
+	$(BUILD_DIR)/ffi/pointer-deref.elf; code=$$?; test $$code -eq 15
 	$(TARGET) tests/ok/pointer-aggregate-access.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-aggregate-access.ll
 	grep -q 'getelementptr inbounds { i64, i64 }' $(BUILD_DIR)/ffi/pointer-aggregate-access.ll
 	grep -q 'getelementptr inbounds \[3 x i64\]' $(BUILD_DIR)/ffi/pointer-aggregate-access.ll
 	grep -q 'store i64' $(BUILD_DIR)/ffi/pointer-aggregate-access.ll
-	$(TARGET) --freestanding tests/ok/pointer-aggregate-access.ari -o $(BUILD_DIR)/ffi/pointer-aggregate-access.raw
-	$(BUILD_DIR)/ffi/pointer-aggregate-access.raw; code=$$?; test $$code -eq 45
-	$(TARGET) --freestanding tests/ok/freestanding-aggregate-byte-layout.ari -o $(BUILD_DIR)/ffi/freestanding-aggregate-byte-layout.raw
-	$(BUILD_DIR)/ffi/freestanding-aggregate-byte-layout.raw; code=$$?; test $$code -eq 45
+	$(TARGET) tests/ok/pointer-aggregate-access.ari -o $(BUILD_DIR)/ffi/pointer-aggregate-access.elf
+	$(BUILD_DIR)/ffi/pointer-aggregate-access.elf; code=$$?; test $$code -eq 45
+	$(TARGET) tests/ok/llvm-aggregate-byte-layout.ari -o $(BUILD_DIR)/ffi/llvm-aggregate-byte-layout.elf
+	$(BUILD_DIR)/ffi/llvm-aggregate-byte-layout.elf; code=$$?; test $$code -eq 45
 	$(TARGET) tests/ok/pointer-aggregate-load-store.ari --emit-llvm $(BUILD_DIR)/ffi/pointer-aggregate-load-store.ll
 	grep -q 'load { i64, i64 }, ptr' $(BUILD_DIR)/ffi/pointer-aggregate-load-store.ll
 	grep -q 'store { i64, i64 }' $(BUILD_DIR)/ffi/pointer-aggregate-load-store.ll
 	grep -q 'store \[2 x i64\]' $(BUILD_DIR)/ffi/pointer-aggregate-load-store.ll
-	$(TARGET) --freestanding tests/ok/pointer-aggregate-load-store.ari -o $(BUILD_DIR)/ffi/pointer-aggregate-load-store.raw
-	$(BUILD_DIR)/ffi/pointer-aggregate-load-store.raw; code=$$?; test $$code -eq 48
+	$(TARGET) tests/ok/pointer-aggregate-load-store.ari -o $(BUILD_DIR)/ffi/pointer-aggregate-load-store.elf
+	$(BUILD_DIR)/ffi/pointer-aggregate-load-store.elf; code=$$?; test $$code -eq 48
 	$(TARGET) tests/ok/ffi-c-varargs.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-varargs.ll
 	grep -q 'declare i32 @printf(ptr, ...)' $(BUILD_DIR)/ffi/ffi-c-varargs.ll
 	grep -q 'call i32 @"printf"(ptr' $(BUILD_DIR)/ffi/ffi-c-varargs.ll
@@ -3033,9 +3015,6 @@ check-ffi: $(TARGET)
 	$(TARGET) tests/ok/ffi-c-callback.ari --emit-llvm $(BUILD_DIR)/ffi/ffi-c-callback.ll
 	grep -q 'declare i64 @"ari_test_apply_i64"(ptr, i64)' $(BUILD_DIR)/ffi/ffi-c-callback.ll
 	grep -q 'call i64 @"ari_test_apply_i64"(ptr @"_ARNv7add_ten", i64 5)' $(BUILD_DIR)/ffi/ffi-c-callback.ll
-	$(TARGET) --freestanding --emit-obj $(BUILD_DIR)/ffi/freestanding-c-import-scalar.o tests/ok/freestanding-c-import-scalar.ari
-	if command -v readelf >/dev/null 2>&1; then readelf -rW $(BUILD_DIR)/ffi/freestanding-c-import-scalar.o >$(BUILD_DIR)/ffi/freestanding-c-import-scalar.relocs; grep -q 'R_X86_64_PLT32.*ari_test_add_i64' $(BUILD_DIR)/ffi/freestanding-c-import-scalar.relocs; grep -q 'R_X86_64_PLT32.*ari_test_inc_i64' $(BUILD_DIR)/ffi/freestanding-c-import-scalar.relocs; grep -q 'R_X86_64_PLT32.*ari_test_is_null' $(BUILD_DIR)/ffi/freestanding-c-import-scalar.relocs; readelf -sW $(BUILD_DIR)/ffi/freestanding-c-import-scalar.o >$(BUILD_DIR)/ffi/freestanding-c-import-scalar.symbols; grep -q 'UND.*ari_test_add_i64' $(BUILD_DIR)/ffi/freestanding-c-import-scalar.symbols; grep -q 'UND.*ari_test_inc_i64' $(BUILD_DIR)/ffi/freestanding-c-import-scalar.symbols; grep -q 'UND.*ari_test_is_null' $(BUILD_DIR)/ffi/freestanding-c-import-scalar.symbols; fi
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(LLVM_CC) tests/ffi/raw_object_main.c $(BUILD_DIR)/ffi/freestanding-c-import-scalar.o tests/ffi/c_helpers.c -o $(BUILD_DIR)/ffi/freestanding-c-import-scalar.elf; $(BUILD_DIR)/ffi/freestanding-c-import-scalar.elf; code=$$?; test $$code -eq 33; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(LLVM_CC) -c tests/ffi/c_helpers.c -o $(BUILD_DIR)/ffi/c_helpers.o; ar rcs $(BUILD_DIR)/ffi/libari_testffi.a $(BUILD_DIR)/ffi/c_helpers.o; $(TARGET) tests/ok/ffi-c-types.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-types.elf; $(BUILD_DIR)/ffi/ffi-c-types.elf; code=$$?; test $$code -eq 36; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-null-pointer.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-null-pointer.elf; $(BUILD_DIR)/ffi/ffi-c-null-pointer.elf; code=$$?; test $$code -eq 3; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/ffi-c-borrow-return.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/ffi-c-borrow-return.elf; $(BUILD_DIR)/ffi/ffi-c-borrow-return.elf; code=$$?; test $$code -eq 33; fi
@@ -3082,8 +3061,6 @@ check-ffi: $(TARGET)
 	grep -q "extern C declarations cannot be generic; declare concrete C symbols or wrap generic foreign APIs in C" $(BUILD_DIR)/ffi/extern-generic.err
 	if $(TARGET) tests/errors/ffi-c-borrow-return-missing-contract.ari -o $(BUILD_DIR)/ffi/ffi-c-borrow-return-missing-contract.elf >$(BUILD_DIR)/ffi/ffi-c-borrow-return-missing-contract.err 2>&1; then exit 1; fi
 	grep -q "extern borrow-returning function 'ari_test_identity_i64_ref' needs an explicit @borrow_return(source) contract" $(BUILD_DIR)/ffi/ffi-c-borrow-return-missing-contract.err
-	if $(TARGET) --freestanding tests/errors/freestanding-extern-c-call.ari -o $(BUILD_DIR)/ffi/freestanding-extern-c-call.raw >$(BUILD_DIR)/ffi/freestanding-extern-c-call.err 2>&1; then exit 1; fi
-	grep -q 'freestanding executable output cannot link imported extern "C" symbols yet' $(BUILD_DIR)/ffi/freestanding-extern-c-call.err
 	if $(TARGET) tests/errors/null-non-pointer.ari -o $(BUILD_DIR)/ffi/null-non-pointer.elf >$(BUILD_DIR)/ffi/null-non-pointer.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got ptr void" $(BUILD_DIR)/ffi/null-non-pointer.err
 	if $(TARGET) tests/errors/nullable-qualified.ari -o $(BUILD_DIR)/ffi/nullable-qualified.elf >$(BUILD_DIR)/ffi/nullable-qualified.err 2>&1; then exit 1; fi
@@ -3148,13 +3125,11 @@ check-ffi: $(TARGET)
 	grep -q "zone pointer returns must come from the function's single zone borrow parameter" $(BUILD_DIR)/ffi/zone-pointer-multizone-return.err
 	if $(TARGET) tests/errors/zone-pointer-no-zone-return.ari -o $(BUILD_DIR)/ffi/zone-pointer-no-zone-return.elf >$(BUILD_DIR)/ffi/zone-pointer-no-zone-return.err 2>&1; then exit 1; fi
 	grep -q "zone pointer returns must come from the function's single zone borrow parameter" $(BUILD_DIR)/ffi/zone-pointer-no-zone-return.err
-	if $(TARGET) --freestanding tests/errors/zone-freestanding.ari -o $(BUILD_DIR)/ffi/zone-freestanding.raw >$(BUILD_DIR)/ffi/zone-freestanding.err 2>&1; then exit 1; fi
-	grep -q "freestanding backend does not lower zone allocation yet" $(BUILD_DIR)/ffi/zone-freestanding.err
 	if $(TARGET) tests/errors/pointer-deref-aggregate.ari -o $(BUILD_DIR)/ffi/pointer-deref-aggregate.elf >$(BUILD_DIR)/ffi/pointer-deref-aggregate.err 2>&1; then exit 1; fi
 	grep -q "pointer dereference cannot copy ownership- or borrow-valued values through raw pointers yet" $(BUILD_DIR)/ffi/pointer-deref-aggregate.err
 check-functions: $(TARGET) check-function-errors
 	mkdir -p $(BUILD_DIR)/functions
-	$(TARGET) --freestanding tests/ok/function-recursion.ari -o $(BUILD_DIR)/functions/function-recursion.elf
+	$(TARGET) tests/ok/function-recursion.ari -o $(BUILD_DIR)/functions/function-recursion.elf
 	$(BUILD_DIR)/functions/function-recursion.elf; code=$$?; test $$code -eq 120
 	readelf -sW $(BUILD_DIR)/functions/function-recursion.elf > $(BUILD_DIR)/functions/function-recursion.sym
 	grep -q "_ARNv4fact" $(BUILD_DIR)/functions/function-recursion.sym
@@ -3166,12 +3141,12 @@ check-functions: $(TARGET) check-function-errors
 	grep -q "_ARNv4main" $(BUILD_DIR)/functions/function-recursion.ll
 	if grep -q "__P" $(BUILD_DIR)/functions/function-recursion.ll; then exit 1; fi
 	if grep -q "__R" $(BUILD_DIR)/functions/function-recursion.ll; then exit 1; fi
-	$(TARGET) --freestanding tests/ok/function-recursion-freestanding.ari -o $(BUILD_DIR)/functions/function-recursion-freestanding.elf
-	$(BUILD_DIR)/functions/function-recursion-freestanding.elf; code=$$?; test $$code -eq 120
-	readelf -sW $(BUILD_DIR)/functions/function-recursion-freestanding.elf > $(BUILD_DIR)/functions/function-recursion-freestanding.sym
-	grep -q "_ARNv4fact" $(BUILD_DIR)/functions/function-recursion-freestanding.sym
-	grep -q "_ARNv4main" $(BUILD_DIR)/functions/function-recursion-freestanding.sym
-	$(TARGET) --freestanding tests/ok/function-void-return.ari -o $(BUILD_DIR)/functions/function-void-return.elf
+	$(TARGET) tests/ok/function-recursion-llvm.ari -o $(BUILD_DIR)/functions/function-recursion-llvm.elf
+	$(BUILD_DIR)/functions/function-recursion-llvm.elf; code=$$?; test $$code -eq 120
+	readelf -sW $(BUILD_DIR)/functions/function-recursion-llvm.elf > $(BUILD_DIR)/functions/function-recursion-llvm.sym
+	grep -q "_ARNv4fact" $(BUILD_DIR)/functions/function-recursion-llvm.sym
+	grep -q "_ARNv4main" $(BUILD_DIR)/functions/function-recursion-llvm.sym
+	$(TARGET) tests/ok/function-void-return.ari -o $(BUILD_DIR)/functions/function-void-return.elf
 	$(BUILD_DIR)/functions/function-void-return.elf; code=$$?; test $$code -eq 7
 	$(TARGET) tests/ok/function-param-patterns.ari --emit-llvm $(BUILD_DIR)/functions/function-param-patterns.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/functions/function-param-patterns.ll
@@ -3179,60 +3154,60 @@ check-functions: $(TARGET) check-function-errors
 	grep -q "slice.bounds.fail" $(BUILD_DIR)/functions/function-param-patterns.ll
 	grep -q "match.arm" $(BUILD_DIR)/functions/function-param-patterns.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-param-patterns.elf; $(BUILD_DIR)/functions/function-param-patterns.elf; code=$$?; test $$code -eq 87; fi
-	$(TARGET) --freestanding tests/ok/function-param-patterns.ari -o $(BUILD_DIR)/functions/function-param-patterns.raw
-	$(BUILD_DIR)/functions/function-param-patterns.raw; code=$$?; test $$code -eq 87
+	$(TARGET) tests/ok/function-param-patterns.ari -o $(BUILD_DIR)/functions/function-param-patterns.elf
+	$(BUILD_DIR)/functions/function-param-patterns.elf; code=$$?; test $$code -eq 87
 	$(TARGET) tests/ok/function-reference-param-patterns.ari --emit-llvm $(BUILD_DIR)/functions/function-reference-param-patterns.ll
 	grep -q "getelementptr" $(BUILD_DIR)/functions/function-reference-param-patterns.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-reference-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-reference-param-patterns.elf; $(BUILD_DIR)/functions/function-reference-param-patterns.elf; code=$$?; test $$code -eq 65; fi
-	$(TARGET) --freestanding tests/ok/function-reference-param-patterns.ari -o $(BUILD_DIR)/functions/function-reference-param-patterns.raw
-	$(BUILD_DIR)/functions/function-reference-param-patterns.raw; code=$$?; test $$code -eq 65
-	$(TARGET) --freestanding tests/ok/function-six-args-freestanding.ari -o $(BUILD_DIR)/functions/function-six-args-freestanding.elf
-	$(BUILD_DIR)/functions/function-six-args-freestanding.elf; code=$$?; test $$code -eq 21
-	$(TARGET) --freestanding tests/ok/function-eight-args-freestanding.ari -o $(BUILD_DIR)/functions/function-eight-args-freestanding.elf
-	$(BUILD_DIR)/functions/function-eight-args-freestanding.elf; code=$$?; test $$code -eq 36
-	$(TARGET) --freestanding tests/ok/function-seven-args-host.ari -o $(BUILD_DIR)/functions/function-seven-args-host.elf
+	$(TARGET) tests/ok/function-reference-param-patterns.ari -o $(BUILD_DIR)/functions/function-reference-param-patterns.elf
+	$(BUILD_DIR)/functions/function-reference-param-patterns.elf; code=$$?; test $$code -eq 65
+	$(TARGET) tests/ok/function-six-args-llvm.ari -o $(BUILD_DIR)/functions/function-six-args-llvm.elf
+	$(BUILD_DIR)/functions/function-six-args-llvm.elf; code=$$?; test $$code -eq 21
+	$(TARGET) tests/ok/function-eight-args-llvm.ari -o $(BUILD_DIR)/functions/function-eight-args-llvm.elf
+	$(BUILD_DIR)/functions/function-eight-args-llvm.elf; code=$$?; test $$code -eq 36
+	$(TARGET) tests/ok/function-seven-args-host.ari -o $(BUILD_DIR)/functions/function-seven-args-host.elf
 	$(BUILD_DIR)/functions/function-seven-args-host.elf; code=$$?; test $$code -eq 28
-	$(TARGET) --freestanding tests/ok/function-narrow-return-freestanding.ari -o $(BUILD_DIR)/functions/function-narrow-return-freestanding.elf
-	$(BUILD_DIR)/functions/function-narrow-return-freestanding.elf; code=$$?; test $$code -eq 23
-	$(TARGET) --freestanding tests/ok/function-float-freestanding.ari -o $(BUILD_DIR)/functions/function-float-freestanding.elf
-	$(BUILD_DIR)/functions/function-float-freestanding.elf; code=$$?; test $$code -eq 3
-	$(TARGET) tests/ok/function-float-freestanding.ari --emit-llvm $(BUILD_DIR)/functions/function-float-freestanding.ll
-	grep -q 'define double @"_ARNv5widen"' $(BUILD_DIR)/functions/function-float-freestanding.ll
-	grep -q 'define float @"_ARNv6narrow"' $(BUILD_DIR)/functions/function-float-freestanding.ll
-	$(TARGET) --freestanding tests/ok/function-aggregate-return-freestanding.ari -o $(BUILD_DIR)/functions/function-aggregate-return-freestanding.elf
-	$(BUILD_DIR)/functions/function-aggregate-return-freestanding.elf; code=$$?; test $$code -eq 69
-	$(TARGET) --freestanding tests/ok/function-aggregate-params-freestanding.ari -o $(BUILD_DIR)/functions/function-aggregate-params-freestanding.elf
-	$(BUILD_DIR)/functions/function-aggregate-params-freestanding.elf; code=$$?; test $$code -eq 149
-	$(TARGET) --freestanding tests/ok/function-aggregate-indirect-return-freestanding.ari -o $(BUILD_DIR)/functions/function-aggregate-indirect-return-freestanding.elf
-	$(BUILD_DIR)/functions/function-aggregate-indirect-return-freestanding.elf; code=$$?; test $$code -eq 76
-	$(TARGET) --freestanding tests/ok/function-generic-surface.ari -o $(BUILD_DIR)/functions/function-generic-surface.elf
+	$(TARGET) tests/ok/function-narrow-return-llvm.ari -o $(BUILD_DIR)/functions/function-narrow-return-llvm.elf
+	$(BUILD_DIR)/functions/function-narrow-return-llvm.elf; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/function-float-llvm.ari -o $(BUILD_DIR)/functions/function-float-llvm.elf
+	$(BUILD_DIR)/functions/function-float-llvm.elf; code=$$?; test $$code -eq 3
+	$(TARGET) tests/ok/function-float-llvm.ari --emit-llvm $(BUILD_DIR)/functions/function-float-llvm.ll
+	grep -q 'define double @"_ARNv5widen"' $(BUILD_DIR)/functions/function-float-llvm.ll
+	grep -q 'define float @"_ARNv6narrow"' $(BUILD_DIR)/functions/function-float-llvm.ll
+	$(TARGET) tests/ok/function-aggregate-return-llvm.ari -o $(BUILD_DIR)/functions/function-aggregate-return-llvm.elf
+	$(BUILD_DIR)/functions/function-aggregate-return-llvm.elf; code=$$?; test $$code -eq 69
+	$(TARGET) tests/ok/function-aggregate-params-llvm.ari -o $(BUILD_DIR)/functions/function-aggregate-params-llvm.elf
+	$(BUILD_DIR)/functions/function-aggregate-params-llvm.elf; code=$$?; test $$code -eq 149
+	$(TARGET) tests/ok/function-aggregate-indirect-return-llvm.ari -o $(BUILD_DIR)/functions/function-aggregate-indirect-return-llvm.elf
+	$(BUILD_DIR)/functions/function-aggregate-indirect-return-llvm.elf; code=$$?; test $$code -eq 76
+	$(TARGET) tests/ok/function-generic-surface.ari -o $(BUILD_DIR)/functions/function-generic-surface.elf
 	$(BUILD_DIR)/functions/function-generic-surface.elf; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/function-generic-call.ari -o $(BUILD_DIR)/functions/function-generic-call.elf
+	$(TARGET) tests/ok/function-generic-call.ari -o $(BUILD_DIR)/functions/function-generic-call.elf
 	$(BUILD_DIR)/functions/function-generic-call.elf; code=$$?; test $$code -eq 22
-	$(TARGET) --freestanding tests/ok/function-generic-companion.ari -o $(BUILD_DIR)/functions/function-generic-companion.elf
+	$(TARGET) tests/ok/function-generic-companion.ari -o $(BUILD_DIR)/functions/function-generic-companion.elf
 	$(BUILD_DIR)/functions/function-generic-companion.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/vector-function-param.ari --emit-llvm $(BUILD_DIR)/functions/vector-function-param.ll
 	grep -Fq 'define i64 @"_ARNv8edge_sum"({ ptr, i64 } %arg0)' $(BUILD_DIR)/functions/vector-function-param.ll
 	! grep -q "edge_sum__V" $(BUILD_DIR)/functions/vector-function-param.ll
-	$(TARGET) --freestanding tests/ok/vector-function-param.ari -o $(BUILD_DIR)/functions/vector-function-param.raw
-	$(BUILD_DIR)/functions/vector-function-param.raw; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/vector-function-param.ari -o $(BUILD_DIR)/functions/vector-function-param.elf
+	$(BUILD_DIR)/functions/vector-function-param.elf; code=$$?; test $$code -eq 18
 	$(TARGET) tests/ok/vector-param-temporary-view.ari --emit-llvm $(BUILD_DIR)/functions/vector-param-temporary-view.ll
 	grep -Fq 'define i64 @"_ARNv3sum"({ ptr, i64 } %arg0)' $(BUILD_DIR)/functions/vector-param-temporary-view.ll
-	$(TARGET) --freestanding tests/ok/vector-param-temporary-view.ari -o $(BUILD_DIR)/functions/vector-param-temporary-view.raw
-	$(BUILD_DIR)/functions/vector-param-temporary-view.raw; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/vector-param-temporary-view.ari -o $(BUILD_DIR)/functions/vector-param-temporary-view.elf
+	$(BUILD_DIR)/functions/vector-param-temporary-view.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/vector-function-pointer-param.ari --emit-llvm $(BUILD_DIR)/functions/vector-function-pointer-param.ll
 	grep -Fq 'define i64 @"_ARNv7call_it"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/functions/vector-function-pointer-param.ll
 	grep -q 'call i64 %' $(BUILD_DIR)/functions/vector-function-pointer-param.ll
-	$(TARGET) --freestanding tests/ok/vector-function-pointer-param.ari -o $(BUILD_DIR)/functions/vector-function-pointer-param.raw
-	$(BUILD_DIR)/functions/vector-function-pointer-param.raw; code=$$?; test $$code -eq 34
-	$(TARGET) --freestanding tests/ok/function-pointer-call.ari -o $(BUILD_DIR)/functions/function-pointer-call.raw
-	$(BUILD_DIR)/functions/function-pointer-call.raw; code=$$?; test $$code -eq 7
+	$(TARGET) tests/ok/vector-function-pointer-param.ari -o $(BUILD_DIR)/functions/vector-function-pointer-param.elf
+	$(BUILD_DIR)/functions/vector-function-pointer-param.elf; code=$$?; test $$code -eq 34
+	$(TARGET) tests/ok/function-pointer-call.ari -o $(BUILD_DIR)/functions/function-pointer-call.elf
+	$(BUILD_DIR)/functions/function-pointer-call.elf; code=$$?; test $$code -eq 7
 	$(TARGET) tests/ok/function-pointer-call.ari --emit-llvm $(BUILD_DIR)/functions/function-pointer-call.ll
 	grep -q 'call i64 %' $(BUILD_DIR)/functions/function-pointer-call.ll
 	$(TARGET) tests/ok/function-extern-c.ari --emit-llvm $(BUILD_DIR)/functions/function-extern-c.ll
 	grep -q 'declare i64 @"puts"(ptr)' $(BUILD_DIR)/functions/function-extern-c.ll
 	grep -q 'call i64 @"puts"' $(BUILD_DIR)/functions/function-extern-c.ll
-	$(TARGET) --freestanding tests/ok/function-module-pub.ari -o $(BUILD_DIR)/functions/function-module-pub.elf
+	$(TARGET) tests/ok/function-module-pub.ari -o $(BUILD_DIR)/functions/function-module-pub.elf
 	$(BUILD_DIR)/functions/function-module-pub.elf; code=$$?; test $$code -eq 10
 	$(TARGET) tests/ok/function-module-pub.ari --emit-llvm $(BUILD_DIR)/functions/function-module-pub.ll
 	grep -q 'define i64 @"_ARNv4Math5value"' $(BUILD_DIR)/functions/function-module-pub.ll
@@ -3289,8 +3264,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "condition must be bool or integer-convertible, got own bool" $(BUILD_DIR)/errors/own-bool-condition.err
 	$(TARGET) tests/ok/drop-destructor-lowering.ari --emit-llvm $(BUILD_DIR)/errors/drop-destructor-lowering.ll
 	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/errors/drop-destructor-lowering.ll
-	$(TARGET) --freestanding tests/ok/drop-destructor-lowering.ari -o $(BUILD_DIR)/errors/drop-destructor-lowering.raw
-	$(BUILD_DIR)/errors/drop-destructor-lowering.raw; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/drop-destructor-lowering.ari -o $(BUILD_DIR)/errors/drop-destructor-lowering.elf
+	$(BUILD_DIR)/errors/drop-destructor-lowering.elf; code=$$?; test $$code -eq 0
 	if $(TARGET) tests/errors/if-drop-one-branch.ari -o $(BUILD_DIR)/errors/if-drop-one-branch.elf >$(BUILD_DIR)/errors/if-drop-one-branch.err 2>&1; then exit 1; fi
 	grep -q "changes ownership state in if without else" $(BUILD_DIR)/errors/if-drop-one-branch.err
 	if $(TARGET) tests/errors/if-branch-state-mismatch.ari -o $(BUILD_DIR)/errors/if-branch-state-mismatch.elf >$(BUILD_DIR)/errors/if-branch-state-mismatch.err 2>&1; then exit 1; fi
@@ -3379,40 +3354,40 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot immutably borrow mutably borrowed field 'cell.0'" $(BUILD_DIR)/errors/borrow-return-method-conflict.err
 	if $(TARGET) tests/errors/discard-borrow.ari -o $(BUILD_DIR)/errors/discard-borrow.elf >$(BUILD_DIR)/errors/discard-borrow.err 2>&1; then exit 1; fi
 	grep -q "borrow expression result must be passed directly to a call" $(BUILD_DIR)/errors/discard-borrow.err
-	$(TARGET) --freestanding tests/ok/borrow-call.ari -o $(BUILD_DIR)/errors/borrow-call.raw
-	$(BUILD_DIR)/errors/borrow-call.raw; code=$$?; test $$code -eq 0
-	$(TARGET) --freestanding tests/ok/borrow-named.ari -o $(BUILD_DIR)/errors/borrow-named.raw
-	$(BUILD_DIR)/errors/borrow-named.raw; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/borrow-call.ari -o $(BUILD_DIR)/errors/borrow-call.elf
+	$(BUILD_DIR)/errors/borrow-call.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/borrow-named.ari -o $(BUILD_DIR)/errors/borrow-named.elf
+	$(BUILD_DIR)/errors/borrow-named.elf; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-named.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-named.elf; $(BUILD_DIR)/errors/borrow-named.elf; code=$$?; test $$code -eq 12; fi
-	$(TARGET) --freestanding tests/ok/pattern-ref-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-ref-binding-mode.raw
-	$(BUILD_DIR)/errors/pattern-ref-binding-mode.raw; code=$$?; test $$code -eq 146
+	$(TARGET) tests/ok/pattern-ref-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf
+	$(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; code=$$?; test $$code -eq 146
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-ref-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; code=$$?; test $$code -eq 146; fi
 	if $(TARGET) tests/errors/pattern-ref-mut-immutable.ari -o $(BUILD_DIR)/errors/pattern-ref-mut-immutable.elf >$(BUILD_DIR)/errors/pattern-ref-mut-immutable.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow immutable binding 'value'" $(BUILD_DIR)/errors/pattern-ref-mut-immutable.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi
 	grep -q "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index" $(BUILD_DIR)/errors/pattern-ref-temporary.err
-	$(TARGET) --freestanding tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.raw
-	$(BUILD_DIR)/errors/named-borrow-last-use.raw; code=$$?; test $$code -eq 18
-	$(TARGET) --freestanding tests/ok/borrow-reborrow.ari -o $(BUILD_DIR)/errors/borrow-reborrow.raw
-	$(BUILD_DIR)/errors/borrow-reborrow.raw; code=$$?; test $$code -eq 14
+	$(TARGET) tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.elf
+	$(BUILD_DIR)/errors/named-borrow-last-use.elf; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/borrow-reborrow.ari -o $(BUILD_DIR)/errors/borrow-reborrow.elf
+	$(BUILD_DIR)/errors/borrow-reborrow.elf; code=$$?; test $$code -eq 14
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-reborrow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-reborrow.elf; $(BUILD_DIR)/errors/borrow-reborrow.elf; code=$$?; test $$code -eq 14; fi
-	$(TARGET) --freestanding tests/ok/borrow-reborrow-paths.ari -o $(BUILD_DIR)/errors/borrow-reborrow-paths.raw
-	$(BUILD_DIR)/errors/borrow-reborrow-paths.raw; code=$$?; test $$code -eq 61
+	$(TARGET) tests/ok/borrow-reborrow-paths.ari -o $(BUILD_DIR)/errors/borrow-reborrow-paths.elf
+	$(BUILD_DIR)/errors/borrow-reborrow-paths.elf; code=$$?; test $$code -eq 61
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-reborrow-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-reborrow-paths.elf; $(BUILD_DIR)/errors/borrow-reborrow-paths.elf; code=$$?; test $$code -eq 61; fi
-	$(TARGET) --freestanding tests/ok/method-ref-mut-to-shared-receiver.ari -o $(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.raw
-	$(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.raw; code=$$?; test $$code -eq 43
+	$(TARGET) tests/ok/method-ref-mut-to-shared-receiver.ari -o $(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.elf
+	$(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.elf; code=$$?; test $$code -eq 43
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/method-ref-mut-to-shared-receiver.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.elf; $(BUILD_DIR)/errors/method-ref-mut-to-shared-receiver.elf; code=$$?; test $$code -eq 43; fi
-	$(TARGET) --freestanding tests/ok/borrow-control-flow-result.ari -o $(BUILD_DIR)/errors/borrow-control-flow-result.raw
-	$(BUILD_DIR)/errors/borrow-control-flow-result.raw; code=$$?; test $$code -eq 4
+	$(TARGET) tests/ok/borrow-control-flow-result.ari -o $(BUILD_DIR)/errors/borrow-control-flow-result.elf
+	$(BUILD_DIR)/errors/borrow-control-flow-result.elf; code=$$?; test $$code -eq 4
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-control-flow-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-control-flow-result.elf; $(BUILD_DIR)/errors/borrow-control-flow-result.elf; code=$$?; test $$code -eq 4; fi
-	$(TARGET) --freestanding tests/ok/borrow-return-param.ari -o $(BUILD_DIR)/errors/borrow-return-param.raw
-	$(BUILD_DIR)/errors/borrow-return-param.raw; code=$$?; test $$code -eq 80
+	$(TARGET) tests/ok/borrow-return-param.ari -o $(BUILD_DIR)/errors/borrow-return-param.elf
+	$(BUILD_DIR)/errors/borrow-return-param.elf; code=$$?; test $$code -eq 80
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-param.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-param.elf; $(BUILD_DIR)/errors/borrow-return-param.elf; code=$$?; test $$code -eq 80; fi
-	$(TARGET) --freestanding tests/ok/borrow-return-subpath.ari -o $(BUILD_DIR)/errors/borrow-return-subpath.raw
-	$(BUILD_DIR)/errors/borrow-return-subpath.raw; code=$$?; test $$code -eq 182
+	$(TARGET) tests/ok/borrow-return-subpath.ari -o $(BUILD_DIR)/errors/borrow-return-subpath.elf
+	$(BUILD_DIR)/errors/borrow-return-subpath.elf; code=$$?; test $$code -eq 182
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-subpath.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-subpath.elf; $(BUILD_DIR)/errors/borrow-return-subpath.elf; code=$$?; test $$code -eq 182; fi
-	$(TARGET) --freestanding tests/ok/borrow-return-explicit-source.ari -o $(BUILD_DIR)/errors/borrow-return-explicit-source.raw
-	$(BUILD_DIR)/errors/borrow-return-explicit-source.raw; code=$$?; test $$code -eq 39
+	$(TARGET) tests/ok/borrow-return-explicit-source.ari -o $(BUILD_DIR)/errors/borrow-return-explicit-source.elf
+	$(BUILD_DIR)/errors/borrow-return-explicit-source.elf; code=$$?; test $$code -eq 39
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-return-explicit-source.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-return-explicit-source.elf; $(BUILD_DIR)/errors/borrow-return-explicit-source.elf; code=$$?; test $$code -eq 39; fi
 	if $(TARGET) tests/errors/borrow-return-path-mismatch.ari -o $(BUILD_DIR)/errors/borrow-return-path-mismatch.elf >$(BUILD_DIR)/errors/borrow-return-path-mismatch.err 2>&1; then exit 1; fi
 	grep -q "function return borrow result must use the same source path on every return" $(BUILD_DIR)/errors/borrow-return-path-mismatch.err
@@ -3442,8 +3417,6 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "integer literal -129 is out of range for i8" $(BUILD_DIR)/errors/i8-literal-range.err
 	if $(TARGET) tests/errors/integer-literal-too-large.ari -o $(BUILD_DIR)/errors/integer-literal-too-large.elf >$(BUILD_DIR)/errors/integer-literal-too-large.err 2>&1; then exit 1; fi
 	grep -q "integer literal is too large" $(BUILD_DIR)/errors/integer-literal-too-large.err
-	if $(TARGET) --freestanding tests/errors/float-backend.ari -o $(BUILD_DIR)/errors/float-backend.elf >$(BUILD_DIR)/errors/float-backend.err 2>&1; then exit 1; fi
-	grep -q "freestanding backend does not lower f128 float operators yet" $(BUILD_DIR)/errors/float-backend.err
 	if $(TARGET) tests/errors/class-removed.ari -o $(BUILD_DIR)/errors/class-removed.elf >$(BUILD_DIR)/errors/class-removed.err 2>&1; then exit 1; fi
 	grep -q "expected top-level declaration" $(BUILD_DIR)/errors/class-removed.err
 	if $(TARGET) tests/errors/interface-removed.ari -o $(BUILD_DIR)/errors/interface-removed.elf >$(BUILD_DIR)/errors/interface-removed.err 2>&1; then exit 1; fi

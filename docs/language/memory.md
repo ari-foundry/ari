@@ -265,7 +265,7 @@ writes one scalar, plain Ari-layout aggregate, or supported aggregate enum
 value through a `ptr T` and returns `void`. The
 `mem::ptr_load` and `mem::ptr_store` spellings are the same compiler-known
 operations. These operations are deliberately unchecked: they do not test for
-null, bounds, alignment, aliasing, or lifetime. On the freestanding backend,
+null, bounds, alignment, aliasing, or lifetime. On the LLVM backend,
 `ptr f32` and `ptr f64` load/store values as raw IEEE bit patterns; `f128`
 pointer access still waits for native float storage policy. Values that contain
 `own`, `ref`, or `ref mut` state are rejected for whole raw-pointer copies for
@@ -529,6 +529,6 @@ impl Point {
 }
 ```
 
-Zone allocation lowers on the LLVM host backend with `malloc`/`free`.
-The freestanding backend deliberately rejects zone allocation until Ari has a
-raw-backend runtime allocation policy.
+Zone allocation lowers on the LLVM host backend with compiler-emitted
+`malloc`/`free` helpers and an 8-byte zone-handle header before each non-empty
+allocation payload.

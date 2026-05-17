@@ -35,7 +35,7 @@ let normal = 1.0e+1f64
 ```
 
 `f32`, `f64`, and `f128` lower on the LLVM host backend as `float`, `double`,
-and `fp128`. The freestanding backend can materialize local `f32`/`f64` literal
+and `fp128`. The LLVM backend can materialize local `f32`/`f64` literal
 values, move them through raw `ptr f32`/`ptr f64` loads and stores, and lower
 `f32`/`f64` arithmetic, ordered comparisons, width casts, and integer/float
 casts. Direct Ari calls can pass and return `f32`/`f64` values on this backend.

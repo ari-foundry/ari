@@ -252,15 +252,15 @@ by compact enum payloads plus vector set/swap/insert/search helpers now share
 strings directly. General-purpose IR expression strings are lazy too:
 string-literal bytes, local/function/call names, borrow source paths, and
 trait-object vtable/call names live behind `IrExprStringPayload`, with sema and
-the LLVM/freestanding backends reading and writing them through
+the LLVM backend reading and writing them through
 `ir_expr_string_value`, `ir_expr_name`, `ir_expr_label`, and setter helpers.
 `ir_builders` owns the string-payload construction paths for function
 references, borrows, trait-object casts, and trait-object calls, keeping those
 node assembly details out of the main semantic checker. Postfix `?`
 residual-conversion flags, residual return payload type/tag metadata, and
 hidden branch cleanup statements now live behind `IrExprTryPayload`; sema calls
-`make_ir_try_expr` after validating the enum shape, and the LLVM/freestanding
-backends read that rare payload through `ir_expr_try_*` helpers. Shared enum
+`make_ir_try_expr` after validating the enum shape, and the LLVM backend reads
+that rare payload through `ir_expr_try_*` helpers. Shared enum
 result metadata for enum constructors, postfix `?`, and `??` now lives behind
 `IrExprEnumResultPayload`; enum constructor helpers, constant materialization,
 `make_ir_try_expr`, and `make_ir_null_coalesce_expr` initialize it, while the

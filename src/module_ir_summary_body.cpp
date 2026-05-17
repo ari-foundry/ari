@@ -6,8 +6,10 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <iomanip>
 #include <limits>
 #include <map>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -151,12 +153,18 @@ std::string signed_integer_payload(bool negative, std::uint64_t value) {
     return text;
 }
 
+std::string float_payload(double value) {
+    std::ostringstream out;
+    out << std::scientific << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
+    return out.str();
+}
+
 std::string expr_scalar_payload(const IrExpr& expr) {
     switch (expr.kind) {
         case IrExprKind::Integer:
             return signed_integer_payload(expr.int_negative, expr.int_value);
         case IrExprKind::Float:
-            return std::to_string(expr.float_value);
+            return float_payload(expr.float_value);
         case IrExprKind::Bool:
             return bool_key(expr.bool_value);
         case IrExprKind::TupleIndex:

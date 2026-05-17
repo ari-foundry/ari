@@ -1,9 +1,7 @@
 #include "driver.hpp"
 
-#include "codegen.hpp"
 #include "common.hpp"
 #include "c_header.hpp"
-#include "elf.hpp"
 #include "llvm_codegen.hpp"
 #include "module_cache.hpp"
 #include "module_ir_replay.hpp"
@@ -17,7 +15,6 @@
 
 #include <cerrno>
 #include <cstdio>
-#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
@@ -37,38 +34,10 @@ static void make_executable(const std::string& path) {
     }
 }
 
-static void write_file(const std::string& path, const std::vector<std::uint8_t>& data, bool executable = false) {
-    std::ofstream out(path, std::ios::binary);
-    if (!out) throw CompileError("cannot open output file '" + path + "'");
-    out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(data.size()));
-    out.close();
-    if (!out) throw CompileError("cannot write output file '" + path + "'");
-    if (executable) make_executable(path);
-}
-
 static void write_text_file(const std::string& path, const std::string& data) {
     std::ofstream out(path, std::ios::binary);
     if (!out) throw CompileError("cannot open output file '" + path + "'");
     out << data;
-}
-
-static std::vector<ElfRelocation> lower_elf_relocations(const std::vector<CodeRelocation>& relocations) {
-    constexpr std::uint32_t R_X86_64_PLT32 = 4;
-    std::vector<ElfRelocation> lowered;
-    lowered.reserve(relocations.size());
-    for (const auto& relocation : relocations) {
-        switch (relocation.kind) {
-            case CodeRelocationKind::PcRel32Call:
-                lowered.push_back(ElfRelocation{
-                    relocation.offset,
-                    relocation.symbol,
-                    R_X86_64_PLT32,
-                    relocation.addend,
-                });
-                break;
-        }
-    }
-    return lowered;
 }
 
 static std::string shell_quote(const std::string& text) {
@@ -82,7 +51,7 @@ static std::string shell_quote(const std::string& text) {
 }
 
 static void usage() {
-    std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path] [--freestanding]\n"
+    std::cerr << "usage: ari <input.ari> [-o output] [--check] [--emit-llvm path]\n"
                  "           [--emit-obj path]\n"
                  "           [--module-path path] [-I path] [--llvm-cc compiler]\n"
                  "           [--target triple]\n"
@@ -114,7 +83,6 @@ int run(int argc, char** argv) {
     std::vector<std::string> module_search_paths;
     std::vector<std::string> link_args;
     std::set<std::string> cfg_features;
-    bool freestanding = false;
     bool check_only = false;
     bool output_explicit = false;
     bool emit_llvm_only = false;
@@ -128,8 +96,6 @@ int run(int argc, char** argv) {
             if (i + 1 >= argc) throw CompileError("-o expects a path");
             output = argv[++i];
             output_explicit = true;
-        } else if (arg == "--freestanding") {
-            freestanding = true;
         } else if (arg == "--check") {
             check_only = true;
         } else if (arg == "--shared") {
@@ -142,7 +108,7 @@ int run(int argc, char** argv) {
             if (i + 1 >= argc) throw CompileError(arg + " expects a feature name");
             cfg_features.insert(argv[++i]);
         } else if (arg == "--backend") {
-            throw CompileError("--backend was removed; LLVM IR is the only host backend");
+            throw CompileError("--backend was removed; LLVM is the only backend");
         } else if (arg == "--emit-cpp") {
             throw CompileError("--emit-cpp was removed; use --emit-llvm");
         } else if (arg == "--keep-cpp") {
@@ -206,26 +172,17 @@ int run(int argc, char** argv) {
     if (shared_library && test_mode) {
         throw CompileError("--test cannot be combined with --shared");
     }
-    if (check_only && (output_explicit || emit_llvm_only || freestanding || shared_library ||
+    if (check_only && (output_explicit || emit_llvm_only || shared_library ||
                        !object_output.empty() ||
                        !c_header_output.empty() || llvm_compiler_explicit || !link_args.empty())) {
         throw CompileError("--check cannot be combined with backend output or linking options");
     }
-    if (!object_output.empty() && !freestanding) {
-        throw CompileError("--emit-obj requires --freestanding");
-    }
-    if (!object_output.empty() && shared_library) {
-        throw CompileError("--emit-obj cannot be combined with --shared");
-    }
-    if (freestanding && (emit_llvm_only || shared_library)) {
-        throw CompileError("--freestanding cannot be combined with --emit-llvm or --shared");
-    }
-    if (freestanding && !c_header_output.empty()) {
-        throw CompileError("--emit-c-header cannot be combined with --freestanding yet");
-    }
     TargetInfo target = resolve_target_info(target_triple);
-    if (freestanding && !target_triple.empty() && !(target.arch == "x86_64" && target.linux)) {
-        throw CompileError("--freestanding currently supports only the x86_64 Linux target");
+    if (!object_output.empty() && emit_llvm_only) {
+        throw CompileError("--emit-obj cannot be combined with --emit-llvm");
+    }
+    if (!object_output.empty() && !link_args.empty()) {
+        throw CompileError("--emit-obj cannot be combined with linker options");
     }
 
     ModuleLoadOptions load_options;
@@ -280,30 +237,6 @@ int run(int argc, char** argv) {
         write_text_file(c_header_output, header);
         std::cout << "wrote " << c_header_output << " (C header)\n";
     }
-    if (freestanding) {
-        EmittedProgram emitted = emit_program_with_symbols(ir);
-        std::vector<ElfSymbol> symbols;
-        symbols.reserve(emitted.symbols.size());
-        for (const auto& symbol : emitted.symbols) {
-            symbols.push_back(ElfSymbol{symbol.name, symbol.offset, symbol.size});
-        }
-        if (!object_output.empty()) {
-            std::vector<ElfRelocation> relocations = lower_elf_relocations(emitted.relocations);
-            std::vector<std::uint8_t> object = write_elf_relocatable_object(emitted.code, symbols, relocations);
-            write_file(object_output, object, false);
-            std::cout << "wrote " << object_output << " (" << object.size()
-                      << " bytes, freestanding object)\n";
-            return 0;
-        }
-        if (!emitted.relocations.empty()) {
-            throw CompileError("freestanding executable output cannot link imported extern \"C\" symbols yet; use --emit-obj and an external linker");
-        }
-        std::vector<std::uint8_t> elf = write_elf_executable(emitted.code, symbols);
-        write_file(output, elf, true);
-        std::cout << "wrote " << output << " (" << elf.size() << " bytes, freestanding)\n";
-        return 0;
-    }
-
     LlvmEmitOptions llvm_options;
     llvm_options.shared_library = shared_library;
     llvm_options.target_triple = target.triple;
@@ -316,15 +249,22 @@ int run(int argc, char** argv) {
     }
 
     std::string command = shell_quote(llvm_compiler) + " ";
+    if (!object_output.empty()) command += "-c ";
     if (shared_library) command += "-shared -fPIC ";
     if (!target_triple.empty()) command += shell_quote("--target=" + target.triple) + " ";
-    command += shell_quote(llvm_path) + " -o " + shell_quote(output);
-    for (const auto& arg : link_args) command += " " + shell_quote(arg);
+    command += shell_quote(llvm_path) + " -o " + shell_quote(object_output.empty() ? output : object_output);
+    if (object_output.empty()) {
+        for (const auto& arg : link_args) command += " " + shell_quote(arg);
+    }
     int status = std::system(command.c_str());
     if (llvm_output.empty()) {
         std::remove(llvm_path.c_str());
     }
-    if (status != 0) throw CompileError("LLVM backend failed while linking output; install clang or pass --llvm-cc");
+    if (status != 0) throw CompileError("LLVM backend failed while producing output; install clang or pass --llvm-cc");
+    if (!object_output.empty()) {
+        std::cout << "wrote " << object_output << " (LLVM object)\n";
+        return 0;
+    }
     make_executable(output);
     std::cout << "wrote " << output << " (LLVM backend)\n";
     return 0;

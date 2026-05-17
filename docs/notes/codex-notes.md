@@ -24,7 +24,7 @@ Avoid:
 
 - adding syntax without a semantic rejection path
 - making the backend understand source-level parser details
-- mixing host/glibc behavior into the raw freestanding backend
+- mixing host/glibc behavior into the LLVM backend
 - turning `Vec[T]` into magic heap allocation before allocator rules exist
 
 ## Next Work I Would Pick
@@ -55,5 +55,5 @@ Why:
 - The Makefile test list is explicit and clear, but it will get long. A small
   test runner may become worth it soon.
 - Formatting is intentionally simple. LLVM host output can print through stdio,
-  while freestanding still needs data-section work for richer strings.
+  while LLVM still needs data-section work for richer strings.
 - Debug builds are useful, but sanitizer runs are better for parser/sema churn.

@@ -523,13 +523,13 @@ The semantic checker accepts this only when the concrete source type has a
 matching impl. Implicit assignment from a concrete value to `dyn Trait` is still
 rejected.
 
-On the LLVM backend and the raw `--freestanding` backend, concrete copyable
-non-borrow values are materialized as a pair of data pointer and vtable pointer.
+On the LLVM backend, concrete copyable non-borrow values are materialized as a
+pair of data pointer and vtable pointer.
 The vtable stores erased receiver thunks, so `value.score()` dispatches through
 the vtable slot while the thunk loads the concrete receiver and calls the
 original impl method. Generic impls such as `impl[T] Score[T] for Box[T]` can
 also be specialized into vtables for concrete object types such as
-`Box[i64] as dyn Score[i64]`. On `--freestanding`, concrete-to-dyn conversions
+`Box[i64] as dyn Score[i64]`. On the LLVM backend, concrete-to-dyn conversions
 use hidden stack storage for the erased data pointer and static image vtables
 with relative thunk slots. Generic trait methods are not object-safe: they
 remain available through static dispatch and are rejected at `as dyn` conversion
@@ -554,9 +554,9 @@ such as `T::new(...)` and `Box::new<i64>(...)`, and trait impl associated
 functions such as `Box::make<i64>(...)` are executable. Generic trait methods
 with method-level bounds are executable. `dyn Trait[...]` type syntax resolves,
 and explicit concrete-to-`dyn` conversions plus vtable dispatch are executable
-for concrete copyable source values on LLVM and raw `--freestanding`, including
-vtables built from generic impl specializations and inherited object-safe
-supertrait methods. Generic trait methods are deliberately static-only for dyn
+for concrete copyable source values on LLVM, including vtables built from
+generic impl specializations and inherited object-safe supertrait methods.
+Generic trait methods are deliberately static-only for dyn
 objects. Associated types and non-copy dyn data ownership are still planned.
 Dyn-to-dyn upcasts are executable when the target is the same trait or an
 inherited supertrait; unrelated dyn casts are rejected.

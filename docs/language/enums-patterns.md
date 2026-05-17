@@ -116,7 +116,7 @@ payload word into the nested enum's first payload slot, while nested enum cases
 store the full nested value. This mixed-slot rule covers ordinary scalar,
 pointer-shaped, and one-word enum payloads, but it does not allow tuples,
 structs, vectors, owned values, or multiple different nested aggregate enum
-types to share a slot. The freestanding backend can store and copy local
+types to share a slot. The LLVM backend can store and copy local
 aggregate enum values, then match local values by tag with positional payload
 bindings, scalar payload literal/range tests, and one-level enum-case payload
 tests for compact, homogeneous nested, or mixed-lane nested aggregate enum
@@ -130,8 +130,8 @@ tuple-index syntax on local or raw-pointer-backed values. `value.0` and
 index. This access does not test the active case. Scalar, pointer-shaped, and
 one-word enum payload slots expose the stored `u64` payload word, while nested
 aggregate-enum slots expose the nested enum storage itself.
-Direct freestanding calls can pass and return aggregate enum values through
-hidden pointer slots. The freestanding backend also materializes direct
+Direct LLVM calls can pass and return aggregate enum values through
+hidden pointer slots. The LLVM backend also materializes direct
 aggregate enum `match` inputs through hidden stack slots, so constructors,
 aggregate-returning calls, `if`/`match`/block expression results, and
 raw-pointer-backed loads such as `*raw` can be matched without first binding a
@@ -141,7 +141,7 @@ named local.
 
 The LLVM backend can store, pass, and return lowered enum values. Compact
 one-word enum values can also be compared with `==` and `!=`; aggregate enum
-comparison is planned. The freestanding backend currently keeps aggregate enum
+comparison is planned. The LLVM backend currently keeps aggregate enum
 support local-stack-only.
 
 ```ari
@@ -244,7 +244,7 @@ let flag_score = match maybe_flag {
 
 When an aggregate enum payload slot stores a one-word enum value or a nested
 aggregate enum value, a nested enum-case subpattern can inspect the inner tag
-and a single scalar payload on the LLVM and freestanding backends:
+and a single scalar payload on the LLVM backend:
 
 ```ari
 enum Inner {
@@ -658,11 +658,7 @@ richer expression lifetime tracking. Arms that end in `panic()`, `todo()`, or
 `unreachable()` are non-continuing and do not need to manufacture a dummy value;
 the reachable value arms determine the match result type and merged ownership
 state. Tuple-valued and aggregate-enum match arm results lower on the LLVM
-backend and on the freestanding backend when the raw backend already supports
-the matched value and arm-result storage. Freestanding arm results work for
-local or directly materialized aggregate enum matches that use tag checks and
-payload bindings, scalar payload literal/range checks, or one-level compact
-enum-case payload checks.
+backend when the matched value and arm-result storage are supported.
 
 ## Match Diagnostics
 
