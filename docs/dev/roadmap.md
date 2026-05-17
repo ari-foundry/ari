@@ -168,27 +168,35 @@ lane; nested enum cases store the full nested value. This gives LLVM and the
 freestanding local/pointer-backed paths one precise layout rule without
 opening tuple, struct, vector, owned, or multiple-nested-enum payload storage.
 
+Aggregate enum payload field access is fixed for the current local and
+raw-pointer-backed ABI and is no longer tracked as active Near-Term work. A
+tuple-index expression on an aggregate enum, such as `value.0` or
+`(*raw_enum).0`, addresses payload slot 0, not the hidden tag field. The
+lowering maps that source payload slot to the stored tag-plus-payload layout,
+so local reads/writes, LLVM raw-pointer field GEPs, and freestanding
+local/pointer-backed raw-place loads, stores, and aggregate slot copies all use
+the same checked slot-index rule. This remains a low-level ABI access: it does
+not check the current case tag, and scalar/pointer-shaped slots expose their
+stored payload word.
+
 Active Near-Term work promoted from Medium-Term and Backend Work:
 
-1. [enum-payload-pointers] lower direct payload field pointer access for
-   aggregate enum payloads on the LLVM path and the already-supported
-   freestanding local/pointer-backed value paths.
-2. [raw-enum-materialization] finish freestanding direct value materialization
+1. [raw-enum-materialization] finish freestanding direct value materialization
    for multi-payload aggregate enums before defining their external FFI ABI.
-3. [aggregate-layout-service] finish sharing field-layout and aggregate layout
+2. [aggregate-layout-service] finish sharing field-layout and aggregate layout
    decisions between sema and both backends. This should be a broad layout
    service/refactor, not another syntax-specific sema helper.
-4. [raw-c-imports-scalar] implement the first real raw/freestanding imported
+3. [raw-c-imports-scalar] implement the first real raw/freestanding imported
    `extern "C"` path for scalar and raw-pointer signatures only. Keep
    aggregate, varargs, platform float-C ABI, and libc discovery outside this
    slice until the scalar link/call path is boring.
-5. [raw-runtime-strings] add freestanding runtime string storage sufficient for
+4. [raw-runtime-strings] add freestanding runtime string storage sufficient for
    string literals, byte writes, and the currently documented line-input
    rejection boundary without depending on the host C runtime.
-6. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
+5. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
    vtable-slot dispatch in the raw backend, leaving `own` and borrow-valued dyn
    data-pointer policy in Medium-Term.
-7. [raw-relocatable-objects] emit native relocatable object files for the raw
+6. [raw-relocatable-objects] emit native relocatable object files for the raw
     backend using the current Ari symbol table/export model. Treat C ABI
     relocations and host linker integration as follow-ups to `[raw-c-imports-scalar]`.
 
@@ -257,8 +265,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    LLVM and freestanding paths. The freestanding backend can store/copy local
    and pointer-backed aggregate enum values, including homogeneous or mixed
    nested aggregate-enum payload values and direct enum-constructor stores
-   through raw pointers. The stored payload universe is still intentionally
-   narrow.
+   through raw pointers. Direct payload slot access through `value.0` and
+   `(*ptr).0` is also implemented for local and raw-pointer-backed aggregate
+   enum values; it exposes the ABI storage slot directly and does not check the
+   active tag. The stored payload universe is still intentionally narrow.
    - [aggregate-values] allow tuple, struct, vector, and owned payload values
      after their non-local ABI/storage rules are defined
    - [repr-c-payloads] define C tagged-union layout and C header emission for
@@ -343,7 +353,6 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      lowering after allocator-backed storage exists; fixed-local root `Vec[T]`
      remains rejected at non-local boundaries until then
    - [enums] external aggregate-enum FFI ABI remains after Near-Term
-     `[enum-mixed-slots]`, `[enum-payload-pointers]`, and
      `[raw-enum-materialization]`
 3. Add freestanding runtime string storage so raw ELF output can lower string
    values and line input helpers without relying on the host C runtime.

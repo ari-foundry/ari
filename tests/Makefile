@@ -1225,6 +1225,12 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-pointer-copy.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/freestanding-aggregate-enum-direct-store.ari -o $(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw
 	$(BUILD_DIR)/match/freestanding-aggregate-enum-direct-store.raw; code=$$?; test $$code -eq 23
+	$(TARGET) tests/ok/enum-payload-pointer-access.ari --emit-llvm $(BUILD_DIR)/match/enum-payload-pointer-access.ll
+	grep -q "getelementptr inbounds { i32, i64 }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll
+	grep -q "getelementptr inbounds { i32, { i32, i64, i64 } }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/enum-payload-pointer-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/match/enum-payload-pointer-access.elf; $(BUILD_DIR)/match/enum-payload-pointer-access.elf; code=$$?; test $$code -eq 65; fi
+	$(TARGET) --freestanding tests/ok/enum-payload-pointer-access.ari -o $(BUILD_DIR)/match/enum-payload-pointer-access.raw
+	$(BUILD_DIR)/match/enum-payload-pointer-access.raw; code=$$?; test $$code -eq 65
 	$(TARGET) tests/ok/enum-mixed-nested-scalar-payload-slot.ari --emit-llvm $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll
 	grep -q "insertvalue { i32, i64, i64 } zeroinitializer" $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll
 	grep -q "extractvalue { i32, i64, i64 }" $(BUILD_DIR)/match/enum-mixed-nested-scalar-payload-slot.ll

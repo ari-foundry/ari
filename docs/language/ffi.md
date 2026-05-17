@@ -144,8 +144,12 @@ aggregate size/alignment model for explicit pointer code. The raw
 tuple-struct, and fixed-array pointer field/element access; aggregate enum
 pointer loads and stores can copy the whole aggregate enum value, and direct
 enum-constructor stores such as `ptr_store(raw, Some(5))` or `*raw = Some(5)`
-write the current Ari tag/payload layout. Direct payload field pointer access
-remains planned.
+write the current Ari tag/payload layout. Aggregate enum payload slots can also
+be addressed directly with tuple-index syntax on a local or raw-pointer-backed
+enum value. For example, `value.0` and `(*raw).0` address payload slot 0 while
+the hidden tag remains an implementation field. This access is intentionally
+low-level: it does not check which case is currently active, and
+scalar/pointer-shaped payload slots expose their stored `u64` payload word.
 The raw `--freestanding` backend does not link or call external C symbols yet;
 calling an `extern "C"` function there is rejected with a backend diagnostic.
 Use the LLVM host backend for C interop, or expose the operation through a

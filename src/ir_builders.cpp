@@ -37,7 +37,8 @@ bool same_ir_type(const IrType& left, const IrType& right) {
 
 const std::vector<IrType>& aggregate_field_types(const IrType& type) {
     if (type.primitive == IrPrimitiveKind::Struct ||
-        type.primitive == IrPrimitiveKind::Array) {
+        type.primitive == IrPrimitiveKind::Array ||
+        (type.primitive == IrPrimitiveKind::Enum && !type.field_types.empty())) {
         return type.field_types;
     }
     return type.args;

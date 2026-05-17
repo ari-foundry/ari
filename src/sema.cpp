@@ -8185,6 +8185,28 @@ private:
         if (expr.kind == ExprKind::TupleIndex) {
             TrackedAggregateAccess base;
             if (!try_build_tracked_aggregate_access(*expr_operand(expr), base)) return false;
+            if (has_aggregate_enum_layout(base.type)) {
+                std::size_t payload_count = base.type.field_types.size() - 1;
+                if (expr.tuple_index >= payload_count) {
+                    fail(expr.loc,
+                         "enum payload field index " + std::to_string(expr.tuple_index) +
+                         " is out of range for " + type_name(base.type));
+                }
+                std::size_t payload_index = static_cast<std::size_t>(expr.tuple_index);
+                std::size_t storage_field_index = payload_index + 1;
+                const IrType field_type = base.type.field_types[storage_field_index];
+
+                out.base_name = std::move(base.base_name);
+                out.base_type = std::move(base.base_type);
+                out.type = field_type;
+                out.path = local_owned_field_path(base.path, payload_index);
+                out.expr = make_tuple_index_expr(expr.loc, std::move(base.expr), storage_field_index);
+                out.has_final_field_mutability = false;
+                out.final_field_mutable = true;
+                out.final_field_label.clear();
+                out.final_container_name = base.type.name;
+                return true;
+            }
             if (base.type.primitive != IrPrimitiveKind::Tuple &&
                 base.type.primitive != IrPrimitiveKind::Struct) {
                 fail(expr.loc, "tuple index access requires tuple or tuple struct value, got " + type_name(base.type));
@@ -14157,6 +14179,20 @@ private:
         }
 
         IrExprPtr operand = check_aggregate_access_operand(*expr_operand(expr));
+        if (has_aggregate_enum_layout(operand->type)) {
+            if (!is_raw_pointer_backed_lvalue(*operand)) {
+                fail(expr.loc,
+                     "enum payload field access requires a local or raw-pointer-backed aggregate enum value");
+            }
+            std::size_t payload_count = operand->type.field_types.size() - 1;
+            if (expr.tuple_index >= payload_count) {
+                fail(expr.loc,
+                     "enum payload field index " + std::to_string(expr.tuple_index) +
+                     " is out of range for " + type_name(operand->type));
+            }
+            std::size_t storage_field_index = static_cast<std::size_t>(expr.tuple_index) + 1;
+            return make_tuple_index_expr(expr.loc, std::move(operand), storage_field_index);
+        }
         if (operand->type.primitive != IrPrimitiveKind::Tuple &&
             operand->type.primitive != IrPrimitiveKind::Struct) {
             fail(expr.loc, "tuple index access requires tuple or tuple struct value, got " + type_name(operand->type));

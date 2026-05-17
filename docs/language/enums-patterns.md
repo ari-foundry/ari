@@ -124,6 +124,12 @@ payloads. Pointer-backed aggregate enum copies work through `ptr_load`,
 `ptr_store`, and `*pointer` when the pointer is a `ptr EnumType`; storing a
 direct enum constructor through those pointer helpers is also supported,
 including homogeneous or mixed nested aggregate-enum payload values.
+For low-level layout code, aggregate enum payload slots can be addressed with
+tuple-index syntax on local or raw-pointer-backed values. `value.0` and
+`(*raw).0` mean payload slot 0; the hidden tag field is not part of the source
+index. This access does not test the active case. Scalar, pointer-shaped, and
+one-word enum payload slots expose the stored `u64` payload word, while nested
+aggregate-enum slots expose the nested enum storage itself.
 Direct freestanding calls can pass and return aggregate enum values through
 hidden pointer slots.
 

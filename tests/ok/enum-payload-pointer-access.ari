@@ -1,0 +1,54 @@
+enum Number {
+  Count(i64),
+  Flag(bool),
+  None,
+}
+
+enum Inner {
+  Empty,
+  Value(i64),
+  Pair(i64, i64),
+}
+
+enum Mixed {
+  Raw(i64),
+  Wrapped(Inner),
+  MixedEmpty,
+}
+
+fn number_value(value: Number) -> i64 {
+  match value {
+    Count(amount) => amount,
+    Flag(ok) => if ok { 1 } else { 0 },
+    None => 0,
+  }
+}
+
+fn inner_value(value: Inner) -> i64 {
+  match value {
+    Value(amount) => amount,
+    Pair(left, right) => left + right,
+    Empty => 0,
+  }
+}
+
+fn main() -> i64 {
+  var number: Number = Count(5);
+  let initial_slot: u64 = number.0;
+  number.0 = 11u64;
+  let after_local = number_value(number);
+
+  var target: Number = None;
+  let target_ptr: ptr Number = (ref mut target) as ptr Number;
+  *target_ptr = Count(9);
+  let pointer_slot: u64 = (*target_ptr).0;
+  (*target_ptr).0 = 17u64;
+  let after_pointer = number_value(*target_ptr);
+
+  var mixed: Mixed = MixedEmpty;
+  let mixed_ptr: ptr Mixed = (ref mut mixed) as ptr Mixed;
+  *mixed_ptr = Wrapped(Value(23));
+  let nested: Inner = (*mixed_ptr).0;
+
+  return (initial_slot as i64) + after_local + (pointer_slot as i64) + after_pointer + inner_value(nested);
+}

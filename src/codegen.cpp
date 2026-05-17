@@ -2537,9 +2537,7 @@ private:
         if (operand.kind == IrExprKind::Local || operand.kind == IrExprKind::TupleIndex) {
             int base = lvalue_offset(operand);
             int offset = aggregate_lvalue_field_offset(expr.loc, base, operand.type, expr.tuple_index);
-            if (expr.type.primitive == IrPrimitiveKind::Tuple ||
-                expr.type.primitive == IrPrimitiveKind::Array ||
-                expr.type.primitive == IrPrimitiveKind::Struct) {
+            if (is_aggregate_type(expr.type)) {
                 throw CompileError(where(expr.loc) + ": backend cannot materialize nested aggregate values; index a scalar field");
             }
             emit_load_rax_from_local(offset, expr.type);
@@ -2548,9 +2546,7 @@ private:
 
         if (operand.kind == IrExprKind::Tuple || operand.kind == IrExprKind::Vector) {
             const IrExpr& item = *operand.args[static_cast<std::size_t>(expr.tuple_index)];
-            if (expr.type.primitive == IrPrimitiveKind::Tuple ||
-                expr.type.primitive == IrPrimitiveKind::Array ||
-                expr.type.primitive == IrPrimitiveKind::Struct) {
+            if (is_aggregate_type(expr.type)) {
                 throw CompileError(where(expr.loc) + ": backend cannot materialize nested aggregate values; index a scalar field");
             }
             emit_expr(item);

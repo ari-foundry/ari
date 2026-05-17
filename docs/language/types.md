@@ -949,14 +949,20 @@ pointers. Local and
 pointer-backed aggregate enum storage works for the currently supported payload
 slot types. Direct raw calls can pass and return aggregate enum values through
 hidden pointer slots; aggregate enum external ABI classification remains
-planned there.
+planned there. Direct payload slot access is available for local and
+raw-pointer-backed aggregate enum values with tuple-index syntax: `value.0` or
+`(*raw).0` addresses payload slot 0, not the hidden tag field. Scalar and
+pointer-shaped payload slots expose their stored `u64` payload word; nested
+aggregate-enum slots expose that nested enum storage. The access does not check
+the current tag, so normal `match` payload patterns remain the checked
+case-aware surface.
 `ptr_load(pointer)` and
 `ptr_store(pointer, value)` provide explicit unchecked scalar, plain
 Ari-layout aggregate, or supported aggregate enum memory access through raw
 pointers. `*pointer` provides the same dereference operation, and
 `(*pointer).field`, `(*pointer).0`, or `(*pointer)[index]` can read and write
-scalar slots inside a raw pointer to a struct, tuple struct, tuple, or fixed
-array. Whole raw-pointer copies
+scalar slots inside a raw pointer to a struct, tuple struct, tuple, fixed
+array, or aggregate enum payload slot. Whole raw-pointer copies
 are intentionally rejected for values that contain `own`, `ref`, or `ref mut`
 state until the zone and ownership diagnostics are broadened.
 
