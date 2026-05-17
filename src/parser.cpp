@@ -1082,7 +1082,8 @@ private:
         if (check(TokenKind::KwRef) || check(TokenKind::Amp)) {
             fail(peek().loc,
                  std::string("reference ") + context +
-                     " binding modes are reserved but not supported yet; bind by value and borrow inside the body");
+                     " binding modes are only supported as declaration-level let ref/let ref mut bindings for now; "
+                     "& and &mut pattern shorthand remain planned");
         }
         if (check(TokenKind::KwMut)) {
             fail(peek().loc,
@@ -1124,13 +1125,26 @@ private:
     }
 
     StmtPtr parse_pattern_variable(bool mutable_binding) {
+        BindingMode binding_mode = BindingMode::Value;
+        if (match(TokenKind::KwRef)) {
+            if (mutable_binding) {
+                fail(tokens_[pos_ - 1].loc,
+                     "reference pattern bindings use let ref or let ref mut; var ref is not supported");
+            }
+            binding_mode = match(TokenKind::KwMut) ? BindingMode::RefMut : BindingMode::Ref;
+        }
         if (match(TokenKind::KwMut)) {
+            if (binding_mode != BindingMode::Value) {
+                fail(tokens_[pos_ - 1].loc,
+                     "reference pattern bindings write mutable borrows as let ref mut PATTERN");
+            }
             mutable_binding = true;
         }
         Binding binding;
         binding.pattern = parse_pattern(true);
         binding.has_pattern = true;
         binding.mutable_binding = mutable_binding;
+        binding.binding_mode = binding_mode;
         binding.loc = binding.pattern.loc;
         if (match(TokenKind::Colon)) {
             binding.type = parse_type();

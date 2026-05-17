@@ -1,0 +1,66 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+struct BoxPair {
+  mut pair: Pair,
+  mut extra: i64,
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn main() -> i64 {
+  var number = 5;
+  var pair = Pair { left: 10, right: 20 };
+  var nested = BoxPair { pair: Pair { left: 3, right: 4 }, extra: 8 };
+  var tuple = (30, 40);
+  var values: [i64, 2] = [6, 7];
+  var total = 0;
+
+  {
+    let ref shared = number;
+    total = total + read(shared);
+  }
+
+  {
+    let ref mut unique = number;
+    write(unique, 2);
+  }
+
+  {
+    let ref (tuple_left, tuple_right) = tuple;
+    total = total + read(tuple_left) + read(tuple_right);
+  }
+
+  {
+    let ref [first, second] = values;
+    total = total + read(first) + read(second);
+  }
+
+  {
+    let ref mut Pair { left: pair_left, right: pair_right } = pair;
+    write(pair_left, 1);
+    write(pair_right, 2);
+  }
+
+  {
+    let ref mut direct = pair.left;
+    write(direct, 3);
+  }
+
+  {
+    let ref BoxPair { pair: Pair { left: nested_left, right: nested_right }, extra: nested_extra } = nested;
+    total = total + read(nested_left) + read(nested_right) + read(nested_extra);
+  }
+
+  return total + number + pair.left + pair.right;
+}

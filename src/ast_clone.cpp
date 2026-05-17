@@ -155,6 +155,7 @@ Binding clone_binding_impl(const Binding& binding, CloneContext& context) {
     copy.type = binding.type;
     copy.has_type = binding.has_type;
     copy.mutable_binding = binding.mutable_binding;
+    copy.binding_mode = binding.binding_mode;
     copy.loc = binding.loc;
     copy.init = clone_optional_expression(binding.init, context);
     copy.has_pattern = binding.has_pattern;

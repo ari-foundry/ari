@@ -100,7 +100,7 @@ check-cli: $(TARGET)
 	grep -q "define i32 @main" $(BUILD_DIR)/cli/count.ll
 	$(TARGET) tests/ok/library-export.ari --check
 	if $(TARGET) tests/errors/pattern-ref-binding-mode.ari --check >$(BUILD_DIR)/cli/check-pattern-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are reserved but not supported yet" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
+	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings for now" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
 	if $(TARGET) examples/count.ari --check --emit-llvm $(BUILD_DIR)/cli/check-bad.ll >$(BUILD_DIR)/cli/check-output-option.err 2>&1; then exit 1; fi
 	grep -q -- "--check cannot be combined with backend output or linking options" $(BUILD_DIR)/cli/check-output-option.err
 	$(TARGET) --freestanding examples/count.ari -o $(BUILD_DIR)/cli/count.raw
@@ -1282,9 +1282,9 @@ check-match: $(TARGET)
 	if $(TARGET) tests/errors/match-or-pattern-binding-type.ari -o $(BUILD_DIR)/match/match-or-pattern-binding-type.elf >$(BUILD_DIR)/match/match-or-pattern-binding-type.err 2>&1; then exit 1; fi
 	grep -q "or-pattern binding 'value' has inconsistent types: i32 and u32" $(BUILD_DIR)/match/match-or-pattern-binding-type.err
 	if $(TARGET) tests/errors/pattern-ref-binding-mode.ari -o $(BUILD_DIR)/match/pattern-ref-binding-mode.elf >$(BUILD_DIR)/match/pattern-ref-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are reserved but not supported yet" $(BUILD_DIR)/match/pattern-ref-binding-mode.err
+	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings for now" $(BUILD_DIR)/match/pattern-ref-binding-mode.err
 	if $(TARGET) tests/errors/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/match/pattern-amp-binding-mode.elf >$(BUILD_DIR)/match/pattern-amp-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are reserved but not supported yet" $(BUILD_DIR)/match/pattern-amp-binding-mode.err
+	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings for now" $(BUILD_DIR)/match/pattern-amp-binding-mode.err
 	if $(TARGET) tests/errors/match-tuple-nonexhaustive.ari -o $(BUILD_DIR)/match/match-tuple-nonexhaustive.elf >$(BUILD_DIR)/match/match-tuple-nonexhaustive.err 2>&1; then exit 1; fi
 	grep -q "tuple match must cover every supported product case" $(BUILD_DIR)/match/match-tuple-nonexhaustive.err
 	if $(TARGET) tests/errors/match-product-nonexhaustive-bool.ari -o $(BUILD_DIR)/match/match-product-nonexhaustive-bool.elf >$(BUILD_DIR)/match/match-product-nonexhaustive-bool.err 2>&1; then exit 1; fi
@@ -3312,6 +3312,13 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) --freestanding tests/ok/borrow-named.ari -o $(BUILD_DIR)/errors/borrow-named.raw
 	$(BUILD_DIR)/errors/borrow-named.raw; code=$$?; test $$code -eq 12
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/borrow-named.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/borrow-named.elf; $(BUILD_DIR)/errors/borrow-named.elf; code=$$?; test $$code -eq 12; fi
+	$(TARGET) --freestanding tests/ok/pattern-ref-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-ref-binding-mode.raw
+	$(BUILD_DIR)/errors/pattern-ref-binding-mode.raw; code=$$?; test $$code -eq 146
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-ref-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; code=$$?; test $$code -eq 146; fi
+	if $(TARGET) tests/errors/pattern-ref-mut-immutable.ari -o $(BUILD_DIR)/errors/pattern-ref-mut-immutable.elf >$(BUILD_DIR)/errors/pattern-ref-mut-immutable.err 2>&1; then exit 1; fi
+	grep -q "cannot mutably borrow immutable binding 'value'" $(BUILD_DIR)/errors/pattern-ref-mut-immutable.err
+	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi
+	grep -q "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index" $(BUILD_DIR)/errors/pattern-ref-temporary.err
 	$(TARGET) --freestanding tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.raw
 	$(BUILD_DIR)/errors/named-borrow-last-use.raw; code=$$?; test $$code -eq 18
 	$(TARGET) --freestanding tests/ok/borrow-reborrow.ari -o $(BUILD_DIR)/errors/borrow-reborrow.raw

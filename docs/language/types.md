@@ -917,6 +917,13 @@ inside `self: ref Self` methods. Local named borrow bindings release their
 source after their last visible straight-line use, while dependent reborrows
 keep the intermediate borrow binding live until the dependent borrow is also
 dead.
+Local declaration patterns can also create named borrow bindings directly:
+`let ref PATTERN = local_or_path` creates shared borrows, and
+`let ref mut PATTERN = local_or_path` creates mutable borrows. The current
+0.x slice supports name, wildcard, tuple, fixed-array, and struct local
+patterns over tracked local places; runtime sequence rest aliases, enum
+payload reference bindings, `&`/`&mut` shorthand, and function parameter
+reference binding modes remain planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

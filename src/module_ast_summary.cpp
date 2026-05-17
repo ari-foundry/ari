@@ -52,6 +52,14 @@ void append_qualifier(std::ostringstream& out, TypeQualifier qualifier) {
     }
 }
 
+void append_binding_mode(std::ostringstream& out, BindingMode mode) {
+    switch (mode) {
+        case BindingMode::Value: append_field(out, "value"); return;
+        case BindingMode::Ref: append_field(out, "ref"); return;
+        case BindingMode::RefMut: append_field(out, "ref mut"); return;
+    }
+}
+
 void append_token_payload(std::ostringstream& out, const Token& token);
 
 void append_type(std::ostringstream& out, const TypeRef& type) {
@@ -585,6 +593,7 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             append_field(out, "var");
             append_field(out, stmt.binding.name);
             append_bool(out, stmt.binding.mutable_binding);
+            append_binding_mode(out, stmt.binding.binding_mode);
             append_bool(out, stmt.binding.has_pattern);
             out << pattern.str();
             append_bool(out, stmt.binding.has_type);
@@ -730,6 +739,7 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
                 if (binding.has_pattern && !append_pattern_payload(pattern, binding.pattern)) return false;
                 append_field(out, binding.name);
                 append_bool(out, binding.mutable_binding);
+                append_binding_mode(out, binding.binding_mode);
                 append_bool(out, binding.has_pattern);
                 out << pattern.str();
                 append_bool(out, binding.has_type);
@@ -1200,6 +1210,14 @@ private:
         if (value == "ref mut") return TypeQualifier::MutRef;
         if (value == "ptr") return TypeQualifier::Ptr;
         fail("unknown type qualifier '" + value + "'");
+    }
+
+    BindingMode read_binding_mode(const std::string& label) {
+        std::string value = read_field(label);
+        if (value == "value") return BindingMode::Value;
+        if (value == "ref") return BindingMode::Ref;
+        if (value == "ref mut") return BindingMode::RefMut;
+        fail("unknown binding mode '" + value + "'");
     }
 
     TypeRef read_type(const std::string& label) {
@@ -1696,6 +1714,7 @@ private:
             stmt->kind = StmtKind::VarDecl;
             stmt->binding.name = read_field(label + " binding name");
             stmt->binding.mutable_binding = read_bool(label + " binding mutability");
+            stmt->binding.binding_mode = read_binding_mode(label + " binding mode");
             stmt->binding.has_pattern = read_bool(label + " binding pattern flag");
             if (stmt->binding.has_pattern) {
                 stmt->binding.pattern = read_pattern(label + " binding pattern");
@@ -1784,6 +1803,7 @@ private:
                 binding.loc = default_loc();
                 binding.name = read_field(label + " init binding name");
                 binding.mutable_binding = read_bool(label + " init binding mutability");
+                binding.binding_mode = read_binding_mode(label + " init binding mode");
                 binding.has_pattern = read_bool(label + " init binding pattern flag");
                 if (binding.has_pattern) {
                     binding.pattern = read_pattern(label + " init binding pattern");

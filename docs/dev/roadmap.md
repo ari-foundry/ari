@@ -4,9 +4,13 @@
 
 Parser-visible syntax is now stable for linting and language-server tooling.
 `init ... while ... next` is the only loop-state spelling; `let ... while` is
-rejected with a migration diagnostic. Reference pattern binding modes (`ref`,
-`ref mut`, `&`, and `&mut`) remain reserved and rejected with diagnostics so
-future reference/ownership binding modes do not collide with the current AST.
+rejected with a migration diagnostic. Declaration-level reference pattern
+binding modes are stable for the first local slice: `let ref PATTERN = value`
+and `let ref mut PATTERN = value` now introduce named borrow bindings for
+plain local/path initializers and for tuple, fixed-array, and struct
+destructuring over those tracked paths. `&`/`&mut` shorthand, function
+parameter reference patterns, and ownership-aware aggregate binding modes
+remain reserved for the broader shared binding-mode engine.
 The mutable declaration binding-mode slice promoted from Medium-Term is
 complete for the current 0.x surface: `let mut PATTERN = value` now parses as
 declaration-level mutability for every binding introduced by the pattern and
@@ -154,37 +158,30 @@ Active Near-Term work promoted from Medium-Term and Backend Work:
    focused fresh/cache-use LLVM byte-for-byte guards must grow with each new
    descriptor, and generic/impl body replay still waits for a deliberate cache
    identity/version bump.
-2. [pattern-reference-bindings] lower the first reference binding-mode slice on
-   top of the shared pattern engine. Start with local declaration patterns such
-   as `let ref x = value` and `let ref mut x = value`, plus tuple/array/struct
-   destructuring over direct local values where the borrow source path is
-   explicit. Keep `&`/`&mut` shorthand, function-parameter reference patterns,
-   and ownership-carrying aggregate binding modes out until this local slice is
-   proven.
-3. [enum-mixed-slots] define and test the stored payload rule for aggregate
+2. [enum-mixed-slots] define and test the stored payload rule for aggregate
    enum cases that mix homogeneous nested aggregate-enum slots with scalar or
    pointer-shaped slots. The goal is a precise layout/materialization rule, not
    broad owned/vector payload support.
-4. [enum-payload-pointers] once `[enum-mixed-slots]` fixes the payload layout
+3. [enum-payload-pointers] once `[enum-mixed-slots]` fixes the payload layout
    rule, lower direct payload field pointer access for aggregate enum payloads
    on the LLVM path and the already-supported freestanding local/pointer-backed
    value paths.
-5. [raw-enum-materialization] finish freestanding direct value materialization
+4. [raw-enum-materialization] finish freestanding direct value materialization
    for multi-payload aggregate enums before defining their external FFI ABI.
-6. [aggregate-layout-service] finish sharing field-layout and aggregate layout
+5. [aggregate-layout-service] finish sharing field-layout and aggregate layout
    decisions between sema and both backends. This should be a broad layout
    service/refactor, not another syntax-specific sema helper.
-7. [raw-c-imports-scalar] implement the first real raw/freestanding imported
+6. [raw-c-imports-scalar] implement the first real raw/freestanding imported
    `extern "C"` path for scalar and raw-pointer signatures only. Keep
    aggregate, varargs, platform float-C ABI, and libc discovery outside this
    slice until the scalar link/call path is boring.
-8. [raw-runtime-strings] add freestanding runtime string storage sufficient for
+7. [raw-runtime-strings] add freestanding runtime string storage sufficient for
    string literals, byte writes, and the currently documented line-input
    rejection boundary without depending on the host C runtime.
-9. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
+8. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
    vtable-slot dispatch in the raw backend, leaving `own` and borrow-valued dyn
    data-pointer policy in Medium-Term.
-10. [raw-relocatable-objects] emit native relocatable object files for the raw
+9. [raw-relocatable-objects] emit native relocatable object files for the raw
     backend using the current Ari symbol table/export model. Treat C ABI
     relocations and host linker integration as follow-ups to `[raw-c-imports-scalar]`.
 
@@ -206,13 +203,16 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 1. Extend pattern binding modes beyond value bindings.
    Declaration-level `let mut PATTERN = value` is implemented as the mutable
-   value-binding slice. The parser still reserves `ref`, `ref mut`, `&`, and
-   `&mut` binding-mode spellings as syntax-stability work. The first local
-   reference binding slice moved to Near-Term `[pattern-reference-bindings]`.
-   This Medium-Term item now tracks shorthand and ownership-aware binding forms
-   that need broader source-path and aggregate ownership policy.
+   value-binding slice. The first local reference binding slice is implemented
+   for `let ref` / `let ref mut` over tracked local/path initializers and
+   tuple, fixed-array, and struct destructuring. This Medium-Term item now
+   tracks shorthand, function-parameter, and ownership-aware binding forms that
+   need broader source-path and aggregate ownership policy.
    - [reference-shorthand] design `&` and `&mut` pattern shorthand after
      explicit `ref`/`ref mut` local patterns are stable
+   - [reference-params] carry explicit reference binding modes through function
+     parameter patterns once the parameter ABI and source-path contracts are
+     shared with local declarations
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share
    same-name/same-type or-pattern bindings through the product pattern engine.

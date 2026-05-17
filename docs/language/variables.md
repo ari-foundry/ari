@@ -130,9 +130,25 @@ let (Point { x: axis, y: 0 } | Point { x: 0, y: axis }) = point
 Declaration patterns bind by value. `let mut pattern = value` is accepted as
 declaration-level mutability for every binding introduced by the pattern, so it
 matches `var pattern = value` while keeping the familiar `let mut` spelling.
-`let ref x`, `let ref mut x`, `let &x`, and `let &mut x` remain reserved for
-future reference binding modes; create an explicit borrow with
-`let x = ref value` today.
+`let ref pattern = value` and `let ref mut pattern = value` bind references
+instead of copying the selected values. The initializer must be a tracked local
+place, such as a local name, field access, tuple index, or constant
+array/vector index. Tuple, fixed-array, and struct destructuring borrow each
+introduced binding's source path independently:
+
+```ari
+let ref shared = value
+let ref mut unique = cell
+let ref (left, right) = pair
+let ref [head, tail]: [i64, 2] = values
+let ref Point { x, y: renamed } = point
+```
+
+`ref mut` requires a mutable source binding and mutable struct field when the
+selected path ends at a field. The introduced bindings themselves are ordinary
+immutable borrow bindings, matching `let unique = ref mut cell`. Reference
+pattern destructuring of ownership-carrying aggregates, `&`/`&mut` shorthand,
+and function parameter reference patterns remain planned.
 
 The `[a, b]` pattern spelling works for fixed arrays and for runtime sequence
 subjects such as local `Vec[T]` storage and `Slice[T]` views. On `Vec[T]` and

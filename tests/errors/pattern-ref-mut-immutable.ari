@@ -1,0 +1,5 @@
+fn main() -> i64 {
+  let value = 1;
+  let ref mut borrowed = value;
+  return 0;
+}

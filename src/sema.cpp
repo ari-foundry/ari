@@ -6237,6 +6237,11 @@ private:
     }
 
     void check_pattern_var_decl(const Stmt& stmt, IrStmt& lowered) {
+        if (stmt.binding.binding_mode != BindingMode::Value) {
+            check_reference_pattern_var_decl(stmt, lowered);
+            return;
+        }
+
         std::size_t borrow_mark = temporary_borrow_mark();
         IrType declared;
         IrExprPtr init;
@@ -6287,6 +6292,383 @@ private:
             stmt.binding.mutable_binding,
             ir_stmt_statements(lowered)
         );
+    }
+
+    static std::vector<std::size_t> local_path_indices(const std::string& path) {
+        std::vector<std::size_t> indices;
+        std::size_t pos = 0;
+        while (pos < path.size()) {
+            if (path[pos] == '.') ++pos;
+            if (pos >= path.size() || !std::isdigit(static_cast<unsigned char>(path[pos]))) {
+                throw CompileError("internal error: malformed tracked local path '" + path + "'");
+            }
+            std::size_t value = 0;
+            while (pos < path.size() && std::isdigit(static_cast<unsigned char>(path[pos]))) {
+                value = value * 10 + static_cast<std::size_t>(path[pos] - '0');
+                ++pos;
+            }
+            indices.push_back(value);
+            if (pos < path.size() && path[pos] != '.') {
+                throw CompileError("internal error: malformed tracked local path '" + path + "'");
+            }
+        }
+        return indices;
+    }
+
+    IrExprPtr make_reference_pattern_access_expr(SourceLocation loc,
+                                                 const std::string& base_name,
+                                                 const IrType& base_type,
+                                                 const std::string& path) {
+        IrExprPtr expr = make_local_lvalue_expr(loc, base_name, base_type);
+        IrType current = base_type;
+        for (std::size_t index : local_path_indices(path)) {
+            if (current.primitive == IrPrimitiveKind::Vector) {
+                expr = make_ir_index_expr(
+                    loc,
+                    std::move(expr),
+                    make_integer_literal(loc, i64_type(loc), static_cast<std::uint64_t>(index)));
+                if (current.args.empty()) {
+                    throw CompileError("internal error: vector path access without element type");
+                }
+                current = current.args[0];
+                continue;
+            }
+            expr = make_tuple_index_expr(loc, std::move(expr), index);
+            current = expr->type;
+        }
+        return expr;
+    }
+
+    [[noreturn]] void fail_reference_pattern_shape(SourceLocation loc) const {
+        fail(loc,
+             "reference pattern bindings currently support wildcard, name, tuple, fixed-array, and struct patterns only");
+    }
+
+    void require_reference_pattern_source_available(SourceLocation loc,
+                                                    const std::string& base_name,
+                                                    LocalInfo& source,
+                                                    const IrType& borrowed_type,
+                                                    const std::string& path,
+                                                    bool mutable_borrow,
+                                                    bool has_final_field_mutability,
+                                                    bool final_field_mutable,
+                                                    const std::string& final_field_label,
+                                                    const std::string& final_container_name) {
+        const bool base_is_borrow_binding = is_borrow_type(source.type);
+        if (!base_is_borrow_binding &&
+            (is_borrow_type(borrowed_type) || borrowed_type.qualifier == TypeQualifier::Ptr)) {
+            fail(loc, "cannot borrow reference-like value '" + local_borrow_path_display(base_name, path) + "'");
+        }
+        if (is_void_value_type(borrowed_type)) {
+            fail(loc, "cannot borrow void value '" + local_borrow_path_display(base_name, path) + "'");
+        }
+
+        if (base_is_borrow_binding) {
+            if (mutable_borrow && has_final_field_mutability && !final_field_mutable) {
+                fail(loc,
+                     "cannot mutably borrow immutable field '" + final_field_label +
+                         "' of struct '" + final_container_name + "'");
+            }
+            require_can_reborrow_path(loc, base_name, source, path, mutable_borrow);
+            return;
+        }
+
+        if (mutable_borrow) {
+            if (auto error = local_mutable_borrow_error(base_name, source)) fail(loc, *error);
+            if (has_final_field_mutability && !final_field_mutable) {
+                fail(loc,
+                     "cannot mutably borrow immutable field '" + final_field_label +
+                         "' of struct '" + final_container_name + "'");
+            }
+        }
+        if (is_owner_type(borrowed_type)) {
+            if (path.empty()) {
+                if (local_has_moved_or_dropped_owned_fields(source)) {
+                    fail(loc, "cannot borrow partially moved owning binding '" + base_name + "'");
+                }
+            } else {
+                require_owned_field_alive(loc, base_name, source, path);
+            }
+        }
+        require_can_borrow_path(loc, base_name, source, path, mutable_borrow);
+    }
+
+    void lower_reference_binding_pattern_value(const Pattern& pattern,
+                                               const std::string& base_name,
+                                               const IrType& base_type,
+                                               const IrType& source_type,
+                                               const std::string& path,
+                                               bool mutable_borrow,
+                                               std::vector<IrStmtPtr>& statements,
+                                               bool has_final_field_mutability = false,
+                                               bool final_field_mutable = true,
+                                               const std::string& final_field_label = {},
+                                               const std::string& final_container_name = {}) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_reference_binding_pattern_value(
+                effective_pattern,
+                base_name,
+                base_type,
+                source_type,
+                path,
+                mutable_borrow,
+                statements,
+                has_final_field_mutability,
+                final_field_mutable,
+                final_field_label,
+                final_container_name);
+            return;
+        }
+        if (pattern.kind == PatternKind::Wildcard) return;
+        if (pattern.kind != PatternKind::Binding) fail_reference_pattern_shape(pattern.loc);
+
+        LocalInfo& source = require_live_local(pattern.loc, base_name);
+        require_reference_pattern_source_available(
+            pattern.loc,
+            base_name,
+            source,
+            source_type,
+            path,
+            mutable_borrow,
+            has_final_field_mutability,
+            final_field_mutable,
+            final_field_label,
+            final_container_name);
+
+        add_borrow_source(source, path, mutable_borrow);
+        borrow_context_.push_temporary(base_name, path, mutable_borrow);
+        IrExprPtr borrow = make_borrow_expr(
+            pattern.loc,
+            base_name,
+            path,
+            make_reference_pattern_access_expr(pattern.loc, base_name, base_type, path),
+            mutable_borrow,
+            source_type);
+        IrType binding_type = borrow->type;
+        declare_local(pattern.loc, pattern.payload_name, binding_type, false);
+        IrStmtPtr decl = make_ir_var_decl(
+            pattern.loc,
+            pattern.payload_name,
+            binding_type,
+            std::move(borrow),
+            false);
+        const IrExpr* init = decl->binding.init.get();
+        statements.push_back(std::move(decl));
+        promote_temporary_borrow_to_named(pattern.loc, *init, pattern.payload_name);
+    }
+
+    void lower_reference_binding_pattern_from_path(const Pattern& pattern,
+                                                   const std::string& base_name,
+                                                   const IrType& base_type,
+                                                   const IrType& source_type,
+                                                   const std::string& path,
+                                                   bool mutable_borrow,
+                                                   std::vector<IrStmtPtr>& statements,
+                                                   bool has_final_field_mutability = false,
+                                                   bool final_field_mutable = true,
+                                                   const std::string& final_field_label = {},
+                                                   const std::string& final_container_name = {}) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_reference_binding_pattern_from_path(
+                effective_pattern,
+                base_name,
+                base_type,
+                source_type,
+                path,
+                mutable_borrow,
+                statements,
+                has_final_field_mutability,
+                final_field_mutable,
+                final_field_label,
+                final_container_name);
+            return;
+        }
+
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+                lower_reference_binding_pattern_value(
+                    pattern,
+                    base_name,
+                    base_type,
+                    source_type,
+                    path,
+                    mutable_borrow,
+                    statements,
+                    has_final_field_mutability,
+                    final_field_mutable,
+                    final_field_label,
+                    final_container_name);
+                return;
+            case PatternKind::Tuple:
+            case PatternKind::Array:
+                lower_reference_tuple_binding_pattern_from_path(
+                    pattern, base_name, base_type, source_type, path, mutable_borrow, statements);
+                return;
+            case PatternKind::Struct:
+                lower_reference_struct_binding_pattern_from_path(
+                    pattern, base_name, base_type, source_type, path, mutable_borrow, statements);
+                return;
+            default:
+                fail_reference_pattern_shape(pattern.loc);
+        }
+    }
+
+    void lower_reference_tuple_binding_pattern_from_path(const Pattern& pattern,
+                                                         const std::string& base_name,
+                                                         const IrType& base_type,
+                                                         const IrType& source_type,
+                                                         const std::string& path,
+                                                         bool mutable_borrow,
+                                                         std::vector<IrStmtPtr>& statements) {
+        IrType shape_type = value_qualified_type(source_type);
+        if (is_owner_type(shape_type)) {
+            fail(pattern.loc,
+                 "reference pattern destructuring of ownership-carrying aggregates is planned after ownership-through-aggregates is implemented");
+        }
+        bool array_pattern = pattern.kind == PatternKind::Array;
+        IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
+        const char* pattern_name = array_pattern ? "array" : "tuple";
+        if (!pattern.rest_alias_name.empty()) {
+            fail(pattern.rest_alias_loc,
+                 "reference pattern rest aliases are planned after Slice-producing reference patterns are implemented");
+        }
+        if (shape_type.primitive != expected_primitive) {
+            fail(pattern.loc, std::string(pattern_name) + " reference binding pattern requires a " +
+                              pattern_name + " value, got " + type_name(source_type));
+        }
+        const std::vector<IrType>& fields = aggregate_field_types(shape_type);
+        if (pattern.has_rest) {
+            if (pattern.elements.size() > fields.size()) {
+                fail(pattern.loc,
+                     std::string(pattern_name) + " reference binding pattern has " +
+                         std::to_string(pattern.elements.size()) +
+                         " non-rest elements but value has " + std::to_string(fields.size()));
+            }
+        } else if (pattern.elements.size() != fields.size()) {
+            fail(pattern.loc,
+                 std::string(pattern_name) + " reference binding pattern has " +
+                     std::to_string(pattern.elements.size()) +
+                     " elements but value has " + std::to_string(fields.size()));
+        }
+
+        std::size_t suffix_count = 0;
+        if (pattern.has_rest) suffix_count = pattern.elements.size() - pattern.rest_index;
+        for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+            const Pattern& item = pattern.elements[i];
+            if (item.kind == PatternKind::Wildcard) continue;
+            std::size_t field_index = i;
+            if (pattern.has_rest && i >= pattern.rest_index) {
+                field_index = fields.size() - suffix_count + (i - pattern.rest_index);
+            }
+            lower_reference_binding_pattern_from_path(
+                item,
+                base_name,
+                base_type,
+                fields[field_index],
+                local_owned_field_path(path, field_index),
+                mutable_borrow,
+                statements);
+        }
+    }
+
+    void lower_reference_struct_binding_pattern_from_path(const Pattern& pattern,
+                                                          const std::string& base_name,
+                                                          const IrType& base_type,
+                                                          const IrType& source_type,
+                                                          const std::string& path,
+                                                          bool mutable_borrow,
+                                                          std::vector<IrStmtPtr>& statements) {
+        IrType shape_type = value_qualified_type(source_type);
+        if (is_owner_type(shape_type)) {
+            fail(pattern.loc,
+                 "reference pattern destructuring of ownership-carrying aggregates is planned after ownership-through-aggregates is implemented");
+        }
+        if (shape_type.primitive != IrPrimitiveKind::Struct) {
+            fail(pattern.loc, "struct reference binding pattern requires a struct value, got " + type_name(source_type));
+        }
+        std::string struct_name = resolve_struct_type_name(pattern.case_name);
+        auto struct_found = structs_.find(struct_name);
+        if (struct_found == structs_.end()) {
+            fail(pattern.loc, "unknown struct '" + pattern.case_name + "' in reference binding pattern");
+        }
+        require_struct_access(pattern.loc, struct_found->second);
+        if (struct_name != shape_type.name) {
+            fail(pattern.loc,
+                 "struct reference binding pattern type '" + struct_name +
+                     "' does not match value type " + type_name(source_type));
+        }
+        if (pattern.field_names.size() != pattern.elements.size()) {
+            throw CompileError("internal error: struct reference binding pattern field/value arity mismatch");
+        }
+
+        std::set<std::string> seen_fields;
+        for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+            const std::string& field_name = pattern.field_names[i];
+            if (!seen_fields.insert(field_name).second) {
+                fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct reference binding pattern");
+            }
+            std::size_t field_index = struct_field_index(pattern.elements[i].loc, shape_type, field_name);
+            const Pattern& item = pattern.elements[i];
+            if (item.kind == PatternKind::Wildcard) continue;
+            lower_reference_binding_pattern_from_path(
+                item,
+                base_name,
+                base_type,
+                shape_type.field_types[field_index],
+                local_owned_field_path(path, field_index),
+                mutable_borrow,
+                statements,
+                true,
+                shape_type.field_mutable[field_index],
+                field_name,
+                shape_type.name);
+        }
+    }
+
+    void check_reference_pattern_var_decl(const Stmt& stmt, IrStmt& lowered) {
+        if (stmt.binding.mutable_binding) {
+            fail(stmt.loc,
+                 "reference pattern bindings use let ref or let ref mut; use ref mut for a mutable borrow");
+        }
+        if (!stmt.binding.init) {
+            throw CompileError("internal error: reference pattern binding without initializer");
+        }
+
+        TrackedAggregateAccess access;
+        if (!try_build_tracked_aggregate_access(*stmt.binding.init, access)) {
+            fail(stmt.binding.init->loc,
+                 "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index");
+        }
+
+        IrType source_type = access.type;
+        if (stmt.binding.has_type) {
+            IrType annotated = resolve_executable_type(stmt.binding.type);
+            if (annotated.qualifier != TypeQualifier::Value) {
+                fail(stmt.binding.type.loc,
+                     "reference pattern binding type annotations describe the borrowed value type, not the produced ref type");
+            }
+            IrType actual = is_borrow_type(source_type) ? value_qualified_type(source_type) : source_type;
+            require_assignable(stmt.loc, annotated, actual);
+            source_type = std::move(annotated);
+        }
+
+        lowered.kind = IrStmtKind::Block;
+        const Pattern& binding_pattern = expanded_pattern(stmt.binding.pattern);
+        lower_reference_binding_pattern_from_path(
+            binding_pattern,
+            access.base_name,
+            access.base_type,
+            source_type,
+            access.path,
+            stmt.binding.binding_mode == BindingMode::RefMut,
+            ir_stmt_statements(lowered),
+            access.has_final_field_mutability,
+            access.final_field_mutable,
+            access.final_field_label,
+            access.final_container_name);
     }
 
     void widen_vector_storage(LocalInfo& local, std::uint64_t capacity) const {

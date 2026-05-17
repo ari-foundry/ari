@@ -331,6 +331,12 @@ struct StmtBreakPayload {
     ExprPtr value;
 };
 
+enum class BindingMode {
+    Value,
+    Ref,
+    RefMut
+};
+
 enum class StmtKind {
     Block,
     VarDecl,
@@ -356,6 +362,7 @@ struct Binding {
     bool has_type = false;
     ExprPtr init;
     bool mutable_binding = true;
+    BindingMode binding_mode = BindingMode::Value;
     SourceLocation loc;
 };
 
