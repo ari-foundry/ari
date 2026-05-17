@@ -19,7 +19,8 @@ changing the long-term language contract.
    and expansion together before sema lowers bindings. Continue extracting
    broad modules such as type inference, ownership state, zone provenance, and
    IR lowering helpers. `attribute_semantics` now owns built-in attribute
-   classification plus `@repr(C)` field/case guards, and
+   classification, target/argument validation, and `@repr(C)` field/case
+   guards, and
    `ownership_semantics` now owns recursive owned-field state seeding for
    locals and stack-backed vector storage. Avoid splitting one tiny file per
    syntax feature.

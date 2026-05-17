@@ -15,8 +15,8 @@ but new work should prefer merging related helpers into broader subsystems over
 adding more narrow syntax-specific `*_semantics` siblings.
 
 - `attribute_semantics` for built-in attribute-name classification,
-  declaration-level `@repr(C)` field/case validation, and small shared
-  attribute argument helpers
+  built-in attribute target/argument validation, and declaration-level
+  `@repr(C)` field/case guards
 - `prelude_resolver` for compiler-known standard-library spellings
 - `try_model` for `?` residual shape helpers
 - `constant_semantics` for the shared constant value model, scalar constant

@@ -10,7 +10,6 @@
 #include "borrow_lifetime.hpp"
 #include "borrow_semantics.hpp"
 #include "c_abi_types.hpp"
-#include "cfg_eval.hpp"
 #include "constant_semantics.hpp"
 #include "control_flow_semantics.hpp"
 #include "drop_semantics.hpp"
@@ -1266,80 +1265,6 @@ private:
         }
     }
 
-    static void require_attribute_args(const Attribute& attr) {
-        if (!attr.has_args || attr.args.empty()) {
-            fail(attr.loc, "attribute '@" + attr.name + "' expects arguments");
-        }
-    }
-
-    static void reject_attribute_args(const Attribute& attr) {
-        if (attr.has_args) {
-            fail(attr.loc, "attribute '@" + attr.name + "' does not take arguments");
-        }
-    }
-
-    void validate_builtin_attribute(const Attribute& attr, const std::string& target_kind) const {
-        if (attr.name == "derive") {
-            if (target_kind != "struct" && target_kind != "enum") {
-                fail(attr.loc, "attribute '@derive' is only supported on structs and enums");
-            }
-            require_attribute_args(attr);
-            return;
-        }
-        if (attr.name == "repr") {
-            if (target_kind != "struct" && target_kind != "enum") {
-                fail(attr.loc, "attribute '@repr' is only supported on structs and enums");
-            }
-            require_attribute_args(attr);
-            if (!attribute_has_single_identifier_argument(attr, "C")) {
-                fail(attr.loc, "attribute '@repr' currently supports only C layout");
-            }
-            return;
-        }
-        if (attr.name == "test") {
-            if (target_kind != "function") {
-                fail(attr.loc, "attribute '@test' is only supported on functions");
-            }
-            reject_attribute_args(attr);
-            return;
-        }
-        if (attr.name == "export") {
-            if (target_kind != "function") {
-                fail(attr.loc, "attribute '@export' is only supported on functions");
-            }
-            if (attr.has_args &&
-                (attr.args.size() != 1 || attr.args[0].kind != TokenKind::String)) {
-                fail(attr.loc, "attribute '@export' expects no arguments or one string symbol name");
-            }
-            return;
-        }
-        if (attr.name == "no_mangle") {
-            if (target_kind != "function") {
-                fail(attr.loc, "attribute '@no_mangle' is only supported on functions");
-            }
-            reject_attribute_args(attr);
-            return;
-        }
-        if (attr.name == "borrow_return") {
-            if (target_kind != "function") {
-                fail(attr.loc, "attribute '@borrow_return' is only supported on functions");
-            }
-            (void)explicit_borrow_return_contract({attr});
-            return;
-        }
-        if (attr.name == "cfg") {
-            (void)cfg_attribute_enabled(attr, options_.cfg_features, options_.target_triple);
-            return;
-        }
-        if (attr.name == "deprecated") {
-            if (attr.has_args &&
-                (attr.args.size() != 1 || attr.args[0].kind != TokenKind::String)) {
-                fail(attr.loc, "attribute '@deprecated' expects no arguments or one string message");
-            }
-            return;
-        }
-    }
-
     static const Attribute* deprecated_attribute(const std::vector<Attribute>& attributes) {
         return find_attribute(attributes, "deprecated");
     }
@@ -1425,7 +1350,7 @@ private:
         current_module_name_ = module_name;
         for (const auto& attr : attributes) {
             if (is_builtin_attribute_name(attr.name)) {
-                validate_builtin_attribute(attr, target_kind);
+                validate_builtin_attribute(attr, target_kind, options_.cfg_features, options_.target_triple);
                 continue;
             }
             (void)require_meta_invocation(attr.loc, MetaInvocationSite::Attribute, attr.name);

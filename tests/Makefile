@@ -2163,6 +2163,8 @@ check-meta: $(TARGET)
 	grep -q "unknown cfg predicate 'enabled'" $(BUILD_DIR)/meta/attribute-cfg-argument.err
 	if $(TARGET) tests/errors/attribute-deprecated-argument.ari -o $(BUILD_DIR)/meta/attribute-deprecated-argument.elf >$(BUILD_DIR)/meta/attribute-deprecated-argument.err 2>&1; then exit 1; fi
 	grep -q "attribute '@deprecated' expects no arguments or one string message" $(BUILD_DIR)/meta/attribute-deprecated-argument.err
+	if $(TARGET) tests/errors/attribute-export-argument.ari -o $(BUILD_DIR)/meta/attribute-export-argument.elf >$(BUILD_DIR)/meta/attribute-export-argument.err 2>&1; then exit 1; fi
+	grep -q "attribute '@export' expects no arguments or one string symbol name" $(BUILD_DIR)/meta/attribute-export-argument.err
 	if $(TARGET) tests/errors/attribute-export-symbol-invalid.ari -o $(BUILD_DIR)/meta/attribute-export-symbol-invalid.elf >$(BUILD_DIR)/meta/attribute-export-symbol-invalid.err 2>&1; then exit 1; fi
 	grep -q "invalid exported symbol 'bad-symbol'" $(BUILD_DIR)/meta/attribute-export-symbol-invalid.err
 	if $(TARGET) tests/errors/attribute-export-mangle-collision.ari -o $(BUILD_DIR)/meta/attribute-export-mangle-collision.elf >$(BUILD_DIR)/meta/attribute-export-mangle-collision.err 2>&1; then exit 1; fi
