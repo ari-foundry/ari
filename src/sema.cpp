@@ -3642,7 +3642,7 @@ private:
             !unresolved_generic_payload &&
             !is_aggregate_enum_payload_type(payload_type)) {
             fail(loc,
-                 "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, plain tuple/array/struct aggregate, or nested aggregate enum values, got " +
+                 "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values, got " +
                      type_name(payload_type));
         }
         if (!payload_needs_aggregate && !is_legacy_enum_payload_type(payload_type)) {
@@ -4541,9 +4541,15 @@ private:
             }
         } else if (type.name == "Vec" || type.name == "prelude::Vec") {
             if (ast_type.args.size() != 1) fail(type.loc, "Vec requires exactly one element type");
-            type.primitive = IrPrimitiveKind::Vector;
-            type.name = "Vec";
-            type.args.push_back(resolve_executable_type(ast_type.args[0]));
+            IrType element = resolve_executable_type(ast_type.args[0]);
+            if (ast_type.array_size != 0) {
+                type = make_vector_storage_type(type.loc, element, ast_type.array_size);
+                type.qualifier = ast_type.qualifier;
+            } else {
+                type.primitive = IrPrimitiveKind::Vector;
+                type.name = "Vec";
+                type.args.push_back(element);
+            }
         } else if (is_prelude_range_type_name(type.name)) {
             if (ast_type.args.size() != 1) {
                 fail(type.loc,

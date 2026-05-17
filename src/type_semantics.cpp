@@ -218,6 +218,7 @@ bool is_aggregate_enum_payload_type(const IrType& type) {
     return type.primitive == IrPrimitiveKind::Enum ||
            type.primitive == IrPrimitiveKind::Tuple ||
            type.primitive == IrPrimitiveKind::Array ||
+           (type.primitive == IrPrimitiveKind::Vector && type.array_size != 0 && !type.field_types.empty()) ||
            type.primitive == IrPrimitiveKind::Struct;
 }
 
@@ -269,6 +270,18 @@ std::string type_ref_key(const TypeRef& type) {
 
     if (type.name == "Array" && type.args.size() == 1) {
         key += "[" + type_ref_key(type.args[0]) + ", " + std::to_string(type.array_size) + "]";
+        if (type.nullable) key += "?";
+        return key;
+    }
+
+    if ((type.name == "Vec" || type.name == "prelude::Vec") && type.args.size() == 1) {
+        key += "Vec[";
+        key += type_ref_key(type.args[0]);
+        if (type.array_size != 0) {
+            key += "; ";
+            key += std::to_string(type.array_size);
+        }
+        key += "]";
         if (type.nullable) key += "?";
         return key;
     }

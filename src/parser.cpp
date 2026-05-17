@@ -509,7 +509,9 @@ private:
             type.is_macro_invocation = true;
             type.macro_tokens = parse_macro_token_tree(bang.loc);
         } else if (match(TokenKind::LBracket)) {
-            if (!check(TokenKind::RBracket)) {
+            if (type.name == "Vec" || type.name == "prelude::Vec") {
+                parse_vec_type_args(type);
+            } else if (!check(TokenKind::RBracket)) {
                 do {
                     type.args.push_back(parse_type());
                 } while (match(TokenKind::Comma));
@@ -523,6 +525,20 @@ private:
             }
         }
         return finish_type(std::move(type));
+    }
+
+    void parse_vec_type_args(TypeRef& type) {
+        if (check(TokenKind::RBracket)) fail(peek().loc, "Vec requires exactly one element type");
+        type.args.push_back(parse_type());
+        if (match(TokenKind::Semicolon)) {
+            Token size = expect(TokenKind::Integer, "expected integer Vec capacity");
+            if (size.int_value == 0) fail(size.loc, "Vec capacity types require a size greater than zero");
+            type.array_size = size.int_value;
+            return;
+        }
+        if (check(TokenKind::Comma)) {
+            fail(peek().loc, "Vec types use Vec[T] or Vec[T; capacity]");
+        }
     }
 
     TypeRef finish_type(TypeRef type) {

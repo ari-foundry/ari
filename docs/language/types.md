@@ -723,13 +723,32 @@ The compiler reserves enough local storage for the largest vector literal,
 explicit `reserve` capacity, or tracked `push` growth seen for that binding,
 but indexing checks the current runtime length, not the reserved capacity. The
 storage is deliberately not heap allocation yet. Allocator-backed growth,
-slicing, and non-local vector ABI are still planned. On the raw
-the LLVM backend, stored local vector literals, local copies, scalar
+slicing, and non-local vector ABI are still planned. On the LLVM backend,
+stored local vector literals, local copies, scalar
 indexing, `len`, `is_empty`, `capacity`, `first`, `last`, `get`, `contains`,
 `index_of`, `count`, `reserve`, `push`, `insert`, `pop`, `remove`, `clear`,
 `truncate`, `set`, `swap`, and stored-vector `for` loops lower through the same
 fixed local layout. These methods still use local capacity traps rather than
 allocator-backed growth.
+
+`Vec[T; capacity]` is the explicit spelling for that fixed-capacity storage
+type when a non-local aggregate slot needs a stable layout. It stores the
+current runtime length plus `capacity` inline element slots, can be initialized
+from a vector literal through an expected type, and is accepted in supported
+aggregate enum payload slots:
+
+```ari
+enum Packet {
+  Values(Vec[i64; 3]),
+  Empty,
+}
+
+let packet: Packet = Values([1, 2, 3])
+```
+
+Bare root `Vec[T]` remains the ergonomic local and parameter spelling for now;
+it is still rejected in enum payload storage because it does not carry a stable
+capacity in the type.
 
 Array literals support constant indexing without materializing a runtime
 aggregate:
@@ -1008,7 +1027,8 @@ raw-pointer-backed aggregate enum values with tuple-index syntax: `value.0` or
 `(*raw).0` addresses payload slot 0, not the hidden tag field. Scalar and
 pointer-shaped payload slots expose their stored `u64` payload word; nested
 aggregate-enum slots expose that nested enum storage; and plain tuple,
-fixed-array, or struct payload slots expose the full stored aggregate value.
+fixed-array, struct, or fixed-capacity vector payload slots expose the full
+stored aggregate value.
 The access does not check the current tag, so normal `match` payload patterns
 remain the checked case-aware surface.
 `ptr_load(pointer)` and

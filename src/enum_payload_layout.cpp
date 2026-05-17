@@ -23,6 +23,7 @@ bool is_inline_payload_storage_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Value &&
            (type.primitive == IrPrimitiveKind::Tuple ||
             type.primitive == IrPrimitiveKind::Array ||
+            (type.primitive == IrPrimitiveKind::Vector && type.array_size != 0 && !type.field_types.empty()) ||
             type.primitive == IrPrimitiveKind::Struct);
 }
 

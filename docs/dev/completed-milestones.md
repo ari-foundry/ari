@@ -149,7 +149,7 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   identities fail during module-cache loading instead of reaching backend
   symbol lookup.
 - `v0` layout descriptors live in the existing cache family. Current descriptors
-  cover cache-only local `Vec[T; capacity]` storage as `vector-storage`
+  cover fixed-capacity `Vec[T; capacity]` storage as `vector-storage`
   entries, and cache-use tests compare fresh/cache LLVM output byte-for-byte
   for that metadata.
 
@@ -182,9 +182,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   one-word enums, nested aggregate enums, and the current mixed payload-word
   plus nested-enum lane rule.
 - Aggregate enum payload slots can store plain Ari-layout tuple, fixed-array,
-  and struct payload values inline. Match payload bindings and direct payload
-  slot access expose the full aggregate value while vector and owned payload
-  storage stay planned behind their ABI rules.
+  struct, and explicit fixed-capacity `Vec[T; N]` payload values inline. Match
+  payload bindings and direct payload slot access expose the full aggregate
+  value while owned payload storage stays planned behind its ABI rules.
 - Enum patterns can destructure inline plain-aggregate payload slots with
   tuple, fixed-array, and struct subpatterns for value bindings, aliases,
   wildcards, and nested product subpatterns.

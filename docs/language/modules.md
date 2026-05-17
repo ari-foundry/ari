@@ -365,8 +365,8 @@ IR bodies validate `impl::...` call targets against the functions carried by the
 same sidecar before backend emission. Layout
 descriptors use `L;...D;...` records inside `ari-ir-summary-v0`; the current
 descriptor kind is `vector-storage`, which records the normalized
-`Vec[T; capacity]` storage type, element type, and slot count for cache-only
-local vector layouts. They are validated as part of cache parsing: the payload
+`Vec[T; capacity]` storage type, element type, and slot count for fixed-capacity
+vector layouts. They are validated as part of cache parsing: the payload
 header, hash, required body payload sections, layout descriptor inventory, and
 function count must agree with the cache record, and the source hash must still
 match the embedded metadata. When a dependency can skip parsing through its AST
@@ -379,7 +379,7 @@ The replayed IR must match the fresh sema path's lowered function surface; stale
 or tampered sidecars are rejected before backend emission. If a hash-valid
 sidecar still cannot be replayed into the current IR model, the compiler
 reports the lowered function that failed replay rather than continuing to
-backend emission. Cache-use replay also preserves cache-only layout metadata
+backend emission. Cache-use replay also preserves fixed-capacity layout metadata
 such as inferred local `Vec[T; capacity]` storage through those descriptors, so
 the lowered LLVM storage shape remains byte-for-byte identical to fresh
 semantic lowering. Missing, duplicate, unknown, unused, or mismatched layout

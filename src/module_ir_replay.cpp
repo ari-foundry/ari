@@ -3,6 +3,7 @@
 #include "common.hpp"
 #include "enum_payload_layout.hpp"
 #include "type_semantics.hpp"
+#include "vector_semantics.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -234,6 +235,18 @@ void apply_array_shape(IrType& type) {
     }
 }
 
+void apply_vector_shape(IrType& type) {
+    if (type.primitive != IrPrimitiveKind::Vector ||
+        type.args.size() != 1 ||
+        type.array_size == 0 ||
+        !type.field_types.empty()) {
+        return;
+    }
+    TypeQualifier qualifier = type.qualifier;
+    type = make_vector_storage_type(type.loc, type.args[0], type.array_size);
+    type.qualifier = qualifier;
+}
+
 IrType replay_type_ref(const TypeRef& ref,
                        const ReplayTypeContext& context,
                        const std::map<std::string, IrType>& substitutions) {
@@ -298,6 +311,7 @@ IrType replay_type_ref(const TypeRef& ref,
     apply_aggregate_shape(type, context);
     apply_enum_shape(type, context);
     apply_array_shape(type);
+    apply_vector_shape(type);
     return type;
 }
 
@@ -476,6 +490,7 @@ private:
         }
         apply_aggregate_shape(type, context_);
         apply_enum_shape(type, context_);
+        apply_vector_shape(type);
         return type;
     }
 
@@ -566,6 +581,7 @@ private:
             ++pos_;
             type.array_size = parse_array_size();
             expect(']');
+            if (type.array_size == 0) fail("Vec capacity types require a size greater than zero");
             return;
         }
         expect(']');

@@ -165,7 +165,7 @@ reported as module-cache IR replay diagnostics before backend emission. The
 module-cache generics fixture also checks that generic free-function and
 generated impl-method specializations are recorded in the IR sidecar, replayed
 only once during cache use, and still execute correctly through the LLVM path. A
-focused layout guard checks cache-only local `Vec[T; capacity]` type metadata by
+focused layout guard checks fixed-capacity `Vec[T; capacity]` type metadata by
 requiring an explicit `vector-storage` IR layout descriptor, rejecting a
 tampered descriptor, and comparing fresh and cache-use LLVM storage shapes.
 
