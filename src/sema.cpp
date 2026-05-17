@@ -11723,7 +11723,7 @@ private:
         const std::vector<IrMatchArm>& pattern_arms
     ) {
         const IrExpr* construct = known_enum_construct_for_while_let_match_value(match_value);
-        return construct && enum_construct_matches_arm_without_refutable_payload_conditions(*construct, pattern_arms);
+        return construct && enum_construct_matches_arm_statically(*construct, pattern_arms);
     }
 
     Flow check_enum_while_let_body(

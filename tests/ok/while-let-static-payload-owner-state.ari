@@ -1,0 +1,17 @@
+enum Maybe {
+  None,
+  Some(i64),
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let token: own i64 = make_owned(11);
+  while let Some(1) = Some(1) {
+    drop token;
+    break;
+  }
+  return 0;
+}
