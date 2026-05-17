@@ -353,8 +353,9 @@ function surface, body shape, and operand-tree payload for each source. The V0
 IR sidecar requires both the body-shape section and the operand-tree section,
 and may carry explicit layout descriptors before the function summaries. Generic
 free-function and generated impl-method specializations also carry a stable
-specialization record with their origin item and concrete type arguments. On
-cache use, semantic checking treats those lowered specialization names as
+specialization record with their origin item and concrete type arguments.
+Cache use validates those specialization origins against the cached AST surface
+before semantic checking treats those lowered specialization names as
 already provided by the IR sidecar, so direct root calls into cached generic
 dependencies do not re-lower duplicate bodies before replay. Layout
 descriptors use `L;...D;...` records inside `ari-ir-summary-v0`; the current

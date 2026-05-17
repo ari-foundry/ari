@@ -109,7 +109,8 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - V0 IR sidecars record stable specialization metadata for replayed generic
   free-function and generated impl-method specializations. Cache-use semantic
   checking recognizes those lowered names and does not re-lower duplicate
-  specializations before the replayed bodies are appended.
+  specializations before the replayed bodies are appended. Cache loading also
+  validates specialization origins against the cached AST surface before replay.
 - V0 layout descriptors live in the existing cache family. Current descriptors
   cover cache-only local `Vec[T; capacity]` storage as `vector-storage`
   entries, and cache-use tests compare fresh/cache LLVM output byte-for-byte

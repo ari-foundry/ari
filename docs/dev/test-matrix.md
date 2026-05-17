@@ -559,9 +559,9 @@ Checklist:
       shapes, skip cached semantic body lowering, and match fresh cache-emission
       LLVM output byte-for-byte
 - [x] IR sidecars replay generic free-function and generated impl-method
-      specializations from cached dependencies, preserve their origin/type-arg
-      specialization metadata, and prevent duplicate lowering when the root
-      directly calls cached generic APIs
+      specializations from cached dependencies, validate and preserve their
+      origin/type-arg specialization metadata, and prevent duplicate lowering
+      when the root directly calls cached generic APIs
 - [x] hash-valid but malformed IR sidecar replay payloads are rejected with a
       module-cache replay diagnostic before backend emission
 - [x] IR sidecar cache-use replay writes explicit `vector-storage` layout

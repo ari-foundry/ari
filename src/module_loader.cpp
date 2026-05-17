@@ -80,6 +80,26 @@ std::string searched_paths_text(const std::vector<std::string>& paths) {
     return text;
 }
 
+bool starts_with(const std::string& text, const std::string& prefix) {
+    return text.size() >= prefix.size() &&
+           text.compare(0, prefix.size(), prefix) == 0;
+}
+
+std::string basename_of_name(const std::string& name) {
+    std::size_t split = name.rfind("::");
+    if (split == std::string::npos) return name;
+    return name.substr(split + 2);
+}
+
+bool split_impl_specialization_origin(const std::string& origin,
+                                      std::string& method_name) {
+    if (!starts_with(origin, "impl::")) return false;
+    std::size_t split = origin.rfind("::");
+    if (split == std::string::npos || split + 2 >= origin.size()) return false;
+    method_name = origin.substr(split + 2);
+    return !method_name.empty();
+}
+
 ModuleFileSearch find_module_file(const ModuleImport& import,
                                   const std::string& base_dir,
                                   const std::vector<std::string>& module_search_paths) {
@@ -171,6 +191,17 @@ void require_ir_summary_specializations_match_ast_summary(
     for (const auto& fn : declarations.functions) {
         if (!fn.generics.empty()) generic_function_names.insert(fn.name);
     }
+    std::set<std::string> impl_specialization_method_names;
+    for (const auto& impl : declarations.impls) {
+        for (const auto& method : impl.methods) {
+            impl_specialization_method_names.insert(basename_of_name(method.name));
+        }
+    }
+    for (const auto& trait : declarations.traits) {
+        for (const auto& method : trait.methods) {
+            impl_specialization_method_names.insert(basename_of_name(method.name));
+        }
+    }
 
     for (const auto& fn : ir_functions) {
         if (fn.specialization_kind.empty()) continue;
@@ -183,7 +214,17 @@ void require_ir_summary_specializations_match_ast_summary(
             }
             continue;
         }
-        if (fn.specialization_kind == "impl-method") continue;
+        if (fn.specialization_kind == "impl-method") {
+            std::string method_name;
+            if (!split_impl_specialization_origin(fn.specialization_origin, method_name) ||
+                !impl_specialization_method_names.count(method_name)) {
+                throw CompileError("module cache IR summary for '" + path +
+                                   "' has impl-method specialization '" + fn.name +
+                                   "' for unknown impl method origin '" +
+                                   fn.specialization_origin + "'");
+            }
+            continue;
+        }
         throw CompileError("module cache IR summary for '" + path +
                            "' has unknown specialization kind '" +
                            fn.specialization_kind + "' for lowered function '" +

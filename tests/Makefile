@@ -1451,6 +1451,10 @@ check-modules: $(TARGET)
 	test $$(grep -c 'define { i64 } @"_ARNv4impl29cache_generics__CacheBox_i64_8inherent3new"' $(BUILD_DIR)/modules/package-cache-generics-cache-use.ll) -eq 1
 	test $$(grep -c 'define { i64 } @"_ARNv4impl29cache_generics__CacheBox_i64_8inherent14replace__G_i64"' $(BUILD_DIR)/modules/package-cache-generics-cache-use.ll) -eq 1
 	test $$(grep -c 'define i64 @"_ARNv4impl29cache_generics__CacheBox_i64_8inherent4take"' $(BUILD_DIR)/modules/package-cache-generics-cache-use.ll) -eq 1
+	python3 tests/tamper_module_cache_ir_summary.py $(BUILD_DIR)/modules/package-cache-generics.aricache $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.aricache cache_generics '54:impl::cache_generics__CacheBox_i64_::inherent::replace' '54:impl::cache_generics__CacheBox_i64_::inherent::fakerep'
+	if $(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.ll >$(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.err 2>&1; then exit 1; fi
+	grep -q "has impl-method specialization" $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.err
+	grep -q "unknown impl method origin" $(BUILD_DIR)/modules/package-cache-generics-impl-origin-tampered.err
 	$(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics.aricache -o $(BUILD_DIR)/modules/package-cache-generics.elf
 	$(BUILD_DIR)/modules/package-cache-generics.elf; code=$$?; test $$code -eq 16
 	$(TARGET) -Itests/packages tests/ok/package-cache-host-literals-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-host-literals.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-host-literals-cache.ll
