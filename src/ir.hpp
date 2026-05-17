@@ -172,6 +172,13 @@ struct IrPayloadRangeCondition {
     bool compact_enum_payload = false;
 };
 
+struct IrPayloadVectorLengthCondition {
+    std::uint32_t index = 0;
+    std::vector<std::uint32_t> field_path;
+    std::uint64_t length = 0;
+    bool at_least = false;
+};
+
 struct IrPayloadEnumCondition {
     std::uint32_t index = 0;
     IrType enum_type;
@@ -211,6 +218,7 @@ struct IrMatchExprArm {
     bool range_is_unsigned = false;
     std::vector<IrPayloadLiteralCondition> payload_literal_conditions;
     std::vector<IrPayloadRangeCondition> payload_range_conditions;
+    std::vector<IrPayloadVectorLengthCondition> payload_vector_length_conditions;
     std::vector<IrPayloadEnumCondition> payload_enum_conditions;
     std::string case_name;
     std::uint32_t enum_tag = 0;
@@ -674,6 +682,7 @@ struct IrMatchArm {
     bool range_is_unsigned = false;
     std::vector<IrPayloadLiteralCondition> payload_literal_conditions;
     std::vector<IrPayloadRangeCondition> payload_range_conditions;
+    std::vector<IrPayloadVectorLengthCondition> payload_vector_length_conditions;
     std::vector<IrPayloadEnumCondition> payload_enum_conditions;
     std::string case_name;
     std::uint32_t enum_tag = 0;

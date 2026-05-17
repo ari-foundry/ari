@@ -55,10 +55,11 @@ changing the long-term language contract.
    Current aggregate enum payloads now cover scalar/pointer-shaped slots,
    one-word enums, nested aggregate enums, and plain Ari-layout tuple,
    fixed-array, struct, and explicit fixed-capacity `Vec[T; N]` payload values,
-   with value-binding product subpatterns over those plain tuple/array/struct
-   aggregate slots. Define owned payload values after their non-local
-   ABI/storage rules are stable. Define payload-bearing `@repr(C)` enum layout
-   and C header emission after that ABI is stable.
+   with value-binding product subpatterns over plain tuple/array/struct
+   aggregate slots and exact array-style element subpatterns over
+   fixed-capacity vector payload slots. Define owned payload values after their
+   non-local ABI/storage rules are stable. Define payload-bearing `@repr(C)`
+   enum layout and C header emission after that ABI is stable.
 
 See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
 roadmap for splitting `src/sema.cpp` by broad semantic phases.

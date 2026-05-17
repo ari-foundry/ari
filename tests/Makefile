@@ -1246,7 +1246,7 @@ check-match: $(TARGET)
 	$(TARGET) tests/ok/enum-plain-aggregate-payloads.ari -o $(BUILD_DIR)/match/enum-plain-aggregate-payloads.elf
 	$(BUILD_DIR)/match/enum-plain-aggregate-payloads.elf; code=$$?; test $$code -eq 63
 	$(TARGET) tests/ok/enum-fixed-vector-payload.ari -o $(BUILD_DIR)/match/enum-fixed-vector-payload.elf
-	$(BUILD_DIR)/match/enum-fixed-vector-payload.elf; code=$$?; test $$code -eq 27
+	$(BUILD_DIR)/match/enum-fixed-vector-payload.elf; code=$$?; test $$code -eq 96
 	$(TARGET) tests/ok/enum-payload-pointer-access.ari --emit-llvm $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	grep -q "getelementptr inbounds { i32, i64 }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	grep -q "getelementptr inbounds { i32, { i32, i64, i64 } }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll

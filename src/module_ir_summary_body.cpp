@@ -294,6 +294,15 @@ void append_payload_range_condition(std::string& out, const IrPayloadRangeCondit
     append_field(out, bool_key(condition.compact_enum_payload));
 }
 
+void append_payload_vector_length_condition(std::string& out,
+                                            const IrPayloadVectorLengthCondition& condition) {
+    append_count(out, condition.index);
+    append_count(out, condition.field_path.size());
+    for (std::uint32_t field : condition.field_path) append_count(out, field);
+    append_count(out, condition.length);
+    append_field(out, bool_key(condition.at_least));
+}
+
 void append_payload_enum_condition(std::string& out, const IrPayloadEnumCondition& condition) {
     append_count(out, condition.index);
     append_type(out, condition.enum_type);
@@ -346,6 +355,10 @@ void append_match_arm_pattern(std::string& out, const Arm& arm) {
     append_count(out, arm.payload_range_conditions.size());
     for (const auto& condition : arm.payload_range_conditions) {
         append_payload_range_condition(out, condition);
+    }
+    append_count(out, arm.payload_vector_length_conditions.size());
+    for (const auto& condition : arm.payload_vector_length_conditions) {
+        append_payload_vector_length_condition(out, condition);
     }
     append_count(out, arm.payload_enum_conditions.size());
     for (const auto& condition : arm.payload_enum_conditions) {
@@ -716,6 +729,24 @@ private:
         return conditions;
     }
 
+    std::vector<ModuleCacheIrPayloadVectorLengthConditionSummary> read_payload_vector_length_conditions() {
+        std::vector<ModuleCacheIrPayloadVectorLengthConditionSummary> conditions;
+        std::uint64_t count = read_count();
+        for (std::uint64_t i = 0; i < count; ++i) {
+            ModuleCacheIrPayloadVectorLengthConditionSummary condition;
+            condition.index = read_count();
+            std::uint64_t field_count = read_count();
+            condition.field_path.reserve(static_cast<std::size_t>(field_count));
+            for (std::uint64_t j = 0; j < field_count; ++j) {
+                condition.field_path.push_back(read_count());
+            }
+            condition.length = read_count();
+            condition.at_least = read_bool_field("payload vector length minimum");
+            conditions.push_back(std::move(condition));
+        }
+        return conditions;
+    }
+
     std::vector<ModuleCacheIrPayloadEnumConditionSummary> read_payload_enum_conditions() {
         std::vector<ModuleCacheIrPayloadEnumConditionSummary> conditions;
         std::uint64_t count = read_count();
@@ -764,6 +795,7 @@ private:
         pattern.payload_bindings = read_payload_bindings();
         pattern.payload_literal_conditions = read_payload_literal_conditions();
         pattern.payload_range_conditions = read_payload_range_conditions();
+        pattern.payload_vector_length_conditions = read_payload_vector_length_conditions();
         pattern.payload_enum_conditions = read_payload_enum_conditions();
         return pattern;
     }

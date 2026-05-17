@@ -115,7 +115,10 @@ storage spelling and occupy the full payload slot as a vector value. Plain
 aggregate payloads occupy the full payload slot and can be bound as full values
 in `match` arms, or destructured with tuple, fixed-array, or struct payload
 subpatterns that contain value bindings, aliases, wildcards, and nested product
-subpatterns. If one payload position mixes
+subpatterns. Fixed-capacity vector payload slots can also be destructured with
+exact array-style element patterns such as `Values([first, second])`; the match
+arm checks the vector's current runtime length before extracting the inline data
+slots. If one payload position mixes
 payload-word values with one nested aggregate enum type, the slot uses the
 nested enum layout. Payload-word cases zero-initialize that nested storage and
 write the payload word into the nested enum's first payload slot, while nested
@@ -249,6 +252,25 @@ let flag_score = match maybe_flag {
   Flag(true) => 1,
   Flag(false) => 0,
   Empty => -1,
+};
+```
+
+Fixed-capacity `Vec[T; N]` aggregate payload slots use array-style element
+patterns. The element list is exact: `Values([a, b])` only matches a vector whose
+current length is 2, even when its capacity is larger. Use `Values(values)` or
+`Values(_)` as the fallback arm for other lengths:
+
+```ari
+enum Packet {
+  Values(Vec[i64; 3]),
+  Empty,
+}
+
+let total = match packet {
+  Values([first, second, third]) => first + second + third,
+  Values([first, second]) => first * 10 + second,
+  Values(_) => 0,
+  Empty => 0,
 };
 ```
 

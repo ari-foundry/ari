@@ -746,6 +746,11 @@ enum Packet {
 let packet: Packet = Values([1, 2, 3])
 ```
 
+Inside enum `match` arms, `Vec[T; capacity]` payload slots support exact
+array-style destructuring. A pattern such as `Values([first, second])` checks
+that the stored vector's current length is exactly 2 before binding the inline
+element slots.
+
 Bare root `Vec[T]` remains the ergonomic local and parameter spelling for now;
 it is still rejected in enum payload storage because it does not carry a stable
 capacity in the type.

@@ -16,6 +16,16 @@ fn direct_slot() -> i64 {
   return len(payload) + payload[0] + payload[1] + payload[2];
 }
 
+fn destructure(value: VecPacket) -> i64 {
+  return match value {
+    Values([first, second, third]) => first + second + third,
+    Values([short_first, short_second]) => short_first * 10 + short_second,
+    Values(_) => 1,
+    Empty => 0;
+  };
+}
+
 fn main() -> i64 {
-  return score(Values([1, 2, 3])) + direct_slot();
+  return score(Values([1, 2, 3])) + direct_slot() +
+    destructure(Values([7, 8, 9])) + destructure(Values([4, 5]));
 }

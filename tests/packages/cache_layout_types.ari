@@ -5,3 +5,17 @@ pub fn vector_capacity_shape() -> i64 {
   values.push(11);
   return values.capacity() + values.len() + values[1];
 }
+
+enum Packet {
+  Values(Vec[i64; 5]),
+  Empty,
+}
+
+pub fn fixed_vector_payload_match() -> i64 {
+  let packet: Packet = Values([3, 4]);
+  return match packet {
+    Values([first, second]) => first * 10 + second,
+    Values(_) => 1,
+    Empty => 0;
+  };
+}

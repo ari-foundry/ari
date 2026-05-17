@@ -374,7 +374,10 @@ summary and a matching IR sidecar is present, the loader parses the lowered
 function surface, materializes the lowered statement/expression summary tree,
 replays named struct/enum/fixed-array and local-`Vec` capacity type shapes, and
 injects pre-lowered dependency bodies into the final IR while skipping semantic
-body lowering for those cached functions.
+body lowering for those cached functions. Match-arm payload tests in the IR
+summary include scalar literal/range tests, nested enum payload tests, and
+fixed-capacity vector payload length checks used by exact array-style enum
+payload patterns.
 The replayed IR must match the fresh sema path's lowered function surface; stale
 or tampered sidecars are rejected before backend emission. If a hash-valid
 sidecar still cannot be replayed into the current IR model, the compiler

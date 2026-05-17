@@ -10739,11 +10739,15 @@ private:
                 }
                 fail(payload.loc, "nested tuple enum payload patterns require a tuple aggregate enum payload");
             case PatternKind::Array:
+                if (aggregate_layout && is_vector_storage_type(payload_type) && payload_type.array_size != 0) {
+                    lower_enum_payload_fixed_vector_pattern(payload, payload_type, lowered_arm, payload_index);
+                    return false;
+                }
                 if (aggregate_layout && payload_type.primitive == IrPrimitiveKind::Array) {
                     lower_enum_payload_product_pattern(payload, payload_type, lowered_arm, payload_index);
                     return true;
                 }
-                fail(payload.loc, "array enum payload patterns require an array aggregate enum payload");
+                fail(payload.loc, "array enum payload patterns require an array or fixed-capacity Vec aggregate enum payload");
             case PatternKind::Struct:
                 if (aggregate_layout && payload_type.primitive == IrPrimitiveKind::Struct) {
                     lower_enum_payload_product_pattern(payload, payload_type, lowered_arm, payload_index);
@@ -11304,6 +11308,66 @@ private:
         }
     }
 
+    void lower_enum_payload_fixed_vector_pattern(const Pattern& payload,
+                                                 const IrType& payload_type,
+                                                 IrMatchArm& lowered_arm,
+                                                 std::uint32_t payload_index,
+                                                 std::vector<std::uint32_t> field_path = {}) {
+        const Pattern& effective_payload = expanded_pattern(payload);
+        if (&effective_payload != &payload) {
+            lower_enum_payload_fixed_vector_pattern(
+                effective_payload,
+                payload_type,
+                lowered_arm,
+                payload_index,
+                std::move(field_path));
+            return;
+        }
+        if (payload.kind != PatternKind::Array) {
+            fail(payload.loc, "fixed-capacity Vec enum payload patterns require an array pattern");
+        }
+        if (!is_vector_storage_type(payload_type) || payload_type.array_size == 0 ||
+            payload_type.args.size() != 1 || payload_type.field_types.size() < 2) {
+            fail(payload.loc,
+                 "fixed-capacity Vec enum payload pattern requires Vec[T; N], got " +
+                     type_name(payload_type));
+        }
+        if (!payload.rest_alias_name.empty()) {
+            fail(payload.rest_alias_loc,
+                 "fixed-capacity Vec enum payload rest aliases require owned Slice payload paths");
+        }
+        if (payload.has_rest) {
+            fail(payload.loc,
+                 "fixed-capacity Vec enum payload patterns currently require an exact element list");
+        }
+        if (payload.elements.size() > payload_type.array_size) {
+            fail(payload.loc,
+                 "fixed-capacity Vec enum payload pattern has " +
+                     std::to_string(payload.elements.size()) +
+                     " elements but capacity is " +
+                     std::to_string(payload_type.array_size));
+        }
+
+        IrPayloadVectorLengthCondition length_condition;
+        length_condition.index = payload_index;
+        length_condition.field_path = field_path;
+        length_condition.length = payload.elements.size();
+        lowered_arm.payload_vector_length_conditions.push_back(std::move(length_condition));
+
+        const IrType& element_type = payload_type.args[0];
+        for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+            std::vector<std::uint32_t> nested_path = field_path;
+            nested_path.push_back(1);
+            nested_path.push_back(static_cast<std::uint32_t>(i));
+            lower_enum_payload_product_pattern(
+                payload.elements[i],
+                element_type,
+                lowered_arm,
+                payload_index,
+                std::move(nested_path));
+        }
+    }
+
     void lower_enum_payload_product_pattern(const Pattern& payload,
                                             const IrType& payload_type,
                                             IrMatchArm& lowered_arm,
@@ -11350,6 +11414,17 @@ private:
                 return;
             case PatternKind::Tuple:
             case PatternKind::Array: {
+                if (payload.kind == PatternKind::Array &&
+                    is_vector_storage_type(payload_type) &&
+                    payload_type.array_size != 0) {
+                    lower_enum_payload_fixed_vector_pattern(
+                        payload,
+                        payload_type,
+                        lowered_arm,
+                        payload_index,
+                        std::move(field_path));
+                    return;
+                }
                 IrPrimitiveKind expected = payload.kind == PatternKind::Array
                     ? IrPrimitiveKind::Array
                     : IrPrimitiveKind::Tuple;

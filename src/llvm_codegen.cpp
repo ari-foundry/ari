@@ -2721,6 +2721,19 @@ private:
             line("  " + both + " = and i1 " + condition + ", " + range);
             condition = both;
         }
+        for (const auto& payload_condition : arm.payload_vector_length_conditions) {
+            Value payload = emit_enum_payload_slot(arm.loc, value, payload_condition.index);
+            std::vector<std::uint32_t> length_path = payload_condition.field_path;
+            length_path.push_back(0);
+            Value length = emit_payload_binding_field_path(arm.loc, payload, length_path);
+            std::string length_cmp = temp();
+            std::string both = temp();
+            const std::string op = payload_condition.at_least ? "sge" : "eq";
+            line("  " + length_cmp + " = icmp " + op + " " + length.type + " " +
+                 length.name + ", " + std::to_string(payload_condition.length));
+            line("  " + both + " = and i1 " + condition + ", " + length_cmp);
+            condition = both;
+        }
         for (const auto& payload_condition : arm.payload_enum_conditions) {
             Value nested = emit_compact_enum_payload_value(arm.loc, value, payload_condition.index, payload_condition.enum_type);
             Value tag = emit_enum_tag_value(arm.loc, nested);

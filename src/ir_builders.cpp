@@ -402,6 +402,7 @@ IrMatchExprArm make_match_expr_arm(IrMatchArm arm) {
     expr_arm.range_is_unsigned = arm.range_is_unsigned;
     expr_arm.payload_literal_conditions = std::move(arm.payload_literal_conditions);
     expr_arm.payload_range_conditions = std::move(arm.payload_range_conditions);
+    expr_arm.payload_vector_length_conditions = std::move(arm.payload_vector_length_conditions);
     expr_arm.payload_enum_conditions = std::move(arm.payload_enum_conditions);
     expr_arm.case_name = std::move(arm.case_name);
     expr_arm.enum_tag = arm.enum_tag;

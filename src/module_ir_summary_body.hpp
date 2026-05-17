@@ -50,6 +50,13 @@ struct ModuleCacheIrPayloadRangeConditionSummary {
     bool compact_enum_payload = false;
 };
 
+struct ModuleCacheIrPayloadVectorLengthConditionSummary {
+    std::uint64_t index = 0;
+    std::vector<std::uint64_t> field_path;
+    std::uint64_t length = 0;
+    bool at_least = false;
+};
+
 struct ModuleCacheIrPayloadEnumConditionSummary {
     std::uint64_t index = 0;
     std::string enum_type;
@@ -90,6 +97,7 @@ struct ModuleCacheIrMatchArmPatternSummary {
     std::vector<ModuleCacheIrPayloadBindingSummary> payload_bindings;
     std::vector<ModuleCacheIrPayloadLiteralConditionSummary> payload_literal_conditions;
     std::vector<ModuleCacheIrPayloadRangeConditionSummary> payload_range_conditions;
+    std::vector<ModuleCacheIrPayloadVectorLengthConditionSummary> payload_vector_length_conditions;
     std::vector<ModuleCacheIrPayloadEnumConditionSummary> payload_enum_conditions;
 };
 

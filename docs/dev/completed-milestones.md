@@ -192,6 +192,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Enum patterns can destructure inline plain-aggregate payload slots with
   tuple, fixed-array, and struct subpatterns for value bindings, aliases,
   wildcards, and nested product subpatterns.
+- Enum patterns can destructure explicit fixed-capacity `Vec[T; N]` payload
+  slots with exact array-style element patterns. The lowered arm checks the
+  vector's current length before extracting inline element fields.
 - Aggregate enum payload slot access through `value.0` and `(*raw_enum).0`
   addresses payload slot 0 rather than the hidden tag field on local and
   raw-pointer-backed ABI paths.

@@ -830,6 +830,24 @@ std::vector<IrPayloadRangeCondition> replay_payload_range_conditions(
     return result;
 }
 
+std::vector<IrPayloadVectorLengthCondition> replay_payload_vector_length_conditions(
+    const std::vector<ModuleCacheIrPayloadVectorLengthConditionSummary>& summaries) {
+    std::vector<IrPayloadVectorLengthCondition> result;
+    result.reserve(summaries.size());
+    for (const auto& summary : summaries) {
+        IrPayloadVectorLengthCondition condition;
+        condition.index = to_u32(summary.index, "payload vector length condition index");
+        condition.field_path.reserve(summary.field_path.size());
+        for (std::uint64_t field : summary.field_path) {
+            condition.field_path.push_back(to_u32(field, "payload vector length field index"));
+        }
+        condition.length = summary.length;
+        condition.at_least = summary.at_least;
+        result.push_back(std::move(condition));
+    }
+    return result;
+}
+
 std::vector<IrPayloadEnumCondition> replay_payload_enum_conditions(
     const std::vector<ModuleCacheIrPayloadEnumConditionSummary>& summaries,
     const ReplayTypeContext& context) {
@@ -906,6 +924,8 @@ void replay_match_pattern(const ModuleCacheIrMatchArmPatternSummary& summary,
         replay_payload_literal_conditions(summary.payload_literal_conditions);
     arm.payload_range_conditions =
         replay_payload_range_conditions(summary.payload_range_conditions, context);
+    arm.payload_vector_length_conditions =
+        replay_payload_vector_length_conditions(summary.payload_vector_length_conditions);
     arm.payload_enum_conditions =
         replay_payload_enum_conditions(summary.payload_enum_conditions, context);
     arm.loc = replay_loc();

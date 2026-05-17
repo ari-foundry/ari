@@ -158,6 +158,7 @@ std::string format_product_missing_case(const IrType& type,
 std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
     if (!arm.payload_literal_conditions.empty() ||
         !arm.payload_range_conditions.empty() ||
+        !arm.payload_vector_length_conditions.empty() ||
         !arm.payload_enum_conditions.empty()) {
         std::string key = std::to_string(arm.enum_tag);
         for (const auto& condition : arm.payload_literal_conditions) {
@@ -168,6 +169,14 @@ std::string enum_payload_pattern_coverage_key(const IrMatchArm& arm) {
                    (condition.start_negative ? "-" : "") + std::to_string(condition.start_int) + ":" +
                    (condition.end_negative ? "-" : "") + std::to_string(condition.end_int) + ":" +
                    (condition.inclusive ? "1" : "0");
+        }
+        for (const auto& condition : arm.payload_vector_length_conditions) {
+            key += ":V" + std::to_string(condition.index);
+            for (std::uint32_t field : condition.field_path) {
+                key += "." + std::to_string(field);
+            }
+            key += ":" + std::to_string(condition.length) + ":" +
+                   (condition.at_least ? "ge" : "eq");
         }
         for (const auto& condition : arm.payload_enum_conditions) {
             key += ":E" + std::to_string(condition.index) + ":" + condition.enum_type.name + ":" +
@@ -797,6 +806,7 @@ EnumCoverageResult note_enum_match_coverage(EnumMatchCoverage& coverage,
                                             bool bool_payload_value) {
     if (!arm.payload_literal_conditions.empty() ||
         !arm.payload_range_conditions.empty() ||
+        !arm.payload_vector_length_conditions.empty() ||
         !arm.payload_enum_conditions.empty()) {
         covers_case = false;
     }
