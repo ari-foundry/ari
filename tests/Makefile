@@ -1900,15 +1900,22 @@ check-meta: $(TARGET)
 	$(TARGET) tests/ok/c-header-repr-array-fields.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-repr-array-fields.h --emit-llvm $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
 	grep -q 'typedef struct ApiArrayFields ApiArrayFields;' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'typedef struct ApiPairArray ApiPairArray;' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'typedef struct AriArray_i64_2 AriArray_i64_2;' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'uint8_t bytes\[4\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'int64_t words\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'int64_t (\*word_ptr)\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'const int64_t (\*word_ref)\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'int64_t (\*word_mut)\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'struct AriArray_i64_2 {' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t elements\[2\];' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'int64_t ari_array_fields(ApiArrayFields\* arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'int64_t ari_array_pair_sum(ApiPairArray arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'int64_t ari_array_ptr(int64_t (\*arg0)\[2\]);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'int64_t ari_array_ref(const int64_t (\*arg0)\[2\]);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'int64_t ari_take_array(AriArray_i64_2 arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'AriArray_i64_2 ari_make_array(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
+	grep -q 'define i64 @"ari_take_array"(\[2 x i64\] %arg0)' $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
+	grep -q 'define \[2 x i64\] @"ari_make_array"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
 	$(TARGET) --freestanding tests/ok/attribute-export-symbols-freestanding.ari -o $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw
 	$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw; code=$$?; test $$code -eq 10
 	readelf -sW $(BUILD_DIR)/meta/attribute-export-symbols-freestanding.raw >$(BUILD_DIR)/meta/attribute-export-symbols-freestanding.sym
@@ -2048,10 +2055,10 @@ check-meta: $(TARGET)
 	grep -q "C header emission for by-value parameter Wide is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-aggregate-by-value.err
 	if $(TARGET) --target x86_64-pc-windows-msvc tests/errors/c-header-target-aggregate-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-target-aggregate-by-value.h >$(BUILD_DIR)/meta/c-header-target-aggregate-by-value.err 2>&1; then exit 1; fi
 	grep -q "C header emission for by-value parameter ApiPair is currently supported only on 64-bit Unix targets" $(BUILD_DIR)/meta/c-header-target-aggregate-by-value.err
-	if $(TARGET) tests/errors/c-header-array-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-array-by-value.h >$(BUILD_DIR)/meta/c-header-array-by-value.err 2>&1; then exit 1; fi
-	grep -q "C header emission does not support by-value fixed-array parameter \\[i64, 2\\]; use ptr \\[i64, 2\\] or wrap it in a public @repr(C) struct" $(BUILD_DIR)/meta/c-header-array-by-value.err
-	if $(TARGET) tests/errors/c-header-array-return-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-array-return-by-value.h >$(BUILD_DIR)/meta/c-header-array-return-by-value.err 2>&1; then exit 1; fi
-	grep -q "C header emission does not support by-value fixed-array return type \\[i64, 2\\]; use ptr \\[i64, 2\\] or wrap it in a public @repr(C) struct" $(BUILD_DIR)/meta/c-header-array-return-by-value.err
+	if $(TARGET) tests/errors/c-header-large-array-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-large-array-by-value.h >$(BUILD_DIR)/meta/c-header-large-array-by-value.err 2>&1; then exit 1; fi
+	grep -q "C header emission for by-value parameter \\[i64, 3\\] is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-array-by-value.err
+	if $(TARGET) --target x86_64-pc-windows-msvc tests/errors/c-header-target-array-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-target-array-by-value.h >$(BUILD_DIR)/meta/c-header-target-array-by-value.err 2>&1; then exit 1; fi
+	grep -q "C header emission for by-value parameter \\[i64, 2\\] is currently supported only on 64-bit Unix targets" $(BUILD_DIR)/meta/c-header-target-array-by-value.err
 	if $(TARGET) tests/errors/attribute-cfg-argument.ari -o $(BUILD_DIR)/meta/attribute-cfg-argument.elf >$(BUILD_DIR)/meta/attribute-cfg-argument.err 2>&1; then exit 1; fi
 	grep -q "unknown cfg predicate 'enabled'" $(BUILD_DIR)/meta/attribute-cfg-argument.err
 	if $(TARGET) tests/errors/attribute-deprecated-argument.ari -o $(BUILD_DIR)/meta/attribute-deprecated-argument.elf >$(BUILD_DIR)/meta/attribute-deprecated-argument.err 2>&1; then exit 1; fi

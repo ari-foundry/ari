@@ -1,0 +1,4 @@
+@export("ari_take_wide_array")
+pub fn take_wide_array(values: [i64, 3]) -> i64 {
+  return values[0];
+}

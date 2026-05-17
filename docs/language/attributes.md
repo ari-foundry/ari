@@ -125,13 +125,15 @@ emitting `typedef int64_t Name;` plus prefixed integer constants such as
 structs, private enums, and implicit source `std` helper functions. Generic
 `@repr(C)` structs are emitted as opaque typedefs so pointer-only C APIs can
 name them; exported by-value instantiations also get concrete
-typedefs/definitions such as `GenericHandle_i64`. By-value struct parameters
-and returns are emitted only for direct aggregate ABI values on 64-bit Unix
-targets, currently up to 16 bytes with at most 8-byte alignment; larger or
-target-specific cases should use an explicit pointer ABI. Header generation
-rejects Ari-only values such as `string`, owned values, direct by-value
-fixed-size array parameters or returns, and aggregate values whose C ABI policy
-is not explicit.
+typedefs/definitions such as `GenericHandle_i64`. Direct by-value fixed-size
+array parameters and returns are exposed through generated wrapper typedefs
+such as `AriArray_i64_2`, because C function parameters cannot carry arrays by
+value directly. By-value struct and fixed-array parameters and returns are
+emitted only for direct aggregate ABI values on 64-bit Unix targets, currently
+up to 16 bytes with at most 8-byte alignment; larger or target-specific cases
+should use an explicit pointer ABI. Header generation rejects Ari-only values
+such as `string`, owned values, and aggregate values whose C ABI policy is not
+explicit.
 Raw `--freestanding` ELF output records explicit export/no-mangle names in the
 static symbol table too. Imported `extern "C"` calls still require the LLVM host
 backend until the raw backend grows a native C link path.

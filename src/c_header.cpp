@@ -43,9 +43,16 @@ struct CConcreteRecord {
     SourceLocation loc;
 };
 
+struct CArrayAlias {
+    std::string key;
+    std::string c_name;
+    IrType type;
+};
+
 using CRecordNames = std::map<std::string, CRecordInfo>;
 using CConcreteRecordNames = std::map<std::string, std::string>;
 using CEnumNames = std::map<std::string, std::string>;
+using CArrayNames = std::map<std::string, std::string>;
 
 std::string c_type_name(const IrType& type,
                         const CRecordNames& c_record_names,
@@ -60,6 +67,7 @@ std::string c_declaration(const IrType& type,
                           bool allow_record_values,
                           bool const_value = false);
 std::string c_record_type_name(const IrType& type, const CRecordNames& c_record_names);
+std::string c_array_alias_type_name(const IrType& type, const CArrayNames& c_array_names);
 
 std::string c_identifier_suffix(const std::string& text) {
     std::string out;
@@ -78,6 +86,23 @@ std::string c_identifier_suffix(const std::string& text) {
     return out;
 }
 
+std::string c_collapsed_identifier_suffix(const std::string& text) {
+    std::string suffix = c_identifier_suffix(text);
+    std::string out;
+    bool previous_underscore = false;
+    for (char c : suffix) {
+        if (c == '_') {
+            if (previous_underscore) continue;
+            previous_underscore = true;
+        } else {
+            previous_underscore = false;
+        }
+        out.push_back(c);
+    }
+    if (out.empty()) return "type";
+    return out;
+}
+
 std::string concrete_record_key(const IrType& type) {
     return type_name(type);
 }
@@ -89,6 +114,10 @@ std::string concrete_record_c_name(const IrType& type, const CRecordNames& c_rec
         out += c_identifier_suffix(type_name(arg));
     }
     return out;
+}
+
+std::string c_array_alias_c_name(const IrType& type) {
+    return "AriArray_" + c_collapsed_identifier_suffix(type_name(type));
 }
 
 std::string c_scalar_type_name(const IrType& type) {
@@ -136,6 +165,12 @@ std::string c_enum_type_name(const IrType& type, const CEnumNames& c_enum_names)
 
 bool is_value_array_type(const IrType& type) {
     return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Array;
+}
+
+std::string c_array_alias_type_name(const IrType& type, const CArrayNames& c_array_names) {
+    auto found = c_array_names.find(type_name(type));
+    if (found != c_array_names.end()) return found->second;
+    throw CompileError("C header emission has no fixed-array ABI alias for " + type_name(type));
 }
 
 std::string c_type_name(const IrType& type,
@@ -264,31 +299,55 @@ std::string emitted_function_symbol(const IrFunction& fn) {
     return fn.link_name.empty() ? mangle_function_name(fn.name) : fn.link_name;
 }
 
-void require_no_direct_array_function_abi(SourceLocation loc,
-                                          const IrType& type,
-                                          const std::string& context) {
-    if (!is_value_array_type(type)) return;
-    throw CompileError(where(loc) + ": C header emission does not support by-value fixed-array " +
-                       context + " " + type_name(type) +
-                       "; use ptr " + type_name(type) + " or wrap it in a public @repr(C) struct");
+bool is_direct_aggregate_abi_type(const IrType& type) {
+    return (type.qualifier == TypeQualifier::Value &&
+            (type.primitive == IrPrimitiveKind::Struct ||
+             type.primitive == IrPrimitiveKind::Array));
+}
+
+std::string pointer_abi_hint(const IrType& type) {
+    if (type.primitive == IrPrimitiveKind::Struct) return type.name;
+    return type_name(type);
+}
+
+std::string c_function_value_type_name(const IrType& type,
+                                       const CRecordNames& c_record_names,
+                                       const CConcreteRecordNames& c_concrete_record_names,
+                                       const CEnumNames& c_enum_names,
+                                       const CArrayNames& c_array_names,
+                                       bool allow_record_values) {
+    if (is_value_array_type(type)) return c_array_alias_type_name(type, c_array_names);
+    return c_type_name(type, c_record_names, c_concrete_record_names, c_enum_names, allow_record_values);
 }
 
 std::string function_prototype(const IrFunction& fn,
                                const CRecordNames& c_record_names,
                                const CConcreteRecordNames& c_concrete_record_names,
-                               const CEnumNames& c_enum_names) {
+                               const CEnumNames& c_enum_names,
+                               const CArrayNames& c_array_names) {
     std::ostringstream out;
-    out << c_type_name(fn.return_type, c_record_names, c_concrete_record_names, c_enum_names, true)
-        << " " << emitted_function_symbol(fn) << "(";
-    for (std::size_t i = 0; i < fn.params.size(); ++i) {
-        if (i > 0) out << ", ";
-        out << c_declaration(
-            fn.params[i].type,
+    out << c_function_value_type_name(
+            fn.return_type,
             c_record_names,
             c_concrete_record_names,
             c_enum_names,
-            "arg" + std::to_string(i),
-            true);
+            c_array_names,
+            true)
+        << " " << emitted_function_symbol(fn) << "(";
+    for (std::size_t i = 0; i < fn.params.size(); ++i) {
+        if (i > 0) out << ", ";
+        std::string arg_name = "arg" + std::to_string(i);
+        if (is_value_array_type(fn.params[i].type)) {
+            out << c_array_alias_type_name(fn.params[i].type, c_array_names) << " " << arg_name;
+        } else {
+            out << c_declaration(
+                fn.params[i].type,
+                c_record_names,
+                c_concrete_record_names,
+                c_enum_names,
+                arg_name,
+                true);
+        }
     }
     if (fn.params.empty()) out << "void";
     out << ");";
@@ -400,20 +459,47 @@ CConcreteRecordNames collect_concrete_record_names(const std::vector<CConcreteRe
     return names;
 }
 
-bool is_by_value_record_type(const IrType& type) {
-    return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Struct;
+void collect_direct_array_alias(const IrType& type, std::map<std::string, CArrayAlias>& aliases) {
+    if (!is_value_array_type(type)) return;
+    std::string key = type_name(type);
+    if (aliases.count(key)) return;
+    aliases.emplace(key, CArrayAlias{key, c_array_alias_c_name(type), type});
 }
 
-void require_direct_record_abi(SourceLocation loc,
-                               const IrType& type,
-                               const TargetInfo& target,
-                               const std::string& context) {
-    if (!is_by_value_record_type(type)) return;
+std::vector<CArrayAlias> collect_array_aliases(const IrProgram& program) {
+    std::map<std::string, CArrayAlias> by_key;
+    for (const auto& fn : program.functions) {
+        if (!should_emit_function_prototype(fn)) continue;
+        collect_direct_array_alias(fn.return_type, by_key);
+        for (const auto& param : fn.params) {
+            collect_direct_array_alias(param.type, by_key);
+        }
+    }
+
+    std::vector<CArrayAlias> out;
+    out.reserve(by_key.size());
+    for (auto& item : by_key) out.push_back(std::move(item.second));
+    return out;
+}
+
+CArrayNames collect_array_names(const std::vector<CArrayAlias>& aliases) {
+    CArrayNames names;
+    for (const auto& alias : aliases) {
+        names.emplace(alias.key, alias.c_name);
+    }
+    return names;
+}
+
+void require_direct_aggregate_abi(SourceLocation loc,
+                                  const IrType& type,
+                                  const TargetInfo& target,
+                                  const std::string& context) {
+    if (!is_direct_aggregate_abi_type(type)) return;
     if (!(target.pointer_bits == 64 && target.unix)) {
         throw CompileError(where(loc) + ": C header emission for by-value " + context + " " +
                            type_name(type) +
                            " is currently supported only on 64-bit Unix targets; use ptr " +
-                           type.name + " for a stable ABI on target '" + target.triple + "'");
+                           pointer_abi_hint(type) + " for a stable ABI on target '" + target.triple + "'");
     }
     std::uint64_t size = 0;
     std::uint64_t align = 0;
@@ -423,27 +509,26 @@ void require_direct_record_abi(SourceLocation loc,
     }
     if (size == 0) {
         throw CompileError(where(loc) + ": C header emission does not support zero-sized by-value " +
-                           context + " " + type_name(type) + "; use ptr " + type.name);
+                           context + " " + type_name(type) + "; use ptr " + pointer_abi_hint(type));
     }
     if (size > 16 || align > 8) {
         throw CompileError(where(loc) + ": C header emission for by-value " + context + " " +
                            type_name(type) +
                            " is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr " +
-                           type.name);
+                           pointer_abi_hint(type));
     }
 }
 
-void require_direct_function_record_abi(const IrFunction& fn, const TargetInfo& target) {
-    require_no_direct_array_function_abi(fn.loc, fn.return_type, "return type");
-    require_direct_record_abi(fn.loc, fn.return_type, target, "return type");
+void require_direct_function_abi(const IrFunction& fn, const TargetInfo& target) {
+    require_direct_aggregate_abi(fn.loc, fn.return_type, target, "return type");
     for (const auto& param : fn.params) {
-        require_no_direct_array_function_abi(fn.loc, param.type, "parameter");
-        require_direct_record_abi(fn.loc, param.type, target, "parameter");
+        require_direct_aggregate_abi(fn.loc, param.type, target, "parameter");
     }
 }
 
-void require_unique_concrete_c_type_names(const IrProgram& program,
-                                          const std::vector<CConcreteRecord>& concrete_records) {
+void require_unique_generated_c_type_names(const IrProgram& program,
+                                           const std::vector<CConcreteRecord>& concrete_records,
+                                           const std::vector<CArrayAlias>& array_aliases) {
     std::set<std::string> used_c_names;
     for (const auto& item : program.c_records) {
         std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
@@ -454,6 +539,11 @@ void require_unique_concrete_c_type_names(const IrProgram& program,
         used_c_names.insert(c_name);
     }
     for (const auto& item : concrete_records) {
+        if (!used_c_names.insert(item.c_name).second) {
+            throw CompileError("C header emission found duplicate C type name '" + item.c_name + "'");
+        }
+    }
+    for (const auto& item : array_aliases) {
         if (!used_c_names.insert(item.c_name).second) {
             throw CompileError("C header emission found duplicate C type name '" + item.c_name + "'");
         }
@@ -479,6 +569,10 @@ std::string record_forward_declaration(const IrCRecord& record) {
 
 std::string concrete_record_forward_declaration(const CConcreteRecord& record) {
     return "typedef struct " + record.c_name + " " + record.c_name + ";";
+}
+
+std::string array_alias_forward_declaration(const CArrayAlias& alias) {
+    return "typedef struct " + alias.c_name + " " + alias.c_name + ";";
 }
 
 std::string record_definition(const IrCRecord& record,
@@ -520,6 +614,23 @@ std::string concrete_record_definition(const CConcreteRecord& record,
     return out.str();
 }
 
+std::string array_alias_definition(const CArrayAlias& alias,
+                                   const CRecordNames& c_record_names,
+                                   const CConcreteRecordNames& c_concrete_record_names,
+                                   const CEnumNames& c_enum_names) {
+    std::ostringstream out;
+    out << "struct " << alias.c_name << " {\n";
+    out << "    " << c_declaration(
+        alias.type,
+        c_record_names,
+        c_concrete_record_names,
+        c_enum_names,
+        "elements",
+        true) << ";\n";
+    out << "};";
+    return out.str();
+}
+
 } // namespace
 
 std::string emit_c_header(const IrProgram& program) {
@@ -528,11 +639,13 @@ std::string emit_c_header(const IrProgram& program) {
     CRecordNames c_record_names = collect_c_record_names(program);
     CEnumNames c_enum_names = collect_c_enum_names(program);
     std::vector<CConcreteRecord> c_concrete_records = collect_concrete_records(program, c_record_names);
-    require_unique_concrete_c_type_names(program, c_concrete_records);
+    std::vector<CArrayAlias> c_array_aliases = collect_array_aliases(program);
+    require_unique_generated_c_type_names(program, c_concrete_records, c_array_aliases);
     CConcreteRecordNames c_concrete_record_names = collect_concrete_record_names(c_concrete_records);
+    CArrayNames c_array_names = collect_array_names(c_array_aliases);
     for (const auto& fn : program.functions) {
         if (!should_emit_function_prototype(fn)) continue;
-        require_direct_function_record_abi(fn, target);
+        require_direct_function_abi(fn, target);
     }
 
     std::ostringstream out;
@@ -547,12 +660,15 @@ std::string emit_c_header(const IrProgram& program) {
         }
     }
 
-    if (!program.c_records.empty()) {
+    if (!program.c_records.empty() || !c_concrete_records.empty() || !c_array_aliases.empty()) {
         for (const auto& record : program.c_records) {
             out << record_forward_declaration(record) << "\n";
         }
         for (const auto& record : c_concrete_records) {
             out << concrete_record_forward_declaration(record) << "\n";
+        }
+        for (const auto& alias : c_array_aliases) {
+            out << array_alias_forward_declaration(alias) << "\n";
         }
         out << "\n";
         for (const auto& record : program.c_records) {
@@ -562,6 +678,9 @@ std::string emit_c_header(const IrProgram& program) {
         for (const auto& record : c_concrete_records) {
             out << concrete_record_definition(record, c_record_names, c_concrete_record_names, c_enum_names) << "\n\n";
         }
+        for (const auto& alias : c_array_aliases) {
+            out << array_alias_definition(alias, c_record_names, c_concrete_record_names, c_enum_names) << "\n\n";
+        }
     }
 
     out << "#ifdef __cplusplus\n";
@@ -570,7 +689,7 @@ std::string emit_c_header(const IrProgram& program) {
 
     for (const auto& fn : program.functions) {
         if (!should_emit_function_prototype(fn)) continue;
-        out << function_prototype(fn, c_record_names, c_concrete_record_names, c_enum_names) << "\n";
+        out << function_prototype(fn, c_record_names, c_concrete_record_names, c_enum_names, c_array_names) << "\n";
     }
 
     out << "\n#ifdef __cplusplus\n";

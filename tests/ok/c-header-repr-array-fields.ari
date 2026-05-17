@@ -31,3 +31,13 @@ pub fn array_ptr(values: ptr [i64, 2]) -> i64 {
 pub fn array_ref(values: ref [i64, 2]) -> i64 {
   return 0;
 }
+
+@export("ari_take_array")
+pub fn take_array(values: [i64, 2]) -> i64 {
+  return values[0] + values[1];
+}
+
+@export("ari_make_array")
+pub fn make_array(seed: i64) -> [i64, 2] {
+  return [seed, seed + 1];
+}
