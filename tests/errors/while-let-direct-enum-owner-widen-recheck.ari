@@ -1,0 +1,13 @@
+enum Maybe {
+  None,
+  Some(i64),
+}
+
+fn main() -> i64 {
+  let token: own i64 = 5;
+  while let Some(value) = Some(1) {
+    let seen = value;
+    drop token;
+  }
+  return 0;
+}

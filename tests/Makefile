@@ -789,6 +789,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.raw; code=$$?; test $$code -eq 36
 	$(TARGET) --freestanding tests/ok/while-let-aggregate-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-aggregate-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-let-aggregate-break-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/while-let-direct-enum-owner-state.ari -o $(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.raw
+	$(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/init-while-owning.ari -o $(BUILD_DIR)/control-flow/init-while-owning.raw
 	$(BUILD_DIR)/control-flow/init-while-owning.raw; code=$$?; test $$code -eq 22
 	$(TARGET) --freestanding tests/ok/init-while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-false-owner-state.raw
@@ -848,6 +850,8 @@ check-control-flow: $(TARGET)
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/while-let-aggregate-or-pattern.ll
 	$(TARGET) tests/ok/while-let-aggregate-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-aggregate-break-owner-state.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/while-let-aggregate-break-owner-state.ll
+	$(TARGET) tests/ok/while-let-direct-enum-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.ll
+	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-direct-enum-owner-state.ll
 	$(TARGET) tests/ok/condition-pattern-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
@@ -3176,6 +3180,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-aggregate-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-aggregate-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-aggregate-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-aggregate-owner-widen-recheck.err
+	if $(TARGET) tests/errors/while-let-direct-enum-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.err 2>&1; then exit 1; fi
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'first'" $(BUILD_DIR)/errors/while-false-borrow-state.err
 	if $(TARGET) tests/errors/loop-borrow-state.ari -o $(BUILD_DIR)/errors/loop-borrow-state.elf >$(BUILD_DIR)/errors/loop-borrow-state.err 2>&1; then exit 1; fi

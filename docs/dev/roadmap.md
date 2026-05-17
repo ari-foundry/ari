@@ -104,19 +104,20 @@ dataflow recheck:
    different: a body checked with an `Alive` owner cannot simply be reused for a
    later iteration that starts with that owner moved or dropped. Add a
    revalidation/dataflow pass before accepting non-trivial next-iteration or
-   fallthrough ownership fixed points. The plain `while` and `init while`
-   no-zero slices now treat
-   immutable local bool conditions initialized directly from literals like
-   literal `true`/`false`, and recheck no-zero next-iteration states under a
-   candidate `Alive -> moved/dropped` owner widening before accepting them.
-   Those proven literal-bool loop conditions are also folded into literal IR
-   branch conditions during lowering.
+   fallthrough ownership fixed points. The plain `while`, `init while`,
+   irrefutable aggregate/runtime-sequence `while let`, direct-covering
+   enum-constructor `while let`, and exact-once range/list/stored-`Vec` `for`
+   slices now recheck no-zero or exact-once next-iteration states under a
+   candidate `Alive -> moved/dropped` owner widening before accepting them. The
+   plain `while` and `init while` slices also treat immutable local bool
+   conditions initialized directly from literals like literal `true`/`false`
+   as proven loop conditions, and fold those conditions into literal IR branch
+   conditions during lowering.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
-     `while`, `init while`, and irrefutable aggregate/runtime-sequence
-     `while let` loops plus exact-once range/list/stored-`Vec` `for` bodies,
-     including refutable enum `while let`/multi-iteration iterator-style bodies
-     and any future maybe-zero representation that can distinguish
-     definitely-live from maybe-unavailable owners after loop fallthrough
+     and exact-once loop bodies into remaining refutable enum
+     `while let`/multi-iteration iterator-style bodies and any future
+     maybe-zero representation that can distinguish definitely-live from
+     maybe-unavailable owners after loop fallthrough
 
 IR package-cache replay is complete for the current V0 0.x executable cache
 surface and has been removed from active Near-Term work. Validated

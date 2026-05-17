@@ -419,6 +419,9 @@ the next-iteration state instead of the post-loop `break` state, so a loop can
 continue with an owner still live and later break after consuming it. If a
 plain `while` next-iteration state widens an owner from live to moved/dropped,
 the body is rechecked under that widened state before the loop is accepted.
+The same recheck applies to `while let` over a direct enum constructor when the
+constructor case is covered without refutable payload literal, range, or nested
+enum conditions, because that loop is known to enter at least once.
 
 If every reachable `break` exit has already consumed the same owner, Ari can
 merge `moved` and `dropped` states as one unavailable post-loop state. This lets
@@ -625,3 +628,6 @@ bindings.
   known iteration count of exactly one are exact-once loops, so their body,
   `continue`, and `break` exit ownership states are merged as post-loop exits
   instead of being treated as maybe-zero.
+- `while let` over a direct enum constructor is also treated as no-zero when
+  the constructor case is covered by the pattern without any refutable payload
+  literal, range, or nested enum condition.

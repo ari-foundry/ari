@@ -11708,6 +11708,84 @@ private:
         return Flow::Continues;
     }
 
+    static bool enum_match_arm_has_refutable_payload_condition(const IrMatchArm& arm) {
+        return arm.has_literal ||
+               arm.has_range ||
+               !arm.payload_literal_conditions.empty() ||
+               !arm.payload_range_conditions.empty() ||
+               !arm.payload_enum_conditions.empty();
+    }
+
+    static bool enum_construct_is_known_match_for_while_let(
+        const IrExpr& match_value,
+        const std::vector<IrMatchArm>& pattern_arms
+    ) {
+        if (match_value.kind != IrExprKind::EnumConstruct) return false;
+        const std::string& constructed_case = ir_expr_case_name(match_value);
+        if (constructed_case.empty()) return false;
+        for (const auto& arm : pattern_arms) {
+            if (arm.case_name == constructed_case &&
+                !enum_match_arm_has_refutable_payload_condition(arm)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Flow check_enum_while_let_body(
+        const Stmt& stmt,
+        const IrMatchArm& arm,
+        std::vector<IrStmtPtr>& lowered_body
+    ) {
+        push_scope();
+        declare_match_arm_bindings(arm);
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
+        for (auto& statement : body.statements) {
+            lowered_body.push_back(std::move(statement));
+        }
+        if (body.flow == Flow::Returns) discard_scope();
+        else if (body.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, lowered_body);
+            pop_scope();
+        }
+        return body.flow;
+    }
+
+    void recheck_enum_while_let_body_under_state(
+        SourceLocation loc,
+        const Stmt& stmt,
+        const IrMatchArm& arm,
+        const LoopInfo& loop,
+        const StateSnapshot& recheck_state,
+        const LocalScopeStack::NameState& name_state
+    ) {
+        StateSnapshot saved_state = snapshot_states();
+        LocalScopeStack::NameState saved_name_state = local_scopes_.snapshot_name_state();
+        std::vector<LoopInfo> saved_loops = loops_;
+        std::size_t saved_warning_count = warnings_.size();
+        int saved_hidden_local_counter = hidden_local_counter_;
+        std::size_t borrow_mark = temporary_borrow_mark();
+
+        restore_states(recheck_state);
+        local_scopes_.restore_name_state(name_state);
+
+        LoopInfo rechecked_loop = loop;
+        rechecked_loop.break_state_snapshots.clear();
+        rechecked_loop.continue_state_snapshots.clear();
+        push_loop(loc, std::move(rechecked_loop));
+        std::vector<IrStmtPtr> ignored_body;
+        (void)check_enum_while_let_body(stmt, arm, ignored_body);
+        loops_.pop_back();
+
+        release_temporary_borrows(borrow_mark);
+        restore_states(saved_state);
+        local_scopes_.restore_name_state(std::move(saved_name_state));
+        loops_ = std::move(saved_loops);
+        warnings_.resize(saved_warning_count);
+        hidden_local_counter_ = saved_hidden_local_counter;
+    }
+
     void check_while_let(const Stmt& stmt, IrStmt& lowered) {
         IrExprPtr match_value = check_expr(*stmt.condition);
         if (is_aggregate_type(match_value->type) ||
@@ -11738,26 +11816,57 @@ private:
                 fail(condition_pattern.loc, "while-let requires a refutable enum-case pattern");
             }
         }
+        const bool no_zero_known_match =
+            enum_construct_is_known_match_for_while_let(*lowered.match_value, pattern_arms);
         StateSnapshot loop_input = snapshot_states();
+        LocalScopeStack::NameState loop_name_state = local_scopes_.snapshot_name_state();
 
         LoopInfo loop;
         loop.label = label;
         push_loop(stmt.loc, loop);
-        push_scope();
-        declare_match_arm_bindings(pattern_arms.front());
-        CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
-        set_ir_stmt_loop_body(lowered, std::move(body.statements));
-        if (body.flow == Flow::Returns) discard_scope();
-        else if (body.flow == Flow::Stops) discard_scope();
-        else {
-            append_current_scope_auto_destroy_cleanup(stmt.loc, ir_stmt_loop_body(lowered));
-            pop_scope();
-        }
+        Flow body_flow = check_enum_while_let_body(stmt, pattern_arms.front(), ir_stmt_loop_body(lowered));
         StateSnapshot loop_body_state = snapshot_states();
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
+        if (no_zero_known_match) {
+            StateSnapshot exit_state = loop_exit_base_state(loop_input, loop_state, false);
+            StateSnapshot next_iteration_state = loop_input;
+            bool widened_owner_state = false;
+            if (body_flow == Flow::Continues) {
+                merge_loop_next_iteration_states(
+                    stmt.loc,
+                    next_iteration_state,
+                    std::vector<StateSnapshot>{loop_body_state},
+                    "cannot change ownership state inside loop yet",
+                    true,
+                    widened_owner_state
+                );
+            }
+            merge_loop_next_iteration_states(
+                stmt.loc,
+                next_iteration_state,
+                loop_state.continue_state_snapshots,
+                "has incompatible ownership states at loop continue",
+                true,
+                widened_owner_state
+            );
+            if (widened_owner_state) {
+                recheck_enum_while_let_body_under_state(
+                    stmt.loc,
+                    stmt,
+                    pattern_arms.front(),
+                    loop_state,
+                    next_iteration_state,
+                    loop_name_state
+                );
+            }
+            merge_existing_zone_generations_into(exit_state, next_iteration_state);
+            merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
+            restore_states(exit_state);
+        } else {
+            restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body_flow));
+        }
         IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(lowered);
         for (auto& arm : pattern_arms) {
             lowered_arms.push_back(std::move(arm));
