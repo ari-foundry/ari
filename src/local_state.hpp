@@ -17,7 +17,8 @@ namespace ari {
 enum class LocalState {
     Alive,
     Moved,
-    Dropped
+    Dropped,
+    MaybeUnavailable
 };
 
 std::string local_state_name(LocalState state);
@@ -102,6 +103,7 @@ bool local_has_moved_or_dropped_owned_fields(const LocalInfo& local);
 bool local_has_tracked_owned_fields(const LocalInfo& local);
 bool local_has_live_owned_fields(const LocalInfo& local);
 bool local_has_live_owner(const LocalInfo& local);
+bool local_has_maybe_unavailable_owner(const LocalInfo& local);
 std::string local_borrow_path_display(const std::string& name, const std::string& path);
 bool local_has_active_borrows(const LocalInfo& local);
 bool local_has_mutable_borrows(const LocalInfo& local);

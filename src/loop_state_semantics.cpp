@@ -26,7 +26,8 @@ const StateSnapshotEntry& snapshot_entry_or_default(
 }
 
 bool compatible_unavailable_owner_states(LocalState left, LocalState right) {
-    return left != LocalState::Alive && right != LocalState::Alive;
+    return (left == LocalState::Moved || left == LocalState::Dropped) &&
+           (right == LocalState::Moved || right == LocalState::Dropped);
 }
 
 bool can_widen_owner_state(LocalState left, LocalState right) {
@@ -43,24 +44,32 @@ LocalState merged_unavailable_owner_state(LocalState left, LocalState right) {
 
 LocalState widened_owner_state(LocalState left, LocalState right) {
     if (left == right) return left;
+    if (left == LocalState::MaybeUnavailable || right == LocalState::MaybeUnavailable) {
+        return LocalState::MaybeUnavailable;
+    }
     if (left == LocalState::Alive) return right;
     if (right == LocalState::Alive) return left;
     return merged_unavailable_owner_state(left, right);
 }
 
+LocalState merged_loop_exit_owner_state(LocalState left, LocalState right) {
+    if (left == right) return left;
+    if (compatible_unavailable_owner_states(left, right)) {
+        return merged_unavailable_owner_state(left, right);
+    }
+    return LocalState::MaybeUnavailable;
+}
+
 std::optional<std::string> merge_loop_exit_state_snapshot(
     StateSnapshot& merged,
     const StateSnapshot& snapshot,
-    const std::string& message
+    const std::string&
 ) {
     StateSnapshotEntry default_entry;
     for (auto& item : merged) {
         const StateSnapshotEntry& actual = snapshot_entry_or_default(snapshot, item.first, default_entry);
         if (item.second.state != actual.state) {
-            if (!compatible_unavailable_owner_states(item.second.state, actual.state)) {
-                return "binding '" + item.first + "' " + message;
-            }
-            item.second.state = merged_unavailable_owner_state(item.second.state, actual.state);
+            item.second.state = merged_loop_exit_owner_state(item.second.state, actual.state);
         }
         if (state_snapshot_key_is_field(item.first)) continue;
         if (!merge_state_snapshot_entry_borrow_state_conservatively(item.second, actual)) {

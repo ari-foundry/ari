@@ -4735,9 +4735,12 @@ private:
                 release_named_borrow(local);
             },
             [this](const LocalInfo& local) {
-                return local_has_live_owner(local);
+                return local_has_live_owner(local) || local_has_maybe_unavailable_owner(local);
             },
             [](const std::string& name, const LocalInfo& local) {
+                if (local_has_maybe_unavailable_owner(local)) {
+                    fail(local.loc, "owning binding '" + name + "' may be unavailable before scope exit");
+                }
                 fail(local.loc, "owning binding '" + name + "' must be moved or dropped before scope exit");
             }
         );
@@ -5687,6 +5690,9 @@ private:
         local_scopes_.for_each_local_from(
             0,
             [&](const std::string& name, const LocalInfo& local) {
+                if (local_has_maybe_unavailable_owner(local)) {
+                    fail(loc, "owning binding '" + name + "' may be unavailable before return");
+                }
                 if (local_has_live_owner(local)) {
                     fail(loc, "owning binding '" + name + "' must be moved or dropped before return");
                 }
@@ -5702,6 +5708,9 @@ private:
         local_scopes_.for_each_local_from(
             first_scope_index,
             [&](const std::string& name, const LocalInfo& local) {
+                if (local_has_maybe_unavailable_owner(local)) {
+                    fail(loc, "owning binding '" + name + "' may be unavailable before " + jump_name);
+                }
                 if (local_has_live_owner(local)) {
                     fail(loc, "owning binding '" + name + "' must be moved or dropped before " + jump_name);
                 }
@@ -12914,6 +12923,11 @@ private:
             const std::string& name = loop.names[i];
             LocalInfo& target = require_local_slot(loc, name);
             require_not_borrowed(loc, name, target, "assign to");
+            if (is_owner_type(loop.types[i]) && local_has_maybe_unavailable_owner(target)) {
+                fail(loc,
+                     "cannot overwrite owning init-while binding '" + name +
+                         "' while it may be unavailable");
+            }
             if (is_owner_type(loop.types[i]) && local_has_live_owner(target)) {
                 fail(loc,
                      "cannot overwrite owning init-while binding '" + name +

@@ -113,15 +113,19 @@ dataflow recheck:
    Known-nonempty range/list/stored-`Vec` `for` loops also drop the
    zero-iteration exit from post-loop owner merges, while still rejecting body
    fallthrough or `continue` owner changes unless they are exact-once.
+   Runtime-dependent maybe-zero `break` exits now merge `Alive` with
+   moved/dropped owner states into an explicit `maybe-unavailable` local state;
+   later use, overwrite, return, and scope exit reject that state instead of
+   pretending the owner is definitely live or definitely unavailable.
    The plain `while` and `init while` slices also treat immutable local bool
    conditions whose initializers resolve through immutable local aliases to
    literals like `true`/`false` as proven loop conditions, and fold those
    conditions into literal IR branch conditions during lowering.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
-     and exact-once loop bodies into remaining runtime-dependent refutable enum
-     `while let`/multi-iteration iterator-style bodies and any future
-     maybe-zero representation that can distinguish definitely-live from
-     maybe-unavailable owners after loop fallthrough
+     and exact-once loop bodies into remaining runtime-dependent body
+     fallthrough/`continue` cases for refutable enum `while let` and
+     multi-iteration iterator-style bodies, plus a future conditional
+     cleanup/resolution form for `maybe-unavailable` owners
 
 IR package-cache replay is complete for the current V0 0.x executable cache
 surface and has been removed from active Near-Term work. Validated

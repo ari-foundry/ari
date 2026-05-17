@@ -29,6 +29,7 @@ std::string local_state_name(LocalState state) {
         case LocalState::Alive: return "live";
         case LocalState::Moved: return "moved";
         case LocalState::Dropped: return "dropped";
+        case LocalState::MaybeUnavailable: return "maybe-unavailable";
     }
     return "unavailable";
 }
@@ -154,6 +155,16 @@ bool local_has_live_owner(const LocalInfo& local) {
     return is_owner_type(local.type) && local_is_alive(local);
 }
 
+bool local_has_maybe_unavailable_owner(const LocalInfo& local) {
+    if (local_has_tracked_owned_fields(local)) {
+        for (const auto& item : local.owned_field_states) {
+            if (item.second == LocalState::MaybeUnavailable) return true;
+        }
+        return false;
+    }
+    return is_owner_type(local.type) && local.state == LocalState::MaybeUnavailable;
+}
+
 std::string local_borrow_path_display(const std::string& name, const std::string& path) {
     return path.empty() ? name : name + "." + path;
 }
@@ -270,6 +281,9 @@ std::optional<std::string> local_assignment_target_error(const std::string& name
 }
 
 std::optional<std::string> local_assignment_storage_error(const std::string& name, const LocalInfo& local) {
+    if (is_owner_type(local.type) && local_has_maybe_unavailable_owner(local)) {
+        return "cannot overwrite owning binding '" + name + "' while it may be unavailable";
+    }
     if (is_owner_type(local.type) && local_has_live_owner(local)) {
         return "cannot overwrite owning binding '" + name + "' before it is moved or dropped";
     }

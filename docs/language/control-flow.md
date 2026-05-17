@@ -403,10 +403,12 @@ while true {
 
 `break` exits the nearest loop.
 
-When a `break` exits a loop, Ari checks that any owning bindings visible after
-the loop have the same state as they would have if the loop ran zero times. This
-keeps paths such as `drop owner; break;` from leaving the owner ambiguously live
-after the loop.
+When a `break` exits a loop, Ari merges any owning bindings visible after the
+loop with the state they would have if the loop ran zero times. If one exit
+leaves an owner live and another has moved or dropped it, the post-loop state is
+`maybe-unavailable`. That binding cannot be used, overwritten, returned past, or
+left to scope exit until a future conditional cleanup/resolution form can make
+the runtime state explicit.
 
 For a literal `while true` loop, or an immutable local `let` condition whose
 initializer resolves through immutable local aliases to `true`, there is no
@@ -629,6 +631,10 @@ bindings.
   outer binding on a body fallthrough path. Literal `false`, or immutable local
   `let` conditions whose initializers resolve through immutable local aliases
   to `false`, are treated as zero-iteration loops.
+- Maybe-zero loop `break` exits that disagree with the zero-iteration owner
+  state produce a `maybe-unavailable` owner. The owner is tracked after the
+  loop, but later use, overwrite, return, and scope exit are rejected until the
+  program has a supported way to resolve both runtime cases.
 - Direct range expressions and list-literal or stored-`Vec` `for` loops with a
   known non-empty iteration count are not treated as zero-iteration loops, so
   `break` exits can define the post-loop owner state. When the known count is
