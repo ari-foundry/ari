@@ -818,9 +818,16 @@ let ref [head, middle @ .., last] = view
 ```
 
 Plain named suffix elements after `..` can be borrowed too, as in
-`let ref [head, middle @ .., last] = values`. `Slice` reference sequence
-patterns currently require each element binding to be a name or `_`; nested
-element subpatterns wait for a more precise dynamic borrow-path model.
+`let ref [head, middle @ .., last] = values`. Shared `Slice` reference
+sequence patterns can also destructure tuple, fixed-array, and struct elements:
+
+```ari
+let ref [(left, right), ..] = pair_view
+```
+
+`ref mut` nested dynamic sequence subpatterns still wait for a more precise
+dynamic borrow-path model; use plain element bindings for mutable sequence
+element borrows.
 
 ## Ownership-Qualified Types
 

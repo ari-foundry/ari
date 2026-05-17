@@ -160,11 +160,11 @@ reference, and `name @ ..` binds the skipped range as a `Slice[T]` view. `Vec`
 element borrows keep precise element paths; `Slice` element borrows keep a
 conservative borrow of the view binding because the view is already a borrowed
 pointer/length pair. Destructuring of ownership-carrying aggregates, nested
-`Slice` element subpatterns, and nested reference binding modes inside
-match/control-flow patterns remain planned. Function parameter patterns support
-`ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
-for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`
-runtime-sequence shapes.
+`ref mut` dynamic sequence element subpatterns, and nested reference binding
+modes inside match/control-flow patterns remain planned. Function parameter
+patterns support `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and
+`&mut PATTERN: T` for the same name, wildcard, tuple, fixed-array, struct, and
+`Slice[T]` runtime-sequence shapes.
 
 The `[a, b]` pattern spelling works for fixed arrays and for runtime sequence
 subjects such as local `Vec[T]` storage and `Slice[T]` views. On `Vec[T]` and

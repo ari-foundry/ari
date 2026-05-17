@@ -17,6 +17,10 @@ fn sum_slice_refs(ref [first, rest @ .., last]: Slice[i64]) -> i64 {
   return read(first) + len(rest) + read(last);
 }
 
+fn sum_pair_slice_refs(ref [(first_left, first_right), .., (last_left, last_right)]: Slice[(i64, i64)]) -> i64 {
+  return read(first_left) + read(first_right) + read(last_left) + read(last_right);
+}
+
 fn main() -> i64 {
   var values: Vec[i64] = [5, 6, 7];
   var total = 0;
@@ -42,6 +46,14 @@ fn main() -> i64 {
     let ref [slice_head, slice_middle @ .., slice_last] = view;
     total = total + read(slice_head) + len(slice_middle) + slice_middle[0] + read(slice_last);
     total = total + sum_slice_refs(view);
+  }
+
+  {
+    var pairs: Vec[(i64, i64)] = [(1, 2), (3, 4), (5, 6)];
+    let pair_view = pairs.as_slice();
+    let ref [(first_left, first_right), pair_middle @ .., (last_left, last_right)] = pair_view;
+    total = total + read(first_left) + read(first_right) + len(pair_middle);
+    total = total + read(last_left) + read(last_right) + sum_pair_slice_refs(pair_view);
   }
 
   return total;

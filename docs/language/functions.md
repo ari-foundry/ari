@@ -347,12 +347,11 @@ current 0.x slice supports name, wildcard, tuple, fixed-array, and struct
 reference parameter patterns over by-value parameter storage, matching local
 `let ref` / `let ref mut` / `let &` / `let &mut` aggregate patterns. Direct
 local `Vec[T]` and function-entry `Slice[T]` reference sequence patterns also
-support plain element borrows with `name @ ..` rest Slice bindings. Owning or
-borrow-valued parameter patterns, enum-payload reference bindings, nested
-reference binding modes inside subpatterns, nested `Slice` element subpatterns,
-and standalone `mut` binding-mode patterns remain rejected. Trait and extern
-function signatures must keep named
-parameters.
+support shared nested element borrows and `name @ ..` rest Slice bindings.
+Owning or borrow-valued parameter patterns, enum-payload reference bindings, nested
+reference binding modes inside subpatterns, `ref mut` nested dynamic sequence
+subpatterns, and standalone `mut` binding-mode patterns remain rejected. Trait
+and extern function signatures must keep named parameters.
 
 ## Borrow Returns
 

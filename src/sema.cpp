@@ -6398,12 +6398,10 @@ private:
         return indices;
     }
 
-    IrExprPtr make_reference_pattern_access_expr(SourceLocation loc,
-                                                 const std::string& base_name,
-                                                 const IrType& base_type,
-                                                 const std::string& path) {
-        IrExprPtr expr = make_local_lvalue_expr(loc, base_name, base_type);
-        IrType current = base_type;
+    IrExprPtr make_reference_pattern_access_expr_from_base(SourceLocation loc,
+                                                           IrExprPtr expr,
+                                                           IrType current,
+                                                           const std::string& path) {
         for (std::size_t index : local_path_indices(path)) {
             if (current.primitive == IrPrimitiveKind::Vector) {
                 expr = make_ir_index_expr(
@@ -6420,6 +6418,17 @@ private:
             current = expr->type;
         }
         return expr;
+    }
+
+    IrExprPtr make_reference_pattern_access_expr(SourceLocation loc,
+                                                 const std::string& base_name,
+                                                 const IrType& base_type,
+                                                 const std::string& path) {
+        return make_reference_pattern_access_expr_from_base(
+            loc,
+            make_local_lvalue_expr(loc, base_name, base_type),
+            base_type,
+            path);
     }
 
     [[noreturn]] void fail_reference_pattern_shape(SourceLocation loc) const {
@@ -6654,6 +6663,8 @@ private:
         ));
     }
 
+    using ReferenceAccessBuilder = std::function<IrExprPtr(SourceLocation, const std::string&)>;
+
     void lower_reference_runtime_sequence_dynamic_element_binding(const Pattern& item,
                                                                   const Pattern& sequence_pattern,
                                                                   std::size_t pattern_index,
@@ -6664,30 +6675,190 @@ private:
                                                                   std::vector<IrStmtPtr>& statements) {
         const Pattern& effective_item = expanded_pattern(item);
         if (effective_item.kind == PatternKind::Wildcard) return;
-        if (effective_item.kind != PatternKind::Binding) {
-            fail(effective_item.loc,
-                 "dynamic suffix reference bindings after .. currently require a plain binding name or _");
-        }
-
-        IrExprPtr access = make_ir_index_expr(
-            effective_item.loc,
-            make_local_lvalue_expr(effective_item.loc, base_name, source_type),
-            make_runtime_sequence_pattern_index_expr(
-                effective_item.loc,
-                sequence_pattern,
-                pattern_index,
-                base_name,
-                source_type
-            )
-        );
-        lower_reference_binding_pattern_value_from_access(
-            effective_item,
+        ReferenceAccessBuilder make_access = [&](SourceLocation loc, const std::string& access_path) {
+            IrExprPtr element_access = make_ir_index_expr(
+                loc,
+                make_local_lvalue_expr(loc, base_name, source_type),
+                make_runtime_sequence_pattern_index_expr(
+                    loc,
+                    sequence_pattern,
+                    pattern_index,
+                    base_name,
+                    source_type
+                )
+            );
+            return make_reference_pattern_access_expr_from_base(
+                loc,
+                std::move(element_access),
+                element_type,
+                access_path);
+        };
+        lower_reference_binding_pattern_from_access_path(
+            item,
             base_name,
             element_type,
             "",
             mutable_borrow,
-            std::move(access),
+            make_access,
             statements);
+    }
+
+    void lower_reference_binding_pattern_from_access_path(const Pattern& pattern,
+                                                          const std::string& base_name,
+                                                          const IrType& source_type,
+                                                          const std::string& access_path,
+                                                          bool mutable_borrow,
+                                                          const ReferenceAccessBuilder& make_access,
+                                                          std::vector<IrStmtPtr>& statements,
+                                                          bool has_final_field_mutability = false,
+                                                          bool final_field_mutable = true,
+                                                          const std::string& final_field_label = {},
+                                                          const std::string& final_container_name = {}) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_reference_binding_pattern_from_access_path(
+                effective_pattern,
+                base_name,
+                source_type,
+                access_path,
+                mutable_borrow,
+                make_access,
+                statements,
+                has_final_field_mutability,
+                final_field_mutable,
+                final_field_label,
+                final_container_name);
+            return;
+        }
+
+        if (mutable_borrow && pattern.kind != PatternKind::Wildcard && pattern.kind != PatternKind::Binding) {
+            fail(pattern.loc,
+                 "nested runtime sequence reference subpatterns with ref mut need precise dynamic borrow paths");
+        }
+
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+                return;
+            case PatternKind::Binding: {
+                IrExprPtr access = make_access(pattern.loc, access_path);
+                lower_reference_binding_pattern_value_from_access(
+                    pattern,
+                    base_name,
+                    source_type,
+                    "",
+                    mutable_borrow,
+                    std::move(access),
+                    statements,
+                    has_final_field_mutability,
+                    final_field_mutable,
+                    final_field_label,
+                    final_container_name);
+                return;
+            }
+            case PatternKind::Tuple:
+            case PatternKind::Array: {
+                IrType shape_type = value_qualified_type(source_type);
+                if (is_owner_type(shape_type)) {
+                    fail(pattern.loc,
+                         "reference pattern destructuring of ownership-carrying aggregates is planned after ownership-through-aggregates is implemented");
+                }
+                bool array_pattern = pattern.kind == PatternKind::Array;
+                IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
+                const char* pattern_name = array_pattern ? "array" : "tuple";
+                if (!pattern.rest_alias_name.empty()) {
+                    fail(pattern.rest_alias_loc,
+                         "reference pattern rest aliases are planned after Slice-producing reference patterns are implemented");
+                }
+                if (shape_type.primitive != expected_primitive) {
+                    fail(pattern.loc, std::string(pattern_name) + " reference binding pattern requires a " +
+                                      pattern_name + " value, got " + type_name(source_type));
+                }
+                const std::vector<IrType>& fields = aggregate_field_types(shape_type);
+                if (pattern.has_rest) {
+                    if (pattern.elements.size() > fields.size()) {
+                        fail(pattern.loc,
+                             std::string(pattern_name) + " reference binding pattern has " +
+                                 std::to_string(pattern.elements.size()) +
+                                 " non-rest elements but value has " + std::to_string(fields.size()));
+                    }
+                } else if (pattern.elements.size() != fields.size()) {
+                    fail(pattern.loc,
+                         std::string(pattern_name) + " reference binding pattern has " +
+                             std::to_string(pattern.elements.size()) +
+                             " elements but value has " + std::to_string(fields.size()));
+                }
+
+                std::size_t suffix_count = 0;
+                if (pattern.has_rest) suffix_count = pattern.elements.size() - pattern.rest_index;
+                for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+                    const Pattern& item = pattern.elements[i];
+                    if (expanded_pattern(item).kind == PatternKind::Wildcard) continue;
+                    std::size_t field_index = i;
+                    if (pattern.has_rest && i >= pattern.rest_index) {
+                        field_index = fields.size() - suffix_count + (i - pattern.rest_index);
+                    }
+                    lower_reference_binding_pattern_from_access_path(
+                        item,
+                        base_name,
+                        fields[field_index],
+                        local_owned_field_path(access_path, field_index),
+                        mutable_borrow,
+                        make_access,
+                        statements);
+                }
+                return;
+            }
+            case PatternKind::Struct: {
+                IrType shape_type = value_qualified_type(source_type);
+                if (is_owner_type(shape_type)) {
+                    fail(pattern.loc,
+                         "reference pattern destructuring of ownership-carrying aggregates is planned after ownership-through-aggregates is implemented");
+                }
+                if (shape_type.primitive != IrPrimitiveKind::Struct) {
+                    fail(pattern.loc, "struct reference binding pattern requires a struct value, got " + type_name(source_type));
+                }
+                std::string struct_name = resolve_struct_type_name(pattern.case_name);
+                auto struct_found = structs_.find(struct_name);
+                if (struct_found == structs_.end()) {
+                    fail(pattern.loc, "unknown struct '" + pattern.case_name + "' in reference binding pattern");
+                }
+                require_struct_access(pattern.loc, struct_found->second);
+                if (struct_name != shape_type.name) {
+                    fail(pattern.loc,
+                         "struct reference binding pattern type '" + struct_name +
+                             "' does not match value type " + type_name(source_type));
+                }
+                if (pattern.field_names.size() != pattern.elements.size()) {
+                    throw CompileError("internal error: struct reference binding pattern field/value arity mismatch");
+                }
+
+                std::set<std::string> seen_fields;
+                for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+                    const std::string& field_name = pattern.field_names[i];
+                    if (!seen_fields.insert(field_name).second) {
+                        fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct reference binding pattern");
+                    }
+                    std::size_t field_index = struct_field_index(pattern.elements[i].loc, shape_type, field_name);
+                    const Pattern& item = pattern.elements[i];
+                    if (expanded_pattern(item).kind == PatternKind::Wildcard) continue;
+                    lower_reference_binding_pattern_from_access_path(
+                        item,
+                        base_name,
+                        shape_type.field_types[field_index],
+                        local_owned_field_path(access_path, field_index),
+                        mutable_borrow,
+                        make_access,
+                        statements,
+                        true,
+                        shape_type.field_mutable[field_index],
+                        field_name,
+                        shape_type.name);
+                }
+                return;
+            }
+            default:
+                fail_reference_pattern_shape(pattern.loc);
+        }
     }
 
     void lower_reference_runtime_sequence_prefix_element_binding(const Pattern& item,
@@ -6713,23 +6884,25 @@ private:
             return;
         }
 
-        if (effective_item.kind != PatternKind::Binding) {
-            fail(effective_item.loc,
-                 "Slice reference element bindings currently require a plain binding name or _");
-        }
-
-        IrExprPtr access = make_ir_index_expr(
-            effective_item.loc,
-            make_local_lvalue_expr(effective_item.loc, base_name, source_type),
-            make_integer_literal(effective_item.loc, i64_type(effective_item.loc), pattern_index)
-        );
-        lower_reference_binding_pattern_value_from_access(
-            effective_item,
+        ReferenceAccessBuilder make_access = [&](SourceLocation loc, const std::string& access_path) {
+            IrExprPtr element_access = make_ir_index_expr(
+                loc,
+                make_local_lvalue_expr(loc, base_name, source_type),
+                make_integer_literal(loc, i64_type(loc), pattern_index)
+            );
+            return make_reference_pattern_access_expr_from_base(
+                loc,
+                std::move(element_access),
+                element_type,
+                access_path);
+        };
+        lower_reference_binding_pattern_from_access_path(
+            item,
             base_name,
             element_type,
             "",
             mutable_borrow,
-            std::move(access),
+            make_access,
             statements);
     }
 

@@ -36,6 +36,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Direct local `Vec[T]` storage and `Slice[T]` view reference patterns support
   runtime length guards, plain prefix/suffix element borrows, and `name @ ..`
   rest bindings that produce `Slice[T]` views.
+- Shared `Slice[T]` reference sequence patterns can destructure tuple,
+  fixed-array, and struct elements through the same access-path helper used by
+  local aggregate reference patterns.
 - Function parameter reference patterns lower as function-entry borrows from
   hidden ABI parameter storage.
 - `[ ... ]` patterns work for compile-time fixed arrays and runtime sequence
