@@ -1,0 +1,20 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let literal_token: own i64 = make_owned(1);
+  for value in [10] {
+    let seen = value;
+    drop literal_token;
+  }
+
+  let values: Vec[i64] = [20];
+  let stored_token: own i64 = make_owned(2);
+  for item in values {
+    let stored_seen = item;
+    drop stored_token;
+  }
+
+  return 0;
+}

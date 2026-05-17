@@ -5290,6 +5290,35 @@ private:
         return exit_state;
     }
 
+    StateSnapshot checked_exact_once_loop_exit_state(
+        SourceLocation loc,
+        const StateSnapshot& loop_input,
+        const StateSnapshot& loop_body_state,
+        const LoopInfo& loop,
+        Flow body_flow
+    ) {
+        std::vector<StateSnapshot> exit_snapshots;
+        if (body_flow == Flow::Continues) exit_snapshots.push_back(loop_body_state);
+        exit_snapshots.insert(
+            exit_snapshots.end(),
+            loop.continue_state_snapshots.begin(),
+            loop.continue_state_snapshots.end());
+        exit_snapshots.insert(
+            exit_snapshots.end(),
+            loop.break_state_snapshots.begin(),
+            loop.break_state_snapshots.end());
+        if (exit_snapshots.empty()) return loop_input;
+
+        StateSnapshot exit_state = project_loop_state_snapshot(loop_input, exit_snapshots.front());
+        if (auto error = merge_loop_exit_states(
+                exit_state,
+                exit_snapshots,
+                "has incompatible ownership states after exact-once loop exits")) {
+            fail(loc, *error);
+        }
+        return exit_state;
+    }
+
     static std::optional<bool> literal_bool_condition_value(const IrExpr& condition) {
         if (condition.kind != IrExprKind::Bool) return std::nullopt;
         return condition.bool_value;
@@ -12557,6 +12586,7 @@ private:
         IrStmtForPayload& for_loop = ensure_ir_stmt_for_payload(lowered);
         for_loop.binding_type = iterable->type.args[0];
         for_loop.values = iterable->args.take();
+        const bool exact_once_loop = for_loop.values.size() == 1;
 
         StateSnapshot loop_input = snapshot_states();
         LoopInfo loop;
@@ -12587,7 +12617,9 @@ private:
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
+        restore_states(exact_once_loop
+            ? checked_exact_once_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow)
+            : checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
     }
 
     void check_for_vector_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
@@ -12601,6 +12633,7 @@ private:
         IrType i64 = i64_type(stmt.loc);
         VectorKnownLength current_length =
             vector_known_length_from_source_expr(vector_type, *stmt.for_iterable, *iterable);
+        const bool exact_once_loop = current_length.known && current_length.length == 1;
 
         lowered.kind = IrStmtKind::Block;
         std::string vector_name = make_hidden_local("$for_vec");
@@ -12658,7 +12691,9 @@ private:
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
+        restore_states(exact_once_loop
+            ? checked_exact_once_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow)
+            : checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
         ir_stmt_statements(lowered).push_back(std::move(loop));
     }
 

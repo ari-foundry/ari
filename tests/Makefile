@@ -775,6 +775,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/for-vector-pattern.raw; code=$$?; test $$code -eq 50
 	$(TARGET) --freestanding tests/ok/for-vector-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw
 	$(BUILD_DIR)/control-flow/for-vector-alias-pattern.raw; code=$$?; test $$code -eq 75
+	$(TARGET) --freestanding tests/ok/for-vector-exact-once-owner-state.ari -o $(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.raw
+	$(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/ir-for-loop-payloads.ari -o $(BUILD_DIR)/control-flow/ir-for-loop-payloads.raw
 	$(BUILD_DIR)/control-flow/ir-for-loop-payloads.raw; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/if-while-let.ari -o $(BUILD_DIR)/control-flow/if-while-let.raw
@@ -872,6 +874,8 @@ check-control-flow: $(TARGET)
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/for-vector-pattern.ll
 	$(TARGET) tests/ok/for-vector-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-alias-pattern.ll
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/for-vector-alias-pattern.ll
+	$(TARGET) tests/ok/for-vector-exact-once-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.ll
+	grep -q "for.end" $(BUILD_DIR)/control-flow/for-vector-exact-once-owner-state.ll
 	$(TARGET) tests/ok/for-vector-stored.ari --emit-llvm $(BUILD_DIR)/control-flow/for-vector-stored.ll
 	grep -q "getelementptr inbounds { i64, \\[3 x i64\\] }" $(BUILD_DIR)/control-flow/for-vector-stored.ll
 	grep -q "extractvalue { i64, i64 }" $(BUILD_DIR)/control-flow/for-vector-stored.ll

@@ -113,8 +113,9 @@ dataflow recheck:
    branch conditions during lowering.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
      `while`, `init while`, and irrefutable aggregate/runtime-sequence
-     `while let` loops, including refutable enum `while let`/iterator-style
-     bodies and any future maybe-zero representation that can distinguish
+     `while let` loops plus exact-once list/stored-`Vec` `for` bodies,
+     including refutable enum `while let`/multi-iteration iterator-style bodies
+     and any future maybe-zero representation that can distinguish
      definitely-live from maybe-unavailable owners after loop fallthrough
 
 IR package-cache replay is complete for the current V0 0.x executable cache
