@@ -31,6 +31,7 @@ Use these when changing the compiler:
 - [Architecture](dev/architecture.md)
 - [Compiler Pipeline](dev/compiler-pipeline.md)
 - [Build And Test](dev/build-test.md)
+- [Aggregate ABI Classification](dev/aggregate-abi.md)
 - [Symbol Mangling](dev/symbol-mangling.md)
 - [Feature Test Matrix](dev/test-matrix.md)
 - [Runtime And Backend](dev/runtime-backend.md)

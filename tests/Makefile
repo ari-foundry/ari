@@ -2095,6 +2095,12 @@ check-meta: $(TARGET)
 	grep -q "C header emission for by-value parameter \\[i64, 3\\] is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-array-by-value.err
 	if $(TARGET) --target x86_64-pc-windows-msvc tests/errors/c-header-target-array-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-target-array-by-value.h >$(BUILD_DIR)/meta/c-header-target-array-by-value.err 2>&1; then exit 1; fi
 	grep -q "C header emission for by-value parameter \\[i64, 2\\] is currently supported only on 64-bit Unix targets" $(BUILD_DIR)/meta/c-header-target-array-by-value.err
+	if $(TARGET) tests/errors/c-header-large-tuple-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-large-tuple-by-value.h >$(BUILD_DIR)/meta/c-header-large-tuple-by-value.err 2>&1; then exit 1; fi
+	grep -q "C header emission for by-value parameter (i64, i64, i64) is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-tuple-by-value.err
+	if $(TARGET) --target x86_64-pc-windows-msvc tests/errors/c-header-target-tuple-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-target-tuple-by-value.h >$(BUILD_DIR)/meta/c-header-target-tuple-by-value.err 2>&1; then exit 1; fi
+	grep -q "C header emission for by-value parameter (i64, i64) is currently supported only on 64-bit Unix targets" $(BUILD_DIR)/meta/c-header-target-tuple-by-value.err
+	if $(TARGET) tests/errors/c-header-large-aggregate-enum-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.h >$(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.err 2>&1; then exit 1; fi
+	grep -q "C header emission for by-value parameter Packet is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.err
 	if $(TARGET) tests/errors/attribute-cfg-argument.ari -o $(BUILD_DIR)/meta/attribute-cfg-argument.elf >$(BUILD_DIR)/meta/attribute-cfg-argument.err 2>&1; then exit 1; fi
 	grep -q "unknown cfg predicate 'enabled'" $(BUILD_DIR)/meta/attribute-cfg-argument.err
 	if $(TARGET) tests/errors/attribute-deprecated-argument.ari -o $(BUILD_DIR)/meta/attribute-deprecated-argument.elf >$(BUILD_DIR)/meta/attribute-deprecated-argument.err 2>&1; then exit 1; fi

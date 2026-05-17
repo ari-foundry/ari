@@ -7,6 +7,7 @@ This folder is for people changing the compiler.
 - [Architecture](architecture.md)
 - [Compiler Pipeline](compiler-pipeline.md)
 - [Build And Test](build-test.md)
+- [Aggregate ABI Classification](aggregate-abi.md)
 - [Feature Test Matrix](test-matrix.md)
 - [Runtime And Backend](runtime-backend.md)
 - [Symbol Mangling](symbol-mangling.md)

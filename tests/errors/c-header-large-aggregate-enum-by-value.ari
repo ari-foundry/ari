@@ -1,0 +1,12 @@
+enum Packet {
+  Single(i64),
+  Pair(i64, i64),
+}
+
+@export("ari_take_packet")
+pub fn take_packet(packet: Packet) -> i64 {
+  return match packet {
+    Single(value) => value,
+    Pair(left, right) => left + right,
+  };
+}

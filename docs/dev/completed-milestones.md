@@ -98,6 +98,13 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 
 ## ABI, Layout, And Backends
 
+- Non-local aggregate ABI classification is shared in `src/aggregate_abi.*`.
+  It recognizes value tuples, fixed arrays, structs, fixed-capacity vector
+  storage values, and aggregate-layout enums, and classifies 64-bit Unix
+  values as direct when they are non-zero, at most 16 bytes, and at most
+  8-byte aligned. Larger/aligned values are indirect, and unsupported
+  target/layout/zero-sized cases are reported explicitly. C-header emission
+  uses this shared classifier before rendering exported by-value prototypes.
 - Direct fixed-array exports are implemented for the current 0.x shared LLVM
   surface, including fixed-array fields in public `@repr(C)` structs,
   pointer-to-array parameters, and by-value `[T, N]` exported

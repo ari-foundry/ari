@@ -1,0 +1,4 @@
+@export("ari_take_tuple")
+pub fn take_tuple(value: (i64, i64)) -> i64 {
+  return value.0 + value.1;
+}

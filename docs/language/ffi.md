@@ -383,11 +383,12 @@ null, bounds, alignment, aliasing, or lifetime validation. Whole raw-pointer
 copies of values that contain `own`, `ref`, or `ref mut` state are rejected
 until the ownership diagnostics for zone-backed memory are broadened.
 
-Tuple parameters/returns, fixed arrays, vectors, generic types, and non-`repr(C)`
-structs are not ABI-lowered yet. Local stack tuples are an executable-language
-feature, not a C FFI layout promise. Aggregate raw-pointer field/element access
-follows Ari's current executable aggregate layout; it is not yet a `repr(C)`
-guarantee.
+Tuple parameters/returns, vectors, generic types, and non-`repr(C)` structs are
+not C ABI-lowered yet. Fixed arrays have a limited by-value header wrapper
+surface when the shared aggregate ABI classifier accepts their size, alignment,
+and target. Local stack tuples are an executable-language feature, not a C FFI
+layout promise. Aggregate raw-pointer field/element access follows Ari's
+current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 
 ## C Header Emission
 
@@ -423,15 +424,18 @@ typedef named `WireStatus`. Private helpers and private `@repr(C)` aggregates
 are not emitted. Generic `@repr(C)` structs still keep the source-name opaque
 `typedef struct Name Name;` declaration for pointer-only APIs; concrete
 by-value instantiations use separate typedefs/definitions keyed by their type
-arguments. By-value struct parameters and returns are emitted only for direct
-aggregate ABI values on 64-bit Unix targets, currently up to 16 bytes with at
-most 8-byte alignment; direct fixed-size array parameters and returns use the
-same size, alignment, and target guard. Larger records, larger arrays, and
-non-Unix targets should expose an explicit pointer ABI. Header generation
-currently rejects Ari-only values such as `string`, ownership-qualified values,
-and non-`repr(C)` aggregate parameters or returns; expose a `ptr c_char`,
-`ptr c_void`, or other scalar/raw pointer C ABI type until those layouts are
-defined.
+arguments. By-value aggregate parameters and returns are checked by the shared
+non-local aggregate ABI classifier and emitted only for direct aggregate ABI
+values on 64-bit Unix targets, currently up to 16 bytes with at most 8-byte
+alignment. Direct fixed-size array parameters and returns use generated wrapper
+structs after passing the same classifier. Larger records, larger arrays, and
+non-Unix targets should expose an explicit pointer ABI. The classifier also
+recognizes tuples, fixed-capacity vector storage values, and aggregate-layout
+enums, but the header emitter still rejects those Ari-only value spellings
+until their C wrapper surface is explicit. Header generation currently rejects
+Ari-only values such as `string`, ownership-qualified values, and non-`repr(C)`
+aggregate parameters or returns; expose a `ptr c_char`, `ptr c_void`, or other
+scalar/raw pointer C ABI type until those layouts are defined.
 
 ## Runtime Entry
 
@@ -447,5 +451,7 @@ shuts the context down afterward.
 
 ## Planned FFI Surface
 
-The next FFI pieces are payload-bearing enum layouts, broader target-specific
-aggregate ABI support, and non-C ABI adapters via explicit C-compatible shims.
+The next FFI pieces are direct aggregate C imports for classifier-approved
+value types, explicit C wrappers for tuple/vector/aggregate-enum values,
+payload-bearing enum C layouts, broader target-specific aggregate ABI support,
+and non-C ABI adapters via explicit C-compatible shims.

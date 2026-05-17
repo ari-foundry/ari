@@ -128,12 +128,15 @@ name them; exported by-value instantiations also get concrete
 typedefs/definitions such as `GenericHandle_i64`. Direct by-value fixed-size
 array parameters and returns are exposed through generated wrapper typedefs
 such as `AriArray_i64_2`, because C function parameters cannot carry arrays by
-value directly. By-value struct and fixed-array parameters and returns are
-emitted only for direct aggregate ABI values on 64-bit Unix targets, currently
-up to 16 bytes with at most 8-byte alignment; larger or target-specific cases
-should use an explicit pointer ABI. Header generation rejects Ari-only values
-such as `string`, owned values, and aggregate values whose C ABI policy is not
-explicit.
+value directly. By-value aggregate parameters and returns are checked by the
+shared non-local aggregate ABI classifier and are emitted only for direct
+aggregate ABI values on 64-bit Unix targets, currently up to 16 bytes with at
+most 8-byte alignment. Larger or target-specific cases should use an explicit
+pointer ABI. The classifier also covers tuples, fixed-capacity vector storage
+values, and aggregate-layout enums, but header generation still rejects those
+Ari-only value spellings until their C wrapper surface is explicit. Header
+generation rejects values such as `string`, owned values, and aggregate values
+whose C ABI policy is not explicit.
 LLVM object and shared-library output record explicit export/no-mangle names in
 their symbol tables. Imported `extern "C"` calls are resolved through the LLVM
 driver and the normal host linker path.

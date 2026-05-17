@@ -12,15 +12,15 @@ item as 1.0 work unless the whole language release is being scoped.
 These are the next compiler-sized slices that should be possible without
 changing the long-term language contract.
 
-1. [abi-aggregate-classification] Define non-local aggregate ABI
-   classification for public tuples, arrays, structs, vectors, and aggregate
-   enums. This should settle the policy needed before raw C aggregate imports,
-   richer C headers, and library-owned collection handles grow further.
-2. Expand IR package-cache replay beyond generic/impl specialization replay.
+1. Expand IR package-cache replay beyond generic/impl specialization replay.
    The current V0 cache family should stay V0 until a deliberate cache version
    bump is approved. The next useful work is trait-specialized replay and
    richer identity descriptors for any replayed lowering that still depends on
    trait-resolution context.
+2. Extend C imports and generated C wrappers using the shared aggregate ABI
+   classifier. The next useful slices are direct aggregate C imports for
+   classifier-approved value types and explicit wrapper/header surfaces for
+   tuples, fixed-capacity vectors, and aggregate-layout enums.
 3. Keep sema extraction phase-oriented.
    Prefer broad modules such as type inference, pattern semantics, ownership
    state, zone provenance, and IR lowering helpers. Avoid splitting one tiny
@@ -58,10 +58,7 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
 
 ## Backend Work
 
-1. Extend C imports after aggregate ABI classification.
-   Add aggregate signatures, platform float-C ABI refinements, libc discovery,
-   and external aggregate-enum FFI once aggregate ABI classification is stable.
-2. Keep LLVM object output library-ready.
+1. Keep LLVM object output library-ready.
    Preserve explicit symbol names, C-header compatibility, and module-cache
    replay behavior for object files produced with `--emit-obj`.
 

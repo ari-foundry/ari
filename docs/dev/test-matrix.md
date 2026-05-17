@@ -18,6 +18,16 @@ For each feature:
 - [ ] generated LLVM IR is inspected when ABI or linking is involved
 - [ ] docs mention the behavior and known limits
 
+## ABI Coverage Note
+
+Non-local aggregate ABI diagnostics are covered by C-header fixtures. The
+shared classifier recognizes value tuples, fixed arrays, structs,
+fixed-capacity vector storage, and aggregate-layout enums, then distinguishes
+direct 64-bit Unix values from indirect or unsupported target/layout cases.
+Header rendering is narrower than classification: public `@repr(C)` structs
+and fixed-array wrapper typedefs are exposed today, while tuples, vectors, and
+aggregate-layout enums remain explicit-wrapper follow-up work.
+
 ## Feature Plan
 
 | Feature | Positive Directions | Negative Directions | Backend Directions | Status |

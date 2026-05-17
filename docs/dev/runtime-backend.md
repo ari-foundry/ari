@@ -103,17 +103,16 @@ carried through IR as a distinct builtin ABI.
 
 The LLVM backend still intentionally rejects or does not ABI-lower:
 
-- tuple values outside fixed-size local stack tuples
-- vector values
-- struct values outside fixed-size local stack structs
+- runtime-capacity vector values
 - generic type declarations beyond simple function-call monomorphization
-- multi-word enum payloads
+- C-facing tuple/vector/aggregate-enum wrappers
 - raw pointer operations outside scalar and plain Ari-layout aggregate local layouts
-- tuple/vector/struct/fixed-array function and FFI ABI layout
+- imported C aggregate calls beyond scalar/raw-pointer signatures
 
 ## Next Backend Work
 
-1. Define non-local aggregate ABI layouts for tuples, structs, and vectors.
-2. Extend C imports after aggregate ABI classification and keep object output
+1. Extend C imports with the shared aggregate ABI classifier and keep object output
    aligned with the library ABI surface.
+2. Add explicit generated C wrapper/header surfaces for tuple,
+   fixed-capacity-vector, and aggregate-enum values that the classifier accepts.
 3. Move compiler-known prelude stubs toward Ari source modules where possible.

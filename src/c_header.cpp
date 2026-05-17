@@ -1,7 +1,7 @@
 #include "c_header.hpp"
 
+#include "aggregate_abi.hpp"
 #include "common.hpp"
-#include "layout.hpp"
 #include "symbol_mangle.hpp"
 #include "target.hpp"
 
@@ -299,12 +299,6 @@ std::string emitted_function_symbol(const IrFunction& fn) {
     return fn.link_name.empty() ? mangle_function_name(fn.name) : fn.link_name;
 }
 
-bool is_direct_aggregate_abi_type(const IrType& type) {
-    return (type.qualifier == TypeQualifier::Value &&
-            (type.primitive == IrPrimitiveKind::Struct ||
-             type.primitive == IrPrimitiveKind::Array));
-}
-
 std::string pointer_abi_hint(const IrType& type) {
     if (type.primitive == IrPrimitiveKind::Struct) return type.name;
     return type_name(type);
@@ -494,24 +488,24 @@ void require_direct_aggregate_abi(SourceLocation loc,
                                   const IrType& type,
                                   const TargetInfo& target,
                                   const std::string& context) {
-    if (!is_direct_aggregate_abi_type(type)) return;
-    if (!(target.pointer_bits == 64 && target.unix)) {
+    NonLocalAggregateAbi abi = classify_nonlocal_aggregate_abi(type, target);
+    if (abi.kind == NonLocalAggregateAbiKind::NotAggregate) return;
+    if (abi.reason == NonLocalAggregateAbiReason::TargetUnsupported) {
         throw CompileError(where(loc) + ": C header emission for by-value " + context + " " +
                            type_name(type) +
                            " is currently supported only on 64-bit Unix targets; use ptr " +
                            pointer_abi_hint(type) + " for a stable ABI on target '" + target.triple + "'");
     }
-    std::uint64_t size = 0;
-    std::uint64_t align = 0;
-    if (!ari_layout_size_bytes(type, size) || !ari_layout_align_bytes(type, align)) {
+    if (abi.reason == NonLocalAggregateAbiReason::LayoutUnavailable) {
         throw CompileError(where(loc) + ": C header emission cannot compute layout for by-value " +
                            context + " " + type_name(type) + "; use an explicit raw pointer ABI");
     }
-    if (size == 0) {
+    if (abi.reason == NonLocalAggregateAbiReason::ZeroSized) {
         throw CompileError(where(loc) + ": C header emission does not support zero-sized by-value " +
                            context + " " + type_name(type) + "; use ptr " + pointer_abi_hint(type));
     }
-    if (size > 16 || align > 8) {
+    if (abi.kind == NonLocalAggregateAbiKind::Direct) return;
+    if (abi.kind == NonLocalAggregateAbiKind::Indirect) {
         throw CompileError(where(loc) + ": C header emission for by-value " + context + " " +
                            type_name(type) +
                            " is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment; use ptr " +
