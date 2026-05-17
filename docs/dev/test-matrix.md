@@ -541,6 +541,9 @@ Checklist:
       LLVM output byte-for-byte
 - [x] hash-valid but malformed IR sidecar replay payloads are rejected with a
       module-cache replay diagnostic before backend emission
+- [x] IR sidecar cache-use replay preserves cache-only local `Vec[T; capacity]`
+      type metadata and keeps the resulting LLVM layout byte-for-byte identical
+      to fresh lowering
 - [x] AST summary records include declaration fingerprints and declaration
       payloads, then reject tampered fingerprints, payloads, or count/payload
       disagreement

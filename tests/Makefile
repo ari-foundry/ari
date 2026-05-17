@@ -1348,6 +1348,12 @@ check-modules: $(TARGET)
 	sed '0,/ari-ast-decls-v0/s/ari-ast-decls-v0/ari-ast-decls-v1/' $(BUILD_DIR)/modules/package-cache-body.aricache >$(BUILD_DIR)/modules/package-cache-body-ast-non-v0.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.ll >$(BUILD_DIR)/modules/package-cache-body-ast-non-v0.err 2>&1; then exit 1; fi
 	grep -q "expected 'ari-ast-decls-v0;'" $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.err
+	$(TARGET) -Itests/packages tests/ok/package-cache-layout-types-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-layout-types.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-layout-types-cache.ll
+	grep -Fq "11:Vec[i64; 5]" $(BUILD_DIR)/modules/package-cache-layout-types.aricache
+	grep -q "%values.addr.* = alloca { i64, \\[5 x i64\\] }" $(BUILD_DIR)/modules/package-cache-layout-types-cache.ll
+	$(TARGET) -Itests/packages tests/ok/package-cache-layout-types-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-layout-types.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-layout-types-cache-use.ll
+	cmp -s $(BUILD_DIR)/modules/package-cache-layout-types-cache.ll $(BUILD_DIR)/modules/package-cache-layout-types-cache-use.ll
+	grep -q "%values.addr.* = alloca { i64, \\[5 x i64\\] }" $(BUILD_DIR)/modules/package-cache-layout-types-cache-use.ll
 	$(TARGET) --freestanding -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.raw
 	$(BUILD_DIR)/modules/package-cache-body.raw; code=$$?; test $$code -eq 14
 	$(TARGET) -Itests/packages tests/ok/package-cache-indirect-call-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-indirect-call.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-indirect-call-cache.ll

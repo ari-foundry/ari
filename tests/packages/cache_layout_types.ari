@@ -1,0 +1,7 @@
+pub fn vector_capacity_shape() -> i64 {
+  var values: Vec[i64] = [];
+  values.reserve(5);
+  values.push(10);
+  values.push(11);
+  return values.capacity() + values.len() + values[1];
+}

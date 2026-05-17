@@ -90,15 +90,24 @@ pointers and reset/destroy diagnostics continue to use semantic provenance.
 Freestanding zone allocation remains deliberately rejected until a raw-backend
 allocation runtime exists.
 
-The loop fixed-point precision goal has been removed from active Near-Term
-tracking. The current loop checker tracks ownership and borrow state at
+The loop fixed-point precision foundation is complete for the current exact
+fixed-point surface. The current loop checker tracks ownership and borrow state at
 `break`, `continue`, zero-iteration, literal-true next-iteration, and
 fallthrough merge points, including conservative same-provenance borrow-release
 joins and literal-true `break` exits that merge moved/dropped unavailable owner
-states. General `Alive -> unavailable` owner widening for next-iteration or
-fallthrough paths is now tracked as Medium-Term dataflow work because it must
-revalidate the loop body under the widened entry state instead of accepting a
-body that was checked only with the owner alive.
+states. The next active Near-Term loop goal is the remaining owner-state
+dataflow recheck:
+
+1. Prove loop owner-state widening with a loop dataflow recheck.
+   Borrow-release widening is safe with the current same-provenance merge
+   because it keeps the source conservatively borrowed. Owner-state widening is
+   different: a body checked with an `Alive` owner cannot simply be reused for a
+   later iteration that starts with that owner moved or dropped. Add a
+   revalidation/dataflow pass before accepting non-trivial next-iteration or
+   fallthrough ownership fixed points.
+   - [owner-widen] recheck loop bodies under candidate widened owner states
+     before accepting `Alive -> moved/dropped` next-iteration or fallthrough
+     joins
 
 IR package-cache replay is complete for the current V0 0.x executable cache
 surface and has been removed from active Near-Term work. Validated
@@ -111,29 +120,17 @@ sema path. The cache-use path can therefore skip parsing summary-safe
 dependencies after metadata/source-hash validation while still producing the
 same LLVM IR as a fresh sema lowering. Hash-valid but malformed replay
 payloads are reported as module-cache IR replay diagnostics tied to the lowered
-function being reconstructed, before backend emission.
-
-Small follow-up labels that are useful but not large Near-Term goals:
-- [cache-type-guard] when a new layout-bearing IR type is added, add a focused
-  cache replay test that proves its cache-only metadata survives a cache-use
-  LLVM byte-for-byte comparison
+function being reconstructed, before backend emission. A focused cache layout
+guard now keeps cache-only local `Vec[T; capacity]` type metadata covered with
+fresh/cache-use LLVM byte-for-byte comparison, so new layout-bearing IR type
+metadata must grow that guard instead of relying only on broad cache-body tests.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 
 ## Medium-Term Compiler Work
 
-1. Prove loop owner-state widening with a loop dataflow recheck.
-   Borrow-release widening is safe with the current same-provenance merge
-   because it keeps the source conservatively borrowed. Owner-state widening is
-   different: a body checked with an `Alive` owner cannot simply be reused for a
-   later iteration that starts with that owner moved or dropped. Add a
-   revalidation/dataflow pass before accepting non-trivial next-iteration or
-   fallthrough ownership fixed points.
-   - [owner-widen] recheck loop bodies under candidate widened owner states
-     before accepting `Alive -> moved/dropped` next-iteration or fallthrough
-     joins
-2. Expand IR package-cache replay after the current V0 free-function surface.
+1. Expand IR package-cache replay after the current V0 free-function surface.
    V0 replay covers non-generic free-function dependency bodies and the
    generated impl specializations needed by those bodies. Keep the cache family
    on 0.x/V0 until a deliberate version bump is approved, then extend the

@@ -160,7 +160,9 @@ body-shape and operand-tree sections, recheck their structural agreement, and
 replay cached dependency `IrFunction` bodies so cache-use LLVM output matches a
 fresh sema lowering byte-for-byte for summary-safe dependencies. Hash-valid
 replay payloads whose body or type shape no longer fits the current IR model are
-reported as module-cache IR replay diagnostics before backend emission.
+reported as module-cache IR replay diagnostics before backend emission. A
+focused layout guard checks cache-only local `Vec[T; capacity]` type metadata by
+comparing fresh and cache-use LLVM storage shapes.
 
 `make check-structs` runs struct and ADT-focused tests for struct declarations,
 generic struct field resolution, named struct literals, tuple-struct
