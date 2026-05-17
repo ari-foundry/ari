@@ -127,10 +127,12 @@ head += left
 let (Point { x: axis, y: 0 } | Point { x: 0, y: axis }) = point
 ```
 
-Declaration patterns bind by value. `let ref x`, `let ref mut x`, `let &x`,
-`let &mut x`, and `let mut x` are reserved for future binding modes and are
-rejected today; use `var x = ...` for a mutable local or create an explicit
-borrow with `let x = ref value`.
+Declaration patterns bind by value. `let mut pattern = value` is accepted as
+declaration-level mutability for every binding introduced by the pattern, so it
+matches `var pattern = value` while keeping the familiar `let mut` spelling.
+`let ref x`, `let ref mut x`, `let &x`, and `let &mut x` remain reserved for
+future reference binding modes; create an explicit borrow with
+`let x = ref value` today.
 
 The `[a, b]` pattern spelling works for fixed arrays and for runtime sequence
 subjects such as local `Vec[T]` storage and `Slice[T]` views. On `Vec[T]` and

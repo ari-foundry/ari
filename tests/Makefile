@@ -1285,8 +1285,6 @@ check-match: $(TARGET)
 	grep -q "reference pattern binding modes are reserved but not supported yet" $(BUILD_DIR)/match/pattern-ref-binding-mode.err
 	if $(TARGET) tests/errors/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/match/pattern-amp-binding-mode.elf >$(BUILD_DIR)/match/pattern-amp-binding-mode.err 2>&1; then exit 1; fi
 	grep -q "reference pattern binding modes are reserved but not supported yet" $(BUILD_DIR)/match/pattern-amp-binding-mode.err
-	if $(TARGET) tests/errors/pattern-mut-binding-mode.ari -o $(BUILD_DIR)/match/pattern-mut-binding-mode.elf >$(BUILD_DIR)/match/pattern-mut-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "mutable pattern binding modes are reserved but not supported yet" $(BUILD_DIR)/match/pattern-mut-binding-mode.err
 	if $(TARGET) tests/errors/match-tuple-nonexhaustive.ari -o $(BUILD_DIR)/match/match-tuple-nonexhaustive.elf >$(BUILD_DIR)/match/match-tuple-nonexhaustive.err 2>&1; then exit 1; fi
 	grep -q "tuple match must cover every supported product case" $(BUILD_DIR)/match/match-tuple-nonexhaustive.err
 	if $(TARGET) tests/errors/match-product-nonexhaustive-bool.ari -o $(BUILD_DIR)/match/match-product-nonexhaustive-bool.elf >$(BUILD_DIR)/match/match-product-nonexhaustive-bool.err 2>&1; then exit 1; fi
@@ -2414,6 +2412,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/variables-match-binding.raw; code=$$?; test $$code -eq 42
 	$(TARGET) --freestanding tests/ok/variables-tuple-pattern.ari -o $(BUILD_DIR)/variables/variables-tuple-pattern.raw
 	$(BUILD_DIR)/variables/variables-tuple-pattern.raw; code=$$?; test $$code -eq 38
+	$(TARGET) --freestanding tests/ok/pattern-mut-binding-mode.ari -o $(BUILD_DIR)/variables/pattern-mut-binding-mode.raw
+	$(BUILD_DIR)/variables/pattern-mut-binding-mode.raw; code=$$?; test $$code -eq 36
 	$(TARGET) --freestanding tests/ok/unit-empty-tuple.ari -o $(BUILD_DIR)/variables/unit-empty-tuple.raw
 	$(BUILD_DIR)/variables/unit-empty-tuple.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --freestanding tests/ok/variables-struct-pattern.ari -o $(BUILD_DIR)/variables/variables-struct-pattern.raw

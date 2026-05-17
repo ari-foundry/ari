@@ -1,0 +1,23 @@
+struct Point {
+  x: i64,
+  y: i64,
+}
+
+fn main() -> i64 {
+  let mut value = 1;
+  value += 2;
+
+  let mut (left, right) = (3, 4);
+  left += value;
+  right += left;
+
+  let mut Point { x, y: other } = Point { x: 5, y: 6 };
+  x += right;
+  other += x;
+
+  let mut [head, tail] = [7, 8];
+  head += other;
+  tail += head;
+
+  return tail;
+}

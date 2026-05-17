@@ -1087,7 +1087,7 @@ private:
         if (check(TokenKind::KwMut)) {
             fail(peek().loc,
                  std::string("mutable ") + context +
-                     " binding modes are reserved but not supported yet; use var for mutable local bindings");
+                     " binding modes are reserved but not supported yet; use let mut before the whole pattern or var for mutable local bindings");
         }
     }
 
@@ -1124,6 +1124,9 @@ private:
     }
 
     StmtPtr parse_pattern_variable(bool mutable_binding) {
+        if (match(TokenKind::KwMut)) {
+            mutable_binding = true;
+        }
         Binding binding;
         binding.pattern = parse_pattern(true);
         binding.has_pattern = true;

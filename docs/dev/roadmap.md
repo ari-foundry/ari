@@ -4,9 +4,13 @@
 
 Parser-visible syntax is now stable for linting and language-server tooling.
 `init ... while ... next` is the only loop-state spelling; `let ... while` is
-rejected with a migration diagnostic. Pattern binding modes (`ref`, `ref mut`,
-`&`, `&mut`, `mut` in patterns) are reserved and rejected with diagnostics so
+rejected with a migration diagnostic. Reference pattern binding modes (`ref`,
+`ref mut`, `&`, and `&mut`) remain reserved and rejected with diagnostics so
 future reference/ownership binding modes do not collide with the current AST.
+The mutable declaration binding-mode slice promoted from Medium-Term is
+complete for the current 0.x surface: `let mut PATTERN = value` now parses as
+declaration-level mutability for every binding introduced by the pattern and
+reuses the existing `var PATTERN` lowering path.
 Both `ref mut T` and `mut ref T` are accepted as equivalent mutable borrow
 spellings. `--check` runs parsing, module loading, and semantic lowering
 without backend emission for editor tooling.
@@ -159,9 +163,11 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
 ## Medium-Term Language Work
 
 1. Extend pattern binding modes beyond value bindings.
-   The parser now reserves `ref`, `ref mut`, `&`, `&mut`, and `mut`
-   binding-mode spellings as Near-Term syntax-stability work. This Medium-Term
-   item is the semantic lowering phase for those reserved forms.
+   Declaration-level `let mut PATTERN = value` is implemented as the mutable
+   value-binding slice. The parser still reserves `ref`, `ref mut`, `&`, and
+   `&mut` binding-mode spellings as syntax-stability work. This Medium-Term
+   item is now the semantic lowering phase for those reference/ownership
+   binding forms.
    - [reference] design `ref`, `ref mut`, `&`, and Ari ownership-aware binding modes
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share
