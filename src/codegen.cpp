@@ -4,6 +4,7 @@
 #include "enum_payload_layout.hpp"
 #include "ir_builders.hpp"
 #include "layout.hpp"
+#include "module_path.hpp"
 #include "raw_string_pool.hpp"
 #include "raw_vtable_pool.hpp"
 #include "slice_semantics.hpp"
@@ -78,10 +79,18 @@ struct CompiledFunction {
     std::vector<RawVTableReference> vtables;
 };
 
+struct RawExternFunction {
+    std::string link_name;
+    IrExternAbi abi = IrExternAbi::C;
+    std::vector<IrParam> params;
+    IrType return_type;
+    bool is_variadic = false;
+};
+
 class FunctionEmitter {
 public:
-    FunctionEmitter(const IrFunction& fn, const std::map<std::string, IrExternAbi>& extern_abis)
-        : fn_(fn), extern_abis_(extern_abis) {}
+    FunctionEmitter(const IrFunction& fn, const std::map<std::string, RawExternFunction>& extern_functions)
+        : fn_(fn), extern_functions_(extern_functions) {}
 
     CompiledFunction emit() {
         reject_unsupported_float_function_abi();
@@ -128,7 +137,7 @@ private:
     };
 
     const IrFunction& fn_;
-    const std::map<std::string, IrExternAbi>& extern_abis_;
+    const std::map<std::string, RawExternFunction>& extern_functions_;
     CodeBuffer out_;
     std::map<std::string, int> locals_;
     std::map<std::string, IrType> local_types_;
@@ -3754,7 +3763,7 @@ private:
 
     void emit_call_with_sret_to_offset(const IrExpr& expr, int target_offset) {
         const std::string& name = ir_expr_name(expr);
-        reject_c_extern_use(expr.loc, name, "call");
+        validate_c_extern_direct_call(expr.loc, name);
         if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(name)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
                                *blocked + " yet; use the LLVM host backend");
@@ -3789,7 +3798,7 @@ private:
 
     void emit_call_with_sret_to_pointer_base(const IrExpr& expr, int byte_offset) {
         const std::string& name = ir_expr_name(expr);
-        reject_c_extern_use(expr.loc, name, "call");
+        validate_c_extern_direct_call(expr.loc, name);
         if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(name)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
                                *blocked + " yet; use the LLVM host backend");
@@ -3830,7 +3839,7 @@ private:
 
     void emit_call(const IrExpr& expr) {
         const std::string& name = ir_expr_name(expr);
-        reject_c_extern_use(expr.loc, name, "call");
+        validate_c_extern_direct_call(expr.loc, name);
         if (std::optional<std::string> blocked = ari_builtin_freestanding_blocked_feature(name)) {
             throw CompileError(where(expr.loc) + ": freestanding backend does not lower " +
                                *blocked + " yet; use the LLVM host backend");
@@ -3868,7 +3877,7 @@ private:
 
     void emit_function_ref(const IrExpr& expr) {
         const std::string& name = ir_expr_name(expr);
-        reject_c_extern_use(expr.loc, name, "take the address of");
+        reject_c_extern_address(expr.loc, name);
         out_.u8(0x48);
         out_.u8(0x8D);
         out_.u8(0x05);
@@ -3877,12 +3886,58 @@ private:
         addresses_.push_back(CallPatch{pos, name});
     }
 
-    void reject_c_extern_use(SourceLocation loc, const std::string& name, const std::string& operation) const {
-        auto found = extern_abis_.find(name);
-        if (found == extern_abis_.end() || found->second != IrExternAbi::C) return;
-        throw CompileError(where(loc) + ": freestanding backend cannot " + operation +
-                           " extern \"C\" function '" + name +
-                           "'; use the LLVM host backend or provide an Ari runtime shim");
+    const RawExternFunction* find_c_extern(const std::string& name) const {
+        auto found = extern_functions_.find(name);
+        if (found == extern_functions_.end() || found->second.abi != IrExternAbi::C) return nullptr;
+        return &found->second;
+    }
+
+    static bool is_raw_c_import_scalar_type(const IrType& type, bool allow_void) {
+        if (type.qualifier == TypeQualifier::Ptr ||
+            type.qualifier == TypeQualifier::Ref ||
+            type.qualifier == TypeQualifier::MutRef) {
+            return true;
+        }
+        if (type.qualifier != TypeQualifier::Value) return false;
+        if (type.primitive == IrPrimitiveKind::Void) return allow_void;
+        if (type.primitive == IrPrimitiveKind::Bool ||
+            type.primitive == IrPrimitiveKind::String ||
+            type.primitive == IrPrimitiveKind::Function) {
+            return true;
+        }
+        return is_integer_primitive(type.primitive);
+    }
+
+    [[noreturn]] void throw_c_extern_scalar_error(SourceLocation loc,
+                                                  const std::string& name,
+                                                  const std::string& role,
+                                                  const IrType& type) const {
+        throw CompileError(where(loc) + ": freestanding backend does not lower extern \"C\" function '" +
+                           name + "' with " + role + " type " + type_name(type) +
+                           " yet; only integer, bool, string, function-pointer, raw-pointer/reference, and void return scalar signatures are supported");
+    }
+
+    void validate_c_extern_direct_call(SourceLocation loc, const std::string& name) const {
+        const RawExternFunction* fn = find_c_extern(name);
+        if (!fn) return;
+        if (fn->is_variadic) {
+            throw CompileError(where(loc) + ": freestanding backend does not lower variadic extern \"C\" function '" +
+                               name + "' yet; build a host executable or wrap it in a fixed-arity C function");
+        }
+        if (!is_raw_c_import_scalar_type(fn->return_type, true)) {
+            throw_c_extern_scalar_error(loc, name, "return", fn->return_type);
+        }
+        for (const auto& param : fn->params) {
+            if (!is_raw_c_import_scalar_type(param.type, false)) {
+                throw_c_extern_scalar_error(loc, name, "parameter '" + param.name + "'", param.type);
+            }
+        }
+    }
+
+    void reject_c_extern_address(SourceLocation loc, const std::string& name) const {
+        if (!find_c_extern(name)) return;
+        throw CompileError(where(loc) + ": freestanding backend cannot take the address of extern \"C\" function '" +
+                           name + "' yet; direct scalar/raw-pointer calls can be emitted as object relocations");
     }
 
     void emit_indirect_call(const IrExpr& expr) {
@@ -4602,7 +4657,7 @@ public:
     explicit ProgramEmitter(const IrProgram& program) : program_(program) {}
 
     EmittedProgram emit() {
-        collect_extern_abis();
+        collect_extern_functions();
         collect_ir_functions();
         if (program_.require_main) emit_entry();
         enqueue_initial_functions();
@@ -4611,7 +4666,7 @@ public:
         emit_static_data();
         patch_calls();
         patch_vtable_entries();
-        return EmittedProgram{std::move(code_.bytes), std::move(symbols_)};
+        return EmittedProgram{std::move(code_.bytes), std::move(symbols_), std::move(relocations_)};
     }
 
 private:
@@ -4620,19 +4675,26 @@ private:
     std::map<std::string, std::size_t> function_offsets_;
     std::map<std::string, const IrFunction*> ir_functions_;
     std::vector<const IrFunction*> function_queue_;
-    std::map<std::string, IrExternAbi> extern_abis_;
+    std::map<std::string, RawExternFunction> extern_functions_;
     std::vector<CallPatch> global_calls_;
     std::vector<CallPatch> global_addresses_;
     std::vector<RawStringReference> global_strings_;
     std::vector<RawVTableReference> global_vtables_;
     std::vector<CodeSymbol> symbols_;
+    std::vector<CodeRelocation> relocations_;
     std::vector<IrFunction> trait_object_thunks_;
     RawStringPool string_pool_;
     RawVTablePool vtable_pool_;
 
-    void collect_extern_abis() {
+    void collect_extern_functions() {
         for (const auto& fn : program_.extern_functions) {
-            extern_abis_[fn.name] = fn.abi;
+            RawExternFunction raw;
+            raw.link_name = fn.link_name.empty() ? qualified_basename(fn.name) : fn.link_name;
+            raw.abi = fn.abi;
+            raw.params = fn.params;
+            raw.return_type = fn.return_type;
+            raw.is_variadic = fn.is_variadic;
+            extern_functions_[fn.name] = std::move(raw);
         }
     }
 
@@ -4754,7 +4816,7 @@ private:
         std::size_t index = 0;
         while (index < function_queue_.size()) {
             const IrFunction& ir_fn = *function_queue_[index++];
-            FunctionEmitter emitter(ir_fn, extern_abis_);
+            FunctionEmitter emitter(ir_fn, extern_functions_);
             CompiledFunction fn = emitter.emit();
             std::size_t offset = code_.size();
             function_offsets_[fn.name] = offset;
@@ -5474,7 +5536,19 @@ private:
     void patch_calls() {
         for (const auto& call : global_calls_) {
             auto found = function_offsets_.find(call.name);
-            if (found == function_offsets_.end()) throw CompileError("backend cannot find function '" + call.name + "'");
+            if (found == function_offsets_.end()) {
+                auto extern_found = extern_functions_.find(call.name);
+                if (extern_found != extern_functions_.end() && extern_found->second.abi == IrExternAbi::C) {
+                    relocations_.push_back(CodeRelocation{
+                        CodeRelocationKind::PcRel32Call,
+                        static_cast<std::uint64_t>(call.imm_offset),
+                        extern_found->second.link_name,
+                        -4,
+                    });
+                    continue;
+                }
+                throw CompileError("backend cannot find function '" + call.name + "'");
+            }
             std::int64_t rel = static_cast<std::int64_t>(found->second) - static_cast<std::int64_t>(call.imm_offset + 4);
             code_.patch32(call.imm_offset, static_cast<std::int32_t>(rel));
         }

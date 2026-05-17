@@ -150,10 +150,13 @@ enum value. For example, `value.0` and `(*raw).0` address payload slot 0 while
 the hidden tag remains an implementation field. This access is intentionally
 low-level: it does not check which case is currently active, and
 scalar/pointer-shaped payload slots expose their stored `u64` payload word.
-The raw `--freestanding` backend does not link or call external C symbols yet;
-calling an `extern "C"` function there is rejected with a backend diagnostic.
-Use the LLVM host backend for C interop, or expose the operation through a
-future Ari runtime shim for raw targets.
+Raw `--freestanding --emit-obj` output can emit direct imported `extern "C"`
+calls for scalar and raw-pointer signatures as undefined C symbols with ELF
+relocations. The supported raw-import slice covers integer and bool values,
+lowercase `string`/function-pointer slots, `ptr`/`ref`/`ref mut` pointer-shaped
+slots, and `c_void` returns. Raw executable output still has no linker phase, so
+the same imported call is rejected unless object output is used and an external
+linker supplies the C symbol.
 Host LLVM builds can allocate raw memory from explicit zones with
 `zone::create`, `zone::alloc`, `zone::reset`, and `zone::destroy`; the result of
 raw byte allocation is a `ptr u8` that can be cast and used with the same raw
@@ -252,8 +255,9 @@ functions remain default-visible. Private helper functions are emitted with
 hidden LLVM visibility, and Ari-owned runtime helpers are hidden as internal
 implementation details.
 Raw `--freestanding` ELF output records explicit export/no-mangle names in the
-static symbol table, but imported `extern "C"` calls still require the LLVM host
-backend until the raw backend has a native C ABI and link path.
+static symbol table. Relocatable raw object output can additionally reference
+scalar/raw-pointer imported `extern "C"` symbols through `.rela.text` call
+relocations; direct raw executable output still rejects imported symbols.
 
 ## Type Mapping
 

@@ -63,9 +63,10 @@ The freestanding backend still uses the small internal integer/bool calling
 convention: the first six scalar arguments use registers and later arguments use
 caller-provided stack slots. Sema caps functions and calls at 65,535
 parameters/arguments. Raw ELF executable and object output records
-`@export`/`@no_mangle` function names in `.symtab`, but imported `extern "C"`
-calls remain rejected until the native backend has a real platform C ABI and
-link path.
+`@export`/`@no_mangle` function names in `.symtab`. Raw relocatable object
+output can also leave direct imported `extern "C"` scalar/raw-pointer calls as
+undefined C symbols with `R_X86_64_PLT32` `.rela.text` entries. Raw executable
+output still rejects those imported calls because it has no linker phase.
 
 ## Prelude IO, Input, And Stops
 
@@ -131,9 +132,12 @@ ari app.ari --freestanding --emit-obj app.o
 
 Object output uses `ET_REL`, writes generated code into `.text`, and emits
 `.symtab` / `.strtab` entries for the same Ari mangled or explicit
-`@export`/`@no_mangle` symbols used by raw executable output. It does not
-introduce platform C ABI relocations or host linker integration; imported
-`extern "C"` calls are still rejected on the freestanding path.
+`@export`/`@no_mangle` symbols used by raw executable output. Direct imported
+`extern "C"` calls with integer, bool, string/function-pointer,
+raw-pointer/reference, or void-return scalar signatures are emitted as
+undefined symbols plus `.rela.text` call relocations, so an external linker can
+resolve them. Aggregates, varargs, platform float-C ABI details, libc
+discovery, and raw executable linking remain future work.
 
 ## Known Backend Limits
 
@@ -146,9 +150,11 @@ The backends still intentionally reject or do not ABI-lower:
 - multi-word enum payloads
 - raw pointer operations outside scalar and plain Ari-layout aggregate local layouts
 - tuple/vector/struct/fixed-array function and FFI ABI layout
+- raw executable linking for imported C symbols
 
 ## Next Backend Work
 
 1. Define non-local aggregate ABI layouts for tuples, structs, and vectors.
-2. Add raw C import relocations and host linker integration.
+2. Extend raw C imports beyond scalar object relocations and add host linker
+   integration.
 3. Move compiler-known prelude stubs toward Ari source modules where possible.

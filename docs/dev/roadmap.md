@@ -12,14 +12,14 @@ item as 1.0 work unless the whole language release is being scoped.
 These are the next compiler-sized slices that should be possible without
 changing the long-term language contract.
 
-1. [raw-c-imports-scalar] Implement the first real raw/freestanding imported
-   `extern "C"` path for scalar and raw-pointer signatures only. Keep
-   aggregate, varargs, platform float-C ABI, and libc discovery outside this
-   slice until scalar linking and calls are boring.
-2. [ir-replay-generics] Replay generic free functions and generated impl
+1. [ir-replay-generics] Replay generic free functions and generated impl
    specializations from V0 IR sidecars once their stable specialization identity
    is versioned. Keep trait-specialized replay and broader identity descriptor
    expansion behind the same 0.x cache-version policy.
+2. [abi-aggregate-classification] Define non-local aggregate ABI
+   classification for public tuples, arrays, structs, vectors, and aggregate
+   enums. This should settle the policy needed before raw C aggregate imports,
+   richer C headers, and library-owned collection handles grow further.
 
 See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
 roadmap for splitting `src/sema.cpp` by broad semantic phases.
@@ -64,17 +64,20 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
 
 ## Backend Work
 
-1. Extend raw C imports after `[raw-c-imports-scalar]`.
+1. Extend raw C imports after the scalar relocatable-object path.
    Add aggregate signatures, varargs, platform float-C ABI, libc discovery, and
-   external aggregate-enum FFI once the scalar/raw-pointer path is stable.
-2. Define non-local aggregate ABI classification.
-   Finish public external-surface ABI classification and policy for tuples,
-   arrays, structs, vectors, and aggregate enums.
-3. Add freestanding runtime string features beyond static literals.
+   external aggregate-enum FFI once aggregate ABI classification is stable.
+2. Add freestanding runtime string features beyond static literals.
    Add line-input buffers, owned-line allocation, allocator-backed string
    construction, and richer hosted IO compatibility.
-4. Complete freestanding floating-point lowering.
+3. Complete freestanding floating-point lowering.
    Add eventual `f128` values and foreign/platform C float ABI integration.
+
+## Small Follow-Ups
+
+- [raw-object-gnu-stack-note] Add a non-executable-stack marker section to raw
+  relocatable objects so external linkers do not warn about a missing
+  `.note.GNU-stack` section.
 
 ## Bootstrap Direction
 

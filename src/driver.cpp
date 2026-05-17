@@ -52,6 +52,25 @@ static void write_text_file(const std::string& path, const std::string& data) {
     out << data;
 }
 
+static std::vector<ElfRelocation> lower_elf_relocations(const std::vector<CodeRelocation>& relocations) {
+    constexpr std::uint32_t R_X86_64_PLT32 = 4;
+    std::vector<ElfRelocation> lowered;
+    lowered.reserve(relocations.size());
+    for (const auto& relocation : relocations) {
+        switch (relocation.kind) {
+            case CodeRelocationKind::PcRel32Call:
+                lowered.push_back(ElfRelocation{
+                    relocation.offset,
+                    relocation.symbol,
+                    R_X86_64_PLT32,
+                    relocation.addend,
+                });
+                break;
+        }
+    }
+    return lowered;
+}
+
 static std::string shell_quote(const std::string& text) {
     std::string quoted = "'";
     for (char c : text) {
@@ -269,11 +288,15 @@ int run(int argc, char** argv) {
             symbols.push_back(ElfSymbol{symbol.name, symbol.offset, symbol.size});
         }
         if (!object_output.empty()) {
-            std::vector<std::uint8_t> object = write_elf_relocatable_object(emitted.code, symbols);
+            std::vector<ElfRelocation> relocations = lower_elf_relocations(emitted.relocations);
+            std::vector<std::uint8_t> object = write_elf_relocatable_object(emitted.code, symbols, relocations);
             write_file(object_output, object, false);
             std::cout << "wrote " << object_output << " (" << object.size()
                       << " bytes, freestanding object)\n";
             return 0;
+        }
+        if (!emitted.relocations.empty()) {
+            throw CompileError("freestanding executable output cannot link imported extern \"C\" symbols yet; use --emit-obj and an external linker");
         }
         std::vector<std::uint8_t> elf = write_elf_executable(emitted.code, symbols);
         write_file(output, elf, true);

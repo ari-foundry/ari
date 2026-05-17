@@ -1,0 +1,10 @@
+extern "C" fn ari_test_add_i64(left: c_longlong, right: c_longlong) -> c_longlong;
+extern "C" fn ari_test_inc_i64(value: ref mut c_longlong) -> c_void;
+extern "C" fn ari_test_is_null(value: ptr c_void) -> i64;
+
+@export("ari_entry")
+pub fn entry() -> i64 {
+  var value: c_longlong = ari_test_add_i64(20, 11);
+  ari_test_inc_i64(ref mut value);
+  return value + ari_test_is_null(null);
+}

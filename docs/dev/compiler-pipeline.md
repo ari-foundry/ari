@@ -113,9 +113,11 @@ src/elf.hpp
 ```
 
 The ELF writer creates minimal Linux x86-64 ET_EXEC files with executable load
-segments and ET_REL object files with `.text`, `.symtab`, `.strtab`, and
-`.shstrtab` sections.
+segments and ET_REL object files with `.text`, optional `.rela.text`,
+`.symtab`, `.strtab`, and `.shstrtab` sections.
 
 The driver writes freestanding ELF outputs with normal executable permissions,
 so no manual `chmod +x` step is needed. Relocatable object outputs are ordinary
-non-executable binary files. There is no external C relocation handling yet.
+non-executable binary files. Supported raw imported `extern "C"`
+scalar/raw-pointer calls lower to undefined symbols plus x86-64 call
+relocations in object output; raw executable output still has no linker phase.

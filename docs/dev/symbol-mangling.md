@@ -33,8 +33,10 @@ functions and Ari-owned runtime helpers are emitted with hidden LLVM
 visibility, so they are not intended to be part of the dynamic library ABI.
 Raw `--freestanding` ELF executable output and
 `--freestanding --emit-obj` relocatable object output also record
-`@export`/`@no_mangle` names in the symbol table. The raw backend still rejects
-imported `extern "C"` calls until a real native C ABI and link path exists.
+`@export`/`@no_mangle` names in the symbol table. Raw relocatable object output
+can also record supported imported `extern "C"` scalar/raw-pointer calls as
+undefined C symbols with ELF relocations. Raw executable output still rejects
+imported C symbols because it has no linker phase.
 
 This mangling is intentionally still a v0 ABI. Future ABI versioning work may
 revise symbol identity rules, but argument-based source-level overloading is not

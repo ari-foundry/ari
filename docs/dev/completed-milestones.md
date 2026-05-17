@@ -120,5 +120,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - The raw backend can emit native x86-64 ELF relocatable object files through
   `--freestanding --emit-obj path`. These objects contain a `.text` section and
   a symbol table using the same Ari mangled or explicit `@export`/`@no_mangle`
-  symbols as raw executable output. C ABI relocations and host linker
-  integration remain separate follow-up work.
+  symbols as raw executable output.
+- Raw relocatable object output supports direct imported `extern "C"` calls for
+  integer, bool, string/function-pointer, raw-pointer/reference, and void-return
+  scalar signatures by emitting undefined C symbols plus `R_X86_64_PLT32`
+  `.rela.text` relocations. Raw executable output still rejects imported C
+  symbols because it has no linker phase.

@@ -2,6 +2,9 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
 
 namespace ari {
 
@@ -201,7 +204,9 @@ public:
     }
 
     static std::vector<std::uint8_t> write_relocatable_object(const std::vector<std::uint8_t>& code,
-                                                              const std::vector<ElfSymbol>& symbols) {
+                                                              const std::vector<ElfSymbol>& symbols,
+                                                              const std::vector<ElfRelocation>& relocations) {
+        const bool has_relocations = !relocations.empty();
         std::vector<std::uint8_t> file(64, 0);
         align_file(file, 16);
         std::uint64_t text_offset = static_cast<std::uint64_t>(file.size());
@@ -211,8 +216,40 @@ public:
         strtab.push_back(0);
         std::vector<std::uint32_t> symbol_name_offsets;
         symbol_name_offsets.reserve(symbols.size());
+        std::map<std::string, std::uint32_t> symbol_indices;
+        std::uint32_t next_symbol_index = 1;
         for (const auto& symbol : symbols) {
             symbol_name_offsets.push_back(add_string(strtab, symbol.name));
+            if (!symbol_indices.count(symbol.name)) {
+                symbol_indices[symbol.name] = next_symbol_index;
+            }
+            ++next_symbol_index;
+        }
+
+        std::vector<std::string> undefined_symbols;
+        std::vector<std::uint32_t> undefined_name_offsets;
+        for (const auto& relocation : relocations) {
+            if (symbol_indices.count(relocation.symbol)) continue;
+            symbol_indices[relocation.symbol] = next_symbol_index++;
+            undefined_symbols.push_back(relocation.symbol);
+            undefined_name_offsets.push_back(add_string(strtab, relocation.symbol));
+        }
+
+        std::uint64_t rela_text_offset = 0;
+        std::uint64_t rela_text_size = 0;
+        if (has_relocations) {
+            align_file(file, 8);
+            rela_text_offset = static_cast<std::uint64_t>(file.size());
+            Writer rela_writer(file);
+            rela_writer.seek(file.size());
+            for (const auto& relocation : relocations) {
+                auto found = symbol_indices.find(relocation.symbol);
+                std::uint64_t symbol_index = found == symbol_indices.end() ? 0 : found->second;
+                rela_writer.u64(relocation.offset);
+                rela_writer.u64((symbol_index << 32) | relocation.type);
+                rela_writer.u64(static_cast<std::uint64_t>(relocation.addend));
+            }
+            rela_text_size = static_cast<std::uint64_t>(rela_writer.tell()) - rela_text_offset;
         }
 
         align_file(file, 8);
@@ -229,6 +266,14 @@ public:
                          symbol.offset,
                          symbol.size);
         }
+        for (std::size_t i = 0; i < undefined_symbols.size(); ++i) {
+            write_symbol(writer,
+                         undefined_name_offsets[i],
+                         static_cast<std::uint8_t>((1 << 4) | 2),
+                         0,
+                         0,
+                         0);
+        }
         std::uint64_t symtab_size = static_cast<std::uint64_t>(writer.tell()) - symtab_offset;
 
         std::uint64_t strtab_offset = static_cast<std::uint64_t>(file.size());
@@ -238,6 +283,7 @@ public:
         std::vector<std::uint8_t> shstrtab;
         shstrtab.push_back(0);
         std::uint32_t sh_text = add_string(shstrtab, ".text");
+        std::uint32_t sh_rela_text = has_relocations ? add_string(shstrtab, ".rela.text") : 0;
         std::uint32_t sh_symtab = add_string(shstrtab, ".symtab");
         std::uint32_t sh_strtab = add_string(shstrtab, ".strtab");
         std::uint32_t sh_shstrtab = add_string(shstrtab, ".shstrtab");
@@ -251,9 +297,16 @@ public:
         writer.seek(file.size());
         write_section_header(writer, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
         write_section_header(writer, sh_text, 1, 0x6, 0, text_offset, code.size(), 0, 0, 16, 0);
-        write_section_header(writer, sh_symtab, 2, 0, 0, symtab_offset, symtab_size, 3, 1, 8, 24);
-        write_section_header(writer, sh_strtab, 3, 0, 0, strtab_offset, strtab_size, 0, 0, 1, 0);
-        write_section_header(writer, sh_shstrtab, 3, 0, 0, shstrtab_offset, shstrtab_size, 0, 0, 1, 0);
+        if (has_relocations) {
+            write_section_header(writer, sh_rela_text, 4, 0, 0, rela_text_offset, rela_text_size, 3, 1, 8, 24);
+            write_section_header(writer, sh_symtab, 2, 0, 0, symtab_offset, symtab_size, 4, 1, 8, 24);
+            write_section_header(writer, sh_strtab, 3, 0, 0, strtab_offset, strtab_size, 0, 0, 1, 0);
+            write_section_header(writer, sh_shstrtab, 3, 0, 0, shstrtab_offset, shstrtab_size, 0, 0, 1, 0);
+        } else {
+            write_section_header(writer, sh_symtab, 2, 0, 0, symtab_offset, symtab_size, 3, 1, 8, 24);
+            write_section_header(writer, sh_strtab, 3, 0, 0, strtab_offset, strtab_size, 0, 0, 1, 0);
+            write_section_header(writer, sh_shstrtab, 3, 0, 0, shstrtab_offset, shstrtab_size, 0, 0, 1, 0);
+        }
 
         writer.seek(0);
         writer.byte(0x7f);
@@ -276,8 +329,8 @@ public:
         writer.u16(0);
         writer.u16(0);
         writer.u16(64);
-        writer.u16(5);
-        writer.u16(4);
+        writer.u16(has_relocations ? 6 : 5);
+        writer.u16(has_relocations ? 5 : 4);
 
         return file;
     }
@@ -296,7 +349,13 @@ std::vector<std::uint8_t> write_elf_executable(const std::vector<std::uint8_t>& 
 
 std::vector<std::uint8_t> write_elf_relocatable_object(const std::vector<std::uint8_t>& code,
                                                        const std::vector<ElfSymbol>& symbols) {
-    return ElfWriter::write_relocatable_object(code, symbols);
+    return ElfWriter::write_relocatable_object(code, symbols, {});
+}
+
+std::vector<std::uint8_t> write_elf_relocatable_object(const std::vector<std::uint8_t>& code,
+                                                       const std::vector<ElfSymbol>& symbols,
+                                                       const std::vector<ElfRelocation>& relocations) {
+    return ElfWriter::write_relocatable_object(code, symbols, relocations);
 }
 
 } // namespace ari
