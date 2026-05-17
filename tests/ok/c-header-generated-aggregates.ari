@@ -1,0 +1,43 @@
+enum MaybeWide {
+  None,
+  Some(i64),
+}
+
+pub fn echo[T](value: T) -> T {
+  return value;
+}
+
+@export("ari_take_tuple")
+pub fn take_tuple(value: (i64, i64)) -> i64 {
+  return value.0 + value.1;
+}
+
+@export("ari_make_tuple")
+pub fn make_tuple(seed: i64) -> (i64, i64) {
+  return (seed, seed + 1);
+}
+
+@export("ari_tuple_ptr")
+pub fn tuple_ptr(value: ptr (i64, i64)) -> i64 {
+  return 0;
+}
+
+@export("ari_take_maybe")
+pub fn take_maybe(value: MaybeWide) -> i64 {
+  return match value {
+    None => 0,
+    Some(payload) => payload,
+  };
+}
+
+@export("ari_make_maybe")
+pub fn make_maybe(seed: i64) -> MaybeWide {
+  return Some(seed);
+}
+
+@export("ari_force_vec")
+pub fn force_vec() -> i64 {
+  let values: Vec[i64] = [2];
+  let copy = echo(values);
+  return copy[0] + len(copy);
+}

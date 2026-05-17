@@ -2,6 +2,7 @@
 
 #include "aggregate_abi.hpp"
 #include "common.hpp"
+#include "layout.hpp"
 #include "symbol_mangle.hpp"
 #include "target.hpp"
 
@@ -43,31 +44,42 @@ struct CConcreteRecord {
     SourceLocation loc;
 };
 
-struct CArrayAlias {
+enum class CGeneratedAggregateKind {
+    Array,
+    Tuple,
+    Vector,
+    AggregateEnum
+};
+
+struct CGeneratedAggregate {
     std::string key;
     std::string c_name;
     IrType type;
+    CGeneratedAggregateKind kind = CGeneratedAggregateKind::Array;
 };
 
 using CRecordNames = std::map<std::string, CRecordInfo>;
 using CConcreteRecordNames = std::map<std::string, std::string>;
 using CEnumNames = std::map<std::string, std::string>;
-using CArrayNames = std::map<std::string, std::string>;
+using CGeneratedAggregateNames = std::map<std::string, std::string>;
 
 std::string c_type_name(const IrType& type,
                         const CRecordNames& c_record_names,
                         const CConcreteRecordNames& c_concrete_record_names,
                         const CEnumNames& c_enum_names,
+                        const CGeneratedAggregateNames& c_generated_aggregate_names,
                         bool allow_record_values);
 std::string c_declaration(const IrType& type,
                           const CRecordNames& c_record_names,
                           const CConcreteRecordNames& c_concrete_record_names,
                           const CEnumNames& c_enum_names,
+                          const CGeneratedAggregateNames& c_generated_aggregate_names,
                           const std::string& declarator,
                           bool allow_record_values,
                           bool const_value = false);
 std::string c_record_type_name(const IrType& type, const CRecordNames& c_record_names);
-std::string c_array_alias_type_name(const IrType& type, const CArrayNames& c_array_names);
+std::string c_generated_aggregate_type_name(const IrType& type,
+                                            const CGeneratedAggregateNames& c_generated_aggregate_names);
 
 std::string c_identifier_suffix(const std::string& text) {
     std::string out;
@@ -116,8 +128,56 @@ std::string concrete_record_c_name(const IrType& type, const CRecordNames& c_rec
     return out;
 }
 
-std::string c_array_alias_c_name(const IrType& type) {
-    return "AriArray_" + c_collapsed_identifier_suffix(type_name(type));
+bool is_value_array_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Array;
+}
+
+bool is_fixed_vector_storage_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Vector &&
+           type.args.size() == 1 &&
+           type.array_size > 0 &&
+           type.field_types.size() == 2;
+}
+
+bool is_generated_aggregate_type(const IrType& type) {
+    return is_value_array_type(type) ||
+           (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Tuple) ||
+           is_fixed_vector_storage_type(type) ||
+           ari_has_aggregate_enum_layout(type);
+}
+
+CGeneratedAggregateKind generated_aggregate_kind(const IrType& type) {
+    if (is_value_array_type(type)) return CGeneratedAggregateKind::Array;
+    if (type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Tuple) {
+        return CGeneratedAggregateKind::Tuple;
+    }
+    if (is_fixed_vector_storage_type(type)) return CGeneratedAggregateKind::Vector;
+    if (ari_has_aggregate_enum_layout(type)) return CGeneratedAggregateKind::AggregateEnum;
+    throw CompileError("internal error: unsupported generated C aggregate type " + type_name(type));
+}
+
+std::string generated_aggregate_key(const IrType& type) {
+    if (type.qualifier == TypeQualifier::Value &&
+        type.primitive == IrPrimitiveKind::Vector &&
+        type.args.size() == 1) {
+        return "Vec[" + type_name(type.args[0]) + "; " + std::to_string(type.array_size) + "]";
+    }
+    return type_name(type);
+}
+
+std::string c_generated_aggregate_c_name(const IrType& type) {
+    switch (generated_aggregate_kind(type)) {
+        case CGeneratedAggregateKind::Array:
+            return "AriArray_" + c_collapsed_identifier_suffix(generated_aggregate_key(type));
+        case CGeneratedAggregateKind::Tuple:
+            return "AriTuple_" + c_collapsed_identifier_suffix(generated_aggregate_key(type));
+        case CGeneratedAggregateKind::Vector:
+            return "AriVec_" + c_collapsed_identifier_suffix(generated_aggregate_key(type));
+        case CGeneratedAggregateKind::AggregateEnum:
+            return "AriEnum_" + c_collapsed_identifier_suffix(generated_aggregate_key(type));
+    }
+    throw CompileError("internal error: unknown generated C aggregate kind");
 }
 
 std::string c_scalar_type_name(const IrType& type) {
@@ -163,20 +223,20 @@ std::string c_enum_type_name(const IrType& type, const CEnumNames& c_enum_names)
                        "; expose a public non-generic fieldless @repr(C) enum or an explicit scalar ABI");
 }
 
-bool is_value_array_type(const IrType& type) {
-    return type.qualifier == TypeQualifier::Value && type.primitive == IrPrimitiveKind::Array;
-}
-
-std::string c_array_alias_type_name(const IrType& type, const CArrayNames& c_array_names) {
-    auto found = c_array_names.find(type_name(type));
-    if (found != c_array_names.end()) return found->second;
-    throw CompileError("C header emission has no fixed-array ABI alias for " + type_name(type));
+std::string c_generated_aggregate_type_name(
+    const IrType& type,
+    const CGeneratedAggregateNames& c_generated_aggregate_names) {
+    auto found = c_generated_aggregate_names.find(generated_aggregate_key(type));
+    if (found != c_generated_aggregate_names.end()) return found->second;
+    throw CompileError("C header emission has no generated aggregate ABI wrapper for " +
+                       generated_aggregate_key(type));
 }
 
 std::string c_type_name(const IrType& type,
                         const CRecordNames& c_record_names,
                         const CConcreteRecordNames& c_concrete_record_names,
                         const CEnumNames& c_enum_names,
+                        const CGeneratedAggregateNames& c_generated_aggregate_names,
                         bool allow_record_values) {
     if (type.qualifier == TypeQualifier::Own) {
         throw CompileError("C header emission does not support ownership-qualified type " + type_name(type) +
@@ -196,6 +256,11 @@ std::string c_type_name(const IrType& type,
             return c_pointer_type_name(c_record_type_name(pointee, c_record_names),
                                        const_pointee);
         }
+        if (is_generated_aggregate_type(pointee) && !is_value_array_type(pointee)) {
+            return c_pointer_type_name(
+                c_generated_aggregate_type_name(pointee, c_generated_aggregate_names),
+                const_pointee);
+        }
         if (pointee.primitive == IrPrimitiveKind::Enum) {
             return c_pointer_type_name(c_enum_type_name(pointee, c_enum_names),
                                        const_pointee);
@@ -209,6 +274,9 @@ std::string c_type_name(const IrType& type,
 
     if (type.primitive == IrPrimitiveKind::String) {
         throw CompileError("C header emission does not support Ari string values; use ptr c_char");
+    }
+    if (allow_record_values && is_generated_aggregate_type(type)) {
+        return c_generated_aggregate_type_name(type, c_generated_aggregate_names);
     }
     if (type.primitive == IrPrimitiveKind::Struct) {
         if (allow_record_values) {
@@ -238,6 +306,7 @@ std::string c_declaration(const IrType& type,
                           const CRecordNames& c_record_names,
                           const CConcreteRecordNames& c_concrete_record_names,
                           const CEnumNames& c_enum_names,
+                          const CGeneratedAggregateNames& c_generated_aggregate_names,
                           const std::string& declarator,
                           bool allow_record_values,
                           bool const_value) {
@@ -257,6 +326,7 @@ std::string c_declaration(const IrType& type,
                 c_record_names,
                 c_concrete_record_names,
                 c_enum_names,
+                c_generated_aggregate_names,
                 allow_record_values) + " " + declarator;
         }
         std::string pointer_declarator = "(*" + declarator + ")";
@@ -265,6 +335,7 @@ std::string c_declaration(const IrType& type,
             c_record_names,
             c_concrete_record_names,
             c_enum_names,
+            c_generated_aggregate_names,
             pointer_declarator,
             allow_record_values,
             type.qualifier == TypeQualifier::Ref);
@@ -280,6 +351,7 @@ std::string c_declaration(const IrType& type,
             c_record_names,
             c_concrete_record_names,
             c_enum_names,
+            c_generated_aggregate_names,
             declarator + "[" + std::to_string(type.array_size) + "]",
             allow_record_values,
             const_value);
@@ -290,6 +362,7 @@ std::string c_declaration(const IrType& type,
         c_record_names,
         c_concrete_record_names,
         c_enum_names,
+        c_generated_aggregate_names,
         allow_record_values);
     if (const_value) base = "const " + base;
     return base + " " + declarator;
@@ -308,37 +381,48 @@ std::string c_function_value_type_name(const IrType& type,
                                        const CRecordNames& c_record_names,
                                        const CConcreteRecordNames& c_concrete_record_names,
                                        const CEnumNames& c_enum_names,
-                                       const CArrayNames& c_array_names,
+                                       const CGeneratedAggregateNames& c_generated_aggregate_names,
                                        bool allow_record_values) {
-    if (is_value_array_type(type)) return c_array_alias_type_name(type, c_array_names);
-    return c_type_name(type, c_record_names, c_concrete_record_names, c_enum_names, allow_record_values);
+    if (is_generated_aggregate_type(type)) {
+        return c_generated_aggregate_type_name(type, c_generated_aggregate_names);
+    }
+    return c_type_name(
+        type,
+        c_record_names,
+        c_concrete_record_names,
+        c_enum_names,
+        c_generated_aggregate_names,
+        allow_record_values);
 }
 
 std::string function_prototype(const IrFunction& fn,
                                const CRecordNames& c_record_names,
                                const CConcreteRecordNames& c_concrete_record_names,
                                const CEnumNames& c_enum_names,
-                               const CArrayNames& c_array_names) {
+                               const CGeneratedAggregateNames& c_generated_aggregate_names) {
     std::ostringstream out;
     out << c_function_value_type_name(
             fn.return_type,
             c_record_names,
             c_concrete_record_names,
             c_enum_names,
-            c_array_names,
+            c_generated_aggregate_names,
             true)
         << " " << emitted_function_symbol(fn) << "(";
     for (std::size_t i = 0; i < fn.params.size(); ++i) {
         if (i > 0) out << ", ";
         std::string arg_name = "arg" + std::to_string(i);
-        if (is_value_array_type(fn.params[i].type)) {
-            out << c_array_alias_type_name(fn.params[i].type, c_array_names) << " " << arg_name;
+        if (is_generated_aggregate_type(fn.params[i].type)) {
+            out << c_generated_aggregate_type_name(
+                fn.params[i].type,
+                c_generated_aggregate_names) << " " << arg_name;
         } else {
             out << c_declaration(
                 fn.params[i].type,
                 c_record_names,
                 c_concrete_record_names,
                 c_enum_names,
+                c_generated_aggregate_names,
                 arg_name,
                 true);
         }
@@ -399,6 +483,15 @@ void collect_concrete_record_type(const IrType& type,
         collect_concrete_record_type(type.args[0], c_record_names, records);
         return;
     }
+    if (type.qualifier == TypeQualifier::Value &&
+        (type.primitive == IrPrimitiveKind::Tuple ||
+         type.primitive == IrPrimitiveKind::Vector ||
+         ari_has_aggregate_enum_layout(type))) {
+        for (const auto& field_type : ari_aggregate_field_types(type)) {
+            collect_concrete_record_type(field_type, c_record_names, records);
+        }
+        return;
+    }
     if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Struct) return;
     const CRecordInfo& source = c_record_info(type, c_record_names);
     if (!source.opaque || type.args.empty()) return;
@@ -453,33 +546,61 @@ CConcreteRecordNames collect_concrete_record_names(const std::vector<CConcreteRe
     return names;
 }
 
-void collect_direct_array_alias(const IrType& type, std::map<std::string, CArrayAlias>& aliases) {
-    if (!is_value_array_type(type)) return;
-    std::string key = type_name(type);
-    if (aliases.count(key)) return;
-    aliases.emplace(key, CArrayAlias{key, c_array_alias_c_name(type), type});
-}
-
-std::vector<CArrayAlias> collect_array_aliases(const IrProgram& program) {
-    std::map<std::string, CArrayAlias> by_key;
-    for (const auto& fn : program.functions) {
-        if (!should_emit_function_prototype(fn)) continue;
-        collect_direct_array_alias(fn.return_type, by_key);
-        for (const auto& param : fn.params) {
-            collect_direct_array_alias(param.type, by_key);
+void collect_generated_aggregate_type(const IrType& type,
+                                      std::map<std::string, CGeneratedAggregate>& aggregates,
+                                      std::vector<std::string>& order) {
+    if (type.qualifier == TypeQualifier::Ptr ||
+        type.qualifier == TypeQualifier::Ref ||
+        type.qualifier == TypeQualifier::MutRef) {
+        IrType pointee = type;
+        pointee.qualifier = TypeQualifier::Value;
+        if (is_generated_aggregate_type(pointee) && !is_value_array_type(pointee)) {
+            collect_generated_aggregate_type(pointee, aggregates, order);
+        }
+        return;
+    }
+    if (!is_generated_aggregate_type(type)) return;
+    if (type.primitive == IrPrimitiveKind::Array && type.args.size() == 1) {
+        collect_generated_aggregate_type(type.args[0], aggregates, order);
+    } else {
+        for (const auto& field_type : ari_aggregate_field_types(type)) {
+            collect_generated_aggregate_type(field_type, aggregates, order);
         }
     }
 
-    std::vector<CArrayAlias> out;
+    std::string key = generated_aggregate_key(type);
+    if (aggregates.count(key)) return;
+    aggregates.emplace(key, CGeneratedAggregate{
+        key,
+        c_generated_aggregate_c_name(type),
+        type,
+        generated_aggregate_kind(type)
+    });
+    order.push_back(key);
+}
+
+std::vector<CGeneratedAggregate> collect_generated_aggregates(const IrProgram& program) {
+    std::map<std::string, CGeneratedAggregate> by_key;
+    std::vector<std::string> order;
+    for (const auto& fn : program.functions) {
+        if (!should_emit_function_prototype(fn)) continue;
+        collect_generated_aggregate_type(fn.return_type, by_key, order);
+        for (const auto& param : fn.params) {
+            collect_generated_aggregate_type(param.type, by_key, order);
+        }
+    }
+
+    std::vector<CGeneratedAggregate> out;
     out.reserve(by_key.size());
-    for (auto& item : by_key) out.push_back(std::move(item.second));
+    for (const auto& key : order) out.push_back(by_key.at(key));
     return out;
 }
 
-CArrayNames collect_array_names(const std::vector<CArrayAlias>& aliases) {
-    CArrayNames names;
-    for (const auto& alias : aliases) {
-        names.emplace(alias.key, alias.c_name);
+CGeneratedAggregateNames collect_generated_aggregate_names(
+    const std::vector<CGeneratedAggregate>& aggregates) {
+    CGeneratedAggregateNames names;
+    for (const auto& aggregate : aggregates) {
+        names.emplace(aggregate.key, aggregate.c_name);
     }
     return names;
 }
@@ -522,7 +643,7 @@ void require_direct_function_abi(const IrFunction& fn, const TargetInfo& target)
 
 void require_unique_generated_c_type_names(const IrProgram& program,
                                            const std::vector<CConcreteRecord>& concrete_records,
-                                           const std::vector<CArrayAlias>& array_aliases) {
+                                           const std::vector<CGeneratedAggregate>& generated_aggregates) {
     std::set<std::string> used_c_names;
     for (const auto& item : program.c_records) {
         std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
@@ -537,7 +658,7 @@ void require_unique_generated_c_type_names(const IrProgram& program,
             throw CompileError("C header emission found duplicate C type name '" + item.c_name + "'");
         }
     }
-    for (const auto& item : array_aliases) {
+    for (const auto& item : generated_aggregates) {
         if (!used_c_names.insert(item.c_name).second) {
             throw CompileError("C header emission found duplicate C type name '" + item.c_name + "'");
         }
@@ -565,14 +686,15 @@ std::string concrete_record_forward_declaration(const CConcreteRecord& record) {
     return "typedef struct " + record.c_name + " " + record.c_name + ";";
 }
 
-std::string array_alias_forward_declaration(const CArrayAlias& alias) {
-    return "typedef struct " + alias.c_name + " " + alias.c_name + ";";
+std::string generated_aggregate_forward_declaration(const CGeneratedAggregate& aggregate) {
+    return "typedef struct " + aggregate.c_name + " " + aggregate.c_name + ";";
 }
 
 std::string record_definition(const IrCRecord& record,
                               const CRecordNames& c_record_names,
                               const CConcreteRecordNames& c_concrete_record_names,
-                              const CEnumNames& c_enum_names) {
+                              const CEnumNames& c_enum_names,
+                              const CGeneratedAggregateNames& c_generated_aggregate_names) {
     std::string c_name = record.c_name.empty() ? unqualified_name(record.name) : record.c_name;
     std::ostringstream out;
     out << "struct " << c_name << " {\n";
@@ -582,6 +704,7 @@ std::string record_definition(const IrCRecord& record,
             c_record_names,
             c_concrete_record_names,
             c_enum_names,
+            c_generated_aggregate_names,
             field.name,
             false) << ";\n";
     }
@@ -592,7 +715,8 @@ std::string record_definition(const IrCRecord& record,
 std::string concrete_record_definition(const CConcreteRecord& record,
                                        const CRecordNames& c_record_names,
                                        const CConcreteRecordNames& c_concrete_record_names,
-                                       const CEnumNames& c_enum_names) {
+                                       const CEnumNames& c_enum_names,
+                                       const CGeneratedAggregateNames& c_generated_aggregate_names) {
     std::ostringstream out;
     out << "struct " << record.c_name << " {\n";
     for (const auto& field : record.fields) {
@@ -601,6 +725,7 @@ std::string concrete_record_definition(const CConcreteRecord& record,
             c_record_names,
             c_concrete_record_names,
             c_enum_names,
+            c_generated_aggregate_names,
             field.name,
             false) << ";\n";
     }
@@ -608,19 +733,52 @@ std::string concrete_record_definition(const CConcreteRecord& record,
     return out.str();
 }
 
-std::string array_alias_definition(const CArrayAlias& alias,
-                                   const CRecordNames& c_record_names,
-                                   const CConcreteRecordNames& c_concrete_record_names,
-                                   const CEnumNames& c_enum_names) {
+std::string generated_aggregate_field_name(const CGeneratedAggregate& aggregate, std::size_t index) {
+    if (aggregate.kind == CGeneratedAggregateKind::Tuple) {
+        return "field" + std::to_string(index);
+    }
+    if (aggregate.kind == CGeneratedAggregateKind::Vector) {
+        if (index < aggregate.type.field_names.size() && !aggregate.type.field_names[index].empty()) {
+            return aggregate.type.field_names[index];
+        }
+        return index == 0 ? "len" : "data";
+    }
+    if (aggregate.kind == CGeneratedAggregateKind::AggregateEnum) {
+        if (index == 0) return "tag";
+        return "payload" + std::to_string(index - 1);
+    }
+    return "field" + std::to_string(index);
+}
+
+std::string generated_aggregate_definition(const CGeneratedAggregate& aggregate,
+                                           const CRecordNames& c_record_names,
+                                           const CConcreteRecordNames& c_concrete_record_names,
+                                           const CEnumNames& c_enum_names,
+                                           const CGeneratedAggregateNames& c_generated_aggregate_names) {
     std::ostringstream out;
-    out << "struct " << alias.c_name << " {\n";
-    out << "    " << c_declaration(
-        alias.type,
-        c_record_names,
-        c_concrete_record_names,
-        c_enum_names,
-        "elements",
-        true) << ";\n";
+    out << "struct " << aggregate.c_name << " {\n";
+    if (aggregate.kind == CGeneratedAggregateKind::Array) {
+        out << "    " << c_declaration(
+            aggregate.type,
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            c_generated_aggregate_names,
+            "elements",
+            true) << ";\n";
+    } else {
+        const std::vector<IrType>& fields = ari_aggregate_field_types(aggregate.type);
+        for (std::size_t i = 0; i < fields.size(); ++i) {
+            out << "    " << c_declaration(
+                fields[i],
+                c_record_names,
+                c_concrete_record_names,
+                c_enum_names,
+                c_generated_aggregate_names,
+                generated_aggregate_field_name(aggregate, i),
+                true) << ";\n";
+        }
+    }
     out << "};";
     return out.str();
 }
@@ -633,10 +791,11 @@ std::string emit_c_header(const IrProgram& program) {
     CRecordNames c_record_names = collect_c_record_names(program);
     CEnumNames c_enum_names = collect_c_enum_names(program);
     std::vector<CConcreteRecord> c_concrete_records = collect_concrete_records(program, c_record_names);
-    std::vector<CArrayAlias> c_array_aliases = collect_array_aliases(program);
-    require_unique_generated_c_type_names(program, c_concrete_records, c_array_aliases);
+    std::vector<CGeneratedAggregate> c_generated_aggregates = collect_generated_aggregates(program);
+    require_unique_generated_c_type_names(program, c_concrete_records, c_generated_aggregates);
     CConcreteRecordNames c_concrete_record_names = collect_concrete_record_names(c_concrete_records);
-    CArrayNames c_array_names = collect_array_names(c_array_aliases);
+    CGeneratedAggregateNames c_generated_aggregate_names =
+        collect_generated_aggregate_names(c_generated_aggregates);
     for (const auto& fn : program.functions) {
         if (!should_emit_function_prototype(fn)) continue;
         require_direct_function_abi(fn, target);
@@ -654,26 +813,41 @@ std::string emit_c_header(const IrProgram& program) {
         }
     }
 
-    if (!program.c_records.empty() || !c_concrete_records.empty() || !c_array_aliases.empty()) {
+    if (!program.c_records.empty() || !c_concrete_records.empty() || !c_generated_aggregates.empty()) {
         for (const auto& record : program.c_records) {
             out << record_forward_declaration(record) << "\n";
         }
         for (const auto& record : c_concrete_records) {
             out << concrete_record_forward_declaration(record) << "\n";
         }
-        for (const auto& alias : c_array_aliases) {
-            out << array_alias_forward_declaration(alias) << "\n";
+        for (const auto& aggregate : c_generated_aggregates) {
+            out << generated_aggregate_forward_declaration(aggregate) << "\n";
         }
         out << "\n";
         for (const auto& record : program.c_records) {
             if (record.opaque) continue;
-            out << record_definition(record, c_record_names, c_concrete_record_names, c_enum_names) << "\n\n";
+            out << record_definition(
+                record,
+                c_record_names,
+                c_concrete_record_names,
+                c_enum_names,
+                c_generated_aggregate_names) << "\n\n";
         }
         for (const auto& record : c_concrete_records) {
-            out << concrete_record_definition(record, c_record_names, c_concrete_record_names, c_enum_names) << "\n\n";
+            out << concrete_record_definition(
+                record,
+                c_record_names,
+                c_concrete_record_names,
+                c_enum_names,
+                c_generated_aggregate_names) << "\n\n";
         }
-        for (const auto& alias : c_array_aliases) {
-            out << array_alias_definition(alias, c_record_names, c_concrete_record_names, c_enum_names) << "\n\n";
+        for (const auto& aggregate : c_generated_aggregates) {
+            out << generated_aggregate_definition(
+                aggregate,
+                c_record_names,
+                c_concrete_record_names,
+                c_enum_names,
+                c_generated_aggregate_names) << "\n\n";
         }
     }
 
@@ -683,7 +857,12 @@ std::string emit_c_header(const IrProgram& program) {
 
     for (const auto& fn : program.functions) {
         if (!should_emit_function_prototype(fn)) continue;
-        out << function_prototype(fn, c_record_names, c_concrete_record_names, c_enum_names, c_array_names) << "\n";
+        out << function_prototype(
+            fn,
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            c_generated_aggregate_names) << "\n";
     }
 
     out << "\n#ifdef __cplusplus\n";

@@ -31,11 +31,18 @@ Extern C signature collection and C-header emission now call the shared
 classifier before accepting by-value aggregate boundaries. Direct C imports
 accept classifier-approved `@repr(C)` structs by value, including small struct
 returns, and reject larger, target-unsupported, or non-`repr(C)` aggregate
-spellings. Existing direct by-value `@repr(C)` exports and fixed arrays keep
-their generated C-header surface. Tuples, fixed-capacity vectors, and
-aggregate-layout enums are classified by the same policy, but still need an
-explicit C representation before headers or imports can expose them directly.
+spellings.
 
-The next backend work should use the same classifier when adding richer
-generated C wrapper types, rather than re-encoding target, size, and alignment
-checks in each backend surface.
+C-header emission exposes direct by-value aggregate exports through generated C
+wrapper structs when Ari's source spelling is not already C-spellable. Fixed
+arrays use `AriArray_*` wrappers with an `elements` array field. Tuples use
+`AriTuple_*` wrappers with `field0`, `field1`, and later positional fields.
+Fixed-capacity vector storage values use `AriVec_*` wrappers with the current
+`len` plus local `data[N]` storage layout. Aggregate-layout enums use
+`AriEnum_*` wrappers with the hidden `tag` field followed by `payloadN` storage
+slots. These wrappers are header surfaces for Ari's current LLVM ABI; they are
+not a promise that the same spelling is accepted as a direct C import type.
+
+Future backend work should keep using this classifier when growing imported C
+aggregate support, rather than re-encoding target, size, and alignment checks in
+each backend surface.

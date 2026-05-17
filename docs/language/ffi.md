@@ -385,12 +385,12 @@ null, bounds, alignment, aliasing, or lifetime validation. Whole raw-pointer
 copies of values that contain `own`, `ref`, or `ref mut` state are rejected
 until the ownership diagnostics for zone-backed memory are broadened.
 
-Tuple parameters/returns, vectors, fixed arrays outside generated wrapper
-types, aggregate-layout enums, and non-`repr(C)` structs are not direct C
-import types yet. Fixed arrays have a limited by-value header wrapper surface
-when the shared aggregate ABI classifier accepts their size, alignment, and
-target. Local stack tuples are an executable-language feature, not a C FFI
-layout promise. Aggregate raw-pointer field/element access follows Ari's
+Tuple parameters/returns, vectors, aggregate-layout enums, fixed arrays outside
+generated wrapper types, and non-`repr(C)` structs are not direct C import types
+yet. C headers can still expose classifier-approved by-value Ari aggregates
+through generated wrapper structs for exports. Local stack tuples and
+aggregate-layout enums remain executable-language features, not direct C import
+layout promises. Aggregate raw-pointer field/element access follows Ari's
 current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 
 ## C Header Emission
@@ -431,14 +431,17 @@ arguments. By-value aggregate parameters and returns are checked by the shared
 non-local aggregate ABI classifier and emitted only for direct aggregate ABI
 values on 64-bit Unix targets, currently up to 16 bytes with at most 8-byte
 alignment. Direct fixed-size array parameters and returns use generated wrapper
-structs after passing the same classifier. Larger records, larger arrays, and
-non-Unix targets should expose an explicit pointer ABI. The classifier also
-recognizes tuples, fixed-capacity vector storage values, and aggregate-layout
-enums, but the header emitter still rejects those Ari-only value spellings
-until their C wrapper surface is explicit. Header generation currently rejects
-Ari-only values such as `string`, ownership-qualified values, and non-`repr(C)`
-aggregate parameters or returns; expose a `ptr c_char`, `ptr c_void`, or other
-scalar/raw pointer C ABI type until those layouts are defined.
+structs after passing the same classifier. Tuple values use generated
+`AriTuple_*` wrappers with positional `fieldN` members. Fixed-capacity vector
+storage values use generated `AriVec_*` wrappers with the current `len` plus
+`data[N]` local storage fields. Aggregate-layout enums use generated
+`AriEnum_*` wrappers with the hidden `tag` plus raw `payloadN` storage slots.
+Larger records, larger arrays/vectors/tuples/enums, and non-Unix targets should
+expose an explicit pointer ABI. Header generation still rejects Ari-only values
+such as `string`, ownership-qualified values, and non-`repr(C)` structs that do
+not have an explicit generated wrapper surface; expose `ptr c_char`,
+`ptr c_void`, or another scalar/raw pointer C ABI type until those layouts are
+defined.
 
 ## Runtime Entry
 

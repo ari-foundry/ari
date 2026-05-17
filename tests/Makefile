@@ -1950,6 +1950,30 @@ check-meta: $(TARGET)
 	grep -q 'AriArray_i64_2 ari_make_array(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'define i64 @"ari_take_array"(\[2 x i64\] %arg0)' $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
 	grep -q 'define \[2 x i64\] @"ari_make_array"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
+	$(TARGET) tests/ok/c-header-generated-aggregates.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-generated-aggregates.h --emit-llvm $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
+	grep -q 'typedef struct AriTuple_i64_i64 AriTuple_i64_i64;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'typedef struct AriEnum_MaybeWide AriEnum_MaybeWide;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'typedef struct AriVec_Vec_i64_1 AriVec_Vec_i64_1;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'struct AriTuple_i64_i64 {' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'int64_t field0;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'int64_t field1;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'struct AriEnum_MaybeWide {' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'int32_t tag;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'uint64_t payload0;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'struct AriVec_Vec_i64_1 {' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'int64_t len;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'int64_t data\[1\];' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'int64_t ari_take_tuple(AriTuple_i64_i64 arg0);' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'AriTuple_i64_i64 ari_make_tuple(int64_t arg0);' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'int64_t ari_tuple_ptr(AriTuple_i64_i64\* arg0);' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'int64_t ari_take_maybe(AriEnum_MaybeWide arg0);' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'AriEnum_MaybeWide ari_make_maybe(int64_t arg0);' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'AriVec_Vec_i64_1 _ARNv23echo__G_Vec_i64__cap_1_(AriVec_Vec_i64_1 arg0);' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
+	grep -q 'define i64 @"ari_take_tuple"({ i64, i64 } %arg0)' $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
+	grep -q 'define { i64, i64 } @"ari_make_tuple"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
+	grep -q 'define i64 @"ari_take_maybe"({ i32, i64 } %arg0)' $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
+	grep -q 'define { i32, i64 } @"ari_make_maybe"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
+	grep -q 'define { i64, \[1 x i64\] } @"_ARNv23echo__G_Vec_i64__cap_1_"({ i64, \[1 x i64\] } %arg0)' $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
 	$(TARGET) tests/ok/library-export.ari --emit-obj $(BUILD_DIR)/meta/library-export.o
 	readelf -h $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.header
 	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/meta/library-export-object.header

@@ -114,6 +114,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   surface, including fixed-array fields in public `@repr(C)` structs,
   pointer-to-array parameters, and by-value `[T, N]` exported
   parameters/returns through generated wrapper typedefs.
+- Generated C-header wrappers expose classifier-approved Ari-only aggregate
+  exports without changing the LLVM ABI: tuples use `AriTuple_*` field wrappers,
+  fixed-capacity vector storage values use `AriVec_*` `len`/`data[N]` wrappers,
+  and aggregate-layout enums use `AriEnum_*` `tag`/`payloadN` storage wrappers.
 - `src/layout.cpp` owns shared aggregate-layout predicates, field-list
   selection, field counts, byte sizes, alignments, and field offsets used by
   sema, the LLVM backend, and related IR helpers.
