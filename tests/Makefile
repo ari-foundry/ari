@@ -3220,9 +3220,9 @@ check-functions: $(TARGET) check-function-errors
 	$(BUILD_DIR)/functions/function-param-patterns.elf; code=$$?; test $$code -eq 87
 	$(TARGET) tests/ok/function-reference-param-patterns.ari --emit-llvm $(BUILD_DIR)/functions/function-reference-param-patterns.ll
 	grep -q "getelementptr" $(BUILD_DIR)/functions/function-reference-param-patterns.ll
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-reference-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-reference-param-patterns.elf; $(BUILD_DIR)/functions/function-reference-param-patterns.elf; code=$$?; test $$code -eq 65; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-reference-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-reference-param-patterns.elf; $(BUILD_DIR)/functions/function-reference-param-patterns.elf; code=$$?; test $$code -eq 70; fi
 	$(TARGET) tests/ok/function-reference-param-patterns.ari -o $(BUILD_DIR)/functions/function-reference-param-patterns.elf
-	$(BUILD_DIR)/functions/function-reference-param-patterns.elf; code=$$?; test $$code -eq 65
+	$(BUILD_DIR)/functions/function-reference-param-patterns.elf; code=$$?; test $$code -eq 70
 	$(TARGET) tests/ok/function-six-args-llvm.ari -o $(BUILD_DIR)/functions/function-six-args-llvm.elf
 	$(BUILD_DIR)/functions/function-six-args-llvm.elf; code=$$?; test $$code -eq 21
 	$(TARGET) tests/ok/function-eight-args-llvm.ari -o $(BUILD_DIR)/functions/function-eight-args-llvm.elf
@@ -3301,8 +3301,6 @@ check-function-errors: $(TARGET)
 	grep -Fq "root Vec[T] cannot be used as a function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-generic-function-return-runtime-abi.err
 	if $(TARGET) tests/errors/function-param-pattern.ari -o $(BUILD_DIR)/functions/errors/function-param-pattern.elf >$(BUILD_DIR)/functions/errors/function-param-pattern.err 2>&1; then exit 1; fi
 	grep -q "tuple binding pattern requires a tuple value, got i64" $(BUILD_DIR)/functions/errors/function-param-pattern.err
-	if $(TARGET) tests/errors/function-ref-param-shorthand.ari -o $(BUILD_DIR)/functions/errors/function-ref-param-shorthand.elf >$(BUILD_DIR)/functions/errors/function-ref-param-shorthand.err 2>&1; then exit 1; fi
-	grep -q "function parameter reference patterns use explicit ref or ref mut" $(BUILD_DIR)/functions/errors/function-ref-param-shorthand.err
 	if $(TARGET) tests/errors/function-overload-params.ari -o $(BUILD_DIR)/functions/errors/function-overload-params.elf >$(BUILD_DIR)/functions/errors/function-overload-params.err 2>&1; then exit 1; fi
 	grep -q "duplicate executable function 'pick'" $(BUILD_DIR)/functions/errors/function-overload-params.err
 	if $(TARGET) tests/errors/function-void-return-value.ari -o $(BUILD_DIR)/functions/errors/function-void-return-value.elf >$(BUILD_DIR)/functions/errors/function-void-return-value.err 2>&1; then exit 1; fi

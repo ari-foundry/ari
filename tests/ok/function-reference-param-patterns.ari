@@ -27,6 +27,10 @@ fn scalar(ref value: i64) -> i64 {
   return read(value);
 }
 
+fn scalar_short(&value: i64) -> i64 {
+  return read(value);
+}
+
 fn tuple_sum(ref (left, right): (i64, i64)) -> i64 {
   return read(left) + read(right);
 }
@@ -50,6 +54,7 @@ fn main() -> i64 {
   var values: [i64, 2] = [7, 8];
   let box = BoxPair { pair: Pair { left: 3, right: 4 }, extra: 10 };
   return scalar(4) +
+      scalar_short(5) +
       tuple_sum((5, 6)) +
       array_sum(values) +
       adjusted_pair(pair) +
