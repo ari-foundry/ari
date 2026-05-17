@@ -109,15 +109,12 @@ dataflow recheck:
    immutable local bool conditions initialized directly from literals like
    literal `true`/`false`, and recheck no-zero next-iteration states under a
    candidate `Alive -> moved/dropped` owner widening before accepting them.
+   Those proven literal-bool loop conditions are also folded into literal IR
+   branch conditions during lowering.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
      `while` and `init while` loops, including `while let`/iterator-style
      bodies and any future maybe-zero representation that can distinguish
      definitely-live from maybe-unavailable owners after loop fallthrough
-   Nice-to-have:
-   - [loop-known-bool-ir-fold] after sema proves an immutable literal-bool
-     loop condition, optionally fold the lowered IR condition to the literal
-     branch value too; the current implementation keeps the source local load
-     in IR while using the known value for ownership/control-flow analysis
 
 IR package-cache replay is complete for the current V0 0.x executable cache
 surface and has been removed from active Near-Term work. Validated

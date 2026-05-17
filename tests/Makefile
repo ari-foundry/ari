@@ -926,7 +926,7 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/init-while-true-continue-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/init-while-true-continue-break-owner-state.ll
 	grep -q "initwhile.end" $(BUILD_DIR)/control-flow/init-while-true-continue-break-owner-state.ll
 	$(TARGET) tests/ok/init-while-known-true-continue-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.ll
-	grep -q "initwhile.end" $(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.ll
+	grep -q "br i1 1" $(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.ll
 	$(TARGET) tests/ok/labeled-block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	$(TARGET) tests/ok/labeled-block-aggregate.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
@@ -939,7 +939,7 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/while-true-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
 	$(TARGET) tests/ok/while-known-true-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.ll
-	grep -q "while.end" $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.ll
+	grep -q "br i1 1" $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.ll
 	$(TARGET) tests/ok/loop-break-owner-unavailable-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
 	$(TARGET) tests/ok/loop-break-borrow-release-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.ll
@@ -957,7 +957,7 @@ check-control-flow: $(TARGET)
 	$(TARGET) tests/ok/while-false-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-false-owner-state.ll
 	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-false-owner-state.ll
 	$(TARGET) tests/ok/while-known-false-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-known-false-owner-state.ll
-	grep -q "store i1 0, ptr %condition" $(BUILD_DIR)/control-flow/while-known-false-owner-state.ll
+	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-known-false-owner-state.ll
 	$(TARGET) tests/ok/while-false-borrow-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-false-borrow-state.ll
 	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-false-borrow-state.ll
 	$(TARGET) tests/ok/statement-label-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/statement-label-payloads.ll

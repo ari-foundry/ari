@@ -11615,6 +11615,9 @@ private:
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
         const std::optional<bool> known_condition = known_bool_condition_value(*lowered.condition);
+        if (known_condition) {
+            lowered.condition = make_bool_literal_expr(stmt.loc, *known_condition);
+        }
         const bool literal_true_condition = known_condition.value_or(false);
         StateSnapshot loop_input = snapshot_states();
         LocalScopeStack::NameState loop_name_state = local_scopes_.snapshot_name_state();
@@ -12643,6 +12646,9 @@ private:
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
         const std::optional<bool> known_condition = known_bool_condition_value(*lowered.condition);
+        if (known_condition) {
+            lowered.condition = make_bool_literal_expr(stmt.loc, *known_condition);
+        }
         const bool literal_true_condition = known_condition.value_or(false);
         StateSnapshot loop_input = snapshot_states();
         LocalScopeStack::NameState loop_name_state = local_scopes_.snapshot_name_state();
