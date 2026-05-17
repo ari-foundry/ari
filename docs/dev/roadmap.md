@@ -113,7 +113,7 @@ dataflow recheck:
    branch conditions during lowering.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
      `while`, `init while`, and irrefutable aggregate/runtime-sequence
-     `while let` loops plus exact-once list/stored-`Vec` `for` bodies,
+     `while let` loops plus exact-once range/list/stored-`Vec` `for` bodies,
      including refutable enum `while let`/multi-iteration iterator-style bodies
      and any future maybe-zero representation that can distinguish
      definitely-live from maybe-unavailable owners after loop fallthrough

@@ -5319,6 +5319,28 @@ private:
         return exit_state;
     }
 
+    static bool range_bounds_exactly_one_iteration(
+        const IrExpr& start,
+        const IrExpr& end,
+        bool inclusive
+    ) {
+        StaticIntegerValue start_value;
+        StaticIntegerValue end_value;
+        if (!try_fold_static_integer_value(start, start_value) ||
+            !try_fold_static_integer_value(end, end_value)) {
+            return false;
+        }
+        std::int64_t start_i64 = 0;
+        std::int64_t end_i64 = 0;
+        if (!static_integer_value_to_i64(start_value, start_i64) ||
+            !static_integer_value_to_i64(end_value, end_i64)) {
+            return false;
+        }
+        if (inclusive) return start_i64 == end_i64;
+        if (start_i64 == std::numeric_limits<std::int64_t>::max()) return false;
+        return start_i64 + 1 == end_i64;
+    }
+
     static std::optional<bool> literal_bool_condition_value(const IrExpr& condition) {
         if (condition.kind != IrExprKind::Bool) return std::nullopt;
         return condition.bool_value;
@@ -12505,7 +12527,8 @@ private:
         bool inclusive = range->type.name == "RangeInclusive";
         IrExprPtr start = std::move(range->args[0]);
         IrExprPtr end = std::move(range->args[1]);
-        finish_for_range(stmt, lowered, std::move(start), std::move(end), inclusive);
+        bool exact_once_loop = range_bounds_exactly_one_iteration(*start, *end, inclusive);
+        finish_for_range(stmt, lowered, std::move(start), std::move(end), inclusive, exact_once_loop);
     }
 
     void check_for_range_value(const Stmt& stmt, IrStmt& lowered, IrExprPtr iterable) {
@@ -12525,7 +12548,14 @@ private:
         ir_stmt_statements(lowered).push_back(std::move(loop));
     }
 
-    void finish_for_range(const Stmt& stmt, IrStmt& lowered, IrExprPtr start, IrExprPtr end, bool inclusive) {
+    void finish_for_range(
+        const Stmt& stmt,
+        IrStmt& lowered,
+        IrExprPtr start,
+        IrExprPtr end,
+        bool inclusive,
+        bool exact_once_loop = false
+    ) {
         const Pattern& for_pattern = expanded_pattern(*stmt.for_pattern);
         IrType bound_type = start->type;
         lowered.kind = IrStmtKind::ForRange;
@@ -12570,7 +12600,9 @@ private:
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        restore_states(checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
+        restore_states(exact_once_loop
+            ? checked_exact_once_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow)
+            : checked_loop_exit_state(stmt.loc, loop_input, loop_body_state, loop_state, body.flow));
     }
 
     void check_for_vector(const Stmt& stmt, IrStmt& lowered) {

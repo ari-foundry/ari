@@ -765,6 +765,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/for-range-operator.raw; code=$$?; test $$code -eq 10
 	$(TARGET) --freestanding tests/ok/for-range-inclusive.ari -o $(BUILD_DIR)/control-flow/for-range-inclusive.raw
 	$(BUILD_DIR)/control-flow/for-range-inclusive.raw; code=$$?; test $$code -eq 23
+	$(TARGET) --freestanding tests/ok/for-range-exact-once-owner-state.ari -o $(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.raw
+	$(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/range-values.ari -o $(BUILD_DIR)/control-flow/range-values.raw
 	$(BUILD_DIR)/control-flow/range-values.raw; code=$$?; test $$code -eq 23
 	$(TARGET) --freestanding tests/ok/for-range-alias-pattern.ari -o $(BUILD_DIR)/control-flow/for-range-alias-pattern.raw
@@ -853,6 +855,8 @@ check-control-flow: $(TARGET)
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	$(TARGET) tests/ok/for-range-inclusive.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-inclusive.ll
 	grep -q "icmp sle" $(BUILD_DIR)/control-flow/for-range-inclusive.ll
+	$(TARGET) tests/ok/for-range-exact-once-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.ll
+	grep -q "for.end" $(BUILD_DIR)/control-flow/for-range-exact-once-owner-state.ll
 	$(TARGET) tests/ok/range-values.ari --emit-llvm $(BUILD_DIR)/control-flow/range-values.ll
 	grep -q "extractvalue" $(BUILD_DIR)/control-flow/range-values.ll
 	$(TARGET) tests/ok/for-range-alias-pattern.ari --emit-llvm $(BUILD_DIR)/control-flow/for-range-alias-pattern.ll

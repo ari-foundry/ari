@@ -621,6 +621,7 @@ bindings.
   outer binding on a body fallthrough path. Literal `false`, or immutable local
   `let` conditions initialized directly from `false`, are treated as
   zero-iteration loops.
-- List-literal and stored-`Vec` `for` loops with a known length of exactly one
-  are exact-once loops, so their body, `continue`, and `break` exit ownership
-  states are merged as post-loop exits instead of being treated as maybe-zero.
+- Direct range expressions and list-literal or stored-`Vec` `for` loops with a
+  known iteration count of exactly one are exact-once loops, so their body,
+  `continue`, and `break` exit ownership states are merged as post-loop exits
+  instead of being treated as maybe-zero.
