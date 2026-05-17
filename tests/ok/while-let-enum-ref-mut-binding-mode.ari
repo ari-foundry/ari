@@ -1,0 +1,50 @@
+enum MaybeWide {
+  Empty,
+  Full(i64),
+}
+
+enum Choice {
+  None,
+  Left(i64, i64),
+  Right(i64, i64),
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn payload_copy(item: MaybeWide) -> i64 {
+  return match item {
+    Full(value) => value,
+    Empty => 0,
+  };
+}
+
+fn choice_score(choice: Choice) -> i64 {
+  return match choice {
+    Left(left, _) => left,
+    Right(_, right) => right,
+    None => 0,
+  };
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  var item: MaybeWide = Full(10);
+  while let Full(ref mut value) = item {
+    write(value, 5);
+    break;
+  }
+  total = total + payload_copy(item);
+
+  var choice: Choice = Right(100, 20);
+  while let Left(ref mut selected, _) | Right(_, ref mut selected) = choice {
+    write(selected, 7);
+    break;
+  }
+  total = total + choice_score(choice);
+
+  return total;
+}

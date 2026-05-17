@@ -165,9 +165,8 @@ of ownership-carrying aggregates remains planned. Nested shared reference
 binding modes are supported in enum `match`, enum `if let`, and enum
 `while let` patterns, including same-name/same-type enum `while let`
 or-pattern alternatives. Mutable enum payload reference bindings are supported
-in enum statement/expression `match` and enum `if let` when the matched subject
-is an addressable local, field, or indexed element. Mutable enum `while let`
-payload borrows remain planned.
+in enum statement/expression `match`, enum `if let`, and enum `while let` when
+the matched subject is an addressable local, field, or indexed element.
 Function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

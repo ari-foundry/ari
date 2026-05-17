@@ -53,10 +53,11 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   keeping `sema.cpp` focused on lowering length guards and element bindings.
 - Enum-case reference patterns borrow addressable aggregate enum payload slots,
   including 64-bit payload-word slots and nested aggregate-enum payload slots.
-- Enum statement/expression `match` and enum `if let` can use mutable reference
-  payload patterns when the matched enum subject is an addressable local, field,
-  or indexed element; the matcher still uses hidden value storage for tag tests
-  while the borrow binding points at the original subject.
+- Enum statement/expression `match`, enum `if let`, and enum `while let` can
+  use mutable reference payload patterns when the matched enum subject is an
+  addressable local, field, or indexed element. Control-flow lowering still
+  uses hidden value storage for tag tests while the borrow binding points at
+  the original subject.
 - Compact and otherwise non-addressable enum payload reference patterns are
   rejected with payload-specific value-only diagnostics instead of falling
   through to a vague layout error.

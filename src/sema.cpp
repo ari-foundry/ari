@@ -13355,19 +13355,18 @@ private:
         const IrMatchArm& arm,
         std::vector<IrStmtPtr>& lowered_body,
         const Pattern* reference_pattern,
-        const std::string& reference_subject_name,
-        const IrType* reference_subject_type
+        const ReferenceBindingSubject* reference_subject
     ) {
         push_scope();
         declare_match_arm_bindings(arm);
-        if (reference_pattern && reference_subject_type) {
+        if (reference_pattern && reference_subject) {
             std::vector<IrStmtPtr> reference_check_prelude;
             lower_explicit_reference_bindings_from_path(
                 *reference_pattern,
-                reference_subject_name,
-                *reference_subject_type,
-                *reference_subject_type,
-                "",
+                reference_subject->base_name,
+                reference_subject->base_type,
+                reference_subject->source_type,
+                reference_subject->path,
                 reference_check_prelude);
         }
         CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
@@ -13391,8 +13390,7 @@ private:
         const StateSnapshot& recheck_state,
         const LocalScopeStack::NameState& name_state,
         const Pattern* reference_pattern,
-        const std::string& reference_subject_name,
-        const IrType* reference_subject_type
+        const ReferenceBindingSubject* reference_subject
     ) {
         StateSnapshot saved_state = snapshot_states();
         LocalScopeStack::NameState saved_name_state = local_scopes_.snapshot_name_state();
@@ -13414,8 +13412,7 @@ private:
             arm,
             ignored_body,
             reference_pattern,
-            reference_subject_name,
-            reference_subject_type);
+            reference_subject);
         loops_.pop_back();
 
         release_temporary_borrows(borrow_mark);
@@ -13429,8 +13426,7 @@ private:
     void lower_enum_while_let_reference_arm_preludes(
         SourceLocation loc,
         const std::vector<Pattern>& alternatives,
-        const std::string& reference_subject_name,
-        const IrType& reference_subject_type,
+        const ReferenceBindingSubject& reference_subject,
         std::vector<IrMatchArm>& arms
     ) {
         if (alternatives.empty()) return;
@@ -13451,10 +13447,10 @@ private:
             push_scope();
             lower_explicit_reference_bindings_from_path(
                 alternatives[i],
-                reference_subject_name,
-                reference_subject_type,
-                reference_subject_type,
-                "",
+                reference_subject.base_name,
+                reference_subject.base_type,
+                reference_subject.source_type,
+                reference_subject.path,
                 arms[i].body);
             discard_scope();
             release_temporary_borrows(borrow_mark);
@@ -13479,14 +13475,14 @@ private:
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         const bool needs_reference_pattern_bindings =
             expanded_pattern_has_reference_binding_mode(condition_pattern);
-        if (needs_reference_pattern_bindings && pattern_has_mutable_reference_binding_mode(condition_pattern)) {
-            fail(condition_pattern.loc,
-                 "enum while-let mutable reference binding modes are planned after addressable enum match storage is lowered");
-        }
+        const bool needs_mutable_reference_pattern_bindings =
+            pattern_needs_mutable_reference_binding(condition_pattern);
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *match_value);
         IrType enum_value_type = match_value->type;
         std::vector<Pattern> reference_alternatives;
         std::string reference_subject_name;
+        ReferenceBindingSubject reference_subject;
+        std::optional<TrackedAggregateAccess> mutable_reference_subject;
         const Pattern* reference_pattern = nullptr;
         if (needs_reference_pattern_bindings) {
             reference_alternatives = expanded_pattern_alternatives(condition_pattern).alternatives;
@@ -13494,8 +13490,18 @@ private:
                 throw CompileError(where(condition_pattern.loc) + ": internal error: enum while-let reference pattern missing alternatives");
             }
             reference_pattern = &reference_alternatives.front();
+            if (needs_mutable_reference_pattern_bindings) {
+                mutable_reference_subject = require_addressable_control_flow_ref_mut_subject(
+                    stmt.loc,
+                    *stmt.condition,
+                    "while-let");
+                reference_subject = tracked_reference_binding_subject(*mutable_reference_subject);
+            }
             reference_subject_name = make_hidden_local("$whilelet_enum");
             declare_local(stmt.loc, reference_subject_name, enum_value_type, false);
+            if (!needs_mutable_reference_pattern_bindings) {
+                reference_subject = hidden_reference_binding_subject(reference_subject_name, enum_value_type);
+            }
 
             IrBinding subject_binding;
             subject_binding.name = reference_subject_name;
@@ -13527,8 +13533,7 @@ private:
             lower_enum_while_let_reference_arm_preludes(
                 condition_pattern.loc,
                 reference_alternatives,
-                reference_subject_name,
-                enum_value_type,
+                reference_subject,
                 pattern_arms);
         }
         const bool no_zero_known_match =
@@ -13544,8 +13549,7 @@ private:
             pattern_arms.front(),
             ir_stmt_loop_body(lowered),
             reference_pattern,
-            reference_subject_name,
-            needs_reference_pattern_bindings ? &enum_value_type : nullptr);
+            needs_reference_pattern_bindings ? &reference_subject : nullptr);
         StateSnapshot loop_body_state = snapshot_states();
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
@@ -13581,8 +13585,7 @@ private:
                     next_iteration_state,
                     loop_name_state,
                     reference_pattern,
-                    reference_subject_name,
-                    needs_reference_pattern_bindings ? &enum_value_type : nullptr
+                    needs_reference_pattern_bindings ? &reference_subject : nullptr
                 );
             }
             merge_existing_zone_generations_into(exit_state, next_iteration_state);
@@ -13596,8 +13599,7 @@ private:
                               &loop_state,
                               loop_name_state,
                               reference_pattern,
-                              reference_subject_name,
-                              enum_value_type,
+                              reference_subject,
                               needs_reference_pattern_bindings](const StateSnapshot& recheck_state) {
                 recheck_enum_while_let_body_under_state(
                     stmt.loc,
@@ -13607,8 +13609,7 @@ private:
                     recheck_state,
                     loop_name_state,
                     reference_pattern,
-                    reference_subject_name,
-                    needs_reference_pattern_bindings ? &enum_value_type : nullptr
+                    needs_reference_pattern_bindings ? &reference_subject : nullptr
                 );
             };
             restore_states(checked_loop_exit_state(
@@ -14290,7 +14291,6 @@ private:
                 recheck_state,
                 loop_name_state,
                 nullptr,
-                "",
                 nullptr
             );
         };

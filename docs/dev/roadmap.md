@@ -26,10 +26,10 @@ changing the long-term language contract.
    alternatives. Pattern macro output now feeds the same expanded pattern path
    before match/or-pattern lowering and reference-binding detection. Mutable
    enum payload reference bindings now work in enum statement/expression
-   `match` and enum `if let` when the matched subject is an addressable local,
-   field, or indexed element. Finish mutable enum `while let` payload borrows,
-   mutable aggregate control-flow reference bindings, and ownership-aware
-   binding modes through aggregate, enum, slice, and vector patterns.
+   `match`, enum `if let`, and enum `while let` when the matched subject is an
+   addressable local, field, or indexed element. Finish mutable aggregate
+   control-flow reference bindings and ownership-aware binding modes through
+   aggregate, enum, slice, and vector patterns.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
 3. Expand aggregate enum payload storage.
