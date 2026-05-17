@@ -133,11 +133,18 @@ struct Pattern {
     SourceLocation loc;
 };
 
+enum class BindingMode {
+    Value,
+    Ref,
+    RefMut
+};
+
 struct Param {
     std::string name;
     TypeRef type;
     bool has_pattern = false;
     Pattern pattern;
+    BindingMode binding_mode = BindingMode::Value;
 };
 
 struct Stmt;
@@ -329,12 +336,6 @@ using StmtMatchArms = std::vector<MatchArm>;
 struct StmtBreakPayload {
     std::string label;
     ExprPtr value;
-};
-
-enum class BindingMode {
-    Value,
-    Ref,
-    RefMut
 };
 
 enum class StmtKind {

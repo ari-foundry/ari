@@ -1,0 +1,59 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+struct BoxPair {
+  mut pair: Pair,
+  mut extra: i64,
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn read_mut(value: ref mut i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn scalar(ref value: i64) -> i64 {
+  return read(value);
+}
+
+fn tuple_sum(ref (left, right): (i64, i64)) -> i64 {
+  return read(left) + read(right);
+}
+
+fn array_sum(ref [first, second]: [i64, 2]) -> i64 {
+  return read(first) + read(second);
+}
+
+fn adjusted_pair(ref mut Pair { left, right }: Pair) -> i64 {
+  write(left, 5);
+  write(right, 7);
+  return read_mut(left) + read_mut(right);
+}
+
+fn nested_sum(ref BoxPair { pair: Pair { left, right }, extra }: BoxPair) -> i64 {
+  return read(left) + read(right) + read(extra);
+}
+
+fn main() -> i64 {
+  var pair = Pair { left: 1, right: 2 };
+  var values: [i64, 2] = [7, 8];
+  let box = BoxPair { pair: Pair { left: 3, right: 4 }, extra: 10 };
+  return scalar(4) +
+      tuple_sum((5, 6)) +
+      array_sum(values) +
+      adjusted_pair(pair) +
+      nested_sum(box) +
+      pair.left +
+      pair.right;
+}

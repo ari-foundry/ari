@@ -4663,7 +4663,8 @@ private:
             std::string ir_param_name = param.has_pattern
                 ? make_hidden_local("$param")
                 : param.name;
-            declare_local(fn.loc, ir_param_name, type, false);
+            bool mutable_parameter_storage = param.binding_mode == BindingMode::RefMut;
+            declare_local(fn.loc, ir_param_name, type, mutable_parameter_storage);
             LocalInfo& param_local = local_slot_by_name(ir_param_name);
             param_local.function_parameter = true;
             param_local.generic_origin = param.has_pattern ? "" : generic_origin_from_type_ref(param.type);
@@ -4672,13 +4673,25 @@ private:
             }
             ir_fn.params.push_back(IrParam{ir_param_name, type});
             if (param.has_pattern) {
-                lower_binding_pattern_from_local(
-                    *param_pattern,
-                    ir_param_name,
-                    type,
-                    false,
-                    parameter_pattern_prelude
-                );
+                if (param.binding_mode == BindingMode::Value) {
+                    lower_binding_pattern_from_local(
+                        *param_pattern,
+                        ir_param_name,
+                        type,
+                        false,
+                        parameter_pattern_prelude
+                    );
+                } else {
+                    lower_reference_binding_pattern_from_path(
+                        *param_pattern,
+                        ir_param_name,
+                        type,
+                        type,
+                        "",
+                        param.binding_mode == BindingMode::RefMut,
+                        parameter_pattern_prelude
+                    );
+                }
             }
         }
         std::vector<IrType> current_param_types;

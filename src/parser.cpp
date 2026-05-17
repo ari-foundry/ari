@@ -580,6 +580,30 @@ private:
     }
 
     Param parse_function_param() {
+        BindingMode binding_mode = BindingMode::Value;
+        if (match(TokenKind::KwRef)) {
+            binding_mode = match(TokenKind::KwMut) ? BindingMode::RefMut : BindingMode::Ref;
+        } else if (check(TokenKind::Amp)) {
+            fail(peek().loc,
+                 "function parameter reference patterns use explicit ref or ref mut; & and &mut pattern shorthand remain planned");
+        } else if (check(TokenKind::KwMut)) {
+            fail(peek().loc,
+                 "mutable function parameter binding modes are reserved; use ref mut PATTERN for mutable borrow parameter patterns");
+        }
+
+        if (binding_mode != BindingMode::Value) {
+            Pattern pattern = parse_pattern(true);
+            expect(TokenKind::Colon, "expected : after parameter pattern");
+            Param param;
+            param.name = "$pattern";
+            param.type = parse_type();
+            param.has_pattern = true;
+            param.pattern = std::move(pattern);
+            param.binding_mode = binding_mode;
+            if (param.pattern.kind == PatternKind::Binding) param.name = param.pattern.payload_name;
+            return param;
+        }
+
         if (check(TokenKind::Identifier)) {
             Token param_name = peek();
             if (param_name.text == "self" && peek(1).kind != TokenKind::Colon) {
@@ -1082,7 +1106,7 @@ private:
         if (check(TokenKind::KwRef) || check(TokenKind::Amp)) {
             fail(peek().loc,
                  std::string("reference ") + context +
-                     " binding modes are only supported as declaration-level let ref/let ref mut bindings for now; "
+                     " binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now; "
                      "& and &mut pattern shorthand remain planned");
         }
         if (check(TokenKind::KwMut)) {

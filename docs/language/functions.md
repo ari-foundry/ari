@@ -318,9 +318,30 @@ expressions such as `sum([1, 2, 3])`. Generic functions whose source parameter i
 local Vec storage. Trait and impl method parameters use the same view ABI for
 ordinary parameter slots, while root `Vec[T]` function returns and trait method
 return types still wait for the runtime-capacity Vec ABI.
-Parameter patterns are value-binding-only for now:
-`ref`, `ref mut`, `&`, `&mut`, and `mut` binding-mode patterns are
-reserved and rejected. Trait and extern function signatures must keep named
+Parameter patterns can also use explicit reference binding modes:
+
+```ari
+fn sum_pair(ref (left, right): (i64, i64)) -> i64 {
+  return read(left) + read(right);
+}
+
+fn adjust(ref mut Point { x, y }: Point) -> i64 {
+  bump(x);
+  bump(y);
+  return read_mut(x) + read_mut(y);
+}
+```
+
+The ABI parameter is still the declared value type. Ari creates hidden function
+entry storage for the parameter, then introduces `ref` or `ref mut` bindings to
+that storage before the body runs. For by-value parameters, `ref mut` mutates
+the function's local parameter copy, not the caller's original value. The
+current 0.x slice supports name, wildcard, tuple, fixed-array, and struct
+reference parameter patterns over by-value parameter storage, matching local
+`let ref` / `let ref mut` patterns. Owning or borrow-valued parameter
+patterns, enum-payload reference bindings, runtime-sequence reference rest
+bindings, `&`/`&mut` shorthand, and standalone `mut` binding-mode patterns
+remain rejected. Trait and extern function signatures must keep named
 parameters.
 
 ## Borrow Returns

@@ -147,8 +147,10 @@ let ref Point { x, y: renamed } = point
 `ref mut` requires a mutable source binding and mutable struct field when the
 selected path ends at a field. The introduced bindings themselves are ordinary
 immutable borrow bindings, matching `let unique = ref mut cell`. Reference
-pattern destructuring of ownership-carrying aggregates, `&`/`&mut` shorthand,
-and function parameter reference patterns remain planned.
+pattern destructuring of ownership-carrying aggregates and `&`/`&mut`
+shorthand remain planned. Function parameter patterns support explicit
+`ref PATTERN: T` and `ref mut PATTERN: T` for the same name, wildcard, tuple,
+fixed-array, and struct shapes.
 
 The `[a, b]` pattern spelling works for fixed arrays and for runtime sequence
 subjects such as local `Vec[T]` storage and `Slice[T]` views. On `Vec[T]` and

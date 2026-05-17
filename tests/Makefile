@@ -100,7 +100,7 @@ check-cli: $(TARGET)
 	grep -q "define i32 @main" $(BUILD_DIR)/cli/count.ll
 	$(TARGET) tests/ok/library-export.ari --check
 	if $(TARGET) tests/errors/pattern-ref-binding-mode.ari --check >$(BUILD_DIR)/cli/check-pattern-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings for now" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
+	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
 	if $(TARGET) examples/count.ari --check --emit-llvm $(BUILD_DIR)/cli/check-bad.ll >$(BUILD_DIR)/cli/check-output-option.err 2>&1; then exit 1; fi
 	grep -q -- "--check cannot be combined with backend output or linking options" $(BUILD_DIR)/cli/check-output-option.err
 	$(TARGET) --freestanding examples/count.ari -o $(BUILD_DIR)/cli/count.raw
@@ -1305,9 +1305,9 @@ check-match: $(TARGET)
 	if $(TARGET) tests/errors/match-or-pattern-binding-type.ari -o $(BUILD_DIR)/match/match-or-pattern-binding-type.elf >$(BUILD_DIR)/match/match-or-pattern-binding-type.err 2>&1; then exit 1; fi
 	grep -q "or-pattern binding 'value' has inconsistent types: i32 and u32" $(BUILD_DIR)/match/match-or-pattern-binding-type.err
 	if $(TARGET) tests/errors/pattern-ref-binding-mode.ari -o $(BUILD_DIR)/match/pattern-ref-binding-mode.elf >$(BUILD_DIR)/match/pattern-ref-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings for now" $(BUILD_DIR)/match/pattern-ref-binding-mode.err
+	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now" $(BUILD_DIR)/match/pattern-ref-binding-mode.err
 	if $(TARGET) tests/errors/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/match/pattern-amp-binding-mode.elf >$(BUILD_DIR)/match/pattern-amp-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings for now" $(BUILD_DIR)/match/pattern-amp-binding-mode.err
+	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now" $(BUILD_DIR)/match/pattern-amp-binding-mode.err
 	if $(TARGET) tests/errors/match-tuple-nonexhaustive.ari -o $(BUILD_DIR)/match/match-tuple-nonexhaustive.elf >$(BUILD_DIR)/match/match-tuple-nonexhaustive.err 2>&1; then exit 1; fi
 	grep -q "tuple match must cover every supported product case" $(BUILD_DIR)/match/match-tuple-nonexhaustive.err
 	if $(TARGET) tests/errors/match-product-nonexhaustive-bool.ari -o $(BUILD_DIR)/match/match-product-nonexhaustive-bool.elf >$(BUILD_DIR)/match/match-product-nonexhaustive-bool.err 2>&1; then exit 1; fi
@@ -3159,6 +3159,11 @@ check-functions: $(TARGET) check-function-errors
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-param-patterns.elf; $(BUILD_DIR)/functions/function-param-patterns.elf; code=$$?; test $$code -eq 87; fi
 	$(TARGET) --freestanding tests/ok/function-param-patterns.ari -o $(BUILD_DIR)/functions/function-param-patterns.raw
 	$(BUILD_DIR)/functions/function-param-patterns.raw; code=$$?; test $$code -eq 87
+	$(TARGET) tests/ok/function-reference-param-patterns.ari --emit-llvm $(BUILD_DIR)/functions/function-reference-param-patterns.ll
+	grep -q "getelementptr" $(BUILD_DIR)/functions/function-reference-param-patterns.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-reference-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-reference-param-patterns.elf; $(BUILD_DIR)/functions/function-reference-param-patterns.elf; code=$$?; test $$code -eq 65; fi
+	$(TARGET) --freestanding tests/ok/function-reference-param-patterns.ari -o $(BUILD_DIR)/functions/function-reference-param-patterns.raw
+	$(BUILD_DIR)/functions/function-reference-param-patterns.raw; code=$$?; test $$code -eq 65
 	$(TARGET) --freestanding tests/ok/function-six-args-freestanding.ari -o $(BUILD_DIR)/functions/function-six-args-freestanding.elf
 	$(BUILD_DIR)/functions/function-six-args-freestanding.elf; code=$$?; test $$code -eq 21
 	$(TARGET) --freestanding tests/ok/function-eight-args-freestanding.ari -o $(BUILD_DIR)/functions/function-eight-args-freestanding.elf
@@ -3237,6 +3242,8 @@ check-function-errors: $(TARGET)
 	grep -Fq "root Vec[T] cannot be used as a function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-generic-function-return-runtime-abi.err
 	if $(TARGET) tests/errors/function-param-pattern.ari -o $(BUILD_DIR)/functions/errors/function-param-pattern.elf >$(BUILD_DIR)/functions/errors/function-param-pattern.err 2>&1; then exit 1; fi
 	grep -q "tuple binding pattern requires a tuple value, got i64" $(BUILD_DIR)/functions/errors/function-param-pattern.err
+	if $(TARGET) tests/errors/function-ref-param-shorthand.ari -o $(BUILD_DIR)/functions/errors/function-ref-param-shorthand.elf >$(BUILD_DIR)/functions/errors/function-ref-param-shorthand.err 2>&1; then exit 1; fi
+	grep -q "function parameter reference patterns use explicit ref or ref mut" $(BUILD_DIR)/functions/errors/function-ref-param-shorthand.err
 	if $(TARGET) tests/errors/function-overload-params.ari -o $(BUILD_DIR)/functions/errors/function-overload-params.elf >$(BUILD_DIR)/functions/errors/function-overload-params.err 2>&1; then exit 1; fi
 	grep -q "duplicate executable function 'pick'" $(BUILD_DIR)/functions/errors/function-overload-params.err
 	if $(TARGET) tests/errors/function-void-return-value.ari -o $(BUILD_DIR)/functions/errors/function-void-return-value.elf >$(BUILD_DIR)/functions/errors/function-void-return-value.err 2>&1; then exit 1; fi

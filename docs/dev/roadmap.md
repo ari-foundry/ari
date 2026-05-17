@@ -8,9 +8,12 @@ rejected with a migration diagnostic. Declaration-level reference pattern
 binding modes are stable for the first local slice: `let ref PATTERN = value`
 and `let ref mut PATTERN = value` now introduce named borrow bindings for
 plain local/path initializers and for tuple, fixed-array, and struct
-destructuring over those tracked paths. `&`/`&mut` shorthand, function
-parameter reference patterns, and ownership-aware aggregate binding modes
-remain reserved for the broader shared binding-mode engine.
+destructuring over those tracked paths. Function parameter patterns now accept
+the matching explicit `ref PATTERN: T` and `ref mut PATTERN: T` forms, lowered
+as function-entry borrows from hidden ABI parameter storage. `&`/`&mut`
+shorthand, runtime-sequence reference rest bindings, and ownership-aware
+aggregate binding modes remain reserved for the broader shared binding-mode
+engine.
 The mutable declaration binding-mode slice promoted from Medium-Term is
 complete for the current 0.x surface: `let mut PATTERN = value` now parses as
 declaration-level mutability for every binding introduced by the pattern and
@@ -229,12 +232,10 @@ Active Near-Term work promoted from Medium-Term and Backend Work:
    backend using the current Ari symbol table/export model. Treat C ABI
    relocations and host linker integration as follow-ups to
    `[raw-c-imports-scalar]`.
-3. [reference-params] carry explicit `ref` / `ref mut` binding modes through
-   function parameter patterns now that declaration-level local reference
-   patterns and value-mode function-parameter destructuring are stable. Keep
-   `&`/`&mut` shorthand and ownership-through-aggregate binding modes in
-   Medium-Term until the shared source-path and aggregate ownership policy is
-   ready.
+3. [ir-replay-generics] replay generic free functions and generated impl
+   specializations from V0 IR sidecars once their stable specialization
+   identity is versioned. Keep trait-specialized replay and broader identity
+   descriptor expansion behind the same 0.x cache-version policy.
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
@@ -247,10 +248,9 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    on 0.x/V0 until a deliberate version bump is approved, then extend the
    sidecar format for richer stable identities. V0 local vector-storage layout
    descriptors are complete in the current IR sidecar; richer generic/impl
+   replay has moved to Near-Term `[ir-replay-generics]`; trait-specialized
    replay and any identity-bearing descriptor expansion still wait for a
    deliberate cache identity/version bump.
-   - [ir-replay-generics] replay generic, impl, and trait-specialized bodies
-     directly from cache once their stable sidecar identity is versioned
 
 ## Medium-Term Language Work
 
@@ -258,14 +258,14 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    Declaration-level `let mut PATTERN = value` is implemented as the mutable
    value-binding slice. The first local reference binding slice is implemented
    for `let ref` / `let ref mut` over tracked local/path initializers and
-   tuple, fixed-array, and struct destructuring. This Medium-Term item now
-   tracks shorthand, function-parameter, and ownership-aware binding forms that
-   need broader source-path and aggregate ownership policy.
+   tuple, fixed-array, and struct destructuring. Explicit `ref` / `ref mut`
+   function parameter patterns are implemented for the same name, wildcard,
+   tuple, fixed-array, and struct shapes. This Medium-Term item now tracks
+   shorthand, runtime-sequence reference rest bindings, enum-payload reference
+   bindings, and ownership-aware binding forms that need broader source-path
+   and aggregate ownership policy.
    - [reference-shorthand] design `&` and `&mut` pattern shorthand after
      explicit `ref`/`ref mut` local patterns are stable
-   - [reference-params] explicit reference binding modes for function parameter
-     patterns moved to Near-Term `[reference-params]`; shorthand and
-     ownership-aware parameter binding modes remain here
    - [ownership] preserve binding modes through aggregate, enum, slice, and vector patterns once ownership-through-aggregates lands
    Tuple, fixed-array, named-struct, and tuple-struct match arms now share
    same-name/same-type or-pattern bindings through the product pattern engine.
@@ -282,10 +282,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      parameters now cover value-mode aggregate and `Slice[T]` runtime sequence
      destructuring, and value alias patterns now work in range, list-literal,
      and stored-vector loop heads when
-     the wrapped pattern is irrefutable. Non-iterator loop-head validation now
-     lives in `for_pattern_semantics`, with a shared sema lowering helper for
-     range, list-literal, and stored-vector loop heads; reference/ownership
-     binding modes still need shared lowering.
+     the wrapped pattern is irrefutable. Function parameters now also share the
+     explicit reference binding-mode lowering for supported tracked shapes.
+     Non-iterator loop-head validation now lives in `for_pattern_semantics`,
+     with a shared sema lowering helper for range, list-literal, and
+     stored-vector loop heads; shorthand and ownership binding modes still need
+     shared lowering.
    - [owner-resolution] design an explicit conditional cleanup/resolution form
      for `maybe-unavailable` owners once runtime owner-state values are part of
      the language surface; until then, loop exits that cannot prove a single
