@@ -35,6 +35,7 @@ Use these when changing the compiler:
 - [Feature Test Matrix](dev/test-matrix.md)
 - [Runtime And Backend](dev/runtime-backend.md)
 - [Roadmap](dev/roadmap.md)
+- [Completed Milestones](dev/completed-milestones.md)
 - [Semantic Checker Decomposition](dev/sema-decomposition.md)
 
 ## Tooling Docs
