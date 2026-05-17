@@ -345,11 +345,14 @@ that storage before the body runs. For by-value parameters, `ref mut` mutates
 the function's local parameter copy, not the caller's original value. The
 current 0.x slice supports name, wildcard, tuple, fixed-array, and struct
 reference parameter patterns over by-value parameter storage, matching local
-`let ref` / `let ref mut` / `let &` / `let &mut` patterns. Owning or
-borrow-valued parameter patterns, enum-payload reference bindings,
-runtime-sequence reference rest bindings, nested reference binding modes inside
-subpatterns, and standalone `mut` binding-mode patterns remain rejected. Trait
-and extern function signatures must keep named parameters.
+`let ref` / `let ref mut` / `let &` / `let &mut` aggregate patterns. Direct
+local `Vec[T]` reference patterns additionally support prefix element borrows
+with `name @ ..` rest Slice bindings, but parameter `Slice[T]`/Vec sequence
+reference destructuring still waits for dynamic element borrow paths. Owning or
+borrow-valued parameter patterns, enum-payload reference bindings, nested
+reference binding modes inside subpatterns, and standalone `mut` binding-mode
+patterns remain rejected. Trait and extern function signatures must keep named
+parameters.
 
 ## Borrow Returns
 

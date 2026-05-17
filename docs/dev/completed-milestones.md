@@ -33,6 +33,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - `let &PATTERN = value`, `let &mut PATTERN = value`, `&PATTERN: T`, and
   `&mut PATTERN: T` are shorthand for the same local and function-parameter
   reference-pattern binding modes.
+- Direct local `Vec[T]` reference patterns support runtime length guards,
+  prefix element borrows, and `name @ ..` rest bindings that produce `Slice[T]`
+  views.
 - Function parameter reference patterns lower as function-entry borrows from
   hidden ABI parameter storage.
 - `[ ... ]` patterns work for compile-time fixed arrays and runtime sequence

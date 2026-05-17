@@ -145,17 +145,23 @@ let &mut alias_unique = cell
 let ref (left, right) = pair
 let &(copy_left, copy_right) = pair
 let ref [head, tail]: [i64, 2] = values
+let ref [head, rest @ ..] = vec_values
+let ref mut [first, middle @ .., _] = vec_values
 let ref Point { x, y: renamed } = point
 ```
 
 `ref mut` requires a mutable source binding and mutable struct field when the
 selected path ends at a field. The introduced bindings themselves are ordinary
 immutable borrow bindings, matching `let unique = ref mut cell`. Reference
-pattern destructuring of ownership-carrying aggregates and nested reference
-binding modes inside match/control-flow patterns remain planned. Function
-parameter patterns support `ref PATTERN: T`, `ref mut PATTERN: T`,
-`&PATTERN: T`, and `&mut PATTERN: T` for the same name, wildcard, tuple,
-fixed-array, and struct shapes.
+patterns over direct local `Vec[T]` storage use the same runtime length guard
+as value sequence patterns. Prefix elements before `..` can be borrowed by
+reference, and `name @ ..` binds the skipped range as a `Slice[T]` view.
+Reference suffix bindings after `..`, Slice-backed reference element patterns,
+destructuring of ownership-carrying aggregates, and nested reference binding
+modes inside match/control-flow patterns remain planned. Function parameter
+patterns support `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and
+`&mut PATTERN: T` for the same name, wildcard, tuple, fixed-array, and struct
+shapes.
 
 The `[a, b]` pattern spelling works for fixed arrays and for runtime sequence
 subjects such as local `Vec[T]` storage and `Slice[T]` views. On `Vec[T]` and

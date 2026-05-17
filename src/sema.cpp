@@ -6424,7 +6424,7 @@ private:
 
     [[noreturn]] void fail_reference_pattern_shape(SourceLocation loc) const {
         fail(loc,
-             "reference pattern bindings currently support wildcard, name, tuple, fixed-array, and struct patterns only");
+             "reference pattern bindings currently support wildcard, name, tuple, fixed-array, local Vec rest, and struct patterns only");
     }
 
     void require_reference_pattern_source_available(SourceLocation loc,
@@ -6587,6 +6587,12 @@ private:
                 return;
             case PatternKind::Tuple:
             case PatternKind::Array:
+                if (pattern.kind == PatternKind::Array &&
+                    is_runtime_sequence_pattern_subject(value_qualified_type(source_type))) {
+                    lower_reference_runtime_sequence_binding_pattern_from_path(
+                        pattern, base_name, base_type, source_type, path, mutable_borrow, statements);
+                    return;
+                }
                 lower_reference_tuple_binding_pattern_from_path(
                     pattern, base_name, base_type, source_type, path, mutable_borrow, statements);
                 return;
@@ -6597,6 +6603,101 @@ private:
             default:
                 fail_reference_pattern_shape(pattern.loc);
         }
+    }
+
+    bool reference_runtime_sequence_suffix_requires_dynamic_path(const Pattern& pattern) const {
+        if (!pattern.has_rest) return false;
+        for (std::size_t i = pattern.rest_index; i < pattern.elements.size(); ++i) {
+            const Pattern& item = expanded_pattern(pattern.elements[i]);
+            if (item.kind != PatternKind::Wildcard) return true;
+        }
+        return false;
+    }
+
+    void append_reference_runtime_sequence_rest_alias(const Pattern& pattern,
+                                                      const std::string& source_name,
+                                                      const IrType& source_type,
+                                                      std::vector<IrStmtPtr>& statements) {
+        if (pattern.rest_alias_name.empty()) return;
+
+        const IrType& element_type = runtime_sequence_element_type(pattern.rest_alias_loc, source_type);
+        IrType slice_type = make_prelude_slice_type(pattern.rest_alias_loc, element_type);
+        declare_local(pattern.rest_alias_loc, pattern.rest_alias_name, slice_type, false);
+        statements.push_back(make_ir_var_decl(
+            pattern.rest_alias_loc,
+            pattern.rest_alias_name,
+            slice_type,
+            make_runtime_sequence_rest_slice_expr(
+                pattern.rest_alias_loc,
+                pattern,
+                source_name,
+                source_type
+            ),
+            false
+        ));
+    }
+
+    void lower_reference_runtime_sequence_binding_pattern_from_path(const Pattern& pattern,
+                                                                    const std::string& base_name,
+                                                                    const IrType& base_type,
+                                                                    const IrType& source_type,
+                                                                    const std::string& path,
+                                                                    bool mutable_borrow,
+                                                                    std::vector<IrStmtPtr>& statements) {
+        IrType shape_type = value_qualified_type(source_type);
+        if (!is_vector_storage_type(shape_type)) {
+            fail(pattern.loc,
+                 "runtime sequence reference patterns currently require direct local Vec[T] storage; Slice[T] element borrow paths are planned");
+        }
+        if (!path.empty()) {
+            fail(pattern.loc,
+                 "runtime sequence reference patterns currently require a direct local Vec[T] binding");
+        }
+        if (is_owner_type(shape_type)) {
+            fail(pattern.loc,
+                 "reference pattern destructuring of ownership-carrying Vec elements is planned after ownership-through-aggregates is implemented");
+        }
+        if (reference_runtime_sequence_suffix_requires_dynamic_path(pattern)) {
+            fail(pattern.elements[pattern.rest_index].loc,
+                 "reference runtime sequence suffix bindings after .. need dynamic element borrow paths");
+        }
+
+        const IrType& element_type = runtime_sequence_element_type(pattern.loc, shape_type);
+        std::vector<IrStmtPtr> body;
+        append_reference_runtime_sequence_rest_alias(pattern, base_name, shape_type, body);
+        const std::size_t prefix_count = pattern.has_rest ? pattern.rest_index : pattern.elements.size();
+        for (std::size_t i = 0; i < prefix_count; ++i) {
+            const Pattern& item = pattern.elements[i];
+            if (expanded_pattern(item).kind == PatternKind::Wildcard) continue;
+            lower_reference_binding_pattern_from_path(
+                item,
+                base_name,
+                base_type,
+                element_type,
+                local_owned_field_path(path, i),
+                mutable_borrow,
+                body);
+        }
+
+        IrExprPtr condition = lower_runtime_sequence_pattern_length_condition(pattern, base_name, shape_type);
+        if (!condition) {
+            for (auto& statement : body) statements.push_back(std::move(statement));
+            return;
+        }
+
+        TupleCheckedStmtArm success;
+        success.loc = pattern.loc;
+        success.condition = std::move(condition);
+        success.body = std::move(body);
+        TupleCheckedStmtArm failure;
+        failure.loc = pattern.loc;
+        failure.body.push_back(make_panic_stmt(pattern.loc));
+        std::vector<TupleCheckedStmtArm> checked_arms;
+        checked_arms.reserve(2);
+        checked_arms.push_back(std::move(success));
+        checked_arms.push_back(std::move(failure));
+        std::vector<IrStmtPtr> lowered = build_tuple_match_if_chain(checked_arms);
+        for (auto& statement : lowered) statements.push_back(std::move(statement));
     }
 
     void lower_reference_tuple_binding_pattern_from_path(const Pattern& pattern,

@@ -807,6 +807,10 @@ element reads. Runtime sequence patterns additionally allow `name @ ..` to
 bind the skipped range as a `Slice[T]` view, as in
 `let [head, tail @ ..] = values`. Runtime sequence matches need a final `_` or
 `[..]` fallback arm when earlier arms are length-checked.
+Direct local `Vec[T]` reference patterns also support prefix borrows with
+`name @ ..` rest Slice bindings, for example
+`let ref [head, tail @ ..] = values`. Borrowing named suffix elements after
+`..` is still reserved for dynamic element borrow paths.
 
 ## Ownership-Qualified Types
 
