@@ -1243,6 +1243,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/llvm-aggregate-enum-direct-store.elf; code=$$?; test $$code -eq 23
 	$(TARGET) tests/ok/llvm-aggregate-enum-materialization.ari -o $(BUILD_DIR)/match/llvm-aggregate-enum-materialization.elf
 	$(BUILD_DIR)/match/llvm-aggregate-enum-materialization.elf; code=$$?; test $$code -eq 65
+	$(TARGET) tests/ok/enum-plain-aggregate-payloads.ari -o $(BUILD_DIR)/match/enum-plain-aggregate-payloads.elf
+	$(BUILD_DIR)/match/enum-plain-aggregate-payloads.elf; code=$$?; test $$code -eq 63
 	$(TARGET) tests/ok/enum-payload-pointer-access.ari --emit-llvm $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	grep -q "getelementptr inbounds { i32, i64 }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll
 	grep -q "getelementptr inbounds { i32, { i32, i64, i64 } }" $(BUILD_DIR)/match/enum-payload-pointer-access.ll
@@ -3543,8 +3545,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "logical operand must be bool, got i64" $(BUILD_DIR)/errors/not-non-bool.err
 	if $(TARGET) tests/errors/invalid-cast.ari -o $(BUILD_DIR)/errors/invalid-cast.elf >$(BUILD_DIR)/errors/invalid-cast.err 2>&1; then exit 1; fi
 	grep -q "explicit casts currently require integer types, float types, integer/float casts, or raw pointer casts, got bool as i64" $(BUILD_DIR)/errors/invalid-cast.err
-	if $(TARGET) tests/errors/enum-payload-too-wide.ari -o $(BUILD_DIR)/errors/enum-payload-too-wide.elf >$(BUILD_DIR)/errors/enum-payload-too-wide.err 2>&1; then exit 1; fi
-	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, or homogeneous nested aggregate enum values" $(BUILD_DIR)/errors/enum-payload-too-wide.err
+	if $(TARGET) tests/errors/enum-payload-unsupported-vector.ari -o $(BUILD_DIR)/errors/enum-payload-unsupported-vector.elf >$(BUILD_DIR)/errors/enum-payload-unsupported-vector.err 2>&1; then exit 1; fi
+	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, plain tuple/array/struct aggregate, or nested aggregate enum values" $(BUILD_DIR)/errors/enum-payload-unsupported-vector.err
 	if $(TARGET) tests/errors/enum-payload-count.ari -o $(BUILD_DIR)/errors/enum-payload-count.elf >$(BUILD_DIR)/errors/enum-payload-count.err 2>&1; then exit 1; fi
 	grep -q "wrong payload count for enum case 'Some'" $(BUILD_DIR)/errors/enum-payload-count.err
 	if $(TARGET) tests/errors/match-nonexhaustive.ari -o $(BUILD_DIR)/errors/match-nonexhaustive.elf >$(BUILD_DIR)/errors/match-nonexhaustive.err 2>&1; then exit 1; fi

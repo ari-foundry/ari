@@ -49,10 +49,12 @@ changing the long-term language contract.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
 3. Expand aggregate enum payload storage.
-   Current aggregate enum payloads intentionally cover a narrow ABI-safe
-   universe. Add tuple, struct, vector, and owned payload values only after
-   their non-local ABI/storage rules are defined. Define payload-bearing
-   `@repr(C)` enum layout and C header emission after that ABI is stable.
+   Current aggregate enum payloads now cover scalar/pointer-shaped slots,
+   one-word enums, nested aggregate enums, and plain Ari-layout tuple,
+   fixed-array, and struct payload values. Define fixed-capacity vector and
+   owned payload values after their non-local ABI/storage rules are stable.
+   Define payload-bearing `@repr(C)` enum layout and C header emission after
+   that ABI is stable.
 
 See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
 roadmap for splitting `src/sema.cpp` by broad semantic phases.

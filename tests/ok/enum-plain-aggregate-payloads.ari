@@ -1,0 +1,66 @@
+struct Pair {
+  left: i64,
+  right: i64,
+}
+
+enum StructPacket {
+  StructValue(Pair),
+  StructEmpty,
+}
+
+enum TuplePacket {
+  TupleValue((i64, i64)),
+  TupleEmpty,
+}
+
+enum ArrayPacket {
+  ArrayValue([i64, 3]),
+  ArrayEmpty,
+}
+
+fn make_struct(left: i64, right: i64) -> StructPacket {
+  return StructValue(Pair { left: left, right: right });
+}
+
+fn score_struct(value: StructPacket) -> i64 {
+  return match value {
+    StructValue(pair) => pair.left + pair.right,
+    StructEmpty => 0;
+  };
+}
+
+fn score_tuple(value: TuplePacket) -> i64 {
+  return match value {
+    TupleValue(pair) => pair.0 + pair.1,
+    TupleEmpty => 0;
+  };
+}
+
+fn score_array(value: ArrayPacket) -> i64 {
+  return match value {
+    ArrayValue(items) => items[0] + items[1] + items[2],
+    ArrayEmpty => 0;
+  };
+}
+
+fn direct_struct_slot() -> i64 {
+  let value: StructPacket = StructValue(Pair { left: 5, right: 6 });
+  let payload: Pair = value.0;
+  return payload.left + payload.right;
+}
+
+fn raw_array_slot() -> i64 {
+  var value: ArrayPacket = ArrayEmpty;
+  let raw: ptr ArrayPacket = (ref mut value) as ptr ArrayPacket;
+  *raw = ArrayValue([7, 8, 9]);
+  let payload: [i64, 3] = (*raw).0;
+  return payload[0] + payload[1] + payload[2];
+}
+
+fn main() -> i64 {
+  return score_struct(make_struct(1, 2)) +
+         score_tuple(TupleValue((3, 4))) +
+         score_array(ArrayValue([5, 6, 7])) +
+         direct_struct_slot() +
+         raw_array_slot();
+}

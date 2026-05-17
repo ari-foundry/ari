@@ -995,8 +995,8 @@ return the current scalar or Ari-layout aggregate byte size/alignment as `i64`.
 Aggregate layout queries use field order, natural scalar alignment, array
 element stride padding, and final aggregate padding to the maximum field
 alignment. They are Ari layout queries, not a C ABI promise; use `@repr(C)`
-surfaces for foreign layout once that ABI is fully specified. The raw
-the LLVM backend uses this Ari layout for local tuple, struct,
+surfaces for foreign layout once that ABI is fully specified. The LLVM backend
+uses this Ari layout for local tuple, struct,
 tuple-struct, fixed-array, and fixed-capacity local vector storage, whole plain
 aggregate copies, and scalar field or element access through raw aggregate
 pointers. Local and
@@ -1007,9 +1007,10 @@ planned there. Direct payload slot access is available for local and
 raw-pointer-backed aggregate enum values with tuple-index syntax: `value.0` or
 `(*raw).0` addresses payload slot 0, not the hidden tag field. Scalar and
 pointer-shaped payload slots expose their stored `u64` payload word; nested
-aggregate-enum slots expose that nested enum storage. The access does not check
-the current tag, so normal `match` payload patterns remain the checked
-case-aware surface.
+aggregate-enum slots expose that nested enum storage; and plain tuple,
+fixed-array, or struct payload slots expose the full stored aggregate value.
+The access does not check the current tag, so normal `match` payload patterns
+remain the checked case-aware surface.
 `ptr_load(pointer)` and
 `ptr_store(pointer, value)` provide explicit unchecked scalar, plain
 Ari-layout aggregate, or supported aggregate enum memory access through raw

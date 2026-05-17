@@ -163,6 +163,8 @@ Checklist:
       returns for tuple, struct, fixed-array, and aggregate enum values through
       hidden argument/result pointers copied into callee-local storage or
       caller-provided result storage
+- [x] store plain tuple, fixed-array, and struct values inline in aggregate
+      enum payload slots
 - [x] materialize discarded LLVM aggregate-returning direct and
       function-pointer calls into hidden temporaries
 - [x] preserve LLVM caller pointer bases while aggregate-valued

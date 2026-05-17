@@ -3642,7 +3642,7 @@ private:
             !unresolved_generic_payload &&
             !is_aggregate_enum_payload_type(payload_type)) {
             fail(loc,
-                 "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, or homogeneous nested aggregate enum values, got " +
+                 "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, plain tuple/array/struct aggregate, or nested aggregate enum values, got " +
                      type_name(payload_type));
         }
         if (!payload_needs_aggregate && !is_legacy_enum_payload_type(payload_type)) {

@@ -109,14 +109,17 @@ backend switches that enum to an aggregate layout:
 
 Aggregate enum payload slots currently accept integer, bool, pointer-shaped
 values such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values,
-and nested aggregate-enum values. If one payload position mixes payload-word
-values with one nested aggregate enum type, the slot uses the nested enum
-layout. Payload-word cases zero-initialize that nested storage and write the
-payload word into the nested enum's first payload slot, while nested enum cases
-store the full nested value. This mixed-slot rule covers ordinary scalar,
-pointer-shaped, and one-word enum payloads, but it does not allow tuples,
-structs, vectors, owned values, or multiple different nested aggregate enum
-types to share a slot. The LLVM backend can store and copy local
+nested aggregate-enum values, and plain Ari-layout tuple, fixed-array, or
+struct values. Plain aggregate payloads occupy the full payload slot and can be
+bound as full values in `match` arms. If one payload position mixes
+payload-word values with one nested aggregate enum type, the slot uses the
+nested enum layout. Payload-word cases zero-initialize that nested storage and
+write the payload word into the nested enum's first payload slot, while nested
+enum cases store the full nested value. This mixed-slot rule covers ordinary
+scalar, pointer-shaped, and one-word enum payloads, but it does not allow
+vectors, owned values, plain aggregates mixed with other slot shapes, or
+multiple different nested aggregate enum types to share a slot. The LLVM backend
+can store and copy local
 aggregate enum values, then match local values by tag with positional payload
 bindings, scalar payload literal/range tests, and one-level enum-case payload
 tests for compact, homogeneous nested, or mixed-lane nested aggregate enum
@@ -129,7 +132,8 @@ tuple-index syntax on local or raw-pointer-backed values. `value.0` and
 `(*raw).0` mean payload slot 0; the hidden tag field is not part of the source
 index. This access does not test the active case. Scalar, pointer-shaped, and
 one-word enum payload slots expose the stored `u64` payload word, while nested
-aggregate-enum slots expose the nested enum storage itself.
+aggregate-enum slots expose the nested enum storage itself. Plain tuple,
+fixed-array, and struct slots expose the stored aggregate value.
 Direct LLVM calls can pass and return aggregate enum values through
 hidden pointer slots. The LLVM backend also materializes direct
 aggregate enum `match` inputs through hidden stack slots, so constructors,

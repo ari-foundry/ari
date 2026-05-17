@@ -181,6 +181,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Aggregate enum payload slots support integer, bool, pointer-shaped values,
   one-word enums, nested aggregate enums, and the current mixed payload-word
   plus nested-enum lane rule.
+- Aggregate enum payload slots can store plain Ari-layout tuple, fixed-array,
+  and struct payload values inline. Match payload bindings and direct payload
+  slot access expose the full aggregate value while vector and owned payload
+  storage stay planned behind their ABI rules.
 - Aggregate enum payload slot access through `value.0` and `(*raw_enum).0`
   addresses payload slot 0 rather than the hidden tag field on local and
   raw-pointer-backed ABI paths.

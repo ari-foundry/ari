@@ -18,6 +18,14 @@ bool is_payload_word_storage(const IrType& type) {
     return same_type(type, enum_payload_storage_type(type.loc));
 }
 
+bool is_inline_payload_storage_type(const IrType& type) {
+    if (has_aggregate_enum_layout(type)) return true;
+    return type.qualifier == TypeQualifier::Value &&
+           (type.primitive == IrPrimitiveKind::Tuple ||
+            type.primitive == IrPrimitiveKind::Array ||
+            type.primitive == IrPrimitiveKind::Struct);
+}
+
 } // namespace
 
 IrType enum_tag_storage_type(SourceLocation loc) {
@@ -29,7 +37,7 @@ IrType enum_payload_storage_type(SourceLocation loc) {
 }
 
 IrType enum_payload_slot_storage_type(SourceLocation loc, const IrType& payload_type) {
-    if (has_aggregate_enum_layout(payload_type)) return payload_type;
+    if (is_inline_payload_storage_type(payload_type)) return payload_type;
     return enum_payload_storage_type(loc);
 }
 
