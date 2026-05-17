@@ -5370,13 +5370,24 @@ private:
         return literal_bool_condition_value(condition).value_or(false);
     }
 
+    const IrExpr* resolve_immutable_local_alias_expr(const IrExpr& expr) {
+        const IrExpr* current = &expr;
+        std::set<std::string> seen_locals;
+        while (current && current->kind == IrExprKind::Local) {
+            const std::string& local_name = ir_expr_name(*current);
+            if (!seen_locals.insert(local_name).second) return nullptr;
+
+            LocalInfo* local = find_local_slot(local_name);
+            if (!local || local->mutable_binding || !local->ir_init_expr) return nullptr;
+            current = local->ir_init_expr;
+        }
+        return current;
+    }
+
     std::optional<bool> known_bool_condition_value(const IrExpr& condition) {
-        if (auto literal = literal_bool_condition_value(condition)) return literal;
-        if (condition.kind != IrExprKind::Local) return std::nullopt;
-        LocalInfo* local = find_local_slot(ir_expr_name(condition));
-        if (!local || local->mutable_binding || !local->ir_init_expr) return std::nullopt;
-        if (local->ir_init_expr->kind != IrExprKind::Bool) return std::nullopt;
-        return local->ir_init_expr->bool_value;
+        const IrExpr* resolved = resolve_immutable_local_alias_expr(condition);
+        if (!resolved) return std::nullopt;
+        return literal_bool_condition_value(*resolved);
     }
 
     static bool literal_true_loop_never_falls_through(const LoopInfo& loop, Flow body_flow) {
@@ -11729,20 +11740,8 @@ private:
     }
 
     const IrExpr* known_enum_construct_for_while_let_match_value(const IrExpr& match_value) {
-        if (match_value.kind == IrExprKind::EnumConstruct) return &match_value;
-
-        std::set<std::string> seen_locals;
-        const IrExpr* current = &match_value;
-        while (current && current->kind == IrExprKind::Local) {
-            const std::string& local_name = ir_expr_name(*current);
-            if (!seen_locals.insert(local_name).second) return nullptr;
-
-            LocalInfo* local = find_local_slot(local_name);
-            if (!local || local->mutable_binding || !local->ir_init_expr) return nullptr;
-            current = local->ir_init_expr;
-            if (current->kind == IrExprKind::EnumConstruct) return current;
-        }
-        return nullptr;
+        const IrExpr* resolved = resolve_immutable_local_alias_expr(match_value);
+        return resolved && resolved->kind == IrExprKind::EnumConstruct ? resolved : nullptr;
     }
 
     bool enum_match_value_is_known_match_for_while_let(

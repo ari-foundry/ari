@@ -408,8 +408,9 @@ the loop have the same state as they would have if the loop ran zero times. This
 keeps paths such as `drop owner; break;` from leaving the owner ambiguously live
 after the loop.
 
-For a literal `while true` loop, or an immutable local `let` condition
-initialized directly from `true`, there is no zero-iteration exit. In that case,
+For a literal `while true` loop, or an immutable local `let` condition whose
+initializer resolves through immutable local aliases to `true`, there is no
+zero-iteration exit. In that case,
 plain `break` paths define the ownership state after the loop. If every body
 path returns, the `while true` statement itself is treated as returning. If the
 body has no reachable `break` and can only continue into the next iteration,
@@ -591,13 +592,14 @@ evaluated before the loop bindings are written. In loops with owning `init`
 bindings, `continue` must provide explicit update values so the checker can
 validate the owner state at that jump.
 For a literal `while false` condition, or an immutable local `let` condition
-initialized directly from `false`, the body and `next` expressions are checked,
-but ownership flow after the loop keeps the initial binding state because no
-iteration or update can execute.
+whose initializer resolves through immutable local aliases to `false`, the body
+and `next` expressions are checked, but ownership flow after the loop keeps the
+initial binding state because no iteration or update can execute.
 For a literal `while true` condition, or an immutable local `let` condition
-initialized directly from `true`, `init while` reports the same
-non-fallthrough and all-return flow as plain `while true`, so a later function
-return is not required when the loop cannot exit normally. Its value
+whose initializer resolves through immutable local aliases to `true`, `init
+while` reports the same non-fallthrough and all-return flow as plain `while
+true`, so a later function return is not required when the loop cannot exit
+normally. Its value
 `continue` paths also merge with the next-iteration state rather than the
 post-loop `break` exit state. If an outer owner is widened from live to
 moved/dropped across a no-zero `init while` transition, Ari rechecks the body
@@ -625,8 +627,8 @@ bindings.
   reserved for future iterator lowering.
 - General maybe-zero loops currently cannot change the ownership state of an
   outer binding on a body fallthrough path. Literal `false`, or immutable local
-  `let` conditions initialized directly from `false`, are treated as
-  zero-iteration loops.
+  `let` conditions whose initializers resolve through immutable local aliases
+  to `false`, are treated as zero-iteration loops.
 - Direct range expressions and list-literal or stored-`Vec` `for` loops with a
   known non-empty iteration count are not treated as zero-iteration loops, so
   `break` exits can define the post-loop owner state. When the known count is

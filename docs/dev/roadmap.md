@@ -114,9 +114,9 @@ dataflow recheck:
    zero-iteration exit from post-loop owner merges, while still rejecting body
    fallthrough or `continue` owner changes unless they are exact-once.
    The plain `while` and `init while` slices also treat immutable local bool
-   conditions initialized directly from literals like literal `true`/`false`
-   as proven loop conditions, and fold those conditions into literal IR branch
-   conditions during lowering.
+   conditions whose initializers resolve through immutable local aliases to
+   literals like `true`/`false` as proven loop conditions, and fold those
+   conditions into literal IR branch conditions during lowering.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
      and exact-once loop bodies into remaining runtime-dependent refutable enum
      `while let`/multi-iteration iterator-style bodies and any future

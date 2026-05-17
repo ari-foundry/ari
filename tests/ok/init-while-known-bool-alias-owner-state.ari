@@ -1,0 +1,25 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  let raw_run = true;
+  let condition = raw_run;
+  init token = make_owned(1), keep_going = false while condition {
+    if keep_going {
+      drop token;
+      continue make_owned(2), keep_going;
+    }
+    drop token;
+    break;
+  } next make_owned(3), keep_going
+
+  let raw_skip = false;
+  let skip = raw_skip;
+  init skipped = make_owned(4), count = 0 while skip {
+    drop skipped;
+  } next make_owned(5), count + 1
+
+  drop skipped;
+  return count;
+}

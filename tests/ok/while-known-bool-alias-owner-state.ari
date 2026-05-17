@@ -1,0 +1,19 @@
+fn main() -> i64 {
+  let raw_run = true;
+  let condition = raw_run;
+  let token: own i64 = 5;
+  while condition {
+    drop token;
+    break;
+  }
+
+  let raw_skip = false;
+  let skip = raw_skip;
+  let skipped: own i64 = 7;
+  while skip {
+    drop skipped;
+  }
+  drop skipped;
+
+  return 0;
+}

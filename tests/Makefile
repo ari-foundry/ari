@@ -809,6 +809,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/init-while-true-continue-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/init-while-known-true-continue-break-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/init-while-known-bool-alias-owner-state.ari -o $(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.raw
+	$(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/labeled-break.ari -o $(BUILD_DIR)/control-flow/labeled-break.raw
 	$(BUILD_DIR)/control-flow/labeled-break.raw; code=$$?; test $$code -eq 2
 	$(TARGET) --freestanding tests/ok/break-statement-payloads.ari -o $(BUILD_DIR)/control-flow/break-statement-payloads.raw
@@ -817,6 +819,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-true-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/while-known-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-known-true-break-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/while-known-bool-alias-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.raw
+	$(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/loop-break-owner-unavailable-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw
 	$(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/loop-break-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.raw
@@ -963,6 +967,9 @@ check-control-flow: $(TARGET)
 	grep -q "initwhile.end" $(BUILD_DIR)/control-flow/init-while-true-continue-break-owner-state.ll
 	$(TARGET) tests/ok/init-while-known-true-continue-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.ll
 	grep -q "br i1 1" $(BUILD_DIR)/control-flow/init-while-known-true-continue-break-owner-state.ll
+	$(TARGET) tests/ok/init-while-known-bool-alias-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.ll
+	grep -q "br i1 1" $(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.ll
+	grep -q "br i1 0" $(BUILD_DIR)/control-flow/init-while-known-bool-alias-owner-state.ll
 	$(TARGET) tests/ok/labeled-block-expression.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	grep -q "block.expr.end" $(BUILD_DIR)/control-flow/labeled-block-expression.ll
 	$(TARGET) tests/ok/labeled-block-aggregate.ari --emit-llvm $(BUILD_DIR)/control-flow/labeled-block-aggregate.ll
@@ -976,6 +983,9 @@ check-control-flow: $(TARGET)
 	grep -q "while.end" $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
 	$(TARGET) tests/ok/while-known-true-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.ll
 	grep -q "br i1 1" $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.ll
+	$(TARGET) tests/ok/while-known-bool-alias-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.ll
+	grep -q "br i1 1" $(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.ll
+	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-known-bool-alias-owner-state.ll
 	$(TARGET) tests/ok/loop-break-owner-unavailable-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
 	$(TARGET) tests/ok/loop-break-borrow-release-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.ll
@@ -3198,6 +3208,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "binding 'token' has incompatible ownership states at loop continue" $(BUILD_DIR)/errors/loop-continue-owner-state.err
 	if $(TARGET) tests/errors/init-while-known-true-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.elf >$(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.err
+	if $(TARGET) tests/errors/init-while-known-bool-alias-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/init-while-known-bool-alias-owner-widen-recheck.elf >$(BUILD_DIR)/errors/init-while-known-bool-alias-owner-widen-recheck.err 2>&1; then exit 1; fi
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/init-while-known-bool-alias-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-aggregate-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-aggregate-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-aggregate-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-aggregate-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-direct-enum-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.err 2>&1; then exit 1; fi
