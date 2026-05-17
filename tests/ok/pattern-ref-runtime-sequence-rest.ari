@@ -13,6 +13,10 @@ fn read_unique(value: ref mut i64) -> i64 {
   return *raw;
 }
 
+fn sum_slice_refs(ref [first, rest @ .., last]: Slice[i64]) -> i64 {
+  return read(first) + len(rest) + read(last);
+}
+
 fn main() -> i64 {
   var values: Vec[i64] = [5, 6, 7];
   var total = 0;
@@ -31,6 +35,13 @@ fn main() -> i64 {
     let ref mut [.., last] = values;
     write(last, 3);
     total = total + read_unique(last);
+  }
+
+  {
+    let view = values.as_slice();
+    let ref [slice_head, slice_middle @ .., slice_last] = view;
+    total = total + read(slice_head) + len(slice_middle) + slice_middle[0] + read(slice_last);
+    total = total + sum_slice_refs(view);
   }
 
   return total;

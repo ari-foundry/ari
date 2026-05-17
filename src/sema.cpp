@@ -6690,6 +6690,49 @@ private:
             statements);
     }
 
+    void lower_reference_runtime_sequence_prefix_element_binding(const Pattern& item,
+                                                                 std::size_t pattern_index,
+                                                                 const std::string& base_name,
+                                                                 const IrType& base_type,
+                                                                 const IrType& source_type,
+                                                                 const IrType& element_type,
+                                                                 bool mutable_borrow,
+                                                                 std::vector<IrStmtPtr>& statements) {
+        const Pattern& effective_item = expanded_pattern(item);
+        if (effective_item.kind == PatternKind::Wildcard) return;
+
+        if (is_vector_storage_type(source_type)) {
+            lower_reference_binding_pattern_from_path(
+                item,
+                base_name,
+                base_type,
+                element_type,
+                local_owned_field_path("", pattern_index),
+                mutable_borrow,
+                statements);
+            return;
+        }
+
+        if (effective_item.kind != PatternKind::Binding) {
+            fail(effective_item.loc,
+                 "Slice reference element bindings currently require a plain binding name or _");
+        }
+
+        IrExprPtr access = make_ir_index_expr(
+            effective_item.loc,
+            make_local_lvalue_expr(effective_item.loc, base_name, source_type),
+            make_integer_literal(effective_item.loc, i64_type(effective_item.loc), pattern_index)
+        );
+        lower_reference_binding_pattern_value_from_access(
+            effective_item,
+            base_name,
+            element_type,
+            "",
+            mutable_borrow,
+            std::move(access),
+            statements);
+    }
+
     void lower_reference_runtime_sequence_binding_pattern_from_path(const Pattern& pattern,
                                                                     const std::string& base_name,
                                                                     const IrType& base_type,
@@ -6698,17 +6741,17 @@ private:
                                                                     bool mutable_borrow,
                                                                     std::vector<IrStmtPtr>& statements) {
         IrType shape_type = value_qualified_type(source_type);
-        if (!is_vector_storage_type(shape_type)) {
+        if (!is_vector_storage_type(shape_type) && !is_prelude_slice_type(shape_type)) {
             fail(pattern.loc,
-                 "runtime sequence reference patterns currently require direct local Vec[T] storage; Slice[T] element borrow paths are planned");
+                 "runtime sequence reference patterns currently require direct local Vec[T] storage or Slice[T] view bindings");
         }
         if (!path.empty()) {
             fail(pattern.loc,
-                 "runtime sequence reference patterns currently require a direct local Vec[T] binding");
+                 "runtime sequence reference patterns currently require a direct local Vec[T] or Slice[T] binding");
         }
         if (is_owner_type(shape_type)) {
             fail(pattern.loc,
-                 "reference pattern destructuring of ownership-carrying Vec elements is planned after ownership-through-aggregates is implemented");
+                 "reference pattern destructuring of ownership-carrying runtime sequence elements is planned after ownership-through-aggregates is implemented");
         }
 
         const IrType& element_type = runtime_sequence_element_type(pattern.loc, shape_type);
@@ -6718,12 +6761,13 @@ private:
         for (std::size_t i = 0; i < prefix_count; ++i) {
             const Pattern& item = pattern.elements[i];
             if (expanded_pattern(item).kind == PatternKind::Wildcard) continue;
-            lower_reference_binding_pattern_from_path(
+            lower_reference_runtime_sequence_prefix_element_binding(
                 item,
+                i,
                 base_name,
                 base_type,
+                shape_type,
                 element_type,
-                local_owned_field_path(path, i),
                 mutable_borrow,
                 body);
         }

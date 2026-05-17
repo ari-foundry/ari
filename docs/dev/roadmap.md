@@ -23,11 +23,11 @@ changing the long-term language contract.
    file per syntax feature.
 3. Finish the remaining pattern binding-mode surface.
    Implement nested reference binding modes inside match/control-flow patterns,
-   Slice-backed runtime-sequence reference element bindings, enum-payload
-   reference bindings, and ownership-aware binding modes through aggregate,
-   enum, slice, and vector patterns. Keep `let`/`var`, match, control-flow,
-   for-loop, and function-parameter patterns on the same shared binding-mode
-   engine.
+   enum-payload reference bindings, ownership-aware binding modes through
+   aggregate, enum, slice, and vector patterns, and nested `Slice[T]` reference
+   sequence element subpatterns once dynamic borrow paths can describe them.
+   Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
+   patterns on the same shared binding-mode engine.
 4. Expand aggregate enum payload storage.
    Current aggregate enum payloads intentionally cover a narrow ABI-safe
    universe. Add tuple, struct, vector, and owned payload values only after

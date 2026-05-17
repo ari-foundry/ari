@@ -809,8 +809,18 @@ bind the skipped range as a `Slice[T]` view, as in
 `[..]` fallback arm when earlier arms are length-checked.
 Direct local `Vec[T]` reference patterns also support prefix borrows with
 `name @ ..` rest Slice bindings, for example
-`let ref [head, tail @ ..] = values`. Plain named suffix elements after `..`
-can be borrowed too, as in `let ref [head, middle @ .., last] = values`.
+`let ref [head, tail @ ..] = values`. Direct local `Slice[T]` view bindings
+support the same plain element bindings and rest slices:
+
+```ari
+let view = values.as_slice()
+let ref [head, middle @ .., last] = view
+```
+
+Plain named suffix elements after `..` can be borrowed too, as in
+`let ref [head, middle @ .., last] = values`. `Slice` reference sequence
+patterns currently require each element binding to be a name or `_`; nested
+element subpatterns wait for a more precise dynamic borrow-path model.
 
 ## Ownership-Qualified Types
 
