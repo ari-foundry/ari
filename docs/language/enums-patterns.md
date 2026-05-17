@@ -628,7 +628,7 @@ function. Empty bodies and `return input;` bodies identity-expand by parsing the
 token tree as exactly one pattern; `ast -> ast` bodies can return
 `pattern!(...)` output. Expanded pattern macro output then flows through the
 same match, or-pattern, and reference-binding machinery as source-written
-patterns:
+patterns, including macro-generated `ref` payload bindings:
 
 ```ari
 match value {

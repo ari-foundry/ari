@@ -304,6 +304,13 @@ std::vector<Pattern> expand_or_pattern_alternatives(const Pattern& pattern) {
     return expanded;
 }
 
+PatternAlternativeSet pattern_alternatives(const Pattern& pattern) {
+    PatternAlternativeSet result;
+    result.contains_or = pattern_contains_or(pattern);
+    result.alternatives = expand_or_pattern_alternatives(pattern);
+    return result;
+}
+
 void require_irrefutable_non_iterator_for_pattern(const Pattern& pattern,
                                                   const IrType& value_type,
                                                   const ForPatternValidationHooks& hooks) {

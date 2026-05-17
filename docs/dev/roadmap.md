@@ -15,9 +15,10 @@ changing the long-term language contract.
 1. Keep sema extraction phase-oriented.
    `pattern_semantics` already owns pure pattern tree queries, or-pattern
    expansion, positional product mapping, and runtime-sequence irrefutability
-   checks. Continue extracting broad modules such as type inference, ownership
-   state, zone provenance, and IR lowering helpers. Avoid splitting one tiny
-   file per syntax feature.
+   checks, with the shared pattern-alternative set keeping or-pattern detection
+   and expansion together before sema lowers bindings. Continue extracting
+   broad modules such as type inference, ownership state, zone provenance, and
+   IR lowering helpers. Avoid splitting one tiny file per syntax feature.
 2. Finish the remaining pattern binding-mode surface.
    Nested shared reference binding modes now work through local/function
    parameter destructuring plus enum statement/expression `match` and enum

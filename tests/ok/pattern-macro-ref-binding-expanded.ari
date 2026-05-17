@@ -1,0 +1,29 @@
+meta fn full_ref(input: ast) -> ast {
+  return pattern!(Full(ref input));
+}
+
+meta fn right_ref(input: ast) -> ast {
+  return pattern!(Right(_, ref input));
+}
+
+enum Choice {
+  Empty,
+  Full(i64),
+  Right(i64, i64),
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn score(item: Choice) -> i64 {
+  return match item {
+    full_ref!(value) | right_ref!(value) => read(value),
+    Empty => 3,
+  };
+}
+
+fn main() -> i64 {
+  return score(Full(11)) + score(Right(8, 13)) + score(Empty);
+}

@@ -641,7 +641,8 @@ pattern before ordinary pattern lowering; `ast -> ast` bodies that return
 `pattern!(...)` replace that input with the constructed pattern AST. The
 expanded pattern is the one used for match-arm or-pattern normalization,
 coverage, payload binding, and reference-binding detection, so macro-generated
-patterns behave like source-written patterns at lowering time.
+patterns, including `ref` payload bindings, behave like source-written patterns
+at lowering time.
 
 Macro invocation is the only parser-level token-tree expression form. A macro
 call is always an ordinary named call such as `make_tokens!(...)`; there is no

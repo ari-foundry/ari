@@ -114,9 +114,11 @@ adding more narrow syntax-specific `*_semantics` siblings.
 - `pattern_semantics` for pure pattern binding/or-pattern detection,
   runtime-sequence irrefutability checks, positional product field mapping,
   recursive reference binding-mode detection, or-pattern expansion helpers,
-  union-safe pattern cloning shared by match/or-pattern normalization and sema
-  iterator-filter rewrites, plus irrefutable non-iterator `for` loop-head
-  pattern validation shared by range, list-literal, and stored-vector loops
+  shared pattern-alternative sets that keep or-detection and expanded
+  alternatives together after macro expansion, union-safe pattern cloning shared
+  by match/or-pattern normalization and sema iterator-filter rewrites, plus
+  irrefutable non-iterator `for` loop-head pattern validation shared by range,
+  list-literal, and stored-vector loops
 - `format_semantics` for formatting target selection and shared `{}` /
   `{:.N}` format-string parsing, escaped-brace handling, placeholder count
   diagnostics, and precision validation used by both print lowering and

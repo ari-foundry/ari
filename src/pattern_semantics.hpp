@@ -22,6 +22,11 @@ struct ForPatternValidationHooks {
         struct_field_index;
 };
 
+struct PatternAlternativeSet {
+    std::vector<Pattern> alternatives;
+    bool contains_or = false;
+};
+
 Pattern clone_pattern(const Pattern& pattern);
 bool pattern_has_binding(const Pattern& pattern);
 bool pattern_has_reference_binding_mode(const Pattern& pattern);
@@ -30,6 +35,7 @@ bool pattern_contains_or(const Pattern& pattern);
 bool pattern_contains_array_pattern(const Pattern& pattern);
 bool runtime_sequence_array_pattern_is_irrefutable(const Pattern& pattern);
 std::vector<Pattern> expand_or_pattern_alternatives(const Pattern& pattern);
+PatternAlternativeSet pattern_alternatives(const Pattern& pattern);
 void require_irrefutable_non_iterator_for_pattern(const Pattern& pattern,
                                                   const IrType& value_type,
                                                   const ForPatternValidationHooks& hooks);

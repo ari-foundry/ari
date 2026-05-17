@@ -18,6 +18,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Pattern-position macro output feeds the shared pattern lowering path after
   expansion, including match-arm or-pattern normalization, coverage, payload
   binding, and reference-binding detection.
+- Pattern or-detection and expanded alternative lists share one
+  `pattern_semantics` result object, so sema keeps match/control-flow lowering
+  wired to a phase-level pattern API instead of syntax-local helper pairs.
 - Declaration-returning `ast -> ast` macros can inspect generic, parameter,
   field, enum-case, method, associated-type, trait, return, and witness
   summaries. `meta_ident!(...)` inside `decl!(...)` supports generated
