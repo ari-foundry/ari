@@ -8,15 +8,6 @@ namespace ari {
 
 namespace {
 
-bool is_aggregate_layout_type(const IrType& type) {
-    return type.qualifier == TypeQualifier::Value &&
-           (type.primitive == IrPrimitiveKind::Tuple ||
-            type.primitive == IrPrimitiveKind::Array ||
-            (type.primitive == IrPrimitiveKind::Vector && type.field_types.size() == 2) ||
-            type.primitive == IrPrimitiveKind::Struct ||
-            (type.primitive == IrPrimitiveKind::Enum && !type.field_types.empty()));
-}
-
 bool checked_add(std::uint64_t left, std::uint64_t right, std::uint64_t& out) {
     if (right > std::numeric_limits<std::uint64_t>::max() - left) return false;
     out = left + right;
@@ -124,16 +115,11 @@ bool scalar_layout_align_bytes(const IrType& type, std::uint64_t& out) {
     }
 }
 
-const std::vector<IrType>& aggregate_fields(const IrType& type) {
-    if (type.primitive == IrPrimitiveKind::Tuple) return type.args;
-    return type.field_types;
-}
-
 bool aggregate_layout_bytes(const IrType& type,
                             std::uint64_t& size_out,
                             std::uint64_t& align_out,
                             std::vector<std::uint64_t>* offsets) {
-    if (!is_aggregate_layout_type(type)) {
+    if (!ari_is_aggregate_layout_type(type)) {
         if (offsets) offsets->clear();
         return scalar_layout_size_bytes(type, size_out) &&
                scalar_layout_align_bytes(type, align_out);
@@ -162,7 +148,7 @@ bool aggregate_layout_bytes(const IrType& type,
     std::uint64_t offset = 0;
     std::uint64_t max_align = 1;
     if (offsets) offsets->clear();
-    for (const auto& field : aggregate_fields(type)) {
+    for (const auto& field : ari_aggregate_field_types(type)) {
         std::uint64_t field_size = 0;
         std::uint64_t field_align = 0;
         if (!aggregate_layout_bytes(field, field_size, field_align, nullptr)) return false;
@@ -178,6 +164,39 @@ bool aggregate_layout_bytes(const IrType& type,
 
 } // namespace
 
+bool ari_has_aggregate_enum_layout(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Enum &&
+           !type.field_types.empty();
+}
+
+bool ari_is_aggregate_layout_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           (type.primitive == IrPrimitiveKind::Tuple ||
+            type.primitive == IrPrimitiveKind::Array ||
+            (type.primitive == IrPrimitiveKind::Vector && type.field_types.size() == 2) ||
+            type.primitive == IrPrimitiveKind::Struct ||
+            ari_has_aggregate_enum_layout(type));
+}
+
+const std::vector<IrType>& ari_aggregate_field_types(const IrType& type) {
+    if (type.primitive == IrPrimitiveKind::Struct ||
+        type.primitive == IrPrimitiveKind::Array ||
+        type.primitive == IrPrimitiveKind::Vector ||
+        ari_has_aggregate_enum_layout(type)) return type.field_types;
+    return type.args;
+}
+
+bool ari_layout_field_count(const IrType& type, std::uint64_t& out) {
+    if (!ari_is_aggregate_layout_type(type)) return false;
+    if (type.primitive == IrPrimitiveKind::Array && type.field_types.empty() && type.args.size() == 1) {
+        out = type.array_size;
+        return true;
+    }
+    out = static_cast<std::uint64_t>(ari_aggregate_field_types(type).size());
+    return true;
+}
+
 bool ari_layout_size_bytes(const IrType& type, std::uint64_t& out) {
     std::uint64_t align = 0;
     return aggregate_layout_bytes(type, out, align, nullptr);
@@ -189,7 +208,7 @@ bool ari_layout_align_bytes(const IrType& type, std::uint64_t& out) {
 }
 
 bool ari_layout_field_offset_bytes(const IrType& type, std::uint64_t index, std::uint64_t& out) {
-    if (!is_aggregate_layout_type(type)) return false;
+    if (!ari_is_aggregate_layout_type(type)) return false;
     std::vector<std::uint64_t> offsets;
     std::uint64_t size = 0;
     std::uint64_t align = 0;

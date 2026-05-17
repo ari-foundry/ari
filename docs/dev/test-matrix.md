@@ -72,6 +72,7 @@ Checklist:
 - [x] typed scalar `ptr_add` lowers to LLVM typed `getelementptr` and raw scaled address add
 - [x] typed aggregate `ptr_add` lowers to LLVM aggregate `getelementptr` and raw Ari-layout scaled address add
 - [x] `size_of<T>()` and `align_of<T>()` expose scalar and Ari-layout aggregate byte counts
+- [x] sema, IR helpers, LLVM, and raw backend aggregate field lists/offsets use the shared Ari layout service
 - [x] scalar `ptr_load`/`ptr_store` lower on LLVM and raw freestanding backends
 - [x] plain aggregate `ptr_load`/`ptr_store` and `*pointer` whole-copy lower on LLVM and raw freestanding backends
 - [x] scalar field/element access through raw aggregate pointers lowers on LLVM and raw freestanding backends

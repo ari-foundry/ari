@@ -25,6 +25,9 @@ adding more narrow syntax-specific `*_semantics` siblings.
 - `type_semantics` for shared type predicates, `TypeRef` diagnostic spelling,
   raw-pointer type checks, literal range checks, and assignability/operand
   diagnostics
+- `layout` for the executable Ari aggregate layout service: aggregate-layout
+  predicates, field-list selection, field counts, byte sizes, alignments, and
+  field offsets shared by sema helpers, IR builders, and both backends
 - `enum_payload_layout` for aggregate enum tag/payload storage selection and
   mixed scalar/pointer-shaped plus nested aggregate-enum slot merge rules shared
   by sema, module IR replay, and both backends

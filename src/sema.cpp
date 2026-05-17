@@ -13960,9 +13960,7 @@ private:
     }
 
     const std::vector<IrType>& aggregate_field_types(const IrType& type) const {
-        if (type.primitive == IrPrimitiveKind::Struct ||
-            type.primitive == IrPrimitiveKind::Array) return type.field_types;
-        return type.args;
+        return ari_aggregate_field_types(type);
     }
 
     std::size_t struct_field_index(SourceLocation loc, const IrType& type, const std::string& field_name) const {

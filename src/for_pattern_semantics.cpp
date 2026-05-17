@@ -1,6 +1,7 @@
 #include "for_pattern_semantics.hpp"
 
 #include "common.hpp"
+#include "layout.hpp"
 #include "pattern_semantics.hpp"
 
 #include <set>
@@ -20,9 +21,7 @@ namespace {
 }
 
 const std::vector<IrType>& aggregate_field_types(const IrType& type) {
-    if (type.primitive == IrPrimitiveKind::Struct ||
-        type.primitive == IrPrimitiveKind::Array) return type.field_types;
-    return type.args;
+    return ari_aggregate_field_types(type);
 }
 
 void require_for_pattern_hooks(SourceLocation loc, const ForPatternValidationHooks& hooks) {

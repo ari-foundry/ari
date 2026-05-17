@@ -4,6 +4,7 @@
 #include "common.hpp"
 #include "control_flow_semantics.hpp"
 #include "enum_payload_layout.hpp"
+#include "layout.hpp"
 #include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 #include "target.hpp"
@@ -135,9 +136,7 @@ static int integer_bits(const IrType& type) {
 }
 
 static bool has_aggregate_enum_layout(const IrType& type) {
-    return type.qualifier == TypeQualifier::Value &&
-           type.primitive == IrPrimitiveKind::Enum &&
-           !type.field_types.empty();
+    return ari_has_aggregate_enum_layout(type);
 }
 
 class LlvmEmitter {
@@ -254,6 +253,18 @@ private:
         block_terminated_ = false;
     }
 
+    std::string llvm_aggregate_type(const IrType& type) const {
+        const std::vector<IrType>& fields = ari_aggregate_field_types(type);
+        if (fields.empty()) return "{}";
+        std::string text = "{ ";
+        for (std::size_t i = 0; i < fields.size(); ++i) {
+            if (i > 0) text += ", ";
+            text += llvm_type(fields[i]);
+        }
+        text += " }";
+        return text;
+    }
+
     std::string llvm_type(const IrType& type) const {
         if (type.qualifier == TypeQualifier::Ref ||
             type.qualifier == TypeQualifier::MutRef ||
@@ -274,15 +285,7 @@ private:
             case IrPrimitiveKind::U64: return "i64";
             case IrPrimitiveKind::Enum:
                 if (!has_aggregate_enum_layout(type)) return "i64";
-                {
-                    std::string text = "{ ";
-                    for (std::size_t i = 0; i < type.field_types.size(); ++i) {
-                        if (i > 0) text += ", ";
-                        text += llvm_type(type.field_types[i]);
-                    }
-                    text += " }";
-                    return text;
-                }
+                return llvm_aggregate_type(type);
             case IrPrimitiveKind::F32: return "float";
             case IrPrimitiveKind::F64: return "double";
             case IrPrimitiveKind::F128: return "fp128";
@@ -291,25 +294,9 @@ private:
             case IrPrimitiveKind::Zone: return "ptr";
             case IrPrimitiveKind::TraitObject:
                 return "{ ptr, ptr }";
-            case IrPrimitiveKind::Struct: {
-                std::string text = "{ ";
-                for (std::size_t i = 0; i < type.field_types.size(); ++i) {
-                    if (i > 0) text += ", ";
-                    text += llvm_type(type.field_types[i]);
-                }
-                text += " }";
-                return text;
-            }
-            case IrPrimitiveKind::Tuple: {
-                if (type.args.empty()) return "{}";
-                std::string text = "{ ";
-                for (std::size_t i = 0; i < type.args.size(); ++i) {
-                    if (i > 0) text += ", ";
-                    text += llvm_type(type.args[i]);
-                }
-                text += " }";
-                return text;
-            }
+            case IrPrimitiveKind::Struct:
+            case IrPrimitiveKind::Tuple:
+                return llvm_aggregate_type(type);
             case IrPrimitiveKind::Array:
                 if (type.args.size() != 1) {
                     throw CompileError(where(type.loc) + ": array type is missing an element type");

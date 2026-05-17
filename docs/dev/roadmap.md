@@ -188,22 +188,29 @@ loads into hidden stack storage, then reads the tag and payload slots from that
 storage. This keeps the raw backend's no-register-aggregate rule intact while
 letting direct expression inputs use the same tag/payload lowering as locals.
 
+The broad aggregate layout service slice is also complete. `src/layout.cpp`
+now owns the shared Ari aggregate-layout predicates, field-list selection,
+field counts, byte sizes, alignments, and field offsets used by sema, the LLVM
+backend, the raw backend, and existing IR-builder/for-pattern helper code.
+Aggregate enum tag/payload storage selection still lives in
+`enum_payload_layout`, but once those IR field types exist all executable
+layout consumers ask the same service for field order and byte layout. This
+keeps `size_of<T>()` / `align_of<T>()`, raw pointer aggregate addressing, LLVM
+aggregate types, and freestanding stack slots aligned on one rule set.
+
 Active Near-Term work promoted from Medium-Term and Backend Work:
 
-1. [aggregate-layout-service] finish sharing field-layout and aggregate layout
-   decisions between sema and both backends. This should be a broad layout
-   service/refactor, not another syntax-specific sema helper.
-2. [raw-c-imports-scalar] implement the first real raw/freestanding imported
+1. [raw-c-imports-scalar] implement the first real raw/freestanding imported
    `extern "C"` path for scalar and raw-pointer signatures only. Keep
    aggregate, varargs, platform float-C ABI, and libc discovery outside this
    slice until the scalar link/call path is boring.
-3. [raw-runtime-strings] add freestanding runtime string storage sufficient for
+2. [raw-runtime-strings] add freestanding runtime string storage sufficient for
    string literals, byte writes, and the currently documented line-input
    rejection boundary without depending on the host C runtime.
-4. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
+3. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
    vtable-slot dispatch in the raw backend, leaving `own` and borrow-valued dyn
    data-pointer policy in Medium-Term.
-5. [raw-relocatable-objects] emit native relocatable object files for the raw
+4. [raw-relocatable-objects] emit native relocatable object files for the raw
     backend using the current Ari symbol table/export model. Treat C ABI
     relocations and host linker integration as follow-ups to `[raw-c-imports-scalar]`.
 
@@ -355,16 +362,17 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
    aggregate enum layout, tuple/array/vector index access, raw aggregate
    expression results, and raw `@export`/`@no_mangle` ELF symbols are
    implemented.
-   - [structs] broad field-layout sharing moved to Near-Term
-     `[aggregate-layout-service]`
+   Broad Ari field-layout sharing is complete through `src/layout.cpp`; the
+   remaining work here is ABI classification and public external-surface policy,
+   not another local field-offset implementation.
    - [raw-c-imports] scalar/raw-pointer imported `extern "C"` support moved to
      Near-Term `[raw-c-imports-scalar]`; aggregate, varargs, platform float-C
      ABI, and libc discovery remain here until the scalar path exists
    - [vectors] define the growable root `Vec[T]` runtime ABI and backend
      lowering after allocator-backed storage exists; fixed-local root `Vec[T]`
      remains rejected at non-local boundaries until then
-   - [enums] external aggregate-enum FFI ABI remains after Near-Term
-     `[aggregate-layout-service]`
+   - [enums] external aggregate-enum FFI ABI remains after the scalar raw C
+     import path and payload-bearing C tagged-union policy are defined
 3. Add freestanding runtime string storage so raw ELF output can lower string
    values and line input helpers without relying on the host C runtime.
    The first storage/runtime slice moved to Near-Term `[raw-runtime-strings]`;

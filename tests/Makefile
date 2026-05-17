@@ -2892,6 +2892,11 @@ check-ffi: $(TARGET)
 	grep -q 'getelementptr i8, ptr' $(BUILD_DIR)/ffi/layout-query.ll
 	$(TARGET) --freestanding tests/ok/layout-query.ari -o $(BUILD_DIR)/ffi/layout-query.raw
 	$(BUILD_DIR)/ffi/layout-query.raw; code=$$?; test $$code -eq 35
+	$(TARGET) tests/ok/layout-service-aggregate-consistency.ari --emit-llvm $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.ll
+	grep -q 'getelementptr inbounds { i8, i64, i16 }' $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.ll
+	grep -q 'extractvalue { i32, i64, i64 }' $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.ll
+	$(TARGET) --freestanding tests/ok/layout-service-aggregate-consistency.ari -o $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.raw
+	$(BUILD_DIR)/ffi/layout-service-aggregate-consistency.raw; code=$$?; test $$code -eq 152
 	$(TARGET) tests/ok/zone-allocation.ari --emit-llvm $(BUILD_DIR)/ffi/zone-allocation.ll
 	grep -q '@ari_builtin_zone_create' $(BUILD_DIR)/ffi/zone-allocation.ll
 	grep -q 'declare ptr @malloc' $(BUILD_DIR)/ffi/zone-allocation.ll
@@ -2999,6 +3004,7 @@ check-ffi: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v ar >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-casts.ari --llvm-cc $(LLVM_CC) -L $(BUILD_DIR)/ffi -l ari_testffi -o $(BUILD_DIR)/ffi/pointer-casts.elf; $(BUILD_DIR)/ffi/pointer-casts.elf; code=$$?; test $$code -eq 1; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pointer-offset.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/pointer-offset.elf; $(BUILD_DIR)/ffi/pointer-offset.elf; code=$$?; test $$code -eq 8; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/layout-query.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/layout-query.elf; $(BUILD_DIR)/ffi/layout-query.elf; code=$$?; test $$code -eq 35; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/layout-service-aggregate-consistency.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.elf; $(BUILD_DIR)/ffi/layout-service-aggregate-consistency.elf; code=$$?; test $$code -eq 152; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-allocation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-allocation.elf; $(BUILD_DIR)/ffi/zone-allocation.elf; code=$$?; test $$code -eq 54; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-header-metadata.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-header-metadata.elf; $(BUILD_DIR)/ffi/zone-header-metadata.elf; code=$$?; test $$code -eq 41; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/zone-typed-allocation.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/ffi/zone-typed-allocation.elf; $(BUILD_DIR)/ffi/zone-typed-allocation.elf; code=$$?; test $$code -eq 42; fi

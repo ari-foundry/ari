@@ -1,0 +1,51 @@
+struct Mixed {
+  a: i8,
+  mut b: i64,
+  mut c: u16,
+}
+
+struct Tiny(i8, mut u16)
+
+enum Packet {
+  Wide(i8, i64),
+  Small(u16),
+  Empty,
+}
+
+fn field_score() -> i64 {
+  var mixed = Mixed { a: 1i8, b: 20, c: 3u16 };
+  let mixed_ptr: ptr Mixed = (ref mut mixed) as ptr Mixed;
+  (*mixed_ptr).b = (*mixed_ptr).b + 1;
+  (*mixed_ptr).c = (*mixed_ptr).c + 2u16;
+
+  var tiny = Tiny(4i8, 5u16);
+  let tiny_ptr: ptr Tiny = (ref mut tiny) as ptr Tiny;
+  (*tiny_ptr).1 = (*mixed_ptr).c;
+
+  return ((*mixed_ptr).a as i64) +
+    (*mixed_ptr).b +
+    ((*mixed_ptr).c as i64) +
+    ((*tiny_ptr).0 as i64) +
+    ((*tiny_ptr).1 as i64);
+}
+
+fn enum_score(value: Packet) -> i64 {
+  return match value {
+    Wide(left, right) => (left as i64) + right,
+    Small(amount) => amount as i64,
+    Empty => 0;
+  };
+}
+
+fn main() -> i64 {
+  return size_of<Mixed>() +
+    align_of<Mixed>() +
+    size_of<(i8, i64, u16)>() +
+    align_of<(i8, i64, u16)>() +
+    size_of<[u16, 3]>() +
+    align_of<[u16, 3]>() +
+    size_of<Packet>() +
+    align_of<Packet>() +
+    field_score() +
+    enum_score(Wide(5i8, 7));
+}

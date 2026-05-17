@@ -1,6 +1,7 @@
 #include "type_semantics.hpp"
 
 #include "common.hpp"
+#include "layout.hpp"
 
 #include <cstddef>
 #include <limits>
@@ -217,9 +218,7 @@ bool is_aggregate_enum_payload_type(const IrType& type) {
 }
 
 bool has_aggregate_enum_layout(const IrType& type) {
-    return type.qualifier == TypeQualifier::Value &&
-           type.primitive == IrPrimitiveKind::Enum &&
-           !type.field_types.empty();
+    return ari_has_aggregate_enum_layout(type);
 }
 
 bool is_float_primitive(IrPrimitiveKind primitive) {

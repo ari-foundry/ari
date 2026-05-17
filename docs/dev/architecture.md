@@ -72,6 +72,13 @@ Good IR additions should carry enough type information for codegen to avoid
 re-resolving source-level names. For example, enum constructor expressions carry
 case metadata after semantic resolution.
 
+Executable Ari aggregate layout is centralized in `src/layout.cpp`. Sema,
+shared IR builders, the LLVM backend, and the freestanding backend use that
+service for aggregate layout predicates, field lists, field counts, sizes,
+alignments, and byte offsets. Enum payload storage selection is still handled by
+`enum_payload_layout`; once those payload slot field types are present, byte
+layout comes from the shared layout service.
+
 ## Backends
 
 `src/llvm_codegen.cpp` is the default glibc-backed backend. It emits LLVM IR,

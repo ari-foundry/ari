@@ -137,7 +137,7 @@ private:
     static int local_slot_count(const IrType& type) {
         if (!is_aggregate_type(type)) return 1;
         int count = 0;
-        const std::vector<IrType>& fields = aggregate_field_types(type);
+        const std::vector<IrType>& fields = ari_aggregate_field_types(type);
         for (const auto& item : fields) count += local_slot_count(item);
         return count;
     }
@@ -162,12 +162,7 @@ private:
     }
 
     static bool is_aggregate_type(const IrType& type) {
-        return type.qualifier == TypeQualifier::Value &&
-               (type.primitive == IrPrimitiveKind::Tuple ||
-                type.primitive == IrPrimitiveKind::Array ||
-                (type.primitive == IrPrimitiveKind::Vector && type.field_types.size() == 2) ||
-                type.primitive == IrPrimitiveKind::Struct ||
-                has_aggregate_enum_layout(type));
+        return ari_is_aggregate_layout_type(type);
     }
 
     bool has_aggregate_return() const {
@@ -214,17 +209,11 @@ private:
     }
 
     static const std::vector<IrType>& aggregate_field_types(const IrType& type) {
-        if (type.primitive == IrPrimitiveKind::Struct ||
-            type.primitive == IrPrimitiveKind::Array ||
-            type.primitive == IrPrimitiveKind::Vector ||
-            has_aggregate_enum_layout(type)) return type.field_types;
-        return type.args;
+        return ari_aggregate_field_types(type);
     }
 
     static bool has_aggregate_enum_layout(const IrType& type) {
-        return type.qualifier == TypeQualifier::Value &&
-               type.primitive == IrPrimitiveKind::Enum &&
-               !type.field_types.empty();
+        return ari_has_aggregate_enum_layout(type);
     }
 
     static bool is_signed_integer_primitive(IrPrimitiveKind primitive) {
