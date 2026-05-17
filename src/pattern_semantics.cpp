@@ -16,6 +16,7 @@ namespace {
 Pattern clone_pattern_without_children(const Pattern& pattern) {
     Pattern copy;
     copy.kind = pattern.kind;
+    copy.binding_mode = pattern.binding_mode;
     copy.case_name = pattern.case_name;
     copy.has_payload_pattern = pattern.has_payload_pattern;
     copy.has_payload_binding = pattern.has_payload_binding;
@@ -90,6 +91,19 @@ bool pattern_has_binding(const Pattern& pattern) {
     }
     for (const auto& element : pattern.elements) {
         if (pattern_has_binding(element)) return true;
+    }
+    return false;
+}
+
+bool pattern_has_reference_binding_mode(const Pattern& pattern) {
+    if (pattern.binding_mode != BindingMode::Value) return true;
+    if (pattern.alias_pattern && pattern_has_reference_binding_mode(*pattern.alias_pattern)) return true;
+    if (pattern.payload_pattern && pattern_has_reference_binding_mode(*pattern.payload_pattern)) return true;
+    for (const auto& alternative : pattern.alternatives) {
+        if (pattern_has_reference_binding_mode(alternative)) return true;
+    }
+    for (const auto& element : pattern.elements) {
+        if (pattern_has_reference_binding_mode(element)) return true;
     }
     return false;
 }

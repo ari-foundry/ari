@@ -457,15 +457,18 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
         case PatternKind::Wildcard:
             append_field(out, "wildcard");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             return true;
         case PatternKind::Binding:
             append_field(out, "binding");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_field(out, pattern.payload_name);
             return true;
         case PatternKind::IntegerLiteral:
             append_field(out, "integer");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_bool(out, pattern.int_negative);
             append_count(out, pattern.int_value);
             append_field(out, pattern.literal_suffix);
@@ -473,11 +476,13 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
         case PatternKind::BoolLiteral:
             append_field(out, "bool");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_bool(out, pattern.bool_value);
             return true;
         case PatternKind::Range:
             append_field(out, "range");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_bool(out, pattern.int_negative);
             append_count(out, pattern.int_value);
             append_field(out, pattern.literal_suffix);
@@ -489,6 +494,7 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
         case PatternKind::EnumCase: {
             append_field(out, "enum");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_field(out, pattern.case_name);
             append_bool(out, pattern.has_payload_pattern);
             append_bool(out, pattern.has_payload_binding);
@@ -502,6 +508,7 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
         case PatternKind::Or:
             append_field(out, "or");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_count(out, pattern.alternatives.size());
             for (const auto& alternative : pattern.alternatives) {
                 if (!append_pattern_payload(out, alternative)) return false;
@@ -511,6 +518,7 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
             if (!pattern.alias_pattern) return false;
             append_field(out, "alias");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_field(out, pattern.alias_name);
             return append_pattern_payload(out, *pattern.alias_pattern);
         case PatternKind::Tuple:
@@ -521,6 +529,7 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
                 append_field(out, pattern.kind == PatternKind::Tuple ? "tuple" : "array");
             }
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_bool(out, pattern.has_rest);
             append_count(out, pattern.rest_index);
             if (pattern.kind == PatternKind::Array && !pattern.rest_alias_name.empty()) {
@@ -536,6 +545,7 @@ bool append_pattern_payload(std::ostringstream& out, const Pattern& pattern) {
             if (pattern.field_names.size() != pattern.elements.size()) return false;
             append_field(out, "struct");
             append_pattern_macro_payload(out, pattern);
+            append_binding_mode(out, pattern.binding_mode);
             append_field(out, pattern.case_name);
             append_bool(out, pattern.has_rest);
             append_count(out, pattern.rest_index);
@@ -1591,6 +1601,7 @@ private:
                 pattern.macro_tokens.push_back(read_token_payload(label + " macro token"));
             }
         }
+        pattern.binding_mode = read_binding_mode(label + " binding mode");
         if (kind == "wildcard") {
             pattern.kind = PatternKind::Wildcard;
             return pattern;

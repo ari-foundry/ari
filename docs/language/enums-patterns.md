@@ -323,13 +323,24 @@ Reference binding mode can borrow addressable payload slots directly:
 ```ari
 let ref Full(payload) = maybe_wide
 let ref Pair(left, right) = nested_pair
+match maybe_wide {
+  Full(ref payload) => { use(payload); }
+  Empty => {}
+}
+if let Full(&payload) = maybe_wide {
+  use(payload);
+}
 ```
 
 This form takes the same panic path when the active case does not match. It is
 available for aggregate-layout enum payload slots that have an addressable
 payload location, including 64-bit payload-word slots and nested aggregate-enum
 slots. Compact small payloads remain value-only because their payload lives
-inside the tag word rather than in a separate slot.
+inside the tag word rather than in a separate slot. Nested shared reference
+bindings are available in enum statement/expression `match` arms and enum
+`if let` arms. Enum `while let` reference bindings and mutable nested
+`match`/`if let` payload borrows remain planned until per-iteration addressable
+match storage is lowered.
 
 These declaration patterns are refutable. If the value is a different enum
 case, Ari takes the panic path. Use `if let` or `match` when the failure path
@@ -599,8 +610,10 @@ let nested_struct = match (point, color) {
 };
 ```
 
-Reference and ownership binding modes for sequence patterns remain planned for
-the shared richer pattern engine.
+Ownership binding modes for sequence patterns remain planned for the shared
+richer pattern engine. Local `let ref` and function-entry reference patterns
+can borrow supported `Vec[T]`/`Slice[T]` elements today; nested reference modes
+inside enum `while let` remain planned.
 Pattern-position macro invocation uses reserved Rust-style `ident!(...)`
 syntax and preserves a balanced token tree in the AST and module summaries. The
 name must resolve to a `token_stream -> token_stream` or `ast -> ast` meta

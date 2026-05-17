@@ -100,10 +100,17 @@ enum class PatternKind {
     Struct
 };
 
+enum class BindingMode {
+    Value,
+    Ref,
+    RefMut
+};
+
 struct Pattern {
     Pattern() : int_value(0) {}
 
     PatternKind kind = PatternKind::EnumCase;
+    BindingMode binding_mode = BindingMode::Value;
     std::string case_name;
     bool has_payload_pattern = false;
     bool has_payload_binding = false;
@@ -131,12 +138,6 @@ struct Pattern {
     bool is_macro_invocation = false;
     std::vector<Token> macro_tokens;
     SourceLocation loc;
-};
-
-enum class BindingMode {
-    Value,
-    Ref,
-    RefMut
 };
 
 struct Param {

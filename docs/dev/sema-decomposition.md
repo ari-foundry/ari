@@ -113,8 +113,9 @@ adding more narrow syntax-specific `*_semantics` siblings.
   coverage state, enum duplicate detection, and enum exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection,
   runtime-sequence irrefutability checks, positional product field mapping,
-  or-pattern expansion helpers, and union-safe pattern cloning shared by
-  match/or-pattern normalization and sema iterator-filter rewrites
+  recursive reference binding-mode detection, or-pattern expansion helpers, and
+  union-safe pattern cloning shared by match/or-pattern normalization and sema
+  iterator-filter rewrites
 - `for_pattern_semantics` for irrefutable non-iterator `for` loop-head pattern
   validation shared by range, list-literal, and stored-vector loops
 - `format_string_semantics` for shared `{}` / `{:.N}` format-string parsing,

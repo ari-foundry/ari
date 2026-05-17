@@ -6603,6 +6603,9 @@ private:
                 final_container_name);
             return;
         }
+        if (pattern.binding_mode != BindingMode::Value) {
+            mutable_borrow = pattern.binding_mode == BindingMode::RefMut;
+        }
 
         switch (pattern.kind) {
             case PatternKind::Wildcard:
@@ -6761,6 +6764,9 @@ private:
                 final_field_label,
                 final_container_name);
             return;
+        }
+        if (pattern.binding_mode != BindingMode::Value) {
+            mutable_borrow = pattern.binding_mode == BindingMode::RefMut;
         }
 
         switch (pattern.kind) {
@@ -7309,6 +7315,182 @@ private:
         checked_arms.push_back(std::move(failure));
         std::vector<IrStmtPtr> lowered = build_tuple_match_if_chain(checked_arms);
         for (auto& statement : lowered) statements.push_back(std::move(statement));
+    }
+
+    void lower_explicit_reference_bindings_from_path(const Pattern& pattern,
+                                                     const std::string& base_name,
+                                                     const IrType& base_type,
+                                                     const IrType& source_type,
+                                                     const std::string& path,
+                                                     std::vector<IrStmtPtr>& statements,
+                                                     bool has_final_field_mutability = false,
+                                                     bool final_field_mutable = true,
+                                                     const std::string& final_field_label = {},
+                                                     const std::string& final_container_name = {}) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            lower_explicit_reference_bindings_from_path(
+                effective_pattern,
+                base_name,
+                base_type,
+                source_type,
+                path,
+                statements,
+                has_final_field_mutability,
+                final_field_mutable,
+                final_field_label,
+                final_container_name);
+            return;
+        }
+        if (pattern.binding_mode != BindingMode::Value) {
+            lower_reference_binding_pattern_from_path(
+                pattern,
+                base_name,
+                base_type,
+                source_type,
+                path,
+                pattern.binding_mode == BindingMode::RefMut,
+                statements,
+                has_final_field_mutability,
+                final_field_mutable,
+                final_field_label,
+                final_container_name);
+            return;
+        }
+
+        switch (pattern.kind) {
+            case PatternKind::Wildcard:
+            case PatternKind::Binding:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+                return;
+            case PatternKind::Alias:
+                if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                lower_explicit_reference_bindings_from_path(
+                    *pattern.alias_pattern,
+                    base_name,
+                    base_type,
+                    source_type,
+                    path,
+                    statements,
+                    has_final_field_mutability,
+                    final_field_mutable,
+                    final_field_label,
+                    final_container_name);
+                return;
+            case PatternKind::Or:
+                for (const auto& alternative : pattern.alternatives) {
+                    lower_explicit_reference_bindings_from_path(
+                        alternative,
+                        base_name,
+                        base_type,
+                        source_type,
+                        path,
+                        statements,
+                        has_final_field_mutability,
+                        final_field_mutable,
+                        final_field_label,
+                        final_container_name);
+                }
+                return;
+            case PatternKind::Tuple:
+            case PatternKind::Array: {
+                IrType shape_type = value_qualified_type(source_type);
+                if (pattern.kind == PatternKind::Array && is_runtime_sequence_pattern_subject(shape_type)) {
+                    return;
+                }
+                const std::vector<IrType>& fields = aggregate_field_types(shape_type);
+                require_tuple_pattern_arity(pattern, shape_type, fields);
+                for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+                    std::size_t field_index = tuple_pattern_field_index(pattern, fields.size(), i);
+                    lower_explicit_reference_bindings_from_path(
+                        pattern.elements[i],
+                        base_name,
+                        base_type,
+                        fields[field_index],
+                        local_owned_field_path(path, field_index),
+                        statements);
+                }
+                return;
+            }
+            case PatternKind::Struct: {
+                IrType shape_type = value_qualified_type(source_type);
+                if (shape_type.primitive != IrPrimitiveKind::Struct) return;
+                require_struct_match_pattern_type(pattern.loc, pattern.case_name, shape_type);
+                for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+                    std::size_t field_index = struct_field_index(pattern.elements[i].loc, shape_type, pattern.field_names[i]);
+                    lower_explicit_reference_bindings_from_path(
+                        pattern.elements[i],
+                        base_name,
+                        base_type,
+                        shape_type.field_types[field_index],
+                        local_owned_field_path(path, field_index),
+                        statements,
+                        true,
+                        shape_type.field_mutable[field_index],
+                        pattern.field_names[i],
+                        shape_type.name);
+                }
+                return;
+            }
+            case PatternKind::EnumCase: {
+                IrType enum_value_type = value_qualified_type(source_type);
+                if (!is_value_enum_type(enum_value_type)) return;
+                std::string case_name = resolve_enum_case_name(pattern.case_name);
+                auto case_found = enum_cases_.find(case_name);
+                if (case_found == enum_cases_.end()) return;
+                EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
+                if (case_info.payloads.empty() || !pattern.payload_pattern) return;
+                if (!has_aggregate_enum_layout(case_info.enum_type)) {
+                    fail_compact_enum_payload_reference(pattern.loc, case_info.payloads);
+                }
+                const Pattern& payload = *pattern.payload_pattern;
+                if (case_info.payloads.size() > 1) {
+                    if (payload.kind != PatternKind::Tuple) return;
+                    require_tuple_pattern_arity(payload, case_info.enum_type, case_info.payloads);
+                    std::size_t suffix_count = payload.has_rest ? payload.elements.size() - payload.rest_index : 0;
+                    for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+                        std::size_t payload_index = i;
+                        if (payload.has_rest && i >= payload.rest_index) {
+                            payload_index = case_info.payloads.size() - suffix_count + (i - payload.rest_index);
+                        }
+                        std::string payload_path = local_owned_field_path(path, payload_index + 1);
+                        std::string storage_path = enum_payload_reference_storage_path(
+                            payload.elements[i].loc,
+                            case_info.enum_type,
+                            static_cast<std::uint32_t>(payload_index),
+                            case_info.payloads[payload_index],
+                            payload_path);
+                        lower_explicit_reference_bindings_from_path(
+                            payload.elements[i],
+                            base_name,
+                            base_type,
+                            case_info.payloads[payload_index],
+                            storage_path,
+                            statements);
+                    }
+                    return;
+                }
+
+                if (payload.kind == PatternKind::Tuple && payload.has_rest && payload.elements.empty()) return;
+                std::string payload_path = local_owned_field_path(path, 1);
+                std::string storage_path = enum_payload_reference_storage_path(
+                    payload.loc,
+                    case_info.enum_type,
+                    0,
+                    case_info.payloads[0],
+                    payload_path);
+                lower_explicit_reference_bindings_from_path(
+                    payload,
+                    base_name,
+                    base_type,
+                    case_info.payloads[0],
+                    storage_path,
+                    statements);
+                return;
+            }
+        }
     }
 
     void check_reference_pattern_var_decl(const Stmt& stmt, IrStmt& lowered) {
@@ -8018,6 +8200,17 @@ private:
             lower_binding_pattern_from_local(effective_pattern, source_name, source_type, mutable_binding, statements);
             return;
         }
+        if (pattern.binding_mode != BindingMode::Value) {
+            lower_reference_binding_pattern_from_path(
+                pattern,
+                source_name,
+                source_type,
+                source_type,
+                "",
+                pattern.binding_mode == BindingMode::RefMut,
+                statements);
+            return;
+        }
         if (is_runtime_sequence_pattern_subject(source_type) && pattern_contains_array_pattern(pattern)) {
             std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
             std::set<std::string> reusable_names;
@@ -8423,6 +8616,17 @@ private:
             if (pattern.has_rest && i >= pattern.rest_index) {
                 field_index = fields.size() - suffix_count + (i - pattern.rest_index);
             }
+            if (item.binding_mode != BindingMode::Value) {
+                lower_reference_binding_pattern_from_path(
+                    item,
+                    source_name,
+                    source_type,
+                    fields[field_index],
+                    local_owned_field_path("", field_index),
+                    item.binding_mode == BindingMode::RefMut,
+                    statements);
+                continue;
+            }
             IrExprPtr field = make_tuple_index_expr(item.loc, source_name, source_type, field_index);
             if (item.kind == PatternKind::Tuple) {
                 std::string nested_name = make_hidden_local("$pattern");
@@ -8498,6 +8702,21 @@ private:
             const IrType& field_type = source_type.field_types[field_index];
             const Pattern& item = pattern.elements[i];
             if (item.kind == PatternKind::Wildcard) continue;
+            if (item.binding_mode != BindingMode::Value) {
+                lower_reference_binding_pattern_from_path(
+                    item,
+                    source_name,
+                    source_type,
+                    field_type,
+                    local_owned_field_path("", field_index),
+                    item.binding_mode == BindingMode::RefMut,
+                    statements,
+                    true,
+                    source_type.field_mutable[field_index],
+                    field_name,
+                    source_type.name);
+                continue;
+            }
             IrExprPtr field = make_tuple_index_expr(item.loc, source_name, source_type, field_index);
             if (item.kind == PatternKind::Tuple) {
                 std::string nested_name = make_hidden_local("$pattern");
@@ -8544,6 +8763,23 @@ private:
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
             lower_binding_pattern_value(effective_pattern, value_type, std::move(value), mutable_binding, statements);
+            return;
+        }
+        if (pattern.binding_mode != BindingMode::Value) {
+            if (pattern.binding_mode == BindingMode::RefMut) {
+                fail(pattern.loc, "ref mut binding pattern requires an addressable local, field, or indexed element");
+            }
+            std::string nested_name = make_hidden_local("$pattern_ref");
+            declare_local(pattern.loc, nested_name, value_type, false);
+            statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
+            lower_reference_binding_pattern_from_path(
+                pattern,
+                nested_name,
+                value_type,
+                value_type,
+                "",
+                false,
+                statements);
             return;
         }
         if (pattern.kind == PatternKind::Wildcard) return;
@@ -10107,6 +10343,15 @@ private:
 
     using PatternBindingSignature = std::map<std::string, IrType>;
 
+    static IrType pattern_binding_type(const Pattern& pattern, IrType type) {
+        if (pattern.binding_mode == BindingMode::Ref) {
+            type.qualifier = TypeQualifier::Ref;
+        } else if (pattern.binding_mode == BindingMode::RefMut) {
+            type.qualifier = TypeQualifier::MutRef;
+        }
+        return type;
+    }
+
     static void add_pattern_binding(SourceLocation loc,
                                     PatternBindingSignature& bindings,
                                     const std::string& name,
@@ -10132,11 +10377,11 @@ private:
             case PatternKind::Range:
                 return;
             case PatternKind::Binding:
-                add_pattern_binding(pattern.loc, bindings, pattern.payload_name, type);
+                add_pattern_binding(pattern.loc, bindings, pattern.payload_name, pattern_binding_type(pattern, type));
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
-                add_pattern_binding(pattern.loc, bindings, pattern.alias_name, type);
+                add_pattern_binding(pattern.loc, bindings, pattern.alias_name, pattern_binding_type(pattern, type));
                 collect_pattern_bindings(*pattern.alias_pattern, type, bindings);
                 return;
             case PatternKind::Or:
@@ -10343,6 +10588,9 @@ private:
         }
         switch (payload.kind) {
             case PatternKind::Binding:
+                if (payload.binding_mode != BindingMode::Value) {
+                    return true;
+                }
                 if (aggregate_layout && is_value_enum_type(payload_type) &&
                     try_lower_nested_zero_payload_case(payload.loc, payload.payload_name, payload_type, lowered_arm, payload_index)) {
                     return false;
@@ -10731,6 +10979,9 @@ private:
         condition.nested_payload_index = nested_payload_index;
         switch (pattern.kind) {
             case PatternKind::Binding:
+                if (pattern.binding_mode != BindingMode::Value) {
+                    return;
+                }
                 add_compact_enum_payload_binding(
                     lowered_arm, payload_index, pattern.payload_name, nested_payload_type, nested_enum_type, nested_payload_index);
                 return;
@@ -11040,7 +11291,9 @@ private:
         if (pattern.kind == PatternKind::Binding) {
             lowered_arm.wildcard = true;
             coverage.has_wildcard = true;
-            apply_value_binding(lowered_arm, pattern.loc, pattern.payload_name, match_type);
+            if (pattern.binding_mode == BindingMode::Value) {
+                apply_value_binding(lowered_arm, pattern.loc, pattern.payload_name, match_type);
+            }
             return lowered_arm;
         }
 
@@ -11774,6 +12027,23 @@ private:
             lower_tuple_match_value_bindings(effective_pattern, value_type, std::move(value), statements, mutable_binding);
             return;
         }
+        if (pattern.binding_mode != BindingMode::Value) {
+            if (pattern.binding_mode == BindingMode::RefMut) {
+                fail(pattern.loc, "ref mut match binding requires an addressable local, field, or indexed element");
+            }
+            std::string nested_name = make_hidden_local("$pattern_ref");
+            declare_local(pattern.loc, nested_name, value_type, false);
+            statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
+            lower_reference_binding_pattern_from_path(
+                pattern,
+                nested_name,
+                value_type,
+                value_type,
+                "",
+                false,
+                statements);
+            return;
+        }
         switch (pattern.kind) {
             case PatternKind::Wildcard:
             case PatternKind::IntegerLiteral:
@@ -11935,6 +12205,17 @@ private:
             const Pattern& item = pattern.elements[i];
             if (item.kind == PatternKind::Wildcard) continue;
             std::size_t field_index = tuple_pattern_field_index(pattern, fields.size(), i);
+            if (item.binding_mode != BindingMode::Value) {
+                lower_reference_binding_pattern_from_path(
+                    item,
+                    source_name,
+                    source_type,
+                    fields[field_index],
+                    local_owned_field_path("", field_index),
+                    item.binding_mode == BindingMode::RefMut,
+                    statements);
+                continue;
+            }
             lower_tuple_match_value_bindings(
                 item,
                 fields[field_index],
@@ -12044,6 +12325,17 @@ private:
                  "tuple-struct pattern for '" + info.name + "' has 1 field but value has " +
                      std::to_string(fields.size()));
         }
+        if (payload.binding_mode != BindingMode::Value) {
+            lower_reference_binding_pattern_from_path(
+                payload,
+                source_name,
+                source_type,
+                fields[0],
+                local_owned_field_path("", 0),
+                payload.binding_mode == BindingMode::RefMut,
+                statements);
+            return;
+        }
         lower_tuple_match_value_bindings(
             payload,
             fields[0],
@@ -12122,6 +12414,21 @@ private:
                 fail(pattern.elements[i].loc, "duplicate field '" + field_name + "' in struct match pattern");
             }
             std::size_t field_index = struct_field_index(pattern.elements[i].loc, source_type, field_name);
+            if (pattern.elements[i].binding_mode != BindingMode::Value) {
+                lower_reference_binding_pattern_from_path(
+                    pattern.elements[i],
+                    source_name,
+                    source_type,
+                    source_type.field_types[field_index],
+                    local_owned_field_path("", field_index),
+                    pattern.elements[i].binding_mode == BindingMode::RefMut,
+                    statements,
+                    true,
+                    source_type.field_mutable[field_index],
+                    field_name,
+                    source_type.name);
+                continue;
+            }
             lower_tuple_match_value_bindings(
                 pattern.elements[i],
                 source_type.field_types[field_index],
@@ -12285,8 +12592,21 @@ private:
         StateSnapshot branch_input = snapshot_states();
         push_scope();
         declare_match_arm_bindings(ir_stmt_match_arms(*ir_stmt_statements(lowered).back()).front());
+        std::vector<IrStmtPtr> then_prelude;
+        if (pattern_has_reference_binding_mode(condition_pattern)) {
+            lower_explicit_reference_bindings_from_path(
+                condition_pattern,
+                subject_name,
+                enum_value_type,
+                enum_value_type,
+                "",
+                then_prelude);
+        }
         CheckedStatements then_checked = check_statements(stmt_then_body(stmt), false);
-        std::vector<IrStmtPtr> then_body = std::move(then_checked.statements);
+        std::vector<IrStmtPtr> then_body = std::move(then_prelude);
+        for (auto& statement : then_checked.statements) {
+            then_body.push_back(std::move(statement));
+        }
         if (then_checked.flow == Flow::Returns) discard_scope();
         else if (then_checked.flow == Flow::Stops) discard_scope();
         else {
@@ -12634,6 +12954,35 @@ private:
         }
         const EnumInfo& enum_info = enum_found->second;
         IrType enum_value_type = lowered.match_value->type;
+        bool needs_reference_pattern_bindings = false;
+        for (const auto& arm : source_arms) {
+            if (pattern_has_reference_binding_mode(arm.pattern)) {
+                needs_reference_pattern_bindings = true;
+                break;
+            }
+        }
+
+        std::string subject_name;
+        std::unique_ptr<IrStmt> materialized_match;
+        IrStmt* match_target = &lowered;
+        if (needs_reference_pattern_bindings) {
+            IrExprPtr match_value = std::move(lowered.match_value);
+            lowered.kind = IrStmtKind::Block;
+            subject_name = make_hidden_local("$match_enum");
+            declare_local(stmt.loc, subject_name, enum_value_type, false);
+            ir_stmt_statements(lowered).push_back(make_ir_var_decl(
+                stmt.loc,
+                subject_name,
+                enum_value_type,
+                std::move(match_value),
+                false
+            ));
+            materialized_match = std::make_unique<IrStmt>();
+            materialized_match->kind = IrStmtKind::Match;
+            materialized_match->loc = stmt.loc;
+            materialized_match->match_value = make_local_lvalue_expr(stmt.loc, subject_name, enum_value_type);
+            match_target = materialized_match.get();
+        }
 
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
@@ -12642,32 +12991,43 @@ private:
         bool all_non_continuing = true;
         EnumMatchCoverage coverage;
 
-        IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(lowered);
+        IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(*match_target);
         for (const auto& arm : source_arms) {
+            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
             if (pattern_contains_or(arm.pattern)) {
-                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
                     enum_match_value_type(arm.pattern.loc, enum_value_type)
                 );
             }
-            std::vector<IrMatchArm> lowered_patterns = lower_match_arm_patterns(
-                arm.pattern,
-                enum_info,
-                enum_value_type,
-                coverage);
             std::size_t alternative_index = 0;
-            for (auto& lowered_arm : lowered_patterns) {
+            for (const auto& alternative : alternatives) {
+                IrMatchArm lowered_arm = lower_match_arm_pattern(
+                    alternative,
+                    enum_info,
+                    enum_value_type,
+                    coverage);
                 restore_states(branch_input);
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
+                if (needs_reference_pattern_bindings && pattern_has_reference_binding_mode(alternative)) {
+                    lower_explicit_reference_bindings_from_path(
+                        alternative,
+                        subject_name,
+                        enum_value_type,
+                        enum_value_type,
+                        "",
+                        lowered_arm.body);
+                }
                 local_scopes_.clear_reusable_pattern_bindings();
 
                 CheckedStatements checked = check_statements(arm.body, false);
-                lowered_arm.body = std::move(checked.statements);
+                for (auto& statement : checked.statements) {
+                    lowered_arm.body.push_back(std::move(statement));
+                }
                 if (checked.flow == Flow::Returns) discard_scope();
                 else if (checked.flow == Flow::Stops) discard_scope();
                 else {
@@ -12697,6 +13057,9 @@ private:
         }
 
         require_match_exhaustive(stmt.loc, enum_info, coverage);
+        if (materialized_match) {
+            ir_stmt_statements(lowered).push_back(std::move(materialized_match));
+        }
 
         if (all_non_continuing) {
             restore_states(branch_input);
@@ -12708,6 +13071,37 @@ private:
 
     Flow check_scalar_match(const Stmt& stmt, IrStmt& lowered) {
         const StmtMatchArms& source_arms = stmt_match_arms(stmt);
+        IrType match_type = lowered.match_value->type;
+        bool needs_reference_pattern_bindings = false;
+        for (const auto& arm : source_arms) {
+            if (pattern_has_reference_binding_mode(arm.pattern)) {
+                needs_reference_pattern_bindings = true;
+                break;
+            }
+        }
+
+        std::string subject_name;
+        std::unique_ptr<IrStmt> materialized_match;
+        IrStmt* match_target = &lowered;
+        if (needs_reference_pattern_bindings) {
+            IrExprPtr match_value = std::move(lowered.match_value);
+            lowered.kind = IrStmtKind::Block;
+            subject_name = make_hidden_local("$match_scalar");
+            declare_local(stmt.loc, subject_name, match_type, false);
+            ir_stmt_statements(lowered).push_back(make_ir_var_decl(
+                stmt.loc,
+                subject_name,
+                match_type,
+                std::move(match_value),
+                false
+            ));
+            materialized_match = std::make_unique<IrStmt>();
+            materialized_match->kind = IrStmtKind::Match;
+            materialized_match->loc = stmt.loc;
+            materialized_match->match_value = make_local_lvalue_expr(stmt.loc, subject_name, match_type);
+            match_target = materialized_match.get();
+        }
+
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
         bool has_continuing_state = false;
@@ -12715,28 +13109,38 @@ private:
         bool all_non_continuing = true;
         ScalarMatchCoverage coverage;
 
-        IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(lowered);
+        IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(*match_target);
         for (const auto& arm : source_arms) {
+            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
             if (pattern_contains_or(arm.pattern)) {
-                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
-                    lowered.match_value->type
+                    match_type
                 );
             }
-            std::vector<IrMatchArm> lowered_patterns = lower_scalar_match_arm_patterns(
-                arm.pattern, lowered.match_value->type, coverage);
             std::size_t alternative_index = 0;
-            for (auto& lowered_arm : lowered_patterns) {
+            for (const auto& alternative : alternatives) {
+                IrMatchArm lowered_arm = lower_scalar_match_arm_pattern(alternative, match_type, coverage);
                 restore_states(branch_input);
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
+                if (needs_reference_pattern_bindings && pattern_has_reference_binding_mode(alternative)) {
+                    lower_explicit_reference_bindings_from_path(
+                        alternative,
+                        subject_name,
+                        match_type,
+                        match_type,
+                        "",
+                        lowered_arm.body);
+                }
                 local_scopes_.clear_reusable_pattern_bindings();
                 CheckedStatements checked = check_statements(arm.body, false);
-                lowered_arm.body = std::move(checked.statements);
+                for (auto& statement : checked.statements) {
+                    lowered_arm.body.push_back(std::move(statement));
+                }
                 if (checked.flow == Flow::Returns) discard_scope();
                 else if (checked.flow == Flow::Stops) discard_scope();
                 else {
@@ -12765,7 +13169,11 @@ private:
             }
         }
 
-        require_scalar_match_exhaustive(stmt.loc, lowered.match_value->type, coverage);
+        require_scalar_match_exhaustive(stmt.loc, match_type, coverage);
+        if (materialized_match) {
+            ir_stmt_statements(lowered).push_back(std::move(materialized_match));
+        }
+
         if (all_non_continuing) {
             restore_states(branch_input);
             return all_return ? Flow::Returns : Flow::Stops;
@@ -12903,6 +13311,10 @@ private:
         set_ir_stmt_label(lowered, label);
         lowered.match_value = std::move(match_value);
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
+        if (pattern_has_reference_binding_mode(condition_pattern)) {
+            fail(condition_pattern.loc,
+                 "enum while-let reference binding modes are planned after per-iteration enum match storage is lowered");
+        }
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *lowered.match_value);
         IrType enum_value_type = lowered.match_value->type;
         EnumMatchCoverage coverage;
@@ -15454,7 +15866,34 @@ private:
         }
         const EnumInfo& enum_info = enum_found->second;
         IrType enum_value_type = match_value->type;
-        lowered = make_ir_match_expr(expr.loc, std::move(match_value));
+        bool needs_reference_pattern_bindings = false;
+        for (const auto& arm : expr_match_arms(expr)) {
+            if (pattern_has_reference_binding_mode(arm.pattern)) {
+                needs_reference_pattern_bindings = true;
+                break;
+            }
+        }
+
+        std::string subject_name;
+        IrExprPtr materialized_match;
+        if (needs_reference_pattern_bindings) {
+            lowered = make_ir_block_expr(expr.loc);
+            subject_name = make_hidden_local("$match_enum");
+            declare_local(expr.loc, subject_name, enum_value_type, false);
+            ir_expr_block_body(*lowered).push_back(make_ir_var_decl(
+                expr.loc,
+                subject_name,
+                enum_value_type,
+                std::move(match_value),
+                false
+            ));
+            materialized_match = make_ir_match_expr(
+                expr.loc,
+                make_local_lvalue_expr(expr.loc, subject_name, enum_value_type));
+        } else {
+            lowered = make_ir_match_expr(expr.loc, std::move(match_value));
+        }
+        IrExpr& match_target = needs_reference_pattern_bindings ? *materialized_match : *lowered;
 
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
@@ -15471,28 +15910,37 @@ private:
         }
 
         for (const auto& arm : expr_match_arms(expr)) {
+            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
             if (pattern_contains_or(arm.pattern)) {
-                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
                     enum_match_value_type(arm.pattern.loc, enum_value_type)
                 );
             }
-            std::vector<IrMatchArm> lowered_patterns = lower_match_arm_patterns(
-                arm.pattern,
-                enum_info,
-                enum_value_type,
-                coverage);
             std::size_t alternative_index = 0;
-            for (auto& pattern : lowered_patterns) {
+            for (const auto& alternative : alternatives) {
+                IrMatchArm pattern = lower_match_arm_pattern(
+                    alternative,
+                    enum_info,
+                    enum_value_type,
+                    coverage);
                 IrMatchExprArm lowered_arm = make_match_expr_arm(std::move(pattern));
 
                 restore_states(branch_input);
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
+                if (needs_reference_pattern_bindings && pattern_has_reference_binding_mode(alternative)) {
+                    lower_explicit_reference_bindings_from_path(
+                        alternative,
+                        subject_name,
+                        enum_value_type,
+                        enum_value_type,
+                        "",
+                        lowered_arm.body);
+                }
                 local_scopes_.clear_reusable_pattern_bindings();
 
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
@@ -15563,7 +16011,7 @@ private:
                     merge_zone_generations_into(continuing_state, branch_state);
                 }
 
-                ir_expr_match_arms(*lowered).push_back(std::move(lowered_arm));
+                ir_expr_match_arms(match_target).push_back(std::move(lowered_arm));
                 ++alternative_index;
             }
         }
@@ -15573,6 +16021,10 @@ private:
             fail(expr.loc, "match expression must have at least one reachable value arm");
         }
         restore_states(continuing_state);
+        if (needs_reference_pattern_bindings) {
+            materialized_match->type = result_type;
+            set_ir_expr_block_value(*lowered, std::move(materialized_match));
+        }
         lowered->type = result_type;
         if (result_borrow_source) {
             activate_control_flow_borrow_result(expr.loc, *lowered, *result_borrow_source);
@@ -15581,6 +16033,35 @@ private:
     }
 
     IrExprPtr check_scalar_match_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
+        IrType match_type = ir_expr_match_value(*lowered)->type;
+        bool needs_reference_pattern_bindings = false;
+        for (const auto& arm : expr_match_arms(expr)) {
+            if (pattern_has_reference_binding_mode(arm.pattern)) {
+                needs_reference_pattern_bindings = true;
+                break;
+            }
+        }
+
+        std::string subject_name;
+        IrExprPtr materialized_match;
+        if (needs_reference_pattern_bindings) {
+            IrExprPtr match_value = std::move(ir_expr_match_value(*lowered));
+            lowered = make_ir_block_expr(expr.loc);
+            subject_name = make_hidden_local("$match_scalar");
+            declare_local(expr.loc, subject_name, match_type, false);
+            ir_expr_block_body(*lowered).push_back(make_ir_var_decl(
+                expr.loc,
+                subject_name,
+                match_type,
+                std::move(match_value),
+                false
+            ));
+            materialized_match = make_ir_match_expr(
+                expr.loc,
+                make_local_lvalue_expr(expr.loc, subject_name, match_type));
+        }
+        IrExpr& match_target = needs_reference_pattern_bindings ? *materialized_match : *lowered;
+
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
         bool has_continuing_state = false;
@@ -15596,25 +16077,33 @@ private:
         }
 
         for (const auto& arm : expr_match_arms(expr)) {
+            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
             if (pattern_contains_or(arm.pattern)) {
-                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
-                    ir_expr_match_value(*lowered)->type
+                    match_type
                 );
             }
-            std::vector<IrMatchArm> lowered_patterns = lower_scalar_match_arm_patterns(
-                arm.pattern, ir_expr_match_value(*lowered)->type, coverage);
             std::size_t alternative_index = 0;
-            for (auto& pattern : lowered_patterns) {
+            for (const auto& alternative : alternatives) {
+                IrMatchArm pattern = lower_scalar_match_arm_pattern(alternative, match_type, coverage);
                 IrMatchExprArm lowered_arm = make_match_expr_arm(std::move(pattern));
 
                 restore_states(branch_input);
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
+                if (needs_reference_pattern_bindings && pattern_has_reference_binding_mode(alternative)) {
+                    lower_explicit_reference_bindings_from_path(
+                        alternative,
+                        subject_name,
+                        match_type,
+                        match_type,
+                        "",
+                        lowered_arm.body);
+                }
                 local_scopes_.clear_reusable_pattern_bindings();
                 const IrType* arm_expected = result_expected ? result_expected : (has_result ? &result_type : nullptr);
                 std::size_t borrow_mark = temporary_borrow_mark();
@@ -15684,16 +16173,20 @@ private:
                     merge_zone_generations_into(continuing_state, branch_state);
                 }
 
-                ir_expr_match_arms(*lowered).push_back(std::move(lowered_arm));
+                ir_expr_match_arms(match_target).push_back(std::move(lowered_arm));
                 ++alternative_index;
             }
         }
 
-        require_scalar_match_exhaustive(expr.loc, ir_expr_match_value(*lowered)->type, coverage);
+        require_scalar_match_exhaustive(expr.loc, match_type, coverage);
         if (!has_result) {
             fail(expr.loc, "match expression must have at least one reachable value arm");
         }
         restore_states(continuing_state);
+        if (needs_reference_pattern_bindings) {
+            materialized_match->type = result_type;
+            set_ir_expr_block_value(*lowered, std::move(materialized_match));
+        }
         lowered->type = result_type;
         if (result_borrow_source) {
             activate_control_flow_borrow_result(expr.loc, *lowered, *result_borrow_source);
@@ -15865,7 +16358,23 @@ private:
         StateSnapshot branch_input = snapshot_states();
         push_scope();
         declare_match_arm_bindings(then_arms.front());
+        std::vector<IrStmtPtr> then_prelude;
+        if (pattern_has_reference_binding_mode(condition_pattern)) {
+            lower_explicit_reference_bindings_from_path(
+                condition_pattern,
+                subject_name,
+                enum_value_type,
+                enum_value_type,
+                "",
+                then_prelude);
+        }
         CheckedStatements then_statements = check_statements(expr_if_then_body(expr), false);
+        if (!then_prelude.empty()) {
+            for (auto& statement : then_statements.statements) {
+                then_prelude.push_back(std::move(statement));
+            }
+            then_statements.statements = std::move(then_prelude);
+        }
         if (then_statements.flow == Flow::Returns) {
             discard_scope();
             fail(expr.loc, "if-let expression arm must reach its final value");

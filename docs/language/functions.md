@@ -351,9 +351,10 @@ support shared nested element borrows and `name @ ..` rest Slice bindings.
 Function-entry enum-case reference patterns can borrow addressable aggregate
 enum payload slots. Compact and non-addressable payload words remain value-only
 and are rejected with payload-specific diagnostics. Owning or borrow-valued
-parameter patterns, nested reference binding modes inside subpatterns, and
-standalone `mut` binding-mode patterns remain rejected. Trait and extern
-function signatures must keep named parameters.
+parameter patterns and standalone `mut` binding-mode patterns remain rejected.
+Nested reference binding modes inside function parameter subpatterns use the
+same local binding-mode engine. Trait and extern function signatures must keep
+named parameters.
 
 ## Borrow Returns
 

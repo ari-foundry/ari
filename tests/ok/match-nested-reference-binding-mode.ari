@@ -1,0 +1,42 @@
+enum MaybeWide {
+  Empty,
+  Full(i64),
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn main() -> i64 {
+  var total = 0;
+  let item: MaybeWide = Full(10);
+
+  match item {
+    Full(ref value) => {
+      total = total + read(value);
+    }
+    Empty => {
+      total = total + 100;
+    }
+  }
+
+  if let Full(ref if_value) = item {
+    total = total + read(if_value);
+  }
+
+  let from_if = if let Full(ref expr_if_value) = item {
+    read(expr_if_value)
+  } else {
+    0
+  };
+  total = total + from_if;
+
+  let from_match = match item {
+    Full(ref expr_match_value) => read(expr_match_value),
+    Empty => 0,
+  };
+  total = total + from_match;
+
+  return total;
+}

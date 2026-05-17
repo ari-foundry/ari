@@ -319,7 +319,7 @@ The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, a compact AST summary for each cached source, and an
 optional sema-produced IR summary sidecar for each source. Current caches are
 written as `ari-module-cache-v0`, with declaration summaries using
-`ari-ast-decls-v0` and IR summary sidecars using `ari-ir-summary-v0`. Ari
+`ari-ast-decls-v1` and IR summary sidecars using `ari-ir-summary-v0`. Ari
 accepts only this V0 cache family until the cache format is explicitly allowed
 to advance; any other cache, declaration-summary, or IR-summary header is
 rejected and should be regenerated. These V0 headers are treated as one format

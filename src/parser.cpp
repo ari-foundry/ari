@@ -1099,16 +1099,6 @@ private:
     }
 
     void reject_pattern_binding_mode_start(const char* context) const {
-        if (check(TokenKind::KwRef)) {
-            fail(peek().loc,
-                 std::string("nested reference ") + context +
-                     " binding modes are not supported yet; put ref or ref mut before the whole let/function parameter pattern");
-        }
-        if (check(TokenKind::Amp)) {
-            fail(peek().loc,
-                 std::string("nested &/&mut reference ") + context +
-                     " binding modes are not supported yet; put & or &mut before the whole let/function parameter pattern");
-        }
         if (check(TokenKind::KwMut)) {
             fail(peek().loc,
                  std::string("mutable ") + context +
@@ -1201,6 +1191,15 @@ private:
     Pattern parse_binding_pattern() {
         Pattern pattern;
         pattern.loc = peek().loc;
+        BindingMode binding_mode = BindingMode::Value;
+        if (parse_reference_binding_mode_prefix(binding_mode)) {
+            pattern = parse_binding_pattern();
+            if (pattern.binding_mode != BindingMode::Value) {
+                fail(pattern.loc, "pattern already has a reference binding mode");
+            }
+            pattern.binding_mode = binding_mode;
+            return pattern;
+        }
         reject_pattern_binding_mode_start("pattern");
         if (match(TokenKind::LBracket)) {
             pattern.kind = PatternKind::Array;
@@ -1460,6 +1459,15 @@ private:
 
     Pattern parse_pattern_atom(bool bare_identifier_is_binding) {
         Pattern pattern;
+        BindingMode binding_mode = BindingMode::Value;
+        if (parse_reference_binding_mode_prefix(binding_mode)) {
+            pattern = parse_pattern_atom(bare_identifier_is_binding);
+            if (pattern.binding_mode != BindingMode::Value) {
+                fail(pattern.loc, "pattern already has a reference binding mode");
+            }
+            pattern.binding_mode = binding_mode;
+            return pattern;
+        }
         reject_pattern_binding_mode_start("pattern");
         if (match(TokenKind::LParen)) {
             SourceLocation loc = tokens_[pos_ - 1].loc;

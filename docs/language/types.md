@@ -954,8 +954,9 @@ forms over hidden function-entry parameter storage. Runtime sequence rest
 aliases, nested runtime-sequence element subpatterns, and addressable aggregate
 enum payload slots can be borrowed by reference. Compact/non-addressable enum
 payloads remain value-only and produce payload-specific diagnostics when used
-in reference patterns. Nested reference binding modes inside match/control-flow
-subpatterns remain planned.
+in reference patterns. Nested shared reference binding modes are supported in
+enum statement/expression `match` arms and enum `if let` arms; enum `while let`
+and mutable nested `match`/`if let` reference bindings remain planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

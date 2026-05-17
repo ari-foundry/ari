@@ -19,9 +19,12 @@ changing the long-term language contract.
    state, zone provenance, and IR lowering helpers. Avoid splitting one tiny
    file per syntax feature.
 2. Finish the remaining pattern binding-mode surface.
-   Implement nested reference binding modes inside match/control-flow patterns,
-   and ownership-aware binding modes through aggregate, enum, slice, and
-   vector patterns.
+   Nested shared reference binding modes now work through local/function
+   parameter destructuring plus enum statement/expression `match` and enum
+   `if let` patterns. Finish per-iteration enum `while let` match storage,
+   mutable nested `match`/`if let` reference bindings against addressable
+   subjects, and ownership-aware binding modes through aggregate, enum, slice,
+   and vector patterns.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
 3. Expand aggregate enum payload storage.
