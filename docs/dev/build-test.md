@@ -150,7 +150,7 @@ file-backed modules, selected imports, glob imports, module aliases, public
 re-exports, public glob re-exports, duplicate glob aliases, and private alias
 visibility. It also checks package module search paths through `--module-path`
 and `-I`, plus module metadata emission, source content hashes, and metadata
-read-back validation, including non-V0 metadata-version and duplicate-record
+read-back validation, including non-`v0` metadata-version and duplicate-record
 rejection. Source-snapshot module cache emission/use is covered here too, with
 stale cfg, source-hash, import-resolution, AST declaration-fingerprint, and
 AST declaration-payload rejection checks plus malformed duplicate source-record,

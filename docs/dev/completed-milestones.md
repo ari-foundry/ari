@@ -100,13 +100,13 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 ## Modules And Cache
 
 - Module cache metadata, source-snapshot cache records, and AST declaration
-  summaries use the shared V0 cache-format contract.
-- V0 IR package-cache replay materializes lowered statement/expression body
+  summaries use the shared `v0` cache-format contract.
+- `v0` IR package-cache replay materializes lowered statement/expression body
   trees into pre-lowered `IrFunction` bodies for summary-safe dependencies.
 - Cache replay can skip semantic body lowering for validated dependency
   functions, append replayed bodies in normal sema order, and report malformed
   replay payloads before backend emission.
-- V0 IR sidecars record stable specialization metadata for replayed generic
+- `v0` IR sidecars record stable specialization metadata for replayed generic
   free-function and generated impl-method specializations. Cache-use semantic
   checking recognizes those lowered names and does not re-lower duplicate
   specializations before the replayed bodies are appended. Cache loading also
@@ -116,7 +116,7 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   against the functions carried by the same sidecar, so corrupted body call
   identities fail during module-cache loading instead of reaching backend
   symbol lookup.
-- V0 layout descriptors live in the existing cache family. Current descriptors
+- `v0` layout descriptors live in the existing cache family. Current descriptors
   cover cache-only local `Vec[T; capacity]` storage as `vector-storage`
   entries, and cache-use tests compare fresh/cache LLVM output byte-for-byte
   for that metadata.

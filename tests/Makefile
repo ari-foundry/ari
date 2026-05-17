@@ -1390,7 +1390,7 @@ check-modules: $(TARGET)
 	$(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-module-main-cache.ll $(BUILD_DIR)/modules/package-module-main-cache-use.ll
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache.ll
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/modules/package-cache-body.aricache
+	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "3:var" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "5:block" $(BUILD_DIR)/modules/package-cache-body.aricache
 	grep -q "6:assign" $(BUILD_DIR)/modules/package-cache-body.aricache
@@ -1432,9 +1432,9 @@ check-modules: $(TARGET)
 	python3 tests/tamper_module_cache_ir_summary.py $(BUILD_DIR)/modules/package-cache-body.aricache $(BUILD_DIR)/modules/package-cache-body-call-target-tampered.aricache cache_bodies '68:impl::cache_bodies__CacheBox_i64_::cache_bodies__CacheSelect::select' '68:impl::cache_bodies__CacheBox_i64_::cache_bodies__MissingAbcd::select'
 	if $(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-call-target-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-call-target-tampered.ll >$(BUILD_DIR)/modules/package-cache-body-call-target-tampered.err 2>&1; then exit 1; fi
 	grep -q "calling unknown cached impl function" $(BUILD_DIR)/modules/package-cache-body-call-target-tampered.err
-	sed '0,/ari-ast-decls-v1/s/ari-ast-decls-v1/ari-ast-decls-v2/' $(BUILD_DIR)/modules/package-cache-body.aricache >$(BUILD_DIR)/modules/package-cache-body-ast-non-v1.aricache
-	if $(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-ast-non-v1.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-ast-non-v1.ll >$(BUILD_DIR)/modules/package-cache-body-ast-non-v1.err 2>&1; then exit 1; fi
-	grep -q "expected 'ari-ast-decls-v1;'" $(BUILD_DIR)/modules/package-cache-body-ast-non-v1.err
+	sed '0,/ari-ast-decls-v0/s/ari-ast-decls-v0/ari-ast-decls-v1/' $(BUILD_DIR)/modules/package-cache-body.aricache >$(BUILD_DIR)/modules/package-cache-body-ast-non-v0.aricache
+	if $(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.ll >$(BUILD_DIR)/modules/package-cache-body-ast-non-v0.err 2>&1; then exit 1; fi
+	grep -q "expected 'ari-ast-decls-v0;'" $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.err
 	$(TARGET) -Itests/packages tests/ok/package-cache-layout-types-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-layout-types.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-layout-types-cache.ll
 	grep -Fq "11:Vec[i64; 5]" $(BUILD_DIR)/modules/package-cache-layout-types.aricache
 	grep -Fq "D;14:vector-storage;11:Vec[i64; 5];3:i64;5;" $(BUILD_DIR)/modules/package-cache-layout-types.aricache
@@ -1448,7 +1448,7 @@ check-modules: $(TARGET)
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.elf
 	$(BUILD_DIR)/modules/package-cache-body.elf; code=$$?; test $$code -eq 14
 	$(TARGET) -Itests/packages tests/ok/package-cache-indirect-call-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-indirect-call.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-indirect-call-cache.ll
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache
+	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache
 	grep -q "13:indirect-call" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-indirect-call-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-indirect-call.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-indirect-call-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-indirect-call-cache.ll $(BUILD_DIR)/modules/package-cache-indirect-call-cache-use.ll
@@ -1470,22 +1470,22 @@ check-modules: $(TARGET)
 	$(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics.aricache -o $(BUILD_DIR)/modules/package-cache-generics.elf
 	$(BUILD_DIR)/modules/package-cache-generics.elf; code=$$?; test $$code -eq 16
 	$(TARGET) -Itests/packages tests/ok/package-cache-host-literals-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-host-literals.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-host-literals-cache.ll
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/modules/package-cache-host-literals.aricache
+	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-host-literals.aricache
 	grep -q "6:string;5:cache;" $(BUILD_DIR)/modules/package-cache-host-literals.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-host-literals-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-host-literals.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-host-literals-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-host-literals-cache.ll $(BUILD_DIR)/modules/package-cache-host-literals-cache-use.ll
 	$(TARGET) -Itests/packages tests/ok/package-cache-decls-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-decls.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-decls-cache.ll
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/modules/package-cache-decls.aricache
+	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-decls.aricache
 	grep -Eq "ast-summary.*cache_decls.*tests/packages/cache_decls.ari.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-decls.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-decls-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-decls.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-decls-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-decls-cache.ll $(BUILD_DIR)/modules/package-cache-decls-cache-use.ll
 	$(TARGET) -Itests/packages tests/ok/package-cache-const-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-const-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-header-cache.ll
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/modules/package-cache-const-header.aricache
+	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-const-header.aricache
 	grep -Eq "ast-summary.*cache_consts.*tests/packages/cache_consts.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-const-header.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-const-header-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-const-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-header-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-const-header-cache.ll $(BUILD_DIR)/modules/package-cache-const-header-cache-use.ll
 	$(TARGET) -Itests/packages tests/ok/package-cache-const-aggregate-header-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-const-aggregate-header-cache.ll
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
+	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	grep -Eq "ast-summary.*cache_const_aggregates.*tests/packages/cache_const_aggregates.arih.*[0-9a-f]{16}" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	grep -q "5:tuple" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
 	grep -q "6:struct" $(BUILD_DIR)/modules/package-cache-const-aggregate-header.aricache
@@ -1528,7 +1528,7 @@ check-modules: $(TARGET)
 	grep -q "declaration summary hashes to" $(BUILD_DIR)/modules/package-module-main-cache-summary-hash-tampered.err
 	awk 'BEGIN { FS=OFS="\t" } $$1 == "ast-summary" && $$2 == "package_math" { $$7 = "tampered" } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.err 2>&1; then exit 1; fi
-	grep -q "declaration summary expected 'ari-ast-decls-v1;' header" $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.err
+	grep -q "declaration summary expected 'ari-ast-decls-v0;' header" $(BUILD_DIR)/modules/package-module-main-cache-summary-payload-tampered.err
 	awk 'BEGIN { FS=OFS="\t" } $$1 == "ir-summary" && $$2 == "package_math" { $$8 = "99" } { print }' $(BUILD_DIR)/modules/package-module-main.aricache >$(BUILD_DIR)/modules/package-module-main-cache-ir-summary-tampered.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-module-main.ari --use-module-cache $(BUILD_DIR)/modules/package-module-main-cache-ir-summary-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-module-main-cache-ir-summary-tampered.ll >$(BUILD_DIR)/modules/package-module-main-cache-ir-summary-tampered.err 2>&1; then exit 1; fi
 	grep -q "has function count 99 but IR summary contains" $(BUILD_DIR)/modules/package-module-main-cache-ir-summary-tampered.err
@@ -1886,7 +1886,7 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/attributes-user-meta.elf; code=$$?; test $$code -eq 9
 	$(TARGET) tests/ok/attributes-user-meta.ari --emit-module-cache $(BUILD_DIR)/meta/attributes-user-meta.aricache --emit-llvm $(BUILD_DIR)/meta/attributes-user-meta-cache.ll
 	grep -q "ari-module-cache-v0" $(BUILD_DIR)/meta/attributes-user-meta.aricache
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/meta/attributes-user-meta.aricache
+	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/meta/attributes-user-meta.aricache
 	grep -q "3:u32;" $(BUILD_DIR)/meta/attributes-user-meta.aricache
 	$(TARGET) tests/ok/attributes-user-meta.ari --use-module-cache $(BUILD_DIR)/meta/attributes-user-meta.aricache --emit-llvm $(BUILD_DIR)/meta/attributes-user-meta-cache-use.ll
 	cmp -s $(BUILD_DIR)/meta/attributes-user-meta-cache.ll $(BUILD_DIR)/meta/attributes-user-meta-cache-use.ll
@@ -2100,7 +2100,7 @@ check-meta: $(TARGET)
 	$(TARGET) tests/ok/pattern-macro-ast-return.ari -o $(BUILD_DIR)/meta/pattern-macro-ast-return.elf
 	$(BUILD_DIR)/meta/pattern-macro-ast-return.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/pattern-macro-identity.ari --emit-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache.ll
-	grep -q "ari-ast-decls-v1" $(BUILD_DIR)/meta/pattern-macro-identity.aricache
+	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/meta/pattern-macro-identity.aricache
 	$(TARGET) tests/ok/pattern-macro-identity.ari --use-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache-use.ll
 	cmp -s $(BUILD_DIR)/meta/pattern-macro-identity-cache.ll $(BUILD_DIR)/meta/pattern-macro-identity-cache-use.ll
 	$(TARGET) tests/ok/matches-macro.ari -o $(BUILD_DIR)/meta/matches-macro.elf

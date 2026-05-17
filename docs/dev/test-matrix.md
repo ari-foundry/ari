@@ -532,7 +532,7 @@ Checklist:
 - [x] repeated file-backed module imports are cached by resolved module name
 - [x] compact module metadata can be emitted and read back for source-graph validation
 - [x] metadata records stable source content hashes for cache invalidation
-- [x] metadata/cache checks accept only the centralized current V0 headers
+- [x] metadata/cache checks accept only the centralized current `v0` headers
 - [x] metadata/cache parsing rejects duplicate source, import, item summary,
       and AST-summary records
 - [x] stale module metadata reports changed cfg, source, import, and item records

@@ -283,8 +283,8 @@ file-backed imports, and declaration names seen in each source file. It is
 intentionally a summary format; use a module cache when you want to reuse a
 validated package source snapshot.
 Current metadata is written as `ari-module-metadata-v0`. The compiler accepts
-only that V0 header until the cache format is explicitly allowed to advance.
-This header belongs to the same V0 cache-format contract as module caches and
+only that `v0` header until the cache format is explicitly allowed to advance.
+This header belongs to the same `v0` cache-format contract as module caches and
 AST declaration summaries, so version bumps happen together instead of one
 record family drifting ahead. Any other metadata header is rejected and should
 be regenerated with `--emit-module-metadata`.
@@ -319,10 +319,10 @@ The cache embeds the same metadata summary, the source text for every file in
 the resolved graph, a compact AST summary for each cached source, and an
 optional sema-produced IR summary sidecar for each source. Current caches are
 written as `ari-module-cache-v0`, with declaration summaries using
-`ari-ast-decls-v1` and IR summary sidecars using `ari-ir-summary-v0`. Ari
-accepts only this V0 cache family until the cache format is explicitly allowed
+`ari-ast-decls-v0` and IR summary sidecars using `ari-ir-summary-v0`. Ari
+accepts only this `v0` cache family until the cache format is explicitly allowed
 to advance; any other cache, declaration-summary, or IR-summary header is
-rejected and should be regenerated. These V0 headers are treated as one format
+rejected and should be regenerated. These `v0` headers are treated as one format
 family inside the compiler. A later build can validate the cache and parse from
 that snapshot:
 
@@ -349,7 +349,7 @@ function parameter patterns and local binding patterns in summary-safe bodies.
 Cache loading parses that payload and checks its hash and counts, so edited or
 corrupted summaries are caught before semantic checking relies on them.
 IR summary sidecars are emitted after semantic checking from the lowered IR
-function surface, body shape, and operand-tree payload for each source. The V0
+function surface, body shape, and operand-tree payload for each source. The `v0`
 IR sidecar requires both the body-shape section and the operand-tree section,
 and may carry explicit layout descriptors before the function summaries. Generic
 free-function and generated impl-method specializations also carry a stable
@@ -417,8 +417,8 @@ materialized from summaries. Header-like dependencies can skip parsing through
 materialized AST summaries, and simple executable dependencies can skip parsing
 when every body has a supported AST/IR summary payload. Unsupported constant
 initializer summaries still parse the cached source snapshot. Future executable
-forms that outgrow the current V0 free-function replay surface need a deliberate
-0.x cache-format extension rather than a silent `ari-ir-summary-v1` drift.
+forms that outgrow the current `v0` free-function replay surface need a deliberate
+0.x cache-format extension rather than a silent header drift.
 
 ## Nested Modules
 
