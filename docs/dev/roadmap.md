@@ -20,20 +20,17 @@ changing the long-term language contract.
    classification for public tuples, arrays, structs, vectors, and aggregate
    enums. This should settle the policy needed before raw C aggregate imports,
    richer C headers, and library-owned collection handles grow further.
-
-See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
-roadmap for splitting `src/sema.cpp` by broad semantic phases.
-
-## Medium-Term Compiler Work
-
-1. Expand IR package-cache replay after `[ir-replay-generics]`.
+3. Expand IR package-cache replay after `[ir-replay-generics]`.
    The current V0 cache family should stay V0 until a deliberate cache version
    bump is approved. The next useful work after generic/impl replay is
    trait-specialized replay and richer identity-bearing descriptors.
-2. Keep sema extraction phase-oriented.
+4. Keep sema extraction phase-oriented.
    Prefer broad modules such as type inference, pattern semantics, ownership
    state, zone provenance, and IR lowering helpers. Avoid splitting one tiny
    file per syntax feature.
+
+See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
+roadmap for splitting `src/sema.cpp` by broad semantic phases.
 
 ## Medium-Term Language Work
 
