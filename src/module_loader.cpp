@@ -9,6 +9,7 @@
 #include "module_path.hpp"
 #include "parser.hpp"
 
+#include <cctype>
 #include <fstream>
 #include <iterator>
 #include <map>
@@ -33,6 +34,12 @@ struct ParsedModuleFile {
     std::string content_hash;
     std::string source;
     std::vector<ModuleCacheIrFunctionSummary> cached_ir_functions;
+};
+
+struct ImplSpecializationOrigin {
+    std::string receiver_key;
+    std::string trait_key;
+    std::string method_name;
 };
 
 std::string read_file(const std::string& path) {
@@ -91,13 +98,39 @@ std::string basename_of_name(const std::string& name) {
     return name.substr(split + 2);
 }
 
+std::string mangle_text_key(const std::string& text) {
+    std::string out;
+    out.reserve(text.size());
+    for (unsigned char c : text) {
+        if (std::isalnum(c)) out.push_back(static_cast<char>(c));
+        else out.push_back('_');
+    }
+    return out;
+}
+
+std::string module_qualified_name(const std::string& module_name,
+                                  const std::string& name) {
+    if (name.find("::") != std::string::npos) return name;
+    if (module_name.empty()) return name;
+    return module_name + "::" + name;
+}
+
 bool split_impl_specialization_origin(const std::string& origin,
-                                      std::string& method_name) {
+                                      ImplSpecializationOrigin& parsed) {
     if (!starts_with(origin, "impl::")) return false;
-    std::size_t split = origin.rfind("::");
-    if (split == std::string::npos || split + 2 >= origin.size()) return false;
-    method_name = origin.substr(split + 2);
-    return !method_name.empty();
+    std::size_t receiver_start = 6;
+    std::size_t trait_split = origin.find("::", receiver_start);
+    if (trait_split == std::string::npos || trait_split == receiver_start) return false;
+    std::size_t method_split = origin.find("::", trait_split + 2);
+    if (method_split == std::string::npos || method_split == trait_split + 2) return false;
+    if (origin.find("::", method_split + 2) != std::string::npos) return false;
+
+    parsed.receiver_key = origin.substr(receiver_start, trait_split - receiver_start);
+    parsed.trait_key = origin.substr(trait_split + 2, method_split - trait_split - 2);
+    parsed.method_name = origin.substr(method_split + 2);
+    return !parsed.receiver_key.empty() &&
+           !parsed.trait_key.empty() &&
+           !parsed.method_name.empty();
 }
 
 std::set<std::string> generic_param_name_set(const std::vector<GenericParam>& generics) {
@@ -109,6 +142,15 @@ std::set<std::string> generic_param_name_set(const std::vector<GenericParam>& ge
 void add_generic_param_names(std::set<std::string>& names,
                              const std::vector<GenericParam>& generics) {
     for (const auto& generic : generics) names.insert(generic.name);
+}
+
+std::string impl_origin_method_key(const std::string& trait_key,
+                                   const std::string& method_name) {
+    return trait_key + "::" + method_name;
+}
+
+std::string inherent_impl_origin_method_key(const std::string& method_name) {
+    return impl_origin_method_key("inherent", method_name);
 }
 
 void require_known_specialization_args(const ModuleCacheIrFunctionSummary& fn,
@@ -225,20 +267,51 @@ void require_ir_summary_specializations_match_ast_summary(
         }
     }
     std::map<std::string, std::set<std::string>> impl_specialization_method_params;
+    std::map<std::string, std::set<std::string>> impl_specialization_origin_params;
+    std::set<std::string> locally_declared_trait_method_keys;
+    std::set<std::string> locally_declared_trait_method_names;
     for (const auto& impl : declarations.impls) {
         for (const auto& method : impl.methods) {
             std::set<std::string>& names =
                 impl_specialization_method_params[basename_of_name(method.name)];
             add_generic_param_names(names, impl.generics);
             add_generic_param_names(names, method.generics);
+
+            if (impl.has_trait) {
+                std::set<std::string> trait_keys;
+                trait_keys.insert(mangle_text_key(impl.trait_type.name));
+                trait_keys.insert(mangle_text_key(module_qualified_name(impl.module_name, impl.trait_type.name)));
+                for (const auto& trait_key : trait_keys) {
+                    std::set<std::string>& origin_names =
+                        impl_specialization_origin_params[impl_origin_method_key(
+                            trait_key,
+                            basename_of_name(method.name))];
+                    add_generic_param_names(origin_names, impl.generics);
+                    add_generic_param_names(origin_names, method.generics);
+                }
+            } else {
+                std::set<std::string>& origin_names =
+                    impl_specialization_origin_params[inherent_impl_origin_method_key(
+                        basename_of_name(method.name))];
+                add_generic_param_names(origin_names, impl.generics);
+                add_generic_param_names(origin_names, method.generics);
+            }
         }
     }
     for (const auto& trait : declarations.traits) {
         for (const auto& method : trait.methods) {
+            std::string method_name = basename_of_name(method.name);
             std::set<std::string>& names =
-                impl_specialization_method_params[basename_of_name(method.name)];
+                impl_specialization_method_params[method_name];
             add_generic_param_names(names, trait.generics);
             add_generic_param_names(names, method.generics);
+
+            std::string key = impl_origin_method_key(mangle_text_key(trait.name), method_name);
+            locally_declared_trait_method_keys.insert(key);
+            locally_declared_trait_method_names.insert(method_name);
+            std::set<std::string>& origin_names = impl_specialization_origin_params[key];
+            add_generic_param_names(origin_names, trait.generics);
+            add_generic_param_names(origin_names, method.generics);
         }
     }
 
@@ -256,10 +329,10 @@ void require_ir_summary_specializations_match_ast_summary(
             continue;
         }
         if (fn.specialization_kind == "impl-method") {
-            std::string method_name;
-            bool has_method_origin = split_impl_specialization_origin(fn.specialization_origin, method_name);
+            ImplSpecializationOrigin origin;
+            bool has_method_origin = split_impl_specialization_origin(fn.specialization_origin, origin);
             auto method = has_method_origin
-                ? impl_specialization_method_params.find(method_name)
+                ? impl_specialization_method_params.find(origin.method_name)
                 : impl_specialization_method_params.end();
             if (!has_method_origin || method == impl_specialization_method_params.end()) {
                 throw CompileError("module cache IR summary for '" + path +
@@ -267,7 +340,22 @@ void require_ir_summary_specializations_match_ast_summary(
                                    "' for unknown impl method origin '" +
                                    fn.specialization_origin + "'");
             }
-            require_known_specialization_args(fn, method->second, path);
+            auto origin_method = impl_specialization_origin_params.find(
+                impl_origin_method_key(origin.trait_key, origin.method_name));
+            if (origin_method == impl_specialization_origin_params.end() &&
+                locally_declared_trait_method_names.count(origin.method_name) != 0 &&
+                locally_declared_trait_method_keys.count(impl_origin_method_key(origin.trait_key, origin.method_name)) == 0) {
+                throw CompileError("module cache IR summary for '" + path +
+                                   "' has impl-method specialization '" + fn.name +
+                                   "' for unknown impl method origin '" +
+                                   fn.specialization_origin + "'");
+            }
+            require_known_specialization_args(
+                fn,
+                origin_method == impl_specialization_origin_params.end()
+                    ? method->second
+                    : origin_method->second,
+                path);
             continue;
         }
         throw CompileError("module cache IR summary for '" + path +

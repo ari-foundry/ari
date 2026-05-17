@@ -561,8 +561,9 @@ Checklist:
 - [x] IR sidecars replay generic free-function and generated impl-method
       specializations from cached dependencies, validate and preserve their
       origin/type-arg specialization metadata including generic argument names,
-      and prevent duplicate lowering when the root directly calls cached
-      generic APIs
+      validate trait-vs-inherent impl origin keys when the cached source
+      declares that trait method surface, and prevent duplicate lowering when
+      the root directly calls cached generic APIs
 - [x] hash-valid but malformed IR sidecar replay payloads are rejected with a
       module-cache replay diagnostic before backend emission
 - [x] IR sidecar cache-use replay writes explicit `vector-storage` layout
