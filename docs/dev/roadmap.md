@@ -90,43 +90,30 @@ pointers and reset/destroy diagnostics continue to use semantic provenance.
 Freestanding zone allocation remains deliberately rejected until a raw-backend
 allocation runtime exists.
 
-The loop fixed-point precision foundation is complete for the current exact
-fixed-point surface. The current loop checker tracks ownership and borrow state at
-`break`, `continue`, zero-iteration, literal-true next-iteration, and
-fallthrough merge points, including conservative same-provenance borrow-release
-joins and literal-true `break` exits that merge moved/dropped unavailable owner
-states. The next active Near-Term loop goal is the remaining owner-state
-dataflow recheck:
-
-1. Prove loop owner-state widening with a loop dataflow recheck.
-   Borrow-release widening is safe with the current same-provenance merge
-   because it keeps the source conservatively borrowed. Owner-state widening is
-   different: a body checked with an `Alive` owner cannot simply be reused for a
-   later iteration that starts with that owner moved or dropped. Add a
-   revalidation/dataflow pass before accepting non-trivial next-iteration or
-   fallthrough ownership fixed points. The plain `while`, `init while`,
-   irrefutable aggregate/runtime-sequence `while let`, direct or immutable
-   local/alias enum-constructor `while let` with statically satisfied payload
-   literal/range/nested-enum tests, and exact-once range/list/stored-`Vec`
-   `for` slices now recheck no-zero or exact-once next-iteration states under
-   a candidate `Alive -> moved/dropped` owner widening before accepting them.
-   Known-nonempty range/list/stored-`Vec` `for` loops also drop the
-   zero-iteration exit from post-loop owner merges, while still rejecting body
-   fallthrough or `continue` owner changes unless they are exact-once.
-   Runtime-dependent maybe-zero `break` exits now merge `Alive` with
-   moved/dropped owner states into an explicit `maybe-unavailable` local state;
-   later use, overwrite, return, scope exit, and aggregate owned-field overwrite
-   reject that state instead of pretending the owner is definitely live or
-   definitely unavailable.
-   The plain `while` and `init while` slices also treat immutable local bool
-   conditions whose initializers resolve through immutable local aliases to
-   literals like `true`/`false` as proven loop conditions, and fold those
-   conditions into literal IR branch conditions during lowering.
-   - [owner-widen] extend the widened-state recheck beyond plain no-zero
-     and exact-once loop bodies into remaining runtime-dependent body
-     fallthrough/`continue` cases for refutable enum `while let` and
-     multi-iteration iterator-style bodies, plus a future conditional
-     cleanup/resolution form for `maybe-unavailable` owners
+The loop fixed-point precision foundation is complete for the current 0.x
+surface and has been removed from active Near-Term work. The loop checker tracks
+ownership and borrow state at `break`, `continue`, zero-iteration,
+literal-true next-iteration, and fallthrough merge points, including
+conservative same-provenance borrow-release joins and literal-true `break` exits
+that merge moved/dropped unavailable owner states. Owner-state widening now
+requires an explicit body recheck before any non-trivial next-iteration or
+fallthrough fixed point is accepted: plain `while`, `init while`, irrefutable
+aggregate/runtime-sequence `while let`, direct or immutable local/alias
+enum-constructor `while let` with statically satisfied payload
+literal/range/nested-enum tests, exact-once range/list/stored-`Vec` `for`
+slices, runtime-dependent refutable enum `while let`, and direct
+`Iterator[T]`/`IntoIterator[T]` loops all revalidate candidate
+`Alive -> moved/dropped` next-iteration states by rechecking the body under the
+widened state. Known-nonempty range/list/stored-`Vec` `for` loops also drop the
+zero-iteration exit from post-loop owner merges, and runtime-dependent
+maybe-zero exits merge `Alive` with moved/dropped owner states into an explicit
+`maybe-unavailable` local state. Later use, overwrite, return, scope exit, and
+aggregate owned-field overwrite reject that state instead of pretending the
+owner is definitely live or definitely unavailable. Plain `while` and
+`init while` also treat immutable local bool conditions whose initializers
+resolve through immutable local aliases to literals like `true`/`false` as
+proven loop conditions, and fold those conditions into literal IR branch
+conditions during lowering.
 
 IR package-cache replay is complete for the current V0 0.x executable cache
 surface and has been removed from active Near-Term work. Validated
@@ -186,6 +173,10 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      lives in `for_pattern_semantics`, with a shared sema lowering helper for
      range, list-literal, and stored-vector loop heads; reference/ownership
      binding modes still need shared lowering.
+   - [owner-resolution] design an explicit conditional cleanup/resolution form
+     for `maybe-unavailable` owners once runtime owner-state values are part of
+     the language surface; until then, loop exits that cannot prove a single
+     owner state remain intentionally unusable after the loop.
 2. Expand aggregate enum payload storage beyond the nested-enum MVP.
    Aggregate enum payload slots support integer, bool, pointer-shaped values
    such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values, and

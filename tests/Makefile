@@ -3213,7 +3213,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/loop-break-owned-field-maybe-unavailable-overwrite.ari -o $(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.elf >$(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.err 2>&1; then exit 1; fi
 	grep -q "cannot overwrite owning field 'holder.0' while it may be unavailable" $(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.err
 	if $(TARGET) tests/errors/loop-continue-owner-state.ari -o $(BUILD_DIR)/errors/loop-continue-owner-state.elf >$(BUILD_DIR)/errors/loop-continue-owner-state.err 2>&1; then exit 1; fi
-	grep -q "binding 'token' has incompatible ownership states at loop continue" $(BUILD_DIR)/errors/loop-continue-owner-state.err
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/loop-continue-owner-state.err
 	if $(TARGET) tests/errors/init-while-known-true-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.elf >$(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.err
 	if $(TARGET) tests/errors/init-while-known-bool-alias-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/init-while-known-bool-alias-owner-widen-recheck.elf >$(BUILD_DIR)/errors/init-while-known-bool-alias-owner-widen-recheck.err 2>&1; then exit 1; fi
@@ -3222,6 +3222,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-aggregate-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-direct-enum-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-direct-enum-owner-widen-recheck.err
+	if $(TARGET) tests/errors/while-let-runtime-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-runtime-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-runtime-owner-widen-recheck.err 2>&1; then exit 1; fi
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-runtime-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-local-enum-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-local-enum-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-local-enum-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-local-enum-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-local-alias-enum-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-local-alias-enum-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-local-alias-enum-owner-widen-recheck.err 2>&1; then exit 1; fi
@@ -3230,6 +3232,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-static-payload-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-static-nested-payload-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.err
+	if $(TARGET) tests/errors/for-iterator-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.elf >$(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.err 2>&1; then exit 1; fi
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi
 	grep -q "cannot assign to borrowed binding 'first'" $(BUILD_DIR)/errors/while-false-borrow-state.err
 	if $(TARGET) tests/errors/loop-borrow-state.ari -o $(BUILD_DIR)/errors/loop-borrow-state.elf >$(BUILD_DIR)/errors/loop-borrow-state.err 2>&1; then exit 1; fi

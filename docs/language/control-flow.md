@@ -422,12 +422,13 @@ the next-iteration state instead of the post-loop `break` state, so a loop can
 continue with an owner still live and later break after consuming it. If a
 plain `while` next-iteration state widens an owner from live to moved/dropped,
 the body is rechecked under that widened state before the loop is accepted.
-The same recheck applies to `while let` over a direct enum constructor, or an
+The same recheck applies to `while let` over a direct enum constructor, an
 immutable local whose initializer resolves through immutable local aliases to
-one, when the constructor case is covered and any literal or range payload
-tests are statically satisfied, including nested enum payload
-tag/literal/range tests that are statically satisfied, because that loop is
-known to enter at least once.
+one, runtime-dependent refutable enum `while let`, and direct
+`Iterator[T]`/`IntoIterator[T]` loops. When a loop is known to enter at least
+once, the rechecked state can define the post-loop owner state; when zero
+iterations are still possible, the rechecked state is merged with the
+zero-iteration state and may become `maybe-unavailable`.
 
 If every reachable `break` exit has already consumed the same owner, Ari can
 merge `moved` and `dropped` states as one unavailable post-loop state. This lets
@@ -627,14 +628,16 @@ bindings.
   also support irrefutable alias, tuple, array, named struct, and tuple-struct
   product patterns. Enum-case and other refutable loop-head patterns are
   reserved for future iterator lowering.
-- General maybe-zero loops currently cannot change the ownership state of an
-  outer binding on a body fallthrough path. Literal `false`, or immutable local
+- General maybe-zero loops can only change the ownership state of an outer
+  binding on body fallthrough or `continue` when the body rechecks successfully
+  under the widened next-iteration state. Literal `false`, or immutable local
   `let` conditions whose initializers resolve through immutable local aliases
   to `false`, are treated as zero-iteration loops.
 - Maybe-zero loop `break` exits that disagree with the zero-iteration owner
   state produce a `maybe-unavailable` owner. The owner is tracked after the
-  loop, but later use, overwrite, return, and scope exit are rejected until the
-  program has a supported way to resolve both runtime cases.
+  loop, but later use, overwrite, owned-field overwrite, return, and scope exit
+  are rejected until the program has a supported way to resolve both runtime
+  cases.
 - Direct range expressions and list-literal or stored-`Vec` `for` loops with a
   known non-empty iteration count are not treated as zero-iteration loops, so
   `break` exits can define the post-loop owner state. When the known count is

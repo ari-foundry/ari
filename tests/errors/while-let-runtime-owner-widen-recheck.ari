@@ -1,0 +1,21 @@
+enum Maybe {
+  None,
+  Some(i64),
+}
+
+fn maybe(flag: bool) -> Maybe {
+  if flag {
+    return Some(1);
+  }
+  return None();
+}
+
+fn main() -> i64 {
+  let token: own i64 = 5;
+  let flag = true;
+  while let Some(value) = maybe(flag) {
+    let seen = value;
+    drop token;
+  }
+  return 0;
+}
