@@ -922,12 +922,14 @@ keep the intermediate borrow binding live until the dependent borrow is also
 dead.
 Local declaration patterns can also create named borrow bindings directly:
 `let ref PATTERN = local_or_path` creates shared borrows, and
-`let ref mut PATTERN = local_or_path` creates mutable borrows. The current
-0.x slice supports name, wildcard, tuple, fixed-array, and struct local
-patterns over tracked local places. Function parameter patterns support the
-same explicit `ref PATTERN: T` and `ref mut PATTERN: T` forms over hidden
-function-entry parameter storage. Runtime sequence rest aliases, enum payload
-reference bindings, and `&`/`&mut` shorthand remain planned.
+`let ref mut PATTERN = local_or_path` creates mutable borrows. `let &PATTERN`
+and `let &mut PATTERN` are equivalent shorthand spellings. The current 0.x
+slice supports name, wildcard, tuple, fixed-array, and struct local patterns
+over tracked local places. Function parameter patterns support the same
+`ref PATTERN: T` / `ref mut PATTERN: T` and `&PATTERN: T` / `&mut PATTERN: T`
+forms over hidden function-entry parameter storage. Runtime sequence rest
+aliases, enum payload reference bindings, and nested reference binding modes
+inside subpatterns remain planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

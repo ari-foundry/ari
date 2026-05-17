@@ -1,0 +1,68 @@
+struct Pair {
+  mut left: i64,
+  mut right: i64,
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn read_mut(value: ref mut i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn tuple_sum(&(left, right): (i64, i64)) -> i64 {
+  return read(left) + read(right);
+}
+
+fn bump_pair(&mut Pair { left, right }: Pair) -> i64 {
+  write(left, 3);
+  write(right, 4);
+  return read_mut(left) + read_mut(right);
+}
+
+fn main() -> i64 {
+  var number = 5;
+  var pair = Pair { left: 10, right: 20 };
+  var tuple = (30, 40);
+  var values: [i64, 2] = [6, 7];
+  var total = 0;
+
+  {
+    let &shared = number;
+    total = total + read(shared);
+  }
+
+  {
+    let &mut unique = number;
+    write(unique, 2);
+  }
+
+  {
+    let &(left, right) = tuple;
+    total = total + read(left) + read(right);
+  }
+
+  {
+    let &[first, second] = values;
+    total = total + read(first) + read(second);
+  }
+
+  {
+    let &mut Pair { left: pair_left, right: pair_right } = pair;
+    write(pair_left, 1);
+    write(pair_right, 2);
+  }
+
+  total = total + tuple_sum(tuple);
+  total = total + bump_pair(pair);
+
+  return total + number + pair.left + pair.right;
+}

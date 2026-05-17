@@ -131,15 +131,19 @@ Declaration patterns bind by value. `let mut pattern = value` is accepted as
 declaration-level mutability for every binding introduced by the pattern, so it
 matches `var pattern = value` while keeping the familiar `let mut` spelling.
 `let ref pattern = value` and `let ref mut pattern = value` bind references
-instead of copying the selected values. The initializer must be a tracked local
-place, such as a local name, field access, tuple index, or constant
-array/vector index. Tuple, fixed-array, and struct destructuring borrow each
-introduced binding's source path independently:
+instead of copying the selected values. `let &pattern = value` and
+`let &mut pattern = value` are equivalent shorthand forms. The initializer must
+be a tracked local place, such as a local name, field access, tuple index, or
+constant array/vector index. Tuple, fixed-array, and struct destructuring borrow
+each introduced binding's source path independently:
 
 ```ari
 let ref shared = value
+let &alias = value
 let ref mut unique = cell
+let &mut alias_unique = cell
 let ref (left, right) = pair
+let &(copy_left, copy_right) = pair
 let ref [head, tail]: [i64, 2] = values
 let ref Point { x, y: renamed } = point
 ```
@@ -147,9 +151,10 @@ let ref Point { x, y: renamed } = point
 `ref mut` requires a mutable source binding and mutable struct field when the
 selected path ends at a field. The introduced bindings themselves are ordinary
 immutable borrow bindings, matching `let unique = ref mut cell`. Reference
-pattern destructuring of ownership-carrying aggregates and `&`/`&mut`
-shorthand remain planned. Function parameter patterns support explicit
-`ref PATTERN: T` and `ref mut PATTERN: T` for the same name, wildcard, tuple,
+pattern destructuring of ownership-carrying aggregates and nested reference
+binding modes inside match/control-flow patterns remain planned. Function
+parameter patterns support `ref PATTERN: T`, `ref mut PATTERN: T`,
+`&PATTERN: T`, and `&mut PATTERN: T` for the same name, wildcard, tuple,
 fixed-array, and struct shapes.
 
 The `[a, b]` pattern spelling works for fixed arrays and for runtime sequence

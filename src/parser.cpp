@@ -581,12 +581,8 @@ private:
 
     Param parse_function_param() {
         BindingMode binding_mode = BindingMode::Value;
-        if (match(TokenKind::KwRef)) {
-            binding_mode = match(TokenKind::KwMut) ? BindingMode::RefMut : BindingMode::Ref;
-        } else if (check(TokenKind::Amp)) {
-            fail(peek().loc,
-                 "function parameter reference patterns use explicit ref or ref mut; & and &mut pattern shorthand remain planned");
-        } else if (check(TokenKind::KwMut)) {
+        parse_reference_binding_mode_prefix(binding_mode);
+        if (binding_mode == BindingMode::Value && check(TokenKind::KwMut)) {
             fail(peek().loc,
                  "mutable function parameter binding modes are reserved; use ref mut PATTERN for mutable borrow parameter patterns");
         }
@@ -1103,11 +1099,15 @@ private:
     }
 
     void reject_pattern_binding_mode_start(const char* context) const {
-        if (check(TokenKind::KwRef) || check(TokenKind::Amp)) {
+        if (check(TokenKind::KwRef)) {
             fail(peek().loc,
-                 std::string("reference ") + context +
-                     " binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now; "
-                     "& and &mut pattern shorthand remain planned");
+                 std::string("nested reference ") + context +
+                     " binding modes are not supported yet; put ref or ref mut before the whole let/function parameter pattern");
+        }
+        if (check(TokenKind::Amp)) {
+            fail(peek().loc,
+                 std::string("nested &/&mut reference ") + context +
+                     " binding modes are not supported yet; put & or &mut before the whole let/function parameter pattern");
         }
         if (check(TokenKind::KwMut)) {
             fail(peek().loc,
@@ -1150,17 +1150,18 @@ private:
 
     StmtPtr parse_pattern_variable(bool mutable_binding) {
         BindingMode binding_mode = BindingMode::Value;
-        if (match(TokenKind::KwRef)) {
+        if (check(TokenKind::KwRef) || check(TokenKind::Amp)) {
+            SourceLocation mode_loc = peek().loc;
             if (mutable_binding) {
-                fail(tokens_[pos_ - 1].loc,
-                     "reference pattern bindings use let ref or let ref mut; var ref is not supported");
+                fail(mode_loc,
+                     "reference pattern bindings use let ref/let ref mut or let &/let &mut; var reference patterns are not supported");
             }
-            binding_mode = match(TokenKind::KwMut) ? BindingMode::RefMut : BindingMode::Ref;
+            parse_reference_binding_mode_prefix(binding_mode);
         }
         if (match(TokenKind::KwMut)) {
             if (binding_mode != BindingMode::Value) {
                 fail(tokens_[pos_ - 1].loc,
-                     "reference pattern bindings write mutable borrows as let ref mut PATTERN");
+                     "reference pattern bindings write mutable borrows as let ref mut PATTERN or let &mut PATTERN");
             }
             mutable_binding = true;
         }
@@ -1183,6 +1184,18 @@ private:
         stmt->loc = binding.loc;
         stmt->binding = std::move(binding);
         return stmt;
+    }
+
+    bool parse_reference_binding_mode_prefix(BindingMode& binding_mode) {
+        if (match(TokenKind::KwRef)) {
+            binding_mode = match(TokenKind::KwMut) ? BindingMode::RefMut : BindingMode::Ref;
+            return true;
+        }
+        if (match(TokenKind::Amp)) {
+            binding_mode = match(TokenKind::KwMut) ? BindingMode::RefMut : BindingMode::Ref;
+            return true;
+        }
+        return false;
     }
 
     Pattern parse_binding_pattern() {

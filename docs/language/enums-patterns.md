@@ -650,7 +650,8 @@ binding-mode spellings inside match patterns, such as `ref name`,
 `ref mut name`, `&name`, `&mut name`, and `mut name`, are still reserved for
 the future shared binding-mode engine and are rejected with a dedicated
 diagnostic today. Borrow inside the arm, or bind a local first with
-`let ref` / `let ref mut` when the source is a tracked local place.
+`let ref` / `let ref mut` or `let &` / `let &mut` when the source is a tracked
+local place.
 
 Expression-valued `match` currently supports enum patterns and copyable
 payloads. Borrow-valued arm results are rejected until the borrow checker grows

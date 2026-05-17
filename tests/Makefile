@@ -100,7 +100,7 @@ check-cli: $(TARGET)
 	grep -q "define i32 @main" $(BUILD_DIR)/cli/count.ll
 	$(TARGET) tests/ok/library-export.ari --check
 	if $(TARGET) tests/errors/pattern-ref-binding-mode.ari --check >$(BUILD_DIR)/cli/check-pattern-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
+	grep -q "nested reference pattern binding modes are not supported yet" $(BUILD_DIR)/cli/check-pattern-binding-mode.err
 	if $(TARGET) examples/count.ari --check --emit-llvm $(BUILD_DIR)/cli/check-bad.ll >$(BUILD_DIR)/cli/check-output-option.err 2>&1; then exit 1; fi
 	grep -q -- "--check cannot be combined with backend output or linking options" $(BUILD_DIR)/cli/check-output-option.err
 	$(TARGET) tests/ok/library-export.ari --emit-obj $(BUILD_DIR)/cli/library-export.o
@@ -1306,9 +1306,9 @@ check-match: $(TARGET)
 	if $(TARGET) tests/errors/match-or-pattern-binding-type.ari -o $(BUILD_DIR)/match/match-or-pattern-binding-type.elf >$(BUILD_DIR)/match/match-or-pattern-binding-type.err 2>&1; then exit 1; fi
 	grep -q "or-pattern binding 'value' has inconsistent types: i32 and u32" $(BUILD_DIR)/match/match-or-pattern-binding-type.err
 	if $(TARGET) tests/errors/pattern-ref-binding-mode.ari -o $(BUILD_DIR)/match/pattern-ref-binding-mode.elf >$(BUILD_DIR)/match/pattern-ref-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now" $(BUILD_DIR)/match/pattern-ref-binding-mode.err
+	grep -q "nested reference pattern binding modes are not supported yet" $(BUILD_DIR)/match/pattern-ref-binding-mode.err
 	if $(TARGET) tests/errors/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/match/pattern-amp-binding-mode.elf >$(BUILD_DIR)/match/pattern-amp-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "reference pattern binding modes are only supported as declaration-level let ref/let ref mut bindings and function parameter ref/ref mut patterns for now" $(BUILD_DIR)/match/pattern-amp-binding-mode.err
+	grep -q "nested &/&mut reference pattern binding modes are not supported yet" $(BUILD_DIR)/match/pattern-amp-binding-mode.err
 	if $(TARGET) tests/errors/match-tuple-nonexhaustive.ari -o $(BUILD_DIR)/match/match-tuple-nonexhaustive.elf >$(BUILD_DIR)/match/match-tuple-nonexhaustive.err 2>&1; then exit 1; fi
 	grep -q "tuple match must cover every supported product case" $(BUILD_DIR)/match/match-tuple-nonexhaustive.err
 	if $(TARGET) tests/errors/match-product-nonexhaustive-bool.ari -o $(BUILD_DIR)/match/match-product-nonexhaustive-bool.elf >$(BUILD_DIR)/match/match-product-nonexhaustive-bool.err 2>&1; then exit 1; fi
@@ -3411,6 +3411,9 @@ check-errors: $(TARGET) check-function-errors
 	$(TARGET) tests/ok/pattern-ref-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf
 	$(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; code=$$?; test $$code -eq 146
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-ref-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; $(BUILD_DIR)/errors/pattern-ref-binding-mode.elf; code=$$?; test $$code -eq 146; fi
+	$(TARGET) tests/ok/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf
+	$(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-amp-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238; fi
 	if $(TARGET) tests/errors/pattern-ref-mut-immutable.ari -o $(BUILD_DIR)/errors/pattern-ref-mut-immutable.elf >$(BUILD_DIR)/errors/pattern-ref-mut-immutable.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow immutable binding 'value'" $(BUILD_DIR)/errors/pattern-ref-mut-immutable.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi

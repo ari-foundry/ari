@@ -30,9 +30,11 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - `let ref PATTERN = value` and `let ref mut PATTERN = value` introduce borrow
   bindings over tracked local/path initializers and tuple, fixed-array, and
   struct destructuring.
-- Function parameter patterns accept explicit `ref PATTERN: T` and
-  `ref mut PATTERN: T`, lowered as function-entry borrows from hidden ABI
-  parameter storage.
+- `let &PATTERN = value`, `let &mut PATTERN = value`, `&PATTERN: T`, and
+  `&mut PATTERN: T` are shorthand for the same local and function-parameter
+  reference-pattern binding modes.
+- Function parameter reference patterns lower as function-entry borrows from
+  hidden ABI parameter storage.
 - `[ ... ]` patterns work for compile-time fixed arrays and runtime sequence
   subjects. Local `Vec[T]` storage and `Slice[T]` views share length guards,
   indexed element bindings, and `name @ ..` Slice rest binding where supported.
