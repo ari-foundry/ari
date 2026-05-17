@@ -265,6 +265,8 @@ void append_payload_binding(std::string& out, const IrPayloadBinding& binding) {
     append_count(out, binding.index);
     append_field(out, binding.name);
     append_type(out, binding.type);
+    append_count(out, binding.field_path.size());
+    for (std::uint32_t field : binding.field_path) append_count(out, field);
     append_field(out, bool_key(binding.compact_enum_payload));
     append_type(out, binding.compact_enum_type);
     append_count(out, binding.compact_enum_payload_index);
@@ -666,6 +668,11 @@ private:
         binding.index = read_count();
         binding.name = read_field();
         binding.type = read_field();
+        std::uint64_t field_count = read_count();
+        binding.field_path.reserve(static_cast<std::size_t>(field_count));
+        for (std::uint64_t i = 0; i < field_count; ++i) {
+            binding.field_path.push_back(read_count());
+        }
         binding.compact_enum_payload = read_bool_field("compact enum payload");
         binding.compact_enum_type = read_field();
         binding.compact_enum_payload_index = read_count();

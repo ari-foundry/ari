@@ -10837,11 +10837,23 @@ private:
             }
             case PatternKind::Tuple:
                 if (payload.has_rest && payload.elements.empty()) return true;
-                fail(payload.loc, "nested tuple enum payload patterns are planned but are not supported yet");
+                if (aggregate_layout && payload_type.primitive == IrPrimitiveKind::Tuple) {
+                    lower_enum_payload_product_pattern(payload, payload_type, lowered_arm, payload_index);
+                    return true;
+                }
+                fail(payload.loc, "nested tuple enum payload patterns require a tuple aggregate enum payload");
             case PatternKind::Array:
-                fail(payload.loc, "array enum payload patterns are planned after aggregate enum payload layout");
+                if (aggregate_layout && payload_type.primitive == IrPrimitiveKind::Array) {
+                    lower_enum_payload_product_pattern(payload, payload_type, lowered_arm, payload_index);
+                    return true;
+                }
+                fail(payload.loc, "array enum payload patterns require an array aggregate enum payload");
             case PatternKind::Struct:
-                fail(payload.loc, "struct enum payload patterns are planned after aggregate enum payload layout");
+                if (aggregate_layout && payload_type.primitive == IrPrimitiveKind::Struct) {
+                    lower_enum_payload_product_pattern(payload, payload_type, lowered_arm, payload_index);
+                    return true;
+                }
+                fail(payload.loc, "struct enum payload patterns require a struct aggregate enum payload");
         }
         fail(payload.loc, "unsupported enum payload pattern");
     }
@@ -11380,11 +11392,13 @@ private:
     static void add_payload_binding(IrMatchArm& arm,
                                     std::uint32_t index,
                                     const std::string& name,
-                                    const IrType& type) {
+                                    const IrType& type,
+                                    std::vector<std::uint32_t> field_path = {}) {
         IrPayloadBinding binding;
         binding.index = index;
         binding.name = name;
         binding.type = type;
+        binding.field_path = std::move(field_path);
         arm.payload_bindings.push_back(binding);
         if (!arm.has_payload_binding) {
             arm.has_payload_binding = true;
@@ -11392,6 +11406,118 @@ private:
             arm.payload_name = name;
             arm.payload_type = type;
         }
+    }
+
+    void lower_enum_payload_product_pattern(const Pattern& payload,
+                                            const IrType& payload_type,
+                                            IrMatchArm& lowered_arm,
+                                            std::uint32_t payload_index,
+                                            std::vector<std::uint32_t> field_path = {}) {
+        const Pattern& effective_payload = expanded_pattern(payload);
+        if (&effective_payload != &payload) {
+            lower_enum_payload_product_pattern(
+                effective_payload,
+                payload_type,
+                lowered_arm,
+                payload_index,
+                std::move(field_path));
+            return;
+        }
+
+        switch (payload.kind) {
+            case PatternKind::Binding:
+                if (payload.binding_mode == BindingMode::Value) {
+                    add_payload_binding(
+                        lowered_arm,
+                        payload_index,
+                        payload.payload_name,
+                        payload_type,
+                        std::move(field_path));
+                }
+                return;
+            case PatternKind::Wildcard:
+                return;
+            case PatternKind::Alias:
+                if (!payload.alias_pattern) fail(payload.loc, "missing aliased payload pattern");
+                add_payload_binding(
+                    lowered_arm,
+                    payload_index,
+                    payload.alias_name,
+                    payload_type,
+                    field_path);
+                lower_enum_payload_product_pattern(
+                    *payload.alias_pattern,
+                    payload_type,
+                    lowered_arm,
+                    payload_index,
+                    std::move(field_path));
+                return;
+            case PatternKind::Tuple:
+            case PatternKind::Array: {
+                IrPrimitiveKind expected = payload.kind == PatternKind::Array
+                    ? IrPrimitiveKind::Array
+                    : IrPrimitiveKind::Tuple;
+                if (payload_type.primitive != expected) {
+                    const char* pattern_name = payload.kind == PatternKind::Array ? "array" : "tuple";
+                    fail(payload.loc,
+                         std::string(pattern_name) +
+                             " enum payload pattern requires a " +
+                             pattern_name +
+                             " payload, got " +
+                             type_name(payload_type));
+                }
+                const std::vector<IrType>& fields = aggregate_field_types(payload_type);
+                require_tuple_pattern_arity(payload, payload_type, fields);
+                for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+                    std::size_t field_index = tuple_pattern_field_index(payload, fields.size(), i);
+                    std::vector<std::uint32_t> nested_path = field_path;
+                    nested_path.push_back(static_cast<std::uint32_t>(field_index));
+                    lower_enum_payload_product_pattern(
+                        payload.elements[i],
+                        fields[field_index],
+                        lowered_arm,
+                        payload_index,
+                        std::move(nested_path));
+                }
+                return;
+            }
+            case PatternKind::Struct: {
+                if (payload_type.primitive != IrPrimitiveKind::Struct) {
+                    fail(payload.loc,
+                         "struct enum payload pattern requires a struct payload, got " +
+                             type_name(payload_type));
+                }
+                require_struct_match_pattern_type(payload.loc, payload.case_name, payload_type);
+                if (!payload.has_rest && payload.field_names.size() != payload_type.field_names.size()) {
+                    fail(payload.loc, "struct enum payload pattern must mention all fields or use '..'");
+                }
+                std::set<std::string> seen_fields;
+                for (std::size_t i = 0; i < payload.field_names.size(); ++i) {
+                    const std::string& field_name = payload.field_names[i];
+                    if (!seen_fields.insert(field_name).second) {
+                        fail(payload.elements[i].loc, "duplicate field '" + field_name + "' in enum payload pattern");
+                    }
+                    std::size_t field_index = struct_field_index(payload.elements[i].loc, payload_type, field_name);
+                    std::vector<std::uint32_t> nested_path = field_path;
+                    nested_path.push_back(static_cast<std::uint32_t>(field_index));
+                    lower_enum_payload_product_pattern(
+                        payload.elements[i],
+                        payload_type.field_types[field_index],
+                        lowered_arm,
+                        payload_index,
+                        std::move(nested_path));
+                }
+                return;
+            }
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+            case PatternKind::EnumCase:
+            case PatternKind::Or:
+                fail(payload.loc,
+                     "nested aggregate enum payload patterns currently support value bindings, aliases, wildcards, and product subpatterns");
+        }
+        fail(payload.loc, "unsupported nested aggregate enum payload pattern");
     }
 
     static void add_compact_enum_payload_binding(IrMatchArm& arm,

@@ -277,6 +277,10 @@ IrType replay_type_ref(const TypeRef& ref,
                primitive(IrPrimitiveKind::String, "string") ||
                primitive(IrPrimitiveKind::Zone, "Zone") ||
                primitive(IrPrimitiveKind::MetaType, "type")) {
+    } else if (ref.name == "Tuple") {
+        type.primitive = IrPrimitiveKind::Tuple;
+    } else if (ref.name == "Array") {
+        type.primitive = IrPrimitiveKind::Array;
     } else if (ref.name == "Vec") {
         type.primitive = IrPrimitiveKind::Vector;
     } else if (context.enums.count(ref.name)) {
@@ -748,6 +752,10 @@ IrPayloadBinding replay_payload_binding(const ModuleCacheIrPayloadBindingSummary
     binding.index = to_u32(summary.index, "payload binding index");
     binding.name = summary.name;
     binding.type = replay_type(summary.type, context);
+    binding.field_path.reserve(summary.field_path.size());
+    for (std::uint64_t field : summary.field_path) {
+        binding.field_path.push_back(to_u32(field, "payload binding field index"));
+    }
     binding.compact_enum_payload = summary.compact_enum_payload;
     binding.compact_enum_type = replay_type(summary.compact_enum_type, context);
     binding.compact_enum_payload_index =

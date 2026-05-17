@@ -111,7 +111,9 @@ Aggregate enum payload slots currently accept integer, bool, pointer-shaped
 values such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values,
 nested aggregate-enum values, and plain Ari-layout tuple, fixed-array, or
 struct values. Plain aggregate payloads occupy the full payload slot and can be
-bound as full values in `match` arms. If one payload position mixes
+bound as full values in `match` arms, or destructured with tuple, fixed-array,
+or struct payload subpatterns that contain value bindings, aliases, wildcards,
+and nested product subpatterns. If one payload position mixes
 payload-word values with one nested aggregate enum type, the slot uses the
 nested enum layout. Payload-word cases zero-initialize that nested storage and
 write the payload word into the nested enum's first payload slot, while nested

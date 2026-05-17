@@ -2533,6 +2533,22 @@ private:
         return cast_value(payload, target);
     }
 
+    Value emit_payload_binding_field_path(SourceLocation loc,
+                                          Value value,
+                                          const std::vector<std::uint32_t>& field_path) {
+        for (std::uint32_t field_index : field_path) {
+            const std::vector<IrType>& fields = ari_aggregate_field_types(value.ir_type);
+            if (field_index >= fields.size()) {
+                throw CompileError(where(loc) + ": enum payload binding field path is out of range during LLVM lowering");
+            }
+            std::string field = temp();
+            line("  " + field + " = extractvalue " + value.type + " " + value.name +
+                 ", " + std::to_string(field_index));
+            value = Value{llvm_type(fields[field_index]), field, fields[field_index]};
+        }
+        return value;
+    }
+
     Value payload_literal_test_value(SourceLocation loc, Value payload) {
         IrType target = enum_payload_storage_type(loc);
         if (enum_payload_slot_uses_scalar_lane(payload.ir_type, target)) {
@@ -2571,6 +2587,7 @@ private:
                           binding.compact_enum_payload_index
                       )
                     : emit_enum_payload_slot(arm.loc, enum_value, binding.index);
+                payload = emit_payload_binding_field_path(arm.loc, payload, binding.field_path);
                 payload = cast_enum_payload_slot_to_type(arm.loc, payload, binding.type);
                 line("  store " + payload.type + " " + payload.name + ", ptr " + local_slot(arm.loc, binding.name));
             }

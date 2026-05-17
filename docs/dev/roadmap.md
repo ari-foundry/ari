@@ -51,8 +51,9 @@ changing the long-term language contract.
 3. Expand aggregate enum payload storage.
    Current aggregate enum payloads now cover scalar/pointer-shaped slots,
    one-word enums, nested aggregate enums, and plain Ari-layout tuple,
-   fixed-array, and struct payload values. Define fixed-capacity vector and
-   owned payload values after their non-local ABI/storage rules are stable.
+   fixed-array, and struct payload values, with value-binding product
+   subpatterns over those plain aggregate slots. Define fixed-capacity vector
+   and owned payload values after their non-local ABI/storage rules are stable.
    Define payload-bearing `@repr(C)` enum layout and C header emission after
    that ABI is stable.
 

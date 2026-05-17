@@ -185,6 +185,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   and struct payload values inline. Match payload bindings and direct payload
   slot access expose the full aggregate value while vector and owned payload
   storage stay planned behind their ABI rules.
+- Enum patterns can destructure inline plain-aggregate payload slots with
+  tuple, fixed-array, and struct subpatterns for value bindings, aliases,
+  wildcards, and nested product subpatterns.
 - Aggregate enum payload slot access through `value.0` and `(*raw_enum).0`
   addresses payload slot 0 rather than the hidden tag field on local and
   raw-pointer-backed ABI paths.

@@ -165,6 +165,8 @@ Checklist:
       caller-provided result storage
 - [x] store plain tuple, fixed-array, and struct values inline in aggregate
       enum payload slots
+- [x] bind plain aggregate enum payload slots through tuple, fixed-array, and
+      struct payload subpatterns
 - [x] materialize discarded LLVM aggregate-returning direct and
       function-pointer calls into hidden temporaries
 - [x] preserve LLVM caller pointer bases while aggregate-valued

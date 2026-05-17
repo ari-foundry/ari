@@ -28,6 +28,7 @@ struct ModuleCacheIrPayloadBindingSummary {
     std::uint64_t index = 0;
     std::string name;
     std::string type;
+    std::vector<std::uint64_t> field_path;
     bool compact_enum_payload = false;
     std::string compact_enum_type;
     std::uint64_t compact_enum_payload_index = 0;

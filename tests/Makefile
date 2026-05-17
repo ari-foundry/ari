@@ -1456,7 +1456,7 @@ check-modules: $(TARGET)
 	if $(TARGET) -Itests/packages tests/ok/package-cache-layout-types-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.ll >$(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.err 2>&1; then exit 1; fi
 	grep -Fq "IR layout descriptor mismatch for Vec[i64; 5]" $(BUILD_DIR)/modules/package-cache-layout-types-layout-tampered.err
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari -o $(BUILD_DIR)/modules/package-cache-body.elf
-	$(BUILD_DIR)/modules/package-cache-body.elf; code=$$?; test $$code -eq 14
+	$(BUILD_DIR)/modules/package-cache-body.elf; code=$$?; test $$code -eq 31
 	$(TARGET) -Itests/packages tests/ok/package-cache-indirect-call-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-indirect-call.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-indirect-call-cache.ll
 	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache
 	grep -q "13:indirect-call" $(BUILD_DIR)/modules/package-cache-indirect-call.aricache

@@ -24,21 +24,21 @@ fn make_struct(left: i64, right: i64) -> StructPacket {
 
 fn score_struct(value: StructPacket) -> i64 {
   return match value {
-    StructValue(pair) => pair.left + pair.right,
+    StructValue(Pair { left: left, right: right }) => left + right,
     StructEmpty => 0;
   };
 }
 
 fn score_tuple(value: TuplePacket) -> i64 {
   return match value {
-    TupleValue(pair) => pair.0 + pair.1,
+    TupleValue((left, right)) => left + right,
     TupleEmpty => 0;
   };
 }
 
 fn score_array(value: ArrayPacket) -> i64 {
   return match value {
-    ArrayValue(items) => items[0] + items[1] + items[2],
+    ArrayValue([first, second, third]) => first + second + third,
     ArrayEmpty => 0;
   };
 }

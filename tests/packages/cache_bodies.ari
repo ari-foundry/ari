@@ -177,6 +177,53 @@ pub fn local_binding_pattern_flow() -> i64 {
   return left + right + first + last;
 }
 
+struct PayloadPair {
+  left: i64,
+  right: i64,
+}
+
+enum PayloadStructPacket {
+  PairPayload(PayloadPair),
+  EmptyStructPayload,
+}
+
+enum PayloadTuplePacket {
+  TuplePayload((i64, i64)),
+  EmptyTuplePayload,
+}
+
+enum PayloadArrayPacket {
+  ArrayPayload([i64, 3]),
+  EmptyArrayPayload,
+}
+
+fn payload_struct_score(value: PayloadStructPacket) -> i64 {
+  return match value {
+    PairPayload(PayloadPair { left: left, right: right }) => left + right,
+    EmptyStructPayload => 0;
+  };
+}
+
+fn payload_tuple_score(value: PayloadTuplePacket) -> i64 {
+  return match value {
+    TuplePayload((left, right)) => left + right,
+    EmptyTuplePayload => 0;
+  };
+}
+
+fn payload_array_score(value: PayloadArrayPacket) -> i64 {
+  return match value {
+    ArrayPayload([first, second, third]) => first + second + third,
+    EmptyArrayPayload => 0;
+  };
+}
+
+pub fn aggregate_payload_pattern_flow() -> i64 {
+  return payload_struct_score(PairPayload(PayloadPair { left: 2, right: 3 })) +
+         payload_tuple_score(TuplePayload((4, 5))) +
+         payload_array_score(ArrayPayload([1, 1, 1]));
+}
+
 pub fn vector_body_flow() -> i64 {
   var values: Vec[i64] = [];
   values.reserve(4);
