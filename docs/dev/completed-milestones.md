@@ -43,6 +43,8 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   for nested tuple, fixed-array, and struct subpatterns, so `ref mut` nested
   element borrows can coexist when the sequence length guard proves the matched
   elements are distinct.
+- Runtime-sequence pattern irrefutability checks live in `pattern_semantics`,
+  keeping `sema.cpp` focused on lowering length guards and element bindings.
 - Enum-case reference patterns borrow addressable aggregate enum payload slots,
   including 64-bit payload-word slots and nested aggregate-enum payload slots.
 - Compact and otherwise non-addressable enum payload reference patterns are

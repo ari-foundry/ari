@@ -7495,34 +7495,6 @@ private:
         return source_type.args[0];
     }
 
-    bool runtime_sequence_array_pattern_is_irrefutable(const Pattern& pattern) const {
-        const Pattern& effective_pattern = expanded_pattern(pattern);
-        if (&effective_pattern != &pattern) return runtime_sequence_array_pattern_is_irrefutable(effective_pattern);
-        switch (pattern.kind) {
-            case PatternKind::Wildcard:
-            case PatternKind::Binding:
-                return true;
-            case PatternKind::Alias:
-                return pattern.alias_pattern &&
-                       runtime_sequence_array_pattern_is_irrefutable(*pattern.alias_pattern);
-            case PatternKind::Or:
-                for (const auto& alternative : pattern.alternatives) {
-                    if (runtime_sequence_array_pattern_is_irrefutable(alternative)) return true;
-                }
-                return false;
-            case PatternKind::Array:
-                return pattern.has_rest && pattern.elements.empty();
-            case PatternKind::IntegerLiteral:
-            case PatternKind::BoolLiteral:
-            case PatternKind::Range:
-            case PatternKind::EnumCase:
-            case PatternKind::Tuple:
-            case PatternKind::Struct:
-                return false;
-        }
-        return false;
-    }
-
     static IrExprPtr make_i64_binary_expr(SourceLocation loc,
                                           IrBinaryOp op,
                                           IrExprPtr left,

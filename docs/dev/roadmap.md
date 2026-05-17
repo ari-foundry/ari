@@ -18,7 +18,9 @@ changing the long-term language contract.
    richer identity descriptors for any replayed lowering that still depends on
    trait-resolution context.
 2. Keep sema extraction phase-oriented.
-   Prefer broad modules such as type inference, pattern semantics, ownership
+   `pattern_semantics` already owns pure pattern tree queries, or-pattern
+   expansion, positional product mapping, and runtime-sequence irrefutability
+   checks. Continue extracting broad modules such as type inference, ownership
    state, zone provenance, and IR lowering helpers. Avoid splitting one tiny
    file per syntax feature.
 3. Finish the remaining pattern binding-mode surface.

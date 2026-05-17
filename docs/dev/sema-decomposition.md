@@ -111,10 +111,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   detection, product exhaustiveness checks, product missing-case hint
   formatting, finite/symbolic product pattern domain lowering, enum match
   coverage state, enum duplicate detection, and enum exhaustiveness diagnostics
-- `pattern_semantics` for pure pattern binding/or-pattern detection, positional
-  product field mapping, or-pattern expansion helpers, and union-safe pattern
-  cloning shared by match/or-pattern normalization and sema iterator-filter
-  rewrites
+- `pattern_semantics` for pure pattern binding/or-pattern detection,
+  runtime-sequence irrefutability checks, positional product field mapping,
+  or-pattern expansion helpers, and union-safe pattern cloning shared by
+  match/or-pattern normalization and sema iterator-filter rewrites
 - `for_pattern_semantics` for irrefutable non-iterator `for` loop-head pattern
   validation shared by range, list-literal, and stored-vector loops
 - `format_string_semantics` for shared `{}` / `{:.N}` format-string parsing,
@@ -314,9 +314,9 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      table extraction.
 3. Continue extracting pattern coverage helpers into `pattern_coverage`.
    - Product rectangle math now lives in `product_coverage`.
-   - Pure pattern binding/or-pattern detection, positional tuple/array field
-     mapping for rest patterns, and expansion helpers now live in
-     `pattern_semantics`.
+   - Pure pattern binding/or-pattern detection, runtime-sequence irrefutability
+     checks, positional tuple/array field mapping for rest patterns, and
+     expansion helpers now live in `pattern_semantics`.
    - Scalar integer range interval math now lives in `pattern_coverage`,
      including signed ordering, interval merging, scalar exhaustiveness, and
      scalar fully-shadowed checks.

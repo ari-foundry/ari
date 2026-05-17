@@ -120,6 +120,32 @@ bool pattern_contains_array_pattern(const Pattern& pattern) {
     return false;
 }
 
+bool runtime_sequence_array_pattern_is_irrefutable(const Pattern& pattern) {
+    switch (pattern.kind) {
+        case PatternKind::Wildcard:
+        case PatternKind::Binding:
+            return true;
+        case PatternKind::Alias:
+            return pattern.alias_pattern &&
+                   runtime_sequence_array_pattern_is_irrefutable(*pattern.alias_pattern);
+        case PatternKind::Or:
+            for (const auto& alternative : pattern.alternatives) {
+                if (runtime_sequence_array_pattern_is_irrefutable(alternative)) return true;
+            }
+            return false;
+        case PatternKind::Array:
+            return pattern.has_rest && pattern.elements.empty();
+        case PatternKind::IntegerLiteral:
+        case PatternKind::BoolLiteral:
+        case PatternKind::Range:
+        case PatternKind::EnumCase:
+        case PatternKind::Tuple:
+        case PatternKind::Struct:
+            return false;
+    }
+    return false;
+}
+
 std::vector<Pattern> expand_or_pattern_alternatives(const Pattern& pattern) {
     if (pattern.kind == PatternKind::Or) {
         std::vector<Pattern> out;
