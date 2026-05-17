@@ -3,6 +3,7 @@
 #include "ari_builtin.hpp"
 #include "enum_payload_layout.hpp"
 #include "layout.hpp"
+#include "raw_string_pool.hpp"
 #include "slice_semantics.hpp"
 #include "symbol_mangle.hpp"
 
@@ -66,6 +67,7 @@ struct CompiledFunction {
     std::vector<std::uint8_t> code;
     std::vector<CallPatch> calls;
     std::vector<CallPatch> addresses;
+    std::vector<RawStringReference> strings;
 };
 
 class FunctionEmitter {
@@ -96,6 +98,7 @@ public:
         compiled.code = std::move(out_.bytes);
         compiled.calls = std::move(calls_);
         compiled.addresses = std::move(addresses_);
+        compiled.strings = std::move(string_refs_);
         return compiled;
     }
 
@@ -128,6 +131,7 @@ private:
     std::vector<std::size_t> return_jumps_;
     std::vector<CallPatch> calls_;
     std::vector<CallPatch> addresses_;
+    std::vector<RawStringReference> string_refs_;
     std::vector<LoopLabels> loops_;
 
     static int align_to(int value, int alignment) {
@@ -2379,7 +2383,8 @@ private:
                 emit_float_literal(expr);
                 break;
             case IrExprKind::String:
-                throw CompileError(where(expr.loc) + ": backend does not lower string values yet");
+                emit_string_literal(ir_expr_string_value(expr));
+                break;
             case IrExprKind::Bool:
                 emit_mov_reg_imm64(Reg::RAX, expr.bool_value ? 1 : 0);
                 break;
@@ -3694,6 +3699,15 @@ private:
         calls_.push_back(CallPatch{pos, name});
     }
 
+    void emit_string_literal(const std::string& value) {
+        out_.u8(0x48);
+        out_.u8(0x8D);
+        out_.u8(0x05);
+        std::size_t pos = out_.size();
+        out_.u32(0);
+        string_refs_.push_back(RawStringReference{pos, value});
+    }
+
     void emit_format_literal(const std::string& text) {
         for (unsigned char c : text) {
             emit_mov_reg_imm64(Reg::RDI, c);
@@ -4376,6 +4390,7 @@ public:
         enqueue_initial_functions();
         emit_queued_functions();
         emit_builtin_functions();
+        emit_static_data();
         patch_calls();
         return EmittedProgram{std::move(code_.bytes), std::move(symbols_)};
     }
@@ -4389,7 +4404,9 @@ private:
     std::map<std::string, IrExternAbi> extern_abis_;
     std::vector<CallPatch> global_calls_;
     std::vector<CallPatch> global_addresses_;
+    std::vector<RawStringReference> global_strings_;
     std::vector<CodeSymbol> symbols_;
+    RawStringPool string_pool_;
 
     void collect_extern_abis() {
         for (const auto& fn : program_.extern_functions) {
@@ -4448,6 +4465,12 @@ private:
             for (const auto& address : fn.addresses) {
                 global_addresses_.push_back(CallPatch{function_offsets_[fn.name] + address.imm_offset, address.name});
                 enqueue_function(address.name);
+            }
+            for (const auto& string_ref : fn.strings) {
+                global_strings_.push_back(RawStringReference{
+                    function_offsets_[fn.name] + string_ref.imm_offset,
+                    string_ref.value
+                });
             }
         }
     }
@@ -5128,6 +5151,10 @@ private:
         std::size_t panic = code_.size();
         register_builtin_aliases("ari_builtin_panic", panic);
         emit_builtin_panic();
+    }
+
+    void emit_static_data() {
+        string_pool_.patch_references(code_.bytes, global_strings_);
     }
 
     void patch_calls() {

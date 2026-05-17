@@ -308,8 +308,9 @@ var fourth = input_owned(ref mut zone)
 
 Those helpers copy the line into a tracked `String` handle owned by the
 provided zone. Use lowercase `string` for today's borrowed pointer-shaped text
-values. The `--freestanding` backend rejects line input until that backend has
-runtime string storage.
+values. The `--freestanding` backend supports static lowercase `string`
+literals, but still rejects line input until that backend has a native
+input-buffer and owned-line allocation policy.
 
 ## Assertions And Stops
 

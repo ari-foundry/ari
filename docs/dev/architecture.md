@@ -91,6 +91,13 @@ into a flat code buffer. The ELF writer then wraps that buffer as a minimal
 direct-syscall executable and can attach a `.symtab` containing Ari mangled
 function symbols.
 
+`src/raw_string_pool.cpp` owns the freestanding static string-literal pool.
+Raw codegen emits RIP-relative references while lowering expressions; the
+program emitter appends deduplicated NUL-terminated literal bytes after the
+callable code and patches those references before the ELF writer sees the final
+image. This keeps lowercase `string` literal storage separate from expression
+lowering and from the ELF container.
+
 The freestanding backend currently assumes scalar stack slots are 64 bits.
 Source-level integer width is preserved in IR so later lowering can use exact
 layouts.

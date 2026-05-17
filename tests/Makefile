@@ -164,6 +164,10 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/format-print-u64.raw >$(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/prelude/format-print-u64.out
+	$(TARGET) --freestanding tests/ok/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.raw
+	$(BUILD_DIR)/prelude/raw-string-literals.raw >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141
+	grep -qx "A" $(BUILD_DIR)/prelude/raw-string-literals.out
+	grep -qx "B" $(BUILD_DIR)/prelude/raw-string-literals.out
 	$(TARGET) tests/ok/prelude-macros.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_i64" $(BUILD_DIR)/prelude/prelude-macros.ll
 	grep -q "@ari_builtin_assert_eq_bool" $(BUILD_DIR)/prelude/prelude-macros.ll
@@ -3399,8 +3403,6 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "integer literal is too large" $(BUILD_DIR)/errors/integer-literal-too-large.err
 	if $(TARGET) --freestanding tests/errors/float-backend.ari -o $(BUILD_DIR)/errors/float-backend.elf >$(BUILD_DIR)/errors/float-backend.err 2>&1; then exit 1; fi
 	grep -q "freestanding backend does not lower f128 float operators yet" $(BUILD_DIR)/errors/float-backend.err
-	if $(TARGET) --freestanding tests/errors/string-backend.ari -o $(BUILD_DIR)/errors/string-backend.elf >$(BUILD_DIR)/errors/string-backend.err 2>&1; then exit 1; fi
-	grep -q "backend does not lower string values yet" $(BUILD_DIR)/errors/string-backend.err
 	if $(TARGET) tests/errors/class-removed.ari -o $(BUILD_DIR)/errors/class-removed.elf >$(BUILD_DIR)/errors/class-removed.err 2>&1; then exit 1; fi
 	grep -q "expected top-level declaration" $(BUILD_DIR)/errors/class-removed.err
 	if $(TARGET) tests/errors/interface-removed.ari -o $(BUILD_DIR)/errors/interface-removed.elf >$(BUILD_DIR)/errors/interface-removed.err 2>&1; then exit 1; fi

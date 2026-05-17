@@ -1,0 +1,25 @@
+fn byte_at(text: string, index: i64) -> u8 {
+  let raw: ptr u8 = text as ptr u8;
+  return ptr_load(ptr_add(raw, index));
+}
+
+fn literal() -> string {
+  return "A\n";
+}
+
+fn write_text(text: string) -> i64 {
+  write_byte(byte_at(text, 0));
+  write_byte(byte_at(text, 1));
+  return byte_at(text, 2) as i64;
+}
+
+fn main() -> i64 {
+  let text: string = literal();
+  let nul = write_text(text);
+  let other: ptr u8 = "B" as ptr u8;
+  write_byte(ptr_load(other));
+  return (byte_at(text, 0) as i64) +
+    (byte_at(text, 1) as i64) +
+    nul +
+    (ptr_load(other) as i64);
+}

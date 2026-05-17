@@ -198,19 +198,25 @@ layout consumers ask the same service for field order and byte layout. This
 keeps `size_of<T>()` / `align_of<T>()`, raw pointer aggregate addressing, LLVM
 aggregate types, and freestanding stack slots aligned on one rule set.
 
+The first freestanding runtime string-storage slice is complete too. The raw
+backend now lowers lowercase `string` literals into a per-image static byte
+pool with a trailing NUL byte, and string values lower as raw pointers to that
+storage. Those pointers can be passed through Ari calls, returned, stored in
+locals, cast to `ptr u8`/`ptr c_char`, read with raw-pointer helpers, and sent
+to `write_byte` without requiring the host C runtime. Line-oriented input still
+stays rejected on `--freestanding`; that boundary is now an input-buffer and
+owned-line policy problem, not a missing static string-literal storage path.
+
 Active Near-Term work promoted from Medium-Term and Backend Work:
 
 1. [raw-c-imports-scalar] implement the first real raw/freestanding imported
    `extern "C"` path for scalar and raw-pointer signatures only. Keep
    aggregate, varargs, platform float-C ABI, and libc discovery outside this
    slice until the scalar link/call path is boring.
-2. [raw-runtime-strings] add freestanding runtime string storage sufficient for
-   string literals, byte writes, and the currently documented line-input
-   rejection boundary without depending on the host C runtime.
-3. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
+2. [raw-dyn-dispatch] lower copyable LLVM-supported trait-object values and
    vtable-slot dispatch in the raw backend, leaving `own` and borrow-valued dyn
    data-pointer policy in Medium-Term.
-4. [raw-relocatable-objects] emit native relocatable object files for the raw
+3. [raw-relocatable-objects] emit native relocatable object files for the raw
     backend using the current Ari symbol table/export model. Treat C ABI
     relocations and host linker integration as follow-ups to `[raw-c-imports-scalar]`.
 
@@ -373,10 +379,12 @@ maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
      remains rejected at non-local boundaries until then
    - [enums] external aggregate-enum FFI ABI remains after the scalar raw C
      import path and payload-bearing C tagged-union policy are defined
-3. Add freestanding runtime string storage so raw ELF output can lower string
-   values and line input helpers without relying on the host C runtime.
-   The first storage/runtime slice moved to Near-Term `[raw-runtime-strings]`;
-   keep richer hosted IO compatibility and allocator integration as follow-ups.
+3. Add freestanding runtime string features beyond static literals. Raw ELF now
+   has static NUL-terminated lowercase `string` literal storage that works with
+   Ari calls, returns, locals, raw-pointer byte reads, and `write_byte` without
+   the host C runtime. Keep line-input buffers, owned-line allocation,
+   allocator-backed string construction, and richer hosted IO compatibility as
+   follow-ups.
 4. Lower floating-point scalar values and calls in the freestanding backend.
    Raw local `f32`/`f64` literals and assignments can now be materialized as
    IEEE bit-pattern scalar storage, and raw pointer load/store/dereference of

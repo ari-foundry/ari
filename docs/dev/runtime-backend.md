@@ -73,8 +73,11 @@ lowers to `getchar`, `read_line`/`input` lower to `fgets` over an internal
 reusable line buffer, and assertion/stop helpers lower to `exit(1)` on failure.
 On `--freestanding`, output lowers to direct Linux `write` syscalls,
 `read_byte` lowers to a direct Linux `read` syscall on stdin, and assertion/stop
-helpers use the Linux `exit` syscall. Freestanding line input is rejected until
-the raw backend has runtime string storage.
+helpers use the Linux `exit` syscall. Lowercase `string` literals lower to
+static NUL-terminated bytes in the raw image and can be consumed through Ari
+calls, returns, raw-pointer casts, byte loads, and `write_byte`. Freestanding
+line input is still rejected until the raw backend has a native input-buffer and
+owned-line allocation policy.
 
 The compiler keeps Ari-owned builtin source aliases and their `ari_builtin_*`
 symbols in one runtime table. That table is used by `extern "ari"` validation,

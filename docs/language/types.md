@@ -95,12 +95,16 @@ let label: string = "count"
 
 The default LLVM host backend lowers `string` as an `i8*`/C string pointer,
 which makes string literals useful for C FFI, context arguments, and host
-`read_line` helpers. Plain host line input returns a pointer into one internal
-reusable buffer, while `read_line_owned(ref mut Zone)`,
+`read_line` helpers. The raw `--freestanding` backend stores string literals in
+the generated image as NUL-terminated static bytes and lowers lowercase
+`string` values as raw pointers to that storage. Those literal pointers can be
+passed through Ari calls, returned, stored in locals, cast to `ptr u8` or
+`ptr c_char`, and read with raw-pointer helpers. Plain host line input returns a
+pointer into one internal reusable buffer, while `read_line_owned(ref mut Zone)`,
 `io::read_line_owned(ref mut Zone)`, `input::owned_line(ref mut Zone)`, and
 `input_owned(ref mut Zone)` copy that line into a tracked source
-`std::string::String` handle. The `--freestanding` backend still supports
-string literals only as compile-time format strings for `print` and `println`.
+`std::string::String` handle. The `--freestanding` backend still rejects line
+input until it has a native input-buffer and owned-line allocation policy.
 
 The uppercase root type `String` is now the public prelude alias for
 `std::string::String`; `std::String` names the same handle. Use lowercase
