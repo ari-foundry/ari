@@ -154,9 +154,9 @@ let ref Point { x, y: renamed } = point
 selected path ends at a field. The introduced bindings themselves are ordinary
 immutable borrow bindings, matching `let unique = ref mut cell`. Reference
 patterns over direct local `Vec[T]` storage use the same runtime length guard
-as value sequence patterns. Prefix elements before `..` can be borrowed by
-reference, and `name @ ..` binds the skipped range as a `Slice[T]` view.
-Reference suffix bindings after `..`, Slice-backed reference element patterns,
+as value sequence patterns. Prefix elements before `..` and plain named suffix
+elements after `..` can be borrowed by reference, and `name @ ..` binds the
+skipped range as a `Slice[T]` view. Slice-backed reference element patterns,
 destructuring of ownership-carrying aggregates, and nested reference binding
 modes inside match/control-flow patterns remain planned. Function parameter
 patterns support `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and

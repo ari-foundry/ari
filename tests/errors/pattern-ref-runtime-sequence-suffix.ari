@@ -1,5 +1,0 @@
-fn main() -> i64 {
-  var values: Vec[i64] = [1, 2, 3];
-  let ref [head, rest @ .., last] = values;
-  return head + last + len(rest);
-}

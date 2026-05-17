@@ -809,8 +809,8 @@ bind the skipped range as a `Slice[T]` view, as in
 `[..]` fallback arm when earlier arms are length-checked.
 Direct local `Vec[T]` reference patterns also support prefix borrows with
 `name @ ..` rest Slice bindings, for example
-`let ref [head, tail @ ..] = values`. Borrowing named suffix elements after
-`..` is still reserved for dynamic element borrow paths.
+`let ref [head, tail @ ..] = values`. Plain named suffix elements after `..`
+can be borrowed too, as in `let ref [head, middle @ .., last] = values`.
 
 ## Ownership-Qualified Types
 

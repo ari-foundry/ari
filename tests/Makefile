@@ -3415,13 +3415,11 @@ check-errors: $(TARGET) check-function-errors
 	$(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-amp-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238; fi
 	$(TARGET) tests/ok/pattern-ref-runtime-sequence-rest.ari -o $(BUILD_DIR)/errors/pattern-ref-runtime-sequence-rest.elf
-	$(BUILD_DIR)/errors/pattern-ref-runtime-sequence-rest.elf; code=$$?; test $$code -eq 42
+	$(BUILD_DIR)/errors/pattern-ref-runtime-sequence-rest.elf; code=$$?; test $$code -eq 49
 	if $(TARGET) tests/errors/pattern-ref-mut-immutable.ari -o $(BUILD_DIR)/errors/pattern-ref-mut-immutable.elf >$(BUILD_DIR)/errors/pattern-ref-mut-immutable.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow immutable binding 'value'" $(BUILD_DIR)/errors/pattern-ref-mut-immutable.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi
 	grep -q "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index" $(BUILD_DIR)/errors/pattern-ref-temporary.err
-	if $(TARGET) tests/errors/pattern-ref-runtime-sequence-suffix.ari -o $(BUILD_DIR)/errors/pattern-ref-runtime-sequence-suffix.elf >$(BUILD_DIR)/errors/pattern-ref-runtime-sequence-suffix.err 2>&1; then exit 1; fi
-	grep -q "reference runtime sequence suffix bindings after .. need dynamic element borrow paths" $(BUILD_DIR)/errors/pattern-ref-runtime-sequence-suffix.err
 	$(TARGET) tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.elf
 	$(BUILD_DIR)/errors/named-borrow-last-use.elf; code=$$?; test $$code -eq 18
 	$(TARGET) tests/ok/borrow-reborrow.ari -o $(BUILD_DIR)/errors/borrow-reborrow.elf

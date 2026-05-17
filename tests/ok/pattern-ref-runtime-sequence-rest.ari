@@ -23,9 +23,14 @@ fn main() -> i64 {
   }
 
   {
-    let ref mut [first, middle @ .., _] = values;
-    write(first, 10);
-    total = total + len(middle) + middle[0] + read_unique(first);
+    let ref [head2, middle @ .., last2] = values;
+    total = total + read(head2) + len(middle) + middle[0] + read(last2);
+  }
+
+  {
+    let ref mut [.., last] = values;
+    write(last, 3);
+    total = total + read_unique(last);
   }
 
   return total;

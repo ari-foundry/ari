@@ -6506,26 +6506,52 @@ private:
         if (pattern.kind == PatternKind::Wildcard) return;
         if (pattern.kind != PatternKind::Binding) fail_reference_pattern_shape(pattern.loc);
 
+        IrExprPtr access = make_reference_pattern_access_expr(pattern.loc, base_name, base_type, path);
+        lower_reference_binding_pattern_value_from_access(
+            pattern,
+            base_name,
+            source_type,
+            path,
+            mutable_borrow,
+            std::move(access),
+            statements,
+            has_final_field_mutability,
+            final_field_mutable,
+            final_field_label,
+            final_container_name);
+    }
+
+    void lower_reference_binding_pattern_value_from_access(const Pattern& pattern,
+                                                           const std::string& base_name,
+                                                           const IrType& source_type,
+                                                           const std::string& borrow_path,
+                                                           bool mutable_borrow,
+                                                           IrExprPtr access,
+                                                           std::vector<IrStmtPtr>& statements,
+                                                           bool has_final_field_mutability = false,
+                                                           bool final_field_mutable = true,
+                                                           const std::string& final_field_label = {},
+                                                           const std::string& final_container_name = {}) {
         LocalInfo& source = require_live_local(pattern.loc, base_name);
         require_reference_pattern_source_available(
             pattern.loc,
             base_name,
             source,
             source_type,
-            path,
+            borrow_path,
             mutable_borrow,
             has_final_field_mutability,
             final_field_mutable,
             final_field_label,
             final_container_name);
 
-        add_borrow_source(source, path, mutable_borrow);
-        borrow_context_.push_temporary(base_name, path, mutable_borrow);
+        add_borrow_source(source, borrow_path, mutable_borrow);
+        borrow_context_.push_temporary(base_name, borrow_path, mutable_borrow);
         IrExprPtr borrow = make_borrow_expr(
             pattern.loc,
             base_name,
-            path,
-            make_reference_pattern_access_expr(pattern.loc, base_name, base_type, path),
+            borrow_path,
+            std::move(access),
             mutable_borrow,
             source_type);
         IrType binding_type = borrow->type;
@@ -6605,15 +6631,6 @@ private:
         }
     }
 
-    bool reference_runtime_sequence_suffix_requires_dynamic_path(const Pattern& pattern) const {
-        if (!pattern.has_rest) return false;
-        for (std::size_t i = pattern.rest_index; i < pattern.elements.size(); ++i) {
-            const Pattern& item = expanded_pattern(pattern.elements[i]);
-            if (item.kind != PatternKind::Wildcard) return true;
-        }
-        return false;
-    }
-
     void append_reference_runtime_sequence_rest_alias(const Pattern& pattern,
                                                       const std::string& source_name,
                                                       const IrType& source_type,
@@ -6637,6 +6654,42 @@ private:
         ));
     }
 
+    void lower_reference_runtime_sequence_dynamic_element_binding(const Pattern& item,
+                                                                  const Pattern& sequence_pattern,
+                                                                  std::size_t pattern_index,
+                                                                  const std::string& base_name,
+                                                                  const IrType& source_type,
+                                                                  const IrType& element_type,
+                                                                  bool mutable_borrow,
+                                                                  std::vector<IrStmtPtr>& statements) {
+        const Pattern& effective_item = expanded_pattern(item);
+        if (effective_item.kind == PatternKind::Wildcard) return;
+        if (effective_item.kind != PatternKind::Binding) {
+            fail(effective_item.loc,
+                 "dynamic suffix reference bindings after .. currently require a plain binding name or _");
+        }
+
+        IrExprPtr access = make_ir_index_expr(
+            effective_item.loc,
+            make_local_lvalue_expr(effective_item.loc, base_name, source_type),
+            make_runtime_sequence_pattern_index_expr(
+                effective_item.loc,
+                sequence_pattern,
+                pattern_index,
+                base_name,
+                source_type
+            )
+        );
+        lower_reference_binding_pattern_value_from_access(
+            effective_item,
+            base_name,
+            element_type,
+            "",
+            mutable_borrow,
+            std::move(access),
+            statements);
+    }
+
     void lower_reference_runtime_sequence_binding_pattern_from_path(const Pattern& pattern,
                                                                     const std::string& base_name,
                                                                     const IrType& base_type,
@@ -6657,10 +6710,6 @@ private:
             fail(pattern.loc,
                  "reference pattern destructuring of ownership-carrying Vec elements is planned after ownership-through-aggregates is implemented");
         }
-        if (reference_runtime_sequence_suffix_requires_dynamic_path(pattern)) {
-            fail(pattern.elements[pattern.rest_index].loc,
-                 "reference runtime sequence suffix bindings after .. need dynamic element borrow paths");
-        }
 
         const IrType& element_type = runtime_sequence_element_type(pattern.loc, shape_type);
         std::vector<IrStmtPtr> body;
@@ -6677,6 +6726,19 @@ private:
                 local_owned_field_path(path, i),
                 mutable_borrow,
                 body);
+        }
+        if (pattern.has_rest) {
+            for (std::size_t i = pattern.rest_index; i < pattern.elements.size(); ++i) {
+                lower_reference_runtime_sequence_dynamic_element_binding(
+                    pattern.elements[i],
+                    pattern,
+                    i,
+                    base_name,
+                    shape_type,
+                    element_type,
+                    mutable_borrow,
+                    body);
+            }
         }
 
         IrExprPtr condition = lower_runtime_sequence_pattern_length_condition(pattern, base_name, shape_type);
