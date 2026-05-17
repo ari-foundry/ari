@@ -148,6 +148,7 @@ let ref [head, tail]: [i64, 2] = values
 let ref [head, rest @ ..] = vec_values
 let ref mut [first, middle @ .., _] = vec_values
 let ref Point { x, y: renamed } = point
+let ref Full(payload) = maybe_wide
 ```
 
 `ref mut` requires a mutable source binding and mutable struct field when the
@@ -164,7 +165,10 @@ pointer/length pair. Destructuring of ownership-carrying aggregates, nested
 modes inside match/control-flow patterns remain planned. Function parameter
 patterns support `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and
 `&mut PATTERN: T` for the same name, wildcard, tuple, fixed-array, struct, and
-`Slice[T]` runtime-sequence shapes.
+`Slice[T]` runtime-sequence shapes. Enum-case reference patterns work when the
+matched enum stores the payload in an addressable aggregate slot, such as an
+`i64`/`u64` payload-word slot or a nested aggregate-enum payload slot. Compact
+small payloads remain value-only.
 
 The `[a, b]` pattern spelling works for fixed arrays and for runtime sequence
 subjects such as local `Vec[T]` storage and `Slice[T]` views. On `Vec[T]` and

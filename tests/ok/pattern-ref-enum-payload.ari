@@ -1,0 +1,74 @@
+enum MaybeWide {
+  Empty,
+  Full(i64),
+}
+
+enum Inner {
+  InnerEmpty,
+  Wide(i64),
+}
+
+enum Outer {
+  Missing,
+  Wrap(Inner),
+  Pair(Inner, Inner),
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn read_unique(value: ref mut i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn inner_score(value: ref Inner) -> i64 {
+  let raw: ptr Inner = value as ptr Inner;
+  let copy = *raw;
+  return match copy {
+    Wide(amount) => amount,
+    InnerEmpty => 0;
+  };
+}
+
+fn param_payload(ref Full(amount): MaybeWide) -> i64 {
+  return read(amount);
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  var item: MaybeWide = Full(40);
+  let ref Full(payload) = item;
+  total = total + read(payload);
+
+  {
+    let ref mut Full(unique) = item;
+    write(unique, 2);
+    total = total + read_unique(unique);
+  }
+
+  let ref Full(after) = item;
+  total = total + read(after) + param_payload(item);
+
+  let empty: MaybeWide = Empty;
+  let ref Empty = empty;
+  total = total + 1;
+
+  let outer: Outer = Wrap(Wide(7));
+  let ref Wrap(inner) = outer;
+  total = total + inner_score(inner);
+
+  let pair: Outer = Pair(Wide(3), Wide(4));
+  let ref Pair(left, right) = pair;
+  total = total + inner_score(left) + inner_score(right);
+
+  return total;
+}

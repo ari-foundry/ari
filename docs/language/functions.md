@@ -348,10 +348,12 @@ reference parameter patterns over by-value parameter storage, matching local
 `let ref` / `let ref mut` / `let &` / `let &mut` aggregate patterns. Direct
 local `Vec[T]` and function-entry `Slice[T]` reference sequence patterns also
 support shared nested element borrows and `name @ ..` rest Slice bindings.
-Owning or borrow-valued parameter patterns, enum-payload reference bindings, nested
-reference binding modes inside subpatterns, `ref mut` nested dynamic sequence
-subpatterns, and standalone `mut` binding-mode patterns remain rejected. Trait
-and extern function signatures must keep named parameters.
+Function-entry enum-case reference patterns can borrow addressable aggregate
+enum payload slots. Owning or borrow-valued parameter patterns, compact
+non-addressable enum-payload reference bindings, nested reference binding modes
+inside subpatterns, `ref mut` nested dynamic sequence subpatterns, and
+standalone `mut` binding-mode patterns remain rejected. Trait and extern
+function signatures must keep named parameters.
 
 ## Borrow Returns
 

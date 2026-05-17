@@ -23,9 +23,10 @@ changing the long-term language contract.
    file per syntax feature.
 3. Finish the remaining pattern binding-mode surface.
    Implement nested reference binding modes inside match/control-flow patterns,
-   enum-payload reference bindings, ownership-aware binding modes through
-   aggregate, enum, slice, and vector patterns, and precise `ref mut`
-   dynamic runtime-sequence subpaths for nested element subpatterns.
+   compact/non-addressable enum-payload reference diagnostics, ownership-aware
+   binding modes through aggregate, enum, slice, and vector patterns, and
+   precise `ref mut` dynamic runtime-sequence subpaths for nested element
+   subpatterns.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
 4. Expand aggregate enum payload storage.

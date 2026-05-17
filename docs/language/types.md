@@ -949,8 +949,9 @@ slice supports name, wildcard, tuple, fixed-array, and struct local patterns
 over tracked local places. Function parameter patterns support the same
 `ref PATTERN: T` / `ref mut PATTERN: T` and `&PATTERN: T` / `&mut PATTERN: T`
 forms over hidden function-entry parameter storage. Runtime sequence rest
-aliases, enum payload reference bindings, and nested reference binding modes
-inside subpatterns remain planned.
+aliases and addressable aggregate enum payload slots can be borrowed by
+reference. Compact/non-addressable enum payloads and nested reference binding
+modes inside match/control-flow subpatterns remain planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

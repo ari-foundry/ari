@@ -318,6 +318,19 @@ let Rgb(red, green, blue) = color
 let Gray(..) = shade
 ```
 
+Reference binding mode can borrow addressable payload slots directly:
+
+```ari
+let ref Full(payload) = maybe_wide
+let ref Pair(left, right) = nested_pair
+```
+
+This form takes the same panic path when the active case does not match. It is
+available for aggregate-layout enum payload slots that have an addressable
+payload location, including 64-bit payload-word slots and nested aggregate-enum
+slots. Compact small payloads remain value-only because their payload lives
+inside the tag word rather than in a separate slot.
+
 These declaration patterns are refutable. If the value is a different enum
 case, Ari takes the panic path. Use `if let` or `match` when the failure path
 needs its own program logic. The payload binding follows the declaration

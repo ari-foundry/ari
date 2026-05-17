@@ -6635,6 +6635,10 @@ private:
                 lower_reference_struct_binding_pattern_from_path(
                     pattern, base_name, base_type, source_type, path, mutable_borrow, statements);
                 return;
+            case PatternKind::EnumCase:
+                lower_reference_enum_binding_pattern_from_path(
+                    pattern, base_name, base_type, source_type, path, mutable_borrow, statements);
+                return;
             default:
                 fail_reference_pattern_shape(pattern.loc);
         }
@@ -7089,6 +7093,184 @@ private:
                 field_name,
                 shape_type.name);
         }
+    }
+
+    static bool is_enum_payload_word_reference_type(const IrType& type) {
+        if (type.qualifier != TypeQualifier::Value) return false;
+        return type.primitive == IrPrimitiveKind::I64 ||
+               type.primitive == IrPrimitiveKind::U64;
+    }
+
+    std::string enum_payload_reference_storage_path(SourceLocation loc,
+                                                    const IrType& enum_type,
+                                                    std::uint32_t payload_index,
+                                                    const IrType& payload_type,
+                                                    const std::string& payload_path) const {
+        std::size_t storage_field_index = static_cast<std::size_t>(payload_index) + 1;
+        if (storage_field_index >= enum_type.field_types.size()) {
+            throw CompileError(where(loc) + ": internal error: enum payload reference index out of range");
+        }
+        const IrType& slot_type = enum_type.field_types[storage_field_index];
+        if (same_type(slot_type, payload_type)) return payload_path;
+        if (enum_payload_slot_uses_scalar_lane(slot_type, payload_type) &&
+            is_enum_payload_word_reference_type(payload_type)) {
+            return local_owned_field_path(payload_path, 1);
+        }
+        if (same_type(slot_type, enum_payload_storage_type(loc)) &&
+            is_enum_payload_word_reference_type(payload_type)) {
+            return payload_path;
+        }
+        fail(loc,
+             "enum payload reference binding for " + type_name(payload_type) +
+                 " requires an addressable aggregate enum payload slot");
+    }
+
+    void lower_reference_enum_payload_slot_pattern(const Pattern& payload,
+                                                   const IrType& enum_type,
+                                                   const IrType& payload_type,
+                                                   std::uint32_t payload_index,
+                                                   const std::string& base_name,
+                                                   const IrType& base_type,
+                                                   const std::string& enum_path,
+                                                   bool mutable_borrow,
+                                                   std::vector<IrStmtPtr>& statements) {
+        std::string payload_path = local_owned_field_path(enum_path, static_cast<std::size_t>(payload_index) + 1);
+        std::string storage_path = enum_payload_reference_storage_path(
+            payload.loc,
+            enum_type,
+            payload_index,
+            payload_type,
+            payload_path);
+        lower_reference_binding_pattern_from_path(
+            payload,
+            base_name,
+            base_type,
+            payload_type,
+            storage_path,
+            mutable_borrow,
+            statements);
+    }
+
+    void lower_reference_enum_payload_patterns(const Pattern& pattern,
+                                               const EnumCaseInfo& case_info,
+                                               const std::string& base_name,
+                                               const IrType& base_type,
+                                               const std::string& enum_path,
+                                               bool mutable_borrow,
+                                               std::vector<IrStmtPtr>& statements) {
+        if (case_info.payloads.empty()) return;
+        if (!has_aggregate_enum_layout(case_info.enum_type)) {
+            fail(pattern.loc,
+                 "enum payload reference bindings require an aggregate enum payload layout");
+        }
+        if (!pattern.payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+        }
+
+        const Pattern& payload = *pattern.payload_pattern;
+        if (case_info.payloads.size() > 1) {
+            if (payload.kind != PatternKind::Tuple) {
+                fail(payload.loc, "multi-payload enum reference patterns must use positional payload patterns");
+            }
+            require_tuple_pattern_arity(payload, case_info.enum_type, case_info.payloads);
+            std::size_t suffix_count = payload.has_rest ? payload.elements.size() - payload.rest_index : 0;
+            for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+                std::size_t payload_index = i;
+                if (payload.has_rest && i >= payload.rest_index) {
+                    payload_index = case_info.payloads.size() - suffix_count + (i - payload.rest_index);
+                }
+                lower_reference_enum_payload_slot_pattern(
+                    payload.elements[i],
+                    case_info.enum_type,
+                    case_info.payloads[payload_index],
+                    static_cast<std::uint32_t>(payload_index),
+                    base_name,
+                    base_type,
+                    enum_path,
+                    mutable_borrow,
+                    statements);
+            }
+            return;
+        }
+
+        if (payload.kind == PatternKind::Tuple && payload.has_rest && payload.elements.empty()) return;
+        lower_reference_enum_payload_slot_pattern(
+            payload,
+            case_info.enum_type,
+            case_info.payloads[0],
+            0,
+            base_name,
+            base_type,
+            enum_path,
+            mutable_borrow,
+            statements);
+    }
+
+    void lower_reference_enum_binding_pattern_from_path(const Pattern& pattern,
+                                                        const std::string& base_name,
+                                                        const IrType& base_type,
+                                                        const IrType& source_type,
+                                                        const std::string& path,
+                                                        bool mutable_borrow,
+                                                        std::vector<IrStmtPtr>& statements) {
+        IrType enum_value_type = value_qualified_type(source_type);
+        if (!is_value_enum_type(enum_value_type)) {
+            fail(pattern.loc, "enum reference binding pattern requires an enum value, got " + type_name(source_type));
+        }
+        auto enum_found = enums_.find(enum_value_type.name);
+        if (enum_found == enums_.end()) {
+            fail(pattern.loc, "unknown enum type '" + enum_value_type.name + "'");
+        }
+
+        std::string case_name = resolve_enum_case_name(pattern.case_name);
+        auto case_found = enum_cases_.find(case_name);
+        if (case_found == enum_cases_.end()) {
+            fail(pattern.loc, "unknown enum case '" + pattern.case_name + "'");
+        }
+        EnumCaseInfo case_info = enum_case_for_match_value(pattern.loc, case_found->second, enum_value_type);
+        require_enum_case_access(pattern.loc, case_info);
+        if (case_info.enum_name != enum_found->second.name) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' does not belong to " + enum_found->second.name);
+        }
+        if (case_info.payloads.empty() && pattern.has_payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' has no payload");
+        }
+        if (!case_info.payloads.empty() && !pattern.has_payload_pattern) {
+            fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");
+        }
+
+        std::vector<IrStmtPtr> body;
+        lower_reference_enum_payload_patterns(
+            pattern,
+            case_info,
+            base_name,
+            base_type,
+            path,
+            mutable_borrow,
+            body);
+
+        IrExprPtr condition = make_bool_binary_expr(
+            pattern.loc,
+            IrBinaryOp::Eq,
+            make_enum_tag_expr(
+                pattern.loc,
+                make_reference_pattern_access_expr(pattern.loc, base_name, base_type, path)),
+            make_integer_literal(pattern.loc, i64_type(pattern.loc), case_info.tag)
+        );
+
+        TupleCheckedStmtArm success;
+        success.loc = pattern.loc;
+        success.condition = std::move(condition);
+        success.body = std::move(body);
+        TupleCheckedStmtArm failure;
+        failure.loc = pattern.loc;
+        failure.body.push_back(make_panic_stmt(pattern.loc));
+        std::vector<TupleCheckedStmtArm> checked_arms;
+        checked_arms.reserve(2);
+        checked_arms.push_back(std::move(success));
+        checked_arms.push_back(std::move(failure));
+        std::vector<IrStmtPtr> lowered = build_tuple_match_if_chain(checked_arms);
+        for (auto& statement : lowered) statements.push_back(std::move(statement));
     }
 
     void check_reference_pattern_var_decl(const Stmt& stmt, IrStmt& lowered) {
