@@ -15,6 +15,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - User-defined `meta fn` macro syntax covers expression, item, type, pattern,
   and attribute-position `ident!(...)` expansion for the documented bounded
   token-stream and explicit AST-constructor subset.
+- Pattern-position macro output feeds the shared pattern lowering path after
+  expansion, including match-arm or-pattern normalization, coverage, payload
+  binding, and reference-binding detection.
 - Declaration-returning `ast -> ast` macros can inspect generic, parameter,
   field, enum-case, method, associated-type, trait, return, and witness
   summaries. `meta_ident!(...)` inside `decl!(...)` supports generated

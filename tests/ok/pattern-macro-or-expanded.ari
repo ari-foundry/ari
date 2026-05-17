@@ -1,0 +1,28 @@
+meta fn identity_pattern(input: token_stream) -> token_stream {
+  return input;
+}
+
+meta fn some_pattern(input: ast) -> ast {
+  return pattern!(Some(input));
+}
+
+enum MaybeI64 {
+  None,
+  Some(i64),
+  Other(i64),
+}
+
+fn score(value: MaybeI64) -> i64 {
+  return match value {
+    some_pattern!(payload) | identity_pattern!(Other(payload)) => {
+      payload
+    }
+    None => {
+      3
+    }
+  };
+}
+
+fn main() -> i64 {
+  return score(Some(10)) + score(Other(20)) + score(None());
+}

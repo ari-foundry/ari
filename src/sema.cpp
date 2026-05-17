@@ -1716,6 +1716,18 @@ private:
         return found->second;
     }
 
+    std::vector<Pattern> expanded_or_pattern_alternatives(const Pattern& pattern) const {
+        return expand_or_pattern_alternatives(expanded_pattern(pattern));
+    }
+
+    bool expanded_pattern_contains_or(const Pattern& pattern) const {
+        return pattern_contains_or(expanded_pattern(pattern));
+    }
+
+    bool expanded_pattern_has_reference_binding_mode(const Pattern& pattern) const {
+        return pattern_has_reference_binding_mode(expanded_pattern(pattern));
+    }
+
     static bool pattern_tree_has_macro_invocation(const Pattern& pattern) {
         if (pattern.is_macro_invocation) return true;
         if (pattern.payload_pattern && pattern_tree_has_macro_invocation(*pattern.payload_pattern)) return true;
@@ -8209,9 +8221,9 @@ private:
             return;
         }
         if (is_runtime_sequence_pattern_subject(source_type) && pattern_contains_array_pattern(pattern)) {
-            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
+            std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(pattern);
             std::set<std::string> reusable_names;
-            if (pattern_contains_or(pattern)) {
+            if (expanded_pattern_contains_or(pattern)) {
                 reusable_names = require_same_or_pattern_bindings(pattern.loc, alternatives, source_type);
             }
 
@@ -8507,9 +8519,9 @@ private:
             fail(pattern.loc, "aggregate binding pattern requires tuple, array, or struct value");
         }
 
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
+        std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(pattern);
         std::set<std::string> reusable_names;
-        if (pattern_contains_or(pattern)) {
+        if (expanded_pattern_contains_or(pattern)) {
             reusable_names = require_same_or_pattern_bindings(pattern.loc, alternatives, source_type);
         }
 
@@ -10300,8 +10312,8 @@ private:
         if (&effective_pattern != &pattern) {
             return lower_match_arm_patterns(effective_pattern, enum_info, enum_value_type, coverage);
         }
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
-        if (pattern_contains_or(pattern)) {
+        std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(pattern);
+        if (expanded_pattern_contains_or(pattern)) {
             require_same_or_pattern_bindings(pattern.loc, alternatives, enum_match_value_type(pattern.loc, enum_value_type));
         }
 
@@ -11404,8 +11416,8 @@ private:
         if (&effective_pattern != &pattern) {
             return lower_scalar_match_arm_patterns(effective_pattern, match_type, coverage);
         }
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
-        if (pattern_contains_or(pattern)) {
+        std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(pattern);
+        if (expanded_pattern_contains_or(pattern)) {
             require_same_or_pattern_bindings(pattern.loc, alternatives, match_type);
         }
 
@@ -12590,7 +12602,7 @@ private:
         push_scope();
         declare_match_arm_bindings(ir_stmt_match_arms(*ir_stmt_statements(lowered).back()).front());
         std::vector<IrStmtPtr> then_prelude;
-        if (pattern_has_reference_binding_mode(condition_pattern)) {
+        if (expanded_pattern_has_reference_binding_mode(condition_pattern)) {
             lower_explicit_reference_bindings_from_path(
                 condition_pattern,
                 subject_name,
@@ -12666,9 +12678,9 @@ private:
         declare_local(stmt.loc, subject_name, subject_type, false);
         ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(condition_pattern);
+        std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(condition_pattern);
         std::set<std::string> reusable_names;
-        if (pattern_contains_or(condition_pattern)) {
+        if (expanded_pattern_contains_or(condition_pattern)) {
             reusable_names = require_same_or_pattern_bindings(condition_pattern.loc, alternatives, subject_type);
         }
 
@@ -12838,9 +12850,9 @@ private:
                 fail(arm.pattern.loc, "unreachable match arm after irrefutable pattern");
             }
 
-            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+            std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
-            if (pattern_contains_or(arm.pattern)) {
+            if (expanded_pattern_contains_or(arm.pattern)) {
                 reusable_names = require_same_or_pattern_bindings(arm.pattern.loc, alternatives, subject_type);
             }
 
@@ -12953,7 +12965,7 @@ private:
         IrType enum_value_type = lowered.match_value->type;
         bool needs_reference_pattern_bindings = false;
         for (const auto& arm : source_arms) {
-            if (pattern_has_reference_binding_mode(arm.pattern)) {
+            if (expanded_pattern_has_reference_binding_mode(arm.pattern)) {
                 needs_reference_pattern_bindings = true;
                 break;
             }
@@ -12990,9 +13002,9 @@ private:
 
         IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(*match_target);
         for (const auto& arm : source_arms) {
-            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+            std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
-            if (pattern_contains_or(arm.pattern)) {
+            if (expanded_pattern_contains_or(arm.pattern)) {
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
@@ -13010,7 +13022,7 @@ private:
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
-                if (needs_reference_pattern_bindings && pattern_has_reference_binding_mode(alternative)) {
+                if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
                         subject_name,
@@ -13071,7 +13083,7 @@ private:
         IrType match_type = lowered.match_value->type;
         bool needs_reference_pattern_bindings = false;
         for (const auto& arm : source_arms) {
-            if (pattern_has_reference_binding_mode(arm.pattern)) {
+            if (expanded_pattern_has_reference_binding_mode(arm.pattern)) {
                 needs_reference_pattern_bindings = true;
                 break;
             }
@@ -13108,9 +13120,9 @@ private:
 
         IrStmtMatchArms& lowered_arms = ensure_ir_stmt_match_arms(*match_target);
         for (const auto& arm : source_arms) {
-            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+            std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
-            if (pattern_contains_or(arm.pattern)) {
+            if (expanded_pattern_contains_or(arm.pattern)) {
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
@@ -13124,7 +13136,7 @@ private:
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
-                if (needs_reference_pattern_bindings && pattern_has_reference_binding_mode(alternative)) {
+                if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
                         subject_name,
@@ -13334,7 +13346,7 @@ private:
         std::size_t saved_warning_count = warnings_.size();
 
         for (std::size_t i = 0; i < alternatives.size(); ++i) {
-            if (!pattern_has_reference_binding_mode(alternatives[i])) continue;
+            if (!expanded_pattern_has_reference_binding_mode(alternatives[i])) continue;
             restore_states(saved_state);
             local_scopes_.restore_name_state(saved_name_state);
             std::size_t borrow_mark = temporary_borrow_mark();
@@ -13369,7 +13381,7 @@ private:
         set_ir_stmt_label(lowered, label);
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         const bool needs_reference_pattern_bindings =
-            pattern_has_reference_binding_mode(condition_pattern);
+            expanded_pattern_has_reference_binding_mode(condition_pattern);
         if (needs_reference_pattern_bindings && pattern_has_mutable_reference_binding_mode(condition_pattern)) {
             fail(condition_pattern.loc,
                  "enum while-let mutable reference binding modes are planned after addressable enum match storage is lowered");
@@ -13380,7 +13392,7 @@ private:
         std::string reference_subject_name;
         const Pattern* reference_pattern = nullptr;
         if (needs_reference_pattern_bindings) {
-            reference_alternatives = expand_or_pattern_alternatives(condition_pattern);
+            reference_alternatives = expanded_or_pattern_alternatives(condition_pattern);
             if (reference_alternatives.empty()) {
                 throw CompileError(where(condition_pattern.loc) + ": internal error: enum while-let reference pattern missing alternatives");
             }
@@ -13618,9 +13630,9 @@ private:
         declare_local(stmt.loc, subject_name, subject_type, false);
         ir_stmt_loop_body(lowered).push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(condition_pattern);
+        std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(condition_pattern);
         std::set<std::string> reusable_names;
-        if (pattern_contains_or(condition_pattern)) {
+        if (expanded_pattern_contains_or(condition_pattern)) {
             reusable_names = require_same_or_pattern_bindings(condition_pattern.loc, alternatives, subject_type);
         }
 
@@ -13862,7 +13874,7 @@ private:
                 }
                 return;
             case PatternKind::Or: {
-                std::vector<Pattern> alternatives = expand_or_pattern_alternatives(pattern);
+                std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(pattern);
                 require_same_or_pattern_bindings(pattern.loc, alternatives, value_type);
                 for (const auto& alternative : alternatives) {
                     require_supported_for_iterator_pattern(alternative, value_type);
@@ -15815,9 +15827,9 @@ private:
                 fail(arm.pattern.loc, "unreachable match arm after irrefutable pattern");
             }
 
-            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+            std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
-            if (pattern_contains_or(arm.pattern)) {
+            if (expanded_pattern_contains_or(arm.pattern)) {
                 reusable_names = require_same_or_pattern_bindings(arm.pattern.loc, alternatives, subject_type);
             }
 
@@ -15981,7 +15993,7 @@ private:
         IrType enum_value_type = match_value->type;
         bool needs_reference_pattern_bindings = false;
         for (const auto& arm : expr_match_arms(expr)) {
-            if (pattern_has_reference_binding_mode(arm.pattern)) {
+            if (expanded_pattern_has_reference_binding_mode(arm.pattern)) {
                 needs_reference_pattern_bindings = true;
                 break;
             }
@@ -16023,9 +16035,9 @@ private:
         }
 
         for (const auto& arm : expr_match_arms(expr)) {
-            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+            std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
-            if (pattern_contains_or(arm.pattern)) {
+            if (expanded_pattern_contains_or(arm.pattern)) {
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
@@ -16045,7 +16057,7 @@ private:
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
-                if (needs_reference_pattern_bindings && pattern_has_reference_binding_mode(alternative)) {
+                if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
                         subject_name,
@@ -16149,7 +16161,7 @@ private:
         IrType match_type = ir_expr_match_value(*lowered)->type;
         bool needs_reference_pattern_bindings = false;
         for (const auto& arm : expr_match_arms(expr)) {
-            if (pattern_has_reference_binding_mode(arm.pattern)) {
+            if (expanded_pattern_has_reference_binding_mode(arm.pattern)) {
                 needs_reference_pattern_bindings = true;
                 break;
             }
@@ -16190,9 +16202,9 @@ private:
         }
 
         for (const auto& arm : expr_match_arms(expr)) {
-            std::vector<Pattern> alternatives = expand_or_pattern_alternatives(arm.pattern);
+            std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(arm.pattern);
             std::set<std::string> reusable_names;
-            if (pattern_contains_or(arm.pattern)) {
+            if (expanded_pattern_contains_or(arm.pattern)) {
                 reusable_names = require_same_or_pattern_bindings(
                     arm.pattern.loc,
                     alternatives,
@@ -16208,7 +16220,7 @@ private:
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
-                if (needs_reference_pattern_bindings && pattern_has_reference_binding_mode(alternative)) {
+                if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
                         subject_name,
@@ -16472,7 +16484,7 @@ private:
         push_scope();
         declare_match_arm_bindings(then_arms.front());
         std::vector<IrStmtPtr> then_prelude;
-        if (pattern_has_reference_binding_mode(condition_pattern)) {
+        if (expanded_pattern_has_reference_binding_mode(condition_pattern)) {
             lower_explicit_reference_bindings_from_path(
                 condition_pattern,
                 subject_name,
@@ -16621,9 +16633,9 @@ private:
             result_expected = &explicit_result_expected;
         }
 
-        std::vector<Pattern> alternatives = expand_or_pattern_alternatives(condition_pattern);
+        std::vector<Pattern> alternatives = expanded_or_pattern_alternatives(condition_pattern);
         std::set<std::string> reusable_names;
-        if (pattern_contains_or(condition_pattern)) {
+        if (expanded_pattern_contains_or(condition_pattern)) {
             reusable_names = require_same_or_pattern_bindings(condition_pattern.loc, alternatives, subject_type);
         }
 

@@ -638,7 +638,10 @@ token-tree parser. It is preserved in the AST and module summaries, checked
 against `token_stream -> token_stream` or `ast -> ast` meta functions. Empty
 and `return input;` bodies identity-expand by parsing the token tree as one
 pattern before ordinary pattern lowering; `ast -> ast` bodies that return
-`pattern!(...)` replace that input with the constructed pattern AST.
+`pattern!(...)` replace that input with the constructed pattern AST. The
+expanded pattern is the one used for match-arm or-pattern normalization,
+coverage, payload binding, and reference-binding detection, so macro-generated
+patterns behave like source-written patterns at lowering time.
 
 Macro invocation is the only parser-level token-tree expression form. A macro
 call is always an ordinary named call such as `make_tokens!(...)`; there is no

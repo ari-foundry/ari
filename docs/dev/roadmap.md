@@ -22,9 +22,11 @@ changing the long-term language contract.
    Nested shared reference binding modes now work through local/function
    parameter destructuring plus enum statement/expression `match` and enum
    `if let`/`while let` patterns, including enum `while let` or-pattern
-   alternatives. Finish mutable nested control-flow reference bindings against
-   addressable subjects and ownership-aware binding modes through aggregate,
-   enum, slice, and vector patterns.
+   alternatives. Pattern macro output now feeds the same expanded pattern path
+   before match/or-pattern lowering and reference-binding detection. Finish
+   mutable nested control-flow reference bindings against addressable subjects
+   and ownership-aware binding modes through aggregate, enum, slice, and vector
+   patterns.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
 3. Expand aggregate enum payload storage.

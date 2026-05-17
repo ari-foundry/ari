@@ -624,8 +624,11 @@ same-name/same-type or-pattern alternatives.
 Pattern-position macro invocation uses reserved Rust-style `ident!(...)`
 syntax and preserves a balanced token tree in the AST and module summaries. The
 name must resolve to a `token_stream -> token_stream` or `ast -> ast` meta
-function. Until compile-time evaluation can rewrite the input, the invocation
-is an identity transform: the token tree must parse as exactly one pattern:
+function. Empty bodies and `return input;` bodies identity-expand by parsing the
+token tree as exactly one pattern; `ast -> ast` bodies can return
+`pattern!(...)` output. Expanded pattern macro output then flows through the
+same match, or-pattern, and reference-binding machinery as source-written
+patterns:
 
 ```ari
 match value {

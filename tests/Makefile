@@ -2099,6 +2099,8 @@ check-meta: $(TARGET)
 	$(BUILD_DIR)/meta/pattern-macro-identity.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/pattern-macro-ast-return.ari -o $(BUILD_DIR)/meta/pattern-macro-ast-return.elf
 	$(BUILD_DIR)/meta/pattern-macro-ast-return.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/pattern-macro-or-expanded.ari -o $(BUILD_DIR)/meta/pattern-macro-or-expanded.elf
+	$(BUILD_DIR)/meta/pattern-macro-or-expanded.elf; code=$$?; test $$code -eq 33
 	$(TARGET) tests/ok/pattern-macro-identity.ari --emit-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache.ll
 	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/meta/pattern-macro-identity.aricache
 	$(TARGET) tests/ok/pattern-macro-identity.ari --use-module-cache $(BUILD_DIR)/meta/pattern-macro-identity.aricache --emit-llvm $(BUILD_DIR)/meta/pattern-macro-identity-cache-use.ll
