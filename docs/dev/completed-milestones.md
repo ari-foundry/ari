@@ -12,6 +12,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - `--check` runs parsing, module loading, and semantic lowering without backend
   emission for editor tooling.
 - Mutable borrow type spellings accept both `ref mut T` and `mut ref T`.
+- Built-in attribute-name classification and declaration-level `@repr(C)`
+  field/case guards live in `attribute_semantics`, keeping those front-end
+  validation rules out of the central semantic coordinator.
 - User-defined `meta fn` macro syntax covers expression, item, type, pattern,
   and attribute-position `ident!(...)` expansion for the documented bounded
   token-stream and explicit AST-constructor subset.

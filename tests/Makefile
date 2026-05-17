@@ -2143,6 +2143,8 @@ check-meta: $(TARGET)
 	grep -q "attribute '@repr(C)' currently supports only fieldless enums" $(BUILD_DIR)/meta/attribute-repr-enum-payload.err
 	if $(TARGET) tests/errors/attribute-repr-own-field.ari -o $(BUILD_DIR)/meta/attribute-repr-own-field.elf >$(BUILD_DIR)/meta/attribute-repr-own-field.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr(C)' fields cannot use own; expose ownership through an explicit ptr/ref ABI" $(BUILD_DIR)/meta/attribute-repr-own-field.err
+	if $(TARGET) tests/errors/attribute-repr-own-tuple-field.ari -o $(BUILD_DIR)/meta/attribute-repr-own-tuple-field.elf >$(BUILD_DIR)/meta/attribute-repr-own-tuple-field.err 2>&1; then exit 1; fi
+	grep -q "attribute '@repr(C)' fields cannot use own; expose ownership through an explicit ptr/ref ABI" $(BUILD_DIR)/meta/attribute-repr-own-tuple-field.err
 	if $(TARGET) tests/errors/c-header-large-aggregate-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-large-aggregate-by-value.h >$(BUILD_DIR)/meta/c-header-large-aggregate-by-value.err 2>&1; then exit 1; fi
 	grep -q "C header emission for by-value parameter Wide is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-aggregate-by-value.err
 	if $(TARGET) --target x86_64-pc-windows-msvc tests/errors/c-header-target-aggregate-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-target-aggregate-by-value.h >$(BUILD_DIR)/meta/c-header-target-aggregate-by-value.err 2>&1; then exit 1; fi

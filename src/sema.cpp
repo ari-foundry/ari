@@ -1266,17 +1266,6 @@ private:
         }
     }
 
-    static bool is_builtin_attribute(const std::string& name) {
-        return name == "derive" ||
-               name == "deprecated" ||
-               name == "export" ||
-               name == "no_mangle" ||
-               name == "borrow_return" ||
-               name == "repr" ||
-               name == "test" ||
-               name == "cfg";
-    }
-
     static void require_attribute_args(const Attribute& attr) {
         if (!attr.has_args || attr.args.empty()) {
             fail(attr.loc, "attribute '@" + attr.name + "' expects arguments");
@@ -1435,7 +1424,7 @@ private:
         std::string previous_module = current_module_name_;
         current_module_name_ = module_name;
         for (const auto& attr : attributes) {
-            if (is_builtin_attribute(attr.name)) {
+            if (is_builtin_attribute_name(attr.name)) {
                 validate_builtin_attribute(attr, target_kind);
                 continue;
             }
@@ -1450,11 +1439,11 @@ private:
         });
         for_each_struct_decl([&](const StructDecl& decl) {
             validate_attribute_list(decl.attributes, "struct", decl.module_name);
-            validate_repr_c_struct(decl);
+            validate_repr_c_struct_fields(decl);
         });
         for_each_enum_decl([&](const EnumDecl& decl) {
             validate_attribute_list(decl.attributes, "enum", decl.module_name);
-            validate_repr_c_enum(decl);
+            validate_repr_c_enum_cases(decl);
         });
         for_each_trait_decl([&](const TraitDecl& decl) {
             validate_attribute_list(decl.attributes, "trait", decl.module_name);
@@ -1572,7 +1561,7 @@ private:
                                         const MetaFunctionInfo*& rewriting_meta) {
         bool rewritten = false;
         for (const auto& attr : attributes) {
-            if (is_builtin_attribute(attr.name)) continue;
+            if (is_builtin_attribute_name(attr.name)) continue;
 
             std::string previous_module = current_module_name_;
             current_module_name_ = module_name;
@@ -1648,7 +1637,7 @@ private:
 
     void reject_rewriting_attribute_macros_on_meta_function(const FunctionDecl& fn) {
         for (const auto& attr : fn.attributes) {
-            if (is_builtin_attribute(attr.name)) continue;
+            if (is_builtin_attribute_name(attr.name)) continue;
 
             std::string previous_module = current_module_name_;
             current_module_name_ = fn.module_name;
@@ -1872,30 +1861,6 @@ private:
         for_each_impl_decl([&](const ImplDecl& impl) {
             for (const auto& method : impl.methods) validate_function_pattern_macros(method);
         });
-    }
-
-    void validate_repr_c_struct(const StructDecl& decl) const {
-        const Attribute* repr = find_attribute(decl.attributes, "repr");
-        if (!repr) return;
-        for (const auto& field : decl.fields) {
-            if (field.type.qualifier != TypeQualifier::Value &&
-                field.type.qualifier != TypeQualifier::Ref &&
-                field.type.qualifier != TypeQualifier::MutRef &&
-                field.type.qualifier != TypeQualifier::Ptr) {
-                fail(field.loc,
-                     "attribute '@repr(C)' fields cannot use own; expose ownership through an explicit ptr/ref ABI");
-            }
-        }
-    }
-
-    void validate_repr_c_enum(const EnumDecl& decl) const {
-        const Attribute* repr = find_attribute(decl.attributes, "repr");
-        if (!repr) return;
-        for (const auto& item : decl.cases) {
-            if (!item.payloads.empty()) {
-                fail(item.loc, "attribute '@repr(C)' currently supports only fieldless enums");
-            }
-        }
     }
 
     void collect_constant_decls() {

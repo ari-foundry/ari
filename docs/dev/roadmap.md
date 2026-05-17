@@ -18,9 +18,11 @@ changing the long-term language contract.
    checks, with the shared pattern-alternative set keeping or-pattern detection
    and expansion together before sema lowers bindings. Continue extracting
    broad modules such as type inference, ownership state, zone provenance, and
-   IR lowering helpers. `ownership_semantics` now owns recursive owned-field
-   state seeding for locals and stack-backed vector storage. Avoid splitting
-   one tiny file per syntax feature.
+   IR lowering helpers. `attribute_semantics` now owns built-in attribute
+   classification plus `@repr(C)` field/case guards, and
+   `ownership_semantics` now owns recursive owned-field state seeding for
+   locals and stack-backed vector storage. Avoid splitting one tiny file per
+   syntax feature.
 2. Finish the remaining pattern binding-mode surface.
    Nested shared reference binding modes now work through local/function
    parameter destructuring plus enum statement/expression `match` and enum
