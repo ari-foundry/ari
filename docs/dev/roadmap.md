@@ -112,7 +112,8 @@ dataflow recheck:
    Those proven literal-bool loop conditions are also folded into literal IR
    branch conditions during lowering.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
-     `while` and `init while` loops, including `while let`/iterator-style
+     `while`, `init while`, and irrefutable aggregate/runtime-sequence
+     `while let` loops, including refutable enum `while let`/iterator-style
      bodies and any future maybe-zero representation that can distinguish
      definitely-live from maybe-unavailable owners after loop fallthrough
 

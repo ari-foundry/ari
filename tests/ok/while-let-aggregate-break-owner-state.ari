@@ -1,0 +1,9 @@
+fn main() -> i64 {
+  let token: own i64 = 5;
+  while let (left, right) = (1, 2) {
+    let sum = left + right;
+    drop token;
+    break;
+  }
+  return 0;
+}

@@ -11720,6 +11720,86 @@ private:
         return stmt;
     }
 
+    Flow check_aggregate_while_let_alternative_body(
+        const Stmt& stmt,
+        const Pattern& alternative,
+        std::size_t alternative_index,
+        const std::set<std::string>& reusable_names,
+        const std::string& subject_name,
+        const IrType& subject_type,
+        std::vector<IrStmtPtr>& lowered_body
+    ) {
+        push_scope();
+        local_scopes_.set_reusable_pattern_bindings(
+            alternative_index == 0 ? std::set<std::string>{} : reusable_names);
+        lower_product_match_pattern_bindings_from_local(
+            alternative,
+            subject_name,
+            subject_type,
+            lowered_body
+        );
+        local_scopes_.clear_reusable_pattern_bindings();
+
+        CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
+        for (auto& statement : body.statements) {
+            lowered_body.push_back(std::move(statement));
+        }
+        if (body.flow == Flow::Returns) discard_scope();
+        else if (body.flow == Flow::Stops) discard_scope();
+        else {
+            append_current_scope_auto_destroy_cleanup(stmt.loc, lowered_body);
+            pop_scope();
+        }
+        return body.flow;
+    }
+
+    void recheck_aggregate_while_let_alternatives_under_state(
+        SourceLocation loc,
+        const Stmt& stmt,
+        const std::vector<Pattern>& alternatives,
+        const std::set<std::string>& reusable_names,
+        const std::string& subject_name,
+        const IrType& subject_type,
+        const LoopInfo& loop,
+        const StateSnapshot& recheck_state,
+        const LocalScopeStack::NameState& name_state
+    ) {
+        StateSnapshot saved_state = snapshot_states();
+        LocalScopeStack::NameState saved_name_state = local_scopes_.snapshot_name_state();
+        std::vector<LoopInfo> saved_loops = loops_;
+        std::size_t saved_warning_count = warnings_.size();
+        int saved_hidden_local_counter = hidden_local_counter_;
+        std::size_t borrow_mark = temporary_borrow_mark();
+
+        LoopInfo rechecked_loop = loop;
+        rechecked_loop.break_state_snapshots.clear();
+        rechecked_loop.continue_state_snapshots.clear();
+        push_loop(loc, std::move(rechecked_loop));
+
+        for (std::size_t i = 0; i < alternatives.size(); ++i) {
+            restore_states(recheck_state);
+            local_scopes_.restore_name_state(name_state);
+            std::vector<IrStmtPtr> ignored_body;
+            (void)check_aggregate_while_let_alternative_body(
+                stmt,
+                alternatives[i],
+                i,
+                reusable_names,
+                subject_name,
+                subject_type,
+                ignored_body
+            );
+        }
+
+        loops_.pop_back();
+        release_temporary_borrows(borrow_mark);
+        restore_states(saved_state);
+        local_scopes_.restore_name_state(std::move(saved_name_state));
+        loops_ = std::move(saved_loops);
+        warnings_.resize(saved_warning_count);
+        hidden_local_counter_ = saved_hidden_local_counter;
+    }
+
     void check_aggregate_while_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
@@ -11761,42 +11841,38 @@ private:
         }
 
         StateSnapshot loop_input = snapshot_states();
+        LocalScopeStack::NameState loop_name_state = local_scopes_.snapshot_name_state();
         LoopInfo loop;
         loop.label = label;
         push_loop(stmt.loc, loop);
 
+        std::vector<StateSnapshot> continuing_body_states;
         for (std::size_t i = 0; i < alternatives.size(); ++i) {
             restore_states(loop_input);
-            push_scope();
-            local_scopes_.set_reusable_pattern_bindings(i == 0 ? std::set<std::string>{} : reusable_names);
-            lower_product_match_pattern_bindings_from_local(
+            Flow body_flow = check_aggregate_while_let_alternative_body(
+                stmt,
                 alternatives[i],
+                i,
+                reusable_names,
                 subject_name,
                 subject_type,
                 checked_arms[i].body
             );
-            local_scopes_.clear_reusable_pattern_bindings();
-
-            CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
-            for (auto& statement : body.statements) {
-                checked_arms[i].body.push_back(std::move(statement));
-            }
-            if (body.flow == Flow::Returns) discard_scope();
-            else if (body.flow == Flow::Stops) discard_scope();
-            else {
-                append_current_scope_auto_destroy_cleanup(stmt.loc, checked_arms[i].body);
-                pop_scope();
-            }
 
             StateSnapshot loop_body_state = snapshot_states();
-            if (body.flow == Flow::Continues) {
-                require_same_states(
-                    stmt.loc,
-                    loop_input,
-                    loop_body_state,
-                    "cannot change ownership state inside loop yet"
-                );
-                restore_merged_states(loop_input, loop_body_state);
+            if (body_flow == Flow::Continues) {
+                if (has_irrefutable_alternative) {
+                    continuing_body_states.push_back(loop_body_state);
+                    restore_states(loop_input);
+                } else {
+                    require_same_states(
+                        stmt.loc,
+                        loop_input,
+                        loop_body_state,
+                        "cannot change ownership state inside loop yet"
+                    );
+                    restore_merged_states(loop_input, loop_body_state);
+                }
             } else {
                 restore_states(loop_input);
             }
@@ -11816,10 +11892,48 @@ private:
             ir_stmt_loop_body(lowered).push_back(std::move(statement));
         }
 
-        StateSnapshot exit_state = loop_input;
-        merge_continue_states(stmt.loc, exit_state, loop_state);
-        merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
-        restore_states(exit_state);
+        if (has_irrefutable_alternative) {
+            StateSnapshot exit_state = loop_exit_base_state(loop_input, loop_state, false);
+            StateSnapshot next_iteration_state = loop_input;
+            bool widened_owner_state = false;
+            merge_loop_next_iteration_states(
+                stmt.loc,
+                next_iteration_state,
+                continuing_body_states,
+                "cannot change ownership state inside loop yet",
+                true,
+                widened_owner_state
+            );
+            merge_loop_next_iteration_states(
+                stmt.loc,
+                next_iteration_state,
+                loop_state.continue_state_snapshots,
+                "has incompatible ownership states at loop continue",
+                true,
+                widened_owner_state
+            );
+            if (widened_owner_state) {
+                recheck_aggregate_while_let_alternatives_under_state(
+                    stmt.loc,
+                    stmt,
+                    alternatives,
+                    reusable_names,
+                    subject_name,
+                    subject_type,
+                    loop_state,
+                    next_iteration_state,
+                    loop_name_state
+                );
+            }
+            merge_existing_zone_generations_into(exit_state, next_iteration_state);
+            merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
+            restore_states(exit_state);
+        } else {
+            StateSnapshot exit_state = loop_input;
+            merge_continue_states(stmt.loc, exit_state, loop_state);
+            merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
+            restore_states(exit_state);
+        }
     }
 
     void bind_irrefutable_non_iterator_for_item(SourceLocation loc,
