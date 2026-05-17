@@ -564,6 +564,9 @@ Checklist:
       validate trait-vs-inherent impl origin keys when the cached source
       declares that trait method surface, and prevent duplicate lowering when
       the root directly calls cached generic APIs
+- [x] IR sidecar cache-use rejects corrupted lowered `impl::...` body call
+      targets during module-cache loading instead of letting backend symbol
+      lookup fail
 - [x] hash-valid but malformed IR sidecar replay payloads are rejected with a
       module-cache replay diagnostic before backend emission
 - [x] IR sidecar cache-use replay writes explicit `vector-storage` layout

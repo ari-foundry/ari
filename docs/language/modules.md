@@ -360,7 +360,9 @@ specialization names as
 already provided by the IR sidecar, so direct root calls into cached generic
 dependencies do not re-lower duplicate bodies before replay. Impl-method
 origins also preserve whether the lowered body came from an inherent method or a
-trait method when the cached source declares that trait method surface. Layout
+trait method when the cached source declares that trait method surface. Cached
+IR bodies validate `impl::...` call targets against the functions carried by the
+same sidecar before backend emission. Layout
 descriptors use `L;...D;...` records inside `ari-ir-summary-v0`; the current
 descriptor kind is `vector-storage`, which records the normalized
 `Vec[T; capacity]` storage type, element type, and slot count for cache-only

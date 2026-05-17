@@ -112,7 +112,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   specializations before the replayed bodies are appended. Cache loading also
   validates specialization origins, generic argument names, and locally known
   trait-vs-inherent impl origin keys against the cached AST surface before
-  replay.
+  replay. Replayed IR bodies also validate cached `impl::...` call targets
+  against the functions carried by the same sidecar, so corrupted body call
+  identities fail during module-cache loading instead of reaching backend
+  symbol lookup.
 - V0 layout descriptors live in the existing cache family. Current descriptors
   cover cache-only local `Vec[T; capacity]` storage as `vector-storage`
   entries, and cache-use tests compare fresh/cache LLVM output byte-for-byte

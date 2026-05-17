@@ -365,6 +365,108 @@ void require_ir_summary_specializations_match_ast_summary(
     }
 }
 
+void require_cached_impl_call_targets_resolve_expr(
+    const ModuleCacheIrExprSummaryPtr& expr,
+    const std::set<std::string>& lowered_function_names,
+    const std::string& function_name,
+    const std::string& path);
+
+void require_cached_impl_call_targets_resolve_stmts(
+    const std::vector<ModuleCacheIrStmtSummaryPtr>& statements,
+    const std::set<std::string>& lowered_function_names,
+    const std::string& function_name,
+    const std::string& path);
+
+void require_cached_impl_call_targets_resolve_exprs(
+    const std::vector<ModuleCacheIrExprSummaryPtr>& expressions,
+    const std::set<std::string>& lowered_function_names,
+    const std::string& function_name,
+    const std::string& path) {
+    for (const auto& expr : expressions) {
+        require_cached_impl_call_targets_resolve_expr(expr, lowered_function_names, function_name, path);
+    }
+}
+
+void require_cached_impl_call_targets_resolve_expr(
+    const ModuleCacheIrExprSummaryPtr& expr,
+    const std::set<std::string>& lowered_function_names,
+    const std::string& function_name,
+    const std::string& path) {
+    if (!expr) return;
+    if ((expr->kind == "call" || expr->kind == "function-ref") &&
+        starts_with(expr->name, "impl::") &&
+        !lowered_function_names.count(expr->name)) {
+        throw CompileError("module cache IR summary for '" + path +
+                           "' has lowered body '" + function_name +
+                           "' calling unknown cached impl function '" +
+                           expr->name + "'");
+    }
+
+    require_cached_impl_call_targets_resolve_expr(expr->operand, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_expr(expr->left, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_expr(expr->right, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_expr(expr->payload, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_exprs(expr->args, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_expr(expr->if_condition, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_stmts(expr->if_then_body, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_expr(expr->if_then_value, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_stmts(expr->if_else_body, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_expr(expr->if_else_value, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_stmts(expr->block_body, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_expr(expr->block_value, lowered_function_names, function_name, path);
+    require_cached_impl_call_targets_resolve_expr(expr->match_value, lowered_function_names, function_name, path);
+    for (const auto& arm : expr->match_arms) {
+        require_cached_impl_call_targets_resolve_stmts(arm.body, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_expr(arm.value, lowered_function_names, function_name, path);
+    }
+    require_cached_impl_call_targets_resolve_stmts(expr->try_residual_cleanup, lowered_function_names, function_name, path);
+}
+
+void require_cached_impl_call_targets_resolve_stmts(
+    const std::vector<ModuleCacheIrStmtSummaryPtr>& statements,
+    const std::set<std::string>& lowered_function_names,
+    const std::string& function_name,
+    const std::string& path) {
+    for (const auto& statement : statements) {
+        if (!statement) continue;
+        require_cached_impl_call_targets_resolve_expr(statement->binding.init, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_expr(statement->assign_target, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_expr(statement->assign_rhs, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_expr(statement->expr, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_expr(statement->condition, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_stmts(statement->statements, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_stmts(statement->then_body, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_stmts(statement->else_body, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_stmts(statement->loop_body, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_expr(statement->for_start, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_expr(statement->for_end, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_exprs(statement->for_values, lowered_function_names, function_name, path);
+        require_cached_impl_call_targets_resolve_expr(statement->match_value, lowered_function_names, function_name, path);
+        for (const auto& binding : statement->init_bindings) {
+            require_cached_impl_call_targets_resolve_expr(binding.init, lowered_function_names, function_name, path);
+        }
+        require_cached_impl_call_targets_resolve_exprs(statement->updates, lowered_function_names, function_name, path);
+        for (const auto& arm : statement->match_arms) {
+            require_cached_impl_call_targets_resolve_stmts(arm.body, lowered_function_names, function_name, path);
+        }
+        require_cached_impl_call_targets_resolve_expr(statement->break_value, lowered_function_names, function_name, path);
+    }
+}
+
+void require_ir_summary_cached_impl_calls_resolve(
+    const std::vector<ModuleCacheIrFunctionSummary>& ir_functions,
+    const std::string& path) {
+    std::set<std::string> lowered_function_names;
+    for (const auto& fn : ir_functions) lowered_function_names.insert(fn.name);
+    for (const auto& fn : ir_functions) {
+        require_cached_impl_call_targets_resolve_stmts(
+            fn.body.statements,
+            lowered_function_names,
+            fn.name,
+            path);
+    }
+}
+
 bool can_load_module_cache_declarations_with_ir_functions(
     const Program& declarations,
     const std::vector<ModuleCacheIrFunctionSummary>& ir_functions) {
@@ -415,6 +517,7 @@ ParsedModuleFile parse_file_in_module(const std::string& path,
                     ir_functions = materialize_module_cache_ir_summary_functions(*ir_summary, path);
                     require_ir_summary_covers_ast_summary_functions(declarations, ir_functions, path);
                     require_ir_summary_specializations_match_ast_summary(declarations, ir_functions, path);
+                    require_ir_summary_cached_impl_calls_resolve(ir_functions, path);
                 }
                 if (can_load_module_cache_ast_summary_declarations(declarations) ||
                     can_load_module_cache_declarations_with_ir_functions(declarations, ir_functions)) {

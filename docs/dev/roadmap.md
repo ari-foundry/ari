@@ -12,27 +12,19 @@ item as 1.0 work unless the whole language release is being scoped.
 These are the next compiler-sized slices that should be possible without
 changing the long-term language contract.
 
-1. Expand IR package-cache replay beyond generic/impl specialization replay.
-   The current V0 cache family should stay V0 until a deliberate cache version
-   bump is approved. Generic free-function and impl-method specialization
-   records now validate their origin names and generic argument names against
-   the cached AST surface before replay, including trait-vs-inherent method
-   origin keys when the cached source declares the trait method surface. The
-   next useful work is richer identity descriptors for lowered bodies that
-   still depend on trait-resolution context.
-2. Keep sema extraction phase-oriented.
+1. Keep sema extraction phase-oriented.
    `pattern_semantics` already owns pure pattern tree queries, or-pattern
    expansion, positional product mapping, and runtime-sequence irrefutability
    checks. Continue extracting broad modules such as type inference, ownership
    state, zone provenance, and IR lowering helpers. Avoid splitting one tiny
    file per syntax feature.
-3. Finish the remaining pattern binding-mode surface.
+2. Finish the remaining pattern binding-mode surface.
    Implement nested reference binding modes inside match/control-flow patterns,
    and ownership-aware binding modes through aggregate, enum, slice, and
    vector patterns.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
-4. Expand aggregate enum payload storage.
+3. Expand aggregate enum payload storage.
    Current aggregate enum payloads intentionally cover a narrow ABI-safe
    universe. Add tuple, struct, vector, and owned payload values only after
    their non-local ABI/storage rules are defined. Define payload-bearing
