@@ -797,6 +797,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/break-statement-payloads.raw; code=$$?; test $$code -eq 9
 	$(TARGET) --freestanding tests/ok/while-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-true-break-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-true-break-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/while-known-true-break-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.raw
+	$(BUILD_DIR)/control-flow/while-known-true-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/loop-break-owner-unavailable-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw
 	$(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.raw; code=$$?; test $$code -eq 13
 	$(TARGET) --freestanding tests/ok/loop-break-borrow-release-merge.ari -o $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.raw
@@ -813,6 +815,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/while-false-owner-state.ari -o $(BUILD_DIR)/control-flow/while-false-owner-state.raw
 	$(BUILD_DIR)/control-flow/while-false-owner-state.raw; code=$$?; test $$code -eq 0
+	$(TARGET) --freestanding tests/ok/while-known-false-owner-state.ari -o $(BUILD_DIR)/control-flow/while-known-false-owner-state.raw
+	$(BUILD_DIR)/control-flow/while-known-false-owner-state.raw; code=$$?; test $$code -eq 0
 	$(TARGET) --freestanding tests/ok/while-false-borrow-state.ari -o $(BUILD_DIR)/control-flow/while-false-borrow-state.raw
 	$(BUILD_DIR)/control-flow/while-false-borrow-state.raw; code=$$?; test $$code -eq 4
 	$(TARGET) tests/ok/while-true-continue-noreturn.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-continue-noreturn.ll
@@ -930,6 +934,8 @@ check-control-flow: $(TARGET)
 	grep -q "while.end" $(BUILD_DIR)/control-flow/break-statement-payloads.ll
 	$(TARGET) tests/ok/while-true-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/while-true-break-owner-state.ll
+	$(TARGET) tests/ok/while-known-true-break-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.ll
+	grep -q "while.end" $(BUILD_DIR)/control-flow/while-known-true-break-owner-state.ll
 	$(TARGET) tests/ok/loop-break-owner-unavailable-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
 	grep -q "while.end" $(BUILD_DIR)/control-flow/loop-break-owner-unavailable-merge.ll
 	$(TARGET) tests/ok/loop-break-borrow-release-merge.ari --emit-llvm $(BUILD_DIR)/control-flow/loop-break-borrow-release-merge.ll
@@ -946,6 +952,8 @@ check-control-flow: $(TARGET)
 	grep -q "br i1 1" $(BUILD_DIR)/control-flow/while-true-literal-if-break-owner-state.ll
 	$(TARGET) tests/ok/while-false-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-false-owner-state.ll
 	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-false-owner-state.ll
+	$(TARGET) tests/ok/while-known-false-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-known-false-owner-state.ll
+	grep -q "store i1 0, ptr %condition" $(BUILD_DIR)/control-flow/while-known-false-owner-state.ll
 	$(TARGET) tests/ok/while-false-borrow-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-false-borrow-state.ll
 	grep -q "br i1 0" $(BUILD_DIR)/control-flow/while-false-borrow-state.ll
 	$(TARGET) tests/ok/statement-label-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/statement-label-payloads.ll
@@ -3143,9 +3151,9 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/if-branch-state-mismatch.ari -o $(BUILD_DIR)/errors/if-branch-state-mismatch.elf >$(BUILD_DIR)/errors/if-branch-state-mismatch.err 2>&1; then exit 1; fi
 	grep -q "has incompatible ownership states after if branches" $(BUILD_DIR)/errors/if-branch-state-mismatch.err
 	if $(TARGET) tests/errors/loop-drop-owner.ari -o $(BUILD_DIR)/errors/loop-drop-owner.elf >$(BUILD_DIR)/errors/loop-drop-owner.err 2>&1; then exit 1; fi
-	grep -q "cannot change ownership state inside loop yet" $(BUILD_DIR)/errors/loop-drop-owner.err
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/loop-drop-owner.err
 	if $(TARGET) tests/errors/loop-break-owner-state.ari -o $(BUILD_DIR)/errors/loop-break-owner-state.elf >$(BUILD_DIR)/errors/loop-break-owner-state.err 2>&1; then exit 1; fi
-	grep -q "binding 'token' has incompatible ownership states after loop exits" $(BUILD_DIR)/errors/loop-break-owner-state.err
+	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/loop-break-owner-state.err
 	if $(TARGET) tests/errors/loop-continue-owner-state.ari -o $(BUILD_DIR)/errors/loop-continue-owner-state.elf >$(BUILD_DIR)/errors/loop-continue-owner-state.err 2>&1; then exit 1; fi
 	grep -q "binding 'token' has incompatible ownership states at loop continue" $(BUILD_DIR)/errors/loop-continue-owner-state.err
 	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi

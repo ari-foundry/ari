@@ -28,6 +28,13 @@ std::optional<std::string> merge_loop_state_snapshots_conservatively(
     const std::string& message
 );
 
+std::optional<std::string> merge_loop_state_snapshots_with_owner_widening(
+    StateSnapshot& merged,
+    const std::vector<StateSnapshot>& snapshots,
+    const std::string& message,
+    bool& widened_owner_state
+);
+
 StateSnapshot project_loop_state_snapshot(
     const StateSnapshot& base,
     const StateSnapshot& snapshot

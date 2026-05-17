@@ -332,6 +332,12 @@ private:
         std::vector<std::string> exit_cleanup_owner_names;
     };
 
+    struct LoopBodyRecheck {
+        const std::vector<StmtPtr>* statements = nullptr;
+        bool scoped = false;
+        LocalScopeStack::NameState name_state;
+    };
+
     struct PendingSpecialization {
         const FunctionDecl* fn = nullptr;
         std::string name;
@@ -5131,23 +5137,79 @@ private:
         merge_existing_zone_generations_into(exit_state, next_iteration_state);
     }
 
-    static StateSnapshot checked_loop_exit_state(
+    void recheck_loop_body_under_state(
+        SourceLocation loc,
+        const LoopInfo& loop,
+        const StateSnapshot& recheck_state,
+        const LoopBodyRecheck& recheck
+    ) {
+        if (!recheck.statements) {
+            fail(loc, "internal error: missing loop body for widened owner-state recheck");
+        }
+
+        StateSnapshot saved_state = snapshot_states();
+        LocalScopeStack::NameState saved_name_state = local_scopes_.snapshot_name_state();
+        std::vector<LoopInfo> saved_loops = loops_;
+        std::size_t saved_warning_count = warnings_.size();
+        int saved_hidden_local_counter = hidden_local_counter_;
+        std::size_t borrow_mark = temporary_borrow_mark();
+
+        restore_states(recheck_state);
+        local_scopes_.restore_name_state(recheck.name_state);
+
+        LoopInfo rechecked_loop = loop;
+        rechecked_loop.break_state_snapshots.clear();
+        rechecked_loop.continue_state_snapshots.clear();
+        push_loop(loc, std::move(rechecked_loop));
+        (void)check_statements(*recheck.statements, recheck.scoped);
+        loops_.pop_back();
+
+        release_temporary_borrows(borrow_mark);
+        restore_states(saved_state);
+        local_scopes_.restore_name_state(std::move(saved_name_state));
+        loops_ = std::move(saved_loops);
+        warnings_.resize(saved_warning_count);
+        hidden_local_counter_ = saved_hidden_local_counter;
+    }
+
+    StateSnapshot checked_loop_exit_state(
         SourceLocation loc,
         const StateSnapshot& loop_input,
         const StateSnapshot& loop_body_state,
         const LoopInfo& loop,
         Flow body_flow,
-        bool has_zero_iteration_exit = true
+        bool has_zero_iteration_exit = true,
+        const LoopBodyRecheck* recheck = nullptr
     ) {
         StateSnapshot exit_state = loop_exit_base_state(loop_input, loop, has_zero_iteration_exit);
         StateSnapshot next_iteration_state = loop_input;
+        const bool allow_owner_widening = !has_zero_iteration_exit && recheck && recheck->statements;
+        bool widened_owner_state = false;
+        auto merge_next_iteration_states =
+            [&](const std::vector<StateSnapshot>& snapshots, const std::string& message) {
+                if (allow_owner_widening) {
+                    if (auto error = merge_loop_state_snapshots_with_owner_widening(
+                            next_iteration_state,
+                            snapshots,
+                            message,
+                            widened_owner_state)) {
+                        fail(loc, *error);
+                    }
+                    return;
+                }
+                if (auto error = merge_loop_state_snapshots_conservatively(
+                        next_iteration_state,
+                        snapshots,
+                        message)) {
+                    fail(loc, *error);
+                }
+            };
+
         if (body_flow == Flow::Continues) {
-            if (auto error = merge_loop_state_snapshots_conservatively(
-                    next_iteration_state,
-                    std::vector<StateSnapshot>{loop_body_state},
-                    "cannot change ownership state inside loop yet")) {
-                fail(loc, *error);
-            }
+            merge_next_iteration_states(
+                std::vector<StateSnapshot>{loop_body_state},
+                "cannot change ownership state inside loop yet"
+            );
             if (has_zero_iteration_exit) {
                 if (auto error = merge_loop_state_snapshots_conservatively(
                         exit_state,
@@ -5157,7 +5219,18 @@ private:
                 }
             }
         }
-        merge_loop_continue_snapshots(loc, exit_state, std::move(next_iteration_state), loop, has_zero_iteration_exit);
+        if (has_zero_iteration_exit) {
+            merge_continue_states(loc, exit_state, loop);
+        } else {
+            merge_next_iteration_states(
+                loop.continue_state_snapshots,
+                "has incompatible ownership states at loop continue"
+            );
+            if (widened_owner_state) {
+                recheck_loop_body_under_state(loc, loop, next_iteration_state, *recheck);
+            }
+            merge_existing_zone_generations_into(exit_state, next_iteration_state);
+        }
         merge_break_exit_states(loc, exit_state, loop, "has incompatible ownership states after loop exits");
         return exit_state;
     }
@@ -5169,6 +5242,15 @@ private:
 
     static bool is_literal_true_condition(const IrExpr& condition) {
         return literal_bool_condition_value(condition).value_or(false);
+    }
+
+    std::optional<bool> known_bool_condition_value(const IrExpr& condition) {
+        if (auto literal = literal_bool_condition_value(condition)) return literal;
+        if (condition.kind != IrExprKind::Local) return std::nullopt;
+        LocalInfo* local = find_local_slot(ir_expr_name(condition));
+        if (!local || local->mutable_binding || !local->ir_init_expr) return std::nullopt;
+        if (local->ir_init_expr->kind != IrExprKind::Bool) return std::nullopt;
+        return local->ir_init_expr->bool_value;
     }
 
     static bool literal_true_loop_never_falls_through(const LoopInfo& loop, Flow body_flow) {
@@ -11477,33 +11559,37 @@ private:
     Flow check_while(const Stmt& stmt, IrStmt& lowered) {
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
-        const std::optional<bool> literal_condition = literal_bool_condition_value(*lowered.condition);
-        const bool literal_true_condition = literal_condition.value_or(false);
+        const std::optional<bool> known_condition = known_bool_condition_value(*lowered.condition);
+        const bool literal_true_condition = known_condition.value_or(false);
         StateSnapshot loop_input = snapshot_states();
+        LocalScopeStack::NameState loop_name_state = local_scopes_.snapshot_name_state();
         const std::string& label = stmt_label(stmt);
+        const std::vector<StmtPtr>& body_source = stmt_loop_body(stmt);
 
         LoopInfo loop;
         loop.label = label;
         push_loop(stmt.loc, loop);
-        CheckedStatements body = check_statements(stmt_loop_body(stmt), true);
+        CheckedStatements body = check_statements(body_source, true);
         set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
 
-        if (literal_condition && !*literal_condition) {
+        if (known_condition && !*known_condition) {
             restore_states(loop_input);
             set_ir_stmt_label(lowered, label);
             return Flow::Continues;
         }
 
+        LoopBodyRecheck recheck{&body_source, true, std::move(loop_name_state)};
         restore_states(checked_loop_exit_state(
             stmt.loc,
             loop_input,
             loop_body_state,
             loop_state,
             body.flow,
-            !literal_true_condition
+            !literal_true_condition,
+            &recheck
         ));
         set_ir_stmt_label(lowered, label);
         if (literal_true_condition && body.flow == Flow::Returns) return Flow::Returns;
@@ -12501,8 +12587,8 @@ private:
 
         lowered.condition = check_expr(*stmt.condition);
         coerce_condition_to_bool(stmt.loc, lowered.condition);
-        const std::optional<bool> literal_condition = literal_bool_condition_value(*lowered.condition);
-        const bool literal_true_condition = literal_condition.value_or(false);
+        const std::optional<bool> known_condition = known_bool_condition_value(*lowered.condition);
+        const bool literal_true_condition = known_condition.value_or(false);
         StateSnapshot loop_input = snapshot_states();
 
         push_loop(stmt.loc, loop);
@@ -12510,7 +12596,7 @@ private:
         set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
         StateSnapshot next_iteration_state = loop_input;
-        if (literal_condition && !*literal_condition) {
+        if (known_condition && !*known_condition) {
             restore_states(loop_input);
             if (!stmt.updates.empty()) {
                 lowered.updates = check_init_while_update_exprs(stmt.loc, loop, stmt.updates);

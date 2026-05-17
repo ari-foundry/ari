@@ -149,6 +149,10 @@ StateSnapshot merge_zone_generations(StateSnapshot target, const StateSnapshot& 
 class LocalScopeStack {
 public:
     using Scope = std::map<std::string, LocalInfo>;
+    struct NameState {
+        std::set<std::string> used_names;
+        std::set<std::string> reusable_pattern_binding_names;
+    };
     using LocalReleaseCallback = std::function<void(const LocalInfo&)>;
     using LocalOwnerCheckCallback = std::function<bool(const LocalInfo&)>;
     using LocalOwnerErrorCallback = std::function<void(const std::string&, const LocalInfo&)>;
@@ -188,6 +192,8 @@ public:
     void mark_name_used(const std::string& name);
     void set_reusable_pattern_bindings(std::set<std::string> names);
     void clear_reusable_pattern_bindings();
+    NameState snapshot_name_state() const;
+    void restore_name_state(NameState state);
 
     void declare_current(std::string name, LocalInfo local);
 

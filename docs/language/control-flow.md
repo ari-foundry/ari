@@ -408,14 +408,17 @@ the loop have the same state as they would have if the loop ran zero times. This
 keeps paths such as `drop owner; break;` from leaving the owner ambiguously live
 after the loop.
 
-For a literal `while true` loop, there is no zero-iteration exit. In that case,
+For a literal `while true` loop, or an immutable local `let` condition
+initialized directly from `true`, there is no zero-iteration exit. In that case,
 plain `break` paths define the ownership state after the loop. If every body
 path returns, the `while true` statement itself is treated as returning. If the
 body has no reachable `break` and can only continue into the next iteration,
 Ari treats the loop as non-fallthrough, so a later function return is not
 required for that path. `continue` paths inside such loops are checked against
 the next-iteration state instead of the post-loop `break` state, so a loop can
-continue with an owner still live and later break after consuming it.
+continue with an owner still live and later break after consuming it. If a
+plain `while` next-iteration state widens an owner from live to moved/dropped,
+the body is rechecked under that widened state before the loop is accepted.
 
 If every reachable `break` exit has already consumed the same owner, Ari can
 merge `moved` and `dropped` states as one unavailable post-loop state. This lets
@@ -609,5 +612,7 @@ bindings.
   also support irrefutable alias, tuple, array, named struct, and tuple-struct
   product patterns. Enum-case and other refutable loop-head patterns are
   reserved for future iterator lowering.
-- General loops currently cannot change the ownership state of an outer binding
-  on a body fallthrough path.
+- General maybe-zero loops currently cannot change the ownership state of an
+  outer binding on a body fallthrough path. Literal `false`, or immutable local
+  `let` conditions initialized directly from `false`, are treated as
+  zero-iteration loops.

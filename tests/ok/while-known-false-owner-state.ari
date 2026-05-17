@@ -1,9 +1,9 @@
 fn main() -> i64 {
-  let condition = true;
+  let condition = false;
   let token: own i64 = 5;
   while condition {
-    let inner = 1;
     drop token;
   }
+  drop token;
   return 0;
 }

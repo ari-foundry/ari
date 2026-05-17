@@ -685,6 +685,15 @@ void LocalScopeStack::clear_reusable_pattern_bindings() {
     reusable_pattern_binding_names_.clear();
 }
 
+LocalScopeStack::NameState LocalScopeStack::snapshot_name_state() const {
+    return NameState{used_names_, reusable_pattern_binding_names_};
+}
+
+void LocalScopeStack::restore_name_state(NameState state) {
+    used_names_ = std::move(state.used_names);
+    reusable_pattern_binding_names_ = std::move(state.reusable_pattern_binding_names);
+}
+
 void LocalScopeStack::declare_current(std::string name, LocalInfo local) {
     current_scope()[std::move(name)] = std::move(local);
 }
