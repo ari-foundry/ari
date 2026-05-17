@@ -7537,6 +7537,9 @@ private:
         if (!local_owned_field_has_state(local, path)) {
             throw CompileError("internal error: missing owned field assignment state for '" + base_name + "." + path + "'");
         }
+        if (local_owned_field_maybe_unavailable(local, path)) {
+            fail(loc, "cannot overwrite owning field '" + base_name + "." + path + "' while it may be unavailable");
+        }
         if (local_owned_field_is_live(local, path)) {
             fail(loc, "cannot overwrite owning field '" + base_name + "." + path + "' before it is moved or dropped");
         }

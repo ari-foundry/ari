@@ -114,6 +114,13 @@ bool local_owned_field_is_live(const LocalInfo& local, const std::string& path) 
     return false;
 }
 
+bool local_owned_field_maybe_unavailable(const LocalInfo& local, const std::string& path) {
+    for (const auto& item : local.owned_field_states) {
+        if (local_owned_field_path_matches(item.first, path) && item.second == LocalState::MaybeUnavailable) return true;
+    }
+    return false;
+}
+
 bool local_owned_field_has_state(const LocalInfo& local, const std::string& path) {
     for (const auto& item : local.owned_field_states) {
         if (local_owned_field_path_matches(item.first, path)) return true;

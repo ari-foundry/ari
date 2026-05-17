@@ -406,9 +406,9 @@ while true {
 When a `break` exits a loop, Ari merges any owning bindings visible after the
 loop with the state they would have if the loop ran zero times. If one exit
 leaves an owner live and another has moved or dropped it, the post-loop state is
-`maybe-unavailable`. That binding cannot be used, overwritten, returned past, or
-left to scope exit until a future conditional cleanup/resolution form can make
-the runtime state explicit.
+`maybe-unavailable`. That binding, or an owned aggregate field in that state,
+cannot be used, overwritten, returned past, or left to scope exit until a future
+conditional cleanup/resolution form can make the runtime state explicit.
 
 For a literal `while true` loop, or an immutable local `let` condition whose
 initializer resolves through immutable local aliases to `true`, there is no

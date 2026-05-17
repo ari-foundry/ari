@@ -115,8 +115,9 @@ dataflow recheck:
    fallthrough or `continue` owner changes unless they are exact-once.
    Runtime-dependent maybe-zero `break` exits now merge `Alive` with
    moved/dropped owner states into an explicit `maybe-unavailable` local state;
-   later use, overwrite, return, and scope exit reject that state instead of
-   pretending the owner is definitely live or definitely unavailable.
+   later use, overwrite, return, scope exit, and aggregate owned-field overwrite
+   reject that state instead of pretending the owner is definitely live or
+   definitely unavailable.
    The plain `while` and `init while` slices also treat immutable local bool
    conditions whose initializers resolve through immutable local aliases to
    literals like `true`/`false` as proven loop conditions, and fold those

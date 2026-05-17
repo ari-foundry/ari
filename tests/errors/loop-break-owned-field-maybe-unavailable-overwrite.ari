@@ -1,0 +1,24 @@
+struct Holder {
+  mut token: own i64,
+  backup: own i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn maybe_consume(condition: bool) -> i64 {
+  var holder = Holder { token: make_owned(5), backup: make_owned(9) };
+  while condition {
+    let token = holder.token;
+    drop token;
+    break;
+  }
+  holder.token = make_owned(6);
+  drop holder;
+  return 0;
+}
+
+fn main() -> i64 {
+  return maybe_consume(false);
+}

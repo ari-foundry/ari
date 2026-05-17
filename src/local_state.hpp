@@ -96,6 +96,7 @@ void mark_local_zone_destroyed(LocalInfo& local);
 std::string local_owned_field_path(const std::string& base, std::size_t index);
 bool local_owned_field_path_matches(const std::string& candidate, const std::string& selected);
 bool local_owned_field_is_live(const LocalInfo& local, const std::string& path);
+bool local_owned_field_maybe_unavailable(const LocalInfo& local, const std::string& path);
 bool local_owned_field_has_state(const LocalInfo& local, const std::string& path);
 void mark_local_owned_field_state(LocalInfo& local, const std::string& path, LocalState state);
 void mark_all_local_owned_fields(LocalInfo& local, LocalState state);

@@ -3210,6 +3210,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "owning binding 'token' may be unavailable before return" $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-return.err
 	if $(TARGET) tests/errors/loop-break-owner-maybe-unavailable-overwrite.ari -o $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.elf >$(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.err 2>&1; then exit 1; fi
 	grep -q "cannot overwrite owning binding 'token' while it may be unavailable" $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.err
+	if $(TARGET) tests/errors/loop-break-owned-field-maybe-unavailable-overwrite.ari -o $(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.elf >$(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.err 2>&1; then exit 1; fi
+	grep -q "cannot overwrite owning field 'holder.0' while it may be unavailable" $(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.err
 	if $(TARGET) tests/errors/loop-continue-owner-state.ari -o $(BUILD_DIR)/errors/loop-continue-owner-state.elf >$(BUILD_DIR)/errors/loop-continue-owner-state.err 2>&1; then exit 1; fi
 	grep -q "binding 'token' has incompatible ownership states at loop continue" $(BUILD_DIR)/errors/loop-continue-owner-state.err
 	if $(TARGET) tests/errors/init-while-known-true-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.elf >$(BUILD_DIR)/errors/init-while-known-true-owner-widen-recheck.err 2>&1; then exit 1; fi
