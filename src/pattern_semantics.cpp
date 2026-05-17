@@ -184,6 +184,19 @@ bool pattern_has_reference_binding_mode(const Pattern& pattern) {
     return false;
 }
 
+bool pattern_has_mutable_reference_binding_mode(const Pattern& pattern) {
+    if (pattern.binding_mode == BindingMode::RefMut) return true;
+    if (pattern.alias_pattern && pattern_has_mutable_reference_binding_mode(*pattern.alias_pattern)) return true;
+    if (pattern.payload_pattern && pattern_has_mutable_reference_binding_mode(*pattern.payload_pattern)) return true;
+    for (const auto& alternative : pattern.alternatives) {
+        if (pattern_has_mutable_reference_binding_mode(alternative)) return true;
+    }
+    for (const auto& element : pattern.elements) {
+        if (pattern_has_mutable_reference_binding_mode(element)) return true;
+    }
+    return false;
+}
+
 bool pattern_contains_or(const Pattern& pattern) {
     if (pattern.kind == PatternKind::Or) return true;
     if (pattern.alias_pattern && pattern_contains_or(*pattern.alias_pattern)) return true;

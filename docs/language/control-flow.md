@@ -174,10 +174,14 @@ while let ((left, 0) | (0, left)) = tuple_at(index) {
 Enum `while let` supports same-name/same-type or-pattern alternatives and
 alias-wrapped alternatives. The loop body is checked once with the shared
 bindings, then each matching alternative fills those bindings before entering
-the body. Aggregate `while let` supports tuple, fixed array, named struct, and
-tuple-struct or-pattern alternatives. It re-evaluates the aggregate expression
-each iteration, executes the first matching alternative, and exits the loop
-when no alternative matches.
+the body. A single enum-case `while let` pattern may also use shared reference
+binding modes such as `Some(ref value)` or `Some(&value)`, with the matched enum
+materialized into hidden per-iteration storage before the body borrows its
+payload. Mutable enum payload borrows and reference binding modes inside enum
+`while let` or-patterns remain planned. Aggregate `while let` supports tuple,
+fixed array, named struct, and tuple-struct or-pattern alternatives. It
+re-evaluates the aggregate expression each iteration, executes the first
+matching alternative, and exits the loop when no alternative matches.
 
 Loops currently cannot change the ownership state of an outer binding. That
 rule is conservative until the checker can track loop invariants. Loop

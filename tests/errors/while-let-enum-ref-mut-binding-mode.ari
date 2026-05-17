@@ -5,7 +5,7 @@ enum MaybeWide {
 
 fn main() -> i64 {
   let item: MaybeWide = Full(1);
-  while let Full(ref value) = item {
+  while let Full(ref mut value) = item {
     return 1;
   }
   return 0;

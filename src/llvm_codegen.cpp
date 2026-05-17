@@ -1295,6 +1295,10 @@ private:
 
         line("  br label %" + cond_label);
         emit_label(cond_label);
+        for (const auto& binding : stmt.init_bindings) {
+            Value init = emit_expr(*binding.init);
+            line("  store " + init.type + " " + init.name + ", ptr " + local_slot(binding.loc, binding.name));
+        }
         Value value = emit_expr(*stmt.match_value);
         std::string subject = value.name;
         std::string subject_type = value.type;

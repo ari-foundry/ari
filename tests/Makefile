@@ -876,6 +876,8 @@ check-control-flow: $(TARGET)
 	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-static-payload-owner-state.ll
 	$(TARGET) tests/ok/while-let-static-nested-payload-owner-state.ari --emit-llvm $(BUILD_DIR)/control-flow/while-let-static-nested-payload-owner-state.ll
 	grep -q "whilelet.end" $(BUILD_DIR)/control-flow/while-let-static-nested-payload-owner-state.ll
+	$(TARGET) tests/ok/while-let-enum-ref-binding-mode.ari -o $(BUILD_DIR)/control-flow/while-let-enum-ref-binding-mode.elf
+	$(BUILD_DIR)/control-flow/while-let-enum-ref-binding-mode.elf; code=$$?; test $$code -eq 28
 	$(TARGET) tests/ok/condition-pattern-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
@@ -3361,8 +3363,10 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-static-payload-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-static-nested-payload-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.elf >$(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.err
-	if $(TARGET) tests/errors/while-let-enum-ref-binding-mode.ari -o $(BUILD_DIR)/errors/while-let-enum-ref-binding-mode.elf >$(BUILD_DIR)/errors/while-let-enum-ref-binding-mode.err 2>&1; then exit 1; fi
-	grep -q "enum while-let reference binding modes are planned after per-iteration enum match storage is lowered" $(BUILD_DIR)/errors/while-let-enum-ref-binding-mode.err
+	if $(TARGET) tests/errors/while-let-enum-ref-mut-binding-mode.ari -o $(BUILD_DIR)/errors/while-let-enum-ref-mut-binding-mode.elf >$(BUILD_DIR)/errors/while-let-enum-ref-mut-binding-mode.err 2>&1; then exit 1; fi
+	grep -q "enum while-let mutable reference binding modes are planned after addressable enum match storage is lowered" $(BUILD_DIR)/errors/while-let-enum-ref-mut-binding-mode.err
+	if $(TARGET) tests/errors/while-let-enum-ref-or-binding-mode.ari -o $(BUILD_DIR)/errors/while-let-enum-ref-or-binding-mode.elf >$(BUILD_DIR)/errors/while-let-enum-ref-or-binding-mode.err 2>&1; then exit 1; fi
+	grep -q "enum while-let reference binding modes with or-patterns are planned after per-arm binding preludes are lowered" $(BUILD_DIR)/errors/while-let-enum-ref-or-binding-mode.err
 	if $(TARGET) tests/errors/for-iterator-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.elf >$(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi

@@ -1,0 +1,31 @@
+enum MaybeWide {
+  Empty,
+  Full(i64),
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn loop_ref(item: MaybeWide) -> i64 {
+  var total = 0;
+  while let Full(ref value) = item {
+    total = total + read(value);
+    break;
+  }
+  return total;
+}
+
+fn loop_amp(item: MaybeWide) -> i64 {
+  var total = 0;
+  while let Full(&value) = item {
+    total = total + read(value);
+    break;
+  }
+  return total;
+}
+
+fn main() -> i64 {
+  return loop_ref(Full(11)) + loop_ref(Empty) + loop_amp(Full(17));
+}

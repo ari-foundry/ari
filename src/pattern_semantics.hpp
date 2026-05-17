@@ -25,6 +25,7 @@ struct ForPatternValidationHooks {
 Pattern clone_pattern(const Pattern& pattern);
 bool pattern_has_binding(const Pattern& pattern);
 bool pattern_has_reference_binding_mode(const Pattern& pattern);
+bool pattern_has_mutable_reference_binding_mode(const Pattern& pattern);
 bool pattern_contains_or(const Pattern& pattern);
 bool pattern_contains_array_pattern(const Pattern& pattern);
 bool runtime_sequence_array_pattern_is_irrefutable(const Pattern& pattern);

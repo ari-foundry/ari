@@ -162,8 +162,10 @@ Runtime-sequence element borrows keep distinct element paths, including nested
 tuple, fixed-array, and struct subpatterns such as
 `let ref mut [(left, right), .., (tail_left, tail_right)] = view`. Destructuring
 of ownership-carrying aggregates remains planned. Nested shared reference
-binding modes are supported in enum `match` and `if let` patterns; enum
-`while let` and mutable nested `match`/`if let` payload borrows remain planned.
+binding modes are supported in enum `match`, single-case enum `if let`, and
+single-case enum `while let` patterns. Mutable nested control-flow payload
+borrows and enum `while let` reference bindings with or-patterns remain
+planned.
 Function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`
