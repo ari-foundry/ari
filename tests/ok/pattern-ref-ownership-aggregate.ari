@@ -1,0 +1,70 @@
+struct Holder {
+  token: own i64,
+  mut count: i64,
+}
+
+struct Wrapper {
+  mut holder: Holder,
+  mut bonus: i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  var holder = Holder { token: make_owned(5), count: 1 };
+  {
+    let ref mut Holder { token: _, count } = holder;
+    write(count, 4);
+  }
+  total = total + holder.count;
+
+  let pair = (make_owned(7), 10);
+  {
+    let ref (_, second) = pair;
+    total = total + read(second);
+  }
+  drop pair;
+
+  var wrapper = Wrapper {
+    holder: Holder { token: make_owned(9), count: 3 },
+    bonus: 20,
+  };
+  {
+    let ref mut Wrapper {
+      holder: Holder { token: _, count: nested_count },
+      bonus,
+    } = wrapper;
+    write(nested_count, 6);
+    write(bonus, 1);
+  }
+  total = total + wrapper.holder.count + wrapper.bonus;
+
+  var holders: [Holder, 2] = [
+    Holder { token: make_owned(1), count: 2 },
+    Holder { token: make_owned(2), count: 4 }
+  ];
+  {
+    let ref mut Holder { token: _, count: item_count } = holders[1];
+    write(item_count, 5);
+  }
+  total = total + holders[1].count;
+
+  drop holders;
+  drop wrapper;
+  drop holder;
+  return total;
+}

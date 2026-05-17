@@ -7095,10 +7095,6 @@ private:
                                                          bool mutable_borrow,
                                                          std::vector<IrStmtPtr>& statements) {
         IrType shape_type = value_qualified_type(source_type);
-        if (is_owner_type(shape_type)) {
-            fail(pattern.loc,
-                 "reference pattern destructuring of ownership-carrying aggregates is planned after ownership-through-aggregates is implemented");
-        }
         bool array_pattern = pattern.kind == PatternKind::Array;
         IrPrimitiveKind expected_primitive = array_pattern ? IrPrimitiveKind::Array : IrPrimitiveKind::Tuple;
         const char* pattern_name = array_pattern ? "array" : "tuple";
@@ -7153,10 +7149,6 @@ private:
                                                           bool mutable_borrow,
                                                           std::vector<IrStmtPtr>& statements) {
         IrType shape_type = value_qualified_type(source_type);
-        if (is_owner_type(shape_type)) {
-            fail(pattern.loc,
-                 "reference pattern destructuring of ownership-carrying aggregates is planned after ownership-through-aggregates is implemented");
-        }
         if (shape_type.primitive != IrPrimitiveKind::Struct) {
             fail(pattern.loc, "struct reference binding pattern requires a struct value, got " + type_name(source_type));
         }

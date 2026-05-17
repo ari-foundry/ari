@@ -1,0 +1,17 @@
+struct Holder {
+  token: own i64,
+  mut count: i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  var holder = Holder { token: make_owned(1), count: 2 };
+  let moved = holder.token;
+  let ref Holder { token: borrowed, count: _ } = holder;
+  drop moved;
+  drop holder;
+  return 0;
+}

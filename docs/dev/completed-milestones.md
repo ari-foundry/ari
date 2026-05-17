@@ -42,6 +42,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Direct local `Vec[T]` storage and `Slice[T]` view reference patterns support
   runtime length guards, plain prefix/suffix element borrows, and `name @ ..`
   rest bindings that produce `Slice[T]` views.
+- Local/path `let ref` and `let ref mut` patterns can destructure
+  ownership-carrying tuple, fixed-array, and struct values. Owned fields may be
+  skipped, and borrowed owned fields still use the tracked owned-field liveness
+  checks before the borrow binding is introduced.
 - Shared `Slice[T]` reference sequence patterns can destructure tuple,
   fixed-array, and struct elements through the same access-path helper used by
   local aggregate reference patterns.

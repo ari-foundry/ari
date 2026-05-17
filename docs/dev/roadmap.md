@@ -32,8 +32,11 @@ changing the long-term language contract.
    addressable subject while hidden product storage drives pattern tests, and
    mutable runtime-sequence control-flow reference bindings now borrow
    addressable `Slice[T]`/`Vec[T]` subjects while hidden sequence storage drives
-   length and element tests. Finish ownership-aware binding modes through
-   aggregate, enum, slice, and vector patterns.
+   length and element tests. Local/path `let ref` and `let ref mut` bindings can
+   destructure ownership-carrying tuple, fixed-array, and struct values when
+   owned fields are skipped or borrowed through live tracked paths. Finish
+   value/move binding modes and ownership-aware enum, slice, and vector
+   sequence patterns, including the parameter-destructuring ownership story.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
 3. Expand aggregate enum payload storage.

@@ -948,9 +948,12 @@ Local declaration patterns can also create named borrow bindings directly:
 `let ref mut PATTERN = local_or_path` creates mutable borrows. `let &PATTERN`
 and `let &mut PATTERN` are equivalent shorthand spellings. The current 0.x
 slice supports name, wildcard, tuple, fixed-array, and struct local patterns
-over tracked local places. Function parameter patterns support the same
-`ref PATTERN: T` / `ref mut PATTERN: T` and `&PATTERN: T` / `&mut PATTERN: T`
-forms over hidden function-entry parameter storage. Runtime sequence rest
+over tracked local places, including ownership-carrying tuple, fixed-array, and
+struct values whose owned fields are skipped or borrowed through live tracked
+owned-field paths. For non-owning values, function parameter patterns support
+the same `ref PATTERN: T` / `ref mut PATTERN: T` and `&PATTERN: T` /
+`&mut PATTERN: T` forms over hidden function-entry parameter storage. Runtime
+sequence rest
 aliases, nested runtime-sequence element subpatterns, and addressable aggregate
 enum payload slots can be borrowed by reference. Compact/non-addressable enum
 payloads remain value-only and produce payload-specific diagnostics when used
@@ -965,8 +968,8 @@ expression `match`, aggregate `if let`, and aggregate `while let` when the
 matched subject is addressable; runtime-sequence `Slice[T]`/`Vec[T]`
 control-flow patterns support `ref mut` element borrows in statement/expression
 `match`, `if let`, and `while let` when the matched subject is addressable.
-Ownership-aware binding modes through aggregate and sequence patterns remain
-planned.
+Ownership-aware value/move pattern bindings, function-parameter owner
+destructuring, and ownership-carrying sequence patterns remain planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,
