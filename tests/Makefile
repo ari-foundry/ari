@@ -3451,6 +3451,8 @@ check-errors: $(TARGET) check-function-errors
 	$(BUILD_DIR)/errors/pattern-ref-ownership-vector.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/pattern-ref-ownership-vector-aggregate.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate.elf
 	$(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate.elf; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/pattern-ref-ownership-vector-rest.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.elf
+	$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf
 	$(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-amp-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238; fi
@@ -3471,7 +3473,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/pattern-ref-ownership-vector-aggregate-moved-field.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate-moved-field.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate-moved-field.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved owned field 'holders.0.0'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate-moved-field.err
 	if $(TARGET) tests/errors/pattern-ref-ownership-vector-rest.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err 2>&1; then exit 1; fi
-	grep -q "ownership-carrying runtime sequence reference patterns currently require exact local Vec\\[T\\] storage patterns without .." $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err
+	grep -q "cannot use moved owned field 'values.2'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi
 	grep -q "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index" $(BUILD_DIR)/errors/pattern-ref-temporary.err
 	$(TARGET) tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.elf

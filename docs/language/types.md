@@ -952,8 +952,11 @@ over tracked local places, including ownership-carrying tuple, fixed-array, and
 struct values whose owned fields are skipped or borrowed through live tracked
 owned-field paths. Exact local `Vec[T]` reference patterns without `..` can
 borrow ownership-carrying element slots when each selected element path is
-statically known, including nested owned fields inside aggregate elements. For
-non-owning values, function parameter patterns support the same
+statically known, including nested owned fields inside aggregate elements.
+Patterns with `..` can borrow ownership-carrying prefix elements, and suffix
+elements when the direct local vector's current length is known, but they still
+cannot bind an owned rest slice. For non-owning values, function parameter
+patterns support the same
 `ref PATTERN: T` / `ref mut PATTERN: T` and `&PATTERN: T` /
 `&mut PATTERN: T` forms over hidden function-entry parameter storage. Runtime
 sequence rest
@@ -972,8 +975,9 @@ matched subject is addressable; runtime-sequence `Slice[T]`/`Vec[T]`
 control-flow patterns support `ref mut` element borrows in statement/expression
 `match`, `if let`, and `while let` when the matched subject is addressable.
 Ownership-aware value/move pattern bindings, function-parameter owner
-destructuring, and ownership-carrying `Slice[T]`, vector rest/dynamic, and
-other non-static runtime sequence owner paths remain planned.
+destructuring, and ownership-carrying `Slice[T]`, owned rest aliases, dynamic
+vector suffixes, and other non-static runtime sequence owner paths remain
+planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

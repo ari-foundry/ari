@@ -6951,6 +6951,18 @@ private:
             statements);
     }
 
+    std::optional<std::uint64_t> known_direct_local_vec_reference_length(
+        const std::string& base_name,
+        const std::string& path,
+        const IrType& source_type) {
+        if (!path.empty() || !is_vector_storage_type(source_type)) return std::nullopt;
+        const LocalInfo* local = find_local_slot(base_name);
+        if (!local || !is_vector_storage_type(local->type)) return std::nullopt;
+        VectorKnownLength length = local_vector_known_length(*local);
+        if (!length.known) return std::nullopt;
+        return length.length;
+    }
+
     void lower_reference_runtime_sequence_element_bindings_from_path(const Pattern& pattern,
                                                                      const std::string& base_name,
                                                                      const IrType& base_type,
@@ -6963,10 +6975,33 @@ private:
             fail(pattern.loc,
                  "runtime sequence reference patterns currently require direct local Vec[T] storage or Slice[T] view bindings");
         }
+        std::optional<std::uint64_t> known_owner_vec_length;
         if (is_owner_type(shape_type)) {
-            if (!is_vector_storage_type(shape_type) || pattern.has_rest) {
+            if (!is_vector_storage_type(shape_type)) {
                 fail(pattern.loc,
-                     "ownership-carrying runtime sequence reference patterns currently require exact local Vec[T] storage patterns without ..");
+                     "ownership-carrying runtime sequence reference patterns currently require direct local Vec[T] storage");
+            }
+            if (!pattern.rest_alias_name.empty()) {
+                fail(pattern.rest_alias_loc,
+                     "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked");
+            }
+            if (pattern.has_rest) {
+                const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+                if (suffix_count != 0) {
+                    known_owner_vec_length =
+                        known_direct_local_vec_reference_length(base_name, path, shape_type);
+                    if (!known_owner_vec_length) {
+                        fail(pattern.loc,
+                             "ownership-carrying Vec[T] reference suffix patterns with .. require a direct local Vec[T] with a known length");
+                    }
+                    const std::uint64_t required =
+                        static_cast<std::uint64_t>(pattern.rest_index + suffix_count);
+                    if (*known_owner_vec_length < required) {
+                        fail(pattern.loc,
+                             "ownership-carrying Vec[T] reference pattern requires a known length of at least " +
+                                 std::to_string(required));
+                    }
+                }
             }
         }
 
@@ -6987,18 +7022,35 @@ private:
                 statements);
         }
         if (pattern.has_rest) {
+            const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
             for (std::size_t i = pattern.rest_index; i < pattern.elements.size(); ++i) {
-                lower_reference_runtime_sequence_dynamic_element_binding(
-                    pattern.elements[i],
-                    pattern,
-                    i,
-                    base_name,
-                    base_type,
-                    path,
-                    shape_type,
-                    element_type,
-                    mutable_borrow,
-                    statements);
+                if (known_owner_vec_length) {
+                    const std::size_t suffix_offset = i - pattern.rest_index;
+                    const std::size_t element_index =
+                        static_cast<std::size_t>(*known_owner_vec_length) - suffix_count + suffix_offset;
+                    lower_reference_runtime_sequence_prefix_element_binding(
+                        pattern.elements[i],
+                        element_index,
+                        base_name,
+                        base_type,
+                        path,
+                        shape_type,
+                        element_type,
+                        mutable_borrow,
+                        statements);
+                } else {
+                    lower_reference_runtime_sequence_dynamic_element_binding(
+                        pattern.elements[i],
+                        pattern,
+                        i,
+                        base_name,
+                        base_type,
+                        path,
+                        shape_type,
+                        element_type,
+                        mutable_borrow,
+                        statements);
+                }
             }
         }
     }
@@ -7014,6 +7066,10 @@ private:
         if (!path.empty() && !pattern.rest_alias_name.empty()) {
             fail(pattern.rest_alias_loc,
                  "runtime sequence reference rest aliases currently require a direct local Vec[T] or Slice[T] binding");
+        }
+        if (is_owner_type(shape_type) && !pattern.rest_alias_name.empty()) {
+            fail(pattern.rest_alias_loc,
+                 "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked");
         }
 
         std::vector<IrStmtPtr> body;

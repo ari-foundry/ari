@@ -166,8 +166,11 @@ struct values when the source is tracked: skipped owned fields are left in
 place, and borrowed owned fields must still be live. Exact local `Vec[T]`
 reference patterns without `..` can also borrow ownership-carrying element
 slots, including nested owned fields inside aggregate elements, when each
-selected element path is statically known. Nested shared reference binding
-modes are supported in enum `match`, enum `if let`, and enum
+selected element path is statically known. Patterns with `..` can borrow
+ownership-carrying prefix elements, and suffix elements when the direct local
+vector's current length is known, but they still cannot bind an owned rest
+slice. Nested shared reference binding modes are supported in enum `match`,
+enum `if let`, and enum
 `while let` patterns, including same-name/same-type enum `while let`
 or-pattern alternatives. Mutable enum payload reference bindings are supported
 in enum statement/expression `match`, enum `if let`, and enum `while let` when
@@ -178,8 +181,8 @@ aggregate `while let` when the matched subject is addressable. Runtime-sequence
 `Slice[T]`/`Vec[T]` control-flow patterns support mutable element reference
 bindings in statement/expression `match`, `if let`, and `while let` when the
 matched subject is addressable. Ownership-aware value/move pattern bindings,
-function-parameter owner destructuring, ownership-carrying `Slice[T]`, and
-vector rest/dynamic sequence patterns remain planned.
+function-parameter owner destructuring, ownership-carrying `Slice[T]`, owned
+rest aliases, and dynamic vector suffix owner paths remain planned.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

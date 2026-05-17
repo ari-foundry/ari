@@ -50,6 +50,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   ownership-carrying element slots, including nested owned fields inside
   aggregate elements, when each element path is statically known; moved element
   slots still report the owned-field liveness diagnostic.
+- Local `Vec[T]` reference patterns with `..` can borrow ownership-carrying
+  prefix elements, and suffix elements when the direct local vector's current
+  length is known, as long as the pattern does not bind the rest as a Slice.
 - Shared `Slice[T]` reference sequence patterns can destructure tuple,
   fixed-array, and struct elements through the same access-path helper used by
   local aggregate reference patterns.

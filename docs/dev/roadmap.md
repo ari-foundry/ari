@@ -39,9 +39,12 @@ changing the long-term language contract.
    owned fields are skipped or borrowed through live tracked paths, and exact
    local `Vec[T]` reference patterns can borrow ownership-carrying element
    slots, including ownership-carrying aggregate element fields, when the
-   element path is statically known. Finish value/move binding modes plus
-   ownership-aware enum and non-static runtime sequence owner paths (`Slice[T]`
-   plus vector rest/dynamic), including the parameter-destructuring ownership
+   element path is statically known. Local `Vec[T]` reference patterns with
+   `..` can also borrow ownership-carrying prefix elements and suffix elements
+   when a direct local vector has a known current length and no rest alias.
+   Finish value/move binding modes plus ownership-aware enum and non-static
+   runtime sequence owner paths (`Slice[T]`, owned rest aliases, and truly
+   dynamic vector suffixes), including the parameter-destructuring ownership
    story.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.
