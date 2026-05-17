@@ -1341,6 +1341,10 @@ check-modules: $(TARGET)
 	grep -q "4:drop" $(BUILD_DIR)/modules/package-cache-body.aricache
 	$(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
 	cmp -s $(BUILD_DIR)/modules/package-cache-body-cache.ll $(BUILD_DIR)/modules/package-cache-body-cache-use.ll
+	python3 tests/tamper_module_cache_ir_summary.py $(BUILD_DIR)/modules/package-cache-body.aricache $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.aricache cache_bodies '26:cache_bodies::return_value;12:cache_bodies;0:;3:i64;' '26:cache_bodies::return_value;12:cache_bodies;0:;7:Vec[i64;'
+	if $(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.ll >$(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.err 2>&1; then exit 1; fi
+	grep -q "module cache IR replay failed for lowered function 'cache_bodies::return_value'" $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.err
+	grep -Fq "IR summary type replay failed for 'Vec[i64'" $(BUILD_DIR)/modules/package-cache-body-ir-replay-bad-type.err
 	sed '0,/ari-ast-decls-v0/s/ari-ast-decls-v0/ari-ast-decls-v1/' $(BUILD_DIR)/modules/package-cache-body.aricache >$(BUILD_DIR)/modules/package-cache-body-ast-non-v0.aricache
 	if $(TARGET) -Itests/packages tests/ok/package-cache-body-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.ll >$(BUILD_DIR)/modules/package-cache-body-ast-non-v0.err 2>&1; then exit 1; fi
 	grep -q "expected 'ari-ast-decls-v0;'" $(BUILD_DIR)/modules/package-cache-body-ast-non-v0.err

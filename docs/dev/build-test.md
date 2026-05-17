@@ -158,7 +158,9 @@ IR lowered-function surface rejection. These cache-use tests also exercise the
 structured IR body payload reader because validated sidecars now materialize the
 body-shape and operand-tree sections, recheck their structural agreement, and
 replay cached dependency `IrFunction` bodies so cache-use LLVM output matches a
-fresh sema lowering byte-for-byte for summary-safe dependencies.
+fresh sema lowering byte-for-byte for summary-safe dependencies. Hash-valid
+replay payloads whose body or type shape no longer fits the current IR model are
+reported as module-cache IR replay diagnostics before backend emission.
 
 `make check-structs` runs struct and ADT-focused tests for struct declarations,
 generic struct field resolution, named struct literals, tuple-struct

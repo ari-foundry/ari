@@ -1177,7 +1177,14 @@ std::vector<IrFunction> replay_module_cache_ir_functions(
 
     std::vector<IrFunction> result;
     result.reserve(functions.size());
-    for (const auto* fn : ordered) result.push_back(replay_function(*fn, context));
+    for (const auto* fn : ordered) {
+        try {
+            result.push_back(replay_function(*fn, context));
+        } catch (const CompileError& error) {
+            throw CompileError("module cache IR replay failed for lowered function '" +
+                               fn->name + "': " + error.what());
+        }
+    }
     return result;
 }
 

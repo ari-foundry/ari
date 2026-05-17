@@ -539,6 +539,8 @@ Checklist:
       preserve named aggregate/enum/fixed-array and local-Vec capacity type
       shapes, skip cached semantic body lowering, and match fresh cache-emission
       LLVM output byte-for-byte
+- [x] hash-valid but malformed IR sidecar replay payloads are rejected with a
+      module-cache replay diagnostic before backend emission
 - [x] AST summary records include declaration fingerprints and declaration
       payloads, then reject tampered fingerprints, payloads, or count/payload
       disagreement

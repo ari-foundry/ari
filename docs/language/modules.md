@@ -360,7 +360,10 @@ statement/expression summary tree, replays named struct/enum/fixed-array and
 local-`Vec` capacity type shapes, and injects pre-lowered dependency bodies into
 the final IR while skipping semantic body lowering for those cached functions.
 The replayed IR must match the fresh sema path's lowered function surface; stale
-or tampered sidecars are rejected before backend emission.
+or tampered sidecars are rejected before backend emission. If a hash-valid
+sidecar still cannot be replayed into the current IR model, the compiler
+reports the lowered function that failed replay rather than continuing to
+backend emission.
 Header-like modules with declaration-only functions and supported constant
 initializers can be materialized directly from the AST summary. Supported
 constant initializer payloads include integer and bool expressions, constant

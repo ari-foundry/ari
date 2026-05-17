@@ -109,14 +109,14 @@ metadata, skip semantic body lowering for cached dependency functions, and
 append those replayed bodies to the final IR in the same order as the normal
 sema path. The cache-use path can therefore skip parsing summary-safe
 dependencies after metadata/source-hash validation while still producing the
-same LLVM IR as a fresh sema lowering.
+same LLVM IR as a fresh sema lowering. Hash-valid but malformed replay
+payloads are reported as module-cache IR replay diagnostics tied to the lowered
+function being reconstructed, before backend emission.
 
 Small follow-up labels that are useful but not large Near-Term goals:
 - [cache-type-guard] when a new layout-bearing IR type is added, add a focused
   cache replay test that proves its cache-only metadata survives a cache-use
   LLVM byte-for-byte comparison
-- [cache-replay-errors] replace any future replay shape mismatch crash with a
-  narrow cache diagnostic before backend emission
 
 See also [Semantic Checker Decomposition](sema-decomposition.md) for the
 maintenance roadmap for splitting `src/sema.cpp` into smaller subsystems.
