@@ -1,0 +1,58 @@
+enum MaybeWide {
+  Empty,
+  Full(i64),
+}
+
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn payload_copy(item: MaybeWide) -> i64 {
+  return match item {
+    Full(value) => value,
+    Empty => 0,
+  };
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  var first: MaybeWide = Full(10);
+  match first {
+    Full(ref mut first_value) => {
+      write(first_value, 5);
+    }
+    Empty => {}
+  }
+  total = total + payload_copy(first);
+
+  var second: MaybeWide = Full(20);
+  let match_value = match second {
+    Full(ref mut second_value) => {
+      write(second_value, 7);
+      27
+    }
+    Empty => 0,
+  };
+  total = total + match_value + payload_copy(second);
+
+  var third: MaybeWide = Full(30);
+  if let Full(ref mut third_value) = third {
+    write(third_value, 3);
+  } else {
+    total = total + 100;
+  }
+  total = total + payload_copy(third);
+
+  var fourth: MaybeWide = Full(40);
+  let if_value = if let Full(ref mut fourth_value) = fourth {
+    write(fourth_value, 4);
+    44
+  } else {
+    0
+  };
+  total = total + if_value + payload_copy(fourth);
+
+  return total;
+}

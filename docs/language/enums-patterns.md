@@ -344,9 +344,11 @@ slots. Compact small payloads remain value-only because their payload lives
 inside the tag word rather than in a separate slot. Nested shared reference
 bindings are available in enum statement/expression `match` arms and enum
 `if let`/`while let` arms, including enum `while let` or-pattern alternatives
-that bind the same names with the same types. Mutable nested control-flow
-payload borrows remain planned until per-arm addressable match storage can
-track exclusive payload access.
+that bind the same names with the same types. Mutable payload reference
+bindings are available in enum statement/expression `match` arms and enum
+`if let` arms when the matched subject is an addressable local, field, or
+indexed element. Mutable enum `while let` payload borrows remain planned until
+per-iteration addressable storage can track exclusive payload access.
 
 These declaration patterns are refutable. If the value is a different enum
 case, Ari takes the panic path. Use `if let` or `match` when the failure path

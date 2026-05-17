@@ -880,6 +880,8 @@ check-control-flow: $(TARGET)
 	$(BUILD_DIR)/control-flow/while-let-enum-ref-binding-mode.elf; code=$$?; test $$code -eq 28
 	$(TARGET) tests/ok/while-let-enum-ref-or-binding-mode.ari -o $(BUILD_DIR)/control-flow/while-let-enum-ref-or-binding-mode.elf
 	$(BUILD_DIR)/control-flow/while-let-enum-ref-or-binding-mode.elf; code=$$?; test $$code -eq 31
+	$(TARGET) tests/ok/control-flow-ref-mut-enum-payload.ari -o $(BUILD_DIR)/control-flow/control-flow-ref-mut-enum-payload.elf
+	$(BUILD_DIR)/control-flow/control-flow-ref-mut-enum-payload.elf; code=$$?; test $$code -eq 190
 	$(TARGET) tests/ok/condition-pattern-payloads.ari --emit-llvm $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	grep -q "match.arm" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
 	grep -q "if.expr.then" $(BUILD_DIR)/control-flow/condition-pattern-payloads.ll
@@ -3371,6 +3373,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/while-let-static-nested-payload-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-let-enum-ref-mut-binding-mode.ari -o $(BUILD_DIR)/errors/while-let-enum-ref-mut-binding-mode.elf >$(BUILD_DIR)/errors/while-let-enum-ref-mut-binding-mode.err 2>&1; then exit 1; fi
 	grep -q "enum while-let mutable reference binding modes are planned after addressable enum match storage is lowered" $(BUILD_DIR)/errors/while-let-enum-ref-mut-binding-mode.err
+	if $(TARGET) tests/errors/control-flow-ref-mut-enum-temporary.ari -o $(BUILD_DIR)/errors/control-flow-ref-mut-enum-temporary.elf >$(BUILD_DIR)/errors/control-flow-ref-mut-enum-temporary.err 2>&1; then exit 1; fi
+	grep -q "ref mut match binding requires an addressable local, field, or indexed element" $(BUILD_DIR)/errors/control-flow-ref-mut-enum-temporary.err
 	if $(TARGET) tests/errors/for-iterator-owner-widen-recheck.ari -o $(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.elf >$(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/for-iterator-owner-widen-recheck.err
 	if $(TARGET) tests/errors/while-false-borrow-state.ari -o $(BUILD_DIR)/errors/while-false-borrow-state.elf >$(BUILD_DIR)/errors/while-false-borrow-state.err 2>&1; then exit 1; fi

@@ -222,6 +222,13 @@ struct TrackedAggregateAccess {
     std::string final_container_name;
 };
 
+struct ReferenceBindingSubject {
+    std::string base_name;
+    IrType base_type;
+    IrType source_type;
+    std::string path;
+};
+
 class SemanticChecker {
 public:
     explicit SemanticChecker(const Program& program, SemaOptions options)
@@ -7585,6 +7592,24 @@ private:
         widen_vector_storage_type(type, vector_storage_capacity_from_source_expr(expr));
     }
 
+    bool pattern_needs_mutable_reference_binding(const Pattern& pattern) const {
+        return pattern_has_mutable_reference_binding_mode(expanded_pattern(pattern));
+    }
+
+    bool stmt_match_arms_need_mutable_reference_binding(const StmtMatchArms& arms) const {
+        for (const auto& arm : arms) {
+            if (pattern_needs_mutable_reference_binding(arm.pattern)) return true;
+        }
+        return false;
+    }
+
+    bool expr_match_arms_need_mutable_reference_binding(const std::vector<ExprMatchArm>& arms) const {
+        for (const auto& arm : arms) {
+            if (pattern_needs_mutable_reference_binding(arm.pattern)) return true;
+        }
+        return false;
+    }
+
     IrType sized_control_flow_expected_type(const IrType& expected,
                                             const std::vector<const Expr*>& values) {
         IrType sized = expected;
@@ -9183,6 +9208,32 @@ private:
         }
 
         return false;
+    }
+
+    ReferenceBindingSubject hidden_reference_binding_subject(const std::string& name,
+                                                             const IrType& type) const {
+        return ReferenceBindingSubject{name, type, type, ""};
+    }
+
+    ReferenceBindingSubject tracked_reference_binding_subject(const TrackedAggregateAccess& access) const {
+        return ReferenceBindingSubject{
+            access.base_name,
+            access.base_type,
+            access.type,
+            access.path
+        };
+    }
+
+    TrackedAggregateAccess require_addressable_control_flow_ref_mut_subject(SourceLocation loc,
+                                                                           const Expr& expr,
+                                                                           const std::string& construct) {
+        TrackedAggregateAccess access;
+        if (!try_build_tracked_aggregate_access(expr, access)) {
+            fail(loc,
+                 "ref mut " + construct +
+                     " binding requires an addressable local, field, or indexed element");
+        }
+        return access;
     }
 
     IrExprPtr check_tracked_assignment_target(SourceLocation loc, TrackedAggregateAccess access) {
@@ -12546,6 +12597,19 @@ private:
     }
 
     Flow check_if_let(const Stmt& stmt, IrStmt& lowered) {
+        const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
+        const bool needs_reference_pattern_bindings =
+            expanded_pattern_has_reference_binding_mode(condition_pattern);
+        const bool needs_mutable_reference_pattern_bindings =
+            pattern_needs_mutable_reference_binding(condition_pattern);
+        std::optional<TrackedAggregateAccess> mutable_reference_subject;
+        if (needs_mutable_reference_pattern_bindings) {
+            mutable_reference_subject = require_addressable_control_flow_ref_mut_subject(
+                stmt.loc,
+                *stmt.condition,
+                "if-let");
+        }
+
         IrExprPtr match_value = check_expr(*stmt.condition);
         if (is_aggregate_type(match_value->type) ||
             is_runtime_sequence_pattern_subject(match_value->type)) {
@@ -12553,7 +12617,6 @@ private:
         }
 
         lowered.kind = IrStmtKind::Block;
-        const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
@@ -12583,6 +12646,10 @@ private:
             true
         ));
 
+        ReferenceBindingSubject reference_subject = needs_mutable_reference_pattern_bindings
+            ? tracked_reference_binding_subject(*mutable_reference_subject)
+            : hidden_reference_binding_subject(subject_name, enum_value_type);
+
         auto pattern_match = std::make_unique<IrStmt>();
         pattern_match->kind = IrStmtKind::Match;
         pattern_match->loc = stmt.loc;
@@ -12602,13 +12669,13 @@ private:
         push_scope();
         declare_match_arm_bindings(ir_stmt_match_arms(*ir_stmt_statements(lowered).back()).front());
         std::vector<IrStmtPtr> then_prelude;
-        if (expanded_pattern_has_reference_binding_mode(condition_pattern)) {
+        if (needs_reference_pattern_bindings) {
             lower_explicit_reference_bindings_from_path(
                 condition_pattern,
-                subject_name,
-                enum_value_type,
-                enum_value_type,
-                "",
+                reference_subject.base_name,
+                reference_subject.base_type,
+                reference_subject.source_type,
+                reference_subject.path,
                 then_prelude);
         }
         CheckedStatements then_checked = check_statements(stmt_then_body(stmt), false);
@@ -12972,8 +13039,18 @@ private:
                 break;
             }
         }
+        const bool needs_mutable_reference_pattern_bindings =
+            stmt_match_arms_need_mutable_reference_binding(source_arms);
+        std::optional<TrackedAggregateAccess> mutable_reference_subject;
+        if (needs_mutable_reference_pattern_bindings) {
+            mutable_reference_subject = require_addressable_control_flow_ref_mut_subject(
+                stmt.loc,
+                *stmt.match_value,
+                "match");
+        }
 
         std::string subject_name;
+        ReferenceBindingSubject reference_subject;
         std::unique_ptr<IrStmt> materialized_match;
         IrStmt* match_target = &lowered;
         if (needs_reference_pattern_bindings) {
@@ -12993,6 +13070,9 @@ private:
             materialized_match->loc = stmt.loc;
             materialized_match->match_value = make_local_lvalue_expr(stmt.loc, subject_name, enum_value_type);
             match_target = materialized_match.get();
+            reference_subject = needs_mutable_reference_pattern_bindings
+                ? tracked_reference_binding_subject(*mutable_reference_subject)
+                : hidden_reference_binding_subject(subject_name, enum_value_type);
         }
 
         StateSnapshot branch_input = snapshot_states();
@@ -13028,10 +13108,10 @@ private:
                 if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
-                        subject_name,
-                        enum_value_type,
-                        enum_value_type,
-                        "",
+                        reference_subject.base_name,
+                        reference_subject.base_type,
+                        reference_subject.source_type,
+                        reference_subject.path,
                         lowered_arm.body);
                 }
                 local_scopes_.clear_reusable_pattern_bindings();
@@ -13091,8 +13171,18 @@ private:
                 break;
             }
         }
+        const bool needs_mutable_reference_pattern_bindings =
+            stmt_match_arms_need_mutable_reference_binding(source_arms);
+        std::optional<TrackedAggregateAccess> mutable_reference_subject;
+        if (needs_mutable_reference_pattern_bindings) {
+            mutable_reference_subject = require_addressable_control_flow_ref_mut_subject(
+                stmt.loc,
+                *stmt.match_value,
+                "match");
+        }
 
         std::string subject_name;
+        ReferenceBindingSubject reference_subject;
         std::unique_ptr<IrStmt> materialized_match;
         IrStmt* match_target = &lowered;
         if (needs_reference_pattern_bindings) {
@@ -13112,6 +13202,9 @@ private:
             materialized_match->loc = stmt.loc;
             materialized_match->match_value = make_local_lvalue_expr(stmt.loc, subject_name, match_type);
             match_target = materialized_match.get();
+            reference_subject = needs_mutable_reference_pattern_bindings
+                ? tracked_reference_binding_subject(*mutable_reference_subject)
+                : hidden_reference_binding_subject(subject_name, match_type);
         }
 
         StateSnapshot branch_input = snapshot_states();
@@ -13143,10 +13236,10 @@ private:
                 if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
-                        subject_name,
-                        match_type,
-                        match_type,
-                        "",
+                        reference_subject.base_name,
+                        reference_subject.base_type,
+                        reference_subject.source_type,
+                        reference_subject.path,
                         lowered_arm.body);
                 }
                 local_scopes_.clear_reusable_pattern_bindings();
@@ -16005,8 +16098,18 @@ private:
                 break;
             }
         }
+        const bool needs_mutable_reference_pattern_bindings =
+            expr_match_arms_need_mutable_reference_binding(expr_match_arms(expr));
+        std::optional<TrackedAggregateAccess> mutable_reference_subject;
+        if (needs_mutable_reference_pattern_bindings) {
+            mutable_reference_subject = require_addressable_control_flow_ref_mut_subject(
+                expr.loc,
+                *expr_match_value(expr),
+                "match");
+        }
 
         std::string subject_name;
+        ReferenceBindingSubject reference_subject;
         IrExprPtr materialized_match;
         if (needs_reference_pattern_bindings) {
             lowered = make_ir_block_expr(expr.loc);
@@ -16022,6 +16125,9 @@ private:
             materialized_match = make_ir_match_expr(
                 expr.loc,
                 make_local_lvalue_expr(expr.loc, subject_name, enum_value_type));
+            reference_subject = needs_mutable_reference_pattern_bindings
+                ? tracked_reference_binding_subject(*mutable_reference_subject)
+                : hidden_reference_binding_subject(subject_name, enum_value_type);
         } else {
             lowered = make_ir_match_expr(expr.loc, std::move(match_value));
         }
@@ -16068,10 +16174,10 @@ private:
                 if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
-                        subject_name,
-                        enum_value_type,
-                        enum_value_type,
-                        "",
+                        reference_subject.base_name,
+                        reference_subject.base_type,
+                        reference_subject.source_type,
+                        reference_subject.path,
                         lowered_arm.body);
                 }
                 local_scopes_.clear_reusable_pattern_bindings();
@@ -16111,7 +16217,7 @@ private:
                 if (diverges) {
                     lowered_arm.value = std::move(value);
                     discard_scope();
-                    ir_expr_match_arms(*lowered).push_back(std::move(lowered_arm));
+                    ir_expr_match_arms(match_target).push_back(std::move(lowered_arm));
                     ++alternative_index;
                     continue;
                 }
@@ -16174,8 +16280,18 @@ private:
                 break;
             }
         }
+        const bool needs_mutable_reference_pattern_bindings =
+            expr_match_arms_need_mutable_reference_binding(expr_match_arms(expr));
+        std::optional<TrackedAggregateAccess> mutable_reference_subject;
+        if (needs_mutable_reference_pattern_bindings) {
+            mutable_reference_subject = require_addressable_control_flow_ref_mut_subject(
+                expr.loc,
+                *expr_match_value(expr),
+                "match");
+        }
 
         std::string subject_name;
+        ReferenceBindingSubject reference_subject;
         IrExprPtr materialized_match;
         if (needs_reference_pattern_bindings) {
             IrExprPtr match_value = std::move(ir_expr_match_value(*lowered));
@@ -16192,6 +16308,9 @@ private:
             materialized_match = make_ir_match_expr(
                 expr.loc,
                 make_local_lvalue_expr(expr.loc, subject_name, match_type));
+            reference_subject = needs_mutable_reference_pattern_bindings
+                ? tracked_reference_binding_subject(*mutable_reference_subject)
+                : hidden_reference_binding_subject(subject_name, match_type);
         }
         IrExpr& match_target = needs_reference_pattern_bindings ? *materialized_match : *lowered;
 
@@ -16232,10 +16351,10 @@ private:
                 if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
-                        subject_name,
-                        match_type,
-                        match_type,
-                        "",
+                        reference_subject.base_name,
+                        reference_subject.base_type,
+                        reference_subject.source_type,
+                        reference_subject.path,
                         lowered_arm.body);
                 }
                 local_scopes_.clear_reusable_pattern_bindings();
@@ -16274,7 +16393,7 @@ private:
                 if (diverges) {
                     lowered_arm.value = std::move(value);
                     discard_scope();
-                    ir_expr_match_arms(*lowered).push_back(std::move(lowered_arm));
+                    ir_expr_match_arms(match_target).push_back(std::move(lowered_arm));
                     ++alternative_index;
                     continue;
                 }
@@ -16442,6 +16561,19 @@ private:
     }
 
     IrExprPtr check_if_let_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
+        const Pattern& condition_pattern = expanded_pattern(*expr_if_condition_pattern(expr));
+        const bool needs_reference_pattern_bindings =
+            expanded_pattern_has_reference_binding_mode(condition_pattern);
+        const bool needs_mutable_reference_pattern_bindings =
+            pattern_needs_mutable_reference_binding(condition_pattern);
+        std::optional<TrackedAggregateAccess> mutable_reference_subject;
+        if (needs_mutable_reference_pattern_bindings) {
+            mutable_reference_subject = require_addressable_control_flow_ref_mut_subject(
+                expr.loc,
+                *expr_if_condition(expr),
+                "if-let");
+        }
+
         IrExprPtr match_value = check_expr(*expr_if_condition(expr));
         if (is_aggregate_type(match_value->type) ||
             is_runtime_sequence_pattern_subject(match_value->type)) {
@@ -16449,7 +16581,6 @@ private:
         }
 
         lowered = make_ir_block_expr(expr.loc);
-        const Pattern& condition_pattern = expanded_pattern(*expr_if_condition_pattern(expr));
         IrType enum_value_type = match_value->type;
         const EnumInfo& enum_info = require_enum_match_value(expr.loc, *match_value);
         std::vector<IrMatchArm> then_arms = lower_if_let_enum_pattern_arms(
@@ -16479,6 +16610,10 @@ private:
             true
         ));
 
+        ReferenceBindingSubject reference_subject = needs_mutable_reference_pattern_bindings
+            ? tracked_reference_binding_subject(*mutable_reference_subject)
+            : hidden_reference_binding_subject(subject_name, enum_value_type);
+
         std::vector<const Expr*> result_values{
             expr_if_then_value(expr).get(),
             expr_if_else_value(expr).get()};
@@ -16493,13 +16628,13 @@ private:
         push_scope();
         declare_match_arm_bindings(then_arms.front());
         std::vector<IrStmtPtr> then_prelude;
-        if (expanded_pattern_has_reference_binding_mode(condition_pattern)) {
+        if (needs_reference_pattern_bindings) {
             lower_explicit_reference_bindings_from_path(
                 condition_pattern,
-                subject_name,
-                enum_value_type,
-                enum_value_type,
-                "",
+                reference_subject.base_name,
+                reference_subject.base_type,
+                reference_subject.source_type,
+                reference_subject.path,
                 then_prelude);
         }
         CheckedStatements then_statements = check_statements(expr_if_then_body(expr), false);

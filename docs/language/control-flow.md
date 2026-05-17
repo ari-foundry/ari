@@ -179,8 +179,10 @@ such as `Some(ref value)` or `Some(&value)`, including same-name/same-type
 or-pattern alternatives. The matched enum is materialized into hidden
 per-iteration storage, and each matching alternative fills its reference
 bindings before the body borrows the payload. Mutable enum payload borrows
-remain planned. Aggregate `while let` supports tuple, fixed array, named
-struct, and tuple-struct or-pattern alternatives. It
+remain planned for `while let`; enum statement/expression `match` and enum
+`if let` can use `ref mut` payload patterns when the matched subject is an
+addressable local, field, or indexed element. Aggregate `while let` supports
+tuple, fixed array, named struct, and tuple-struct or-pattern alternatives. It
 re-evaluates the aggregate expression each iteration, executes the first
 matching alternative, and exits the loop when no alternative matches.
 
