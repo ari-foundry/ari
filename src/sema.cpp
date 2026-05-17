@@ -13252,13 +13252,14 @@ private:
         push_scope();
         declare_match_arm_bindings(arm);
         if (reference_pattern && reference_subject_type) {
+            std::vector<IrStmtPtr> reference_check_prelude;
             lower_explicit_reference_bindings_from_path(
                 *reference_pattern,
                 reference_subject_name,
                 *reference_subject_type,
                 *reference_subject_type,
                 "",
-                lowered_body);
+                reference_check_prelude);
         }
         CheckedStatements body = check_statements(stmt_loop_body(stmt), false);
         for (auto& statement : body.statements) {
@@ -13316,6 +13317,45 @@ private:
         hidden_local_counter_ = saved_hidden_local_counter;
     }
 
+    void lower_enum_while_let_reference_arm_preludes(
+        SourceLocation loc,
+        const std::vector<Pattern>& alternatives,
+        const std::string& reference_subject_name,
+        const IrType& reference_subject_type,
+        std::vector<IrMatchArm>& arms
+    ) {
+        if (alternatives.empty()) return;
+        if (alternatives.size() != arms.size()) {
+            throw CompileError(where(loc) + ": internal error: enum while-let alternative count mismatch");
+        }
+
+        StateSnapshot saved_state = snapshot_states();
+        LocalScopeStack::NameState saved_name_state = local_scopes_.snapshot_name_state();
+        std::size_t saved_warning_count = warnings_.size();
+
+        for (std::size_t i = 0; i < alternatives.size(); ++i) {
+            if (!pattern_has_reference_binding_mode(alternatives[i])) continue;
+            restore_states(saved_state);
+            local_scopes_.restore_name_state(saved_name_state);
+            std::size_t borrow_mark = temporary_borrow_mark();
+
+            push_scope();
+            lower_explicit_reference_bindings_from_path(
+                alternatives[i],
+                reference_subject_name,
+                reference_subject_type,
+                reference_subject_type,
+                "",
+                arms[i].body);
+            discard_scope();
+            release_temporary_borrows(borrow_mark);
+        }
+
+        restore_states(saved_state);
+        local_scopes_.restore_name_state(std::move(saved_name_state));
+        warnings_.resize(saved_warning_count);
+    }
+
     void check_while_let(const Stmt& stmt, IrStmt& lowered) {
         IrExprPtr match_value = check_expr(*stmt.condition);
         if (is_aggregate_type(match_value->type) ||
@@ -13334,15 +13374,17 @@ private:
             fail(condition_pattern.loc,
                  "enum while-let mutable reference binding modes are planned after addressable enum match storage is lowered");
         }
-        if (needs_reference_pattern_bindings && pattern_contains_or(condition_pattern)) {
-            fail(condition_pattern.loc,
-                 "enum while-let reference binding modes with or-patterns are planned after per-arm binding preludes are lowered");
-        }
         const EnumInfo& enum_info = require_enum_match_value(stmt.loc, *match_value);
         IrType enum_value_type = match_value->type;
+        std::vector<Pattern> reference_alternatives;
         std::string reference_subject_name;
         const Pattern* reference_pattern = nullptr;
         if (needs_reference_pattern_bindings) {
+            reference_alternatives = expand_or_pattern_alternatives(condition_pattern);
+            if (reference_alternatives.empty()) {
+                throw CompileError(where(condition_pattern.loc) + ": internal error: enum while-let reference pattern missing alternatives");
+            }
+            reference_pattern = &reference_alternatives.front();
             reference_subject_name = make_hidden_local("$whilelet_enum");
             declare_local(stmt.loc, reference_subject_name, enum_value_type, false);
 
@@ -13354,7 +13396,6 @@ private:
             subject_binding.loc = stmt.loc;
             lowered.init_bindings.push_back(std::move(subject_binding));
             lowered.match_value = make_local_lvalue_expr(stmt.loc, reference_subject_name, enum_value_type);
-            reference_pattern = &condition_pattern;
         } else {
             lowered.match_value = std::move(match_value);
         }
@@ -13372,6 +13413,14 @@ private:
             if (arm.wildcard) {
                 fail(condition_pattern.loc, "while-let requires a refutable enum-case pattern");
             }
+        }
+        if (needs_reference_pattern_bindings) {
+            lower_enum_while_let_reference_arm_preludes(
+                condition_pattern.loc,
+                reference_alternatives,
+                reference_subject_name,
+                enum_value_type,
+                pattern_arms);
         }
         const bool no_zero_known_match =
             enum_match_value_is_known_match_for_while_let(*lowered.match_value, pattern_arms);

@@ -1,0 +1,23 @@
+enum Choice {
+  Empty,
+  Left(i64, i64),
+  Right(i64, i64),
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn loop_ref(item: Choice) -> i64 {
+  var total = 0;
+  while let Left(ref value, _) | Right(_, ref value) = item {
+    total = total + read(value);
+    break;
+  }
+  return total;
+}
+
+fn main() -> i64 {
+  return loop_ref(Left(11, 100)) + loop_ref(Right(200, 20)) + loop_ref(Empty);
+}

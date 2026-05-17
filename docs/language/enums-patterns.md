@@ -343,9 +343,10 @@ payload location, including 64-bit payload-word slots and nested aggregate-enum
 slots. Compact small payloads remain value-only because their payload lives
 inside the tag word rather than in a separate slot. Nested shared reference
 bindings are available in enum statement/expression `match` arms and enum
-`if let`/`while let` arms. Mutable nested control-flow payload borrows and
-enum `while let` reference bindings with or-patterns remain planned until
-per-arm addressable match storage is lowered.
+`if let`/`while let` arms, including enum `while let` or-pattern alternatives
+that bind the same names with the same types. Mutable nested control-flow
+payload borrows remain planned until per-arm addressable match storage can
+track exclusive payload access.
 
 These declaration patterns are refutable. If the value is a different enum
 case, Ari takes the panic path. Use `if let` or `match` when the failure path
@@ -618,7 +619,8 @@ let nested_struct = match (point, color) {
 Ownership binding modes for sequence patterns remain planned for the shared
 richer pattern engine. Local `let ref` and function-entry reference patterns
 can borrow supported `Vec[T]`/`Slice[T]` elements today; nested reference modes
-inside enum `while let` support shared borrows for a single enum-case pattern.
+inside enum `while let` support shared borrows for enum-case patterns and
+same-name/same-type or-pattern alternatives.
 Pattern-position macro invocation uses reserved Rust-style `ident!(...)`
 syntax and preserves a balanced token tree in the AST and module summaries. The
 name must resolve to a `token_stream -> token_stream` or `ast -> ast` meta

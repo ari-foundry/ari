@@ -991,11 +991,12 @@ private:
                 for (const auto& binding : stmt.init_bindings) locals.push_back({binding.name, binding.type});
                 for (const auto& binding : stmt.init_bindings) collect_expr_locals(binding.init, locals);
                 collect_expr_locals(stmt.condition, locals);
-                if (stmt.kind == IrStmtKind::WhileLet && !ir_stmt_match_arms(stmt).empty() && ir_stmt_match_arms(stmt)[0].has_value_binding) {
-                    locals.push_back({ir_stmt_match_arms(stmt)[0].value_name, ir_stmt_match_arms(stmt)[0].value_type});
-                }
-                if (stmt.kind == IrStmtKind::WhileLet && !ir_stmt_match_arms(stmt).empty() && ir_stmt_match_arms(stmt)[0].has_payload_binding) {
-                    collect_payload_binding_locals(ir_stmt_match_arms(stmt)[0], locals);
+                if (stmt.kind == IrStmtKind::WhileLet) {
+                    for (const auto& arm : ir_stmt_match_arms(stmt)) {
+                        if (arm.has_value_binding) locals.push_back({arm.value_name, arm.value_type});
+                        collect_payload_binding_locals(arm, locals);
+                        collect_locals(arm.body, locals);
+                    }
                 }
                 collect_locals(ir_stmt_loop_body(stmt), locals);
                 for (const auto& update : stmt.updates) collect_expr_locals(update, locals);
@@ -1324,10 +1325,13 @@ private:
                 line("  store " + bound.type + " " + bound.name + ", ptr " + local_slot(arm.loc, arm.value_name));
             }
             emit_payload_bindings(arm, value);
-            if (stmt.while_let_continue_on_mismatch && i + 1 == ir_stmt_match_arms(stmt).size()) {
-                line("  br label %" + cond_label);
-            } else {
-                line("  br label %" + body_label);
+            emit_statements(arm.body);
+            if (!block_terminated_) {
+                if (stmt.while_let_continue_on_mismatch && i + 1 == ir_stmt_match_arms(stmt).size()) {
+                    line("  br label %" + cond_label);
+                } else {
+                    line("  br label %" + body_label);
+                }
             }
         }
 
