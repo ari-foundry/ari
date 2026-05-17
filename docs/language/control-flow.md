@@ -584,14 +584,19 @@ The update is still positional and parallel: all update expressions are
 evaluated before the loop bindings are written. In loops with owning `init`
 bindings, `continue` must provide explicit update values so the checker can
 validate the owner state at that jump.
-For a literal `while false` condition, the body and `next` expressions are
-checked, but ownership flow after the loop keeps the initial binding state
-because no iteration or update can execute.
-For a literal `while true` condition, `init while` reports the same
+For a literal `while false` condition, or an immutable local `let` condition
+initialized directly from `false`, the body and `next` expressions are checked,
+but ownership flow after the loop keeps the initial binding state because no
+iteration or update can execute.
+For a literal `while true` condition, or an immutable local `let` condition
+initialized directly from `true`, `init while` reports the same
 non-fallthrough and all-return flow as plain `while true`, so a later function
 return is not required when the loop cannot exit normally. Its value
 `continue` paths also merge with the next-iteration state rather than the
-post-loop `break` exit state.
+post-loop `break` exit state. If an outer owner is widened from live to
+moved/dropped across a no-zero `init while` transition, Ari rechecks the body
+and `next` update under that widened next-iteration state before accepting the
+loop.
 
 `let ... while ... next ...` is no longer accepted. Use the single loop-state
 spelling `init ... while ... next ...` so `let` stays reserved for ordinary

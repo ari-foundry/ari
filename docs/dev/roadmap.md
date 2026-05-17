@@ -104,14 +104,15 @@ dataflow recheck:
    different: a body checked with an `Alive` owner cannot simply be reused for a
    later iteration that starts with that owner moved or dropped. Add a
    revalidation/dataflow pass before accepting non-trivial next-iteration or
-   fallthrough ownership fixed points. The plain `while` slice now treats
+   fallthrough ownership fixed points. The plain `while` and `init while`
+   no-zero slices now treat
    immutable local bool conditions initialized directly from literals like
-   literal `true`/`false`, and rechecks no-zero next-iteration states under a
+   literal `true`/`false`, and recheck no-zero next-iteration states under a
    candidate `Alive -> moved/dropped` owner widening before accepting them.
    - [owner-widen] extend the widened-state recheck beyond plain no-zero
-     `while` loops, including `init while`/`while let` bodies and any future
-     maybe-zero representation that can distinguish definitely-live from
-     maybe-unavailable owners after loop fallthrough
+     `while` and `init while` loops, including `while let`/iterator-style
+     bodies and any future maybe-zero representation that can distinguish
+     definitely-live from maybe-unavailable owners after loop fallthrough
    Nice-to-have:
    - [loop-known-bool-ir-fold] after sema proves an immutable literal-bool
      loop condition, optionally fold the lowered IR condition to the literal

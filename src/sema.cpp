@@ -5137,6 +5137,32 @@ private:
         merge_existing_zone_generations_into(exit_state, next_iteration_state);
     }
 
+    static void merge_loop_next_iteration_states(
+        SourceLocation loc,
+        StateSnapshot& next_iteration_state,
+        const std::vector<StateSnapshot>& snapshots,
+        const std::string& message,
+        bool allow_owner_widening,
+        bool& widened_owner_state
+    ) {
+        if (allow_owner_widening) {
+            if (auto error = merge_loop_state_snapshots_with_owner_widening(
+                    next_iteration_state,
+                    snapshots,
+                    message,
+                    widened_owner_state)) {
+                fail(loc, *error);
+            }
+            return;
+        }
+        if (auto error = merge_loop_state_snapshots_conservatively(
+                next_iteration_state,
+                snapshots,
+                message)) {
+            fail(loc, *error);
+        }
+    }
+
     void recheck_loop_body_under_state(
         SourceLocation loc,
         const LoopInfo& loop,
@@ -5172,6 +5198,46 @@ private:
         hidden_local_counter_ = saved_hidden_local_counter;
     }
 
+    void recheck_init_while_transition_under_state(
+        SourceLocation loc,
+        const Stmt& stmt,
+        const LoopInfo& loop,
+        const StateSnapshot& recheck_state,
+        const LoopBodyRecheck& recheck
+    ) {
+        if (!recheck.statements) {
+            fail(loc, "internal error: missing init-while body for widened owner-state recheck");
+        }
+
+        StateSnapshot saved_state = snapshot_states();
+        LocalScopeStack::NameState saved_name_state = local_scopes_.snapshot_name_state();
+        std::vector<LoopInfo> saved_loops = loops_;
+        std::size_t saved_warning_count = warnings_.size();
+        int saved_hidden_local_counter = hidden_local_counter_;
+        std::size_t borrow_mark = temporary_borrow_mark();
+
+        restore_states(recheck_state);
+        local_scopes_.restore_name_state(recheck.name_state);
+
+        LoopInfo rechecked_loop = loop;
+        rechecked_loop.break_state_snapshots.clear();
+        rechecked_loop.continue_state_snapshots.clear();
+        push_loop(loc, std::move(rechecked_loop));
+        CheckedStatements body = check_statements(*recheck.statements, recheck.scoped);
+        if (body.flow == Flow::Continues && !stmt.updates.empty()) {
+            (void)check_init_while_update_exprs(loc, loop, stmt.updates);
+            apply_init_while_update_state(loc, loop);
+        }
+        loops_.pop_back();
+
+        release_temporary_borrows(borrow_mark);
+        restore_states(saved_state);
+        local_scopes_.restore_name_state(std::move(saved_name_state));
+        loops_ = std::move(saved_loops);
+        warnings_.resize(saved_warning_count);
+        hidden_local_counter_ = saved_hidden_local_counter;
+    }
+
     StateSnapshot checked_loop_exit_state(
         SourceLocation loc,
         const StateSnapshot& loop_input,
@@ -5185,30 +5251,15 @@ private:
         StateSnapshot next_iteration_state = loop_input;
         const bool allow_owner_widening = !has_zero_iteration_exit && recheck && recheck->statements;
         bool widened_owner_state = false;
-        auto merge_next_iteration_states =
-            [&](const std::vector<StateSnapshot>& snapshots, const std::string& message) {
-                if (allow_owner_widening) {
-                    if (auto error = merge_loop_state_snapshots_with_owner_widening(
-                            next_iteration_state,
-                            snapshots,
-                            message,
-                            widened_owner_state)) {
-                        fail(loc, *error);
-                    }
-                    return;
-                }
-                if (auto error = merge_loop_state_snapshots_conservatively(
-                        next_iteration_state,
-                        snapshots,
-                        message)) {
-                    fail(loc, *error);
-                }
-            };
 
         if (body_flow == Flow::Continues) {
-            merge_next_iteration_states(
+            merge_loop_next_iteration_states(
+                loc,
+                next_iteration_state,
                 std::vector<StateSnapshot>{loop_body_state},
-                "cannot change ownership state inside loop yet"
+                "cannot change ownership state inside loop yet",
+                allow_owner_widening,
+                widened_owner_state
             );
             if (has_zero_iteration_exit) {
                 if (auto error = merge_loop_state_snapshots_conservatively(
@@ -5222,9 +5273,13 @@ private:
         if (has_zero_iteration_exit) {
             merge_continue_states(loc, exit_state, loop);
         } else {
-            merge_next_iteration_states(
+            merge_loop_next_iteration_states(
+                loc,
+                next_iteration_state,
                 loop.continue_state_snapshots,
-                "has incompatible ownership states at loop continue"
+                "has incompatible ownership states at loop continue",
+                allow_owner_widening,
+                widened_owner_state
             );
             if (widened_owner_state) {
                 recheck_loop_body_under_state(loc, loop, next_iteration_state, *recheck);
@@ -12590,9 +12645,14 @@ private:
         const std::optional<bool> known_condition = known_bool_condition_value(*lowered.condition);
         const bool literal_true_condition = known_condition.value_or(false);
         StateSnapshot loop_input = snapshot_states();
+        LocalScopeStack::NameState loop_name_state = local_scopes_.snapshot_name_state();
+        const std::vector<StmtPtr>& body_source = stmt_loop_body(stmt);
+        const bool has_zero_iteration_exit = !literal_true_condition;
+        const bool allow_owner_widening = !has_zero_iteration_exit;
+        bool widened_owner_state = false;
 
         push_loop(stmt.loc, loop);
-        CheckedStatements body = check_statements(stmt_loop_body(stmt), true);
+        CheckedStatements body = check_statements(body_source, true);
         set_ir_stmt_loop_body(lowered, std::move(body.statements));
         StateSnapshot loop_body_state = snapshot_states();
         StateSnapshot next_iteration_state = loop_input;
@@ -12612,39 +12672,68 @@ private:
             restore_states(loop_input);
         }
         if (body.flow == Flow::Continues && stmt.updates.empty()) {
-            require_same_states(stmt.loc, loop_input, loop_body_state, "cannot change ownership state inside loop yet");
-            merge_existing_zone_generations_into(next_iteration_state, loop_body_state);
-        } else if (body.flow == Flow::Continues) {
-            require_same_states_except_loop_bindings(
+            merge_loop_next_iteration_states(
                 stmt.loc,
-                loop_input,
-                loop_body_state,
-                loop,
-                "cannot change ownership state inside loop except updated init-while bindings"
+                next_iteration_state,
+                std::vector<StateSnapshot>{loop_body_state},
+                "cannot change ownership state inside loop yet",
+                allow_owner_widening,
+                widened_owner_state
             );
+        } else if (body.flow == Flow::Continues) {
+            if (has_zero_iteration_exit) {
+                require_same_states_except_loop_bindings(
+                    stmt.loc,
+                    loop_input,
+                    loop_body_state,
+                    loop,
+                    "cannot change ownership state inside loop except updated init-while bindings"
+                );
+            }
         }
 
         if (body.flow == Flow::Continues && !stmt.updates.empty()) {
             lowered.updates = check_init_while_update_exprs(stmt.loc, loop, stmt.updates);
             apply_init_while_update_state(stmt.loc, loop);
             StateSnapshot update_state = snapshot_states();
-            require_same_states(stmt.loc, loop_input, update_state, "cannot change ownership state in loop updates yet");
-            merge_existing_zone_generations_into(next_iteration_state, update_state);
+            merge_loop_next_iteration_states(
+                stmt.loc,
+                next_iteration_state,
+                std::vector<StateSnapshot>{update_state},
+                "cannot change ownership state in loop updates yet",
+                allow_owner_widening,
+                widened_owner_state
+            );
         }
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
-        const bool has_zero_iteration_exit = !literal_true_condition;
         StateSnapshot exit_state = loop_exit_base_state(loop_input, loop_state, has_zero_iteration_exit);
         if (has_zero_iteration_exit && body.flow == Flow::Continues) {
             merge_existing_zone_generations_into(exit_state, next_iteration_state);
         }
-        merge_loop_continue_snapshots(
-            stmt.loc,
-            exit_state,
-            std::move(next_iteration_state),
-            loop_state,
-            has_zero_iteration_exit
-        );
+        if (has_zero_iteration_exit) {
+            merge_loop_continue_snapshots(
+                stmt.loc,
+                exit_state,
+                std::move(next_iteration_state),
+                loop_state,
+                has_zero_iteration_exit
+            );
+        } else {
+            merge_loop_next_iteration_states(
+                stmt.loc,
+                next_iteration_state,
+                loop_state.continue_state_snapshots,
+                "has incompatible ownership states at loop continue",
+                allow_owner_widening,
+                widened_owner_state
+            );
+            if (widened_owner_state) {
+                LoopBodyRecheck recheck{&body_source, true, std::move(loop_name_state)};
+                recheck_init_while_transition_under_state(stmt.loc, stmt, loop_state, next_iteration_state, recheck);
+            }
+            merge_existing_zone_generations_into(exit_state, next_iteration_state);
+        }
         merge_break_exit_states(stmt.loc, exit_state, loop_state, "has incompatible ownership states after loop exits");
         restore_states(exit_state);
         if (literal_true_condition && body.flow == Flow::Returns) return Flow::Returns;
