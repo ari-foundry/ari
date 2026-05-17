@@ -29,9 +29,10 @@ changing the long-term language contract.
    `match`, enum `if let`, and enum `while let` when the matched subject is an
    addressable local, field, or indexed element. Mutable tuple, fixed-array,
    and struct control-flow reference bindings now borrow the original
-   addressable subject while hidden product storage drives pattern tests.
-   Finish mutable runtime-sequence control-flow reference bindings for
-   `Slice[T]`/`Vec[T]` patterns and ownership-aware binding modes through
+   addressable subject while hidden product storage drives pattern tests, and
+   mutable runtime-sequence control-flow reference bindings now borrow
+   addressable `Slice[T]`/`Vec[T]` subjects while hidden sequence storage drives
+   length and element tests. Finish ownership-aware binding modes through
    aggregate, enum, slice, and vector patterns.
    Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
    patterns on the same shared binding-mode engine.

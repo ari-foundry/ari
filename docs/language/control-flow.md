@@ -118,6 +118,12 @@ original matched tuple, fixed array, or struct when it is an addressable local,
 field, or indexed element; non-addressable temporaries remain value-only for
 mutable field borrows. Irrefutable aggregate patterns such as `(x, y)` do not
 need `if let`; Ari rejects them when an `else` arm is present.
+Runtime-sequence `Vec[T]` and `Slice[T]` array patterns follow the same
+control-flow rule for `ref mut` element patterns: the hidden sequence value
+drives the length and element tests, and the mutable borrow points at the
+original addressable sequence subject. A temporary sequence expression such as
+`values.as_slice()` must be bound first before it can be mutably borrowed by a
+control-flow pattern.
 
 ## Block Expressions
 
@@ -190,6 +196,8 @@ original matched tuple, fixed array, or struct when it is addressable while the
 per-iteration hidden value drives the pattern tests. It re-evaluates the
 aggregate expression each iteration, executes the first matching alternative,
 and exits the loop when no alternative matches.
+Runtime-sequence `while let` uses the same addressable-subject rule for
+`ref mut` element patterns over `Vec[T]` storage and `Slice[T]` views.
 
 Loops currently cannot change the ownership state of an outer binding. That
 rule is conservative until the checker can track loop invariants. Loop

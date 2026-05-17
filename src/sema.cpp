@@ -6413,7 +6413,7 @@ private:
     IrExprPtr make_reference_pattern_access_expr_from_base(SourceLocation loc,
                                                            IrExprPtr expr,
                                                            IrType current,
-                                                           const std::string& path) {
+                                                           const std::string& path) const {
         for (std::size_t index : local_path_indices(path)) {
             if (current.primitive == IrPrimitiveKind::Vector) {
                 expr = make_ir_index_expr(
@@ -6435,7 +6435,7 @@ private:
     IrExprPtr make_reference_pattern_access_expr(SourceLocation loc,
                                                  const std::string& base_name,
                                                  const IrType& base_type,
-                                                 const std::string& path) {
+                                                 const std::string& path) const {
         return make_reference_pattern_access_expr_from_base(
             loc,
             make_local_lvalue_expr(loc, base_name, base_type),
@@ -6684,10 +6684,23 @@ private:
 
     using ReferenceAccessBuilder = std::function<IrExprPtr(SourceLocation, const std::string&)>;
 
+    static std::string append_reference_borrow_path_segment(const std::string& base,
+                                                            const std::string& segment) {
+        return base.empty() ? segment : base + "." + segment;
+    }
+
+    std::string runtime_sequence_reference_element_borrow_path(const std::string& source_path,
+                                                              const std::string& element_path,
+                                                              const IrType& source_type) const {
+        if (is_prelude_slice_type(value_qualified_type(source_type))) {
+            return append_reference_borrow_path_segment(local_owned_field_path(source_path, 0), element_path);
+        }
+        return append_reference_borrow_path_segment(source_path, element_path);
+    }
+
     std::string runtime_sequence_reference_element_borrow_path(std::string element_path,
                                                               const IrType& source_type) const {
-        if (is_prelude_slice_type(value_qualified_type(source_type))) return "0." + element_path;
-        return element_path;
+        return runtime_sequence_reference_element_borrow_path("", element_path, source_type);
     }
 
     std::string runtime_sequence_reference_static_borrow_path(std::size_t pattern_index,
@@ -6697,7 +6710,23 @@ private:
             source_type);
     }
 
+    std::string runtime_sequence_reference_static_borrow_path(const std::string& source_path,
+                                                             std::size_t pattern_index,
+                                                             const IrType& source_type) const {
+        return runtime_sequence_reference_element_borrow_path(
+            source_path,
+            "$seq" + std::to_string(pattern_index),
+            source_type);
+    }
+
     std::string runtime_sequence_reference_borrow_path(const Pattern& sequence_pattern,
+                                                       std::size_t pattern_index,
+                                                       const IrType& source_type) const {
+        return runtime_sequence_reference_borrow_path("", sequence_pattern, pattern_index, source_type);
+    }
+
+    std::string runtime_sequence_reference_borrow_path(const std::string& source_path,
+                                                       const Pattern& sequence_pattern,
                                                        std::size_t pattern_index,
                                                        const IrType& source_type) const {
         std::string element_path;
@@ -6706,13 +6735,15 @@ private:
         } else {
             element_path = "$seq_tail" + std::to_string(pattern_index - sequence_pattern.rest_index);
         }
-        return runtime_sequence_reference_element_borrow_path(std::move(element_path), source_type);
+        return runtime_sequence_reference_element_borrow_path(source_path, std::move(element_path), source_type);
     }
 
     void lower_reference_runtime_sequence_dynamic_element_binding(const Pattern& item,
                                                                   const Pattern& sequence_pattern,
                                                                   std::size_t pattern_index,
                                                                   const std::string& base_name,
+                                                                  const IrType& base_type,
+                                                                  const std::string& source_path,
                                                                   const IrType& source_type,
                                                                   const IrType& element_type,
                                                                   bool mutable_borrow,
@@ -6722,12 +6753,14 @@ private:
         ReferenceAccessBuilder make_access = [&](SourceLocation loc, const std::string& access_path) {
             IrExprPtr element_access = make_ir_index_expr(
                 loc,
-                make_local_lvalue_expr(loc, base_name, source_type),
+                make_reference_pattern_access_expr(loc, base_name, base_type, source_path),
                 make_runtime_sequence_pattern_index_expr(
                     loc,
                     sequence_pattern,
                     pattern_index,
                     base_name,
+                    base_type,
+                    source_path,
                     source_type
                 )
             );
@@ -6742,7 +6775,7 @@ private:
             base_name,
             element_type,
             "",
-            runtime_sequence_reference_borrow_path(sequence_pattern, pattern_index, source_type),
+            runtime_sequence_reference_borrow_path(source_path, sequence_pattern, pattern_index, source_type),
             mutable_borrow,
             make_access,
             statements);
@@ -6912,6 +6945,7 @@ private:
                                                                  std::size_t pattern_index,
                                                                  const std::string& base_name,
                                                                  const IrType& base_type,
+                                                                 const std::string& source_path,
                                                                  const IrType& source_type,
                                                                  const IrType& element_type,
                                                                  bool mutable_borrow,
@@ -6925,7 +6959,7 @@ private:
                 base_name,
                 base_type,
                 element_type,
-                local_owned_field_path("", pattern_index),
+                local_owned_field_path(source_path, pattern_index),
                 mutable_borrow,
                 statements);
             return;
@@ -6934,7 +6968,7 @@ private:
         ReferenceAccessBuilder make_access = [&](SourceLocation loc, const std::string& access_path) {
             IrExprPtr element_access = make_ir_index_expr(
                 loc,
-                make_local_lvalue_expr(loc, base_name, source_type),
+                make_reference_pattern_access_expr(loc, base_name, base_type, source_path),
                 make_integer_literal(loc, i64_type(loc), pattern_index)
             );
             return make_reference_pattern_access_expr_from_base(
@@ -6948,10 +6982,60 @@ private:
             base_name,
             element_type,
             "",
-            runtime_sequence_reference_static_borrow_path(pattern_index, source_type),
+            runtime_sequence_reference_static_borrow_path(source_path, pattern_index, source_type),
             mutable_borrow,
             make_access,
             statements);
+    }
+
+    void lower_reference_runtime_sequence_element_bindings_from_path(const Pattern& pattern,
+                                                                     const std::string& base_name,
+                                                                     const IrType& base_type,
+                                                                     const IrType& source_type,
+                                                                     const std::string& path,
+                                                                     bool mutable_borrow,
+                                                                     std::vector<IrStmtPtr>& statements) {
+        IrType shape_type = value_qualified_type(source_type);
+        if (!is_vector_storage_type(shape_type) && !is_prelude_slice_type(shape_type)) {
+            fail(pattern.loc,
+                 "runtime sequence reference patterns currently require direct local Vec[T] storage or Slice[T] view bindings");
+        }
+        if (is_owner_type(shape_type)) {
+            fail(pattern.loc,
+                 "reference pattern destructuring of ownership-carrying runtime sequence elements is planned after ownership-through-aggregates is implemented");
+        }
+
+        const IrType& element_type = runtime_sequence_element_type(pattern.loc, shape_type);
+        const std::size_t prefix_count = pattern.has_rest ? pattern.rest_index : pattern.elements.size();
+        for (std::size_t i = 0; i < prefix_count; ++i) {
+            const Pattern& item = pattern.elements[i];
+            if (expanded_pattern(item).kind == PatternKind::Wildcard) continue;
+            lower_reference_runtime_sequence_prefix_element_binding(
+                item,
+                i,
+                base_name,
+                base_type,
+                path,
+                shape_type,
+                element_type,
+                mutable_borrow,
+                statements);
+        }
+        if (pattern.has_rest) {
+            for (std::size_t i = pattern.rest_index; i < pattern.elements.size(); ++i) {
+                lower_reference_runtime_sequence_dynamic_element_binding(
+                    pattern.elements[i],
+                    pattern,
+                    i,
+                    base_name,
+                    base_type,
+                    path,
+                    shape_type,
+                    element_type,
+                    mutable_borrow,
+                    statements);
+            }
+        }
     }
 
     void lower_reference_runtime_sequence_binding_pattern_from_path(const Pattern& pattern,
@@ -6962,51 +7046,27 @@ private:
                                                                     bool mutable_borrow,
                                                                     std::vector<IrStmtPtr>& statements) {
         IrType shape_type = value_qualified_type(source_type);
-        if (!is_vector_storage_type(shape_type) && !is_prelude_slice_type(shape_type)) {
-            fail(pattern.loc,
-                 "runtime sequence reference patterns currently require direct local Vec[T] storage or Slice[T] view bindings");
-        }
-        if (!path.empty()) {
-            fail(pattern.loc,
-                 "runtime sequence reference patterns currently require a direct local Vec[T] or Slice[T] binding");
-        }
-        if (is_owner_type(shape_type)) {
-            fail(pattern.loc,
-                 "reference pattern destructuring of ownership-carrying runtime sequence elements is planned after ownership-through-aggregates is implemented");
+        if (!path.empty() && !pattern.rest_alias_name.empty()) {
+            fail(pattern.rest_alias_loc,
+                 "runtime sequence reference rest aliases currently require a direct local Vec[T] or Slice[T] binding");
         }
 
-        const IrType& element_type = runtime_sequence_element_type(pattern.loc, shape_type);
         std::vector<IrStmtPtr> body;
-        append_reference_runtime_sequence_rest_alias(pattern, base_name, shape_type, body);
-        const std::size_t prefix_count = pattern.has_rest ? pattern.rest_index : pattern.elements.size();
-        for (std::size_t i = 0; i < prefix_count; ++i) {
-            const Pattern& item = pattern.elements[i];
-            if (expanded_pattern(item).kind == PatternKind::Wildcard) continue;
-            lower_reference_runtime_sequence_prefix_element_binding(
-                item,
-                i,
-                base_name,
-                base_type,
-                shape_type,
-                element_type,
-                mutable_borrow,
-                body);
+        if (path.empty()) {
+            append_reference_runtime_sequence_rest_alias(pattern, base_name, shape_type, body);
         }
-        if (pattern.has_rest) {
-            for (std::size_t i = pattern.rest_index; i < pattern.elements.size(); ++i) {
-                lower_reference_runtime_sequence_dynamic_element_binding(
-                    pattern.elements[i],
-                    pattern,
-                    i,
-                    base_name,
-                    shape_type,
-                    element_type,
-                    mutable_borrow,
-                    body);
-            }
-        }
+        lower_reference_runtime_sequence_element_bindings_from_path(
+            pattern,
+            base_name,
+            base_type,
+            source_type,
+            path,
+            mutable_borrow,
+            body);
 
-        IrExprPtr condition = lower_runtime_sequence_pattern_length_condition(pattern, base_name, shape_type);
+        IrExprPtr condition = path.empty()
+            ? lower_runtime_sequence_pattern_length_condition(pattern, base_name, shape_type)
+            : lower_runtime_sequence_pattern_length_condition(pattern, base_name, base_type, path, shape_type);
         if (!condition) {
             for (auto& statement : body) statements.push_back(std::move(statement));
             return;
@@ -7410,6 +7470,14 @@ private:
             case PatternKind::Array: {
                 IrType shape_type = value_qualified_type(source_type);
                 if (pattern.kind == PatternKind::Array && is_runtime_sequence_pattern_subject(shape_type)) {
+                    lower_reference_runtime_sequence_element_bindings_from_path(
+                        pattern,
+                        base_name,
+                        base_type,
+                        source_type,
+                        path,
+                        false,
+                        statements);
                     return;
                 }
                 const std::vector<IrType>& fields = aggregate_field_types(shape_type);
@@ -7727,11 +7795,38 @@ private:
         return make_collection_len_expr(loc, make_local_lvalue_expr(loc, source_name, source_type));
     }
 
+    IrExprPtr make_runtime_sequence_len_expr(SourceLocation loc,
+                                             const std::string& base_name,
+                                             const IrType& base_type,
+                                             const std::string& source_path) const {
+        return make_collection_len_expr(
+            loc,
+            make_reference_pattern_access_expr(loc, base_name, base_type, source_path));
+    }
+
     IrExprPtr make_runtime_sequence_pattern_index_expr(SourceLocation loc,
                                                        const Pattern& pattern,
                                                        std::size_t pattern_index,
                                                        const std::string& source_name,
                                                        const IrType& source_type) const {
+        return make_runtime_sequence_pattern_index_expr(
+            loc,
+            pattern,
+            pattern_index,
+            source_name,
+            source_type,
+            "",
+            source_type);
+    }
+
+    IrExprPtr make_runtime_sequence_pattern_index_expr(SourceLocation loc,
+                                                       const Pattern& pattern,
+                                                       std::size_t pattern_index,
+                                                       const std::string& base_name,
+                                                       const IrType& base_type,
+                                                       const std::string& source_path,
+                                                       const IrType& source_type) const {
+        (void)source_type;
         if (!pattern.has_rest || pattern_index < pattern.rest_index) {
             return make_integer_literal(loc, i64_type(loc), pattern_index);
         }
@@ -7741,7 +7836,7 @@ private:
         IrExprPtr index = make_i64_binary_expr(
             loc,
             IrBinaryOp::Sub,
-            make_runtime_sequence_len_expr(loc, source_name, source_type),
+            make_runtime_sequence_len_expr(loc, base_name, base_type, source_path),
             make_integer_literal(loc, i64_type(loc), suffix_count)
         );
         if (suffix_offset == 0) return index;
@@ -7858,6 +7953,22 @@ private:
             pattern.loc,
             pattern.has_rest ? IrBinaryOp::Ge : IrBinaryOp::Eq,
             make_runtime_sequence_len_expr(pattern.loc, source_name, source_type),
+            make_integer_literal(pattern.loc, i64_type(pattern.loc), required)
+        );
+    }
+
+    IrExprPtr lower_runtime_sequence_pattern_length_condition(const Pattern& pattern,
+                                                              const std::string& base_name,
+                                                              const IrType& base_type,
+                                                              const std::string& source_path,
+                                                              const IrType& source_type) const {
+        (void)source_type;
+        if (runtime_sequence_array_pattern_is_irrefutable(pattern)) return nullptr;
+        const std::uint64_t required = static_cast<std::uint64_t>(pattern.elements.size());
+        return make_bool_binary_expr(
+            pattern.loc,
+            pattern.has_rest ? IrBinaryOp::Ge : IrBinaryOp::Eq,
+            make_runtime_sequence_len_expr(pattern.loc, base_name, base_type, source_path),
             make_integer_literal(pattern.loc, i64_type(pattern.loc), required)
         );
     }
@@ -12795,11 +12906,13 @@ private:
 
     Flow check_aggregate_if_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
+        const bool runtime_sequence_subject = is_runtime_sequence_pattern_subject(subject_type);
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         const bool needs_mutable_reference_pattern_bindings =
             pattern_needs_mutable_reference_binding(condition_pattern);
         std::optional<ReferenceBindingSubject> reference_subject;
-        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+        if (needs_mutable_reference_pattern_bindings &&
+            (is_aggregate_type(subject_type) || runtime_sequence_subject)) {
             reference_subject = tracked_reference_binding_subject(
                 require_addressable_control_flow_ref_mut_subject(
                     stmt.loc,
@@ -12809,7 +12922,8 @@ private:
         lowered.kind = IrStmtKind::Block;
 
         std::string subject_name = make_hidden_local(
-            subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple");
+            runtime_sequence_subject ? "$iflet_seq" :
+                (subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple"));
         declare_local(stmt.loc, subject_name, subject_type, false);
         ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
@@ -12983,7 +13097,8 @@ private:
         const bool needs_mutable_reference_pattern_bindings =
             stmt_match_arms_need_mutable_reference_binding(stmt_match_arms(stmt));
         std::optional<ReferenceBindingSubject> reference_subject;
-        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+        if (needs_mutable_reference_pattern_bindings &&
+            (is_aggregate_type(subject_type) || runtime_sequence_subject)) {
             reference_subject = tracked_reference_binding_subject(
                 require_addressable_control_flow_ref_mut_subject(
                     stmt.loc,
@@ -12993,7 +13108,8 @@ private:
 
         lowered.kind = IrStmtKind::Block;
         std::string subject_name = make_hidden_local(
-            subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple");
+            runtime_sequence_subject ? "$match_seq" :
+                (subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple"));
         declare_local(stmt.loc, subject_name, subject_type, false);
         ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
@@ -13839,11 +13955,13 @@ private:
 
     void check_aggregate_while_let(const Stmt& stmt, IrStmt& lowered, IrExprPtr subject) {
         IrType subject_type = subject->type;
+        const bool runtime_sequence_subject = is_runtime_sequence_pattern_subject(subject_type);
         const Pattern& condition_pattern = expanded_pattern(*stmt.condition_pattern);
         const bool needs_mutable_reference_pattern_bindings =
             pattern_needs_mutable_reference_binding(condition_pattern);
         std::optional<ReferenceBindingSubject> reference_subject;
-        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+        if (needs_mutable_reference_pattern_bindings &&
+            (is_aggregate_type(subject_type) || runtime_sequence_subject)) {
             reference_subject = tracked_reference_binding_subject(
                 require_addressable_control_flow_ref_mut_subject(
                     stmt.loc,
@@ -13856,7 +13974,8 @@ private:
         lowered.condition = make_bool_literal_expr(stmt.loc, true);
 
         std::string subject_name = make_hidden_local(
-            subject_type.primitive == IrPrimitiveKind::Struct ? "$whilelet_struct" : "$whilelet_tuple");
+            runtime_sequence_subject ? "$whilelet_seq" :
+                (subject_type.primitive == IrPrimitiveKind::Struct ? "$whilelet_struct" : "$whilelet_tuple"));
         declare_local(stmt.loc, subject_name, subject_type, false);
         ir_stmt_loop_body(lowered).push_back(make_ir_var_decl(stmt.loc, subject_name, subject_type, std::move(subject), false));
 
@@ -16034,7 +16153,8 @@ private:
         const bool needs_mutable_reference_pattern_bindings =
             expr_match_arms_need_mutable_reference_binding(expr_match_arms(expr));
         std::optional<ReferenceBindingSubject> reference_subject;
-        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+        if (needs_mutable_reference_pattern_bindings &&
+            (is_aggregate_type(subject_type) || runtime_sequence_subject)) {
             reference_subject = tracked_reference_binding_subject(
                 require_addressable_control_flow_ref_mut_subject(
                     expr.loc,
@@ -16045,7 +16165,8 @@ private:
         lowered = make_ir_block_expr(expr.loc);
 
         std::string subject_name = make_hidden_local(
-            subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple");
+            runtime_sequence_subject ? "$match_seq" :
+                (subject_type.primitive == IrPrimitiveKind::Struct ? "$match_struct" : "$match_tuple"));
         declare_local(expr.loc, subject_name, subject_type, false);
         ir_expr_block_body(*lowered).push_back(
             make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));
@@ -16909,11 +17030,13 @@ private:
         const IrType* expected = nullptr
     ) {
         IrType subject_type = subject->type;
+        const bool runtime_sequence_subject = is_runtime_sequence_pattern_subject(subject_type);
         const Pattern& condition_pattern = expanded_pattern(*expr_if_condition_pattern(expr));
         const bool needs_mutable_reference_pattern_bindings =
             pattern_needs_mutable_reference_binding(condition_pattern);
         std::optional<ReferenceBindingSubject> reference_subject;
-        if (needs_mutable_reference_pattern_bindings && is_aggregate_type(subject_type)) {
+        if (needs_mutable_reference_pattern_bindings &&
+            (is_aggregate_type(subject_type) || runtime_sequence_subject)) {
             reference_subject = tracked_reference_binding_subject(
                 require_addressable_control_flow_ref_mut_subject(
                     expr.loc,
@@ -16923,7 +17046,8 @@ private:
         lowered = make_ir_block_expr(expr.loc);
 
         std::string subject_name = make_hidden_local(
-            subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple");
+            runtime_sequence_subject ? "$iflet_seq" :
+                (subject_type.primitive == IrPrimitiveKind::Struct ? "$iflet_struct" : "$iflet_tuple"));
         declare_local(expr.loc, subject_name, subject_type, false);
         ir_expr_block_body(*lowered).push_back(
             make_ir_var_decl(expr.loc, subject_name, subject_type, std::move(subject), false));

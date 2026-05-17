@@ -170,7 +170,10 @@ the matched subject is an addressable local, field, or indexed element. Tuple,
 fixed-array, and struct control-flow patterns also support mutable field
 reference bindings in statement/expression `match`, aggregate `if let`, and
 aggregate `while let` when the matched subject is addressable. Runtime-sequence
-`Slice[T]`/`Vec[T]` control-flow mutable element borrows remain planned.
+`Slice[T]`/`Vec[T]` control-flow patterns support mutable element reference
+bindings in statement/expression `match`, `if let`, and `while let` when the
+matched subject is addressable. Ownership-carrying aggregate destructuring
+through these binding modes remains planned.
 Function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

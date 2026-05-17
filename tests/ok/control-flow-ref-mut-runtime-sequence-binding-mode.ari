@@ -1,0 +1,71 @@
+fn write(value: ref mut i64, amount: i64) -> void {
+  let raw: ptr i64 = value as ptr i64;
+  *raw = *raw + amount;
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  var values: Vec[i64] = [10, 20, 30];
+  match values {
+    [ref mut head, ..] => {
+      write(head, 5);
+    }
+    _ => {}
+  }
+  total = total + values[0];
+
+  var nums: Vec[i64] = [1, 2, 3];
+  if let [_, ref mut middle, ..] = nums {
+    write(middle, 7);
+  } else {
+    total = total + 100;
+  }
+  total = total + nums[1];
+
+  var match_values: Vec[i64] = [4, 5];
+  let match_score = match match_values {
+    [ref mut left, ref mut right] => {
+      write(left, 6);
+      write(right, 8);
+      30
+    }
+    _ => 0,
+  };
+  total = total + match_score + match_values[0] + match_values[1];
+
+  var if_values: Vec[i64] = [9];
+  let if_score = if let [ref mut only] = if_values {
+    write(only, 1);
+    40
+  } else {
+    0
+  };
+  total = total + if_score + if_values[0];
+
+  var loop_values: Vec[i64] = [2, 3];
+  while let [.., ref mut tail] = loop_values {
+    write(tail, 11);
+    break;
+  }
+  total = total + loop_values[1];
+
+  var slice_values: Vec[i64] = [5, 6];
+  var view = slice_values.as_slice();
+  if let [ref mut slice_head, ..] = view {
+    write(slice_head, 20);
+  }
+  total = total + slice_values[0];
+
+  var pairs: Vec[(i64, i64)] = [(1, 2), (3, 4)];
+  match pairs {
+    [(ref mut first_left, _), .., (_, ref mut last_right)] => {
+      write(first_left, 30);
+      write(last_right, 40);
+    }
+    _ => {}
+  }
+  total = total + pairs[0].0 + pairs[1].1;
+
+  return total;
+}
