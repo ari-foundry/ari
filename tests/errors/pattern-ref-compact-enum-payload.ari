@@ -1,0 +1,10 @@
+enum Small {
+  None,
+  Some(i32),
+}
+
+fn main() -> i64 {
+  let item: Small = Some(3i32);
+  let ref Some(value) = item;
+  return 0;
+}

@@ -7127,6 +7127,18 @@ private:
                type.primitive == IrPrimitiveKind::U64;
     }
 
+    [[noreturn]] void fail_compact_enum_payload_reference(SourceLocation loc,
+                                                          const std::vector<IrType>& payloads) const {
+        if (payloads.size() == 1) {
+            fail(loc,
+                 "compact enum payload reference binding for " +
+                     type_name(payloads.front()) +
+                     " is value-only; use a value pattern or an addressable aggregate enum payload");
+        }
+        fail(loc,
+             "compact enum payload reference bindings are value-only; use value patterns or an addressable aggregate enum payload layout");
+    }
+
     std::string enum_payload_reference_storage_path(SourceLocation loc,
                                                     const IrType& enum_type,
                                                     std::uint32_t payload_index,
@@ -7147,8 +7159,9 @@ private:
             return payload_path;
         }
         fail(loc,
-             "enum payload reference binding for " + type_name(payload_type) +
-                 " requires an addressable aggregate enum payload slot");
+             "non-addressable enum payload reference binding for " +
+                 type_name(payload_type) +
+                 " is value-only; only full payload slots, i64/u64 payload words, and nested aggregate enum payload slots can be borrowed by reference");
     }
 
     void lower_reference_enum_payload_slot_pattern(const Pattern& payload,
@@ -7186,8 +7199,7 @@ private:
                                                std::vector<IrStmtPtr>& statements) {
         if (case_info.payloads.empty()) return;
         if (!has_aggregate_enum_layout(case_info.enum_type)) {
-            fail(pattern.loc,
-                 "enum payload reference bindings require an aggregate enum payload layout");
+            fail_compact_enum_payload_reference(pattern.loc, case_info.payloads);
         }
         if (!pattern.payload_pattern) {
             fail(pattern.loc, "enum case '" + pattern.case_name + "' requires a payload pattern");

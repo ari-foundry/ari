@@ -953,7 +953,8 @@ over tracked local places. Function parameter patterns support the same
 forms over hidden function-entry parameter storage. Runtime sequence rest
 aliases, nested runtime-sequence element subpatterns, and addressable aggregate
 enum payload slots can be borrowed by reference. Compact/non-addressable enum
-payloads and nested reference binding modes inside match/control-flow
+payloads remain value-only and produce payload-specific diagnostics when used
+in reference patterns. Nested reference binding modes inside match/control-flow
 subpatterns remain planned.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped

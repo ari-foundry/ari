@@ -3418,6 +3418,10 @@ check-errors: $(TARGET) check-function-errors
 	$(BUILD_DIR)/errors/pattern-ref-runtime-sequence-rest.elf; code=$$?; test $$code -eq 140
 	$(TARGET) tests/ok/pattern-ref-enum-payload.ari -o $(BUILD_DIR)/errors/pattern-ref-enum-payload.elf
 	$(BUILD_DIR)/errors/pattern-ref-enum-payload.elf; code=$$?; test $$code -eq 181
+	if $(TARGET) tests/errors/pattern-ref-compact-enum-payload.ari -o $(BUILD_DIR)/errors/pattern-ref-compact-enum-payload.elf >$(BUILD_DIR)/errors/pattern-ref-compact-enum-payload.err 2>&1; then exit 1; fi
+	grep -Fq "compact enum payload reference binding for i32 is value-only" $(BUILD_DIR)/errors/pattern-ref-compact-enum-payload.err
+	if $(TARGET) tests/errors/pattern-ref-non-addressable-enum-payload.ari -o $(BUILD_DIR)/errors/pattern-ref-non-addressable-enum-payload.elf >$(BUILD_DIR)/errors/pattern-ref-non-addressable-enum-payload.err 2>&1; then exit 1; fi
+	grep -Fq "non-addressable enum payload reference binding for i32 is value-only" $(BUILD_DIR)/errors/pattern-ref-non-addressable-enum-payload.err
 	if $(TARGET) tests/errors/pattern-ref-mut-immutable.ari -o $(BUILD_DIR)/errors/pattern-ref-mut-immutable.elf >$(BUILD_DIR)/errors/pattern-ref-mut-immutable.err 2>&1; then exit 1; fi
 	grep -q "cannot mutably borrow immutable binding 'value'" $(BUILD_DIR)/errors/pattern-ref-mut-immutable.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi

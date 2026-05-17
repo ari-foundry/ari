@@ -168,7 +168,9 @@ for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`
 runtime-sequence shapes. Enum-case reference patterns work when the
 matched enum stores the payload in an addressable aggregate slot, such as an
 `i64`/`u64` payload-word slot or a nested aggregate-enum payload slot. Compact
-small payloads remain value-only.
+small payloads and narrow non-addressable aggregate payload words remain
+value-only, and the checker reports the payload type when such a payload is
+used in a reference pattern.
 
 The `[a, b]` pattern spelling works for fixed arrays and for runtime sequence
 subjects such as local `Vec[T]` storage and `Slice[T]` views. On `Vec[T]` and

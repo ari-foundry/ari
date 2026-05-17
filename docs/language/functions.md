@@ -349,9 +349,9 @@ reference parameter patterns over by-value parameter storage, matching local
 local `Vec[T]` and function-entry `Slice[T]` reference sequence patterns also
 support shared nested element borrows and `name @ ..` rest Slice bindings.
 Function-entry enum-case reference patterns can borrow addressable aggregate
-enum payload slots. Owning or borrow-valued parameter patterns, compact
-non-addressable enum-payload reference bindings, nested reference binding modes
-inside subpatterns, `ref mut` nested dynamic sequence subpatterns, and
+enum payload slots. Compact and non-addressable payload words remain value-only
+and are rejected with payload-specific diagnostics. Owning or borrow-valued
+parameter patterns, nested reference binding modes inside subpatterns, and
 standalone `mut` binding-mode patterns remain rejected. Trait and extern
 function signatures must keep named parameters.
 

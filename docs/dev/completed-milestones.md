@@ -45,6 +45,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   elements are distinct.
 - Enum-case reference patterns borrow addressable aggregate enum payload slots,
   including 64-bit payload-word slots and nested aggregate-enum payload slots.
+- Compact and otherwise non-addressable enum payload reference patterns are
+  rejected with payload-specific value-only diagnostics instead of falling
+  through to a vague layout error.
 - Function parameter reference patterns lower as function-entry borrows from
   hidden ABI parameter storage.
 - `[ ... ]` patterns work for compile-time fixed arrays and runtime sequence

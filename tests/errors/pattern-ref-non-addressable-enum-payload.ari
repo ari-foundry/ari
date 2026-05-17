@@ -1,0 +1,10 @@
+enum Mixed {
+  Empty,
+  Pair(i32, i64),
+}
+
+fn main() -> i64 {
+  let item: Mixed = Pair(1i32, 2);
+  let ref Pair(left, right) = item;
+  return 0;
+}
