@@ -284,6 +284,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5ascii21ends_with_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
 	$(TARGET) tests/cases/standard-library/ok/std-ascii-case-compare.ari -o $(BUILD_DIR)/prelude/std-ascii-case-compare.elf
 	$(BUILD_DIR)/prelude/std-ascii-case-compare.elf; code=$$?; test $$code -eq 8
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-case-search.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-case-search.ll
+	grep -q '_ARNv3std5ascii20index_of_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-search.ll
+	grep -q '_ARNv3std5ascii20contains_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-search.ll
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-case-search.ari -o $(BUILD_DIR)/prelude/std-ascii-case-search.elf
+	$(BUILD_DIR)/prelude/std-ascii-case-search.elf; code=$$?; test $$code -eq 167
 	$(TARGET) tests/cases/standard-library/ok/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll

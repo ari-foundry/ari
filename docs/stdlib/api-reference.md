@@ -489,6 +489,8 @@ ascii::hex_value(byte)
 ascii::equals_ignore_case(left, right)
 ascii::starts_with_ignore_case(bytes, prefix)
 ascii::ends_with_ignore_case(bytes, suffix)
+ascii::index_of_ignore_case(bytes, needle)
+ascii::contains_ignore_case(bytes, needle)
 ascii::skip_whitespace(bytes)
 ascii::trim_start(bytes)
 ascii::trim_end(bytes)
@@ -505,13 +507,16 @@ digits.
 `digit_value` and `hex_value` return `Option[i64]`. Non-digit input returns
 `None<i64>()` where appropriate.
 
-`equals_ignore_case`, `starts_with_ignore_case`, and `ends_with_ignore_case`
-operate on `Slice[u8]` and fold only ASCII letter case. Empty prefixes and
-suffixes match. `skip_whitespace`, `trim_start`, `trim_end`, and `trim` also
-operate on `Slice[u8]` and return either a byte offset or a borrowed sub-slice.
-`parse_decimal` and `parse_hex` parse the entire slice and return
-`Option[i64]`; empty input or invalid bytes return `None<i64>()`. These parser
-helpers do not define overflow behavior yet.
+`equals_ignore_case`, `starts_with_ignore_case`, `ends_with_ignore_case`,
+`index_of_ignore_case`, and `contains_ignore_case` operate on `Slice[u8]` and
+fold only ASCII letter case. Empty prefixes, suffixes, and search needles
+match. `index_of_ignore_case` returns the first matching byte offset or `-1`;
+`contains_ignore_case` returns the same search as a bool. `skip_whitespace`,
+`trim_start`, `trim_end`, and `trim` also operate on `Slice[u8]` and return
+either a byte offset or a borrowed sub-slice. `parse_decimal` and `parse_hex`
+parse the entire slice and return `Option[i64]`; empty input or invalid bytes
+return `None<i64>()`. These parser helpers do not define overflow behavior
+yet.
 
 ## Choosing The Right Collection
 

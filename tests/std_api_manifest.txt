@@ -10,10 +10,12 @@
 
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
+fn std::ascii::contains_ignore_case|std ascii case search tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::digit_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::ends_with_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::equals_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::hex_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::index_of_ignore_case|std ascii case search tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_alpha|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_alphanumeric|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_blank|std ascii class helper tests; docs/stdlib/api-reference.md ASCII section

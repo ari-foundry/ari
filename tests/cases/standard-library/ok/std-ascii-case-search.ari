@@ -1,0 +1,63 @@
+// Covers ASCII-only case-insensitive substring search over borrowed byte slices.
+fn main() -> i64 {
+  var text: Vec[u8] = [
+    65u8, 114u8, 105u8, 45u8, 83u8, 116u8, 100u8, 45u8,
+    76u8, 105u8, 98u8, 45u8, 65u8, 114u8, 105u8, 33u8
+  ];
+  var std_lower: Vec[u8] = [115u8, 116u8, 100u8];
+  var lib_upper: Vec[u8] = [76u8, 73u8, 66u8];
+  var ari_lower: Vec[u8] = [97u8, 114u8, 105u8];
+  var ari_bang: Vec[u8] = [97u8, 114u8, 105u8, 33u8];
+  var missing: Vec[u8] = [120u8];
+  var too_long: Vec[u8] = [
+    97u8, 114u8, 105u8, 45u8, 115u8, 116u8, 100u8, 45u8,
+    108u8, 105u8, 98u8, 45u8, 97u8, 114u8, 105u8, 33u8, 33u8
+  ];
+  var empty: Vec[u8] = [];
+
+  let all = text.as_slice();
+  var score = 0;
+
+  if std::ascii::index_of_ignore_case(all, std_lower.as_slice()) == 4 {
+    score = score + 11;
+  }
+  if ascii::contains_ignore_case(all, std_lower.as_slice()) {
+    score = score + 13;
+  }
+  if ascii::index_of_ignore_case(all, lib_upper.as_slice()) == 8 {
+    score = score + 17;
+  }
+  if ascii::index_of_ignore_case(all, ari_lower.as_slice()) == 0 {
+    score = score + 19;
+  }
+  if ascii::index_of_ignore_case(all, ari_bang.as_slice()) == 12 {
+    score = score + 23;
+  }
+  if !ascii::contains_ignore_case(all, missing.as_slice()) {
+    score = score + 29;
+  }
+  if ascii::index_of_ignore_case(all, missing.as_slice()) == -1 {
+    score = score + 31;
+  }
+  if ascii::contains_ignore_case(all, empty.as_slice()) {
+    score = score + 37;
+  }
+  if ascii::index_of_ignore_case(all, empty.as_slice()) == 0 {
+    score = score + 41;
+  }
+  if ascii::index_of_ignore_case(all, too_long.as_slice()) == -1 {
+    score = score + 43;
+  }
+  if !ascii::contains_ignore_case(all, too_long.as_slice()) {
+    score = score + 47;
+  }
+  if ascii::index_of_ignore_case(empty.as_slice(), empty.as_slice()) == 0 {
+    score = score + 53;
+  }
+  if !ascii::contains_ignore_case(empty.as_slice(), missing.as_slice()) {
+    score = score + 59;
+  }
+
+  assert_eq_i64(score, 423);
+  return score % 256;
+}

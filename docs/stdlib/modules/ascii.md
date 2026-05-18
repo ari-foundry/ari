@@ -9,7 +9,8 @@ that policy visible at every call site.
 
 Use `std::ascii` when you have a `u8` or `Slice[u8]` from a `String`, raw byte
 input, or a byte-oriented parser and you need simple ASCII classification,
-case conversion, comparison, trimming, or small integer parsing.
+case conversion, comparison, substring search, trimming, or small integer
+parsing.
 
 Do not use it as a Unicode or locale-aware text API. Those policies are future
 library work and should not be hidden behind ASCII helper names.
@@ -63,6 +64,8 @@ Slice helpers operate on borrowed `Slice[u8]` values:
 ascii::equals_ignore_case(left, right)
 ascii::starts_with_ignore_case(bytes, prefix)
 ascii::ends_with_ignore_case(bytes, suffix)
+ascii::index_of_ignore_case(bytes, needle)
+ascii::contains_ignore_case(bytes, needle)
 ascii::skip_whitespace(bytes)
 ascii::trim_start(bytes)
 ascii::trim_end(bytes)
@@ -73,7 +76,10 @@ ascii::parse_hex(bytes)
 
 The `*_ignore_case` helpers compare only ASCII letter case. Bytes outside
 `A..Z` and `a..z` compare by exact byte value after the same `to_lower`
-conversion used by the scalar helpers. Empty prefixes and suffixes match.
+conversion used by the scalar helpers. Empty prefixes, suffixes, and search
+needles match. `index_of_ignore_case` returns the first matching byte offset,
+or `-1` when the needle is not found; `contains_ignore_case` is the boolean
+form of that search.
 
 `skip_whitespace` returns the first non-whitespace byte index or `bytes.len`
 when the slice is all whitespace. The trim helpers return borrowed sub-slices;
@@ -103,6 +109,11 @@ fn has_ari_prefix(bytes: Slice[u8]) -> bool {
   var prefix: Vec[u8] = [65u8, 82u8, 73u8];
   return ascii::starts_with_ignore_case(bytes, prefix.as_slice());
 }
+
+fn find_lib(bytes: Slice[u8]) -> i64 {
+  var needle: Vec[u8] = [108u8, 105u8, 98u8];
+  return ascii::index_of_ignore_case(bytes, needle.as_slice());
+}
 ```
 
 ## Tests
@@ -114,6 +125,7 @@ tests/cases/standard-library/ok/std-ascii-byte-helpers.ari
 tests/cases/standard-library/ok/std-ascii-class-helpers.ari
 tests/cases/standard-library/ok/std-ascii-slice-helpers.ari
 tests/cases/standard-library/ok/std-ascii-case-compare.ari
+tests/cases/standard-library/ok/std-ascii-case-search.ari
 ```
 
 `make check-prelude` compiles them to LLVM, checks representative public
@@ -128,6 +140,6 @@ Potential next slices:
 
 - prefix parsers that return both the parsed value and consumed byte count
 - signed decimal parsing after the numeric overflow policy is documented
-- additional ASCII slice search helpers after collection substring policy is
-  documented
+- byte-window helpers after collection substring policy grows beyond
+  first-match search
 - a separate text/Unicode module after Ari has a deliberate text policy

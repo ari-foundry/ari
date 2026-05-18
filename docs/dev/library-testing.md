@@ -52,6 +52,8 @@ test:
   classification behavior.
 - `std-ascii-case-compare.ari`: source `std::ascii` borrowed-slice
   case-insensitive comparison behavior.
+- `std-ascii-case-search.ari`: source `std::ascii` borrowed-slice
+  case-insensitive first-match search behavior.
 - `std-ascii-slice-helpers.ari`: source `std::ascii` borrowed-slice trimming
   and integer parsing behavior.
 - `std-bits-mask-helpers.ari`: source `std::bits` u64 mask and alignment

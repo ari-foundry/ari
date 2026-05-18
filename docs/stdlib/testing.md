@@ -42,6 +42,7 @@ std-convert-value-helpers.ari
 std-math-integer-helpers.ari
 std-math-division-rounding.ari
 std-ascii-case-compare.ari
+std-ascii-case-search.ari
 std-ascii-class-helpers.ari
 std-ascii-slice-helpers.ari
 std-bits-rotate-helpers.ari
