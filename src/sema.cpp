@@ -20476,26 +20476,7 @@ private:
 
     IrExprPtr check_layout_query_call(const Expr& expr, IrExprPtr lowered, bool align_query) {
         (void)lowered;
-        const std::string operation = align_query ? "align_of" : "size_of";
-        if (expr_type_args(expr).size() != 1) {
-            fail(expr.loc, operation + " expects exactly one type argument");
-        }
-        if (!expr.args.empty()) {
-            fail(expr.loc, operation + " does not take value arguments");
-        }
-
-        IrType queried = resolve_executable_type(expr_type_args(expr)[0]);
-        std::uint64_t bytes = 0;
-        bool supported = align_query
-            ? ari_layout_align_bytes(queried, bytes)
-            : ari_layout_size_bytes(queried, bytes);
-        if (!supported) {
-            fail(expr_type_args(expr)[0].loc, operation + " does not support " + type_name(queried));
-        }
-        if (bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(expr_type_args(expr)[0].loc, operation + " result is too large for i64");
-        }
-        return make_integer_literal(expr.loc, i64_type(expr.loc), bytes);
+        return lower_layout_query_call(expr, align_query, *this);
     }
 
     IrExprPtr check_typed_zone_alloc_call(const Expr& expr, IrExprPtr lowered) {

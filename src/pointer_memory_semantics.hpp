@@ -31,5 +31,6 @@ IrExprPtr lower_pointer_load_call(const Expr& expr, PointerMemorySemanticContext
 IrExprPtr lower_pointer_store_call(const Expr& expr, PointerMemorySemanticContext& context);
 IrExprPtr lower_mem_replace_call(const Expr& expr, PointerMemorySemanticContext& context);
 IrExprPtr lower_mem_swap_call(const Expr& expr, PointerMemorySemanticContext& context);
+IrExprPtr lower_layout_query_call(const Expr& expr, bool align_query, PointerMemorySemanticContext& context);
 
 } // namespace ari

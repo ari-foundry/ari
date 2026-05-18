@@ -91,9 +91,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
 - `range_semantics` for shared `Range[T]` / `RangeInclusive[T]` name and type
   recognition plus source-prelude range value type construction used by sema's
   type resolver, range constructors, stored-range loops, and Slice range checks
-- `pointer_memory_semantics` for raw pointer helper and `std::mem` value-helper
-  lowering: explicit type-argument checks, pointer arithmetic/load/store
-  diagnostics, mutable-place validation, borrow-mark release, hidden temporary
+- `pointer_memory_semantics` for raw pointer helper, layout-query, and
+  `std::mem` value-helper lowering: explicit type-argument checks, pointer
+  arithmetic/load/store diagnostics, `size_of<T>` / `align_of<T>` layout
+  literals, mutable-place validation, borrow-mark release, hidden temporary
   local registration, and final IR block assembly stay together as one raw
   memory phase while sema provides expression/type callbacks
 - `ir_builders` for basic IR node construction helpers such as local lvalues,

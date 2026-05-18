@@ -29,9 +29,9 @@ changing the long-term language contract.
    metadata assembly while sema supplies resolved types and enum layout, and
    `vector_semantics` owns root `Vec[T]` parameter ABI lowering into
    Slice-shaped views plus the remaining root-vector runtime ABI guards.
-   `pointer_memory_semantics` now owns raw pointer helper and `std::mem`
-   value-helper lowering while sema supplies expression/type callbacks and
-   hidden-local registration.
+   `pointer_memory_semantics` now owns raw pointer helper, layout-query, and
+   `std::mem` value-helper lowering while sema supplies expression/type
+   callbacks and hidden-local registration.
    `zone_allocation_semantics` now owns typed zone allocation, placement
    construction, promotion, and lexical temporary-zone call lowering while sema
    supplies expression/type callbacks.

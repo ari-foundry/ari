@@ -2,8 +2,11 @@
 
 #include "common.hpp"
 #include "ir_builders.hpp"
+#include "layout.hpp"
 #include "type_semantics.hpp"
 
+#include <cstdint>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -26,6 +29,10 @@ IrType primitive_type(IrPrimitiveKind primitive, std::string name, SourceLocatio
 
 IrType void_type(SourceLocation loc) {
     return primitive_type(IrPrimitiveKind::Void, "void", loc);
+}
+
+IrType i64_type(SourceLocation loc) {
+    return primitive_type(IrPrimitiveKind::I64, "i64", loc);
 }
 
 std::optional<IrType> resolve_optional_pointer_helper_type_arg(
@@ -323,6 +330,29 @@ IrExprPtr lower_mem_swap_call(const Expr& expr, PointerMemorySemanticContext& co
         void_type(expr.loc),
         std::move(body),
         std::move(final_store));
+}
+
+IrExprPtr lower_layout_query_call(const Expr& expr, bool align_query, PointerMemorySemanticContext& context) {
+    const std::string operation = align_query ? "align_of" : "size_of";
+    if (expr_type_args(expr).size() != 1) {
+        fail(expr.loc, operation + " expects exactly one type argument");
+    }
+    if (!expr.args.empty()) {
+        fail(expr.loc, operation + " does not take value arguments");
+    }
+
+    IrType queried = context.resolve_executable_type(expr_type_args(expr)[0]);
+    std::uint64_t bytes = 0;
+    bool supported = align_query
+        ? ari_layout_align_bytes(queried, bytes)
+        : ari_layout_size_bytes(queried, bytes);
+    if (!supported) {
+        fail(expr_type_args(expr)[0].loc, operation + " does not support " + type_name(queried));
+    }
+    if (bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
+        fail(expr_type_args(expr)[0].loc, operation + " result is too large for i64");
+    }
+    return make_integer_literal(expr.loc, i64_type(expr.loc), bytes);
 }
 
 } // namespace ari
