@@ -41,7 +41,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`. | Implemented for source-level trait-bound static dispatch. |
 | `std::convert` | Conversion trait names. | `From`, `Into`, `TryFrom`, `TryInto`. | Trait surface only; broad conversion impls are future library work. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`. | First i64-signature helper slice; overflow policy is still future work. |
-| `std::bits` | Source-only bit-mask, power-of-two alignment, and bit-scan helpers. | `is_set`, `any_set`, `set`, `clear`, `toggle`, `is_power_of_two`, `align_down`, `align_up`, `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`. | Current u64-signature helper slices; generic integer policy is future work. |
+| `std::bits` | Source-only bit-mask, power-of-two, low-mask, alignment, and bit-scan helpers. | `is_set`, `any_set`, `set`, `clear`, `toggle`, `is_power_of_two`, `bit_width`, `floor_power_of_two`, `ceil_power_of_two`, `low_mask`, `align_down`, `align_up`, `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`. | Current u64-signature helper slices; generic integer policy is future work. |
 
 ## API Conventions
 
@@ -89,7 +89,7 @@ Use this table when writing code from docs alone:
 | Inspect layout or raw memory. | `size_of<T>`, `align_of<T>`, `ptr_add`, `ptr_load`, `ptr_store` | Use only for scalar and supported Ari-layout aggregate values. |
 | Compare values generically. | `cmp::min`, `cmp::max`, `cmp::clamp` | Requires an `Ord[T]` impl for the compared type. |
 | Iterate ranges. | `range(start, end)`, `range_inclusive(start, end)`, `start..end`, `start..=end` | Works directly in `for` loops and stores as `Range[T]`/`RangeInclusive[T]`. |
-| Work with bit masks and bit scans. | `bits::is_set`, `bits::set`, `bits::align_up`, `bits::count_ones`, `bits::leading_zeros` | Current helpers take `u64`. Alignment helpers assert a non-zero power-of-two alignment; zero has 64 leading and trailing zeros. |
+| Work with bit masks, powers of two, and bit scans. | `bits::is_set`, `bits::set`, `bits::bit_width`, `bits::floor_power_of_two`, `bits::low_mask`, `bits::align_up` | Current helpers take `u64`. Alignment helpers assert a non-zero power-of-two alignment; zero has 64 leading and trailing zeros. |
 | Implement custom iteration. | `Iterator[T]::next(self: ref mut Self) -> Option[T]` | Use `for item in iterator`; use `for let pattern in iterator` for skip-on-mismatch filtering. |
 | Format into owned text. | `format_in!(ref mut zone, "...", values...)` | Default-zone `format!` is intentionally not executable in the current surface. |
 | Use integer helper routines. | `math::abs`, `math::pow`, `math::gcd` | Current helpers have i64 signatures and are source implemented. `pow` asserts that the exponent is non-negative. |

@@ -35,12 +35,16 @@ fn std::assert_ne_i64|prelude assertion macro tests; docs/dev/test-matrix.md Pre
 fn std::bits::align_down|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::align_up|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::any_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::bit_width|std bits width helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::ceil_power_of_two|std bits width helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::clear|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::count_ones|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::count_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::floor_power_of_two|std bits width helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::is_power_of_two|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::is_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::leading_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::low_mask|std bits width helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::toggle|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::trailing_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section

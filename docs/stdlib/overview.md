@@ -34,7 +34,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`. |
 | `std::convert` | Conversion trait names. | `From`, `Into`, `TryFrom`, `TryInto`. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`. |
-| `std::bits` | Source-only bit-mask, alignment, and bit-scan helpers. | `is_set`, `set`, `align_up`, `count_ones`, `leading_zeros`. |
+| `std::bits` | Source-only bit-mask, power-of-two, low-mask, alignment, and bit-scan helpers. | `is_set`, `set`, `bit_width`, `floor_power_of_two`, `low_mask`, `align_up`. |
 
 ## Allocation Rules
 
@@ -70,9 +70,10 @@ ASCII parsing are plain source methods.
 asserting `first`/`last`/`get` for programmer errors and `try_first`/
 `try_last`/`try_get` for ordinary absence handled through `Option[T]`.
 
-`std::bits` follows the same rule for current `u64` mask, alignment, and
-source-loop bit-scan helpers. Future intrinsic-backed implementations may need
-compiler support, but the public edge-case behavior should stay source-defined.
+`std::bits` follows the same rule for current `u64` mask, power-of-two,
+low-mask, alignment, and source-loop bit-scan helpers. Future intrinsic-backed
+implementations may need compiler support, but the public edge-case behavior
+should stay source-defined.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

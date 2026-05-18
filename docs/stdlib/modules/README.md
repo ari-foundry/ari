@@ -14,8 +14,8 @@ limits, examples, and test files for one module.
   safe accessors, growth, copy, and iterator entry points.
 - [std::ascii](ascii.md): source-only ASCII byte classification, case
   conversion, borrowed-slice trimming, and digit parsing helpers.
-- [std::bits](bits.md): source-only `u64` bit-mask, power-of-two alignment,
-  and bit-scan helpers.
+- [std::bits](bits.md): source-only `u64` bit-mask, power-of-two, low-mask,
+  alignment, and bit-scan helpers.
 
 ## Guide Shape
 

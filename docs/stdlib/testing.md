@@ -33,6 +33,7 @@ std-string-ascii-helpers.ari
 std-math-integer-helpers.ari
 std-ascii-slice-helpers.ari
 std-bits-scan-helpers.ari
+std-bits-width-helpers.ari
 prelude-option-result-methods.ari
 prelude-option-result-predicates.ari
 ```

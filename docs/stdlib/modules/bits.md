@@ -1,9 +1,9 @@
 # std::bits
 
 `std::bits` contains source-only helpers for bit-mask code, power-of-two
-alignment, and bit scans. The current slices use `u64` signatures because Ari
-does not yet have the numeric trait vocabulary needed to express one generic
-integer API.
+rounding, low-bit masks, alignment, and bit scans. The current slices use
+`u64` signatures because Ari does not yet have the numeric trait vocabulary
+needed to express one generic integer API.
 
 The names are intentionally natural. When generic numeric traits are ready,
 the library should grow these names instead of adding public type suffixes.
@@ -41,9 +41,20 @@ Power-of-two helpers:
 
 ```ari
 bits::is_power_of_two(value)
+bits::bit_width(value)
+bits::floor_power_of_two(value)
+bits::ceil_power_of_two(value)
+bits::low_mask(width)
 bits::align_down(value, alignment)
 bits::align_up(value, alignment)
 ```
+
+`bit_width` returns the number of bits needed to represent `value`, with `0`
+returning `0`. `floor_power_of_two` returns the largest power of two not above
+`value`, with `0` returning `0`. `ceil_power_of_two` returns the smallest power
+of two not below `value`, with `0` and `1` returning `1`; it asserts when the
+next power would overflow `u64`. `low_mask(width)` returns the lowest `width`
+bits set and asserts that `width` is between `0` and `64`.
 
 `align_down` and `align_up` assert that `alignment` is a non-zero power of two.
 They do not define overflow behavior for `value + alignment - 1`; checked and
@@ -84,6 +95,7 @@ The focused positive tests are:
 ```text
 tests/cases/standard-library/ok/std-bits-mask-helpers.ari
 tests/cases/standard-library/ok/std-bits-scan-helpers.ari
+tests/cases/standard-library/ok/std-bits-width-helpers.ari
 ```
 
 `make check-prelude` compiles them to LLVM, checks representative public

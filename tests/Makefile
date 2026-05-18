@@ -249,6 +249,13 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4bits14trailing_zeros' $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-bits-scan-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-scan-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-scan-helpers.elf; code=$$?; test $$code -eq 187
+	$(TARGET) tests/cases/standard-library/ok/std-bits-width-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
+	grep -q '_ARNv3std4bits9bit_width' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
+	grep -q '_ARNv3std4bits18floor_power_of_two' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
+	grep -q '_ARNv3std4bits17ceil_power_of_two' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
+	grep -q '_ARNv3std4bits8low_mask' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-bits-width-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-width-helpers.elf
+	$(BUILD_DIR)/prelude/std-bits-width-helpers.elf; code=$$?; test $$code -eq 239
 	$(TARGET) tests/cases/standard-library/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.elf
 	$(BUILD_DIR)/prelude/prelude-explicit-move.elf; code=$$?; test $$code -eq 32
 	$(TARGET) tests/cases/standard-library/ok/std-mem-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-value-helpers.ll

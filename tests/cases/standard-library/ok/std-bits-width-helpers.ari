@@ -1,0 +1,54 @@
+// Covers std::bits u64 width, power-of-two rounding, and low-bit masks.
+fn main() -> i64 {
+  let high = 9223372036854775808u64;
+  var score = 0;
+
+  if std::bits::bit_width(0u64) == 0 {
+    score = score + 1;
+  }
+  if bits::bit_width(1u64) == 1 {
+    score = score + 2;
+  }
+  if bits::bit_width(0b10110000u64) == 8 {
+    score = score + 3;
+  }
+  if bits::bit_width(high) == 64 {
+    score = score + 5;
+  }
+
+  if bits::floor_power_of_two(0u64) == 0u64 {
+    score = score + 7;
+  }
+  if bits::floor_power_of_two(37u64) == 32u64 {
+    score = score + 11;
+  }
+  if bits::floor_power_of_two(64u64) == 64u64 {
+    score = score + 13;
+  }
+
+  if bits::ceil_power_of_two(0u64) == 1u64 {
+    score = score + 17;
+  }
+  if bits::ceil_power_of_two(37u64) == 64u64 {
+    score = score + 19;
+  }
+  if bits::ceil_power_of_two(high) == high {
+    score = score + 23;
+  }
+
+  if bits::low_mask(0) == 0u64 {
+    score = score + 29;
+  }
+  if bits::low_mask(1) == 1u64 {
+    score = score + 31;
+  }
+  if bits::low_mask(4) == 15u64 {
+    score = score + 37;
+  }
+  if bits::low_mask(64) == ~0u64 {
+    score = score + 41;
+  }
+
+  assert_eq_i64(score, 239);
+  return score;
+}
