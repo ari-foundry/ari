@@ -67,8 +67,9 @@ primitives, but byte search, comparison, ASCII trim views, and whole-string
 ASCII parsing are plain source methods.
 
 `Slice[T]` and `std::vec::Vec[T]` share the preferred collection vocabulary:
-asserting `first`/`last`/`get` for programmer errors and `try_first`/
-`try_last`/`try_get` for ordinary absence handled through `Option[T]`.
+`is_empty` for length metadata, asserting `first`/`last`/`get` for programmer
+errors, and `try_first`/`try_last`/`try_get` for ordinary absence handled
+through `Option[T]`.
 
 `std::bits` follows the same rule for current `u64` mask, rotation,
 power-of-two, low-mask, alignment, and source-loop bit-scan helpers. Future

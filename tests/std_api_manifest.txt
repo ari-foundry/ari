@@ -121,6 +121,7 @@ method Slice[T]::equals|check-prelude prelude-slice-methods borrowed receiver Sl
 method Slice[T]::first|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::is_empty|check-prelude prelude-slice-metadata borrowed receiver metadata helper; docs/stdlib/api-reference.md Slice section
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::starts_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::try_first|check-prelude prelude-slice-option-access Option-returning empty-safe access; docs/stdlib/api-reference.md Slice section

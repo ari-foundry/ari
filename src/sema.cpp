@@ -21860,6 +21860,31 @@ private:
         return false;
     }
 
+    bool is_builtin_collection_is_empty_method_receiver(const Expr& expr) {
+        if (expr.kind == ExprKind::Vector) return true;
+        if (expr.kind == ExprKind::Name) {
+            const LocalInfo* local = find_local_slot(expr.name);
+            return local && (local->type.primitive == IrPrimitiveKind::Vector ||
+                             local->type.primitive == IrPrimitiveKind::Array);
+        }
+        if (expr.kind == ExprKind::Block && expr_block_value(expr)) {
+            return is_builtin_collection_is_empty_method_receiver(*expr_block_value(expr));
+        }
+        if (expr.kind == ExprKind::If) {
+            return expr_if_then_value(expr) && expr_if_else_value(expr) &&
+                   is_builtin_collection_is_empty_method_receiver(*expr_if_then_value(expr)) &&
+                   is_builtin_collection_is_empty_method_receiver(*expr_if_else_value(expr));
+        }
+        if (expr.kind == ExprKind::Match) {
+            if (expr_match_arms(expr).empty()) return false;
+            for (const auto& arm : expr_match_arms(expr)) {
+                if (!arm.value || !is_builtin_collection_is_empty_method_receiver(*arm.value)) return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     const ImplMethodInfo* select_trait_qualified_concrete_method_impl(
         SourceLocation loc,
         const std::string& trait_name,
@@ -22971,7 +22996,8 @@ private:
             require_collection_len_method_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
             return check_collection_len_expr(expr.loc, *expr_operand(expr));
         }
-        if (expr.name == "is_empty" && is_collection_len_method_receiver(*expr_operand(expr))) {
+        if (expr.name == "is_empty" &&
+            is_builtin_collection_is_empty_method_receiver(*expr_operand(expr))) {
             return check_collection_is_empty_method_call(expr);
         }
         if (expr.name == "as_slice") {

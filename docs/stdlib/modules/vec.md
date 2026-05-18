@@ -150,6 +150,7 @@ implements `IntoIterator[T]` for the current for-loop lowering.
 with source vectors:
 
 ```ari
+view.is_empty()
 view.first()
 view.try_first()
 view.last()
@@ -165,7 +166,8 @@ view.equals(other)
 view.copy_to(ref mut zone)
 ```
 
-Use `Slice[T]` when you only need a borrowed view. Use `try_*` accessors when
+Use `Slice[T]` when you only need a borrowed view. `is_empty` checks the
+view's stored length without touching elements. Use `try_*` accessors when
 absence is a normal branch and `first`/`last`/`get` when absence should trap.
 
 ## Example
@@ -194,6 +196,7 @@ Focused positive tests include:
 
 ```text
 tests/cases/standard-library/ok/prelude-slice-methods.ari
+tests/cases/standard-library/ok/prelude-slice-metadata.ari
 tests/cases/standard-library/ok/prelude-slice-option-access.ari
 tests/cases/standard-library/ok/prelude-slice-copy-to.ari
 tests/cases/standard-library/ok/std-vec-metadata-methods.ari

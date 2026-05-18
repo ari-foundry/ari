@@ -33,8 +33,8 @@ The current `std` package already provides:
 - layout and pointer helpers in `std::mem`
 - explicit-zone allocation in `std::zone`
 - source handles for `Box`, `String`, and `Vec`
-- `Slice[T]` and `std::vec::Vec[T]` asserting and `Option`-returning element
-  access helpers
+- `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access, and
+  `Option`-returning element access helpers
 - `std::string::String` byte search, comparison, ASCII trim, and whole-string
   ASCII parsing helpers
 - range/iterator traits and the `std::vec::Iter` implementation

@@ -862,7 +862,7 @@ Checklist:
       combinator methods implemented in `std::option` and `std::result`
 - [x] expose source `Slice[T]` and `slice(data, len)` as a non-owning
       pointer/length view through the source prelude, with `len(view)`,
-      `view.len()`, `view.is_empty()`, `view[index]`, and `view[index] = value`
+      `view.len()`, source `view.is_empty()`, `view[index]`, and `view[index] = value`
       helpers, mutable local array/Vec `as_slice()` view creation,
       `view[start..end]` / `view[start..=end]` range slicing, checked
       `first`/`last`/`get`, Option-returning `try_first`/`try_last`/`try_get`,

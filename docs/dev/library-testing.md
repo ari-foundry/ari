@@ -22,6 +22,8 @@ test:
 - `std-vec-try-pop.ari`: source `std::vec` method behavior.
 - `std-vec-try-access.ari`: source `std::vec` Option-returning access
   behavior.
+- `prelude-slice-metadata.ari`: root `Slice[T]` borrowed metadata helper
+  behavior.
 - `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access
   behavior.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.

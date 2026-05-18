@@ -143,7 +143,8 @@ view.copy_to(ref mut zone)
 
 `first`, `last`, and `get` assert when the requested element does not exist.
 Use `try_first`, `try_last`, and `try_get` when absence is an ordinary branch;
-they return `Option[T]`.
+they return `Option[T]`. `is_empty` is a source method that borrows the view
+and checks whether the stored length is zero.
 
 `std::vec::Vec[T]` is the source growable sequence:
 

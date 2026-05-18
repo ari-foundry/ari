@@ -553,6 +553,8 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude-slice-metadata.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
+	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent8is_empty"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-metadata.ll
 	$(TARGET) tests/cases/standard-library/ok/prelude-slice-option-access.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl15std__Slice_i64_8inherent9try_first"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl15std__Slice_i64_8inherent8try_last"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
@@ -565,6 +567,8 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101
 	$(TARGET) tests/cases/standard-library/ok/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf
 	$(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105
+	$(TARGET) tests/cases/standard-library/ok/prelude-slice-metadata.ari -o $(BUILD_DIR)/prelude/prelude-slice-metadata.elf
+	$(BUILD_DIR)/prelude/prelude-slice-metadata.elf; code=$$?; test $$code -eq 23
 	$(TARGET) tests/cases/standard-library/ok/prelude-slice-option-access.ari -o $(BUILD_DIR)/prelude/prelude-slice-option-access.elf
 	$(BUILD_DIR)/prelude/prelude-slice-option-access.elf; code=$$?; test $$code -eq 77
 	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-methods.ll

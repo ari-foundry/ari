@@ -1,0 +1,13 @@
+// Covers root Slice[T] metadata helpers implemented as source std methods.
+fn main() -> i64 {
+  var values = [4, 6, 9];
+  let view = values.as_slice();
+  let empty = view[0..0];
+  let one = view[1..2];
+
+  let a = if empty.is_empty() { 5 } else { 0 };
+  let b = if !one.is_empty() { 7 } else { 0 };
+  let c = if !view.is_empty() { 11 } else { 0 };
+
+  return a + b + c;
+}
