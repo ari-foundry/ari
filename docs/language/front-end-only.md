@@ -125,7 +125,9 @@ non-generic payload-bearing `@repr(C)` enums are C-header-visible as explicit
 tagged structs with an `int32_t tag` plus payload slots. Scalar and
 pointer-shaped payloads use raw `uint64_t payloadN` slots, and non-scalar plain
 aggregate payloads use generated wrapper typedefs; generic payload-bearing
-`@repr(C)` enums still need an explicit C wrapper.
+`@repr(C)` enums still need an explicit C wrapper. Payload slots that contain
+`own` are rejected; expose ownership-sensitive values with explicit `ptr` or
+`ref` wrapper APIs.
 
 `@cfg(false)` prunes a declaration before name collection and type checking.
 The disabled declaration must still parse, but its names, types, and body are

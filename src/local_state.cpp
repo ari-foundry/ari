@@ -335,6 +335,25 @@ static LocalState snapshot_state(const StateSnapshot& snapshot, const std::strin
     return found->second.state;
 }
 
+static bool compatible_unavailable_owner_states(LocalState left, LocalState right) {
+    return (left == LocalState::Moved || left == LocalState::Dropped) &&
+           (right == LocalState::Moved || right == LocalState::Dropped);
+}
+
+static bool both_states_unavailable(LocalState left, LocalState right) {
+    return left != LocalState::Alive && right != LocalState::Alive;
+}
+
+static bool field_state_irrelevant_after_base_unavailable(const StateSnapshot& left,
+                                                          const StateSnapshot& right,
+                                                          const std::string& field_key) {
+    std::string base_name;
+    std::string field_path;
+    if (!split_field_state_key(field_key, base_name, field_path)) return false;
+    return both_states_unavailable(snapshot_state(left, base_name),
+                                   snapshot_state(right, base_name));
+}
+
 static bool borrow_source_equal(const LocalInfo::BorrowSource& left,
                                 const LocalInfo::BorrowSource& right) {
     return left.aggregate_path == right.aggregate_path &&
@@ -413,14 +432,18 @@ std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& le
                                                          const StateSnapshot& right,
                                                          const std::string& message) {
     for (const auto& item : left) {
-        if (item.second.state != snapshot_state(right, item.first)) {
+        LocalState right_state = snapshot_state(right, item.first);
+        if (item.second.state != right_state &&
+            !compatible_unavailable_owner_states(item.second.state, right_state) &&
+            !field_state_irrelevant_after_base_unavailable(left, right, item.first)) {
             return "binding '" + item.first + "' " + message;
         }
         if (state_snapshot_key_is_field(item.first)) continue;
         auto found = right.find(item.first);
         StateSnapshotEntry default_entry;
         const StateSnapshotEntry& actual = found == right.end() ? default_entry : found->second;
-        if (item.second.owned_field_states_complete != actual.owned_field_states_complete) {
+        if (item.second.owned_field_states_complete != actual.owned_field_states_complete &&
+            !both_states_unavailable(item.second.state, actual.state)) {
             return "binding '" + item.first + "' " + message;
         }
         if (!state_snapshot_entry_borrow_state_equal(item.second, actual)) {

@@ -23,6 +23,14 @@ void reject_attribute_args(const Attribute& attr) {
     }
 }
 
+bool type_ref_contains_own(const TypeRef& type) {
+    if (type.qualifier == TypeQualifier::Own) return true;
+    for (const auto& arg : type.args) {
+        if (type_ref_contains_own(arg)) return true;
+    }
+    return false;
+}
+
 } // namespace
 
 const Attribute* find_attribute(const std::vector<Attribute>& attributes, const std::string& name) {
@@ -142,6 +150,12 @@ void validate_repr_c_enum_cases(const EnumDecl& decl) {
         if (!item.payloads.empty() && !decl.generics.empty()) {
             fail(item.loc,
                  "attribute '@repr(C)' generic payload enums are not supported yet; use a non-generic enum or an explicit C wrapper");
+        }
+        for (const auto& payload : item.payloads) {
+            if (type_ref_contains_own(payload)) {
+                fail(payload.loc,
+                     "attribute '@repr(C)' enum payloads cannot use own; expose ownership through an explicit ptr/ref ABI");
+            }
         }
     }
 }

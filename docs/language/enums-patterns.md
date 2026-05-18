@@ -130,10 +130,12 @@ Statement `match` arms over tracked runtime-dependent local and parameter
 subjects seed tag-known owner payload states, so `Some(token)` can value-bind
 an owning payload and the binding must be dropped or moved before the arm exits.
 Runtime-dependent payload-slot moves outside statement `match`, such as
-`value.0`, are supported when every enum case has the same owner payload paths
-in that layout; case-dependent payload ownership still needs `match` so the
-active tag can seed the right owner paths. Fixed-capacity vector payload slots
-can also be
+`value.0`, are supported for uniform owner layouts and for tag-conditioned
+layouts when control flow has narrowed the active case through `match`,
+`if let`, or `while let`. Expression-valued `match` arms seed the same owner
+payload paths. After a statement `match`, branches that move or drop the active
+payload merge as an unavailable owner state, and later whole-value cleanup skips
+the already-consumed payload. Fixed-capacity vector payload slots can also be
 destructured with
 exact array-style element patterns such as `Values([first, second])`; the match
 arm checks the vector's current runtime length before extracting the inline data
@@ -143,9 +145,9 @@ nested enum layout. Payload-word cases zero-initialize that nested storage and
 write the payload word into the nested enum's first payload slot, while nested
 enum cases store the full nested value. This mixed-slot rule covers ordinary
 scalar, pointer-shaped, and one-word enum payloads, but it does not allow
-bare root `Vec[T]`, owned values outside the `own i64`/`own u64` direct-match
-slice, fixed-capacity vectors or plain aggregates mixed with other slot shapes,
-or multiple different nested aggregate enum types to share a slot. The LLVM backend
+bare root `Vec[T]`, fixed-capacity vectors or plain aggregates mixed with other
+slot shapes, or multiple different nested aggregate enum types to share a slot.
+The LLVM backend
 can store and copy local
 aggregate enum values, then match local values by tag with positional payload
 bindings, scalar payload literal/range tests, and one-level enum-case payload

@@ -252,6 +252,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   plain aggregate payloads use generated wrapper typedefs such as
   `AriTuple_*`. Direct-ABI exported functions use the public enum type name
   instead of a generated `AriEnum_*` wrapper.
+- `@repr(C)` enum payload slots reject `own` payloads. Public C-facing enums
+  must expose ownership-sensitive values through explicit `ptr` or `ref` ABI
+  wrappers instead of embedding Ari owner state in the C layout.
 - `src/layout.cpp` owns shared aggregate-layout predicates, field-list
   selection, field counts, byte sizes, alignments, and field offsets used by
   sema, the LLVM backend, and related IR helpers.
@@ -274,14 +277,15 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   and parameters seed tag-known owner payload states, so owning payload bindings
   are checked and must be consumed before the arm exits.
 - Runtime-dependent aggregate enum payload-slot owner moves outside statement
-  `match` are supported when every case has the same owner payload paths. Cases
-  such as `None | Some(own i64)` still require `match` because the active tag
-  decides whether the owner path exists.
+  `match` are supported for both uniform owner layouts and tag-conditioned
+  layouts. `if let`, `while let`, statement `match`, and expression `match`
+  seed the active owner payload paths from the runtime tag, branch merges accept
+  moved-or-dropped unavailable payload states, and partial payload moves are
+  cleaned up by tag-guarded whole-value drops.
 - Aggregate enum payload slots can store plain Ari-layout tuple, fixed-array,
   struct, and explicit fixed-capacity `Vec[T; N]` payload values inline. Match
   payload bindings and direct payload slot access expose the full aggregate
-  value while general tag-aware ownership through stored enum payloads stays
-  planned behind its ABI rules.
+  value.
 - Enum patterns can destructure inline plain-aggregate payload slots with
   tuple, fixed-array, and struct subpatterns for value bindings, aliases,
   wildcards, and nested product subpatterns.

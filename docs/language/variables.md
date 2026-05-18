@@ -202,9 +202,11 @@ only the active `own i64`/`own u64` payload slot for move/drop checking. When an
 ownership-carrying aggregate enum value comes from a runtime-dependent source,
 such as a parameter or aggregate-returning call, `drop value;` is supported as a
 whole-value cleanup: Ari checks the runtime tag and drops only the active owning
-payload slots. Runtime-dependent payload-slot moves, `Slice[T]` owner paths, and
-unknown-length value vector suffix owner paths remain tied to the later
-owned-payload/dynamic-owner ABI work.
+payload slots. Runtime-dependent payload-slot moves are also supported after
+`match`, `if let`, or `while let` narrows the active case, and uniform owner
+layouts can move payload slots directly. `Slice[T]` owner paths and
+unknown-length value vector suffix owner paths remain tied to later
+dynamic-owner ABI work.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

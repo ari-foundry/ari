@@ -1,0 +1,73 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+enum MaybeOwned {
+  None,
+  Some(own i64),
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn choose(flag: bool) -> MaybeOwned {
+  if flag {
+    return Some(make_owned(7));
+  }
+  return None;
+}
+
+fn from_if_let(item: MaybeOwned) -> i64 {
+  if let Some(_) = item {
+    let token = item.0;
+    drop token;
+    return 17;
+  } else {
+    drop item;
+    return 4;
+  }
+}
+
+fn from_statement_match(item: MaybeOwned) -> i64 {
+  var score = 0;
+  match item {
+    Some(token) => {
+      drop token;
+      score = 10;
+    },
+    None => {
+      score = 5;
+    },
+  }
+  return score;
+}
+
+fn from_expression_match(item: MaybeOwned) -> i64 {
+  return match item {
+    Some(token) => {
+      drop token;
+      20
+    },
+    None => 11,
+  };
+}
+
+fn from_while_let(item: MaybeOwned) -> i64 {
+  while let Some(_) = item {
+    let token = item.0;
+    drop token;
+    return 3;
+  }
+  drop item;
+  return 0;
+}
+
+fn main() -> i64 {
+  return from_if_let(choose(true)) +
+         from_statement_match(choose(false)) +
+         from_expression_match(choose(true)) +
+         from_while_let(choose(true));
+}

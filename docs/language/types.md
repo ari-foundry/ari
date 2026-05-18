@@ -1009,9 +1009,11 @@ bindings, and known-length suffix bindings after `..`, through tracked hidden
 Vec storage. Selected `_` elements and known skipped rest-gap elements are
 dropped from that hidden storage. Known-length owned rest aliases bind
 non-owning `Slice[own T]` views and keep the source borrowed while the view is
-live. Ownership-carrying enum payload moves, `Slice[T]` owner paths,
-unknown-length value vector suffixes, and other non-static runtime sequence
-owner paths remain tied to the later owned-payload/dynamic-owner ABI work.
+live. Runtime-dependent aggregate enum payload moves are supported when a
+`match`, `if let`, or `while let` narrows the active case, and uniform owner
+layouts can move payload slots directly. `Slice[T]` owner paths, unknown-length
+value vector suffixes, and other non-static runtime sequence owner paths remain
+tied to dynamic-owner ABI work.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

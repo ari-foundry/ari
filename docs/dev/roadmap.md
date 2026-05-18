@@ -16,37 +16,19 @@ Phase-oriented sema decomposition is now tracked as ongoing maintenance in
 [Semantic Checker Decomposition](sema-decomposition.md) instead of as a finite
 near-term deliverable.
 
-1. Add enum payload owner paths.
-   Direct temporary aggregate-enum constructors can carry and match-bind
-   `own i64`/`own u64` payloads, and direct constructor locals / whole-local
-   assignments now seed tag-aware active payload slots for drop checking and
-   direct payload-slot moves.
-   Runtime-dependent stored locals, parameters, and call/return results can also
-   be explicitly dropped as whole values; cleanup tests the runtime tag and
-   drops only the active owning payload slots.
-   Statement `match` arms over tracked runtime-dependent locals and parameters
-   now seed tag-known owner payload states, so value-bound owning payloads must
-   be moved or dropped before the arm exits.
-   Runtime-dependent payload-slot moves outside statement `match` are now
-   supported for uniform owner layouts where every case has the same owner
-   payload paths, such as `Either(own i64)`.
-   Remaining work is tag-conditioned payload-slot moves outside statement
-   `match`, branch-merged tag states, partial-move cleanup, and `@repr(C)` layout
-   rules for owned payload-bearing public enums.
-   Label: `owner-enum-payload-paths`.
-2. Add owner-aware `Slice[T]` element paths.
+1. Add owner-aware `Slice[T]` element paths.
    Treat `Slice[own T]` as a non-owning view while still preserving borrow and
    move diagnostics for element paths that are reached through the slice.
    Label: `slice-owner-element-paths`.
-3. Add dynamic value-vector suffix owner paths.
+2. Add dynamic value-vector suffix owner paths.
    Support value patterns that move unknown-length `Vec[own T]` suffix elements
    without relying on hidden whole-value leaks.
    Label: `dynamic-value-vector-suffixes`.
-4. Extend trait-object ownership.
+3. Extend trait-object ownership.
    Define durable data-pointer storage for `own` and borrow-valued dyn objects,
    including lifetime rules for objects that outlive hidden stack
    materialization.
-5. Add an explicit owner-resolution surface.
+4. Add an explicit owner-resolution surface.
    Loop exits that cannot prove a single owner state currently produce
    `maybe-unavailable` locals. A future language form should let users resolve
    those conditional cleanup states intentionally.

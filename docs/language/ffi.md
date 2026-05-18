@@ -362,7 +362,8 @@ surface. The header spells those payload enums as `struct Name` with an
 `int32_t tag` plus payload storage slots. Scalar and pointer-shaped payloads
 use raw `uint64_t payloadN` storage, while non-scalar plain aggregate payloads
 use generated wrapper typedefs such as `AriTuple_*`. Generic payload enums and
-owned payload values still need explicit C wrappers.
+payload slots that contain `own` are rejected; use explicit C wrapper APIs with
+`ptr` or `ref` slots for ownership-sensitive values.
 
 `*pointer` is available for raw-pointer load/store syntax.
 `ptr_load<T>(pointer)` and `ptr_store<T>(pointer, value)` are also accepted

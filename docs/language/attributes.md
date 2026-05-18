@@ -34,6 +34,8 @@ payload-bearing `@repr(C)` enums use an explicit C struct layout with an
 pointer-shaped payloads use raw `uint64_t payloadN` slots; non-scalar plain
 aggregate payloads use generated wrapper typedefs. Generic `@repr(C)` enums are
 accepted only when their type parameters do not appear in payload storage.
+Payload slots that contain `own` are rejected; C-facing enums should expose
+ownership-sensitive data through explicit `ptr` or `ref` wrapper APIs.
 
 `@cfg(...)` prunes top-level declarations before name collection and type
 checking. Disabled declarations must still parse, but their names, types, and

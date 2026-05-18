@@ -2217,6 +2217,8 @@ check-meta: $(TARGET)
 	grep -q "attribute '@repr' currently supports only C layout" $(BUILD_DIR)/meta/attribute-repr-unsupported.err
 	if $(TARGET) tests/errors/attribute-repr-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-repr-enum-payload.elf >$(BUILD_DIR)/meta/attribute-repr-enum-payload.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr(C)' generic payload enums are not supported yet" $(BUILD_DIR)/meta/attribute-repr-enum-payload.err
+	if $(TARGET) tests/errors/attribute-repr-enum-own-payload.ari -o $(BUILD_DIR)/meta/attribute-repr-enum-own-payload.elf >$(BUILD_DIR)/meta/attribute-repr-enum-own-payload.err 2>&1; then exit 1; fi
+	grep -q "attribute '@repr(C)' enum payloads cannot use own; expose ownership through an explicit ptr/ref ABI" $(BUILD_DIR)/meta/attribute-repr-enum-own-payload.err
 	if $(TARGET) tests/errors/attribute-repr-own-field.ari -o $(BUILD_DIR)/meta/attribute-repr-own-field.elf >$(BUILD_DIR)/meta/attribute-repr-own-field.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr(C)' fields cannot use own; expose ownership through an explicit ptr/ref ABI" $(BUILD_DIR)/meta/attribute-repr-own-field.err
 	if $(TARGET) tests/errors/attribute-repr-own-tuple-field.ari -o $(BUILD_DIR)/meta/attribute-repr-own-tuple-field.elf >$(BUILD_DIR)/meta/attribute-repr-own-tuple-field.err 2>&1; then exit 1; fi
@@ -2752,6 +2754,8 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/runtime-owned-enum-uniform-payload-slot-move.elf; code=$$?; test $$code -eq 42
 	if $(TARGET) tests/errors/runtime-owned-enum-conditional-payload-slot-move.ari -o $(BUILD_DIR)/variables/runtime-owned-enum-conditional-payload-slot-move.elf >$(BUILD_DIR)/variables/runtime-owned-enum-conditional-payload-slot-move.err 2>&1; then exit 1; fi
 	grep -q "cannot move runtime-dependent owning enum payload slot 'item.0' outside match because enum cases do not share the same owner payload layout; use match" $(BUILD_DIR)/variables/runtime-owned-enum-conditional-payload-slot-move.err
+	$(TARGET) tests/ok/runtime-owned-enum-tagged-payload-paths.ari -o $(BUILD_DIR)/variables/runtime-owned-enum-tagged-payload-paths.elf
+	$(BUILD_DIR)/variables/runtime-owned-enum-tagged-payload-paths.elf; code=$$?; test $$code -eq 45
 	$(TARGET) tests/ok/drop-statement-payloads.ari --emit-llvm $(BUILD_DIR)/variables/drop-statement-payloads.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-statement-payloads.ll) -eq 3
 	$(TARGET) tests/ok/local-state-mutation-api.ari --emit-llvm $(BUILD_DIR)/variables/local-state-mutation-api.ll
@@ -3478,9 +3482,11 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/loop-break-owner-state.ari -o $(BUILD_DIR)/errors/loop-break-owner-state.elf >$(BUILD_DIR)/errors/loop-break-owner-state.err 2>&1; then exit 1; fi
 	grep -q "cannot use dropped binding 'token'" $(BUILD_DIR)/errors/loop-break-owner-state.err
 	if $(TARGET) tests/errors/loop-break-owner-maybe-unavailable-use.ari -o $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-use.elf >$(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-use.err 2>&1; then exit 1; fi
-	grep -q "cannot use maybe-unavailable binding 'token'" $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-use.err
+	grep -q "owning binding 'token' may be unavailable before drop" $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-use.err
 	if $(TARGET) tests/errors/loop-break-owner-maybe-unavailable-return.ari -o $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-return.elf >$(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-return.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'token' may be unavailable before return" $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-return.err
+	if $(TARGET) tests/errors/drop-maybe-unavailable-owner.ari -o $(BUILD_DIR)/errors/drop-maybe-unavailable-owner.elf >$(BUILD_DIR)/errors/drop-maybe-unavailable-owner.err 2>&1; then exit 1; fi
+	grep -q "owning binding 'token' may be unavailable before drop" $(BUILD_DIR)/errors/drop-maybe-unavailable-owner.err
 	if $(TARGET) tests/errors/loop-break-owner-maybe-unavailable-overwrite.ari -o $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.elf >$(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.err 2>&1; then exit 1; fi
 	grep -q "cannot overwrite owning binding 'token' while it may be unavailable" $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.err
 	if $(TARGET) tests/errors/loop-break-owned-field-maybe-unavailable-overwrite.ari -o $(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.elf >$(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.err 2>&1; then exit 1; fi

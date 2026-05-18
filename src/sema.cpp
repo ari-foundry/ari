@@ -9337,7 +9337,8 @@ private:
 
         std::map<std::string, LocalState> case_states;
         for (const std::string& case_name : enum_found->second.case_names) {
-            auto case_found = enum_cases_.find(case_name);
+            std::string case_key = qualify_in_module(enum_found->second.module_name, case_name);
+            auto case_found = enum_cases_.find(case_key);
             if (case_found == enum_cases_.end()) {
                 throw CompileError("internal error: missing enum case '" + case_name + "'");
             }
@@ -9430,7 +9431,8 @@ private:
         }
 
         for (const std::string& case_name : enum_found->second.case_names) {
-            auto case_found = enum_cases_.find(case_name);
+            std::string case_key = qualify_in_module(enum_found->second.module_name, case_name);
+            auto case_found = enum_cases_.find(case_key);
             if (case_found == enum_cases_.end()) {
                 throw CompileError("internal error: missing enum case '" + case_name + "'");
             }
@@ -9525,9 +9527,10 @@ private:
         return path;
     }
 
+    template <typename Arm>
     void mark_enum_payload_binding_owner_moves(SourceLocation loc,
                                                const TrackedEnumOwnerSubject& subject,
-                                               const IrMatchArm& arm) {
+                                               const Arm& arm) {
         std::set<std::string> moved_paths;
         for (const auto& binding : arm.payload_bindings) {
             if (!is_owner_type(binding.type)) continue;
@@ -9544,9 +9547,10 @@ private:
         }
     }
 
+    template <typename Arm>
     void seed_enum_owner_payload_match_arm(SourceLocation loc,
                                            const std::optional<TrackedEnumOwnerSubject>& subject,
-                                           const IrMatchArm& arm) {
+                                           const Arm& arm) {
         if (!subject || arm.case_name.empty() || arm.wildcard) return;
         if (arm.has_value_binding && is_owner_type(arm.value_type)) {
             fail(loc, "owning whole-enum match aliases are planned but are not supported yet");
@@ -9936,6 +9940,18 @@ private:
         };
     }
 
+    ReferenceBindingSubject tracked_enum_owner_reference_binding_subject(
+        const TrackedEnumOwnerSubject& subject
+    ) {
+        const LocalInfo& base = local_slot_by_name(subject.base_name);
+        return ReferenceBindingSubject{
+            subject.base_name,
+            base.type,
+            subject.enum_type,
+            subject.path
+        };
+    }
+
     TrackedAggregateAccess require_addressable_control_flow_ref_mut_subject(SourceLocation loc,
                                                                            const Expr& expr,
                                                                            const std::string& construct) {
@@ -10284,7 +10300,11 @@ private:
 
     void check_drop(const Stmt& stmt, IrStmt& lowered) {
         const std::string& drop_name = stmt_drop_name(stmt);
-        LocalInfo& local = require_live_local(stmt.loc, drop_name);
+        LocalInfo& local = require_local_slot(stmt.loc, drop_name);
+        if (local.state == LocalState::MaybeUnavailable || local_has_maybe_unavailable_owner(local)) {
+            fail(stmt.loc, "owning binding '" + drop_name + "' may be unavailable before drop");
+        }
+        if (auto error = local_unavailable_binding_error(drop_name, local)) fail(stmt.loc, *error);
         require_not_borrowed(stmt.loc, drop_name, local, "drop");
         if (local.type.qualifier == TypeQualifier::Own && local.type.primitive == IrPrimitiveKind::Zone) {
             fail(stmt.loc, "use zone::destroy(" + drop_name + ") to release a Zone");
@@ -13755,7 +13775,7 @@ private:
                 "if-let");
         }
 
-        IrExprPtr match_value = check_expr(*stmt.condition);
+        IrExprPtr match_value = check_statement_match_value(*stmt.condition);
         if (is_aggregate_type(match_value->type) ||
             is_runtime_sequence_pattern_subject(match_value->type)) {
             return check_aggregate_if_let(stmt, lowered, std::move(match_value));
@@ -13770,15 +13790,27 @@ private:
             enum_value_type
         );
 
-        std::string subject_name = make_hidden_local("$iflet_enum");
-        declare_local(stmt.loc, subject_name, enum_value_type, false);
-        ir_stmt_statements(lowered).push_back(make_ir_var_decl(
-            stmt.loc,
-            subject_name,
-            enum_value_type,
-            std::move(match_value),
-            false
-        ));
+        std::optional<TrackedEnumOwnerSubject> enum_owner_subject =
+            tracked_enum_owner_subject(*match_value);
+        if (enum_owner_subject && then_arms.size() != 1) {
+            fail(condition_pattern.loc, "owning enum if-let or-pattern payload paths require statement match");
+        }
+        IrExprPtr pattern_match_value;
+        std::string subject_name;
+        if (enum_owner_subject) {
+            pattern_match_value = std::move(match_value);
+        } else {
+            subject_name = make_hidden_local("$iflet_enum");
+            declare_local(stmt.loc, subject_name, enum_value_type, false);
+            ir_stmt_statements(lowered).push_back(make_ir_var_decl(
+                stmt.loc,
+                subject_name,
+                enum_value_type,
+                std::move(match_value),
+                false
+            ));
+            pattern_match_value = make_local_lvalue_expr(stmt.loc, subject_name, enum_value_type);
+        }
 
         IrType matched_type = bool_type(stmt.loc);
         std::string matched_name = make_hidden_local("$iflet_matched");
@@ -13791,14 +13823,21 @@ private:
             true
         ));
 
-        ReferenceBindingSubject reference_subject = needs_mutable_reference_pattern_bindings
-            ? tracked_reference_binding_subject(*mutable_reference_subject)
-            : hidden_reference_binding_subject(subject_name, enum_value_type);
+        ReferenceBindingSubject reference_subject;
+        if (needs_reference_pattern_bindings) {
+            if (needs_mutable_reference_pattern_bindings) {
+                reference_subject = tracked_reference_binding_subject(*mutable_reference_subject);
+            } else if (enum_owner_subject) {
+                reference_subject = tracked_enum_owner_reference_binding_subject(*enum_owner_subject);
+            } else {
+                reference_subject = hidden_reference_binding_subject(subject_name, enum_value_type);
+            }
+        }
 
         auto pattern_match = std::make_unique<IrStmt>();
         pattern_match->kind = IrStmtKind::Match;
         pattern_match->loc = stmt.loc;
-        pattern_match->match_value = make_local_lvalue_expr(stmt.loc, subject_name, enum_value_type);
+        pattern_match->match_value = std::move(pattern_match_value);
         IrStmtMatchArms& match_arms = ensure_ir_stmt_match_arms(*pattern_match);
         for (auto& arm : then_arms) {
             arm.body.push_back(make_bool_assignment_stmt(arm.loc, matched_name, true));
@@ -13812,7 +13851,9 @@ private:
 
         StateSnapshot branch_input = snapshot_states();
         push_scope();
-        declare_match_arm_bindings(ir_stmt_match_arms(*ir_stmt_statements(lowered).back()).front());
+        const IrMatchArm& iflet_arm = ir_stmt_match_arms(*ir_stmt_statements(lowered).back()).front();
+        declare_match_arm_bindings(iflet_arm);
+        seed_enum_owner_payload_match_arm(stmt.loc, enum_owner_subject, iflet_arm);
         std::vector<IrStmtPtr> then_prelude;
         if (needs_reference_pattern_bindings) {
             lower_explicit_reference_bindings_from_path(
@@ -14561,10 +14602,12 @@ private:
         const IrMatchArm& arm,
         std::vector<IrStmtPtr>& lowered_body,
         const Pattern* reference_pattern,
-        const ReferenceBindingSubject* reference_subject
+        const ReferenceBindingSubject* reference_subject,
+        const std::optional<TrackedEnumOwnerSubject>& enum_owner_subject
     ) {
         push_scope();
         declare_match_arm_bindings(arm);
+        seed_enum_owner_payload_match_arm(stmt.loc, enum_owner_subject, arm);
         if (reference_pattern && reference_subject) {
             std::vector<IrStmtPtr> reference_check_prelude;
             lower_explicit_reference_bindings_from_path(
@@ -14596,7 +14639,8 @@ private:
         const StateSnapshot& recheck_state,
         const LocalScopeStack::NameState& name_state,
         const Pattern* reference_pattern,
-        const ReferenceBindingSubject* reference_subject
+        const ReferenceBindingSubject* reference_subject,
+        const std::optional<TrackedEnumOwnerSubject>& enum_owner_subject
     ) {
         StateSnapshot saved_state = snapshot_states();
         LocalScopeStack::NameState saved_name_state = local_scopes_.snapshot_name_state();
@@ -14618,7 +14662,8 @@ private:
             arm,
             ignored_body,
             reference_pattern,
-            reference_subject);
+            reference_subject,
+            enum_owner_subject);
         loops_.pop_back();
 
         release_temporary_borrows(borrow_mark);
@@ -14668,7 +14713,7 @@ private:
     }
 
     void check_while_let(const Stmt& stmt, IrStmt& lowered) {
-        IrExprPtr match_value = check_expr(*stmt.condition);
+        IrExprPtr match_value = check_statement_match_value(*stmt.condition);
         if (is_aggregate_type(match_value->type) ||
             is_runtime_sequence_pattern_subject(match_value->type)) {
             check_aggregate_while_let(stmt, lowered, std::move(match_value));
@@ -14720,6 +14765,8 @@ private:
         } else {
             lowered.match_value = std::move(match_value);
         }
+        std::optional<TrackedEnumOwnerSubject> enum_owner_subject =
+            tracked_enum_owner_subject(*lowered.match_value);
         EnumMatchCoverage coverage;
         std::vector<IrMatchArm> pattern_arms = lower_match_arm_patterns(
             condition_pattern,
@@ -14755,7 +14802,8 @@ private:
             pattern_arms.front(),
             ir_stmt_loop_body(lowered),
             reference_pattern,
-            needs_reference_pattern_bindings ? &reference_subject : nullptr);
+            needs_reference_pattern_bindings ? &reference_subject : nullptr,
+            enum_owner_subject);
         StateSnapshot loop_body_state = snapshot_states();
         LoopInfo loop_state = loops_.back();
         loops_.pop_back();
@@ -14791,7 +14839,8 @@ private:
                     next_iteration_state,
                     loop_name_state,
                     reference_pattern,
-                    needs_reference_pattern_bindings ? &reference_subject : nullptr
+                    needs_reference_pattern_bindings ? &reference_subject : nullptr,
+                    enum_owner_subject
                 );
             }
             merge_existing_zone_generations_into(exit_state, next_iteration_state);
@@ -14806,7 +14855,8 @@ private:
                               loop_name_state,
                               reference_pattern,
                               reference_subject,
-                              needs_reference_pattern_bindings](const StateSnapshot& recheck_state) {
+                              needs_reference_pattern_bindings,
+                              enum_owner_subject](const StateSnapshot& recheck_state) {
                 recheck_enum_while_let_body_under_state(
                     stmt.loc,
                     stmt,
@@ -14815,7 +14865,8 @@ private:
                     recheck_state,
                     loop_name_state,
                     reference_pattern,
-                    needs_reference_pattern_bindings ? &reference_subject : nullptr
+                    needs_reference_pattern_bindings ? &reference_subject : nullptr,
+                    enum_owner_subject
                 );
             };
             restore_states(checked_loop_exit_state(
@@ -15518,6 +15569,7 @@ private:
 
         LoopBodyRecheck recheck;
         recheck.custom = [this, &stmt, &pattern_arms, &loop_state, loop_name_state](const StateSnapshot& recheck_state) {
+            std::optional<TrackedEnumOwnerSubject> enum_owner_subject;
             recheck_enum_while_let_body_under_state(
                 stmt.loc,
                 stmt,
@@ -15526,7 +15578,8 @@ private:
                 recheck_state,
                 loop_name_state,
                 nullptr,
-                nullptr
+                nullptr,
+                enum_owner_subject
             );
         };
         restore_states(checked_loop_exit_state(
@@ -17322,7 +17375,7 @@ private:
     IrExprPtr check_match_expr(const Expr& expr, IrExprPtr lowered, const IrType* expected = nullptr) {
         if (expr_match_arms(expr).empty()) fail(expr.loc, "match must have at least one arm");
 
-        IrExprPtr match_value = check_expr(*expr_match_value(expr));
+        IrExprPtr match_value = check_statement_match_value(*expr_match_value(expr));
         if (is_borrow_type(match_value->type)) {
             fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
@@ -17388,6 +17441,8 @@ private:
             lowered = make_ir_match_expr(expr.loc, std::move(match_value));
         }
         IrExpr& match_target = needs_reference_pattern_bindings ? *materialized_match : *lowered;
+        std::optional<TrackedEnumOwnerSubject> enum_owner_subject =
+            tracked_enum_owner_subject(*ir_expr_match_value(match_target));
 
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
@@ -17427,6 +17482,7 @@ private:
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
+                seed_enum_owner_payload_match_arm(arm.loc, enum_owner_subject, lowered_arm);
                 if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,
