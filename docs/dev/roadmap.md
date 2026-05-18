@@ -12,37 +12,11 @@ item as 1.0 work unless the whole language release is being scoped.
 These are the next compiler-sized slices that should be possible without
 changing the long-term language contract.
 
-1. Keep sema extraction phase-oriented.
-   `pattern_semantics` already owns pure pattern tree queries, or-pattern
-   expansion, positional product mapping, and runtime-sequence irrefutability
-   checks, plus product-pattern irrefutability queries used before sema
-   materializes hidden match storage. The shared pattern-alternative set keeps
-   or-pattern detection and expansion together before sema lowers bindings.
-   It also owns runtime-sequence reference-pattern planning for direct rest
-   alias constraints, ownership-carrying rest-alias rejection, and known-length
-   owner suffix guards before sema lowers the element borrows.
-   Continue extracting broad modules such as declaration tables, name
-   resolution, ownership state, zone provenance, and IR lowering helpers.
-   `attribute_semantics` now owns built-in attribute classification,
-   target/argument validation, and `@repr(C)` field/case guards,
-   `c_export_semantics` now owns public `@repr(C)` record/enum C-header
-   metadata assembly while sema supplies resolved types and enum layout, and
-   `vector_semantics` owns root `Vec[T]` parameter ABI lowering into
-   Slice-shaped views plus the remaining root-vector runtime ABI guards.
-   `pointer_memory_semantics` now owns raw pointer helper, layout-query, and
-   `std::mem` value-helper lowering while sema supplies expression/type
-   callbacks and hidden-local registration.
-   `zone_allocation_semantics` now owns typed zone allocation, placement
-   construction, promotion, and lexical temporary-zone call lowering while sema
-   supplies expression/type callbacks.
-   `ownership_semantics` now owns recursive owned-field state seeding for
-   locals and stack-backed vector storage. Avoid splitting one tiny file per
-   syntax feature.
+Phase-oriented sema decomposition is now tracked as ongoing maintenance in
+[Semantic Checker Decomposition](sema-decomposition.md) instead of as a finite
+near-term deliverable.
 
-See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
-roadmap for splitting `src/sema.cpp` by broad semantic phases.
-
-2. Define owned root collection and smart-pointer handles.
+1. Define owned root collection and smart-pointer handles.
    Define the growable root `Vec[T]` runtime-capacity ABI and non-local
    aggregate layout before expanding source libraries that depend on
    ownership-stable collections. The stack-backed local root `Vec[T]` method
@@ -50,7 +24,7 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
    Source `Box[T]`/`std::Box[T]` already follows the explicit-zone handle
    policy; future heap ownership should keep that capability-oriented shape
    rather than inventing an ambient heap.
-3. Define dynamic owner pattern paths.
+2. Define dynamic owner pattern paths.
    After runtime-capacity `Vec[T]` and owned enum payload ABI rules are stable,
    define owner moves through enum payload slots, `Slice[T]` element paths,
    owned rest aliases, and dynamic vector suffixes without relying on hidden

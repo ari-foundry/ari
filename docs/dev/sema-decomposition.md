@@ -14,6 +14,13 @@ Existing small helpers can stay in place until a natural consolidation point,
 but new work should prefer merging related helpers into broader subsystems over
 adding more narrow syntax-specific `*_semantics` siblings.
 
+This document is the home for ongoing sema extraction policy and candidate
+work. The active roadmap should only carry finite compiler-sized feature
+slices. Future extraction should stay broad: declaration tables, name
+resolution, ownership/borrow state, zone provenance, type inference, trait
+selection, and IR lowering helpers are good boundaries; one-file-per-syntax
+feature helpers are not.
+
 - `attribute_semantics` for built-in attribute-name classification,
   built-in attribute target/argument validation, and declaration-level
   `@repr(C)` field/case guards

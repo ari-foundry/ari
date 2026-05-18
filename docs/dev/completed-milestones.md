@@ -40,6 +40,11 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   temporary-zone calls lower through `zone_allocation_semantics`, so layout
   checks and runtime allocation-call assembly are kept out of central
   expression dispatch.
+- Phase-oriented sema decomposition is no longer tracked as a finite near-term
+  roadmap item. Ongoing extraction policy and candidate boundaries live in
+  `docs/dev/sema-decomposition.md` after the attribute, C export, vector,
+  pointer/memory, zone allocation, ownership, pattern, and IR helper phases
+  were split out far enough for roadmap cleanup.
 - The stack-backed local root `Vec[T]` method surface includes `as_ptr()` for
   raw element-buffer access alongside the fixed-capacity read/search/mutation
   helpers.
