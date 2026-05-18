@@ -204,10 +204,11 @@ and `zone::new<T>(...)` is also disabled until the `std` module is present.
 Raw pointer helpers can infer `T` from their pointer argument or take an
 explicit `<T>` argument.
 Source function signatures such as `write_i64(...)`, `io::write_i64(...)`,
-`arg_count()`, and `zone::create(...)` follow the same rule; without implicit
-`std` or an explicit `mod std;`, they are ordinary unknown calls. Prelude trait
-names such as `Debug`, `Drop`, and `Iterable[T]` also come from source `std`,
-so they are unavailable in that mode unless the source `std` module is loaded.
+`arg_count()`, `has_arg(...)`, and `zone::create(...)` follow the same rule;
+without implicit `std` or an explicit `mod std;`, they are ordinary unknown
+calls. Prelude trait names such as `Debug`, `Drop`, and `Iterable[T]` also come
+from source `std`, so they are unavailable in that mode unless the source `std`
+module is loaded.
 For helper surfaces that the source `std` package can describe as generic
 function declarations, the declaration must actually exist; a partial custom
 `std` header does not silently inherit those compiler-known names:
@@ -439,8 +440,10 @@ todo() -> void
 unreachable() -> void
 context::argc() -> i64
 context::arg(index: i64) -> string
+context::has_arg(index: i64) -> bool
 arg_count() -> i64
 arg(index: i64) -> string
+has_arg(index: i64) -> bool
 slice<T>(data: ptr T, len: i64) -> Slice[T]
 std::slice<T>(data: ptr T, len: i64) -> std::Slice[T]
 ```
@@ -564,11 +567,15 @@ Available context builtins:
 ```ari
 context::argc() -> i64
 context::arg(index: i64) -> string
+context::has_arg(index: i64) -> bool
 arg_count() -> i64
 arg(index: i64) -> string
+has_arg(index: i64) -> bool
 ```
 
-Out-of-range `arg(index)` currently returns an empty string.
+`has_arg(index)` returns `true` only when `0 <= index < context::argc()`.
+Out-of-range `arg(index)` currently returns an empty string, so use `has_arg`
+when missing arguments are part of normal control flow.
 
 ## Layout Queries
 

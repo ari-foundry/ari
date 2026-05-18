@@ -182,6 +182,12 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_read_byte" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "@ari_builtin_context_arg" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "declare i32 @getchar" $(BUILD_DIR)/prelude/prelude-input.ll
+	$(TARGET) tests/cases/standard-library/ok/std-context-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -F -q "std7context7has_arg" $(BUILD_DIR)/prelude/std-context-args.ll
+	$(TARGET) tests/cases/standard-library/ok/std-context-args.ari -o $(BUILD_DIR)/prelude/std-context-args.elf
+	$(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 95
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-context-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-context-args.elf; $(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 95; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll

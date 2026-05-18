@@ -22,7 +22,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`. |
 | `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_line`. |
 | `std::input` | Friendly input aliases. | `line`, `owned_line`, `read_byte`. |
-| `std::context` | Process argument access. | `argc`, `arg`. |
+| `std::context` | Process argument access. | `argc`, `arg`, `has_arg`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -83,6 +83,10 @@ without compiler-known comparison intrinsics.
 `std::convert` follows the same source-first path for generic conversion
 helpers. `identity`, `from`, and `into` are plain Ari functions over the
 module's trait surface.
+
+`std::context` keeps the same split: `argc` and `arg` are runtime hooks because
+they read the host argument context, while `has_arg` is ordinary source that
+documents the valid index policy in one reusable place.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

@@ -41,6 +41,7 @@ input()
 input_owned(ref mut zone)
 arg_count()
 arg(index)
+has_arg(index)
 size_of<T>()
 align_of<T>()
 ptr_add(pointer, count)
@@ -61,6 +62,23 @@ destroy(zone)
 range(start, end)
 range_inclusive(start, end)
 ```
+
+## Process Context
+
+Runtime-backed argument access lives in `std::context`:
+
+```ari
+context::argc()
+context::arg(index)
+context::has_arg(index)
+arg_count()
+arg(index)
+has_arg(index)
+```
+
+`has_arg(index)` is true only for `0 <= index < context::argc()`. It is the
+preferred guard before reading optional user arguments. `arg(index)` returns a
+lowercase `string`; out-of-range access returns an empty string.
 
 ## Option And Result
 

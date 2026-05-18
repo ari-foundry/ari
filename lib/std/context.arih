@@ -1,2 +1,11 @@
+// Runtime context helpers for program arguments. The primitive values come
+// from backend hooks; small safety predicates stay in Ari source.
 pub extern "ari" fn argc() -> i64 = "ari_builtin_context_argc";
 pub extern "ari" fn arg(index: i64) -> string = "ari_builtin_context_arg";
+
+pub fn has_arg(index: i64) -> bool {
+  if index < 0 {
+    return false;
+  }
+  return index < argc();
+}

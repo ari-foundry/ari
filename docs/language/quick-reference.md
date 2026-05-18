@@ -223,7 +223,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | optional value | `Option[T]`, `Some(value)`, `None<T>()` |
 | result value | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` |
 | optional/result helpers | Option: `.is_some()`, `.is_none()`; Result: `.is_ok()`, `.is_err()`; both: `.unwrap_or(fallback)`, `.map<U>(fn)`, `.and_then<U>(fn)` |
-| process args | `arg_count()`, `arg(index)`, `context::argc()`, `context::arg(index)` |
+| process args | `arg_count()`, `arg(index)`, `has_arg(index)`, `context::argc()`, `context::arg(index)`, `context::has_arg(index)` |
 | input line | `input()`, `read_line()`, `input_owned(ref mut zone)` |
 | raw IO | `io::write_i64`, `io::write_u64`, `io::write_bool`, `io::write_byte`, `io::newline` |
 | layout | `size_of<T>()`, `align_of<T>()` |

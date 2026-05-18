@@ -67,7 +67,7 @@ fn main() -> i64 {
   let count = arg_count();
   println("argc={}", count);
 
-  if count > 0 {
+  if has_arg(0) {
     println("arg0={}", arg(0));
   }
 
@@ -76,7 +76,8 @@ fn main() -> i64 {
 ```
 
 `arg(index)` returns lowercase `string`, a borrowed pointer-shaped string value.
-Out-of-range argument access returns an empty string.
+Out-of-range argument access returns an empty string. Use `has_arg(index)` when
+missing arguments are an expected branch.
 
 ## Define Structs And Methods
 

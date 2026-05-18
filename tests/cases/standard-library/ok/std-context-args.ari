@@ -1,0 +1,28 @@
+fn main() -> i64 {
+  let count = context::argc();
+  var score = 0;
+
+  if context::has_arg(0) {
+    score = score + 5;
+  }
+  if context::has_arg(count - 1) {
+    score = score + 7;
+  }
+  if !context::has_arg(count) {
+    score = score + 11;
+  }
+  if !context::has_arg(-1) {
+    score = score + 13;
+  }
+  if has_arg(0) {
+    score = score + 17;
+  }
+  if std::has_arg(0) {
+    score = score + 19;
+  }
+  if arg_count() == count {
+    score = score + 23;
+  }
+
+  return score;
+}
