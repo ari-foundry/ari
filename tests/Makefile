@@ -1174,6 +1174,8 @@ check-match: $(TARGET)
 	$(BUILD_DIR)/match/match-literals.elf; code=$$?; test $$code -eq 128
 	$(TARGET) tests/ok/match-statement-payloads.ari -o $(BUILD_DIR)/match/match-statement-payloads.elf
 	$(BUILD_DIR)/match/match-statement-payloads.elf; code=$$?; test $$code -eq 30
+	$(TARGET) tests/ok/match-owned-enum-payload.ari -o $(BUILD_DIR)/match/match-owned-enum-payload.elf
+	$(BUILD_DIR)/match/match-owned-enum-payload.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/ok/pattern-payload-unions.ari -o $(BUILD_DIR)/match/pattern-payload-unions.elf
 	$(BUILD_DIR)/match/pattern-payload-unions.elf; code=$$?; test $$code -eq 41
 	$(TARGET) tests/ok/match-tuple-pattern.ari -o $(BUILD_DIR)/match/match-tuple-pattern.elf
@@ -1244,6 +1246,9 @@ check-match: $(TARGET)
 	grep -q "match.arm" $(BUILD_DIR)/match/match-statement-payloads.ll
 	grep -q "icmp sle i64" $(BUILD_DIR)/match/match-statement-payloads.ll
 	grep -q "extractvalue" $(BUILD_DIR)/match/match-statement-payloads.ll
+	$(TARGET) tests/ok/match-owned-enum-payload.ari --emit-llvm $(BUILD_DIR)/match/match-owned-enum-payload.ll
+	grep -q "store i64 .*%token.addr" $(BUILD_DIR)/match/match-owned-enum-payload.ll
+	grep -q "match.arm" $(BUILD_DIR)/match/match-owned-enum-payload.ll
 	$(TARGET) tests/ok/pattern-payload-unions.ari --emit-llvm $(BUILD_DIR)/match/pattern-payload-unions.ll
 	grep -q "icmp eq i1" $(BUILD_DIR)/match/pattern-payload-unions.ll
 	grep -q "icmp sge i64" $(BUILD_DIR)/match/pattern-payload-unions.ll
@@ -3670,7 +3675,7 @@ check-errors: $(TARGET) check-function-errors
 	if $(TARGET) tests/errors/invalid-cast.ari -o $(BUILD_DIR)/errors/invalid-cast.elf >$(BUILD_DIR)/errors/invalid-cast.err 2>&1; then exit 1; fi
 	grep -q "explicit casts currently require integer types, float types, integer/float casts, or raw pointer casts, got bool as i64" $(BUILD_DIR)/errors/invalid-cast.err
 	if $(TARGET) tests/errors/enum-payload-unsupported-vector.ari -o $(BUILD_DIR)/errors/enum-payload-unsupported-vector.elf >$(BUILD_DIR)/errors/enum-payload-unsupported-vector.err 2>&1; then exit 1; fi
-	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values" $(BUILD_DIR)/errors/enum-payload-unsupported-vector.err
+	grep -q "enum aggregate payloads currently support integer, bool, pointer-shaped, one-word enum, owned i64/u64, plain tuple/array/struct aggregate, fixed-capacity vector, or nested aggregate enum values" $(BUILD_DIR)/errors/enum-payload-unsupported-vector.err
 	if $(TARGET) tests/errors/enum-payload-count.ari -o $(BUILD_DIR)/errors/enum-payload-count.elf >$(BUILD_DIR)/errors/enum-payload-count.err 2>&1; then exit 1; fi
 	grep -q "wrong payload count for enum case 'Some'" $(BUILD_DIR)/errors/enum-payload-count.err
 	if $(TARGET) tests/errors/match-nonexhaustive.ari -o $(BUILD_DIR)/errors/match-nonexhaustive.elf >$(BUILD_DIR)/errors/match-nonexhaustive.err 2>&1; then exit 1; fi

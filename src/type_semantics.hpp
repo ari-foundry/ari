@@ -35,6 +35,7 @@ bool is_integer_primitive(IrPrimitiveKind primitive);
 bool is_owned_executable_primitive(IrPrimitiveKind primitive);
 bool is_borrowable_executable_primitive(IrPrimitiveKind primitive);
 bool is_legacy_enum_payload_type(const IrType& type);
+bool is_owned_word_enum_payload_type(const IrType& type);
 bool is_aggregate_enum_payload_type(const IrType& type);
 bool has_aggregate_enum_layout(const IrType& type);
 

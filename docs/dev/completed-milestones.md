@@ -258,10 +258,14 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Aggregate enum payload slots support integer, bool, pointer-shaped values,
   one-word enums, nested aggregate enums, and the current mixed payload-word
   plus nested-enum lane rule.
+- Aggregate enum payload slots preserve `own i64` and `own u64` payload storage
+  for direct temporary constructor matches, so a `match` arm can bind and drop
+  the owned payload value without erasing the ownership qualifier.
 - Aggregate enum payload slots can store plain Ari-layout tuple, fixed-array,
   struct, and explicit fixed-capacity `Vec[T; N]` payload values inline. Match
   payload bindings and direct payload slot access expose the full aggregate
-  value while owned payload storage stays planned behind its ABI rules.
+  value while general tag-aware ownership through stored enum payloads stays
+  planned behind its ABI rules.
 - Enum patterns can destructure inline plain-aggregate payload slots with
   tuple, fixed-array, and struct subpatterns for value bindings, aliases,
   wildcards, and nested product subpatterns.

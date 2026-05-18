@@ -43,11 +43,13 @@ bool same_type(const IrType& left, const IrType& right) {
 bool is_copy_type(const IrType& type) {
     if (type.qualifier == TypeQualifier::Ref || type.qualifier == TypeQualifier::MutRef) return true;
     if (type.qualifier != TypeQualifier::Value) return false;
+    if (type.primitive == IrPrimitiveKind::Enum) {
+        return !is_owner_type(type) && !contains_borrow_type(type);
+    }
     return is_integer_primitive(type.primitive) ||
            is_float_primitive(type.primitive) ||
            type.primitive == IrPrimitiveKind::Bool ||
            type.primitive == IrPrimitiveKind::String ||
-           type.primitive == IrPrimitiveKind::Enum ||
            type.primitive == IrPrimitiveKind::Function;
 }
 
@@ -208,8 +210,15 @@ bool is_legacy_enum_payload_type(const IrType& type) {
     }
 }
 
+bool is_owned_word_enum_payload_type(const IrType& type) {
+    if (type.qualifier != TypeQualifier::Own) return false;
+    return type.primitive == IrPrimitiveKind::I64 ||
+           type.primitive == IrPrimitiveKind::U64;
+}
+
 bool is_aggregate_enum_payload_type(const IrType& type) {
     if (type.qualifier == TypeQualifier::Ptr) return true;
+    if (is_owned_word_enum_payload_type(type)) return true;
     if (type.qualifier != TypeQualifier::Value) return false;
     if (is_owner_type(type) || contains_borrow_type(type)) return false;
     if (type.primitive == IrPrimitiveKind::Bool) return true;

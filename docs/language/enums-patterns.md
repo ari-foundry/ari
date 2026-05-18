@@ -109,13 +109,18 @@ backend switches that enum to an aggregate layout:
 
 Aggregate enum payload slots currently accept integer, bool, pointer-shaped
 values such as `string`, `ptr T`, and `fn(...) -> ...`, one-word enum values,
-nested aggregate-enum values, and plain Ari-layout tuple, fixed-array, or
-struct values. Fixed-capacity vector payloads use the explicit `Vec[T; N]`
-storage spelling and occupy the full payload slot as a vector value. Plain
-aggregate payloads occupy the full payload slot and can be bound as full values
-in `match` arms, or destructured with tuple, fixed-array, or struct payload
-subpatterns that contain value bindings, aliases, wildcards, and nested product
-subpatterns. Fixed-capacity vector payload slots can also be destructured with
+nested aggregate-enum values, owned word payloads written as `own i64` or
+`own u64`, and plain Ari-layout tuple, fixed-array, or struct values.
+Fixed-capacity vector payloads use the explicit `Vec[T; N]` storage spelling
+and occupy the full payload slot as a vector value. Plain aggregate payloads
+occupy the full payload slot and can be bound as full values in `match` arms,
+or destructured with tuple, fixed-array, or struct payload subpatterns that
+contain value bindings, aliases, wildcards, and nested product subpatterns.
+Owned word payloads can be constructed and value-bound in direct temporary
+constructor matches, and the bound payload must be consumed or dropped before
+the arm exits. Stored enum values with owned payload paths still need the
+planned tag-aware owner-path model. Fixed-capacity vector payload slots can
+also be destructured with
 exact array-style element patterns such as `Values([first, second])`; the match
 arm checks the vector's current runtime length before extracting the inline data
 slots. If one payload position mixes
@@ -124,9 +129,9 @@ nested enum layout. Payload-word cases zero-initialize that nested storage and
 write the payload word into the nested enum's first payload slot, while nested
 enum cases store the full nested value. This mixed-slot rule covers ordinary
 scalar, pointer-shaped, and one-word enum payloads, but it does not allow
-bare root `Vec[T]`, owned values, fixed-capacity vectors or plain aggregates
-mixed with other slot shapes, or multiple different nested aggregate enum types
-to share a slot. The LLVM backend
+bare root `Vec[T]`, owned values outside the `own i64`/`own u64` direct-match
+slice, fixed-capacity vectors or plain aggregates mixed with other slot shapes,
+or multiple different nested aggregate enum types to share a slot. The LLVM backend
 can store and copy local
 aggregate enum values, then match local values by tag with positional payload
 bindings, scalar payload literal/range tests, and one-level enum-case payload
@@ -738,6 +743,9 @@ the future shared binding-mode engine and are rejected with a dedicated
 diagnostic today. Borrow inside the arm, or bind a local first with
 `let ref` / `let ref mut` or `let &` / `let &mut` when the source is a tracked
 local place.
+When the matched subject is a direct temporary constructor, a payload of type
+`own i64` or `own u64` can be value-bound and then explicitly dropped inside
+the arm.
 
 Expression-valued `match` currently supports enum patterns and copyable
 payloads. Borrow-valued arm results are rejected until the borrow checker grows

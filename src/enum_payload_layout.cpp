@@ -38,6 +38,7 @@ IrType enum_payload_storage_type(SourceLocation loc) {
 }
 
 IrType enum_payload_slot_storage_type(SourceLocation loc, const IrType& payload_type) {
+    if (is_owned_word_enum_payload_type(payload_type)) return payload_type;
     if (is_inline_payload_storage_type(payload_type)) return payload_type;
     return enum_payload_storage_type(loc);
 }

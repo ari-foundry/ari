@@ -17,9 +17,11 @@ Phase-oriented sema decomposition is now tracked as ongoing maintenance in
 near-term deliverable.
 
 1. Add enum payload owner paths.
-   Define the payload-slot ownership model for enum values that carry owned
-   payloads, including partial-move cleanup and `@repr(C)` layout rules for
-   owned payload-bearing public enums.
+   Direct temporary aggregate-enum constructors can now carry and match-bind
+   `own i64`/`own u64` payloads. Remaining work is the full payload-slot
+   ownership model for stored local, parameter, and returned enum values,
+   including tag-aware owner paths, partial-move cleanup, and `@repr(C)` layout
+   rules for owned payload-bearing public enums.
    Label: `owner-enum-payload-paths`.
 2. Add owner-aware `Slice[T]` element paths.
    Treat `Slice[own T]` as a non-owning view while still preserving borrow and
