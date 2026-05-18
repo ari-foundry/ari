@@ -418,6 +418,9 @@ generic numeric APIs later without changing call sites:
 ```ari
 math::abs(value)
 math::sign(value)
+math::is_positive(value)
+math::is_negative(value)
+math::is_zero(value)
 math::is_even(value)
 math::is_odd(value)
 math::pow(base, exponent)
@@ -428,13 +431,14 @@ math::gcd(left, right)
 math::lcm(left, right)
 ```
 
-`pow` requires a non-negative exponent and asserts that precondition at
-runtime. `div_floor` rounds signed division toward negative infinity,
-`div_ceil` rounds toward positive infinity, and `mod_floor` returns the
-matching floor remainder. The division helpers assert that `denominator != 0`.
-`gcd` and `lcm` normalize negative inputs through absolute values. `lcm`
-returns `0` when either input is `0`. These helpers intentionally do not define
-overflow semantics yet.
+`is_positive`, `is_negative`, and `is_zero` are predicate forms for the same
+sign policy as `sign`. `pow` requires a non-negative exponent and asserts that
+precondition at runtime. `div_floor` rounds signed division toward negative
+infinity, `div_ceil` rounds toward positive infinity, and `mod_floor` returns
+the matching floor remainder. The division helpers assert that
+`denominator != 0`. `gcd` and `lcm` normalize negative inputs through absolute
+values. `lcm` returns `0` when either input is `0`. These helpers
+intentionally do not define overflow semantics yet.
 
 ## Bits
 

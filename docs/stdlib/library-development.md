@@ -23,6 +23,14 @@ primitive. Examples include layout queries, raw pointer load/store,
 
 - Use module paths that say what owns the behavior: `std::vec::new`,
   `std::string::from_slice_in`, `std::math::gcd`.
+- Do not add a type suffix when the module path, generic parameters, argument
+  types, or return type already carry the type. Prefer `math::is_positive`,
+  `bits::leading_ones`, or `convert::from<T, U>` over names like
+  `is_positive_i64`, `leading_ones_u64`, or `from_i32_to_i64`.
+- Keep type suffixes only for current runtime hooks or compatibility surfaces
+  that cannot yet be generic, such as `io::write_i64` or `append_i64_in`.
+  When the language can express a generic source API, add the natural name and
+  keep the suffixed form only as a documented compatibility shim.
 - Use `_in` when a function needs an explicit allocation zone.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
 - Use `assert` only for programmer errors and current precondition traps.

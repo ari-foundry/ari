@@ -96,7 +96,10 @@ fn std::math::div_ceil|std math division rounding tests; docs/stdlib/api-referen
 fn std::math::div_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::gcd|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::is_even|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::is_negative|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::is_odd|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::is_positive|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::is_zero|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::lcm|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::mod_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section

@@ -242,13 +242,16 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3abs' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math4sign' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math11is_positive' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math11is_negative' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math7is_zero' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math7is_even' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math6is_odd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3pow' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3gcd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3lcm' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
-	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 200
+	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 71
 	$(TARGET) tests/cases/standard-library/ok/std-math-division-rounding.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-division-rounding.ll
 	grep -q '_ARNv3std4math9div_floor' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
 	grep -q '_ARNv3std4math8div_ceil' $(BUILD_DIR)/prelude/std-math-division-rounding.ll

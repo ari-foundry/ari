@@ -3,6 +3,35 @@ fn main() -> i64 {
   let absolute = std::math::abs(-9) + math::abs(0) + math::abs(8);
   let sign_score = math::sign(-10) + math::sign(0) + math::sign(10);
 
+  var sign_predicates = 0;
+  if math::is_positive(9) {
+    sign_predicates = sign_predicates + 3;
+  }
+  if !math::is_positive(0) {
+    sign_predicates = sign_predicates + 5;
+  }
+  if !math::is_positive(-9) {
+    sign_predicates = sign_predicates + 7;
+  }
+  if math::is_negative(-9) {
+    sign_predicates = sign_predicates + 11;
+  }
+  if !math::is_negative(0) {
+    sign_predicates = sign_predicates + 13;
+  }
+  if !math::is_negative(9) {
+    sign_predicates = sign_predicates + 17;
+  }
+  if std::math::is_zero(0) {
+    sign_predicates = sign_predicates + 19;
+  }
+  if !std::math::is_zero(4) {
+    sign_predicates = sign_predicates + 23;
+  }
+  if !std::math::is_zero(-4) {
+    sign_predicates = sign_predicates + 29;
+  }
+
   var parity = 0;
   if math::is_even(8) {
     parity = parity + 5;
@@ -21,5 +50,8 @@ fn main() -> i64 {
   let gcds = math::gcd(48, 18) + math::gcd(-24, 18) + math::gcd(0, 9);
   let lcms = math::lcm(12, 18) + math::lcm(-6, 8) + math::lcm(0, 10);
 
-  return absolute + sign_score + parity + powers + gcds + lcms;
+  let total =
+    absolute + sign_score + sign_predicates + parity + powers + gcds + lcms;
+  assert_eq_i64(total, 327);
+  return total % 256;
 }

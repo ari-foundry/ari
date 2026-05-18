@@ -15,13 +15,17 @@ Basic signed integer helpers:
 ```ari
 math::abs(value)
 math::sign(value)
+math::is_positive(value)
+math::is_negative(value)
+math::is_zero(value)
 math::is_even(value)
 math::is_odd(value)
 ```
 
 `abs` returns the non-negative magnitude of the input. `sign` returns `-1`,
-`0`, or `1`. The parity helpers use integer remainder and work for negative
-values too.
+`0`, or `1`. `is_positive`, `is_negative`, and `is_zero` are small predicate
+forms for the same sign policy. The parity helpers use integer remainder and
+work for negative values too.
 
 Power and divisor helpers:
 
@@ -62,7 +66,7 @@ fn tile_score(width: i64, height: i64) -> i64 {
   let step = math::div_ceil(width, 8);
   let common = math::gcd(step, height);
   let repeat = math::lcm(step, height);
-  if math::is_even(repeat) {
+  if math::is_positive(width) && math::is_even(repeat) {
     return common + repeat;
   }
   return common;

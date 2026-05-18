@@ -17,6 +17,18 @@ pub fn sign(value: i64) -> i64 {
   return 0;
 }
 
+pub fn is_positive(value: i64) -> bool {
+  return value > 0;
+}
+
+pub fn is_negative(value: i64) -> bool {
+  return value < 0;
+}
+
+pub fn is_zero(value: i64) -> bool {
+  return value == 0;
+}
+
 pub fn is_even(value: i64) -> bool {
   return (value % 2) == 0;
 }

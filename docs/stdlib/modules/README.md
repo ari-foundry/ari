@@ -28,9 +28,9 @@ limits, examples, and test files for one module.
   printable/control predicates, case conversion, borrowed-slice
   case-insensitive comparison/search, trimming, and digit/prefix parsing
   helpers.
-- [std::math](math.md): source-only `i64` arithmetic helpers for signs,
-  parity, powers, division rounding, greatest common divisor, and least common
-  multiple.
+- [std::math](math.md): source-only `i64` arithmetic helpers for signs, sign
+  predicates, parity, powers, division rounding, greatest common divisor, and
+  least common multiple.
 - [std::bits](bits.md): source-only `u64` bit-mask, rotation, power-of-two,
   low-mask, alignment, and zero/one-run bit-scan helpers.
 
