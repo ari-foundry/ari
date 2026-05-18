@@ -23,6 +23,13 @@ build/ari-lsp
 
 `make` is the same as `make release`.
 
+Native C++ builds are object-based. Release objects live under
+`build/obj/release`, debug objects under `build/obj/debug`, sanitizer objects
+under `build/obj/sanitize`, and lint/LSP helper objects under
+`build/obj/tools`. Object rules emit `.d` dependency files with `-MMD -MP`, so
+changing one `.cpp` or an included header rebuilds only the affected objects
+and then relinks the relevant executable.
+
 ## Test Commands
 
 The repository-root `Makefile` owns compiler build targets. Test recipes live
