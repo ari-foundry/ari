@@ -52,6 +52,8 @@ test:
   case behavior.
 - `std-bits-width-helpers.ari`: source `std::bits` u64 bit-width,
   power-of-two rounding, and low-mask behavior.
+- `std-zone-alloc-array.ari`: source `std::zone` typed raw array allocation,
+  root re-export, zero-count null return, and raw pointer load/store behavior.
 - `std-boxed-as-ptr-after-reset.ari`: negative zone provenance diagnostic.
 - `prelude-option-result-methods.ari`: root prelude ADT method behavior.
 - `prelude-option-result-predicates.ari`: consuming Option/Result payload

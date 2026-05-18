@@ -229,7 +229,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | layout | `size_of<T>()`, `align_of<T>()` |
 | raw pointers | `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store` |
 | replace/swap | `mem::replace(ref mut place, value)`, `mem::swap(ref mut a, ref mut b)` |
-| explicit allocation | `zone::create`, `zone::alloc<T>`, `zone::new<T>`, `zone::reset`, `zone::destroy` |
+| explicit allocation | `zone::create`, `zone::alloc<T>`, `zone::alloc_array<T>`, `zone::new<T>`, `zone::reset`, `zone::destroy` |
 | temporary allocation | `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
 | single-value handle | `std::boxed::Box[T]`, `Box!(T, ref mut zone, value)` |
 | owned byte string | `std::string::String`, `std::string::from_string(ref mut zone, "text")` |

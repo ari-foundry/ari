@@ -32,7 +32,8 @@ The current `std` package already provides:
 - IO/input/context builtin declarations plus source helpers such as
   `io::write_bytes`, `input::try_read_byte`, and `context::has_arg`
 - layout and pointer helpers in `std::mem`
-- explicit-zone allocation in `std::zone`
+- explicit-zone allocation in `std::zone`, including the source
+  `alloc_array<T>` raw buffer helper
 - source handles for `Box`, `String`, and `Vec`
 - `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access, and
   `Option`-returning element access helpers
@@ -148,7 +149,7 @@ Likely compiler work:
 | `std::option` | Filter helpers after borrowed function-pointer ergonomics are clear. | Predicate/combinator/conversion behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
 | `std::result` | Error conversion helpers that use `From`/`Into` after trait impl patterns mature. | `Result` projection/conversion and `?` residual tests. | Residual conversion and trait-bound selection. |
 | `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |
-| `std::zone` | More scoped allocation helpers. | Reset/destroy provenance and escape diagnostics. | Zone lifetime/state merge rules. |
+| `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
 | `std::string` | Add copying trim variants and signed/checked parsers only after text and numeric policies are documented. | Search, growth, append, copy, ASCII trim/parse, and after-reset tests. | Formatting/string runtime hooks. |
 | `std::ascii` | Add prefix parsers only after a result shape for consumed byte counts is chosen. | Byte classification behavior, slice trimming/parsing, source symbol checks, and future parser edge cases. | None for current whole-slice helpers; prefix parsers may need tuple/result ergonomics. |

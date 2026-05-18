@@ -1,0 +1,27 @@
+// Covers typed raw array allocation through std::zone and the root re-export.
+fn main() -> i64 {
+  var zone = zone::create(160);
+
+  let values = std::zone::alloc_array<i64>(ref mut zone, 3);
+  ptr_store(values, 5);
+  ptr_store(ptr_add(values, 1), 7);
+  ptr_store(ptr_add(values, 2), 11);
+
+  let root_values = alloc_array<i64>(ref mut zone, 2);
+  ptr_store(root_values, 13);
+  ptr_store(ptr_add(root_values, 1), 17);
+
+  let empty = std::zone::alloc_array<i64>(ref mut zone, 0);
+  let empty_score = if (empty as u64) == 0u64 { 19 } else { 0 };
+
+  let total =
+    ptr_load(values) +
+    ptr_load(ptr_add(values, 1)) +
+    ptr_load(ptr_add(values, 2)) +
+    ptr_load(root_values) +
+    ptr_load(ptr_add(root_values, 1)) +
+    empty_score;
+
+  zone::destroy(zone);
+  return total;
+}

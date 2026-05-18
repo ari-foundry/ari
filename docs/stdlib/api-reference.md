@@ -54,10 +54,11 @@ min<T>(left, right)
 max<T>(left, right)
 clamp<T>(value, low, high)
 is_between<T>(value, low, high)
-create(bytes)
+create(capacity)
 alloc(ref mut zone, bytes, align)
+alloc_array<T>(ref mut zone, count)
 new<T>(ref mut zone, value)
-promote<T>(ref mut target, value)
+promote<T>(ref mut target, source)
 reset(ref mut zone)
 destroy(zone)
 range(start, end)
@@ -108,6 +109,40 @@ input::owned_line(ref mut zone)
 writes every byte in a `Slice[u8]` and returns the byte count attempted.
 Borrowed line input uses a reusable runtime buffer; use the owned forms when
 the line must survive later input reads.
+
+## Memory And Zones
+
+`std::mem` exposes layout and raw pointer helpers:
+
+```ari
+mem::size_of<T>()
+mem::align_of<T>()
+mem::ptr_offset<T>(pointer, bytes)
+mem::ptr_add<T>(pointer, count)
+mem::ptr_load<T>(pointer)
+mem::ptr_store<T>(pointer, value)
+mem::replace<T>(ref mut place, value)
+mem::swap<T>(ref mut left, ref mut right)
+```
+
+`std::zone` exposes the explicit allocation capability:
+
+```ari
+zone::create(capacity)
+zone::alloc(ref mut zone, bytes, align)
+zone::alloc<T>(ref mut zone)
+zone::alloc_array<T>(ref mut zone, count)
+zone::new<T>(ref mut zone, value)
+zone::promote<T>(ref mut target, source)
+zone::allocation_zone(data)
+zone::reset(ref mut zone)
+zone::destroy(zone)
+```
+
+`alloc_array<T>` returns uninitialized storage for `count` consecutive `T`
+values. It returns null for `0`, asserts for negative counts, and does not run
+destructors for the slots; initialize before reading and prefer higher-level
+handles when ownership matters.
 
 ## Option And Result
 

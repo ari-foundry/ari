@@ -21,6 +21,8 @@ limits, examples, and test files for one module.
   `identity`, `from`, and `into` helper calls for generic code.
 - [std::context](context.md): runtime-backed program argument access plus the
   source `has_arg` range predicate and root aliases.
+- [std::zone](zone.md): explicit allocation capability, raw typed allocation,
+  `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,
   printable/control predicates, case conversion, borrowed-slice trimming, and
   digit parsing helpers.

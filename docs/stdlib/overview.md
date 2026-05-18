@@ -24,7 +24,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Process argument access. | `argc`, `arg`, `has_arg`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
-| `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
+| `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `append_i64_in`, `trim`, `parse_decimal`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `is_punctuation`, `trim`, `parse_decimal`. |
@@ -87,6 +87,11 @@ module's trait surface.
 `std::context` keeps the same split: `argc` and `arg` are runtime hooks because
 they read the host argument context, while `has_arg` is ordinary source that
 documents the valid index policy in one reusable place.
+
+`std::zone` keeps allocation visible. Raw byte allocation and lifecycle hooks
+are runtime-backed, while `alloc_array<T>` is source Ari that packages the
+common "count times `size_of<T>()` at `align_of<T>()`" pattern for library
+authors.
 
 `std::input` follows that pattern for stdin. `read_byte`, `line`, and
 `owned_line` are runtime hooks, while `try_read_byte` is source Ari that turns

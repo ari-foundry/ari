@@ -626,6 +626,7 @@ zone::temp(capacity: i64) -> own Zone
 zone::alloc(zone: ref mut Zone, bytes: i64, align: i64) -> ptr u8
 zone::allocation_zone(data: ptr u8) -> ptr c_void
 zone::alloc<T>(zone: ref mut Zone) -> ptr T
+zone::alloc_array<T>(zone: ref mut Zone, count: i64) -> ptr T
 zone::new<T>(zone: ref mut Zone, value: T) -> ptr T
 zone::scratch<T>(capacity: i64, value: T) -> ptr T
 zone::promote<T>(target: ref mut Zone, source: ptr T) -> ptr T
@@ -637,8 +638,10 @@ Zones are explicit allocation regions. Allocation returns raw `ptr u8` memory,
 so callers cast or offset pointers deliberately and use `ptr_load`,
 `ptr_store`, or `*pointer` for unchecked memory access. The generic
 `zone::alloc<T>` form computes `T`'s layout and returns `ptr T` directly.
-`zone::new<T>` additionally stores a provided value into that memory. It is
-placement construction only; it does not register destructors.
+`zone::alloc_array<T>` does the same for `count` consecutive uninitialized
+values, returning null for a zero count. `zone::new<T>` additionally stores a
+provided value into that memory. It is placement construction only; it does
+not register destructors.
 `zone::scratch<T>(capacity, value)` can initialize a local pointer binding by
 creating a hidden lexical temporary zone and placing `value` into it. The
 resulting pointer cannot escape that local scratch lifetime.
