@@ -1005,7 +1005,8 @@ predicates that can inspect a local or other place value without consuming it.
 `expect(message)`, `unwrap_err()`, `expect_err(message)`, `unwrap_or(fallback)`,
 `map[U](fn(T) -> U)`, `map_err[F](fn(E) -> F)`,
 `and_then[U](fn(T) -> Result[U, E])`, and
-`or_else[F](fn(E) -> Result[T, F])`. Bind function-call results to a local
+`or[F](Result[T, F])` / `or_else[F](fn(E) -> Result[T, F])`. Bind
+function-call results to a local
 before calling these borrowed predicate methods. Use explicit paths such as
 `std::Option[i64]`, `std::Some(1)`, or `std::Ok<i64, i32>(1)` when you want to
 spell the source module. The method implementations live in

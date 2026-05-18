@@ -54,14 +54,22 @@ fn main() -> i64 {
   let result_ok_passthrough = Ok<i64, i32>(9).map_err<i64>(widen_error).unwrap_or(0);
   let result_then_ok = Ok<i64, i32>(5).and_then<i64>(result_next).unwrap_or(0);
   let result_then_err = Err<i64, i32>(6i32).and_then<i64>(result_next).unwrap_or(13);
+  let result_or_ok = Ok<i64, i32>(41).or<i64>(Err<i64, i64>(99)).unwrap_or(0);
+  let result_or_err = Err<i64, i32>(10i32).or<i64>(Ok<i64, i64>(43)).unwrap_or(0);
+  let result_or_still_err =
+    Err<i64, i32>(11i32).or<i64>(Err<i64, i64>(47)).unwrap_or(53);
   let result_or_else_ok = Ok<i64, i32>(7).or_else<i64>(recover_result).unwrap_or(0);
   let result_or_else_err = Err<i64, i32>(8i32).or_else<i64>(recover_result).unwrap_or(0);
   let result_or_else_still_err = Err<i64, i32>(9i32).or_else<i64>(fail_result).unwrap_or(19);
 
-  return option_map + option_map_none + option_then + option_then_none +
-         option_or_some + option_or_none + option_or_else_some +
-         option_or_else_none + option_or_else_still_none +
-         result_map + result_map_err_passthrough + result_err_changed +
-         result_ok_passthrough + result_then_ok + result_then_err +
-         result_or_else_ok + result_or_else_err + result_or_else_still_err;
+  let total =
+    option_map + option_map_none + option_then + option_then_none +
+    option_or_some + option_or_none + option_or_else_some +
+    option_or_else_none + option_or_else_still_none +
+    result_map + result_map_err_passthrough + result_err_changed +
+    result_ok_passthrough + result_then_ok + result_then_err +
+    result_or_ok + result_or_err + result_or_still_err +
+    result_or_else_ok + result_or_else_err + result_or_else_still_err;
+  assert_eq_i64(total, 355);
+  return total % 256;
 }

@@ -188,6 +188,7 @@ value.err()
 value.map<U>(op)
 value.map_err<F>(op)
 value.and_then<U>(op)
+value.or<F>(fallback)
 value.or_else<F>(op)
 ```
 
@@ -197,7 +198,9 @@ the enum value and pass the payload to the predicate. Use the lazy `*_else`
 forms when the fallback is expensive or should only run on the missing/error
 branch. Use `ok_or` and `ok_or_else` when an optional value needs to enter a
 `Result`-returning flow. Use `ok` and `err` when a `Result` should be projected
-back into an `Option`.
+back into an `Option`. Use `Result::or` when a fallback `Result` is already
+available; use `Result::or_else` when the fallback should be built from the
+error only on the `Err` branch.
 
 ## Slice, Vec, String, And Box
 

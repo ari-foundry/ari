@@ -60,12 +60,14 @@ value.err()
 value.map<U>(op)
 value.map_err<F>(op)
 value.and_then<U>(op)
+value.or<F>(fallback)
 value.or_else<F>(op)
 ```
 
 `ok` keeps the success payload as `Option[T]`. `err` keeps the error payload as
 `Option[E]`. `unwrap_or_else` receives the error and returns a fallback success
-value.
+value. `or` uses an already-built fallback `Result[T, F]` when the receiver is
+`Err`; `or_else` builds that fallback lazily from the original error.
 
 `is_ok_and` consumes the `Result[T, E]` and predicates the success payload.
 `is_err_and` consumes it and predicates the error payload.

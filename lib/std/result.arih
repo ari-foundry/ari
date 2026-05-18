@@ -119,6 +119,13 @@ pub impl[T, E] std::Result[T, E] {
     };
   }
 
+  fn or[F](self, fallback: std::Result[T, F]) -> std::Result[T, F] {
+    return match self {
+      std::Ok(value) => std::Ok<T, F>(value),
+      std::Err(_) => fallback;
+    };
+  }
+
   fn or_else[F](self, op: fn(E) -> std::Result[T, F]) -> std::Result[T, F] {
     return match self {
       std::Ok(value) => std::Ok<T, F>(value),

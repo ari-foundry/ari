@@ -79,6 +79,8 @@ test:
 - `prelude-option-result-methods.ari`: root prelude ADT method behavior.
 - `prelude-option-result-predicates.ari`: consuming Option/Result payload
   predicate helpers.
+- `prelude-option-result-combinators.ari`: Option/Result map, and_then,
+  eager fallback, and lazy fallback combinator behavior.
 - `prelude-option-result-conversions.ari`: Option/Result conversion, xor, and
   lazy fallback behavior.
 - `prelude-macro-format-no-default-zone.ari`: macro or implicit prelude

@@ -150,7 +150,7 @@ Likely compiler work:
 | Module | Next Useful Slice | Tests To Add First | Compiler Work If Needed |
 | --- | --- | --- | --- |
 | `std::option` | Filter helpers after borrowed function-pointer ergonomics are clear. | Predicate/combinator/conversion behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
-| `std::result` | Error conversion helpers that use `From`/`Into` after trait impl patterns mature. | `Result` projection/conversion and `?` residual tests. | Residual conversion and trait-bound selection. |
+| `std::result` | Error conversion helpers that use `From`/`Into` after trait impl patterns mature. | `Result` projection/conversion, eager/lazy fallback, and `?` residual tests. | Residual conversion and trait-bound selection. |
 | `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |

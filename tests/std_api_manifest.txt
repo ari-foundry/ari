@@ -177,6 +177,7 @@ method std::Result[T,E]::is_ok_and|check-prelude prelude-option-result-predicate
 method std::Result[T,E]::map[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::map_err[F]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::ok|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
+method std::Result[T,E]::or[F]|check-prelude prelude-option-result-combinators; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::or_else[F]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::unwrap|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::unwrap_err|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
