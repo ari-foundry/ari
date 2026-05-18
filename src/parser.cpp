@@ -99,7 +99,10 @@ private:
     }
 
     Token expect_identifier_or_contextual_name_keyword(const std::string& message) {
-        if (!check(TokenKind::Identifier) && !check(TokenKind::KwDrop) && !check(TokenKind::KwNext)) {
+        if (!check(TokenKind::Identifier) &&
+            !check(TokenKind::KwDrop) &&
+            !check(TokenKind::KwForget) &&
+            !check(TokenKind::KwNext)) {
             fail(peek().loc, message);
         }
         return tokens_[pos_++];
@@ -960,6 +963,7 @@ private:
         if (match(TokenKind::KwBreak)) return parse_break();
         if (match(TokenKind::KwMatch)) return parse_match();
         if (match(TokenKind::KwDrop)) return parse_drop();
+        if (match(TokenKind::KwForget)) return parse_forget();
 
         if (is_assignment_statement_start()) {
             SourceLocation loc = peek().loc;
@@ -1736,6 +1740,16 @@ private:
         stmt->loc = name.loc;
         set_stmt_drop_name(*stmt, name.text);
         require_semicolon("expected ; after drop");
+        return stmt;
+    }
+
+    StmtPtr parse_forget() {
+        Token name = expect(TokenKind::Identifier, "expected binding name after forget");
+        auto stmt = std::make_unique<Stmt>();
+        stmt->kind = StmtKind::Forget;
+        stmt->loc = name.loc;
+        set_stmt_drop_name(*stmt, name.text);
+        require_semicolon("expected ; after forget");
         return stmt;
     }
 

@@ -275,6 +275,10 @@ tuple, fixed-array, vector, and struct fields that provide a matching impl.
 
 After a binding is dropped, later reads are rejected.
 
+`forget name;` also ends an owning binding, but it intentionally skips all
+`Drop` lowering. It is mainly for explicit leak-style cleanup decisions, such
+as resolving a `maybe-unavailable` owner after a maybe-zero loop.
+
 ## Owning Bindings
 
 ```ari

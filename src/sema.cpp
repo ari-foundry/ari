@@ -6015,6 +6015,9 @@ private:
             case StmtKind::Drop:
                 check_drop(stmt, *lowered);
                 break;
+            case StmtKind::Forget:
+                check_forget(stmt, *lowered);
+                break;
         }
 
         return CheckedStatement{std::move(lowered), flow};
@@ -10542,6 +10545,30 @@ private:
         mark_all_local_owned_fields(local, LocalState::Dropped);
         mark_local_dropped(local);
         set_ir_stmt_drop_name(lowered, drop_name);
+    }
+
+    void check_forget(const Stmt& stmt, IrStmt& lowered) {
+        const std::string& forget_name = stmt_drop_name(stmt);
+        LocalInfo& local = require_local_slot(stmt.loc, forget_name);
+        if (local.state != LocalState::Alive && local.state != LocalState::MaybeUnavailable) {
+            if (auto error = local_unavailable_binding_error(forget_name, local)) fail(stmt.loc, *error);
+        }
+        const bool has_owner_to_forget =
+            local_has_live_owner(local) || local_has_maybe_unavailable_owner(local);
+        if (!has_owner_to_forget) {
+            fail(stmt.loc, "forget requires a live or maybe-unavailable owning binding '" + forget_name + "'");
+        }
+        require_not_borrowed(stmt.loc, forget_name, local, "forget");
+        if (is_auto_destroy_zone(local)) {
+            fail(stmt.loc,
+                 "temporary zone '" + forget_name +
+                     "' cannot be forgotten; it is destroyed automatically at scope exit");
+        }
+
+        mark_all_local_owned_fields(local, LocalState::Moved);
+        mark_local_moved(local);
+        lowered.kind = IrStmtKind::ExprStmt;
+        lowered.expr = make_void_noop_expr(stmt.loc);
     }
 
     void check_return(const Stmt& stmt, IrStmt& lowered) {
@@ -23045,6 +23072,7 @@ private:
             case StmtKind::Break: return IrStmtKind::Break;
             case StmtKind::Match: return IrStmtKind::Match;
             case StmtKind::Drop: return IrStmtKind::Drop;
+            case StmtKind::Forget: return IrStmtKind::ExprStmt;
         }
         fail(loc, "unsupported statement kind");
     }

@@ -793,6 +793,10 @@ bool append_body_stmt_payload(std::ostringstream& out, const Stmt& stmt) {
             append_field(out, "drop");
             append_field(out, stmt_drop_name(stmt));
             return true;
+        case StmtKind::Forget:
+            append_field(out, "forget");
+            append_field(out, stmt_drop_name(stmt));
+            return true;
         default:
             return false;
     }
@@ -1852,6 +1856,11 @@ private:
         if (kind == "drop") {
             stmt->kind = StmtKind::Drop;
             set_stmt_drop_name(*stmt, read_field(label + " drop name"));
+            return stmt;
+        }
+        if (kind == "forget") {
+            stmt->kind = StmtKind::Forget;
+            set_stmt_drop_name(*stmt, read_field(label + " forget name"));
             return stmt;
         }
         fail("unknown function body statement summary kind '" + kind + "'");

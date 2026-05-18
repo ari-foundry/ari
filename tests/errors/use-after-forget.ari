@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  let token: own i64 = 1;
+  forget token;
+  drop token;
+  return 0;
+}

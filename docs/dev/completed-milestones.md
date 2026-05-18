@@ -324,3 +324,7 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - LLVM object fixtures now cover direct by-value `@repr(C)` aggregate exports
   that also reference unresolved `extern "C"` helpers, so symbol tables and
   relocation records stay checked as the library ABI surface grows.
+- `forget name;` is implemented as an explicit owner-resolution surface for
+  live and `maybe-unavailable` owners. It consumes the static owner state
+  without lowering destructor calls, letting maybe-zero loop exits be resolved
+  intentionally when remaining live values should be leaked.

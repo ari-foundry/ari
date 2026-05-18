@@ -94,6 +94,7 @@ enum class TokenKind {
     KwContinue,
     KwBreak,
     KwDrop,
+    KwForget,
     KwNull,
     KwTrue,
     KwFalse

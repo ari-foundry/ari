@@ -208,6 +208,7 @@ bool supported_ast_statement(const Stmt& stmt,
             }
             return true;
         case StmtKind::Drop:
+        case StmtKind::Forget:
             return is_local_generated_name(stmt_drop_name(stmt), local_names, reason);
     }
     reason = "unsupported ast meta statement body";

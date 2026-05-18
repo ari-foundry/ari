@@ -427,8 +427,10 @@ When a `break` exits a loop, Ari merges any owning bindings visible after the
 loop with the state they would have if the loop ran zero times. If one exit
 leaves an owner live and another has moved or dropped it, the post-loop state is
 `maybe-unavailable`. That binding, or an owned aggregate field in that state,
-cannot be used, overwritten, returned past, or left to scope exit until a future
-conditional cleanup/resolution form can make the runtime state explicit.
+cannot be used, overwritten, returned past, or left to scope exit until it is
+resolved. Use `forget name;` to explicitly consume a live-or-unavailable owner
+without running destructors; this intentionally leaks the value on runtime paths
+where it was still live.
 
 For a literal `while true` loop, or an immutable local `let` condition whose
 initializer resolves through immutable local aliases to `true`, there is no
@@ -656,8 +658,9 @@ bindings.
 - Maybe-zero loop `break` exits that disagree with the zero-iteration owner
   state produce a `maybe-unavailable` owner. The owner is tracked after the
   loop, but later use, overwrite, owned-field overwrite, return, and scope exit
-  are rejected until the program has a supported way to resolve both runtime
-  cases.
+  are rejected until the program resolves the owner. `forget name;` is the
+  supported explicit resolution when the intended behavior is to abandon any
+  still-live owner without running `Drop`.
 - Direct range expressions and list-literal or stored-`Vec` `for` loops with a
   known non-empty iteration count are not treated as zero-iteration loops, so
   `break` exits can define the post-loop owner state. When the known count is

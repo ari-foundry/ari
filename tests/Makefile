@@ -2758,6 +2758,10 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/runtime-owned-enum-tagged-payload-paths.elf; code=$$?; test $$code -eq 45
 	$(TARGET) tests/ok/drop-statement-payloads.ari --emit-llvm $(BUILD_DIR)/variables/drop-statement-payloads.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-statement-payloads.ll) -eq 3
+	$(TARGET) tests/ok/forget-maybe-unavailable-owner.ari -o $(BUILD_DIR)/variables/forget-maybe-unavailable-owner.elf
+	$(BUILD_DIR)/variables/forget-maybe-unavailable-owner.elf; code=$$?; test $$code -eq 14
+	$(TARGET) tests/ok/forget-skips-drop-lowering.ari --emit-llvm $(BUILD_DIR)/variables/forget-skips-drop-lowering.ll
+	if grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/forget-skips-drop-lowering.ll; then exit 1; fi
 	$(TARGET) tests/ok/local-state-mutation-api.ari --emit-llvm $(BUILD_DIR)/variables/local-state-mutation-api.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/local-state-mutation-api.ll) -eq 3
 	grep -q "store i64 1, ptr %current_len" $(BUILD_DIR)/variables/local-state-mutation-api.ll
@@ -3487,6 +3491,10 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "owning binding 'token' may be unavailable before return" $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-return.err
 	if $(TARGET) tests/errors/drop-maybe-unavailable-owner.ari -o $(BUILD_DIR)/errors/drop-maybe-unavailable-owner.elf >$(BUILD_DIR)/errors/drop-maybe-unavailable-owner.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'token' may be unavailable before drop" $(BUILD_DIR)/errors/drop-maybe-unavailable-owner.err
+	if $(TARGET) tests/errors/forget-non-owner.ari -o $(BUILD_DIR)/errors/forget-non-owner.elf >$(BUILD_DIR)/errors/forget-non-owner.err 2>&1; then exit 1; fi
+	grep -q "forget requires a live or maybe-unavailable owning binding 'value'" $(BUILD_DIR)/errors/forget-non-owner.err
+	if $(TARGET) tests/errors/use-after-forget.ari -o $(BUILD_DIR)/errors/use-after-forget.elf >$(BUILD_DIR)/errors/use-after-forget.err 2>&1; then exit 1; fi
+	grep -q "cannot use moved binding 'token'" $(BUILD_DIR)/errors/use-after-forget.err
 	if $(TARGET) tests/errors/loop-break-owner-maybe-unavailable-overwrite.ari -o $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.elf >$(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.err 2>&1; then exit 1; fi
 	grep -q "cannot overwrite owning binding 'token' while it may be unavailable" $(BUILD_DIR)/errors/loop-break-owner-maybe-unavailable-overwrite.err
 	if $(TARGET) tests/errors/loop-break-owned-field-maybe-unavailable-overwrite.ari -o $(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.elf >$(BUILD_DIR)/errors/loop-break-owned-field-maybe-unavailable-overwrite.err 2>&1; then exit 1; fi

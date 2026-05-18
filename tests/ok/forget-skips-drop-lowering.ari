@@ -1,0 +1,10 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+  }
+}
+
+fn main() -> i64 {
+  let token: own i64 = 5;
+  forget token;
+  return 0;
+}

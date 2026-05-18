@@ -387,6 +387,7 @@ StmtPtr clone_statement_impl(const Stmt& stmt, CloneContext& context) {
             break;
         }
         case StmtKind::Drop:
+        case StmtKind::Forget:
             set_stmt_drop_name(*clone, clone_local_name_reference(stmt_drop_name(stmt), context));
             break;
     }

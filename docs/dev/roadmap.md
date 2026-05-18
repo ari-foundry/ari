@@ -20,10 +20,6 @@ near-term deliverable.
    Define durable data-pointer storage for `own` and borrow-valued dyn objects,
    including lifetime rules for objects that outlive hidden stack
    materialization.
-2. Add an explicit owner-resolution surface.
-   Loop exits that cannot prove a single owner state currently produce
-   `maybe-unavailable` locals. A future language form should let users resolve
-   those conditional cleanup states intentionally.
 
 ## Backend Work
 

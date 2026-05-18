@@ -1,0 +1,13 @@
+fn resolve(condition: bool) -> i64 {
+  let token: own i64 = 5;
+  while condition {
+    drop token;
+    break;
+  }
+  forget token;
+  return 7;
+}
+
+fn main() -> i64 {
+  return resolve(false) + resolve(true);
+}

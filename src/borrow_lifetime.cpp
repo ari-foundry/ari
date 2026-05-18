@@ -143,6 +143,7 @@ void collect_stmt_uses(const Stmt& stmt, NameUseCounts& counts) {
             }
             return;
         case StmtKind::Drop:
+        case StmtKind::Forget:
             add_name_use(counts, stmt_drop_name(stmt));
             return;
     }

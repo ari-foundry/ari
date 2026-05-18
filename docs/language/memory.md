@@ -188,6 +188,25 @@ fields are tracked and dropped as whole bindings, and `drop aggregate;` lowers
 destructor calls for owned tuple, fixed-array, vector, and struct fields that
 provide a matching `Drop` impl.
 
+## Forget
+
+```ari
+forget token;
+```
+
+`forget` consumes a live or `maybe-unavailable` owning binding without lowering
+any `Drop` calls. If the binding is live at runtime, the value is intentionally
+leaked; if a loop exit already moved or dropped it on that runtime path, no
+cleanup is attempted. This gives code an explicit way to resolve
+`maybe-unavailable` owner states after maybe-zero loops when the right cleanup
+choice is to abandon any remaining owner instead of conditionally running a
+destructor.
+
+Known `moved` or `dropped` bindings cannot be forgotten, non-owning bindings
+cannot be forgotten, and active borrows still block `forget`. Temporary zones
+created for automatic scope cleanup also cannot be forgotten; let their
+automatic cleanup run or use an explicit non-temporary zone handle.
+
 Local aggregates can carry `own`, `ref`, and `ref mut` fields. Owned aggregates
 move as one value. Borrow-valued aggregate bindings track source borrows per
 field path, so local aggregate reassignment and borrow-field reassignment can

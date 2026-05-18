@@ -353,7 +353,8 @@ enum class StmtKind {
     Continue,
     Break,
     Match,
-    Drop
+    Drop,
+    Forget
 };
 
 struct Binding {

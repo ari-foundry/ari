@@ -261,6 +261,7 @@ private:
             {"continue", TokenKind::KwContinue},
             {"break", TokenKind::KwBreak},
             {"drop", TokenKind::KwDrop},
+            {"forget", TokenKind::KwForget},
             {"null", TokenKind::KwNull},
             {"true", TokenKind::KwTrue},
             {"false", TokenKind::KwFalse}
