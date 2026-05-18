@@ -42,10 +42,12 @@ near-term deliverable.
    they drop selected `_` elements plus known skipped rest-gap elements. Shared
    local `let ref` suffix patterns over unknown-length direct `Vec[own T]`
    storage now use a conservative whole-owner borrow when the vector is not
-   partially moved. Remaining work is the genuinely dynamic owner-move surface:
-   owner moves through enum payload slots, `Slice[T]` element paths, owned rest
-   aliases, and unknown-length value/mutable vector suffixes without relying on
-   hidden whole-value leaks.
+   partially moved, and the same fallback supports a single mutable suffix
+   binding such as `let ref mut [.., last]`. Remaining work is the genuinely
+   dynamic owner-move surface: owner moves through enum payload slots,
+   `Slice[T]` element paths, owned rest aliases, and unknown-length value or
+   multi-binding mutable vector suffixes without relying on hidden whole-value
+   leaks.
    Owned payload-bearing `@repr(C)` enum C layouts should be defined with this
    ABI work; public non-generic plain payload enums already emit C headers for
    scalar, pointer-shaped, and generated wrapper-backed non-scalar payload

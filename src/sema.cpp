@@ -6962,6 +6962,23 @@ private:
         }
     }
 
+    bool runtime_sequence_pattern_has_single_dynamic_suffix_binding(const Pattern& pattern) {
+        if (!pattern.has_rest || !pattern.rest_alias_name.empty()) return false;
+
+        bool found_binding = false;
+        for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+            const Pattern& item = expanded_pattern(pattern.elements[i]);
+            if (item.kind == PatternKind::Wildcard) continue;
+            if (i < pattern.rest_index) return false;
+            if (item.kind != PatternKind::Binding || item.binding_mode != BindingMode::Value) {
+                return false;
+            }
+            if (found_binding) return false;
+            found_binding = true;
+        }
+        return found_binding;
+    }
+
     void lower_reference_runtime_sequence_binding_pattern_from_path(const Pattern& pattern,
                                                                     const std::string& base_name,
                                                                     const IrType& base_type,
@@ -6977,9 +6994,11 @@ private:
             [&]() -> std::optional<std::uint64_t> {
                 return known_direct_local_vec_reference_length(base_name, path, shape_type);
             });
-        if (mutable_borrow && reference_plan.dynamic_owner_suffix_uses_whole_borrow) {
+        if (mutable_borrow &&
+            reference_plan.dynamic_owner_suffix_uses_whole_borrow &&
+            !runtime_sequence_pattern_has_single_dynamic_suffix_binding(pattern)) {
             fail(pattern.loc,
-                 "mutable reference suffix patterns over ownership-carrying Vec[T] require a known vector length");
+                 "mutable reference suffix patterns over ownership-carrying Vec[T] require a known vector length unless exactly one suffix binding can borrow the whole vector");
         }
 
         std::vector<IrStmtPtr> body;
