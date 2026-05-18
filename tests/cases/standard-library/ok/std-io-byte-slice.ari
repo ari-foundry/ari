@@ -1,0 +1,12 @@
+// Covers source std::io byte-slice output over the single-byte backend hook.
+fn main() -> i64 {
+  var first = [65 as u8, 66 as u8, 10 as u8];
+  var second = [67 as u8, 68 as u8, 10 as u8];
+  let empty = first.as_slice()[0..0];
+
+  let first_count = io::write_bytes(first.as_slice());
+  let second_count = std::io::write_bytes(second.as_slice());
+  let empty_count = write_bytes(empty);
+
+  return first_count + second_count + empty_count;
+}

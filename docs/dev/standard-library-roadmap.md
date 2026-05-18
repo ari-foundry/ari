@@ -30,7 +30,7 @@ The current `std` package already provides:
   fallback helpers, including consuming payload predicate helpers
 - assertion, panic, `move`, and `take` helpers
 - IO/input/context builtin declarations plus source helpers such as
-  `input::try_read_byte` and `context::has_arg`
+  `io::write_bytes`, `input::try_read_byte`, and `context::has_arg`
 - layout and pointer helpers in `std::mem`
 - explicit-zone allocation in `std::zone`
 - source handles for `Box`, `String`, and `Vec`

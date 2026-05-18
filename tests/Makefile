@@ -166,6 +166,14 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/format-print-u64.elf >$(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "u64=18446744073709551615 zero=0" $(BUILD_DIR)/prelude/format-print-u64.out
 	grep -qx "small=7 max=18446744073709551615" $(BUILD_DIR)/prelude/format-print-u64.out
+	$(TARGET) tests/cases/standard-library/ok/std-io-byte-slice.ari --emit-llvm $(BUILD_DIR)/prelude/std-io-byte-slice.ll
+	grep -q '_ARNv3std2io11write_bytes' $(BUILD_DIR)/prelude/std-io-byte-slice.ll
+	grep -q "@ari_builtin_write_byte" $(BUILD_DIR)/prelude/std-io-byte-slice.ll
+	$(TARGET) tests/cases/standard-library/ok/std-io-byte-slice.ari -o $(BUILD_DIR)/prelude/std-io-byte-slice.elf
+	$(BUILD_DIR)/prelude/std-io-byte-slice.elf >$(BUILD_DIR)/prelude/std-io-byte-slice.out; code=$$?; test $$code -eq 6
+	grep -qx "AB" $(BUILD_DIR)/prelude/std-io-byte-slice.out
+	grep -qx "CD" $(BUILD_DIR)/prelude/std-io-byte-slice.out
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-io-byte-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-io-byte-slice.elf; $(BUILD_DIR)/prelude/std-io-byte-slice.elf >$(BUILD_DIR)/prelude/std-io-byte-slice.out; code=$$?; test $$code -eq 6; grep -qx "AB" $(BUILD_DIR)/prelude/std-io-byte-slice.out; grep -qx "CD" $(BUILD_DIR)/prelude/std-io-byte-slice.out; fi
 	$(TARGET) tests/cases/standard-library/ok/raw-string-literals.ari -o $(BUILD_DIR)/prelude/raw-string-literals.elf
 	$(BUILD_DIR)/prelude/raw-string-literals.elf >$(BUILD_DIR)/prelude/raw-string-literals.out; code=$$?; test $$code -eq 141
 	grep -qx "A" $(BUILD_DIR)/prelude/raw-string-literals.out

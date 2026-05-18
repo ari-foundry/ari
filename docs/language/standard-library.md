@@ -27,7 +27,7 @@ hooks because the current language cannot express those primitives directly.
 | `std` root | Common prelude surface and shared ADTs. | `Option[T]`, `Result[T, E]`, `Slice[T]` with `try_*` accessors, `Range[T]`, `RangeInclusive[T]`, `move`, `take`, assertion helpers, panic helpers, root `Box`, `String`, and `Vec` aliases. | Implemented source surface with compiler-known hooks for selected helpers. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `map`, `or`, `or_else`, `xor`, `and_then`, `ok_or`, `ok_or_else`. | Implemented for the current generic enum model. |
 | `std::result` | Error-return convenience methods. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `unwrap_err`, `expect_err`, `ok`, `err`, `map`, `map_err`, `and_then`, `or_else`. | Implemented for the current generic enum model. |
-| `std::io` | Minimal process IO hooks. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_byte`, `read_line`, `read_line_owned`. | Runtime-backed through reserved `extern "ari"` builtins. |
+| `std::io` | Minimal process IO hooks. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `write_bytes`, `newline`, `read_byte`, `read_line`, `read_line_owned`. | Runtime-backed hooks plus source byte-slice output. |
 | `std::input` | Friendly stdin helpers. | `read_byte`, `try_read_byte`, `line`, `owned_line`. | Runtime-backed hooks plus source EOF-to-Option byte handling. |
 | `std::context` | Program argument access. | `argc`, `arg`, `has_arg`. | Runtime-backed hooks plus a source range predicate; initialized by the generated entry wrapper. |
 | `std::mem` | Layout and raw pointer helpers. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. | Compiler-lowered where layout or typed pointer semantics are required. |
@@ -71,7 +71,7 @@ Use this table when writing code from docs alone:
 
 | Task | Preferred API | Notes |
 | --- | --- | --- |
-| Print debug or user-facing output. | `print`, `println`, `print!`, `println!` | Format strings must be string literals. Use `{}` for strings, integers, bools, and `f32`/`f64`; use `{:.N}` for float precision. |
+| Print debug or user-facing output. | `print`, `println`, `print!`, `println!`, `io::write_bytes(slice)` | Format strings must be string literals. Use `{}` for strings, integers, bools, and `f32`/`f64`; use `{:.N}` for float precision. Use `write_bytes` for raw `Slice[u8]` output. |
 | Read process arguments. | `arg_count()`, `arg(index)`, `has_arg(index)`, `context::argc()`, `context::arg(index)`, `context::has_arg(index)` | Arguments are lowercase `string` values. `has_arg` checks `0 <= index < argc`; out-of-range `arg` returns an empty string. |
 | Read stdin. | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` | `try_read_byte` returns `Option[u8]` instead of the raw `-1` EOF sentinel. Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
 | Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `?`, or `??` when that reads better than `match`. |

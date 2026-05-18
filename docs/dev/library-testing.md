@@ -31,6 +31,8 @@ test:
   views and whole-string parsing behavior.
 - `std-context-args.ari`: runtime-backed `std::context` argument access,
   source `has_arg`, and root alias behavior.
+- `std-io-byte-slice.ari`: source `std::io` byte-slice output over the raw
+  write-byte backend hook.
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper
   behavior over the raw stdin hook.
 - `std-cmp-value-helpers.ari`: source `std::cmp` trait-bound value selection,

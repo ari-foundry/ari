@@ -20,7 +20,7 @@ hiding allocation, ownership, or backend behavior.
 | `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `try_get`, `move`, `take`, `assert`, `panic`. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`. |
-| `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_line`. |
+| `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `write_bytes`, `newline`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Process argument access. | `argc`, `arg`, `has_arg`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
@@ -91,6 +91,10 @@ documents the valid index policy in one reusable place.
 `std::input` follows that pattern for stdin. `read_byte`, `line`, and
 `owned_line` are runtime hooks, while `try_read_byte` is source Ari that turns
 the raw `-1` EOF sentinel into `Option[u8]`.
+
+`std::io` keeps raw process IO visible. Scalar and line operations are runtime
+hooks, while `write_bytes` is source Ari over `Slice[u8]` and the single-byte
+hook.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

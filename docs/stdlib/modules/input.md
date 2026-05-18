@@ -62,6 +62,7 @@ io::write_i64(value)
 io::write_u64(value)
 io::write_bool(value)
 io::write_byte(value)
+io::write_bytes(values)
 io::newline()
 ```
 

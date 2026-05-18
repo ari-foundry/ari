@@ -1,3 +1,5 @@
+// Low-level process IO hooks plus small source helpers. Bulk byte output stays
+// in Ari source and delegates to the single-byte backend hook.
 pub extern "ari" fn write_i64(value: i64) -> i64 = "ari_builtin_write_i64";
 pub extern "ari" fn write_u64(value: u64) -> i64 = "ari_builtin_write_u64";
 pub extern "ari" fn write_bool(value: bool) -> i64 = "ari_builtin_write_bool";
@@ -6,3 +8,12 @@ pub extern "ari" fn newline() -> i64 = "ari_builtin_newline";
 pub extern "ari" fn read_byte() -> i64 = "ari_builtin_read_byte";
 pub extern "ari" fn read_line() -> string = "ari_builtin_read_line";
 pub extern "ari" fn read_line_owned(zone: ref mut Zone) -> std::string::String = "ari_builtin_read_line_owned";
+
+pub fn write_bytes(values: std::Slice[u8]) -> i64 {
+  var index = 0;
+  while index < values.len {
+    write_byte(values[index]);
+    index = index + 1;
+  }
+  return index;
+}

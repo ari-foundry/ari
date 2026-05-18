@@ -33,6 +33,7 @@ write_i64(value)
 write_u64(value)
 write_bool(value)
 write_byte(value)
+write_bytes(values)
 newline()
 read_byte()
 read_line()
@@ -90,6 +91,7 @@ io::write_i64(value)
 io::write_u64(value)
 io::write_bool(value)
 io::write_byte(value)
+io::write_bytes(values)
 io::newline()
 io::read_byte()
 io::read_line()
@@ -102,9 +104,10 @@ input::owned_line(ref mut zone)
 ```
 
 `read_byte` returns an `i64` byte value or `-1` at EOF.
-`input::try_read_byte()` wraps that shape as `Option[u8]`. Borrowed line input
-uses a reusable runtime buffer; use the owned forms when the line must survive
-later input reads.
+`input::try_read_byte()` wraps that shape as `Option[u8]`. `write_bytes`
+writes every byte in a `Slice[u8]` and returns the byte count attempted.
+Borrowed line input uses a reusable runtime buffer; use the owned forms when
+the line must survive later input reads.
 
 ## Option And Result
 

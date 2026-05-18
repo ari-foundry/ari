@@ -77,6 +77,7 @@ fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Pre
 fn std::io::read_line_owned|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::io::write_bool|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_byte|prelude byte IO tests; docs/dev/test-matrix.md Prelude row
+fn std::io::write_bytes|std io byte slice tests; docs/stdlib/modules/io.md
 fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelude row
 fn std::io::write_u64|prelude IO and u64 format tests; docs/dev/test-matrix.md Prelude row
 fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
@@ -374,5 +375,6 @@ use std::size_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C
 use std::swap|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows
 use std::write_bool|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::write_byte|std root re-export tests; docs/dev/test-matrix.md Prelude row
+use std::write_bytes|std io byte slice root re-export tests; docs/stdlib/modules/io.md
 use std::write_i64|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::write_u64|std root re-export tests; docs/dev/test-matrix.md Prelude row

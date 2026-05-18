@@ -276,6 +276,8 @@ io::write_i64(42)
 io::write_u64(42u64)
 io::write_bool(true)
 io::write_byte(65 as u8)
+var bytes = [65 as u8, 66 as u8]
+io::write_bytes(bytes.as_slice())
 io::newline()
 let byte = io::read_byte()
 ```
@@ -287,6 +289,8 @@ write_i64(42)
 write_u64(42u64)
 write_bool(true)
 write_byte(65 as u8)
+var bytes = [65 as u8, 66 as u8]
+write_bytes(bytes.as_slice())
 newline()
 let byte = read_byte()
 ```
@@ -420,6 +424,7 @@ io::write_i64(value: i64) -> i64
 io::write_u64(value: u64) -> i64
 io::write_bool(value: bool) -> i64
 io::write_byte(value: u8) -> i64
+io::write_bytes(values: Slice[u8]) -> i64
 io::newline() -> i64
 io::read_byte() -> i64
 io::read_line() -> string
@@ -428,6 +433,7 @@ write_i64(value: i64) -> i64
 write_u64(value: u64) -> i64
 write_bool(value: bool) -> i64
 write_byte(value: u8) -> i64
+write_bytes(values: Slice[u8]) -> i64
 newline() -> i64
 read_byte() -> i64
 read_line() -> string
