@@ -1,0 +1,5 @@
+// Covers explicit process exit lowering. The test harness checks exit code 42.
+fn main() -> i64 {
+  process::exit(42);
+  return 0;
+}

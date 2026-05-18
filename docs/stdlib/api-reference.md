@@ -97,6 +97,22 @@ env::program_name()
 the optional `argv[0]` value. Environment variables, process mutation, files,
 time, and thread APIs are still roadmap items.
 
+Current-process helpers live in `std::process`:
+
+```ari
+process::id()
+process::exit(code)
+process::success()
+process::failure()
+process::is_success(code)
+process::is_failure(code)
+```
+
+`id()` returns the host process id as `i64`. `exit(code)` terminates the
+process and does not return. The status helpers are source functions for the
+common `0` success and `1` failure convention. Child process handles, spawn,
+wait, and fork are still future work.
+
 ## IO And Input
 
 `std::io` exposes low-level process IO hooks, while `std::input` keeps

@@ -43,6 +43,10 @@ test:
   source `has_arg`, and root alias behavior.
 - `std-env-args.ari`: source `std::env` argument helpers, `Option`-returning
   `try_arg`, and `program_name` behavior over the runtime context.
+- `std-process-basic.ari`: runtime-backed `std::process::id` plus source
+  success/failure status helper behavior.
+- `std-process-exit.ari`: runtime-backed explicit process exit status
+  behavior.
 - `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
   insertion, duplicate rejection, membership, removal, borrowed view, copy, and
   target/source zone behavior.

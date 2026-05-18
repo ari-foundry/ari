@@ -1,0 +1,23 @@
+// Covers the first current-process helper slice: pid plus status-code helpers.
+fn main() -> i64 {
+  let pid = process::id();
+  var score = 0;
+
+  if pid > 0 {
+    score = score + 5;
+  }
+  if process::success() == 0 {
+    score = score + 7;
+  }
+  if process::failure() == 1 {
+    score = score + 11;
+  }
+  if process::is_success(0) {
+    score = score + 13;
+  }
+  if process::is_failure(9) {
+    score = score + 17;
+  }
+
+  return score;
+}

@@ -225,6 +225,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | result value | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` |
 | optional/result helpers | Option: `.is_some()`, `.is_none()`, `.filter(fn(ref T) -> bool)`, `.flatten()` for nested options, `.transpose()` for optional results; Result: `.is_ok()`, `.is_err()`, `.transpose()` for result-wrapped options; both: `.unwrap_or(fallback)`, `.map<U>(fn)`, `.and_then<U>(fn)` |
 | process args | `env::try_arg(index)`, `env::program_name()`, `env::arg_count()`, root `arg_count()`, `has_arg(index)` |
+| current process | `process::id()`, `process::exit(code)`, `process::success()`, `process::failure()` |
 | input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` |
 | raw IO | `io::write_i64`, `io::write_u64`, `io::write_bool`, `io::write_byte`, `io::write_bytes`, `io::newline` |
 | layout | `size_of<T>()`, `align_of<T>()` |

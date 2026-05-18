@@ -1,0 +1,20 @@
+// Current-process helpers. Keep these small and explicit until process
+// handles, spawn/wait, and platform fork policy are designed.
+pub extern "ari" fn id() -> i64 = "ari_builtin_process_id";
+pub extern "ari" fn exit(code: i64) -> void = "ari_builtin_process_exit";
+
+pub fn success() -> i64 {
+  return 0;
+}
+
+pub fn failure() -> i64 {
+  return 1;
+}
+
+pub fn is_success(code: i64) -> bool {
+  return code == success();
+}
+
+pub fn is_failure(code: i64) -> bool {
+  return !is_success(code);
+}

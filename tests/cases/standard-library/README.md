@@ -12,7 +12,8 @@ compiler-known hooks.
 ## Name Prefixes
 
 - `std-<module>-<feature>.ari`: source module APIs such as
-  `std-vec-try-pop.ari` or `std-math-integer-helpers.ari`.
+  `std-vec-try-pop.ari`, `std-math-integer-helpers.ari`, or
+  `std-process-basic.ari`.
 - `prelude-<feature>.ari`: root prelude names, aliases, macros, and implicit
   `std` loading.
 - `format-<feature>.ari`: formatting macro and runtime-lowering behavior.

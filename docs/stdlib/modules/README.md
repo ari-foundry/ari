@@ -26,6 +26,8 @@ limits, examples, and test files for one module.
   source `has_arg` range predicate and root aliases.
 - [std::env](env.md): user-facing process argument helpers, including
   `try_arg` and `program_name` over the runtime context.
+- [std::process](process.md): current process id, explicit exit, and status
+  helper functions.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,

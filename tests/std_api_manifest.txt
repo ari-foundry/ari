@@ -121,6 +121,12 @@ fn std::mem::size_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::swap[T]|std mem value helper tests; docs/dev/test-matrix.md Prelude and C FFI rows
 fn std::move[T]|explicit move tests; docs/dev/test-matrix.md Ownership row
 fn std::panic|prelude panic helpers; docs/dev/test-matrix.md Prelude row
+fn std::process::exit|check-prelude std-process-exit explicit process exit hook; docs/stdlib/modules/process.md
+fn std::process::failure|check-prelude std-process-basic source failure status helper; docs/stdlib/modules/process.md
+fn std::process::id|check-prelude std-process-basic current process id hook; docs/stdlib/modules/process.md
+fn std::process::is_failure|check-prelude std-process-basic source status predicate; docs/stdlib/modules/process.md
+fn std::process::is_success|check-prelude std-process-basic source status predicate; docs/stdlib/modules/process.md
+fn std::process::success|check-prelude std-process-basic source success status helper; docs/stdlib/modules/process.md
 fn std::slice[T]|Slice construction tests; docs/dev/test-matrix.md Prelude row
 fn std::string::alloc_buffer|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::string::copy_to|check-prelude std-string-from-copy borrowed source and target reset tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -328,6 +334,7 @@ module std::iter|range and iterator tests; docs/dev/test-matrix.md Control flow 
 module std::math|std math integer helper tests; docs/stdlib/overview.md module map
 module std::mem|layout and pointer tests; docs/dev/test-matrix.md C FFI row
 module std::option|prelude Option method tests; docs/dev/test-matrix.md Prelude row
+module std::process|std process current-process tests; docs/stdlib/modules/process.md
 module std::result|prelude Result method tests; docs/dev/test-matrix.md Prelude row
 module std::string|std string allocation seed tests; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::vec|std vec handle tests; docs/dev/test-matrix.md Explicit memory zones row

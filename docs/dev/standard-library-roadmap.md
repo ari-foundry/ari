@@ -33,6 +33,8 @@ The current `std` package already provides:
 - IO/input/context/env declarations and source helpers such as
   `io::write_bytes`, `input::try_read_byte`, `context::has_arg`,
   `env::try_arg`, and `env::program_name`
+- the first `std::process` current-process helpers: `id`, `exit`, and source
+  status helpers
 - layout and pointer helpers in `std::mem`
 - explicit-zone allocation in `std::zone`, including the source
   `alloc_array<T>` raw buffer helper
@@ -175,7 +177,7 @@ Likely compiler work:
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
 | `std::env` | Environment-variable helpers after the current argument wrapper slice. | `try_arg`, `program_name`, future `get`/`has`/`set`/`remove`, and null/environment-missing behavior. | Runtime string ownership, OS wrapper declarations, and platform error policy. |
-| `std::process` | Exit status, process id, spawn, wait, and platform fork wrappers. | `id`, `exit` diagnostics, spawn/wait result handling, fork platform guards. | Runtime wrappers for POSIX/Windows split and handle ownership. |
+| `std::process` | Grow from the current `id`/`exit` seed into child process handles. | current `id`, explicit exit status, source status predicates, future spawn/wait result handling, fork platform guards. | Current id/exit use runtime hooks; spawn/wait/fork need runtime wrappers for POSIX/Windows split and handle ownership. |
 | `std::thread` | Spawn/join handles after function pointer and ownership transfer rules are stable. | join success/failure, moved capture rejection, shared state diagnostics. | Runtime thread wrapper, entry trampoline ABI, and send/share trait policy. |
 | `std::sync` | Shared ownership and atomics before locks/channels. | `Shared`/`Weak` upgrade behavior, atomic load/store/CAS, mutex poisoning or no-poison policy. | Reference-counted handle lowering, atomic intrinsics, and thread-safety trait checks. |
 | `std::collections` | Extend the current linear `Set[T]` with iterator coverage, then design `HashMap` and `HashSet`. | current set insertion/duplicate/removal/copy/after-reset/same-zone tests; future replacement, lookup, growth, iteration, drop, and hash collision behavior. | Current `Set[T]` needs zone-handle provenance recognition only; hash tables need generic aggregate monomorphization, hashing/equality traits, and zone-aware table layout. |

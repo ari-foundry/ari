@@ -59,8 +59,9 @@ fn main() -> i64 {
 - Environment variables are not exposed yet. Planned names should prefer
   natural APIs such as `env::get`, `env::has`, `env::set`, and `env::remove`
   once runtime string and OS wrapper policy is stable.
-- Current working directory, executable path normalization, and process
-  mutation are future OS-facing slices.
+- Current working directory, executable path normalization, and child-process
+  mutation are future OS-facing slices. Current process id/exit helpers live in
+  `std::process`.
 - Argument strings are borrowed from the host runtime context. Copy into a
   zone-backed `std::string::String` when owned text is needed.
 

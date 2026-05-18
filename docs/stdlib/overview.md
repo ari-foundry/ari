@@ -24,6 +24,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `has_arg`. |
 | `std::env` | User-facing process argument helpers. | `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`. |
+| `std::process` | Current-process helpers. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -57,7 +58,7 @@ invalid after `reset` or `destroy`, and sema rejects later use.
 Most helper methods are plain Ari source. Compiler hooks remain for primitives
 that need backend or checker knowledge:
 
-- `extern "ari"` IO, panic, string allocation, and zone runtime hooks.
+- `extern "ari"` IO, panic, process, string allocation, and zone runtime hooks.
 - layout queries and typed pointer operations in `std::mem`.
 - formatting macros, because they inspect literal format strings.
 - provenance checks for zone-backed handles and raw pointers.
@@ -99,6 +100,11 @@ documents the valid index policy in one reusable place.
 `std::env` is source-only for now. It wraps the context hooks with the names
 application code should use and adds `Option`-based argument access through
 `try_arg` and `program_name`.
+
+`std::process` starts with a small runtime-backed current-process surface:
+`id` reads the host process id, `exit` terminates with an explicit status, and
+the status helpers are source Ari. Spawn, wait, fork, and process handles are
+intentionally still roadmap work.
 
 `std::collections::Set[T]` is source Ari over typed zone allocation. The
 compiler only recognizes the handle shape so zone reset/destroy invalidation

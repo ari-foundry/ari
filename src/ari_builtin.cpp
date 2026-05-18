@@ -79,6 +79,10 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::arg", "ari_builtin_context_arg"},
         {"context::arg", "ari_builtin_context_arg"},
         {"std::context::arg", "ari_builtin_context_arg"},
+        {"process::id", "ari_builtin_process_id"},
+        {"std::process::id", "ari_builtin_process_id"},
+        {"process::exit", "ari_builtin_process_exit"},
+        {"std::process::exit", "ari_builtin_process_exit"},
         {"create", "ari_builtin_zone_create"},
         {"std::create", "ari_builtin_zone_create"},
         {"zone::create", "ari_builtin_zone_create"},
@@ -156,6 +160,8 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
 
     if (symbol == "ari_builtin_context_argc") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_context_arg") return builtin_sig({i64}, source_string);
+    if (symbol == "ari_builtin_process_id") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_process_exit") return builtin_sig({i64}, void_type);
     if (symbol == "ari_builtin_write_i64") return builtin_sig({i64}, i64);
     if (symbol == "ari_builtin_write_u64") return builtin_sig({u64}, i64);
     if (symbol == "ari_builtin_write_bool") return builtin_sig({boolean}, i64);

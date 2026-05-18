@@ -210,6 +210,20 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/std-env-args.ari -o $(BUILD_DIR)/prelude/std-env-args.elf
 	$(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-args.elf; $(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98; fi
+	$(TARGET) tests/cases/standard-library/ok/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
+	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
+	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll
+	grep -F -q "std7process10is_success" $(BUILD_DIR)/prelude/std-process-basic.ll
+	grep -F -q "std7process10is_failure" $(BUILD_DIR)/prelude/std-process-basic.ll
+	$(TARGET) tests/cases/standard-library/ok/std-process-basic.ari -o $(BUILD_DIR)/prelude/std-process-basic.elf
+	$(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53
+	$(TARGET) tests/cases/standard-library/ok/std-process-exit.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-exit.ll
+	grep -q "@ari_builtin_process_exit" $(BUILD_DIR)/prelude/std-process-exit.ll
+	grep -q "call void @exit(i32 %narrow)" $(BUILD_DIR)/prelude/std-process-exit.ll
+	$(TARGET) tests/cases/standard-library/ok/std-process-exit.ari -o $(BUILD_DIR)/prelude/std-process-exit.elf
+	$(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-process-basic.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-basic.elf; $(BUILD_DIR)/prelude/std-process-basic.elf; code=$$?; test $$code -eq 53; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-process-exit.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-process-exit.elf; $(BUILD_DIR)/prelude/std-process-exit.elf; code=$$?; test $$code -eq 42; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
@@ -828,6 +842,8 @@ check-prelude: $(TARGET)
 	grep -q 'import	std	std::context	context	lib/std/context.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::env	lib/std/env.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::env	env	lib/std/env.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::process	lib/std/process.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::process	process	lib/std/process.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::mem	lib/std/mem.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::mem	mem	lib/std/mem.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::zone	lib/std/zone.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta

@@ -366,6 +366,7 @@ private:
                symbol == "putchar" ||
                symbol == "getchar" ||
                symbol == "fgets" ||
+               symbol == "getpid" ||
                symbol == "malloc" ||
                symbol == "free" ||
                symbol == "exit";
@@ -385,6 +386,7 @@ private:
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_panic" ||
+            symbol == "ari_builtin_process_exit" ||
             symbol == "ari_builtin_zone_reset" ||
             symbol == "ari_builtin_zone_destroy") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
@@ -410,6 +412,7 @@ private:
         declarations_ << "declare i32 @putchar(i32)\n";
         declarations_ << "declare i32 @getchar()\n";
         declarations_ << "declare ptr @fgets(ptr, i32, ptr)\n";
+        declarations_ << "declare i32 @getpid()\n";
         declarations_ << "declare ptr @malloc(i64)\n";
         declarations_ << "declare void @free(ptr)\n";
         declarations_ << "declare void @exit(i32)\n";
@@ -486,6 +489,22 @@ private:
         line("  ret ptr %arg");
         line("empty:");
         line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_process_id() {");
+        line("entry:");
+        line("  %pid = call i32 @getpid()");
+        line("  %wide = sext i32 %pid to i64");
+        line("  ret i64 %wide");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "void @ari_builtin_process_exit(i64 %code) {");
+        line("entry:");
+        line("  %narrow = trunc i64 %code to i32");
+        line("  call void @exit(i32 %narrow)");
+        line("  unreachable");
         line("}");
         line();
 
