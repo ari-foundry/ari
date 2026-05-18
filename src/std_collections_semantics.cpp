@@ -87,6 +87,7 @@ bool std_collections_set_method_requires_same_zone_argument(const std::string& m
            method_name == "ensure_spare_capacity" ||
            method_name == "reserve" ||
            method_name == "reserve_extra" ||
+           method_name == "replace" ||
            method_name == "insert";
 }
 

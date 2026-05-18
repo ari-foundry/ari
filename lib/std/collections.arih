@@ -168,6 +168,17 @@ pub impl[T] std::collections::Set[T] {
     return true;
   }
 
+  fn replace(self: ref mut Self, zone: ref mut Zone, value: T) -> std::Option[T] {
+    let index = self.index_of(value);
+    if index < 0 {
+      self.insert(zone, value);
+      return std::None<T>();
+    }
+    let previous = ptr_load(ptr_add(self.data, index));
+    ptr_store(ptr_add(self.data, index), value);
+    return std::Some<T>(previous);
+  }
+
   fn remove(self: ref mut Self, value: T) -> bool {
     let index = self.index_of(value);
     if index < 0 {

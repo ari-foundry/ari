@@ -247,6 +247,7 @@ method std::collections::Set[T]::len|check-prelude std-collections-set metadata 
 method std::collections::Set[T]::new|check-prelude std-collections-set associated constructor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::pop|check-prelude std-collections-set-access last-value removal; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::remove|check-prelude std-collections-set membership removal; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::replace|check-prelude std-collections-set-replace replace-or-insert behavior and same-zone diagnostic; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::reserve|check-prelude std-collections-set-access same-zone capacity growth; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::reserve_extra|check-prelude std-collections-set-access same-zone spare-capacity growth; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::take|check-prelude std-collections-set Option-returning removal; docs/stdlib/modules/collections.md

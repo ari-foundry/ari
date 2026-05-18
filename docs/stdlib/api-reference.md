@@ -362,6 +362,7 @@ set.try_get(index)
 set.index_of(value)
 set.contains(value)
 set.insert(ref mut zone, value)
+set.replace(ref mut zone, value)
 set.remove(value)
 set.take(value)
 set.pop()
@@ -374,9 +375,11 @@ set.iter()
 set.copy_to(ref mut zone)
 ```
 
-`insert` returns `true` only for newly inserted values. `remove` drops the
-removed value and reports whether it was present; `take` returns
-`Option[T]`. `first`/`last`/`get` assert that the requested element exists,
+`insert` returns `true` only for newly inserted values. `replace` returns
+`Some(previous)` for an equal existing value, or inserts the missing value and
+returns `None`. `remove` drops the removed value and reports whether it was
+present; `take` returns `Option[T]`. `first`/`last`/`get` assert that the
+requested element exists,
 while `try_first`/`try_last`/`try_get` return `Option[T]`. `pop` removes the
 last insertion-order value, and `try_pop` returns `None` on an empty set.
 `reserve` and `reserve_extra` keep growth explicit through the same source

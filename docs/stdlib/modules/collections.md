@@ -17,6 +17,7 @@ Collection APIs should read naturally:
 set.insert(ref mut zone, value)
 set.contains(value)
 set.take(value)
+set.replace(ref mut zone, value)
 set.try_get(index)
 set.iter()
 set.reserve(ref mut zone, capacity)
@@ -81,6 +82,7 @@ implements `IntoIterator[T]`, so both `for value in set.iter()` and
 
 ```ari
 set.insert(ref mut zone, value)
+set.replace(ref mut zone, value)
 set.remove(value)
 set.take(value)
 set.pop()
@@ -91,8 +93,10 @@ set.reserve_extra(ref mut zone, additional)
 ```
 
 `insert` returns `true` when the value was newly inserted and `false` when the
-set already contained it. Because insertion may grow storage, the method takes
-the same explicit zone used to create the set.
+set already contained it. `replace` returns `Some(previous)` when the set
+already contained an equal value; otherwise it inserts the new value and
+returns `None`. Because insertion and missing-value replacement may grow
+storage, both methods take the same explicit zone used to create the set.
 
 `remove` returns `true` when it found and dropped the value. `take` returns
 `Option[T]` and moves the removed value out instead of dropping it. `pop`
@@ -125,6 +129,7 @@ fn main() -> i64 {
   seen.insert(ref mut zone, 3);
   seen.insert(ref mut zone, 5);
   seen.insert(ref mut zone, 3);
+  let replaced = seen.replace(ref mut zone, 5).unwrap_or(0);
 
   let found = seen.contains(5);
   let first = seen.try_first().unwrap_or(0);
@@ -133,7 +138,7 @@ fn main() -> i64 {
     iter_total = iter_total + value;
   }
   let removed = seen.take(3).unwrap_or(0);
-  let total = seen.len() + first + iter_total + removed + if found { 10 } else { 0 };
+  let total = seen.len() + first + iter_total + replaced + removed + if found { 10 } else { 0 };
 
   zone::destroy(zone);
   return total;
@@ -147,6 +152,7 @@ Focused positive coverage:
 ```text
 tests/cases/standard-library/ok/std-collections-set.ari
 tests/cases/standard-library/ok/std-collections-set-access.ari
+tests/cases/standard-library/ok/std-collections-set-replace.ari
 tests/cases/standard-library/ok/std-collections-set-iter.ari
 ```
 
@@ -156,6 +162,7 @@ Focused negative coverage:
 tests/cases/standard-library/errors/std-collections-set-after-reset.ari
 tests/cases/standard-library/errors/std-collections-set-iter-after-reset.ari
 tests/cases/standard-library/errors/std-collections-set-insert-different-zone.ari
+tests/cases/standard-library/errors/std-collections-set-replace-different-zone.ari
 tests/cases/standard-library/errors/std-collections-set-reserve-different-zone.ari
 tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-zone.ari
 ```
@@ -164,6 +171,8 @@ tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-
 membership, removal, borrowed views, copying, and target/source zone behavior.
 `std-collections-set-access.ari` covers insertion-order accessors,
 `Option`-returning reads, explicit reserve growth, `pop`, and `try_pop`.
+`std-collections-set-replace.ari` covers replace-or-insert behavior and the
+same-zone growth rule for missing values.
 `std-collections-set-iter.ari` covers explicit cursors, direct set iteration,
 and insertion-order iterator lowering. The iterator reset test confirms that
 derived cursors preserve the set's allocation-zone provenance.

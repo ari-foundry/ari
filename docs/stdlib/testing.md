@@ -43,10 +43,12 @@ std-process-basic.ari
 std-process-exit.ari
 std-collections-set.ari
 std-collections-set-access.ari
+std-collections-set-replace.ari
 std-collections-set-iter.ari
 std-collections-set-after-reset.ari
 std-collections-set-iter-after-reset.ari
 std-collections-set-insert-different-zone.ari
+std-collections-set-replace-different-zone.ari
 std-collections-set-reserve-different-zone.ari
 std-collections-set-reserve-extra-different-zone.ari
 std-io-byte-slice.ari

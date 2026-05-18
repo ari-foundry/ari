@@ -1,0 +1,42 @@
+// Covers Set replacement semantics: present values are swapped out and
+// returned, while missing values are inserted through the same source zone.
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var set = collections::new<i64>(ref mut zone, 1);
+  var score = 0;
+
+  if set.insert(ref mut zone, 4) {
+    score = score + 1;
+  }
+
+  let previous_four = set.replace(ref mut zone, 4);
+  if previous_four.unwrap_or(0) == 4 && set.len() == 1 {
+    score = score + 2;
+  }
+
+  let missing_nine = set.replace(ref mut zone, 9);
+  if missing_nine.is_none() && set.len() == 2 {
+    score = score + 4;
+  }
+
+  if set.contains(9) {
+    score = score + 8;
+  }
+
+  let previous_nine = set.replace(ref mut zone, 9);
+  if previous_nine.unwrap_or(0) == 9 && set.len() == 2 {
+    score = score + 16;
+  }
+
+  if set.capacity() == 2 {
+    score = score + 32;
+  }
+
+  let taken_four = set.take(4);
+  if taken_four.unwrap_or(0) == 4 && set.len() == 1 {
+    score = score + 64;
+  }
+
+  zone::destroy(zone);
+  return score;
+}
