@@ -11,28 +11,42 @@ Ari is still a compiler prototype, so each page separates three states:
 ## Reading Order
 
 1. [Getting Started](getting-started.md)
-2. [Functions](functions.md)
-3. [Variables](variables.md)
-4. [Literals](literals.md)
-5. [Types](types.md)
-6. [Operators](operators.md)
-7. [Control Flow](control-flow.md)
-8. [Attributes](attributes.md)
-9. [Modules](modules.md)
-10. [Enums And Pattern Matching](enums-patterns.md)
-11. [Traits](traits.md)
-12. [Prelude And Formatting](prelude.md)
-13. [Standard Library](standard-library.md)
-14. [C FFI And Libraries](ffi.md)
-15. [Memory And Ownership](memory.md)
-16. [Front-End Only Syntax](front-end-only.md)
+2. [Quick Reference](quick-reference.md)
+3. [Cookbook](cookbook.md)
+4. [Functions](functions.md)
+5. [Variables](variables.md)
+6. [Literals](literals.md)
+7. [Types](types.md)
+8. [Operators](operators.md)
+9. [Control Flow](control-flow.md)
+10. [Attributes](attributes.md)
+11. [Modules](modules.md)
+12. [Enums And Pattern Matching](enums-patterns.md)
+13. [Traits](traits.md)
+14. [Prelude And Formatting](prelude.md)
+15. [Standard Library](standard-library.md)
+16. [C FFI And Libraries](ffi.md)
+17. [Memory And Ownership](memory.md)
+18. [Front-End Only Syntax](front-end-only.md)
+
+## Docs-Only Workflow
+
+When you need to write Ari code from documentation alone, use this path:
+
+1. Open [Quick Reference](quick-reference.md) to choose the current syntax,
+   standard-library entry point, and known gotchas.
+2. Copy a nearby pattern from [Cookbook](cookbook.md).
+3. Use the focused page for the feature you are changing when the short form is
+   not enough.
+4. Check [Front-End Only Syntax](front-end-only.md) before assuming a parsed
+   feature lowers to executable code.
 
 ## Small Program
 
 ```ari
 fn main() -> i64 {
-  println("answer={}", 42)
-  return 42
+  println("answer={}", 42);
+  return 42;
 }
 ```
 

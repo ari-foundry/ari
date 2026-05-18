@@ -57,6 +57,94 @@ is `std::boxed::Box`, `std::String` is `std::string::String`, and `std::Vec`
 is `std::vec::Vec`. Bare root `Vec[T]` without the `std::` source alias is
 still the compiler-known local vector surface.
 
+## Task-Oriented API Guide
+
+Use this table when writing code from docs alone:
+
+| Task | Preferred API | Notes |
+| --- | --- | --- |
+| Print debug or user-facing output. | `print`, `println`, `print!`, `println!` | Format strings must be string literals. Use `{}` for strings, integers, bools, and `f32`/`f64`; use `{:.N}` for float precision. |
+| Read process arguments. | `arg_count()`, `arg(index)`, `context::argc()`, `context::arg(index)` | Arguments are lowercase `string` values. Out-of-range `arg` returns an empty string. |
+| Read stdin. | `input()`, `read_line()`, `input_owned(ref mut zone)` | Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
+| Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `?`, or `??` when that reads better than `match`. |
+| Represent success/failure. | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` | `?` propagates residual cases and runs hidden iterator cleanup when needed. |
+| Work with borrowed contiguous data. | `Slice[T]`, `slice(data, len)`, `.as_slice()` | Slice methods borrow the view; `copy_to(ref mut zone)` makes a new owned collection when available. |
+| Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
+| Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. |
+| Store owned byte text. | `std::string::from_string(ref mut zone, "text")` or `std::string::new(ref mut zone, capacity)` | The handle stores bytes, not a full Unicode text abstraction yet. |
+| Store one zone-backed value. | `std::boxed::new<T>(ref mut zone, value)` or `Box!(T, ref mut zone, value)` | `take()` empties the handle; `try_take()` returns `Option[T]`. |
+| Allocate raw memory. | `zone::alloc`, `zone::alloc<T>`, `zone::new<T>` | Raw allocation does not run destructors or make memory safe by itself. |
+| Inspect layout or raw memory. | `size_of<T>`, `align_of<T>`, `ptr_add`, `ptr_load`, `ptr_store` | Use only for scalar and supported Ari-layout aggregate values. |
+| Compare values generically. | `cmp::min`, `cmp::max`, `cmp::clamp` | Requires an `Ord[T]` impl for the compared type. |
+| Iterate ranges. | `range(start, end)`, `range_inclusive(start, end)`, `start..end`, `start..=end` | Works directly in `for` loops and stores as `Range[T]`/`RangeInclusive[T]`. |
+| Implement custom iteration. | `Iterator[T]::next(self: ref mut Self) -> Option[T]` | Use `for item in iterator`; use `for let pattern in iterator` for skip-on-mismatch filtering. |
+| Format into owned text. | `format_in!(ref mut zone, "...", values...)` | Default-zone `format!` is intentionally not executable in the current surface. |
+| Share code with C. | `extern "C"`, `@repr(C)`, `@export`, `--shared`, `--emit-c-header` | Do not pass Ari ownership across C directly. Use explicit pointers, borrows, or wrappers. |
+
+## Common Method Groups
+
+`Option[T]`:
+
+```ari
+value.is_some()
+value.is_none()
+value.unwrap_or(fallback)
+value.unwrap()
+value.expect()
+value.map<U>(fn_name)
+value.and_then<U>(fn_name)
+value.or(other)
+value.or_else(fn_name)
+```
+
+`Result[T, E]`:
+
+```ari
+value.is_ok()
+value.is_err()
+value.unwrap_or(fallback)
+value.unwrap()
+value.expect()
+value.unwrap_err()
+value.expect_err()
+value.map<U>(fn_name)
+value.map_err<F>(fn_name)
+value.and_then<U>(fn_name)
+value.or_else<F>(fn_name)
+```
+
+`Slice[T]`, `std::vec::Vec[T]`, and `std::string::String` share a small
+collection vocabulary where the operation makes sense:
+
+```ari
+value.len()
+value.is_empty()
+value.first()
+value.last()
+value.get(index)
+value.contains(item)
+value.index_of(item)
+value.count(item)
+value.as_ptr()
+value.as_slice()
+value.copy_to(ref mut zone)
+```
+
+`std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
+`replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,
+`reserve_extra`, `extend_from_slice`, `resize`, and their explicit-zone `_in`
+forms where applicable.
+
+`std::string::String` mutating methods are byte-oriented and include `push`,
+`pop`, `set`, `replace`, `insert`, `truncate`, `clear`, `reserve`,
+`reserve_extra`, `extend_from_slice`, `resize`, `append_string`,
+`append_i64`, `append_u64`, `append_bool`, `append_f32`, `append_f64`, and
+the explicit-zone `_in` forms.
+
+`std::boxed::Box[T]` methods include `get`, `set`, `replace`, `take`,
+`try_take`, `clear`, `put_in`, `copy_to`, `as_ref`, `as_mut`, `as_ptr`,
+`as_mut_ptr`, `swap`, and `is_empty`.
+
 ## Example
 
 ```ari

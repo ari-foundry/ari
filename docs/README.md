@@ -8,6 +8,8 @@ Use these when writing Ari code:
 
 - [Language Overview](language/README.md)
 - [Getting Started](language/getting-started.md)
+- [Quick Reference](language/quick-reference.md)
+- [Cookbook](language/cookbook.md)
 - [Functions](language/functions.md)
 - [Variables](language/variables.md)
 - [Literals](language/literals.md)
