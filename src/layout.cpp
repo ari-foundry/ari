@@ -164,8 +164,8 @@ bool aggregate_layout_bytes(const IrType& type,
 
 } // namespace
 
-const std::vector<IrType>& trait_object_layout_fields() {
-    static const std::vector<IrType> fields = [] {
+const std::vector<IrType>& trait_object_layout_fields(const IrType& type) {
+    static const std::vector<IrType> borrowed_fields = [] {
         IrType data;
         data.qualifier = TypeQualifier::Ptr;
         data.primitive = IrPrimitiveKind::Void;
@@ -174,7 +174,17 @@ const std::vector<IrType>& trait_object_layout_fields() {
         IrType vtable = data;
         return std::vector<IrType>{data, vtable};
     }();
-    return fields;
+    static const std::vector<IrType> owned_fields = [] {
+        IrType data;
+        data.qualifier = TypeQualifier::Ptr;
+        data.primitive = IrPrimitiveKind::Void;
+        data.name = "void";
+
+        IrType vtable = data;
+        IrType drop = data;
+        return std::vector<IrType>{data, vtable, drop};
+    }();
+    return type.qualifier == TypeQualifier::Own ? owned_fields : borrowed_fields;
 }
 
 bool ari_has_aggregate_enum_layout(const IrType& type) {
@@ -184,17 +194,17 @@ bool ari_has_aggregate_enum_layout(const IrType& type) {
 }
 
 bool ari_is_aggregate_layout_type(const IrType& type) {
+    if (type.primitive == IrPrimitiveKind::TraitObject) return true;
     return type.qualifier == TypeQualifier::Value &&
            (type.primitive == IrPrimitiveKind::Tuple ||
             type.primitive == IrPrimitiveKind::Array ||
             (type.primitive == IrPrimitiveKind::Vector && type.field_types.size() == 2) ||
             type.primitive == IrPrimitiveKind::Struct ||
-            type.primitive == IrPrimitiveKind::TraitObject ||
             ari_has_aggregate_enum_layout(type));
 }
 
 const std::vector<IrType>& ari_aggregate_field_types(const IrType& type) {
-    if (type.primitive == IrPrimitiveKind::TraitObject) return trait_object_layout_fields();
+    if (type.primitive == IrPrimitiveKind::TraitObject) return trait_object_layout_fields(type);
     if (type.primitive == IrPrimitiveKind::Struct ||
         type.primitive == IrPrimitiveKind::Array ||
         type.primitive == IrPrimitiveKind::Vector ||

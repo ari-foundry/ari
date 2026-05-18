@@ -492,6 +492,9 @@ The checker tracks direct local pointers produced by `zone::alloc<T>` and
 `zone::new<T>`, plus calls to pointer-returning functions or associated
 constructors that take exactly one `ref Zone` or `ref mut Zone` parameter. Using
 those bindings after the source zone has been reset or destroyed is rejected.
+An `own dyn Trait` value constructed from a tracked `ptr T` keeps the same
+source-zone provenance. Its `drop` path calls the erased concrete-value drop
+thunk, but the zone still owns and releases the allocation bytes.
 Source handles such as `std::boxed::Box<T>`, `std::string::RawString`,
 `std::string::String`, `std::vec::RawVec<T>`, and `std::vec::Vec<T>` carry the
 same tracked source-zone provenance when they are returned by a single-zone

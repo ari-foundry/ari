@@ -1,0 +1,16 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+impl Score for i64 {
+  fn score(self) -> i64 {
+    self
+  }
+}
+
+fn main() -> i64 {
+  let value = 41i64;
+  let object: own dyn Score = value as own dyn Score;
+  drop object;
+  return 0;
+}

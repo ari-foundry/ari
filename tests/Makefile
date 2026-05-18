@@ -2448,7 +2448,16 @@ check-traits: $(TARGET)
 	if $(TARGET) tests/errors/trait-object-arity.ari -o $(BUILD_DIR)/traits/trait-object-arity.elf >$(BUILD_DIR)/traits/trait-object-arity.err 2>&1; then exit 1; fi
 	grep -q "trait 'Compare' expects 1 type argument" $(BUILD_DIR)/traits/trait-object-arity.err
 	if $(TARGET) tests/errors/trait-object-qualifier.ari -o $(BUILD_DIR)/traits/trait-object-qualifier.elf >$(BUILD_DIR)/traits/trait-object-qualifier.err 2>&1; then exit 1; fi
-	grep -q "own dyn Trait requires durable owned trait-object storage and is still planned" $(BUILD_DIR)/traits/trait-object-qualifier.err
+	grep -q "ptr dyn Trait is not supported; use dyn Trait, ref dyn Trait, ref mut dyn Trait, or own dyn Trait" $(BUILD_DIR)/traits/trait-object-qualifier.err
+	$(TARGET) tests/ok/trait-object-own-zone-dispatch-drop.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-own-zone-dispatch-drop.ll
+	grep -q '::drop"' $(BUILD_DIR)/traits/trait-object-own-zone-dispatch-drop.ll
+	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/traits/trait-object-own-zone-dispatch-drop.ll
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-own-zone-dispatch-drop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-own-zone-dispatch-drop.elf; $(BUILD_DIR)/traits/trait-object-own-zone-dispatch-drop.elf; code=$$?; test $$code -eq 42; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-own-supertrait-upcast.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-own-supertrait-upcast.elf; $(BUILD_DIR)/traits/trait-object-own-supertrait-upcast.elf; code=$$?; test $$code -eq 47; fi
+	if $(TARGET) tests/errors/trait-object-own-non-zone.ari -o $(BUILD_DIR)/traits/trait-object-own-non-zone.elf >$(BUILD_DIR)/traits/trait-object-own-non-zone.err 2>&1; then exit 1; fi
+	grep -q "own dyn Trait conversions require a zone-tracked ptr operand, got i64" $(BUILD_DIR)/traits/trait-object-own-non-zone.err
+	if $(TARGET) tests/errors/trait-object-own-after-reset.ari -o $(BUILD_DIR)/traits/trait-object-own-after-reset.elf >$(BUILD_DIR)/traits/trait-object-own-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'object' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/traits/trait-object-own-after-reset.err
 	if $(TARGET) tests/errors/trait-object-ref-mut-source.ari -o $(BUILD_DIR)/traits/trait-object-ref-mut-source.elf >$(BUILD_DIR)/traits/trait-object-ref-mut-source.err 2>&1; then exit 1; fi
 	grep -q "borrowed trait object conversion requires ref mut dyn Score source mode, got ref i64" $(BUILD_DIR)/traits/trait-object-ref-mut-source.err
 	if $(TARGET) tests/errors/trait-object-value-planned.ari -o $(BUILD_DIR)/traits/trait-object-value-planned.elf >$(BUILD_DIR)/traits/trait-object-value-planned.err 2>&1; then exit 1; fi

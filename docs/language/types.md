@@ -940,7 +940,10 @@ Meanings:
   dispatched. `ref dyn Trait[...]` and `ref mut dyn Trait[...]` conversions keep
   the original borrowed address as the data pointer and preserve normal borrow
   provenance. Dyn-to-dyn upcasts are supported for the same trait or a
-  supertrait; `own dyn` type-erased storage is still planned.
+  supertrait. `own dyn Trait[...]` is constructed from a zone-tracked `ptr T`
+  source and lowers as `{data pointer, vtable pointer, drop thunk pointer}`;
+  dropping it calls the erased drop thunk and then the concrete `Drop::drop`
+  impl when one exists. The zone still releases the bytes.
 
 The executable subset supports scalar `own` values, scalar and aggregate `ref`
 / `ref mut` values, and can preserve borrow qualifiers inside local tuple,

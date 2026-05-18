@@ -108,6 +108,7 @@ std::string expr_kind_name(IrExprKind kind) {
         case IrExprKind::Block: return "block";
         case IrExprKind::IndirectCall: return "indirect-call";
         case IrExprKind::TraitObjectCall: return "trait-object-call";
+        case IrExprKind::TraitObjectDrop: return "trait-object-drop";
         case IrExprKind::Binary: return "binary";
         case IrExprKind::Call: return "call";
     }

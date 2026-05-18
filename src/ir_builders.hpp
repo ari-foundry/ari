@@ -48,7 +48,8 @@ IrExprPtr make_trait_object_cast_expr(SourceLocation loc,
                                       IrExprPtr value,
                                       IrType target,
                                       std::string vtable_name,
-                                      std::uint64_t vtable_offset);
+                                      std::uint64_t vtable_offset,
+                                      std::string drop_thunk_name = {});
 IrExprPtr make_pointer_offset_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset);
 IrExprPtr make_pointer_add_expr(SourceLocation loc, IrExprPtr pointer, IrExprPtr offset);
 IrExprPtr make_pointer_load_expr(SourceLocation loc, IrExprPtr pointer, const IrType& result);
@@ -89,6 +90,7 @@ IrExprPtr make_trait_object_call_expr(SourceLocation loc,
                                       IrType result,
                                       std::vector<IrType> erased_params,
                                       std::vector<IrExprPtr> args);
+IrExprPtr make_trait_object_drop_expr(SourceLocation loc, IrExprPtr receiver, IrType result);
 IrMatchExprArm make_match_expr_arm(IrMatchArm arm);
 IrExprPtr make_ir_match_expr(SourceLocation loc, IrExprPtr value);
 IrExprPtr make_ir_block_expr(SourceLocation loc, std::string label = {});

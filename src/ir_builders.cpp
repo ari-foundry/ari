@@ -229,11 +229,13 @@ IrExprPtr make_trait_object_cast_expr(SourceLocation loc,
                                       IrExprPtr value,
                                       IrType target,
                                       std::string vtable_name,
-                                      std::uint64_t vtable_offset) {
+                                      std::uint64_t vtable_offset,
+                                      std::string drop_thunk_name) {
     auto cast = std::make_unique<IrExpr>();
     cast->kind = IrExprKind::Cast;
     cast->loc = loc;
     set_ir_expr_name(*cast, std::move(vtable_name));
+    set_ir_expr_label(*cast, std::move(drop_thunk_name));
     cast->tuple_index = vtable_offset;
     cast->type = std::move(target);
     set_ir_expr_operand(*cast, std::move(value));
@@ -379,6 +381,15 @@ IrExprPtr make_trait_object_call_expr(SourceLocation loc,
     set_ir_expr_operand(*expr, std::move(receiver));
     set_ir_expr_call_param_types(*expr, std::move(erased_params));
     expr->args = std::move(args);
+    return expr;
+}
+
+IrExprPtr make_trait_object_drop_expr(SourceLocation loc, IrExprPtr receiver, IrType result) {
+    auto expr = std::make_unique<IrExpr>();
+    expr->kind = IrExprKind::TraitObjectDrop;
+    expr->loc = loc;
+    expr->type = std::move(result);
+    set_ir_expr_operand(*expr, std::move(receiver));
     return expr;
 }
 

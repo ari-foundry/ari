@@ -319,6 +319,7 @@ enum class IrExprKind {
     Block,
     IndirectCall,
     TraitObjectCall,
+    TraitObjectDrop,
     Binary,
     Call
 };
@@ -772,8 +773,11 @@ struct IrTraitObjectVTableMethod {
 
 struct IrTraitObjectVTable {
     std::string name;
+    std::string drop_thunk_name;
+    std::string drop_impl_name;
     IrType object_type;
     IrType concrete_type;
+    IrType drop_receiver_type;
     std::vector<IrTraitObjectVTableMethod> methods;
     SourceLocation loc;
 };

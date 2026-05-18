@@ -16,11 +16,8 @@ Phase-oriented sema decomposition is now tracked as ongoing maintenance in
 [Semantic Checker Decomposition](sema-decomposition.md) instead of as a finite
 near-term deliverable.
 
-1. Extend trait-object ownership for `own dyn`.
-   Borrowed trait objects now use durable borrowed data pointers and normal
-   borrow provenance. The remaining ownership work is a typed-erased owned
-   storage model for `own dyn` that can call the erased value's destructor and
-   does not imply an ambient global heap.
+No active near-term compiler work is queued right now. Add the next concrete
+0.x-sized compiler slice here when it is ready to implement.
 
 ## Backend Work
 

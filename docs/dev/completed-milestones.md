@@ -332,3 +332,8 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   live and `maybe-unavailable` owners. It consumes the static owner state
   without lowering destructor calls, letting maybe-zero loop exits be resolved
   intentionally when remaining live values should be leaked.
+- `own dyn Trait` is implemented for explicit-zone storage. Conversions from
+  zone-tracked `ptr T` build a three-word owner object
+  `{data, vtable, drop_thunk}`, method dispatch reuses the normal dyn vtable,
+  `drop object;` calls the erased concrete drop thunk, and owning dyn-to-supertrait
+  upcasts preserve the data pointer and drop thunk without adding a global heap.

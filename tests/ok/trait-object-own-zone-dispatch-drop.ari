@@ -1,0 +1,25 @@
+trait Score {
+  fn score(self, bonus: i64) -> i64
+}
+
+impl Score for i64 {
+  fn score(self, bonus: i64) -> i64 {
+    self + bonus
+  }
+}
+
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let slot = zone::new<i64>(ref mut zone, 37);
+  let object: own dyn Score = slot as own dyn Score;
+  let result = object.score(5);
+  drop object;
+  zone::destroy(zone);
+  return result;
+}

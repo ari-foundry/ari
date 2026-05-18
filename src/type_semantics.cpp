@@ -182,7 +182,8 @@ bool is_owned_executable_primitive(IrPrimitiveKind primitive) {
            is_float_primitive(primitive) ||
            primitive == IrPrimitiveKind::Bool ||
            primitive == IrPrimitiveKind::String ||
-           primitive == IrPrimitiveKind::Zone;
+           primitive == IrPrimitiveKind::Zone ||
+           primitive == IrPrimitiveKind::TraitObject;
 }
 
 bool is_borrowable_executable_primitive(IrPrimitiveKind primitive) {

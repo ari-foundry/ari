@@ -1,0 +1,30 @@
+trait BaseScore {
+  fn base(self, bonus: i64) -> i64
+}
+
+trait ChildScore: BaseScore {
+  fn child(self) -> i64
+}
+
+impl BaseScore for i64 {
+  fn base(self, bonus: i64) -> i64 {
+    self + bonus
+  }
+}
+
+impl ChildScore for i64 {
+  fn child(self) -> i64 {
+    self * 2
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(128);
+  let slot = zone::new<i64>(ref mut zone, 41);
+  let child: own dyn ChildScore = slot as own dyn ChildScore;
+  let base: own dyn BaseScore = child as own dyn BaseScore;
+  let result = base.base(6);
+  drop base;
+  zone::destroy(zone);
+  return result;
+}

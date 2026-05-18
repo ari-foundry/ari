@@ -702,6 +702,7 @@ IrExprKind replay_expr_kind(const std::string& kind) {
         {"block", IrExprKind::Block},
         {"indirect-call", IrExprKind::IndirectCall},
         {"trait-object-call", IrExprKind::TraitObjectCall},
+        {"trait-object-drop", IrExprKind::TraitObjectDrop},
         {"binary", IrExprKind::Binary},
         {"call", IrExprKind::Call},
     };

@@ -81,7 +81,9 @@ Inside a constrained generic function, a bound also selects the matching impl
 method for static dispatch. This means `value.score()` can be accepted even if
 the concrete type has multiple visible `score` methods from different traits,
 as long as the generic parameter has a single bound that declares `score`.
-Generic trait methods are still planned.
+Generic trait methods are executable through static dispatch. They remain
+non-object-safe for `dyn` dispatch because a vtable slot must have one concrete
+signature.
 
 Generic impl blocks can also constrain their own parameters:
 
@@ -556,8 +558,27 @@ dispatch on the concrete value before erasing it. A dyn object can also be
 upcast to the same trait or one of its supertraits with `as dyn Base`; the data
 pointer is preserved and the vtable pointer is adjusted to the inherited
 supertrait method slots. Unrelated dyn-to-dyn casts remain rejected.
-`own dyn Trait` is still planned because type-erased owned storage needs an
-explicit allocation/destructor policy rather than an implicit global heap.
+
+Owned trait objects are explicit-zone values. Construct `own dyn Trait` from a
+tracked `ptr T` produced by `zone::new<T>`, `zone::alloc<T>`, or another
+single-zone pointer-returning constructor:
+
+```ari
+var zone = zone::create(128);
+let slot = zone::new<i64>(ref mut zone, 37);
+let object: own dyn Score = slot as own dyn Score;
+let result = object.score();
+drop object;
+zone::destroy(zone);
+```
+
+The LLVM representation is `{data pointer, method vtable pointer, drop thunk
+pointer}`. `drop object;` calls the type-erased drop thunk, which then invokes
+the concrete `Drop::drop` impl when one exists. The zone still owns the bytes:
+`own dyn` does not allocate from or imply a global heap, and using or dropping
+the object after the source zone is reset or destroyed is rejected. `own dyn`
+can be upcast to an owning supertrait object while preserving the data pointer
+and drop thunk.
 
 ## Current Status
 
@@ -572,8 +593,10 @@ with method-level bounds are executable. `dyn Trait[...]` type syntax resolves,
 and explicit concrete-to-`dyn` conversions plus vtable dispatch are executable
 for concrete copyable source values and borrowed `ref dyn` / `ref mut dyn`
 values on LLVM, including vtables built from generic impl specializations and
-inherited object-safe supertrait methods.
+inherited object-safe supertrait methods. `own dyn Trait[...]` is executable
+from zone-tracked concrete pointers and lowers with an erased drop thunk.
 Generic trait methods are deliberately static-only for dyn
-objects. Associated types and `own dyn` data ownership are still planned.
+objects. Associated types remain planned.
 Dyn-to-dyn upcasts are executable when the target is the same trait or an
-inherited supertrait; unrelated dyn casts are rejected.
+inherited supertrait, including `own dyn` upcasts; unrelated dyn casts are
+rejected.

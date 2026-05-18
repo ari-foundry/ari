@@ -427,6 +427,7 @@ private:
 
     struct TraitObjectConversion {
         std::string vtable_name;
+        std::string drop_thunk_name;
         std::uint64_t vtable_offset = 0;
     };
 
@@ -4327,16 +4328,14 @@ private:
         IrPrimitiveKind c_primitive = IrPrimitiveKind::Unknown;
         std::string c_canonical;
         if (ast_type.is_dyn_object) {
-            if (type.qualifier == TypeQualifier::Own) {
-                fail(type.loc, "own dyn Trait requires durable owned trait-object storage and is still planned");
-            }
             if (type.qualifier == TypeQualifier::Ptr) {
-                fail(type.loc, "ptr dyn Trait is not supported; use dyn Trait, ref dyn Trait, or ref mut dyn Trait");
+                fail(type.loc, "ptr dyn Trait is not supported; use dyn Trait, ref dyn Trait, ref mut dyn Trait, or own dyn Trait");
             }
             if (type.qualifier != TypeQualifier::Value &&
+                type.qualifier != TypeQualifier::Own &&
                 type.qualifier != TypeQualifier::Ref &&
                 type.qualifier != TypeQualifier::MutRef) {
-                fail(type.loc, "trait object types support dyn Trait, ref dyn Trait, and ref mut dyn Trait");
+                fail(type.loc, "trait object types support dyn Trait, ref dyn Trait, ref mut dyn Trait, and own dyn Trait");
             }
 
             std::string trait_name = resolve_trait_name(type.name);
@@ -10332,6 +10331,14 @@ private:
         return stmt;
     }
 
+    IrStmtPtr make_trait_object_drop_stmt(SourceLocation loc, DropValueFactory make_value) {
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::ExprStmt;
+        stmt->loc = loc;
+        stmt->expr = make_trait_object_drop_expr(loc, make_value(), void_type(loc));
+        return stmt;
+    }
+
     std::optional<ImplMethodInfo> find_drop_impl(SourceLocation loc, const IrType& dropped_type) {
         auto exact = drop_impls_.find(drop_impl_key(dropped_type));
         if (exact != drop_impls_.end()) return exact->second;
@@ -10476,6 +10483,12 @@ private:
             return;
         }
 
+        if (type.qualifier == TypeQualifier::Own &&
+            type.primitive == IrPrimitiveKind::TraitObject) {
+            statements.push_back(make_trait_object_drop_stmt(loc, make_value));
+            return;
+        }
+
         IrType dropped_type = type;
         dropped_type.qualifier = TypeQualifier::Value;
         std::optional<ImplMethodInfo> destructor = find_drop_impl(loc, dropped_type);
@@ -10538,6 +10551,7 @@ private:
         }
         if (auto error = local_unavailable_binding_error(drop_name, local)) fail(stmt.loc, *error);
         require_not_borrowed(stmt.loc, drop_name, local, "drop");
+        require_zone_pointer_valid(stmt.loc, drop_name, local);
         if (local.type.qualifier == TypeQualifier::Own && local.type.primitive == IrPrimitiveKind::Zone) {
             fail(stmt.loc, "use zone::destroy(" + drop_name + ") to release a Zone");
         }
@@ -18866,12 +18880,20 @@ private:
         if (target.primitive == IrPrimitiveKind::TraitObject) {
             TraitObjectConversion conversion =
                 require_trait_object_conversion(expr.loc, operand->type, target);
+            if (target.qualifier == TypeQualifier::Own) {
+                std::string zone_source;
+                if (!zone_pointer_source_name_from_expr(*operand, zone_source)) {
+                    fail(expr.loc,
+                         "own dyn Trait conversions require a zone-tracked ptr operand for durable storage");
+                }
+            }
             IrExprPtr cast = make_trait_object_cast_expr(
                 expr.loc,
                 std::move(operand),
                 std::move(target),
                 std::move(conversion.vtable_name),
-                conversion.vtable_offset);
+                conversion.vtable_offset,
+                std::move(conversion.drop_thunk_name));
             if (is_borrow_type(cast->type)) {
                 std::optional<BorrowResultSource> source =
                     activate_borrowed_trait_object_source(expr.loc, *ir_expr_operand(*cast));
@@ -18920,7 +18942,40 @@ private:
 
     TraitObjectConversion require_trait_object_conversion(SourceLocation loc, const IrType& source, const IrType& target) {
         if (target.qualifier == TypeQualifier::Own) {
-            fail(loc, "own dyn Trait requires durable owned trait-object storage and is still planned");
+            IrType value_target = target;
+            value_target.qualifier = TypeQualifier::Value;
+            if (source.primitive == IrPrimitiveKind::TraitObject) {
+                if (source.qualifier != TypeQualifier::Own) {
+                    fail(loc, "own dyn Trait upcasts require an own dyn source, got " + type_name(source));
+                }
+                IrType value_source = source;
+                value_source.qualifier = TypeQualifier::Value;
+                if (!trait_application_implies_trait(value_source.name, value_source.args, value_target.name, value_target.args)) {
+                    fail(loc, "trait object upcast from " + type_name(source) + " to " +
+                              type_name(target) +
+                              " requires the target trait to be the same trait or a supertrait");
+                }
+                TraitObjectConversion conversion;
+                conversion.vtable_offset = trait_object_upcast_vtable_offset(loc, value_source, value_target);
+                return conversion;
+            }
+            if (source.qualifier != TypeQualifier::Ptr) {
+                fail(loc, "own dyn Trait conversions require a zone-tracked ptr operand, got " + type_name(source));
+            }
+            IrType value_source = source;
+            value_source.qualifier = TypeQualifier::Value;
+            if (is_owner_type(value_source) || contains_borrow_type(value_source)) {
+                fail(loc, "own dyn Trait conversions currently require pointer operands to non-owning concrete values, got " +
+                              type_name(source));
+            }
+            if (!type_implements_trait(value_target.name, value_target.args, value_source)) {
+                fail(loc, "type " + type_name(value_source) + " does not implement trait '" +
+                           trait_application_display(value_target.name, value_target.args) + "' for dyn conversion");
+            }
+            TraitObjectConversion conversion;
+            conversion.vtable_name = register_trait_object_vtable(loc, value_source, value_target);
+            conversion.drop_thunk_name = trait_object_drop_thunk_name(value_source, value_target);
+            return conversion;
         }
         if (target.qualifier == TypeQualifier::Ptr) {
             fail(loc, "ptr dyn Trait is not supported; use dyn Trait, ref dyn Trait, or ref mut dyn Trait");
@@ -19110,8 +19165,17 @@ private:
 
         IrTraitObjectVTable table;
         table.name = trait_object_vtable_name(source, target);
+        table.drop_thunk_name = trait_object_drop_thunk_name(source, target);
         table.object_type = target;
         table.concrete_type = source;
+        table.drop_receiver_type = source;
+        if (std::optional<ImplMethodInfo> destructor = find_drop_impl(loc, source)) {
+            if (!is_valid_drop_method_signature(destructor->sig.params.size(), destructor->sig.result)) {
+                throw CompileError(invalid_drop_impl_internal_message(destructor->receiver_type));
+            }
+            table.drop_impl_name = destructor->lowered_name;
+            queue_impl_method_for_lowering(*destructor);
+        }
         table.loc = loc;
 
         std::vector<TraitObjectMethodEntry> object_methods = collect_trait_object_methods(trait, target.args);
@@ -19814,6 +19878,10 @@ private:
 
     static std::string trait_object_vtable_name(const IrType& source, const IrType& target) {
         return "dyn::vtable::" + mangle_type_key(source) + "::" + mangle_type_key(target);
+    }
+
+    static std::string trait_object_drop_thunk_name(const IrType& source, const IrType& target) {
+        return trait_object_vtable_name(source, target) + "::drop";
     }
 
     static std::string method_lookup_key(const IrType& receiver_type, const std::string& method_name) {
@@ -22963,8 +23031,29 @@ private:
         }
 
         std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr receiver = check_expr(*expr_operand(expr));
+        IrExprPtr receiver;
+        const Expr& receiver_source = *expr_operand(expr);
+        if (receiver_source.kind == ExprKind::Name) {
+            if (LocalInfo* local_slot = find_local_slot(receiver_source.name)) {
+                LocalInfo& local = *local_slot;
+                if (local.type.qualifier == TypeQualifier::Own &&
+                    local.type.primitive == IrPrimitiveKind::TraitObject) {
+                    if (auto error = local_unavailable_binding_error(receiver_source.name, local)) {
+                        fail(receiver_source.loc, *error);
+                    }
+                    require_can_read_borrow_path(receiver_source.loc, receiver_source.name, local, "");
+                    require_zone_pointer_valid(receiver_source.loc, receiver_source.name, local);
+                    copy_aggregate_borrow_sources_to_temporaries(receiver_source.loc, receiver_source.name, local);
+                    receiver = make_local_lvalue_expr(receiver_source.loc, receiver_source.name, local.type);
+                }
+            }
+        }
+        if (!receiver) receiver = check_expr(receiver_source);
         if (receiver->type.primitive == IrPrimitiveKind::TraitObject) {
+            if (receiver->type.qualifier == TypeQualifier::Own &&
+                receiver->kind != IrExprKind::Local) {
+                fail(expr.loc, "own dyn method calls require a named local receiver so the owner can still be dropped");
+            }
             IrExprPtr out = check_trait_object_method_call(expr, std::move(receiver), std::move(lowered));
             release_temporary_borrows(borrow_mark);
             return out;

@@ -41,6 +41,10 @@ bool is_zone_pointer_trackable_type(const IrType& type) {
         value_type.qualifier == TypeQualifier::MutRef) {
         value_type.qualifier = TypeQualifier::Value;
     }
+    if (type.qualifier == TypeQualifier::Own &&
+        type.primitive == IrPrimitiveKind::TraitObject) {
+        return true;
+    }
     return type.qualifier == TypeQualifier::Ptr ||
            is_std_box_handle_type(value_type) ||
            is_std_string_zone_handle_type(value_type) ||

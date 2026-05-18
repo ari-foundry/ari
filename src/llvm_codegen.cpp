@@ -274,6 +274,7 @@ private:
 
     std::string llvm_type(const IrType& type) const {
         if (type.primitive == IrPrimitiveKind::TraitObject) {
+            if (type.qualifier == TypeQualifier::Own) return "{ ptr, ptr, ptr }";
             return "{ ptr, ptr }";
         }
         if (type.qualifier == TypeQualifier::Ref ||
@@ -303,6 +304,7 @@ private:
             case IrPrimitiveKind::Function: return "ptr";
             case IrPrimitiveKind::Zone: return "ptr";
             case IrPrimitiveKind::TraitObject:
+                if (type.qualifier == TypeQualifier::Own) return "{ ptr, ptr, ptr }";
                 return "{ ptr, ptr }";
             case IrPrimitiveKind::Struct:
             case IrPrimitiveKind::Tuple:
@@ -926,6 +928,20 @@ private:
                     line("  " + out + " = " + call);
                     line("  ret " + llvm_type(method.result_type) + " " + out);
                 }
+                line("}");
+                line();
+            }
+
+            if (!table.drop_thunk_name.empty()) {
+                line("define private void " + quote_global(table.drop_thunk_name) + "(ptr %arg0) {");
+                line("entry:");
+                if (!table.drop_impl_name.empty()) {
+                    std::string receiver = temp();
+                    line("  " + receiver + " = load " + llvm_type(table.drop_receiver_type) + ", ptr %arg0");
+                    line("  call void " + quote_global(function_symbols_.at(table.drop_impl_name)) +
+                         "(" + llvm_type(table.drop_receiver_type) + " " + receiver + ")");
+                }
+                line("  ret void");
                 line("}");
                 line();
             }
@@ -1644,6 +1660,8 @@ private:
                 return emit_indirect_call(expr);
             case IrExprKind::TraitObjectCall:
                 return emit_trait_object_call(expr);
+            case IrExprKind::TraitObjectDrop:
+                return emit_trait_object_drop(expr);
             case IrExprKind::Call:
                 return emit_call(expr);
             case IrExprKind::Binary:
@@ -2930,11 +2948,25 @@ private:
             std::string with_vtable = temp();
             line("  " + with_vtable + " = insertvalue " + object_type + " " + with_data +
                  ", ptr " + target_vtable + ", 1");
-            return Value{object_type, with_vtable, expr.type};
+            if (expr.type.qualifier != TypeQualifier::Own) {
+                return Value{object_type, with_vtable, expr.type};
+            }
+            if (ir_expr_operand(expr)->type.qualifier != TypeQualifier::Own) {
+                throw CompileError(where(expr.loc) + ": own dyn upcast requires an own dyn source during LLVM lowering");
+            }
+            std::string drop = temp();
+            line("  " + drop + " = extractvalue " + source.type + " " + source.name + ", 2");
+            std::string with_drop = temp();
+            line("  " + with_drop + " = insertvalue " + object_type + " " + with_vtable +
+                 ", ptr " + drop + ", 2");
+            return Value{object_type, with_drop, expr.type};
         }
 
         std::string data_pointer = source.name;
-        if (ir_expr_operand(expr)->type.qualifier != TypeQualifier::Ref &&
+        if (expr.type.qualifier == TypeQualifier::Own &&
+            ir_expr_operand(expr)->type.qualifier == TypeQualifier::Ptr) {
+            data_pointer = source.name;
+        } else if (ir_expr_operand(expr)->type.qualifier != TypeQualifier::Ref &&
             ir_expr_operand(expr)->type.qualifier != TypeQualifier::MutRef) {
             data_pointer = temp();
             line("  " + data_pointer + " = alloca " + source.type);
@@ -2947,7 +2979,16 @@ private:
         std::string with_vtable = temp();
         line("  " + with_vtable + " = insertvalue " + object_type + " " + with_data +
              ", ptr " + quote_global(ir_expr_name(expr)) + ", 1");
-        return Value{object_type, with_vtable, expr.type};
+        if (expr.type.qualifier != TypeQualifier::Own) {
+            return Value{object_type, with_vtable, expr.type};
+        }
+        if (ir_expr_label(expr).empty()) {
+            throw CompileError(where(expr.loc) + ": own dyn conversion is missing a drop thunk during LLVM lowering");
+        }
+        std::string with_drop = temp();
+        line("  " + with_drop + " = insertvalue " + object_type + " " + with_vtable +
+             ", ptr " + quote_global(ir_expr_label(expr)) + ", 2");
+        return Value{object_type, with_drop, expr.type};
     }
 
     Value emit_trait_object_call(const IrExpr& expr) {
@@ -2990,6 +3031,20 @@ private:
         std::string out = temp();
         line("  " + out + " = " + call);
         return Value{result_type, out, expr.type};
+    }
+
+    Value emit_trait_object_drop(const IrExpr& expr) {
+        Value object = emit_expr(*ir_expr_operand(expr));
+        if (ir_expr_operand(expr)->type.qualifier != TypeQualifier::Own ||
+            ir_expr_operand(expr)->type.primitive != IrPrimitiveKind::TraitObject) {
+            throw CompileError(where(expr.loc) + ": LLVM backend can only drop own dyn trait objects");
+        }
+        std::string data = temp();
+        line("  " + data + " = extractvalue " + object.type + " " + object.name + ", 0");
+        std::string drop = temp();
+        line("  " + drop + " = extractvalue " + object.type + " " + object.name + ", 2");
+        line("  call void " + drop + "(ptr " + data + ")");
+        return Value{"void", "", expr.type};
     }
 
     Value cast_value(Value value, const IrType& target) {
