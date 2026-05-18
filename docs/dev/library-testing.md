@@ -39,8 +39,8 @@ test:
   provenance diagnostic for copied trim results.
 - `std-string-try-byte-access.ari`: source `std::string` Option-returning
   byte access and empty pop behavior.
-- `std-context-args.ari`: runtime-backed `std::context` argument access,
-  source `has_arg`, and root alias behavior.
+- `std-context-args.ari`: runtime-backed `std::context` argument and thread-id
+  access, source context predicates, and root alias behavior.
 - `std-env-args.ari`: source `std::env` argument helpers, `Option`-returning
   `try_arg`, and `program_name` behavior over the runtime context.
 - `std-env-vars.ari`: runtime-backed `std::env` environment variable

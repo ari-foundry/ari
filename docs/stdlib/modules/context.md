@@ -1,21 +1,26 @@
 # std::context
 
-`std::context` exposes the low-level process argument slice that the Ari host
-entry wrapper receives from the operating system. It is intentionally small:
-the module answers "how many arguments did the program start with?" and "is
-this argument index available?" without owning the full process environment
-surface.
+`std::context` exposes the low-level runtime context that the Ari host entry
+wrapper receives or creates before source `main` runs. It is intentionally
+small: the module answers "what did the program start with?" and "which Ari
+runtime thread is running this code?" without owning the full process,
+environment, filesystem, or thread-management surface.
 
 The primitive values come from runtime hooks initialized by `@ari_entry`.
-Small policy helpers, such as `has_arg`, live in Ari source so their behavior
-is readable and testable like ordinary library code.
+Small policy helpers, such as `has_arg` and `is_main_thread`, live in Ari
+source so their behavior is readable and testable like ordinary library code.
 
 ## API
 
 ```ari
 context::argc() -> i64
 context::arg(index: i64) -> string
+context::thread_id() -> i64
+context::has_args() -> bool
 context::has_arg(index: i64) -> bool
+context::user_arg_count() -> i64
+context::has_user_args() -> bool
+context::is_main_thread() -> bool
 
 arg_count() -> i64
 arg(index: i64) -> string
@@ -25,14 +30,30 @@ has_arg(index: i64) -> bool
 `arg_count()` is the root alias for `context::argc()`. `arg(index)` and
 `has_arg(index)` are root aliases for the matching `std::context` functions.
 
+`has_args()` is true when the host provided at least one argument slot.
+On ordinary executable starts that means `argv[0]` exists, but embedders and
+future shared-library hosts should still be allowed to install an empty context.
+
 `has_arg(index)` returns `true` only when `0 <= index < context::argc()`.
 Negative indexes are always false. Use it before `arg(index)` when absence is
-an ordinary branch in low-level context code. Application code should usually
-prefer `std::env::try_arg`.
+an ordinary branch in low-level context code.
+
+`user_arg_count()` counts arguments after `argv[0]`. It returns zero for an
+empty context and for a program that was started without user arguments.
+`has_user_args()` is the boolean form of that policy.
 
 `arg(index)` returns a lowercase Ari `string`, which is currently a borrowed
 pointer-shaped value. If `index` is out of range, it returns an empty string.
 Index `0` is the host-provided `argv[0]` value.
+
+`thread_id()` returns the Ari runtime thread id. The main thread is `0`.
+Current executables only install the main-thread context, so
+`is_main_thread()` is true today. Future `std::thread` work should install
+nonzero ids for spawned Ari threads before they enter source code.
+
+Application code should usually prefer the user-facing `std::env` wrappers for
+arguments. `std::context` stays useful for runtime, tests, embedders, and other
+standard-library modules that need exact host context behavior.
 
 ## Example
 
@@ -44,18 +65,22 @@ fn main() -> i64 {
     println("first user arg={}", arg(1));
   }
 
+  if context::is_main_thread() {
+    println("running on the main Ari thread");
+  }
+
   return 0;
 }
 ```
 
 ## Current Limits
 
-- `std::env` now provides the user-facing argument helpers. Environment
-  variables, process control, and filesystem modules are still future
-  OS-facing slices.
+- `std::env` provides the user-facing argument helpers.
 - Argument strings are borrowed from the runtime context. Copy into a
   zone-backed `std::string::String` later when longer-lived owned text is
   needed.
+- `thread_id()` only distinguishes the main thread today. Thread spawning and
+  per-thread context installation are still roadmap work.
 - Shared-library context behavior is still tracked separately in the compiler
   test matrix.
 
@@ -67,7 +92,8 @@ fn main() -> i64 {
 - `tests/cases/standard-library/ok/prelude-input.ari` keeps context access
   covered beside prelude input hooks.
 - `tests/cases/standard-library/ok/std-context-args.ari` checks `has_arg`,
-  root aliases, LLVM hook visibility, and executable behavior.
+  argument-count helpers, main-thread helpers, root aliases, LLVM hook
+  visibility, and executable behavior.
 
 Run `make check-std-api` after public API edits and `make check-prelude` for
 the focused runtime/source coverage.

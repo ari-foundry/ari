@@ -1,11 +1,32 @@
-// Runtime context helpers for program arguments. The primitive values come
-// from backend hooks; small safety predicates stay in Ari source.
+// Runtime context helpers. Primitive values come from backend hooks; small
+// policy helpers stay in Ari source so their behavior is easy to read and test.
 pub extern "ari" fn argc() -> i64 = "ari_builtin_context_argc";
 pub extern "ari" fn arg(index: i64) -> string = "ari_builtin_context_arg";
+pub extern "ari" fn thread_id() -> i64 = "ari_builtin_context_thread_id";
+
+pub fn has_args() -> bool {
+  return argc() > 0;
+}
 
 pub fn has_arg(index: i64) -> bool {
   if index < 0 {
     return false;
   }
   return index < argc();
+}
+
+pub fn user_arg_count() -> i64 {
+  let count = argc();
+  if count <= 0 {
+    return 0;
+  }
+  return count - 1;
+}
+
+pub fn has_user_args() -> bool {
+  return user_arg_count() > 0;
+}
+
+pub fn is_main_thread() -> bool {
+  return thread_id() == 0;
 }

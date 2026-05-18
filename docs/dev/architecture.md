@@ -90,7 +90,7 @@ stops; `--emit-obj` asks the LLVM driver to produce a relocatable object.
 
 The host runtime is compiler-emitted LLVM IR:
 
-- initialize `AriContext` with `argc`, `argv`, and a thread-id slot
+- initialize `AriContext` with `argc`, `argv`, and main thread id `0`
 - enter `@ari_entry`, then call the `@"ari::main"` bridge for source `main`
 - shut down the thread-local context
 - prelude IO through C stdio

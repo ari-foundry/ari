@@ -23,6 +23,21 @@ fn main() -> i64 {
   if arg_count() == count {
     score = score + 23;
   }
+  if context::has_args() {
+    score = score + 2;
+  }
+  if context::user_arg_count() == count - 1 {
+    score = score + 3;
+  }
+  if !context::has_user_args() {
+    score = score + 5;
+  }
+  if context::thread_id() == 0 {
+    score = score + 7;
+  }
+  if context::is_main_thread() {
+    score = score + 11;
+  }
 
   return score;
 }

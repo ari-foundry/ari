@@ -455,7 +455,12 @@ todo() -> void
 unreachable() -> void
 context::argc() -> i64
 context::arg(index: i64) -> string
+context::thread_id() -> i64
+context::has_args() -> bool
 context::has_arg(index: i64) -> bool
+context::user_arg_count() -> i64
+context::has_user_args() -> bool
+context::is_main_thread() -> bool
 env::arg_count() -> i64
 env::arg(index: i64) -> string
 env::has_arg(index: i64) -> bool
@@ -580,14 +585,21 @@ snapshot-style containers.
 
 The LLVM host backend initializes a small runtime context inside `@ari_entry`
 before the `@"ari::main"` bridge calls source `main`.
-It stores `argc`, `argv`, and a thread-id slot for later thread/runtime work.
+It stores `argc`, `argv`, and the Ari runtime thread id. Current executable
+builds initialize the main thread id to `0`; later `std::thread` work should
+install nonzero ids for spawned Ari threads.
 
 Available context builtins:
 
 ```ari
 context::argc() -> i64
 context::arg(index: i64) -> string
+context::thread_id() -> i64
+context::has_args() -> bool
 context::has_arg(index: i64) -> bool
+context::user_arg_count() -> i64
+context::has_user_args() -> bool
+context::is_main_thread() -> bool
 env::arg_count() -> i64
 env::arg(index: i64) -> string
 env::has_arg(index: i64) -> bool
@@ -601,6 +613,9 @@ has_arg(index: i64) -> bool
 `has_arg(index)` returns `true` only when `0 <= index < context::argc()`.
 Out-of-range `arg(index)` currently returns an empty string, so use
 `env::try_arg(index)` when missing arguments are part of normal control flow.
+`context::user_arg_count()` excludes `argv[0]`, while
+`context::thread_id()` returns the Ari runtime thread id. The main thread is
+`0`, so `context::is_main_thread()` is true for current executable builds.
 `env::program_name()` is the optional `argv[0]` value.
 
 ## Layout Queries

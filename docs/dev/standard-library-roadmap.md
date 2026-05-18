@@ -32,6 +32,7 @@ The current `std` package already provides:
 - assertion, panic, `move`, and `take` helpers
 - IO/input/context/env declarations and source helpers such as
   `io::write_bytes`, `input::try_read_byte`, `context::has_arg`,
+  `context::user_arg_count`, `context::is_main_thread`,
   `env::try_arg`, `env::program_name`, `env::try_get`, and current-process
   environment `get`/`has`/`set`/`remove`
 - the first `std::process` current-process helpers: `id`, `exit`, and source

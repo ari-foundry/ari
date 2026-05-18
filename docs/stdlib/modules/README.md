@@ -22,8 +22,8 @@ limits, examples, and test files for one module.
   inclusive clamping, and inclusive range predicates.
 - [std::convert](convert.md): explicit conversion traits plus source
   `identity`, `from`, and `into` helper calls for generic code.
-- [std::context](context.md): runtime-backed program argument access plus the
-  source `has_arg` range predicate and root aliases.
+- [std::context](context.md): runtime-backed program argument and thread-id
+  access plus source predicates and root argument aliases.
 - [std::env](env.md): user-facing process argument and environment-variable
   helpers, including `try_arg`, `program_name`, `try_get`, `set`, and
   `remove`.

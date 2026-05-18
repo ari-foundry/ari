@@ -79,6 +79,8 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::arg", "ari_builtin_context_arg"},
         {"context::arg", "ari_builtin_context_arg"},
         {"std::context::arg", "ari_builtin_context_arg"},
+        {"context::thread_id", "ari_builtin_context_thread_id"},
+        {"std::context::thread_id", "ari_builtin_context_thread_id"},
         {"env::get", "ari_builtin_env_get"},
         {"std::env::get", "ari_builtin_env_get"},
         {"env::has", "ari_builtin_env_has"},
@@ -168,6 +170,7 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
 
     if (symbol == "ari_builtin_context_argc") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_context_arg") return builtin_sig({i64}, source_string);
+    if (symbol == "ari_builtin_context_thread_id") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_env_get") return builtin_sig({source_string}, source_string);
     if (symbol == "ari_builtin_env_has") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_env_set") return builtin_sig({source_string, source_string}, boolean);

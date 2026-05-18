@@ -198,10 +198,16 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-input-byte-option.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-input-byte-option.elf; printf 'A' | $(BUILD_DIR)/prelude/std-input-byte-option.elf; code=$$?; test $$code -eq 72; fi
 	$(TARGET) tests/cases/standard-library/ok/std-context-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -q "@ari_builtin_context_thread_id" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -q "@ari_thread_id" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context7has_arg" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -F -q "std7context8has_args" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -F -q "std7context14user_arg_count" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -F -q "std7context13has_user_args" $(BUILD_DIR)/prelude/std-context-args.ll
+	grep -F -q "std7context14is_main_thread" $(BUILD_DIR)/prelude/std-context-args.ll
 	$(TARGET) tests/cases/standard-library/ok/std-context-args.ari -o $(BUILD_DIR)/prelude/std-context-args.elf
-	$(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 95
-	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-context-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-context-args.elf; $(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 95; fi
+	$(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 123
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-context-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-context-args.elf; $(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 123; fi
 	$(TARGET) tests/cases/standard-library/ok/std-env-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-env-args.ll
 	grep -F -q "std3env9arg_count" $(BUILD_DIR)/prelude/std-env-args.ll

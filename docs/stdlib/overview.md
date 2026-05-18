@@ -22,7 +22,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
 | `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `write_bytes`, `newline`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
-| `std::context` | Low-level runtime context access. | `argc`, `arg`, `has_arg`. |
+| `std::context` | Low-level runtime context access. | `argc`, `arg`, `thread_id`, `has_arg`, `user_arg_count`, `is_main_thread`. |
 | `std::env` | User-facing process argument and environment-variable helpers. | `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`. |
 | `std::process` | Current-process helpers. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
@@ -94,9 +94,11 @@ without compiler-known comparison intrinsics.
 helpers. `identity`, `from`, and `into` are plain Ari functions over the
 module's trait surface.
 
-`std::context` keeps the same split: `argc` and `arg` are runtime hooks because
-they read the host argument context, while `has_arg` is ordinary source that
-documents the valid index policy in one reusable place.
+`std::context` keeps the same split: `argc`, `arg`, and `thread_id` are runtime
+hooks because they read the host runtime context, while `has_arg`,
+`user_arg_count`, `has_user_args`, and `is_main_thread` are ordinary source
+helpers that document Ari's valid-index and main-thread policies in one
+reusable place.
 
 `std::env` wraps the context hooks with the names application code should use
 and adds `Option`-based argument access through `try_arg` and `program_name`.

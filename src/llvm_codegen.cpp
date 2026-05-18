@@ -164,6 +164,7 @@ public:
         out << "target triple = \"" << resolve_target_info(options_.target_triple).triple << "\"\n\n";
         out << "@ari_argc = internal global i32 0\n";
         out << "@ari_argv = internal global ptr null\n\n";
+        out << "@ari_thread_id = internal thread_local global i64 0\n\n";
         out << "@ari_line_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         for (const auto& item : strings_) {
             out << item.name << " = private unnamed_addr constant [" << item.size << " x i8] c\"" << item.bytes << "\", align 1\n";
@@ -469,6 +470,7 @@ private:
         line("entry:");
         line("  store i32 %argc, ptr @ari_argc");
         line("  store ptr %argv, ptr @ari_argv");
+        line("  store i64 0, ptr @ari_thread_id");
         line("  ret void");
         line("}");
         line();
@@ -484,6 +486,13 @@ private:
         line("  %argc = load i32, ptr @ari_argc");
         line("  %wide = sext i32 %argc to i64");
         line("  ret i64 %wide");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i64 @ari_builtin_context_thread_id() {");
+        line("entry:");
+        line("  %id = load i64, ptr @ari_thread_id");
+        line("  ret i64 %id");
         line("}");
         line();
 

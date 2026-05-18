@@ -12,8 +12,13 @@ A function has:
 
 - a name
 - zero or more named parameters
-- one return type after `->`
+- one return type after `->` when it returns a value
 - a block body
+
+Generic parameters do not replace the return annotation. A generic function
+still writes the result shape, such as `-> T`, so callers, declarations, module
+summaries, and function-pointer coercions all agree on the same public API.
+Omitting `->` means the function returns `void`.
 
 ## Main
 

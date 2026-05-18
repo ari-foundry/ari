@@ -87,6 +87,9 @@ work. Each one should land in small tested slices with natural API names.
 - Grow `std::env` from arguments and environment variables into
   current-directory and executable-path helpers once owned-string behavior is
   stable.
+- Keep `std::context` as the low-level runtime state boundary: arguments and
+  main-thread identity are implemented now; future thread support should extend
+  the thread-id slot instead of changing the public context API shape.
 - Grow `std::process` from current-process helpers into child-process handles,
   then add `std::fs`, `std::time`, `std::thread`, and `std::sync` as thin
   explicit wrappers after C FFI conventions are stable.

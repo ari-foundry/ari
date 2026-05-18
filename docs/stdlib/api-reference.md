@@ -68,20 +68,28 @@ range_inclusive(start, end)
 
 ## Process Context And Environment
 
-Runtime-backed argument access lives in `std::context`:
+Runtime-backed context access lives in `std::context`:
 
 ```ari
 context::argc()
 context::arg(index)
+context::thread_id()
+context::has_args()
 context::has_arg(index)
+context::user_arg_count()
+context::has_user_args()
+context::is_main_thread()
 arg_count()
 arg(index)
 has_arg(index)
 ```
 
 `has_arg(index)` is true only for `0 <= index < context::argc()`. It is the
-preferred guard before reading optional user arguments. `arg(index)` returns a
-lowercase `string`; out-of-range access returns an empty string.
+preferred low-level guard before reading optional host arguments. `arg(index)`
+returns a lowercase `string`; out-of-range access returns an empty string.
+`user_arg_count()` excludes `argv[0]`, `has_user_args()` is its boolean form,
+and `thread_id()` returns the Ari runtime thread id. The main thread is `0`, so
+`is_main_thread()` is true for current executable builds.
 
 Application code should usually use the user-facing `std::env` wrappers:
 
