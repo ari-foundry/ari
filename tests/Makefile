@@ -218,8 +218,9 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4math6is_odd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3pow' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	grep -q '_ARNv3std4math3gcd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math3lcm' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
-	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 140
+	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 200
 	$(TARGET) tests/cases/standard-library/ok/std-ascii-byte-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8is_digit' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8to_lower' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll

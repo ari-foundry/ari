@@ -48,3 +48,15 @@ pub fn gcd(left: i64, right: i64) -> i64 {
   }
   return a;
 }
+
+pub fn lcm(left: i64, right: i64) -> i64 {
+  if left == 0 {
+    return 0;
+  }
+  if right == 0 {
+    return 0;
+  }
+
+  // Divide before multiplying so common factors are removed first.
+  return (abs(left) / gcd(left, right)) * abs(right);
+}

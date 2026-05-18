@@ -276,10 +276,13 @@ math::is_even(value)
 math::is_odd(value)
 math::pow(base, exponent)
 math::gcd(left, right)
+math::lcm(left, right)
 ```
 
 `pow` requires a non-negative exponent and asserts that precondition at
-runtime. These helpers intentionally do not define overflow semantics yet.
+runtime. `gcd` and `lcm` normalize negative inputs through absolute values.
+`lcm` returns `0` when either input is `0`. These helpers intentionally do not
+define overflow semantics yet.
 
 ## Bits
 

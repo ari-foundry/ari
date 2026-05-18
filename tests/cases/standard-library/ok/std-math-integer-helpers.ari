@@ -19,6 +19,7 @@ fn main() -> i64 {
 
   let powers = math::pow(3, 4) + math::pow(5, 0);
   let gcds = math::gcd(48, 18) + math::gcd(-24, 18) + math::gcd(0, 9);
+  let lcms = math::lcm(12, 18) + math::lcm(-6, 8) + math::lcm(0, 10);
 
-  return absolute + sign_score + parity + powers + gcds;
+  return absolute + sign_score + parity + powers + gcds + lcms;
 }

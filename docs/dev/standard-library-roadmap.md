@@ -39,7 +39,8 @@ The current `std` package already provides:
   ASCII parsing helpers
 - range/iterator traits and the `std::vec::Iter` implementation
 - comparison, formatting, and conversion trait surfaces
-- `std::math` integer helpers implemented in Ari source with natural names
+- `std::math` integer helpers implemented in Ari source with natural names:
+  `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`, and `lcm`
 - `std::ascii` byte classification, printable/control predicates, case
   conversion, borrowed-slice trimming, and digit parsing helpers
 - `std::bits` `u64` mask, rotation, power-of-two, low-mask, alignment, and

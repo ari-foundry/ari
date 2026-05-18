@@ -79,6 +79,7 @@ fn std::math::abs|std math integer helper tests; docs/stdlib/api-reference.md Ma
 fn std::math::gcd|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::is_even|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::is_odd|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::lcm|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::sign|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
