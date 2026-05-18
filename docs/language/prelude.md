@@ -996,7 +996,9 @@ alias. `Option[T]` has borrowed-receiver `is_some()` and `is_none()`
 predicates that can inspect a local or other place value without consuming it.
 `is_some_and(fn(T) -> bool)` and `is_none_or(fn(T) -> bool)` consume the
 `Option[T]` value and pass the payload to the predicate when it is `Some`.
-`unwrap()`, `expect(message)`, `unwrap_or(fallback)`, `map[U](fn(T) -> U)`,
+`filter(fn(ref T) -> bool)` consumes the option but borrows the payload for
+the predicate, keeping only accepted `Some` values. `unwrap()`,
+`expect(message)`, `unwrap_or(fallback)`, `map[U](fn(T) -> U)`,
 `or(Option[T])`, `or_else(fn() -> Option[T])`, `flatten()` on
 `Option[Option[T]]`, `transpose()` on `Option[Result[T, E]]`, and
 `and_then[U](fn(T) -> Option[U])` also consume the `Option[T]` value.

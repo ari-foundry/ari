@@ -100,6 +100,17 @@ pub impl[T] std::Option[T] {
     };
   }
 
+  fn filter(self, op: fn(ref T) -> bool) -> std::Option[T] {
+    return match self {
+      std::Some(value) => if op(ref value) {
+        std::Some<T>(value)
+      } else {
+        std::None<T>()
+      },
+      std::None => std::None<T>();
+    };
+  }
+
   fn ok_or[E](self, error: E) -> std::Result[T, E] {
     return match self {
       std::Some(value) => std::Ok<T, E>(value),

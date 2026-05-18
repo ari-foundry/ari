@@ -79,6 +79,7 @@ test:
 - `prelude-option-result-methods.ari`: root prelude ADT method behavior.
 - `prelude-option-result-predicates.ari`: consuming Option/Result payload
   predicate helpers.
+- `prelude-option-filter.ari`: borrowed-predicate Option filtering behavior.
 - `prelude-option-flatten.ari`: nested Option flattening behavior.
 - `prelude-option-transpose.ari`: Option/Result transposition behavior.
 - `prelude-result-transpose.ari`: Result/Option transposition behavior.

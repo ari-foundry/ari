@@ -1,0 +1,24 @@
+// Covers Option::filter with borrowed predicates and multiple specializations.
+fn positive(value: ref i64) -> bool {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw > 0;
+}
+
+fn truthy(value: ref bool) -> bool {
+  let raw: ptr bool = value as ptr bool;
+  return *raw;
+}
+
+fn main() -> i64 {
+  let kept = Some(23).filter(positive).unwrap_or(0);
+  let removed = Some(-4).filter(positive).unwrap_or(5);
+  let none_kept = None<i64>().filter(positive).unwrap_or(7);
+  let filtered_true = Some(true).filter(truthy);
+  let filtered_false = Some(false).filter(truthy);
+  let bool_kept = if filtered_true.is_some() { 11 } else { 0 };
+  let bool_removed = if filtered_false.is_none() { 13 } else { 0 };
+
+  let total = kept + removed + none_kept + bool_kept + bool_removed;
+  assert_eq_i64(total, 59);
+  return total;
+}

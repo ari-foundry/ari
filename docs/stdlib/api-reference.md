@@ -161,6 +161,7 @@ value.unwrap()
 value.expect("message")
 value.map<U>(op)
 value.and_then<U>(op)
+value.filter(op)
 value.flatten()
 value.transpose()
 value.or(fallback)
@@ -198,7 +199,9 @@ value.transpose()
 Use `is_some_and`, `is_none_or`, `is_ok_and`, and `is_err_and` when a branch
 depends on both the enum case and a payload predicate. These helpers consume
 the enum value and pass the payload to the predicate. `Option::flatten` is
-available on `Option[Option[T]]` and removes one optional layer.
+available on `Option[Option[T]]` and removes one optional layer. `filter`
+keeps a `Some(T)` only when a borrowed `fn(ref T) -> bool` predicate accepts
+the payload.
 `Option::transpose` is available on `Option[Result[T, E]]` and turns optional
 fallible work into fallible optional work. Use the lazy `*_else` forms when the
 fallback is expensive or should only run on the missing/error branch. Use

@@ -25,6 +25,7 @@ value.unwrap()
 value.expect("message")
 value.map<U>(op)
 value.and_then<U>(op)
+value.filter(op)
 value.flatten()
 value.transpose()
 value.or(fallback)
@@ -40,6 +41,10 @@ value.ok_or_else<E>(op)
 `is_some_and` and `is_none_or` consume the `Option[T]` and pass the payload to
 `op` only for `Some`. Use borrowed `is_some` or `is_none` when you only need
 to inspect the case without consuming a local value.
+
+`filter` consumes the `Option[T]` but passes the payload to `op` as `ref T`.
+It keeps `Some(T)` when the predicate returns true and returns `None<T>()`
+when the predicate returns false or the input is already `None`.
 
 `ok_or` and `ok_or_else` convert `Option[T]` into `Result[T, E]`. The lazy
 form calls its function only for `None`.
@@ -110,6 +115,7 @@ Focused positive tests:
 ```text
 tests/cases/standard-library/ok/prelude-option-result-methods.ari
 tests/cases/standard-library/ok/prelude-option-result-predicates.ari
+tests/cases/standard-library/ok/prelude-option-filter.ari
 tests/cases/standard-library/ok/prelude-option-flatten.ari
 tests/cases/standard-library/ok/prelude-option-transpose.ari
 tests/cases/standard-library/ok/prelude-result-transpose.ari
