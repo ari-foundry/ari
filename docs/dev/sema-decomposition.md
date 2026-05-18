@@ -124,8 +124,10 @@ adding more narrow syntax-specific `*_semantics` siblings.
   or-pattern expansion helpers, shared pattern-alternative sets that keep
   or-detection and expanded alternatives together after macro expansion,
   union-safe pattern cloning shared by match/or-pattern normalization and sema
-  iterator-filter rewrites, plus irrefutable non-iterator `for` loop-head
-  pattern validation shared by range, list-literal, and stored-vector loops
+  iterator-filter rewrites, runtime-sequence reference-pattern planning for
+  direct rest aliases and ownership-carrying known-length suffix guards, plus
+  irrefutable non-iterator `for` loop-head pattern validation shared by range,
+  list-literal, and stored-vector loops
 - `format_semantics` for formatting target selection and shared `{}` /
   `{:.N}` format-string parsing, escaped-brace handling, placeholder count
   diagnostics, and precision validation used by both print lowering and

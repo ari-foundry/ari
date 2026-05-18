@@ -2,6 +2,9 @@
 
 #include "common.hpp"
 #include "layout.hpp"
+#include "slice_semantics.hpp"
+#include "type_semantics.hpp"
+#include "vector_semantics.hpp"
 
 #include <memory>
 #include <set>
@@ -505,6 +508,54 @@ const Pattern* positional_product_field_pattern(const Pattern& pattern,
         return &pattern.elements[pattern.rest_index + field_index - suffix_start];
     }
     return nullptr;
+}
+
+RuntimeSequenceReferencePatternPlan plan_runtime_sequence_reference_pattern(
+    const Pattern& pattern,
+    const IrType& shape_type,
+    bool direct_binding,
+    const RuntimeSequenceKnownLengthLookup& known_direct_vec_length) {
+    if (!is_vector_storage_type(shape_type) && !is_prelude_slice_type(shape_type)) {
+        fail(pattern.loc,
+             "runtime sequence reference patterns currently require direct local Vec[T] storage or Slice[T] view bindings");
+    }
+    if (!direct_binding && !pattern.rest_alias_name.empty()) {
+        fail(pattern.rest_alias_loc,
+             "runtime sequence reference rest aliases currently require a direct local Vec[T] or Slice[T] binding");
+    }
+
+    RuntimeSequenceReferencePatternPlan plan;
+    if (!is_owner_type(shape_type)) return plan;
+
+    if (!is_vector_storage_type(shape_type)) {
+        fail(pattern.loc,
+             "ownership-carrying runtime sequence reference patterns currently require direct local Vec[T] storage");
+    }
+    if (!pattern.rest_alias_name.empty()) {
+        fail(pattern.rest_alias_loc,
+             "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked");
+    }
+    if (!pattern.has_rest) return plan;
+
+    const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+    if (suffix_count == 0) return plan;
+    if (!known_direct_vec_length) {
+        fail(pattern.loc, "internal error: missing runtime sequence known-length lookup");
+    }
+    plan.known_owner_vec_length = known_direct_vec_length();
+    if (!plan.known_owner_vec_length) {
+        fail(pattern.loc,
+             "ownership-carrying Vec[T] reference suffix patterns with .. require a direct local Vec[T] with a known length");
+    }
+
+    const std::uint64_t required =
+        static_cast<std::uint64_t>(pattern.rest_index + suffix_count);
+    if (*plan.known_owner_vec_length < required) {
+        fail(pattern.loc,
+             "ownership-carrying Vec[T] reference pattern requires a known length of at least " +
+                 std::to_string(required));
+    }
+    return plan;
 }
 
 } // namespace ari

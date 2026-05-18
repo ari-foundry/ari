@@ -3513,6 +3513,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use moved owned field 'holders.0.0'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate-moved-field.err
 	if $(TARGET) tests/errors/pattern-ref-ownership-vector-rest.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved owned field 'values.2'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err
+	if $(TARGET) tests/errors/pattern-ref-ownership-vector-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err 2>&1; then exit 1; fi
+	grep -Fq "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi
 	grep -q "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index" $(BUILD_DIR)/errors/pattern-ref-temporary.err
 	$(TARGET) tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.elf

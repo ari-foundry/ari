@@ -18,6 +18,9 @@ changing the long-term language contract.
    checks, plus product-pattern irrefutability queries used before sema
    materializes hidden match storage. The shared pattern-alternative set keeps
    or-pattern detection and expansion together before sema lowers bindings.
+   It also owns runtime-sequence reference-pattern planning for direct rest
+   alias constraints, ownership-carrying rest-alias rejection, and known-length
+   owner suffix guards before sema lowers the element borrows.
    Continue extracting broad modules such as declaration tables, name
    resolution, ownership state, zone provenance, and IR lowering helpers.
    `attribute_semantics` now owns built-in attribute classification,

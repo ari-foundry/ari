@@ -6812,41 +6812,11 @@ private:
                                                                      const IrType& source_type,
                                                                      const std::string& path,
                                                                      bool mutable_borrow,
-                                                                     std::vector<IrStmtPtr>& statements) {
+                                                                     std::vector<IrStmtPtr>& statements,
+                                                                     const RuntimeSequenceReferencePatternPlan& reference_plan) {
         IrType shape_type = value_qualified_type(source_type);
-        if (!is_vector_storage_type(shape_type) && !is_prelude_slice_type(shape_type)) {
-            fail(pattern.loc,
-                 "runtime sequence reference patterns currently require direct local Vec[T] storage or Slice[T] view bindings");
-        }
-        std::optional<std::uint64_t> known_owner_vec_length;
-        if (is_owner_type(shape_type)) {
-            if (!is_vector_storage_type(shape_type)) {
-                fail(pattern.loc,
-                     "ownership-carrying runtime sequence reference patterns currently require direct local Vec[T] storage");
-            }
-            if (!pattern.rest_alias_name.empty()) {
-                fail(pattern.rest_alias_loc,
-                     "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked");
-            }
-            if (pattern.has_rest) {
-                const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
-                if (suffix_count != 0) {
-                    known_owner_vec_length =
-                        known_direct_local_vec_reference_length(base_name, path, shape_type);
-                    if (!known_owner_vec_length) {
-                        fail(pattern.loc,
-                             "ownership-carrying Vec[T] reference suffix patterns with .. require a direct local Vec[T] with a known length");
-                    }
-                    const std::uint64_t required =
-                        static_cast<std::uint64_t>(pattern.rest_index + suffix_count);
-                    if (*known_owner_vec_length < required) {
-                        fail(pattern.loc,
-                             "ownership-carrying Vec[T] reference pattern requires a known length of at least " +
-                                 std::to_string(required));
-                    }
-                }
-            }
-        }
+        const std::optional<std::uint64_t>& known_owner_vec_length =
+            reference_plan.known_owner_vec_length;
 
         const IrType& element_type = runtime_sequence_element_type(pattern.loc, shape_type);
         const std::size_t prefix_count = pattern.has_rest ? pattern.rest_index : pattern.elements.size();
@@ -6906,14 +6876,13 @@ private:
                                                                     bool mutable_borrow,
                                                                     std::vector<IrStmtPtr>& statements) {
         IrType shape_type = value_qualified_type(source_type);
-        if (!path.empty() && !pattern.rest_alias_name.empty()) {
-            fail(pattern.rest_alias_loc,
-                 "runtime sequence reference rest aliases currently require a direct local Vec[T] or Slice[T] binding");
-        }
-        if (is_owner_type(shape_type) && !pattern.rest_alias_name.empty()) {
-            fail(pattern.rest_alias_loc,
-                 "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked");
-        }
+        RuntimeSequenceReferencePatternPlan reference_plan = plan_runtime_sequence_reference_pattern(
+            pattern,
+            shape_type,
+            path.empty(),
+            [&]() -> std::optional<std::uint64_t> {
+                return known_direct_local_vec_reference_length(base_name, path, shape_type);
+            });
 
         std::vector<IrStmtPtr> body;
         if (path.empty()) {
@@ -6926,7 +6895,8 @@ private:
             source_type,
             path,
             mutable_borrow,
-            body);
+            body,
+            reference_plan);
 
         IrExprPtr condition = path.empty()
             ? lower_runtime_sequence_pattern_length_condition(pattern, base_name, shape_type)
@@ -7326,6 +7296,14 @@ private:
             case PatternKind::Array: {
                 IrType shape_type = value_qualified_type(source_type);
                 if (pattern.kind == PatternKind::Array && is_runtime_sequence_pattern_subject(shape_type)) {
+                    RuntimeSequenceReferencePatternPlan reference_plan =
+                        plan_runtime_sequence_reference_pattern(
+                            pattern,
+                            shape_type,
+                            path.empty(),
+                            [&]() -> std::optional<std::uint64_t> {
+                                return known_direct_local_vec_reference_length(base_name, path, shape_type);
+                            });
                     lower_reference_runtime_sequence_element_bindings_from_path(
                         pattern,
                         base_name,
@@ -7333,7 +7311,8 @@ private:
                         source_type,
                         path,
                         false,
-                        statements);
+                        statements,
+                        reference_plan);
                     return;
                 }
                 const std::vector<IrType>& fields = aggregate_field_types(shape_type);

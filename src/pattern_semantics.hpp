@@ -4,7 +4,9 @@
 #include "ir.hpp"
 
 #include <cstddef>
+#include <cstdint>
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -36,6 +38,12 @@ struct PatternAlternativeSet {
     bool contains_or = false;
 };
 
+struct RuntimeSequenceReferencePatternPlan {
+    std::optional<std::uint64_t> known_owner_vec_length;
+};
+
+using RuntimeSequenceKnownLengthLookup = std::function<std::optional<std::uint64_t>()>;
+
 Pattern clone_pattern(const Pattern& pattern);
 bool pattern_has_binding(const Pattern& pattern);
 bool pattern_has_reference_binding_mode(const Pattern& pattern);
@@ -57,5 +65,10 @@ std::size_t tuple_pattern_field_index(const Pattern& pattern,
 const Pattern* positional_product_field_pattern(const Pattern& pattern,
                                                 std::size_t field_count,
                                                 std::size_t field_index);
+RuntimeSequenceReferencePatternPlan plan_runtime_sequence_reference_pattern(
+    const Pattern& pattern,
+    const IrType& shape_type,
+    bool direct_binding,
+    const RuntimeSequenceKnownLengthLookup& known_direct_vec_length);
 
 } // namespace ari

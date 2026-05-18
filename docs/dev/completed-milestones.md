@@ -73,6 +73,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   elements are distinct.
 - Runtime-sequence pattern irrefutability checks live in `pattern_semantics`,
   keeping `sema.cpp` focused on lowering length guards and element bindings.
+- Runtime-sequence reference pattern planning also lives in
+  `pattern_semantics`, including direct rest-alias constraints,
+  ownership-carrying rest-alias rejection, and known-length owner suffix
+  requirements before sema emits the borrow bindings.
 - Enum-case reference patterns borrow addressable aggregate enum payload slots,
   including 64-bit payload-word slots and nested aggregate-enum payload slots.
 - Enum statement/expression `match`, enum `if let`, and enum `while let` can
