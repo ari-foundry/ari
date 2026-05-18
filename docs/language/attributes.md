@@ -83,7 +83,7 @@ they may return tracked Ari borrow values.
 `@test` marks a function for the compiler test runner. Run tests with:
 
 ```sh
-ari --test tests/ok/attribute-test-runner.ari -o build/test-runner
+ari --test tests/cases/attributes/ok/attribute-test-runner.ari -o build/test-runner
 ```
 
 In test mode, Ari synthesizes a `main` that calls all `@test` functions in

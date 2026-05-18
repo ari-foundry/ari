@@ -16,6 +16,11 @@ Phase-oriented sema decomposition is now tracked as ongoing maintenance in
 [Semantic Checker Decomposition](sema-decomposition.md) instead of as a finite
 near-term deliverable.
 
+Source standard library planning is tracked in
+[Standard Library Roadmap](standard-library-roadmap.md). Add compiler work here
+only when a library slice needs parser, semantic checker, IR, runtime, or
+backend changes that cannot be expressed in Ari source.
+
 No active near-term compiler work is queued right now. Add the next concrete
 0.x-sized compiler slice here when it is ready to implement.
 

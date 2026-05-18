@@ -1,0 +1,160 @@
+# Standard Library Roadmap
+
+This roadmap tracks source standard library work. General compiler work remains
+in [Roadmap](roadmap.md), and coverage details remain in
+[Feature Test Matrix](test-matrix.md).
+
+## Goal
+
+Ari's libraries should be ordinary Ari source whenever possible. The compiler
+should only know about primitives that the current language cannot express:
+layout queries, raw pointer operations, zone runtime hooks, formatting macros,
+temporary-zone lowering, and backend-specific entry/runtime glue.
+
+The library contract is explicit and capability-oriented:
+
+- no hidden global heap
+- no source-level C++ ABI dependency
+- allocations flow through visible capabilities such as `Zone`
+- ownership, borrowing, and zone provenance are checked before LLVM lowering
+- public APIs are tracked in `tests/std_api_manifest.txt`
+- every public API has focused positive, negative, and backend coverage where
+  applicable
+
+## Current Baseline
+
+The current `std` package already provides:
+
+- prelude ADTs: `Option`, `Result`, `Slice`, `Range`, `RangeInclusive`
+- assertion, panic, `move`, and `take` helpers
+- IO/input/context builtin declarations
+- layout and pointer helpers in `std::mem`
+- explicit-zone allocation in `std::zone`
+- source handles for `Box`, `String`, and `Vec`
+- range/iterator traits and the `std::vec::Iter` implementation
+- comparison, formatting, and conversion trait surfaces
+
+This baseline is useful, but it is still a seed. Some APIs are compiler hooks
+with source declarations, and some names exist mainly so user code can start
+depending on stable module paths.
+
+## Phases
+
+### Phase 1: Stabilize The Current Source `std`
+
+- Keep `lib/std.arih` as the single public root.
+- Keep child modules file-backed under `lib/std/`.
+- Maintain `tests/std_api_manifest.txt` for every public declaration.
+- Keep the user-facing API guide in
+  [Standard Library](../language/standard-library.md).
+- Split library tests by purpose using the naming scheme in
+  [Library Testing](library-testing.md).
+- Prefer source implementations for helper methods and combinators.
+
+Exit criteria:
+
+- `make check-std-api` passes.
+- `make check-prelude` covers every public API family.
+- New contributors can find module purpose, API shape, and tests from docs.
+
+### Phase 2: Pull More Behavior Into Source Ari
+
+- Move helper logic out of compiler hooks when structs, generic aggregates, and
+  trait dispatch can express it safely.
+- Keep compiler-known declarations as compatibility shims only when source
+  lowering cannot model the primitive yet.
+- Do not make LLVM codegen re-resolve source names; sema should lower the IR
+  metadata needed by the backend.
+
+Likely compiler work:
+
+- generic aggregate/type monomorphization cleanup
+- stronger trait-bound dispatch for reusable helper impls
+- richer module-cache summaries for source library bodies
+- clearer diagnostics when a partial custom `std` omits required helpers
+
+### Phase 3: Collections And Allocation
+
+- Stabilize `std::vec::Vec[T]` as the source growable vector handle.
+- Keep root bare `Vec[T]` and source `std::Vec[T]` distinctions documented
+  until the compiler-known local vector model is unified or retired.
+- Add collection APIs only when ownership, borrowing, and zone provenance can
+  be tested in focused slices.
+- Grow collection families in this order: slice helpers, vector methods,
+  iterator adapters, maps/sets/deques.
+
+Likely compiler work:
+
+- generic aggregate monomorphization for richer collection layouts
+- iterator protocol diagnostics beyond direct `range` and current `Vec` support
+- allocation-zone diagnostics for nested and generic wrapper types
+
+### Phase 4: Text, Formatting, And Diagnostics
+
+- Keep `std::string::String` as a byte string until a deliberate Unicode/text
+  policy is designed.
+- Add formatting APIs through `std::fmt` only when `Display` and `Debug`
+  behavior can be expressed or cleanly lowered.
+- Prefer `format_in!(ref mut zone, ...)` for owned formatted strings.
+- Add richer panic/assert messages only after string lifetime and allocation
+  behavior stays predictable.
+
+Likely compiler work:
+
+- reduce formatting macro special cases as trait dispatch matures
+- owned runtime string diagnostics for invalid zone or type usage
+- optional float/text runtime helpers behind Ari builtin declarations
+
+### Phase 5: OS-Facing Libraries
+
+- Add thin wrappers for environment, file, time, and process APIs only after
+  C FFI wrapper conventions are stable.
+- Keep OS resources explicit. File handles, process handles, and buffers should
+  be visible owners or zone-backed handles.
+- Prefer small modules: `std::env`, `std::fs`, `std::time`, `std::process`.
+
+Likely compiler work:
+
+- no new syntax should be needed
+- runtime or C wrapper declarations may be needed for platform-specific calls
+- shared-library and object-output behavior must stay on the LLVM path
+
+### Phase 6: Library Developer Experience
+
+- Add source-level test helpers when the language can express them.
+- Build a library test runner around existing `@test` support when stable.
+- Keep docs and test names readable enough that a new contributor can copy a
+  nearby pattern.
+
+## Module Backlog
+
+| Module | Next Useful Slice | Tests To Add First | Compiler Work If Needed |
+| --- | --- | --- | --- |
+| `std::option` | More combinators only after current `map`/`and_then` behavior is stable. | Positive combinator behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
+| `std::result` | Error conversion helpers after `From`/`Into` impls mature. | `Result` conversion and `?` residual tests. | Residual conversion and trait-bound selection. |
+| `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |
+| `std::zone` | More scoped allocation helpers. | Reset/destroy provenance and escape diagnostics. | Zone lifetime/state merge rules. |
+| `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
+| `std::string` | Decide byte-string vs text-string naming and add small utility helpers. | Search, growth, append, copy, and after-reset tests. | Formatting/string runtime hooks. |
+| `std::vec` | Iterator/adaptor growth and root/source Vec unification plan. | Method, iterator, borrow, owner-drop, and same-zone tests. | Iterator lowering and generic aggregate monomorphization. |
+| `std::iter` | Adapter traits after collection iterators are stable. | Direct iterator, `IntoIterator`, and refutable-pattern diagnostics. | General iterator protocol lowering. |
+| `std::fmt` | Source trait impls for common values. | `format_in!`, `Display`, unsupported-type diagnostics. | Macro-to-trait lowering cleanup. |
+| `std::cmp` | Derived comparison impl coverage for more aggregate shapes. | Generic helper and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
+| `std::convert` | Concrete `From`/`Into` impl patterns. | Explicit associated calls and residual conversions. | Trait coherence and inference diagnostics. |
+
+## API Landing Checklist
+
+Before landing a public library API:
+
+- Add or update source in `lib/std.arih` or `lib/std/<module>.arih`.
+- Add focused positive tests in `tests/cases/standard-library/ok/`.
+- Add negative diagnostics in `tests/cases/standard-library/errors/` for misuse.
+- Add IR or executable checks in `tests/Makefile` when behavior reaches the
+  backend.
+- Update `tests/std_api_manifest.txt`.
+- Update [Standard Library](../language/standard-library.md) or a focused
+  language page.
+- Update [Feature Test Matrix](test-matrix.md) when compiler semantics,
+  backend lowering, ownership, borrowing, or ABI behavior changes.
+- Run `make check-std-api` and the narrowest affected check target; prefer
+  `make check-sanitize` for parser, sema, ownership, or codegen changes.

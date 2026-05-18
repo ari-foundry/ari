@@ -11,6 +11,8 @@ This folder is for people changing the compiler.
 - [Feature Test Matrix](test-matrix.md)
 - [Runtime And Backend](runtime-backend.md)
 - [Symbol Mangling](symbol-mangling.md)
+- [Standard Library Roadmap](standard-library-roadmap.md)
+- [Library Testing](library-testing.md)
 - [Roadmap](roadmap.md)
 - [Completed Milestones](completed-milestones.md)
 - [Semantic Checker Decomposition](sema-decomposition.md)

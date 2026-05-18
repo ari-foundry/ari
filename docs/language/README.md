@@ -22,9 +22,10 @@ Ari is still a compiler prototype, so each page separates three states:
 10. [Enums And Pattern Matching](enums-patterns.md)
 11. [Traits](traits.md)
 12. [Prelude And Formatting](prelude.md)
-13. [C FFI And Libraries](ffi.md)
-14. [Memory And Ownership](memory.md)
-15. [Front-End Only Syntax](front-end-only.md)
+13. [Standard Library](standard-library.md)
+14. [C FFI And Libraries](ffi.md)
+15. [Memory And Ownership](memory.md)
+16. [Front-End Only Syntax](front-end-only.md)
 
 ## Small Program
 

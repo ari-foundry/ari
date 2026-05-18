@@ -201,21 +201,24 @@ environment even when ASan/UBSan are still useful.
 ## Test Layout
 
 ```text
-tests/ok       programs that should compile and run
-tests/errors   programs that should fail with a specific diagnostic
-examples       small source files used by docs and smoke tests
+tests/cases/<feature>/ok       programs that should compile and run
+tests/cases/<feature>/errors   programs that should fail with a specific diagnostic
+tests/packages                 file-backed module and module-cache fixtures
+tests/ffi                      C helpers for FFI/object tests
+tests/tools                    editor, lint, and LSP smoke checks
+examples                       small source files used by docs and smoke tests
 ```
 
 ## Adding A Positive Test
 
-1. Add `tests/ok/name.ari`.
+1. Add `tests/cases/<feature>/ok/name.ari`.
 2. Add a compile/run block in the focused target in `tests/Makefile`.
 3. Check the exit code or stdout.
 
 Example expectation:
 
 ```make
-$(TARGET) tests/ok/name.ari -o $(BUILD_DIR)/name.elf
+$(TARGET) tests/cases/<feature>/ok/name.ari -o $(BUILD_DIR)/name.elf
 $(BUILD_DIR)/name.elf; code=$$?; test $$code -eq 7
 ```
 
@@ -230,7 +233,7 @@ branch or loop shapes.
 
 ## Adding A Negative Test
 
-1. Add `tests/errors/name.ari`.
+1. Add `tests/cases/<feature>/errors/name.ari`.
 2. Compile it in the focused target in `tests/Makefile` or in `check-errors`.
 3. Fail the test if compilation succeeds.
 4. `grep` for a stable diagnostic substring.

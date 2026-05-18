@@ -1,0 +1,30 @@
+impl cmp::Ord[i64] for i64 {
+  fn lt(self, other: i64) -> bool {
+    return self < other;
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(256);
+
+  var numbers = std::vec::new<i64>(ref mut zone, 2);
+  numbers.push(3);
+  numbers.push(5);
+  let view = numbers.as_slice();
+
+  var text = std::string::new(ref mut zone, 4);
+  text.push(65u8);
+  text.push(66u8);
+
+  var boxed = std::boxed::new<i64>(ref mut zone, 7);
+
+  let option_score = Some(11).unwrap_or(0) + None<i64>().unwrap_or(13);
+  let result_score = Ok<i64, i32>(17).unwrap_or(0) + Err<i64, i32>(2i32).unwrap_or(19);
+  let cmp_score = cmp::min<i64>(9, 4) + cmp::max<i64>(2, 8) + cmp::clamp<i64>(12, 0, 10);
+  let slice_score = view.len() + view[0] + view[1];
+  let text_score = text.len() + (text.first() as i64) + (text.last() as i64);
+  let box_score = boxed.get();
+
+  zone::destroy(zone);
+  return option_score + result_score + cmp_score + slice_score + text_score + box_score;
+}

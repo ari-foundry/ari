@@ -20,7 +20,7 @@ The executable is written to `build/ari-lint`.
 
 ```sh
 build/ari-lint examples/count.ari
-build/ari-lint --json tests/errors/prelude-macro-format-no-default-zone.ari
+build/ari-lint --json tests/cases/standard-library/errors/prelude-macro-format-no-default-zone.ari
 build/ari-lint --ari build/ari -I path/to/modules source.ari
 build/ari-lint --list-rules
 build/ari-lint --config ari-lint.rules source.ari
