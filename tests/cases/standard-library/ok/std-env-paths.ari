@@ -1,0 +1,32 @@
+// Covers std::env path helpers that read or mutate process-local path state.
+// The test changes to the current directory itself so later tests inherit no
+// observable working-directory change.
+fn is_empty_text(value: string) -> bool {
+  return std::mem::ptr_load(value as ptr u8) == 0;
+}
+
+fn main() -> i64 {
+  let cwd = env::current_dir();
+  let exe = env::executable_path();
+  let maybe_cwd = env::try_current_dir();
+  let maybe_exe = env::try_executable_path();
+  var score = 0;
+
+  if !is_empty_text(cwd) {
+    score = score + 3;
+  }
+  if maybe_cwd.is_some() {
+    score = score + 5;
+  }
+  if env::set_current_dir(cwd) {
+    score = score + 7;
+  }
+  if !is_empty_text(exe) {
+    score = score + 11;
+  }
+  if maybe_exe.is_some() {
+    score = score + 13;
+  }
+
+  return score;
+}

@@ -19,7 +19,9 @@ prefix parsers, `vec`, `iter`, `fmt`, `cmp` comparison helpers, `convert`
 identity/from/into helpers, `context` runtime hooks plus the source
 `has_arg` helper, `env` source argument wrappers with `try_arg` and
 `program_name` plus current-process environment `get`/`has`/`try_get`/`set`/
-`remove`, `input` runtime hooks plus the source `try_read_byte` EOF helper,
+`remove` and path-state helpers `current_dir`/`try_current_dir`/
+`set_current_dir`/`executable_path`/`try_executable_path`,
+`input` runtime hooks plus the source `try_read_byte` EOF helper,
 `io` runtime hooks plus source byte-slice output, current `process`
 id/exit/status helpers,
 `collections::Set[T]` as the first linear insertion-order set, and the first
@@ -33,7 +35,7 @@ work. Each one should land in small tested slices with natural API names.
 
 | Family | Purpose | Current Or Planned APIs |
 | --- | --- | --- |
-| `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`; future current-directory and executable-path helpers. |
+| `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future path normalization and platform-specific expansion. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates; future `spawn`, `wait`, platform `fork`, status/result handles. |
 | `std::fs` | Work with files and directories through owned handles. | Future open/read/write/close, metadata, directory iteration, path helpers. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Future `Instant`, `Duration`, `now`, elapsed arithmetic, sleep. |
@@ -84,9 +86,9 @@ work. Each one should land in small tested slices with natural API names.
 
 ## Phase 5: OS-Facing Libraries
 
-- Grow `std::env` from arguments and environment variables into
-  current-directory and executable-path helpers once owned-string behavior is
-  stable.
+- Grow `std::env` from the current argument, variable, current-directory, and
+  executable-path base into path normalization and platform-specific policy
+  once owned-string behavior is stable.
 - Keep `std::context` as the low-level runtime state boundary: arguments and
   main-thread identity are implemented now; future thread support should extend
   the thread-id slot instead of changing the public context API shape.

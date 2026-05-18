@@ -25,8 +25,8 @@ limits, examples, and test files for one module.
 - [std::context](context.md): runtime-backed program argument and thread-id
   access plus source predicates and root argument aliases.
 - [std::env](env.md): user-facing process argument and environment-variable
-  helpers, including `try_arg`, `program_name`, `try_get`, `set`, and
-  `remove`.
+  helpers, including `try_arg`, `program_name`, `try_get`, `set`,
+  `current_dir`, `set_current_dir`, and `try_executable_path`.
 - [std::process](process.md): current process id, explicit exit, and status
   helper functions.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,

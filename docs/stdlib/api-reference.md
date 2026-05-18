@@ -104,6 +104,11 @@ env::has(name)
 env::try_get(name)
 env::set(name, value)
 env::remove(name)
+env::current_dir()
+env::try_current_dir()
+env::set_current_dir(path)
+env::executable_path()
+env::try_executable_path()
 ```
 
 `env::try_arg(index)` returns `Option[string]`, and `env::program_name()` is
@@ -113,8 +118,11 @@ the optional `argv[0]` value.
 `env::get(name)` returns an empty string when the variable is missing, so prefer
 `try_get` or `has` when absence matters. `env::set(name, value)` overwrites a
 current-process variable and `env::remove(name)` unsets it; both return whether
-the host accepted the request. Current directory helpers, files, time, and
-thread APIs are still roadmap items.
+the host accepted the request. `env::current_dir()` and
+`env::executable_path()` return borrowed runtime strings, with `try_*` wrappers
+for ordinary failure; `env::set_current_dir(path)` mutates the current process
+working directory. Files, time, child processes, and thread APIs are still
+roadmap items.
 
 Current-process helpers live in `std::process`:
 

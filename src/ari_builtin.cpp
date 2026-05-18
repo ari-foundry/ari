@@ -89,6 +89,12 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
         {"std::env::set", "ari_builtin_env_set"},
         {"env::remove", "ari_builtin_env_remove"},
         {"std::env::remove", "ari_builtin_env_remove"},
+        {"env::current_dir", "ari_builtin_env_current_dir"},
+        {"std::env::current_dir", "ari_builtin_env_current_dir"},
+        {"env::set_current_dir", "ari_builtin_env_set_current_dir"},
+        {"std::env::set_current_dir", "ari_builtin_env_set_current_dir"},
+        {"env::executable_path", "ari_builtin_env_executable_path"},
+        {"std::env::executable_path", "ari_builtin_env_executable_path"},
         {"process::id", "ari_builtin_process_id"},
         {"std::process::id", "ari_builtin_process_id"},
         {"process::exit", "ari_builtin_process_exit"},
@@ -175,6 +181,9 @@ std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(c
     if (symbol == "ari_builtin_env_has") return builtin_sig({source_string}, boolean);
     if (symbol == "ari_builtin_env_set") return builtin_sig({source_string, source_string}, boolean);
     if (symbol == "ari_builtin_env_remove") return builtin_sig({source_string}, boolean);
+    if (symbol == "ari_builtin_env_current_dir") return builtin_sig({}, source_string);
+    if (symbol == "ari_builtin_env_set_current_dir") return builtin_sig({source_string}, boolean);
+    if (symbol == "ari_builtin_env_executable_path") return builtin_sig({}, source_string);
     if (symbol == "ari_builtin_process_id") return builtin_sig({}, i64);
     if (symbol == "ari_builtin_process_exit") return builtin_sig({i64}, void_type);
     if (symbol == "ari_builtin_write_i64") return builtin_sig({i64}, i64);

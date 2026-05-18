@@ -165,6 +165,8 @@ public:
         out << "@ari_argc = internal global i32 0\n";
         out << "@ari_argv = internal global ptr null\n\n";
         out << "@ari_thread_id = internal thread_local global i64 0\n\n";
+        out << "@ari_cwd_buffer = internal global [4096 x i8] zeroinitializer, align 16\n";
+        out << "@ari_executable_path_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         out << "@ari_line_buffer = internal global [4096 x i8] zeroinitializer, align 16\n\n";
         for (const auto& item : strings_) {
             out << item.name << " = private unnamed_addr constant [" << item.size << " x i8] c\"" << item.bytes << "\", align 1\n";
@@ -370,6 +372,9 @@ private:
                symbol == "getenv" ||
                symbol == "setenv" ||
                symbol == "unsetenv" ||
+               symbol == "getcwd" ||
+               symbol == "chdir" ||
+               symbol == "readlink" ||
                symbol == "getpid" ||
                symbol == "malloc" ||
                symbol == "free" ||
@@ -388,12 +393,15 @@ private:
         }
         if (symbol == "ari_builtin_context_arg" ||
             symbol == "ari_builtin_env_get" ||
+            symbol == "ari_builtin_env_current_dir" ||
+            symbol == "ari_builtin_env_executable_path" ||
             symbol == "ari_builtin_read_line") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_env_has" ||
             symbol == "ari_builtin_env_set" ||
-            symbol == "ari_builtin_env_remove") {
+            symbol == "ari_builtin_env_remove" ||
+            symbol == "ari_builtin_env_set_current_dir") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_panic" ||
@@ -426,6 +434,9 @@ private:
         declarations_ << "declare ptr @getenv(ptr)\n";
         declarations_ << "declare i32 @setenv(ptr, ptr, i32)\n";
         declarations_ << "declare i32 @unsetenv(ptr)\n";
+        declarations_ << "declare ptr @getcwd(ptr, i64)\n";
+        declarations_ << "declare i32 @chdir(ptr)\n";
+        declarations_ << "declare i64 @readlink(ptr, ptr, i64)\n";
         declarations_ << "declare i32 @getpid()\n";
         declarations_ << "declare ptr @malloc(i64)\n";
         declarations_ << "declare void @free(ptr)\n";
@@ -457,7 +468,11 @@ private:
         std::string fmt_u64 = string_ptr("%llu");
         std::string fmt_bool = string_ptr("%d");
         std::string empty = string_ptr("");
+        std::string proc_self_exe = string_ptr("/proc/self/exe");
         std::string line_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_line_buffer, i64 0, i64 0)";
+        std::string cwd_buffer = "getelementptr inbounds ([4096 x i8], ptr @ari_cwd_buffer, i64 0, i64 0)";
+        std::string executable_path_buffer =
+            "getelementptr inbounds ([4096 x i8], ptr @ari_executable_path_buffer, i64 0, i64 0)";
         const std::string zone_struct_bytes = std::to_string(kZoneRuntimeZoneStructBytes);
         const std::string zone_max_capacity = std::to_string(kZoneRuntimeMaxCreateCapacity);
         const std::string zone_arena_scale = std::to_string(kZoneRuntimeArenaReserveScale);
@@ -548,6 +563,43 @@ private:
         line("  %code = call i32 @unsetenv(ptr %name)");
         line("  %ok = icmp eq i32 %code, 0");
         line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_env_current_dir() {");
+        line("entry:");
+        line("  %path = call ptr @getcwd(ptr " + cwd_buffer + ", i64 4096)");
+        line("  %missing = icmp eq ptr %path, null");
+        line("  br i1 %missing, label %empty, label %found");
+        line("found:");
+        line("  ret ptr " + cwd_buffer);
+        line("empty:");
+        line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_env_set_current_dir(ptr %path) {");
+        line("entry:");
+        line("  %code = call i32 @chdir(ptr %path)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_env_executable_path() {");
+        line("entry:");
+        line("  %len = call i64 @readlink(ptr " + proc_self_exe + ", ptr " + executable_path_buffer + ", i64 4095)");
+        line("  %negative = icmp slt i64 %len, 0");
+        line("  %too_long = icmp sge i64 %len, 4095");
+        line("  %bad = or i1 %negative, %too_long");
+        line("  br i1 %bad, label %empty, label %found");
+        line("found:");
+        line("  %end = getelementptr inbounds i8, ptr " + executable_path_buffer + ", i64 %len");
+        line("  store i8 0, ptr %end");
+        line("  ret ptr " + executable_path_buffer);
+        line("empty:");
+        line("  store i8 0, ptr " + executable_path_buffer);
+        line("  ret ptr " + empty);
         line("}");
         line();
 

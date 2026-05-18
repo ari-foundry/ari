@@ -79,6 +79,12 @@ Formatting and IO builtins lower to C stdio. `read_byte`
 lowers to `getchar`, `read_line`/`input` lower to `fgets` over an internal
 reusable line buffer, and assertion/stop helpers lower to `exit(1)` on failure.
 
+Environment and process-local path hooks stay in the compiler-owned runtime
+table too. `std::env` lowers environment variables through `getenv`, `setenv`,
+and `unsetenv`; current-directory helpers lower through `getcwd`/`chdir`; and
+the current Linux executable-path helper reads `/proc/self/exe` with
+`readlink` into a fixed runtime buffer.
+
 The compiler keeps Ari-owned builtin source aliases and their `ari_builtin_*`
 symbols in one runtime table. That table is used by `extern "ari"` validation,
 and LLVM builtin calls, so root re-export forms such as

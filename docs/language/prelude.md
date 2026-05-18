@@ -466,6 +466,11 @@ env::arg(index: i64) -> string
 env::has_arg(index: i64) -> bool
 env::try_arg(index: i64) -> Option[string]
 env::program_name() -> Option[string]
+env::current_dir() -> string
+env::try_current_dir() -> Option[string]
+env::set_current_dir(path: string) -> bool
+env::executable_path() -> string
+env::try_executable_path() -> Option[string]
 arg_count() -> i64
 arg(index: i64) -> string
 has_arg(index: i64) -> bool
@@ -605,6 +610,11 @@ env::arg(index: i64) -> string
 env::has_arg(index: i64) -> bool
 env::try_arg(index: i64) -> Option[string]
 env::program_name() -> Option[string]
+env::current_dir() -> string
+env::try_current_dir() -> Option[string]
+env::set_current_dir(path: string) -> bool
+env::executable_path() -> string
+env::try_executable_path() -> Option[string]
 arg_count() -> i64
 arg(index: i64) -> string
 has_arg(index: i64) -> bool
@@ -616,7 +626,9 @@ Out-of-range `arg(index)` currently returns an empty string, so use
 `context::user_arg_count()` excludes `argv[0]`, while
 `context::thread_id()` returns the Ari runtime thread id. The main thread is
 `0`, so `context::is_main_thread()` is true for current executable builds.
-`env::program_name()` is the optional `argv[0]` value.
+`env::program_name()` is the optional `argv[0]` value. `env::try_current_dir()`
+and `env::try_executable_path()` are the preferred path accessors when host
+lookup failure should be handled normally.
 
 ## Layout Queries
 

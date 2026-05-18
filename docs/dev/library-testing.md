@@ -45,6 +45,8 @@ test:
   `try_arg`, and `program_name` behavior over the runtime context.
 - `std-env-vars.ari`: runtime-backed `std::env` environment variable
   `get`/`has`/`try_get`/`set`/`remove` behavior.
+- `std-env-paths.ari`: runtime-backed `std::env` current directory,
+  `set_current_dir`, executable path, and `Option` wrapper behavior.
 - `std-process-basic.ari`: runtime-backed `std::process::id` plus source
   success/failure status helper behavior.
 - `std-process-exit.ari`: runtime-backed explicit process exit status

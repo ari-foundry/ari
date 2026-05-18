@@ -228,6 +228,18 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/std-env-vars.ari -o $(BUILD_DIR)/prelude/std-env-vars.elf
 	$(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-vars.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-vars.elf; $(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158; fi
+	$(TARGET) tests/cases/standard-library/ok/std-env-paths.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -q "@ari_builtin_env_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -q "@ari_builtin_env_set_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -q "@ari_builtin_env_executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -q "@getcwd" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -q "@chdir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -q "@readlink" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env15try_current_dir" $(BUILD_DIR)/prelude/std-env-paths.ll
+	grep -F -q "std3env19try_executable_path" $(BUILD_DIR)/prelude/std-env-paths.ll
+	$(TARGET) tests/cases/standard-library/ok/std-env-paths.ari -o $(BUILD_DIR)/prelude/std-env-paths.elf
+	$(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-paths.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-paths.elf; $(BUILD_DIR)/prelude/std-env-paths.elf; code=$$?; test $$code -eq 39; fi
 	$(TARGET) tests/cases/standard-library/ok/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll

@@ -1,11 +1,11 @@
 # std::env
 
 `std::env` is the user-facing home for process environment helpers. It exposes
-process arguments with natural names and `Option`-returning accessors, plus a
-small environment-variable surface for reading and mutating the current
-process environment. Argument helpers are built on top of `std::context`,
-which owns the low-level runtime hooks initialized by the generated host entry
-wrapper.
+process arguments with natural names and `Option`-returning accessors, a small
+environment-variable surface, and the basic process-local path state that most
+CLIs need: current directory and executable path. Argument helpers are built on
+top of `std::context`, which owns the low-level runtime hooks initialized by
+the generated host entry wrapper.
 
 Use `std::env` from application code when you want to talk about program
 startup state. Use `std::context` only when you are testing or extending the
@@ -24,6 +24,11 @@ env::has(name: string) -> bool
 env::try_get(name: string) -> Option[string]
 env::set(name: string, value: string) -> bool
 env::remove(name: string) -> bool
+env::current_dir() -> string
+env::try_current_dir() -> Option[string]
+env::set_current_dir(path: string) -> bool
+env::executable_path() -> string
+env::try_executable_path() -> Option[string]
 ```
 
 `arg_count()` returns the number of host arguments.
@@ -56,6 +61,22 @@ returns whether the host accepted the mutation. `remove(name)` unsets the
 variable and returns whether the host accepted the request. These mutations
 affect the current process and children spawned later by this process; they do
 not edit a user's shell profile or global system environment.
+
+`current_dir()` returns the process current working directory as a borrowed
+lowercase Ari `string`. It returns an empty string if the host cannot provide
+one. `try_current_dir()` is the preferred accessor when failure is an ordinary
+branch.
+
+`set_current_dir(path)` changes the current process working directory and
+returns whether the host accepted the request. This is process-local state:
+later relative paths in this process will observe the change, and child
+processes spawned later should inherit it.
+
+`executable_path()` returns the host path to the running executable when the
+platform can provide it. On the current Linux backend this uses
+`/proc/self/exe`. It returns an empty string if the path cannot be read or does
+not fit the runtime buffer. `try_executable_path()` wraps that policy in
+`Option[string]`.
 
 ## Example
 
@@ -92,11 +113,39 @@ fn main() -> i64 {
 }
 ```
 
+Current directory and executable path:
+
+```ari
+fn main() -> i64 {
+  let cwd = env::try_current_dir();
+  if cwd.is_some() {
+    println("cwd={}", cwd.unwrap());
+  }
+
+  if env::set_current_dir(env::current_dir()) {
+    println("cwd unchanged");
+  }
+
+  let exe = env::try_executable_path();
+  if exe.is_some() {
+    println("exe={}", exe.unwrap());
+  }
+
+  return 0;
+}
+```
+
 ## Current Limits
 
-- Current working directory, executable path normalization, and child-process
-  mutation are future OS-facing slices. Current process id/exit helpers live in
-  `std::process`.
+- Path strings are borrowed from fixed runtime buffers. Copy into a
+  zone-backed `std::string::String` before storing them beyond the immediate
+  use site or before calling another path helper that may reuse the same
+  buffer.
+- Executable path lookup is currently Linux-specific and reads
+  `/proc/self/exe`. Cross-platform normalization belongs behind this module
+  later.
+- Child-process mutation is a future OS-facing slice. Current process id/exit
+  helpers live in `std::process`.
 - Argument strings are borrowed from the host runtime context. Copy into a
   zone-backed `std::string::String` when owned text is needed.
 - Environment variable values are also borrowed host strings. Copy into a
@@ -112,6 +161,9 @@ fn main() -> i64 {
 - `tests/cases/standard-library/ok/std-env-vars.ari` checks current-process
   environment `get`/`has`/`try_get`/`set`/`remove` behavior and runtime hook
   lowering.
+- `tests/cases/standard-library/ok/std-env-paths.ari` checks current
+  directory, `set_current_dir`, executable-path lookup, `Option` wrappers,
+  LLVM symbols, and executable behavior.
 - `tests/cases/standard-library/ok/std-context-args.ari` remains the lower-level
   context hook and root alias coverage.
 

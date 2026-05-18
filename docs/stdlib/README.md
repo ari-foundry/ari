@@ -18,10 +18,11 @@ under `lib/std/`.
 ## Current Shape
 
 The standard library is ordinary Ari source whenever possible. It lives at
-`lib/std.arih`, with child modules in `lib/std/`. User-facing argument and
-environment-variable helpers now live in `std::env`, while `std::context`
-stays the low-level runtime context layer. `std::process` starts the
-OS-facing surface with current process id and explicit exit helpers. Source
+`lib/std.arih`, with child modules in `lib/std/`. User-facing argument,
+environment-variable, current-directory, and executable-path helpers now live
+in `std::env`, while `std::context` stays the low-level runtime context layer.
+`std::process` starts the OS-facing surface with current process id and
+explicit exit helpers. Source
 collection work has started with
 `std::collections::Set[T]` as a linear explicit-zone set before hash-table
 policy is ready. A few declarations are still compiler-known because the

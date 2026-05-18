@@ -34,7 +34,8 @@ The current `std` package already provides:
   `io::write_bytes`, `input::try_read_byte`, `context::has_arg`,
   `context::user_arg_count`, `context::is_main_thread`,
   `env::try_arg`, `env::program_name`, `env::try_get`, and current-process
-  environment `get`/`has`/`set`/`remove`
+  environment/path hooks `get`/`has`/`set`/`remove`/`current_dir`/
+  `set_current_dir`/`executable_path`
 - the first `std::process` current-process helpers: `id`, `exit`, and source
   status helpers
 - layout and pointer helpers in `std::mem`
@@ -178,7 +179,7 @@ Likely compiler work:
 | `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
-| `std::env` | Current-directory and executable-path helpers after the argument and environment-variable slices. | Current `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`; future cwd/executable path behavior. | Runtime string ownership, OS wrapper declarations, and platform error policy. |
+| `std::env` | Path normalization and platform-specific policy after the argument, environment-variable, cwd, and executable-path slices. | Current `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`, `current_dir`, `try_current_dir`, `set_current_dir`, `executable_path`, `try_executable_path`; future canonicalization and platform differences. | Runtime string ownership, OS wrapper declarations, and platform error policy. |
 | `std::process` | Grow from the current `id`/`exit` seed into child process handles. | current `id`, explicit exit status, source status predicates, future spawn/wait result handling, fork platform guards. | Current id/exit use runtime hooks; spawn/wait/fork need runtime wrappers for POSIX/Windows split and handle ownership. |
 | `std::thread` | Spawn/join handles after function pointer and ownership transfer rules are stable. | join success/failure, moved capture rejection, shared state diagnostics. | Runtime thread wrapper, entry trampoline ABI, and send/share trait policy. |
 | `std::sync` | Shared ownership and atomics before locks/channels. | `Shared`/`Weak` upgrade behavior, atomic load/store/CAS, mutex poisoning or no-poison policy. | Reference-counted handle lowering, atomic intrinsics, and thread-safety trait checks. |
