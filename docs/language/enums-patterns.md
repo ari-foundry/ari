@@ -659,8 +659,11 @@ borrow exact local `Vec[own T]` element slots, including nested owned fields
 inside aggregate elements, when each selected element path is statically known,
 and local `let ref` patterns with `..` can borrow ownership-carrying prefix
 elements plus suffix elements when a direct local vector has a known current
-length and no rest alias. Local `let ref` plus function-entry reference
-patterns can borrow supported non-owning `Vec[T]`/`Slice[T]` elements today.
+length and no rest alias. Shared local `let ref` suffixes over unknown-length
+`Vec[own T]` storage are allowed with a conservative whole-vector borrow when
+the vector has no moved elements; mutable suffixes still require a known length.
+Local `let ref` plus function-entry reference patterns can borrow supported
+non-owning `Vec[T]`/`Slice[T]` elements today.
 Nested reference modes inside enum `while let` support shared borrows for
 enum-case patterns and same-name/same-type or-pattern alternatives.
 Pattern-position macro invocation uses reserved Rust-style `ident!(...)`

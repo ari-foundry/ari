@@ -544,8 +544,8 @@ RuntimeSequenceReferencePatternPlan plan_runtime_sequence_reference_pattern(
     }
     plan.known_owner_vec_length = known_direct_vec_length();
     if (!plan.known_owner_vec_length) {
-        fail(pattern.loc,
-             "ownership-carrying Vec[T] reference suffix patterns with .. require a direct local Vec[T] with a known length");
+        plan.dynamic_owner_suffix_uses_whole_borrow = true;
+        return plan;
     }
 
     const std::uint64_t required =

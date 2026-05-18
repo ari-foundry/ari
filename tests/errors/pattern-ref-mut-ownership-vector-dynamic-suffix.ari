@@ -1,0 +1,14 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  var values: Vec[own i64] = if true {
+    [make_owned(1), make_owned(2)]
+  } else {
+    [make_owned(3), make_owned(4), make_owned(5)]
+  };
+  let ref mut [first, .., last] = values;
+  drop values;
+  return 0;
+}

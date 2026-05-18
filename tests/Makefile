@@ -3555,6 +3555,8 @@ check-errors: $(TARGET) check-function-errors
 	$(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate.elf; code=$$?; test $$code -eq 18
 	$(TARGET) tests/ok/pattern-ref-ownership-vector-rest.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.elf
 	$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/ok/pattern-ref-ownership-vector-dynamic-suffix.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-dynamic-suffix.elf
+	$(BUILD_DIR)/errors/pattern-ref-ownership-vector-dynamic-suffix.elf; code=$$?; test $$code -eq 0
 	$(TARGET) tests/ok/pattern-value-ownership-vector.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector.elf
 	$(BUILD_DIR)/errors/pattern-value-ownership-vector.elf; code=$$?; test $$code -eq 19
 	$(TARGET) tests/ok/pattern-value-ownership-vector-rest.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest.elf
@@ -3584,6 +3586,10 @@ check-errors: $(TARGET) check-function-errors
 	grep -q "cannot use moved owned field 'holders.0.0'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-aggregate-moved-field.err
 	if $(TARGET) tests/errors/pattern-ref-ownership-vector-rest.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err 2>&1; then exit 1; fi
 	grep -q "cannot use moved owned field 'values.2'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest.err
+	if $(TARGET) tests/errors/pattern-ref-ownership-vector-dynamic-suffix-moved.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-dynamic-suffix-moved.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-dynamic-suffix-moved.err 2>&1; then exit 1; fi
+	grep -q "cannot borrow partially moved owning binding 'values'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-dynamic-suffix-moved.err
+	if $(TARGET) tests/errors/pattern-ref-mut-ownership-vector-dynamic-suffix.ari -o $(BUILD_DIR)/errors/pattern-ref-mut-ownership-vector-dynamic-suffix.elf >$(BUILD_DIR)/errors/pattern-ref-mut-ownership-vector-dynamic-suffix.err 2>&1; then exit 1; fi
+	grep -Fq "mutable reference suffix patterns over ownership-carrying Vec[T] require a known vector length" $(BUILD_DIR)/errors/pattern-ref-mut-ownership-vector-dynamic-suffix.err
 	if $(TARGET) tests/errors/pattern-ref-ownership-vector-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err 2>&1; then exit 1; fi
 	grep -Fq "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err
 	if $(TARGET) tests/errors/pattern-value-ownership-vector-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.elf >$(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.err 2>&1; then exit 1; fi

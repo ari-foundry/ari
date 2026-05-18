@@ -168,8 +168,12 @@ reference patterns without `..` can also borrow ownership-carrying element
 slots, including nested owned fields inside aggregate elements, when each
 selected element path is statically known. Patterns with `..` can borrow
 ownership-carrying prefix elements, and suffix elements when the direct local
-vector's current length is known, but they still cannot bind an owned rest
-slice. Nested shared reference binding modes are supported in enum `match`,
+vector's current length is known. If a shared `let ref` suffix depends on an
+unknown current length, Ari borrows the whole owner vector path instead; this is
+more conservative, so the vector must not be partially moved and the suffix
+borrow blocks mutation/drop until the borrow bindings leave scope. These
+patterns still cannot bind an owned rest slice. Nested shared reference binding
+modes are supported in enum `match`,
 enum `if let`, and enum
 `while let` patterns, including same-name/same-type enum `while let`
 or-pattern alternatives. Mutable enum payload reference bindings are supported
@@ -187,7 +191,7 @@ also move exact element bindings, and suffix element bindings after `..` when
 the hidden vector's current length is known. Selected `_` elements and known
 skipped `..` ranges are dropped from the hidden Vec storage. Ownership-carrying
 enum payload moves, `Slice[T]` owner paths, owned rest aliases, and
-unknown-length vector suffix owner paths remain tied to the later
+unknown-length value/mutable vector suffix owner paths remain tied to the later
 owned-payload/runtime-capacity ABI work.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`

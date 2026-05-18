@@ -6637,6 +6637,7 @@ private:
                                                                   const std::string& source_path,
                                                                   const IrType& source_type,
                                                                   const IrType& element_type,
+                                                                  const std::string& borrow_path,
                                                                   bool mutable_borrow,
                                                                   std::vector<IrStmtPtr>& statements) {
         const Pattern& effective_item = expanded_pattern(item);
@@ -6666,7 +6667,7 @@ private:
             base_name,
             element_type,
             "",
-            runtime_sequence_reference_borrow_path(source_path, sequence_pattern, pattern_index, source_type),
+            borrow_path,
             mutable_borrow,
             make_access,
             statements);
@@ -6937,6 +6938,13 @@ private:
                         mutable_borrow,
                         statements);
                 } else {
+                    std::string borrow_path = reference_plan.dynamic_owner_suffix_uses_whole_borrow
+                        ? path
+                        : runtime_sequence_reference_borrow_path(
+                              path,
+                              pattern,
+                              i,
+                              shape_type);
                     lower_reference_runtime_sequence_dynamic_element_binding(
                         pattern.elements[i],
                         pattern,
@@ -6946,6 +6954,7 @@ private:
                         path,
                         shape_type,
                         element_type,
+                        borrow_path,
                         mutable_borrow,
                         statements);
                 }
@@ -6968,6 +6977,10 @@ private:
             [&]() -> std::optional<std::uint64_t> {
                 return known_direct_local_vec_reference_length(base_name, path, shape_type);
             });
+        if (mutable_borrow && reference_plan.dynamic_owner_suffix_uses_whole_borrow) {
+            fail(pattern.loc,
+                 "mutable reference suffix patterns over ownership-carrying Vec[T] require a known vector length");
+        }
 
         std::vector<IrStmtPtr> body;
         if (path.empty()) {
