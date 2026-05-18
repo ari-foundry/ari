@@ -126,6 +126,16 @@ bool is_unsized_vector_storage_type(const IrType& type) {
     return is_vector_storage_type(type) && type.array_size == 0;
 }
 
+IrType unsized_vector_storage_view_type(const IrType& type) {
+    IrType out = type;
+    if (!is_vector_storage_type(out)) return out;
+    out.array_size = 0;
+    out.field_names.clear();
+    out.field_types.clear();
+    out.field_mutable.clear();
+    return out;
+}
+
 bool contains_root_vector_without_runtime_abi(const IrType& type) {
     if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size == 0) return true;
     for (const auto& arg : type.args) {

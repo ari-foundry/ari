@@ -536,10 +536,11 @@ from a temporary Vec literal / Vec-valued control-flow expression such as
 specialization per element type with the same view ABI; generic by-value
 `T` parameters still preserve concrete local Vec capacity when `T` itself
 resolves to local Vec storage. Trait and impl method parameters use the same
-view ABI for ordinary parameter slots, including trait-qualified calls. Root
-`Vec[T]` returns, extern parameters/returns, trait method return types, struct
-fields, and impl receivers still reject root `Vec[T]` until the
-runtime-capacity layout is defined. Use `std::Vec<T>` /
+view ABI for ordinary parameter slots, including trait-qualified calls.
+`impl Vec[T]` and `impl Trait for Vec[T]` receivers also lower as borrowed
+views. Root `Vec[T]` returns, extern parameters/returns, trait method return
+types, and struct fields still reject root `Vec[T]` until the runtime-capacity
+layout is defined. Use `std::Vec<T>` /
 `std::vec::Vec<T>` when a value must be passed as an explicit-zone heap handle,
 or pass `Slice[T]` for a borrowed view.
 

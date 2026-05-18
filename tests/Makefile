@@ -2312,6 +2312,11 @@ check-traits: $(TARGET)
 	$(TARGET) tests/ok/vector-trait-method-param-view.ari --emit-llvm $(BUILD_DIR)/traits/vector-trait-method-param-view.ll
 	grep -Fq 'define i64 @"_ARNv4impl3i647UsesVec4take"(i64 %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/traits/vector-trait-method-param-view.ll
 	grep -Fq 'define i64 @"_ARNv4impl3i647UsesVec3sum"({ ptr, i64 } %arg0)' $(BUILD_DIR)/traits/vector-trait-method-param-view.ll
+	$(TARGET) tests/ok/vector-impl-receiver-view.ari --emit-llvm $(BUILD_DIR)/traits/vector-impl-receiver-view.ll
+	grep -Fq 'define i64 @"_ARNv4impl15Vec_i64__cap_0_8inherent8edge_sum"({ ptr, i64 } %arg0)' $(BUILD_DIR)/traits/vector-impl-receiver-view.ll
+	grep -Fq 'define i64 @"_ARNv4impl15Vec_i64__cap_0_8VecScore5score"({ ptr, i64 } %arg0)' $(BUILD_DIR)/traits/vector-impl-receiver-view.ll
+	$(TARGET) tests/ok/vector-impl-receiver-view.ari -o $(BUILD_DIR)/traits/vector-impl-receiver-view.elf
+	$(BUILD_DIR)/traits/vector-impl-receiver-view.elf; code=$$?; test $$code -eq 33
 	$(TARGET) tests/ok/vector-trait-object-param-view.ari --emit-llvm $(BUILD_DIR)/traits/vector-trait-object-param-view.ll
 	grep -Fq 'define private i64 @"dyn::vtable::i64::dyn_UsesVecObject::UsesVecObject::take"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/traits/vector-trait-object-param-view.ll
 	$(TARGET) tests/ok/vector-trait-object-param-view.ari -o $(BUILD_DIR)/traits/vector-trait-object-param-view.elf
@@ -2392,8 +2397,6 @@ check-traits: $(TARGET)
 	grep -q "trait 'std::Iterable' expects 1 type argument" $(BUILD_DIR)/traits/iterable-trait-arity.err
 	if $(TARGET) tests/errors/duplicate-trait-impl.ari -o $(BUILD_DIR)/traits/duplicate-trait-impl.elf >$(BUILD_DIR)/traits/duplicate-trait-impl.err 2>&1; then exit 1; fi
 	grep -q "duplicate impl of trait 'std::Iterable' for Bag" $(BUILD_DIR)/traits/duplicate-trait-impl.err
-	if $(TARGET) tests/errors/vector-impl-runtime-abi.ari -o $(BUILD_DIR)/traits/vector-impl-runtime-abi.elf >$(BUILD_DIR)/traits/vector-impl-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as an impl receiver until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/traits/vector-impl-runtime-abi.err
 	if $(TARGET) tests/errors/vector-trait-method-return-runtime-abi.ari -o $(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.elf >$(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.err 2>&1; then exit 1; fi
 	grep -Fq "root Vec[T] cannot be used as a trait method return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.err
 	if $(TARGET) tests/errors/trait-duplicate-decl.ari -o $(BUILD_DIR)/traits/trait-duplicate-decl.elf >$(BUILD_DIR)/traits/trait-duplicate-decl.err 2>&1; then exit 1; fi

@@ -3364,7 +3364,6 @@ private:
             std::map<std::string, IrType> outer_previous_substitutions = std::move(current_type_substitutions_);
             current_type_substitutions_ = substitutions;
             IrType self_type = resolve_executable_type(impl.for_type);
-            require_root_vector_runtime_abi(impl.for_type.loc, self_type, "an impl receiver");
             substitutions.emplace("Self", self_type);
             current_type_substitutions_ = substitutions;
             std::vector<GenericTraitBound> impl_bounds = resolve_generic_trait_bounds(impl.generics);
@@ -17821,7 +17820,8 @@ private:
         const IrType& target,
         const std::string& method_name
     ) const {
-        auto found = method_impls_.find(method_lookup_key(source, method_name));
+        IrType lookup_source = impl_receiver_lookup_type(source);
+        auto found = method_impls_.find(method_lookup_key(lookup_source, method_name));
         if (found == method_impls_.end()) return nullptr;
 
         const ImplMethodInfo* selected = nullptr;
@@ -18596,6 +18596,13 @@ private:
         return type_name(receiver_type) + "::" + method_name;
     }
 
+    static IrType impl_receiver_lookup_type(const IrType& receiver_type) {
+        if (is_vector_storage_type(receiver_type)) {
+            return unsized_vector_storage_view_type(receiver_type);
+        }
+        return receiver_type;
+    }
+
     static std::string drop_impl_key(const IrType& type) {
         return type_name(type);
     }
@@ -18795,6 +18802,11 @@ private:
     ) const {
         std::string key = trait_impl_key(trait_name, trait_args, self_type);
         if (impl_keys_.count(key)) return true;
+        IrType lookup_self_type = impl_receiver_lookup_type(self_type);
+        if (!same_type(lookup_self_type, self_type)) {
+            key = trait_impl_key(trait_name, trait_args, lookup_self_type);
+            if (impl_keys_.count(key)) return true;
+        }
         if (!visiting.insert(key).second) return false;
         for (const auto& impl : generic_trait_impls_) {
             std::map<std::string, IrType> substitutions;
@@ -21228,6 +21240,7 @@ private:
         if (is_receiver_borrow_type(method_receiver_type)) {
             method_receiver_type = value_qualified_type(method_receiver_type);
         }
+        method_receiver_type = impl_receiver_lookup_type(method_receiver_type);
 
         std::vector<IrExprPtr> checked_args;
         std::vector<IrType> arg_types;
@@ -21301,15 +21314,19 @@ private:
             receiver = check_expr(*borrow_expr);
         }
 
-        weaken_mut_receiver_to_shared_if_needed(*receiver, sig.params[0]);
-        coerce_expr_to_expected(*receiver, sig.params[0]);
-        require_assignable(expr.loc, sig.params[0], receiver->type);
+        IrExprPtr receiver_arg = try_make_implicit_slice_argument(*expr.args.front(), sig.params[0]);
+        if (!receiver_arg) {
+            receiver_arg = std::move(receiver);
+            weaken_mut_receiver_to_shared_if_needed(*receiver_arg, sig.params[0]);
+            coerce_expr_to_expected(*receiver_arg, sig.params[0]);
+            require_assignable(expr.loc, sig.params[0], receiver_arg->type);
+        }
 
         require_impl_method_access(expr.loc, method, method_name);
         queue_impl_method_for_lowering(method);
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size());
-        args.push_back(std::move(receiver));
+        args.push_back(std::move(receiver_arg));
         for (std::size_t i = 1; i < expr.args.size(); ++i) {
             IrExprPtr arg = coerce_checked_call_argument_or_implicit_slice(
                 *expr.args[i],
@@ -21699,9 +21716,11 @@ private:
         }
 
         IrType method_receiver_type = receiver->type;
+        method_receiver_type = impl_receiver_lookup_type(method_receiver_type);
         auto found = method_impls_.find(method_lookup_key(method_receiver_type, expr.name));
         if (found == method_impls_.end() && is_receiver_borrow_type(receiver->type)) {
             method_receiver_type = value_qualified_type(receiver->type);
+            method_receiver_type = impl_receiver_lookup_type(method_receiver_type);
             found = method_impls_.find(method_lookup_key(method_receiver_type, expr.name));
         }
         const ImplMethodInfo* selected = nullptr;
@@ -21767,15 +21786,19 @@ private:
             receiver = check_expr(*borrow_expr);
         }
 
-        weaken_mut_receiver_to_shared_if_needed(*receiver, sig.params[0]);
-        coerce_expr_to_expected(*receiver, sig.params[0]);
-        require_assignable(expr.loc, sig.params[0], receiver->type);
+        IrExprPtr receiver_arg = try_make_implicit_slice_argument(*expr_operand(expr), sig.params[0]);
+        if (!receiver_arg) {
+            receiver_arg = std::move(receiver);
+            weaken_mut_receiver_to_shared_if_needed(*receiver_arg, sig.params[0]);
+            coerce_expr_to_expected(*receiver_arg, sig.params[0]);
+            require_assignable(expr.loc, sig.params[0], receiver_arg->type);
+        }
 
         require_impl_method_access(expr.loc, method, expr.name);
         queue_impl_method_for_lowering(method);
         std::vector<IrExprPtr> args;
         args.reserve(expr.args.size() + 1);
-        args.push_back(std::move(receiver));
+        args.push_back(std::move(receiver_arg));
         for (std::size_t i = 0; i < expr.args.size(); ++i) {
             IrExprPtr arg = has_generic_selected
                 ? coerce_checked_call_argument_or_implicit_slice(

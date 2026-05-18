@@ -50,8 +50,9 @@ feature helpers are not.
 - `vector_semantics` for local `Vec[T]` storage type/helpers, typed empty
   vector literal construction, frozen local method classification and shape
   diagnostics, shared `len`/`is_empty`/`as_slice` shape diagnostics, shared
-  collection `len` lowering, root `Vec[T]` parameter ABI lowering into
-  Slice-shaped views plus the remaining root-vector runtime ABI guards,
+  collection `len` lowering, root `Vec[T]` parameter and impl receiver ABI
+  lowering into Slice-shaped views plus the remaining root-vector runtime ABI
+  guards,
   `as_slice` data/view IR construction including Vec storage views, local Vec
   integer/non-negative and known-index operand diagnostics, direct local Vec
   index diagnostics, known-empty element/indexed method diagnostics, frozen API

@@ -21,6 +21,9 @@ near-term deliverable.
    aggregate layout before expanding source libraries that depend on
    ownership-stable collections. The stack-backed local root `Vec[T]` method
    surface is frozen, including `as_ptr()` for raw element-buffer access.
+   Root `Vec[T]` function parameters and impl receivers lower through the
+   existing Slice-shaped view ABI; root `Vec[T]` returns, struct fields, trait
+   method returns, and extern signatures still need the runtime-capacity ABI.
    Source `Box[T]`/`std::Box[T]` already follows the explicit-zone handle
    policy, including tracked `as_ptr()` and `as_mut_ptr()` raw views; future
    heap ownership should keep that capability-oriented shape rather than

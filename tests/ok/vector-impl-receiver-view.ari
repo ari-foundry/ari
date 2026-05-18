@@ -1,0 +1,23 @@
+trait VecScore {
+  fn score(self) -> i64
+}
+
+impl Vec[i64] {
+  fn edge_sum(self) -> i64 {
+    return len(self) + self[0] + self[len(self) - 1];
+  }
+}
+
+impl VecScore for Vec[i64] {
+  fn score(self) -> i64 {
+    return len(self) + self[0] + self[len(self) - 1];
+  }
+}
+
+fn main() -> i64 {
+  let values: Vec[i64] = [2, 4, 6];
+  let direct = values.edge_sum();
+  let trait_direct = values.score();
+  let trait_qualified = VecScore::score(values);
+  return direct + trait_direct + trait_qualified;
+}

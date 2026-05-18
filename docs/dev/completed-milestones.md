@@ -29,9 +29,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   `pattern_semantics` result object, so sema keeps match/control-flow lowering
   wired to a phase-level pattern API instead of syntax-local helper pairs.
 - Root `Vec[T]` function, method, trait-method, and function-pointer parameter
-  ABI lowering is owned by `vector_semantics`: parameters lower to the
-  Slice-shaped view ABI, while return/field/extern runtime-capacity guards stay
-  with the same vector phase.
+  ABI lowering plus impl receiver view lowering is owned by `vector_semantics`:
+  parameters and receivers lower to the Slice-shaped view ABI, while
+  return/field/extern runtime-capacity guards stay with the same vector phase.
 - Raw pointer helpers, layout queries, and `std::mem` value helpers lower
   through `pointer_memory_semantics`, keeping type-argument checks,
   mutable-place validation, hidden temporary locals, and final pointer IR block
