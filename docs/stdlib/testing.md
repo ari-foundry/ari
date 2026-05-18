@@ -50,6 +50,7 @@ std-ascii-prefix-parsers.ari
 std-ascii-slice-helpers.ari
 std-bits-rotate-helpers.ari
 std-bits-scan-helpers.ari
+std-bits-one-run-helpers.ari
 std-bits-width-helpers.ari
 std-zone-alloc-array.ari
 prelude-option-result-methods.ari

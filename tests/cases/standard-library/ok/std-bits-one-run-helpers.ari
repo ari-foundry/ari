@@ -1,0 +1,43 @@
+// Covers std::bits helpers that count leading or trailing runs of one bits.
+fn main() -> i64 {
+  let low_run = 0b10111u64;
+  let high = 9223372036854775808u64;
+  let high_run = high | (high / 2u64) | (high / 4u64) | (high / 8u64);
+  let middle_run = 0b11110000u64;
+
+  var score = 0;
+
+  if bits::trailing_ones(0u64) == 0 {
+    score = score + 3;
+  }
+  if bits::leading_ones(0u64) == 0 {
+    score = score + 5;
+  }
+  if std::bits::trailing_ones(~0u64) == 64 {
+    score = score + 7;
+  }
+  if std::bits::leading_ones(~0u64) == 64 {
+    score = score + 11;
+  }
+  if bits::trailing_ones(low_run) == 3 {
+    score = score + 13;
+  }
+  if bits::leading_ones(low_run) == 0 {
+    score = score + 17;
+  }
+  if bits::leading_ones(high_run) == 4 {
+    score = score + 19;
+  }
+  if bits::trailing_ones(high_run) == 0 {
+    score = score + 23;
+  }
+  if bits::trailing_ones(middle_run) == 0 {
+    score = score + 29;
+  }
+  if bits::leading_ones(middle_run) == 0 {
+    score = score + 31;
+  }
+
+  assert_eq_i64(score, 158);
+  return score;
+}

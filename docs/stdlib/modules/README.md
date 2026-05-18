@@ -32,7 +32,7 @@ limits, examples, and test files for one module.
   parity, powers, division rounding, greatest common divisor, and least common
   multiple.
 - [std::bits](bits.md): source-only `u64` bit-mask, rotation, power-of-two,
-  low-mask, alignment, and bit-scan helpers.
+  low-mask, alignment, and zero/one-run bit-scan helpers.
 
 ## Guide Shape
 

@@ -137,6 +137,10 @@ pub fn trailing_zeros(value: u64) -> i64 {
   return total;
 }
 
+pub fn trailing_ones(value: u64) -> i64 {
+  return trailing_zeros(~value);
+}
+
 pub fn leading_zeros(value: u64) -> i64 {
   if value == 0u64 {
     return 64;
@@ -149,4 +153,8 @@ pub fn leading_zeros(value: u64) -> i64 {
     mask = mask / 2u64;
   }
   return total;
+}
+
+pub fn leading_ones(value: u64) -> i64 {
+  return leading_zeros(~value);
 }

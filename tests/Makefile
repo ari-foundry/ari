@@ -313,6 +313,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4bits14trailing_zeros' $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-bits-scan-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-scan-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-scan-helpers.elf; code=$$?; test $$code -eq 187
+	$(TARGET) tests/cases/standard-library/ok/std-bits-one-run-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-one-run-helpers.ll
+	grep -q '_ARNv3std4bits12leading_ones' $(BUILD_DIR)/prelude/std-bits-one-run-helpers.ll
+	grep -q '_ARNv3std4bits13trailing_ones' $(BUILD_DIR)/prelude/std-bits-one-run-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-bits-one-run-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-one-run-helpers.elf
+	$(BUILD_DIR)/prelude/std-bits-one-run-helpers.elf; code=$$?; test $$code -eq 158
 	$(TARGET) tests/cases/standard-library/ok/std-bits-width-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
 	grep -q '_ARNv3std4bits9bit_width' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
 	grep -q '_ARNv3std4bits18floor_power_of_two' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll

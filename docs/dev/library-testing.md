@@ -68,6 +68,8 @@ test:
   modulo-64 count handling.
 - `std-bits-scan-helpers.ari`: source `std::bits` u64 bit-scan and zero edge
   case behavior.
+- `std-bits-one-run-helpers.ari`: source `std::bits` u64 leading/trailing
+  one-run bit-scan behavior.
 - `std-bits-width-helpers.ari`: source `std::bits` u64 bit-width,
   power-of-two rounding, and low-mask behavior.
 - `std-zone-alloc-array.ari`: source `std::zone` typed raw array allocation,

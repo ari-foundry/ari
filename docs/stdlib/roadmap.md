@@ -19,7 +19,8 @@ prefix parsers, `vec`, `iter`, `fmt`, `cmp` comparison helpers, `convert`
 identity/from/into helpers, `context` runtime hooks plus the source
 `has_arg` helper, `input` runtime hooks plus the source `try_read_byte` EOF
 helper, `io` runtime hooks plus source byte-slice output, and the first
-`math` arithmetic/division-rounding and `bits` numeric helper slices.
+`math` arithmetic/division-rounding and `bits` numeric helper slices,
+including zero/one-run bit scans.
 
 ## Phase 2: Pull More Behavior Into Ari Source
 

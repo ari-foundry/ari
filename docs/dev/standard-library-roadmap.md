@@ -51,7 +51,7 @@ The current `std` package already provides:
   conversion, borrowed-slice case-insensitive comparison/search, trimming,
   whole-slice digit parsing, and prefix digit parsing helpers
 - `std::bits` `u64` mask, rotation, power-of-two, low-mask, alignment, and
-  bit-scan helpers
+  zero/one-run bit-scan helpers
 
 This baseline is useful, but it is still a seed. Some APIs are compiler hooks
 with source declarations, and some names exist mainly so user code can start
@@ -162,7 +162,7 @@ Likely compiler work:
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes. | Generic helper, inclusive range predicate, and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
 | `std::convert` | Concrete `From`/`Into` impl patterns and fallible conversion policy. | Identity/from/into behavior, explicit associated calls, and residual conversions. | Trait coherence and inference diagnostics. |
 | `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Integer helper behavior, signed division rounding, overflow-policy diagnostics, and future checked/wrapping helpers. | Overflow intrinsics or diagnostics only after the source policy is designed. |
-| `std::bits` | Grow natural helper names from u64 signatures into generic integer helpers. | Mask behavior, rotate count handling, power-of-two rounding, low-mask widths, alignment preconditions, scan edge cases, and future overflow-policy diagnostics. | Optional bit-scan intrinsics only after the source policy is stable. |
+| `std::bits` | Grow natural helper names from u64 signatures into generic integer helpers. | Mask behavior, rotate count handling, power-of-two rounding, low-mask widths, alignment preconditions, zero/one-run scan edge cases, and future overflow-policy diagnostics. | Optional bit-scan intrinsics only after the source policy is stable. |
 
 ## API Landing Checklist
 

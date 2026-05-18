@@ -34,7 +34,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
 | `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `div_floor`, `div_ceil`, `mod_floor`, `gcd`, `lcm`. |
-| `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, and bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`. |
+| `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, and zero/one-run bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`, `leading_ones`. |
 
 ## Allocation Rules
 
@@ -76,9 +76,9 @@ metadata, asserting `first`/`last`/`get` for programmer errors, and
 `Option`.
 
 `std::bits` follows the same rule for current `u64` mask, rotation,
-power-of-two, low-mask, alignment, and source-loop bit-scan helpers. Future
-intrinsic-backed implementations may need compiler support, but the public
-edge-case behavior should stay source-defined.
+power-of-two, low-mask, alignment, and source-loop zero/one-run bit-scan
+helpers. Future intrinsic-backed implementations may need compiler support,
+but the public edge-case behavior should stay source-defined.
 
 `std::cmp` is also source-first. Its current helpers build on the minimal
 `Ord[T]::lt` method so generic code can select, clamp, or range-check values

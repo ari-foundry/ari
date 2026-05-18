@@ -1,9 +1,9 @@
 # std::bits
 
 `std::bits` contains source-only helpers for bit-mask code, rotations,
-power-of-two rounding, low-bit masks, alignment, and bit scans. The current
-slices use `u64` signatures because Ari does not yet have the numeric trait
-vocabulary needed to express one generic integer API.
+power-of-two rounding, low-bit masks, alignment, and zero/one-run bit scans.
+The current slices use `u64` signatures because Ari does not yet have the
+numeric trait vocabulary needed to express one generic integer API.
 
 The names are intentionally natural. When generic numeric traits are ready,
 the library should grow these names instead of adding public type suffixes.
@@ -73,12 +73,16 @@ bits::count_ones(value)
 bits::count_zeros(value)
 bits::leading_zeros(value)
 bits::trailing_zeros(value)
+bits::leading_ones(value)
+bits::trailing_ones(value)
 ```
 
 `count_ones` and `count_zeros` count set and unset bits across the whole
 64-bit value. `leading_zeros` and `trailing_zeros` return `64` for `0u64`.
-The current implementation is a straightforward Ari source loop; future
-intrinsic-backed lowering should preserve the same edge-case behavior.
+`leading_ones` and `trailing_ones` count contiguous one bits from the high or
+low end; they return `0` for `0u64` and `64` for `~0u64`. The current
+implementation is a straightforward Ari source loop; future intrinsic-backed
+lowering should preserve the same edge-case behavior.
 
 ## Example
 
@@ -102,6 +106,7 @@ The focused positive tests are:
 tests/cases/standard-library/ok/std-bits-mask-helpers.ari
 tests/cases/standard-library/ok/std-bits-rotate-helpers.ari
 tests/cases/standard-library/ok/std-bits-scan-helpers.ari
+tests/cases/standard-library/ok/std-bits-one-run-helpers.ari
 tests/cases/standard-library/ok/std-bits-width-helpers.ari
 ```
 

@@ -439,7 +439,7 @@ overflow semantics yet.
 ## Bits
 
 `std::bits` contains source-only `u64` helpers for bit masks, rotations,
-power-of-two rounding, low-bit masks, alignment, and bit scans:
+power-of-two rounding, low-bit masks, alignment, and zero/one-run bit scans:
 
 ```ari
 bits::is_set(value, mask)
@@ -460,6 +460,8 @@ bits::count_ones(value)
 bits::count_zeros(value)
 bits::leading_zeros(value)
 bits::trailing_zeros(value)
+bits::leading_ones(value)
+bits::trailing_ones(value)
 ```
 
 `is_set` requires all bits from `mask`; `any_set` requires at least one
@@ -467,7 +469,9 @@ overlap. `rotate_left` and `rotate_right` assert that `count` is non-negative
 and then rotate modulo 64. `align_down` and `align_up` assert that `alignment`
 is a non-zero power of two. These helpers currently have `u64` signatures and
 intentionally avoid type suffixes so future generic integer APIs can keep the
-same names. The zero value has 64 leading zeros and 64 trailing zeros.
+same names. The zero value has 64 leading zeros, 64 trailing zeros, zero
+leading ones, and zero trailing ones; `~0u64` has 64 leading ones and 64
+trailing ones.
 `bit_width` returns the number of bits needed to represent a value,
 `floor_power_of_two` and `ceil_power_of_two` round to nearby powers of two, and
 `low_mask(width)` returns a mask with the lowest `width` bits set. `low_mask`
