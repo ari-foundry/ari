@@ -25,7 +25,7 @@ LINT_HEADERS := $(wildcard tools/lint/*.hpp)
 LSP_SRC := $(wildcard tools/lsp/*.cpp)
 LSP_HEADERS := $(wildcard tools/lsp/*.hpp)
 
-.PHONY: all release debug sanitize tools lint lsp clean sample
+.PHONY: all release debug sanitize tools lint lsp clean examples check-examples example run-example
 
 all: $(TARGET)
 release: $(TARGET)
@@ -34,6 +34,11 @@ sanitize: $(SANITIZE_TARGET)
 tools: lint lsp
 lint: $(LINT_TARGET)
 lsp: $(LSP_TARGET)
+
+EXAMPLE ?= count
+EXAMPLE_SRCS := $(sort $(wildcard examples/*.ari))
+EXAMPLE_BINS := $(patsubst examples/%.ari,$(BUILD_DIR)/examples/%$(EXEEXT),$(EXAMPLE_SRCS))
+EXAMPLE_BIN := $(BUILD_DIR)/examples/$(EXAMPLE)$(EXEEXT)
 
 $(TARGET): $(SRC) $(HEADERS)
 	mkdir -p $(BUILD_DIR)
@@ -55,8 +60,19 @@ $(LSP_TARGET): $(LSP_SRC) $(LSP_HEADERS) $(LINT_LIB_SRC) $(LINT_HEADERS) $(TOOLI
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) $(TOOLING_SRC) $(LINT_LIB_SRC) $(LSP_SRC) -o $@
 
-sample: $(TARGET)
-	$(TARGET) examples/count.ari --emit-llvm $(BUILD_DIR)/count.ll
+examples: $(EXAMPLE_BINS)
+
+check-examples: $(TARGET)
+	@set -e; for src in $(EXAMPLE_SRCS); do echo "checking $$src"; $(TARGET) $$src --check; done
+
+example: $(EXAMPLE_BIN)
+
+run-example: $(EXAMPLE_BIN)
+	@set +e; $(EXAMPLE_BIN); code=$$?; echo "$(EXAMPLE) exited $$code"
+
+$(BUILD_DIR)/examples/%$(EXEEXT): examples/%.ari $(TARGET)
+	mkdir -p $(BUILD_DIR)/examples
+	$(TARGET) $< -o $@
 
 include tests/Makefile
 

@@ -30,6 +30,13 @@ Run the full test suite:
 make check
 ```
 
+Build the bundled examples:
+
+```sh
+make examples
+make run-example EXAMPLE=hello
+```
+
 Build the lint and LSP tools:
 
 ```sh
@@ -43,6 +50,8 @@ make release
 make debug
 make sanitize
 make tools
+make examples
+make check-examples
 make check-tools
 make check
 make check-debug

@@ -1,0 +1,21 @@
+mod Math {
+  pub fn sum_to(end: i64) -> i64 {
+    var total = 0;
+    for value in range(1, end + 1) {
+      total = total + value;
+    }
+    return total;
+  }
+
+  pub fn double(value: i64) -> i64 {
+    return value + value;
+  }
+}
+
+use Math::sum_to
+
+fn main() -> i64 {
+  let total = sum_to(5) + Math::double(3);
+  println("modules={}", total);
+  return 0;
+}

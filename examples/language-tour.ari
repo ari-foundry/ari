@@ -4,41 +4,46 @@ struct Point {
   y: i64,
 }
 
-struct Pair[T] {
-  left: T,
-  right: T,
-}
-
 enum Option[T] {
   None,
   Some(T),
 }
 
-enum Result[T, E] {
-  Ok(T),
-  Err(E),
-}
-
-trait Eq[T] {
-  fn eq(self: T, other: T) -> bool
-}
-
 impl Eq[i64] for i64 {
-  fn eq(self: i64, other: i64) -> bool {
+  fn eq(self, other: i64) -> bool {
     return self == other;
   }
 }
 
-meta fn identity_type(T: type) -> type {
-  return T;
+fn identity[T](value: T) -> T {
+  return value;
+}
+
+fn score(point: Point) -> i64 {
+  return point.x + point.y;
+}
+
+fn maybe_score(flag: bool, value: i64) -> Option[i64] {
+  if flag {
+    return Some(value);
+  }
+  return None<i64>();
 }
 
 fn main() -> i64 {
-  var value = 0;
+  let point = Point { x: 2, y: 3 };
+  let value = identity(score(point));
+  var total = 0;
 
-  init a = 1, b = 4 while a < b {
-    value = value + a;
-  } next a + 1, b
+  match maybe_score(value.eq(5), value) {
+    Some(inner) => {
+      total = inner;
+    },
+    None => {
+      total = 1;
+    },
+  }
 
-  return value;
+  println("tour={}", total);
+  return 0;
 }

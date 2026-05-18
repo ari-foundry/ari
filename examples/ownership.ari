@@ -1,0 +1,39 @@
+struct TokenBox {
+  token: own i64,
+  salt: i64,
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume_owned(value: own i64) -> i64 {
+  drop value;
+  return 1;
+}
+
+fn observe_pair(value: (ref i64, ref mut i64)) -> i64 {
+  return 2;
+}
+
+fn main() -> i64 {
+  var left = 10;
+  var right = 20;
+  var total = 0;
+
+  {
+    let pair = (ref left, ref mut right);
+    total = total + observe_pair(pair);
+  }
+
+  right = right + 1;
+
+  let token = make_owned(42);
+  total = total + consume_owned(token);
+
+  let boxed = TokenBox { token: make_owned(5), salt: 7 };
+  drop boxed;
+
+  println("ownership={}", total + right);
+  return 0;
+}

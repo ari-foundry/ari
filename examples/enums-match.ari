@@ -1,0 +1,29 @@
+enum Command {
+  Stop,
+  Add(i64),
+  Multiply(i64),
+}
+
+fn apply(total: i64, command: Command) -> i64 {
+  match command {
+    Stop => {
+      return total;
+    },
+    Add(amount) => {
+      return total + amount;
+    },
+    Multiply(factor) => {
+      return total * factor;
+    },
+  }
+}
+
+fn main() -> i64 {
+  var total = 1;
+  total = apply(total, Add(4));
+  total = apply(total, Multiply(3));
+  total = apply(total, Stop);
+
+  println("match={}", total);
+  return 0;
+}
