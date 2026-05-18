@@ -6409,7 +6409,7 @@ private:
                 if (local_has_moved_or_dropped_owned_fields(source)) {
                     fail(loc, "cannot borrow partially moved owning binding '" + base_name + "'");
                 }
-            } else {
+            } else if (!is_owner_element_slice_type(source.type)) {
                 require_owned_field_alive(loc, base_name, source, path);
             }
         }
@@ -8367,6 +8367,7 @@ private:
         std::vector<IrStmtPtr>& statements) {
         if (!is_owner_type(element_type) || !pattern.has_rest ||
             !value_plan.known_owner_vec_length ||
+            is_owner_element_slice_type(source_type) ||
             !pattern.rest_alias_name.empty()) {
             return;
         }
@@ -8401,6 +8402,11 @@ private:
                 source_name,
                 source_type,
                 "runtime sequence pattern binding");
+        }
+        if (is_owner_element_slice_type(source_type)) {
+            fail(loc,
+                 "cannot move ownership out of non-owning Slice[own T] view; "
+                 "borrow the element with a reference pattern or move from the owning source");
         }
 
         std::uint64_t element_index =
@@ -8492,6 +8498,7 @@ private:
         }
 
         const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+        const bool owner_element_slice = is_owner_element_slice_type(source_type);
         RuntimeSequenceValuePatternPlan value_plan = plan_runtime_sequence_value_pattern(
             pattern,
             source_type,
@@ -8525,7 +8532,7 @@ private:
         for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
             const Pattern& item = pattern.elements[i];
             if (item.kind == PatternKind::Wildcard) {
-                if (is_owner_type(element_type)) {
+                if (is_owner_type(element_type) && !owner_element_slice) {
                     std::uint64_t element_index =
                         runtime_sequence_value_pattern_element_index(pattern, i, value_plan);
                     append_runtime_sequence_value_pattern_owned_element_drop(
@@ -8540,6 +8547,11 @@ private:
             }
             std::optional<PatternValueSource> owner_source;
             if (is_owner_type(element_type) && item.binding_mode == BindingMode::Value) {
+                if (owner_element_slice) {
+                    fail(item.loc,
+                         "cannot move ownership out of non-owning Slice[own T] view; "
+                         "borrow the element with a reference pattern or move from the owning source");
+                }
                 if (!runtime_sequence_value_pattern_consumes_owner_element(item)) {
                     fail(item.loc,
                          "ownership-carrying Vec[T] value patterns must bind selected owned elements or discard them with _");
@@ -10049,6 +10061,10 @@ private:
             fail(expr.loc, "Slice index must be non-negative");
         }
         const IrType element_type = operand->type.args[0];
+        if (is_owner_type(element_type)) {
+            fail(expr.loc,
+                 "cannot assign ownership-valued elements through non-owning Slice[own T] view");
+        }
         require_slice_element_materializable(expr.loc, element_type, "Slice element assignment");
 
         return make_ir_index_expr(expr.loc, std::move(operand), std::move(index));
@@ -16819,6 +16835,11 @@ private:
                 fail(expr.loc, "Slice index must be non-negative");
             }
             const IrType element_type = operand->type.args[0];
+            if (is_owner_type(element_type)) {
+                fail(expr.loc,
+                     "cannot move ownership out of non-owning Slice[own T] view; "
+                     "borrow the element with a reference pattern or move from the owning source");
+            }
             require_slice_element_materializable(expr.loc, element_type, "Slice indexing");
             return make_ir_index_expr(expr.loc, std::move(operand), std::move(index));
         }

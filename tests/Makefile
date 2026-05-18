@@ -3605,6 +3605,8 @@ check-errors: $(TARGET) check-function-errors
 	$(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-skip.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/pattern-value-ownership-vector-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.elf
 	$(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.elf; code=$$?; test $$code -eq 2
+	$(TARGET) tests/ok/pattern-slice-owner-element-paths.ari -o $(BUILD_DIR)/errors/pattern-slice-owner-element-paths.elf
+	$(BUILD_DIR)/errors/pattern-slice-owner-element-paths.elf; code=$$?; test $$code -eq 40
 	$(TARGET) tests/ok/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf
 	$(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-amp-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238; fi
@@ -3632,6 +3634,12 @@ check-errors: $(TARGET) check-function-errors
 	grep -Fq "cannot drop borrowed binding 'values'" $(BUILD_DIR)/errors/pattern-ref-mut-ownership-vector-dynamic-suffix.err
 	if $(TARGET) tests/errors/pattern-ref-ownership-vector-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err 2>&1; then exit 1; fi
 	grep -Fq "cannot drop borrowed binding 'values'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err
+	if $(TARGET) tests/errors/slice-owner-index-move.ari -o $(BUILD_DIR)/errors/slice-owner-index-move.elf >$(BUILD_DIR)/errors/slice-owner-index-move.err 2>&1; then exit 1; fi
+	grep -Fq "cannot move ownership out of non-owning Slice[own T] view" $(BUILD_DIR)/errors/slice-owner-index-move.err
+	if $(TARGET) tests/errors/slice-owner-value-pattern-move.ari -o $(BUILD_DIR)/errors/slice-owner-value-pattern-move.elf >$(BUILD_DIR)/errors/slice-owner-value-pattern-move.err 2>&1; then exit 1; fi
+	grep -Fq "cannot move ownership out of non-owning Slice[own T] view" $(BUILD_DIR)/errors/slice-owner-value-pattern-move.err
+	if $(TARGET) tests/errors/slice-owner-assignment.ari -o $(BUILD_DIR)/errors/slice-owner-assignment.elf >$(BUILD_DIR)/errors/slice-owner-assignment.err 2>&1; then exit 1; fi
+	grep -Fq "cannot assign ownership-valued elements through non-owning Slice[own T] view" $(BUILD_DIR)/errors/slice-owner-assignment.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi
 	grep -q "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index" $(BUILD_DIR)/errors/pattern-ref-temporary.err
 	$(TARGET) tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.elf

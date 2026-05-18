@@ -41,6 +41,13 @@ bool is_prelude_slice_type(const IrType& type) {
            type.field_names[1] == "len";
 }
 
+bool is_owner_element_slice_type(const IrType& type) {
+    IrType shape = value_qualified_slice_type(type);
+    return is_prelude_slice_type(shape) &&
+           !shape.args.empty() &&
+           is_owner_type(shape.args[0]);
+}
+
 IrType make_prelude_slice_type(SourceLocation loc, const IrType& element) {
     IrType type = primitive_type(IrPrimitiveKind::Struct, "std::Slice", loc);
     IrType data = element;

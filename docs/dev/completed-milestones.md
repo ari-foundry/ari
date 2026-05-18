@@ -151,8 +151,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   as explicit element drops, so hidden Vec storage has no leaked live owner
   slots after the pattern body. Known-length owned rest aliases lower to
   non-owning `Slice[own T]` views; the source Vec is borrowed while the view is
-  live, and compiler-owned hidden pattern storage drops any still-owned slots at
-  scope exit.
+  live, compiler-owned hidden pattern storage drops any still-owned slots at
+  scope exit, and owner elements reached through the Slice view can be borrowed
+  by reference patterns without allowing moves or indexed owner replacement
+  through the non-owning view.
 - Loop fixed-point checking tracks ownership and borrow states at `break`,
   `continue`, zero-iteration, literal-true next-iteration, and fallthrough
   merge points. Ambiguous loop exits produce explicit `maybe-unavailable`

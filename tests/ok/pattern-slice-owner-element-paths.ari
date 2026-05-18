@@ -1,0 +1,35 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn read(value: ref i64) -> i64 {
+  let raw: ptr i64 = value as ptr i64;
+  return *raw;
+}
+
+fn sum_owned_slice(ref [first, .., last]: Slice[own i64]) -> i64 {
+  return read(first) + read(last);
+}
+
+fn main() -> i64 {
+  var total = 0;
+
+  {
+    let [first, rest @ ..]: Vec[own i64] = [make_owned(1), make_owned(2), make_owned(3)];
+    let ref [second, third] = rest;
+    total = total + read(second) + read(third) + len(rest);
+    total = total + sum_owned_slice(rest);
+    drop first;
+  }
+
+  {
+    let [first2, rest2 @ ..]: Vec[own i64] = [make_owned(4), make_owned(5), make_owned(6), make_owned(7)];
+    let [_, tail @ ..] = rest2;
+    let ref [third2, fourth] = tail;
+    total = total + read(third2) + read(fourth) + len(tail);
+    total = total + sum_owned_slice(tail);
+    drop first2;
+  }
+
+  return total;
+}

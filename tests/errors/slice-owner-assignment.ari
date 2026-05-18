@@ -1,0 +1,10 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn main() -> i64 {
+  var [first, rest @ ..]: Vec[own i64] = [make_owned(1), make_owned(2)];
+  rest[0] = make_owned(3);
+  drop first;
+  return 0;
+}
