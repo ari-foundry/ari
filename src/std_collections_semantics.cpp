@@ -71,6 +71,8 @@ std::optional<std::vector<std::size_t>> std_collections_set_zone_handle_data_fie
 bool std_collections_set_method_requires_same_zone_argument(const std::string& method_name) {
     return method_name == "grow_to_capacity" ||
            method_name == "ensure_spare_capacity" ||
+           method_name == "reserve" ||
+           method_name == "reserve_extra" ||
            method_name == "insert";
 }
 

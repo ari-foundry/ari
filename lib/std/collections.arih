@@ -97,6 +97,46 @@ pub impl[T] std::collections::Set[T] {
     return self.len == 0;
   }
 
+  fn first(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    return ptr_load(self.data);
+  }
+
+  fn try_first(self: ref Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(self.data));
+  }
+
+  fn last(self: ref Self) -> T {
+    std::assert(self.len > 0);
+    return ptr_load(ptr_add(self.data, self.len - 1));
+  }
+
+  fn try_last(self: ref Self) -> std::Option[T] {
+    if self.len == 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, self.len - 1)));
+  }
+
+  fn get(self: ref Self, index: i64) -> T {
+    std::assert(index >= 0);
+    std::assert(index < self.len);
+    return ptr_load(ptr_add(self.data, index));
+  }
+
+  fn try_get(self: ref Self, index: i64) -> std::Option[T] {
+    if index < 0 {
+      return std::None<T>();
+    }
+    if index >= self.len {
+      return std::None<T>();
+    }
+    return std::Some<T>(ptr_load(ptr_add(self.data, index)));
+  }
+
   fn index_of(self: ref Self, value: T) -> i64 {
     var index = 0;
     while index < self.len {
@@ -132,6 +172,18 @@ pub impl[T] std::collections::Set[T] {
     return true;
   }
 
+  fn pop(self: ref mut Self) -> T {
+    std::assert(self.len > 0);
+    return remove_at<T>(self, self.len - 1);
+  }
+
+  fn try_pop(self: ref mut Self) -> std::Option[T] {
+    if self.is_empty() {
+      return std::None<T>();
+    }
+    return std::Some<T>(self.pop());
+  }
+
   fn take(self: ref mut Self, value: T) -> std::Option[T] {
     let index = self.index_of(value);
     if index < 0 {
@@ -142,6 +194,15 @@ pub impl[T] std::collections::Set[T] {
 
   fn clear(self: ref mut Self) -> void {
     drop_values<T>(self);
+  }
+
+  fn reserve(self: ref mut Self, zone: ref mut Zone, capacity: i64) -> void {
+    grow_to_capacity<T>(self, zone, capacity);
+  }
+
+  fn reserve_extra(self: ref mut Self, zone: ref mut Zone, additional: i64) -> void {
+    std::assert(additional >= 0);
+    grow_to_capacity<T>(self, zone, self.len + additional);
   }
 
   fn as_slice(self: ref Self) -> std::Slice[T] {

@@ -353,21 +353,35 @@ collections::from_slice_in<T>(ref mut zone, values)
 set.len()
 set.capacity()
 set.is_empty()
+set.first()
+set.try_first()
+set.last()
+set.try_last()
+set.get(index)
+set.try_get(index)
 set.index_of(value)
 set.contains(value)
 set.insert(ref mut zone, value)
 set.remove(value)
 set.take(value)
+set.pop()
+set.try_pop()
 set.clear()
+set.reserve(ref mut zone, capacity)
+set.reserve_extra(ref mut zone, additional)
 set.as_slice()
 set.copy_to(ref mut zone)
 ```
 
 `insert` returns `true` only for newly inserted values. `remove` drops the
 removed value and reports whether it was present; `take` returns
-`Option[T]`. The set preserves insertion order in `index_of`, `as_slice`, and
-`copy_to`. It is linear, not hash-backed, so future `HashMap`/`HashSet` APIs
-can still choose a deliberate hashing and equality policy.
+`Option[T]`. `first`/`last`/`get` assert that the requested element exists,
+while `try_first`/`try_last`/`try_get` return `Option[T]`. `pop` removes the
+last insertion-order value, and `try_pop` returns `None` on an empty set.
+`reserve` and `reserve_extra` keep growth explicit through the same source
+zone. The set preserves insertion order in accessors, `index_of`, `as_slice`,
+and `copy_to`. It is linear, not hash-backed, so future `HashMap`/`HashSet`
+APIs can still choose a deliberate hashing and equality policy.
 
 `std::string::String` is an owned byte string:
 

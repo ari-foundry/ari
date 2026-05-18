@@ -237,7 +237,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | temporary allocation | `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
 | single-value handle | `std::boxed::Box[T]`, `Box!(T, ref mut zone, value)` |
 | owned byte string | `std::string::String`, `std::string::from_string(ref mut zone, "text")`, `.try_get(index)`, `.index_of_ignore_case(bytes)`, `.parse_decimal_prefix()`, `.trim_to(ref mut zone)` |
-| unique linear set | `collections::new<T>(ref mut zone, capacity)`, `Set::new<T>(ref mut zone, capacity)`, `.insert(ref mut zone, value)`, `.contains(value)` |
+| unique linear set | `collections::new<T>(ref mut zone, capacity)`, `Set::new<T>(ref mut zone, capacity)`, `.insert(ref mut zone, value)`, `.try_get(index)`, `.try_pop()`, `.reserve(ref mut zone, capacity)`, `.contains(value)` |
 | ASCII byte helpers | `ascii::is_digit`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::trim`, `ascii::parse_decimal`, `ascii::parse_decimal_prefix` |
 | integer math helpers | `math::abs`, `math::is_positive`, `math::is_zero`, `math::div_floor`, `math::div_ceil`, `math::mod_floor`, `math::gcd` |
 | bit helpers | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::leading_zeros`, `bits::leading_ones` |
@@ -251,7 +251,8 @@ Use lowercase `string` for borrowed pointer-shaped text. Use uppercase
 Use bare `Vec[T]` for local compiler-known vectors and `std::vec::Vec[T]` for
 the source standard-library growable handle. Use `Set[T]` or
 `std::collections::Set[T]` when you need insertion-order uniqueness; it is
-linear today, not hash-backed.
+linear today, not hash-backed, and its growth methods keep the source zone
+explicit.
 
 ## Ownership And Borrowing Checklist
 

@@ -1,0 +1,71 @@
+// Covers Set accessors, Option-returning reads, explicit reserve growth, and
+// stack-like removal without adding a separate hash-table policy.
+fn main() -> i64 {
+  var zone = zone::create(1024);
+  var set = collections::new<i64>(ref mut zone, 1);
+  var score = 0;
+
+  set.reserve(ref mut zone, 4);
+  if set.capacity() == 4 {
+    score = score + 1;
+  }
+
+  if set.insert(ref mut zone, 4) {
+    score = score + 2;
+  }
+  if set.insert(ref mut zone, 9) {
+    score = score + 3;
+  }
+  if set.insert(ref mut zone, 12) {
+    score = score + 4;
+  }
+
+  if set.first() == 4 {
+    score = score + 5;
+  }
+  if set.last() == 12 {
+    score = score + 6;
+  }
+  if set.get(1) == 9 {
+    score = score + 7;
+  }
+
+  let maybe_first = set.try_first();
+  if maybe_first.unwrap_or(0) == 4 {
+    score = score + 8;
+  }
+  let maybe_last = set.try_last();
+  if maybe_last.unwrap_or(0) == 12 {
+    score = score + 9;
+  }
+  let maybe_value = set.try_get(2);
+  if maybe_value.unwrap_or(0) == 12 {
+    score = score + 10;
+  }
+  let missing_value = set.try_get(3);
+  if missing_value.is_none() {
+    score = score + 11;
+  }
+
+  set.reserve_extra(ref mut zone, 5);
+  if set.capacity() == 8 {
+    score = score + 12;
+  }
+
+  let popped = set.pop();
+  if popped == 12 && set.len() == 2 {
+    score = score + 13;
+  }
+  let maybe_popped = set.try_pop();
+  if maybe_popped.unwrap_or(0) == 9 {
+    score = score + 14;
+  }
+  set.clear();
+  let empty_pop = set.try_pop();
+  if empty_pop.is_none() {
+    score = score + 15;
+  }
+
+  zone::destroy(zone);
+  return score;
+}

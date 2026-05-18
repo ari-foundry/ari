@@ -38,7 +38,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::string` | Zone-backed owned byte string seed. | `String`, `RawString`, capacity constructors, copy helpers, byte get/set/search, `try_get`, `try_pop`, growth, append helpers, ASCII case compare/search, trim views, trim copies, whole and prefix parse helpers, `as_slice`, `as_ptr`. | Implemented as a byte string. Full text/Unicode policy is still future work. |
 | `std::ascii` | ASCII-only byte and slice helpers for byte strings and parsers. | `ParsedInt`, `is_digit`, `is_alpha`, `is_alphanumeric`, `is_blank`, `is_whitespace`, `is_control`, `is_printable`, `is_graphic`, `is_punctuation`, `is_hex_digit`, `to_lower`, `to_upper`, `digit_value`, `hex_value`, `equals_ignore_case`, `starts_with_ignore_case`, `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, `parse_hex`, `parse_hex_prefix`. | Implemented in Ari source; not a Unicode or locale-aware text API. |
 | `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked and `Option` element access, mutation, growth, copy, slice view, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
-| `std::collections` | Zone-backed collection handles beyond sequences. | `Set[T]`, constructors, `from_slice_in`, metadata, `contains`, `index_of`, `insert`, `remove`, `take`, `clear`, `as_slice`, `copy_to`. | Implemented as a linear insertion-order set seed; hash maps and hash sets are future work. |
+| `std::collections` | Zone-backed collection handles beyond sequences. | `Set[T]`, constructors, `from_slice_in`, metadata, insertion-order access, `try_*` access, `contains`, `index_of`, `insert`, `remove`, `take`, `pop`, `try_pop`, `reserve`, `clear`, `as_slice`, `copy_to`. | Implemented as a linear insertion-order set seed; hash maps and hash sets are future work. |
 | `std::iter` | Iteration traits and range constructors. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`. | Range lowering and `std::vec::Iter` are implemented; general iterator protocols are still growing. |
 | `std::fmt` | Formatting traits. | `Debug`, `Display::format_in`. | Trait surface is present; formatting macros still use compiler lowering. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`, `is_between`. | Implemented for source-level trait-bound static dispatch. |
@@ -53,8 +53,9 @@ Allocation APIs take a `ref mut Zone` or return values tied to a zone. The
 local `std::vec::Vec[T]` and `std::string::String` handles, Ari can infer the
 same source zone for common methods such as `push`, `insert`, `reserve`,
 `reserve_extra`, `extend_from_slice`, and `resize`. `std::collections::Set[T]`
-keeps the growing insertion path explicit today through
-`insert(ref mut zone, value)`.
+keeps growth explicit today through `insert(ref mut zone, value)`,
+`reserve(ref mut zone, capacity)`, and
+`reserve_extra(ref mut zone, additional)`.
 
 Generic APIs should keep natural names. Prefer `insert`, `get`, `contains`,
 and `copy_to` over type-suffixed names such as `insert_i64`; the type belongs
@@ -94,7 +95,7 @@ Use this table when writing code from docs alone:
 | Work with borrowed contiguous data. | `Slice[T]`, `slice(data, len)`, `.as_slice()` | Slice methods borrow the view; use `try_get` when absence is expected, and `copy_to(ref mut zone)` when an owned collection is needed. |
 | Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
 | Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. |
-| Store unique values in insertion order. | `collections::new<T>(ref mut zone, capacity)` or `Set::new<T>(ref mut zone, capacity)` | `insert(ref mut zone, value)` returns whether a value was newly added. Use `contains`, `remove`, `take`, `as_slice`, and `copy_to` for the current linear set. |
+| Store unique values in insertion order. | `collections::new<T>(ref mut zone, capacity)` or `Set::new<T>(ref mut zone, capacity)` | `insert(ref mut zone, value)` returns whether a value was newly added. Use `try_get`, `try_pop`, `contains`, `remove`, `take`, `reserve`, `as_slice`, and `copy_to` for the current linear set. |
 | Store owned byte text. | `std::string::from_string(ref mut zone, "text")` or `std::string::new(ref mut zone, capacity)` | The handle stores bytes, not a full Unicode text abstraction yet. |
 | Compare, search, trim, or parse owned ASCII byte text. | `text.equals_ignore_case(bytes)`, `text.index_of_ignore_case(bytes)`, `text.trim()`, `text.trim_to(ref mut zone)`, `text.parse_decimal()`, `text.parse_decimal_prefix()` | Case-insensitive `String` helpers fold only ASCII letters. Plain trim methods return borrowed `Slice[u8]` views; `*_to` trim methods copy into a target zone. Whole parse methods require the whole string to be valid; prefix parsers return `Option[ascii::ParsedInt]`. |
 | Classify, compare, search, trim, or parse ASCII bytes. | `ascii::is_digit`, `ascii::is_printable`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::to_lower`, `ascii::trim`, `ascii::parse_decimal_prefix` | Scalar helpers take `u8`; slice helpers take `Slice[u8]`. Case-insensitive comparison/search folds only ASCII letters. Whole parsers return `Option[i64]`; prefix parsers return `Option[ascii::ParsedInt]` with `value` and consumed `len`. |
@@ -189,8 +190,9 @@ The non-`try` accessors assert on bad indexes. `try_first`, `try_last`, and
 `String`; they are the better choice for normal control flow.
 
 `std::collections::Set[T]` also includes `insert(ref mut zone, value)`,
-`remove(value)`, `take(value)`, and `clear()`. Its `index_of` and `as_slice`
-preserve insertion order.
+`remove(value)`, `take(value)`, `pop()`, `try_pop()`, `reserve(ref mut zone,
+capacity)`, `reserve_extra(ref mut zone, additional)`, and `clear()`. Its
+accessors, `index_of`, and `as_slice` preserve insertion order.
 
 `std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
 `replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,

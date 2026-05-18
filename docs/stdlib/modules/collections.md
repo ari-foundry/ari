@@ -17,6 +17,8 @@ Collection APIs should read naturally:
 set.insert(ref mut zone, value)
 set.contains(value)
 set.take(value)
+set.try_get(index)
+set.reserve(ref mut zone, capacity)
 set.copy_to(ref mut target)
 ```
 
@@ -48,10 +50,21 @@ tracked set after that zone is reset or destroyed.
 set.len()
 set.capacity()
 set.is_empty()
+set.first()
+set.try_first()
+set.last()
+set.try_last()
+set.get(index)
+set.try_get(index)
 set.index_of(value)
 set.contains(value)
 set.as_slice()
 ```
+
+`first`, `last`, and `get` are asserting accessors for cases where absence is a
+programmer error. The `try_*` forms return `Option[T]` for empty or
+out-of-range reads and are the preferred API for ordinary absence. All access
+is insertion-order based.
 
 `index_of` returns the insertion-order index of the value or `-1` when absent.
 `contains` is the usual membership predicate. `as_slice` returns a borrowed
@@ -63,7 +76,11 @@ set.as_slice()
 set.insert(ref mut zone, value)
 set.remove(value)
 set.take(value)
+set.pop()
+set.try_pop()
 set.clear()
+set.reserve(ref mut zone, capacity)
+set.reserve_extra(ref mut zone, additional)
 ```
 
 `insert` returns `true` when the value was newly inserted and `false` when the
@@ -71,8 +88,15 @@ set already contained it. Because insertion may grow storage, the method takes
 the same explicit zone used to create the set.
 
 `remove` returns `true` when it found and dropped the value. `take` returns
-`Option[T]` and moves the removed value out instead of dropping it. `clear`
-drops every live value and keeps the allocated capacity for later reuse.
+`Option[T]` and moves the removed value out instead of dropping it. `pop`
+removes and returns the last insertion-order value, while `try_pop` returns
+`None` for an empty set.
+
+`clear` drops every live value and keeps the allocated capacity for later
+reuse. `reserve` grows to an absolute capacity, and `reserve_extra` grows so
+the set can hold at least `len() + additional` elements. Both reserve methods
+take the same explicit zone as construction because they may allocate new
+backing storage.
 
 ## Copies And Lifetimes
 
@@ -96,8 +120,9 @@ fn main() -> i64 {
   seen.insert(ref mut zone, 3);
 
   let found = seen.contains(5);
+  let first = seen.try_first().unwrap_or(0);
   let removed = seen.take(3).unwrap_or(0);
-  let total = seen.len() + removed + if found { 10 } else { 0 };
+  let total = seen.len() + first + removed + if found { 10 } else { 0 };
 
   zone::destroy(zone);
   return total;
@@ -110,6 +135,7 @@ Focused positive coverage:
 
 ```text
 tests/cases/standard-library/ok/std-collections-set.ari
+tests/cases/standard-library/ok/std-collections-set-access.ari
 ```
 
 Focused negative coverage:
@@ -117,10 +143,17 @@ Focused negative coverage:
 ```text
 tests/cases/standard-library/errors/std-collections-set-after-reset.ari
 tests/cases/standard-library/errors/std-collections-set-insert-different-zone.ari
+tests/cases/standard-library/errors/std-collections-set-reserve-different-zone.ari
+tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-zone.ari
 ```
 
-`make check-prelude` compiles the positive test, checks representative
-monomorphized symbols, runs the executable result, and checks the negative
+`std-collections-set.ari` covers construction, insertion, duplicate rejection,
+membership, removal, borrowed views, copying, and target/source zone behavior.
+`std-collections-set-access.ari` covers insertion-order accessors,
+`Option`-returning reads, explicit reserve growth, `pop`, and `try_pop`.
+
+`make check-prelude` compiles the positive tests, checks representative
+monomorphized symbols, runs the executable results, and checks the negative
 zone diagnostics. Public declarations are tracked in
 `tests/std_api_manifest.txt` and checked by `make check-std-api`.
 

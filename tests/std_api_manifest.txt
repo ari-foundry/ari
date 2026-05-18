@@ -236,13 +236,23 @@ method std::collections::Set[T]::capacity|check-prelude std-collections-set capa
 method std::collections::Set[T]::clear|check-prelude std-collections-set value drop clear; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::contains|check-prelude std-collections-set linear membership lookup; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::copy_to|check-prelude std-collections-set target-zone copy; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::first|check-prelude std-collections-set-access insertion-order first accessor; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::get|check-prelude std-collections-set-access insertion-order indexed accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::index_of|check-prelude std-collections-set stable insertion-order index lookup; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::insert|check-prelude std-collections-set same-zone insertion and duplicate rejection; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::is_empty|check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::last|check-prelude std-collections-set-access insertion-order last accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::len|check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::new|check-prelude std-collections-set associated constructor; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::pop|check-prelude std-collections-set-access last-value removal; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::remove|check-prelude std-collections-set membership removal; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::reserve|check-prelude std-collections-set-access same-zone capacity growth; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::reserve_extra|check-prelude std-collections-set-access same-zone spare-capacity growth; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::take|check-prelude std-collections-set Option-returning removal; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::try_first|check-prelude std-collections-set-access optional first accessor; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::try_get|check-prelude std-collections-set-access optional indexed accessor; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::try_last|check-prelude std-collections-set-access optional last accessor; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::try_pop|check-prelude std-collections-set-access optional last-value removal; docs/stdlib/modules/collections.md
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows

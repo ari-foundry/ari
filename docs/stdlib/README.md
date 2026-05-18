@@ -24,8 +24,9 @@ in `std::env`, while `std::context` stays the low-level runtime context layer.
 `std::process` starts the OS-facing surface with current process id and
 explicit exit helpers. Source
 collection work has started with
-`std::collections::Set[T]` as a linear explicit-zone set before hash-table
-policy is ready. A few declarations are still compiler-known because the
+`std::collections::Set[T]` as a linear explicit-zone set with insertion-order
+access, optional access, and reserve growth before hash-table policy is ready.
+A few declarations are still compiler-known because the
 current language cannot express them directly: layout queries, typed raw
 pointer operations, runtime IO hooks, explicit zone allocation, formatting
 macro lowering, and some zone provenance checks.

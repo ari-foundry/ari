@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var other = zone::create(256);
+  var set = collections::new<i64>(ref mut zone, 1);
+
+  set.reserve_extra(ref mut other, 4);
+
+  zone::destroy(zone);
+  zone::destroy(other);
+  return 0;
+}
