@@ -125,6 +125,12 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   tuple, fixed-array, struct, and tuple-struct slots into bindings from tracked
   hidden storage. The binding engine marks the moved owner subpaths so skipped
   live owned fields still follow normal cleanup.
+- Local `Vec[own T]` value patterns can move exact element bindings and
+  known-length suffix element bindings after `..` from tracked hidden Vec
+  storage when every selected owned element is bound and any rest is
+  known-empty. Owned rest aliases and owned-element skips remain rejected until
+  owned `Slice[T]` paths or explicit cleanup rules exist for those dynamic
+  slots.
 - Loop fixed-point checking tracks ownership and borrow states at `break`,
   `continue`, zero-iteration, literal-true next-iteration, and fallthrough
   merge points. Ambiguous loop exits produce explicit `maybe-unavailable`

@@ -34,10 +34,12 @@ near-term deliverable.
    `as_mut_ptr()` raw views; future heap ownership should keep that
    capability-oriented shape rather than inventing an ambient heap.
 2. Define dynamic owner pattern paths.
-   After runtime-capacity `Vec[T]` and owned enum payload ABI rules are stable,
-   define owner moves through enum payload slots, `Slice[T]` element paths,
-   owned rest aliases, and dynamic vector suffixes without relying on hidden
-   whole-value leaks.
+   Static local/hidden-storage `Vec[own T]` value patterns can now move exact
+   elements and known-length suffix elements through tracked owner paths when
+   every owned element is bound. Remaining work is the genuinely dynamic
+   surface: owner moves through enum payload slots, `Slice[T]` element paths,
+   owned rest aliases, owned-element skips, and unknown-length vector suffixes
+   without relying on hidden whole-value leaks.
    Non-scalar or owned payload-bearing `@repr(C)` enum C layouts should be
    defined with this ABI work; the current compiler covers public non-generic
    scalar/pointer-slot payload enums in C headers.

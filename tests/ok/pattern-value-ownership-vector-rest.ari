@@ -1,0 +1,14 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume(value: own i64, amount: i64) -> i64 {
+  drop value;
+  return amount;
+}
+
+fn main() -> i64 {
+  let [first, middle, .., last]: Vec[own i64] = [make_owned(1), make_owned(2), make_owned(3)];
+  let score = consume(first, 5) + consume(middle, 6) + consume(last, 7);
+  return score;
+}

@@ -558,4 +558,55 @@ RuntimeSequenceReferencePatternPlan plan_runtime_sequence_reference_pattern(
     return plan;
 }
 
+RuntimeSequenceValuePatternPlan plan_runtime_sequence_value_pattern(
+    const Pattern& pattern,
+    const IrType& shape_type,
+    bool direct_binding,
+    const RuntimeSequenceKnownLengthLookup& known_direct_vec_length) {
+    if (!is_vector_storage_type(shape_type) && !is_prelude_slice_type(shape_type)) {
+        fail(pattern.loc,
+             "runtime sequence value patterns currently require direct local Vec[T] storage or Slice[T] view bindings");
+    }
+    if (!direct_binding && !pattern.rest_alias_name.empty()) {
+        fail(pattern.rest_alias_loc,
+             "runtime sequence value rest aliases currently require a direct local Vec[T] or Slice[T] binding");
+    }
+
+    RuntimeSequenceValuePatternPlan plan;
+    if (!is_owner_type(shape_type)) return plan;
+
+    if (!is_vector_storage_type(shape_type) || !direct_binding) {
+        fail(pattern.loc,
+             "ownership-carrying runtime sequence value patterns currently require direct local Vec[T] storage");
+    }
+    if (!pattern.rest_alias_name.empty()) {
+        fail(pattern.rest_alias_loc,
+             "ownership-carrying Vec[T] value rest aliases are planned after owned Slice paths are tracked");
+    }
+    if (!pattern.has_rest) return plan;
+
+    const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+    if (!known_direct_vec_length) {
+        fail(pattern.loc, "internal error: missing runtime sequence known-length lookup");
+    }
+    plan.known_owner_vec_length = known_direct_vec_length();
+    if (!plan.known_owner_vec_length) {
+        fail(pattern.loc,
+             "ownership-carrying Vec[T] value patterns with .. require a direct local Vec[T] with a known length");
+    }
+
+    const std::uint64_t required =
+        static_cast<std::uint64_t>(pattern.rest_index + suffix_count);
+    if (*plan.known_owner_vec_length < required) {
+        fail(pattern.loc,
+             "ownership-carrying Vec[T] value pattern requires a known length of at least " +
+                 std::to_string(required));
+    }
+    if (*plan.known_owner_vec_length > required) {
+        fail(pattern.loc,
+             "ownership-carrying Vec[T] value patterns cannot skip owned rest elements yet");
+    }
+    return plan;
+}
+
 } // namespace ari

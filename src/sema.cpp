@@ -6188,6 +6188,8 @@ private:
         coerce_expr_to_expected(*init, declared);
         require_nullable_pointer_initializer(stmt.loc, stmt.binding, declared, *init);
         require_assignable(stmt.loc, declared, init->type);
+        VectorKnownLength init_vector_length =
+            vector_known_length_from_source_expr(declared, *stmt.binding.init, *init);
         if (is_borrow_type(declared)) {
             fail(stmt.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
         }
@@ -6212,7 +6214,13 @@ private:
 
         std::string source_name = make_hidden_local("$pattern");
         declare_local(stmt.loc, source_name, declared, false);
-        ir_stmt_statements(lowered).push_back(make_ir_var_decl(stmt.loc, source_name, declared, std::move(init), false));
+        IrStmtPtr source_decl = make_ir_var_decl(stmt.loc, source_name, declared, std::move(init), false);
+        IrStmt* source_decl_ptr = source_decl.get();
+        ir_stmt_statements(lowered).push_back(std::move(source_decl));
+        LocalInfo& source_local = local_slot_by_name(source_name);
+        source_local.ir_storage_type = &source_decl_ptr->binding.type;
+        source_local.ir_init_expr = source_decl_ptr->binding.init.get();
+        set_local_vector_known_length(source_local, init_vector_length);
         lower_binding_pattern_from_local(
             binding_pattern,
             source_name,
@@ -8105,6 +8113,102 @@ private:
         return condition;
     }
 
+    struct PatternValueSource {
+        std::string name;
+        std::string path;
+    };
+
+    std::optional<std::uint64_t> known_direct_local_vec_value_length(
+        const std::string& source_name,
+        const IrType& source_type) {
+        if (!is_vector_storage_type(source_type)) return std::nullopt;
+        const LocalInfo* local = find_local_slot(source_name);
+        if (!local || !is_vector_storage_type(local->type)) return std::nullopt;
+        VectorKnownLength length = local_vector_known_length(*local);
+        if (!length.known) return std::nullopt;
+        return length.length;
+    }
+
+    std::uint64_t runtime_sequence_value_pattern_element_index(
+        const Pattern& pattern,
+        std::size_t pattern_index,
+        const RuntimeSequenceValuePatternPlan& value_plan) const {
+        if (!pattern.has_rest || pattern_index < pattern.rest_index) {
+            return static_cast<std::uint64_t>(pattern_index);
+        }
+        if (!value_plan.known_owner_vec_length) {
+            throw CompileError("internal error: missing known Vec length for owned runtime sequence value pattern");
+        }
+        const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
+        const std::size_t suffix_offset = pattern_index - pattern.rest_index;
+        return *value_plan.known_owner_vec_length -
+               static_cast<std::uint64_t>(suffix_count) +
+               static_cast<std::uint64_t>(suffix_offset);
+    }
+
+    PatternValueSource runtime_sequence_value_pattern_owner_source(
+        const Pattern& pattern,
+        std::size_t pattern_index,
+        const std::string& source_name,
+        const RuntimeSequenceValuePatternPlan& value_plan) const {
+        std::uint64_t element_index =
+            runtime_sequence_value_pattern_element_index(pattern, pattern_index, value_plan);
+        return PatternValueSource{
+            source_name,
+            local_owned_field_path("", static_cast<std::size_t>(element_index))
+        };
+    }
+
+    IrExprPtr make_runtime_sequence_pattern_binding_element_expr(
+        SourceLocation loc,
+        const Pattern& pattern,
+        std::size_t pattern_index,
+        const std::string& source_name,
+        const IrType& source_type,
+        const IrType& element_type,
+        const RuntimeSequenceValuePatternPlan& value_plan) const {
+        if (!is_owner_type(element_type)) {
+            return make_runtime_sequence_pattern_element_expr(
+                loc,
+                pattern,
+                pattern_index,
+                source_name,
+                source_type,
+                "runtime sequence pattern binding");
+        }
+
+        std::uint64_t element_index =
+            runtime_sequence_value_pattern_element_index(pattern, pattern_index, value_plan);
+        return make_ir_index_expr(
+            loc,
+            make_local_lvalue_expr(loc, source_name, source_type),
+            make_integer_literal(loc, i64_type(loc), element_index));
+    }
+
+    bool runtime_sequence_value_pattern_consumes_owner_element(const Pattern& pattern) {
+        const Pattern& effective_pattern = expanded_pattern(pattern);
+        if (&effective_pattern != &pattern) {
+            return runtime_sequence_value_pattern_consumes_owner_element(effective_pattern);
+        }
+        if (pattern.binding_mode != BindingMode::Value) return false;
+        switch (pattern.kind) {
+            case PatternKind::Binding:
+            case PatternKind::Alias:
+            case PatternKind::Tuple:
+            case PatternKind::Array:
+            case PatternKind::Struct:
+            case PatternKind::EnumCase:
+                return true;
+            case PatternKind::Wildcard:
+            case PatternKind::IntegerLiteral:
+            case PatternKind::BoolLiteral:
+            case PatternKind::Range:
+            case PatternKind::Or:
+                return false;
+        }
+        return false;
+    }
+
     void lower_runtime_sequence_match_pattern_bindings_from_local(const Pattern& pattern,
                                                                   const std::string& source_name,
                                                                   const IrType& source_type,
@@ -8162,6 +8266,13 @@ private:
         }
 
         const IrType& element_type = runtime_sequence_element_type(pattern.loc, source_type);
+        RuntimeSequenceValuePatternPlan value_plan = plan_runtime_sequence_value_pattern(
+            pattern,
+            source_type,
+            true,
+            [&]() -> std::optional<std::uint64_t> {
+                return known_direct_local_vec_value_length(source_name, source_type);
+            });
         if (!pattern.rest_alias_name.empty()) {
             IrType slice_type = make_prelude_slice_type(pattern.rest_alias_loc, element_type);
             declare_local(pattern.rest_alias_loc, pattern.rest_alias_name, slice_type, mutable_binding);
@@ -8180,29 +8291,44 @@ private:
         }
         for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
             const Pattern& item = pattern.elements[i];
-            if (item.kind == PatternKind::Wildcard) continue;
+            if (item.kind == PatternKind::Wildcard) {
+                if (is_owner_type(element_type)) {
+                    fail(item.loc,
+                         "ownership-carrying Vec[T] value patterns must bind each selected owned element");
+                }
+                continue;
+            }
+            std::optional<PatternValueSource> owner_source;
+            if (is_owner_type(element_type) && item.binding_mode == BindingMode::Value) {
+                if (!runtime_sequence_value_pattern_consumes_owner_element(item)) {
+                    fail(item.loc,
+                         "ownership-carrying Vec[T] value patterns must bind each selected owned element");
+                }
+                owner_source = runtime_sequence_value_pattern_owner_source(
+                    pattern,
+                    i,
+                    source_name,
+                    value_plan);
+            }
             lower_tuple_match_value_bindings(
                 item,
                 element_type,
-                make_runtime_sequence_pattern_element_expr(
+                make_runtime_sequence_pattern_binding_element_expr(
                     item.loc,
                     pattern,
                     i,
                     source_name,
                     source_type,
-                    "runtime sequence pattern binding"
+                    element_type,
+                    value_plan
                 ),
                 statements,
                 mutable_binding,
-                skip_reference_bindings
+                skip_reference_bindings,
+                owner_source ? &*owner_source : nullptr
             );
         }
     }
-
-    struct PatternValueSource {
-        std::string name;
-        std::string path;
-    };
 
     void mark_pattern_value_moved_from_source(SourceLocation loc,
                                               const IrType& value_type,
@@ -12434,6 +12560,9 @@ private:
                 return;
             case PatternKind::EnumCase:
                 if (value_type.primitive == IrPrimitiveKind::Struct) {
+                    if (owner_source) {
+                        mark_pattern_value_moved_from_source(pattern.loc, value_type, *owner_source);
+                    }
                     std::string nested_name = make_hidden_local("$pattern");
                     declare_local(pattern.loc, nested_name, value_type, false);
                     statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));

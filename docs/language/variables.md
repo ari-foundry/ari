@@ -182,9 +182,13 @@ aggregate `while let` when the matched subject is addressable. Runtime-sequence
 bindings in statement/expression `match`, `if let`, and `while let` when the
 matched subject is addressable. Local and function-parameter value patterns can
 move ownership-carrying tuple, fixed-array, struct, and tuple-struct slots into
-bindings from tracked hidden storage. Ownership-carrying enum payload moves,
-`Slice[T]` owner paths, owned rest aliases, and dynamic vector suffix owner
-paths remain tied to the later owned-payload/runtime-capacity ABI work.
+bindings from tracked hidden storage. Local `Vec[own T]` value patterns can
+also move exact element bindings, and suffix element bindings after `..` when
+the hidden vector's current length is known. Every selected owned element must
+be bound, and a `..` rest must be known-empty for `Vec[own T]`. Ownership-carrying
+enum payload moves, `Slice[T]` owner paths, owned rest aliases, owned-element
+skips, and unknown-length vector suffix owner paths remain tied to the later
+owned-payload/runtime-capacity ABI work.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

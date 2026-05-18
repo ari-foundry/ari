@@ -144,7 +144,9 @@ feature helpers are not.
   or-detection and expanded alternatives together after macro expansion,
   union-safe pattern cloning shared by match/or-pattern normalization and sema
   iterator-filter rewrites, runtime-sequence reference-pattern planning for
-  direct rest aliases and ownership-carrying known-length suffix guards, plus
+  direct rest aliases and ownership-carrying known-length suffix guards,
+  runtime-sequence value-pattern planning for ownership-carrying rest-alias
+  rejection and known-length suffix moves, plus
   irrefutable non-iterator `for` loop-head pattern validation shared by range,
   list-literal, and stored-vector loops
 - `format_semantics` for formatting target selection and shared `{}` /

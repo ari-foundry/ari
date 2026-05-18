@@ -42,6 +42,10 @@ struct RuntimeSequenceReferencePatternPlan {
     std::optional<std::uint64_t> known_owner_vec_length;
 };
 
+struct RuntimeSequenceValuePatternPlan {
+    std::optional<std::uint64_t> known_owner_vec_length;
+};
+
 using RuntimeSequenceKnownLengthLookup = std::function<std::optional<std::uint64_t>()>;
 
 Pattern clone_pattern(const Pattern& pattern);
@@ -66,6 +70,11 @@ const Pattern* positional_product_field_pattern(const Pattern& pattern,
                                                 std::size_t field_count,
                                                 std::size_t field_index);
 RuntimeSequenceReferencePatternPlan plan_runtime_sequence_reference_pattern(
+    const Pattern& pattern,
+    const IrType& shape_type,
+    bool direct_binding,
+    const RuntimeSequenceKnownLengthLookup& known_direct_vec_length);
+RuntimeSequenceValuePatternPlan plan_runtime_sequence_value_pattern(
     const Pattern& pattern,
     const IrType& shape_type,
     bool direct_binding,
