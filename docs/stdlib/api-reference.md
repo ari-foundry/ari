@@ -71,12 +71,16 @@ None<T>()
 value.is_some()
 value.is_none()
 value.unwrap_or(fallback)
+value.unwrap_or_else(op)
 value.unwrap()
 value.expect("message")
 value.map<U>(op)
 value.and_then<U>(op)
 value.or(fallback)
 value.or_else(op)
+value.xor(other)
+value.ok_or<E>(error)
+value.ok_or_else<E>(op)
 ```
 
 `Result[T, E]` models success or failure:
@@ -87,15 +91,23 @@ Err<T, E>(error)
 value.is_ok()
 value.is_err()
 value.unwrap_or(fallback)
+value.unwrap_or_else(op)
 value.unwrap()
 value.expect("message")
 value.unwrap_err()
 value.expect_err("message")
+value.ok()
+value.err()
 value.map<U>(op)
 value.map_err<F>(op)
 value.and_then<U>(op)
 value.or_else<F>(op)
 ```
+
+Use the lazy `*_else` forms when the fallback is expensive or should only run
+on the missing/error branch. Use `ok_or` and `ok_or_else` when an optional
+value needs to enter a `Result`-returning flow. Use `ok` and `err` when a
+`Result` should be projected back into an `Option`.
 
 ## Slice, Vec, String, And Box
 

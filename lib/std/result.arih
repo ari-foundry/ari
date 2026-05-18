@@ -1,3 +1,5 @@
+// Source-level Result helpers. The success and error types live in the generic
+// signature so callers get natural names like ok, err, map, and unwrap_or_else.
 fn __is_ok[T, E](value: ref std::Result[T, E]) -> bool;
 fn __is_err[T, E](value: ref std::Result[T, E]) -> bool;
 
@@ -14,6 +16,13 @@ pub impl[T, E] std::Result[T, E] {
     return match self {
       std::Ok(value) => value,
       std::Err(_) => fallback;
+    };
+  }
+
+  fn unwrap_or_else(self, op: fn(E) -> T) -> T {
+    return match self {
+      std::Ok(value) => value,
+      std::Err(error) => op(error);
     };
   }
 
@@ -59,6 +68,20 @@ pub impl[T, E] std::Result[T, E] {
         return error;
       }
     }
+  }
+
+  fn ok(self) -> std::Option[T] {
+    return match self {
+      std::Ok(value) => std::Some<T>(value),
+      std::Err(_) => std::None<T>();
+    };
+  }
+
+  fn err(self) -> std::Option[E] {
+    return match self {
+      std::Ok(_) => std::None<E>(),
+      std::Err(error) => std::Some<E>(error);
+    };
   }
 
   fn map[U](self, op: fn(T) -> U) -> std::Result[U, E] {

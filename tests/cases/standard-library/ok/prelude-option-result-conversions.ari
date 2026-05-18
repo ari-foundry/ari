@@ -1,0 +1,54 @@
+// Covers Option/Result conversion and lazy fallback helpers.
+fn fallback_value() -> i64 {
+  return 10;
+}
+
+fn fallback_error() -> i32 {
+  return 7i32;
+}
+
+fn recover_from_error(code: i32) -> i64 {
+  return (code as i64) + 5;
+}
+
+fn main() -> i64 {
+  let option_lazy_some = Some(5).unwrap_or_else(fallback_value);
+  let option_lazy_none = None<i64>().unwrap_or_else(fallback_value);
+  let ok_from_some = Some(9).ok_or<i32>(4i32).unwrap_or(0);
+  let err_from_none = None<i64>().ok_or<i32>(4i32).unwrap_err() as i64;
+  let ok_from_some_lazy = Some(11).ok_or_else<i32>(fallback_error).unwrap_or(0);
+  let err_from_none_lazy = None<i64>().ok_or_else<i32>(fallback_error).unwrap_err() as i64;
+
+  let xor_left = Some(13).xor(None<i64>()).unwrap_or(0);
+  let xor_right = None<i64>().xor(Some(17)).unwrap_or(0);
+  let xor_both = Some(19).xor(Some(23)).unwrap_or(19);
+  let xor_none = None<i64>().xor(None<i64>()).unwrap_or(23);
+
+  let ok_to_option = Ok<i64, i32>(29).ok().unwrap_or(0);
+  let err_to_option = Err<i64, i32>(31i32).ok().unwrap_or(31);
+  let err_value = Err<i64, i32>(37i32).err().unwrap_or(0i32) as i64;
+  let ok_error_missing = Ok<i64, i32>(41).err().unwrap_or(41i32) as i64;
+  let result_lazy_ok = Ok<i64, i32>(43).unwrap_or_else(recover_from_error);
+  let result_lazy_err = Err<i64, i32>(47i32).unwrap_or_else(recover_from_error);
+
+  let total =
+    option_lazy_some +
+    option_lazy_none +
+    ok_from_some +
+    err_from_none +
+    ok_from_some_lazy +
+    err_from_none_lazy +
+    xor_left +
+    xor_right +
+    xor_both +
+    xor_none +
+    ok_to_option +
+    err_to_option +
+    err_value +
+    ok_error_missing +
+    result_lazy_ok +
+    result_lazy_err;
+
+  assert_eq_i64(total, 351);
+  return total % 256;
+}

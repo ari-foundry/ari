@@ -25,8 +25,8 @@ hooks because the current language cannot express those primitives directly.
 | Library | Purpose | Current API Highlights | Status |
 | --- | --- | --- | --- |
 | `std` root | Common prelude surface and shared ADTs. | `Option[T]`, `Result[T, E]`, `Slice[T]`, `Range[T]`, `RangeInclusive[T]`, `move`, `take`, assertion helpers, panic helpers, root `Box`, `String`, and `Vec` aliases. | Implemented source surface with compiler-known hooks for selected helpers. |
-| `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `unwrap_or`, `unwrap`, `expect`, `map`, `or`, `or_else`, `and_then`. | Implemented for the current generic enum model. |
-| `std::result` | Error-return convenience methods. | `is_ok`, `is_err`, `unwrap_or`, `unwrap`, `expect`, `unwrap_err`, `expect_err`, `map`, `map_err`, `and_then`, `or_else`. | Implemented for the current generic enum model. |
+| `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `map`, `or`, `or_else`, `xor`, `and_then`, `ok_or`, `ok_or_else`. | Implemented for the current generic enum model. |
+| `std::result` | Error-return convenience methods. | `is_ok`, `is_err`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `unwrap_err`, `expect_err`, `ok`, `err`, `map`, `map_err`, `and_then`, `or_else`. | Implemented for the current generic enum model. |
 | `std::io` | Minimal process IO hooks. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_byte`, `read_line`, `read_line_owned`. | Runtime-backed through reserved `extern "ari"` builtins. |
 | `std::input` | Friendly input aliases. | `read_byte`, `line`, `owned_line`. | Runtime-backed through `std::io`-style builtins. |
 | `std::context` | Program argument access. | `argc`, `arg`. | Runtime-backed; initialized by the generated entry wrapper. |
@@ -75,7 +75,9 @@ Use this table when writing code from docs alone:
 | Read process arguments. | `arg_count()`, `arg(index)`, `context::argc()`, `context::arg(index)` | Arguments are lowercase `string` values. Out-of-range `arg` returns an empty string. |
 | Read stdin. | `input()`, `read_line()`, `input_owned(ref mut zone)` | Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
 | Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `?`, or `??` when that reads better than `match`. |
+| Convert missing values into failures. | `option.ok_or<E>(error)`, `option.ok_or_else<E>(op)` | Lazy form builds the error only for `None`. |
 | Represent success/failure. | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` | `?` propagates residual cases and runs hidden iterator cleanup when needed. |
+| Convert failures back to optional values. | `result.ok()`, `result.err()` | Keeps only the selected payload branch. |
 | Work with borrowed contiguous data. | `Slice[T]`, `slice(data, len)`, `.as_slice()` | Slice methods borrow the view; `copy_to(ref mut zone)` makes a new owned collection when available. |
 | Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
 | Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. |
@@ -100,12 +102,16 @@ Use this table when writing code from docs alone:
 value.is_some()
 value.is_none()
 value.unwrap_or(fallback)
+value.unwrap_or_else(fn_name)
 value.unwrap()
 value.expect()
 value.map<U>(fn_name)
 value.and_then<U>(fn_name)
 value.or(other)
 value.or_else(fn_name)
+value.xor(other)
+value.ok_or<E>(error)
+value.ok_or_else<E>(fn_name)
 ```
 
 `Result[T, E]`:
@@ -114,10 +120,13 @@ value.or_else(fn_name)
 value.is_ok()
 value.is_err()
 value.unwrap_or(fallback)
+value.unwrap_or_else(fn_name)
 value.unwrap()
 value.expect()
 value.unwrap_err()
 value.expect_err()
+value.ok()
+value.err()
 value.map<U>(fn_name)
 value.map_err<F>(fn_name)
 value.and_then<U>(fn_name)

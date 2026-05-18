@@ -26,6 +26,8 @@ test:
   helper behavior.
 - `std-boxed-as-ptr-after-reset.ari`: negative zone provenance diagnostic.
 - `prelude-option-result-methods.ari`: root prelude ADT method behavior.
+- `prelude-option-result-conversions.ari`: Option/Result conversion, xor, and
+  lazy fallback behavior.
 - `prelude-macro-format-no-default-zone.ari`: macro or implicit prelude
   diagnostic.
 - `zone-promote-return.ari`: compiler-known zone lifetime behavior.

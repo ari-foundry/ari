@@ -1,3 +1,5 @@
+// Source-level Option helpers. Keep method names type-neutral; generic
+// signatures carry the value type without suffixing every API name.
 fn __is_some[T](value: ref std::Option[T]) -> bool;
 fn __is_none[T](value: ref std::Option[T]) -> bool;
 
@@ -14,6 +16,13 @@ pub impl[T] std::Option[T] {
     return match self {
       std::Some(value) => value,
       std::None => fallback;
+    };
+  }
+
+  fn unwrap_or_else(self, op: fn() -> T) -> T {
+    return match self {
+      std::Some(value) => value,
+      std::None => op();
     };
   }
 
@@ -60,10 +69,34 @@ pub impl[T] std::Option[T] {
     };
   }
 
+  fn xor(self, other: std::Option[T]) -> std::Option[T] {
+    return match self {
+      std::Some(value) => match other {
+        std::Some(_) => std::None<T>(),
+        std::None => std::Some<T>(value);
+      },
+      std::None => other;
+    };
+  }
+
   fn and_then[U](self, op: fn(T) -> std::Option[U]) -> std::Option[U] {
     return match self {
       std::Some(value) => op(value),
       std::None => std::None<U>();
+    };
+  }
+
+  fn ok_or[E](self, error: E) -> std::Result[T, E] {
+    return match self {
+      std::Some(value) => std::Ok<T, E>(value),
+      std::None => std::Err<T, E>(error);
+    };
+  }
+
+  fn ok_or_else[E](self, op: fn() -> E) -> std::Result[T, E] {
+    return match self {
+      std::Some(value) => std::Ok<T, E>(value),
+      std::None => std::Err<T, E>(op());
     };
   }
 }

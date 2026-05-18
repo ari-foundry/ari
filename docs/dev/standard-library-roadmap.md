@@ -26,6 +26,8 @@ The library contract is explicit and capability-oriented:
 The current `std` package already provides:
 
 - prelude ADTs: `Option`, `Result`, `Slice`, `Range`, `RangeInclusive`
+- source `Option`/`Result` predicates, combinators, conversions, and lazy
+  fallback helpers
 - assertion, panic, `move`, and `take` helpers
 - IO/input/context builtin declarations
 - layout and pointer helpers in `std::mem`
@@ -133,8 +135,8 @@ Likely compiler work:
 
 | Module | Next Useful Slice | Tests To Add First | Compiler Work If Needed |
 | --- | --- | --- | --- |
-| `std::option` | More combinators only after current `map`/`and_then` behavior is stable. | Positive combinator behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
-| `std::result` | Error conversion helpers after `From`/`Into` impls mature. | `Result` conversion and `?` residual tests. | Residual conversion and trait-bound selection. |
+| `std::option` | Predicate and filter helpers after borrowed function-pointer ergonomics are clear. | Positive combinator/conversion behavior plus wrong-payload negative tests. | Generic enum method specialization diagnostics. |
+| `std::result` | Error conversion helpers that use `From`/`Into` after trait impl patterns mature. | `Result` projection/conversion and `?` residual tests. | Residual conversion and trait-bound selection. |
 | `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |
 | `std::zone` | More scoped allocation helpers. | Reset/destroy provenance and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |

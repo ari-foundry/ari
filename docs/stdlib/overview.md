@@ -18,8 +18,8 @@ hiding allocation, ownership, or backend behavior.
 | Module | Purpose | First Things To Use |
 | --- | --- | --- |
 | `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `move`, `take`, `assert`, `panic`. |
-| `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `unwrap_or`, `unwrap`, `map`, `and_then`. |
-| `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `unwrap_or`, `map`, `map_err`, `and_then`. |
+| `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `unwrap_or_else`, `map`, `and_then`, `ok_or`. |
+| `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `unwrap_or_else`, `ok`, `err`, `map_err`. |
 | `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_line`. |
 | `std::input` | Friendly input aliases. | `line`, `owned_line`, `read_byte`. |
 | `std::context` | Process argument access. | `argc`, `arg`. |

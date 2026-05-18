@@ -6,6 +6,8 @@ limits, examples, and test files for one module.
 
 ## Available Guides
 
+- [std::option and std::result](option-result.md): ADT helpers for absence,
+  failure, conversion, and lazy fallback.
 - [std::ascii](ascii.md): source-only ASCII byte classification, case
   conversion, and digit parsing helpers.
 - [std::bits](bits.md): source-only `u64` bit-mask and power-of-two alignment
