@@ -24,9 +24,12 @@ near-term deliverable.
    Runtime-dependent stored locals, parameters, and call/return results can also
    be explicitly dropped as whole values; cleanup tests the runtime tag and
    drops only the active owning payload slots.
+   Statement `match` arms over tracked runtime-dependent locals and parameters
+   now seed tag-known owner payload states, so value-bound owning payloads must
+   be moved or dropped before the arm exits.
    Remaining work is path-level ownership for runtime-dependent payload-slot
-   moves, branch-merged tag states, partial-move cleanup, and `@repr(C)` layout
-   rules for owned payload-bearing public enums.
+   moves outside statement `match`, branch-merged tag states, partial-move
+   cleanup, and `@repr(C)` layout rules for owned payload-bearing public enums.
    Label: `owner-enum-payload-paths`.
 2. Add owner-aware `Slice[T]` element paths.
    Treat `Slice[own T]` as a non-owning view while still preserving borrow and

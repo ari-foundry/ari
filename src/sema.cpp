@@ -225,6 +225,12 @@ struct TrackedAggregateAccess {
     std::string final_container_name;
 };
 
+struct TrackedEnumOwnerSubject {
+    std::string base_name;
+    std::string path;
+    IrType enum_type;
+};
+
 struct ReferenceBindingSubject {
     std::string base_name;
     IrType base_type;
@@ -9293,6 +9299,162 @@ private:
         return false;
     }
 
+    std::optional<TrackedEnumOwnerSubject> tracked_enum_owner_subject(const IrExpr& expr) {
+        if (!has_aggregate_enum_layout(expr.type)) return std::nullopt;
+        std::string base_name;
+        std::string path;
+        if (!tracked_ir_access_path(expr, base_name, path)) return std::nullopt;
+        if (!find_local_slot(base_name)) return std::nullopt;
+        return TrackedEnumOwnerSubject{base_name, path, expr.type};
+    }
+
+    IrExprPtr check_statement_match_value(const Expr& expr) {
+        if (expr.kind == ExprKind::Name) {
+            if (LocalInfo* local_slot = find_local_slot(expr.name)) {
+                LocalInfo& local = *local_slot;
+                if (is_owner_type(local.type) && has_aggregate_enum_layout(local.type)) {
+                    if (auto error = local_unavailable_binding_error(expr.name, local)) fail(expr.loc, *error);
+                    require_can_read_borrow_path(expr.loc, expr.name, local, "");
+                    require_zone_pointer_valid(expr.loc, expr.name, local);
+                    copy_aggregate_borrow_sources_to_temporaries(expr.loc, expr.name, local);
+                    return make_local_lvalue_expr(expr.loc, expr.name, local.type);
+                }
+            }
+        }
+        return check_expr(expr);
+    }
+
+    void collect_enum_owner_payload_states(SourceLocation loc,
+                                           const IrType& enum_type,
+                                           const std::string& enum_path,
+                                           LocalState state,
+                                           std::map<std::string, LocalState>& states) {
+        if (!has_aggregate_enum_layout(enum_type)) return;
+        auto enum_found = enums_.find(enum_type.name);
+        if (enum_found == enums_.end()) {
+            fail(loc, "unknown enum type '" + enum_type.name + "'");
+        }
+
+        std::map<std::string, LocalState> case_states;
+        for (const std::string& case_name : enum_found->second.case_names) {
+            auto case_found = enum_cases_.find(case_name);
+            if (case_found == enum_cases_.end()) {
+                throw CompileError("internal error: missing enum case '" + case_name + "'");
+            }
+            EnumCaseInfo case_info = enum_case_for_match_value(loc, case_found->second, enum_type);
+            for (std::size_t payload_index = 0; payload_index < case_info.payloads.size(); ++payload_index) {
+                collect_owned_field_states(
+                    case_info.payloads[payload_index],
+                    local_owned_field_path(enum_path, payload_index + 1),
+                    case_states);
+            }
+        }
+        for (const auto& item : case_states) {
+            states[item.first] = state;
+        }
+    }
+
+    std::map<std::string, LocalState> enum_owner_payload_states_for_case(
+        const TrackedEnumOwnerSubject& subject,
+        const EnumCaseInfo& case_info,
+        LocalState state
+    ) {
+        std::map<std::string, LocalState> states;
+        for (std::size_t payload_index = 0; payload_index < case_info.payloads.size(); ++payload_index) {
+            collect_owned_field_states(
+                case_info.payloads[payload_index],
+                local_owned_field_path(subject.path, payload_index + 1),
+                states);
+        }
+        for (auto& item : states) item.second = state;
+        return states;
+    }
+
+    void require_enum_owner_payload_states_available(SourceLocation loc,
+                                                     const std::string& base_name,
+                                                     const LocalInfo& local,
+                                                     const std::map<std::string, LocalState>& states) const {
+        for (const auto& item : states) {
+            auto found = local.owned_field_states.find(item.first);
+            if (found == local.owned_field_states.end()) continue;
+            if (found->second != LocalState::Alive) {
+                fail(loc,
+                     "cannot match partially moved owning enum binding '" +
+                         base_name +
+                         "'");
+            }
+        }
+    }
+
+    void seed_enum_owner_payload_arm_states(SourceLocation loc,
+                                            const TrackedEnumOwnerSubject& subject,
+                                            const EnumCaseInfo& case_info) {
+        std::map<std::string, LocalState> all_payload_states;
+        collect_enum_owner_payload_states(
+            loc,
+            subject.enum_type,
+            subject.path,
+            LocalState::Dropped,
+            all_payload_states);
+        if (all_payload_states.empty()) return;
+
+        LocalInfo& local = require_live_local(loc, subject.base_name);
+        require_enum_owner_payload_states_available(loc, subject.base_name, local, all_payload_states);
+        for (const auto& item : all_payload_states) {
+            local.owned_field_states[item.first] = item.second;
+        }
+        std::map<std::string, LocalState> active_payload_states =
+            enum_owner_payload_states_for_case(subject, case_info, LocalState::Alive);
+        for (const auto& item : active_payload_states) {
+            local.owned_field_states[item.first] = item.second;
+        }
+        local.owned_field_states_complete = true;
+    }
+
+    std::string enum_payload_binding_owner_path(const TrackedEnumOwnerSubject& subject,
+                                                const IrPayloadBinding& binding) const {
+        std::string path = local_owned_field_path(subject.path, static_cast<std::size_t>(binding.index) + 1);
+        for (std::uint32_t field_index : binding.field_path) {
+            path = local_owned_field_path(path, static_cast<std::size_t>(field_index));
+        }
+        return path;
+    }
+
+    void mark_enum_payload_binding_owner_moves(SourceLocation loc,
+                                               const TrackedEnumOwnerSubject& subject,
+                                               const IrMatchArm& arm) {
+        std::set<std::string> moved_paths;
+        for (const auto& binding : arm.payload_bindings) {
+            if (!is_owner_type(binding.type)) continue;
+            if (binding.compact_enum_payload) {
+                fail(loc,
+                     "owning compact enum payload bindings require aggregate owner payload paths");
+            }
+            std::string path = enum_payload_binding_owner_path(subject, binding);
+            if (!moved_paths.insert(path).second) continue;
+            mark_owned_field_moved(
+                loc,
+                subject.base_name,
+                path);
+        }
+    }
+
+    void seed_enum_owner_payload_match_arm(SourceLocation loc,
+                                           const std::optional<TrackedEnumOwnerSubject>& subject,
+                                           const IrMatchArm& arm) {
+        if (!subject || arm.case_name.empty() || arm.wildcard) return;
+        if (arm.has_value_binding && is_owner_type(arm.value_type)) {
+            fail(loc, "owning whole-enum match aliases are planned but are not supported yet");
+        }
+        auto case_found = enum_cases_.find(arm.case_name);
+        if (case_found == enum_cases_.end()) {
+            throw CompileError("internal error: missing lowered enum case '" + arm.case_name + "'");
+        }
+        EnumCaseInfo case_info = enum_case_for_match_value(loc, case_found->second, subject->enum_type);
+        seed_enum_owner_payload_arm_states(loc, *subject, case_info);
+        mark_enum_payload_binding_owner_moves(loc, *subject, arm);
+    }
+
     static std::string local_owned_field_path_from_indices(const std::vector<std::size_t>& indices) {
         std::string path;
         for (std::size_t index : indices) {
@@ -13942,7 +14104,7 @@ private:
         const StmtMatchArms& source_arms = stmt_match_arms(stmt);
         if (source_arms.empty()) fail(stmt.loc, "match must have at least one arm");
 
-        lowered.match_value = check_expr(*stmt.match_value);
+        lowered.match_value = check_statement_match_value(*stmt.match_value);
         if (is_borrow_type(lowered.match_value->type)) {
             fail(stmt.loc, "borrow expression result must be passed directly to a call");
         }
@@ -14008,6 +14170,11 @@ private:
                 : hidden_reference_binding_subject(subject_name, enum_value_type);
         }
 
+        std::optional<TrackedEnumOwnerSubject> enum_owner_subject;
+        if (match_target->match_value) {
+            enum_owner_subject = tracked_enum_owner_subject(*match_target->match_value);
+        }
+
         StateSnapshot branch_input = snapshot_states();
         StateSnapshot continuing_state;
         bool has_continuing_state = false;
@@ -14038,6 +14205,7 @@ private:
                 push_scope();
                 local_scopes_.set_reusable_pattern_bindings(alternative_index == 0 ? std::set<std::string>{} : reusable_names);
                 declare_match_arm_bindings(lowered_arm);
+                seed_enum_owner_payload_match_arm(arm.loc, enum_owner_subject, lowered_arm);
                 if (needs_reference_pattern_bindings && expanded_pattern_has_reference_binding_mode(alternative)) {
                     lower_explicit_reference_bindings_from_path(
                         alternative,

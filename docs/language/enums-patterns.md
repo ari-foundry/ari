@@ -126,8 +126,12 @@ active owned payload from a direct-constructor local. Runtime-dependent
 aggregate enum values, including parameters and values received from
 aggregate-returning calls, can be explicitly dropped as whole values; the
 lowered cleanup tests the tag and drops only the active owning payload slots.
-Runtime-dependent payload-slot moves such as `value.0` still need the planned
-full owner-path model. Fixed-capacity vector payload slots can also be
+Statement `match` arms over tracked runtime-dependent local and parameter
+subjects seed tag-known owner payload states, so `Some(token)` can value-bind
+an owning payload and the binding must be dropped or moved before the arm exits.
+Runtime-dependent payload-slot moves outside statement `match`, such as
+`value.0`, still need the planned full owner-path model. Fixed-capacity vector
+payload slots can also be
 destructured with
 exact array-style element patterns such as `Values([first, second])`; the match
 arm checks the vector's current runtime length before extracting the inline data
@@ -751,7 +755,8 @@ the future shared binding-mode engine and are rejected with a dedicated
 diagnostic today. Borrow inside the arm, or bind a local first with
 `let ref` / `let ref mut` or `let &` / `let &mut` when the source is a tracked
 local place.
-When the matched subject is a direct temporary constructor, a payload of type
+When the matched subject is a direct temporary constructor, or a tracked
+runtime-dependent local or parameter in a statement `match`, a payload of type
 `own i64` or `own u64` can be value-bound and then explicitly dropped inside
 the arm.
 

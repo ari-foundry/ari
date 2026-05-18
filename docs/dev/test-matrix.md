@@ -60,6 +60,11 @@ indirect, or target-unsupported aggregate header surfaces remain rejected.
 | Front-end surfaces | structs, traits, trait generics, `dyn Trait[...]` trait-object type syntax, associated type declarations `trait T { type Item }`, impl witnesses `type Item = T`, and projection syntax `Trait[T]::Item` in type positions including unique inherited generic-supertrait associated types, explicit `value as dyn Trait[...]` impl checks, concrete and generic-impl-specialized copyable LLVM dyn dispatch, impl conformance, concrete method dispatch, generic function trait bounds, constrained static dispatch, generic source `std::cmp` `min`/`max`/`clamp` helpers over `cmp::Ord[T]`, generics, meta syntax, Rust-like prelude trait names and ADTs, required `Drop::drop` method | removed class/interface syntax, unknown traits and trait bounds, invalid trait object arity/qualifiers, missing/extra/duplicate associated type witnesses, ambiguous direct or inherited associated type projections, implicit concrete-to-dyn assignment, missing dyn-conversion impls, unrelated dyn-to-dyn upcasts, non-object-safe generic trait methods under dyn dispatch, duplicate impls, missing/mismatched trait methods, missing impls for generic trait bounds, unknown/ambiguous method calls, planned aggregate destructuring syntax, still-planned owned prelude ADTs | parser/sema validation, associated type projection lowering through unique impl witnesses and unique generic supertrait projection targets, static method-call lowering, constrained generic method selection, LLVM dyn vtable globals and LLVM vtables with erased receiver thunks for concrete and generic impls, dyn multi-argument calls, aggregate argument views, and supertrait upcasts, source `std::cmp` helper monomorphization on LLVM | partial |
 | Unsupported aggregates | vector type checking, list literal constant indexing, fixed-size array surface, non-local aggregate ABI gaps | backend rejection, vector index bounds, non-local aggregate ABI rejection | clear diagnostics | partial |
 
+Note: runtime-dependent owner enum payload moves are now covered for tracked
+local/parameter subjects in statement `match` payload bindings. The remaining
+gap in the Variables, Ownership, and Enums rows means payload-slot moves outside
+statement `match`, plus branch-merged tag-state cleanup.
+
 ## Completed Sprint: C FFI
 
 Goal: C FFI must be boring and reliable. Ari supports only C ABI for foreign
@@ -185,6 +190,9 @@ Checklist:
 - [x] drop runtime-dependent aggregate enum locals, parameters, and call/return
       results by testing the runtime tag and cleaning only the active
       owner-carrying payload slots
+- [x] bind and explicitly drop tracked runtime-dependent statement `match`
+      `own i64`/`own u64` aggregate enum payloads from local and parameter
+      subjects
 - [x] materialize discarded LLVM aggregate-returning direct and
       function-pointer calls into hidden temporaries
 - [x] preserve LLVM caller pointer bases while aggregate-valued

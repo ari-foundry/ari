@@ -1,0 +1,50 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+enum MaybeOwned {
+  None,
+  Some(own i64),
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn choose(flag: bool) -> MaybeOwned {
+  if flag {
+    return Some(make_owned(11));
+  }
+  return None;
+}
+
+fn consume(item: MaybeOwned) -> i64 {
+  match item {
+    Some(token) => {
+      drop token;
+      return 11;
+    },
+    None => {
+      return 18;
+    },
+  }
+}
+
+fn consume_local(flag: bool) -> i64 {
+  let item: MaybeOwned = choose(flag);
+  match item {
+    Some(token) => {
+      drop token;
+      return 13;
+    },
+    None => {
+      return 5;
+    },
+  }
+}
+
+fn main() -> i64 {
+  return consume(choose(true)) + consume(choose(false)) + consume_local(true);
+}

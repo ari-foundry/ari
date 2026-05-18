@@ -270,6 +270,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   with owner-carrying payload slots can be explicitly dropped as whole values.
   The lowered cleanup reads the runtime tag and only calls payload destructors
   for the active case.
+- Statement `match` arms over tracked runtime-dependent aggregate enum locals
+  and parameters seed tag-known owner payload states, so owning payload bindings
+  are checked and must be consumed before the arm exits.
 - Aggregate enum payload slots can store plain Ari-layout tuple, fixed-array,
   struct, and explicit fixed-capacity `Vec[T; N]` payload values inline. Match
   payload bindings and direct payload slot access expose the full aggregate
