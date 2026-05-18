@@ -24,8 +24,9 @@ limits, examples, and test files for one module.
   `identity`, `from`, and `into` helper calls for generic code.
 - [std::context](context.md): runtime-backed program argument access plus the
   source `has_arg` range predicate and root aliases.
-- [std::env](env.md): user-facing process argument helpers, including
-  `try_arg` and `program_name` over the runtime context.
+- [std::env](env.md): user-facing process argument and environment-variable
+  helpers, including `try_arg`, `program_name`, `try_get`, `set`, and
+  `remove`.
 - [std::process](process.md): current process id, explicit exit, and status
   helper functions.
 - [std::zone](zone.md): explicit allocation capability, raw typed allocation,

@@ -23,7 +23,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `write_bytes`, `newline`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Low-level runtime context access. | `argc`, `arg`, `has_arg`. |
-| `std::env` | User-facing process argument helpers. | `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`. |
+| `std::env` | User-facing process argument and environment-variable helpers. | `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`. |
 | `std::process` | Current-process helpers. | `id`, `exit`, `success`, `failure`, `is_success`, `is_failure`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
@@ -58,7 +58,8 @@ invalid after `reset` or `destroy`, and sema rejects later use.
 Most helper methods are plain Ari source. Compiler hooks remain for primitives
 that need backend or checker knowledge:
 
-- `extern "ari"` IO, panic, process, string allocation, and zone runtime hooks.
+- `extern "ari"` IO, panic, environment, process, string allocation, and zone
+  runtime hooks.
 - layout queries and typed pointer operations in `std::mem`.
 - formatting macros, because they inspect literal format strings.
 - provenance checks for zone-backed handles and raw pointers.
@@ -97,9 +98,11 @@ module's trait surface.
 they read the host argument context, while `has_arg` is ordinary source that
 documents the valid index policy in one reusable place.
 
-`std::env` is source-only for now. It wraps the context hooks with the names
-application code should use and adds `Option`-based argument access through
-`try_arg` and `program_name`.
+`std::env` wraps the context hooks with the names application code should use
+and adds `Option`-based argument access through `try_arg` and `program_name`.
+Environment variables use small runtime-backed hooks for `get`, `has`, `set`,
+and `remove`, with the source `try_get` helper keeping ordinary absence in
+`Option[string]`.
 
 `std::process` starts with a small runtime-backed current-process surface:
 `id` reads the host process id, `exit` terminates with an explicit status, and

@@ -19,6 +19,26 @@ Compiler changes belong in `src/` only when source Ari cannot model the
 primitive. Examples include layout queries, raw pointer load/store,
 `extern "ari"` runtime hooks, formatting macro parsing, and zone provenance.
 
+## Source File Layout
+
+Today, `.arih` and `.ari` are both parsed as Ari source. A file-backed
+`mod name;` import chooses one module file, and it searches `name.ari` before
+`name.arih`. The compiler does not yet merge a `name.arih` declaration file
+with a sibling `name.ari` implementation file.
+
+For `std`, keep each module's current public surface and source
+implementation in the file that is actually loaded, usually
+`lib/std/<module>.arih`. This keeps docs, manifest entries, and module-cache
+metadata simple. If a module grows too large, split private implementation
+details into a child module rather than assuming an automatic header/source
+pair.
+
+The intended longer-term direction is still friendly to paired files:
+`<module>.arih` can become the public declaration and ABI surface, while
+`<module>.ari` can hold larger private bodies. That compiler work should land
+with explicit duplicate-declaration and body-matching diagnostics before std
+depends on it.
+
 ## API Style
 
 - Use module paths that say what owns the behavior: `std::vec::new`,

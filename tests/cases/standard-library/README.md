@@ -13,7 +13,7 @@ compiler-known hooks.
 
 - `std-<module>-<feature>.ari`: source module APIs such as
   `std-vec-try-pop.ari`, `std-math-integer-helpers.ari`, or
-  `std-process-basic.ari`.
+  `std-env-vars.ari`.
 - `prelude-<feature>.ari`: root prelude names, aliases, macros, and implicit
   `std` loading.
 - `format-<feature>.ari`: formatting macro and runtime-lowering behavior.

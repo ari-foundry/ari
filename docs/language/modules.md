@@ -97,6 +97,20 @@ small public module surfaces there. Ari's own `lib/std.arih` uses
 `extern "ari"` for compiler/runtime builtin declarations; C libraries should
 still use `extern "C"`.
 
+`*.arih` and `*.ari` files are both Ari source files to the current compiler.
+For one `mod name;` import, the loader chooses one file in this order:
+`name.ari`, `name.arih`, `name/mod.ari`, then `name/mod.arih`. If both
+`name.ari` and `name.arih` exist today, they are not automatically paired;
+the `.ari` file wins because it appears first in the lookup order. That means
+the standard library currently keeps public declarations and small source
+implementations together in `lib/std.arih` and `lib/std/name.arih`.
+
+A future header/source pairing mode can build on this convention, for example
+by treating `name.arih` as the public declaration surface and `name.ari` as the
+private implementation body for the same module. Until that is implemented,
+keep a module's compiled implementation in the single file that `mod name;`
+will actually load, or split private helpers into child modules.
+
 Example header module:
 
 ```ari

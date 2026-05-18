@@ -18,9 +18,10 @@ byte classification, case-insensitive comparison/search, slice helpers, and
 prefix parsers, `vec`, `iter`, `fmt`, `cmp` comparison helpers, `convert`
 identity/from/into helpers, `context` runtime hooks plus the source
 `has_arg` helper, `env` source argument wrappers with `try_arg` and
-`program_name`, `input` runtime hooks plus the source `try_read_byte` EOF
-helper, `io` runtime hooks plus source byte-slice output, current
-`process` id/exit/status helpers,
+`program_name` plus current-process environment `get`/`has`/`try_get`/`set`/
+`remove`, `input` runtime hooks plus the source `try_read_byte` EOF helper,
+`io` runtime hooks plus source byte-slice output, current `process`
+id/exit/status helpers,
 `collections::Set[T]` as the first linear insertion-order set, and the first
 `math` sign predicate/arithmetic/division-rounding and `bits` numeric helper
 slices, including zero/one-run bit scans.
@@ -32,7 +33,7 @@ work. Each one should land in small tested slices with natural API names.
 
 | Family | Purpose | Current Or Planned APIs |
 | --- | --- | --- |
-| `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`; future `get`, `has`, `set`, `remove`. |
+| `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`, `get`, `has`, `try_get`, `set`, `remove`; future current-directory and executable-path helpers. |
 | `std::process` | Represent the current process and child processes explicitly. | Current `id`, `exit`, `success`, `failure`, status predicates; future `spawn`, `wait`, platform `fork`, status/result handles. |
 | `std::fs` | Work with files and directories through owned handles. | Future open/read/write/close, metadata, directory iteration, path helpers. |
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Future `Instant`, `Duration`, `now`, elapsed arithmetic, sleep. |
@@ -83,9 +84,9 @@ work. Each one should land in small tested slices with natural API names.
 
 ## Phase 5: OS-Facing Libraries
 
-- Grow `std::env` from argument helpers into environment-variable APIs such as
-  `get`, `has`, `set`, and `remove` after runtime string and OS wrapper policy
-  is stable.
+- Grow `std::env` from arguments and environment variables into
+  current-directory and executable-path helpers once owned-string behavior is
+  stable.
 - Grow `std::process` from current-process helpers into child-process handles,
   then add `std::fs`, `std::time`, `std::thread`, and `std::sync` as thin
   explicit wrappers after C FFI conventions are stable.

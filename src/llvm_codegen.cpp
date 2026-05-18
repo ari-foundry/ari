@@ -366,6 +366,9 @@ private:
                symbol == "putchar" ||
                symbol == "getchar" ||
                symbol == "fgets" ||
+               symbol == "getenv" ||
+               symbol == "setenv" ||
+               symbol == "unsetenv" ||
                symbol == "getpid" ||
                symbol == "malloc" ||
                symbol == "free" ||
@@ -382,8 +385,15 @@ private:
         if (symbol == "ari_builtin_zone_allocation_zone") {
             return IrType{TypeQualifier::Ptr, IrPrimitiveKind::Void, "void", {}, {}, {}, {}, loc};
         }
-        if (symbol == "ari_builtin_context_arg" || symbol == "ari_builtin_read_line") {
+        if (symbol == "ari_builtin_context_arg" ||
+            symbol == "ari_builtin_env_get" ||
+            symbol == "ari_builtin_read_line") {
             return IrType{TypeQualifier::Value, IrPrimitiveKind::String, "string", {}, {}, {}, {}, loc};
+        }
+        if (symbol == "ari_builtin_env_has" ||
+            symbol == "ari_builtin_env_set" ||
+            symbol == "ari_builtin_env_remove") {
+            return IrType{TypeQualifier::Value, IrPrimitiveKind::Bool, "bool", {}, {}, {}, {}, loc};
         }
         if (symbol == "ari_builtin_panic" ||
             symbol == "ari_builtin_process_exit" ||
@@ -412,6 +422,9 @@ private:
         declarations_ << "declare i32 @putchar(i32)\n";
         declarations_ << "declare i32 @getchar()\n";
         declarations_ << "declare ptr @fgets(ptr, i32, ptr)\n";
+        declarations_ << "declare ptr @getenv(ptr)\n";
+        declarations_ << "declare i32 @setenv(ptr, ptr, i32)\n";
+        declarations_ << "declare i32 @unsetenv(ptr)\n";
         declarations_ << "declare i32 @getpid()\n";
         declarations_ << "declare ptr @malloc(i64)\n";
         declarations_ << "declare void @free(ptr)\n";
@@ -489,6 +502,43 @@ private:
         line("  ret ptr %arg");
         line("empty:");
         line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "ptr @ari_builtin_env_get(ptr %name) {");
+        line("entry:");
+        line("  %value = call ptr @getenv(ptr %name)");
+        line("  %missing = icmp eq ptr %value, null");
+        line("  br i1 %missing, label %empty, label %found");
+        line("found:");
+        line("  ret ptr %value");
+        line("empty:");
+        line("  ret ptr " + empty);
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_env_has(ptr %name) {");
+        line("entry:");
+        line("  %value = call ptr @getenv(ptr %name)");
+        line("  %missing = icmp eq ptr %value, null");
+        line("  %present = xor i1 %missing, true");
+        line("  ret i1 %present");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_env_set(ptr %name, ptr %value) {");
+        line("entry:");
+        line("  %code = call i32 @setenv(ptr %name, ptr %value, i32 1)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
+        line("}");
+        line();
+
+        line("define " + runtime_visibility + "i1 @ari_builtin_env_remove(ptr %name) {");
+        line("entry:");
+        line("  %code = call i32 @unsetenv(ptr %name)");
+        line("  %ok = icmp eq i32 %code, 0");
+        line("  ret i1 %ok");
         line("}");
         line();
 

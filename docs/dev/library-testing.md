@@ -43,6 +43,8 @@ test:
   source `has_arg`, and root alias behavior.
 - `std-env-args.ari`: source `std::env` argument helpers, `Option`-returning
   `try_arg`, and `program_name` behavior over the runtime context.
+- `std-env-vars.ari`: runtime-backed `std::env` environment variable
+  `get`/`has`/`try_get`/`set`/`remove` behavior.
 - `std-process-basic.ari`: runtime-backed `std::process::id` plus source
   success/failure status helper behavior.
 - `std-process-exit.ari`: runtime-backed explicit process exit status

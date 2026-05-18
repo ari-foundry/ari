@@ -80,9 +80,14 @@ fn std::convert::into[T, U: Into[T]|std convert value helper tests; docs/stdlib/
 fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
 fn std::env::arg|check-prelude std-env-args argument wrapper; docs/stdlib/modules/env.md
 fn std::env::arg_count|check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md
+fn std::env::get|check-prelude std-env-vars environment variable lookup; docs/stdlib/modules/env.md
+fn std::env::has|check-prelude std-env-vars environment variable presence; docs/stdlib/modules/env.md
 fn std::env::has_arg|check-prelude std-env-args argument range helper; docs/stdlib/modules/env.md
 fn std::env::program_name|check-prelude std-env-args optional program name helper; docs/stdlib/modules/env.md
+fn std::env::remove|check-prelude std-env-vars environment variable removal; docs/stdlib/modules/env.md
+fn std::env::set|check-prelude std-env-vars environment variable mutation; docs/stdlib/modules/env.md
 fn std::env::try_arg|check-prelude std-env-args optional argument helper; docs/stdlib/modules/env.md
+fn std::env::try_get|check-prelude std-env-vars optional environment variable helper; docs/stdlib/modules/env.md
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row

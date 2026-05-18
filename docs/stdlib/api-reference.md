@@ -91,11 +91,22 @@ env::arg(index)
 env::has_arg(index)
 env::try_arg(index)
 env::program_name()
+env::get(name)
+env::has(name)
+env::try_get(name)
+env::set(name, value)
+env::remove(name)
 ```
 
 `env::try_arg(index)` returns `Option[string]`, and `env::program_name()` is
-the optional `argv[0]` value. Environment variables, process mutation, files,
-time, and thread APIs are still roadmap items.
+the optional `argv[0]` value.
+
+`env::try_get(name)` returns `Option[string]` for environment variables.
+`env::get(name)` returns an empty string when the variable is missing, so prefer
+`try_get` or `has` when absence matters. `env::set(name, value)` overwrites a
+current-process variable and `env::remove(name)` unsets it; both return whether
+the host accepted the request. Current directory helpers, files, time, and
+thread APIs are still roadmap items.
 
 Current-process helpers live in `std::process`:
 

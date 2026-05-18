@@ -210,6 +210,18 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/std-env-args.ari -o $(BUILD_DIR)/prelude/std-env-args.elf
 	$(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-args.elf; $(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98; fi
+	$(TARGET) tests/cases/standard-library/ok/std-env-vars.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -q "@ari_builtin_env_get" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -q "@ari_builtin_env_has" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -q "@ari_builtin_env_set" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -q "@ari_builtin_env_remove" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -q "@getenv" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -q "@setenv" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -q "@unsetenv" $(BUILD_DIR)/prelude/std-env-vars.ll
+	grep -F -q "std3env7try_get" $(BUILD_DIR)/prelude/std-env-vars.ll
+	$(TARGET) tests/cases/standard-library/ok/std-env-vars.ari -o $(BUILD_DIR)/prelude/std-env-vars.elf
+	$(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-vars.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-vars.elf; $(BUILD_DIR)/prelude/std-env-vars.elf; code=$$?; test $$code -eq 158; fi
 	$(TARGET) tests/cases/standard-library/ok/std-process-basic.ari --emit-llvm $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@ari_builtin_process_id" $(BUILD_DIR)/prelude/std-process-basic.ll
 	grep -q "@getpid" $(BUILD_DIR)/prelude/std-process-basic.ll

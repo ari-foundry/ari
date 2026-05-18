@@ -1,0 +1,60 @@
+// Covers std::env environment variable helpers. The variable is process-local
+// to this test executable, so later tests do not inherit the mutation.
+fn main() -> i64 {
+  let name = "ARI_STD_ENV_TEST_VALUE";
+  var zone = zone::create(256);
+  var score = 0;
+
+  env::remove(name);
+  if !env::has(name) {
+    score = score + 3;
+  }
+
+  let missing = env::try_get(name);
+  if missing.is_none() {
+    score = score + 5;
+  }
+
+  if env::set(name, "first") {
+    score = score + 7;
+  }
+  if env::has(name) {
+    score = score + 11;
+  }
+
+  match env::try_get(name) {
+    std::Some(value) => {
+      var text = std::string::from_string(ref mut zone, value);
+      var expected = std::string::from_string(ref mut zone, "first");
+      if text.equals(expected.as_slice()) {
+        score = score + 13;
+      }
+    }
+    std::None => {}
+  }
+
+  if env::set(name, "second") {
+    score = score + 17;
+  }
+
+  var updated = std::string::from_string(ref mut zone, env::get(name));
+  var second = std::string::from_string(ref mut zone, "second");
+  if updated.equals(second.as_slice()) {
+    score = score + 19;
+  }
+
+  if env::remove(name) {
+    score = score + 23;
+  }
+  if !env::has(name) {
+    score = score + 29;
+  }
+
+  let removed = env::try_get(name);
+  if removed.is_none() {
+    score = score + 31;
+  }
+
+  zone::destroy(zone);
+  return score;
+}
