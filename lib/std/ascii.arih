@@ -21,11 +21,30 @@ pub fn is_alphanumeric(value: u8) -> bool {
   return is_alpha(value) || is_digit(value);
 }
 
+pub fn is_blank(value: u8) -> bool {
+  return value == (32 as u8) || value == (9 as u8);
+}
+
 pub fn is_whitespace(value: u8) -> bool {
-  return value == (32 as u8) ||
-         value == (9 as u8) ||
+  return is_blank(value) ||
          value == (10 as u8) ||
          value == (13 as u8);
+}
+
+pub fn is_control(value: u8) -> bool {
+  return value <= (31 as u8) || value == (127 as u8);
+}
+
+pub fn is_printable(value: u8) -> bool {
+  return value >= (32 as u8) && value <= (126 as u8);
+}
+
+pub fn is_graphic(value: u8) -> bool {
+  return value >= (33 as u8) && value <= (126 as u8);
+}
+
+pub fn is_punctuation(value: u8) -> bool {
+  return is_graphic(value) && !is_alphanumeric(value);
 }
 
 pub fn is_hex_digit(value: u8) -> bool {

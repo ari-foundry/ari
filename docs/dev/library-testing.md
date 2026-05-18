@@ -28,6 +28,8 @@ test:
 - `std-string-ascii-helpers.ari`: source `std::string` borrowed ASCII trim
   views and whole-string parsing behavior.
 - `std-math-integer-helpers.ari`: source `std::math` i64 helper behavior.
+- `std-ascii-class-helpers.ari`: source `std::ascii` extended byte
+  classification behavior.
 - `std-ascii-slice-helpers.ari`: source `std::ascii` borrowed-slice trimming
   and integer parsing behavior.
 - `std-bits-mask-helpers.ari`: source `std::bits` u64 mask and alignment

@@ -24,9 +24,20 @@ ascii::is_lower(byte)
 ascii::is_upper(byte)
 ascii::is_alpha(byte)
 ascii::is_alphanumeric(byte)
+ascii::is_blank(byte)
 ascii::is_whitespace(byte)
+ascii::is_control(byte)
+ascii::is_printable(byte)
+ascii::is_graphic(byte)
+ascii::is_punctuation(byte)
 ascii::is_hex_digit(byte)
 ```
+
+`is_blank` accepts space and tab. `is_whitespace` accepts space, tab, line
+feed, and carriage return. `is_control` accepts `0..31` and `127`.
+`is_printable` accepts `32..126`, including space. `is_graphic` accepts
+`33..126`, excluding space. `is_punctuation` accepts printable graphic bytes
+that are not ASCII letters or digits.
 
 Case helpers return the converted byte when the input is an ASCII letter and
 return the original byte otherwise:
@@ -84,10 +95,11 @@ fn parse_score(bytes: Slice[u8]) -> i64 {
 
 ## Tests
 
-The focused positive test is:
+The focused positive tests are:
 
 ```text
 tests/cases/standard-library/ok/std-ascii-byte-helpers.ari
+tests/cases/standard-library/ok/std-ascii-class-helpers.ari
 tests/cases/standard-library/ok/std-ascii-slice-helpers.ari
 ```
 

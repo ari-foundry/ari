@@ -326,7 +326,12 @@ ascii::is_lower(byte)
 ascii::is_upper(byte)
 ascii::is_alpha(byte)
 ascii::is_alphanumeric(byte)
+ascii::is_blank(byte)
 ascii::is_whitespace(byte)
+ascii::is_control(byte)
+ascii::is_printable(byte)
+ascii::is_graphic(byte)
+ascii::is_punctuation(byte)
 ascii::is_hex_digit(byte)
 ascii::to_lower(byte)
 ascii::to_upper(byte)
@@ -339,6 +344,11 @@ ascii::trim(bytes)
 ascii::parse_decimal(bytes)
 ascii::parse_hex(bytes)
 ```
+
+`is_blank` covers space and tab. `is_whitespace` covers space, tab, line feed,
+and carriage return. `is_printable` includes space; `is_graphic` excludes
+space. `is_punctuation` is true for graphic ASCII bytes that are not letters or
+digits.
 
 `digit_value` and `hex_value` return `Option[i64]`. Non-digit input returns
 `None<i64>()` where appropriate.

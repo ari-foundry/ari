@@ -12,9 +12,9 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 - Keep this `docs/stdlib/` folder current with every public API.
 
 Current source families: `option`, `result`, `mem`, `zone`, `boxed`,
-`string`, `ascii` byte/slice helpers, `vec`, `iter`, `fmt`, `cmp`, `convert`,
-`context`, `input`, `io`, and the first `math` and `bits` numeric helper
-slices.
+`string`, `ascii` byte classification and slice helpers, `vec`, `iter`,
+`fmt`, `cmp`, `convert`, `context`, `input`, `io`, and the first `math` and
+`bits` numeric helper slices.
 
 ## Phase 2: Pull More Behavior Into Ari Source
 

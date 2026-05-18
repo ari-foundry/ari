@@ -14,9 +14,14 @@ fn std::ascii::digit_value|std ascii byte helper tests; docs/stdlib/api-referenc
 fn std::ascii::hex_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_alpha|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_alphanumeric|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_blank|std ascii class helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_control|std ascii class helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_digit|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_graphic|std ascii class helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_hex_digit|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_lower|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_printable|std ascii class helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_punctuation|std ascii class helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_upper|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_whitespace|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::parse_decimal|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section

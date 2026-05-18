@@ -227,6 +227,14 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5ascii9hex_value' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-ascii-byte-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf
 	$(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf; code=$$?; test $$code -eq 177
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-class-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
+	grep -q '_ARNv3std5ascii10is_control' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
+	grep -q '_ARNv3std5ascii12is_printable' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
+	grep -q '_ARNv3std5ascii10is_graphic' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
+	grep -q '_ARNv3std5ascii14is_punctuation' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
+	grep -q '_ARNv3std5ascii8is_blank' $(BUILD_DIR)/prelude/std-ascii-class-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-class-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-class-helpers.elf
+	$(BUILD_DIR)/prelude/std-ascii-class-helpers.elf; code=$$?; test $$code -eq 171
 	$(TARGET) tests/cases/standard-library/ok/std-ascii-slice-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
 	grep -q '_ARNv3std5ascii15skip_whitespace' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
 	grep -q '_ARNv3std5ascii10trim_start' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll

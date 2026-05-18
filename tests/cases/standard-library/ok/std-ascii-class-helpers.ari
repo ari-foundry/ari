@@ -1,0 +1,66 @@
+// Covers extended std::ascii byte classification helpers.
+fn main() -> i64 {
+  var score = 0;
+
+  if std::ascii::is_control(0 as u8) {
+    score = score + 1;
+  }
+  if ascii::is_control(31 as u8) {
+    score = score + 2;
+  }
+  if ascii::is_control(127 as u8) {
+    score = score + 3;
+  }
+  if !ascii::is_control(32 as u8) {
+    score = score + 4;
+  }
+
+  if ascii::is_printable(32 as u8) {
+    score = score + 5;
+  }
+  if ascii::is_printable(126 as u8) {
+    score = score + 6;
+  }
+  if !ascii::is_printable(127 as u8) {
+    score = score + 7;
+  }
+  if !ascii::is_printable(10 as u8) {
+    score = score + 8;
+  }
+
+  if ascii::is_graphic(33 as u8) {
+    score = score + 9;
+  }
+  if ascii::is_graphic(126 as u8) {
+    score = score + 10;
+  }
+  if !ascii::is_graphic(32 as u8) {
+    score = score + 11;
+  }
+
+  if ascii::is_punctuation(33 as u8) {
+    score = score + 12;
+  }
+  if ascii::is_punctuation(64 as u8) {
+    score = score + 13;
+  }
+  if !ascii::is_punctuation(65 as u8) {
+    score = score + 14;
+  }
+  if !ascii::is_punctuation(48 as u8) {
+    score = score + 15;
+  }
+
+  if ascii::is_blank(32 as u8) {
+    score = score + 16;
+  }
+  if ascii::is_blank(9 as u8) {
+    score = score + 17;
+  }
+  if !ascii::is_blank(10 as u8) {
+    score = score + 18;
+  }
+
+  assert_eq_i64(score, 171);
+  return score;
+}

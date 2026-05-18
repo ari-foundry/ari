@@ -31,6 +31,7 @@ prelude-slice-option-access.ari
 std-string-append-u64.ari
 std-string-ascii-helpers.ari
 std-math-integer-helpers.ari
+std-ascii-class-helpers.ari
 std-ascii-slice-helpers.ari
 std-bits-scan-helpers.ari
 std-bits-width-helpers.ari
