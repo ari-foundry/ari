@@ -32,10 +32,10 @@ When emitting host LLVM IR for `--shared`, public Ari functions and explicit
 functions and Ari-owned runtime helpers are emitted with hidden LLVM
 visibility, so they are not intended to be part of the dynamic library ABI.
 `--emit-obj` relocatable object output also records `@export`/`@no_mangle`
-names in the symbol table. LLVM object output can also record supported
-imported `extern "C"` scalar/raw-pointer calls as undefined C symbols with
-relocations. Direct executable output still rejects unresolved imported C
-symbols.
+names in the symbol table, including supported aggregate exports. LLVM object
+output can also record supported imported `extern "C"` calls as undefined C
+symbols with relocations. Direct executable output still rejects unresolved
+imported C symbols.
 
 This mangling is intentionally still a v0 ABI. Future ABI versioning work may
 revise symbol identity rules, but argument-based source-level overloading is not

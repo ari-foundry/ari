@@ -64,11 +64,6 @@ near-term deliverable.
    Preserve explicit symbol names, C-header compatibility, and module-cache
    replay behavior for object files produced with `--emit-obj`.
 
-## Small Follow-Ups
-
-- [llvm-object-fixtures] Add one minimal external-link fixture around
-  `--emit-obj` when the library ABI surface grows beyond scalar exports.
-
 ## Bootstrap Direction
 
 1. Keep the C++ implementation compact while the language design stabilizes.

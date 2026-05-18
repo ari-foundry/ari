@@ -2072,6 +2072,16 @@ check-meta: $(TARGET)
 	readelf -sW $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.sym
 	grep -q '_ARNv3add' $(BUILD_DIR)/meta/library-export-object.sym
 	if grep -q '_ARNv4main' $(BUILD_DIR)/meta/library-export-object.sym; then exit 1; fi
+	$(TARGET) tests/ok/object-aggregate-extern-link.ari --emit-obj $(BUILD_DIR)/meta/object-aggregate-extern-link.o
+	readelf -h $(BUILD_DIR)/meta/object-aggregate-extern-link.o >$(BUILD_DIR)/meta/object-aggregate-extern-link.header
+	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/meta/object-aggregate-extern-link.header
+	readelf -sW $(BUILD_DIR)/meta/object-aggregate-extern-link.o >$(BUILD_DIR)/meta/object-aggregate-extern-link.sym
+	grep -q 'ari_make_object_pair' $(BUILD_DIR)/meta/object-aggregate-extern-link.sym
+	grep -q 'ari_take_object_pair' $(BUILD_DIR)/meta/object-aggregate-extern-link.sym
+	grep -q 'ari_test_add_i64' $(BUILD_DIR)/meta/object-aggregate-extern-link.sym
+	readelf -rW $(BUILD_DIR)/meta/object-aggregate-extern-link.o >$(BUILD_DIR)/meta/object-aggregate-extern-link.relocs
+	grep -q 'ari_test_add_i64' $(BUILD_DIR)/meta/object-aggregate-extern-link.relocs
+	if grep -q '_ARNv4main' $(BUILD_DIR)/meta/object-aggregate-extern-link.sym; then exit 1; fi
 	$(TARGET) tests/ok/shared-visibility.ari --shared --emit-llvm $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define hidden i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define i64 @"_ARNv10public_api"' $(BUILD_DIR)/meta/shared-visibility.ll

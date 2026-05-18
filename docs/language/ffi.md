@@ -158,9 +158,11 @@ undefined C symbols with relocations. The supported imported-call slice covers
 integer and bool values, lowercase `string`/function-pointer slots,
 `ptr`/`ref`/`ref mut` pointer-shaped slots, `c_void` returns, and by-value
 `@repr(C)` struct parameters or returns that the shared aggregate ABI classifier
-accepts as direct on the selected target. Executable output uses the LLVM
-driver as the linker; symbols outside the host C library or Ari runtime must be
-provided through normal link arguments such as `-L`, `-l`, or `--link`.
+accepts as direct on the selected target. Object output also records explicit
+aggregate export symbols when those functions reference unresolved C helpers.
+Executable output uses the LLVM driver as the linker; symbols outside the host
+C library or Ari runtime must be provided through normal link arguments such as
+`-L`, `-l`, or `--link`.
 Host LLVM builds can allocate raw memory from explicit zones with
 `zone::create`, `zone::alloc`, `zone::reset`, and `zone::destroy`; the result of
 raw byte allocation is a `ptr u8` that can be cast and used with the same raw
@@ -259,9 +261,9 @@ functions remain default-visible. Private helper functions are emitted with
 hidden LLVM visibility, and Ari-owned runtime helpers are hidden as internal
 implementation details.
 Relocatable LLVM object output records explicit export/no-mangle names in its
-symbol table and can additionally reference scalar/raw-pointer imported
-`extern "C"` symbols through relocations. Direct executable output still rejects
-unresolved imported symbols.
+symbol table, including by-value aggregate exports, and can additionally
+reference imported `extern "C"` symbols through relocations. Direct executable
+output still rejects unresolved imported symbols.
 
 ## Type Mapping
 

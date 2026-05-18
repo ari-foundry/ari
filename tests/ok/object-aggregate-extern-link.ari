@@ -1,0 +1,20 @@
+extern "C" fn ari_test_add_i64(left: i64, right: i64) -> i64;
+
+@repr(C)
+pub struct ObjectPair {
+  left: i64,
+  right: i64,
+}
+
+@export("ari_make_object_pair")
+pub fn make_object_pair(seed: i64) -> ObjectPair {
+  return ObjectPair {
+    left: seed,
+    right: ari_test_add_i64(seed, 1),
+  };
+}
+
+@export("ari_take_object_pair")
+pub fn take_object_pair(pair: ObjectPair) -> i64 {
+  return pair.left + pair.right;
+}

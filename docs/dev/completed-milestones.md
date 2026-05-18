@@ -271,3 +271,6 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   scalar signatures by emitting undefined C symbols plus `R_X86_64_PLT32`
   `.rela.text` relocations. LLVM executable output still rejects imported C
   symbols because it has no linker phase.
+- LLVM object fixtures now cover direct by-value `@repr(C)` aggregate exports
+  that also reference unresolved `extern "C"` helpers, so symbol tables and
+  relocation records stay checked as the library ABI surface grows.

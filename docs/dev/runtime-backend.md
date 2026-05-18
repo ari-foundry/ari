@@ -62,7 +62,9 @@ keep the previous default visibility.
 
 Sema caps functions and calls at 65,535 parameters/arguments. Public functions
 and explicit `@export`/`@no_mangle` functions keep their requested symbol names
-in LLVM IR, shared-library output, and LLVM object output.
+in LLVM IR, shared-library output, and LLVM object output. Object fixtures cover
+both scalar exports and direct by-value aggregate exports that also reference
+unresolved `extern "C"` helpers.
 
 ## Prelude IO, Input, And Stops
 
