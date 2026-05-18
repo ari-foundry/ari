@@ -998,10 +998,11 @@ expression `match`, aggregate `if let`, and aggregate `while let` when the
 matched subject is addressable; runtime-sequence `Slice[T]`/`Vec[T]`
 control-flow patterns support `ref mut` element borrows in statement/expression
 `match`, `if let`, and `while let` when the matched subject is addressable.
-Ownership-aware value/move pattern bindings, function-parameter owner
-destructuring, and ownership-carrying `Slice[T]`, owned rest aliases, dynamic
-vector suffixes, and other non-static runtime sequence owner paths remain
-planned.
+Local and function-parameter value patterns can move ownership-carrying tuple,
+fixed-array, struct, and tuple-struct slots into bindings from tracked hidden
+storage. Ownership-carrying enum payload moves, `Slice[T]` owner paths, owned
+rest aliases, dynamic vector suffixes, and other non-static runtime sequence
+owner paths remain tied to the later owned-payload/runtime-capacity ABI work.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

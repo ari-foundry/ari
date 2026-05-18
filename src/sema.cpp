@@ -4627,9 +4627,6 @@ private:
                 fail(fn.loc, "parameter cannot have void type");
             }
             if (param.has_pattern) {
-                if (is_owner_type(type)) {
-                    fail(param_pattern->loc, "owning parameter patterns are planned after ownership through parameter destructuring is defined");
-                }
                 if (contains_borrow_type(type)) {
                     fail(param_pattern->loc, "borrow parameter patterns are not supported yet; use a named parameter");
                 }
@@ -6229,10 +6226,6 @@ private:
             discard->expr = std::move(init);
             ir_stmt_statements(lowered).push_back(std::move(discard));
             return;
-        }
-
-        if (is_owner_type(declared)) {
-            fail(stmt.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
         }
 
         std::string source_name = make_hidden_local("$pattern");
@@ -8177,6 +8170,10 @@ private:
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                mark_pattern_value_moved_from_source(
+                    pattern.loc,
+                    source_type,
+                    PatternValueSource{source_name, ""});
                 declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
@@ -8187,7 +8184,7 @@ private:
                 ));
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
-                    source_name,
+                    pattern.alias_name,
                     source_type,
                     statements,
                     mutable_binding,
@@ -8239,6 +8236,32 @@ private:
                 skip_reference_bindings
             );
         }
+    }
+
+    struct PatternValueSource {
+        std::string name;
+        std::string path;
+    };
+
+    void mark_pattern_value_moved_from_source(SourceLocation loc,
+                                              const IrType& value_type,
+                                              const PatternValueSource& source) {
+        if (!is_owner_type(value_type)) return;
+        LocalInfo& local = require_live_local(loc, source.name);
+        require_not_borrowed(loc, source.name, local, "move");
+        if (source.path.empty()) {
+            if (local_has_tracked_owned_fields(local)) {
+                if (local_has_moved_or_dropped_owned_fields(local)) {
+                    fail(loc, "cannot move partially moved owning binding '" + source.name + "'");
+                }
+                mark_all_local_owned_fields(local, LocalState::Moved);
+                mark_local_moved(local);
+                return;
+            }
+            mark_local_moved(local);
+            return;
+        }
+        mark_owned_field_moved(loc, source.name, source.path);
     }
 
     void lower_binding_pattern_from_local(
@@ -8319,22 +8342,17 @@ private:
         switch (pattern.kind) {
             case PatternKind::Wildcard:
                 return;
-            case PatternKind::Binding:
-                if (is_borrow_type(source_type)) {
-                    fail(pattern.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
-                }
-                if (is_owner_type(source_type)) {
-                    fail(pattern.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
-                }
-                declare_local(pattern.loc, pattern.payload_name, source_type, mutable_binding);
-                statements.push_back(make_ir_var_decl(
-                    pattern.loc,
-                    pattern.payload_name,
+            case PatternKind::Binding: {
+                PatternValueSource owner_source{source_name, ""};
+                lower_binding_pattern_value(
+                    pattern,
                     source_type,
                     make_local_lvalue_expr(pattern.loc, source_name, source_type),
-                    mutable_binding
-                ));
+                    mutable_binding,
+                    statements,
+                    &owner_source);
                 return;
+            }
             case PatternKind::Tuple:
                 if (!is_aggregate_type(source_type)) {
                     lower_tuple_binding_pattern_from_local(pattern, source_name, source_type, mutable_binding, statements);
@@ -8682,8 +8700,13 @@ private:
                     statements);
                 continue;
             }
+            std::string field_path = local_owned_field_path("", field_index);
             IrExprPtr field = make_tuple_index_expr(item.loc, source_name, source_type, field_index);
             if (item.kind == PatternKind::Tuple) {
+                mark_pattern_value_moved_from_source(
+                    item.loc,
+                    fields[field_index],
+                    PatternValueSource{source_name, field_path});
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(item.loc, nested_name, fields[field_index], false);
                 statements.push_back(make_ir_var_decl(item.loc, nested_name, fields[field_index], std::move(field), false));
@@ -8691,6 +8714,10 @@ private:
                 continue;
             }
             if (item.kind == PatternKind::Array) {
+                mark_pattern_value_moved_from_source(
+                    item.loc,
+                    fields[field_index],
+                    PatternValueSource{source_name, field_path});
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(item.loc, nested_name, fields[field_index], false);
                 statements.push_back(make_ir_var_decl(item.loc, nested_name, fields[field_index], std::move(field), false));
@@ -8708,13 +8735,24 @@ private:
                 continue;
             }
             if (item.kind == PatternKind::Struct) {
+                mark_pattern_value_moved_from_source(
+                    item.loc,
+                    fields[field_index],
+                    PatternValueSource{source_name, field_path});
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(item.loc, nested_name, fields[field_index], false);
                 statements.push_back(make_ir_var_decl(item.loc, nested_name, fields[field_index], std::move(field), false));
                 lower_struct_binding_pattern_from_local(item, nested_name, fields[field_index], mutable_binding, statements);
                 continue;
             }
-            lower_binding_pattern_value(item, fields[field_index], std::move(field), mutable_binding, statements);
+            PatternValueSource owner_source{source_name, field_path};
+            lower_binding_pattern_value(
+                item,
+                fields[field_index],
+                std::move(field),
+                mutable_binding,
+                statements,
+                &owner_source);
         }
     }
 
@@ -8772,8 +8810,13 @@ private:
                     source_type.name);
                 continue;
             }
+            std::string field_path = local_owned_field_path("", field_index);
             IrExprPtr field = make_tuple_index_expr(item.loc, source_name, source_type, field_index);
             if (item.kind == PatternKind::Tuple) {
+                mark_pattern_value_moved_from_source(
+                    item.loc,
+                    field_type,
+                    PatternValueSource{source_name, field_path});
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(item.loc, nested_name, field_type, false);
                 statements.push_back(make_ir_var_decl(item.loc, nested_name, field_type, std::move(field), false));
@@ -8781,6 +8824,10 @@ private:
                 continue;
             }
             if (item.kind == PatternKind::Array) {
+                mark_pattern_value_moved_from_source(
+                    item.loc,
+                    field_type,
+                    PatternValueSource{source_name, field_path});
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(item.loc, nested_name, field_type, false);
                 statements.push_back(make_ir_var_decl(item.loc, nested_name, field_type, std::move(field), false));
@@ -8798,13 +8845,24 @@ private:
                 continue;
             }
             if (item.kind == PatternKind::Struct) {
+                mark_pattern_value_moved_from_source(
+                    item.loc,
+                    field_type,
+                    PatternValueSource{source_name, field_path});
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(item.loc, nested_name, field_type, false);
                 statements.push_back(make_ir_var_decl(item.loc, nested_name, field_type, std::move(field), false));
                 lower_struct_binding_pattern_from_local(item, nested_name, field_type, mutable_binding, statements);
                 continue;
             }
-            lower_binding_pattern_value(item, field_type, std::move(field), mutable_binding, statements);
+            PatternValueSource owner_source{source_name, field_path};
+            lower_binding_pattern_value(
+                item,
+                field_type,
+                std::move(field),
+                mutable_binding,
+                statements,
+                &owner_source);
         }
     }
 
@@ -8813,11 +8871,18 @@ private:
         const IrType& value_type,
         IrExprPtr value,
         bool mutable_binding,
-        std::vector<IrStmtPtr>& statements
+        std::vector<IrStmtPtr>& statements,
+        const PatternValueSource* owner_source = nullptr
     ) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
-            lower_binding_pattern_value(effective_pattern, value_type, std::move(value), mutable_binding, statements);
+            lower_binding_pattern_value(
+                effective_pattern,
+                value_type,
+                std::move(value),
+                mutable_binding,
+                statements,
+                owner_source);
             return;
         }
         if (pattern.binding_mode != BindingMode::Value) {
@@ -8845,7 +8910,10 @@ private:
             fail(pattern.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
         }
         if (is_owner_type(value_type)) {
-            fail(pattern.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+            if (!owner_source) {
+                fail(pattern.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+            }
+            mark_pattern_value_moved_from_source(pattern.loc, value_type, *owner_source);
         }
         declare_local(pattern.loc, pattern.payload_name, value_type, mutable_binding);
         statements.push_back(make_ir_var_decl(pattern.loc, pattern.payload_name, value_type, std::move(value), mutable_binding));
@@ -11770,6 +11838,29 @@ private:
         (void)source_type;
     }
 
+    bool product_match_pattern_condition_irrefutable(const Pattern& pattern,
+                                                     const IrType& source_type) {
+        ProductPatternIrrefutabilityHooks hooks;
+        hooks.expand_pattern =
+            [this](const Pattern& candidate) -> const Pattern& {
+                return expanded_pattern(candidate);
+            };
+        hooks.require_struct_pattern_type =
+            [this](SourceLocation loc, const std::string& name, const IrType& type) {
+                const StructInfo& info = require_struct_match_pattern_type(loc, name, type);
+                return ForPatternStructInfo{info.name, info.tuple_struct};
+            };
+        hooks.struct_field_index =
+            [this](SourceLocation loc, const IrType& type, const std::string& field_name) {
+                return struct_field_index(loc, type, field_name);
+            };
+        hooks.is_runtime_sequence_subject =
+            [](const IrType& type) {
+                return is_runtime_sequence_pattern_subject(type);
+            };
+        return product_pattern_condition_is_irrefutable(pattern, source_type, hooks);
+    }
+
     IrExprPtr lower_tuple_element_match_condition(const Pattern& pattern,
                                                   const std::string& source_name,
                                                   const IrType& source_type,
@@ -11900,6 +11991,7 @@ private:
                 if (field_type.primitive != IrPrimitiveKind::Struct) {
                     fail(pattern.loc, "tuple-struct tuple element patterns require a tuple-struct field");
                 }
+                if (product_match_pattern_condition_irrefutable(pattern, field_type)) return nullptr;
                 {
                     std::string nested_name = make_hidden_local("$match_struct");
                     declare_local(pattern.loc, nested_name, field_type, false);
@@ -11916,6 +12008,7 @@ private:
                 if (field_type.primitive != IrPrimitiveKind::Tuple) {
                     fail(pattern.loc, "nested tuple pattern requires a tuple field, got " + type_name(field_type));
                 }
+                if (product_match_pattern_condition_irrefutable(pattern, field_type)) return nullptr;
                 std::string nested_name = make_hidden_local("$match_tuple");
                 declare_local(pattern.loc, nested_name, field_type, false);
                 prelude.push_back(make_ir_var_decl(
@@ -11930,6 +12023,7 @@ private:
             case PatternKind::Array: {
                 if (field_type.primitive != IrPrimitiveKind::Array) {
                     if (is_runtime_sequence_pattern_subject(field_type)) {
+                        if (product_match_pattern_condition_irrefutable(pattern, field_type)) return nullptr;
                         std::string nested_name = make_hidden_local("$match_array");
                         declare_local(pattern.loc, nested_name, field_type, false);
                         prelude.push_back(make_ir_var_decl(
@@ -11944,6 +12038,7 @@ private:
                     }
                     fail(pattern.loc, "nested array pattern requires an array field, got " + type_name(field_type));
                 }
+                if (product_match_pattern_condition_irrefutable(pattern, field_type)) return nullptr;
                 std::string nested_name = make_hidden_local("$match_array");
                 declare_local(pattern.loc, nested_name, field_type, false);
                 prelude.push_back(make_ir_var_decl(
@@ -11959,6 +12054,7 @@ private:
                 if (field_type.primitive != IrPrimitiveKind::Struct) {
                     fail(pattern.loc, "struct tuple element patterns require a struct field");
                 }
+                if (product_match_pattern_condition_irrefutable(pattern, field_type)) return nullptr;
                 std::string nested_name = make_hidden_local("$match_struct");
                 declare_local(pattern.loc, nested_name, field_type, false);
                 prelude.push_back(make_ir_var_decl(
@@ -12306,7 +12402,8 @@ private:
                                           IrExprPtr value,
                                           std::vector<IrStmtPtr>& statements,
                                           bool mutable_binding = false,
-                                          bool skip_reference_bindings = false) {
+                                          bool skip_reference_bindings = false,
+                                          const PatternValueSource* owner_source = nullptr) {
         const Pattern& effective_pattern = expanded_pattern(pattern);
         if (&effective_pattern != &pattern) {
             lower_tuple_match_value_bindings(
@@ -12315,7 +12412,8 @@ private:
                 std::move(value),
                 statements,
                 mutable_binding,
-                skip_reference_bindings);
+                skip_reference_bindings,
+                owner_source);
             return;
         }
         if (pattern.binding_mode != BindingMode::Value) {
@@ -12357,15 +12455,24 @@ private:
                 }
                 return;
             case PatternKind::Binding:
-                lower_binding_pattern_value(pattern, value_type, std::move(value), mutable_binding, statements);
+                lower_binding_pattern_value(
+                    pattern,
+                    value_type,
+                    std::move(value),
+                    mutable_binding,
+                    statements,
+                    owner_source);
                 return;
             case PatternKind::Alias: {
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
                 if (is_borrow_type(value_type)) {
                     fail(pattern.loc, "borrow pattern bindings are not supported yet; pass ref values directly to calls");
                 }
-                if (is_owner_type(value_type)) {
+                if (is_owner_type(value_type) && !owner_source) {
                     fail(pattern.loc, "owning pattern bindings are planned after ownership through aggregates is implemented");
+                }
+                if (owner_source) {
+                    mark_pattern_value_moved_from_source(pattern.loc, value_type, *owner_source);
                 }
                 declare_local(pattern.loc, pattern.alias_name, value_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(pattern.loc, pattern.alias_name, value_type, std::move(value), mutable_binding));
@@ -12380,6 +12487,9 @@ private:
                 return;
             }
             case PatternKind::Tuple: {
+                if (owner_source) {
+                    mark_pattern_value_moved_from_source(pattern.loc, value_type, *owner_source);
+                }
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
@@ -12393,6 +12503,9 @@ private:
                 return;
             }
             case PatternKind::Array: {
+                if (owner_source) {
+                    mark_pattern_value_moved_from_source(pattern.loc, value_type, *owner_source);
+                }
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
@@ -12417,6 +12530,9 @@ private:
                 return;
             }
             case PatternKind::Struct: {
+                if (owner_source) {
+                    mark_pattern_value_moved_from_source(pattern.loc, value_type, *owner_source);
+                }
                 std::string nested_name = make_hidden_local("$pattern");
                 declare_local(pattern.loc, nested_name, value_type, false);
                 statements.push_back(make_ir_var_decl(pattern.loc, nested_name, value_type, std::move(value), false));
@@ -12485,6 +12601,10 @@ private:
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                mark_pattern_value_moved_from_source(
+                    pattern.loc,
+                    source_type,
+                    PatternValueSource{source_name, ""});
                 declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
@@ -12495,7 +12615,7 @@ private:
                 ));
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
-                    source_name,
+                    pattern.alias_name,
                     source_type,
                     statements,
                     mutable_binding,
@@ -12541,13 +12661,15 @@ private:
                     statements);
                 continue;
             }
+            PatternValueSource owner_source{source_name, local_owned_field_path("", field_index)};
             lower_tuple_match_value_bindings(
                 item,
                 fields[field_index],
                 make_tuple_index_expr(item.loc, source_name, source_type, field_index),
                 statements,
                 mutable_binding,
-                skip_reference_bindings
+                skip_reference_bindings,
+                &owner_source
             );
         }
     }
@@ -12580,6 +12702,10 @@ private:
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                mark_pattern_value_moved_from_source(
+                    pattern.loc,
+                    source_type,
+                    PatternValueSource{source_name, ""});
                 declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
@@ -12590,7 +12716,7 @@ private:
                 ));
                 lower_product_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
-                    source_name,
+                    pattern.alias_name,
                     source_type,
                     statements,
                     mutable_binding,
@@ -12669,13 +12795,15 @@ private:
                 statements);
             return;
         }
+        PatternValueSource owner_source{source_name, local_owned_field_path("", 0)};
         lower_tuple_match_value_bindings(
             payload,
             fields[0],
             make_tuple_index_expr(payload.loc, source_name, source_type, 0),
             statements,
             mutable_binding,
-            skip_reference_bindings
+            skip_reference_bindings,
+            &owner_source
         );
     }
 
@@ -12702,6 +12830,10 @@ private:
                 return;
             case PatternKind::Alias:
                 if (!pattern.alias_pattern) fail(pattern.loc, "missing aliased pattern");
+                mark_pattern_value_moved_from_source(
+                    pattern.loc,
+                    source_type,
+                    PatternValueSource{source_name, ""});
                 declare_local(pattern.loc, pattern.alias_name, source_type, mutable_binding);
                 statements.push_back(make_ir_var_decl(
                     pattern.loc,
@@ -12712,7 +12844,7 @@ private:
                 ));
                 lower_struct_match_pattern_bindings_from_local(
                     *pattern.alias_pattern,
-                    source_name,
+                    pattern.alias_name,
                     source_type,
                     statements,
                     mutable_binding,
@@ -12767,13 +12899,15 @@ private:
                     source_type.name);
                 continue;
             }
+            PatternValueSource owner_source{source_name, local_owned_field_path("", field_index)};
             lower_tuple_match_value_bindings(
                 pattern.elements[i],
                 source_type.field_types[field_index],
                 make_tuple_index_expr(pattern.elements[i].loc, source_name, source_type, field_index),
                 statements,
                 mutable_binding,
-                skip_reference_bindings
+                skip_reference_bindings,
+                &owner_source
             );
         }
     }

@@ -301,9 +301,11 @@ wildcard, alias, and enum-case parameter patterns lower at function entry.
 `Slice[T]` runtime-sequence parameters support `name @ ..` rest bindings, which
 bind the skipped range as another `Slice[T]` view. Refutable enum-case and
 `Slice[T]` sequence parameters panic if the caller passes a non-matching case
-or length. Owning and borrow-valued parameter patterns are still rejected until
-ownership behavior for parameter destructuring is defined. Root `Vec[T]`
-function parameters are allowed in
+or length. Value patterns can destructure ownership-carrying tuple,
+fixed-array, struct, and tuple-struct parameters when the owning slots are moved
+into bindings from hidden function-entry storage. Borrow-valued parameter
+patterns are still rejected; pass ref values through named parameters. Root
+`Vec[T]` function parameters are allowed in
 ordinary direct calls and in function pointer parameter positions such as
 `fn(Vec[T]) -> R`: the compiler lowers those parameter slots to a borrowed
 `Slice[T]`-shaped ABI, so one function body works for local Vec values with
@@ -350,8 +352,8 @@ local `Vec[T]` and function-entry `Slice[T]` reference sequence patterns also
 support shared nested element borrows and `name @ ..` rest Slice bindings.
 Function-entry enum-case reference patterns can borrow addressable aggregate
 enum payload slots. Compact and non-addressable payload words remain value-only
-and are rejected with payload-specific diagnostics. Owning or borrow-valued
-parameter patterns and standalone `mut` binding-mode patterns remain rejected.
+and are rejected with payload-specific diagnostics. Borrow-valued parameter
+patterns and standalone `mut` binding-mode patterns remain rejected.
 Nested reference binding modes inside function parameter subpatterns use the
 same local binding-mode engine. Trait and extern function signatures must keep
 named parameters.

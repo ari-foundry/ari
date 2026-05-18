@@ -114,13 +114,13 @@ adding more narrow syntax-specific `*_semantics` siblings.
   formatting, finite/symbolic product pattern domain lowering, enum match
   coverage state, enum duplicate detection, and enum exhaustiveness diagnostics
 - `pattern_semantics` for pure pattern binding/or-pattern detection,
-  runtime-sequence irrefutability checks, positional product field mapping,
-  recursive reference binding-mode detection, or-pattern expansion helpers,
-  shared pattern-alternative sets that keep or-detection and expanded
-  alternatives together after macro expansion, union-safe pattern cloning shared
-  by match/or-pattern normalization and sema iterator-filter rewrites, plus
-  irrefutable non-iterator `for` loop-head pattern validation shared by range,
-  list-literal, and stored-vector loops
+  runtime-sequence and product-pattern irrefutability checks, positional
+  product field mapping, recursive reference binding-mode detection,
+  or-pattern expansion helpers, shared pattern-alternative sets that keep
+  or-detection and expanded alternatives together after macro expansion,
+  union-safe pattern cloning shared by match/or-pattern normalization and sema
+  iterator-filter rewrites, plus irrefutable non-iterator `for` loop-head
+  pattern validation shared by range, list-literal, and stored-vector loops
 - `format_semantics` for formatting target selection and shared `{}` /
   `{:.N}` format-string parsing, escaped-brace handling, placeholder count
   diagnostics, and precision validation used by both print lowering and
@@ -322,9 +322,10 @@ or `SourceLocation`, not on the whole `SemanticChecker` state.
      table extraction.
 3. Continue extracting pattern coverage helpers into `pattern_coverage`.
    - Product rectangle math now lives in `product_coverage`.
-   - Pure pattern binding/or-pattern detection, runtime-sequence irrefutability
-     checks, positional tuple/array field mapping for rest patterns, and
-     expansion helpers now live in `pattern_semantics`.
+   - Pure pattern binding/or-pattern detection, runtime-sequence and
+     product-pattern irrefutability checks, positional tuple/array field
+     mapping for rest patterns, and expansion helpers now live in
+     `pattern_semantics`.
    - Scalar integer range interval math now lives in `pattern_coverage`,
      including signed ordering, interval merging, scalar exhaustiveness, and
      scalar fully-shadowed checks.

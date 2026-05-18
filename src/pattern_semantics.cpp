@@ -76,6 +76,15 @@ void require_for_pattern_hooks(SourceLocation loc, const ForPatternValidationHoo
     }
 }
 
+void require_product_pattern_hooks(SourceLocation loc, const ProductPatternIrrefutabilityHooks& hooks) {
+    if (!hooks.expand_pattern ||
+        !hooks.require_struct_pattern_type ||
+        !hooks.struct_field_index ||
+        !hooks.is_runtime_sequence_subject) {
+        fail(loc, "internal error: incomplete product-pattern validation hooks");
+    }
+}
+
 void require_tuple_pattern_arity(const Pattern& pattern,
                                  const IrType& source_type,
                                  const std::vector<IrType>& fields) {
@@ -244,6 +253,93 @@ bool runtime_sequence_array_pattern_is_irrefutable(const Pattern& pattern) {
         case PatternKind::EnumCase:
         case PatternKind::Tuple:
         case PatternKind::Struct:
+            return false;
+    }
+    return false;
+}
+
+bool product_pattern_condition_is_irrefutable(const Pattern& pattern,
+                                              const IrType& source_type,
+                                              const ProductPatternIrrefutabilityHooks& hooks) {
+    require_product_pattern_hooks(pattern.loc, hooks);
+    const Pattern& effective_pattern = hooks.expand_pattern(pattern);
+    if (&effective_pattern != &pattern) {
+        return product_pattern_condition_is_irrefutable(effective_pattern, source_type, hooks);
+    }
+    switch (pattern.kind) {
+        case PatternKind::Wildcard:
+        case PatternKind::Binding:
+            return true;
+        case PatternKind::Alias:
+            return pattern.alias_pattern &&
+                   product_pattern_condition_is_irrefutable(*pattern.alias_pattern, source_type, hooks);
+        case PatternKind::Or:
+            for (const auto& alternative : pattern.alternatives) {
+                if (product_pattern_condition_is_irrefutable(alternative, source_type, hooks)) return true;
+            }
+            return false;
+        case PatternKind::Tuple:
+        case PatternKind::Array: {
+            if (pattern.kind == PatternKind::Array &&
+                hooks.is_runtime_sequence_subject(source_type)) {
+                return runtime_sequence_array_pattern_is_irrefutable(pattern);
+            }
+            IrPrimitiveKind expected = pattern.kind == PatternKind::Array
+                ? IrPrimitiveKind::Array
+                : IrPrimitiveKind::Tuple;
+            if (source_type.primitive != expected) return false;
+            const std::vector<IrType>& fields = aggregate_field_types(source_type);
+            require_tuple_pattern_arity(pattern, source_type, fields);
+            for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
+                std::size_t field_index = tuple_pattern_field_index(pattern, fields.size(), i);
+                if (!product_pattern_condition_is_irrefutable(pattern.elements[i], fields[field_index], hooks)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        case PatternKind::Struct: {
+            if (source_type.primitive != IrPrimitiveKind::Struct) return false;
+            hooks.require_struct_pattern_type(pattern.loc, pattern.case_name, source_type);
+            if (pattern.field_names.size() != pattern.elements.size()) {
+                throw CompileError("internal error: struct match pattern field/value arity mismatch");
+            }
+            for (std::size_t i = 0; i < pattern.field_names.size(); ++i) {
+                std::size_t field_index = hooks.struct_field_index(
+                    pattern.elements[i].loc,
+                    source_type,
+                    pattern.field_names[i]);
+                if (!product_pattern_condition_is_irrefutable(
+                        pattern.elements[i],
+                        source_type.field_types[field_index],
+                        hooks)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        case PatternKind::EnumCase: {
+            if (source_type.primitive != IrPrimitiveKind::Struct) return false;
+            ForPatternStructInfo info = hooks.require_struct_pattern_type(pattern.loc, pattern.case_name, source_type);
+            if (!info.tuple_struct || !pattern.has_payload_pattern || !pattern.payload_pattern) return false;
+            const std::vector<IrType>& fields = aggregate_field_types(source_type);
+            const Pattern& payload = *pattern.payload_pattern;
+            if (payload.kind == PatternKind::Tuple) {
+                require_tuple_pattern_arity(payload, source_type, fields);
+                for (std::size_t i = 0; i < payload.elements.size(); ++i) {
+                    std::size_t field_index = tuple_pattern_field_index(payload, fields.size(), i);
+                    if (!product_pattern_condition_is_irrefutable(payload.elements[i], fields[field_index], hooks)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return fields.size() == 1 &&
+                   product_pattern_condition_is_irrefutable(payload, fields[0], hooks);
+        }
+        case PatternKind::IntegerLiteral:
+        case PatternKind::BoolLiteral:
+        case PatternKind::Range:
             return false;
     }
     return false;

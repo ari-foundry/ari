@@ -1,0 +1,72 @@
+struct Holder {
+  token: own i64,
+  count: i64,
+}
+
+struct Wrapper {
+  holder: Holder,
+  bonus: i64,
+}
+
+struct TupleBox(own i64, i64)
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn take_tuple((token, amount): (own i64, i64)) -> i64 {
+  drop token;
+  return amount;
+}
+
+fn take_holder(Holder { token, count }: Holder) -> i64 {
+  drop token;
+  return count;
+}
+
+fn take_nested(Wrapper { holder: Holder { token, count }, bonus }: Wrapper) -> i64 {
+  drop token;
+  return count + bonus;
+}
+
+fn take_tuple_struct(TupleBox(token, amount): TupleBox) -> i64 {
+  drop token;
+  return amount;
+}
+
+fn take_array([first, second]: [own i64, 2]) -> i64 {
+  drop first;
+  drop second;
+  return 5;
+}
+
+fn local_patterns() -> i64 {
+  let Holder { token, count } = Holder { token: make_owned(8), count: 9 };
+  drop token;
+
+  let (left, right) = (make_owned(10), 11);
+  drop left;
+
+  let [first, second] = [make_owned(12), make_owned(13)];
+  drop first;
+  drop second;
+
+  let whole @ Holder { token: alias_token, count: alias_count } =
+    Holder { token: make_owned(14), count: 15 };
+  drop alias_token;
+  drop whole;
+
+  return count + right + alias_count + 5;
+}
+
+fn main() -> i64 {
+  return take_tuple((make_owned(1), 2)) +
+         take_holder(Holder { token: make_owned(3), count: 4 }) +
+         take_nested(Wrapper {
+           holder: Holder { token: make_owned(6), count: 8 },
+           bonus: 9,
+         }) +
+         take_tuple_struct(TupleBox(make_owned(11), 12)) +
+         take_array([make_owned(20), make_owned(21)]) +
+         local_patterns();
+}

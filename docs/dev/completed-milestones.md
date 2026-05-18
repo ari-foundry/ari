@@ -94,6 +94,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Product-pattern lowering is shared across tuple, fixed-array, named-struct,
   tuple-struct, `let`/`var`, match, aggregate `if let`, aggregate `while let`,
   and supported function parameter patterns.
+- Local and function-parameter value patterns can move ownership-carrying
+  tuple, fixed-array, struct, and tuple-struct slots into bindings from tracked
+  hidden storage. The binding engine marks the moved owner subpaths so skipped
+  live owned fields still follow normal cleanup.
 - Loop fixed-point checking tracks ownership and borrow states at `break`,
   `continue`, zero-iteration, literal-true next-iteration, and fallthrough
   merge points. Ambiguous loop exits produce explicit `maybe-unavailable`

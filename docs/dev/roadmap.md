@@ -15,43 +15,18 @@ changing the long-term language contract.
 1. Keep sema extraction phase-oriented.
    `pattern_semantics` already owns pure pattern tree queries, or-pattern
    expansion, positional product mapping, and runtime-sequence irrefutability
-   checks, with the shared pattern-alternative set keeping or-pattern detection
-   and expansion together before sema lowers bindings. Continue extracting
-   broad modules such as type inference, ownership state, zone provenance, and
-   IR lowering helpers. `attribute_semantics` now owns built-in attribute
+   checks, plus product-pattern irrefutability queries used before sema
+   materializes hidden match storage. The shared pattern-alternative set keeps
+   or-pattern detection and expansion together before sema lowers bindings.
+   Continue extracting broad modules such as type inference, ownership state,
+   zone provenance, and IR lowering helpers. `attribute_semantics` now owns
+   built-in attribute
    classification, target/argument validation, and `@repr(C)` field/case
    guards, and
    `ownership_semantics` now owns recursive owned-field state seeding for
    locals and stack-backed vector storage. Avoid splitting one tiny file per
    syntax feature.
-2. Finish the remaining pattern binding-mode surface.
-   Nested shared reference binding modes now work through local/function
-   parameter destructuring plus enum statement/expression `match` and enum
-   `if let`/`while let` patterns, including enum `while let` or-pattern
-   alternatives. Pattern macro output now feeds the same expanded pattern path
-   before match/or-pattern lowering and reference-binding detection. Mutable
-   enum payload reference bindings now work in enum statement/expression
-   `match`, enum `if let`, and enum `while let` when the matched subject is an
-   addressable local, field, or indexed element. Mutable tuple, fixed-array,
-   and struct control-flow reference bindings now borrow the original
-   addressable subject while hidden product storage drives pattern tests, and
-   mutable runtime-sequence control-flow reference bindings now borrow
-   addressable `Slice[T]`/`Vec[T]` subjects while hidden sequence storage drives
-   length and element tests. Local/path `let ref` and `let ref mut` bindings can
-   destructure ownership-carrying tuple, fixed-array, and struct values when
-   owned fields are skipped or borrowed through live tracked paths, and exact
-   local `Vec[T]` reference patterns can borrow ownership-carrying element
-   slots, including ownership-carrying aggregate element fields, when the
-   element path is statically known. Local `Vec[T]` reference patterns with
-   `..` can also borrow ownership-carrying prefix elements and suffix elements
-   when a direct local vector has a known current length and no rest alias.
-   Finish value/move binding modes plus ownership-aware enum and non-static
-   runtime sequence owner paths (`Slice[T]`, owned rest aliases, and truly
-   dynamic vector suffixes), including the parameter-destructuring ownership
-   story.
-   Keep `let`/`var`, match, control-flow, for-loop, and function-parameter
-   patterns on the same shared binding-mode engine.
-3. Expand aggregate enum payload storage.
+2. Expand aggregate enum payload storage.
    Current aggregate enum payloads now cover scalar/pointer-shaped slots,
    one-word enums, nested aggregate enums, and plain Ari-layout tuple,
    fixed-array, struct, and explicit fixed-capacity `Vec[T; N]` payload values,
@@ -71,11 +46,16 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
    method surface, and non-local aggregate layout. Future owning heap-style
    `Box[T]` should build on the same explicit-capability rules rather than
    inventing an ambient heap.
-2. Extend trait-object ownership.
+2. Define dynamic owner pattern paths.
+   After runtime-capacity `Vec[T]` and owned enum payload ABI rules are stable,
+   define owner moves through enum payload slots, `Slice[T]` element paths,
+   owned rest aliases, and dynamic vector suffixes without relying on hidden
+   whole-value leaks.
+3. Extend trait-object ownership.
    Define durable data-pointer storage for `own` and borrow-valued dyn objects,
    including lifetime rules for objects that outlive hidden stack
    materialization.
-3. Add an explicit owner-resolution surface.
+4. Add an explicit owner-resolution surface.
    Loop exits that cannot prove a single owner state currently produce
    `maybe-unavailable` locals. A future language form should let users resolve
    those conditional cleanup states intentionally.

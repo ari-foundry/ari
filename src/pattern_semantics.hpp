@@ -22,6 +22,15 @@ struct ForPatternValidationHooks {
         struct_field_index;
 };
 
+struct ProductPatternIrrefutabilityHooks {
+    std::function<const Pattern&(const Pattern&)> expand_pattern;
+    std::function<ForPatternStructInfo(SourceLocation, const std::string&, const IrType&)>
+        require_struct_pattern_type;
+    std::function<std::size_t(SourceLocation, const IrType&, const std::string&)>
+        struct_field_index;
+    std::function<bool(const IrType&)> is_runtime_sequence_subject;
+};
+
 struct PatternAlternativeSet {
     std::vector<Pattern> alternatives;
     bool contains_or = false;
@@ -34,6 +43,9 @@ bool pattern_has_mutable_reference_binding_mode(const Pattern& pattern);
 bool pattern_contains_or(const Pattern& pattern);
 bool pattern_contains_array_pattern(const Pattern& pattern);
 bool runtime_sequence_array_pattern_is_irrefutable(const Pattern& pattern);
+bool product_pattern_condition_is_irrefutable(const Pattern& pattern,
+                                              const IrType& source_type,
+                                              const ProductPatternIrrefutabilityHooks& hooks);
 std::vector<Pattern> expand_or_pattern_alternatives(const Pattern& pattern);
 PatternAlternativeSet pattern_alternatives(const Pattern& pattern);
 void require_irrefutable_non_iterator_for_pattern(const Pattern& pattern,

@@ -180,9 +180,11 @@ reference bindings in statement/expression `match`, aggregate `if let`, and
 aggregate `while let` when the matched subject is addressable. Runtime-sequence
 `Slice[T]`/`Vec[T]` control-flow patterns support mutable element reference
 bindings in statement/expression `match`, `if let`, and `while let` when the
-matched subject is addressable. Ownership-aware value/move pattern bindings,
-function-parameter owner destructuring, ownership-carrying `Slice[T]`, owned
-rest aliases, and dynamic vector suffix owner paths remain planned.
+matched subject is addressable. Local and function-parameter value patterns can
+move ownership-carrying tuple, fixed-array, struct, and tuple-struct slots into
+bindings from tracked hidden storage. Ownership-carrying enum payload moves,
+`Slice[T]` owner paths, owned rest aliases, and dynamic vector suffix owner
+paths remain tied to the later owned-payload/runtime-capacity ABI work.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

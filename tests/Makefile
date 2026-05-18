@@ -3241,6 +3241,8 @@ check-functions: $(TARGET) check-function-errors
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-param-patterns.elf; $(BUILD_DIR)/functions/function-param-patterns.elf; code=$$?; test $$code -eq 87; fi
 	$(TARGET) tests/ok/function-param-patterns.ari -o $(BUILD_DIR)/functions/function-param-patterns.elf
 	$(BUILD_DIR)/functions/function-param-patterns.elf; code=$$?; test $$code -eq 87
+	$(TARGET) tests/ok/function-param-pattern-ownership.ari -o $(BUILD_DIR)/functions/function-param-pattern-ownership.elf
+	$(BUILD_DIR)/functions/function-param-pattern-ownership.elf; code=$$?; test $$code -eq 80
 	$(TARGET) tests/ok/function-reference-param-patterns.ari --emit-llvm $(BUILD_DIR)/functions/function-reference-param-patterns.ll
 	grep -q "getelementptr" $(BUILD_DIR)/functions/function-reference-param-patterns.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/function-reference-param-patterns.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/functions/function-reference-param-patterns.elf; $(BUILD_DIR)/functions/function-reference-param-patterns.elf; code=$$?; test $$code -eq 70; fi
