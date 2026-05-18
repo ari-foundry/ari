@@ -27,6 +27,8 @@ slices.
 
 - Stabilize `std::vec::Vec[T]` and document the distinction from bare local
   `Vec[T]`.
+- Keep shared collection access vocabulary aligned across `Slice[T]` and
+  `std::vec::Vec[T]`, including `try_*` methods for `Option`-based absence.
 - Add collection helpers in small slices: slice methods, vector methods,
   iterator adapters, then maps/sets/deques.
 - Keep `std::string::String` byte-oriented until a Unicode/text policy is

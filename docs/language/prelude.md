@@ -78,7 +78,8 @@ The prelude expression macro `Vec!(T, ref mut zone, capacity)` is shorthand for
 that `std::vec::new<T>(ref mut zone, capacity)` constructor; it is allocator
 construction sugar, not a root `Vec[T]` ABI workaround.
 The source handle currently exposes element methods: `len`, `capacity`,
-`is_empty`, `first`, `last`, `get`, `set`, `replace`, `swap`, `push`,
+`is_empty`, `first`, `try_first`, `last`, `try_last`, `get`, `try_get`,
+`set`, `replace`, `swap`, `push`,
 `push_in(ref mut zone, value)`, grow-only same-zone `reserve`,
 `reserve_extra(ref mut zone, additional)`, `pop`, `try_pop`, `insert`,
 `insert_in(ref mut zone, index, value)`, `remove`, `clear`, `truncate`,
@@ -740,8 +741,8 @@ the explicit allocator path for future Vec storage, and
 `std::vec::Vec<T>` / `std::Vec<T>`. `Vec!(T, ref mut Zone, capacity)` is the
 short prelude constructor spelling for that same source handle. The source
 handle supports metadata, read/write/replace,
-push/pop, same-zone `push_in` growth, same-zone grow-only `reserve`,
-`try_pop`, insert/remove, swap,
+push/pop, `try_first`/`try_last`/`try_get`, same-zone `push_in` growth,
+same-zone grow-only `reserve`, `try_pop`, insert/remove, swap,
 same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone
 `extend_from_slice_in` growth, same-zone `resize_in` growth, truncate/clear,
 element borrow views, simple search, `Slice[T]` exact/prefix/suffix checks,
@@ -754,9 +755,10 @@ same zone provenance, so using either after `zone::reset` or `zone::destroy`
 is rejected. `as_ptr()` / `as_mut_ptr()` raw pointers and copied Vec handles
 track their source or target zone respectively. Mutating overwrite/shrink
 helpers drop removed element values before reducing the live length, while
-buffer release remains with the explicit zone. `try_pop()` returns `Option[T]`
-instead of asserting on empty handles. The bare `Vec[T]` type and its current
-local method set remain
+buffer release remains with the explicit zone. `try_first()`, `try_last()`,
+`try_get(index)`, and `try_pop()` return `Option[T]` instead of asserting on
+empty or out-of-range handles. The bare `Vec[T]` type and its current local
+method set remain
 fixed-local until runtime growth is ported. Bare root `Vec[T]` can be used as
 an ordinary direct function
 parameter or as a function pointer parameter in `fn(Vec[T]) -> R`; sema lowers

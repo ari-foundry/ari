@@ -474,6 +474,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/std-vec-try-pop.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent7try_pop' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
 	grep -q '_ARNv4impl16std__Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/std-vec-try-pop.ll
+	$(TARGET) tests/cases/standard-library/ok/std-vec-try-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-try-access.ll
+	grep -F -q 'define { i32, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent9try_first"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-try-access.ll
+	grep -F -q 'define { i32, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent8try_last"(ptr %arg0)' $(BUILD_DIR)/prelude/std-vec-try-access.ll
+	grep -F -q 'define { i32, i64 } @"_ARNv4impl18std__vec__Vec_i64_8inherent7try_get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-try-access.ll
+	$(TARGET) tests/cases/standard-library/ok/std-vec-try-access.ari -o $(BUILD_DIR)/prelude/std-vec-try-access.elf
+	$(BUILD_DIR)/prelude/std-vec-try-access.elf; code=$$?; test $$code -eq 120
 	$(TARGET) tests/cases/standard-library/ok/std-vec-shrink-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv3std3vec20shrink_to_len__G_i64' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_8inherent3set' $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.ll
@@ -527,6 +533,10 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent6equals"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl15std__Slice_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/prelude-slice-methods.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude-slice-option-access.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
+	grep -F -q 'define { i32, i64 } @"_ARNv4impl15std__Slice_i64_8inherent9try_first"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
+	grep -F -q 'define { i32, i64 } @"_ARNv4impl15std__Slice_i64_8inherent8try_last"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
+	grep -F -q 'define { i32, i64 } @"_ARNv4impl15std__Slice_i64_8inherent7try_get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/prelude-slice-option-access.ll
 	$(TARGET) tests/cases/standard-library/ok/prelude-slice-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl15std__Slice_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-slice-as-ptr.ll
 	$(TARGET) tests/cases/standard-library/ok/prelude-slice-copy-to.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-slice-copy-to.ll
@@ -535,6 +545,8 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/prelude-slice-view.elf; code=$$?; test $$code -eq 101
 	$(TARGET) tests/cases/standard-library/ok/prelude-slice-methods.ari -o $(BUILD_DIR)/prelude/prelude-slice-methods.elf
 	$(BUILD_DIR)/prelude/prelude-slice-methods.elf; code=$$?; test $$code -eq 105
+	$(TARGET) tests/cases/standard-library/ok/prelude-slice-option-access.ari -o $(BUILD_DIR)/prelude/prelude-slice-option-access.elf
+	$(BUILD_DIR)/prelude/prelude-slice-option-access.elf; code=$$?; test $$code -eq 77
 	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-methods.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'define i1 @"_ARNv4impl16std__Option_i64_8inherent7is_some"(ptr %arg0)' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	grep -F -q 'Option_i64_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll

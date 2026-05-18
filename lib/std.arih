@@ -60,15 +60,39 @@ pub impl[T] Slice[T] {
     return ptr_load(self.data);
   }
 
+  fn try_first(self: ref Self) -> Option[T] {
+    if self.len == 0 {
+      return None<T>();
+    }
+    return Some<T>(ptr_load(self.data));
+  }
+
   fn last(self: ref Self) -> T {
     std::assert(self.len > 0);
     return ptr_load(ptr_add(self.data, self.len - 1));
+  }
+
+  fn try_last(self: ref Self) -> Option[T] {
+    if self.len == 0 {
+      return None<T>();
+    }
+    return Some<T>(ptr_load(ptr_add(self.data, self.len - 1)));
   }
 
   fn get(self: ref Self, index: i64) -> T {
     std::assert(index >= 0);
     std::assert(index < self.len);
     return ptr_load(ptr_add(self.data, index));
+  }
+
+  fn try_get(self: ref Self, index: i64) -> Option[T] {
+    if index < 0 {
+      return None<T>();
+    }
+    if index >= self.len {
+      return None<T>();
+    }
+    return Some<T>(ptr_load(ptr_add(self.data, index)));
   }
 
   fn as_ptr(self: ref Self) -> ptr T {

@@ -20,6 +20,10 @@ Use file names that identify both the library family and the behavior under
 test:
 
 - `std-vec-try-pop.ari`: source `std::vec` method behavior.
+- `std-vec-try-access.ari`: source `std::vec` Option-returning access
+  behavior.
+- `prelude-slice-option-access.ari`: root `Slice[T]` Option-returning access
+  behavior.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-string-ascii-helpers.ari`: source `std::string` borrowed ASCII trim
   views and whole-string parsing behavior.

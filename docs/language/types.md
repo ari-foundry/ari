@@ -479,13 +479,15 @@ the compiler knows the current local vector length. Slice views can be sliced
 again with `view[start..end]` or `view[start..=end]`; the result stores an
 adjusted raw pointer and length after checking the requested range against the
 source view. `first()`, `last()`, and `get(index)` are checked read-only
-accessors. `contains(value)`, `index_of(value)`, and `count(value)` scan
-comparable elements, while `equals(view)`, `starts_with(view)`, and
-`ends_with(view)` compare against another `Slice[T]`. `copy_to(ref mut Zone)`
-copies the current view into a target-zone `std::vec::Vec<T>` handle whose
-reset/destroy provenance follows the target zone. The LLVM host backend lowers
-the local Slice view surface for materializable element values; target-zone
-Slice copy is an LLVM host explicit-zone path.
+accessors that assert on absence. `try_first()`, `try_last()`, and
+`try_get(index)` return `Option[T]` for empty or out-of-range access.
+`contains(value)`, `index_of(value)`, and `count(value)` scan comparable
+elements, while `equals(view)`, `starts_with(view)`, and `ends_with(view)`
+compare against another `Slice[T]`. `copy_to(ref mut Zone)` copies the current
+view into a target-zone `std::vec::Vec<T>` handle whose reset/destroy
+provenance follows the target zone. The LLVM host backend lowers the local
+Slice view surface for materializable element values; target-zone Slice copy is
+an LLVM host explicit-zone path.
 Array lengths, including direct array literal lengths, are folded directly:
 
 ```ari
@@ -654,8 +656,10 @@ pointer with the receiver's zone provenance intact. `vec.as_slice()` returns a
 `Slice[T]` over the same zone-backed buffer, and that slice is rejected after
 the source zone is reset or destroyed. `equals(view)`, `starts_with(view)`, and
 `ends_with(view)` compare the current Vec elements with a borrowed `Slice[T]`
-view. `vec.iter()` returns a tracked `std::vec::Iter<T>` over the current
-buffer, and `std::vec::Vec<T>` implements `IntoIterator[T]`, so
+view. `try_first()`, `try_last()`, and `try_get(index)` mirror the Slice
+Option-returning accessors for ordinary empty or out-of-range cases.
+`vec.iter()` returns a tracked `std::vec::Iter<T>` over the current buffer, and
+`std::vec::Vec<T>` implements `IntoIterator[T]`, so
 `for value in vec` and `for value in vec.iter()` both advance through the same
 `Iterator[T].next` lowering. The iterator keeps the handle's zone provenance:
 using it after that zone is reset or destroyed is rejected. Metadata, checked

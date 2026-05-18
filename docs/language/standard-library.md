@@ -24,7 +24,7 @@ hooks because the current language cannot express those primitives directly.
 
 | Library | Purpose | Current API Highlights | Status |
 | --- | --- | --- | --- |
-| `std` root | Common prelude surface and shared ADTs. | `Option[T]`, `Result[T, E]`, `Slice[T]`, `Range[T]`, `RangeInclusive[T]`, `move`, `take`, assertion helpers, panic helpers, root `Box`, `String`, and `Vec` aliases. | Implemented source surface with compiler-known hooks for selected helpers. |
+| `std` root | Common prelude surface and shared ADTs. | `Option[T]`, `Result[T, E]`, `Slice[T]` with `try_*` accessors, `Range[T]`, `RangeInclusive[T]`, `move`, `take`, assertion helpers, panic helpers, root `Box`, `String`, and `Vec` aliases. | Implemented source surface with compiler-known hooks for selected helpers. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `map`, `or`, `or_else`, `xor`, `and_then`, `ok_or`, `ok_or_else`. | Implemented for the current generic enum model. |
 | `std::result` | Error-return convenience methods. | `is_ok`, `is_err`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `unwrap_err`, `expect_err`, `ok`, `err`, `map`, `map_err`, `and_then`, `or_else`. | Implemented for the current generic enum model. |
 | `std::io` | Minimal process IO hooks. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_byte`, `read_line`, `read_line_owned`. | Runtime-backed through reserved `extern "ari"` builtins. |
@@ -35,7 +35,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::boxed` | Zone-backed single-value owner handle. | `Box[T]`, `new`, `Box::new`, `get`, `set`, `replace`, `take`, `try_take`, `clear`, `put_in`, `copy_to`, `as_ref`, `as_mut`, `swap`, raw pointer access. | Implemented as an explicit-zone seed for future smart-pointer work. |
 | `std::string` | Zone-backed owned byte string seed. | `String`, `RawString`, capacity constructors, copy helpers, byte get/set/search, growth, append helpers, ASCII `trim`/parse helpers, `as_slice`, `as_ptr`. | Implemented as a byte string. Full text/Unicode policy is still future work. |
 | `std::ascii` | ASCII-only byte and slice helpers for byte strings and parsers. | `is_digit`, `is_alpha`, `is_alphanumeric`, `is_whitespace`, `is_hex_digit`, `to_lower`, `to_upper`, `digit_value`, `hex_value`, `trim`, `parse_decimal`, `parse_hex`. | Implemented in Ari source; not a Unicode or locale-aware text API. |
-| `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked element access, mutation, growth, copy, slice view, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
+| `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked and `Option` element access, mutation, growth, copy, slice view, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
 | `std::iter` | Iteration traits and range constructors. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`. | Range lowering and `std::vec::Iter` are implemented; general iterator protocols are still growing. |
 | `std::fmt` | Formatting traits. | `Debug`, `Display::format_in`. | Trait surface is present; formatting macros still use compiler lowering. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`. | Implemented for source-level trait-bound static dispatch. |
@@ -78,7 +78,7 @@ Use this table when writing code from docs alone:
 | Convert missing values into failures. | `option.ok_or<E>(error)`, `option.ok_or_else<E>(op)` | Lazy form builds the error only for `None`. |
 | Represent success/failure. | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` | `?` propagates residual cases and runs hidden iterator cleanup when needed. |
 | Convert failures back to optional values. | `result.ok()`, `result.err()` | Keeps only the selected payload branch. |
-| Work with borrowed contiguous data. | `Slice[T]`, `slice(data, len)`, `.as_slice()` | Slice methods borrow the view; `copy_to(ref mut zone)` makes a new owned collection when available. |
+| Work with borrowed contiguous data. | `Slice[T]`, `slice(data, len)`, `.as_slice()` | Slice methods borrow the view; use `try_get` when absence is expected, and `copy_to(ref mut zone)` when an owned collection is needed. |
 | Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
 | Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. |
 | Store owned byte text. | `std::string::from_string(ref mut zone, "text")` or `std::string::new(ref mut zone, capacity)` | The handle stores bytes, not a full Unicode text abstraction yet. |
@@ -141,8 +141,11 @@ collection vocabulary where the operation makes sense:
 value.len()
 value.is_empty()
 value.first()
+value.try_first()
 value.last()
+value.try_last()
 value.get(index)
+value.try_get(index)
 value.contains(item)
 value.index_of(item)
 value.count(item)
@@ -150,6 +153,9 @@ value.as_ptr()
 value.as_slice()
 value.copy_to(ref mut zone)
 ```
+
+The non-`try` accessors assert on bad indexes. `try_first`, `try_last`, and
+`try_get` return `Option[T]` and are the better choice for normal control flow.
 
 `std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
 `replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,

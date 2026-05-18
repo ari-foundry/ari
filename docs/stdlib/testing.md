@@ -26,6 +26,8 @@ Examples:
 
 ```text
 std-vec-try-pop.ari
+std-vec-try-access.ari
+prelude-slice-option-access.ari
 std-string-append-u64.ari
 std-string-ascii-helpers.ari
 std-math-integer-helpers.ari

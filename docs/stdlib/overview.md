@@ -17,7 +17,7 @@ hiding allocation, ownership, or backend behavior.
 
 | Module | Purpose | First Things To Use |
 | --- | --- | --- |
-| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `move`, `take`, `assert`, `panic`. |
+| `std` | Prelude root, shared ADTs, root aliases. | `Option`, `Result`, `Slice`, `try_get`, `move`, `take`, `assert`, `panic`. |
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `unwrap_or_else`, `map`, `and_then`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `unwrap_or_else`, `ok`, `err`, `map_err`. |
 | `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_line`. |
@@ -28,7 +28,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `append_i64_in`, `trim`, `parse_decimal`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_whitespace`, `trim`, `parse_decimal`, `parse_hex`. |
-| `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `get`, `as_slice`, `iter`. |
+| `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
 | `std::fmt` | Formatting trait surface. | `Display::format_in`, `Debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`. |
@@ -65,6 +65,10 @@ small integer parsing need no compiler knowledge.
 constructors and runtime copy hooks still depend on compiler-known zone/string
 primitives, but byte search, comparison, ASCII trim views, and whole-string
 ASCII parsing are plain source methods.
+
+`Slice[T]` and `std::vec::Vec[T]` share the preferred collection vocabulary:
+asserting `first`/`last`/`get` for programmer errors and `try_first`/
+`try_last`/`try_get` for ordinary absence handled through `Option[T]`.
 
 `std::bits` follows the same rule for current `u64` mask, alignment, and
 source-loop bit-scan helpers. Future intrinsic-backed implementations may need

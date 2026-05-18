@@ -1,0 +1,26 @@
+// Covers Option-returning Slice accessors for empty and out-of-range reads.
+fn main() -> i64 {
+  var values = [4, 9, 16];
+  let view = values.as_slice();
+  let empty = view[0..0];
+
+  let first = view.try_first().unwrap_or(0);
+  let last = view.try_last().unwrap_or(0);
+  let middle = view.try_get(1).unwrap_or(0);
+  let negative = view.try_get(-1).unwrap_or(7);
+  let too_far = view.try_get(3).unwrap_or(11);
+  let empty_first = empty.try_first().unwrap_or(13);
+  let empty_last = empty.try_last().unwrap_or(17);
+
+  let total =
+    first +
+    last +
+    middle +
+    negative +
+    too_far +
+    empty_first +
+    empty_last;
+
+  assert_eq_i64(total, 77);
+  return total;
+}

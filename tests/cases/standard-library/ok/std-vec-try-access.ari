@@ -1,0 +1,32 @@
+// Covers Option-returning source Vec accessors without relying on traps.
+fn main() -> i64 {
+  var zone = zone::create(96);
+  var values = std::vec::new<i64>(ref mut zone, 2);
+
+  let empty_first = values.try_first().unwrap_or(31);
+
+  values.push(5);
+  values.push(8);
+
+  let first = values.try_first().unwrap_or(0);
+  let last = values.try_last().unwrap_or(0);
+  let indexed = values.try_get(1).unwrap_or(0);
+  let negative = values.try_get(-1).unwrap_or(13);
+  let too_far = values.try_get(2).unwrap_or(21);
+
+  values.clear();
+  let empty_last = values.try_last().unwrap_or(34);
+
+  let total =
+    empty_first +
+    first +
+    last +
+    indexed +
+    negative +
+    too_far +
+    empty_last;
+
+  assert_eq_i64(total, 120);
+  zone::destroy(zone);
+  return total;
+}

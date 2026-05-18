@@ -118,8 +118,11 @@ slice(pointer, len)
 view.len()
 view.is_empty()
 view.first()
+view.try_first()
 view.last()
+view.try_last()
 view.get(index)
+view.try_get(index)
 view[index]
 view.as_ptr()
 view.contains(value)
@@ -131,6 +134,10 @@ view.equals(other)
 view.copy_to(ref mut zone)
 ```
 
+`first`, `last`, and `get` assert when the requested element does not exist.
+Use `try_first`, `try_last`, and `try_get` when absence is an ordinary branch;
+they return `Option[T]`.
+
 `std::vec::Vec[T]` is the source growable sequence:
 
 ```ari
@@ -140,8 +147,11 @@ vec.len()
 vec.capacity()
 vec.is_empty()
 vec.first()
+vec.try_first()
 vec.last()
+vec.try_last()
 vec.get(index)
+vec.try_get(index)
 vec.get_ref(index)
 vec.get_mut(index)
 vec.push(value)
@@ -166,6 +176,10 @@ vec.as_mut_ptr()
 vec.copy_to(ref mut zone)
 vec.iter()
 ```
+
+The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
+Use the non-`try` forms when absence is a programmer error and an assertion is
+the desired behavior.
 
 `std::string::String` is an owned byte string:
 

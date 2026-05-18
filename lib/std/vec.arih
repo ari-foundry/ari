@@ -103,15 +103,39 @@ pub impl[T] std::vec::Vec[T] {
     return ptr_load(self.raw.data);
   }
 
+  fn try_first(self: ref Self) -> super::Option[T] {
+    if self.raw.len == 0 {
+      return super::None<T>();
+    }
+    return super::Some<T>(ptr_load(self.raw.data));
+  }
+
   fn last(self: ref Self) -> T {
     std::assert(self.raw.len > 0);
     return ptr_load(ptr_add(self.raw.data, self.raw.len - 1));
+  }
+
+  fn try_last(self: ref Self) -> super::Option[T] {
+    if self.raw.len == 0 {
+      return super::None<T>();
+    }
+    return super::Some<T>(ptr_load(ptr_add(self.raw.data, self.raw.len - 1)));
   }
 
   fn get(self: ref Self, index: i64) -> T {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);
     return ptr_load(ptr_add(self.raw.data, index));
+  }
+
+  fn try_get(self: ref Self, index: i64) -> super::Option[T] {
+    if index < 0 {
+      return super::None<T>();
+    }
+    if index >= self.raw.len {
+      return super::None<T>();
+    }
+    return super::Some<T>(ptr_load(ptr_add(self.raw.data, index)));
   }
 
   fn get_ref(self: ref Self, index: i64) -> ref T {

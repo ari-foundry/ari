@@ -112,6 +112,9 @@ method Slice[T]::get|check-prelude prelude-slice-methods borrowed receiver tests
 method Slice[T]::index_of|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::last|check-prelude prelude-slice-methods borrowed receiver tests; docs/dev/test-matrix.md Prelude row
 method Slice[T]::starts_with|check-prelude prelude-slice-methods borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Prelude row
+method Slice[T]::try_first|check-prelude prelude-slice-option-access Option-returning empty-safe access; docs/stdlib/api-reference.md Slice section
+method Slice[T]::try_get|check-prelude prelude-slice-option-access Option-returning out-of-range access; docs/stdlib/api-reference.md Slice section
+method Slice[T]::try_last|check-prelude prelude-slice-option-access Option-returning empty-safe access; docs/stdlib/api-reference.md Slice section
 method std::Option[T]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::is_none|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
@@ -228,6 +231,9 @@ method std::vec::Vec[T]::set|check-prelude std-vec-fixed-ops; docs/dev/test-matr
 method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowed receiver Slice[T] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::try_first|check-prelude std-vec-try-access Option-returning empty-safe access; docs/stdlib/api-reference.md Vec section
+method std::vec::Vec[T]::try_get|check-prelude std-vec-try-access Option-returning out-of-range access; docs/stdlib/api-reference.md Vec section
+method std::vec::Vec[T]::try_last|check-prelude std-vec-try-access Option-returning empty-safe access; docs/stdlib/api-reference.md Vec section
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map
 module std::bits|module load and std bits mask helper tests; docs/stdlib/overview.md module map
