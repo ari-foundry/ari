@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var boxed = Box!(i64, ref mut zone, 21);
+
+  let shared = boxed.as_ref();
+  let unique = boxed.as_mut();
+  let raw = shared as ptr i64;
+  let other = unique as ptr i64;
+
+  return ptr_load(raw) + ptr_load(other);
+}

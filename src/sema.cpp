@@ -3161,6 +3161,16 @@ private:
             };
         }
 
+        if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
+            std::optional<BorrowReturnOperandPathHint> base =
+                borrow_return_operand_path_hint(*expr_operand(expr), param_name, type);
+            if (!base || !is_raw_pointer_type(base->type)) return std::nullopt;
+            return BorrowReturnOperandPathHint{
+                base->path,
+                raw_pointer_pointee_type(base->type)
+            };
+        }
+
         return std::nullopt;
     }
 
@@ -18125,9 +18135,56 @@ private:
         return cases;
     }
 
+    IrExprPtr check_pointer_deref_borrow(const Expr& expr, const Expr& deref_expr) {
+        if (!expr_operand(deref_expr)) {
+            throw CompileError("internal error: pointer dereference borrow without pointer operand");
+        }
+
+        TrackedAggregateAccess pointer_access;
+        if (!try_build_tracked_aggregate_access(*expr_operand(deref_expr), pointer_access)) {
+            fail(expr.loc,
+                 "borrow expression requires a local binding, field access, tuple index, "
+                 "constant aggregate index, or raw pointer dereference rooted in one of those");
+        }
+
+        IrType element_type =
+            require_raw_pointer_deref_type(deref_expr.loc, pointer_access.type, "pointer dereference");
+        LocalInfo& source = require_live_local(expr.loc, pointer_access.base_name);
+        if (is_borrow_type(source.type)) {
+            require_can_reborrow_path(
+                expr.loc,
+                pointer_access.base_name,
+                source,
+                pointer_access.path,
+                expr.mutable_borrow);
+        } else {
+            require_can_borrow_path(
+                expr.loc,
+                pointer_access.base_name,
+                source,
+                pointer_access.path,
+                expr.mutable_borrow);
+        }
+        add_borrow_source(source, pointer_access.path, expr.mutable_borrow);
+        borrow_context_.push_temporary(pointer_access.base_name, pointer_access.path, expr.mutable_borrow);
+
+        IrExprPtr pointee =
+            make_pointer_load_expr(deref_expr.loc, std::move(pointer_access.expr), element_type);
+        return make_borrow_expr(
+            expr.loc,
+            pointer_access.base_name,
+            pointer_access.path,
+            std::move(pointee),
+            expr.mutable_borrow,
+            element_type);
+    }
+
     IrExprPtr check_borrow(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
         if (const Expr* operand = expr_operand(expr).get()) {
+            if (operand->kind == ExprKind::Unary && operand->op == TokenKind::Star) {
+                return check_pointer_deref_borrow(expr, *operand);
+            }
             if (operand->kind == ExprKind::Name) {
                 if (LocalInfo* source = find_local_slot(operand->name)) {
                     if (is_borrow_type(source->type)) {
@@ -18152,7 +18209,9 @@ private:
         TrackedAggregateAccess access;
         if (expr_operand(expr)) {
             if (!try_build_tracked_aggregate_access(*expr_operand(expr), access)) {
-                fail(expr.loc, "borrow expression requires a local binding, field access, tuple index, or constant aggregate index");
+                fail(expr.loc,
+                     "borrow expression requires a local binding, field access, tuple index, "
+                     "constant aggregate index, or raw pointer dereference");
             }
         } else {
             LocalInfo& source = require_live_local(expr.loc, expr.name);

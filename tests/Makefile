@@ -255,6 +255,9 @@ check-prelude: $(TARGET)
 	grep -F -q 'define { ptr } @"_ARNv4impl20std__boxed__Box_i64_8inherent7copy_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-boxed-copy-to.ll
 	$(TARGET) tests/ok/std-boxed-swap.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-swap.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-boxed-swap.ll
+	$(TARGET) tests/ok/std-boxed-as-ref-mut.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.ll
+	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent6as_ref"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.ll
+	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent6as_mut"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.ll
 	$(TARGET) tests/ok/std-boxed-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
 	$(TARGET) tests/ok/std-boxed-as-mut-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.ll
@@ -526,6 +529,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-replace.elf; $(BUILD_DIR)/prelude/std-boxed-replace.elf; code=$$?; test $$code -eq 29; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; code=$$?; test $$code -eq 51; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ref-mut.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.elf; $(BUILD_DIR)/prelude/std-boxed-as-ref-mut.elf; code=$$?; test $$code -eq 45; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-mut-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; code=$$?; test $$code -eq 38; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-take.elf; $(BUILD_DIR)/prelude/std-boxed-take.elf; code=$$?; test $$code -eq 24; fi
@@ -659,6 +663,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-as-mut-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.err
+	if $(TARGET) tests/errors/std-boxed-as-ref-mut-conflict.ari -o $(BUILD_DIR)/prelude/std-boxed-as-ref-mut-conflict.elf >$(BUILD_DIR)/prelude/std-boxed-as-ref-mut-conflict.err 2>&1; then exit 1; fi
+	grep -q "cannot mutably borrow already borrowed binding 'boxed'" $(BUILD_DIR)/prelude/std-boxed-as-ref-mut-conflict.err
 	if $(TARGET) tests/errors/std-boxed-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err
 	if $(TARGET) tests/errors/std-boxed-drop-use-after.ari -o $(BUILD_DIR)/prelude/std-boxed-drop-use-after.elf >$(BUILD_DIR)/prelude/std-boxed-drop-use-after.err 2>&1; then exit 1; fi

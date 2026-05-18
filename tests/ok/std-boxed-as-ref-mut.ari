@@ -1,0 +1,20 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var boxed = Box!(i64, ref mut zone, 21);
+
+  let before = {
+    let shared_view: ref i64 = boxed.as_ref();
+    let shared_raw = shared_view as ptr i64;
+    ptr_load(shared_raw)
+  };
+
+  {
+    let unique_view: ref mut i64 = boxed.as_mut();
+    let unique_raw = unique_view as ptr i64;
+    ptr_store(unique_raw, ptr_load(unique_raw) + 3);
+  }
+
+  let after = boxed.get();
+  zone::destroy(zone);
+  return before + after;
+}

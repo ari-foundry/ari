@@ -26,8 +26,9 @@ near-term deliverable.
    method returns, and extern signatures still need the runtime-capacity ABI.
    Source `Box[T]`/`std::Box[T]` already follows the explicit-zone handle
    policy, including `Box!(T, ref mut Zone, value)` construction sugar and
-   tracked `as_ptr()` / `as_mut_ptr()` raw views; future heap ownership should
-   keep that capability-oriented shape rather than inventing an ambient heap.
+   tracked `as_ref()` / `as_mut()` value borrows plus `as_ptr()` /
+   `as_mut_ptr()` raw views; future heap ownership should keep that
+   capability-oriented shape rather than inventing an ambient heap.
 2. Define dynamic owner pattern paths.
    After runtime-capacity `Vec[T]` and owned enum payload ABI rules are stable,
    define owner moves through enum payload slots, `Slice[T]` element paths,

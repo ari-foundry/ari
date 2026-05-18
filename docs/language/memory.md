@@ -292,7 +292,10 @@ let raw: ptr i64 = (ref mut value) as ptr i64;
 Dereference syntax supports scalar `ptr T` loads and stores, and whole
 plain-aggregate copies for Ari-layout structs, tuple structs, tuples, and fixed
 arrays. It is the same unchecked raw memory access as `ptr_load` and
-`ptr_store`.
+`ptr_store`. When a raw pointer binding or pointer-valued field is the source,
+`ref *pointer` and `ref mut *pointer` create a tracked borrow of the pointee
+without copying the pointee value. This is the form used by source handles such
+as `std::boxed::Box<T>.as_ref()` and `as_mut()`.
 
 Raw pointers to local aggregate layouts can also address scalar fields and
 elements without materializing the whole aggregate:
@@ -328,8 +331,9 @@ source explicit-zone handle over `zone::new<T>` storage. Construct it with
 `Box!(T, ref mut Zone, value)`, `Box::new<T>(ref mut Zone, value)`,
 `std::Box::new<T>(ref mut Zone, value)`, or
 `std::boxed::new<T>(ref mut Zone, value)`. Read-only handle methods such as
-`get`, `copy_to`, and `as_ptr` borrow the receiver. `as_mut_ptr` exposes the
-stored raw pointer through a mutable receiver borrow. `set(value)` overwrites
+`get`, `copy_to`, `as_ref`, and `as_ptr` borrow the receiver. `as_ref`
+borrows the stored value itself; `as_mut` and `as_mut_ptr` use a mutable
+receiver borrow for mutable value or raw-pointer access. `set(value)` overwrites
 the stored value and drops the previous value. `take()` mutably borrows the handle,
 returns the stored value, and leaves the handle empty so a later
 `drop boxed` consumes only the handle. `try_take()` returns `Option[T]` instead

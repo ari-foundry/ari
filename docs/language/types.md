@@ -924,7 +924,8 @@ Meanings:
   the handle is empty.
   `clear()` drops the value if one is present and leaves the handle empty.
   `put_in(ref mut Zone, value)` refills an empty handle using the same tracked
-  source zone.
+  source zone. `as_ref()` and `as_mut()` borrow the stored value directly;
+  `as_ptr()` and `as_mut_ptr()` expose tracked raw pointer views.
 - `Unique[T]`, `Shared[T]`, and `Weak[T]`: reserved root smart-pointer names.
   `Unique[T]` remains reserved for policy compatibility, and `Shared[T]` /
   `Weak[T]` are reserved for future reference-counted ownership.

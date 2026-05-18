@@ -1875,7 +1875,7 @@ private:
         if (match(TokenKind::KwRef)) {
             Token ref = tokens_[pos_ - 1];
             bool mutable_borrow = match(TokenKind::KwMut);
-            return make_ast_borrow_expr(ref.loc, parse_call(), mutable_borrow);
+            return make_ast_borrow_expr(ref.loc, parse_unary(), mutable_borrow);
         }
         return parse_call();
     }

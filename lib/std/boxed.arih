@@ -74,6 +74,16 @@ pub impl[T] std::boxed::Box[T] {
     return std::boxed::new<T>(target, self.get());
   }
 
+  fn as_ref(self: ref Self) -> ref T {
+    std::assert(!self.is_empty());
+    return ref *self.data;
+  }
+
+  fn as_mut(self: ref mut Self) -> ref mut T {
+    std::assert(!self.is_empty());
+    return ref mut *self.data;
+  }
+
   fn swap(self: ref mut Self, other: ref mut Self) -> void {
     std::assert(!self.is_empty());
     std::assert(!other.is_empty());
