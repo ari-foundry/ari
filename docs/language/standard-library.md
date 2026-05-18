@@ -37,6 +37,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::string` | Zone-backed owned byte string seed. | `String`, `RawString`, capacity constructors, copy helpers, byte get/set/search, `try_get`, `try_pop`, growth, append helpers, ASCII case compare/search, trim views, trim copies, whole and prefix parse helpers, `as_slice`, `as_ptr`. | Implemented as a byte string. Full text/Unicode policy is still future work. |
 | `std::ascii` | ASCII-only byte and slice helpers for byte strings and parsers. | `ParsedInt`, `is_digit`, `is_alpha`, `is_alphanumeric`, `is_blank`, `is_whitespace`, `is_control`, `is_printable`, `is_graphic`, `is_punctuation`, `is_hex_digit`, `to_lower`, `to_upper`, `digit_value`, `hex_value`, `equals_ignore_case`, `starts_with_ignore_case`, `ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`, `parse_hex`, `parse_hex_prefix`. | Implemented in Ari source; not a Unicode or locale-aware text API. |
 | `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked and `Option` element access, mutation, growth, copy, slice view, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
+| `std::collections` | Zone-backed collection handles beyond sequences. | `Set[T]`, constructors, `from_slice_in`, metadata, `contains`, `index_of`, `insert`, `remove`, `take`, `clear`, `as_slice`, `copy_to`. | Implemented as a linear insertion-order set seed; hash maps and hash sets are future work. |
 | `std::iter` | Iteration traits and range constructors. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`. | Range lowering and `std::vec::Iter` are implemented; general iterator protocols are still growing. |
 | `std::fmt` | Formatting traits. | `Debug`, `Display::format_in`. | Trait surface is present; formatting macros still use compiler lowering. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`, `is_between`. | Implemented for source-level trait-bound static dispatch. |
@@ -50,7 +51,15 @@ Allocation APIs take a `ref mut Zone` or return values tied to a zone. The
 `_in` suffix means "use this explicit zone for growth or copying". For tracked
 local `std::vec::Vec[T]` and `std::string::String` handles, Ari can infer the
 same source zone for common methods such as `push`, `insert`, `reserve`,
-`reserve_extra`, `extend_from_slice`, and `resize`.
+`reserve_extra`, `extend_from_slice`, and `resize`. `std::collections::Set[T]`
+keeps the growing insertion path explicit today through
+`insert(ref mut zone, value)`.
+
+Generic APIs should keep natural names. Prefer `insert`, `get`, `contains`,
+and `copy_to` over type-suffixed names such as `insert_i64`; the type belongs
+in `Set[T]`, `Vec[T]`, or an explicit generic call like `collections::new<i64>`.
+Current Ari function declarations still spell result types because generics
+describe type parameters, not the full public signature.
 
 Read-only methods usually take `self: ref Self`; mutating methods take
 `self: ref mut Self`. Raw pointer accessors preserve the allocation provenance
@@ -82,6 +91,7 @@ Use this table when writing code from docs alone:
 | Work with borrowed contiguous data. | `Slice[T]`, `slice(data, len)`, `.as_slice()` | Slice methods borrow the view; use `try_get` when absence is expected, and `copy_to(ref mut zone)` when an owned collection is needed. |
 | Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
 | Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. |
+| Store unique values in insertion order. | `collections::new<T>(ref mut zone, capacity)` or `Set::new<T>(ref mut zone, capacity)` | `insert(ref mut zone, value)` returns whether a value was newly added. Use `contains`, `remove`, `take`, `as_slice`, and `copy_to` for the current linear set. |
 | Store owned byte text. | `std::string::from_string(ref mut zone, "text")` or `std::string::new(ref mut zone, capacity)` | The handle stores bytes, not a full Unicode text abstraction yet. |
 | Compare, search, trim, or parse owned ASCII byte text. | `text.equals_ignore_case(bytes)`, `text.index_of_ignore_case(bytes)`, `text.trim()`, `text.trim_to(ref mut zone)`, `text.parse_decimal()`, `text.parse_decimal_prefix()` | Case-insensitive `String` helpers fold only ASCII letters. Plain trim methods return borrowed `Slice[u8]` views; `*_to` trim methods copy into a target zone. Whole parse methods require the whole string to be valid; prefix parsers return `Option[ascii::ParsedInt]`. |
 | Classify, compare, search, trim, or parse ASCII bytes. | `ascii::is_digit`, `ascii::is_printable`, `ascii::equals_ignore_case`, `ascii::index_of_ignore_case`, `ascii::to_lower`, `ascii::trim`, `ascii::parse_decimal_prefix` | Scalar helpers take `u8`; slice helpers take `Slice[u8]`. Case-insensitive comparison/search folds only ASCII letters. Whole parsers return `Option[i64]`; prefix parsers return `Option[ascii::ParsedInt]` with `value` and consumed `len`. |
@@ -93,7 +103,7 @@ Use this table when writing code from docs alone:
 | Iterate ranges. | `range(start, end)`, `range_inclusive(start, end)`, `start..end`, `start..=end` | Works directly in `for` loops and stores as `Range[T]`/`RangeInclusive[T]`. |
 | Work with bit masks, rotations, powers of two, and bit scans. | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::low_mask`, `bits::align_up`, `bits::leading_ones` | Current helpers take `u64`. Rotate counts are non-negative and wrap modulo 64; alignment helpers assert a non-zero power-of-two alignment. Zero-run helpers return `64` for `0u64`; one-run helpers return `64` for `~0u64`. |
 | Plan OS-facing code. | `std::env` today; future `std::process`, `std::thread`, `std::sync`, `std::fs`, `std::time`, `std::os` | Args are implemented. Environment variables, process spawn/fork, thread join, shared ownership/atomics, files, time, and raw syscall wrappers need runtime and ownership policy work. |
-| Plan map/set collections. | Future `std::collections::HashMap`, `std::collections::HashSet` | These need generic aggregate monomorphization, hashing/equality traits, iterator behavior, and explicit-zone allocation policy before landing. |
+| Plan hash map/set collections. | Current `std::collections::Set`; future `HashMap` and `HashSet` | The current set is linear. Hash tables need hashing/equality traits, iterator behavior, collision policy, and explicit-zone allocation tests before landing. |
 | Implement custom iteration. | `Iterator[T]::next(self: ref mut Self) -> Option[T]` | Use `for item in iterator`; use `for let pattern in iterator` for skip-on-mismatch filtering. |
 | Format into owned text. | `format_in!(ref mut zone, "...", values...)` | Default-zone `format!` is intentionally not executable in the current surface. |
 | Use integer helper routines. | `math::abs`, `math::is_positive`, `math::pow`, `math::div_floor`, `math::mod_floor`, `math::gcd`, `math::lcm` | Current helpers have i64 signatures and natural names so they can grow into generic APIs later. `pow` asserts that the exponent is non-negative; division rounding helpers assert a non-zero denominator; `lcm` returns `0` if either input is `0`. |
@@ -150,7 +160,8 @@ value.transpose()
 The plain case predicates borrow the enum value. The `*_and` and `*_or`
 predicate helpers consume the enum and pass its payload to the given function.
 
-`Slice[T]`, `std::vec::Vec[T]`, and `std::string::String` share a small
+`Slice[T]`, `std::vec::Vec[T]`, `std::collections::Set[T]`, and
+`std::string::String` share a small
 collection vocabulary where the operation makes sense:
 
 ```ari
@@ -173,6 +184,10 @@ value.copy_to(ref mut zone)
 The non-`try` accessors assert on bad indexes. `try_first`, `try_last`, and
 `try_get` return `Option[T]` for generic collections and `Option[u8]` for
 `String`; they are the better choice for normal control flow.
+
+`std::collections::Set[T]` also includes `insert(ref mut zone, value)`,
+`remove(value)`, `take(value)`, and `clear()`. Its `index_of` and `as_slice`
+preserve insertion order.
 
 `std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
 `replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,
@@ -246,7 +261,7 @@ small source APIs with focused tests before becoming a larger design promise.
 | --- | --- | --- |
 | Foundation | Programs need stable ADTs, traits, assertions, and low-level helpers before higher-level APIs can be trusted. | `std`, `std::option`, `std::result`, `std::cmp`, `std::convert`, `std::mem`. |
 | Allocation | Ari's memory model is explicit, so allocation must be visible and capability-based. | `std::zone`, future allocator traits, future scoped scratch helpers. |
-| Collections | Most programs need growable storage and borrowed views. | `std::vec`, `std::boxed`, future maps/sets/deques after generic aggregate monomorphization matures. |
+| Collections | Most programs need growable storage, membership checks, and borrowed views. | `std::vec`, `std::boxed`, current linear `std::collections::Set`, future hash maps/sets/deques after generic aggregate monomorphization and hash traits mature. |
 | Text And Formatting | Diagnostics, CLI tools, and user programs need owned text, byte helpers, and formatting. | `std::string`, `std::ascii`, `std::fmt`, formatting macros. |
 | IO And Process Context | Programs need arguments, stdin/stdout, and eventually files, full environment access, processes, and threads. | `std::io`, `std::input`, `std::context`, `std::env`, future `std::fs`, `std::process`, `std::thread`, `std::sync`. |
 | Iteration | Collections and ranges need a shared loop protocol. | `std::iter`, collection iterators. |

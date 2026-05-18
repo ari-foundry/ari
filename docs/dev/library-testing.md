@@ -43,6 +43,13 @@ test:
   source `has_arg`, and root alias behavior.
 - `std-env-args.ari`: source `std::env` argument helpers, `Option`-returning
   `try_arg`, and `program_name` behavior over the runtime context.
+- `std-collections-set.ari`: source `std::collections::Set[T]` constructor,
+  insertion, duplicate rejection, membership, removal, borrowed view, copy, and
+  target/source zone behavior.
+- `std-collections-set-after-reset.ari`: negative source-zone provenance
+  diagnostic for a tracked set after `zone::reset`.
+- `std-collections-set-insert-different-zone.ari`: negative same-zone growth
+  diagnostic for set insertion with the wrong allocation zone.
 - `std-io-byte-slice.ari`: source `std::io` byte-slice output over the raw
   write-byte backend hook.
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper

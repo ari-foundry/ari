@@ -1,0 +1,168 @@
+// Linear insertion-order set. This is a source seed for collection APIs before
+// HashMap/HashSet policy exists, so membership checks are O(n).
+pub struct Set[T] {
+  mut data: ptr T,
+  mut len: i64,
+  mut capacity: i64,
+}
+
+pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::collections::Set[T] {
+  let data = std::zone::alloc_array<T>(zone, capacity);
+  return std::collections::Set<T> {
+    data: data,
+    len: 0,
+    capacity: capacity,
+  };
+}
+
+pub fn from_slice_in[T](zone: ref mut Zone, values: std::Slice[T]) -> std::collections::Set[T] {
+  var set = std::collections::new<T>(zone, values.len);
+  var index = 0;
+  while index < values.len {
+    set.insert(zone, values[index]);
+    index = index + 1;
+  }
+  return set;
+}
+
+fn next_growth_capacity(current: i64, minimum: i64) -> i64 {
+  var capacity = current * 2;
+  if capacity < minimum {
+    capacity = minimum;
+  }
+  return capacity;
+}
+
+fn grow_to_capacity[T](set: ref mut std::collections::Set[T], zone: ref mut Zone, capacity: i64) -> void {
+  std::assert(capacity >= 0);
+  if capacity <= set.capacity {
+    return;
+  }
+  // Zones own backing storage; growth copies live values into a larger buffer.
+  let data = std::zone::alloc_array<T>(zone, capacity);
+  var index = 0;
+  while index < set.len {
+    ptr_store(ptr_add(data, index), ptr_load(ptr_add(set.data, index)));
+    index = index + 1;
+  }
+  set.data = data;
+  set.capacity = capacity;
+}
+
+fn ensure_spare_capacity[T](set: ref mut std::collections::Set[T], zone: ref mut Zone) -> void {
+  if set.len >= set.capacity {
+    let capacity = next_growth_capacity(set.capacity, set.len + 1);
+    grow_to_capacity<T>(set, zone, capacity);
+  }
+}
+
+fn remove_at[T](set: ref mut std::collections::Set[T], index: i64) -> T {
+  std::assert(index >= 0);
+  std::assert(index < set.len);
+  let value = ptr_load(ptr_add(set.data, index));
+  var cursor = index;
+  while cursor + 1 < set.len {
+    ptr_store(ptr_add(set.data, cursor), ptr_load(ptr_add(set.data, cursor + 1)));
+    cursor = cursor + 1;
+  }
+  set.len = set.len - 1;
+  return value;
+}
+
+fn drop_values[T](set: ref mut std::collections::Set[T]) -> void {
+  // Drop only initialized live elements. The explicit Zone owns raw storage.
+  var index = 0;
+  while index < set.len {
+    let value = ptr_load(ptr_add(set.data, index));
+    drop value;
+    index = index + 1;
+  }
+  set.len = 0;
+}
+
+pub impl[T] std::collections::Set[T] {
+  fn new(zone: ref mut Zone, capacity: i64) -> std::collections::Set[T] {
+    return std::collections::new<T>(zone, capacity);
+  }
+
+  fn len(self: ref Self) -> i64 {
+    return self.len;
+  }
+
+  fn capacity(self: ref Self) -> i64 {
+    return self.capacity;
+  }
+
+  fn is_empty(self: ref Self) -> bool {
+    return self.len == 0;
+  }
+
+  fn index_of(self: ref Self, value: T) -> i64 {
+    var index = 0;
+    while index < self.len {
+      if ptr_load(ptr_add(self.data, index)) == value {
+        return index;
+      }
+      index = index + 1;
+    }
+    return -1;
+  }
+
+  fn contains(self: ref Self, value: T) -> bool {
+    return self.index_of(value) >= 0;
+  }
+
+  fn insert(self: ref mut Self, zone: ref mut Zone, value: T) -> bool {
+    if self.contains(value) {
+      return false;
+    }
+    ensure_spare_capacity<T>(self, zone);
+    ptr_store(ptr_add(self.data, self.len), value);
+    self.len = self.len + 1;
+    return true;
+  }
+
+  fn remove(self: ref mut Self, value: T) -> bool {
+    let index = self.index_of(value);
+    if index < 0 {
+      return false;
+    }
+    let removed = remove_at<T>(self, index);
+    drop removed;
+    return true;
+  }
+
+  fn take(self: ref mut Self, value: T) -> std::Option[T] {
+    let index = self.index_of(value);
+    if index < 0 {
+      return std::None<T>();
+    }
+    return std::Some<T>(remove_at<T>(self, index));
+  }
+
+  fn clear(self: ref mut Self) -> void {
+    drop_values<T>(self);
+  }
+
+  fn as_slice(self: ref Self) -> std::Slice[T] {
+    return std::Slice<T> { data: self.data, len: self.len };
+  }
+
+  fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::Set[T] {
+    var copied = std::collections::new<T>(target, self.len);
+    var index = 0;
+    while index < self.len {
+      copied.insert(target, ptr_load(ptr_add(self.data, index)));
+      index = index + 1;
+    }
+    return copied;
+  }
+}
+
+impl[T] std::Drop for std::collections::Set[T] {
+  fn drop(self) -> void {
+    var dropped = self;
+    drop_values<T>(ref mut dropped);
+    return;
+  }
+}

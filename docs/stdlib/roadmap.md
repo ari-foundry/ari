@@ -19,9 +19,10 @@ prefix parsers, `vec`, `iter`, `fmt`, `cmp` comparison helpers, `convert`
 identity/from/into helpers, `context` runtime hooks plus the source
 `has_arg` helper, `env` source argument wrappers with `try_arg` and
 `program_name`, `input` runtime hooks plus the source `try_read_byte` EOF
-helper, `io` runtime hooks plus source byte-slice output, and the first `math`
-sign predicate/arithmetic/division-rounding and `bits` numeric helper slices,
-including zero/one-run bit scans.
+helper, `io` runtime hooks plus source byte-slice output,
+`collections::Set[T]` as the first linear insertion-order set, and the first
+`math` sign predicate/arithmetic/division-rounding and `bits` numeric helper
+slices, including zero/one-run bit scans.
 
 ## Essential Library Families
 
@@ -36,7 +37,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Future `Instant`, `Duration`, `now`, elapsed arithmetic, sleep. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Future `spawn`, `join`, thread id, stack/runtime context setup. |
 | `std::sync` | Share state between threads deliberately. | Future atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
-| `std::collections` | Store keyed and set-like data beyond vectors. | Future `HashMap`, `HashSet`, iterator views, capacity/growth helpers. |
+| `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]`; future `HashMap`, `HashSet`, iterator views, capacity/growth helpers. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
@@ -52,8 +53,8 @@ work. Each one should land in small tested slices with natural API names.
   `Vec[T]`.
 - Keep shared collection access vocabulary aligned across `Slice[T]` and
   `std::vec::Vec[T]`, including `try_*` methods for `Option`-based absence.
-- Add collection helpers in small slices: slice methods, vector methods,
-  iterator adapters, then maps/sets/deques.
+- Add collection helpers in small slices: slice methods, vector methods, the
+  current linear `Set[T]`, iterator adapters, then hash maps/sets/deques.
 - Add `HashMap` and `HashSet` only after generic aggregate layouts,
   hashing/equality trait policy, and explicit allocation-zone ownership are
   testable together.

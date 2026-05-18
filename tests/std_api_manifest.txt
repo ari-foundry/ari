@@ -69,6 +69,8 @@ fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md
 fn std::cmp::is_between[T: Ord[T]|std cmp value helper tests; docs/stdlib/api-reference.md Comparison section
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::min[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::collections::from_slice_in[T]|check-prelude std-collections-set source linear set from slice; docs/stdlib/modules/collections.md
+fn std::collections::new[T]|check-prelude std-collections-set source linear set constructor; docs/stdlib/modules/collections.md
 fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::context::argc|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::context::has_arg|std context args tests; docs/stdlib/modules/context.md
@@ -208,6 +210,18 @@ method std::boxed::Box[T]::set|check-prelude std-boxed-box and std-boxed-set-dro
 method std::boxed::Box[T]::swap|check-prelude std-boxed-swap; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::take|check-prelude std-boxed-take value move-out leaves empty handle; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::try_take|check-prelude std-boxed-try-take Option-returning empty-handle move-out; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+method std::collections::Set[T]::as_slice|check-prelude std-collections-set borrowed set storage view; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::capacity|check-prelude std-collections-set capacity metadata; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::clear|check-prelude std-collections-set value drop clear; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::contains|check-prelude std-collections-set linear membership lookup; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::copy_to|check-prelude std-collections-set target-zone copy; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::index_of|check-prelude std-collections-set stable insertion-order index lookup; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::insert|check-prelude std-collections-set same-zone insertion and duplicate rejection; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::is_empty|check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::len|check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::new|check-prelude std-collections-set associated constructor; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::remove|check-prelude std-collections-set membership removal; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::take|check-prelude std-collections-set Option-returning removal; docs/stdlib/modules/collections.md
 method std::string::String::append_bool_in|check-prelude std-string-append and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f32_in|check-prelude std-string-append-f32 and std-string-append-f32-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 method std::string::String::append_f64_in|check-prelude prelude-format-in and std-string-append-f64-different-zone; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
@@ -303,6 +317,7 @@ module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overv
 module std::bits|module load and std bits mask helper tests; docs/stdlib/overview.md module map
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
 module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+module std::collections|std collections linear set tests; docs/stdlib/modules/collections.md
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row
 module std::convert|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::env|std env argument helper tests; docs/stdlib/modules/env.md
@@ -322,6 +337,7 @@ struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
 struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::collections::Set[T]|std collections linear set tests; docs/stdlib/modules/collections.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::string::RawString|std string handle tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -384,6 +400,7 @@ trait-method std::fmt::Display::format_in|format_in Display borrowed receiver te
 trait-method std::iter::IntoIterator[T]::into_iter|iterator module tests; docs/dev/test-matrix.md Control flow row
 trait-method std::iter::Iterator[T]::next|iterator module tests; docs/dev/test-matrix.md Control flow row
 use std::Box|prelude root Box tests; docs/dev/test-matrix.md Explicit memory zones row
+use std::Set|check-prelude std-collections-set root alias for std::collections::Set[T]; docs/stdlib/modules/collections.md
 use std::String|prelude root String tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::Vec|check-prelude std-vec-root-alias explicit-zone alias for std::vec::Vec[T]; docs/dev/test-matrix.md Explicit memory zones row
 use std::align_of|std root re-export tests; docs/dev/test-matrix.md Prelude and C FFI rows

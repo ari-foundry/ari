@@ -37,6 +37,9 @@ std-string-trim-copy.ari
 std-string-trim-to-after-target-reset.ari
 std-string-try-byte-access.ari
 std-context-args.ari
+std-collections-set.ari
+std-collections-set-after-reset.ari
+std-collections-set-insert-different-zone.ari
 std-io-byte-slice.ari
 std-input-byte-option.ari
 std-cmp-value-helpers.ari

@@ -36,6 +36,7 @@
 #include "range_semantics.hpp"
 #include "slice_semantics.hpp"
 #include "std_box_semantics.hpp"
+#include "std_collections_semantics.hpp"
 #include "std_enum_probe_semantics.hpp"
 #include "std_string_semantics.hpp"
 #include "std_vec_semantics.hpp"
@@ -5506,6 +5507,9 @@ private:
             (fn.module_name == "std::boxed" &&
              std_box_method_requires_same_zone_argument(method_name) &&
              is_std_box_handle_type(receiver_type)) ||
+            (fn.module_name == "std::collections" &&
+             std_collections_set_method_requires_same_zone_argument(method_name) &&
+             is_std_collections_set_handle_type(receiver_type)) ||
             (fn.module_name == "std::string" &&
              std_string_method_requires_same_zone_argument(method_name) &&
              is_std_string_handle_type(receiver_type)) ||
@@ -5552,6 +5556,25 @@ private:
                                                          const IrType& receiver_type,
                                                          const std::vector<IrExprPtr>& args) {
         std::optional<std::string> violation = std_box_same_zone_method_violation(
+            method_name,
+            receiver_type,
+            args,
+            [this](const IrExpr& value, std::string& out) {
+                return zone_pointer_source_name_from_expr(value, out);
+            },
+            [this](const IrExpr& value, std::string& out) {
+                return zone_source_name_from_arg(value, out);
+            });
+        if (violation) {
+            fail(loc, *violation);
+        }
+    }
+
+    void require_std_collections_set_same_zone_method_matches_source(SourceLocation loc,
+                                                                     const std::string& method_name,
+                                                                     const IrType& receiver_type,
+                                                                     const std::vector<IrExprPtr>& args) {
+        std::optional<std::string> violation = std_collections_set_same_zone_method_violation(
             method_name,
             receiver_type,
             args,
@@ -9801,6 +9824,7 @@ private:
 
     bool assignment_target_allows_zone_pointer_storage(const IrExpr& target) {
         if (current_module_name_ != "std::boxed" &&
+            current_module_name_ != "std::collections" &&
             current_module_name_ != "std::vec" &&
             current_module_name_ != "std::string") {
             return false;
@@ -9818,6 +9842,11 @@ private:
         if (current_module_name_ == "std::string") {
             std::optional<std::vector<std::size_t>> data_path =
                 std_string_zone_handle_data_field_path_indices(value_qualified_type(local->type));
+            return data_path && path == local_owned_field_path_from_indices(*data_path);
+        }
+        if (current_module_name_ == "std::collections") {
+            std::optional<std::vector<std::size_t>> data_path =
+                std_collections_set_zone_handle_data_field_path_indices(value_qualified_type(local->type));
             return data_path && path == local_owned_field_path_from_indices(*data_path);
         }
         std::optional<std::vector<std::size_t>> data_path =
@@ -17306,6 +17335,9 @@ private:
         std::optional<std::size_t> std_zone_handle_source_field =
             std_vec_zone_handle_source_field_index(struct_type);
         if (!std_zone_handle_source_field) {
+            std_zone_handle_source_field = std_collections_set_zone_handle_source_field_index(struct_type);
+        }
+        if (!std_zone_handle_source_field) {
             std_zone_handle_source_field = std_box_zone_handle_source_field_index(struct_type);
         }
         if (!std_zone_handle_source_field) {
@@ -23181,6 +23213,7 @@ private:
         }
         require_std_vec_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
         require_std_box_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
+        require_std_collections_set_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
         require_std_string_same_zone_method_matches_source(expr.loc, expr.name, method_receiver_type, args);
         return finish_tracked_call(
             expr.loc,

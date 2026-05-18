@@ -1,0 +1,7 @@
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var set = collections::new<i64>(ref mut zone, 0);
+  zone::reset(ref mut zone);
+
+  return set.len();
+}

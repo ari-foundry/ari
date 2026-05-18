@@ -611,6 +611,12 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/std-vec-drop-value.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-drop-value.ll
 	grep -q '_ARNv4impl18std__vec__Vec_i64_9std__Drop4drop' $(BUILD_DIR)/prelude/std-vec-drop-value.ll
 	grep -q 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/prelude/std-vec-drop-value.ll
+	$(TARGET) tests/cases/standard-library/ok/std-collections-set.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set.ll
+	grep -q '_ARNv3std11collections10new__G_i64' $(BUILD_DIR)/prelude/std-collections-set.ll
+	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent6insert' $(BUILD_DIR)/prelude/std-collections-set.ll
+	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent4take' $(BUILD_DIR)/prelude/std-collections-set.ll
+	$(TARGET) tests/cases/standard-library/ok/std-collections-set.ari -o $(BUILD_DIR)/prelude/std-collections-set.elf
+	$(BUILD_DIR)/prelude/std-collections-set.elf; code=$$?; test $$code -eq 250
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
 	$(TARGET) tests/cases/standard-library/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
@@ -808,6 +814,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-try-pop.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-try-pop.elf; $(BUILD_DIR)/prelude/std-vec-try-pop.elf; code=$$?; test $$code -eq 25; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-shrink-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-shrink-drop-value.elf; code=$$?; test $$code -eq 13; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-drop-value.elf; code=$$?; test $$code -eq 0; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set.elf; $(BUILD_DIR)/prelude/std-collections-set.elf; code=$$?; test $$code -eq 250; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
 	$(TARGET) --no-implicit-std --module-path lib tests/cases/standard-library/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
@@ -831,6 +838,8 @@ check-prelude: $(TARGET)
 	grep -q 'import	std	std::string	string	lib/std/string.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::vec	lib/std/vec.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::vec	vec	lib/std/vec.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::collections	lib/std/collections.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::collections	collections	lib/std/collections.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::iter	lib/std/iter.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::iter	iter	lib/std/iter.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::fmt	lib/std/fmt.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
@@ -897,6 +906,10 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-copy-to-after-target-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/std-vec-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-set-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-set-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'set' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-set-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.err 2>&1; then exit 1; fi
+	grep -q "std::collections::Set.insert zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude-slice-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/prelude-slice-copy-to-after-target-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/prelude-slice-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/prelude-slice-as-ptr-after-reset.err 2>&1; then exit 1; fi

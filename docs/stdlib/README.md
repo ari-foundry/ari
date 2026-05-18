@@ -20,10 +20,12 @@ under `lib/std/`.
 The standard library is ordinary Ari source whenever possible. It lives at
 `lib/std.arih`, with child modules in `lib/std/`. User-facing argument helpers
 now live in `std::env`, while `std::context` stays the low-level runtime
-context layer. A few declarations are still compiler-known because the current
-language cannot express them directly: layout queries, typed raw pointer
-operations, runtime IO hooks, explicit zone allocation, formatting macro
-lowering, and some zone provenance checks.
+context layer. Source collection work has started with
+`std::collections::Set[T]` as a linear explicit-zone set before hash-table
+policy is ready. A few declarations are still compiler-known because the
+current language cannot express them directly: layout queries, typed raw
+pointer operations, runtime IO hooks, explicit zone allocation, formatting
+macro lowering, and some zone provenance checks.
 
 The rule of thumb is simple: put behavior in Ari source first, and add
 compiler support only when the language cannot safely model the primitive yet.

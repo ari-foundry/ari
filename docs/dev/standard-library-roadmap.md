@@ -37,6 +37,8 @@ The current `std` package already provides:
 - explicit-zone allocation in `std::zone`, including the source
   `alloc_array<T>` raw buffer helper
 - source handles for `Box`, `String`, and `Vec`
+- source `std::collections::Set[T]` as a linear insertion-order set with
+  explicit-zone growth, membership, removal, copy, and provenance checks
 - `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access, and
   `Option`-returning element access helpers
 - `std::string::String` empty-safe byte access, byte search, comparison,
@@ -102,7 +104,10 @@ Likely compiler work:
 - Add collection APIs only when ownership, borrowing, and zone provenance can
   be tested in focused slices.
 - Grow collection families in this order: slice helpers, vector methods,
-  iterator adapters, maps/sets/deques.
+  the current linear `Set[T]`, iterator adapters, hash maps/sets/deques.
+- Keep `Set[T]` linear until hashing and equality traits are ready. Its public
+  names should remain natural so a future hash-backed set does not need
+  type-suffixed call sites.
 - Keep `HashMap` and `HashSet` behind a clear policy for hashing, equality,
   tombstones, capacity growth, and explicit allocation zones. The public names
   should be natural (`HashMap`, `HashSet`, `insert`, `get`, `contains`) rather
@@ -173,7 +178,7 @@ Likely compiler work:
 | `std::process` | Exit status, process id, spawn, wait, and platform fork wrappers. | `id`, `exit` diagnostics, spawn/wait result handling, fork platform guards. | Runtime wrappers for POSIX/Windows split and handle ownership. |
 | `std::thread` | Spawn/join handles after function pointer and ownership transfer rules are stable. | join success/failure, moved capture rejection, shared state diagnostics. | Runtime thread wrapper, entry trampoline ABI, and send/share trait policy. |
 | `std::sync` | Shared ownership and atomics before locks/channels. | `Shared`/`Weak` upgrade behavior, atomic load/store/CAS, mutex poisoning or no-poison policy. | Reference-counted handle lowering, atomic intrinsics, and thread-safety trait checks. |
-| `std::collections` | `HashMap` and `HashSet` after Vec and iterator surfaces are stable. | insertion, replacement, removal, lookup, growth, iteration, drop, hash collision behavior. | Generic aggregate monomorphization, hashing/equality traits, zone-aware table layout. |
+| `std::collections` | Extend the current linear `Set[T]` with iterator coverage, then design `HashMap` and `HashSet`. | current set insertion/duplicate/removal/copy/after-reset/same-zone tests; future replacement, lookup, growth, iteration, drop, and hash collision behavior. | Current `Set[T]` needs zone-handle provenance recognition only; hash tables need generic aggregate monomorphization, hashing/equality traits, and zone-aware table layout. |
 | `std::string` | Add signed/checked parsers only after text and numeric policies are documented. | Search, growth, append, copy, ASCII case comparison/search, ASCII trim/parse, prefix parse, owned trim copy, and after-reset tests. | Formatting/string runtime hooks. |
 | `std::ascii` | Add signed parsers only after numeric sign and overflow policy is documented. | Byte classification behavior, case-insensitive comparison/search, slice trimming/parsing, prefix parser consumed-length behavior, source symbol checks, and future parser edge cases. | None for current whole-slice and prefix helpers; signed/checked parsers may need overflow diagnostics. |
 | `std::vec` | Iterator/adaptor growth and root/source Vec unification plan after safe accessors. | Method, `try_*` access, iterator, borrow, owner-drop, and same-zone tests. | Iterator lowering and generic aggregate monomorphization. |

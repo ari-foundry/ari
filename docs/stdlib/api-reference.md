@@ -16,6 +16,7 @@ Range[T]
 RangeInclusive[T]
 Box[T]
 String
+Set[T]
 std::Vec[T]
 move(value)
 take(place)
@@ -227,7 +228,7 @@ error only on the `Err` branch. `Result::transpose` is available on
 `Result[Option[T], E]` and turns fallible optional work back into optional
 fallible work.
 
-## Slice, Vec, String, And Box
+## Slice, Vec, Set, String, And Box
 
 `Slice[T]` is a borrowed contiguous view:
 
@@ -299,6 +300,31 @@ vec.iter()
 The `try_*` accessors return `Option[T]` for empty or out-of-range reads.
 Use the non-`try` forms when absence is a programmer error and an assertion is
 the desired behavior.
+
+`std::collections::Set[T]` is a zone-backed linear set:
+
+```ari
+collections::new<T>(ref mut zone, capacity)
+Set::new<T>(ref mut zone, capacity)
+collections::from_slice_in<T>(ref mut zone, values)
+set.len()
+set.capacity()
+set.is_empty()
+set.index_of(value)
+set.contains(value)
+set.insert(ref mut zone, value)
+set.remove(value)
+set.take(value)
+set.clear()
+set.as_slice()
+set.copy_to(ref mut zone)
+```
+
+`insert` returns `true` only for newly inserted values. `remove` drops the
+removed value and reports whether it was present; `take` returns
+`Option[T]`. The set preserves insertion order in `index_of`, `as_slice`, and
+`copy_to`. It is linear, not hash-backed, so future `HashMap`/`HashSet` APIs
+can still choose a deliberate hashing and equality policy.
 
 `std::string::String` is an owned byte string:
 

@@ -1,0 +1,11 @@
+fn main() -> i64 {
+  var left = zone::create(128);
+  var right = zone::create(128);
+  var set = collections::new<i64>(ref mut left, 0);
+
+  set.insert(ref mut right, 5);
+
+  zone::destroy(right);
+  zone::destroy(left);
+  return 0;
+}

@@ -1,0 +1,75 @@
+// Covers the source-only linear Set seed before hash-table collections exist.
+fn main() -> i64 {
+  var zone = zone::create(512);
+  var set = collections::new<i64>(ref mut zone, 0);
+  var score = 0;
+
+  if set.is_empty() {
+    score = score + 3;
+  }
+  if set.insert(ref mut zone, 5) {
+    score = score + 5;
+  }
+  if !set.insert(ref mut zone, 5) {
+    score = score + 7;
+  }
+  if set.insert(ref mut zone, 8) {
+    score = score + 11;
+  }
+  if set.contains(5) {
+    score = score + 13;
+  }
+  if !set.contains(9) {
+    score = score + 17;
+  }
+  if set.len() == 2 {
+    score = score + 19;
+  }
+  if set.index_of(8) == 1 {
+    score = score + 23;
+  }
+
+  let taken = set.take(5);
+  score = score + taken.unwrap_or(0);
+
+  if !set.remove(42) {
+    score = score + 29;
+  }
+  if set.remove(8) {
+    score = score + 31;
+  }
+  if set.capacity() == 2 {
+    score = score + 2;
+  }
+
+  var alias = Set::new<i64>(ref mut zone, 1);
+  if alias.insert(ref mut zone, 4) {
+    score = score + 37;
+  }
+  let alias_view = alias.as_slice();
+  if alias_view.len() == 1 && alias_view.get(0) == 4 {
+    score = score + 11;
+  }
+  alias.clear();
+  if alias.is_empty() {
+    score = score + 7;
+  }
+
+  var seed = [2, 3, 2];
+  let seed_view = seed.as_slice();
+  var from_slice = collections::from_slice_in<i64>(ref mut zone, seed_view);
+  if from_slice.len() == 2 && from_slice.contains(3) {
+    score = score + 13;
+  }
+
+  var target = zone::create(256);
+  var copied = from_slice.copy_to(ref mut target);
+  zone::reset(ref mut zone);
+  if copied.len() == 2 && copied.contains(2) {
+    score = score + 17;
+  }
+
+  zone::destroy(zone);
+  zone::destroy(target);
+  return score;
+}
