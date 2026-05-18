@@ -54,6 +54,9 @@ bool is_copy_type(const IrType& type) {
 bool is_owner_type(const IrType& type) {
     if (type.qualifier == TypeQualifier::Own) return true;
     if (type.qualifier != TypeQualifier::Value) return false;
+    if (type.primitive == IrPrimitiveKind::Struct && type.name == "std::Slice") {
+        return false;
+    }
     for (const auto& arg : type.args) {
         if (is_owner_type(arg)) return true;
     }

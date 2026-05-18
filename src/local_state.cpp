@@ -613,6 +613,7 @@ StateSnapshot LocalScopeStack::snapshot_states() const {
                 item.second.borrow_source_path,
                 item.second.borrow_source_mutable,
                 item.second.borrow_sources_released,
+                item.second.auto_drop_owner,
                 item.second.aggregate_borrow_sources
             };
             for (const auto& field : item.second.owned_field_states) {
@@ -644,6 +645,7 @@ void LocalScopeStack::restore_states(const StateSnapshot& snapshot) {
             local.borrow_source_path = item.second.borrow_source_path;
             local.borrow_source_mutable = item.second.borrow_source_mutable;
             local.borrow_sources_released = item.second.borrow_sources_released;
+            local.auto_drop_owner = item.second.auto_drop_owner;
             local.aggregate_borrow_sources = item.second.aggregate_borrow_sources;
         }
     }

@@ -531,10 +531,6 @@ RuntimeSequenceReferencePatternPlan plan_runtime_sequence_reference_pattern(
         fail(pattern.loc,
              "ownership-carrying runtime sequence reference patterns currently require direct local Vec[T] storage");
     }
-    if (!pattern.rest_alias_name.empty()) {
-        fail(pattern.rest_alias_loc,
-             "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked");
-    }
     if (!pattern.has_rest) return plan;
 
     const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
@@ -578,10 +574,6 @@ RuntimeSequenceValuePatternPlan plan_runtime_sequence_value_pattern(
     if (!is_vector_storage_type(shape_type) || !direct_binding) {
         fail(pattern.loc,
              "ownership-carrying runtime sequence value patterns currently require direct local Vec[T] storage");
-    }
-    if (!pattern.rest_alias_name.empty()) {
-        fail(pattern.rest_alias_loc,
-             "ownership-carrying Vec[T] value rest aliases are planned after owned Slice paths are tracked");
     }
     if (!pattern.has_rest) return plan;
 

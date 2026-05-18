@@ -149,8 +149,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   known-length suffix element bindings after `..` from tracked hidden Vec
   storage. Selected `_` elements and known skipped rest-gap elements are lowered
   as explicit element drops, so hidden Vec storage has no leaked live owner
-  slots after the pattern body. Owned rest aliases remain rejected until owned
-  `Slice[T]` paths exist for those dynamic slots.
+  slots after the pattern body. Known-length owned rest aliases lower to
+  non-owning `Slice[own T]` views; the source Vec is borrowed while the view is
+  live, and compiler-owned hidden pattern storage drops any still-owned slots at
+  scope exit.
 - Loop fixed-point checking tracks ownership and borrow states at `break`,
   `continue`, zero-iteration, literal-true next-iteration, and fallthrough
   merge points. Ambiguous loop exits produce explicit `maybe-unavailable`

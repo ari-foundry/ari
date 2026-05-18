@@ -30,6 +30,7 @@ struct LocalInfo {
     bool mutable_binding = false;
     bool function_parameter = false;
     bool auto_destroy_zone = false;
+    bool auto_drop_owner = false;
     bool vector_length_known = false;
     std::uint64_t vector_known_length = 0;
     bool integer_value_known = false;
@@ -76,6 +77,7 @@ struct StateSnapshotEntry {
     std::string borrow_source_path;
     bool borrow_source_mutable = false;
     bool borrow_sources_released = false;
+    bool auto_drop_owner = false;
     std::vector<LocalInfo::BorrowSource> aggregate_borrow_sources;
 };
 

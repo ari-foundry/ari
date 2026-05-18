@@ -191,10 +191,13 @@ move ownership-carrying tuple, fixed-array, struct, and tuple-struct slots into
 bindings from tracked hidden storage. Local `Vec[own T]` value patterns can
 also move exact element bindings, and suffix element bindings after `..` when
 the hidden vector's current length is known. Selected `_` elements and known
-skipped `..` ranges are dropped from the hidden Vec storage. Ownership-carrying
-enum payload moves, `Slice[T]` owner paths, owned rest aliases, and
-unknown-length value vector suffix owner paths remain tied to the later
-owned-payload/dynamic-owner ABI work.
+skipped `..` ranges are dropped from the hidden Vec storage. Known-length
+`Vec[own T]` value/rest patterns can also bind `rest @ ..` as a non-owning
+`Slice[own T]` view; if the source is compiler-owned hidden storage, Ari keeps
+that storage borrowed while the view is live and cleans the remaining owned
+slots when the hidden storage leaves scope. Ownership-carrying enum payload
+moves, `Slice[T]` owner paths, and unknown-length value vector suffix owner
+paths remain tied to the later owned-payload/dynamic-owner ABI work.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

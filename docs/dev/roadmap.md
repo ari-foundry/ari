@@ -16,34 +16,27 @@ Phase-oriented sema decomposition is now tracked as ongoing maintenance in
 [Semantic Checker Decomposition](sema-decomposition.md) instead of as a finite
 near-term deliverable.
 
-1. Define dynamic owner pattern paths.
-   Static local/hidden-storage `Vec[own T]` value patterns can now move exact
-   elements and known-length suffix elements through tracked owner paths, and
-   they drop selected `_` elements plus known skipped rest-gap elements. Local
-   `let ref` / `let ref mut` suffix patterns over unknown-length direct
-   `Vec[own T]` storage now use synthetic suffix owner paths when the vector is
-   not partially moved, so distinct prefix/suffix mutable borrows can coexist.
-   Remaining work is the genuinely dynamic owner-move surface: owner moves
-   through enum payload slots, `Slice[T]` element paths, owned rest aliases, and
-   unknown-length value vector suffixes without relying on hidden whole-value
-   leaks.
-   Owned payload-bearing `@repr(C)` enum C layouts should be defined with this
-   ABI work; public non-generic plain payload enums already emit C headers for
-   scalar, pointer-shaped, and generated wrapper-backed non-scalar payload
-   slots.
-2. Extend trait-object ownership.
+1. Add enum payload owner paths.
+   Define the payload-slot ownership model for enum values that carry owned
+   payloads, including partial-move cleanup and `@repr(C)` layout rules for
+   owned payload-bearing public enums.
+   Label: `owner-enum-payload-paths`.
+2. Add owner-aware `Slice[T]` element paths.
+   Treat `Slice[own T]` as a non-owning view while still preserving borrow and
+   move diagnostics for element paths that are reached through the slice.
+   Label: `slice-owner-element-paths`.
+3. Add dynamic value-vector suffix owner paths.
+   Support value patterns that move unknown-length `Vec[own T]` suffix elements
+   without relying on hidden whole-value leaks.
+   Label: `dynamic-value-vector-suffixes`.
+4. Extend trait-object ownership.
    Define durable data-pointer storage for `own` and borrow-valued dyn objects,
    including lifetime rules for objects that outlive hidden stack
    materialization.
-3. Add an explicit owner-resolution surface.
+5. Add an explicit owner-resolution surface.
    Loop exits that cannot prove a single owner state currently produce
    `maybe-unavailable` locals. A future language form should let users resolve
    those conditional cleanup states intentionally.
-
-## Medium-Term Language Work
-
-Medium-term is currently empty; promote work here only after the near-term owner
-and trait-object slices become too large for one 0.x step.
 
 ## Backend Work
 

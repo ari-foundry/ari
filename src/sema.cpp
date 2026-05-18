@@ -4963,6 +4963,7 @@ private:
                 first_scope_index)) {
             fail(loc, *error);
         }
+        append_auto_drop_owner_cleanup(loc, statements, first_scope_index);
     }
 
     void append_auto_destroy_zone_cleanup(SourceLocation loc, std::vector<IrStmtPtr>& statements) {
@@ -4972,6 +4973,24 @@ private:
     void append_current_scope_auto_destroy_cleanup(SourceLocation loc, std::vector<IrStmtPtr>& statements) {
         if (local_scopes_.empty()) return;
         append_auto_destroy_zone_cleanup(loc, statements, local_scopes_.size() - 1);
+    }
+
+    void append_auto_drop_owner_cleanup(
+        SourceLocation loc,
+        std::vector<IrStmtPtr>& statements,
+        std::size_t first_scope_index
+    ) {
+        local_scopes_.for_each_local_from_inner_to_outer(
+            first_scope_index,
+            [&](const std::string& name, LocalInfo& local) {
+                if (!local.auto_drop_owner || !local_has_live_owner(local)) return;
+                DropValueFactory make_value = [this, loc, name, type = local.type]() {
+                    return make_local_lvalue_expr(loc, name, type);
+                };
+                append_drop_stmts_for_value(loc, local.type, make_value, statements, &local);
+                mark_all_local_owned_fields(local, LocalState::Dropped);
+                mark_local_dropped(local);
+            });
     }
 
     IrExprPtr materialize_value_before_auto_destroy_cleanup(
@@ -4992,6 +5011,7 @@ private:
             hidden_prefix,
             escape_context);
         if (materialized.error) fail(loc, *materialized.error);
+        append_auto_drop_owner_cleanup(loc, statements, first_scope_index);
         return std::move(materialized.value);
     }
 
@@ -5014,6 +5034,7 @@ private:
                 escape_context)) {
             fail(loc, *error);
         }
+        append_auto_drop_owner_cleanup(loc, statements, first_scope_index);
     }
 
     static bool is_zone_temp_call(const IrExpr& expr) {
@@ -6571,6 +6592,13 @@ private:
             ),
             false
         ));
+        if (is_owner_type(element_type) || contains_borrow_type(element_type)) {
+            LocalInfo& source = require_live_local(pattern.rest_alias_loc, source_name);
+            require_can_borrow_path(pattern.rest_alias_loc, source_name, source, "", false);
+            add_borrow_source(source, "", false);
+            LocalInfo& alias = local_slot_by_name(pattern.rest_alias_name);
+            set_local_named_borrow_source(alias, source_name, "", false);
+        }
     }
 
     using ReferenceAccessBuilder = std::function<IrExprPtr(SourceLocation, const std::string&)>;
@@ -7893,12 +7921,6 @@ private:
                                                     const std::string& source_name,
                                                     const IrType& source_type) const {
         const IrType& element_type = runtime_sequence_element_type(loc, source_type);
-        require_runtime_sequence_element_materializable(
-            loc,
-            source_type,
-            element_type,
-            "runtime sequence rest binding"
-        );
 
         const std::size_t prefix_count = pattern.rest_index;
         const std::size_t suffix_count = pattern.elements.size() - pattern.rest_index;
@@ -7940,6 +7962,21 @@ private:
             std::move(length),
             make_prelude_slice_type(loc, element_type)
         );
+    }
+
+    void track_runtime_sequence_value_rest_alias_borrow(const Pattern& pattern,
+                                                        const std::string& source_name,
+                                                        const IrType& element_type) {
+        if (pattern.rest_alias_name.empty()) return;
+        if (!is_owner_type(element_type) && !contains_borrow_type(element_type)) return;
+        LocalInfo& source = require_live_local(pattern.rest_alias_loc, source_name);
+        require_can_borrow_path(pattern.rest_alias_loc, source_name, source, "", false);
+        add_borrow_source(source, "", false);
+        if (!source_name.empty() && source_name.front() == '$') {
+            source.auto_drop_owner = true;
+        }
+        LocalInfo& alias = local_slot_by_name(pattern.rest_alias_name);
+        set_local_named_borrow_source(alias, source_name, "", false);
     }
 
     IrExprPtr lower_runtime_sequence_pattern_length_condition(const Pattern& pattern,
@@ -8322,7 +8359,8 @@ private:
         const RuntimeSequenceValuePatternPlan& value_plan,
         std::vector<IrStmtPtr>& statements) {
         if (!is_owner_type(element_type) || !pattern.has_rest ||
-            !value_plan.known_owner_vec_length) {
+            !value_plan.known_owner_vec_length ||
+            !pattern.rest_alias_name.empty()) {
             return;
         }
         const std::uint64_t suffix_count =
@@ -8523,6 +8561,7 @@ private:
                 owner_source ? &*owner_source : nullptr
             );
         }
+        track_runtime_sequence_value_rest_alias_borrow(pattern, source_name, element_type);
     }
 
     void mark_pattern_value_moved_from_source(SourceLocation loc,
