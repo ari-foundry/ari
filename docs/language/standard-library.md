@@ -25,8 +25,8 @@ hooks because the current language cannot express those primitives directly.
 | Library | Purpose | Current API Highlights | Status |
 | --- | --- | --- | --- |
 | `std` root | Common prelude surface and shared ADTs. | `Option[T]`, `Result[T, E]`, `Slice[T]` with `try_*` accessors, `Range[T]`, `RangeInclusive[T]`, `move`, `take`, assertion helpers, panic helpers, root `Box`, `String`, and `Vec` aliases. | Implemented source surface with compiler-known hooks for selected helpers. |
-| `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `map`, `or`, `or_else`, `xor`, `and_then`, `ok_or`, `ok_or_else`. | Implemented for the current generic enum model. |
-| `std::result` | Error-return convenience methods. | `is_ok`, `is_err`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `unwrap_err`, `expect_err`, `ok`, `err`, `map`, `map_err`, `and_then`, `or_else`. | Implemented for the current generic enum model. |
+| `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `map`, `or`, `or_else`, `xor`, `and_then`, `ok_or`, `ok_or_else`. | Implemented for the current generic enum model. |
+| `std::result` | Error-return convenience methods. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `unwrap_err`, `expect_err`, `ok`, `err`, `map`, `map_err`, `and_then`, `or_else`. | Implemented for the current generic enum model. |
 | `std::io` | Minimal process IO hooks. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_byte`, `read_line`, `read_line_owned`. | Runtime-backed through reserved `extern "ari"` builtins. |
 | `std::input` | Friendly input aliases. | `read_byte`, `line`, `owned_line`. | Runtime-backed through `std::io`-style builtins. |
 | `std::context` | Program argument access. | `argc`, `arg`. | Runtime-backed; initialized by the generated entry wrapper. |
@@ -102,6 +102,8 @@ Use this table when writing code from docs alone:
 ```ari
 value.is_some()
 value.is_none()
+value.is_some_and(fn_name)
+value.is_none_or(fn_name)
 value.unwrap_or(fallback)
 value.unwrap_or_else(fn_name)
 value.unwrap()
@@ -120,6 +122,8 @@ value.ok_or_else<E>(fn_name)
 ```ari
 value.is_ok()
 value.is_err()
+value.is_ok_and(fn_name)
+value.is_err_and(fn_name)
 value.unwrap_or(fallback)
 value.unwrap_or_else(fn_name)
 value.unwrap()
@@ -133,6 +137,9 @@ value.map_err<F>(fn_name)
 value.and_then<U>(fn_name)
 value.or_else<F>(fn_name)
 ```
+
+The plain case predicates borrow the enum value. The `*_and` and `*_or`
+predicate helpers consume the enum and pass its payload to the given function.
 
 `Slice[T]`, `std::vec::Vec[T]`, and `std::string::String` share a small
 collection vocabulary where the operation makes sense:

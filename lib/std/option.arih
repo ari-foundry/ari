@@ -12,6 +12,20 @@ pub impl[T] std::Option[T] {
     return __is_none<T>(self);
   }
 
+  fn is_some_and(self, op: fn(T) -> bool) -> bool {
+    return match self {
+      std::Some(value) => op(value),
+      std::None => false;
+    };
+  }
+
+  fn is_none_or(self, op: fn(T) -> bool) -> bool {
+    return match self {
+      std::Some(value) => op(value),
+      std::None => true;
+    };
+  }
+
   fn unwrap_or(self, fallback: T) -> T {
     return match self {
       std::Some(value) => value,

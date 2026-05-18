@@ -34,6 +34,7 @@ std-math-integer-helpers.ari
 std-ascii-slice-helpers.ari
 std-bits-scan-helpers.ari
 prelude-option-result-methods.ari
+prelude-option-result-predicates.ari
 ```
 
 ## What Counts As Covered

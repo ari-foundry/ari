@@ -12,6 +12,20 @@ pub impl[T, E] std::Result[T, E] {
     return __is_err<T, E>(self);
   }
 
+  fn is_ok_and(self, op: fn(T) -> bool) -> bool {
+    return match self {
+      std::Ok(value) => op(value),
+      std::Err(_) => false;
+    };
+  }
+
+  fn is_err_and(self, op: fn(E) -> bool) -> bool {
+    return match self {
+      std::Ok(_) => false,
+      std::Err(error) => op(error);
+    };
+  }
+
   fn unwrap_or(self, fallback: T) -> T {
     return match self {
       std::Ok(value) => value,

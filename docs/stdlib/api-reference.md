@@ -70,6 +70,8 @@ Some(value)
 None<T>()
 value.is_some()
 value.is_none()
+value.is_some_and(op)
+value.is_none_or(op)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
 value.unwrap()
@@ -90,6 +92,8 @@ Ok<T, E>(value)
 Err<T, E>(error)
 value.is_ok()
 value.is_err()
+value.is_ok_and(op)
+value.is_err_and(op)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
 value.unwrap()
@@ -104,10 +108,13 @@ value.and_then<U>(op)
 value.or_else<F>(op)
 ```
 
-Use the lazy `*_else` forms when the fallback is expensive or should only run
-on the missing/error branch. Use `ok_or` and `ok_or_else` when an optional
-value needs to enter a `Result`-returning flow. Use `ok` and `err` when a
-`Result` should be projected back into an `Option`.
+Use `is_some_and`, `is_none_or`, `is_ok_and`, and `is_err_and` when a branch
+depends on both the enum case and a payload predicate. These helpers consume
+the enum value and pass the payload to the predicate. Use the lazy `*_else`
+forms when the fallback is expensive or should only run on the missing/error
+branch. Use `ok_or` and `ok_or_else` when an optional value needs to enter a
+`Result`-returning flow. Use `ok` and `err` when a `Result` should be projected
+back into an `Option`.
 
 ## Slice, Vec, String, And Box
 

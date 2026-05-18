@@ -1,0 +1,42 @@
+// Covers consuming predicate helpers on Option and Result payloads.
+fn positive(value: i64) -> bool {
+  return value > 0;
+}
+
+fn small_error(code: i32) -> bool {
+  return code < 10i32;
+}
+
+fn main() -> i64 {
+  let option_some_true = if Some(5).is_some_and(positive) { 3 } else { 0 };
+  let option_some_false = if Some(-1).is_some_and(positive) { 0 } else { 5 };
+  let option_none_false = if None<i64>().is_some_and(positive) { 0 } else { 7 };
+  let option_none_true = if None<i64>().is_none_or(positive) { 11 } else { 0 };
+  let option_some_none_or = if Some(4).is_none_or(positive) { 13 } else { 0 };
+  let option_some_none_or_false = if Some(-2).is_none_or(positive) { 0 } else { 17 };
+
+  let result_ok_true = if Ok<i64, i32>(9).is_ok_and(positive) { 19 } else { 0 };
+  let result_ok_false = if Ok<i64, i32>(-3).is_ok_and(positive) { 0 } else { 23 };
+  let result_err_false = if Err<i64, i32>(4i32).is_ok_and(positive) { 0 } else { 29 };
+  let result_err_true = if Err<i64, i32>(4i32).is_err_and(small_error) { 31 } else { 0 };
+  let result_err_pred_false =
+    if Err<i64, i32>(14i32).is_err_and(small_error) { 0 } else { 37 };
+  let result_ok_err_false = if Ok<i64, i32>(1).is_err_and(small_error) { 0 } else { 41 };
+
+  let total =
+    option_some_true +
+    option_some_false +
+    option_none_false +
+    option_none_true +
+    option_some_none_or +
+    option_some_none_or_false +
+    result_ok_true +
+    result_ok_false +
+    result_err_false +
+    result_err_true +
+    result_err_pred_false +
+    result_ok_err_false;
+
+  assert_eq_i64(total, 236);
+  return total;
+}

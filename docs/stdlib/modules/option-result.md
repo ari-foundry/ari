@@ -17,6 +17,8 @@ recoverable failures should flow through `Option` or `Result`.
 ```ari
 value.is_some()
 value.is_none()
+value.is_some_and(op)
+value.is_none_or(op)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
 value.unwrap()
@@ -33,6 +35,10 @@ value.ok_or_else<E>(op)
 `unwrap` and `expect` panic on `None`. Prefer `unwrap_or`,
 `unwrap_or_else`, `match`, or `?` in normal control flow.
 
+`is_some_and` and `is_none_or` consume the `Option[T]` and pass the payload to
+`op` only for `Some`. Use borrowed `is_some` or `is_none` when you only need
+to inspect the case without consuming a local value.
+
 `ok_or` and `ok_or_else` convert `Option[T]` into `Result[T, E]`. The lazy
 form calls its function only for `None`.
 
@@ -41,6 +47,8 @@ form calls its function only for `None`.
 ```ari
 value.is_ok()
 value.is_err()
+value.is_ok_and(op)
+value.is_err_and(op)
 value.unwrap_or(fallback)
 value.unwrap_or_else(op)
 value.unwrap()
@@ -58,6 +66,9 @@ value.or_else<F>(op)
 `ok` keeps the success payload as `Option[T]`. `err` keeps the error payload as
 `Option[E]`. `unwrap_or_else` receives the error and returns a fallback success
 value.
+
+`is_ok_and` consumes the `Result[T, E]` and predicates the success payload.
+`is_err_and` consumes it and predicates the error payload.
 
 ## Example
 
@@ -82,6 +93,7 @@ Focused positive tests:
 
 ```text
 tests/cases/standard-library/ok/prelude-option-result-methods.ari
+tests/cases/standard-library/ok/prelude-option-result-predicates.ari
 tests/cases/standard-library/ok/prelude-option-result-combinators.ari
 tests/cases/standard-library/ok/prelude-option-result-conversions.ari
 tests/cases/standard-library/ok/prelude-option-result-unwrap.ari

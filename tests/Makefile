@@ -554,6 +554,13 @@ check-prelude: $(TARGET)
 	grep -F -q 'Result_i64__i32_8inherent9unwrap_or' $(BUILD_DIR)/prelude/prelude-option-result-methods.ll
 	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-methods.ari -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf
 	$(BUILD_DIR)/prelude/prelude-option-result-methods.elf; code=$$?; test $$code -eq 91
+	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-predicates.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
+	grep -F -q 'define i1 @"_ARNv4impl16std__Option_i64_8inherent11is_some_and"({ i32, i64 } %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
+	grep -F -q 'define i1 @"_ARNv4impl16std__Option_i64_8inherent10is_none_or"({ i32, i64 } %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
+	grep -F -q 'define i1 @"_ARNv4impl21std__Result_i64__i32_8inherent9is_ok_and"({ i32, i64 } %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
+	grep -F -q 'define i1 @"_ARNv4impl21std__Result_i64__i32_8inherent10is_err_and"({ i32, i64 } %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/prelude-option-result-predicates.ll
+	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-predicates.ari -o $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf
+	$(BUILD_DIR)/prelude/prelude-option-result-predicates.elf; code=$$?; test $$code -eq 236
 	$(TARGET) tests/cases/standard-library/ok/prelude-option-result-combinators.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent10map__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
 	grep -F -q 'Option_i64_8inherent15and_then__G_i64' $(BUILD_DIR)/prelude/prelude-option-result-combinators.ll
@@ -586,6 +593,7 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/prelude-option-result-unwrap-llvm.elf; code=$$?; test $$code -eq 52
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result.elf; $(BUILD_DIR)/prelude/prelude-option-result.elf; code=$$?; test $$code -eq 67; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; $(BUILD_DIR)/prelude/prelude-option-result-methods.elf; code=$$?; test $$code -eq 91; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-predicates.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf; $(BUILD_DIR)/prelude/prelude-option-result-predicates.elf; code=$$?; test $$code -eq 236; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-combinators.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; $(BUILD_DIR)/prelude/prelude-option-result-combinators.elf; code=$$?; test $$code -eq 218; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-conversions.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-conversions.elf; $(BUILD_DIR)/prelude/prelude-option-result-conversions.elf; code=$$?; test $$code -eq 95; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-option-result-unwrap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; $(BUILD_DIR)/prelude/prelude-option-result-unwrap.elf; code=$$?; test $$code -eq 91; fi
