@@ -219,6 +219,27 @@ math::gcd(left, right)
 `pow` requires a non-negative exponent and asserts that precondition at
 runtime. These helpers intentionally do not define overflow semantics yet.
 
+## Bits
+
+`std::bits` contains source-only `u64` helpers for bit masks and
+power-of-two alignment:
+
+```ari
+bits::is_set(value, mask)
+bits::any_set(value, mask)
+bits::set(value, mask)
+bits::clear(value, mask)
+bits::toggle(value, mask)
+bits::is_power_of_two(value)
+bits::align_down(value, alignment)
+bits::align_up(value, alignment)
+```
+
+`is_set` requires all bits from `mask`; `any_set` requires at least one
+overlap. `align_down` and `align_up` assert that `alignment` is a non-zero
+power of two. These helpers currently have `u64` signatures and intentionally
+avoid type suffixes so future generic integer APIs can keep the same names.
+
 ## ASCII
 
 `std::ascii` contains byte-oriented helpers for ASCII-only text and parser

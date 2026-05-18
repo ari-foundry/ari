@@ -1,0 +1,53 @@
+// Covers the first source-only std::bits slice: u64 masks and alignment.
+fn main() -> i64 {
+  let flags = 0b0110u64;
+  var score = 0;
+
+  if std::bits::is_set(flags, 0b0100u64) {
+    score = score + 1;
+  }
+  if !bits::is_set(flags, 0b1000u64) {
+    score = score + 2;
+  }
+  if bits::any_set(flags, 0b0110u64) {
+    score = score + 3;
+  }
+  if !bits::any_set(flags, 0b1000u64) {
+    score = score + 4;
+  }
+
+  let with_execute = bits::set(flags, 0b1000u64);
+  let read_execute = bits::clear(with_execute, 0b0010u64);
+  let toggled = bits::toggle(read_execute, 0b0101u64);
+  assert_eq_i64(with_execute as i64, 14);
+  assert_eq_i64(read_execute as i64, 12);
+  assert_eq_i64(toggled as i64, 9);
+
+  if bits::is_power_of_two(16u64) {
+    score = score + 5;
+  }
+  if !bits::is_power_of_two(18u64) {
+    score = score + 6;
+  }
+  if !bits::is_power_of_two(0u64) {
+    score = score + 7;
+  }
+
+  let down = bits::align_down(37u64, 8u64);
+  let up = bits::align_up(37u64, 8u64);
+  let exact_up = bits::align_up(32u64, 8u64);
+  let exact_down = bits::align_down(32u64, 8u64);
+  assert_eq_i64(down as i64, 32);
+  assert_eq_i64(up as i64, 40);
+  assert_eq_i64(exact_up as i64, 32);
+  assert_eq_i64(exact_down as i64, 32);
+
+  return score +
+         (with_execute as i64) +
+         (read_execute as i64) +
+         (toggled as i64) +
+         (down as i64) +
+         (up as i64) +
+         (exact_up as i64) +
+         (exact_down as i64);
+}

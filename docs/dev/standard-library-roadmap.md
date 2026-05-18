@@ -35,6 +35,7 @@ The current `std` package already provides:
 - comparison, formatting, and conversion trait surfaces
 - `std::math` integer helpers implemented in Ari source with natural names
 - `std::ascii` byte classification, case conversion, and digit parsing helpers
+- `std::bits` `u64` mask and power-of-two alignment helpers
 
 This baseline is useful, but it is still a seed. Some APIs are compiler hooks
 with source declarations, and some names exist mainly so user code can start
@@ -145,6 +146,7 @@ Likely compiler work:
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes. | Generic helper and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
 | `std::convert` | Concrete `From`/`Into` impl patterns. | Explicit associated calls and residual conversions. | Trait coherence and inference diagnostics. |
 | `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Integer helper behavior, overflow-policy diagnostics, and future checked/wrapping helpers. | Overflow intrinsics or diagnostics only after the source policy is designed. |
+| `std::bits` | Grow natural helper names from u64 signatures into generic integer mask helpers. | Mask behavior, alignment preconditions, overflow-policy diagnostics, and future bit-scan helpers. | Bit-scan intrinsics only after the source policy is designed. |
 
 ## API Landing Checklist
 

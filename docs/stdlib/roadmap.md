@@ -13,7 +13,7 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 
 Current source families: `option`, `result`, `mem`, `zone`, `boxed`,
 `string`, `ascii`, `vec`, `iter`, `fmt`, `cmp`, `convert`, `context`,
-`input`, `io`, and the first `math` integer helper slice.
+`input`, `io`, and the first `math` and `bits` numeric helper slices.
 
 ## Phase 2: Pull More Behavior Into Ari Source
 
@@ -37,6 +37,8 @@ Current source families: `option`, `result`, `mem`, `zone`, `boxed`,
 
 - Expand `std::math` from i64 signatures to generic numeric helpers when the
   language has the right trait vocabulary.
+- Expand `std::bits` from u64 signatures to generic integer mask helpers when
+  the same trait vocabulary exists.
 - Add checked, saturating, and wrapping operations only after overflow policy
   is documented.
 - Add floating helpers only where LLVM lowering and runtime behavior are

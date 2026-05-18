@@ -158,6 +158,8 @@ pub mod math;
 
 pub mod ascii;
 
+pub mod bits;
+
 pub struct Range[T] {
   start: T,
   end: T,

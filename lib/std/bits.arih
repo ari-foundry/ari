@@ -1,0 +1,37 @@
+// Source-only helpers for u64 bit masks and power-of-two alignment.
+// Wider generic integer support should extend these names later instead of
+// adding type suffixes to the public API.
+pub fn is_set(value: u64, mask: u64) -> bool {
+  return (value & mask) == mask;
+}
+
+pub fn any_set(value: u64, mask: u64) -> bool {
+  return (value & mask) != 0u64;
+}
+
+pub fn set(value: u64, mask: u64) -> u64 {
+  return value | mask;
+}
+
+pub fn clear(value: u64, mask: u64) -> u64 {
+  return value & ~mask;
+}
+
+pub fn toggle(value: u64, mask: u64) -> u64 {
+  return value ^ mask;
+}
+
+pub fn is_power_of_two(value: u64) -> bool {
+  return value != 0u64 && (value & (value - 1u64)) == 0u64;
+}
+
+pub fn align_down(value: u64, alignment: u64) -> u64 {
+  std::assert(is_power_of_two(alignment));
+  return value & ~(alignment - 1u64);
+}
+
+pub fn align_up(value: u64, alignment: u64) -> u64 {
+  std::assert(is_power_of_two(alignment));
+  let mask = alignment - 1u64;
+  return (value + mask) & ~mask;
+}

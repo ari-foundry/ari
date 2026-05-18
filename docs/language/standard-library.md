@@ -41,6 +41,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`. | Implemented for source-level trait-bound static dispatch. |
 | `std::convert` | Conversion trait names. | `From`, `Into`, `TryFrom`, `TryInto`. | Trait surface only; broad conversion impls are future library work. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`. | First i64-signature helper slice; overflow policy is still future work. |
+| `std::bits` | Source-only bit-mask and power-of-two alignment helpers. | `is_set`, `any_set`, `set`, `clear`, `toggle`, `is_power_of_two`, `align_down`, `align_up`. | First u64-signature helper slice; generic integer policy is future work. |
 
 ## API Conventions
 
@@ -85,6 +86,7 @@ Use this table when writing code from docs alone:
 | Inspect layout or raw memory. | `size_of<T>`, `align_of<T>`, `ptr_add`, `ptr_load`, `ptr_store` | Use only for scalar and supported Ari-layout aggregate values. |
 | Compare values generically. | `cmp::min`, `cmp::max`, `cmp::clamp` | Requires an `Ord[T]` impl for the compared type. |
 | Iterate ranges. | `range(start, end)`, `range_inclusive(start, end)`, `start..end`, `start..=end` | Works directly in `for` loops and stores as `Range[T]`/`RangeInclusive[T]`. |
+| Work with bit masks. | `bits::is_set`, `bits::set`, `bits::clear`, `bits::align_up` | Current helpers take `u64`. Alignment helpers assert a non-zero power-of-two alignment. |
 | Implement custom iteration. | `Iterator[T]::next(self: ref mut Self) -> Option[T]` | Use `for item in iterator`; use `for let pattern in iterator` for skip-on-mismatch filtering. |
 | Format into owned text. | `format_in!(ref mut zone, "...", values...)` | Default-zone `format!` is intentionally not executable in the current surface. |
 | Use integer helper routines. | `math::abs`, `math::pow`, `math::gcd` | Current helpers have i64 signatures and are source implemented. `pow` asserts that the exponent is non-negative. |
@@ -201,7 +203,7 @@ small source APIs with focused tests before becoming a larger design promise.
 | Text And Formatting | Diagnostics, CLI tools, and user programs need owned text, byte helpers, and formatting. | `std::string`, `std::ascii`, `std::fmt`, formatting macros. |
 | IO And Process Context | Programs need arguments, stdin/stdout, and eventually files and environment access. | `std::io`, `std::input`, `std::context`, future `std::fs`, `std::env`, `std::process`. |
 | Iteration | Collections and ranges need a shared loop protocol. | `std::iter`, collection iterators. |
-| Numerics | Systems programs need reliable arithmetic helpers beyond operators. | `std::math`, future integer checked/wrapping helpers, bit utilities. |
+| Numerics | Systems programs need reliable arithmetic and bit helpers beyond operators. | `std::math`, `std::bits`, future integer checked/wrapping helpers. |
 | Testing And Diagnostics | Library work needs source-level tests and stable failure reporting. | future `std::test`, richer panic messages, diagnostics helpers. |
 | C Interop | Ari should call C libraries without making the standard library depend on a C++ ABI. | `extern "C"` declarations, future thin C library wrappers. |
 

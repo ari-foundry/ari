@@ -34,6 +34,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`. |
 | `std::convert` | Conversion trait names. | `From`, `Into`, `TryFrom`, `TryInto`. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`. |
+| `std::bits` | Source-only bit-mask and alignment helpers. | `is_set`, `any_set`, `set`, `clear`, `toggle`, `align_up`. |
 
 ## Allocation Rules
 
@@ -59,6 +60,10 @@ that need backend or checker knowledge:
 `std::ascii` is an example of the preferred path: it is ordinary Ari source
 because byte classification, case conversion, and digit parsing need no
 compiler knowledge.
+
+`std::bits` follows the same rule for current `u64` mask helpers. Future bit
+scan intrinsics may need compiler support, but mask transforms and
+power-of-two alignment do not.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

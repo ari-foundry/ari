@@ -26,6 +26,14 @@ fn std::assert_eq_bool|prelude assertion macro tests; docs/dev/test-matrix.md Pr
 fn std::assert_eq_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
 fn std::assert_ne_bool|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
 fn std::assert_ne_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
+fn std::bits::align_down|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::align_up|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::any_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::clear|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::is_power_of_two|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::is_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::toggle|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
@@ -200,6 +208,7 @@ method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-mat
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
 module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map
+module std::bits|module load and std bits mask helper tests; docs/stdlib/overview.md module map
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
 module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row
