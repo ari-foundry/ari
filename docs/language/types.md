@@ -937,8 +937,10 @@ Meanings:
   `{data pointer, vtable pointer}` and method calls dispatch through vtable
   thunks. Generic impls can be specialized into vtables for concrete object
   types. Generic trait methods are not object-safe and stay statically
-  dispatched. Dyn-to-dyn upcasts are rejected; non-copy dyn data ownership and
-  LLVM backend lowering are still planned.
+  dispatched. `ref dyn Trait[...]` and `ref mut dyn Trait[...]` conversions keep
+  the original borrowed address as the data pointer and preserve normal borrow
+  provenance. Dyn-to-dyn upcasts are supported for the same trait or a
+  supertrait; `own dyn` type-erased storage is still planned.
 
 The executable subset supports scalar `own` values, scalar and aggregate `ref`
 / `ref mut` values, and can preserve borrow qualifiers inside local tuple,

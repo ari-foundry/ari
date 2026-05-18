@@ -57,10 +57,14 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Source `std::Vec[T]`/`std::vec::Vec[T]` is the supported growable collection
   handle for library-facing ownership. It uses explicit `Zone` capabilities for
   allocation, same-zone growth, `Vec!` construction sugar, drop of live elements,
-  tracked `Slice` views, element borrows, and raw element-buffer views. Source
+  tracked `Slice` views, element borrows, and raw element-buffer views.
   `Box[T]`/`std::Box[T]` follows the same explicit-zone handle policy for single
   values through `Box!(T, ref mut Zone, value)`, `as_ref()` / `as_mut()`, and raw
   pointer views.
+- `ref dyn Trait` and `ref mut dyn Trait` values lower as normal fat trait
+  objects that point at the original borrowed data and preserve borrow
+  provenance across local bindings, parameters, dispatch, and supertrait
+  upcasts.
 - Declaration-returning `ast -> ast` macros can inspect generic, parameter,
   field, enum-case, method, associated-type, trait, return, and witness
   summaries. `meta_ident!(...)` inside `decl!(...)` supports generated

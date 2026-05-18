@@ -1,0 +1,19 @@
+trait Score {
+  fn score(self) -> i64
+}
+
+impl Score for i64 {
+  fn score(self) -> i64 {
+    self + 4
+  }
+}
+
+fn use_score(value: ref mut dyn Score) -> i64 {
+  value.score()
+}
+
+fn main() -> i64 {
+  var number = 38i64;
+  let object: ref mut dyn Score = (ref mut number) as ref mut dyn Score;
+  return use_score(object);
+}

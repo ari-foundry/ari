@@ -1,0 +1,19 @@
+trait Score {
+  fn score(self, bonus: i64) -> i64
+}
+
+impl Score for i64 {
+  fn score(self, bonus: i64) -> i64 {
+    self + bonus
+  }
+}
+
+fn use_score(value: ref dyn Score) -> i64 {
+  value.score(5)
+}
+
+fn main() -> i64 {
+  let number = 37i64;
+  let object: ref dyn Score = (ref number) as ref dyn Score;
+  return use_score(object);
+}

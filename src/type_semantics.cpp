@@ -191,7 +191,8 @@ bool is_borrowable_executable_primitive(IrPrimitiveKind primitive) {
            primitive == IrPrimitiveKind::Array ||
            primitive == IrPrimitiveKind::Vector ||
            primitive == IrPrimitiveKind::Struct ||
-           primitive == IrPrimitiveKind::Enum;
+           primitive == IrPrimitiveKind::Enum ||
+           primitive == IrPrimitiveKind::TraitObject;
 }
 
 bool is_legacy_enum_payload_type(const IrType& type) {

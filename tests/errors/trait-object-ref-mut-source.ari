@@ -1,0 +1,8 @@
+trait Score {
+}
+
+fn main() -> i64 {
+  let number = 7i64;
+  let object: ref mut dyn Score = (ref number) as ref mut dyn Score;
+  return 0;
+}

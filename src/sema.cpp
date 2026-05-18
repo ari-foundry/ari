@@ -4327,8 +4327,16 @@ private:
         IrPrimitiveKind c_primitive = IrPrimitiveKind::Unknown;
         std::string c_canonical;
         if (ast_type.is_dyn_object) {
-            if (type.qualifier != TypeQualifier::Value) {
-                fail(type.loc, "trait object ownership qualifiers are planned; use dyn Trait as a value type for now");
+            if (type.qualifier == TypeQualifier::Own) {
+                fail(type.loc, "own dyn Trait requires durable owned trait-object storage and is still planned");
+            }
+            if (type.qualifier == TypeQualifier::Ptr) {
+                fail(type.loc, "ptr dyn Trait is not supported; use dyn Trait, ref dyn Trait, or ref mut dyn Trait");
+            }
+            if (type.qualifier != TypeQualifier::Value &&
+                type.qualifier != TypeQualifier::Ref &&
+                type.qualifier != TypeQualifier::MutRef) {
+                fail(type.loc, "trait object types support dyn Trait, ref dyn Trait, and ref mut dyn Trait");
             }
 
             std::string trait_name = resolve_trait_name(type.name);
@@ -18854,19 +18862,29 @@ private:
     IrExprPtr check_cast(const Expr& expr, IrExprPtr lowered) {
         IrExprPtr operand = check_expr(*expr_operand(expr));
         IrType target = resolve_executable_type(expr.cast_type);
-        if (is_borrow_type(operand->type) && !is_raw_pointer_type(target)) {
-            fail(expr.loc, "borrow expression result must be passed directly to a call");
-        }
 
-        if (is_value_trait_object_type(target)) {
+        if (target.primitive == IrPrimitiveKind::TraitObject) {
             TraitObjectConversion conversion =
                 require_trait_object_conversion(expr.loc, operand->type, target);
-            return make_trait_object_cast_expr(
+            IrExprPtr cast = make_trait_object_cast_expr(
                 expr.loc,
                 std::move(operand),
                 std::move(target),
                 std::move(conversion.vtable_name),
                 conversion.vtable_offset);
+            if (is_borrow_type(cast->type)) {
+                std::optional<BorrowResultSource> source =
+                    activate_borrowed_trait_object_source(expr.loc, *ir_expr_operand(*cast));
+                if (!source) {
+                    fail(expr.loc, "borrowed trait object conversions must preserve a concrete borrow source");
+                }
+                set_borrow_result_source(*cast, *source);
+            }
+            return cast;
+        }
+
+        if (is_borrow_type(operand->type) && !is_raw_pointer_type(target)) {
+            fail(expr.loc, "borrow expression result must be passed directly to a call");
         }
 
         bool integer_cast = is_value_integer_type(operand->type) && is_value_integer_type(target);
@@ -18886,29 +18904,88 @@ private:
         return lowered;
     }
 
+    std::optional<BorrowResultSource> activate_borrowed_trait_object_source(SourceLocation loc, const IrExpr& expr) {
+        std::optional<BorrowResultSource> source = borrow_result_source(expr);
+        if (source) return source;
+        if (expr.kind != IrExprKind::Local || !is_borrow_type(expr.type)) return std::nullopt;
+
+        const std::string& name = ir_expr_name(expr);
+        LocalInfo& local = local_slot_by_name(name);
+        const bool mutable_borrow = expr.type.qualifier == TypeQualifier::MutRef;
+        require_can_reborrow(loc, name, local, mutable_borrow);
+        add_borrow_source(local, "", mutable_borrow);
+        borrow_context_.push_temporary(name, "", mutable_borrow);
+        return BorrowResultSource{name, "", mutable_borrow};
+    }
+
     TraitObjectConversion require_trait_object_conversion(SourceLocation loc, const IrType& source, const IrType& target) {
+        if (target.qualifier == TypeQualifier::Own) {
+            fail(loc, "own dyn Trait requires durable owned trait-object storage and is still planned");
+        }
+        if (target.qualifier == TypeQualifier::Ptr) {
+            fail(loc, "ptr dyn Trait is not supported; use dyn Trait, ref dyn Trait, or ref mut dyn Trait");
+        }
+        IrType value_target = target;
+        value_target.qualifier = TypeQualifier::Value;
+        if (is_borrow_type(target)) {
+            if (!is_borrow_type(source)) {
+                fail(loc, "borrowed trait object conversions require borrow operands, got " + type_name(source));
+            }
+            if (source.qualifier != target.qualifier) {
+                fail(loc,
+                     "borrowed trait object conversion requires " + type_name(target) +
+                         " source mode, got " + type_name(source));
+            }
+            if (source.primitive == IrPrimitiveKind::TraitObject) {
+                IrType value_source = source;
+                value_source.qualifier = TypeQualifier::Value;
+                if (!trait_application_implies_trait(value_source.name, value_source.args, value_target.name, value_target.args)) {
+                    fail(loc, "trait object upcast from " + type_name(source) + " to " +
+                                  type_name(target) +
+                                  " requires the target trait to be the same trait or a supertrait");
+                }
+                TraitObjectConversion conversion;
+                conversion.vtable_offset = trait_object_upcast_vtable_offset(loc, value_source, value_target);
+                return conversion;
+            }
+
+            IrType value_source = source;
+            value_source.qualifier = TypeQualifier::Value;
+            if (is_owner_type(value_source) || contains_borrow_type(value_source)) {
+                fail(loc, "borrowed trait object conversions currently require non-owning concrete values, got " +
+                              type_name(source));
+            }
+            if (!type_implements_trait(value_target.name, value_target.args, value_source)) {
+                fail(loc, "type " + type_name(value_source) + " does not implement trait '" +
+                               trait_application_display(value_target.name, value_target.args) + "' for dyn conversion");
+            }
+            TraitObjectConversion conversion;
+            conversion.vtable_name = register_trait_object_vtable(loc, value_source, value_target);
+            return conversion;
+        }
+
         if (source.qualifier != TypeQualifier::Value) {
             fail(loc, "trait object conversions currently require value operands, got " + type_name(source));
         }
         if (source.primitive == IrPrimitiveKind::TraitObject) {
-            if (!trait_application_implies_trait(source.name, source.args, target.name, target.args)) {
+            if (!trait_application_implies_trait(source.name, source.args, value_target.name, value_target.args)) {
                 fail(loc, "trait object upcast from " + type_name(source) + " to " +
-                              type_name(target) +
+                              type_name(value_target) +
                               " requires the target trait to be the same trait or a supertrait");
             }
             TraitObjectConversion conversion;
-            conversion.vtable_offset = trait_object_upcast_vtable_offset(loc, source, target);
+            conversion.vtable_offset = trait_object_upcast_vtable_offset(loc, source, value_target);
             return conversion;
         }
         if (is_owner_type(source) || contains_borrow_type(source)) {
             fail(loc, "trait object conversions currently require copyable non-borrow values, got " + type_name(source));
         }
-        if (!type_implements_trait(target.name, target.args, source)) {
+        if (!type_implements_trait(value_target.name, value_target.args, source)) {
             fail(loc, "type " + type_name(source) + " does not implement trait '" +
-                           trait_application_display(target.name, target.args) + "' for dyn conversion");
+                           trait_application_display(value_target.name, value_target.args) + "' for dyn conversion");
         }
         TraitObjectConversion conversion;
-        conversion.vtable_name = register_trait_object_vtable(loc, source, target);
+        conversion.vtable_name = register_trait_object_vtable(loc, source, value_target);
         return conversion;
     }
 
@@ -22887,7 +22964,7 @@ private:
 
         std::size_t borrow_mark = temporary_borrow_mark();
         IrExprPtr receiver = check_expr(*expr_operand(expr));
-        if (is_value_trait_object_type(receiver->type)) {
+        if (receiver->type.primitive == IrPrimitiveKind::TraitObject) {
             IrExprPtr out = check_trait_object_method_call(expr, std::move(receiver), std::move(lowered));
             release_temporary_borrows(borrow_mark);
             return out;

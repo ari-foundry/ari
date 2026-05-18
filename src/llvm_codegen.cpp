@@ -273,6 +273,9 @@ private:
     }
 
     std::string llvm_type(const IrType& type) const {
+        if (type.primitive == IrPrimitiveKind::TraitObject) {
+            return "{ ptr, ptr }";
+        }
         if (type.qualifier == TypeQualifier::Ref ||
             type.qualifier == TypeQualifier::MutRef ||
             type.qualifier == TypeQualifier::Ptr) {
@@ -2930,13 +2933,17 @@ private:
             return Value{object_type, with_vtable, expr.type};
         }
 
-        std::string source_slot = temp();
-        line("  " + source_slot + " = alloca " + source.type);
-        line("  store " + source.type + " " + source.name + ", ptr " + source_slot);
+        std::string data_pointer = source.name;
+        if (ir_expr_operand(expr)->type.qualifier != TypeQualifier::Ref &&
+            ir_expr_operand(expr)->type.qualifier != TypeQualifier::MutRef) {
+            data_pointer = temp();
+            line("  " + data_pointer + " = alloca " + source.type);
+            line("  store " + source.type + " " + source.name + ", ptr " + data_pointer);
+        }
 
         std::string object_type = llvm_type(expr.type);
         std::string with_data = temp();
-        line("  " + with_data + " = insertvalue " + object_type + " undef, ptr " + source_slot + ", 0");
+        line("  " + with_data + " = insertvalue " + object_type + " undef, ptr " + data_pointer + ", 0");
         std::string with_vtable = temp();
         line("  " + with_vtable + " = insertvalue " + object_type + " " + with_data +
              ", ptr " + quote_global(ir_expr_name(expr)) + ", 1");

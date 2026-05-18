@@ -2337,6 +2337,12 @@ check-traits: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-dispatch.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-dispatch.elf; $(BUILD_DIR)/traits/trait-object-dispatch.elf; code=$$?; test $$code -eq 11; fi
 	$(TARGET) tests/ok/trait-object-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-dispatch.elf
 	$(BUILD_DIR)/traits/trait-object-dispatch.elf; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/trait-object-ref-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-ref-dispatch.ll
+	grep -q "dyn::vtable::i64::dyn_Score" $(BUILD_DIR)/traits/trait-object-ref-dispatch.ll
+	$(TARGET) tests/ok/trait-object-ref-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-ref-dispatch.elf
+	$(BUILD_DIR)/traits/trait-object-ref-dispatch.elf; code=$$?; test $$code -eq 42
+	$(TARGET) tests/ok/trait-object-ref-mut-dispatch.ari -o $(BUILD_DIR)/traits/trait-object-ref-mut-dispatch.elf
+	$(BUILD_DIR)/traits/trait-object-ref-mut-dispatch.elf; code=$$?; test $$code -eq 42
 	$(TARGET) tests/ok/trait-object-multi-arg-dispatch.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
 	grep -q "dyn::vtable::i64::dyn_Mix_i64_" $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
 	grep -q "call i64 .*ptr .* i64 3, i64 4" $(BUILD_DIR)/traits/trait-object-multi-arg-dispatch.ll
@@ -2359,6 +2365,10 @@ check-traits: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/trait-object-supertrait-upcast.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; code=$$?; test $$code -eq 12; fi
 	$(TARGET) tests/ok/trait-object-supertrait-upcast.ari -o $(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf
 	$(BUILD_DIR)/traits/trait-object-supertrait-upcast.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/trait-object-ref-supertrait-upcast.ari --emit-llvm $(BUILD_DIR)/traits/trait-object-ref-supertrait-upcast.ll
+	grep -q "getelementptr ptr, ptr .* i64 1" $(BUILD_DIR)/traits/trait-object-ref-supertrait-upcast.ll
+	$(TARGET) tests/ok/trait-object-ref-supertrait-upcast.ari -o $(BUILD_DIR)/traits/trait-object-ref-supertrait-upcast.elf
+	$(BUILD_DIR)/traits/trait-object-ref-supertrait-upcast.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/trait-bound-static-dispatch.ari -o $(BUILD_DIR)/traits/trait-bound-static-dispatch.elf
 	$(BUILD_DIR)/traits/trait-bound-static-dispatch.elf; code=$$?; test $$code -eq 6
 	$(TARGET) tests/ok/trait-supertrait-static.ari -o $(BUILD_DIR)/traits/trait-supertrait-static.elf
@@ -2438,7 +2448,9 @@ check-traits: $(TARGET)
 	if $(TARGET) tests/errors/trait-object-arity.ari -o $(BUILD_DIR)/traits/trait-object-arity.elf >$(BUILD_DIR)/traits/trait-object-arity.err 2>&1; then exit 1; fi
 	grep -q "trait 'Compare' expects 1 type argument" $(BUILD_DIR)/traits/trait-object-arity.err
 	if $(TARGET) tests/errors/trait-object-qualifier.ari -o $(BUILD_DIR)/traits/trait-object-qualifier.elf >$(BUILD_DIR)/traits/trait-object-qualifier.err 2>&1; then exit 1; fi
-	grep -q "trait object ownership qualifiers are planned" $(BUILD_DIR)/traits/trait-object-qualifier.err
+	grep -q "own dyn Trait requires durable owned trait-object storage and is still planned" $(BUILD_DIR)/traits/trait-object-qualifier.err
+	if $(TARGET) tests/errors/trait-object-ref-mut-source.ari -o $(BUILD_DIR)/traits/trait-object-ref-mut-source.elf >$(BUILD_DIR)/traits/trait-object-ref-mut-source.err 2>&1; then exit 1; fi
+	grep -q "borrowed trait object conversion requires ref mut dyn Score source mode, got ref i64" $(BUILD_DIR)/traits/trait-object-ref-mut-source.err
 	if $(TARGET) tests/errors/trait-object-value-planned.ari -o $(BUILD_DIR)/traits/trait-object-value-planned.elf >$(BUILD_DIR)/traits/trait-object-value-planned.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected dyn Score, got i64" $(BUILD_DIR)/traits/trait-object-value-planned.err
 	if $(TARGET) tests/errors/trait-object-coerce-missing-impl.ari -o $(BUILD_DIR)/traits/trait-object-coerce-missing-impl.elf >$(BUILD_DIR)/traits/trait-object-coerce-missing-impl.err 2>&1; then exit 1; fi

@@ -1,0 +1,30 @@
+trait BaseScore {
+  fn base(self, bonus: i64) -> i64
+}
+
+trait ChildScore: BaseScore {
+  fn child(self) -> i64
+}
+
+impl BaseScore for i64 {
+  fn base(self, bonus: i64) -> i64 {
+    self + bonus
+  }
+}
+
+impl ChildScore for i64 {
+  fn child(self) -> i64 {
+    self * 2
+  }
+}
+
+fn use_base(value: ref dyn BaseScore) -> i64 {
+  value.base(5)
+}
+
+fn main() -> i64 {
+  let number = 7i64;
+  let child: ref dyn ChildScore = (ref number) as ref dyn ChildScore;
+  let base: ref dyn BaseScore = child as ref dyn BaseScore;
+  return use_base(base);
+}

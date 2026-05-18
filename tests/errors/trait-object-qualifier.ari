@@ -2,7 +2,7 @@ trait Score {
 }
 
 struct Holder {
-  value: ref dyn Score,
+  value: own dyn Score,
 }
 
 fn main() -> i64 {
