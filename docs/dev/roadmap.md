@@ -43,9 +43,10 @@ near-term deliverable.
    work is the genuinely dynamic surface: owner moves through enum payload
    slots, `Slice[T]` element paths, owned rest aliases, and unknown-length vector
    suffixes without relying on hidden whole-value leaks.
-   Non-scalar or owned payload-bearing `@repr(C)` enum C layouts should be
-   defined with this ABI work; the current compiler covers public non-generic
-   scalar/pointer-slot payload enums in C headers.
+   Owned payload-bearing `@repr(C)` enum C layouts should be defined with this
+   ABI work; public non-generic plain payload enums already emit C headers for
+   scalar, pointer-shaped, and generated wrapper-backed non-scalar payload
+   slots.
 
 ## Medium-Term Language Work
 

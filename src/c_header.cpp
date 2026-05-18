@@ -6,6 +6,7 @@
 #include "symbol_mangle.hpp"
 #include "target.hpp"
 
+#include <algorithm>
 #include <cstddef>
 #include <map>
 #include <set>
@@ -804,31 +805,11 @@ std::string aggregate_enum_field_name(std::size_t index) {
     return "payload" + std::to_string(index - 1);
 }
 
-void require_raw_payload_c_enum_storage(const IrCEnum& item) {
-    const std::vector<IrType>& fields = ari_aggregate_field_types(item.type);
-    for (std::size_t i = 0; i < fields.size(); ++i) {
-        bool expected_tag =
-            i == 0 &&
-            fields[i].qualifier == TypeQualifier::Value &&
-            fields[i].primitive == IrPrimitiveKind::I32;
-        bool expected_payload =
-            i > 0 &&
-            fields[i].qualifier == TypeQualifier::Value &&
-            fields[i].primitive == IrPrimitiveKind::U64;
-        if (expected_tag || expected_payload) continue;
-        throw CompileError(where(item.loc) +
-                           ": C header emission for payload-bearing @repr(C) enum '" +
-                           item.name +
-                           "' currently supports only scalar or pointer-shaped raw payload slots; use an explicit C wrapper for aggregate payload storage");
-    }
-}
-
 std::string aggregate_enum_definition(const IrCEnum& item,
                                       const CRecordNames& c_record_names,
                                       const CConcreteRecordNames& c_concrete_record_names,
                                       const CEnumNames& c_enum_names,
                                       const CGeneratedAggregateNames& c_generated_aggregate_names) {
-    require_raw_payload_c_enum_storage(item);
     std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
     std::ostringstream out;
     out << "struct " << c_name << " {\n";
@@ -845,6 +826,172 @@ std::string aggregate_enum_definition(const IrCEnum& item,
     }
     out << "};";
     return out.str();
+}
+
+struct CDefinitionNode {
+    std::string name;
+    std::vector<std::string> dependencies;
+    std::string definition;
+    SourceLocation loc;
+};
+
+void add_definition_dependency(std::set<std::string>& seen,
+                               std::vector<std::string>& dependencies,
+                               const std::string& name) {
+    if (name.empty()) return;
+    if (!seen.insert(name).second) return;
+    dependencies.push_back(name);
+}
+
+void collect_definition_dependencies_for_type(
+    const IrType& type,
+    const CRecordNames& c_record_names,
+    const CConcreteRecordNames& c_concrete_record_names,
+    const CEnumNames& c_enum_names,
+    const CGeneratedAggregateNames& c_generated_aggregate_names,
+    std::set<std::string>& seen,
+    std::vector<std::string>& dependencies) {
+    if (type.qualifier == TypeQualifier::Ptr ||
+        type.qualifier == TypeQualifier::Ref ||
+        type.qualifier == TypeQualifier::MutRef) {
+        return;
+    }
+    if (type.qualifier == TypeQualifier::Own) {
+        throw CompileError("C header emission does not support ownership-qualified type " + type_name(type) +
+                           "; expose an explicit raw pointer or scalar ABI instead");
+    }
+    if (type.qualifier != TypeQualifier::Value) return;
+
+    if (type.primitive == IrPrimitiveKind::Array) {
+        if (type.args.size() != 1) {
+            throw CompileError("C header emission cannot render malformed fixed-array type " +
+                               type_name(type));
+        }
+        collect_definition_dependencies_for_type(
+            type.args[0],
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            c_generated_aggregate_names,
+            seen,
+            dependencies);
+        return;
+    }
+
+    if (type.primitive == IrPrimitiveKind::Struct) {
+        const CRecordInfo& record = c_record_info(type, c_record_names);
+        if (record.opaque) {
+            auto concrete = c_concrete_record_names.find(concrete_record_key(type));
+            if (concrete != c_concrete_record_names.end()) {
+                add_definition_dependency(seen, dependencies, concrete->second);
+                return;
+            }
+            throw CompileError("C header emission does not support by-value generic aggregate type " +
+                               type_name(type) + "; no concrete C layout was collected for this instantiation");
+        }
+        add_definition_dependency(seen, dependencies, record.c_name);
+        return;
+    }
+
+    if (type.primitive == IrPrimitiveKind::Enum) {
+        const CEnumInfo* enum_info = c_enum_info_for_type(type, c_enum_names);
+        if (enum_info) {
+            if (enum_info->aggregate_layout) {
+                add_definition_dependency(seen, dependencies, enum_info->c_name);
+            }
+            return;
+        }
+    }
+
+    if (is_generated_aggregate_type(type) && !is_value_array_type(type)) {
+        add_definition_dependency(
+            seen,
+            dependencies,
+            c_generated_aggregate_type_name(type, c_generated_aggregate_names));
+    }
+}
+
+std::vector<std::string> collect_definition_dependencies(
+    const std::vector<IrType>& fields,
+    const CRecordNames& c_record_names,
+    const CConcreteRecordNames& c_concrete_record_names,
+    const CEnumNames& c_enum_names,
+    const CGeneratedAggregateNames& c_generated_aggregate_names,
+    const std::string& self_name) {
+    std::set<std::string> seen;
+    std::vector<std::string> dependencies;
+    for (const auto& field : fields) {
+        collect_definition_dependencies_for_type(
+            field,
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            c_generated_aggregate_names,
+            seen,
+            dependencies);
+    }
+    dependencies.erase(
+        std::remove(dependencies.begin(), dependencies.end(), self_name),
+        dependencies.end());
+    return dependencies;
+}
+
+std::vector<std::string> record_definition_dependencies(
+    const IrCRecord& record,
+    const CRecordNames& c_record_names,
+    const CConcreteRecordNames& c_concrete_record_names,
+    const CEnumNames& c_enum_names,
+    const CGeneratedAggregateNames& c_generated_aggregate_names,
+    const std::string& self_name) {
+    std::vector<IrType> fields;
+    fields.reserve(record.fields.size());
+    for (const auto& field : record.fields) fields.push_back(field.type);
+    return collect_definition_dependencies(
+        fields,
+        c_record_names,
+        c_concrete_record_names,
+        c_enum_names,
+        c_generated_aggregate_names,
+        self_name);
+}
+
+std::vector<std::string> concrete_record_definition_dependencies(
+    const CConcreteRecord& record,
+    const CRecordNames& c_record_names,
+    const CConcreteRecordNames& c_concrete_record_names,
+    const CEnumNames& c_enum_names,
+    const CGeneratedAggregateNames& c_generated_aggregate_names) {
+    std::vector<IrType> fields;
+    fields.reserve(record.fields.size());
+    for (const auto& field : record.fields) fields.push_back(field.type);
+    return collect_definition_dependencies(
+        fields,
+        c_record_names,
+        c_concrete_record_names,
+        c_enum_names,
+        c_generated_aggregate_names,
+        record.c_name);
+}
+
+std::vector<std::string> generated_aggregate_definition_dependencies(
+    const CGeneratedAggregate& aggregate,
+    const CRecordNames& c_record_names,
+    const CConcreteRecordNames& c_concrete_record_names,
+    const CEnumNames& c_enum_names,
+    const CGeneratedAggregateNames& c_generated_aggregate_names) {
+    std::vector<IrType> fields;
+    if (aggregate.kind == CGeneratedAggregateKind::Array) {
+        fields.push_back(aggregate.type);
+    } else {
+        fields = ari_aggregate_field_types(aggregate.type);
+    }
+    return collect_definition_dependencies(
+        fields,
+        c_record_names,
+        c_concrete_record_names,
+        c_enum_names,
+        c_generated_aggregate_names,
+        aggregate.c_name);
 }
 
 std::string generated_aggregate_field_name(const CGeneratedAggregate& aggregate, std::size_t index) {
@@ -895,6 +1042,49 @@ std::string generated_aggregate_definition(const CGeneratedAggregate& aggregate,
     }
     out << "};";
     return out.str();
+}
+
+void add_definition_node(std::map<std::string, CDefinitionNode>& nodes,
+                         std::vector<std::string>& order,
+                         CDefinitionNode node) {
+    std::string name = node.name;
+    if (!nodes.emplace(name, std::move(node)).second) {
+        throw CompileError("C header emission found duplicate C definition name '" + name + "'");
+    }
+    order.push_back(std::move(name));
+}
+
+void emit_ordered_definition(const std::string& name,
+                             const std::map<std::string, CDefinitionNode>& nodes,
+                             std::set<std::string>& visiting,
+                             std::set<std::string>& emitted,
+                             std::ostringstream& out) {
+    if (emitted.count(name)) return;
+    auto found = nodes.find(name);
+    if (found == nodes.end()) return;
+    if (!visiting.insert(name).second) {
+        throw CompileError(where(found->second.loc) +
+                           ": C header emission found recursive by-value C type dependency involving '" +
+                           name + "'");
+    }
+
+    for (const auto& dependency : found->second.dependencies) {
+        emit_ordered_definition(dependency, nodes, visiting, emitted, out);
+    }
+
+    visiting.erase(name);
+    emitted.insert(name);
+    out << found->second.definition << "\n\n";
+}
+
+void emit_ordered_definitions(const std::vector<std::string>& order,
+                              const std::map<std::string, CDefinitionNode>& nodes,
+                              std::ostringstream& out) {
+    std::set<std::string> visiting;
+    std::set<std::string> emitted;
+    for (const auto& name : order) {
+        emit_ordered_definition(name, nodes, visiting, emitted, out);
+    }
 }
 
 } // namespace
@@ -957,41 +1147,100 @@ std::string emit_c_header(const IrProgram& program) {
             out << generated_aggregate_forward_declaration(aggregate) << "\n";
         }
         out << "\n";
+        std::map<std::string, CDefinitionNode> definition_nodes;
+        std::vector<std::string> definition_order;
         for (const auto& item : program.c_enums) {
             if (!item.aggregate_layout) continue;
-            out << aggregate_enum_definition(
-                item,
-                c_record_names,
-                c_concrete_record_names,
-                c_enum_names,
-                c_generated_aggregate_names) << "\n\n";
-            out << enum_constants_definition(item) << "\n\n";
+            std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
+            add_definition_node(
+                definition_nodes,
+                definition_order,
+                CDefinitionNode{
+                    c_name,
+                    collect_definition_dependencies(
+                        ari_aggregate_field_types(item.type),
+                        c_record_names,
+                        c_concrete_record_names,
+                        c_enum_names,
+                        c_generated_aggregate_names,
+                        c_name),
+                    aggregate_enum_definition(
+                        item,
+                        c_record_names,
+                        c_concrete_record_names,
+                        c_enum_names,
+                        c_generated_aggregate_names) + "\n\n" +
+                        enum_constants_definition(item),
+                    item.loc
+                });
         }
         for (const auto& record : program.c_records) {
             if (record.opaque) continue;
-            out << record_definition(
-                record,
-                c_record_names,
-                c_concrete_record_names,
-                c_enum_names,
-                c_generated_aggregate_names) << "\n\n";
+            std::string c_name = record.c_name.empty() ? unqualified_name(record.name) : record.c_name;
+            add_definition_node(
+                definition_nodes,
+                definition_order,
+                CDefinitionNode{
+                    c_name,
+                    record_definition_dependencies(
+                        record,
+                        c_record_names,
+                        c_concrete_record_names,
+                        c_enum_names,
+                        c_generated_aggregate_names,
+                        c_name),
+                    record_definition(
+                        record,
+                        c_record_names,
+                        c_concrete_record_names,
+                        c_enum_names,
+                        c_generated_aggregate_names),
+                    record.loc
+                });
         }
         for (const auto& record : c_concrete_records) {
-            out << concrete_record_definition(
-                record,
-                c_record_names,
-                c_concrete_record_names,
-                c_enum_names,
-                c_generated_aggregate_names) << "\n\n";
+            add_definition_node(
+                definition_nodes,
+                definition_order,
+                CDefinitionNode{
+                    record.c_name,
+                    concrete_record_definition_dependencies(
+                        record,
+                        c_record_names,
+                        c_concrete_record_names,
+                        c_enum_names,
+                        c_generated_aggregate_names),
+                    concrete_record_definition(
+                        record,
+                        c_record_names,
+                        c_concrete_record_names,
+                        c_enum_names,
+                        c_generated_aggregate_names),
+                    record.loc
+                });
         }
         for (const auto& aggregate : c_generated_aggregates) {
-            out << generated_aggregate_definition(
-                aggregate,
-                c_record_names,
-                c_concrete_record_names,
-                c_enum_names,
-                c_generated_aggregate_names) << "\n\n";
+            add_definition_node(
+                definition_nodes,
+                definition_order,
+                CDefinitionNode{
+                    aggregate.c_name,
+                    generated_aggregate_definition_dependencies(
+                        aggregate,
+                        c_record_names,
+                        c_concrete_record_names,
+                        c_enum_names,
+                        c_generated_aggregate_names),
+                    generated_aggregate_definition(
+                        aggregate,
+                        c_record_names,
+                        c_concrete_record_names,
+                        c_enum_names,
+                        c_generated_aggregate_names),
+                    aggregate.type.loc
+                });
         }
+        emit_ordered_definitions(definition_order, definition_nodes, out);
     }
 
     out << "#ifdef __cplusplus\n";

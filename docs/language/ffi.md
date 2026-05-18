@@ -359,10 +359,10 @@ let point_align = mem::align_of<Point>();
 
 Public non-generic `@repr(C)` enums may carry payloads in the current C-header
 surface. The header spells those payload enums as `struct Name` with an
-`int32_t tag` plus raw `uint64_t payloadN` storage slots, matching Ari's current
-scalar and pointer-shaped aggregate enum ABI. Generic payload enums, owned
-payload values, and broader non-scalar payload C layouts still need explicit C
-wrappers.
+`int32_t tag` plus payload storage slots. Scalar and pointer-shaped payloads
+use raw `uint64_t payloadN` storage, while non-scalar plain aggregate payloads
+use generated wrapper typedefs such as `AriTuple_*`. Generic payload enums and
+owned payload values still need explicit C wrappers.
 
 `*pointer` is available for raw-pointer load/store syntax.
 `ptr_load<T>(pointer)` and `ptr_store<T>(pointer, value)` are also accepted
@@ -446,7 +446,8 @@ structs after passing the same classifier. Tuple values use generated
 `AriTuple_*` wrappers with positional `fieldN` members. Fixed-capacity vector
 storage values use generated `AriVec_*` wrappers with the current `len` plus
 `data[N]` local storage fields. Aggregate-layout enums use generated
-`AriEnum_*` wrappers with the hidden `tag` plus raw `payloadN` storage slots.
+`AriEnum_*` wrappers with the hidden `tag` plus scalar, pointer-shaped, or
+generated-wrapper `payloadN` storage slots.
 Larger records, larger arrays/vectors/tuples/enums, and non-Unix targets should
 expose an explicit pointer ABI. Header generation still rejects Ari-only values
 such as `string`, ownership-qualified values, and non-`repr(C)` structs that do

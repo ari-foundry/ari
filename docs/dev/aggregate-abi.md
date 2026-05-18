@@ -39,9 +39,10 @@ arrays use `AriArray_*` wrappers with an `elements` array field. Tuples use
 `AriTuple_*` wrappers with `field0`, `field1`, and later positional fields.
 Fixed-capacity vector storage values use `AriVec_*` wrappers with the current
 `len` plus local `data[N]` storage layout. Aggregate-layout enums use
-`AriEnum_*` wrappers with the hidden `tag` field followed by `payloadN` storage
-slots. These wrappers are header surfaces for Ari's current LLVM ABI; they are
-not a promise that the same spelling is accepted as a direct C import type.
+`AriEnum_*` wrappers with the hidden `tag` field followed by scalar,
+pointer-shaped, or generated-wrapper `payloadN` storage slots. These wrappers
+are header surfaces for Ari's current LLVM ABI; they are not a promise that the
+same spelling is accepted as a direct C import type.
 
 Future backend work should keep using this classifier when growing imported C
 aggregate support, rather than re-encoding target, size, and alignment checks in

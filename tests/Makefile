@@ -2230,8 +2230,20 @@ check-meta: $(TARGET)
 	grep -q "C header emission for by-value parameter (i64, i64) is currently supported only on 64-bit Unix targets" $(BUILD_DIR)/meta/c-header-target-tuple-by-value.err
 	if $(TARGET) tests/errors/c-header-large-aggregate-enum-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.h >$(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.err 2>&1; then exit 1; fi
 	grep -q "C header emission for by-value parameter Packet is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.err
-	if $(TARGET) tests/errors/c-header-repr-enum-aggregate-payload.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h >$(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.err 2>&1; then exit 1; fi
-	grep -q "C header emission for payload-bearing @repr(C) enum 'WireTuple' currently supports only scalar or pointer-shaped raw payload slots" $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.err
+	$(TARGET) tests/ok/c-header-repr-enum-aggregate-payload.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h --emit-llvm $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.ll
+	grep -q 'typedef struct WireTuple WireTuple;' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'typedef struct AriTuple_i64_i64 AriTuple_i64_i64;' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'struct AriTuple_i64_i64 {' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'int64_t field0;' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'int64_t field1;' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'struct WireTuple {' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'int32_t tag;' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'AriTuple_i64_i64 payload0;' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'WireTuple_Empty = 0,' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'WireTuple_Pair = 1,' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'int64_t ari_wire_tuple_ptr(WireTuple\* arg0);' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h
+	grep -q 'define i64 @"ari_wire_tuple_ptr"(ptr %arg0)' $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.ll
+	if command -v cc >/dev/null 2>&1; then cc -x c -fsyntax-only -include $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h /dev/null; fi
 	if $(TARGET) tests/errors/attribute-cfg-argument.ari -o $(BUILD_DIR)/meta/attribute-cfg-argument.elf >$(BUILD_DIR)/meta/attribute-cfg-argument.err 2>&1; then exit 1; fi
 	grep -q "unknown cfg predicate 'enabled'" $(BUILD_DIR)/meta/attribute-cfg-argument.err
 	if $(TARGET) tests/errors/attribute-deprecated-argument.ari -o $(BUILD_DIR)/meta/attribute-deprecated-argument.elf >$(BUILD_DIR)/meta/attribute-deprecated-argument.err 2>&1; then exit 1; fi

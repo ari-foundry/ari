@@ -30,8 +30,9 @@ ownership; expose ownership-sensitive values through an explicit `ptr` or `ref`
 ABI instead.
 Fieldless `@repr(C)` enums use Ari's fixed 64-bit tag ABI. Public non-generic
 payload-bearing `@repr(C)` enums use an explicit C struct layout with an
-`int32_t tag` field followed by raw `uint64_t payloadN` storage slots for the
-current scalar and pointer-shaped payload ABI. Generic `@repr(C)` enums are
+`int32_t tag` field followed by payload storage slots. Scalar and
+pointer-shaped payloads use raw `uint64_t payloadN` slots; non-scalar plain
+aggregate payloads use generated wrapper typedefs. Generic `@repr(C)` enums are
 accepted only when their type parameters do not appear in payload storage.
 
 `@cfg(...)` prunes top-level declarations before name collection and type
