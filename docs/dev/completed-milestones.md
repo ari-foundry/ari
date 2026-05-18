@@ -28,6 +28,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Pattern or-detection and expanded alternative lists share one
   `pattern_semantics` result object, so sema keeps match/control-flow lowering
   wired to a phase-level pattern API instead of syntax-local helper pairs.
+- Root `Vec[T]` function, method, trait-method, and function-pointer parameter
+  ABI lowering is owned by `vector_semantics`: parameters lower to the
+  Slice-shaped view ABI, while return/field/extern runtime-capacity guards stay
+  with the same vector phase.
 - Declaration-returning `ast -> ast` macros can inspect generic, parameter,
   field, enum-case, method, associated-type, trait, return, and witness
   summaries. `meta_ident!(...)` inside `decl!(...)` supports generated

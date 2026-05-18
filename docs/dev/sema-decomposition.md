@@ -43,11 +43,13 @@ adding more narrow syntax-specific `*_semantics` siblings.
 - `vector_semantics` for local `Vec[T]` storage type/helpers, typed empty
   vector literal construction, frozen local method classification and shape
   diagnostics, shared `len`/`is_empty`/`as_slice` shape diagnostics, shared
-  collection `len` lowering, `as_slice` data/view IR construction including
-  Vec storage views, local Vec integer/non-negative and known-index operand
-  diagnostics, direct local Vec index diagnostics, known-empty element/indexed
-  method diagnostics, frozen API diagnostics, local Vec IR construction helpers
-  such as `first`, `last`, and `push`, and `VectorKnownLength`/capacity
+  collection `len` lowering, root `Vec[T]` parameter ABI lowering into
+  Slice-shaped views plus the remaining root-vector runtime ABI guards,
+  `as_slice` data/view IR construction including Vec storage views, local Vec
+  integer/non-negative and known-index operand diagnostics, direct local Vec
+  index diagnostics, known-empty element/indexed method diagnostics, frozen API
+  diagnostics, local Vec IR construction helpers such as `first`, `last`, and
+  `push`, and `VectorKnownLength`/capacity
   transition helpers used by local `len`/`is_empty`, `as_slice` length, and
   stored-vector `for` loop bound constant lowering, plus local Vec source-AST
   known-length and storage-capacity merging with semantic local-name callbacks

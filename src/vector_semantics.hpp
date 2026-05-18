@@ -44,10 +44,15 @@ using VectorKnownLengthLookup = std::function<VectorKnownLength(const std::strin
 using VectorStorageCapacityLookup = std::function<std::uint64_t(const std::string&)>;
 
 bool is_vector_storage_type(const IrType& type);
+bool is_unsized_vector_storage_type(const IrType& type);
 bool contains_root_vector_without_runtime_abi(const IrType& type);
 void require_root_vector_runtime_abi(SourceLocation loc,
                                      const IrType& type,
                                      const std::string& context);
+IrType vector_parameter_abi_type(SourceLocation loc,
+                                 const IrType& source,
+                                 const std::string& context,
+                                 bool& vec_view);
 IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length);
 const IrType& require_typed_empty_vector_element_type(SourceLocation loc, const IrType& expected);
 void specialize_vector_storage_from_init(IrType& declared, const IrExpr& init);

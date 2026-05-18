@@ -24,6 +24,8 @@ changing the long-term language contract.
    target/argument validation, and `@repr(C)` field/case guards,
    `c_export_semantics` now owns public `@repr(C)` record/enum C-header
    metadata assembly while sema supplies resolved types and enum layout, and
+   `vector_semantics` owns root `Vec[T]` parameter ABI lowering into
+   Slice-shaped views plus the remaining root-vector runtime ABI guards.
    `ownership_semantics` now owns recursive owned-field state seeding for
    locals and stack-backed vector storage. Avoid splitting one tiny file per
    syntax feature.

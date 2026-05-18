@@ -121,6 +121,10 @@ bool is_vector_storage_type(const IrType& type) {
     return type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1;
 }
 
+bool is_unsized_vector_storage_type(const IrType& type) {
+    return is_vector_storage_type(type) && type.array_size == 0;
+}
+
 bool contains_root_vector_without_runtime_abi(const IrType& type) {
     if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size == 0) return true;
     for (const auto& arg : type.args) {
@@ -139,6 +143,23 @@ void require_root_vector_runtime_abi(SourceLocation loc,
     fail(loc,
          "root Vec[T] cannot be used as " + context +
              " until the runtime-capacity Vec ABI is defined; use std::Vec[T] / std::vec::Vec[T] with an explicit Zone handle or pass Slice[T]");
+}
+
+IrType vector_parameter_abi_type(SourceLocation loc,
+                                 const IrType& source,
+                                 const std::string& context,
+                                 bool& vec_view) {
+    vec_view = false;
+    if (is_unsized_vector_storage_type(source)) {
+        if (source.args.size() != 1) {
+            fail(loc, "Vec parameter ABI requires exactly one element type");
+        }
+        require_slice_element_materializable(loc, source.args[0], "Vec parameter ABI");
+        vec_view = true;
+        return make_prelude_slice_type(loc, source.args[0]);
+    }
+    require_root_vector_runtime_abi(loc, source, context);
+    return source;
 }
 
 IrType make_vector_storage_type(SourceLocation loc, const IrType& element, std::uint64_t length) {

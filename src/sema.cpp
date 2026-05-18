@@ -2053,7 +2053,7 @@ private:
                 for (const auto& param : method.params) {
                     IrType param_type = resolve_executable_type(param.type);
                     bool vec_view = false;
-                    (void)function_parameter_abi_type(
+                    (void)vector_parameter_abi_type(
                         param.type.loc,
                         param_type,
                         "a trait method parameter",
@@ -3412,7 +3412,7 @@ private:
                 for (const auto& param : method.params) {
                     IrType param_type = resolve_executable_type(param.type);
                     bool vec_view = false;
-                    sig.params.push_back(function_parameter_abi_type(
+                    sig.params.push_back(vector_parameter_abi_type(
                         param.type.loc,
                         param_type,
                         "an impl method parameter",
@@ -3755,7 +3755,7 @@ private:
             for (const auto& param : fn.params) {
                 IrType param_type = resolve_executable_type(param.type);
                 bool vec_view = false;
-                sig.params.push_back(function_parameter_abi_type(
+                sig.params.push_back(vector_parameter_abi_type(
                     param.type.loc,
                     param_type,
                     "a function parameter",
@@ -3784,27 +3784,6 @@ private:
         if (fn.has_return_type) {
             require_root_vector_runtime_abi(fn.return_type.loc, result, "a function return type");
         }
-    }
-
-    static bool is_unsized_vector_storage_type(const IrType& type) {
-        return is_vector_storage_type(type) && type.array_size == 0;
-    }
-
-    IrType function_parameter_abi_type(SourceLocation loc,
-                                       const IrType& source,
-                                       const std::string& context,
-                                       bool& vec_view) const {
-        vec_view = false;
-        if (is_unsized_vector_storage_type(source)) {
-            if (source.args.size() != 1) {
-                fail(loc, "Vec parameter ABI requires exactly one element type");
-            }
-            require_slice_element_materializable(loc, source.args[0], "Vec parameter ABI");
-            vec_view = true;
-            return make_prelude_slice_type(loc, source.args[0]);
-        }
-        require_root_vector_runtime_abi(loc, source, context);
-        return source;
     }
 
     bool is_repr_c_struct_import_type(const IrType& type) const {
@@ -4312,7 +4291,7 @@ private:
             for (std::size_t i = 0; i < type.array_size; ++i) {
                 IrType param_type = resolve_executable_type(ast_type.args[i]);
                 bool vec_view = false;
-                type.args.push_back(function_parameter_abi_type(
+                type.args.push_back(vector_parameter_abi_type(
                     ast_type.args[i].loc,
                     param_type,
                     "a function pointer parameter",
@@ -4591,7 +4570,7 @@ private:
                 type = active_sig->params[param_index];
             } else {
                 bool vec_view = false;
-                type = function_parameter_abi_type(
+                type = vector_parameter_abi_type(
                     param.type.loc,
                     resolve_executable_type(param.type),
                     "a function parameter",
@@ -18860,7 +18839,7 @@ private:
         for (const auto& param : method.fn->params) {
             IrType param_type = resolve_type_with_substitutions(param.type, substitutions);
             bool vec_view = false;
-            sig.params.push_back(function_parameter_abi_type(
+            sig.params.push_back(vector_parameter_abi_type(
                 param.type.loc,
                 param_type,
                 "an impl method parameter",
@@ -18912,7 +18891,7 @@ private:
         for (const auto& param : method.fn->params) {
             IrType param_type = resolve_type_with_substitutions(param.type, substitutions);
             bool vec_view = false;
-            sig.params.push_back(function_parameter_abi_type(
+            sig.params.push_back(vector_parameter_abi_type(
                 param.type.loc,
                 param_type,
                 "an impl method parameter",
@@ -19545,7 +19524,7 @@ private:
         for (std::size_t i = 0; i < fn.params.size(); ++i) {
             IrType source_param_type = resolve_type_with_substitutions(fn.params[i].type, substitutions);
             bool vec_view = false;
-            IrType param_type = function_parameter_abi_type(
+            IrType param_type = vector_parameter_abi_type(
                 fn.params[i].type.loc,
                 source_param_type,
                 "a function parameter",
@@ -19677,7 +19656,7 @@ private:
         for (const auto& param : fn.params) {
             IrType source_param_type = resolve_type_with_substitutions(param.type, substitutions);
             bool vec_view = false;
-            param_types.push_back(function_parameter_abi_type(
+            param_types.push_back(vector_parameter_abi_type(
                 param.type.loc,
                 source_param_type,
                 "a function pointer parameter",
@@ -22065,7 +22044,7 @@ private:
         for (std::size_t i = 1; i < method.params.size(); ++i) {
             IrType source_param = resolve_type_with_substitutions(method.params[i], substitutions);
             bool vec_view = false;
-            IrType param = function_parameter_abi_type(
+            IrType param = vector_parameter_abi_type(
                 method.params[i].loc,
                 source_param,
                 "a trait object method parameter",
