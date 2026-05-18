@@ -32,6 +32,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   ABI lowering is owned by `vector_semantics`: parameters lower to the
   Slice-shaped view ABI, while return/field/extern runtime-capacity guards stay
   with the same vector phase.
+- Raw pointer helpers and `std::mem` value helpers lower through
+  `pointer_memory_semantics`, keeping type-argument checks, mutable-place
+  validation, hidden temporary locals, and final pointer IR block assembly out
+  of central expression dispatch.
 - The stack-backed local root `Vec[T]` method surface includes `as_ptr()` for
   raw element-buffer access alongside the fixed-capacity read/search/mutation
   helpers.

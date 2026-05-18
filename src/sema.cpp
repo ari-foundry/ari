@@ -29,6 +29,7 @@
 #include "parser.hpp"
 #include "pattern_coverage.hpp"
 #include "pattern_semantics.hpp"
+#include "pointer_memory_semantics.hpp"
 #include "prelude_macros.hpp"
 #include "prelude_resolver.hpp"
 #include "product_coverage.hpp"
@@ -230,7 +231,7 @@ struct ReferenceBindingSubject {
     std::string path;
 };
 
-class SemanticChecker {
+class SemanticChecker : private PointerMemorySemanticContext {
 public:
     explicit SemanticChecker(const Program& program, SemaOptions options)
         : program_(program), options_(options), borrow_context_(local_scopes_) {}
@@ -5638,6 +5639,10 @@ private:
 
     void release_temporary_borrows(std::size_t mark) {
         borrow_context_.release_to_mark(mark);
+    }
+
+    void coerce_pointer_memory_expr_to_expected(IrExpr& expr, const IrType& expected) override {
+        coerce_expr_to_expected(expr, expected);
     }
 
     void prefix_temporary_borrow_targets(std::size_t mark, const std::string& target_path) {
@@ -20433,300 +20438,34 @@ private:
         );
     }
 
-    std::optional<IrType> resolve_optional_pointer_helper_type_arg(const Expr& expr,
-                                                                   const std::string& operation) {
-        if (expr_type_args(expr).empty()) return std::nullopt;
-        if (expr_type_args(expr).size() != 1) {
-            fail(expr.loc, operation + " expects at most one type argument");
-        }
-        IrType element_type = resolve_executable_type(expr_type_args(expr)[0]);
-        if (element_type.qualifier != TypeQualifier::Value) {
-            fail(expr_type_args(expr)[0].loc, operation + "<T> expects a value type, got " + type_name(element_type));
-        }
-        element_type.qualifier = TypeQualifier::Ptr;
-        return element_type;
-    }
-
-    IrExprPtr check_pointer_helper_pointer_arg(const Expr& arg,
-                                               const std::optional<IrType>& expected_pointer) {
-        IrExprPtr pointer = check_expr(arg);
-        if (expected_pointer) {
-            coerce_expr_to_expected(*pointer, *expected_pointer);
-            require_assignable(arg.loc, *expected_pointer, pointer->type);
-        }
-        return pointer;
-    }
-
     IrExprPtr check_pointer_offset_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        std::optional<IrType> expected_pointer = resolve_optional_pointer_helper_type_arg(expr, "ptr_offset");
-        if (expr.args.size() != 2) fail(expr.loc, "ptr_offset expects a pointer and a byte offset");
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_pointer_helper_pointer_arg(*expr.args[0], expected_pointer);
-        IrExprPtr offset = check_expr(*expr.args[1]);
-        release_temporary_borrows(borrow_mark);
-
-        if (!is_raw_pointer_type(pointer->type)) {
-            fail(expr.args[0]->loc, "ptr_offset first argument must be a raw pointer, got " + type_name(pointer->type));
-        }
-        if (!is_value_integer_type(offset->type)) {
-            fail(expr.args[1]->loc, "ptr_offset byte offset must be an integer, got " + type_name(offset->type));
-        }
-
-        return make_pointer_offset_expr(expr.loc, std::move(pointer), std::move(offset));
+        return lower_pointer_offset_call(expr, *this);
     }
 
     IrExprPtr check_pointer_add_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        std::optional<IrType> expected_pointer = resolve_optional_pointer_helper_type_arg(expr, "ptr_add");
-        if (expr.args.size() != 2) fail(expr.loc, "ptr_add expects a pointer and an element offset");
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_pointer_helper_pointer_arg(*expr.args[0], expected_pointer);
-        IrExprPtr offset = check_expr(*expr.args[1]);
-        release_temporary_borrows(borrow_mark);
-
-        (void)require_raw_pointer_add_type(expr.args[0]->loc, pointer->type, "ptr_add");
-        if (!is_value_integer_type(offset->type)) {
-            fail(expr.args[1]->loc, "ptr_add element offset must be an integer, got " + type_name(offset->type));
-        }
-
-        return make_pointer_add_expr(expr.loc, std::move(pointer), std::move(offset));
+        return lower_pointer_add_call(expr, *this);
     }
 
     IrExprPtr check_pointer_load_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        std::optional<IrType> expected_pointer = resolve_optional_pointer_helper_type_arg(expr, "ptr_load");
-        if (expr.args.size() != 1) fail(expr.loc, "ptr_load expects one pointer");
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_pointer_helper_pointer_arg(*expr.args[0], expected_pointer);
-        release_temporary_borrows(borrow_mark);
-
-        IrType element_type = require_raw_pointer_materializable_type(expr.args[0]->loc, pointer->type, "ptr_load");
-        return make_pointer_load_expr(expr.loc, std::move(pointer), element_type);
+        return lower_pointer_load_call(expr, *this);
     }
 
     IrExprPtr check_pointer_store_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        std::optional<IrType> expected_pointer = resolve_optional_pointer_helper_type_arg(expr, "ptr_store");
-        if (expr.args.size() != 2) fail(expr.loc, "ptr_store expects a pointer and a value");
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr pointer = check_pointer_helper_pointer_arg(*expr.args[0], expected_pointer);
-        IrType element_type = require_raw_pointer_materializable_type(expr.args[0]->loc, pointer->type, "ptr_store");
-        IrExprPtr value = check_expr(*expr.args[1]);
-        coerce_expr_to_expected(*value, element_type);
-        require_assignable(expr.args[1]->loc, element_type, value->type);
-        release_temporary_borrows(borrow_mark);
-
-        return make_pointer_store_expr(expr.loc, std::move(pointer), std::move(value));
-    }
-
-    IrType resolve_optional_mem_place_type_arg(const Expr& expr, const std::string& operation) {
-        if (expr_type_args(expr).size() > 1) {
-            fail(expr.loc, operation + " expects at most one type argument");
-        }
-        if (expr_type_args(expr).empty()) return {};
-        IrType explicit_type = resolve_executable_type(expr_type_args(expr)[0]);
-        if (explicit_type.qualifier != TypeQualifier::Value) {
-            fail(expr_type_args(expr)[0].loc, operation + "<T> expects a value type, got " + type_name(explicit_type));
-        }
-        return explicit_type;
-    }
-
-    IrType require_mem_place_mut_borrow(SourceLocation loc,
-                                        const IrExpr& place,
-                                        const std::string& operation,
-                                        const std::string& argument_name) {
-        if (place.type.qualifier != TypeQualifier::MutRef) {
-            fail(loc, operation + " " + argument_name + " must be a mutable borrow, got " + type_name(place.type));
-        }
-        IrType element_type = place.type;
-        element_type.qualifier = TypeQualifier::Value;
-        return element_type;
-    }
-
-    void require_mem_place_type(SourceLocation loc,
-                                const IrType& inferred,
-                                const IrType& explicit_type,
-                                bool has_explicit_type,
-                                const std::string& operation,
-                                const std::string& argument_name) {
-        if (has_explicit_type && !same_type(inferred, explicit_type)) {
-            fail(loc,
-                 operation + " " + argument_name + " type mismatch: expected " +
-                     type_name(explicit_type) + ", got " + type_name(inferred));
-        }
-        IrType pointer_type = has_explicit_type ? explicit_type : inferred;
-        pointer_type.qualifier = TypeQualifier::Ptr;
-        (void)require_raw_pointer_materializable_type(loc, pointer_type, operation);
-    }
-
-    static IrStmtPtr make_ir_expr_stmt(SourceLocation loc, IrExprPtr expr) {
-        auto stmt = std::make_unique<IrStmt>();
-        stmt->kind = IrStmtKind::ExprStmt;
-        stmt->loc = loc;
-        stmt->expr = std::move(expr);
-        return stmt;
+        return lower_pointer_store_call(expr, *this);
     }
 
     IrExprPtr check_mem_replace_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        const std::string operation = "std::mem::replace";
-        if (expr.args.size() != 2) fail(expr.loc, operation + " expects a mutable place and a value");
-
-        IrType explicit_type = resolve_optional_mem_place_type_arg(expr, operation);
-        bool has_explicit_type = !expr_type_args(expr).empty();
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr target = check_expr(*expr.args[0]);
-        IrType element_type = require_mem_place_mut_borrow(
-            expr.args[0]->loc,
-            *target,
-            operation,
-            "target");
-        require_mem_place_type(
-            expr.args[0]->loc,
-            element_type,
-            explicit_type,
-            has_explicit_type,
-            operation,
-            "target");
-        if (has_explicit_type) element_type = explicit_type;
-
-        IrExprPtr value = check_expr_maybe_expected(*expr.args[1], &element_type);
-        coerce_expr_to_expected(*value, element_type);
-        require_assignable(expr.args[1]->loc, element_type, value->type);
-        release_temporary_borrows(borrow_mark);
-
-        IrType pointer_type = element_type;
-        pointer_type.qualifier = TypeQualifier::Ptr;
-        std::string raw_name = make_hidden_local("$mem_replace_raw");
-        std::string previous_name = make_hidden_local("$mem_replace_previous");
-        declare_local(expr.loc, raw_name, pointer_type, false);
-        declare_local(expr.loc, previous_name, element_type, false);
-
-        std::vector<IrStmtPtr> body;
-        body.push_back(make_ir_var_decl(
-            expr.loc,
-            raw_name,
-            pointer_type,
-            make_cast_expr(expr.args[0]->loc, std::move(target), pointer_type),
-            false));
-        body.push_back(make_ir_var_decl(
-            expr.loc,
-            previous_name,
-            element_type,
-            make_pointer_load_expr(
-                expr.loc,
-                make_local_lvalue_expr(expr.loc, raw_name, pointer_type),
-                element_type),
-            false));
-        body.push_back(make_ir_expr_stmt(
-            expr.loc,
-            make_pointer_store_expr(
-                expr.loc,
-                make_local_lvalue_expr(expr.loc, raw_name, pointer_type),
-                std::move(value))));
-
-        return make_ir_block_expr(
-            expr.loc,
-            {},
-            element_type,
-            std::move(body),
-            make_local_lvalue_expr(expr.loc, previous_name, element_type));
+        return lower_mem_replace_call(expr, *this);
     }
 
     IrExprPtr check_mem_swap_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        const std::string operation = "std::mem::swap";
-        if (expr.args.size() != 2) fail(expr.loc, operation + " expects two mutable places");
-
-        IrType explicit_type = resolve_optional_mem_place_type_arg(expr, operation);
-        bool has_explicit_type = !expr_type_args(expr).empty();
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr left = check_expr(*expr.args[0]);
-        IrType element_type = require_mem_place_mut_borrow(
-            expr.args[0]->loc,
-            *left,
-            operation,
-            "left argument");
-        require_mem_place_type(
-            expr.args[0]->loc,
-            element_type,
-            explicit_type,
-            has_explicit_type,
-            operation,
-            "left argument");
-        if (has_explicit_type) element_type = explicit_type;
-
-        IrExprPtr right = check_expr(*expr.args[1]);
-        IrType right_type = require_mem_place_mut_borrow(
-            expr.args[1]->loc,
-            *right,
-            operation,
-            "right argument");
-        if (!same_type(right_type, element_type)) {
-            fail(expr.args[1]->loc,
-                 operation + " right argument type mismatch: expected " +
-                     type_name(element_type) + ", got " + type_name(right_type));
-        }
-        release_temporary_borrows(borrow_mark);
-
-        IrType pointer_type = element_type;
-        pointer_type.qualifier = TypeQualifier::Ptr;
-        std::string left_raw_name = make_hidden_local("$mem_swap_left");
-        std::string right_raw_name = make_hidden_local("$mem_swap_right");
-        std::string temporary_name = make_hidden_local("$mem_swap_temporary");
-        declare_local(expr.loc, left_raw_name, pointer_type, false);
-        declare_local(expr.loc, right_raw_name, pointer_type, false);
-        declare_local(expr.loc, temporary_name, element_type, false);
-
-        std::vector<IrStmtPtr> body;
-        body.push_back(make_ir_var_decl(
-            expr.loc,
-            left_raw_name,
-            pointer_type,
-            make_cast_expr(expr.args[0]->loc, std::move(left), pointer_type),
-            false));
-        body.push_back(make_ir_var_decl(
-            expr.loc,
-            right_raw_name,
-            pointer_type,
-            make_cast_expr(expr.args[1]->loc, std::move(right), pointer_type),
-            false));
-        body.push_back(make_ir_var_decl(
-            expr.loc,
-            temporary_name,
-            element_type,
-            make_pointer_load_expr(
-                expr.loc,
-                make_local_lvalue_expr(expr.loc, left_raw_name, pointer_type),
-                element_type),
-            false));
-        body.push_back(make_ir_expr_stmt(
-            expr.loc,
-            make_pointer_store_expr(
-                expr.loc,
-                make_local_lvalue_expr(expr.loc, left_raw_name, pointer_type),
-                make_pointer_load_expr(
-                    expr.loc,
-                    make_local_lvalue_expr(expr.loc, right_raw_name, pointer_type),
-                    element_type))));
-
-        IrExprPtr final_store = make_pointer_store_expr(
-            expr.loc,
-            make_local_lvalue_expr(expr.loc, right_raw_name, pointer_type),
-            make_local_lvalue_expr(expr.loc, temporary_name, element_type));
-        return make_ir_block_expr(
-            expr.loc,
-            {},
-            void_type(expr.loc),
-            std::move(body),
-            std::move(final_store));
+        return lower_mem_swap_call(expr, *this);
     }
 
     IrExprPtr check_layout_query_call(const Expr& expr, IrExprPtr lowered, bool align_query) {
