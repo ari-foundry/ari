@@ -183,6 +183,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   exports without changing the LLVM ABI: tuples use `AriTuple_*` field wrappers,
   fixed-capacity vector storage values use `AriVec_*` `len`/`data[N]` wrappers,
   and aggregate-layout enums use `AriEnum_*` `tag`/`payloadN` storage wrappers.
+- Public non-generic payload-bearing `@repr(C)` enums are emitted in C headers
+  as named tagged structs with `int32_t tag` plus raw `uint64_t payloadN` slots,
+  and direct-ABI exported functions use the public enum type name instead of a
+  generated `AriEnum_*` wrapper.
 - `src/layout.cpp` owns shared aggregate-layout predicates, field-list
   selection, field counts, byte sizes, alignments, and field offsets used by
   sema, the LLVM backend, and related IR helpers.

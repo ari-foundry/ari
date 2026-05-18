@@ -3560,6 +3560,7 @@ private:
         std::vector<IrType> payload_slot_types;
         std::vector<bool> payload_slot_set;
         for (const auto& item : info.cases) {
+            if (info.repr_c && !item.payloads.empty()) aggregate_layout = true;
             if (item.payloads.size() > 1) aggregate_layout = true;
             max_payloads = std::max(max_payloads, item.payloads.size());
             if (payload_slot_types.size() < item.payloads.size()) {
@@ -3986,6 +3987,11 @@ private:
             item.name = decl.name;
             item.c_name = unqualified_name(decl.name);
             item.loc = decl.loc;
+            auto info = enums_.find(decl.name);
+            if (info != enums_.end()) {
+                item.type = info->second.type;
+                item.aggregate_layout = has_aggregate_enum_layout(item.type);
+            }
             for (std::size_t i = 0; i < decl.cases.size(); ++i) {
                 const EnumCase& enum_case = decl.cases[i];
                 item.cases.push_back(IrCEnumCase{

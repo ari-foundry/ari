@@ -44,6 +44,12 @@ struct CConcreteRecord {
     SourceLocation loc;
 };
 
+struct CEnumInfo {
+    std::string c_name;
+    bool aggregate_layout = false;
+    IrType type;
+};
+
 enum class CGeneratedAggregateKind {
     Array,
     Tuple,
@@ -60,7 +66,7 @@ struct CGeneratedAggregate {
 
 using CRecordNames = std::map<std::string, CRecordInfo>;
 using CConcreteRecordNames = std::map<std::string, std::string>;
-using CEnumNames = std::map<std::string, std::string>;
+using CEnumNames = std::map<std::string, CEnumInfo>;
 using CGeneratedAggregateNames = std::map<std::string, std::string>;
 
 std::string c_type_name(const IrType& type,
@@ -218,9 +224,23 @@ std::string c_pointer_type_name(const std::string& pointee, bool const_pointee) 
 
 std::string c_enum_type_name(const IrType& type, const CEnumNames& c_enum_names) {
     auto found = c_enum_names.find(type.name);
-    if (found != c_enum_names.end()) return found->second;
+    if (found != c_enum_names.end()) return found->second.c_name;
     throw CompileError("C header emission does not support enum type " + type_name(type) +
-                       "; expose a public non-generic fieldless @repr(C) enum or an explicit scalar ABI");
+                       "; expose a public @repr(C) enum or an explicit scalar ABI");
+}
+
+const CEnumInfo* c_enum_info_for_type(const IrType& type, const CEnumNames& c_enum_names) {
+    if (type.qualifier != TypeQualifier::Value || type.primitive != IrPrimitiveKind::Enum) {
+        return nullptr;
+    }
+    auto found = c_enum_names.find(type.name);
+    if (found == c_enum_names.end()) return nullptr;
+    return &found->second;
+}
+
+bool is_c_aggregate_enum_type(const IrType& type, const CEnumNames& c_enum_names) {
+    const CEnumInfo* info = c_enum_info_for_type(type, c_enum_names);
+    return info && info->aggregate_layout;
 }
 
 std::string c_generated_aggregate_type_name(
@@ -256,6 +276,12 @@ std::string c_type_name(const IrType& type,
             return c_pointer_type_name(c_record_type_name(pointee, c_record_names),
                                        const_pointee);
         }
+        if (pointee.primitive == IrPrimitiveKind::Enum) {
+            const CEnumInfo* enum_info = c_enum_info_for_type(pointee, c_enum_names);
+            if (enum_info) {
+                return c_pointer_type_name(enum_info->c_name, const_pointee);
+            }
+        }
         if (is_generated_aggregate_type(pointee) && !is_value_array_type(pointee)) {
             return c_pointer_type_name(
                 c_generated_aggregate_type_name(pointee, c_generated_aggregate_names),
@@ -274,6 +300,10 @@ std::string c_type_name(const IrType& type,
 
     if (type.primitive == IrPrimitiveKind::String) {
         throw CompileError("C header emission does not support Ari string values; use ptr c_char");
+    }
+    if (type.primitive == IrPrimitiveKind::Enum) {
+        const CEnumInfo* enum_info = c_enum_info_for_type(type, c_enum_names);
+        if (enum_info) return enum_info->c_name;
     }
     if (allow_record_values && is_generated_aggregate_type(type)) {
         return c_generated_aggregate_type_name(type, c_generated_aggregate_names);
@@ -383,6 +413,9 @@ std::string c_function_value_type_name(const IrType& type,
                                        const CEnumNames& c_enum_names,
                                        const CGeneratedAggregateNames& c_generated_aggregate_names,
                                        bool allow_record_values) {
+    if (c_enum_info_for_type(type, c_enum_names)) {
+        return c_enum_type_name(type, c_enum_names);
+    }
     if (is_generated_aggregate_type(type)) {
         return c_generated_aggregate_type_name(type, c_generated_aggregate_names);
     }
@@ -412,7 +445,8 @@ std::string function_prototype(const IrFunction& fn,
     for (std::size_t i = 0; i < fn.params.size(); ++i) {
         if (i > 0) out << ", ";
         std::string arg_name = "arg" + std::to_string(i);
-        if (is_generated_aggregate_type(fn.params[i].type)) {
+        if (is_generated_aggregate_type(fn.params[i].type) &&
+            !c_enum_info_for_type(fn.params[i].type, c_enum_names)) {
             out << c_generated_aggregate_type_name(
                 fn.params[i].type,
                 c_generated_aggregate_names) << " " << arg_name;
@@ -466,7 +500,7 @@ CEnumNames collect_c_enum_names(const IrProgram& program) {
     std::set<std::string> used_case_names;
     for (const auto& item : program.c_enums) {
         std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
-        names.emplace(item.name, c_name);
+        names.emplace(item.name, CEnumInfo{c_name, item.aggregate_layout, item.type});
         for (const auto& enum_case : item.cases) {
             if (!used_case_names.insert(enum_case.c_name).second) {
                 throw CompileError("C header emission found duplicate C enum constant '" + enum_case.c_name + "'");
@@ -547,6 +581,7 @@ CConcreteRecordNames collect_concrete_record_names(const std::vector<CConcreteRe
 }
 
 void collect_generated_aggregate_type(const IrType& type,
+                                      const CEnumNames& c_enum_names,
                                       std::map<std::string, CGeneratedAggregate>& aggregates,
                                       std::vector<std::string>& order) {
     if (type.qualifier == TypeQualifier::Ptr ||
@@ -554,17 +589,29 @@ void collect_generated_aggregate_type(const IrType& type,
         type.qualifier == TypeQualifier::MutRef) {
         IrType pointee = type;
         pointee.qualifier = TypeQualifier::Value;
+        if (is_c_aggregate_enum_type(pointee, c_enum_names)) {
+            for (const auto& field_type : ari_aggregate_field_types(pointee)) {
+                collect_generated_aggregate_type(field_type, c_enum_names, aggregates, order);
+            }
+            return;
+        }
         if (is_generated_aggregate_type(pointee) && !is_value_array_type(pointee)) {
-            collect_generated_aggregate_type(pointee, aggregates, order);
+            collect_generated_aggregate_type(pointee, c_enum_names, aggregates, order);
+        }
+        return;
+    }
+    if (is_c_aggregate_enum_type(type, c_enum_names)) {
+        for (const auto& field_type : ari_aggregate_field_types(type)) {
+            collect_generated_aggregate_type(field_type, c_enum_names, aggregates, order);
         }
         return;
     }
     if (!is_generated_aggregate_type(type)) return;
     if (type.primitive == IrPrimitiveKind::Array && type.args.size() == 1) {
-        collect_generated_aggregate_type(type.args[0], aggregates, order);
+        collect_generated_aggregate_type(type.args[0], c_enum_names, aggregates, order);
     } else {
         for (const auto& field_type : ari_aggregate_field_types(type)) {
-            collect_generated_aggregate_type(field_type, aggregates, order);
+            collect_generated_aggregate_type(field_type, c_enum_names, aggregates, order);
         }
     }
 
@@ -579,14 +626,21 @@ void collect_generated_aggregate_type(const IrType& type,
     order.push_back(key);
 }
 
-std::vector<CGeneratedAggregate> collect_generated_aggregates(const IrProgram& program) {
+std::vector<CGeneratedAggregate> collect_generated_aggregates(const IrProgram& program,
+                                                              const CEnumNames& c_enum_names) {
     std::map<std::string, CGeneratedAggregate> by_key;
     std::vector<std::string> order;
+    for (const auto& item : program.c_enums) {
+        if (!item.aggregate_layout) continue;
+        for (const auto& field_type : ari_aggregate_field_types(item.type)) {
+            collect_generated_aggregate_type(field_type, c_enum_names, by_key, order);
+        }
+    }
     for (const auto& fn : program.functions) {
         if (!should_emit_function_prototype(fn)) continue;
-        collect_generated_aggregate_type(fn.return_type, by_key, order);
+        collect_generated_aggregate_type(fn.return_type, c_enum_names, by_key, order);
         for (const auto& param : fn.params) {
-            collect_generated_aggregate_type(param.type, by_key, order);
+            collect_generated_aggregate_type(param.type, c_enum_names, by_key, order);
         }
     }
 
@@ -665,10 +719,9 @@ void require_unique_generated_c_type_names(const IrProgram& program,
     }
 }
 
-std::string enum_definition(const IrCEnum& item) {
+std::string enum_constants_definition(const IrCEnum& item) {
     std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
     std::ostringstream out;
-    out << "typedef int64_t " << c_name << ";\n";
     out << "enum {\n";
     for (const auto& enum_case : item.cases) {
         out << "    " << enum_case.c_name << " = " << enum_case.tag << ",\n";
@@ -677,8 +730,21 @@ std::string enum_definition(const IrCEnum& item) {
     return out.str();
 }
 
+std::string fieldless_enum_definition(const IrCEnum& item) {
+    std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
+    std::ostringstream out;
+    out << "typedef int64_t " << c_name << ";\n";
+    out << enum_constants_definition(item);
+    return out.str();
+}
+
 std::string record_forward_declaration(const IrCRecord& record) {
     std::string c_name = record.c_name.empty() ? unqualified_name(record.name) : record.c_name;
+    return "typedef struct " + c_name + " " + c_name + ";";
+}
+
+std::string aggregate_enum_forward_declaration(const IrCEnum& item) {
+    std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
     return "typedef struct " + c_name + " " + c_name + ";";
 }
 
@@ -728,6 +794,54 @@ std::string concrete_record_definition(const CConcreteRecord& record,
             c_generated_aggregate_names,
             field.name,
             false) << ";\n";
+    }
+    out << "};";
+    return out.str();
+}
+
+std::string aggregate_enum_field_name(std::size_t index) {
+    if (index == 0) return "tag";
+    return "payload" + std::to_string(index - 1);
+}
+
+void require_raw_payload_c_enum_storage(const IrCEnum& item) {
+    const std::vector<IrType>& fields = ari_aggregate_field_types(item.type);
+    for (std::size_t i = 0; i < fields.size(); ++i) {
+        bool expected_tag =
+            i == 0 &&
+            fields[i].qualifier == TypeQualifier::Value &&
+            fields[i].primitive == IrPrimitiveKind::I32;
+        bool expected_payload =
+            i > 0 &&
+            fields[i].qualifier == TypeQualifier::Value &&
+            fields[i].primitive == IrPrimitiveKind::U64;
+        if (expected_tag || expected_payload) continue;
+        throw CompileError(where(item.loc) +
+                           ": C header emission for payload-bearing @repr(C) enum '" +
+                           item.name +
+                           "' currently supports only scalar or pointer-shaped raw payload slots; use an explicit C wrapper for aggregate payload storage");
+    }
+}
+
+std::string aggregate_enum_definition(const IrCEnum& item,
+                                      const CRecordNames& c_record_names,
+                                      const CConcreteRecordNames& c_concrete_record_names,
+                                      const CEnumNames& c_enum_names,
+                                      const CGeneratedAggregateNames& c_generated_aggregate_names) {
+    require_raw_payload_c_enum_storage(item);
+    std::string c_name = item.c_name.empty() ? unqualified_name(item.name) : item.c_name;
+    std::ostringstream out;
+    out << "struct " << c_name << " {\n";
+    const std::vector<IrType>& fields = ari_aggregate_field_types(item.type);
+    for (std::size_t i = 0; i < fields.size(); ++i) {
+        out << "    " << c_declaration(
+            fields[i],
+            c_record_names,
+            c_concrete_record_names,
+            c_enum_names,
+            c_generated_aggregate_names,
+            aggregate_enum_field_name(i),
+            true) << ";\n";
     }
     out << "};";
     return out.str();
@@ -791,7 +905,8 @@ std::string emit_c_header(const IrProgram& program) {
     CRecordNames c_record_names = collect_c_record_names(program);
     CEnumNames c_enum_names = collect_c_enum_names(program);
     std::vector<CConcreteRecord> c_concrete_records = collect_concrete_records(program, c_record_names);
-    std::vector<CGeneratedAggregate> c_generated_aggregates = collect_generated_aggregates(program);
+    std::vector<CGeneratedAggregate> c_generated_aggregates =
+        collect_generated_aggregates(program, c_enum_names);
     require_unique_generated_c_type_names(program, c_concrete_records, c_generated_aggregates);
     CConcreteRecordNames c_concrete_record_names = collect_concrete_record_names(c_concrete_records);
     CGeneratedAggregateNames c_generated_aggregate_names =
@@ -809,11 +924,29 @@ std::string emit_c_header(const IrProgram& program) {
 
     if (!program.c_enums.empty()) {
         for (const auto& item : program.c_enums) {
-            out << enum_definition(item) << "\n\n";
+            if (!item.aggregate_layout) {
+                out << fieldless_enum_definition(item) << "\n\n";
+            }
         }
     }
 
-    if (!program.c_records.empty() || !c_concrete_records.empty() || !c_generated_aggregates.empty()) {
+    bool has_aggregate_c_enums = false;
+    for (const auto& item : program.c_enums) {
+        if (item.aggregate_layout) {
+            has_aggregate_c_enums = true;
+            break;
+        }
+    }
+
+    if (has_aggregate_c_enums ||
+        !program.c_records.empty() ||
+        !c_concrete_records.empty() ||
+        !c_generated_aggregates.empty()) {
+        for (const auto& item : program.c_enums) {
+            if (item.aggregate_layout) {
+                out << aggregate_enum_forward_declaration(item) << "\n";
+            }
+        }
         for (const auto& record : program.c_records) {
             out << record_forward_declaration(record) << "\n";
         }
@@ -824,6 +957,16 @@ std::string emit_c_header(const IrProgram& program) {
             out << generated_aggregate_forward_declaration(aggregate) << "\n";
         }
         out << "\n";
+        for (const auto& item : program.c_enums) {
+            if (!item.aggregate_layout) continue;
+            out << aggregate_enum_definition(
+                item,
+                c_record_names,
+                c_concrete_record_names,
+                c_enum_names,
+                c_generated_aggregate_names) << "\n\n";
+            out << enum_constants_definition(item) << "\n\n";
+        }
         for (const auto& record : program.c_records) {
             if (record.opaque) continue;
             out << record_definition(

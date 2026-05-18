@@ -120,8 +120,10 @@ generic fields by value, and concrete instantiations resolve those fields to
 concrete layout slots before IR emission. Generic `ptr T`, `ref T`, and
 `ref mut T` fields remain pointer-sized slots. `own` fields are rejected
 because C cannot model Ari ownership; use explicit pointer or borrow slots at
-the boundary. `@repr(C)` enums currently must be fieldless, including generic
-enums; C tagged-union payload layout is not implemented yet.
+the boundary. Fieldless `@repr(C)` enums use the fixed Ari tag ABI. Public
+non-generic payload-bearing `@repr(C)` enums are C-header-visible as explicit
+tagged structs with an `int32_t tag` plus raw `uint64_t payloadN` slots; generic
+payload-bearing `@repr(C)` enums still need an explicit C wrapper.
 
 `@cfg(false)` prunes a declaration before name collection and type checking.
 The disabled declaration must still parse, but its names, types, and body are

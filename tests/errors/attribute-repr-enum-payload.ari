@@ -1,7 +1,7 @@
 @repr(C)
-enum Maybe {
+enum Maybe[T] {
   None,
-  Some(i32),
+  Some(T),
 }
 
 fn main() -> i64 {

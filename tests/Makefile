@@ -1978,6 +1978,33 @@ check-meta: $(TARGET)
 	grep -q 'AriArray_i64_2 ari_make_array(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-array-fields.h
 	grep -q 'define i64 @"ari_take_array"(\[2 x i64\] %arg0)' $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
 	grep -q 'define \[2 x i64\] @"ari_make_array"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-repr-array-fields.ll
+	$(TARGET) tests/ok/c-header-repr-payload-enum.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-repr-payload-enum.h --emit-llvm $(BUILD_DIR)/meta/c-header-repr-payload-enum.ll
+	grep -q 'typedef struct WireValue WireValue;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'typedef struct WirePair WirePair;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'typedef struct WireSmall WireSmall;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'typedef struct WireHolder WireHolder;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'struct WireValue {' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'int32_t tag;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'uint64_t payload0;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'struct WirePair {' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'uint64_t payload1;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'struct WireSmall {' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'struct WireHolder {' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WireValue value;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WirePair\* pair;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WireSmall small;' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WireValue_ValueEmpty = 0,' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WireValue_Number = 1,' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WirePair_Pair = 1,' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WireSmall_Small = 1,' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'int64_t ari_wire_value_tag(WireValue arg0);' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WireValue ari_make_wire_value(int64_t arg0);' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'int64_t ari_wire_pair_ptr(WirePair\* arg0);' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'int64_t ari_wire_holder_ptr(WireHolder\* arg0);' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'WireSmall ari_make_wire_small(int32_t arg0);' $(BUILD_DIR)/meta/c-header-repr-payload-enum.h
+	grep -q 'define i64 @"ari_wire_value_tag"({ i32, i64 } %arg0)' $(BUILD_DIR)/meta/c-header-repr-payload-enum.ll
+	grep -q 'define { i32, i64 } @"ari_make_wire_value"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-repr-payload-enum.ll
+	grep -q 'define { i32, i64 } @"ari_make_wire_small"(i32 %arg0)' $(BUILD_DIR)/meta/c-header-repr-payload-enum.ll
 	$(TARGET) tests/ok/c-header-generated-aggregates.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-generated-aggregates.h --emit-llvm $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
 	grep -q 'typedef struct AriTuple_i64_i64 AriTuple_i64_i64;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
 	grep -q 'typedef struct AriEnum_MaybeWide AriEnum_MaybeWide;' $(BUILD_DIR)/meta/c-header-generated-aggregates.h
@@ -2140,7 +2167,7 @@ check-meta: $(TARGET)
 	if $(TARGET) tests/errors/attribute-repr-unsupported.ari -o $(BUILD_DIR)/meta/attribute-repr-unsupported.elf >$(BUILD_DIR)/meta/attribute-repr-unsupported.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr' currently supports only C layout" $(BUILD_DIR)/meta/attribute-repr-unsupported.err
 	if $(TARGET) tests/errors/attribute-repr-enum-payload.ari -o $(BUILD_DIR)/meta/attribute-repr-enum-payload.elf >$(BUILD_DIR)/meta/attribute-repr-enum-payload.err 2>&1; then exit 1; fi
-	grep -q "attribute '@repr(C)' currently supports only fieldless enums" $(BUILD_DIR)/meta/attribute-repr-enum-payload.err
+	grep -q "attribute '@repr(C)' generic payload enums are not supported yet" $(BUILD_DIR)/meta/attribute-repr-enum-payload.err
 	if $(TARGET) tests/errors/attribute-repr-own-field.ari -o $(BUILD_DIR)/meta/attribute-repr-own-field.elf >$(BUILD_DIR)/meta/attribute-repr-own-field.err 2>&1; then exit 1; fi
 	grep -q "attribute '@repr(C)' fields cannot use own; expose ownership through an explicit ptr/ref ABI" $(BUILD_DIR)/meta/attribute-repr-own-field.err
 	if $(TARGET) tests/errors/attribute-repr-own-tuple-field.ari -o $(BUILD_DIR)/meta/attribute-repr-own-tuple-field.elf >$(BUILD_DIR)/meta/attribute-repr-own-tuple-field.err 2>&1; then exit 1; fi
@@ -2159,6 +2186,8 @@ check-meta: $(TARGET)
 	grep -q "C header emission for by-value parameter (i64, i64) is currently supported only on 64-bit Unix targets" $(BUILD_DIR)/meta/c-header-target-tuple-by-value.err
 	if $(TARGET) tests/errors/c-header-large-aggregate-enum-by-value.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.h >$(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.err 2>&1; then exit 1; fi
 	grep -q "C header emission for by-value parameter Packet is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/meta/c-header-large-aggregate-enum-by-value.err
+	if $(TARGET) tests/errors/c-header-repr-enum-aggregate-payload.ari --shared --emit-c-header $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.h >$(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.err 2>&1; then exit 1; fi
+	grep -q "C header emission for payload-bearing @repr(C) enum 'WireTuple' currently supports only scalar or pointer-shaped raw payload slots" $(BUILD_DIR)/meta/c-header-repr-enum-aggregate-payload.err
 	if $(TARGET) tests/errors/attribute-cfg-argument.ari -o $(BUILD_DIR)/meta/attribute-cfg-argument.elf >$(BUILD_DIR)/meta/attribute-cfg-argument.err 2>&1; then exit 1; fi
 	grep -q "unknown cfg predicate 'enabled'" $(BUILD_DIR)/meta/attribute-cfg-argument.err
 	if $(TARGET) tests/errors/attribute-deprecated-argument.ari -o $(BUILD_DIR)/meta/attribute-deprecated-argument.elf >$(BUILD_DIR)/meta/attribute-deprecated-argument.err 2>&1; then exit 1; fi

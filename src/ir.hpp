@@ -740,8 +740,10 @@ struct IrCEnumCase {
 struct IrCEnum {
     std::string name;
     std::string c_name;
+    IrType type;
     std::vector<IrCEnumCase> cases;
     SourceLocation loc;
+    bool aggregate_layout = false;
 };
 
 enum class IrExternAbi {

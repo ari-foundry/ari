@@ -1,0 +1,52 @@
+@repr(C)
+pub enum WireValue {
+  ValueEmpty,
+  Number(i64),
+}
+
+@repr(C)
+pub enum WirePair {
+  PairEmpty,
+  Pair(i32, bool),
+}
+
+@repr(C)
+pub enum WireSmall {
+  SmallEmpty,
+  Small(i32),
+}
+
+@repr(C)
+pub struct WireHolder {
+  value: WireValue,
+  pair: ptr WirePair,
+  small: WireSmall,
+}
+
+@export("ari_wire_value_tag")
+pub fn wire_value_tag(value: WireValue) -> i64 {
+  return match value {
+    ValueEmpty => 0,
+    Number(payload) => payload,
+  };
+}
+
+@export("ari_make_wire_value")
+pub fn make_wire_value(value: i64) -> WireValue {
+  return Number(value);
+}
+
+@export("ari_wire_pair_ptr")
+pub fn wire_pair_ptr(value: ptr WirePair) -> i64 {
+  return 0;
+}
+
+@export("ari_wire_holder_ptr")
+pub fn wire_holder_ptr(value: ptr WireHolder) -> i64 {
+  return 0;
+}
+
+@export("ari_make_wire_small")
+pub fn make_wire_small(value: i32) -> WireSmall {
+  return Small(value);
+}

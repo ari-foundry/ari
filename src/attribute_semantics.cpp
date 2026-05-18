@@ -139,8 +139,9 @@ void validate_repr_c_enum_cases(const EnumDecl& decl) {
     const Attribute* repr = find_attribute(decl.attributes, "repr");
     if (!repr) return;
     for (const auto& item : decl.cases) {
-        if (!item.payloads.empty()) {
-            fail(item.loc, "attribute '@repr(C)' currently supports only fieldless enums");
+        if (!item.payloads.empty() && !decl.generics.empty()) {
+            fail(item.loc,
+                 "attribute '@repr(C)' generic payload enums are not supported yet; use a non-generic enum or an explicit C wrapper");
         }
     }
 }

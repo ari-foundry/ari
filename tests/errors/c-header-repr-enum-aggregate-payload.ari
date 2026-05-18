@@ -1,0 +1,10 @@
+@repr(C)
+pub enum WireTuple {
+  Empty,
+  Pair((i64, i64)),
+}
+
+@export("ari_wire_tuple_ptr")
+pub fn wire_tuple_ptr(value: ptr WireTuple) -> i64 {
+  return 0;
+}

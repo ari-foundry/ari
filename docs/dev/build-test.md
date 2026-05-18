@@ -98,9 +98,9 @@ names reserved by `meta fn`, exported C header prototypes and public
 non-generic `@repr(C)` struct declarations with const-ref slots, by-value
 non-generic `@repr(C)` struct export prototypes, opaque generic `@repr(C)`
 struct typedefs for pointer-only APIs, concrete generic `@repr(C)` struct
-typedefs for by-value exported instantiations, plus generic/non-generic
-fieldless enum declarations, shared aggregate ABI classifier diagnostics for
-by-value header target/size/layout guards,
+typedefs for by-value exported instantiations, generic/non-generic fieldless
+enum declarations, plus non-generic payload-bearing enum struct declarations,
+shared aggregate ABI classifier diagnostics for by-value header target/size/layout guards,
 one-parameter same-domain meta signatures over `token_stream`/`ast`/`type`,
 empty and explicit `return input;` identity meta bodies,
 attribute/expression/item/type macro domain checks, parser-stable

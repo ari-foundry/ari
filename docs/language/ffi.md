@@ -353,9 +353,12 @@ let point_bytes = size_of<Point>();
 let point_align = mem::align_of<Point>();
 ```
 
-Enums with multi-payload or 64-bit payload aggregate layouts are not part of the
-C ABI surface yet. Use fieldless or compact one-word enums for FFI-facing
-values.
+Public non-generic `@repr(C)` enums may carry payloads in the current C-header
+surface. The header spells those payload enums as `struct Name` with an
+`int32_t tag` plus raw `uint64_t payloadN` storage slots, matching Ari's current
+scalar and pointer-shaped aggregate enum ABI. Generic payload enums, owned
+payload values, and broader non-scalar payload C layouts still need explicit C
+wrappers.
 
 `*pointer` is available for raw-pointer load/store syntax.
 `ptr_load<T>(pointer)` and `ptr_store<T>(pointer, value)` are also accepted
@@ -399,8 +402,9 @@ current executable aggregate layout; it is not yet a `repr(C)` guarantee.
 from the LLVM/shared-library ABI surface. The first supported slice covers
 exported scalar/raw-pointer functions, public non-generic `@repr(C)` structs
 whose fields are scalar, raw pointer, `ref`, or `ref mut` slots, and public
-fieldless `@repr(C)` enums. Exported functions may take or return public
-non-generic `@repr(C)` structs by value in the header. Public generic
+fieldless or non-generic payload-bearing `@repr(C)` enums. Exported functions
+may take or return public non-generic `@repr(C)` structs and direct-ABI
+payload-bearing `@repr(C)` enums by value in the header. Public generic
 `@repr(C)` structs are exposed as opaque typedefs for pointer-only APIs, and
 exported by-value instantiations get concrete C names such as
 `GenericHandle_i64`:
@@ -423,8 +427,11 @@ layout. Fieldless enum declarations are emitted as
 so the header matches Ari's current fixed tag ABI instead of relying on C's
 implementation-defined enum width. Generic fieldless enum type parameters do
 not affect layout, so `WireStatus[i64]` and `WireStatus[bool]` share one C
-typedef named `WireStatus`. Private helpers and private `@repr(C)` aggregates
-are not emitted. Generic `@repr(C)` structs still keep the source-name opaque
+typedef named `WireStatus`. Public non-generic payload-bearing enums are emitted
+as `typedef struct Name Name;` plus a `struct Name` definition with `tag` and
+`payloadN` fields, followed by the same prefixed case constants. Private helpers
+and private `@repr(C)` aggregates are not emitted. Generic `@repr(C)` structs
+still keep the source-name opaque
 `typedef struct Name Name;` declaration for pointer-only APIs; concrete
 by-value instantiations use separate typedefs/definitions keyed by their type
 arguments. By-value aggregate parameters and returns are checked by the shared
@@ -458,5 +465,5 @@ shuts the context down afterward.
 ## Planned FFI Surface
 
 The next FFI pieces are explicit C wrappers for tuple/vector/aggregate-enum
-values, payload-bearing enum C layouts, broader target-specific aggregate ABI
-support, and non-C ABI adapters via explicit C-compatible shims.
+values with non-scalar or owned payload storage, broader target-specific
+aggregate ABI support, and non-C ABI adapters via explicit C-compatible shims.

@@ -26,15 +26,6 @@ changing the long-term language contract.
    `ownership_semantics` now owns recursive owned-field state seeding for
    locals and stack-backed vector storage. Avoid splitting one tiny file per
    syntax feature.
-2. Expand aggregate enum payload storage.
-   Current aggregate enum payloads now cover scalar/pointer-shaped slots,
-   one-word enums, nested aggregate enums, and plain Ari-layout tuple,
-   fixed-array, struct, and explicit fixed-capacity `Vec[T; N]` payload values,
-   with value-binding product subpatterns over plain tuple/array/struct
-   aggregate slots and exact array-style element subpatterns over
-   fixed-capacity vector payload slots. Define owned payload values after their
-   non-local ABI/storage rules are stable. Define payload-bearing `@repr(C)`
-   enum layout and C header emission after that ABI is stable.
 
 See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
 roadmap for splitting `src/sema.cpp` by broad semantic phases.
@@ -51,6 +42,9 @@ roadmap for splitting `src/sema.cpp` by broad semantic phases.
    define owner moves through enum payload slots, `Slice[T]` element paths,
    owned rest aliases, and dynamic vector suffixes without relying on hidden
    whole-value leaks.
+   Non-scalar or owned payload-bearing `@repr(C)` enum C layouts should be
+   defined with this ABI work; the Near-Term compiler now covers public
+   non-generic scalar/pointer-slot payload enums in C headers.
 3. Extend trait-object ownership.
    Define durable data-pointer storage for `own` and borrow-valued dyn objects,
    including lifetime rules for objects that outlive hidden stack

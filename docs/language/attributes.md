@@ -28,8 +28,11 @@ pointer spellings, with `[T, N]` fields and pointer-to-array slots using C array
 declarators. `own` fields are rejected because the C ABI cannot carry Ari
 ownership; expose ownership-sensitive values through an explicit `ptr` or `ref`
 ABI instead.
-`@repr(C)` enums currently must be fieldless, including generic enums; generic
-parameters are accepted only when they do not appear in payload storage.
+Fieldless `@repr(C)` enums use Ari's fixed 64-bit tag ABI. Public non-generic
+payload-bearing `@repr(C)` enums use an explicit C struct layout with an
+`int32_t tag` field followed by raw `uint64_t payloadN` storage slots for the
+current scalar and pointer-shaped payload ABI. Generic `@repr(C)` enums are
+accepted only when their type parameters do not appear in payload storage.
 
 `@cfg(...)` prunes top-level declarations before name collection and type
 checking. Disabled declarations must still parse, but their names, types, and
@@ -113,7 +116,8 @@ Use `--emit-c-header path` with the LLVM/shared path to write a small C header
 for exported scalar/raw-pointer functions, public non-generic `@repr(C)` struct
 declarations whose fields are scalar, fixed-size arrays, raw pointer, `ref`, or
 `ref mut` slots, public non-generic `@repr(C)` structs passed or returned by
-value, and public fieldless `@repr(C)` enums. Immutable `ref` fields and
+value, public fieldless `@repr(C)` enums, and public non-generic
+payload-bearing `@repr(C)` enums. Immutable `ref` fields and
 exported parameters are written as `const` C pointers in the header, including
 `ref [T, N]` parameters and fields rendered as `const T (*)[N]`. `ptr [T, N]`
 and `ref mut [T, N]` are rendered as mutable C pointer-to-array declarators.
@@ -121,7 +125,9 @@ Fieldless generic enum type
 parameters do not affect layout, so the C header emits one erased tag typedef
 for the source enum name. Enum headers use Ari's current fixed tag ABI by
 emitting `typedef int64_t Name;` plus prefixed integer constants such as
-`Name_Case = 0`. The current header emitter skips private helpers, private
+`Name_Case = 0`. Payload-bearing enum headers emit `typedef struct Name Name;`,
+define `struct Name` with `tag`/`payloadN` fields, and emit the same prefixed
+case constants. The current header emitter skips private helpers, private
 structs, private enums, and implicit source `std` helper functions. Generic
 `@repr(C)` structs are emitted as opaque typedefs so pointer-only C APIs can
 name them; exported by-value instantiations also get concrete
