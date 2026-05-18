@@ -14,6 +14,7 @@ struct Expr;
 
 enum class LocalVecMethod {
     Unknown,
+    AsPtr,
     AsSlice,
     Capacity,
     Clear,

@@ -86,7 +86,8 @@ struct LocalVecMethodInfo {
     LocalVecMethod method;
 };
 
-constexpr std::array<LocalVecMethodInfo, 19> kLocalVecMethods{{
+constexpr std::array<LocalVecMethodInfo, 20> kLocalVecMethods{{
+    {"as_ptr", LocalVecMethod::AsPtr},
     {"as_slice", LocalVecMethod::AsSlice},
     {"capacity", LocalVecMethod::Capacity},
     {"clear", LocalVecMethod::Clear},
@@ -702,6 +703,7 @@ void require_local_vec_method_shape(SourceLocation loc,
         case LocalVecMethod::Capacity:
         case LocalVecMethod::Pop:
         case LocalVecMethod::Clear:
+        case LocalVecMethod::AsPtr:
             if (arg_count != 0) fail(loc, display + " expects no arguments");
             return;
         case LocalVecMethod::Get:

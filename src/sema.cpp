@@ -20146,6 +20146,18 @@ private:
         return make_vec_capacity_expr(expr.loc, local.type);
     }
 
+    IrExprPtr check_vec_as_ptr_method_call(const Expr& expr, IrExprPtr lowered, const LocalInfo& local) const {
+        (void)lowered;
+        const std::string& name = expr_operand(expr)->name;
+        require_readable_vec_method_receiver(expr.loc, name, local, "as_ptr");
+        require_local_vec_method_shape(expr.loc, LocalVecMethod::AsPtr, expr_type_args(expr).size(), expr.args.size());
+        require_slice_element_materializable(expr.loc, local.type.args[0], "Vec.as_ptr");
+        return make_slice_data_pointer_expr(
+            expr.loc,
+            make_vec_storage_lvalue_expr(expr_operand(expr)->loc, name, local.type),
+            local.type.args[0]);
+    }
+
     IrExprPtr check_vec_pop_method_call(const Expr& expr, IrExprPtr lowered, LocalInfo& local) {
         (void)lowered;
         const std::string& name = expr_operand(expr)->name;
@@ -22078,6 +22090,8 @@ private:
                     return check_vec_reserve_method_call(expr, std::move(lowered), *local);
                 case LocalVecMethod::Capacity:
                     return check_vec_capacity_method_call(expr, std::move(lowered), *local);
+                case LocalVecMethod::AsPtr:
+                    return check_vec_as_ptr_method_call(expr, std::move(lowered), *local);
                 case LocalVecMethod::Pop:
                     return check_vec_pop_method_call(expr, std::move(lowered), *local);
                 case LocalVecMethod::Clear:

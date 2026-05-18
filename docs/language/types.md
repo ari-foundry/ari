@@ -483,9 +483,9 @@ accessors. `contains(value)`, `index_of(value)`, and `count(value)` scan
 comparable elements, while `equals(view)`, `starts_with(view)`, and
 `ends_with(view)` compare against another `Slice[T]`. `copy_to(ref mut Zone)`
 copies the current view into a target-zone `std::vec::Vec<T>` handle whose
-reset/destroy provenance follows the target zone. The LLVM host backend and raw
-the LLVM backend lowers the local Slice view surface for materializable
-element values; target-zone Slice copy is an LLVM host explicit-zone path.
+reset/destroy provenance follows the target zone. The LLVM host backend lowers
+the local Slice view surface for materializable element values; target-zone
+Slice copy is an LLVM host explicit-zone path.
 Array lengths, including direct array literal lengths, are folded directly:
 
 ```ari
@@ -511,6 +511,7 @@ values.insert(1, 7)
 let has_seven = values.contains(7)
 let seven_index = values.index_of(7)
 let seven_count = values.count(7)
+let raw = values.as_ptr()
 let last = values.pop()
 let capacity = values.capacity()
 let empty = values.is_empty()

@@ -1,0 +1,6 @@
+fn main() -> i64 {
+  var values: Vec[i64] = [10, 20, 30];
+  let raw = values.as_ptr();
+  ptr_store(ptr_add(raw, 1), 25);
+  return ptr_load(raw) + values.get(1) + ptr_load(ptr_add(raw, 2));
+}

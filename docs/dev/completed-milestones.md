@@ -32,6 +32,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   ABI lowering is owned by `vector_semantics`: parameters lower to the
   Slice-shaped view ABI, while return/field/extern runtime-capacity guards stay
   with the same vector phase.
+- The stack-backed local root `Vec[T]` method surface includes `as_ptr()` for
+  raw element-buffer access alongside the fixed-capacity read/search/mutation
+  helpers.
 - Declaration-returning `ast -> ast` macros can inspect generic, parameter,
   field, enum-case, method, associated-type, trait, return, and witness
   summaries. `meta_ident!(...)` inside `decl!(...)` supports generated

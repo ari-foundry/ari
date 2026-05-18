@@ -37,10 +37,12 @@ See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
 roadmap for splitting `src/sema.cpp` by broad semantic phases.
 
 2. Define owned root collection and smart-pointer handles.
-   Define the growable root `Vec[T]` runtime-capacity ABI, permanent root
-   method surface, and non-local aggregate layout before expanding source
-   libraries that depend on ownership-stable collections. Future owning
-   heap-style `Box[T]` should build on the same explicit-capability rules
+   Define the growable root `Vec[T]` runtime-capacity ABI and non-local
+   aggregate layout before expanding source libraries that depend on
+   ownership-stable collections. The stack-backed local root `Vec[T]` method
+   surface is frozen, including `as_ptr()` for raw element-buffer access.
+   Source `Box[T]`/`std::Box[T]` already follows the explicit-zone handle
+   policy; future heap ownership should keep that capability-oriented shape
    rather than inventing an ambient heap.
 3. Define dynamic owner pattern paths.
    After runtime-capacity `Vec[T]` and owned enum payload ABI rules are stable,
