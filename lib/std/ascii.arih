@@ -67,3 +67,83 @@ pub fn hex_value(value: u8) -> std::Option[i64] {
   }
   return std::None<i64>();
 }
+
+pub fn skip_whitespace(values: std::Slice[u8]) -> i64 {
+  var index = 0;
+  while index < values.len {
+    if !is_whitespace(values[index]) {
+      return index;
+    }
+    index = index + 1;
+  }
+  return values.len;
+}
+
+// Trim helpers return borrowed views into the original slice; they never
+// allocate or copy bytes.
+pub fn trim_start(values: std::Slice[u8]) -> std::Slice[u8] {
+  let offset = skip_whitespace(values);
+  return std::Slice<u8> {
+    data: ptr_add(values.data, offset),
+    len: values.len - offset
+  };
+}
+
+pub fn trim_end(values: std::Slice[u8]) -> std::Slice[u8] {
+  var end = values.len;
+  while end > 0 {
+    if !is_whitespace(values[end - 1]) {
+      return std::Slice<u8> { data: values.data, len: end };
+    }
+    end = end - 1;
+  }
+  return std::Slice<u8> { data: values.data, len: 0 };
+}
+
+pub fn trim(values: std::Slice[u8]) -> std::Slice[u8] {
+  return trim_end(trim_start(values));
+}
+
+// Whole-slice parsers reject empty or partial input so callers cannot
+// accidentally ignore trailing invalid bytes.
+pub fn parse_decimal(values: std::Slice[u8]) -> std::Option[i64] {
+  if values.len == 0 {
+    return std::None<i64>();
+  }
+
+  var result = 0;
+  var index = 0;
+  while index < values.len {
+    match digit_value(values[index]) {
+      std::Some(value) => {
+        result = (result * 10) + value;
+      }
+      std::None => {
+        return std::None<i64>();
+      }
+    }
+    index = index + 1;
+  }
+  return std::Some<i64>(result);
+}
+
+pub fn parse_hex(values: std::Slice[u8]) -> std::Option[i64] {
+  if values.len == 0 {
+    return std::None<i64>();
+  }
+
+  var result = 0;
+  var index = 0;
+  while index < values.len {
+    match hex_value(values[index]) {
+      std::Some(value) => {
+        result = (result * 16) + value;
+      }
+      std::None => {
+        return std::None<i64>();
+      }
+    }
+    index = index + 1;
+  }
+  return std::Some<i64>(result);
+}

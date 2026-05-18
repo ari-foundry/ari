@@ -270,10 +270,22 @@ ascii::to_lower(byte)
 ascii::to_upper(byte)
 ascii::digit_value(byte)
 ascii::hex_value(byte)
+ascii::skip_whitespace(bytes)
+ascii::trim_start(bytes)
+ascii::trim_end(bytes)
+ascii::trim(bytes)
+ascii::parse_decimal(bytes)
+ascii::parse_hex(bytes)
 ```
 
 `digit_value` and `hex_value` return `Option[i64]`. Non-digit input returns
-`None[i64]()`.
+`None<i64>()` where appropriate.
+
+`skip_whitespace`, `trim_start`, `trim_end`, and `trim` operate on
+`Slice[u8]` and return either a byte offset or a borrowed sub-slice.
+`parse_decimal` and `parse_hex` parse the entire slice and return
+`Option[i64]`; empty input or invalid bytes return `None<i64>()`. These parser
+helpers do not define overflow behavior yet.
 
 ## Choosing The Right Collection
 

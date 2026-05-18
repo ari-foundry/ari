@@ -28,6 +28,7 @@ Examples:
 std-vec-try-pop.ari
 std-string-append-u64.ari
 std-math-integer-helpers.ari
+std-ascii-slice-helpers.ari
 prelude-option-result-methods.ari
 ```
 

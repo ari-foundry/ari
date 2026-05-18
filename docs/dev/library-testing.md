@@ -22,6 +22,8 @@ test:
 - `std-vec-try-pop.ari`: source `std::vec` method behavior.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-math-integer-helpers.ari`: source `std::math` i64 helper behavior.
+- `std-ascii-slice-helpers.ari`: source `std::ascii` borrowed-slice trimming
+  and integer parsing behavior.
 - `std-bits-mask-helpers.ari`: source `std::bits` u64 mask and alignment
   helper behavior.
 - `std-boxed-as-ptr-after-reset.ari`: negative zone provenance diagnostic.

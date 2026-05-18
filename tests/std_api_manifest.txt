@@ -19,8 +19,14 @@ fn std::ascii::is_hex_digit|std ascii byte helper tests; docs/stdlib/api-referen
 fn std::ascii::is_lower|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_upper|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_whitespace|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::parse_decimal|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::parse_hex|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::skip_whitespace|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::to_lower|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::to_upper|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::trim|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::trim_end|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::trim_start|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
 fn std::assert_eq_bool|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
 fn std::assert_eq_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row

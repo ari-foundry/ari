@@ -227,6 +227,14 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5ascii9hex_value' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-ascii-byte-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf
 	$(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf; code=$$?; test $$code -eq 177
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-slice-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
+	grep -q '_ARNv3std5ascii15skip_whitespace' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
+	grep -q '_ARNv3std5ascii10trim_start' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
+	grep -q '_ARNv3std5ascii8trim_end' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
+	grep -q '_ARNv3std5ascii13parse_decimal' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
+	grep -q '_ARNv3std5ascii9parse_hex' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-slice-helpers.elf
+	$(BUILD_DIR)/prelude/std-ascii-slice-helpers.elf; code=$$?; test $$code -eq 19
 	$(TARGET) tests/cases/standard-library/ok/std-bits-mask-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits6is_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	grep -q '_ARNv3std4bits7any_set' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
