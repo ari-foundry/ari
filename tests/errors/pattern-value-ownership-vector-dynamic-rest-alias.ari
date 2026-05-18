@@ -1,0 +1,18 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn rest_alias(flag: bool) -> i64 {
+  let [first, rest @ .., last]: Vec[own i64] = if flag {
+    [make_owned(1), make_owned(2)]
+  } else {
+    [make_owned(3), make_owned(4), make_owned(5)]
+  };
+  drop first;
+  drop last;
+  return len(rest);
+}
+
+fn main() -> i64 {
+  return rest_alias(true);
+}

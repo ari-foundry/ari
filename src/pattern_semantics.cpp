@@ -583,8 +583,13 @@ RuntimeSequenceValuePatternPlan plan_runtime_sequence_value_pattern(
     }
     plan.known_owner_vec_length = known_direct_vec_length();
     if (!plan.known_owner_vec_length) {
-        fail(pattern.loc,
-             "ownership-carrying Vec[T] value patterns with .. require a direct local Vec[T] with a known length");
+        if (!pattern.rest_alias_name.empty()) {
+            fail(pattern.rest_alias_loc,
+                 "unknown-length ownership-carrying Vec[T] value rest aliases are not supported; "
+                 "bind suffix elements directly or borrow the rest with a reference pattern");
+        }
+        plan.dynamic_owner_suffix_uses_runtime_paths = true;
+        return plan;
     }
 
     const std::uint64_t required =

@@ -148,7 +148,8 @@ feature helpers are not.
   synthetic dynamic owner suffix paths for shared and mutable unknown-length
   suffixes,
   runtime-sequence value-pattern planning for ownership-carrying rest-alias
-  rejection, known-length suffix moves, and known skipped-owner cleanup, plus
+  rejection, known-length suffix moves, dynamic unknown-length suffix moves,
+  and known or dynamic skipped-owner cleanup, plus
   irrefutable non-iterator `for` loop-head pattern validation shared by range,
   list-literal, and stored-vector loops
 - `format_semantics` for formatting target selection and shared `{}` /

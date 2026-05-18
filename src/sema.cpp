@@ -8330,6 +8330,15 @@ private:
         };
     }
 
+    bool runtime_sequence_value_pattern_uses_dynamic_suffix(
+        const Pattern& pattern,
+        std::size_t pattern_index,
+        const RuntimeSequenceValuePatternPlan& value_plan) const {
+        return value_plan.dynamic_owner_suffix_uses_runtime_paths &&
+               pattern.has_rest &&
+               pattern_index >= pattern.rest_index;
+    }
+
     void append_runtime_sequence_value_pattern_owned_element_drop(
         SourceLocation loc,
         const std::string& source_name,
@@ -8358,6 +8367,62 @@ private:
         mark_local_owned_field_state(local, path, LocalState::Dropped);
     }
 
+    void append_runtime_sequence_value_pattern_dynamic_owned_element_drop(
+        SourceLocation loc,
+        const std::string& source_name,
+        const IrType& source_type,
+        const IrType& element_type,
+        const std::string& index_name,
+        std::vector<IrStmtPtr>& statements) {
+        auto make_value = [this, loc, source_name, source_type, index_name]() {
+            return make_ir_index_expr(
+                loc,
+                make_local_lvalue_expr(loc, source_name, source_type),
+                make_local_lvalue_expr(loc, index_name, i64_type(loc)));
+        };
+        append_drop_stmts_for_value(loc, element_type, make_value, statements);
+    }
+
+    void append_runtime_sequence_value_pattern_dynamic_rest_gap_drops(
+        const Pattern& pattern,
+        const std::string& source_name,
+        const IrType& source_type,
+        const IrType& element_type,
+        std::vector<IrStmtPtr>& statements) {
+        IrType i64 = i64_type(pattern.loc);
+        auto loop = std::make_unique<IrStmt>();
+        loop->kind = IrStmtKind::ForRange;
+        loop->loc = pattern.loc;
+        IrStmtForPayload& for_loop = ensure_ir_stmt_for_payload(*loop);
+        for_loop.inclusive = false;
+        for_loop.binding_type = i64;
+        for_loop.start = make_integer_literal(
+            pattern.loc,
+            i64,
+            static_cast<std::uint64_t>(pattern.rest_index));
+        for_loop.end = make_i64_binary_expr(
+            pattern.loc,
+            IrBinaryOp::Sub,
+            make_runtime_sequence_len_expr(pattern.loc, source_name, source_type),
+            make_integer_literal(
+                pattern.loc,
+                i64,
+                static_cast<std::uint64_t>(pattern.elements.size() - pattern.rest_index)));
+        for_loop.index_name = make_hidden_local("$pattern_gap_index");
+        for_loop.end_name = make_hidden_local("$pattern_gap_end");
+        declare_local(pattern.loc, for_loop.index_name, i64, true);
+        declare_local(pattern.loc, for_loop.end_name, i64, false);
+
+        append_runtime_sequence_value_pattern_dynamic_owned_element_drop(
+            pattern.loc,
+            source_name,
+            source_type,
+            element_type,
+            for_loop.index_name,
+            ir_stmt_loop_body(*loop));
+        statements.push_back(std::move(loop));
+    }
+
     void append_runtime_sequence_value_pattern_rest_gap_drops(
         const Pattern& pattern,
         const std::string& source_name,
@@ -8366,11 +8431,20 @@ private:
         const RuntimeSequenceValuePatternPlan& value_plan,
         std::vector<IrStmtPtr>& statements) {
         if (!is_owner_type(element_type) || !pattern.has_rest ||
-            !value_plan.known_owner_vec_length ||
             is_owner_element_slice_type(source_type) ||
             !pattern.rest_alias_name.empty()) {
             return;
         }
+        if (value_plan.dynamic_owner_suffix_uses_runtime_paths) {
+            append_runtime_sequence_value_pattern_dynamic_rest_gap_drops(
+                pattern,
+                source_name,
+                source_type,
+                element_type,
+                statements);
+            return;
+        }
+        if (!value_plan.known_owner_vec_length) return;
         const std::uint64_t suffix_count =
             static_cast<std::uint64_t>(pattern.elements.size() - pattern.rest_index);
         const std::uint64_t skip_begin = static_cast<std::uint64_t>(pattern.rest_index);
@@ -8408,6 +8482,17 @@ private:
                  "cannot move ownership out of non-owning Slice[own T] view; "
                  "borrow the element with a reference pattern or move from the owning source");
         }
+        if (runtime_sequence_value_pattern_uses_dynamic_suffix(pattern, pattern_index, value_plan)) {
+            return make_ir_index_expr(
+                loc,
+                make_local_lvalue_expr(loc, source_name, source_type),
+                make_runtime_sequence_pattern_index_expr(
+                    loc,
+                    pattern,
+                    pattern_index,
+                    source_name,
+                    source_type));
+        }
 
         std::uint64_t element_index =
             runtime_sequence_value_pattern_element_index(pattern, pattern_index, value_plan);
@@ -8439,6 +8524,94 @@ private:
                 return false;
         }
         return false;
+    }
+
+    void require_dynamic_owner_suffix_value_pattern_available(SourceLocation loc,
+                                                              const std::string& source_name) {
+        LocalInfo& local = require_live_local(loc, source_name);
+        require_not_borrowed(loc, source_name, local, "move from");
+        if (local_has_moved_or_dropped_owned_fields(local)) {
+            fail(loc, "cannot move partially moved owning binding '" + source_name + "'");
+        }
+    }
+
+    void mark_dynamic_owner_suffix_value_pattern_source_consumed(SourceLocation loc,
+                                                                 const std::string& source_name) {
+        LocalInfo& local = require_live_local(loc, source_name);
+        mark_all_local_owned_fields(local, LocalState::Dropped);
+    }
+
+    void lower_runtime_sequence_dynamic_owner_suffix_value_binding(
+        const Pattern& item,
+        const Pattern& sequence_pattern,
+        std::size_t pattern_index,
+        const std::string& source_name,
+        const IrType& source_type,
+        const IrType& element_type,
+        const RuntimeSequenceValuePatternPlan& value_plan,
+        std::vector<IrStmtPtr>& statements,
+        bool mutable_binding,
+        bool skip_reference_bindings) {
+        std::string element_name = make_hidden_local("$pattern_dynamic_owner");
+        IrExprPtr element = make_runtime_sequence_pattern_binding_element_expr(
+            item.loc,
+            sequence_pattern,
+            pattern_index,
+            source_name,
+            source_type,
+            element_type,
+            value_plan);
+        declare_local(item.loc, element_name, element_type, false);
+        statements.push_back(make_ir_var_decl(
+            item.loc,
+            element_name,
+            element_type,
+            std::move(element),
+            false));
+        PatternValueSource element_source{element_name, ""};
+        lower_tuple_match_value_bindings(
+            item,
+            element_type,
+            make_local_lvalue_expr(item.loc, element_name, element_type),
+            statements,
+            mutable_binding,
+            skip_reference_bindings,
+            &element_source);
+    }
+
+    void lower_runtime_sequence_dynamic_owner_suffix_wildcard(
+        const Pattern& item,
+        const Pattern& sequence_pattern,
+        std::size_t pattern_index,
+        const std::string& source_name,
+        const IrType& source_type,
+        const IrType& element_type,
+        const RuntimeSequenceValuePatternPlan& value_plan,
+        std::vector<IrStmtPtr>& statements) {
+        std::string element_name = make_hidden_local("$pattern_dynamic_drop");
+        IrExprPtr element = make_runtime_sequence_pattern_binding_element_expr(
+            item.loc,
+            sequence_pattern,
+            pattern_index,
+            source_name,
+            source_type,
+            element_type,
+            value_plan);
+        declare_local(item.loc, element_name, element_type, false);
+        IrStmtPtr decl = make_ir_var_decl(
+            item.loc,
+            element_name,
+            element_type,
+            std::move(element),
+            false);
+        statements.push_back(std::move(decl));
+        LocalInfo& element_local = local_slot_by_name(element_name);
+        auto make_value = [this, loc = item.loc, element_name, element_type]() {
+            return make_local_lvalue_expr(loc, element_name, element_type);
+        };
+        append_drop_stmts_for_value(item.loc, element_type, make_value, statements, &element_local);
+        mark_all_local_owned_fields(element_local, LocalState::Dropped);
+        mark_local_dropped(element_local);
     }
 
     void lower_runtime_sequence_match_pattern_bindings_from_local(const Pattern& pattern,
@@ -8506,6 +8679,9 @@ private:
             [&]() -> std::optional<std::uint64_t> {
                 return known_direct_local_vec_value_length(source_name, source_type);
             });
+        if (value_plan.dynamic_owner_suffix_uses_runtime_paths) {
+            require_dynamic_owner_suffix_value_pattern_available(pattern.loc, source_name);
+        }
         if (!pattern.rest_alias_name.empty()) {
             IrType slice_type = make_prelude_slice_type(pattern.rest_alias_loc, element_type);
             declare_local(pattern.rest_alias_loc, pattern.rest_alias_name, slice_type, mutable_binding);
@@ -8533,15 +8709,27 @@ private:
             const Pattern& item = pattern.elements[i];
             if (item.kind == PatternKind::Wildcard) {
                 if (is_owner_type(element_type) && !owner_element_slice) {
-                    std::uint64_t element_index =
-                        runtime_sequence_value_pattern_element_index(pattern, i, value_plan);
-                    append_runtime_sequence_value_pattern_owned_element_drop(
-                        item.loc,
-                        source_name,
-                        source_type,
-                        element_type,
-                        element_index,
-                        statements);
+                    if (runtime_sequence_value_pattern_uses_dynamic_suffix(pattern, i, value_plan)) {
+                        lower_runtime_sequence_dynamic_owner_suffix_wildcard(
+                            item,
+                            pattern,
+                            i,
+                            source_name,
+                            source_type,
+                            element_type,
+                            value_plan,
+                            statements);
+                    } else {
+                        std::uint64_t element_index =
+                            runtime_sequence_value_pattern_element_index(pattern, i, value_plan);
+                        append_runtime_sequence_value_pattern_owned_element_drop(
+                            item.loc,
+                            source_name,
+                            source_type,
+                            element_type,
+                            element_index,
+                            statements);
+                    }
                 }
                 continue;
             }
@@ -8555,6 +8743,20 @@ private:
                 if (!runtime_sequence_value_pattern_consumes_owner_element(item)) {
                     fail(item.loc,
                          "ownership-carrying Vec[T] value patterns must bind selected owned elements or discard them with _");
+                }
+                if (runtime_sequence_value_pattern_uses_dynamic_suffix(pattern, i, value_plan)) {
+                    lower_runtime_sequence_dynamic_owner_suffix_value_binding(
+                        item,
+                        pattern,
+                        i,
+                        source_name,
+                        source_type,
+                        element_type,
+                        value_plan,
+                        statements,
+                        mutable_binding,
+                        skip_reference_bindings);
+                    continue;
                 }
                 owner_source = runtime_sequence_value_pattern_owner_source(
                     pattern,
@@ -8579,6 +8781,9 @@ private:
                 skip_reference_bindings,
                 owner_source ? &*owner_source : nullptr
             );
+        }
+        if (value_plan.dynamic_owner_suffix_uses_runtime_paths) {
+            mark_dynamic_owner_suffix_value_pattern_source_consumed(pattern.loc, source_name);
         }
         track_runtime_sequence_value_rest_alias_borrow(pattern, source_name, element_type);
     }

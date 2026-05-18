@@ -1005,17 +1005,19 @@ control-flow patterns support `ref mut` element borrows in statement/expression
 Local and function-parameter value patterns can move ownership-carrying tuple,
 fixed-array, struct, and tuple-struct slots into bindings from tracked hidden
 storage. Local `Vec[own T]` value patterns can also move exact element
-bindings, and known-length suffix bindings after `..`, through tracked hidden
-Vec storage. Selected `_` elements and known skipped rest-gap elements are
-dropped from that hidden storage. Known-length owned rest aliases bind
-non-owning `Slice[own T]` views and keep the source borrowed while the view is
-live. `Slice[own T]` reference patterns borrow owner elements through the view,
-but value patterns, direct indexing, and indexed assignment cannot move or
-overwrite those owners through the non-owning view. Runtime-dependent aggregate
-enum payload moves are supported when a `match`, `if let`, or `while let`
-narrows the active case, and uniform owner layouts can move payload slots
-directly. Unknown-length value vector suffixes and other non-static runtime
-sequence owner paths remain tied to dynamic-owner ABI work.
+bindings, known-length suffix bindings after `..`, and direct unknown-length
+suffix bindings after `..` through tracked hidden Vec storage. Selected `_`
+elements and skipped rest-gap elements are dropped from that hidden storage;
+unknown-length rest gaps use runtime index loops before suffix owners are moved
+or dropped. Known-length owned rest aliases bind non-owning `Slice[own T]`
+views and keep the source borrowed while the view is live; unknown-length
+owning rest aliases are rejected because the view would overlap
+runtime-selected suffix owner moves. `Slice[own T]` reference patterns borrow
+owner elements through the view, but value patterns, direct indexing, and
+indexed assignment cannot move or overwrite those owners through the non-owning
+view. Runtime-dependent aggregate enum payload moves are supported when a
+`match`, `if let`, or `while let` narrows the active case, and uniform owner
+layouts can move payload slots directly.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

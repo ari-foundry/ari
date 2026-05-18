@@ -1,0 +1,41 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn consume(value: own i64, amount: i64) -> i64 {
+  drop value;
+  return amount;
+}
+
+fn move_suffix(flag: bool) -> i64 {
+  let [first, .., last]: Vec[own i64] = if flag {
+    [make_owned(1), make_owned(2)]
+  } else {
+    [make_owned(3), make_owned(4), make_owned(5)]
+  };
+  return consume(first, 11) + consume(last, 13);
+}
+
+fn drop_unknown_tail(flag: bool) -> i64 {
+  let [head, ..]: Vec[own i64] = if flag {
+    [make_owned(6)]
+  } else {
+    [make_owned(7), make_owned(8), make_owned(9)]
+  };
+  return consume(head, 17);
+}
+
+fn drop_dynamic_suffix_wildcard(flag: bool) -> i64 {
+  let [head, .., _]: Vec[own i64] = if flag {
+    [make_owned(10), make_owned(11)]
+  } else {
+    [make_owned(12), make_owned(13), make_owned(14)]
+  };
+  return consume(head, 19);
+}
+
+fn main() -> i64 {
+  return move_suffix(true) + move_suffix(false)
+      + drop_unknown_tail(true) + drop_unknown_tail(false)
+      + drop_dynamic_suffix_wildcard(true) + drop_dynamic_suffix_wildcard(false);
+}

@@ -3603,6 +3603,8 @@ check-errors: $(TARGET) check-function-errors
 	$(BUILD_DIR)/errors/pattern-value-ownership-vector-skip.elf; code=$$?; test $$code -eq 11
 	$(TARGET) tests/ok/pattern-value-ownership-vector-rest-skip.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-skip.elf
 	$(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-skip.elf; code=$$?; test $$code -eq 12
+	$(TARGET) tests/ok/pattern-value-ownership-vector-dynamic-suffix.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-dynamic-suffix.elf
+	$(BUILD_DIR)/errors/pattern-value-ownership-vector-dynamic-suffix.elf; code=$$?; test $$code -eq 120
 	$(TARGET) tests/ok/pattern-value-ownership-vector-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.elf
 	$(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.elf; code=$$?; test $$code -eq 2
 	$(TARGET) tests/ok/pattern-slice-owner-element-paths.ari -o $(BUILD_DIR)/errors/pattern-slice-owner-element-paths.elf
@@ -3634,6 +3636,8 @@ check-errors: $(TARGET) check-function-errors
 	grep -Fq "cannot drop borrowed binding 'values'" $(BUILD_DIR)/errors/pattern-ref-mut-ownership-vector-dynamic-suffix.err
 	if $(TARGET) tests/errors/pattern-ref-ownership-vector-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.elf >$(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err 2>&1; then exit 1; fi
 	grep -Fq "cannot drop borrowed binding 'values'" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err
+	if $(TARGET) tests/errors/pattern-value-ownership-vector-dynamic-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-dynamic-rest-alias.elf >$(BUILD_DIR)/errors/pattern-value-ownership-vector-dynamic-rest-alias.err 2>&1; then exit 1; fi
+	grep -Fq "unknown-length ownership-carrying Vec[T] value rest aliases are not supported" $(BUILD_DIR)/errors/pattern-value-ownership-vector-dynamic-rest-alias.err
 	if $(TARGET) tests/errors/slice-owner-index-move.ari -o $(BUILD_DIR)/errors/slice-owner-index-move.elf >$(BUILD_DIR)/errors/slice-owner-index-move.err 2>&1; then exit 1; fi
 	grep -Fq "cannot move ownership out of non-owning Slice[own T] view" $(BUILD_DIR)/errors/slice-owner-index-move.err
 	if $(TARGET) tests/errors/slice-owner-value-pattern-move.ari -o $(BUILD_DIR)/errors/slice-owner-value-pattern-move.elf >$(BUILD_DIR)/errors/slice-owner-value-pattern-move.err 2>&1; then exit 1; fi

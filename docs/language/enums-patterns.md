@@ -671,15 +671,18 @@ let nested_struct = match (point, color) {
 };
 ```
 
-Local `Vec[own T]` value patterns can move exact element bindings, and suffix
-element bindings after `..` when the hidden vector's current length is known;
-selected `_` elements and known skipped rest-gap elements are dropped from the
-hidden Vec storage. Known-length `Vec[own T]` value/rest patterns can bind
-`rest @ ..` as a non-owning `Slice[own T]` view; hidden pattern storage remains
-borrowed while the view is live, then Ari cleans any still-owned hidden slots at
-scope exit. The view can be destructured by reference patterns, but value
-patterns, direct indexing, and indexed assignment cannot move or replace owner
-elements through that non-owning Slice.
+Local `Vec[own T]` value patterns can move exact element bindings,
+known-length suffix element bindings after `..`, and direct unknown-length
+suffix element bindings after `..`; selected `_` elements and skipped rest-gap
+elements are dropped from the hidden Vec storage. Unknown-length rest gaps use
+runtime index loops before suffix owners are moved or dropped. Known-length
+`Vec[own T]` value/rest patterns can bind `rest @ ..` as a non-owning
+`Slice[own T]` view; unknown-length owning rest aliases are rejected because
+the view would overlap runtime-selected suffix owner moves. Hidden pattern
+storage remains borrowed while a known rest view is live, then Ari cleans any
+still-owned hidden slots at scope exit. The view can be destructured by
+reference patterns, but value patterns, direct indexing, and indexed assignment
+cannot move or replace owner elements through that non-owning Slice.
 Local `let ref` can
 borrow exact local `Vec[own T]` element slots, including nested owned fields
 inside aggregate elements, when each selected element path is statically known,

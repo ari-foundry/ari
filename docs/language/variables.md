@@ -189,14 +189,17 @@ bindings in statement/expression `match`, `if let`, and `while let` when the
 matched subject is addressable. Local and function-parameter value patterns can
 move ownership-carrying tuple, fixed-array, struct, and tuple-struct slots into
 bindings from tracked hidden storage. Local `Vec[own T]` value patterns can
-also move exact element bindings, and suffix element bindings after `..` when
-the hidden vector's current length is known. Selected `_` elements and known
-skipped `..` ranges are dropped from the hidden Vec storage. Known-length
-`Vec[own T]` value/rest patterns can also bind `rest @ ..` as a non-owning
-`Slice[own T]` view; if the source is compiler-owned hidden storage, Ari keeps
-that storage borrowed while the view is live and cleans the remaining owned
-slots when the hidden storage leaves scope. `Slice[own T]` remains a non-owning
-view: reference patterns can borrow owner elements through the view, while value
+also move exact element bindings, known-length suffix element bindings after
+`..`, and direct unknown-length suffix element bindings after `..`. Selected
+`_` elements and skipped `..` ranges are dropped from the hidden Vec storage;
+unknown-length rest gaps use runtime index loops before suffix owners are moved
+or dropped. Known-length `Vec[own T]` value/rest patterns can bind `rest @ ..`
+as a non-owning `Slice[own T]` view. Unknown-length owning rest aliases are
+rejected because the rest view would overlap runtime-selected suffix owner
+moves. If the source is compiler-owned hidden storage, Ari keeps known rest
+views borrowed while they are live and cleans any remaining owned slots when
+the hidden storage leaves scope. `Slice[own T]` remains a non-owning view:
+reference patterns can borrow owner elements through the view, while value
 patterns, direct indexing, and indexed assignment reject attempts to move or
 overwrite those owners through the view. Ownership-carrying enum payload moves
 from direct temporary constructor matches are supported, and direct constructor
@@ -207,8 +210,7 @@ such as a parameter or aggregate-returning call, `drop value;` is supported as a
 whole-value cleanup: Ari checks the runtime tag and drops only the active owning
 payload slots. Runtime-dependent payload-slot moves are also supported after
 `match`, `if let`, or `while let` narrows the active case, and uniform owner
-layouts can move payload slots directly. Unknown-length value vector suffix
-owner paths remain tied to later dynamic-owner ABI work.
+layouts can move payload slots directly.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

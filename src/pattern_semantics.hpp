@@ -45,6 +45,7 @@ struct RuntimeSequenceReferencePatternPlan {
 
 struct RuntimeSequenceValuePatternPlan {
     std::optional<std::uint64_t> known_owner_vec_length;
+    bool dynamic_owner_suffix_uses_runtime_paths = false;
 };
 
 using RuntimeSequenceKnownLengthLookup = std::function<std::optional<std::uint64_t>()>;

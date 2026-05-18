@@ -16,15 +16,11 @@ Phase-oriented sema decomposition is now tracked as ongoing maintenance in
 [Semantic Checker Decomposition](sema-decomposition.md) instead of as a finite
 near-term deliverable.
 
-1. Add dynamic value-vector suffix owner paths.
-   Support value patterns that move unknown-length `Vec[own T]` suffix elements
-   without relying on hidden whole-value leaks.
-   Label: `dynamic-value-vector-suffixes`.
-2. Extend trait-object ownership.
+1. Extend trait-object ownership.
    Define durable data-pointer storage for `own` and borrow-valued dyn objects,
    including lifetime rules for objects that outlive hidden stack
    materialization.
-3. Add an explicit owner-resolution surface.
+2. Add an explicit owner-resolution surface.
    Loop exits that cannot prove a single owner state currently produce
    `maybe-unavailable` locals. A future language form should let users resolve
    those conditional cleanup states intentionally.

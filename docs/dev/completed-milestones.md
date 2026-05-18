@@ -145,16 +145,19 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   tuple, fixed-array, struct, and tuple-struct slots into bindings from tracked
   hidden storage. The binding engine marks the moved owner subpaths so skipped
   live owned fields still follow normal cleanup.
-- Local `Vec[own T]` value patterns can move exact element bindings and
-  known-length suffix element bindings after `..` from tracked hidden Vec
-  storage. Selected `_` elements and known skipped rest-gap elements are lowered
-  as explicit element drops, so hidden Vec storage has no leaked live owner
-  slots after the pattern body. Known-length owned rest aliases lower to
-  non-owning `Slice[own T]` views; the source Vec is borrowed while the view is
-  live, compiler-owned hidden pattern storage drops any still-owned slots at
-  scope exit, and owner elements reached through the Slice view can be borrowed
-  by reference patterns without allowing moves or indexed owner replacement
-  through the non-owning view.
+- Local `Vec[own T]` value patterns can move exact element bindings,
+  known-length suffix element bindings after `..`, and direct unknown-length
+  suffix element bindings after `..` from tracked hidden Vec storage. Selected
+  `_` elements plus skipped rest-gap ranges are lowered as explicit element
+  drops; unknown-length rest gaps use runtime index loops, so hidden Vec storage
+  has no leaked live owner slots after the pattern body. Known-length owned rest
+  aliases lower to non-owning `Slice[own T]` views; unknown-length owned rest
+  aliases are rejected because the view would overlap dynamic suffix owner
+  moves. While a known rest view is live, the source Vec is borrowed,
+  compiler-owned hidden pattern storage drops any still-owned slots at scope
+  exit, and owner elements reached through the Slice view can be borrowed by
+  reference patterns without allowing moves or indexed owner replacement through
+  the non-owning view.
 - Loop fixed-point checking tracks ownership and borrow states at `break`,
   `continue`, zero-iteration, literal-true next-iteration, and fallthrough
   merge points. Ambiguous loop exits produce explicit `maybe-unavailable`
