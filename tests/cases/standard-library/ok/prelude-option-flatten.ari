@@ -1,0 +1,21 @@
+fn nested_some() -> Option[Option[i64]] {
+  return Some<Option[i64]>(Some<i64>(31));
+}
+
+fn nested_inner_none() -> Option[Option[i64]] {
+  return Some<Option[i64]>(None<i64>());
+}
+
+fn nested_outer_none() -> Option[Option[i64]] {
+  return None<Option[i64]>();
+}
+
+fn main() -> i64 {
+  let flattened_some = nested_some().flatten().unwrap_or(0);
+  let flattened_inner_none = nested_inner_none().flatten().unwrap_or(13);
+  let flattened_outer_none = nested_outer_none().flatten().unwrap_or(17);
+
+  let total = flattened_some + flattened_inner_none + flattened_outer_none;
+  assert_eq_i64(total, 61);
+  return total;
+}

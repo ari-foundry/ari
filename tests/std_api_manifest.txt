@@ -166,6 +166,7 @@ method std::Option[T]::unwrap|check-prelude prelude-option-result-unwrap; docs/d
 method std::Option[T]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Option[T]::unwrap_or_else|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Option[T]::xor|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
+method std::Option[std::Option[T]]::flatten|check-prelude prelude-option-flatten; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::and_then[U]|check-prelude prelude-option-result-combinators; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::err|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
 method std::Result[T,E]::expect|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row

@@ -114,3 +114,12 @@ pub impl[T] std::Option[T] {
     };
   }
 }
+
+pub impl[T] std::Option[std::Option[T]] {
+  fn flatten(self) -> std::Option[T] {
+    return match self {
+      std::Some(value) => value,
+      std::None => std::None<T>();
+    };
+  }
+}

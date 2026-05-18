@@ -25,6 +25,7 @@ value.unwrap()
 value.expect("message")
 value.map<U>(op)
 value.and_then<U>(op)
+value.flatten()
 value.or(fallback)
 value.or_else(op)
 value.xor(other)
@@ -41,6 +42,10 @@ to inspect the case without consuming a local value.
 
 `ok_or` and `ok_or_else` convert `Option[T]` into `Result[T, E]`. The lazy
 form calls its function only for `None`.
+
+`flatten` is available on nested `Option[Option[T]]` values. It keeps the
+inner `Some(T)`, turns `Some(None<T>())` into `None<T>()`, and also keeps an
+outer `None<Option[T]>()` as `None<T>()`.
 
 ## Result API
 
@@ -96,6 +101,7 @@ Focused positive tests:
 ```text
 tests/cases/standard-library/ok/prelude-option-result-methods.ari
 tests/cases/standard-library/ok/prelude-option-result-predicates.ari
+tests/cases/standard-library/ok/prelude-option-flatten.ari
 tests/cases/standard-library/ok/prelude-option-result-combinators.ari
 tests/cases/standard-library/ok/prelude-option-result-conversions.ari
 tests/cases/standard-library/ok/prelude-option-result-unwrap.ari

@@ -997,7 +997,8 @@ predicates that can inspect a local or other place value without consuming it.
 `is_some_and(fn(T) -> bool)` and `is_none_or(fn(T) -> bool)` consume the
 `Option[T]` value and pass the payload to the predicate when it is `Some`.
 `unwrap()`, `expect(message)`, `unwrap_or(fallback)`, `map[U](fn(T) -> U)`,
-`or(Option[T])`, `or_else(fn() -> Option[T])`, and
+`or(Option[T])`, `or_else(fn() -> Option[T])`, `flatten()` on
+`Option[Option[T]]`, and
 `and_then[U](fn(T) -> Option[U])` also consume the `Option[T]` value.
 `Result[T, E]` follows the same split: borrowed-receiver `is_ok()` and
 `is_err()` predicates, consuming `is_ok_and(fn(T) -> bool)` and
