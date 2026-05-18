@@ -83,6 +83,11 @@ adding more narrow syntax-specific `*_semantics` siblings.
   temporary-zone escape diagnostics, temporary-zone `zone::destroy` cleanup IR,
   and cleanup-before-exit value materialization for returns, labeled-block
   breaks, and `init while` continue values
+- `zone_allocation_semantics` for typed zone allocation and placement lowering:
+  `zone::alloc<T>`, `zone::new<T>`, `zone::promote<T>`, and `zone::temp`
+  validate explicit type arguments, compute compile-time layout, coerce zone
+  and value operands, and assemble the final runtime calls as a single
+  allocation phase while sema provides expression/type callbacks
 - `range_semantics` for shared `Range[T]` / `RangeInclusive[T]` name and type
   recognition plus source-prelude range value type construction used by sema's
   type resolver, range constructors, stored-range loops, and Slice range checks

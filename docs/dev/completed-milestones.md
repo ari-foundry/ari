@@ -36,6 +36,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   `pointer_memory_semantics`, keeping type-argument checks, mutable-place
   validation, hidden temporary locals, and final pointer IR block assembly out
   of central expression dispatch.
+- Typed zone allocation, placement construction, promotion, and lexical
+  temporary-zone calls lower through `zone_allocation_semantics`, so layout
+  checks and runtime allocation-call assembly are kept out of central
+  expression dispatch.
 - The stack-backed local root `Vec[T]` method surface includes `as_ptr()` for
   raw element-buffer access alongside the fixed-capacity read/search/mutation
   helpers.

@@ -46,6 +46,7 @@
 #include "type_semantics.hpp"
 #include "value_construction_semantics.hpp"
 #include "vector_semantics.hpp"
+#include "zone_allocation_semantics.hpp"
 #include "zone_pointer_semantics.hpp"
 #include "zone_return_semantics.hpp"
 
@@ -231,7 +232,8 @@ struct ReferenceBindingSubject {
     std::string path;
 };
 
-class SemanticChecker : private PointerMemorySemanticContext {
+class SemanticChecker : private PointerMemorySemanticContext,
+                        private ZoneAllocationSemanticContext {
 public:
     explicit SemanticChecker(const Program& program, SemaOptions options)
         : program_(program), options_(options), borrow_context_(local_scopes_) {}
@@ -5642,6 +5644,10 @@ private:
     }
 
     void coerce_pointer_memory_expr_to_expected(IrExpr& expr, const IrType& expected) override {
+        coerce_expr_to_expected(expr, expected);
+    }
+
+    void coerce_zone_allocation_expr_to_expected(IrExpr& expr, const IrType& expected) override {
         coerce_expr_to_expected(expr, expected);
     }
 
@@ -20494,187 +20500,22 @@ private:
 
     IrExprPtr check_typed_zone_alloc_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (expr_type_args(expr).empty()) return nullptr;
-        if (expr_type_args(expr).size() != 1) {
-            fail(expr.loc, "zone::alloc<T> expects exactly one type argument");
-        }
-        if (expr.args.size() != 1) {
-            fail(expr.loc, "zone::alloc<T> expects exactly one zone argument");
-        }
-
-        IrType allocated = resolve_executable_type(expr_type_args(expr)[0]);
-        if (allocated.qualifier != TypeQualifier::Value) {
-            fail(expr_type_args(expr)[0].loc, "zone::alloc<T> expects a value type, got " + type_name(allocated));
-        }
-
-        std::uint64_t size_bytes = 0;
-        std::uint64_t align_bytes = 0;
-        if (!ari_layout_size_bytes(allocated, size_bytes) ||
-            !ari_layout_align_bytes(allocated, align_bytes)) {
-            fail(expr_type_args(expr)[0].loc, "zone::alloc<T> does not support " + type_name(allocated));
-        }
-        if (size_bytes == 0) {
-            fail(expr_type_args(expr)[0].loc, "zone::alloc<T> requires a non-zero-sized type");
-        }
-        if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
-            align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(expr_type_args(expr)[0].loc, "zone::alloc<T> layout is too large for i64");
-        }
-
-        SourceLocation loc{1, 1};
-        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", loc);
-        zone.qualifier = TypeQualifier::MutRef;
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr zone_arg = check_expr(*expr.args[0]);
-        coerce_expr_to_expected(*zone_arg, zone);
-        require_assignable(expr.args[0]->loc, zone, zone_arg->type);
-
-        IrType pointer_type = allocated;
-        pointer_type.qualifier = TypeQualifier::Ptr;
-        std::vector<IrExprPtr> args;
-        args.reserve(3);
-        args.push_back(std::move(zone_arg));
-        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
-        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
-        release_temporary_borrows(borrow_mark);
-        return make_ir_call_expr(expr.loc, "zone::alloc", std::move(pointer_type), std::move(args));
+        return lower_typed_zone_alloc_call(expr, *this);
     }
 
     IrExprPtr check_zone_new_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (expr_type_args(expr).size() != 1) {
-            fail(expr.loc, "zone::new<T> expects exactly one type argument");
-        }
-        if (expr.args.size() != 2) {
-            fail(expr.loc, "zone::new<T> expects a zone and a value");
-        }
-
-        IrType allocated = resolve_executable_type(expr_type_args(expr)[0]);
-        if (allocated.qualifier != TypeQualifier::Value) {
-            fail(expr_type_args(expr)[0].loc, "zone::new<T> expects a value type, got " + type_name(allocated));
-        }
-        if (is_owner_type(allocated) || contains_borrow_type(allocated)) {
-            fail(expr_type_args(expr)[0].loc, "zone::new<T> cannot place ownership- or borrow-valued types yet");
-        }
-
-        std::uint64_t size_bytes = 0;
-        std::uint64_t align_bytes = 0;
-        if (!ari_layout_size_bytes(allocated, size_bytes) ||
-            !ari_layout_align_bytes(allocated, align_bytes)) {
-            fail(expr_type_args(expr)[0].loc, "zone::new<T> does not support " + type_name(allocated));
-        }
-        if (size_bytes == 0) {
-            fail(expr_type_args(expr)[0].loc, "zone::new<T> requires a non-zero-sized type");
-        }
-        if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
-            align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(expr_type_args(expr)[0].loc, "zone::new<T> layout is too large for i64");
-        }
-
-        SourceLocation loc{1, 1};
-        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", loc);
-        zone.qualifier = TypeQualifier::MutRef;
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr zone_arg = check_expr(*expr.args[0]);
-        coerce_expr_to_expected(*zone_arg, zone);
-        require_assignable(expr.args[0]->loc, zone, zone_arg->type);
-
-        IrExprPtr value = check_expr(*expr.args[1]);
-        coerce_expr_to_expected(*value, allocated);
-        require_assignable(expr.args[1]->loc, allocated, value->type);
-
-        IrType pointer_type = allocated;
-        pointer_type.qualifier = TypeQualifier::Ptr;
-        std::vector<IrExprPtr> args;
-        args.reserve(4);
-        args.push_back(std::move(zone_arg));
-        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
-        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
-        args.push_back(std::move(value));
-        release_temporary_borrows(borrow_mark);
-        return make_ir_call_expr(expr.loc, "zone::new", std::move(pointer_type), std::move(args));
+        return lower_zone_new_call(expr, *this);
     }
 
     IrExprPtr check_zone_promote_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (expr_type_args(expr).size() != 1) {
-            fail(expr.loc, "zone::promote<T> expects exactly one type argument");
-        }
-        if (expr.args.size() != 2) {
-            fail(expr.loc, "zone::promote<T> expects a target zone and source pointer");
-        }
-
-        IrType allocated = resolve_executable_type(expr_type_args(expr)[0]);
-        if (allocated.qualifier != TypeQualifier::Value) {
-            fail(expr_type_args(expr)[0].loc, "zone::promote<T> expects a value type, got " + type_name(allocated));
-        }
-        if (is_owner_type(allocated) || contains_borrow_type(allocated)) {
-            fail(expr_type_args(expr)[0].loc, "zone::promote<T> cannot copy ownership- or borrow-valued types yet");
-        }
-
-        std::uint64_t size_bytes = 0;
-        std::uint64_t align_bytes = 0;
-        if (!ari_layout_size_bytes(allocated, size_bytes) ||
-            !ari_layout_align_bytes(allocated, align_bytes)) {
-            fail(expr_type_args(expr)[0].loc, "zone::promote<T> does not support " + type_name(allocated));
-        }
-        if (size_bytes == 0) {
-            fail(expr_type_args(expr)[0].loc, "zone::promote<T> requires a non-zero-sized type");
-        }
-        if (size_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) ||
-            align_bytes > static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max())) {
-            fail(expr_type_args(expr)[0].loc, "zone::promote<T> layout is too large for i64");
-        }
-
-        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", expr.loc);
-        zone.qualifier = TypeQualifier::MutRef;
-        IrType source_pointer_type = allocated;
-        source_pointer_type.qualifier = TypeQualifier::Ptr;
-
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr zone_arg = check_expr(*expr.args[0]);
-        coerce_expr_to_expected(*zone_arg, zone);
-        require_assignable(expr.args[0]->loc, zone, zone_arg->type);
-
-        IrExprPtr source = check_expr(*expr.args[1]);
-        coerce_expr_to_expected(*source, source_pointer_type);
-        require_assignable(expr.args[1]->loc, source_pointer_type, source->type);
-
-        IrExprPtr value = make_pointer_load_expr(expr.args[1]->loc, std::move(source), allocated);
-
-        std::vector<IrExprPtr> args;
-        args.reserve(4);
-        args.push_back(std::move(zone_arg));
-        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), size_bytes));
-        args.push_back(make_integer_literal(expr.loc, i64_type(expr.loc), align_bytes));
-        args.push_back(std::move(value));
-        release_temporary_borrows(borrow_mark);
-        return make_ir_call_expr(expr.loc, "zone::new", std::move(source_pointer_type), std::move(args));
+        return lower_zone_promote_call(expr, *this);
     }
 
     IrExprPtr check_zone_temp_call(const Expr& expr, IrExprPtr lowered) {
         (void)lowered;
-        if (!expr_type_args(expr).empty()) {
-            fail(expr.loc, "zone::temp does not take type arguments");
-        }
-        if (expr.args.size() != 1) {
-            fail(expr.loc, "zone::temp expects a capacity");
-        }
-
-        IrType capacity_type = i64_type(expr.loc);
-        std::size_t borrow_mark = temporary_borrow_mark();
-        IrExprPtr capacity = check_expr(*expr.args[0]);
-        coerce_expr_to_expected(*capacity, capacity_type);
-        require_assignable(expr.args[0]->loc, capacity_type, capacity->type);
-        release_temporary_borrows(borrow_mark);
-
-        IrType zone = primitive_type(IrPrimitiveKind::Zone, "Zone", expr.loc);
-        zone.qualifier = TypeQualifier::Own;
-        std::vector<IrExprPtr> args;
-        args.push_back(std::move(capacity));
-        return make_ir_call_expr(expr.loc, "zone::temp", std::move(zone), std::move(args));
+        return lower_zone_temp_call(expr, *this);
     }
 
     bool is_collection_len_method_receiver(const Expr& expr) {

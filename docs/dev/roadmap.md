@@ -32,6 +32,9 @@ changing the long-term language contract.
    `pointer_memory_semantics` now owns raw pointer helper and `std::mem`
    value-helper lowering while sema supplies expression/type callbacks and
    hidden-local registration.
+   `zone_allocation_semantics` now owns typed zone allocation, placement
+   construction, promotion, and lexical temporary-zone call lowering while sema
+   supplies expression/type callbacks.
    `ownership_semantics` now owns recursive owned-field state seeding for
    locals and stack-backed vector storage. Avoid splitting one tiny file per
    syntax feature.
