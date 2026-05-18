@@ -278,6 +278,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std5ascii9parse_hex' $(BUILD_DIR)/prelude/std-ascii-slice-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-ascii-slice-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-slice-helpers.elf
 	$(BUILD_DIR)/prelude/std-ascii-slice-helpers.elf; code=$$?; test $$code -eq 19
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-prefix-parsers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.ll
+	grep -q '_ARNv3std5ascii20parse_decimal_prefix' $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.ll
+	grep -q '_ARNv3std5ascii16parse_hex_prefix' $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-prefix-parsers.ari -o $(BUILD_DIR)/prelude/std-ascii-prefix-parsers.elf
+	$(BUILD_DIR)/prelude/std-ascii-prefix-parsers.elf; code=$$?; test $$code -eq 39
 	$(TARGET) tests/cases/standard-library/ok/std-ascii-case-compare.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
 	grep -q '_ARNv3std5ascii18equals_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-compare.ll
 	grep -q '_ARNv3std5ascii23starts_with_ignore_case' $(BUILD_DIR)/prelude/std-ascii-case-compare.ll

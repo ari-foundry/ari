@@ -473,10 +473,11 @@ accepts widths from 0 through 64.
 ## ASCII
 
 `std::ascii` contains byte-oriented helpers for ASCII-only text and parser
-code. All classification and case helpers take `u8` values and use natural
-names because the module path already says the policy:
+code. Public names stay natural because the module path already says the
+policy:
 
 ```ari
+ascii::ParsedInt
 ascii::is_digit(byte)
 ascii::is_lower(byte)
 ascii::is_upper(byte)
@@ -503,7 +504,9 @@ ascii::trim_start(bytes)
 ascii::trim_end(bytes)
 ascii::trim(bytes)
 ascii::parse_decimal(bytes)
+ascii::parse_decimal_prefix(bytes)
 ascii::parse_hex(bytes)
+ascii::parse_hex_prefix(bytes)
 ```
 
 `is_blank` covers space and tab. `is_whitespace` covers space, tab, line feed,
@@ -524,6 +527,12 @@ either a byte offset or a borrowed sub-slice. `parse_decimal` and `parse_hex`
 parse the entire slice and return `Option[i64]`; empty input or invalid bytes
 return `None<i64>()`. These parser helpers do not define overflow behavior
 yet.
+
+`ParsedInt` carries `value: i64` and `len: i64` for prefix parser results.
+`parse_decimal_prefix` and `parse_hex_prefix` parse only the leading digit run,
+stop before the first invalid byte, and return `None<ParsedInt>()` when the
+first byte is empty or invalid. They do not trim, parse signs, or recognize
+hexadecimal prefixes such as `0x`.
 
 ## Choosing The Right Collection
 

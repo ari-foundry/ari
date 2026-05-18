@@ -26,7 +26,8 @@ limits, examples, and test files for one module.
   `alloc_array`, placement construction, promotion, reset, and destroy rules.
 - [std::ascii](ascii.md): source-only ASCII byte classification,
   printable/control predicates, case conversion, borrowed-slice
-  case-insensitive comparison/search, trimming, and digit parsing helpers.
+  case-insensitive comparison/search, trimming, and digit/prefix parsing
+  helpers.
 - [std::math](math.md): source-only `i64` arithmetic helpers for signs,
   parity, powers, division rounding, greatest common divisor, and least common
   multiple.

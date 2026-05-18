@@ -1,6 +1,11 @@
 // Byte-oriented ASCII helpers for std::string::String and Slice[u8] code.
 // These functions intentionally stay source-only and use natural names; the
 // module name carries the byte/text policy while the signatures stay explicit.
+pub struct ParsedInt {
+  value: i64,
+  len: i64,
+}
+
 pub fn is_digit(value: u8) -> bool {
   return value >= (48 as u8) && value <= (57 as u8);
 }
@@ -226,6 +231,31 @@ pub fn parse_decimal(values: std::Slice[u8]) -> std::Option[i64] {
   return std::Some<i64>(result);
 }
 
+// Prefix parsers consume only the leading digit run and report how many bytes
+// were used, so parser code can continue from the next byte.
+pub fn parse_decimal_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
+  var result = 0;
+  var index = 0;
+  while index < values.len {
+    match digit_value(values[index]) {
+      std::Some(value) => {
+        result = (result * 10) + value;
+      }
+      std::None => {
+        if index == 0 {
+          return std::None<ParsedInt>();
+        }
+        return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
+      }
+    }
+    index = index + 1;
+  }
+  if index == 0 {
+    return std::None<ParsedInt>();
+  }
+  return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
+}
+
 pub fn parse_hex(values: std::Slice[u8]) -> std::Option[i64] {
   if values.len == 0 {
     return std::None<i64>();
@@ -245,4 +275,27 @@ pub fn parse_hex(values: std::Slice[u8]) -> std::Option[i64] {
     index = index + 1;
   }
   return std::Some<i64>(result);
+}
+
+pub fn parse_hex_prefix(values: std::Slice[u8]) -> std::Option[ParsedInt] {
+  var result = 0;
+  var index = 0;
+  while index < values.len {
+    match hex_value(values[index]) {
+      std::Some(value) => {
+        result = (result * 16) + value;
+      }
+      std::None => {
+        if index == 0 {
+          return std::None<ParsedInt>();
+        }
+        return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
+      }
+    }
+    index = index + 1;
+  }
+  if index == 0 {
+    return std::None<ParsedInt>();
+  }
+  return std::Some<ParsedInt>(ParsedInt { value: result, len: index });
 }

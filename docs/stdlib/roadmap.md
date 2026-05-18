@@ -14,9 +14,9 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 Current source families: `option`, `result`, `mem`, `zone` raw allocation plus
 source typed array allocation, `boxed`, `string` byte access/search/ASCII
 helpers including case search and owned trim copies, `ascii` byte classification,
-case-insensitive comparison/search, and slice helpers, `vec`, `iter`, `fmt`,
-`cmp` comparison helpers, `convert`
-identity/from/into helpers, `context` runtime hooks plus the source
+case-insensitive comparison/search, slice helpers, and prefix parsers, `vec`,
+`iter`, `fmt`, `cmp` comparison helpers, `convert` identity/from/into helpers,
+`context` runtime hooks plus the source
 `has_arg` helper, `input` runtime hooks plus the source `try_read_byte` EOF
 helper, `io` runtime hooks plus source byte-slice output, and the first
 `math` arithmetic/division-rounding and `bits` numeric helper slices.

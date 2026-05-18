@@ -58,6 +58,12 @@ ascii::hex_value(byte)
 `digit_value` accepts `0` through `9`. `hex_value` accepts `0` through `9`,
 `a` through `f`, and `A` through `F`.
 
+Prefix parsers return a small named result type:
+
+```ari
+ascii::ParsedInt
+```
+
 Slice helpers operate on borrowed `Slice[u8]` values:
 
 ```ari
@@ -71,7 +77,9 @@ ascii::trim_start(bytes)
 ascii::trim_end(bytes)
 ascii::trim(bytes)
 ascii::parse_decimal(bytes)
+ascii::parse_decimal_prefix(bytes)
 ascii::parse_hex(bytes)
+ascii::parse_hex_prefix(bytes)
 ```
 
 The `*_ignore_case` helpers compare only ASCII letter case. Bytes outside
@@ -86,6 +94,19 @@ when the slice is all whitespace. The trim helpers return borrowed sub-slices;
 they do not allocate or copy. `parse_decimal` and `parse_hex` parse the entire
 slice and return `None<i64>()` for empty input or invalid bytes. Overflow
 behavior is not promised yet.
+
+`ParsedInt` is the result shape for prefix parsers:
+
+```ari
+let parsed = ascii::parse_decimal_prefix(bytes).unwrap();
+let value = parsed.value;
+let consumed = parsed.len;
+```
+
+`parse_decimal_prefix` and `parse_hex_prefix` parse the leading digit run and
+stop before the first invalid byte. They return `None<ParsedInt>()` when the
+first byte is missing or invalid. They do not trim whitespace, accept signs,
+recognize `0x`, or promise overflow behavior yet.
 
 ## Example
 
@@ -114,6 +135,13 @@ fn find_lib(bytes: Slice[u8]) -> i64 {
   var needle: Vec[u8] = [108u8, 105u8, 98u8];
   return ascii::index_of_ignore_case(bytes, needle.as_slice());
 }
+
+fn read_prefix(bytes: Slice[u8]) -> i64 {
+  match ascii::parse_decimal_prefix(bytes) {
+    std::Some(parsed) => parsed.value + parsed.len,
+    std::None => 0,
+  }
+}
 ```
 
 ## Tests
@@ -124,6 +152,7 @@ The focused positive tests are:
 tests/cases/standard-library/ok/std-ascii-byte-helpers.ari
 tests/cases/standard-library/ok/std-ascii-class-helpers.ari
 tests/cases/standard-library/ok/std-ascii-slice-helpers.ari
+tests/cases/standard-library/ok/std-ascii-prefix-parsers.ari
 tests/cases/standard-library/ok/std-ascii-case-compare.ari
 tests/cases/standard-library/ok/std-ascii-case-search.ari
 ```
@@ -138,7 +167,6 @@ The public API is tracked in `tests/std_api_manifest.txt` and checked by
 
 Potential next slices:
 
-- prefix parsers that return both the parsed value and consumed byte count
 - signed decimal parsing after the numeric overflow policy is documented
 - byte-window helpers after collection substring policy grows beyond
   first-match search

@@ -27,7 +27,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `as_slice`. |
-| `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`. |
+| `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
 | `std::fmt` | Formatting trait surface. | `Display::format_in`, `Debug`. |
@@ -60,8 +60,8 @@ that need backend or checker knowledge:
 
 `std::ascii` is an example of the preferred path: it is ordinary Ari source
 because byte classification, printable/control predicates, case conversion,
-borrowed-slice case-insensitive comparison/search, trimming, and small integer
-parsing need no compiler knowledge.
+borrowed-slice case-insensitive comparison/search, trimming, whole-slice
+integer parsing, and prefix integer parsing need no compiler knowledge.
 
 `std::string::String` follows the same direction where it can. Its allocation
 constructors and runtime copy hooks still depend on compiler-known zone/string

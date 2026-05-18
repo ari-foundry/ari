@@ -29,7 +29,9 @@ fn std::ascii::is_punctuation|std ascii class helper tests; docs/stdlib/api-refe
 fn std::ascii::is_upper|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_whitespace|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::parse_decimal|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::parse_decimal_prefix|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::parse_hex|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::parse_hex_prefix|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::skip_whitespace|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::starts_with_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::to_lower|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
@@ -300,6 +302,7 @@ module std::zone|zone lifecycle tests; docs/dev/test-matrix.md Explicit memory z
 struct std::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
+struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row

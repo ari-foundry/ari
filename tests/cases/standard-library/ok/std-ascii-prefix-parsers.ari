@@ -1,0 +1,105 @@
+// Covers ASCII prefix parsers that return both the parsed value and the
+// number of consumed bytes while leaving trailing bytes for the caller.
+fn main() -> i64 {
+  var decimal: Vec[u8] = [49u8, 50u8, 51u8, 120u8];
+  var hex: Vec[u8] = [49u8, 65u8, 102u8, 71u8];
+  var all_decimal: Vec[u8] = [52u8, 50u8];
+  var leading_zero: Vec[u8] = [48u8, 48u8, 57u8];
+  var invalid: Vec[u8] = [120u8, 49u8];
+  var empty: Vec[u8] = [];
+
+  var score = 0;
+
+  match ascii::parse_decimal_prefix(decimal.as_slice()) {
+    std::Some(parsed_decimal) => {
+      if parsed_decimal.value == 123 {
+        score = score + 11;
+      }
+      if parsed_decimal.len == 3 {
+        score = score + 13;
+      }
+    }
+    std::None => {}
+  }
+  match ascii::parse_decimal(decimal.as_slice()) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 17;
+    }
+  }
+
+  match ascii::parse_hex_prefix(hex.as_slice()) {
+    std::Some(parsed_hex) => {
+      if parsed_hex.value == 431 {
+        score = score + 19;
+      }
+      if parsed_hex.len == 3 {
+        score = score + 23;
+      }
+    }
+    std::None => {}
+  }
+  match ascii::parse_hex(hex.as_slice()) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 29;
+    }
+  }
+
+  match ascii::parse_decimal_prefix(all_decimal.as_slice()) {
+    std::Some(parsed_all) => {
+      if parsed_all.value == 42 {
+        score = score + 31;
+      }
+      if parsed_all.len == 2 {
+        score = score + 37;
+      }
+    }
+    std::None => {}
+  }
+
+  match ascii::parse_decimal_prefix(leading_zero.as_slice()) {
+    std::Some(parsed_zero) => {
+      if parsed_zero.value == 9 {
+        score = score + 41;
+      }
+      if parsed_zero.len == 3 {
+        score = score + 43;
+      }
+    }
+    std::None => {}
+  }
+
+  match ascii::parse_decimal_prefix(invalid.as_slice()) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 47;
+    }
+  }
+  match ascii::parse_hex_prefix(invalid.as_slice()) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 53;
+    }
+  }
+  match ascii::parse_decimal_prefix(empty.as_slice()) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 59;
+    }
+  }
+  match ascii::parse_hex_prefix(empty.as_slice()) {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 61;
+    }
+  }
+
+  let manual = std::ascii::ParsedInt { value: 5, len: 6 };
+  if manual.value + manual.len == 11 {
+    score = score + 67;
+  }
+
+  assert_eq_i64(score, 551);
+  return score % 256;
+}
