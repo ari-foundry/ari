@@ -27,9 +27,12 @@ near-term deliverable.
    Statement `match` arms over tracked runtime-dependent locals and parameters
    now seed tag-known owner payload states, so value-bound owning payloads must
    be moved or dropped before the arm exits.
-   Remaining work is path-level ownership for runtime-dependent payload-slot
-   moves outside statement `match`, branch-merged tag states, partial-move
-   cleanup, and `@repr(C)` layout rules for owned payload-bearing public enums.
+   Runtime-dependent payload-slot moves outside statement `match` are now
+   supported for uniform owner layouts where every case has the same owner
+   payload paths, such as `Either(own i64)`.
+   Remaining work is tag-conditioned payload-slot moves outside statement
+   `match`, branch-merged tag states, partial-move cleanup, and `@repr(C)` layout
+   rules for owned payload-bearing public enums.
    Label: `owner-enum-payload-paths`.
 2. Add owner-aware `Slice[T]` element paths.
    Treat `Slice[own T]` as a non-owning view while still preserving borrow and

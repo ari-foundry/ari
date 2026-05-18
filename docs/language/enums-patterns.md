@@ -130,8 +130,10 @@ Statement `match` arms over tracked runtime-dependent local and parameter
 subjects seed tag-known owner payload states, so `Some(token)` can value-bind
 an owning payload and the binding must be dropped or moved before the arm exits.
 Runtime-dependent payload-slot moves outside statement `match`, such as
-`value.0`, still need the planned full owner-path model. Fixed-capacity vector
-payload slots can also be
+`value.0`, are supported when every enum case has the same owner payload paths
+in that layout; case-dependent payload ownership still needs `match` so the
+active tag can seed the right owner paths. Fixed-capacity vector payload slots
+can also be
 destructured with
 exact array-style element patterns such as `Values([first, second])`; the match
 arm checks the vector's current runtime length before extracting the inline data

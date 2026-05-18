@@ -1,0 +1,31 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+enum MaybeOwned {
+  None,
+  Some(own i64),
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn choose(flag: bool) -> MaybeOwned {
+  if flag {
+    return Some(make_owned(1));
+  }
+  return None;
+}
+
+fn consume(item: MaybeOwned) -> i64 {
+  let token = item.0;
+  drop token;
+  return 0;
+}
+
+fn main() -> i64 {
+  return consume(choose(true));
+}

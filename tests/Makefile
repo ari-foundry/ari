@@ -2748,6 +2748,10 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/match-runtime-owned-enum-payload.elf; code=$$?; test $$code -eq 42
 	if $(TARGET) tests/errors/match-runtime-owned-enum-payload-undropped.ari -o $(BUILD_DIR)/variables/match-runtime-owned-enum-payload-undropped.elf >$(BUILD_DIR)/variables/match-runtime-owned-enum-payload-undropped.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'token' must be moved or dropped before return" $(BUILD_DIR)/variables/match-runtime-owned-enum-payload-undropped.err
+	$(TARGET) tests/ok/runtime-owned-enum-uniform-payload-slot-move.ari -o $(BUILD_DIR)/variables/runtime-owned-enum-uniform-payload-slot-move.elf
+	$(BUILD_DIR)/variables/runtime-owned-enum-uniform-payload-slot-move.elf; code=$$?; test $$code -eq 42
+	if $(TARGET) tests/errors/runtime-owned-enum-conditional-payload-slot-move.ari -o $(BUILD_DIR)/variables/runtime-owned-enum-conditional-payload-slot-move.elf >$(BUILD_DIR)/variables/runtime-owned-enum-conditional-payload-slot-move.err 2>&1; then exit 1; fi
+	grep -q "cannot move runtime-dependent owning enum payload slot 'item.0' outside match because enum cases do not share the same owner payload layout; use match" $(BUILD_DIR)/variables/runtime-owned-enum-conditional-payload-slot-move.err
 	$(TARGET) tests/ok/drop-statement-payloads.ari --emit-llvm $(BUILD_DIR)/variables/drop-statement-payloads.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-statement-payloads.ll) -eq 3
 	$(TARGET) tests/ok/local-state-mutation-api.ari --emit-llvm $(BUILD_DIR)/variables/local-state-mutation-api.ll

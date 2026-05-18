@@ -273,6 +273,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Statement `match` arms over tracked runtime-dependent aggregate enum locals
   and parameters seed tag-known owner payload states, so owning payload bindings
   are checked and must be consumed before the arm exits.
+- Runtime-dependent aggregate enum payload-slot owner moves outside statement
+  `match` are supported when every case has the same owner payload paths. Cases
+  such as `None | Some(own i64)` still require `match` because the active tag
+  decides whether the owner path exists.
 - Aggregate enum payload slots can store plain Ari-layout tuple, fixed-array,
   struct, and explicit fixed-capacity `Vec[T; N]` payload values inline. Match
   payload bindings and direct payload slot access expose the full aggregate

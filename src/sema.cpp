@@ -9386,6 +9386,111 @@ private:
         }
     }
 
+    static std::optional<std::vector<std::size_t>> local_owned_field_path_indices(const std::string& path) {
+        std::vector<std::size_t> indices;
+        if (path.empty()) return indices;
+
+        std::size_t start = 0;
+        while (start < path.size()) {
+            std::size_t end = path.find('.', start);
+            if (end == std::string::npos) end = path.size();
+            if (end == start) return std::nullopt;
+
+            std::size_t value = 0;
+            for (std::size_t i = start; i < end; ++i) {
+                if (!std::isdigit(static_cast<unsigned char>(path[i]))) return std::nullopt;
+                value = value * 10 + static_cast<std::size_t>(path[i] - '0');
+            }
+            indices.push_back(value);
+            start = end + 1;
+        }
+
+        return indices;
+    }
+
+    static std::string enum_payload_move_display(const std::string& base_name, const std::string& storage_path) {
+        std::optional<std::vector<std::size_t>> indices = local_owned_field_path_indices(storage_path);
+        if (!indices || indices->empty() || indices->front() == 0) {
+            return storage_path.empty() ? base_name : base_name + "." + storage_path;
+        }
+
+        std::string display = base_name + "." + std::to_string(indices->front() - 1);
+        for (std::size_t i = 1; i < indices->size(); ++i) {
+            display += "." + std::to_string((*indices)[i]);
+        }
+        return display;
+    }
+
+    bool enum_owner_payload_paths_match_every_case(SourceLocation loc,
+                                                   const TrackedEnumOwnerSubject& subject,
+                                                   const std::map<std::string, LocalState>& all_payload_states) {
+        auto enum_found = enums_.find(subject.enum_type.name);
+        if (enum_found == enums_.end()) {
+            fail(loc, "unknown enum type '" + subject.enum_type.name + "'");
+        }
+
+        for (const std::string& case_name : enum_found->second.case_names) {
+            auto case_found = enum_cases_.find(case_name);
+            if (case_found == enum_cases_.end()) {
+                throw CompileError("internal error: missing enum case '" + case_name + "'");
+            }
+            EnumCaseInfo case_info = enum_case_for_match_value(loc, case_found->second, subject.enum_type);
+            std::map<std::string, LocalState> case_states =
+                enum_owner_payload_states_for_case(subject, case_info, LocalState::Alive);
+            if (case_states.size() != all_payload_states.size()) return false;
+            for (const auto& item : all_payload_states) {
+                if (case_states.find(item.first) == case_states.end()) return false;
+            }
+        }
+        return true;
+    }
+
+    void seed_uniform_runtime_enum_payload_states_for_move(SourceLocation loc,
+                                                           const TrackedAggregateAccess& access,
+                                                           LocalInfo& local) {
+        if (!has_aggregate_enum_layout(access.base_type)) return;
+
+        std::optional<std::vector<std::size_t>> indices = local_owned_field_path_indices(access.path);
+        if (!indices || indices->empty()) return;
+        std::size_t storage_field_index = indices->front();
+        if (storage_field_index == 0 || storage_field_index >= access.base_type.field_types.size()) return;
+
+        const std::string display = enum_payload_move_display(access.base_name, access.path);
+        if (local_has_tracked_owned_fields(local)) {
+            if (!local_owned_field_has_state(local, access.path)) {
+                fail(loc,
+                     "cannot move inactive owning enum payload slot '" + display +
+                         "'; use match to prove the active case");
+            }
+            return;
+        }
+
+        TrackedEnumOwnerSubject subject{access.base_name, "", access.base_type};
+        std::map<std::string, LocalState> all_payload_states;
+        collect_enum_owner_payload_states(
+            loc,
+            subject.enum_type,
+            subject.path,
+            LocalState::Alive,
+            all_payload_states);
+        if (all_payload_states.empty()) return;
+        if (!enum_owner_payload_paths_match_every_case(loc, subject, all_payload_states)) {
+            fail(loc,
+                 "cannot move runtime-dependent owning enum payload slot '" + display +
+                     "' outside match because enum cases do not share the same owner payload layout; use match");
+        }
+
+        local.owned_field_states = std::move(all_payload_states);
+        local.owned_field_states_complete = true;
+    }
+
+    void mark_tracked_aggregate_access_moved_if_owner(SourceLocation loc, const TrackedAggregateAccess& access) {
+        if (!is_owner_type(access.type)) return;
+        LocalInfo& local = local_slot_by_name(access.base_name);
+        seed_uniform_runtime_enum_payload_states_for_move(loc, access, local);
+        mark_owned_field_moved(loc, access.base_name, access.path);
+    }
+
     void seed_enum_owner_payload_arm_states(SourceLocation loc,
                                             const TrackedEnumOwnerSubject& subject,
                                             const EnumCaseInfo& case_info) {
@@ -16585,9 +16690,7 @@ private:
         if (try_build_tracked_aggregate_access(expr, access)) {
             LocalInfo& local = local_slot_by_name(access.base_name);
             require_can_read_borrow_path(expr.loc, access.base_name, local, access.path);
-            if (is_owner_type(access.type)) {
-                mark_owned_field_moved(expr.loc, access.base_name, access.path);
-            }
+            mark_tracked_aggregate_access_moved_if_owner(expr.loc, access);
             activate_tracked_borrow_field_access(expr.loc, access, *access.expr);
             return std::move(access.expr);
         }
@@ -16635,9 +16738,7 @@ private:
         if (try_build_tracked_aggregate_access(expr, access)) {
             LocalInfo& local = local_slot_by_name(access.base_name);
             require_can_read_borrow_path(expr.loc, access.base_name, local, access.path);
-            if (is_owner_type(access.type)) {
-                mark_owned_field_moved(expr.loc, access.base_name, access.path);
-            }
+            mark_tracked_aggregate_access_moved_if_owner(expr.loc, access);
             activate_tracked_borrow_field_access(expr.loc, access, *access.expr);
             return std::move(access.expr);
         }
@@ -16755,9 +16856,7 @@ private:
         if (try_build_tracked_aggregate_access(expr, access)) {
             LocalInfo& local = local_slot_by_name(access.base_name);
             require_can_read_borrow_path(expr.loc, access.base_name, local, access.path);
-            if (is_owner_type(access.type)) {
-                mark_owned_field_moved(expr.loc, access.base_name, access.path);
-            }
+            mark_tracked_aggregate_access_moved_if_owner(expr.loc, access);
             activate_tracked_borrow_field_access(expr.loc, access, *access.expr);
             return std::move(access.expr);
         }

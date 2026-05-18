@@ -61,9 +61,10 @@ indirect, or target-unsupported aggregate header surfaces remain rejected.
 | Unsupported aggregates | vector type checking, list literal constant indexing, fixed-size array surface, non-local aggregate ABI gaps | backend rejection, vector index bounds, non-local aggregate ABI rejection | clear diagnostics | partial |
 
 Note: runtime-dependent owner enum payload moves are now covered for tracked
-local/parameter subjects in statement `match` payload bindings. The remaining
-gap in the Variables, Ownership, and Enums rows means payload-slot moves outside
-statement `match`, plus branch-merged tag-state cleanup.
+local/parameter subjects in statement `match` payload bindings and for
+uniform owner-layout payload-slot moves outside `match`. The remaining gap in
+the Variables, Ownership, and Enums rows means tag-conditioned payload-slot
+moves outside statement `match`, plus branch-merged tag-state cleanup.
 
 ## Completed Sprint: C FFI
 
@@ -193,6 +194,8 @@ Checklist:
 - [x] bind and explicitly drop tracked runtime-dependent statement `match`
       `own i64`/`own u64` aggregate enum payloads from local and parameter
       subjects
+- [x] move runtime-dependent aggregate enum owner payload slots outside
+      statement `match` when every case has the same owner payload paths
 - [x] materialize discarded LLVM aggregate-returning direct and
       function-pointer calls into hidden temporaries
 - [x] preserve LLVM caller pointer bases while aggregate-valued
