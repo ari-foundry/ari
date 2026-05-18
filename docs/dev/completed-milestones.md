@@ -127,10 +127,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   live owned fields still follow normal cleanup.
 - Local `Vec[own T]` value patterns can move exact element bindings and
   known-length suffix element bindings after `..` from tracked hidden Vec
-  storage when every selected owned element is bound and any rest is
-  known-empty. Owned rest aliases and owned-element skips remain rejected until
-  owned `Slice[T]` paths or explicit cleanup rules exist for those dynamic
-  slots.
+  storage. Selected `_` elements and known skipped rest-gap elements are lowered
+  as explicit element drops, so hidden Vec storage has no leaked live owner
+  slots after the pattern body. Owned rest aliases remain rejected until owned
+  `Slice[T]` paths exist for those dynamic slots.
 - Loop fixed-point checking tracks ownership and borrow states at `break`,
   `continue`, zero-iteration, literal-true next-iteration, and fallthrough
   merge points. Ambiguous loop exits produce explicit `maybe-unavailable`

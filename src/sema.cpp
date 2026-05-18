@@ -8159,6 +8159,60 @@ private:
         };
     }
 
+    void append_runtime_sequence_value_pattern_owned_element_drop(
+        SourceLocation loc,
+        const std::string& source_name,
+        const IrType& source_type,
+        const IrType& element_type,
+        std::uint64_t element_index,
+        std::vector<IrStmtPtr>& statements) {
+        LocalInfo& local = require_live_local(loc, source_name);
+        require_not_borrowed(loc, source_name, local, "drop element from");
+        std::string path =
+            local_owned_field_path("", static_cast<std::size_t>(element_index));
+        require_owned_field_alive(loc, source_name, local, path);
+        auto make_value = [this, loc, source_name, source_type, element_index]() {
+            return make_ir_index_expr(
+                loc,
+                make_local_lvalue_expr(loc, source_name, source_type),
+                make_integer_literal(loc, i64_type(loc), element_index));
+        };
+        append_drop_stmts_for_value(
+            loc,
+            element_type,
+            make_value,
+            statements,
+            &local,
+            path);
+        mark_local_owned_field_state(local, path, LocalState::Dropped);
+    }
+
+    void append_runtime_sequence_value_pattern_rest_gap_drops(
+        const Pattern& pattern,
+        const std::string& source_name,
+        const IrType& source_type,
+        const IrType& element_type,
+        const RuntimeSequenceValuePatternPlan& value_plan,
+        std::vector<IrStmtPtr>& statements) {
+        if (!is_owner_type(element_type) || !pattern.has_rest ||
+            !value_plan.known_owner_vec_length) {
+            return;
+        }
+        const std::uint64_t suffix_count =
+            static_cast<std::uint64_t>(pattern.elements.size() - pattern.rest_index);
+        const std::uint64_t skip_begin = static_cast<std::uint64_t>(pattern.rest_index);
+        const std::uint64_t skip_end = *value_plan.known_owner_vec_length - suffix_count;
+        for (std::uint64_t index = skip_begin; index < skip_end; ++index) {
+            append_runtime_sequence_value_pattern_owned_element_drop(
+                pattern.loc,
+                source_name,
+                source_type,
+                element_type,
+                index,
+                statements);
+        }
+    }
+
     IrExprPtr make_runtime_sequence_pattern_binding_element_expr(
         SourceLocation loc,
         const Pattern& pattern,
@@ -8289,12 +8343,26 @@ private:
                 mutable_binding
             ));
         }
+        append_runtime_sequence_value_pattern_rest_gap_drops(
+            pattern,
+            source_name,
+            source_type,
+            element_type,
+            value_plan,
+            statements);
         for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
             const Pattern& item = pattern.elements[i];
             if (item.kind == PatternKind::Wildcard) {
                 if (is_owner_type(element_type)) {
-                    fail(item.loc,
-                         "ownership-carrying Vec[T] value patterns must bind each selected owned element");
+                    std::uint64_t element_index =
+                        runtime_sequence_value_pattern_element_index(pattern, i, value_plan);
+                    append_runtime_sequence_value_pattern_owned_element_drop(
+                        item.loc,
+                        source_name,
+                        source_type,
+                        element_type,
+                        element_index,
+                        statements);
                 }
                 continue;
             }
@@ -8302,7 +8370,7 @@ private:
             if (is_owner_type(element_type) && item.binding_mode == BindingMode::Value) {
                 if (!runtime_sequence_value_pattern_consumes_owner_element(item)) {
                     fail(item.loc,
-                         "ownership-carrying Vec[T] value patterns must bind each selected owned element");
+                         "ownership-carrying Vec[T] value patterns must bind selected owned elements or discard them with _");
                 }
                 owner_source = runtime_sequence_value_pattern_owner_source(
                     pattern,

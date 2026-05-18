@@ -3531,6 +3531,10 @@ check-errors: $(TARGET) check-function-errors
 	$(BUILD_DIR)/errors/pattern-value-ownership-vector.elf; code=$$?; test $$code -eq 19
 	$(TARGET) tests/ok/pattern-value-ownership-vector-rest.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest.elf
 	$(BUILD_DIR)/errors/pattern-value-ownership-vector-rest.elf; code=$$?; test $$code -eq 18
+	$(TARGET) tests/ok/pattern-value-ownership-vector-skip.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-skip.elf
+	$(BUILD_DIR)/errors/pattern-value-ownership-vector-skip.elf; code=$$?; test $$code -eq 11
+	$(TARGET) tests/ok/pattern-value-ownership-vector-rest-skip.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-skip.elf
+	$(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-skip.elf; code=$$?; test $$code -eq 12
 	$(TARGET) tests/ok/pattern-amp-binding-mode.ari -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf
 	$(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/pattern-amp-binding-mode.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; $(BUILD_DIR)/errors/pattern-amp-binding-mode.elf; code=$$?; test $$code -eq 238; fi
@@ -3556,8 +3560,6 @@ check-errors: $(TARGET) check-function-errors
 	grep -Fq "ownership-carrying Vec[T] reference rest aliases are planned after owned Slice paths are tracked" $(BUILD_DIR)/errors/pattern-ref-ownership-vector-rest-alias.err
 	if $(TARGET) tests/errors/pattern-value-ownership-vector-rest-alias.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.elf >$(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.err 2>&1; then exit 1; fi
 	grep -Fq "ownership-carrying Vec[T] value rest aliases are planned after owned Slice paths are tracked" $(BUILD_DIR)/errors/pattern-value-ownership-vector-rest-alias.err
-	if $(TARGET) tests/errors/pattern-value-ownership-vector-skip.ari -o $(BUILD_DIR)/errors/pattern-value-ownership-vector-skip.elf >$(BUILD_DIR)/errors/pattern-value-ownership-vector-skip.err 2>&1; then exit 1; fi
-	grep -Fq "ownership-carrying Vec[T] value patterns must bind each selected owned element" $(BUILD_DIR)/errors/pattern-value-ownership-vector-skip.err
 	if $(TARGET) tests/errors/pattern-ref-temporary.ari -o $(BUILD_DIR)/errors/pattern-ref-temporary.elf >$(BUILD_DIR)/errors/pattern-ref-temporary.err 2>&1; then exit 1; fi
 	grep -q "reference pattern binding initializer must be a local binding, field access, tuple index, or constant array/vector index" $(BUILD_DIR)/errors/pattern-ref-temporary.err
 	$(TARGET) tests/ok/named-borrow-last-use.ari -o $(BUILD_DIR)/errors/named-borrow-last-use.elf

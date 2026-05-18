@@ -35,11 +35,11 @@ near-term deliverable.
    capability-oriented shape rather than inventing an ambient heap.
 2. Define dynamic owner pattern paths.
    Static local/hidden-storage `Vec[own T]` value patterns can now move exact
-   elements and known-length suffix elements through tracked owner paths when
-   every owned element is bound. Remaining work is the genuinely dynamic
-   surface: owner moves through enum payload slots, `Slice[T]` element paths,
-   owned rest aliases, owned-element skips, and unknown-length vector suffixes
-   without relying on hidden whole-value leaks.
+   elements and known-length suffix elements through tracked owner paths, and
+   they drop selected `_` elements plus known skipped rest-gap elements. Remaining
+   work is the genuinely dynamic surface: owner moves through enum payload
+   slots, `Slice[T]` element paths, owned rest aliases, and unknown-length vector
+   suffixes without relying on hidden whole-value leaks.
    Non-scalar or owned payload-bearing `@repr(C)` enum C layouts should be
    defined with this ABI work; the current compiler covers public non-generic
    scalar/pointer-slot payload enums in C headers.

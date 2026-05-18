@@ -146,7 +146,7 @@ feature helpers are not.
   iterator-filter rewrites, runtime-sequence reference-pattern planning for
   direct rest aliases and ownership-carrying known-length suffix guards,
   runtime-sequence value-pattern planning for ownership-carrying rest-alias
-  rejection and known-length suffix moves, plus
+  rejection, known-length suffix moves, and known skipped-owner cleanup, plus
   irrefutable non-iterator `for` loop-head pattern validation shared by range,
   list-literal, and stored-vector loops
 - `format_semantics` for formatting target selection and shared `{}` /

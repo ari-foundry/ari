@@ -1006,10 +1006,10 @@ Local and function-parameter value patterns can move ownership-carrying tuple,
 fixed-array, struct, and tuple-struct slots into bindings from tracked hidden
 storage. Local `Vec[own T]` value patterns can also move exact element
 bindings, and known-length suffix bindings after `..`, through tracked hidden
-Vec storage when every owned element is bound and any rest is known-empty.
-Ownership-carrying enum payload moves, `Slice[T]` owner paths, owned rest
-aliases, owned-element skips, unknown-length vector suffixes, and other
-non-static runtime sequence owner paths remain tied to the later
+Vec storage. Selected `_` elements and known skipped rest-gap elements are
+dropped from that hidden storage. Ownership-carrying enum payload moves,
+`Slice[T]` owner paths, owned rest aliases, unknown-length vector suffixes, and
+other non-static runtime sequence owner paths remain tied to the later
 owned-payload/runtime-capacity ABI work.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped

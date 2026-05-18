@@ -2,8 +2,12 @@ fn make_owned(value: i64) -> own i64 {
   return value;
 }
 
+fn consume(value: own i64, amount: i64) -> i64 {
+  drop value;
+  return amount;
+}
+
 fn main() -> i64 {
   let [first, _]: Vec[own i64] = [make_owned(1), make_owned(2)];
-  drop first;
-  return 0;
+  return consume(first, 11);
 }

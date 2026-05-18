@@ -602,10 +602,6 @@ RuntimeSequenceValuePatternPlan plan_runtime_sequence_value_pattern(
              "ownership-carrying Vec[T] value pattern requires a known length of at least " +
                  std::to_string(required));
     }
-    if (*plan.known_owner_vec_length > required) {
-        fail(pattern.loc,
-             "ownership-carrying Vec[T] value patterns cannot skip owned rest elements yet");
-    }
     return plan;
 }
 

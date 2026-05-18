@@ -652,8 +652,9 @@ let nested_struct = match (point, color) {
 
 Local `Vec[own T]` value patterns can move exact element bindings, and suffix
 element bindings after `..` when the hidden vector's current length is known;
-every selected owned element must be bound and any rest must be known-empty.
-Owned rest aliases still wait for owned `Slice[T]` paths. Local `let ref` can
+selected `_` elements and known skipped rest-gap elements are dropped from the
+hidden Vec storage. Owned rest aliases still wait for owned `Slice[T]` paths.
+Local `let ref` can
 borrow exact local `Vec[own T]` element slots, including nested owned fields
 inside aggregate elements, when each selected element path is statically known,
 and local `let ref` patterns with `..` can borrow ownership-carrying prefix
