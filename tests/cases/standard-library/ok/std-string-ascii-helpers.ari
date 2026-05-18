@@ -1,0 +1,58 @@
+// Covers String convenience methods that expose std::ascii's borrowed
+// trim and whole-string parsing policy.
+fn main() -> i64 {
+  var zone = zone::create(192);
+
+  var spaced_bytes: Vec[u8] = [32u8, 9u8, 49u8, 50u8, 51u8, 32u8];
+  var decimal_bytes: Vec[u8] = [49u8, 50u8, 51u8];
+  var invalid_decimal_bytes: Vec[u8] = [49u8, 50u8, 120u8];
+  var hex_bytes: Vec[u8] = [49u8, 65u8, 102u8];
+  var blank_bytes: Vec[u8] = [32u8, 10u8];
+
+  var spaced = std::string::from_slice_in(ref mut zone, spaced_bytes.as_slice());
+  var decimal = std::string::from_slice_in(ref mut zone, decimal_bytes.as_slice());
+  var invalid_decimal =
+    std::string::from_slice_in(ref mut zone, invalid_decimal_bytes.as_slice());
+  var hex = std::string::from_slice_in(ref mut zone, hex_bytes.as_slice());
+  var blank = std::string::from_slice_in(ref mut zone, blank_bytes.as_slice());
+
+  let start = spaced.trim_start();
+  let end = spaced.trim_end();
+  let trimmed = spaced.trim();
+  let blank_trimmed = blank.trim();
+
+  let parsed_decimal = decimal.parse_decimal().unwrap_or(0);
+  let invalid_value = invalid_decimal.parse_decimal().unwrap_or(77);
+  let parsed_hex = hex.parse_hex().unwrap_or(0);
+  let spaced_value = spaced.parse_decimal().unwrap_or(88);
+  let trimmed_value = std::ascii::parse_decimal(trimmed).unwrap_or(0);
+
+  assert_eq_i64(start.len(), 4);
+  assert_eq_i64(start[0] as i64, 49);
+  assert_eq_i64(end.len(), 5);
+  assert_eq_i64(trimmed.len(), 3);
+  assert_eq_i64(trimmed[2] as i64, 51);
+  assert_eq_i64(blank_trimmed.len(), 0);
+  assert_eq_i64(parsed_decimal, 123);
+  assert_eq_i64(invalid_value, 77);
+  assert_eq_i64(parsed_hex, 431);
+  assert_eq_i64(spaced_value, 88);
+  assert_eq_i64(trimmed_value, 123);
+
+  let total =
+    start.len() +
+    (start[0] as i64) +
+    end.len() +
+    trimmed.len() +
+    (trimmed[2] as i64) +
+    blank_trimmed.len() +
+    parsed_decimal +
+    invalid_value +
+    parsed_hex +
+    spaced_value +
+    trimmed_value;
+
+  assert_eq_i64(total, 954);
+  zone::destroy(zone);
+  return total % 256;
+}

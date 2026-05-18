@@ -1,0 +1,210 @@
+# std::string
+
+`std::string` contains Ari's current owned byte-string handle. It exists so
+programs can copy borrowed `string` literals, formatted output, or byte slices
+into an explicit allocation `Zone` without introducing a hidden global heap.
+
+Today's `String` is intentionally a byte string. It is useful for compiler
+tests, CLI-style output, simple parser buffers, and ASCII-oriented text work.
+It is not a Unicode text abstraction yet.
+
+## When To Use It
+
+Use `std::string::String` when bytes must outlive a borrowed literal or input
+buffer and you can name the `Zone` that owns the storage. Use `Slice[u8]` when
+you only need a borrowed view. Use `std::ascii` or the `String` ASCII helpers
+for byte classification, trimming, and integer parsing.
+
+Avoid using `String` as a general text policy. Unicode normalization, grapheme
+iteration, encoding conversion, and locale-sensitive case conversion are future
+library work.
+
+## Constructors And Copies
+
+Constructors allocate in an explicit zone:
+
+```ari
+std::string::new(ref mut zone, capacity)
+std::string::from_string(ref mut zone, "text")
+std::string::from_slice_in(ref mut zone, bytes)
+```
+
+`new` creates an empty buffer with fixed starting capacity.
+`from_string` copies a lowercase `string` literal/runtime value.
+`from_slice_in` copies a borrowed `Slice[u8]`.
+
+Copies also require a target zone:
+
+```ari
+std::string::copy_to(ref text, ref mut zone)
+text.copy_to(ref mut zone)
+```
+
+The returned handle is tied to the target zone. Ari's checker rejects use of a
+tracked string, its raw pointer, or derived views after that zone is reset or
+destroyed.
+
+## Metadata, Bytes, And Views
+
+Basic metadata and checked byte access:
+
+```ari
+text.len()
+text.capacity()
+text.is_empty()
+text.first()
+text.last()
+text.get(index)
+text.set(index, byte)
+text.replace(index, byte)
+```
+
+`first`, `last`, `get`, `set`, and `replace` assert their bounds at runtime.
+`replace` returns the previous byte.
+
+Borrowed views and raw pointers:
+
+```ari
+text.as_slice()
+text.as_ptr()
+```
+
+`as_slice` returns a borrowed `Slice[u8]` over the current bytes. `as_ptr`
+returns the backing byte pointer and preserves zone provenance in the checker.
+
+## Mutation And Growth
+
+Fixed-capacity mutation:
+
+```ari
+text.push(byte)
+text.pop()
+text.insert(index, byte)
+text.clear()
+text.truncate(length)
+```
+
+Growth-capable mutation uses the owning zone. The explicit forms are the
+source-level contract:
+
+```ari
+text.push_in(ref mut zone, byte)
+text.insert_in(ref mut zone, index, byte)
+text.reserve(ref mut zone, capacity)
+text.reserve_extra(ref mut zone, additional)
+text.extend_from_slice_in(ref mut zone, bytes)
+text.resize_in(ref mut zone, length, byte)
+```
+
+For tracked local `String` handles, Ari can infer the same source zone for the
+common non-`_in` convenience calls documented in the language guide. The
+explicit `_in` forms are still the clearest shape for library code and tests.
+
+Appending formatted primitive values also grows through the explicit zone:
+
+```ari
+text.append_string_in(ref mut zone, "text")
+text.append_i64_in(ref mut zone, value)
+text.append_u64_in(ref mut zone, value)
+text.append_bool_in(ref mut zone, value)
+text.append_f32_in(ref mut zone, value, precision)
+text.append_f64_in(ref mut zone, value, precision)
+```
+
+These helpers are the current source-side building blocks used by owned
+formatting paths.
+
+## Search And Comparison
+
+Search helpers operate on bytes:
+
+```ari
+text.index_of(byte)
+text.contains(byte)
+text.count(byte)
+```
+
+Slice comparison helpers operate on borrowed `Slice[u8]` values:
+
+```ari
+text.starts_with(bytes)
+text.ends_with(bytes)
+text.equals(bytes)
+```
+
+They compare exact byte values and do not perform case folding or decoding.
+
+## ASCII Helpers
+
+`String` exposes convenience methods for the `std::ascii` slice helpers:
+
+```ari
+text.trim_start()
+text.trim_end()
+text.trim()
+text.parse_decimal()
+text.parse_hex()
+```
+
+The trim methods return borrowed `Slice[u8]` views into the same storage; they
+do not allocate or copy. The parse methods require the entire string to be a
+valid decimal or hexadecimal ASCII integer and return `Option[i64]`. Empty
+input, whitespace, or invalid bytes return `None<i64>()`. To accept surrounding
+ASCII whitespace, trim first and parse the returned slice with `std::ascii`:
+
+```ari
+let view = text.trim();
+let value = std::ascii::parse_decimal(view).unwrap_or(0);
+```
+
+Overflow behavior is not promised yet.
+
+## Example
+
+```ari
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var text = std::string::from_string(ref mut zone, " 123 ");
+
+  let trimmed = text.trim();
+  let value = std::ascii::parse_decimal(trimmed).unwrap_or(0);
+
+  text.clear();
+  text.append_string_in(ref mut zone, "score=");
+  text.append_i64_in(ref mut zone, value);
+
+  let answer = text.len() + value;
+  zone::destroy(zone);
+  return answer;
+}
+```
+
+## Tests
+
+Focused positive tests include:
+
+```text
+tests/cases/standard-library/ok/std-string-handle.ari
+tests/cases/standard-library/ok/std-string-first-last.ari
+tests/cases/standard-library/ok/std-string-search.ari
+tests/cases/standard-library/ok/std-string-prefix-suffix.ari
+tests/cases/standard-library/ok/std-string-equals.ari
+tests/cases/standard-library/ok/std-string-ascii-helpers.ari
+tests/cases/standard-library/ok/std-string-grow.ari
+tests/cases/standard-library/ok/std-string-append.ari
+tests/cases/standard-library/ok/std-string-from-slice-in.ari
+```
+
+`make check-prelude` compiles these to LLVM, checks representative symbols and
+runtime hooks, and runs executable checks where behavior is observable. Public
+methods are tracked in `tests/std_api_manifest.txt` and checked by
+`make check-std-api`.
+
+## Future Work
+
+Potential next slices:
+
+- copying trim variants that return new `String` values in a target zone
+- signed and overflow-checked parsers after numeric policy is documented
+- a deliberate text/Unicode module instead of expanding ASCII byte helpers
+- broader formatter integration as `Display` and `Debug` dispatch mature

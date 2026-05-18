@@ -26,7 +26,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
-| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `append_i64_in`, `as_slice`. |
+| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `append_i64_in`, `trim`, `parse_decimal`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_whitespace`, `trim`, `parse_decimal`, `parse_hex`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `get`, `as_slice`, `iter`. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
@@ -60,6 +60,11 @@ that need backend or checker knowledge:
 `std::ascii` is an example of the preferred path: it is ordinary Ari source
 because byte classification, case conversion, borrowed-slice trimming, and
 small integer parsing need no compiler knowledge.
+
+`std::string::String` follows the same direction where it can. Its allocation
+constructors and runtime copy hooks still depend on compiler-known zone/string
+primitives, but byte search, comparison, ASCII trim views, and whole-string
+ASCII parsing are plain source methods.
 
 `std::bits` follows the same rule for current `u64` mask, alignment, and
 source-loop bit-scan helpers. Future intrinsic-backed implementations may need

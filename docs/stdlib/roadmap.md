@@ -31,6 +31,8 @@ slices.
   iterator adapters, then maps/sets/deques.
 - Keep `std::string::String` byte-oriented until a Unicode/text policy is
   designed.
+- Expose small `String` conveniences only when they preserve byte-string
+  semantics, such as borrowed ASCII trim views and whole-string ASCII parsers.
 - Keep ASCII-only helpers in `std::ascii` so byte-oriented classification,
   trimming, and parsing behavior is explicit at call sites.
 

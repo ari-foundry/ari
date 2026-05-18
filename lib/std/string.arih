@@ -380,6 +380,33 @@ pub impl std::string::String {
     return true;
   }
 
+  fn trim_start(self: ref Self) -> super::Slice[u8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::trim_start(view);
+  }
+
+  fn trim_end(self: ref Self) -> super::Slice[u8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::trim_end(view);
+  }
+
+  // String is currently a byte-string handle, so these helpers deliberately
+  // reuse std::ascii's whole-slice policy instead of promising Unicode text.
+  fn trim(self: ref Self) -> super::Slice[u8] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::trim(view);
+  }
+
+  fn parse_decimal(self: ref Self) -> std::Option[i64] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::parse_decimal(view);
+  }
+
+  fn parse_hex(self: ref Self) -> std::Option[i64] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::parse_hex(view);
+  }
+
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::string::String {
     return std::string::copy_to(self, target);
   }

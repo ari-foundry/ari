@@ -179,6 +179,8 @@ method std::string::String::insert_in|check-prelude std-string-grow; docs/dev/te
 method std::string::String::is_empty|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::last|check-prelude std-string-first-last borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::len|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::parse_decimal|check-prelude std-string-ascii-helpers whole-string ASCII decimal parser; docs/stdlib/api-reference.md String section
+method std::string::String::parse_hex|check-prelude std-string-ascii-helpers whole-string ASCII hexadecimal parser; docs/stdlib/api-reference.md String section
 method std::string::String::pop|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push_in|check-prelude std-string-grow and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones row
@@ -188,6 +190,9 @@ method std::string::String::reserve_extra|check-prelude std-string-grow; docs/de
 method std::string::String::resize_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::set|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::starts_with|check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::trim|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
+method std::string::String::trim_end|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
+method std::string::String::trim_start|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
 method std::string::String::truncate|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_mut_ptr|check-prelude std-vec-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row

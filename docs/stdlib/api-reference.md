@@ -179,18 +179,46 @@ text.is_empty()
 text.first()
 text.last()
 text.get(index)
+text.set(index, byte)
+text.replace(index, byte)
 text.push(byte)
 text.push_in(ref mut zone, byte)
+text.pop()
+text.insert(index, byte)
+text.insert_in(ref mut zone, index, byte)
+text.clear()
+text.truncate(length)
+text.reserve(ref mut zone, capacity)
+text.reserve_extra(ref mut zone, additional)
+text.extend_from_slice_in(ref mut zone, bytes)
+text.resize_in(ref mut zone, length, byte)
+text.index_of(byte)
+text.contains(byte)
+text.count(byte)
+text.starts_with(bytes)
+text.ends_with(bytes)
+text.equals(bytes)
 text.append_string_in(ref mut zone, "text")
 text.append_i64_in(ref mut zone, value)
 text.append_u64_in(ref mut zone, value)
 text.append_bool_in(ref mut zone, value)
 text.append_f32_in(ref mut zone, value, precision)
 text.append_f64_in(ref mut zone, value, precision)
+text.trim_start()
+text.trim_end()
+text.trim()
+text.parse_decimal()
+text.parse_hex()
 text.as_slice()
 text.as_ptr()
 text.copy_to(ref mut zone)
 ```
+
+`String` stores bytes, so `trim_start`, `trim_end`, `trim`,
+`parse_decimal`, and `parse_hex` intentionally reuse `std::ascii` behavior.
+The trim methods return borrowed `Slice[u8]` views. The parse methods require
+the whole string to be valid and return `Option[i64]`; trim first when leading
+or trailing ASCII whitespace should be ignored.
 
 `std::boxed::Box[T]` is a zone-backed single-value owner:
 

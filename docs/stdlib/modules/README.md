@@ -8,6 +8,8 @@ limits, examples, and test files for one module.
 
 - [std::option and std::result](option-result.md): ADT helpers for absence,
   failure, conversion, and lazy fallback.
+- [std::string](string.md): zone-backed owned byte-string handles, growth,
+  borrowed views, byte search, ASCII trim, and parsing helpers.
 - [std::ascii](ascii.md): source-only ASCII byte classification, case
   conversion, borrowed-slice trimming, and digit parsing helpers.
 - [std::bits](bits.md): source-only `u64` bit-mask, power-of-two alignment,
