@@ -250,6 +250,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4bits8align_up' $(BUILD_DIR)/prelude/std-bits-mask-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-bits-mask-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-mask-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-mask-helpers.elf; code=$$?; test $$code -eq 199
+	$(TARGET) tests/cases/standard-library/ok/std-bits-rotate-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
+	grep -q '_ARNv3std4bits11rotate_left' $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
+	grep -q '_ARNv3std4bits12rotate_right' $(BUILD_DIR)/prelude/std-bits-rotate-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-bits-rotate-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-rotate-helpers.elf
+	$(BUILD_DIR)/prelude/std-bits-rotate-helpers.elf; code=$$?; test $$code -eq 101
 	$(TARGET) tests/cases/standard-library/ok/std-bits-scan-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
 	grep -q '_ARNv3std4bits10count_ones' $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll
 	grep -q '_ARNv3std4bits11count_zeros' $(BUILD_DIR)/prelude/std-bits-scan-helpers.ll

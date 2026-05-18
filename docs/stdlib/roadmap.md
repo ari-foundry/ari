@@ -42,7 +42,7 @@ Current source families: `option`, `result`, `mem`, `zone`, `boxed`,
 
 - Expand `std::math` from i64 signatures to generic numeric helpers when the
   language has the right trait vocabulary.
-- Expand `std::bits` from u64 signatures to generic integer mask,
+- Expand `std::bits` from u64 signatures to generic integer mask, rotation,
   power-of-two, low-mask, and bit-scan helpers when the same trait vocabulary
   exists.
 - Add checked, saturating, and wrapping operations only after overflow policy

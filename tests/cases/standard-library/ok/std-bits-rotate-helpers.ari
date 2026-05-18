@@ -1,0 +1,41 @@
+// Covers std::bits u64 rotate helpers, including wraparound and count masking.
+fn main() -> i64 {
+  let high = 9223372036854775808u64;
+  var score = 0;
+
+  if std::bits::rotate_left(1u64, 4) == 16u64 {
+    score = score + 1;
+  }
+  if bits::rotate_left(high, 1) == 1u64 {
+    score = score + 2;
+  }
+  if bits::rotate_left(0b1011u64, 64) == 0b1011u64 {
+    score = score + 3;
+  }
+  if bits::rotate_left(0b1011u64, 65) == 0b10110u64 {
+    score = score + 5;
+  }
+
+  if bits::rotate_right(16u64, 4) == 1u64 {
+    score = score + 7;
+  }
+  if bits::rotate_right(1u64, 1) == high {
+    score = score + 11;
+  }
+  if bits::rotate_right(0b1011u64, 64) == 0b1011u64 {
+    score = score + 13;
+  }
+  if bits::rotate_right(0b10110u64, 65) == 0b1011u64 {
+    score = score + 17;
+  }
+
+  if bits::rotate_left(0u64, 17) == 0u64 {
+    score = score + 19;
+  }
+  if bits::rotate_right(0u64, 22) == 0u64 {
+    score = score + 23;
+  }
+
+  assert_eq_i64(score, 101);
+  return score;
+}

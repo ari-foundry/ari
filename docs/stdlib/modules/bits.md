@@ -1,9 +1,9 @@
 # std::bits
 
-`std::bits` contains source-only helpers for bit-mask code, power-of-two
-rounding, low-bit masks, alignment, and bit scans. The current slices use
-`u64` signatures because Ari does not yet have the numeric trait vocabulary
-needed to express one generic integer API.
+`std::bits` contains source-only helpers for bit-mask code, rotations,
+power-of-two rounding, low-bit masks, alignment, and bit scans. The current
+slices use `u64` signatures because Ari does not yet have the numeric trait
+vocabulary needed to express one generic integer API.
 
 The names are intentionally natural. When generic numeric traits are ready,
 the library should grow these names instead of adding public type suffixes.
@@ -35,7 +35,13 @@ Mask transforms:
 bits::set(value, mask)
 bits::clear(value, mask)
 bits::toggle(value, mask)
+bits::rotate_left(value, count)
+bits::rotate_right(value, count)
 ```
+
+`rotate_left` and `rotate_right` assert that `count` is non-negative and rotate
+modulo 64, so a count of `64` returns the original value and `65` behaves like
+`1`.
 
 Power-of-two helpers:
 
@@ -94,6 +100,7 @@ The focused positive tests are:
 
 ```text
 tests/cases/standard-library/ok/std-bits-mask-helpers.ari
+tests/cases/standard-library/ok/std-bits-rotate-helpers.ari
 tests/cases/standard-library/ok/std-bits-scan-helpers.ari
 tests/cases/standard-library/ok/std-bits-width-helpers.ari
 ```

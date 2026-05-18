@@ -50,6 +50,8 @@ fn std::bits::is_power_of_two|std bits mask helper tests; docs/stdlib/api-refere
 fn std::bits::is_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::leading_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::low_mask|std bits width helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::rotate_left|std bits rotate helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::rotate_right|std bits rotate helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::toggle|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::trailing_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section

@@ -282,8 +282,8 @@ runtime. These helpers intentionally do not define overflow semantics yet.
 
 ## Bits
 
-`std::bits` contains source-only `u64` helpers for bit masks, power-of-two
-rounding, low-bit masks, alignment, and bit scans:
+`std::bits` contains source-only `u64` helpers for bit masks, rotations,
+power-of-two rounding, low-bit masks, alignment, and bit scans:
 
 ```ari
 bits::is_set(value, mask)
@@ -291,6 +291,8 @@ bits::any_set(value, mask)
 bits::set(value, mask)
 bits::clear(value, mask)
 bits::toggle(value, mask)
+bits::rotate_left(value, count)
+bits::rotate_right(value, count)
 bits::is_power_of_two(value)
 bits::bit_width(value)
 bits::floor_power_of_two(value)
@@ -305,14 +307,15 @@ bits::trailing_zeros(value)
 ```
 
 `is_set` requires all bits from `mask`; `any_set` requires at least one
-overlap. `align_down` and `align_up` assert that `alignment` is a non-zero
-power of two. These helpers currently have `u64` signatures and intentionally
-avoid type suffixes so future generic integer APIs can keep the same names.
-The zero value has 64 leading zeros and 64 trailing zeros. `bit_width` returns
-the number of bits needed to represent a value, `floor_power_of_two` and
-`ceil_power_of_two` round to nearby powers of two, and `low_mask(width)`
-returns a mask with the lowest `width` bits set. `low_mask` accepts widths from
-0 through 64.
+overlap. `rotate_left` and `rotate_right` assert that `count` is non-negative
+and then rotate modulo 64. `align_down` and `align_up` assert that `alignment`
+is a non-zero power of two. These helpers currently have `u64` signatures and
+intentionally avoid type suffixes so future generic integer APIs can keep the
+same names. The zero value has 64 leading zeros and 64 trailing zeros.
+`bit_width` returns the number of bits needed to represent a value,
+`floor_power_of_two` and `ceil_power_of_two` round to nearby powers of two, and
+`low_mask(width)` returns a mask with the lowest `width` bits set. `low_mask`
+accepts widths from 0 through 64.
 
 ## ASCII
 

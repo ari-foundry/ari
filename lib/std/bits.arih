@@ -1,4 +1,5 @@
-// Source-only helpers for u64 bit masks, power-of-two values, and alignment.
+// Source-only helpers for u64 bit masks, rotations, power-of-two values, and
+// alignment.
 // Wider generic integer support should extend these names later instead of
 // adding type suffixes to the public API.
 pub fn is_set(value: u64, mask: u64) -> bool {
@@ -19,6 +20,26 @@ pub fn clear(value: u64, mask: u64) -> u64 {
 
 pub fn toggle(value: u64, mask: u64) -> u64 {
   return value ^ mask;
+}
+
+pub fn rotate_left(value: u64, count: i64) -> u64 {
+  std::assert(count >= 0);
+
+  let shift = count % 64;
+  if shift == 0 {
+    return value;
+  }
+  return (value << shift) | (value >> (64 - shift));
+}
+
+pub fn rotate_right(value: u64, count: i64) -> u64 {
+  std::assert(count >= 0);
+
+  let shift = count % 64;
+  if shift == 0 {
+    return value;
+  }
+  return (value >> shift) | (value << (64 - shift));
 }
 
 pub fn is_power_of_two(value: u64) -> bool {

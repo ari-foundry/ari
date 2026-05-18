@@ -34,6 +34,8 @@ test:
   and integer parsing behavior.
 - `std-bits-mask-helpers.ari`: source `std::bits` u64 mask and alignment
   helper behavior.
+- `std-bits-rotate-helpers.ari`: source `std::bits` u64 rotate behavior and
+  modulo-64 count handling.
 - `std-bits-scan-helpers.ari`: source `std::bits` u64 bit-scan and zero edge
   case behavior.
 - `std-bits-width-helpers.ari`: source `std::bits` u64 bit-width,
