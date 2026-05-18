@@ -182,6 +182,12 @@ check-prelude: $(TARGET)
 	grep -q "@ari_builtin_read_byte" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "@ari_builtin_context_arg" $(BUILD_DIR)/prelude/prelude-input.ll
 	grep -q "declare i32 @getchar" $(BUILD_DIR)/prelude/prelude-input.ll
+	$(TARGET) tests/cases/standard-library/ok/std-input-byte-option.ari --emit-llvm $(BUILD_DIR)/prelude/std-input-byte-option.ll
+	grep -q '_ARNv3std5input13try_read_byte' $(BUILD_DIR)/prelude/std-input-byte-option.ll
+	grep -q "@ari_builtin_read_byte" $(BUILD_DIR)/prelude/std-input-byte-option.ll
+	$(TARGET) tests/cases/standard-library/ok/std-input-byte-option.ari -o $(BUILD_DIR)/prelude/std-input-byte-option.elf
+	printf 'A' | $(BUILD_DIR)/prelude/std-input-byte-option.elf; code=$$?; test $$code -eq 72
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-input-byte-option.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-input-byte-option.elf; printf 'A' | $(BUILD_DIR)/prelude/std-input-byte-option.elf; code=$$?; test $$code -eq 72; fi
 	$(TARGET) tests/cases/standard-library/ok/std-context-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-context-args.ll
 	grep -F -q "std7context7has_arg" $(BUILD_DIR)/prelude/std-context-args.ll

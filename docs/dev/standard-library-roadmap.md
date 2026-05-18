@@ -29,8 +29,8 @@ The current `std` package already provides:
 - source `Option`/`Result` predicates, combinators, conversions, and lazy
   fallback helpers, including consuming payload predicate helpers
 - assertion, panic, `move`, and `take` helpers
-- IO/input/context builtin declarations plus the source `context::has_arg`
-  range predicate
+- IO/input/context builtin declarations plus source helpers such as
+  `input::try_read_byte` and `context::has_arg`
 - layout and pointer helpers in `std::mem`
 - explicit-zone allocation in `std::zone`
 - source handles for `Box`, `String`, and `Vec`

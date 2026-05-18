@@ -40,9 +40,9 @@ child modules become visible in ordinary code. Write `Vec[T]`, `Option[T]`,
 `replace(ref mut value, next)`, `swap(ref mut left, ref mut right)`,
 `write_i64(...)`, `create(...)`, `new<T>(...)`, and pointer helpers directly.
 Nested forms such as `fmt::Display`, `iter::Iterator[T]`, `mem::size_of<T>()`,
-`input::read_byte()`, and `zone::new<T>(...)` resolve through implicit aliases
-to the source `std` module, even when a root re-export such as `input()` shares
-the prefix.
+`input::read_byte()`, `input::try_read_byte()`, and `zone::new<T>(...)`
+resolve through implicit aliases to the source `std` module, even when a root
+re-export such as `input()` shares the prefix.
 The explicit paths still exist as `std::Vec`, `std::iter::range`,
 `std::mem::size_of`, and `std::zone::new`. `std::vec::Vec` names the
 source-backed allocator seed handle, and `std::Vec[T]` is a public alias for
@@ -294,6 +294,14 @@ let byte = read_byte()
 `input::read_byte()` is also available. `read_byte` returns the next byte as an
 `i64`, or `-1` at end of input.
 
+For ordinary stdin byte handling, prefer the source helper:
+
+```ari
+let byte = input::try_read_byte()
+```
+
+It returns `Some(byte)` for a byte and `None` at end of input.
+
 Line-oriented input is available on the LLVM/glibc host backend:
 
 ```ari
@@ -427,6 +435,7 @@ read_line_owned(ref mut Zone) -> std::string::String
 input() -> string
 input_owned(ref mut Zone) -> std::string::String
 input::read_byte() -> i64
+input::try_read_byte() -> Option[u8]
 input::line() -> string
 input::owned_line(ref mut Zone) -> std::string::String
 assert(condition: bool) -> i64

@@ -14,8 +14,9 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 Current source families: `option`, `result`, `mem`, `zone`, `boxed`,
 `string`, `ascii` byte classification and slice helpers, `vec`, `iter`,
 `fmt`, `cmp` comparison helpers, `convert` identity/from/into helpers,
-`context` runtime hooks plus the source `has_arg` helper, `input`, `io`, and
-the first `math` and `bits` numeric helper slices.
+`context` runtime hooks plus the source `has_arg` helper, `input` runtime hooks
+plus the source `try_read_byte` EOF helper, `io`, and the first `math` and
+`bits` numeric helper slices.
 
 ## Phase 2: Pull More Behavior Into Ari Source
 

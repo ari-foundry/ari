@@ -21,7 +21,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or_else`, `map`, `and_then`, `ok_or`. |
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`. |
 | `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_line`. |
-| `std::input` | Friendly input aliases. | `line`, `owned_line`, `read_byte`. |
+| `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
 | `std::context` | Process argument access. | `argc`, `arg`, `has_arg`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
@@ -87,6 +87,10 @@ module's trait surface.
 `std::context` keeps the same split: `argc` and `arg` are runtime hooks because
 they read the host argument context, while `has_arg` is ordinary source that
 documents the valid index policy in one reusable place.
+
+`std::input` follows that pattern for stdin. `read_byte`, `line`, and
+`owned_line` are runtime hooks, while `try_read_byte` is source Ari that turns
+the raw `-1` EOF sentinel into `Option[u8]`.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

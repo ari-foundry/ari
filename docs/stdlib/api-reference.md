@@ -80,6 +80,32 @@ has_arg(index)
 preferred guard before reading optional user arguments. `arg(index)` returns a
 lowercase `string`; out-of-range access returns an empty string.
 
+## IO And Input
+
+`std::io` exposes low-level process IO hooks, while `std::input` keeps
+stdin-oriented helper names:
+
+```ari
+io::write_i64(value)
+io::write_u64(value)
+io::write_bool(value)
+io::write_byte(value)
+io::newline()
+io::read_byte()
+io::read_line()
+io::read_line_owned(ref mut zone)
+
+input::read_byte()
+input::try_read_byte()
+input::line()
+input::owned_line(ref mut zone)
+```
+
+`read_byte` returns an `i64` byte value or `-1` at EOF.
+`input::try_read_byte()` wraps that shape as `Option[u8]`. Borrowed line input
+uses a reusable runtime buffer; use the owned forms when the line must survive
+later input reads.
+
 ## Option And Result
 
 `Option[T]` models a present or missing value:

@@ -28,7 +28,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::option` | Convenience methods for optional values. | `is_some`, `is_none`, `is_some_and`, `is_none_or`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `map`, `or`, `or_else`, `xor`, `and_then`, `ok_or`, `ok_or_else`. | Implemented for the current generic enum model. |
 | `std::result` | Error-return convenience methods. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `unwrap_err`, `expect_err`, `ok`, `err`, `map`, `map_err`, `and_then`, `or_else`. | Implemented for the current generic enum model. |
 | `std::io` | Minimal process IO hooks. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `newline`, `read_byte`, `read_line`, `read_line_owned`. | Runtime-backed through reserved `extern "ari"` builtins. |
-| `std::input` | Friendly input aliases. | `read_byte`, `line`, `owned_line`. | Runtime-backed through `std::io`-style builtins. |
+| `std::input` | Friendly stdin helpers. | `read_byte`, `try_read_byte`, `line`, `owned_line`. | Runtime-backed hooks plus source EOF-to-Option byte handling. |
 | `std::context` | Program argument access. | `argc`, `arg`, `has_arg`. | Runtime-backed hooks plus a source range predicate; initialized by the generated entry wrapper. |
 | `std::mem` | Layout and raw pointer helpers. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. | Compiler-lowered where layout or typed pointer semantics are required. |
 | `std::zone` | Explicit allocation capability. | `create`, byte `alloc`, typed `alloc[T]`, `new[T]`, `promote[T]`, `reset`, `destroy`, `allocation_zone`. | Runtime-backed with ownership/provenance checks in sema. |
@@ -73,7 +73,7 @@ Use this table when writing code from docs alone:
 | --- | --- | --- |
 | Print debug or user-facing output. | `print`, `println`, `print!`, `println!` | Format strings must be string literals. Use `{}` for strings, integers, bools, and `f32`/`f64`; use `{:.N}` for float precision. |
 | Read process arguments. | `arg_count()`, `arg(index)`, `has_arg(index)`, `context::argc()`, `context::arg(index)`, `context::has_arg(index)` | Arguments are lowercase `string` values. `has_arg` checks `0 <= index < argc`; out-of-range `arg` returns an empty string. |
-| Read stdin. | `input()`, `read_line()`, `input_owned(ref mut zone)` | Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
+| Read stdin. | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` | `try_read_byte` returns `Option[u8]` instead of the raw `-1` EOF sentinel. Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
 | Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `?`, or `??` when that reads better than `match`. |
 | Convert missing values into failures. | `option.ok_or<E>(error)`, `option.ok_or_else<E>(op)` | Lazy form builds the error only for `None`. |
 | Represent success/failure. | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` | `?` propagates residual cases and runs hidden iterator cleanup when needed. |

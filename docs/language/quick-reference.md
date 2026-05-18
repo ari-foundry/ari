@@ -224,7 +224,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | result value | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` |
 | optional/result helpers | Option: `.is_some()`, `.is_none()`; Result: `.is_ok()`, `.is_err()`; both: `.unwrap_or(fallback)`, `.map<U>(fn)`, `.and_then<U>(fn)` |
 | process args | `arg_count()`, `arg(index)`, `has_arg(index)`, `context::argc()`, `context::arg(index)`, `context::has_arg(index)` |
-| input line | `input()`, `read_line()`, `input_owned(ref mut zone)` |
+| input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` |
 | raw IO | `io::write_i64`, `io::write_u64`, `io::write_bool`, `io::write_byte`, `io::newline` |
 | layout | `size_of<T>()`, `align_of<T>()` |
 | raw pointers | `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store` |

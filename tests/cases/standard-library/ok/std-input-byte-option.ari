@@ -1,0 +1,15 @@
+// Covers the source input helper that converts raw byte input into Option[u8].
+fn main() -> i64 {
+  let first = input::try_read_byte();
+  let second = std::input::try_read_byte();
+  var score = 0;
+
+  if first.is_some() {
+    score = score + (first.unwrap_or(0 as u8) as i64);
+  }
+  if second.is_none() {
+    score = score + 7;
+  }
+
+  return score;
+}

@@ -70,6 +70,7 @@ fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
+fn std::input::try_read_byte|std input byte option tests; docs/stdlib/modules/input.md
 fn std::io::newline|prelude IO and print tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
 fn std::io::read_line|prelude read_line/input tests; docs/dev/test-matrix.md Prelude row
