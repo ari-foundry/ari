@@ -16,27 +16,7 @@ Phase-oriented sema decomposition is now tracked as ongoing maintenance in
 [Semantic Checker Decomposition](sema-decomposition.md) instead of as a finite
 near-term deliverable.
 
-1. Define owned root collection and smart-pointer handles.
-   Define the growable root `Vec[T]` runtime-capacity ABI and non-local
-   aggregate layout before expanding source libraries that depend on
-   ownership-stable collections. The stack-backed local root `Vec[T]` method
-   surface is frozen, including `as_ptr()` for raw element-buffer access.
-   Root `Vec[T]` function parameters and impl receivers lower through the
-   existing Slice-shaped view ABI; root `Vec[T]` returns, struct fields, trait
-   method returns, and extern C signatures still need the runtime-capacity ABI.
-   Reserved `extern "ari"` builtin declarations are signature-checked against
-   compiler-known builtin metadata and are not an escape hatch for root
-   collection ABI.
-   Source `std::Vec[T]`/`std::vec::Vec[T]` already follows the explicit-zone
-   handle policy for allocation, same-zone growth, `Vec!` construction sugar,
-   Drop of live elements, tracked `Slice` views, `get_ref()` / `get_mut()`
-   element borrows, and `as_ptr()` / `as_mut_ptr()` raw element-buffer views.
-   Source `Box[T]`/`std::Box[T]` already follows the explicit-zone handle
-   policy, including `Box!(T, ref mut Zone, value)` construction sugar and
-   tracked `as_ref()` / `as_mut()` value borrows plus `as_ptr()` /
-   `as_mut_ptr()` raw views; future heap ownership should keep that
-   capability-oriented shape rather than inventing an ambient heap.
-2. Define dynamic owner pattern paths.
+1. Define dynamic owner pattern paths.
    Static local/hidden-storage `Vec[own T]` value patterns can now move exact
    elements and known-length suffix elements through tracked owner paths, and
    they drop selected `_` elements plus known skipped rest-gap elements. Local
@@ -51,17 +31,19 @@ near-term deliverable.
    ABI work; public non-generic plain payload enums already emit C headers for
    scalar, pointer-shaped, and generated wrapper-backed non-scalar payload
    slots.
-
-## Medium-Term Language Work
-
-1. Extend trait-object ownership.
+2. Extend trait-object ownership.
    Define durable data-pointer storage for `own` and borrow-valued dyn objects,
    including lifetime rules for objects that outlive hidden stack
    materialization.
-2. Add an explicit owner-resolution surface.
+3. Add an explicit owner-resolution surface.
    Loop exits that cannot prove a single owner state currently produce
    `maybe-unavailable` locals. A future language form should let users resolve
    those conditional cleanup states intentionally.
+
+## Medium-Term Language Work
+
+Medium-term is currently empty; promote work here only after the near-term owner
+and trait-object slices become too large for one 0.x step.
 
 ## Backend Work
 
@@ -85,4 +67,6 @@ near-term deliverable.
 - garbage collection
 - C++ ABI dependency as a source-level FFI surface
 - ambient global heap as a language primitive
+- non-local ownership for bare root `Vec[T]` without an explicit allocation
+  capability
 - adding a second backend before the LLVM path is library-ready

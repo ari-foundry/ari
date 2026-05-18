@@ -2449,7 +2449,7 @@ check-traits: $(TARGET)
 	if $(TARGET) tests/errors/duplicate-trait-impl.ari -o $(BUILD_DIR)/traits/duplicate-trait-impl.elf >$(BUILD_DIR)/traits/duplicate-trait-impl.err 2>&1; then exit 1; fi
 	grep -q "duplicate impl of trait 'std::Iterable' for Bag" $(BUILD_DIR)/traits/duplicate-trait-impl.err
 	if $(TARGET) tests/errors/vector-trait-method-return-runtime-abi.ari -o $(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.elf >$(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as a trait method return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.err
+	grep -Fq "bare root Vec[T] cannot be used as a trait method return type; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/traits/vector-trait-method-return-runtime-abi.err
 	if $(TARGET) tests/errors/trait-duplicate-decl.ari -o $(BUILD_DIR)/traits/trait-duplicate-decl.elf >$(BUILD_DIR)/traits/trait-duplicate-decl.err 2>&1; then exit 1; fi
 	grep -q "duplicate trait 'Show'" $(BUILD_DIR)/traits/trait-duplicate-decl.err
 	if $(TARGET) tests/errors/trait-duplicate-method.ari -o $(BUILD_DIR)/traits/trait-duplicate-method.elf >$(BUILD_DIR)/traits/trait-duplicate-method.err 2>&1; then exit 1; fi
@@ -2568,9 +2568,9 @@ check-structs: $(TARGET)
 	if $(TARGET) tests/errors/struct-unknown-field-type.ari -o $(BUILD_DIR)/structs/struct-unknown-field-type.elf >$(BUILD_DIR)/structs/struct-unknown-field-type.err 2>&1; then exit 1; fi
 	grep -q "unsupported executable type 'Missing'" $(BUILD_DIR)/structs/struct-unknown-field-type.err
 	if $(TARGET) tests/errors/vector-struct-field-runtime-abi.ari -o $(BUILD_DIR)/structs/vector-struct-field-runtime-abi.elf >$(BUILD_DIR)/structs/vector-struct-field-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as a struct field until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/structs/vector-struct-field-runtime-abi.err
+	grep -Fq "bare root Vec[T] cannot be used as a struct field; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/structs/vector-struct-field-runtime-abi.err
 	if $(TARGET) tests/errors/vector-generic-struct-field-runtime-abi.ari -o $(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.elf >$(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as a struct field until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.err
+	grep -Fq "bare root Vec[T] cannot be used as a struct field; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/structs/vector-generic-struct-field-runtime-abi.err
 	if $(TARGET) tests/errors/struct-generic-arity.ari -o $(BUILD_DIR)/structs/struct-generic-arity.elf >$(BUILD_DIR)/structs/struct-generic-arity.err 2>&1; then exit 1; fi
 	grep -q "struct 'Pair' expects 1 type argument" $(BUILD_DIR)/structs/struct-generic-arity.err
 	if $(TARGET) tests/errors/generic-struct-infer-conflict.ari -o $(BUILD_DIR)/structs/generic-struct-infer-conflict.elf >$(BUILD_DIR)/structs/generic-struct-infer-conflict.err 2>&1; then exit 1; fi
@@ -3217,9 +3217,9 @@ check-ffi: $(TARGET)
 	if $(TARGET) tests/errors/extern-void-param.ari -o $(BUILD_DIR)/ffi/extern-void-param.elf >$(BUILD_DIR)/ffi/extern-void-param.err 2>&1; then exit 1; fi
 	grep -q "extern parameter cannot have void type; use ptr c_void for void\\*" $(BUILD_DIR)/ffi/extern-void-param.err
 	if $(TARGET) tests/errors/vector-extern-param-runtime-abi.ari -o $(BUILD_DIR)/ffi/vector-extern-param-runtime-abi.elf >$(BUILD_DIR)/ffi/vector-extern-param-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as an extern function parameter until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/ffi/vector-extern-param-runtime-abi.err
+	grep -Fq "bare root Vec[T] cannot be used as an extern function parameter; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/ffi/vector-extern-param-runtime-abi.err
 	if $(TARGET) tests/errors/vector-extern-return-runtime-abi.ari -o $(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.elf >$(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as an extern function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.err
+	grep -Fq "bare root Vec[T] cannot be used as an extern function return type; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/ffi/vector-extern-return-runtime-abi.err
 	if $(TARGET) tests/errors/extern-c-large-aggregate-import.ari --emit-llvm $(BUILD_DIR)/ffi/extern-c-large-aggregate-import.ll >$(BUILD_DIR)/ffi/extern-c-large-aggregate-import.err 2>&1; then exit 1; fi
 	grep -q "extern C import for by-value parameter Wide is limited to direct aggregate ABI values up to 16 bytes and 8-byte alignment" $(BUILD_DIR)/ffi/extern-c-large-aggregate-import.err
 	if $(TARGET) --target x86_64-pc-windows-msvc tests/errors/extern-c-target-aggregate-import.ari --emit-llvm $(BUILD_DIR)/ffi/extern-c-target-aggregate-import.ll >$(BUILD_DIR)/ffi/extern-c-target-aggregate-import.err 2>&1; then exit 1; fi
@@ -3411,11 +3411,11 @@ check-function-errors: $(TARGET)
 	if $(TARGET) tests/errors/function-arg-type-mismatch.ari -o $(BUILD_DIR)/functions/errors/function-arg-type-mismatch.elf >$(BUILD_DIR)/functions/errors/function-arg-type-mismatch.err 2>&1; then exit 1; fi
 	grep -q "type mismatch: expected i64, got bool" $(BUILD_DIR)/functions/errors/function-arg-type-mismatch.err
 	if $(TARGET) tests/errors/vector-function-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as a function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err
+	grep -Fq "bare root Vec[T] cannot be used as a function return type; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/functions/errors/vector-function-return-runtime-abi.err
 	if $(TARGET) tests/errors/vector-function-pointer-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as a function pointer return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.err
+	grep -Fq "bare root Vec[T] cannot be used as a function pointer return type; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/functions/errors/vector-function-pointer-return-runtime-abi.err
 	if $(TARGET) tests/errors/vector-generic-function-return-runtime-abi.ari -o $(BUILD_DIR)/functions/errors/vector-generic-function-return-runtime-abi.elf >$(BUILD_DIR)/functions/errors/vector-generic-function-return-runtime-abi.err 2>&1; then exit 1; fi
-	grep -Fq "root Vec[T] cannot be used as a function return type until the runtime-capacity Vec ABI is defined" $(BUILD_DIR)/functions/errors/vector-generic-function-return-runtime-abi.err
+	grep -Fq "bare root Vec[T] cannot be used as a function return type; it is limited to local storage and Slice-shaped parameter views" $(BUILD_DIR)/functions/errors/vector-generic-function-return-runtime-abi.err
 	if $(TARGET) tests/errors/function-param-pattern.ari -o $(BUILD_DIR)/functions/errors/function-param-pattern.elf >$(BUILD_DIR)/functions/errors/function-param-pattern.err 2>&1; then exit 1; fi
 	grep -q "tuple binding pattern requires a tuple value, got i64" $(BUILD_DIR)/functions/errors/function-param-pattern.err
 	if $(TARGET) tests/errors/function-overload-params.ari -o $(BUILD_DIR)/functions/errors/function-overload-params.elf >$(BUILD_DIR)/functions/errors/function-overload-params.err 2>&1; then exit 1; fi

@@ -316,8 +316,9 @@ expressions such as `sum([1, 2, 3])`. Generic functions whose source parameter i
 `T` parameters still carry concrete Vec capacity when `T` itself resolves to
 local Vec storage. Trait and impl method parameters use the same view ABI for
 ordinary parameter slots, and `impl Vec[T]` / `impl Trait for Vec[T]` receivers
-also lower as borrowed views. Root `Vec[T]` function returns and trait method
-return types still wait for the runtime-capacity Vec ABI.
+also lower as borrowed views. Bare root `Vec[T]` function returns and trait
+method return types are rejected because root Vec is local storage or a borrowed
+parameter view only; use `std::Vec[T]` for explicit-zone owned returns.
 Parameter patterns can also use reference binding modes:
 
 ```ari

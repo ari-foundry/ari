@@ -1862,7 +1862,7 @@ private:
             current_type_substitutions_ = std::move(substitutions);
             for (const auto& field : decl.fields) {
                 IrType field_type = resolve_executable_type(field.type);
-                require_root_vector_runtime_abi(field.loc, field_type, "a struct field");
+                require_nonlocal_root_vector_storage(field.loc, field_type, "a struct field");
             }
             current_type_substitutions_ = std::move(previous_substitutions);
             current_module_name_ = previous_module;
@@ -2065,7 +2065,7 @@ private:
                 }
                 if (method.has_return_type) {
                     IrType result_type = resolve_executable_type(method.return_type);
-                    require_root_vector_runtime_abi(method.return_type.loc, result_type, "a trait method return type");
+                    require_nonlocal_root_vector_storage(method.return_type.loc, result_type, "a trait method return type");
                 }
             }
 
@@ -3440,7 +3440,7 @@ private:
                 }
                 sig.result = method.has_return_type ? resolve_executable_type(method.return_type) : void_type(method.loc);
                 if (method.has_return_type) {
-                    require_root_vector_runtime_abi(method.return_type.loc, sig.result, "an impl method return type");
+                    require_nonlocal_root_vector_storage(method.return_type.loc, sig.result, "an impl method return type");
                 }
                 set_function_return_contracts(sig);
                 apply_explicit_borrow_return_contract(sig, method);
@@ -3783,7 +3783,7 @@ private:
             }
             sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
             if (fn.has_return_type) {
-                require_root_vector_runtime_abi(fn.return_type.loc, sig.result, "a function return type");
+                require_nonlocal_root_vector_storage(fn.return_type.loc, sig.result, "a function return type");
             }
             set_function_return_contracts(sig);
             apply_explicit_borrow_return_contract(sig, fn);
@@ -3799,10 +3799,10 @@ private:
                                                            const std::vector<IrType>& param_types,
                                                            const IrType& result) const {
         for (std::size_t i = 0; i < param_types.size(); ++i) {
-            require_root_vector_runtime_abi(fn.params[i].type.loc, param_types[i], "a function parameter");
+            require_nonlocal_root_vector_storage(fn.params[i].type.loc, param_types[i], "a function parameter");
         }
         if (fn.has_return_type) {
-            require_root_vector_runtime_abi(fn.return_type.loc, result, "a function return type");
+            require_nonlocal_root_vector_storage(fn.return_type.loc, result, "a function return type");
         }
     }
 
@@ -3958,7 +3958,7 @@ private:
         current_module_name_ = fn.module_name;
         for (const auto& param : fn.params) {
             IrType param_type = resolve_executable_type(param.type);
-            require_root_vector_runtime_abi(param.type.loc, param_type, "an extern function parameter");
+            require_nonlocal_root_vector_storage(param.type.loc, param_type, "an extern function parameter");
             if (param_type.qualifier == TypeQualifier::Value && param_type.primitive == IrPrimitiveKind::Void) {
                 fail(param.type.loc, "extern parameter cannot have void type; use ptr c_void for void*");
             }
@@ -3969,7 +3969,7 @@ private:
         }
         sig.result = fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc);
         if (fn.has_return_type) {
-            require_root_vector_runtime_abi(fn.return_type.loc, sig.result, "an extern function return type");
+            require_nonlocal_root_vector_storage(fn.return_type.loc, sig.result, "an extern function return type");
             if (is_c_abi) {
                 require_extern_c_direct_aggregate_abi(fn.return_type.loc, sig.result, "return type");
             }
@@ -4370,7 +4370,7 @@ private:
                 }
             }
             type.args.push_back(resolve_executable_type(ast_type.args[type.array_size]));
-            require_root_vector_runtime_abi(
+            require_nonlocal_root_vector_storage(
                 ast_type.args[type.array_size].loc,
                 type.args[type.array_size],
                 "a function pointer return type");
@@ -4514,7 +4514,7 @@ private:
                     type.field_mutable.push_back(field.mutable_field);
                 }
                 current_type_substitutions_ = std::move(previous_substitutions);
-                require_root_vector_runtime_abi(type.loc, type, "a struct field");
+                require_nonlocal_root_vector_storage(type.loc, type, "a struct field");
             } else {
                 std::string resolved_name = resolve_enum_type_name(type.name);
                 auto enum_found = enums_.find(resolved_name);
@@ -4623,7 +4623,7 @@ private:
             ? active_sig->result
             : (fn.has_return_type ? resolve_executable_type(fn.return_type) : void_type(fn.loc));
         if (fn.has_return_type) {
-            require_root_vector_runtime_abi(fn.return_type.loc, current_return_, "a function return type");
+            require_nonlocal_root_vector_storage(fn.return_type.loc, current_return_, "a function return type");
         }
         ir_fn.return_type = current_return_;
         if (sig_found != functions_.end()) {
@@ -19273,7 +19273,7 @@ private:
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
         if (method.fn->has_return_type) {
-            require_root_vector_runtime_abi(
+            require_nonlocal_root_vector_storage(
                 method.fn->return_type.loc,
                 sig.result,
                 "an impl method return type");
@@ -19325,7 +19325,7 @@ private:
             ? resolve_type_with_substitutions(method.fn->return_type, substitutions)
             : void_type(method.fn->loc);
         if (method.fn->has_return_type) {
-            require_root_vector_runtime_abi(
+            require_nonlocal_root_vector_storage(
                 method.fn->return_type.loc,
                 sig.result,
                 "an impl method return type");

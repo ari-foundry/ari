@@ -33,8 +33,11 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   wired to a phase-level pattern API instead of syntax-local helper pairs.
 - Root `Vec[T]` function, method, trait-method, and function-pointer parameter
   ABI lowering plus impl receiver view lowering is owned by `vector_semantics`:
-  parameters and receivers lower to the Slice-shaped view ABI, while
-  return/field/extern runtime-capacity guards stay with the same vector phase.
+  parameters and receivers lower to the Slice-shaped view ABI. Bare root
+  `Vec[T]` remains a local-storage and borrowed-view type; non-local ownership
+  contexts such as returns, struct fields, trait-method returns, and extern C
+  signatures produce a dedicated policy diagnostic instead of implying a hidden
+  heap.
 - Raw pointer helpers, layout queries, and `std::mem` value helpers lower
   through `pointer_memory_semantics`, keeping type-argument checks,
   mutable-place validation, hidden temporary locals, and final pointer IR block
@@ -51,6 +54,13 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - The stack-backed local root `Vec[T]` method surface includes `as_ptr()` for
   raw element-buffer access alongside the fixed-capacity read/search/mutation
   helpers.
+- Source `std::Vec[T]`/`std::vec::Vec[T]` is the supported growable collection
+  handle for library-facing ownership. It uses explicit `Zone` capabilities for
+  allocation, same-zone growth, `Vec!` construction sugar, drop of live elements,
+  tracked `Slice` views, element borrows, and raw element-buffer views. Source
+  `Box[T]`/`std::Box[T]` follows the same explicit-zone handle policy for single
+  values through `Box!(T, ref mut Zone, value)`, `as_ref()` / `as_mut()`, and raw
+  pointer views.
 - Declaration-returning `ast -> ast` macros can inspect generic, parameter,
   field, enum-case, method, associated-type, trait, return, and witness
   summaries. `meta_ident!(...)` inside `decl!(...)` supports generated

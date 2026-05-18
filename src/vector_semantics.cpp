@@ -136,24 +136,24 @@ IrType unsized_vector_storage_view_type(const IrType& type) {
     return out;
 }
 
-bool contains_root_vector_without_runtime_abi(const IrType& type) {
+bool contains_nonlocal_root_vector_storage(const IrType& type) {
     if (type.primitive == IrPrimitiveKind::Vector && type.args.size() == 1 && type.array_size == 0) return true;
     for (const auto& arg : type.args) {
-        if (contains_root_vector_without_runtime_abi(arg)) return true;
+        if (contains_nonlocal_root_vector_storage(arg)) return true;
     }
     for (const auto& field : type.field_types) {
-        if (contains_root_vector_without_runtime_abi(field)) return true;
+        if (contains_nonlocal_root_vector_storage(field)) return true;
     }
     return false;
 }
 
-void require_root_vector_runtime_abi(SourceLocation loc,
-                                     const IrType& type,
-                                     const std::string& context) {
-    if (!contains_root_vector_without_runtime_abi(type)) return;
+void require_nonlocal_root_vector_storage(SourceLocation loc,
+                                          const IrType& type,
+                                          const std::string& context) {
+    if (!contains_nonlocal_root_vector_storage(type)) return;
     fail(loc,
-         "root Vec[T] cannot be used as " + context +
-             " until the runtime-capacity Vec ABI is defined; use std::Vec[T] / std::vec::Vec[T] with an explicit Zone handle or pass Slice[T]");
+         "bare root Vec[T] cannot be used as " + context +
+             "; it is limited to local storage and Slice-shaped parameter views. Use std::Vec[T] / std::vec::Vec[T] with an explicit Zone handle for non-local ownership or pass Slice[T]");
 }
 
 IrType vector_parameter_abi_type(SourceLocation loc,
@@ -169,7 +169,7 @@ IrType vector_parameter_abi_type(SourceLocation loc,
         vec_view = true;
         return make_prelude_slice_type(loc, source.args[0]);
     }
-    require_root_vector_runtime_abi(loc, source, context);
+    require_nonlocal_root_vector_storage(loc, source, context);
     return source;
 }
 

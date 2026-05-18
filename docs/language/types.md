@@ -538,11 +538,11 @@ specialization per element type with the same view ABI; generic by-value
 resolves to local Vec storage. Trait and impl method parameters use the same
 view ABI for ordinary parameter slots, including trait-qualified calls.
 `impl Vec[T]` and `impl Trait for Vec[T]` receivers also lower as borrowed
-views. Root `Vec[T]` returns, extern parameters/returns, trait method return
-types, and struct fields still reject root `Vec[T]` until the runtime-capacity
-layout is defined. Use `std::Vec<T>` /
-`std::vec::Vec<T>` when a value must be passed as an explicit-zone heap handle,
-or pass `Slice[T]` for a borrowed view.
+views. Bare root `Vec[T]` does not provide non-local ownership: returns, extern
+parameters/returns, trait method return types, and struct fields reject it with
+a local/view-only diagnostic. Use `std::Vec<T>` / `std::vec::Vec<T>` when a value
+must be passed as an explicit-zone heap handle, or pass `Slice[T]` for a borrowed
+view.
 
 For the allocator-backed path, `std::vec::alloc_buffer<T>(ref mut zone,
 capacity)` now provides the raw element-buffer seed. It takes an explicit
@@ -608,12 +608,12 @@ vec.truncate(1)
 vec.clear()
 ```
 
-It is constructor sugar for the source handle, not a workaround for passing the
-bare root stack-backed `Vec[T]` type across function boundaries. The handle
+It is constructor sugar for the source handle, not a workaround for turning the
+bare root stack-backed `Vec[T]` type into a non-local owned value. The handle
 exposes checked methods over the raw allocation.
 
 The bare root `Vec[T]` type is still the current local vector literal
-storage until runtime heap growth is ported. `std::Vec[T]` is instead the
+storage and borrowed parameter-view surface. `std::Vec[T]` is instead the
 explicit-zone source handle alias. Source `std::vec::Vec<T>.reserve`
 is grow-only: it allocates a larger buffer from the same explicit zone, copies
 the current elements, preserves `len`, and leaves the old buffer to the zone's
@@ -1010,7 +1010,7 @@ Vec storage. Selected `_` elements and known skipped rest-gap elements are
 dropped from that hidden storage. Ownership-carrying enum payload moves,
 `Slice[T]` owner paths, owned rest aliases, unknown-length value vector
 suffixes, and other non-static runtime sequence owner paths remain tied to the
-later owned-payload/runtime-capacity ABI work.
+later owned-payload/dynamic-owner ABI work.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

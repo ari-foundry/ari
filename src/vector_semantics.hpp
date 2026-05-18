@@ -47,10 +47,10 @@ using VectorStorageCapacityLookup = std::function<std::uint64_t(const std::strin
 bool is_vector_storage_type(const IrType& type);
 bool is_unsized_vector_storage_type(const IrType& type);
 IrType unsized_vector_storage_view_type(const IrType& type);
-bool contains_root_vector_without_runtime_abi(const IrType& type);
-void require_root_vector_runtime_abi(SourceLocation loc,
-                                     const IrType& type,
-                                     const std::string& context);
+bool contains_nonlocal_root_vector_storage(const IrType& type);
+void require_nonlocal_root_vector_storage(SourceLocation loc,
+                                          const IrType& type,
+                                          const std::string& context);
 IrType vector_parameter_abi_type(SourceLocation loc,
                                  const IrType& source,
                                  const std::string& context,

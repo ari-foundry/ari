@@ -194,7 +194,7 @@ the hidden vector's current length is known. Selected `_` elements and known
 skipped `..` ranges are dropped from the hidden Vec storage. Ownership-carrying
 enum payload moves, `Slice[T]` owner paths, owned rest aliases, and
 unknown-length value vector suffix owner paths remain tied to the later
-owned-payload/runtime-capacity ABI work.
+owned-payload/dynamic-owner ABI work.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`
