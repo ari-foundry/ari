@@ -287,6 +287,26 @@ an `impl cmp::Ord[T] for T`. `clamp` and `is_between` assert that
 The root prelude re-exports the value helpers as `min<T>`, `max<T>`,
 `clamp<T>`, and `is_between<T>`.
 
+## Conversion
+
+`std::convert` contains explicit conversion trait names and source helper
+functions:
+
+```ari
+convert::From[T]
+convert::Into[T]
+convert::TryFrom[T]
+convert::TryInto[T]
+convert::identity<T>(value)
+convert::from<T, U>(value)
+convert::into<T, U>(value)
+```
+
+`identity` returns its input unchanged. `from<T, U>` builds destination `U`
+through `convert::From[T]`, and `into<T, U>` turns source `U` into destination
+`T` through `convert::Into[T]`. `TryFrom` and `TryInto` are reserved trait
+names only for now; fallible conversion methods are future library work.
+
 ## Math
 
 `std::math` currently contains conservative source-only helpers with `i64`

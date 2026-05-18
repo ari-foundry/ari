@@ -62,6 +62,9 @@ fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md F
 fn std::cmp::min[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
 fn std::context::argc|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
+fn std::convert::from[T, U: From[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
+fn std::convert::identity[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
+fn std::convert::into[T, U: Into[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows

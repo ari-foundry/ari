@@ -14,6 +14,8 @@ limits, examples, and test files for one module.
   safe accessors, growth, copy, and iterator entry points.
 - [std::cmp](cmp.md): source comparison traits, generic value selection,
   inclusive clamping, and inclusive range predicates.
+- [std::convert](convert.md): explicit conversion traits plus source
+  `identity`, `from`, and `into` helper calls for generic code.
 - [std::ascii](ascii.md): source-only ASCII byte classification,
   printable/control predicates, case conversion, borrowed-slice trimming, and
   digit parsing helpers.

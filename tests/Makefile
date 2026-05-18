@@ -204,6 +204,13 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/prelude-read-line-owned.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; printf 'alpha\nbeta\ngamma\ndelta\n' | $(BUILD_DIR)/prelude/prelude-read-line-owned.elf; code=$$?; test $$code -eq 161; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude-trait-surface.ari -o $(BUILD_DIR)/prelude/prelude-trait-surface.elf
 	$(BUILD_DIR)/prelude/prelude-trait-surface.elf; code=$$?; test $$code -eq 0
+	$(TARGET) tests/cases/standard-library/ok/std-convert-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
+	grep -F -q 'std7convert15identity__G_i64' $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
+	grep -F -q 'std7convert15from__G_i32_i64' $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
+	grep -F -q 'std7convert15into__G_i64_i32' $(BUILD_DIR)/prelude/std-convert-value-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-convert-value-helpers.ari -o $(BUILD_DIR)/prelude/std-convert-value-helpers.elf
+	$(BUILD_DIR)/prelude/std-convert-value-helpers.elf; code=$$?; test $$code -eq 48
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-convert-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-convert-value-helpers.elf; $(BUILD_DIR)/prelude/std-convert-value-helpers.elf; code=$$?; test $$code -eq 48; fi
 	$(TARGET) tests/cases/standard-library/ok/std-cmp-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp10min__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll
 	grep -F -q 'std3cmp10max__G_i64' $(BUILD_DIR)/prelude/std-cmp-value-helpers.ll

@@ -40,6 +40,7 @@ The current `std` package already provides:
 - range/iterator traits and the `std::vec::Iter` implementation
 - comparison, formatting, and conversion trait surfaces, plus source
   comparison value helpers: `min`, `max`, `clamp`, and `is_between`
+- `std::convert` source helpers: `identity`, `from`, and `into`
 - `std::math` integer helpers implemented in Ari source with natural names:
   `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`, and `lcm`
 - `std::ascii` byte classification, printable/control predicates, case
@@ -154,7 +155,7 @@ Likely compiler work:
 | `std::iter` | Adapter traits after collection iterators are stable. | Direct iterator, `IntoIterator`, and refutable-pattern diagnostics. | General iterator protocol lowering. |
 | `std::fmt` | Source trait impls for common values. | `format_in!`, `Display`, unsupported-type diagnostics. | Macro-to-trait lowering cleanup. |
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes. | Generic helper, inclusive range predicate, and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
-| `std::convert` | Concrete `From`/`Into` impl patterns. | Explicit associated calls and residual conversions. | Trait coherence and inference diagnostics. |
+| `std::convert` | Concrete `From`/`Into` impl patterns and fallible conversion policy. | Identity/from/into behavior, explicit associated calls, and residual conversions. | Trait coherence and inference diagnostics. |
 | `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Integer helper behavior, overflow-policy diagnostics, and future checked/wrapping helpers. | Overflow intrinsics or diagnostics only after the source policy is designed. |
 | `std::bits` | Grow natural helper names from u64 signatures into generic integer helpers. | Mask behavior, rotate count handling, power-of-two rounding, low-mask widths, alignment preconditions, scan edge cases, and future overflow-policy diagnostics. | Optional bit-scan intrinsics only after the source policy is stable. |
 

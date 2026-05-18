@@ -32,6 +32,7 @@ prelude-slice-option-access.ari
 std-string-append-u64.ari
 std-string-ascii-helpers.ari
 std-cmp-value-helpers.ari
+std-convert-value-helpers.ari
 std-math-integer-helpers.ari
 std-ascii-class-helpers.ari
 std-ascii-slice-helpers.ari

@@ -11,3 +11,15 @@ pub trait TryFrom[T] {
 
 pub trait TryInto[T] {
 }
+
+pub fn identity[T](value: T) -> T {
+  return value;
+}
+
+pub fn from[T, U: From[T]](value: T) -> U {
+  return From[T]::from<U>(value);
+}
+
+pub fn into[T, U: Into[T]](value: U) -> T {
+  return value.into();
+}

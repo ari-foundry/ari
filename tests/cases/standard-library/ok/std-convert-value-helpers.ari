@@ -1,0 +1,36 @@
+impl convert::From[i32] for i64 {
+  fn from(value: i32) -> i64 {
+    return value as i64;
+  }
+}
+
+impl convert::Into[i64] for i32 {
+  fn into(self) -> i64 {
+    return self as i64;
+  }
+}
+
+struct Wrapped {
+  value: i64,
+}
+
+impl convert::From[i64] for Wrapped {
+  fn from(value: i64) -> Wrapped {
+    return Wrapped { value: value };
+  }
+}
+
+impl convert::Into[i64] for Wrapped {
+  fn into(self) -> i64 {
+    return self.value;
+  }
+}
+
+fn main() -> i64 {
+  let same = convert::identity<i64>(7);
+  let via_from = convert::from<i32, i64>(11 as i32);
+  let via_into = convert::into<i64, i32>(13 as i32);
+  let wrapped = convert::from<i64, Wrapped>(17);
+  let unwrapped = convert::into<i64, Wrapped>(wrapped);
+  return same + via_from + via_into + unwrapped;
+}
