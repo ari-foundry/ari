@@ -12,6 +12,8 @@ limits, examples, and test files for one module.
   borrowed views, byte search, ASCII trim, and parsing helpers.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, copy, and iterator entry points.
+- [std::cmp](cmp.md): source comparison traits, generic value selection,
+  inclusive clamping, and inclusive range predicates.
 - [std::ascii](ascii.md): source-only ASCII byte classification,
   printable/control predicates, case conversion, borrowed-slice trimming, and
   digit parsing helpers.

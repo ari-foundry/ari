@@ -51,6 +51,7 @@ swap(ref mut left, ref mut right)
 min<T>(left, right)
 max<T>(left, right)
 clamp<T>(value, low, high)
+is_between<T>(value, low, high)
 create(bytes)
 alloc(ref mut zone, bytes, align)
 new<T>(ref mut zone, value)
@@ -262,6 +263,29 @@ box.as_mut_ptr()
 box.swap(ref mut other)
 box.is_empty()
 ```
+
+## Comparison
+
+`std::cmp` contains source comparison traits and generic value helpers:
+
+```ari
+cmp::Eq[T]
+cmp::PartialEq[T]
+cmp::Ord[T]
+cmp::PartialOrd[T]
+cmp::min<T>(left, right)
+cmp::max<T>(left, right)
+cmp::clamp<T>(value, low, high)
+cmp::is_between<T>(value, low, high)
+```
+
+`Ord[T]` currently requires `lt(self, other: T) -> bool`. `min`, `max`,
+`clamp`, and `is_between` use that trait bound, so custom ordered values need
+an `impl cmp::Ord[T] for T`. `clamp` and `is_between` assert that
+`low <= high`; `is_between` is inclusive at both ends.
+
+The root prelude re-exports the value helpers as `min<T>`, `max<T>`,
+`clamp<T>`, and `is_between<T>`.
 
 ## Math
 

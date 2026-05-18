@@ -57,6 +57,7 @@ fn std::bits::toggle|std bits mask helper tests; docs/stdlib/api-reference.md Bi
 fn std::bits::trailing_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
+fn std::cmp::is_between[T: Ord[T]|std cmp value helper tests; docs/stdlib/api-reference.md Comparison section
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::min[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::context::arg|check-prelude context tests; docs/dev/test-matrix.md Context runtime row
@@ -346,6 +347,7 @@ use std::create|std root re-export tests; docs/dev/test-matrix.md Prelude and Ex
 use std::destroy|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 use std::input|std root re-export tests; docs/dev/test-matrix.md Prelude row
 use std::input_owned|std root re-export owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
+use std::is_between|std cmp value helper root re-export tests; docs/stdlib/api-reference.md Comparison section
 use std::max|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::min|std cmp value helper root re-export tests; docs/dev/test-matrix.md Front-end surfaces row
 use std::new|std root re-export tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows

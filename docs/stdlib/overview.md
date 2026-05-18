@@ -31,7 +31,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
 | `std::fmt` | Formatting trait surface. | `Display::format_in`, `Debug`. |
-| `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`. |
+| `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
 | `std::convert` | Conversion trait names. | `From`, `Into`, `TryFrom`, `TryInto`. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`, `lcm`. |
 | `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, and bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`. |
@@ -75,6 +75,10 @@ through `Option[T]`.
 power-of-two, low-mask, alignment, and source-loop bit-scan helpers. Future
 intrinsic-backed implementations may need compiler support, but the public
 edge-case behavior should stay source-defined.
+
+`std::cmp` is also source-first. Its current helpers build on the minimal
+`Ord[T]::lt` method so generic code can select, clamp, or range-check values
+without compiler-known comparison intrinsics.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

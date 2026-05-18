@@ -29,6 +29,8 @@ test:
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-string-ascii-helpers.ari`: source `std::string` borrowed ASCII trim
   views and whole-string parsing behavior.
+- `std-cmp-value-helpers.ari`: source `std::cmp` trait-bound value selection,
+  clamping, inclusive range predicates, and root re-export behavior.
 - `std-math-integer-helpers.ari`: source `std::math` i64 helper behavior.
 - `std-ascii-class-helpers.ari`: source `std::ascii` extended byte
   classification behavior.

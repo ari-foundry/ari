@@ -24,14 +24,45 @@ fn main() -> i64 {
   let root_max = std::max<i64>(6, 14);
   let root_clamp = clamp<i64>(99, 20, 30);
 
+  var range_score = 0;
+  if cmp::is_between<i64>(7, 5, 10) {
+    range_score = range_score + 5;
+  }
+  if cmp::is_between<i64>(5, 5, 10) {
+    range_score = range_score + 7;
+  }
+  if cmp::is_between<i64>(10, 5, 10) {
+    range_score = range_score + 11;
+  }
+  if !cmp::is_between<i64>(4, 5, 10) {
+    range_score = range_score + 13;
+  }
+  if !std::cmp::is_between<i64>(12, 5, 10) {
+    range_score = range_score + 17;
+  }
+  if std::is_between<i64>(6, 5, 10) {
+    range_score = range_score + 19;
+  }
+  if is_between<i64>(8, 5, 10) {
+    range_score = range_score + 29;
+  }
+
   let score_min = cmp::min<Score>(Score { value: 8 }, Score { value: 3 });
   let score_max = cmp::max<Score>(Score { value: 8 }, Score { value: 3 });
   let score_clamp = cmp::clamp<Score>(
     Score { value: 11 },
     Score { value: 4 },
     Score { value: 9 });
+  let score_between = cmp::is_between<Score>(
+    Score { value: 6 },
+    Score { value: 4 },
+    Score { value: 9 });
+  if score_between {
+    range_score = range_score + 23;
+  }
 
   return small + large + clamped_low + clamped_mid + clamped_high +
          root_min + root_max + root_clamp +
-         score_min.value + score_max.value + score_clamp.value;
+         score_min.value + score_max.value + score_clamp.value +
+         range_score;
 }

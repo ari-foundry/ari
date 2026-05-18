@@ -38,3 +38,14 @@ pub fn clamp[T: Ord[T]](value: T, low: T, high: T) -> T {
   }
   return value;
 }
+
+pub fn is_between[T: Ord[T]](value: T, low: T, high: T) -> bool {
+  std::assert(!high.lt(low));
+  if value.lt(low) {
+    return false;
+  }
+  if high.lt(value) {
+    return false;
+  }
+  return true;
+}
