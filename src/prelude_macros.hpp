@@ -18,6 +18,7 @@ enum class PreludeMacroKind {
     Format,
     FormatIn,
     Matches,
+    Box,
     Vec
 };
 

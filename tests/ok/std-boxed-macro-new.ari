@@ -1,0 +1,16 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var other = zone::create(64);
+
+  var boxed = Box!(i64, ref mut zone, 21);
+  var qualified = std::boxed::Box!(i64, ref mut other, 4);
+
+  let raw = boxed.as_mut_ptr();
+  *raw = *raw + 2;
+  let copied = boxed.copy_to(ref mut other);
+  let total = boxed.get() + qualified.get() + copied.get();
+
+  zone::destroy(zone);
+  zone::destroy(other);
+  return total;
+}

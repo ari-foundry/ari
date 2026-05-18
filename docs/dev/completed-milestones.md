@@ -154,6 +154,8 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   explicit-zone `std::vec::Vec[T]` source handle, and
   `Vec!(T, ref mut Zone, capacity)` is constructor sugar for
   `std::vec::new<T>`.
+- `Box!(T, ref mut Zone, value)` is constructor sugar for the explicit-zone
+  `std::boxed::new<T>` source handle.
 - Source Vec and String growth can infer the tracked receiver's source zone for
   common same-zone operations without adding an ambient heap.
 - Host zone allocation metadata is fixed for the 0.x ABI: every non-empty

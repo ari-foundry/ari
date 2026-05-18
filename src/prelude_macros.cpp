@@ -15,6 +15,7 @@ PreludeMacroKind prelude_macro_kind(const std::string& name) {
     if (name == "format") return PreludeMacroKind::Format;
     if (name == "format_in") return PreludeMacroKind::FormatIn;
     if (name == "matches") return PreludeMacroKind::Matches;
+    if (name == "Box") return PreludeMacroKind::Box;
     if (name == "Vec") return PreludeMacroKind::Vec;
     return PreludeMacroKind::None;
 }
@@ -34,6 +35,7 @@ bool is_supported_prelude_macro(PreludeMacroKind kind) {
         case PreludeMacroKind::Unreachable:
         case PreludeMacroKind::Print:
         case PreludeMacroKind::Println:
+        case PreludeMacroKind::Box:
         case PreludeMacroKind::Vec:
             return true;
         default:

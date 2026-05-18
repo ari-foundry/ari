@@ -325,7 +325,8 @@ ptr_store(point_ptr, ptr_load(point_ptr));
 
 `Box[T]` is executable today as the root alias for `std::boxed::Box<T>`, the
 source explicit-zone handle over `zone::new<T>` storage. Construct it with
-`Box::new<T>(ref mut Zone, value)`, `std::Box::new<T>(ref mut Zone, value)`, or
+`Box!(T, ref mut Zone, value)`, `Box::new<T>(ref mut Zone, value)`,
+`std::Box::new<T>(ref mut Zone, value)`, or
 `std::boxed::new<T>(ref mut Zone, value)`. Read-only handle methods such as
 `get`, `copy_to`, and `as_ptr` borrow the receiver. `as_mut_ptr` exposes the
 stored raw pointer through a mutable receiver borrow. `set(value)` overwrites

@@ -1143,6 +1143,7 @@ private:
         std::string base = basename_of_qualified_name(name);
         PreludeMacroKind kind = prelude_macro_kind(base);
         if (kind == PreludeMacroKind::None) return PreludeMacroKind::None;
+        if (kind == PreludeMacroKind::Box && name == "std::boxed::Box") return kind;
         if (kind == PreludeMacroKind::Vec && name == "std::vec::Vec") return kind;
         if (name == base || name == "std::" + base) return kind;
         return PreludeMacroKind::None;
@@ -19415,6 +19416,34 @@ private:
         return check_call(call, std::move(lowered));
     }
 
+    IrExprPtr check_box_macro_call(const Expr& expr) {
+        if (!expr.macro_tokens) {
+            fail(expr.loc, "macro invocation '" + expr.name + "!' is missing token payload");
+        }
+        std::string usage = "Box! expects Box!(T, ref mut zone, value)";
+        std::vector<std::vector<Token>> parts =
+            split_macro_top_level_arguments(*expr.macro_tokens, expr.loc, expr.name);
+        if (parts.size() != 3) fail(expr.loc, usage);
+        require_non_empty_macro_arguments(parts, expr.loc, usage);
+
+        TypeRef value_type = parse_macro_type_ref(std::move(parts[0]), expr.loc);
+        std::vector<ExprPtr> args;
+        args.reserve(2);
+        args.push_back(parse_macro_expression(std::move(parts[1]), expr.loc));
+        args.push_back(parse_macro_expression(std::move(parts[2]), expr.loc));
+
+        Expr call;
+        call.kind = ExprKind::Call;
+        call.loc = expr.loc;
+        call.name = "std::boxed::new";
+        call.args = std::move(args);
+        set_expr_type_args(call, {std::move(value_type)});
+
+        auto lowered = std::make_unique<IrExpr>();
+        lowered->loc = expr.loc;
+        return check_call(call, std::move(lowered));
+    }
+
     IrExprPtr check_prelude_macro_call(const Expr& expr, PreludeMacroKind kind) {
         if (kind == PreludeMacroKind::Format) {
             fail(expr.loc, "prelude macro 'format!' has no implicit allocation zone; use format_in!(ref mut zone, ...) for explicit-zone strings");
@@ -19427,6 +19456,9 @@ private:
         }
         if (kind == PreludeMacroKind::Matches) {
             fail(expr.loc, "prelude macro 'matches!' needs pattern-position macro expansion before it can be lowered");
+        }
+        if (kind == PreludeMacroKind::Box) {
+            return check_box_macro_call(expr);
         }
         if (kind == PreludeMacroKind::Vec) {
             return check_vec_macro_call(expr);
