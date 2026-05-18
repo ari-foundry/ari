@@ -31,26 +31,28 @@ changing the long-term language contract.
 See [Semantic Checker Decomposition](sema-decomposition.md) for the maintenance
 roadmap for splitting `src/sema.cpp` by broad semantic phases.
 
-## Medium-Term Language Work
-
-1. Define owned root collection and smart-pointer handles.
+2. Define owned root collection and smart-pointer handles.
    Define the growable root `Vec[T]` runtime-capacity ABI, permanent root
-   method surface, and non-local aggregate layout. Future owning heap-style
-   `Box[T]` should build on the same explicit-capability rules rather than
-   inventing an ambient heap.
-2. Define dynamic owner pattern paths.
+   method surface, and non-local aggregate layout before expanding source
+   libraries that depend on ownership-stable collections. Future owning
+   heap-style `Box[T]` should build on the same explicit-capability rules
+   rather than inventing an ambient heap.
+3. Define dynamic owner pattern paths.
    After runtime-capacity `Vec[T]` and owned enum payload ABI rules are stable,
    define owner moves through enum payload slots, `Slice[T]` element paths,
    owned rest aliases, and dynamic vector suffixes without relying on hidden
    whole-value leaks.
    Non-scalar or owned payload-bearing `@repr(C)` enum C layouts should be
-   defined with this ABI work; the Near-Term compiler now covers public
-   non-generic scalar/pointer-slot payload enums in C headers.
-3. Extend trait-object ownership.
+   defined with this ABI work; the current compiler covers public non-generic
+   scalar/pointer-slot payload enums in C headers.
+
+## Medium-Term Language Work
+
+1. Extend trait-object ownership.
    Define durable data-pointer storage for `own` and borrow-valued dyn objects,
    including lifetime rules for objects that outlive hidden stack
    materialization.
-4. Add an explicit owner-resolution surface.
+2. Add an explicit owner-resolution surface.
    Loop exits that cannot prove a single owner state currently produce
    `maybe-unavailable` locals. A future language form should let users resolve
    those conditional cleanup states intentionally.
