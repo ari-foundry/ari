@@ -211,6 +211,15 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/std-cmp-value-helpers.ari -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf
 	$(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 111
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 111; fi
+	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math7abs_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math8sign_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math11is_even_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math10is_odd_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math7pow_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math7gcd_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
+	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 140
 	$(TARGET) tests/cases/standard-library/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.elf
 	$(BUILD_DIR)/prelude/prelude-explicit-move.elf; code=$$?; test $$code -eq 32
 	$(TARGET) tests/cases/standard-library/ok/std-mem-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
@@ -614,6 +623,8 @@ check-prelude: $(TARGET)
 	grep -q 'import	std	std::cmp	cmp	lib/std/cmp.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::convert	lib/std/convert.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::convert	convert	lib/std/convert.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::math	lib/std/math.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::math	math	lib/std/math.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'item	std::io	extern-ari-fn	std::io::write_i64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'item	std::io	extern-ari-fn	std::io::write_u64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll

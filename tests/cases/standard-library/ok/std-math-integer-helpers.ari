@@ -1,0 +1,24 @@
+// Covers the first source-only std::math slice: signed i64 helper functions.
+fn main() -> i64 {
+  let absolute = std::math::abs_i64(-9) + math::abs_i64(0) + math::abs_i64(8);
+  let sign_score = math::sign_i64(-10) + math::sign_i64(0) + math::sign_i64(10);
+
+  var parity = 0;
+  if math::is_even_i64(8) {
+    parity = parity + 5;
+  }
+  if !math::is_even_i64(9) {
+    parity = parity + 5;
+  }
+  if math::is_odd_i64(9) {
+    parity = parity + 5;
+  }
+  if !math::is_odd_i64(8) {
+    parity = parity + 5;
+  }
+
+  let powers = math::pow_i64(3, 4) + math::pow_i64(5, 0);
+  let gcds = math::gcd_i64(48, 18) + math::gcd_i64(-24, 18) + math::gcd_i64(0, 9);
+
+  return absolute + sign_score + parity + powers + gcds;
+}

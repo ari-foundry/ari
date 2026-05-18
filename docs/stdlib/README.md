@@ -1,0 +1,25 @@
+# Ari Standard Library
+
+This folder is the dedicated home for Ari standard library documentation. Use
+it when writing Ari programs, changing `lib/std.arih`, or adding a new module
+under `lib/std/`.
+
+## Start Here
+
+- [Overview](overview.md): library purpose, module map, and design rules.
+- [API Reference](api-reference.md): current public APIs grouped by module.
+- [Library Development](library-development.md): how to add or change a
+  standard library API.
+- [Testing](testing.md): test names, check targets, and coverage expectations.
+- [Roadmap](roadmap.md): staged implementation plan and next library families.
+
+## Current Shape
+
+The standard library is ordinary Ari source whenever possible. It lives at
+`lib/std.arih`, with child modules in `lib/std/`. A few declarations are still
+compiler-known because the current language cannot express them directly:
+layout queries, typed raw pointer operations, runtime IO hooks, explicit zone
+allocation, formatting macro lowering, and some zone provenance checks.
+
+The rule of thumb is simple: put behavior in Ari source first, and add
+compiler support only when the language cannot safely model the primitive yet.

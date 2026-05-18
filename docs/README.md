@@ -26,6 +26,17 @@ Use these when writing Ari code:
 - [Memory And Ownership](language/memory.md)
 - [Front-End Only Syntax](language/front-end-only.md)
 
+## Standard Library Docs
+
+Use these when writing or changing Ari libraries:
+
+- [Standard Library Overview](stdlib/README.md)
+- [Standard Library Module Map](stdlib/overview.md)
+- [Standard Library API Reference](stdlib/api-reference.md)
+- [Standard Library Development](stdlib/library-development.md)
+- [Standard Library Testing](stdlib/testing.md)
+- [Standard Library Roadmap](stdlib/roadmap.md)
+
 ## Developer Docs
 
 Use these when changing the compiler:

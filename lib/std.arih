@@ -154,6 +154,8 @@ pub mod cmp;
 
 pub mod convert;
 
+pub mod math;
+
 pub struct Range[T] {
   start: T,
   end: T,

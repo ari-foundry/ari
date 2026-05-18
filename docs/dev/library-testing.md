@@ -21,6 +21,7 @@ test:
 
 - `std-vec-try-pop.ari`: source `std::vec` method behavior.
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
+- `std-math-integer-helpers.ari`: source `std::math` i64 helper behavior.
 - `std-boxed-as-ptr-after-reset.ari`: negative zone provenance diagnostic.
 - `prelude-option-result-methods.ari`: root prelude ADT method behavior.
 - `prelude-macro-format-no-default-zone.ari`: macro or implicit prelude

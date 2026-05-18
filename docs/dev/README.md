@@ -13,6 +13,7 @@ This folder is for people changing the compiler.
 - [Symbol Mangling](symbol-mangling.md)
 - [Standard Library Roadmap](standard-library-roadmap.md)
 - [Library Testing](library-testing.md)
+- [Standard Library Docs](../stdlib/README.md)
 - [Roadmap](roadmap.md)
 - [Completed Milestones](completed-milestones.md)
 - [Semantic Checker Decomposition](sema-decomposition.md)
