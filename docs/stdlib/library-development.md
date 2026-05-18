@@ -22,7 +22,7 @@ primitive. Examples include layout queries, raw pointer load/store,
 ## API Style
 
 - Use module paths that say what owns the behavior: `std::vec::new`,
-  `std::string::from_slice_in`, `std::math::gcd_i64`.
+  `std::string::from_slice_in`, `std::math::gcd`.
 - Use `_in` when a function needs an explicit allocation zone.
 - Prefer `Option` or `Result` for ordinary absence or recoverable failure.
 - Use `assert` only for programmer errors and current precondition traps.

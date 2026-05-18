@@ -39,7 +39,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::fmt` | Formatting traits. | `Debug`, `Display::format_in`. | Trait surface is present; formatting macros still use compiler lowering. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`. | Implemented for source-level trait-bound static dispatch. |
 | `std::convert` | Conversion trait names. | `From`, `Into`, `TryFrom`, `TryInto`. | Trait surface only; broad conversion impls are future library work. |
-| `std::math` | Source-only numeric helpers. | `abs_i64`, `sign_i64`, `is_even_i64`, `is_odd_i64`, `pow_i64`, `gcd_i64`. | First i64 helper slice; overflow policy is still future work. |
+| `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`. | First i64-signature helper slice; overflow policy is still future work. |
 
 ## API Conventions
 
@@ -85,7 +85,7 @@ Use this table when writing code from docs alone:
 | Iterate ranges. | `range(start, end)`, `range_inclusive(start, end)`, `start..end`, `start..=end` | Works directly in `for` loops and stores as `Range[T]`/`RangeInclusive[T]`. |
 | Implement custom iteration. | `Iterator[T]::next(self: ref mut Self) -> Option[T]` | Use `for item in iterator`; use `for let pattern in iterator` for skip-on-mismatch filtering. |
 | Format into owned text. | `format_in!(ref mut zone, "...", values...)` | Default-zone `format!` is intentionally not executable in the current surface. |
-| Use integer helper routines. | `math::abs_i64`, `math::pow_i64`, `math::gcd_i64` | Current helpers are i64-only and source implemented. `pow_i64` asserts that the exponent is non-negative. |
+| Use integer helper routines. | `math::abs`, `math::pow`, `math::gcd` | Current helpers have i64 signatures and are source implemented. `pow` asserts that the exponent is non-negative. |
 | Share code with C. | `extern "C"`, `@repr(C)`, `@export`, `--shared`, `--emit-c-header` | Do not pass Ari ownership across C directly. Use explicit pointers, borrows, or wrappers. |
 
 ## Common Method Groups

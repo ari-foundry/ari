@@ -212,12 +212,12 @@ check-prelude: $(TARGET)
 	$(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 111
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-cmp-value-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; $(BUILD_DIR)/prelude/std-cmp-value-helpers.elf; code=$$?; test $$code -eq 111; fi
 	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
-	grep -q '_ARNv3std4math7abs_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
-	grep -q '_ARNv3std4math8sign_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
-	grep -q '_ARNv3std4math11is_even_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
-	grep -q '_ARNv3std4math10is_odd_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
-	grep -q '_ARNv3std4math7pow_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
-	grep -q '_ARNv3std4math7gcd_i64' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math3abs' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math4sign' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math7is_even' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math6is_odd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math3pow' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
+	grep -q '_ARNv3std4math3gcd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
 	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 140
 	$(TARGET) tests/cases/standard-library/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.elf

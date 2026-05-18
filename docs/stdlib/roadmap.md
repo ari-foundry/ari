@@ -33,7 +33,8 @@ and the first `math` integer helper slice.
 
 ## Phase 4: Numerics
 
-- Expand `std::math` from i64 helpers to width-specific integer helpers.
+- Expand `std::math` from i64 signatures to generic numeric helpers when the
+  language has the right trait vocabulary.
 - Add checked, saturating, and wrapping operations only after overflow policy
   is documented.
 - Add floating helpers only where LLVM lowering and runtime behavior are

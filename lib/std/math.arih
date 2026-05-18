@@ -1,13 +1,13 @@
-// Source-only integer helpers. Keep this module small until Ari has richer
-// generic numeric traits and overflow policy APIs.
-pub fn abs_i64(value: i64) -> i64 {
+// Source-only integer helpers. The public names stay natural; the current
+// signatures are i64-only until Ari has generic numeric traits.
+pub fn abs(value: i64) -> i64 {
   if value < 0 {
     return 0 - value;
   }
   return value;
 }
 
-pub fn sign_i64(value: i64) -> i64 {
+pub fn sign(value: i64) -> i64 {
   if value < 0 {
     return -1;
   }
@@ -17,15 +17,15 @@ pub fn sign_i64(value: i64) -> i64 {
   return 0;
 }
 
-pub fn is_even_i64(value: i64) -> bool {
+pub fn is_even(value: i64) -> bool {
   return (value % 2) == 0;
 }
 
-pub fn is_odd_i64(value: i64) -> bool {
-  return !is_even_i64(value);
+pub fn is_odd(value: i64) -> bool {
+  return !is_even(value);
 }
 
-pub fn pow_i64(base: i64, exponent: i64) -> i64 {
+pub fn pow(base: i64, exponent: i64) -> i64 {
   std::assert(exponent >= 0);
 
   var result = 1;
@@ -37,9 +37,9 @@ pub fn pow_i64(base: i64, exponent: i64) -> i64 {
   return result;
 }
 
-pub fn gcd_i64(left: i64, right: i64) -> i64 {
-  var a = abs_i64(left);
-  var b = abs_i64(right);
+pub fn gcd(left: i64, right: i64) -> i64 {
+  var a = abs(left);
+  var b = abs(right);
 
   while b != 0 {
     let remainder = a % b;

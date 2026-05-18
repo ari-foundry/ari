@@ -203,18 +203,20 @@ box.is_empty()
 
 ## Math
 
-`std::math` currently contains conservative source-only `i64` helpers:
+`std::math` currently contains conservative source-only helpers with `i64`
+signatures. The names intentionally avoid type suffixes so they can grow into
+generic numeric APIs later without changing call sites:
 
 ```ari
-math::abs_i64(value)
-math::sign_i64(value)
-math::is_even_i64(value)
-math::is_odd_i64(value)
-math::pow_i64(base, exponent)
-math::gcd_i64(left, right)
+math::abs(value)
+math::sign(value)
+math::is_even(value)
+math::is_odd(value)
+math::pow(base, exponent)
+math::gcd(left, right)
 ```
 
-`pow_i64` requires a non-negative exponent and asserts that precondition at
+`pow` requires a non-negative exponent and asserts that precondition at
 runtime. These helpers intentionally do not define overflow semantics yet.
 
 ## Choosing The Right Collection

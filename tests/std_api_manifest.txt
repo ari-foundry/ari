@@ -35,12 +35,12 @@ fn std::io::write_i64|prelude IO and format tests; docs/dev/test-matrix.md Prelu
 fn std::io::write_u64|prelude IO and u64 format tests; docs/dev/test-matrix.md Prelude row
 fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
-fn std::math::abs_i64|std math integer helper tests; docs/stdlib/api-reference.md Math section
-fn std::math::gcd_i64|std math integer helper tests; docs/stdlib/api-reference.md Math section
-fn std::math::is_even_i64|std math integer helper tests; docs/stdlib/api-reference.md Math section
-fn std::math::is_odd_i64|std math integer helper tests; docs/stdlib/api-reference.md Math section
-fn std::math::pow_i64|std math integer helper tests; docs/stdlib/api-reference.md Math section
-fn std::math::sign_i64|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::abs|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::gcd|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::is_even|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::is_odd|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::sign|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::ptr_add[T]|typed pointer arithmetic tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::ptr_load[T]|raw pointer load tests; docs/dev/test-matrix.md C FFI row

@@ -33,7 +33,7 @@ The current `std` package already provides:
 - source handles for `Box`, `String`, and `Vec`
 - range/iterator traits and the `std::vec::Iter` implementation
 - comparison, formatting, and conversion trait surfaces
-- `std::math` i64 integer helpers implemented in Ari source
+- `std::math` integer helpers implemented in Ari source with natural names
 
 This baseline is useful, but it is still a seed. Some APIs are compiler hooks
 with source declarations, and some names exist mainly so user code can start
@@ -142,7 +142,7 @@ Likely compiler work:
 | `std::fmt` | Source trait impls for common values. | `format_in!`, `Display`, unsupported-type diagnostics. | Macro-to-trait lowering cleanup. |
 | `std::cmp` | Derived comparison impl coverage for more aggregate shapes. | Generic helper and derive interaction tests. | Trait-bound static dispatch and derive expansion. |
 | `std::convert` | Concrete `From`/`Into` impl patterns. | Explicit associated calls and residual conversions. | Trait coherence and inference diagnostics. |
-| `std::math` | Grow from i64 helpers into documented numeric policy slices. | Integer helper behavior, overflow-policy diagnostics, and future checked/wrapping helpers. | Overflow intrinsics or diagnostics only after the source policy is designed. |
+| `std::math` | Grow natural helper names from i64 signatures into documented numeric policy slices. | Integer helper behavior, overflow-policy diagnostics, and future checked/wrapping helpers. | Overflow intrinsics or diagnostics only after the source policy is designed. |
 
 ## API Landing Checklist
 
