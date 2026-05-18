@@ -38,6 +38,7 @@ struct LocalInfo {
     bool integer_known_negative = false;
     LocalState state = LocalState::Alive;
     std::map<std::string, LocalState> owned_field_states;
+    bool owned_field_states_complete = false;
     int immutable_borrows = 0;
     int mutable_borrows = 0;
     struct FieldBorrowCounts {
@@ -78,6 +79,7 @@ struct StateSnapshotEntry {
     bool borrow_source_mutable = false;
     bool borrow_sources_released = false;
     bool auto_drop_owner = false;
+    bool owned_field_states_complete = false;
     std::vector<LocalInfo::BorrowSource> aggregate_borrow_sources;
 };
 

@@ -261,6 +261,11 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Aggregate enum payload slots preserve `own i64` and `own u64` payload storage
   for direct temporary constructor matches, so a `match` arm can bind and drop
   the owned payload value without erasing the ownership qualifier.
+- Direct aggregate-enum constructors stored in locals or assigned to whole
+  locals seed only the active `own i64`/`own u64` payload slots as live owner
+  paths. Fieldless cases such as `None` do not require a payload drop, and
+  moving or dropping a stored payload-bearing case uses the active payload
+  owner path.
 - Aggregate enum payload slots can store plain Ari-layout tuple, fixed-array,
   struct, and explicit fixed-capacity `Vec[T; N]` payload values inline. Match
   payload bindings and direct payload slot access expose the full aggregate

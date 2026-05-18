@@ -1,0 +1,43 @@
+impl Drop for i64 {
+  fn drop(self) -> void {
+    return;
+  }
+}
+
+enum MaybeOwned {
+  None,
+  Some(own i64),
+}
+
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn untouched_none() -> i64 {
+  let item: MaybeOwned = None;
+  return 17;
+}
+
+fn assign_from_none() -> i64 {
+  var item: MaybeOwned = None;
+  item = Some(make_owned(5));
+  drop item;
+  return 5;
+}
+
+fn drop_some() -> i64 {
+  let item: MaybeOwned = Some(make_owned(19));
+  drop item;
+  return 19;
+}
+
+fn move_payload() -> i64 {
+  let item: MaybeOwned = Some(make_owned(3));
+  let token = item.0;
+  drop token;
+  return 3;
+}
+
+fn main() -> i64 {
+  return untouched_none() + assign_from_none() + drop_some() + move_payload();
+}

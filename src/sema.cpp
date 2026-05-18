@@ -6234,6 +6234,7 @@ private:
         local.generic_origin = std::move(generic_origin);
         local.auto_destroy_zone = is_zone_temp_call(*local.ir_init_expr);
         set_local_vector_known_length(local, init_vector_length);
+        initialize_owned_field_states_from_direct_enum_constructor(local, *local.ir_init_expr);
         set_known_integer_value_from_expr(local, *stmt.binding.init, *local.ir_init_expr);
         set_zone_pointer_source_from_expr(local, *local.ir_init_expr);
     }
@@ -9392,6 +9393,7 @@ private:
         }
         mark_local_alive(target);
         initialize_owned_field_states(target);
+        initialize_owned_field_states_from_direct_enum_constructor(target, *value);
         set_local_vector_known_length(target, assigned_vector_length);
         set_zone_pointer_source_from_expr(target, *value);
         set_ir_stmt_assign_name(lowered, assign_name);
@@ -9529,7 +9531,7 @@ private:
                 out.base_name = std::move(base.base_name);
                 out.base_type = std::move(base.base_type);
                 out.type = field_type;
-                out.path = local_owned_field_path(base.path, payload_index);
+                out.path = local_owned_field_path(base.path, storage_field_index);
                 out.expr = make_tuple_index_expr(expr.loc, std::move(base.expr), storage_field_index);
                 out.has_final_field_mutability = false;
                 out.final_field_mutable = true;
@@ -9875,6 +9877,19 @@ private:
         }
         if (can_call_destructor) {
             statements.push_back(make_drop_call_stmt(loc, *destructor, make_value));
+        }
+
+        if (has_aggregate_enum_layout(type)) {
+            for (std::size_t i = 1; i < type.field_types.size(); ++i) {
+                const IrType& field_type = type.field_types[i];
+                if (!is_owner_type(field_type)) continue;
+                std::string field_path = local_owned_field_path(path, i);
+                DropValueFactory make_field = [this, loc, make_value, i, field_type]() {
+                    return make_field_value_expr(loc, make_value, i, field_type);
+                };
+                append_drop_stmts_for_value(loc, field_type, make_field, statements, tracked_local, field_path);
+            }
+            return;
         }
 
         if (type.primitive == IrPrimitiveKind::Tuple ||

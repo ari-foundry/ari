@@ -2731,6 +2731,12 @@ check-variables: $(TARGET)
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-fields.ll) -eq 2
 	$(TARGET) tests/ok/drop-aggregate-moved-field.ari --emit-llvm $(BUILD_DIR)/variables/drop-aggregate-moved-field.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-aggregate-moved-field.ll) -eq 2
+	$(TARGET) tests/ok/stored-owned-enum-payload-drop.ari --emit-llvm $(BUILD_DIR)/variables/stored-owned-enum-payload-drop.ll
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/stored-owned-enum-payload-drop.ll) -eq 3
+	$(TARGET) tests/ok/stored-owned-enum-payload-drop.ari -o $(BUILD_DIR)/variables/stored-owned-enum-payload-drop.elf
+	$(BUILD_DIR)/variables/stored-owned-enum-payload-drop.elf; code=$$?; test $$code -eq 44
+	if $(TARGET) tests/errors/stored-owned-enum-payload-undropped.ari -o $(BUILD_DIR)/variables/stored-owned-enum-payload-undropped.elf >$(BUILD_DIR)/variables/stored-owned-enum-payload-undropped.err 2>&1; then exit 1; fi
+	grep -q "owning binding 'item' must be moved or dropped before return" $(BUILD_DIR)/variables/stored-owned-enum-payload-undropped.err
 	$(TARGET) tests/ok/drop-statement-payloads.ari --emit-llvm $(BUILD_DIR)/variables/drop-statement-payloads.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-statement-payloads.ll) -eq 3
 	$(TARGET) tests/ok/local-state-mutation-api.ari --emit-llvm $(BUILD_DIR)/variables/local-state-mutation-api.ll

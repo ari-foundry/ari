@@ -146,7 +146,7 @@ bool local_has_moved_or_dropped_owned_fields(const LocalInfo& local) {
 }
 
 bool local_has_tracked_owned_fields(const LocalInfo& local) {
-    return !local.owned_field_states.empty();
+    return local.owned_field_states_complete || !local.owned_field_states.empty();
 }
 
 bool local_has_live_owned_fields(const LocalInfo& local) {
@@ -420,6 +420,9 @@ std::optional<std::string> state_snapshot_mismatch_error(const StateSnapshot& le
         auto found = right.find(item.first);
         StateSnapshotEntry default_entry;
         const StateSnapshotEntry& actual = found == right.end() ? default_entry : found->second;
+        if (item.second.owned_field_states_complete != actual.owned_field_states_complete) {
+            return "binding '" + item.first + "' " + message;
+        }
         if (!state_snapshot_entry_borrow_state_equal(item.second, actual)) {
             return "binding '" + item.first + "' has incompatible borrow states";
         }
@@ -614,6 +617,7 @@ StateSnapshot LocalScopeStack::snapshot_states() const {
                 item.second.borrow_source_mutable,
                 item.second.borrow_sources_released,
                 item.second.auto_drop_owner,
+                item.second.owned_field_states_complete,
                 item.second.aggregate_borrow_sources
             };
             for (const auto& field : item.second.owned_field_states) {
@@ -635,6 +639,7 @@ void LocalScopeStack::restore_states(const StateSnapshot& snapshot) {
         } else {
             LocalInfo& local = require_for_restore(item.first);
             local.state = item.second.state;
+            local.owned_field_states.clear();
             local.zone_generation = item.second.zone_generation;
             local.vector_length_known = item.second.vector_length_known;
             local.vector_known_length = item.second.vector_known_length;
@@ -646,6 +651,7 @@ void LocalScopeStack::restore_states(const StateSnapshot& snapshot) {
             local.borrow_source_mutable = item.second.borrow_source_mutable;
             local.borrow_sources_released = item.second.borrow_sources_released;
             local.auto_drop_owner = item.second.auto_drop_owner;
+            local.owned_field_states_complete = item.second.owned_field_states_complete;
             local.aggregate_borrow_sources = item.second.aggregate_borrow_sources;
         }
     }

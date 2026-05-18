@@ -118,9 +118,14 @@ or destructured with tuple, fixed-array, or struct payload subpatterns that
 contain value bindings, aliases, wildcards, and nested product subpatterns.
 Owned word payloads can be constructed and value-bound in direct temporary
 constructor matches, and the bound payload must be consumed or dropped before
-the arm exits. Stored enum values with owned payload paths still need the
-planned tag-aware owner-path model. Fixed-capacity vector payload slots can
-also be destructured with
+the arm exits. Direct constructor values stored in locals or assigned to whole
+locals also seed tag-aware payload ownership for the known active case: a
+fieldless case such as `None` has no live payload owner, while `Some(own i64)`
+must be dropped or moved before the local exits, and `value.0` can move the
+active owned payload from a direct-constructor local. Runtime-dependent stored
+enum values, parameters, and returned enum values still need the planned full
+owner-path model. Fixed-capacity vector payload slots can also be destructured
+with
 exact array-style element patterns such as `Values([first, second])`; the match
 arm checks the vector's current runtime length before extracting the inline data
 slots. If one payload position mixes
