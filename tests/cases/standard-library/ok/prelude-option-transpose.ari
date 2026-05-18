@@ -1,0 +1,24 @@
+fn optional_ok() -> Option[Result[i64, i32]] {
+  return Some<Result[i64, i32]>(Ok<i64, i32>(23));
+}
+
+fn optional_err() -> Option[Result[i64, i32]] {
+  return Some<Result[i64, i32]>(Err<i64, i32>(5i32));
+}
+
+fn optional_none() -> Option[Result[i64, i32]] {
+  return None<Result[i64, i32]>();
+}
+
+fn main() -> i64 {
+  let transposed_ok = optional_ok().transpose().unwrap().unwrap_or(0);
+  let transposed_none = optional_none().transpose().unwrap().unwrap_or(13);
+  let transposed_err = match optional_err().transpose() {
+    Ok(_) => 0,
+    Err(error) => (error as i64) + 30;
+  };
+
+  let total = transposed_ok + transposed_none + transposed_err;
+  assert_eq_i64(total, 71);
+  return total;
+}

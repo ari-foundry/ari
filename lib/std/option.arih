@@ -123,3 +123,15 @@ pub impl[T] std::Option[std::Option[T]] {
     };
   }
 }
+
+pub impl[T, E] std::Option[std::Result[T, E]] {
+  fn transpose(self) -> std::Result[std::Option[T], E] {
+    return match self {
+      std::Some(value) => match value {
+        std::Ok(payload) => std::Ok<std::Option[T], E>(std::Some<T>(payload)),
+        std::Err(error) => std::Err<std::Option[T], E>(error);
+      },
+      std::None => std::Ok<std::Option[T], E>(std::None<T>());
+    };
+  }
+}

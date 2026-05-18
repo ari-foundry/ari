@@ -26,6 +26,7 @@ value.expect("message")
 value.map<U>(op)
 value.and_then<U>(op)
 value.flatten()
+value.transpose()
 value.or(fallback)
 value.or_else(op)
 value.xor(other)
@@ -46,6 +47,10 @@ form calls its function only for `None`.
 `flatten` is available on nested `Option[Option[T]]` values. It keeps the
 inner `Some(T)`, turns `Some(None<T>())` into `None<T>()`, and also keeps an
 outer `None<Option[T]>()` as `None<T>()`.
+
+`transpose` is available on `Option[Result[T, E]]` values. It turns
+`Some(Ok(T))` into `Ok(Some(T))`, `Some(Err(E))` into `Err(E)`, and
+`None<Result[T, E]>()` into `Ok(None<T>())`.
 
 ## Result API
 
@@ -102,6 +107,7 @@ Focused positive tests:
 tests/cases/standard-library/ok/prelude-option-result-methods.ari
 tests/cases/standard-library/ok/prelude-option-result-predicates.ari
 tests/cases/standard-library/ok/prelude-option-flatten.ari
+tests/cases/standard-library/ok/prelude-option-transpose.ari
 tests/cases/standard-library/ok/prelude-option-result-combinators.ari
 tests/cases/standard-library/ok/prelude-option-result-conversions.ari
 tests/cases/standard-library/ok/prelude-option-result-unwrap.ari

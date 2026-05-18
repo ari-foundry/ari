@@ -80,6 +80,7 @@ test:
 - `prelude-option-result-predicates.ari`: consuming Option/Result payload
   predicate helpers.
 - `prelude-option-flatten.ari`: nested Option flattening behavior.
+- `prelude-option-transpose.ari`: Option/Result transposition behavior.
 - `prelude-option-result-combinators.ari`: Option/Result map, and_then,
   eager fallback, and lazy fallback combinator behavior.
 - `prelude-option-result-conversions.ari`: Option/Result conversion, xor, and
