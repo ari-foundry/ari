@@ -202,14 +202,18 @@ method std::string::String::as_slice|check-prelude std-string-handle tests; docs
 method std::string::String::capacity|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::clear|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::contains|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::contains_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only search; docs/stdlib/api-reference.md String section
 method std::string::String::copy_to|check-prelude std-string-copy-to-method borrowed receiver and target reset tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::count|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::ends_with|check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::ends_with_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section
 method std::string::String::equals|check-prelude std-string-equals borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::equals_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section
 method std::string::String::extend_from_slice_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::first|check-prelude std-string-first-last borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::get|check-prelude std-string-handle borrowed receiver and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::index_of|check-prelude std-string-search borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::index_of_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only search; docs/stdlib/api-reference.md String section
 method std::string::String::insert|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::insert_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::is_empty|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
@@ -226,6 +230,7 @@ method std::string::String::reserve_extra|check-prelude std-string-grow; docs/de
 method std::string::String::resize_in|check-prelude std-string-grow; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::set|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::starts_with|check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::starts_with_ignore_case|check-prelude std-string-ascii-case-helpers borrowed receiver ASCII-only comparison; docs/stdlib/api-reference.md String section
 method std::string::String::trim|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
 method std::string::String::trim_end|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
 method std::string::String::trim_end_to|check-prelude std-string-trim-copy owned ASCII trim-end copy in target zone; docs/stdlib/modules/string.md

@@ -9,7 +9,8 @@ limits, examples, and test files for one module.
 - [std::option and std::result](option-result.md): ADT helpers for absence,
   failure, conversion, and lazy fallback.
 - [std::string](string.md): zone-backed owned byte-string handles, growth,
-  borrowed views, byte search, ASCII trim views/copies, and parsing helpers.
+  borrowed views, byte search, ASCII case search, trim views/copies, and
+  parsing helpers.
 - [std::io](io.md): low-level process IO hooks plus source byte-slice output.
 - [std::input](input.md): stdin-facing byte and line input, including
   `try_read_byte` for `Option[u8]` EOF handling.

@@ -1,0 +1,70 @@
+// Covers String convenience methods that expose std::ascii's ASCII-only
+// case-insensitive comparison and substring search policy.
+fn main() -> i64 {
+  var zone = zone::create(192);
+
+  var text = std::string::from_string(ref mut zone, "Ari-Std-Lib-Ari!");
+  var same: Vec[u8] = [
+    97u8, 114u8, 105u8, 45u8, 115u8, 116u8, 100u8, 45u8,
+    108u8, 105u8, 98u8, 45u8, 97u8, 114u8, 105u8, 33u8
+  ];
+  var prefix: Vec[u8] = [97u8, 82u8, 73u8];
+  var suffix: Vec[u8] = [97u8, 114u8, 105u8, 33u8];
+  var std_lower: Vec[u8] = [115u8, 116u8, 100u8];
+  var lib_upper: Vec[u8] = [76u8, 73u8, 66u8];
+  var missing: Vec[u8] = [120u8];
+  var too_long: Vec[u8] = [
+    97u8, 114u8, 105u8, 45u8, 115u8, 116u8, 100u8, 45u8,
+    108u8, 105u8, 98u8, 45u8, 97u8, 114u8, 105u8, 33u8, 33u8
+  ];
+  var empty: Vec[u8] = [];
+
+  var score = 0;
+
+  if text.equals_ignore_case(same.as_slice()) {
+    score = score + 5;
+  }
+  if !text.equals_ignore_case(prefix.as_slice()) {
+    score = score + 7;
+  }
+  if text.starts_with_ignore_case(prefix.as_slice()) {
+    score = score + 11;
+  }
+  if text.ends_with_ignore_case(suffix.as_slice()) {
+    score = score + 13;
+  }
+  if text.index_of_ignore_case(std_lower.as_slice()) == 4 {
+    score = score + 17;
+  }
+  if text.contains_ignore_case(lib_upper.as_slice()) {
+    score = score + 19;
+  }
+  if text.index_of_ignore_case(lib_upper.as_slice()) == 8 {
+    score = score + 23;
+  }
+  if text.index_of_ignore_case(suffix.as_slice()) == 12 {
+    score = score + 29;
+  }
+  if !text.contains_ignore_case(missing.as_slice()) {
+    score = score + 31;
+  }
+  if text.index_of_ignore_case(missing.as_slice()) == -1 {
+    score = score + 37;
+  }
+  if text.contains_ignore_case(empty.as_slice()) {
+    score = score + 41;
+  }
+  if text.index_of_ignore_case(empty.as_slice()) == 0 {
+    score = score + 43;
+  }
+  if !text.contains_ignore_case(too_long.as_slice()) {
+    score = score + 47;
+  }
+  if text.index_of_ignore_case(too_long.as_slice()) == -1 {
+    score = score + 53;
+  }
+
+  assert_eq_i64(score, 376);
+  zone::destroy(zone);
+  return score % 256;
+}

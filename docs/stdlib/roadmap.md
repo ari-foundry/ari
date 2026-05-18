@@ -13,7 +13,7 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 
 Current source families: `option`, `result`, `mem`, `zone` raw allocation plus
 source typed array allocation, `boxed`, `string` byte access/search/ASCII
-helpers including owned trim copies, `ascii` byte classification,
+helpers including case search and owned trim copies, `ascii` byte classification,
 case-insensitive comparison/search, and slice helpers, `vec`, `iter`, `fmt`,
 `cmp` comparison helpers, `convert`
 identity/from/into helpers, `context` runtime hooks plus the source
@@ -39,8 +39,8 @@ helper, `io` runtime hooks plus source byte-slice output, and the first
 - Keep `std::string::String` byte-oriented until a Unicode/text policy is
   designed.
 - Expose small `String` conveniences only when they preserve byte-string
-  semantics, such as borrowed ASCII trim views, owned trim copies, and
-  whole-string ASCII parsers.
+  semantics, such as ASCII case comparison/search, borrowed ASCII trim views,
+  owned trim copies, and whole-string ASCII parsers.
 - Keep ASCII-only helpers in `std::ascii` so byte-oriented classification,
   comparison, search, trimming, and parsing behavior is explicit at call sites.
 

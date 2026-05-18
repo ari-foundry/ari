@@ -434,6 +434,14 @@ check-prelude: $(TARGET)
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__string__String8inherent13parse_decimal"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__string__String8inherent9parse_hex"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-ascii-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; code=$$?; test $$code -eq 186; fi
+	$(TARGET) tests/cases/standard-library/ok/std-string-ascii-case-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
+	grep -F -q 'String8inherent18equals_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
+	grep -F -q 'String8inherent23starts_with_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
+	grep -F -q 'String8inherent21ends_with_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
+	grep -F -q 'String8inherent20index_of_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
+	grep -F -q 'String8inherent20contains_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-string-ascii-case-helpers.ari -o $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.elf
+	$(BUILD_DIR)/prelude/std-string-ascii-case-helpers.elf; code=$$?; test $$code -eq 120
 	$(TARGET) tests/cases/standard-library/ok/std-string-trim-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent13trim_start_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent11trim_end_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll

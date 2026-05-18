@@ -13,7 +13,8 @@ It is not a Unicode text abstraction yet.
 Use `std::string::String` when bytes must outlive a borrowed literal or input
 buffer and you can name the `Zone` that owns the storage. Use `Slice[u8]` when
 you only need a borrowed view. Use `std::ascii` or the `String` ASCII helpers
-for byte classification, trimming, and integer parsing.
+for byte classification, ASCII-only comparison/search, trimming, and integer
+parsing.
 
 Avoid using `String` as a general text policy. Unicode normalization, grapheme
 iteration, encoding conversion, and locale-sensitive case conversion are future
@@ -154,6 +155,11 @@ They compare exact byte values and do not perform case folding or decoding.
 `String` exposes convenience methods for the `std::ascii` slice helpers:
 
 ```ari
+text.equals_ignore_case(bytes)
+text.starts_with_ignore_case(bytes)
+text.ends_with_ignore_case(bytes)
+text.index_of_ignore_case(bytes)
+text.contains_ignore_case(bytes)
 text.trim_start()
 text.trim_start_to(ref mut zone)
 text.trim_end()
@@ -163,6 +169,10 @@ text.trim_to(ref mut zone)
 text.parse_decimal()
 text.parse_hex()
 ```
+
+The case-insensitive helpers fold only ASCII letters and then reuse the
+`std::ascii` comparison/search policy. `index_of_ignore_case` returns the first
+matching byte offset or `-1`; an empty search slice matches at `0`.
 
 The trim methods return borrowed `Slice[u8]` views into the same storage; they
 do not allocate or copy. The `*_to` forms return owned `String` copies in a
@@ -211,6 +221,7 @@ tests/cases/standard-library/ok/std-string-search.ari
 tests/cases/standard-library/ok/std-string-prefix-suffix.ari
 tests/cases/standard-library/ok/std-string-equals.ari
 tests/cases/standard-library/ok/std-string-ascii-helpers.ari
+tests/cases/standard-library/ok/std-string-ascii-case-helpers.ari
 tests/cases/standard-library/ok/std-string-trim-copy.ari
 tests/cases/standard-library/ok/std-string-grow.ari
 tests/cases/standard-library/ok/std-string-append.ari
@@ -233,5 +244,5 @@ methods are tracked in `tests/std_api_manifest.txt` and checked by
 Potential next slices:
 
 - signed and overflow-checked parsers after numeric policy is documented
-- a deliberate text/Unicode module instead of expanding ASCII byte helpers
+- a deliberate text/Unicode module beyond the explicit ASCII byte helpers
 - broader formatter integration as `Display` and `Debug` dispatch mature

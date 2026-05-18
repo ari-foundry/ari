@@ -26,7 +26,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
-| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `trim`, `trim_to`, `parse_decimal`, `as_slice`. |
+| `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
@@ -66,8 +66,8 @@ parsing need no compiler knowledge.
 `std::string::String` follows the same direction where it can. Its allocation
 constructors and runtime copy hooks still depend on compiler-known zone/string
 primitives, but byte access, empty-safe `try_*` accessors, byte search,
-comparison, ASCII trim views, owned trim copies, and whole-string ASCII
-parsing are plain source methods.
+comparison, ASCII case-insensitive comparison/search, ASCII trim views, owned
+trim copies, and whole-string ASCII parsing are plain source methods.
 
 `Slice[T]`, `std::vec::Vec[T]`, and byte-oriented `std::string::String` share
 the preferred collection vocabulary where it fits: `is_empty` for length

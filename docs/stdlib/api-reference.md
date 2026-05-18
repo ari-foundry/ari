@@ -307,6 +307,11 @@ text.count(byte)
 text.starts_with(bytes)
 text.ends_with(bytes)
 text.equals(bytes)
+text.equals_ignore_case(bytes)
+text.starts_with_ignore_case(bytes)
+text.ends_with_ignore_case(bytes)
+text.index_of_ignore_case(bytes)
+text.contains_ignore_case(bytes)
 text.append_string_in(ref mut zone, "text")
 text.append_i64_in(ref mut zone, value)
 text.append_u64_in(ref mut zone, value)
@@ -326,14 +331,16 @@ text.as_ptr()
 text.copy_to(ref mut zone)
 ```
 
-`String` stores bytes, so `trim_start`, `trim_end`, `trim`,
-`parse_decimal`, and `parse_hex` intentionally reuse `std::ascii` behavior.
-The `try_*` byte accessors return `Option[u8]` for empty or out-of-range
-access. The plain trim methods return borrowed `Slice[u8]` views, while
-`trim_start_to`, `trim_end_to`, and `trim_to` copy the trimmed bytes into a
-target zone and return owned `String` handles. The parse methods require the
-whole string to be valid and return `Option[i64]`; trim first when leading or
-trailing ASCII whitespace should be ignored.
+`String` stores bytes, so `equals_ignore_case`, `starts_with_ignore_case`,
+`ends_with_ignore_case`, `index_of_ignore_case`, `contains_ignore_case`,
+`trim_start`, `trim_end`, `trim`, `parse_decimal`, and `parse_hex`
+intentionally reuse `std::ascii` behavior. The `try_*` byte accessors return
+`Option[u8]` for empty or out-of-range access. The plain trim methods return
+borrowed `Slice[u8]` views, while `trim_start_to`, `trim_end_to`, and
+`trim_to` copy the trimmed bytes into a target zone and return owned `String`
+handles. The parse methods require the whole string to be valid and return
+`Option[i64]`; trim first when leading or trailing ASCII whitespace should be
+ignored.
 
 `std::boxed::Box[T]` is a zone-backed single-value owner:
 

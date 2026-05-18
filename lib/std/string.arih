@@ -411,6 +411,31 @@ pub impl std::string::String {
     return true;
   }
 
+  fn equals_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::equals_ignore_case(view, values);
+  }
+
+  fn starts_with_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::starts_with_ignore_case(view, values);
+  }
+
+  fn ends_with_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::ends_with_ignore_case(view, values);
+  }
+
+  fn index_of_ignore_case(self: ref Self, values: super::Slice[u8]) -> i64 {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::index_of_ignore_case(view, values);
+  }
+
+  fn contains_ignore_case(self: ref Self, values: super::Slice[u8]) -> bool {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::contains_ignore_case(view, values);
+  }
+
   fn trim_start(self: ref Self) -> super::Slice[u8] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::trim_start(view);
