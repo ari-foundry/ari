@@ -168,14 +168,13 @@ reference patterns without `..` can also borrow ownership-carrying element
 slots, including nested owned fields inside aggregate elements, when each
 selected element path is statically known. Patterns with `..` can borrow
 ownership-carrying prefix elements, and suffix elements when the direct local
-vector's current length is known. If a shared `let ref` suffix depends on an
-unknown current length, Ari borrows the whole owner vector path instead; this is
-more conservative, so the vector must not be partially moved and the suffix
-borrow blocks mutation/drop until the borrow bindings leave scope. A mutable
-unknown-length suffix can use the same whole-vector fallback only when it binds
-exactly one suffix element, such as `let ref mut [.., last]`; patterns that bind
-multiple mutable element references still require a known vector length. These
-patterns still cannot bind an owned rest slice. Nested shared reference binding
+vector's current length is known. If a local `let ref` or `let ref mut` suffix
+depends on an unknown current length, Ari first checks that all tracked owned
+elements in the vector are still live, then records synthetic suffix owner paths
+for each suffix binding. That lets distinct bindings such as
+`let ref mut [first, .., prev, last] = values` coexist while still blocking
+whole-vector mutation/drop until the borrow bindings leave scope. These patterns
+still cannot bind an owned rest slice. Nested shared reference binding
 modes are supported in enum `match`,
 enum `if let`, and enum
 `while let` patterns, including same-name/same-type enum `while let`
@@ -194,8 +193,8 @@ also move exact element bindings, and suffix element bindings after `..` when
 the hidden vector's current length is known. Selected `_` elements and known
 skipped `..` ranges are dropped from the hidden Vec storage. Ownership-carrying
 enum payload moves, `Slice[T]` owner paths, owned rest aliases, and
-unknown-length value or multi-binding mutable vector suffix owner paths remain
-tied to the later owned-payload/runtime-capacity ABI work.
+unknown-length value vector suffix owner paths remain tied to the later
+owned-payload/runtime-capacity ABI work.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

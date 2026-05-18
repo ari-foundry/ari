@@ -6629,6 +6629,65 @@ private:
         return runtime_sequence_reference_element_borrow_path(source_path, std::move(element_path), source_type);
     }
 
+    void require_dynamic_owner_suffix_reference_available(SourceLocation loc,
+                                                          const std::string& base_name,
+                                                          LocalInfo& source,
+                                                          const std::string& borrow_path,
+                                                          bool mutable_borrow) {
+        if (mutable_borrow) {
+            if (auto error = local_mutable_borrow_error(base_name, source)) fail(loc, *error);
+        }
+        if (local_has_moved_or_dropped_owned_fields(source)) {
+            fail(loc, "cannot borrow partially moved owning binding '" + base_name + "'");
+        }
+        require_can_borrow_path(loc, base_name, source, borrow_path, mutable_borrow);
+    }
+
+    void lower_dynamic_owner_suffix_reference_binding(const Pattern& item,
+                                                      const std::string& base_name,
+                                                      const IrType& element_type,
+                                                      const std::string& borrow_path,
+                                                      bool mutable_borrow,
+                                                      const ReferenceAccessBuilder& make_access,
+                                                      std::vector<IrStmtPtr>& statements) {
+        const Pattern& effective_item = expanded_pattern(item);
+        if (effective_item.kind == PatternKind::Wildcard) return;
+        if (effective_item.kind != PatternKind::Binding ||
+            effective_item.binding_mode != BindingMode::Value) {
+            fail(effective_item.loc,
+                 "dynamic ownership-carrying Vec[T] reference suffix patterns currently support direct element bindings");
+        }
+
+        LocalInfo& source = require_live_local(effective_item.loc, base_name);
+        require_dynamic_owner_suffix_reference_available(
+            effective_item.loc,
+            base_name,
+            source,
+            borrow_path,
+            mutable_borrow);
+
+        add_borrow_source(source, borrow_path, mutable_borrow);
+        borrow_context_.push_temporary(base_name, borrow_path, mutable_borrow);
+        IrExprPtr borrow = make_borrow_expr(
+            effective_item.loc,
+            base_name,
+            borrow_path,
+            make_access(effective_item.loc, ""),
+            mutable_borrow,
+            element_type);
+        IrType binding_type = borrow->type;
+        declare_local(effective_item.loc, effective_item.payload_name, binding_type, false);
+        IrStmtPtr decl = make_ir_var_decl(
+            effective_item.loc,
+            effective_item.payload_name,
+            binding_type,
+            std::move(borrow),
+            false);
+        const IrExpr* init = decl->binding.init.get();
+        statements.push_back(std::move(decl));
+        promote_temporary_borrow_to_named(effective_item.loc, *init, effective_item.payload_name);
+    }
+
     void lower_reference_runtime_sequence_dynamic_element_binding(const Pattern& item,
                                                                   const Pattern& sequence_pattern,
                                                                   std::size_t pattern_index,
@@ -6639,6 +6698,7 @@ private:
                                                                   const IrType& element_type,
                                                                   const std::string& borrow_path,
                                                                   bool mutable_borrow,
+                                                                  bool dynamic_owner_suffix_path,
                                                                   std::vector<IrStmtPtr>& statements) {
         const Pattern& effective_item = expanded_pattern(item);
         if (effective_item.kind == PatternKind::Wildcard) return;
@@ -6662,6 +6722,17 @@ private:
                 element_type,
                 access_path);
         };
+        if (dynamic_owner_suffix_path && is_owner_type(element_type)) {
+            lower_dynamic_owner_suffix_reference_binding(
+                item,
+                base_name,
+                element_type,
+                borrow_path,
+                mutable_borrow,
+                make_access,
+                statements);
+            return;
+        }
         lower_reference_binding_pattern_from_access_path(
             item,
             base_name,
@@ -6938,13 +7009,11 @@ private:
                         mutable_borrow,
                         statements);
                 } else {
-                    std::string borrow_path = reference_plan.dynamic_owner_suffix_uses_whole_borrow
-                        ? path
-                        : runtime_sequence_reference_borrow_path(
-                              path,
-                              pattern,
-                              i,
-                              shape_type);
+                    std::string borrow_path = runtime_sequence_reference_borrow_path(
+                        path,
+                        pattern,
+                        i,
+                        shape_type);
                     lower_reference_runtime_sequence_dynamic_element_binding(
                         pattern.elements[i],
                         pattern,
@@ -6956,27 +7025,11 @@ private:
                         element_type,
                         borrow_path,
                         mutable_borrow,
+                        reference_plan.dynamic_owner_suffix_uses_synthetic_paths,
                         statements);
                 }
             }
         }
-    }
-
-    bool runtime_sequence_pattern_has_single_dynamic_suffix_binding(const Pattern& pattern) {
-        if (!pattern.has_rest || !pattern.rest_alias_name.empty()) return false;
-
-        bool found_binding = false;
-        for (std::size_t i = 0; i < pattern.elements.size(); ++i) {
-            const Pattern& item = expanded_pattern(pattern.elements[i]);
-            if (item.kind == PatternKind::Wildcard) continue;
-            if (i < pattern.rest_index) return false;
-            if (item.kind != PatternKind::Binding || item.binding_mode != BindingMode::Value) {
-                return false;
-            }
-            if (found_binding) return false;
-            found_binding = true;
-        }
-        return found_binding;
     }
 
     void lower_reference_runtime_sequence_binding_pattern_from_path(const Pattern& pattern,
@@ -6994,13 +7047,6 @@ private:
             [&]() -> std::optional<std::uint64_t> {
                 return known_direct_local_vec_reference_length(base_name, path, shape_type);
             });
-        if (mutable_borrow &&
-            reference_plan.dynamic_owner_suffix_uses_whole_borrow &&
-            !runtime_sequence_pattern_has_single_dynamic_suffix_binding(pattern)) {
-            fail(pattern.loc,
-                 "mutable reference suffix patterns over ownership-carrying Vec[T] require a known vector length unless exactly one suffix binding can borrow the whole vector");
-        }
-
         std::vector<IrStmtPtr> body;
         if (path.empty()) {
             append_reference_runtime_sequence_rest_alias(pattern, base_name, shape_type, body);

@@ -544,7 +544,7 @@ RuntimeSequenceReferencePatternPlan plan_runtime_sequence_reference_pattern(
     }
     plan.known_owner_vec_length = known_direct_vec_length();
     if (!plan.known_owner_vec_length) {
-        plan.dynamic_owner_suffix_uses_whole_borrow = true;
+        plan.dynamic_owner_suffix_uses_synthetic_paths = true;
         return plan;
     }
 

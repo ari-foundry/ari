@@ -83,12 +83,12 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Local `Vec[T]` reference patterns with `..` can borrow ownership-carrying
   prefix elements, and suffix elements when the direct local vector's current
   length is known, as long as the pattern does not bind the rest as a Slice.
-- Shared local `let ref` suffix patterns over unknown-length direct
-  `Vec[own T]` storage use a conservative whole-vector borrow when all tracked
-  owned elements are still live. The whole-vector borrow blocks mutation and
-  drop while the suffix borrow bindings are in scope. Single-binding mutable
-  suffix patterns such as `let ref mut [.., last]` use the same whole-vector
-  fallback; multi-binding mutable suffixes still require exact owner paths.
+- Unknown-length local `let ref` and `let ref mut` suffix patterns over direct
+  `Vec[own T]` storage use synthetic suffix owner paths after proving all
+  tracked owned elements are still live. These dynamic suffix borrows allow
+  distinct prefix/suffix bindings such as `let ref mut [first, .., last]` while
+  still blocking whole-vector mutation and drop until the borrow bindings leave
+  scope.
 - Shared `Slice[T]` reference sequence patterns can destructure tuple,
   fixed-array, and struct elements through the same access-path helper used by
   local aggregate reference patterns.
@@ -101,8 +101,8 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Runtime-sequence reference pattern planning also lives in
   `pattern_semantics`, including direct rest-alias constraints,
   ownership-carrying rest-alias rejection, known-length owner suffix paths, and
-  conservative whole-owner fallback planning before sema emits shared or
-  single-binding mutable borrow bindings.
+  synthetic dynamic owner suffix planning before sema emits shared or mutable
+  borrow bindings.
 - Enum-case reference patterns borrow addressable aggregate enum payload slots,
   including 64-bit payload-word slots and nested aggregate-enum payload slots.
 - Enum statement/expression `match`, enum `if let`, and enum `while let` can

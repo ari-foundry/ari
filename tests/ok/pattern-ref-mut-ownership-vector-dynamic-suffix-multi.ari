@@ -1,0 +1,27 @@
+fn make_owned(value: i64) -> own i64 {
+  return value;
+}
+
+fn touch(value: ref mut i64) -> i64 {
+  return 0;
+}
+
+fn borrow_suffix(flag: bool) -> i64 {
+  var values: Vec[own i64] = if flag {
+    [make_owned(1), make_owned(2), make_owned(3)]
+  } else {
+    [make_owned(4), make_owned(5), make_owned(6), make_owned(7)]
+  };
+  {
+    let ref mut [first, .., prev, last] = values;
+    touch(first);
+    touch(prev);
+    touch(last);
+  }
+  drop values;
+  return 0;
+}
+
+fn main() -> i64 {
+  return borrow_suffix(true) + borrow_suffix(false);
+}

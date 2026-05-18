@@ -1008,9 +1008,9 @@ storage. Local `Vec[own T]` value patterns can also move exact element
 bindings, and known-length suffix bindings after `..`, through tracked hidden
 Vec storage. Selected `_` elements and known skipped rest-gap elements are
 dropped from that hidden storage. Ownership-carrying enum payload moves,
-`Slice[T]` owner paths, owned rest aliases, unknown-length value or
-multi-binding mutable vector suffixes, and other non-static runtime sequence
-owner paths remain tied to the later owned-payload/runtime-capacity ABI work.
+`Slice[T]` owner paths, owned rest aliases, unknown-length value vector
+suffixes, and other non-static runtime sequence owner paths remain tied to the
+later owned-payload/runtime-capacity ABI work.
 
 `ptr T` can appear in FFI signatures and be passed around as a pointer-shaped
 value. `T?` is accepted as the nullable spelling of the same raw pointer type,

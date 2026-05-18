@@ -40,7 +40,7 @@ struct PatternAlternativeSet {
 
 struct RuntimeSequenceReferencePatternPlan {
     std::optional<std::uint64_t> known_owner_vec_length;
-    bool dynamic_owner_suffix_uses_whole_borrow = false;
+    bool dynamic_owner_suffix_uses_synthetic_paths = false;
 };
 
 struct RuntimeSequenceValuePatternPlan {
