@@ -1,0 +1,58 @@
+// Covers std::math helpers that make signed division rounding explicit.
+fn main() -> i64 {
+  var score = 0;
+
+  if std::math::div_floor(7, 3) == 2 {
+    score = score + 3;
+  }
+  if math::div_floor(-7, 3) == -3 {
+    score = score + 5;
+  }
+  if math::div_floor(7, -3) == -3 {
+    score = score + 7;
+  }
+  if math::div_floor(-7, -3) == 2 {
+    score = score + 11;
+  }
+  if math::div_floor(6, 3) == 2 {
+    score = score + 13;
+  }
+
+  if math::div_ceil(7, 3) == 3 {
+    score = score + 17;
+  }
+  if math::div_ceil(-7, 3) == -2 {
+    score = score + 19;
+  }
+  if math::div_ceil(7, -3) == -2 {
+    score = score + 23;
+  }
+  if math::div_ceil(-7, -3) == 3 {
+    score = score + 29;
+  }
+  if math::div_ceil(6, 3) == 2 {
+    score = score + 31;
+  }
+
+  if math::mod_floor(7, 3) == 1 {
+    score = score + 37;
+  }
+  if math::mod_floor(-7, 3) == 2 {
+    score = score + 41;
+  }
+  if math::mod_floor(7, -3) == -2 {
+    score = score + 43;
+  }
+  if math::mod_floor(-7, -3) == -1 {
+    score = score + 47;
+  }
+  if math::mod_floor(6, 3) == 0 {
+    score = score + 53;
+  }
+  if math::mod_floor(0, 3) == 0 {
+    score = score + 59;
+  }
+
+  assert_eq_i64(score, 438);
+  return score % 256;
+}

@@ -40,7 +40,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::fmt` | Formatting traits. | `Debug`, `Display::format_in`. | Trait surface is present; formatting macros still use compiler lowering. |
 | `std::cmp` | Comparison traits and helpers. | `Eq`, `PartialEq`, `Ord`, `PartialOrd`, `min`, `max`, `clamp`, `is_between`. | Implemented for source-level trait-bound static dispatch. |
 | `std::convert` | Conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. | First source helper slice; broad conversion impls and fallible conversion methods are future work. |
-| `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`, `lcm`. | First i64-signature helper slice; overflow policy is still future work. |
+| `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `div_floor`, `div_ceil`, `mod_floor`, `gcd`, `lcm`. | Current i64-signature helper slices; overflow policy is still future work. |
 | `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, and bit-scan helpers. | `is_set`, `any_set`, `set`, `clear`, `toggle`, `rotate_left`, `rotate_right`, `is_power_of_two`, `bit_width`, `floor_power_of_two`, `ceil_power_of_two`, `low_mask`, `align_down`, `align_up`, `count_ones`, `count_zeros`, `leading_zeros`, `trailing_zeros`. | Current u64-signature helper slices; generic integer policy is future work. |
 
 ## API Conventions
@@ -93,7 +93,7 @@ Use this table when writing code from docs alone:
 | Work with bit masks, rotations, powers of two, and bit scans. | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::low_mask`, `bits::align_up` | Current helpers take `u64`. Rotate counts are non-negative and wrap modulo 64; alignment helpers assert a non-zero power-of-two alignment. |
 | Implement custom iteration. | `Iterator[T]::next(self: ref mut Self) -> Option[T]` | Use `for item in iterator`; use `for let pattern in iterator` for skip-on-mismatch filtering. |
 | Format into owned text. | `format_in!(ref mut zone, "...", values...)` | Default-zone `format!` is intentionally not executable in the current surface. |
-| Use integer helper routines. | `math::abs`, `math::pow`, `math::gcd`, `math::lcm` | Current helpers have i64 signatures and are source implemented. `pow` asserts that the exponent is non-negative; `lcm` returns `0` if either input is `0`. |
+| Use integer helper routines. | `math::abs`, `math::pow`, `math::div_floor`, `math::mod_floor`, `math::gcd`, `math::lcm` | Current helpers have i64 signatures and are source implemented. `pow` asserts that the exponent is non-negative; division rounding helpers assert a non-zero denominator; `lcm` returns `0` if either input is `0`. |
 | Share code with C. | `extern "C"`, `@repr(C)`, `@export`, `--shared`, `--emit-c-header` | Do not pass Ari ownership across C directly. Use explicit pointers, borrows, or wrappers. |
 
 ## Common Method Groups

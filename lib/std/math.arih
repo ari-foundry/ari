@@ -37,6 +37,40 @@ pub fn pow(base: i64, exponent: i64) -> i64 {
   return result;
 }
 
+pub fn div_floor(numerator: i64, denominator: i64) -> i64 {
+  std::assert(denominator != 0);
+
+  let quotient = numerator / denominator;
+  let remainder = numerator % denominator;
+  if remainder != 0 {
+    if (remainder > 0 && denominator < 0) || (remainder < 0 && denominator > 0) {
+      return quotient - 1;
+    }
+  }
+  return quotient;
+}
+
+pub fn div_ceil(numerator: i64, denominator: i64) -> i64 {
+  std::assert(denominator != 0);
+
+  let quotient = numerator / denominator;
+  let remainder = numerator % denominator;
+  if remainder != 0 {
+    if (remainder > 0 && denominator > 0) || (remainder < 0 && denominator < 0) {
+      return quotient + 1;
+    }
+  }
+  return quotient;
+}
+
+pub fn mod_floor(numerator: i64, denominator: i64) -> i64 {
+  std::assert(denominator != 0);
+
+  // Keep the remainder paired with div_floor so:
+  // numerator == div_floor(numerator, denominator) * denominator + mod_floor(...).
+  return numerator - (div_floor(numerator, denominator) * denominator);
+}
+
 pub fn gcd(left: i64, right: i64) -> i64 {
   var a = abs(left);
   var b = abs(right);

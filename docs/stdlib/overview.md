@@ -33,7 +33,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::fmt` | Formatting trait surface. | `Display::format_in`, `Debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
 | `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. |
-| `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`, `lcm`. |
+| `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `div_floor`, `div_ceil`, `mod_floor`, `gcd`, `lcm`. |
 | `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, and bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`. |
 
 ## Allocation Rules

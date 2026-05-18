@@ -411,14 +411,20 @@ math::sign(value)
 math::is_even(value)
 math::is_odd(value)
 math::pow(base, exponent)
+math::div_floor(numerator, denominator)
+math::div_ceil(numerator, denominator)
+math::mod_floor(numerator, denominator)
 math::gcd(left, right)
 math::lcm(left, right)
 ```
 
 `pow` requires a non-negative exponent and asserts that precondition at
-runtime. `gcd` and `lcm` normalize negative inputs through absolute values.
-`lcm` returns `0` when either input is `0`. These helpers intentionally do not
-define overflow semantics yet.
+runtime. `div_floor` rounds signed division toward negative infinity,
+`div_ceil` rounds toward positive infinity, and `mod_floor` returns the
+matching floor remainder. The division helpers assert that `denominator != 0`.
+`gcd` and `lcm` normalize negative inputs through absolute values. `lcm`
+returns `0` when either input is `0`. These helpers intentionally do not define
+overflow semantics yet.
 
 ## Bits
 

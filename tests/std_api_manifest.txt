@@ -86,10 +86,13 @@ fn std::io::write_u64|prelude IO and u64 format tests; docs/dev/test-matrix.md P
 fn std::iter::range[T]|range for-loop tests; docs/dev/test-matrix.md Control flow row
 fn std::iter::range_inclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 fn std::math::abs|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::div_ceil|std math division rounding tests; docs/stdlib/api-reference.md Math section
+fn std::math::div_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::gcd|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::is_even|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::is_odd|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::lcm|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::mod_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::sign|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row

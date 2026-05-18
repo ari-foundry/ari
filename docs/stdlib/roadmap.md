@@ -19,7 +19,7 @@ comparison helpers, `convert`
 identity/from/into helpers, `context` runtime hooks plus the source
 `has_arg` helper, `input` runtime hooks plus the source `try_read_byte` EOF
 helper, `io` runtime hooks plus source byte-slice output, and the first
-`math` and `bits` numeric helper slices.
+`math` arithmetic/division-rounding and `bits` numeric helper slices.
 
 ## Phase 2: Pull More Behavior Into Ari Source
 
@@ -47,7 +47,8 @@ helper, `io` runtime hooks plus source byte-slice output, and the first
 ## Phase 4: Numerics
 
 - Expand `std::math` from i64 signatures to generic numeric helpers when the
-  language has the right trait vocabulary.
+  language has the right trait vocabulary. Preserve the existing natural names
+  for signs, parity, powers, division rounding, and divisor helpers.
 - Expand `std::bits` from u64 signatures to generic integer mask, rotation,
   power-of-two, low-mask, and bit-scan helpers when the same trait vocabulary
   exists.

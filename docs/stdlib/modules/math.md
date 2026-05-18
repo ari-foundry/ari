@@ -27,14 +27,24 @@ Power and divisor helpers:
 
 ```ari
 math::pow(base, exponent)
+math::div_floor(numerator, denominator)
+math::div_ceil(numerator, denominator)
+math::mod_floor(numerator, denominator)
 math::gcd(left, right)
 math::lcm(left, right)
 ```
 
-`pow` multiplies in a source loop and asserts that `exponent >= 0`. `gcd`
-normalizes negative inputs through `abs` and returns the greatest common
-divisor. `lcm` also normalizes negative inputs and returns `0` when either
-input is `0`.
+`pow` multiplies in a source loop and asserts that `exponent >= 0`.
+`div_floor` rounds signed division toward negative infinity, `div_ceil` rounds
+toward positive infinity, and `mod_floor` returns the paired floor remainder:
+
+```text
+numerator == div_floor(numerator, denominator) * denominator + mod_floor(numerator, denominator)
+```
+
+The division helpers assert that `denominator != 0`. `gcd` normalizes negative
+inputs through `abs` and returns the greatest common divisor. `lcm` also
+normalizes negative inputs and returns `0` when either input is `0`.
 
 ## Limits
 
@@ -49,8 +59,9 @@ when no helper communicates intent better.
 
 ```ari
 fn tile_score(width: i64, height: i64) -> i64 {
-  let common = math::gcd(width, height);
-  let repeat = math::lcm(width, height);
+  let step = math::div_ceil(width, 8);
+  let common = math::gcd(step, height);
+  let repeat = math::lcm(step, height);
   if math::is_even(repeat) {
     return common + repeat;
   }
@@ -64,7 +75,8 @@ The focused behavior test is:
 
 ```text
 tests/cases/standard-library/ok/std-math-integer-helpers.ari
+tests/cases/standard-library/ok/std-math-division-rounding.ari
 ```
 
-`make check-prelude` emits LLVM for that file, checks the public helper symbols,
-builds an executable, and verifies the exit code.
+`make check-prelude` emits LLVM for those files, checks the public helper
+symbols, builds executables, and verifies the exit codes.

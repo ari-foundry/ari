@@ -249,6 +249,12 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4math3lcm' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
 	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 200
+	$(TARGET) tests/cases/standard-library/ok/std-math-division-rounding.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-division-rounding.ll
+	grep -q '_ARNv3std4math9div_floor' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
+	grep -q '_ARNv3std4math8div_ceil' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
+	grep -q '_ARNv3std4math9mod_floor' $(BUILD_DIR)/prelude/std-math-division-rounding.ll
+	$(TARGET) tests/cases/standard-library/ok/std-math-division-rounding.ari -o $(BUILD_DIR)/prelude/std-math-division-rounding.elf
+	$(BUILD_DIR)/prelude/std-math-division-rounding.elf; code=$$?; test $$code -eq 182
 	$(TARGET) tests/cases/standard-library/ok/std-ascii-byte-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8is_digit' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8to_lower' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
