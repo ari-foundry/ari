@@ -22,8 +22,9 @@ near-term deliverable.
    ownership-stable collections. The stack-backed local root `Vec[T]` method
    surface is frozen, including `as_ptr()` for raw element-buffer access.
    Source `Box[T]`/`std::Box[T]` already follows the explicit-zone handle
-   policy; future heap ownership should keep that capability-oriented shape
-   rather than inventing an ambient heap.
+   policy, including tracked `as_ptr()` and `as_mut_ptr()` raw views; future
+   heap ownership should keep that capability-oriented shape rather than
+   inventing an ambient heap.
 2. Define dynamic owner pattern paths.
    After runtime-capacity `Vec[T]` and owned enum payload ABI rules are stable,
    define owner moves through enum payload slots, `Slice[T]` element paths,

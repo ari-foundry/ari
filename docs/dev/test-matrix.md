@@ -294,8 +294,9 @@ Checklist:
       parameters
 - [x] `std::boxed::new<T>(ref mut Zone, value)` wraps placement construction in
       a tracked source `std::boxed::Box<T>` handle with
-      `get`/`set`/`replace`/`take`/`try_take`/`clear`/`put_in`/`is_empty`/`copy_to`/`swap`/`as_ptr`
-      methods, borrowed receiver lowering for read-only `get`/`copy_to`/`as_ptr`,
+      `get`/`set`/`replace`/`take`/`try_take`/`clear`/`put_in`/`is_empty`/`copy_to`/`swap`/`as_ptr`/`as_mut_ptr`
+      methods, borrowed receiver lowering for read-only `get`/`copy_to`/`as_ptr`
+      and mutable-borrowed receiver lowering for `as_mut_ptr`,
       value-drop overwrite through `set`, an empty-handle state after `take`,
       Option-returning empty-handle move-out through `try_take`, same-zone
       empty-handle refill through `put_in(ref mut Zone, value)`, no-op clear for empty handles, and

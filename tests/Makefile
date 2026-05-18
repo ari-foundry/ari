@@ -254,6 +254,8 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4swap' $(BUILD_DIR)/prelude/std-boxed-swap.ll
 	$(TARGET) tests/ok/std-boxed-as-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
 	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-ptr.ll
+	$(TARGET) tests/ok/std-boxed-as-mut-ptr.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.ll
+	grep -F -q 'define ptr @"_ARNv4impl20std__boxed__Box_i64_8inherent10as_mut_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.ll
 	$(TARGET) tests/ok/std-boxed-take.ari --emit-llvm $(BUILD_DIR)/prelude/std-boxed-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent4take' $(BUILD_DIR)/prelude/std-boxed-take.ll
 	grep -q '_ARNv4impl20std__boxed__Box_i64_8inherent8is_empty' $(BUILD_DIR)/prelude/std-boxed-take.ll
@@ -521,6 +523,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-copy-to.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; $(BUILD_DIR)/prelude/std-boxed-copy-to.elf; code=$$?; test $$code -eq 51; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-swap.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-swap.elf; $(BUILD_DIR)/prelude/std-boxed-swap.elf; code=$$?; test $$code -eq 85; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-ptr.elf; code=$$?; test $$code -eq 30; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-as-mut-ptr.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr.elf; code=$$?; test $$code -eq 38; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-take.elf; $(BUILD_DIR)/prelude/std-boxed-take.elf; code=$$?; test $$code -eq 24; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-try-take.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-try-take.elf; $(BUILD_DIR)/prelude/std-boxed-try-take.elf; code=$$?; test $$code -eq 42; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-boxed-clear.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-boxed-clear.elf; $(BUILD_DIR)/prelude/std-boxed-clear.elf; code=$$?; test $$code -eq 30; fi
@@ -648,6 +651,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'boxed' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-box-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-as-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-as-ptr-after-reset.err
+	if $(TARGET) tests/errors/std-boxed-as-mut-ptr-after-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.elf >$(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'raw' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-as-mut-ptr-after-reset.err
 	if $(TARGET) tests/errors/std-boxed-copy-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-boxed-copy-to-after-target-reset.err
 	if $(TARGET) tests/errors/std-boxed-drop-use-after.ari -o $(BUILD_DIR)/prelude/std-boxed-drop-use-after.elf >$(BUILD_DIR)/prelude/std-boxed-drop-use-after.err 2>&1; then exit 1; fi
