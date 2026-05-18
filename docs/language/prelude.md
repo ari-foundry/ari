@@ -25,7 +25,9 @@ The package exposes declaration-shaped IO, input, context, assertion, trait,
 range, pointer/memory, and zone surfaces. Ari-owned runtime hooks are declared
 with `extern "ari"` and explicit `ari_builtin_*` symbols, not `extern "C"`;
 they are compiler/runtime builtins, not libc bindings. The semantic checker
-uses those source declarations for ordinary function and trait signatures.
+uses those source declarations for ordinary function and trait signatures, and
+checks each reserved builtin declaration against the compiler's expected
+parameter and return types.
 Formatting `print`/`println`, layout queries, range constructors, typed memory
 helpers, and lexical temporary-zone helpers still lower through compiler hooks
 after the matching source `std` surface is visible.
@@ -391,6 +393,9 @@ paths.
 
 These signatures are declared by `lib/std.arih` and exposed through implicit
 prelude aliases when source `std` is loaded:
+
+Reserved `extern "ari"` declarations must keep these builtin signatures exact;
+wrong arity, parameter types, or return types are rejected before lowering.
 
 ```ari
 print(format: string, ...) -> i64

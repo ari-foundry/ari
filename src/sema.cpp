@@ -3856,6 +3856,54 @@ private:
         }
     }
 
+    static bool ari_builtin_type_matches(const IrType& actual,
+                                         const AriBuiltinTypeExpectation& expected) {
+        const std::string actual_name = type_name(actual);
+        return std::find(expected.accepted_names.begin(),
+                         expected.accepted_names.end(),
+                         actual_name) != expected.accepted_names.end();
+    }
+
+    static std::string parameter_count_name(std::size_t count) {
+        return count == 1 ? "parameter" : "parameters";
+    }
+
+    void require_ari_builtin_signature_matches(const FunctionDecl& fn,
+                                               const FunctionSig& sig) const {
+        if (sig.extern_abi != "ari") return;
+        std::optional<AriBuiltinSignatureExpectation> expected =
+            ari_builtin_signature_for_symbol(sig.link_name);
+        if (!expected) {
+            fail(fn.loc, "internal error: missing signature metadata for Ari builtin '" +
+                             sig.link_name + "'");
+        }
+
+        if (sig.params.size() != expected->params.size()) {
+            fail(fn.loc,
+                 "Ari builtin '" + sig.link_name + "' expects " +
+                     std::to_string(expected->params.size()) + " " +
+                     parameter_count_name(expected->params.size()) + ", got " +
+                     std::to_string(sig.params.size()));
+        }
+
+        for (std::size_t i = 0; i < sig.params.size(); ++i) {
+            if (!ari_builtin_type_matches(sig.params[i], expected->params[i])) {
+                fail(fn.params[i].type.loc,
+                     "Ari builtin '" + sig.link_name + "' parameter " +
+                         std::to_string(i + 1) + " must be " +
+                         expected->params[i].display_name + ", got " +
+                         type_name(sig.params[i]));
+            }
+        }
+
+        if (!ari_builtin_type_matches(sig.result, expected->result)) {
+            SourceLocation loc = fn.has_return_type ? fn.return_type.loc : fn.loc;
+            fail(loc,
+                 "Ari builtin '" + sig.link_name + "' return type must be " +
+                     expected->result.display_name + ", got " + type_name(sig.result));
+        }
+    }
+
     void collect_extern_function_signature(const FunctionDecl& fn) {
         if (fn.params.size() > std::numeric_limits<std::uint16_t>::max()) {
             fail(fn.loc, "functions support up to 65535 parameters");
@@ -3926,6 +3974,7 @@ private:
                 require_extern_c_direct_aggregate_abi(fn.return_type.loc, sig.result, "return type");
             }
         }
+        require_ari_builtin_signature_matches(fn, sig);
         set_function_return_contracts(sig);
         apply_explicit_borrow_return_contract(sig, fn);
         current_module_name_ = previous_module;

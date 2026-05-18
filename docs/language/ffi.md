@@ -63,9 +63,11 @@ extern "ari" fn write_u64(value: u64) -> i64 = "ari_builtin_write_u64";
 
 These declarations must name a known `ari_builtin_*` symbol explicitly. They
 are for Ari's own standard surface and should not be used to bind libc or other
-foreign libraries. After semantic checking they lower as Ari builtin ABI
-entries, not C extern declarations, so LLVM output calls the runtime hook
-without emitting a foreign `declare` for it.
+foreign libraries. The semantic checker validates the declaration's arity,
+parameter types, and return type against the compiler-known builtin metadata.
+After semantic checking they lower as Ari builtin ABI entries, not C extern
+declarations, so LLVM output calls the runtime hook without emitting a foreign
+`declare` for it.
 
 Extern declarations describe concrete C symbols. They cannot be generic because
 C has no source-level generic ABI for Ari to instantiate:

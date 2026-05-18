@@ -19,6 +19,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - Public `@repr(C)` record and enum C-header metadata assembly lives in
   `c_export_semantics`; sema still owns declaration traversal, type resolution,
   and enum-layout lookup for that export phase.
+- Ari builtin metadata now records expected source signatures for
+  `extern "ari"` declarations, and sema rejects wrong arity, parameter types,
+  or return types before any builtin call reaches IR lowering.
 - User-defined `meta fn` macro syntax covers expression, item, type, pattern,
   and attribute-position `ident!(...)` expansion for the documented bounded
   token-stream and explicit AST-constructor subset.

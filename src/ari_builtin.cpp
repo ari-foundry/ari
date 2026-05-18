@@ -1,6 +1,31 @@
 #include "ari_builtin.hpp"
 
+#include <initializer_list>
+#include <utility>
+
 namespace ari {
+namespace {
+
+AriBuiltinTypeExpectation builtin_type(std::string display_name,
+                                       std::initializer_list<const char*> aliases = {}) {
+    AriBuiltinTypeExpectation type;
+    type.display_name = std::move(display_name);
+    type.accepted_names.push_back(type.display_name);
+    for (const char* alias : aliases) {
+        type.accepted_names.emplace_back(alias);
+    }
+    return type;
+}
+
+AriBuiltinSignatureExpectation builtin_sig(std::initializer_list<AriBuiltinTypeExpectation> params,
+                                           AriBuiltinTypeExpectation result) {
+    AriBuiltinSignatureExpectation signature;
+    signature.params.assign(params.begin(), params.end());
+    signature.result = std::move(result);
+    return signature;
+}
+
+} // namespace
 
 const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
     static const std::vector<AriBuiltinAlias> aliases = {
@@ -111,32 +136,51 @@ const std::vector<AriBuiltinAlias>& ari_builtin_source_aliases() {
 }
 
 bool is_ari_builtin_symbol(const std::string& symbol) {
-    return symbol == "ari_builtin_context_argc" ||
-           symbol == "ari_builtin_context_arg" ||
-           symbol == "ari_builtin_write_i64" ||
-           symbol == "ari_builtin_write_u64" ||
-           symbol == "ari_builtin_write_bool" ||
-           symbol == "ari_builtin_write_byte" ||
-           symbol == "ari_builtin_newline" ||
-           symbol == "ari_builtin_read_byte" ||
-           symbol == "ari_builtin_read_line" ||
-           symbol == "ari_builtin_read_line_owned" ||
-           symbol == "ari_builtin_zone_create" ||
-           symbol == "ari_builtin_zone_alloc" ||
-           symbol == "ari_builtin_zone_allocation_zone" ||
-           symbol == "ari_builtin_string_alloc_buffer" ||
-           symbol == "ari_builtin_string_with_capacity" ||
-           symbol == "ari_builtin_string_new" ||
-           symbol == "ari_builtin_string_from_string" ||
-           symbol == "ari_builtin_string_copy_to" ||
-           symbol == "ari_builtin_zone_reset" ||
-           symbol == "ari_builtin_zone_destroy" ||
-           symbol == "ari_builtin_assert" ||
-           symbol == "ari_builtin_assert_eq_i64" ||
-           symbol == "ari_builtin_assert_ne_i64" ||
-           symbol == "ari_builtin_assert_eq_bool" ||
-           symbol == "ari_builtin_assert_ne_bool" ||
-           symbol == "ari_builtin_panic";
+    return ari_builtin_signature_for_symbol(symbol).has_value();
+}
+
+std::optional<AriBuiltinSignatureExpectation> ari_builtin_signature_for_symbol(const std::string& symbol) {
+    const AriBuiltinTypeExpectation i64 = builtin_type("i64");
+    const AriBuiltinTypeExpectation u64 = builtin_type("u64");
+    const AriBuiltinTypeExpectation u8 = builtin_type("u8");
+    const AriBuiltinTypeExpectation boolean = builtin_type("bool");
+    const AriBuiltinTypeExpectation void_type = builtin_type("void");
+    const AriBuiltinTypeExpectation source_string = builtin_type("string");
+    const AriBuiltinTypeExpectation ptr_u8 = builtin_type("ptr u8");
+    const AriBuiltinTypeExpectation ptr_c_void = builtin_type("ptr c_void", {"ptr void"});
+    const AriBuiltinTypeExpectation own_zone = builtin_type("own Zone");
+    const AriBuiltinTypeExpectation ref_mut_zone = builtin_type("ref mut Zone");
+    const AriBuiltinTypeExpectation raw_string = builtin_type("std::string::RawString");
+    const AriBuiltinTypeExpectation std_string = builtin_type("std::string::String");
+    const AriBuiltinTypeExpectation ref_std_string = builtin_type("ref std::string::String");
+
+    if (symbol == "ari_builtin_context_argc") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_context_arg") return builtin_sig({i64}, source_string);
+    if (symbol == "ari_builtin_write_i64") return builtin_sig({i64}, i64);
+    if (symbol == "ari_builtin_write_u64") return builtin_sig({u64}, i64);
+    if (symbol == "ari_builtin_write_bool") return builtin_sig({boolean}, i64);
+    if (symbol == "ari_builtin_write_byte") return builtin_sig({u8}, i64);
+    if (symbol == "ari_builtin_newline") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_read_byte") return builtin_sig({}, i64);
+    if (symbol == "ari_builtin_read_line") return builtin_sig({}, source_string);
+    if (symbol == "ari_builtin_read_line_owned") return builtin_sig({ref_mut_zone}, std_string);
+    if (symbol == "ari_builtin_zone_create") return builtin_sig({i64}, own_zone);
+    if (symbol == "ari_builtin_zone_alloc") return builtin_sig({ref_mut_zone, i64, i64}, ptr_u8);
+    if (symbol == "ari_builtin_zone_allocation_zone") return builtin_sig({ptr_u8}, ptr_c_void);
+    if (symbol == "ari_builtin_string_alloc_buffer") return builtin_sig({ref_mut_zone, i64}, ptr_u8);
+    if (symbol == "ari_builtin_string_with_capacity") return builtin_sig({ref_mut_zone, i64}, raw_string);
+    if (symbol == "ari_builtin_string_new") return builtin_sig({ref_mut_zone, i64}, std_string);
+    if (symbol == "ari_builtin_string_from_string") return builtin_sig({ref_mut_zone, source_string}, std_string);
+    if (symbol == "ari_builtin_string_copy_to") return builtin_sig({ref_std_string, ref_mut_zone}, std_string);
+    if (symbol == "ari_builtin_zone_reset") return builtin_sig({ref_mut_zone}, void_type);
+    if (symbol == "ari_builtin_zone_destroy") return builtin_sig({own_zone}, void_type);
+    if (symbol == "ari_builtin_assert") return builtin_sig({boolean}, i64);
+    if (symbol == "ari_builtin_assert_eq_i64") return builtin_sig({i64, i64}, i64);
+    if (symbol == "ari_builtin_assert_ne_i64") return builtin_sig({i64, i64}, i64);
+    if (symbol == "ari_builtin_assert_eq_bool") return builtin_sig({boolean, boolean}, i64);
+    if (symbol == "ari_builtin_assert_ne_bool") return builtin_sig({boolean, boolean}, i64);
+    if (symbol == "ari_builtin_panic") return builtin_sig({}, void_type);
+    return std::nullopt;
 }
 
 std::optional<std::string> ari_builtin_symbol_for_source_name(const std::string& source_name) {

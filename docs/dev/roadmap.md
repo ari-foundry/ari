@@ -23,7 +23,10 @@ near-term deliverable.
    surface is frozen, including `as_ptr()` for raw element-buffer access.
    Root `Vec[T]` function parameters and impl receivers lower through the
    existing Slice-shaped view ABI; root `Vec[T]` returns, struct fields, trait
-   method returns, and extern signatures still need the runtime-capacity ABI.
+   method returns, and extern C signatures still need the runtime-capacity ABI.
+   Reserved `extern "ari"` builtin declarations are signature-checked against
+   compiler-known builtin metadata and are not an escape hatch for root
+   collection ABI.
    Source `std::Vec[T]`/`std::vec::Vec[T]` already follows the explicit-zone
    handle policy for allocation, same-zone growth, `Vec!` construction sugar,
    Drop of live elements, tracked `Slice` views, `get_ref()` / `get_mut()`

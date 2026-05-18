@@ -738,6 +738,12 @@ check-prelude: $(TARGET)
 	grep -q "unknown Ari builtin symbol 'puts'" $(BUILD_DIR)/prelude/ari-builtin-unknown.err
 	if $(TARGET) tests/errors/ari-builtin-missing-link.ari -o $(BUILD_DIR)/prelude/ari-builtin-missing-link.elf >$(BUILD_DIR)/prelude/ari-builtin-missing-link.err 2>&1; then exit 1; fi
 	grep -q 'extern "ari" builtin declarations require an explicit builtin symbol' $(BUILD_DIR)/prelude/ari-builtin-missing-link.err
+	if $(TARGET) tests/errors/ari-builtin-signature-arity.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-arity.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-arity.err 2>&1; then exit 1; fi
+	grep -q "Ari builtin 'ari_builtin_write_i64' expects 1 parameter, got 0" $(BUILD_DIR)/prelude/ari-builtin-signature-arity.err
+	if $(TARGET) tests/errors/ari-builtin-signature-param.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-param.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-param.err 2>&1; then exit 1; fi
+	grep -q "Ari builtin 'ari_builtin_write_i64' parameter 1 must be i64, got u64" $(BUILD_DIR)/prelude/ari-builtin-signature-param.err
+	if $(TARGET) tests/errors/ari-builtin-signature-result.ari -o $(BUILD_DIR)/prelude/ari-builtin-signature-result.elf >$(BUILD_DIR)/prelude/ari-builtin-signature-result.err 2>&1; then exit 1; fi
+	grep -q "Ari builtin 'ari_builtin_write_i64' return type must be i64, got u64" $(BUILD_DIR)/prelude/ari-builtin-signature-result.err
 	if $(TARGET) tests/errors/prelude-result-arity.ari -o $(BUILD_DIR)/prelude/prelude-result-arity.elf >$(BUILD_DIR)/prelude/prelude-result-arity.err 2>&1; then exit 1; fi
 	grep -q "enum 'std::Result' expects 2 type arguments" $(BUILD_DIR)/prelude/prelude-result-arity.err
 	if $(TARGET) tests/errors/prelude-read-line-owned-after-reset.ari -o $(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.elf >$(BUILD_DIR)/prelude/prelude-read-line-owned-after-reset.err 2>&1; then exit 1; fi
