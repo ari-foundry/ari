@@ -1,10 +1,10 @@
 # std::context
 
-`std::context` exposes the process argument slice that the Ari host entry
-wrapper receives from the operating system. It is intentionally small: the
-module answers "how many arguments did the program start with?" and "is this
-argument index available?" without promising environment, process, or file
-system APIs yet.
+`std::context` exposes the low-level process argument slice that the Ari host
+entry wrapper receives from the operating system. It is intentionally small:
+the module answers "how many arguments did the program start with?" and "is
+this argument index available?" without owning the full process environment
+surface.
 
 The primitive values come from runtime hooks initialized by `@ari_entry`.
 Small policy helpers, such as `has_arg`, live in Ari source so their behavior
@@ -27,7 +27,8 @@ has_arg(index: i64) -> bool
 
 `has_arg(index)` returns `true` only when `0 <= index < context::argc()`.
 Negative indexes are always false. Use it before `arg(index)` when absence is
-an ordinary branch in your program.
+an ordinary branch in low-level context code. Application code should usually
+prefer `std::env::try_arg`.
 
 `arg(index)` returns a lowercase Ari `string`, which is currently a borrowed
 pointer-shaped value. If `index` is out of range, it returns an empty string.
@@ -49,7 +50,9 @@ fn main() -> i64 {
 
 ## Current Limits
 
-- There is no `std::env`, `std::process`, or filesystem module yet.
+- `std::env` now provides the user-facing argument helpers. Environment
+  variables, process control, and filesystem modules are still future
+  OS-facing slices.
 - Argument strings are borrowed from the runtime context. Copy into a
   zone-backed `std::string::String` later when longer-lived owned text is
   needed.

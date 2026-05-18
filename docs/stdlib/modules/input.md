@@ -6,8 +6,9 @@
 copy, and `input::try_read_byte()` when EOF should be handled with `Option`.
 
 The module is intentionally narrow. It does not manage files, terminals,
-environment variables, or process handles. Those belong to future OS-facing
-modules such as `std::fs`, `std::env`, and `std::process`.
+environment variables, or process handles. `std::env` owns process argument
+helpers today, and future OS-facing modules such as `std::fs` and
+`std::process` should own their resource handles explicitly.
 
 ## API
 

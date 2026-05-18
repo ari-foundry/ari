@@ -456,6 +456,11 @@ unreachable() -> void
 context::argc() -> i64
 context::arg(index: i64) -> string
 context::has_arg(index: i64) -> bool
+env::arg_count() -> i64
+env::arg(index: i64) -> string
+env::has_arg(index: i64) -> bool
+env::try_arg(index: i64) -> Option[string]
+env::program_name() -> Option[string]
 arg_count() -> i64
 arg(index: i64) -> string
 has_arg(index: i64) -> bool
@@ -583,14 +588,20 @@ Available context builtins:
 context::argc() -> i64
 context::arg(index: i64) -> string
 context::has_arg(index: i64) -> bool
+env::arg_count() -> i64
+env::arg(index: i64) -> string
+env::has_arg(index: i64) -> bool
+env::try_arg(index: i64) -> Option[string]
+env::program_name() -> Option[string]
 arg_count() -> i64
 arg(index: i64) -> string
 has_arg(index: i64) -> bool
 ```
 
 `has_arg(index)` returns `true` only when `0 <= index < context::argc()`.
-Out-of-range `arg(index)` currently returns an empty string, so use `has_arg`
-when missing arguments are part of normal control flow.
+Out-of-range `arg(index)` currently returns an empty string, so use
+`env::try_arg(index)` when missing arguments are part of normal control flow.
+`env::program_name()` is the optional `argv[0]` value.
 
 ## Layout Queries
 

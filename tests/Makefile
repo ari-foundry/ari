@@ -202,6 +202,14 @@ check-prelude: $(TARGET)
 	$(TARGET) tests/cases/standard-library/ok/std-context-args.ari -o $(BUILD_DIR)/prelude/std-context-args.elf
 	$(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 95
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-context-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-context-args.elf; $(BUILD_DIR)/prelude/std-context-args.elf; code=$$?; test $$code -eq 95; fi
+	$(TARGET) tests/cases/standard-library/ok/std-env-args.ari --emit-llvm $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -q "@ari_builtin_context_argc" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env9arg_count" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env7try_arg" $(BUILD_DIR)/prelude/std-env-args.ll
+	grep -F -q "std3env12program_name" $(BUILD_DIR)/prelude/std-env-args.ll
+	$(TARGET) tests/cases/standard-library/ok/std-env-args.ari -o $(BUILD_DIR)/prelude/std-env-args.elf
+	$(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-env-args.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-env-args.elf; $(BUILD_DIR)/prelude/std-env-args.elf; code=$$?; test $$code -eq 98; fi
 	$(TARGET) tests/cases/standard-library/ok/prelude-std-qualified-print.ari --emit-llvm $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 1)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
 	grep -q "call i64 @ari_builtin_write_i64(i64 3)" $(BUILD_DIR)/prelude/prelude-std-qualified-print.ll
@@ -811,6 +819,8 @@ check-prelude: $(TARGET)
 	grep -q 'import	std	std::input	input	lib/std/input.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::context	lib/std/context.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::context	context	lib/std/context.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::env	lib/std/env.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::env	env	lib/std/env.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::mem	lib/std/mem.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::mem	mem	lib/std/mem.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::zone	lib/std/zone.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta

@@ -22,7 +22,8 @@ hiding allocation, ownership, or backend behavior.
 | `std::result` | Convenience methods for success/failure values. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or_else`, `ok`, `err`, `map_err`, `or`, `transpose`. |
 | `std::io` | Minimal runtime-backed process IO. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `write_bytes`, `newline`, `read_line`. |
 | `std::input` | Friendly stdin helpers. | `line`, `owned_line`, `read_byte`, `try_read_byte`. |
-| `std::context` | Process argument access. | `argc`, `arg`, `has_arg`. |
+| `std::context` | Low-level runtime context access. | `argc`, `arg`, `has_arg`. |
+| `std::env` | User-facing process argument helpers. | `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`. |
 | `std::mem` | Layout and raw pointer operations. | `size_of`, `align_of`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. |
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `alloc_array<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
@@ -91,6 +92,10 @@ module's trait surface.
 `std::context` keeps the same split: `argc` and `arg` are runtime hooks because
 they read the host argument context, while `has_arg` is ordinary source that
 documents the valid index policy in one reusable place.
+
+`std::env` is source-only for now. It wraps the context hooks with the names
+application code should use and adds `Option`-based argument access through
+`try_arg` and `program_name`.
 
 `std::zone` keeps allocation visible. Raw byte allocation and lifecycle hooks
 are runtime-backed, while `alloc_array<T>` is source Ari that packages the

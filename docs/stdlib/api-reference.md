@@ -65,7 +65,7 @@ range(start, end)
 range_inclusive(start, end)
 ```
 
-## Process Context
+## Process Context And Environment
 
 Runtime-backed argument access lives in `std::context`:
 
@@ -81,6 +81,20 @@ has_arg(index)
 `has_arg(index)` is true only for `0 <= index < context::argc()`. It is the
 preferred guard before reading optional user arguments. `arg(index)` returns a
 lowercase `string`; out-of-range access returns an empty string.
+
+Application code should usually use the user-facing `std::env` wrappers:
+
+```ari
+env::arg_count()
+env::arg(index)
+env::has_arg(index)
+env::try_arg(index)
+env::program_name()
+```
+
+`env::try_arg(index)` returns `Option[string]`, and `env::program_name()` is
+the optional `argv[0]` value. Environment variables, process mutation, files,
+time, and thread APIs are still roadmap items.
 
 ## IO And Input
 

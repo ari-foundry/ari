@@ -41,6 +41,8 @@ test:
   byte access and empty pop behavior.
 - `std-context-args.ari`: runtime-backed `std::context` argument access,
   source `has_arg`, and root alias behavior.
+- `std-env-args.ari`: source `std::env` argument helpers, `Option`-returning
+  `try_arg`, and `program_name` behavior over the runtime context.
 - `std-io-byte-slice.ari`: source `std::io` byte-slice output over the raw
   write-byte backend hook.
 - `std-input-byte-option.ari`: source `std::input` EOF-to-Option byte helper

@@ -76,6 +76,11 @@ fn std::convert::from[T, U: From[T]|std convert value helper tests; docs/stdlib/
 fn std::convert::identity[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::convert::into[T, U: Into[T]|std convert value helper tests; docs/stdlib/api-reference.md Conversion section
 fn std::debug_assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
+fn std::env::arg|check-prelude std-env-args argument wrapper; docs/stdlib/modules/env.md
+fn std::env::arg_count|check-prelude std-env-args argument count wrapper; docs/stdlib/modules/env.md
+fn std::env::has_arg|check-prelude std-env-args argument range helper; docs/stdlib/modules/env.md
+fn std::env::program_name|check-prelude std-env-args optional program name helper; docs/stdlib/modules/env.md
+fn std::env::try_arg|check-prelude std-env-args optional argument helper; docs/stdlib/modules/env.md
 fn std::input::line|prelude input/read_line tests; docs/dev/test-matrix.md Prelude row
 fn std::input::owned_line|prelude owned read_line tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 fn std::input::read_byte|prelude byte input tests; docs/dev/test-matrix.md Prelude row
@@ -300,6 +305,7 @@ module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Mo
 module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row
 module std::convert|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
+module std::env|std env argument helper tests; docs/stdlib/modules/env.md
 module std::fmt|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::input|prelude input tests; docs/dev/test-matrix.md Prelude row
 module std::io|prelude IO tests; docs/dev/test-matrix.md Prelude row

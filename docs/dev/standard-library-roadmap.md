@@ -30,8 +30,9 @@ The current `std` package already provides:
   filtering, flattening, bidirectional option-result transposition, and lazy
   fallback helpers, including consuming payload predicate helpers
 - assertion, panic, `move`, and `take` helpers
-- IO/input/context builtin declarations plus source helpers such as
-  `io::write_bytes`, `input::try_read_byte`, and `context::has_arg`
+- IO/input/context/env declarations and source helpers such as
+  `io::write_bytes`, `input::try_read_byte`, `context::has_arg`,
+  `env::try_arg`, and `env::program_name`
 - layout and pointer helpers in `std::mem`
 - explicit-zone allocation in `std::zone`, including the source
   `alloc_array<T>` raw buffer helper
@@ -102,6 +103,10 @@ Likely compiler work:
   be tested in focused slices.
 - Grow collection families in this order: slice helpers, vector methods,
   iterator adapters, maps/sets/deques.
+- Keep `HashMap` and `HashSet` behind a clear policy for hashing, equality,
+  tombstones, capacity growth, and explicit allocation zones. The public names
+  should be natural (`HashMap`, `HashSet`, `insert`, `get`, `contains`) rather
+  than type-suffixed, with trait bounds carrying key and value types.
 
 Likely compiler work:
 
@@ -127,11 +132,20 @@ Likely compiler work:
 
 ### Phase 5: OS-Facing Libraries
 
-- Add thin wrappers for environment, file, time, and process APIs only after
-  C FFI wrapper conventions are stable.
+- Grow `std::env` from the current process-argument helpers into
+  environment-variable APIs only after runtime string ownership and OS wrapper
+  conventions are stable.
+- Add thin wrappers for file, time, process, thread, synchronization, and
+  syscall-adjacent APIs only after C FFI wrapper conventions are stable.
 - Keep OS resources explicit. File handles, process handles, and buffers should
   be visible owners or zone-backed handles.
-- Prefer small modules: `std::env`, `std::fs`, `std::time`, `std::process`.
+- Prefer small modules: `std::env`, `std::fs`, `std::time`, `std::process`,
+  `std::thread`, `std::sync`, and `std::os`.
+- Treat modern must-have system APIs as explicit capabilities: args/env,
+  current directory, file descriptors or handles, process spawn and platform
+  fork, thread spawn/join, shared/atomic coordination, time, and error-code
+  conversion. Avoid a raw "everything syscall" module until safe wrappers
+  define ownership and lifetime rules.
 
 Likely compiler work:
 
@@ -155,6 +169,11 @@ Likely compiler work:
 | `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
+| `std::env` | Environment-variable helpers after the current argument wrapper slice. | `try_arg`, `program_name`, future `get`/`has`/`set`/`remove`, and null/environment-missing behavior. | Runtime string ownership, OS wrapper declarations, and platform error policy. |
+| `std::process` | Exit status, process id, spawn, wait, and platform fork wrappers. | `id`, `exit` diagnostics, spawn/wait result handling, fork platform guards. | Runtime wrappers for POSIX/Windows split and handle ownership. |
+| `std::thread` | Spawn/join handles after function pointer and ownership transfer rules are stable. | join success/failure, moved capture rejection, shared state diagnostics. | Runtime thread wrapper, entry trampoline ABI, and send/share trait policy. |
+| `std::sync` | Shared ownership and atomics before locks/channels. | `Shared`/`Weak` upgrade behavior, atomic load/store/CAS, mutex poisoning or no-poison policy. | Reference-counted handle lowering, atomic intrinsics, and thread-safety trait checks. |
+| `std::collections` | `HashMap` and `HashSet` after Vec and iterator surfaces are stable. | insertion, replacement, removal, lookup, growth, iteration, drop, hash collision behavior. | Generic aggregate monomorphization, hashing/equality traits, zone-aware table layout. |
 | `std::string` | Add signed/checked parsers only after text and numeric policies are documented. | Search, growth, append, copy, ASCII case comparison/search, ASCII trim/parse, prefix parse, owned trim copy, and after-reset tests. | Formatting/string runtime hooks. |
 | `std::ascii` | Add signed parsers only after numeric sign and overflow policy is documented. | Byte classification behavior, case-insensitive comparison/search, slice trimming/parsing, prefix parser consumed-length behavior, source symbol checks, and future parser edge cases. | None for current whole-slice and prefix helpers; signed/checked parsers may need overflow diagnostics. |
 | `std::vec` | Iterator/adaptor growth and root/source Vec unification plan after safe accessors. | Method, `try_*` access, iterator, borrow, owner-drop, and same-zone tests. | Iterator lowering and generic aggregate monomorphization. |

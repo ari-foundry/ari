@@ -29,7 +29,8 @@ hooks because the current language cannot express those primitives directly.
 | `std::result` | Error-return convenience methods. | `is_ok`, `is_err`, `is_ok_and`, `is_err_and`, `unwrap_or`, `unwrap_or_else`, `unwrap`, `expect`, `unwrap_err`, `expect_err`, `ok`, `err`, `map`, `map_err`, `and_then`, `or`, `or_else`, `transpose`. | Implemented for the current generic enum model. |
 | `std::io` | Minimal process IO hooks. | `write_i64`, `write_u64`, `write_bool`, `write_byte`, `write_bytes`, `newline`, `read_byte`, `read_line`, `read_line_owned`. | Runtime-backed hooks plus source byte-slice output. |
 | `std::input` | Friendly stdin helpers. | `read_byte`, `try_read_byte`, `line`, `owned_line`. | Runtime-backed hooks plus source EOF-to-Option byte handling. |
-| `std::context` | Program argument access. | `argc`, `arg`, `has_arg`. | Runtime-backed hooks plus a source range predicate; initialized by the generated entry wrapper. |
+| `std::context` | Low-level runtime context access. | `argc`, `arg`, `has_arg`. | Runtime-backed hooks plus a source range predicate; initialized by the generated entry wrapper. |
+| `std::env` | User-facing process argument helpers. | `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`. | Source wrappers over `std::context`; environment variables and process mutation are future OS-facing slices. |
 | `std::mem` | Layout and raw pointer helpers. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. | Compiler-lowered where layout or typed pointer semantics are required. |
 | `std::zone` | Explicit allocation capability. | `create`, byte `alloc`, typed `alloc[T]`, `alloc_array[T]`, `new[T]`, `promote[T]`, `reset`, `destroy`, `allocation_zone`. | Runtime-backed with ownership/provenance checks in sema plus source raw array allocation. |
 | `std::boxed` | Zone-backed single-value owner handle. | `Box[T]`, `new`, `Box::new`, `get`, `set`, `replace`, `take`, `try_take`, `clear`, `put_in`, `copy_to`, `as_ref`, `as_mut`, `swap`, raw pointer access. | Implemented as an explicit-zone seed for future smart-pointer work. |
@@ -72,7 +73,7 @@ Use this table when writing code from docs alone:
 | Task | Preferred API | Notes |
 | --- | --- | --- |
 | Print debug or user-facing output. | `print`, `println`, `print!`, `println!`, `io::write_bytes(slice)` | Format strings must be string literals. Use `{}` for strings, integers, bools, and `f32`/`f64`; use `{:.N}` for float precision. Use `write_bytes` for raw `Slice[u8]` output. |
-| Read process arguments. | `arg_count()`, `arg(index)`, `has_arg(index)`, `context::argc()`, `context::arg(index)`, `context::has_arg(index)` | Arguments are lowercase `string` values. `has_arg` checks `0 <= index < argc`; out-of-range `arg` returns an empty string. |
+| Read process arguments. | `env::try_arg(index)`, `env::program_name()`, `env::arg_count()`, `env::has_arg(index)`, root `arg_count()`, `has_arg(index)` | Arguments are lowercase `string` values. Prefer `try_arg` for normal absence; out-of-range raw `arg` returns an empty string. |
 | Read stdin. | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` | `try_read_byte` returns `Option[u8]` instead of the raw `-1` EOF sentinel. Borrowed line input reuses an internal buffer. Owned line input copies into `std::string::String`. |
 | Represent missing values. | `Option[T]`, `Some(value)`, `None<T>()` | Use `.unwrap_or`, `.map<U>`, `.and_then<U>`, `.filter()`, `.flatten()`, `.transpose()`, `?`, or `??` when that reads better than `match`. |
 | Convert missing values into failures. | `option.ok_or<E>(error)`, `option.ok_or_else<E>(op)` | Lazy form builds the error only for `None`. |
@@ -91,6 +92,8 @@ Use this table when writing code from docs alone:
 | Convert values generically. | `convert::identity`, `convert::from`, `convert::into` | `from<T, U>` uses `convert::From[T]` for destination `U`; `into<T, U>` uses `convert::Into[T]` on source `U`. |
 | Iterate ranges. | `range(start, end)`, `range_inclusive(start, end)`, `start..end`, `start..=end` | Works directly in `for` loops and stores as `Range[T]`/`RangeInclusive[T]`. |
 | Work with bit masks, rotations, powers of two, and bit scans. | `bits::is_set`, `bits::rotate_left`, `bits::bit_width`, `bits::low_mask`, `bits::align_up`, `bits::leading_ones` | Current helpers take `u64`. Rotate counts are non-negative and wrap modulo 64; alignment helpers assert a non-zero power-of-two alignment. Zero-run helpers return `64` for `0u64`; one-run helpers return `64` for `~0u64`. |
+| Plan OS-facing code. | `std::env` today; future `std::process`, `std::thread`, `std::sync`, `std::fs`, `std::time`, `std::os` | Args are implemented. Environment variables, process spawn/fork, thread join, shared ownership/atomics, files, time, and raw syscall wrappers need runtime and ownership policy work. |
+| Plan map/set collections. | Future `std::collections::HashMap`, `std::collections::HashSet` | These need generic aggregate monomorphization, hashing/equality traits, iterator behavior, and explicit-zone allocation policy before landing. |
 | Implement custom iteration. | `Iterator[T]::next(self: ref mut Self) -> Option[T]` | Use `for item in iterator`; use `for let pattern in iterator` for skip-on-mismatch filtering. |
 | Format into owned text. | `format_in!(ref mut zone, "...", values...)` | Default-zone `format!` is intentionally not executable in the current surface. |
 | Use integer helper routines. | `math::abs`, `math::is_positive`, `math::pow`, `math::div_floor`, `math::mod_floor`, `math::gcd`, `math::lcm` | Current helpers have i64 signatures and natural names so they can grow into generic APIs later. `pow` asserts that the exponent is non-negative; division rounding helpers assert a non-zero denominator; `lcm` returns `0` if either input is `0`. |
@@ -245,7 +248,7 @@ small source APIs with focused tests before becoming a larger design promise.
 | Allocation | Ari's memory model is explicit, so allocation must be visible and capability-based. | `std::zone`, future allocator traits, future scoped scratch helpers. |
 | Collections | Most programs need growable storage and borrowed views. | `std::vec`, `std::boxed`, future maps/sets/deques after generic aggregate monomorphization matures. |
 | Text And Formatting | Diagnostics, CLI tools, and user programs need owned text, byte helpers, and formatting. | `std::string`, `std::ascii`, `std::fmt`, formatting macros. |
-| IO And Process Context | Programs need arguments, stdin/stdout, and eventually files and environment access. | `std::io`, `std::input`, `std::context`, future `std::fs`, `std::env`, `std::process`. |
+| IO And Process Context | Programs need arguments, stdin/stdout, and eventually files, full environment access, processes, and threads. | `std::io`, `std::input`, `std::context`, `std::env`, future `std::fs`, `std::process`, `std::thread`, `std::sync`. |
 | Iteration | Collections and ranges need a shared loop protocol. | `std::iter`, collection iterators. |
 | Numerics | Systems programs need reliable arithmetic and bit helpers beyond operators. | `std::math`, `std::bits`, future integer checked/wrapping helpers. |
 | Testing And Diagnostics | Library work needs source-level tests and stable failure reporting. | future `std::test`, richer panic messages, diagnostics helpers. |

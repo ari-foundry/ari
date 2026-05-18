@@ -1,0 +1,43 @@
+// Covers source std::env argument helpers built on the runtime context hooks.
+fn consume_arg(value: string) -> i64 {
+  return 19;
+}
+
+fn main() -> i64 {
+  let count = env::arg_count();
+  var score = 0;
+
+  if count == context::argc() {
+    score = score + 3;
+  }
+  if env::has_arg(0) {
+    score = score + 5;
+  }
+  if !env::has_arg(-1) {
+    score = score + 7;
+  }
+  if !env::has_arg(count) {
+    score = score + 11;
+  }
+
+  let first = env::try_arg(0);
+  if first.is_some() {
+    score = score + 13;
+  }
+
+  let missing = env::try_arg(count);
+  if missing.is_none() {
+    score = score + 17;
+  }
+
+  if env::has_arg(0) {
+    score = score + consume_arg(env::arg(0));
+  }
+
+  let program = env::program_name();
+  if program.is_some() {
+    score = score + 23;
+  }
+
+  return score;
+}

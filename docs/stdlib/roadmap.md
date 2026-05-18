@@ -17,10 +17,27 @@ helpers including case search, prefix parsers, and owned trim copies, `ascii`
 byte classification, case-insensitive comparison/search, slice helpers, and
 prefix parsers, `vec`, `iter`, `fmt`, `cmp` comparison helpers, `convert`
 identity/from/into helpers, `context` runtime hooks plus the source
-`has_arg` helper, `input` runtime hooks plus the source `try_read_byte` EOF
-helper, `io` runtime hooks plus source byte-slice output, and the first
-`math` sign predicate/arithmetic/division-rounding and `bits` numeric helper
-slices, including zero/one-run bit scans.
+`has_arg` helper, `env` source argument wrappers with `try_arg` and
+`program_name`, `input` runtime hooks plus the source `try_read_byte` EOF
+helper, `io` runtime hooks plus source byte-slice output, and the first `math`
+sign predicate/arithmetic/division-rounding and `bits` numeric helper slices,
+including zero/one-run bit scans.
+
+## Essential Library Families
+
+These are the library families Ari needs for modern application and systems
+work. Each one should land in small tested slices with natural API names.
+
+| Family | Purpose | Current Or Planned APIs |
+| --- | --- | --- |
+| `std::env` | Read startup and environment state without exposing raw runtime hooks. | Current `arg_count`, `arg`, `has_arg`, `try_arg`, `program_name`; future `get`, `has`, `set`, `remove`. |
+| `std::process` | Represent the current process and child processes explicitly. | Future `id`, `exit`, `spawn`, `wait`, platform `fork`, status/result helpers. |
+| `std::fs` | Work with files and directories through owned handles. | Future open/read/write/close, metadata, directory iteration, path helpers. |
+| `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Future `Instant`, `Duration`, `now`, elapsed arithmetic, sleep. |
+| `std::thread` | Start and join OS threads with clear ownership transfer. | Future `spawn`, `join`, thread id, stack/runtime context setup. |
+| `std::sync` | Share state between threads deliberately. | Future atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
+| `std::collections` | Store keyed and set-like data beyond vectors. | Future `HashMap`, `HashSet`, iterator views, capacity/growth helpers. |
+| `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
 
@@ -37,6 +54,9 @@ slices, including zero/one-run bit scans.
   `std::vec::Vec[T]`, including `try_*` methods for `Option`-based absence.
 - Add collection helpers in small slices: slice methods, vector methods,
   iterator adapters, then maps/sets/deques.
+- Add `HashMap` and `HashSet` only after generic aggregate layouts,
+  hashing/equality trait policy, and explicit allocation-zone ownership are
+  testable together.
 - Keep `std::string::String` byte-oriented until a Unicode/text policy is
   designed.
 - Expose small `String` conveniences only when they preserve byte-string
@@ -61,8 +81,15 @@ slices, including zero/one-run bit scans.
 
 ## Phase 5: OS-Facing Libraries
 
-- Add `std::env`, `std::fs`, `std::time`, and `std::process` as thin explicit
-  wrappers after C FFI conventions are stable.
+- Grow `std::env` from argument helpers into environment-variable APIs such as
+  `get`, `has`, `set`, and `remove` after runtime string and OS wrapper policy
+  is stable.
+- Add `std::fs`, `std::time`, `std::process`, `std::thread`, and `std::sync`
+  as thin explicit wrappers after C FFI conventions are stable.
+- Keep syscall-facing helpers minimal and modern: process arguments and
+  environment, current directory, file descriptors/handles, time, process
+  spawn/fork where the platform supports it, thread creation/join, atomics or
+  shared ownership handles, and error-code conversion.
 - Keep handles visible and owned; do not hide OS resources behind global state.
 
 ## Phase 6: Library Developer Experience
