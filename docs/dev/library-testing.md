@@ -48,6 +48,8 @@ test:
 - `std-math-integer-helpers.ari`: source `std::math` i64 helper behavior.
 - `std-ascii-class-helpers.ari`: source `std::ascii` extended byte
   classification behavior.
+- `std-ascii-case-compare.ari`: source `std::ascii` borrowed-slice
+  case-insensitive comparison behavior.
 - `std-ascii-slice-helpers.ari`: source `std::ascii` borrowed-slice trimming
   and integer parsing behavior.
 - `std-bits-mask-helpers.ari`: source `std::bits` u64 mask and alignment

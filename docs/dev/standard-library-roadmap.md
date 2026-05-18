@@ -46,7 +46,8 @@ The current `std` package already provides:
 - `std::math` integer helpers implemented in Ari source with natural names:
   `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`, and `lcm`
 - `std::ascii` byte classification, printable/control predicates, case
-  conversion, borrowed-slice trimming, and digit parsing helpers
+  conversion, borrowed-slice case-insensitive comparison, trimming, and digit
+  parsing helpers
 - `std::bits` `u64` mask, rotation, power-of-two, low-mask, alignment, and
   bit-scan helpers
 
@@ -152,7 +153,7 @@ Likely compiler work:
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
 | `std::string` | Add signed/checked parsers only after text and numeric policies are documented. | Search, growth, append, copy, ASCII trim/parse, owned trim copy, and after-reset tests. | Formatting/string runtime hooks. |
-| `std::ascii` | Add prefix parsers only after a result shape for consumed byte counts is chosen. | Byte classification behavior, slice trimming/parsing, source symbol checks, and future parser edge cases. | None for current whole-slice helpers; prefix parsers may need tuple/result ergonomics. |
+| `std::ascii` | Add prefix parsers only after a result shape for consumed byte counts is chosen. | Byte classification behavior, case-insensitive comparison, slice trimming/parsing, source symbol checks, and future parser edge cases. | None for current whole-slice helpers; prefix parsers may need tuple/result ergonomics. |
 | `std::vec` | Iterator/adaptor growth and root/source Vec unification plan after safe accessors. | Method, `try_*` access, iterator, borrow, owner-drop, and same-zone tests. | Iterator lowering and generic aggregate monomorphization. |
 | `std::iter` | Adapter traits after collection iterators are stable. | Direct iterator, `IntoIterator`, and refutable-pattern diagnostics. | General iterator protocol lowering. |
 | `std::fmt` | Source trait impls for common values. | `format_in!`, `Display`, unsupported-type diagnostics. | Macro-to-trait lowering cleanup. |

@@ -1,0 +1,48 @@
+// Covers ASCII-only case-insensitive comparisons over borrowed byte slices.
+fn main() -> i64 {
+  var mixed: Vec[u8] = [65u8, 114u8, 105u8, 45u8, 76u8, 97u8, 110u8, 103u8];
+  var lower: Vec[u8] = [97u8, 114u8, 105u8, 45u8, 108u8, 97u8, 110u8, 103u8];
+  var wrong: Vec[u8] = [97u8, 114u8, 105u8, 45u8, 108u8, 97u8, 110u8, 120u8];
+  var prefix: Vec[u8] = [65u8, 82u8, 73u8];
+  var suffix: Vec[u8] = [76u8, 65u8, 78u8, 71u8];
+  var punct: Vec[u8] = [97u8, 114u8, 105u8, 33u8];
+  var punct_same: Vec[u8] = [65u8, 82u8, 73u8, 33u8];
+  var empty: Vec[u8] = [];
+
+  let all = mixed.as_slice();
+  var score = 0;
+
+  if ascii::equals_ignore_case(all, lower.as_slice()) {
+    score = score + 11;
+  }
+  if !ascii::equals_ignore_case(all, wrong.as_slice()) {
+    score = score + 13;
+  }
+  if !ascii::equals_ignore_case(all, prefix.as_slice()) {
+    score = score + 17;
+  }
+  if std::ascii::starts_with_ignore_case(all, prefix.as_slice()) {
+    score = score + 19;
+  }
+  if ascii::ends_with_ignore_case(all, suffix.as_slice()) {
+    score = score + 23;
+  }
+  if ascii::starts_with_ignore_case(all, empty.as_slice()) {
+    score = score + 29;
+  }
+  if ascii::ends_with_ignore_case(all, empty.as_slice()) {
+    score = score + 31;
+  }
+  if !ascii::starts_with_ignore_case(prefix.as_slice(), all) {
+    score = score + 37;
+  }
+  if !ascii::ends_with_ignore_case(prefix.as_slice(), all) {
+    score = score + 41;
+  }
+  if ascii::equals_ignore_case(punct.as_slice(), punct_same.as_slice()) {
+    score = score + 43;
+  }
+
+  assert_eq_i64(score, 264);
+  return score % 256;
+}

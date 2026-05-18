@@ -11,6 +11,8 @@
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 fn std::ascii::digit_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::ends_with_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::equals_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::hex_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_alpha|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::is_alphanumeric|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
@@ -27,6 +29,7 @@ fn std::ascii::is_whitespace|std ascii byte helper tests; docs/stdlib/api-refere
 fn std::ascii::parse_decimal|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::parse_hex|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::skip_whitespace|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::starts_with_ignore_case|std ascii case compare tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::to_lower|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::to_upper|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::ascii::trim|std ascii slice helper tests; docs/stdlib/api-reference.md ASCII section

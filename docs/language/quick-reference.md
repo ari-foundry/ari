@@ -233,6 +233,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | temporary allocation | `zone::scratch<T>`, `zone::temp`, `zone::promote<T>` |
 | single-value handle | `std::boxed::Box[T]`, `Box!(T, ref mut zone, value)` |
 | owned byte string | `std::string::String`, `std::string::from_string(ref mut zone, "text")`, `.try_get(index)`, `.trim_to(ref mut zone)` |
+| ASCII byte helpers | `ascii::is_digit`, `ascii::equals_ignore_case`, `ascii::trim`, `ascii::parse_decimal` |
 | source growable vector | `std::vec::Vec[T]`, `std::vec::new<T>(ref mut zone, capacity)` |
 | borrowed view | `Slice[T]`, `.as_slice()`, `slice(data, len)` |
 | comparison helpers | `cmp::min`, `cmp::max`, `cmp::clamp` with `Ord` impls |

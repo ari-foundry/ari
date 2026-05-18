@@ -87,6 +87,52 @@ pub fn hex_value(value: u8) -> std::Option[i64] {
   return std::None<i64>();
 }
 
+pub fn equals_ignore_case(left: std::Slice[u8], right: std::Slice[u8]) -> bool {
+  if left.len != right.len {
+    return false;
+  }
+
+  var index = 0;
+  while index < left.len {
+    if to_lower(left[index]) != to_lower(right[index]) {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+pub fn starts_with_ignore_case(values: std::Slice[u8], prefix: std::Slice[u8]) -> bool {
+  if prefix.len > values.len {
+    return false;
+  }
+
+  var index = 0;
+  while index < prefix.len {
+    if to_lower(values[index]) != to_lower(prefix[index]) {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
+pub fn ends_with_ignore_case(values: std::Slice[u8], suffix: std::Slice[u8]) -> bool {
+  if suffix.len > values.len {
+    return false;
+  }
+
+  let offset = values.len - suffix.len;
+  var index = 0;
+  while index < suffix.len {
+    if to_lower(values[offset + index]) != to_lower(suffix[index]) {
+      return false;
+    }
+    index = index + 1;
+  }
+  return true;
+}
+
 pub fn skip_whitespace(values: std::Slice[u8]) -> i64 {
   var index = 0;
   while index < values.len {

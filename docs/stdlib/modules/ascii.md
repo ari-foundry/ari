@@ -9,7 +9,7 @@ that policy visible at every call site.
 
 Use `std::ascii` when you have a `u8` or `Slice[u8]` from a `String`, raw byte
 input, or a byte-oriented parser and you need simple ASCII classification,
-case conversion, trimming, or small integer parsing.
+case conversion, comparison, trimming, or small integer parsing.
 
 Do not use it as a Unicode or locale-aware text API. Those policies are future
 library work and should not be hidden behind ASCII helper names.
@@ -60,6 +60,9 @@ ascii::hex_value(byte)
 Slice helpers operate on borrowed `Slice[u8]` values:
 
 ```ari
+ascii::equals_ignore_case(left, right)
+ascii::starts_with_ignore_case(bytes, prefix)
+ascii::ends_with_ignore_case(bytes, suffix)
 ascii::skip_whitespace(bytes)
 ascii::trim_start(bytes)
 ascii::trim_end(bytes)
@@ -67,6 +70,10 @@ ascii::trim(bytes)
 ascii::parse_decimal(bytes)
 ascii::parse_hex(bytes)
 ```
+
+The `*_ignore_case` helpers compare only ASCII letter case. Bytes outside
+`A..Z` and `a..z` compare by exact byte value after the same `to_lower`
+conversion used by the scalar helpers. Empty prefixes and suffixes match.
 
 `skip_whitespace` returns the first non-whitespace byte index or `bytes.len`
 when the slice is all whitespace. The trim helpers return borrowed sub-slices;
@@ -91,6 +98,11 @@ fn parse_score(bytes: Slice[u8]) -> i64 {
   let trimmed = ascii::trim(bytes);
   return ascii::parse_decimal(trimmed).unwrap_or(0);
 }
+
+fn has_ari_prefix(bytes: Slice[u8]) -> bool {
+  var prefix: Vec[u8] = [65u8, 82u8, 73u8];
+  return ascii::starts_with_ignore_case(bytes, prefix.as_slice());
+}
 ```
 
 ## Tests
@@ -101,6 +113,7 @@ The focused positive tests are:
 tests/cases/standard-library/ok/std-ascii-byte-helpers.ari
 tests/cases/standard-library/ok/std-ascii-class-helpers.ari
 tests/cases/standard-library/ok/std-ascii-slice-helpers.ari
+tests/cases/standard-library/ok/std-ascii-case-compare.ari
 ```
 
 `make check-prelude` compiles them to LLVM, checks representative public
@@ -115,4 +128,6 @@ Potential next slices:
 
 - prefix parsers that return both the parsed value and consumed byte count
 - signed decimal parsing after the numeric overflow policy is documented
+- additional ASCII slice search helpers after collection substring policy is
+  documented
 - a separate text/Unicode module after Ari has a deliberate text policy

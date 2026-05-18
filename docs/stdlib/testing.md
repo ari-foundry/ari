@@ -40,6 +40,7 @@ std-input-byte-option.ari
 std-cmp-value-helpers.ari
 std-convert-value-helpers.ari
 std-math-integer-helpers.ari
+std-ascii-case-compare.ari
 std-ascii-class-helpers.ari
 std-ascii-slice-helpers.ari
 std-bits-rotate-helpers.ari
