@@ -478,7 +478,8 @@ Source handles such as `std::boxed::Box<T>`, `std::string::RawString`,
 same tracked source-zone provenance when they are returned by a single-zone
 constructor. Raw pointers recovered from a tracked `std::boxed::Box<T>`,
 `std::string::String`, or `std::vec::Vec<T>` through `as_ptr()` keep that
-provenance too. A `std::boxed::Box<T>`, `std::string::String`, or
+provenance too; `std::vec::Vec<T>.as_mut_ptr()` preserves the same zone
+through a mutable receiver. A `std::boxed::Box<T>`, `std::string::String`, or
 `std::vec::Vec<T>` copied with `copy_to(ref mut Zone)`,
 `std::vec::from_slice_in<T>(ref mut Zone, Slice<T>)`, or a
 `std::string::String` copied with
@@ -499,7 +500,8 @@ capacity-growing source Vec or String operation. Read-only
 `std::string::String` and `std::vec::Vec<T>` handle methods
 borrow the receiver, so metadata, checked endpoint/indexed reads, source
 string/Vec search, source string exact/prefix/suffix checks, target-zone copy,
-and raw-pointer recovery do not copy the handle itself.
+and read-only raw-pointer recovery do not copy the handle itself. Mutable raw
+Vec pointer recovery borrows the source handle mutably.
 Dropping a tracked source `std::vec::Vec<T>`
 consumes the handle and drops each current element, while overwrite and shrink
 helpers drop removed elements before reducing the live length. The explicit

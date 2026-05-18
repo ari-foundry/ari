@@ -411,6 +411,9 @@ Checklist:
 - [x] source `std::vec::Vec<T>.as_ptr()` returns the stored element pointer
       through a borrowed receiver while preserving receiver-zone reset/destroy
       provenance
+- [x] source `std::vec::Vec<T>.as_mut_ptr()` returns the stored element pointer
+      through a mutable borrowed receiver while preserving receiver-zone
+      reset/destroy provenance
 - [x] source `std::vec::Vec<T>.iter()` returns a tracked
       `std::vec::Iter<T>` that implements `Iterator[T]`, and
       `std::vec::Vec<T>` implements `IntoIterator[T]` for direct

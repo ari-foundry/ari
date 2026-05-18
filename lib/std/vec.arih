@@ -203,6 +203,10 @@ pub impl[T] std::vec::Vec[T] {
     return self.raw.data;
   }
 
+  fn as_mut_ptr(self: ref mut Self) -> ptr T {
+    return self.raw.data;
+  }
+
   fn iter(self: ref Self) -> std::vec::Iter[T] {
     return std::vec::Iter<T> { data: self.raw.data, len: self.raw.len, index: 0 };
   }
