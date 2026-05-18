@@ -18,11 +18,12 @@ changing the long-term language contract.
    checks, plus product-pattern irrefutability queries used before sema
    materializes hidden match storage. The shared pattern-alternative set keeps
    or-pattern detection and expansion together before sema lowers bindings.
-   Continue extracting broad modules such as type inference, ownership state,
-   zone provenance, and IR lowering helpers. `attribute_semantics` now owns
-   built-in attribute
-   classification, target/argument validation, and `@repr(C)` field/case
-   guards, and
+   Continue extracting broad modules such as declaration tables, name
+   resolution, ownership state, zone provenance, and IR lowering helpers.
+   `attribute_semantics` now owns built-in attribute classification,
+   target/argument validation, and `@repr(C)` field/case guards,
+   `c_export_semantics` now owns public `@repr(C)` record/enum C-header
+   metadata assembly while sema supplies resolved types and enum layout, and
    `ownership_semantics` now owns recursive owned-field state seeding for
    locals and stack-backed vector storage. Avoid splitting one tiny file per
    syntax feature.

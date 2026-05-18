@@ -17,6 +17,9 @@ adding more narrow syntax-specific `*_semantics` siblings.
 - `attribute_semantics` for built-in attribute-name classification,
   built-in attribute target/argument validation, and declaration-level
   `@repr(C)` field/case guards
+- `c_export_semantics` for public `@repr(C)` record/enum metadata assembly used
+  by C-header emission; `SemanticChecker` still owns declaration traversal,
+  type resolution callbacks, and enum layout lookup
 - `prelude_resolver` for compiler-known standard-library spellings
 - `try_model` for `?` residual shape helpers
 - `constant_semantics` for the shared constant value model, scalar constant

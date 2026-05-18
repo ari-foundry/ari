@@ -16,6 +16,9 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   validation, and declaration-level `@repr(C)` field/case guards live in
   `attribute_semantics`, keeping those front-end validation rules out of the
   central semantic coordinator.
+- Public `@repr(C)` record and enum C-header metadata assembly lives in
+  `c_export_semantics`; sema still owns declaration traversal, type resolution,
+  and enum-layout lookup for that export phase.
 - User-defined `meta fn` macro syntax covers expression, item, type, pattern,
   and attribute-position `ident!(...)` expansion for the documented bounded
   token-stream and explicit AST-constructor subset.

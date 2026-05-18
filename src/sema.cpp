@@ -10,6 +10,7 @@
 #include "borrow_lifetime.hpp"
 #include "borrow_semantics.hpp"
 #include "c_abi_types.hpp"
+#include "c_export_semantics.hpp"
 #include "constant_semantics.hpp"
 #include "control_flow_semantics.hpp"
 #include "drop_semantics.hpp"
@@ -3955,53 +3956,21 @@ private:
 
     void collect_ir_c_records(IrProgram& ir) {
         for_each_struct_decl([&](const StructDecl& decl) {
-            if (!decl.is_public) return;
-            if (!find_attribute(decl.attributes, "repr")) return;
-
-            IrCRecord record;
-            record.name = decl.name;
-            record.c_name = unqualified_name(decl.name);
-            record.loc = decl.loc;
-            record.opaque = !decl.generics.empty();
-            if (record.opaque) {
-                ir.c_records.push_back(std::move(record));
-                return;
-            }
-            for (const auto& field : decl.fields) {
-                record.fields.push_back(IrCRecordField{
-                    field.name,
-                    resolve_executable_type(field.type),
-                    field.loc
-                });
-            }
-            ir.c_records.push_back(std::move(record));
+            auto record = build_c_export_record(decl, [&](const TypeRef& type) {
+                return resolve_executable_type(type);
+            });
+            if (record) ir.c_records.push_back(std::move(*record));
         });
     }
 
     void collect_ir_c_enums(IrProgram& ir) const {
         for_each_enum_decl([&](const EnumDecl& decl) {
-            if (!decl.is_public) return;
-            if (!find_attribute(decl.attributes, "repr")) return;
-
-            IrCEnum item;
-            item.name = decl.name;
-            item.c_name = unqualified_name(decl.name);
-            item.loc = decl.loc;
-            auto info = enums_.find(decl.name);
-            if (info != enums_.end()) {
-                item.type = info->second.type;
-                item.aggregate_layout = has_aggregate_enum_layout(item.type);
-            }
-            for (std::size_t i = 0; i < decl.cases.size(); ++i) {
-                const EnumCase& enum_case = decl.cases[i];
-                item.cases.push_back(IrCEnumCase{
-                    enum_case.name,
-                    item.c_name + "_" + enum_case.name,
-                    static_cast<std::uint32_t>(i),
-                    enum_case.loc
-                });
-            }
-            ir.c_enums.push_back(std::move(item));
+            auto item = build_c_export_enum(decl, [&](const std::string& name) -> std::optional<IrType> {
+                auto info = enums_.find(name);
+                if (info == enums_.end()) return std::nullopt;
+                return info->second.type;
+            });
+            if (item) ir.c_enums.push_back(std::move(*item));
         });
     }
 
