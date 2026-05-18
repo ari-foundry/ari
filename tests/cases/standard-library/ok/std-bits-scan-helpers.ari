@@ -1,0 +1,50 @@
+// Covers std::bits u64 bit-scan helpers and their zero-value edge cases.
+fn main() -> i64 {
+  let value = 0b10110000u64;
+  let high = 9223372036854775808u64;
+
+  let ones = std::bits::count_ones(value);
+  let zeros = bits::count_zeros(value);
+  let trailing = bits::trailing_zeros(value);
+  let leading = bits::leading_zeros(value);
+
+  let zero_ones = bits::count_ones(0u64);
+  let zero_zeros = bits::count_zeros(0u64);
+  let zero_trailing = bits::trailing_zeros(0u64);
+  let zero_leading = bits::leading_zeros(0u64);
+
+  let high_leading = bits::leading_zeros(high);
+  let high_trailing = bits::trailing_zeros(high);
+  let all_ones = bits::count_ones(~0u64);
+  let all_zeros = bits::count_zeros(~0u64);
+
+  assert_eq_i64(ones, 3);
+  assert_eq_i64(zeros, 61);
+  assert_eq_i64(trailing, 4);
+  assert_eq_i64(leading, 56);
+  assert_eq_i64(zero_ones, 0);
+  assert_eq_i64(zero_zeros, 64);
+  assert_eq_i64(zero_trailing, 64);
+  assert_eq_i64(zero_leading, 64);
+  assert_eq_i64(high_leading, 0);
+  assert_eq_i64(high_trailing, 63);
+  assert_eq_i64(all_ones, 64);
+  assert_eq_i64(all_zeros, 0);
+
+  let total =
+    ones +
+    zeros +
+    trailing +
+    leading +
+    zero_ones +
+    zero_zeros +
+    zero_trailing +
+    zero_leading +
+    high_leading +
+    high_trailing +
+    all_ones +
+    all_zeros;
+
+  assert_eq_i64(total, 443);
+  return total % 256;
+}

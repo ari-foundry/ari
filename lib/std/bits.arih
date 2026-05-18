@@ -35,3 +35,49 @@ pub fn align_up(value: u64, alignment: u64) -> u64 {
   let mask = alignment - 1u64;
   return (value + mask) & ~mask;
 }
+
+// Bit-scan helpers use simple source loops for now. Future intrinsic-backed
+// implementations should preserve these names and edge-case results.
+pub fn count_ones(value: u64) -> i64 {
+  var current = value;
+  var total = 0;
+  while current != 0u64 {
+    if (current & 1u64) != 0u64 {
+      total = total + 1;
+    }
+    current = current / 2u64;
+  }
+  return total;
+}
+
+pub fn count_zeros(value: u64) -> i64 {
+  return 64 - count_ones(value);
+}
+
+pub fn trailing_zeros(value: u64) -> i64 {
+  if value == 0u64 {
+    return 64;
+  }
+
+  var current = value;
+  var total = 0;
+  while (current & 1u64) == 0u64 {
+    total = total + 1;
+    current = current / 2u64;
+  }
+  return total;
+}
+
+pub fn leading_zeros(value: u64) -> i64 {
+  if value == 0u64 {
+    return 64;
+  }
+
+  var mask = 9223372036854775808u64;
+  var total = 0;
+  while (value & mask) == 0u64 {
+    total = total + 1;
+    mask = mask / 2u64;
+  }
+  return total;
+}

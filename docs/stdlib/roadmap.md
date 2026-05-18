@@ -38,8 +38,8 @@ slices.
 
 - Expand `std::math` from i64 signatures to generic numeric helpers when the
   language has the right trait vocabulary.
-- Expand `std::bits` from u64 signatures to generic integer mask helpers when
-  the same trait vocabulary exists.
+- Expand `std::bits` from u64 signatures to generic integer mask and bit-scan
+  helpers when the same trait vocabulary exists.
 - Add checked, saturating, and wrapping operations only after overflow policy
   is documented.
 - Add floating helpers only where LLVM lowering and runtime behavior are

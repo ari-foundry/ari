@@ -34,7 +34,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`. |
 | `std::convert` | Conversion trait names. | `From`, `Into`, `TryFrom`, `TryInto`. |
 | `std::math` | Source-only numeric helpers. | `abs`, `sign`, `is_even`, `is_odd`, `pow`, `gcd`. |
-| `std::bits` | Source-only bit-mask and alignment helpers. | `is_set`, `any_set`, `set`, `clear`, `toggle`, `align_up`. |
+| `std::bits` | Source-only bit-mask, alignment, and bit-scan helpers. | `is_set`, `set`, `align_up`, `count_ones`, `leading_zeros`. |
 
 ## Allocation Rules
 
@@ -61,9 +61,9 @@ that need backend or checker knowledge:
 because byte classification, case conversion, borrowed-slice trimming, and
 small integer parsing need no compiler knowledge.
 
-`std::bits` follows the same rule for current `u64` mask helpers. Future bit
-scan intrinsics may need compiler support, but mask transforms and
-power-of-two alignment do not.
+`std::bits` follows the same rule for current `u64` mask, alignment, and
+source-loop bit-scan helpers. Future intrinsic-backed implementations may need
+compiler support, but the public edge-case behavior should stay source-defined.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

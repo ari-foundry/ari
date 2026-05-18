@@ -10,8 +10,8 @@ limits, examples, and test files for one module.
   failure, conversion, and lazy fallback.
 - [std::ascii](ascii.md): source-only ASCII byte classification, case
   conversion, borrowed-slice trimming, and digit parsing helpers.
-- [std::bits](bits.md): source-only `u64` bit-mask and power-of-two alignment
-  helpers.
+- [std::bits](bits.md): source-only `u64` bit-mask, power-of-two alignment,
+  and bit-scan helpers.
 
 ## Guide Shape
 

@@ -233,8 +233,8 @@ runtime. These helpers intentionally do not define overflow semantics yet.
 
 ## Bits
 
-`std::bits` contains source-only `u64` helpers for bit masks and
-power-of-two alignment:
+`std::bits` contains source-only `u64` helpers for bit masks, power-of-two
+alignment, and bit scans:
 
 ```ari
 bits::is_set(value, mask)
@@ -245,12 +245,17 @@ bits::toggle(value, mask)
 bits::is_power_of_two(value)
 bits::align_down(value, alignment)
 bits::align_up(value, alignment)
+bits::count_ones(value)
+bits::count_zeros(value)
+bits::leading_zeros(value)
+bits::trailing_zeros(value)
 ```
 
 `is_set` requires all bits from `mask`; `any_set` requires at least one
 overlap. `align_down` and `align_up` assert that `alignment` is a non-zero
 power of two. These helpers currently have `u64` signatures and intentionally
 avoid type suffixes so future generic integer APIs can keep the same names.
+The zero value has 64 leading zeros and 64 trailing zeros.
 
 ## ASCII
 

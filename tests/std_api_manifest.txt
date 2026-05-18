@@ -36,10 +36,14 @@ fn std::bits::align_down|std bits mask helper tests; docs/stdlib/api-reference.m
 fn std::bits::align_up|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::any_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::clear|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::count_ones|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::count_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::is_power_of_two|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::is_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::leading_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::toggle|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::trailing_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::boxed::new[T]|check-prelude std-boxed-* provenance tests; docs/dev/test-matrix.md Explicit memory zones row
 fn std::cmp::clamp[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
 fn std::cmp::max[T: Ord[T]|std cmp value helper tests; docs/dev/test-matrix.md Front-end surfaces row
