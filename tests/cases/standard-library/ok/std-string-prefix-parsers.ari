@@ -1,0 +1,111 @@
+// Covers String convenience methods that expose std::ascii prefix parsers over
+// owned byte-string storage.
+fn main() -> i64 {
+  var zone = zone::create(256);
+
+  var decimal = std::string::from_string(ref mut zone, "123x");
+  var hex = std::string::from_string(ref mut zone, "1AfG");
+  var all_decimal = std::string::from_string(ref mut zone, "42");
+  var leading_zero = std::string::from_string(ref mut zone, "009");
+  var invalid = std::string::from_string(ref mut zone, "x123");
+  var empty = std::string::new(ref mut zone, 0);
+
+  var score = 0;
+
+  match decimal.parse_decimal_prefix() {
+    std::Some(parsed_decimal) => {
+      if parsed_decimal.value == 123 {
+        score = score + 11;
+      }
+      if parsed_decimal.len == 3 {
+        score = score + 13;
+      }
+    }
+    std::None => {}
+  }
+  match decimal.parse_decimal() {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 17;
+    }
+  }
+
+  match hex.parse_hex_prefix() {
+    std::Some(parsed_hex) => {
+      if parsed_hex.value == 431 {
+        score = score + 19;
+      }
+      if parsed_hex.len == 3 {
+        score = score + 23;
+      }
+    }
+    std::None => {}
+  }
+  match hex.parse_hex() {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 29;
+    }
+  }
+
+  match all_decimal.parse_decimal_prefix() {
+    std::Some(parsed_all) => {
+      if parsed_all.value == 42 {
+        score = score + 31;
+      }
+      if parsed_all.len == 2 {
+        score = score + 37;
+      }
+    }
+    std::None => {}
+  }
+  match all_decimal.parse_decimal() {
+    std::Some(value) => {
+      if value == 42 {
+        score = score + 41;
+      }
+    }
+    std::None => {}
+  }
+
+  match leading_zero.parse_decimal_prefix() {
+    std::Some(parsed_zero) => {
+      if parsed_zero.value == 9 {
+        score = score + 43;
+      }
+      if parsed_zero.len == 3 {
+        score = score + 47;
+      }
+    }
+    std::None => {}
+  }
+
+  match invalid.parse_decimal_prefix() {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 53;
+    }
+  }
+  match invalid.parse_hex_prefix() {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 59;
+    }
+  }
+  match empty.parse_decimal_prefix() {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 61;
+    }
+  }
+  match empty.parse_hex_prefix() {
+    std::Some(_) => {}
+    std::None => {
+      score = score + 67;
+    }
+  }
+
+  assert_eq_i64(score, 551);
+  zone::destroy(zone);
+  return score % 256;
+}

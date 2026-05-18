@@ -222,7 +222,9 @@ method std::string::String::is_empty|check-prelude std-string-handle borrowed re
 method std::string::String::last|check-prelude std-string-first-last borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::len|check-prelude std-string-handle borrowed receiver tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::parse_decimal|check-prelude std-string-ascii-helpers whole-string ASCII decimal parser; docs/stdlib/api-reference.md String section
+method std::string::String::parse_decimal_prefix|check-prelude std-string-prefix-parsers leading ASCII decimal parser; docs/stdlib/api-reference.md String section
 method std::string::String::parse_hex|check-prelude std-string-ascii-helpers whole-string ASCII hexadecimal parser; docs/stdlib/api-reference.md String section
+method std::string::String::parse_hex_prefix|check-prelude std-string-prefix-parsers leading ASCII hexadecimal parser; docs/stdlib/api-reference.md String section
 method std::string::String::pop|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push|check-prelude std-string-handle and std-string-from-copy tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::push_in|check-prelude std-string-grow and same-zone diagnostic; docs/dev/test-matrix.md Explicit memory zones row

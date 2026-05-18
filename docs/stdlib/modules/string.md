@@ -167,7 +167,9 @@ text.trim_end_to(ref mut zone)
 text.trim()
 text.trim_to(ref mut zone)
 text.parse_decimal()
+text.parse_decimal_prefix()
 text.parse_hex()
+text.parse_hex_prefix()
 ```
 
 The case-insensitive helpers fold only ASCII letters and then reuse the
@@ -177,10 +179,12 @@ matching byte offset or `-1`; an empty search slice matches at `0`.
 The trim methods return borrowed `Slice[u8]` views into the same storage; they
 do not allocate or copy. The `*_to` forms return owned `String` copies in a
 target zone, so the copied handle remains usable after the source zone is reset
-or destroyed. The parse methods require the entire string to be a valid decimal
-or hexadecimal ASCII integer and return `Option[i64]`. Empty input, whitespace,
-or invalid bytes return `None<i64>()`. To accept surrounding ASCII whitespace,
-trim first and parse the returned slice with `std::ascii`:
+or destroyed. The whole-string parse methods require the entire string to be a
+valid decimal or hexadecimal ASCII integer and return `Option[i64]`. Empty
+input, whitespace, or invalid bytes return `None<i64>()`. The prefix parsers
+return `Option[std::ascii::ParsedInt]` with the parsed `value` and consumed
+byte `len`, stopping before the first invalid byte. To accept surrounding ASCII
+whitespace, trim first and parse the returned slice with `std::ascii`:
 
 ```ari
 let view = text.trim();
@@ -222,6 +226,7 @@ tests/cases/standard-library/ok/std-string-prefix-suffix.ari
 tests/cases/standard-library/ok/std-string-equals.ari
 tests/cases/standard-library/ok/std-string-ascii-helpers.ari
 tests/cases/standard-library/ok/std-string-ascii-case-helpers.ari
+tests/cases/standard-library/ok/std-string-prefix-parsers.ari
 tests/cases/standard-library/ok/std-string-trim-copy.ari
 tests/cases/standard-library/ok/std-string-grow.ari
 tests/cases/standard-library/ok/std-string-append.ari

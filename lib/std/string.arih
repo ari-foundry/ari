@@ -470,9 +470,19 @@ pub impl std::string::String {
     return std::ascii::parse_decimal(view);
   }
 
+  fn parse_decimal_prefix(self: ref Self) -> std::Option[std::ascii::ParsedInt] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::parse_decimal_prefix(view);
+  }
+
   fn parse_hex(self: ref Self) -> std::Option[i64] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::parse_hex(view);
+  }
+
+  fn parse_hex_prefix(self: ref Self) -> std::Option[std::ascii::ParsedInt] {
+    let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
+    return std::ascii::parse_hex_prefix(view);
   }
 
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::string::String {

@@ -439,6 +439,11 @@ check-prelude: $(TARGET)
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__string__String8inherent13parse_decimal"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__string__String8inherent9parse_hex"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-ascii-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; code=$$?; test $$code -eq 186; fi
+	$(TARGET) tests/cases/standard-library/ok/std-string-prefix-parsers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-prefix-parsers.ll
+	grep -F -q 'String8inherent20parse_decimal_prefix' $(BUILD_DIR)/prelude/std-string-prefix-parsers.ll
+	grep -F -q 'String8inherent16parse_hex_prefix' $(BUILD_DIR)/prelude/std-string-prefix-parsers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-string-prefix-parsers.ari -o $(BUILD_DIR)/prelude/std-string-prefix-parsers.elf
+	$(BUILD_DIR)/prelude/std-string-prefix-parsers.elf; code=$$?; test $$code -eq 39
 	$(TARGET) tests/cases/standard-library/ok/std-string-ascii-case-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
 	grep -F -q 'String8inherent18equals_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll
 	grep -F -q 'String8inherent23starts_with_ignore_case' $(BUILD_DIR)/prelude/std-string-ascii-case-helpers.ll

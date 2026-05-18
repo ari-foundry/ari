@@ -31,6 +31,8 @@ test:
   views and whole-string parsing behavior.
 - `std-string-ascii-case-helpers.ari`: source `std::string` ASCII-only
   case-insensitive comparison and first-match search helpers.
+- `std-string-prefix-parsers.ari`: source `std::string` prefix parser
+  conveniences over the `std::ascii` parser result shape.
 - `std-string-trim-copy.ari`: source `std::string` owned ASCII trim copies
   into a target zone, including source-zone reset behavior.
 - `std-string-trim-to-after-target-reset.ari`: negative target-zone
