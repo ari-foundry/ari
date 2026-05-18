@@ -1,0 +1,12 @@
+fn main() -> i64 {
+  var zone = zone::create(128);
+  var set = collections::new<i64>(ref mut zone, 1);
+  set.insert(ref mut zone, 7);
+
+  var cursor = set.iter();
+  zone::reset(ref mut zone);
+  let value = cursor.next();
+
+  zone::destroy(zone);
+  return 0;
+}

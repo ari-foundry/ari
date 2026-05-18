@@ -241,6 +241,7 @@ method std::collections::Set[T]::get|check-prelude std-collections-set-access in
 method std::collections::Set[T]::index_of|check-prelude std-collections-set stable insertion-order index lookup; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::insert|check-prelude std-collections-set same-zone insertion and duplicate rejection; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::is_empty|check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md
+method std::collections::Set[T]::iter|check-prelude std-collections-set-iter standard iterator cursor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::last|check-prelude std-collections-set-access insertion-order last accessor; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::len|check-prelude std-collections-set metadata helper; docs/stdlib/modules/collections.md
 method std::collections::Set[T]::new|check-prelude std-collections-set associated constructor; docs/stdlib/modules/collections.md
@@ -369,6 +370,7 @@ struct std::Range[T]|range tests; docs/dev/test-matrix.md Control flow row
 struct std::Slice[T]|Slice view tests; docs/dev/test-matrix.md Prelude row
 struct std::ascii::ParsedInt|std ascii prefix parser tests; docs/stdlib/api-reference.md ASCII section
 struct std::boxed::Box[T]|std boxed handle tests; docs/dev/test-matrix.md Explicit memory zones row
+struct std::collections::Iter[T]|std collections iterator tests; docs/stdlib/modules/collections.md
 struct std::collections::Set[T]|std collections linear set tests; docs/stdlib/modules/collections.md
 struct std::iter::RangeInclusive[T]|inclusive range tests; docs/dev/test-matrix.md Control flow row
 struct std::iter::Range[T]|range tests; docs/dev/test-matrix.md Control flow row

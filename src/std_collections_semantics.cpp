@@ -24,18 +24,25 @@ bool is_std_collections_set_handle_type(const IrType& type) {
            type.name == "std::collections::Set";
 }
 
+bool is_std_collections_iter_handle_type(const IrType& type) {
+    return type.qualifier == TypeQualifier::Value &&
+           type.primitive == IrPrimitiveKind::Struct &&
+           type.name == "std::collections::Iter";
+}
+
 bool is_std_collections_zone_handle_type(const IrType& type) {
-    return is_std_collections_set_handle_type(type);
+    return is_std_collections_set_handle_type(type) ||
+           is_std_collections_iter_handle_type(type);
 }
 
 std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(const IrType& type) {
-    if (!is_std_collections_set_handle_type(type)) return std::nullopt;
+    if (!is_std_collections_zone_handle_type(type)) return std::nullopt;
     if (type.field_names.empty() && type.field_types.empty()) return 0;
-    if (type.field_names.size() != 3 || type.field_types.size() != 3) return std::nullopt;
 
     std::optional<std::size_t> data_index;
     bool has_len = false;
     bool has_capacity = false;
+    bool has_index = false;
     for (std::size_t i = 0; i < type.field_names.size(); ++i) {
         const std::string& name = type.field_names[i];
         const IrType& field_type = type.field_types[i];
@@ -51,14 +58,21 @@ std::optional<std::size_t> std_collections_set_zone_handle_source_field_index(co
             if (!is_i64_value_type(field_type)) return std::nullopt;
             has_len = true;
         } else if (name == "capacity") {
+            if (!is_std_collections_set_handle_type(type)) return std::nullopt;
             if (!is_i64_value_type(field_type)) return std::nullopt;
             has_capacity = true;
+        } else if (name == "index") {
+            if (!is_std_collections_iter_handle_type(type)) return std::nullopt;
+            if (!is_i64_value_type(field_type)) return std::nullopt;
+            has_index = true;
         } else {
             return std::nullopt;
         }
     }
 
-    if (!data_index || !has_len || !has_capacity) return std::nullopt;
+    if (!data_index || !has_len) return std::nullopt;
+    if (is_std_collections_set_handle_type(type) && !has_capacity) return std::nullopt;
+    if (is_std_collections_iter_handle_type(type) && !has_index) return std::nullopt;
     return data_index;
 }
 
@@ -74,6 +88,13 @@ bool std_collections_set_method_requires_same_zone_argument(const std::string& m
            method_name == "reserve" ||
            method_name == "reserve_extra" ||
            method_name == "insert";
+}
+
+bool std_collections_result_preserves_receiver_zone(const IrExpr& call) {
+    if (call.kind != IrExprKind::Call || call.args.empty()) return false;
+    if (!is_std_collections_set_handle_type(value_qualified_set_type(call.args[0]->type))) return false;
+    IrType result_type = value_qualified_set_type(call.type);
+    return is_std_collections_iter_handle_type(result_type);
 }
 
 std::optional<std::string> std_collections_set_same_zone_method_violation(

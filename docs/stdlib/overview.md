@@ -31,7 +31,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `try_get`, `try_pop`, `append_i64_in`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `trim_to`, `parse_decimal`, `parse_decimal_prefix`, `as_slice`. |
 | `std::ascii` | Source-only ASCII byte and slice helpers. | `is_digit`, `is_printable`, `equals_ignore_case`, `index_of_ignore_case`, `trim`, `parse_decimal`, `parse_decimal_prefix`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `try_get`, `as_slice`, `iter`. |
-| `std::collections` | Source collection handles beyond sequences. | `Set[T]`, `new<T>`, `from_slice_in`, `insert`, `try_get`, `try_pop`, `reserve`, `contains`, `as_slice`, `copy_to`. |
+| `std::collections` | Source collection handles beyond sequences. | `Set[T]`, `Iter[T]`, `new<T>`, `from_slice_in`, `insert`, `try_get`, `try_pop`, `reserve`, `contains`, `as_slice`, `iter`, `copy_to`. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
 | `std::fmt` | Formatting trait surface. | `Display::format_in`, `Debug`. |
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
@@ -47,7 +47,8 @@ methods with a `_to` suffix copy a derived value into a target zone.
 For tracked local `std::vec::Vec[T]` and `std::string::String` handles, Ari can
 infer the same source zone for common mutating methods. `std::collections::Set[T]`
 keeps growth explicit today, so `insert(ref mut zone, value)` spells the
-allocation capability at the call site.
+allocation capability at the call site. Its iterator cursor keeps the same
+zone provenance as the set.
 
 Use `zone::destroy(zone)` when a manually created zone is no longer needed.
 Pointers, strings, vectors, boxes, and slices derived from that zone become
@@ -114,8 +115,10 @@ intentionally still roadmap work.
 
 `std::collections::Set[T]` is source Ari over typed zone allocation. Its
 insertion-order accessors and `try_*` methods mirror the collection vocabulary
-used by `Slice[T]` and `std::vec::Vec[T]`. The compiler only recognizes the
-handle shape so zone reset/destroy invalidation and same-zone growth
+used by `Slice[T]` and `std::vec::Vec[T]`. `std::collections::Iter[T]`
+implements the standard iterator trait so direct `for value in set` lowering
+uses the same path as other source iterators. The compiler only recognizes the
+handle shapes so zone reset/destroy invalidation and same-zone growth
 diagnostics stay as strong as `std::vec::Vec[T]`.
 
 `std::zone` keeps allocation visible. Raw byte allocation and lifecycle hooks

@@ -25,9 +25,9 @@ identity/from/into helpers, `context` runtime hooks plus the source
 `io` runtime hooks plus source byte-slice output, current `process`
 id/exit/status helpers,
 `collections::Set[T]` as the first linear insertion-order set with
-`try_*` accessors, `pop`/`try_pop`, explicit reserve growth, and the first
-`math` sign predicate/arithmetic/division-rounding and `bits` numeric helper
-slices, including zero/one-run bit scans.
+`try_*` accessors, `pop`/`try_pop`, explicit reserve growth, direct iterator
+support, and the first `math` sign predicate/arithmetic/division-rounding and
+`bits` numeric helper slices, including zero/one-run bit scans.
 
 ## Essential Library Families
 
@@ -42,7 +42,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::time` | Access monotonic and wall-clock time for CLIs, servers, and tests. | Future `Instant`, `Duration`, `now`, elapsed arithmetic, sleep. |
 | `std::thread` | Start and join OS threads with clear ownership transfer. | Future `spawn`, `join`, thread id, stack/runtime context setup. |
 | `std::sync` | Share state between threads deliberately. | Future atomics, `Mutex`, `Shared`, `Weak`, and possibly channels after ownership rules are stable. |
-| `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]` with insertion-order access, optional access, removal, copy, and reserve helpers; future `HashMap`, `HashSet`, and iterator views. |
+| `std::collections` | Store keyed and set-like data beyond vectors. | Current linear `Set[T]` with insertion-order access, optional access, removal, copy, reserve helpers, and direct iteration; future `HashMap` and `HashSet`. |
 | `std::os` | Hold platform-specific syscall wrappers that are too sharp for portable modules. | Future Unix/Windows gated modules, raw descriptors/handles, error-code translation. |
 
 ## Phase 2: Pull More Behavior Into Ari Source
@@ -59,8 +59,8 @@ work. Each one should land in small tested slices with natural API names.
 - Keep shared collection access vocabulary aligned across `Slice[T]` and
   `std::vec::Vec[T]`, including `try_*` methods for `Option`-based absence.
 - Add collection helpers in small slices: slice methods, vector methods, the
-  current linear `Set[T]` access/reserve surface, iterator adapters, then hash
-  maps/sets/deques.
+  current linear `Set[T]` access/reserve/iteration surface, iterator adapters,
+  then hash maps/sets/deques.
 - Add `HashMap` and `HashSet` only after generic aggregate layouts,
   hashing/equality trait policy, and explicit allocation-zone ownership are
   testable together.

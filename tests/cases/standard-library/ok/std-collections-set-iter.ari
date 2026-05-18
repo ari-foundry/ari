@@ -1,0 +1,34 @@
+// Covers direct Set iteration, explicit iterator cursors, and IntoIterator
+// lowering while preserving insertion order and duplicate rejection.
+fn main() -> i64 {
+  var zone = zone::create(256);
+  var set = collections::new<i64>(ref mut zone, 1);
+
+  set.insert(ref mut zone, 2);
+  set.insert(ref mut zone, 5);
+  set.insert(ref mut zone, 5);
+  set.insert(ref mut zone, 8);
+
+  var cursor = set.iter();
+  let first = match cursor.next() {
+    std::Some(value) => value,
+    std::None => 0,
+  };
+  let second = match cursor.next() {
+    std::Some(next_value) => next_value,
+    std::None => 0,
+  };
+
+  var by_iter = 0;
+  for iter_value in set.iter() {
+    by_iter = by_iter + iter_value;
+  }
+
+  var by_set = 0;
+  for set_value in set {
+    by_set = by_set + set_value;
+  }
+
+  zone::destroy(zone);
+  return first + second + by_iter + by_set;
+}

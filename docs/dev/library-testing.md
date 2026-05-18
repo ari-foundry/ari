@@ -56,8 +56,12 @@ test:
   target/source zone behavior.
 - `std-collections-set-access.ari`: source set insertion-order accessors,
   optional accessors, explicit reserve growth, `pop`, and `try_pop` behavior.
+- `std-collections-set-iter.ari`: source set cursor iteration, direct
+  `for value in set.iter()`, and `IntoIterator` lowering for `for value in set`.
 - `std-collections-set-after-reset.ari`: negative source-zone provenance
   diagnostic for a tracked set after `zone::reset`.
+- `std-collections-set-iter-after-reset.ari`: negative source-zone provenance
+  diagnostic for a set iterator after its source zone is reset.
 - `std-collections-set-insert-different-zone.ari`: negative same-zone growth
   diagnostic for set insertion with the wrong allocation zone.
 - `std-collections-set-reserve-different-zone.ari`: negative same-zone growth

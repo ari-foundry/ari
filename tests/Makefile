@@ -670,6 +670,12 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent7try_pop' $(BUILD_DIR)/prelude/std-collections-set-access.ll
 	$(TARGET) tests/cases/standard-library/ok/std-collections-set-access.ari -o $(BUILD_DIR)/prelude/std-collections-set-access.elf
 	$(BUILD_DIR)/prelude/std-collections-set-access.elf; code=$$?; test $$code -eq 120
+	$(TARGET) tests/cases/standard-library/ok/std-collections-set-iter.ari --emit-llvm $(BUILD_DIR)/prelude/std-collections-set-iter.ll
+	grep -q '_ARNv4impl26std__collections__Set_i64_8inherent4iter' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
+	grep -q 'std__collections__Iter_i64_13std__Iterator4next' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
+	grep -q 'std__collections__Set_i64_17std__IntoIterator9into_iter' $(BUILD_DIR)/prelude/std-collections-set-iter.ll
+	$(TARGET) tests/cases/standard-library/ok/std-collections-set-iter.ari -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf
+	$(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37
 	if grep -q 'extern "C".*ari_builtin' lib/std.arih; then exit 1; fi
 	$(TARGET) tests/cases/standard-library/ok/ari-builtin-extern.ari --emit-llvm $(BUILD_DIR)/prelude/ari-builtin-extern.ll
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/ari-builtin-extern.ll
@@ -869,6 +875,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-vec-drop-value.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-drop-value.elf; $(BUILD_DIR)/prelude/std-vec-drop-value.elf; code=$$?; test $$code -eq 0; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set.elf; $(BUILD_DIR)/prelude/std-collections-set.elf; code=$$?; test $$code -eq 250; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-access.elf; $(BUILD_DIR)/prelude/std-collections-set-access.elf; code=$$?; test $$code -eq 120; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-collections-set-iter.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-collections-set-iter.elf; $(BUILD_DIR)/prelude/std-collections-set-iter.elf; code=$$?; test $$code -eq 37; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-prelude-unqualified.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; $(BUILD_DIR)/prelude/std-prelude-unqualified.elf; code=$$?; test $$code -eq 39; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-prelude-local-shadow.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; $(BUILD_DIR)/prelude/std-prelude-local-shadow.elf; code=$$?; test $$code -eq 8; fi
 	$(TARGET) --no-implicit-std --module-path lib tests/cases/standard-library/ok/prelude-header-explicit-std.ari --emit-module-metadata $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta --emit-llvm $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll
@@ -964,6 +971,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-from-slice-in-after-target-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-set-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-set-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'set' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-set-after-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-iter-after-reset.ari -o $(BUILD_DIR)/prelude/std-collections-set-iter-after-reset.elf >$(BUILD_DIR)/prelude/std-collections-set-iter-after-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'cursor' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-collections-set-iter-after-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-insert-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::collections::Set.insert zone argument must match the set allocation zone" $(BUILD_DIR)/prelude/std-collections-set-insert-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/std-collections-set-reserve-different-zone.ari -o $(BUILD_DIR)/prelude/std-collections-set-reserve-different-zone.elf >$(BUILD_DIR)/prelude/std-collections-set-reserve-different-zone.err 2>&1; then exit 1; fi

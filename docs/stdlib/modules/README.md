@@ -17,8 +17,8 @@ limits, examples, and test files for one module.
 - [std::vec](vec.md): zone-backed growable sequence handles, borrowed slices,
   safe accessors, growth, copy, and iterator entry points.
 - [std::collections](collections.md): source linear `Set[T]` for unique
-  insertion-order values, optional access, reserve growth, copied views, and
-  explicit-zone provenance.
+  insertion-order values, optional access, iterator support, reserve growth,
+  copied views, and explicit-zone provenance.
 - [std::cmp](cmp.md): source comparison traits, generic value selection,
   inclusive clamping, and inclusive range predicates.
 - [std::convert](convert.md): explicit conversion traits plus source

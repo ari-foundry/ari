@@ -370,6 +370,7 @@ set.clear()
 set.reserve(ref mut zone, capacity)
 set.reserve_extra(ref mut zone, additional)
 set.as_slice()
+set.iter()
 set.copy_to(ref mut zone)
 ```
 
@@ -380,8 +381,11 @@ while `try_first`/`try_last`/`try_get` return `Option[T]`. `pop` removes the
 last insertion-order value, and `try_pop` returns `None` on an empty set.
 `reserve` and `reserve_extra` keep growth explicit through the same source
 zone. The set preserves insertion order in accessors, `index_of`, `as_slice`,
-and `copy_to`. It is linear, not hash-backed, so future `HashMap`/`HashSet`
-APIs can still choose a deliberate hashing and equality policy.
+`iter`, and `copy_to`. `std::collections::Iter[T]` implements `Iterator[T]`,
+and `Set[T]` implements `IntoIterator[T]`, so `for value in set` works through
+the standard iterator path. It is linear, not hash-backed, so future
+`HashMap`/`HashSet` APIs can still choose a deliberate hashing and equality
+policy.
 
 `std::string::String` is an owned byte string:
 

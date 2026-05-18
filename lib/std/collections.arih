@@ -6,6 +6,12 @@ pub struct Set[T] {
   mut capacity: i64,
 }
 
+pub struct Iter[T] {
+  data: ptr T,
+  len: i64,
+  mut index: i64,
+}
+
 pub fn new[T](zone: ref mut Zone, capacity: i64) -> std::collections::Set[T] {
   let data = std::zone::alloc_array<T>(zone, capacity);
   return std::collections::Set<T> {
@@ -209,6 +215,10 @@ pub impl[T] std::collections::Set[T] {
     return std::Slice<T> { data: self.data, len: self.len };
   }
 
+  fn iter(self: ref Self) -> std::collections::Iter[T] {
+    return std::collections::Iter<T> { data: self.data, len: self.len, index: 0 };
+  }
+
   fn copy_to(self: ref Self, target: ref mut Zone) -> std::collections::Set[T] {
     var copied = std::collections::new<T>(target, self.len);
     var index = 0;
@@ -217,6 +227,23 @@ pub impl[T] std::collections::Set[T] {
       index = index + 1;
     }
     return copied;
+  }
+}
+
+impl[T] std::Iterator[T] for std::collections::Iter[T] {
+  pub fn next(self: ref mut Self) -> std::Option[T] {
+    if self.index >= self.len {
+      return std::None<T>();
+    }
+    let value = ptr_load(ptr_add(self.data, self.index));
+    self.index = self.index + 1;
+    return std::Some<T>(value);
+  }
+}
+
+impl[T] std::IntoIterator[T] for std::collections::Set[T] {
+  pub fn into_iter(self: ref mut Self) -> std::collections::Iter[T] {
+    return std::collections::Iter<T> { data: self.data, len: self.len, index: 0 };
   }
 }
 

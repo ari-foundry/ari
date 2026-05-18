@@ -18,6 +18,7 @@ set.insert(ref mut zone, value)
 set.contains(value)
 set.take(value)
 set.try_get(index)
+set.iter()
 set.reserve(ref mut zone, capacity)
 set.copy_to(ref mut target)
 ```
@@ -44,7 +45,7 @@ values from a borrowed `Slice[T]` into a new target-zone set.
 The handle is tied to the zone used for construction. Ari rejects use of a
 tracked set after that zone is reset or destroyed.
 
-## Metadata, Search, And Views
+## Metadata, Search, Views, And Iteration
 
 ```ari
 set.len()
@@ -59,6 +60,7 @@ set.try_get(index)
 set.index_of(value)
 set.contains(value)
 set.as_slice()
+set.iter()
 ```
 
 `first`, `last`, and `get` are asserting accessors for cases where absence is a
@@ -69,6 +71,11 @@ is insertion-order based.
 `index_of` returns the insertion-order index of the value or `-1` when absent.
 `contains` is the usual membership predicate. `as_slice` returns a borrowed
 `Slice[T]` over the current insertion-order elements.
+
+`iter` returns a `std::collections::Iter[T]` cursor over the same
+insertion-order elements. `Iter[T]` implements `Iterator[T]`, and `Set[T]`
+implements `IntoIterator[T]`, so both `for value in set.iter()` and
+`for value in set` use the standard iterator lowering.
 
 ## Mutation
 
@@ -121,8 +128,12 @@ fn main() -> i64 {
 
   let found = seen.contains(5);
   let first = seen.try_first().unwrap_or(0);
+  var iter_total = 0;
+  for value in seen.iter() {
+    iter_total = iter_total + value;
+  }
   let removed = seen.take(3).unwrap_or(0);
-  let total = seen.len() + first + removed + if found { 10 } else { 0 };
+  let total = seen.len() + first + iter_total + removed + if found { 10 } else { 0 };
 
   zone::destroy(zone);
   return total;
@@ -136,12 +147,14 @@ Focused positive coverage:
 ```text
 tests/cases/standard-library/ok/std-collections-set.ari
 tests/cases/standard-library/ok/std-collections-set-access.ari
+tests/cases/standard-library/ok/std-collections-set-iter.ari
 ```
 
 Focused negative coverage:
 
 ```text
 tests/cases/standard-library/errors/std-collections-set-after-reset.ari
+tests/cases/standard-library/errors/std-collections-set-iter-after-reset.ari
 tests/cases/standard-library/errors/std-collections-set-insert-different-zone.ari
 tests/cases/standard-library/errors/std-collections-set-reserve-different-zone.ari
 tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-zone.ari
@@ -151,6 +164,9 @@ tests/cases/standard-library/errors/std-collections-set-reserve-extra-different-
 membership, removal, borrowed views, copying, and target/source zone behavior.
 `std-collections-set-access.ari` covers insertion-order accessors,
 `Option`-returning reads, explicit reserve growth, `pop`, and `try_pop`.
+`std-collections-set-iter.ari` covers explicit cursors, direct set iteration,
+and insertion-order iterator lowering. The iterator reset test confirms that
+derived cursors preserve the set's allocation-zone provenance.
 
 `make check-prelude` compiles the positive tests, checks representative
 monomorphized symbols, runs the executable results, and checks the negative
@@ -160,10 +176,9 @@ zone diagnostics. Public declarations are tracked in
 ## Current Limits
 
 - Operations are linear time.
-- Iteration is currently through `as_slice`; a direct `Set` iterator can land
-  after collection iterator policy is broader.
 - `HashMap` and `HashSet` are future modules. They need hashing and equality
   traits, table growth policy, collision/tombstone behavior, iterator behavior,
   and explicit-zone ownership tests.
-- The compiler recognizes `std::collections::Set[T]` as a zone-backed handle
-  only for provenance checking. The collection behavior itself is Ari source.
+- The compiler recognizes `std::collections::Set[T]` and
+  `std::collections::Iter[T]` as zone-backed handles only for provenance
+  checking. The collection behavior itself is Ari source.

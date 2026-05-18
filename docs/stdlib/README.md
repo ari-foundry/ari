@@ -25,7 +25,8 @@ in `std::env`, while `std::context` stays the low-level runtime context layer.
 explicit exit helpers. Source
 collection work has started with
 `std::collections::Set[T]` as a linear explicit-zone set with insertion-order
-access, optional access, and reserve growth before hash-table policy is ready.
+access, optional access, iterator support, and reserve growth before
+hash-table policy is ready.
 A few declarations are still compiler-known because the
 current language cannot express them directly: layout queries, typed raw
 pointer operations, runtime IO hooks, explicit zone allocation, formatting
