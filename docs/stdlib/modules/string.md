@@ -53,14 +53,18 @@ text.len()
 text.capacity()
 text.is_empty()
 text.first()
+text.try_first()
 text.last()
+text.try_last()
 text.get(index)
+text.try_get(index)
 text.set(index, byte)
 text.replace(index, byte)
 ```
 
 `first`, `last`, `get`, `set`, and `replace` assert their bounds at runtime.
-`replace` returns the previous byte.
+Use `try_first`, `try_last`, and `try_get` when missing bytes are normal input;
+they return `Option[u8]`. `replace` returns the previous byte.
 
 Borrowed views and raw pointers:
 
@@ -79,10 +83,14 @@ Fixed-capacity mutation:
 ```ari
 text.push(byte)
 text.pop()
+text.try_pop()
 text.insert(index, byte)
 text.clear()
 text.truncate(length)
 ```
+
+`try_pop` returns `None<u8>()` when the string is empty. `pop` asserts in that
+case and is best when an empty string means a programmer error.
 
 Growth-capable mutation uses the owning zone. The explicit forms are the
 source-level contract:
@@ -186,6 +194,7 @@ Focused positive tests include:
 ```text
 tests/cases/standard-library/ok/std-string-handle.ari
 tests/cases/standard-library/ok/std-string-first-last.ari
+tests/cases/standard-library/ok/std-string-try-byte-access.ari
 tests/cases/standard-library/ok/std-string-search.ari
 tests/cases/standard-library/ok/std-string-prefix-suffix.ari
 tests/cases/standard-library/ok/std-string-equals.ari

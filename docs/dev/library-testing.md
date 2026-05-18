@@ -29,6 +29,8 @@ test:
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-string-ascii-helpers.ari`: source `std::string` borrowed ASCII trim
   views and whole-string parsing behavior.
+- `std-string-try-byte-access.ari`: source `std::string` Option-returning
+  byte access and empty pop behavior.
 - `std-context-args.ari`: runtime-backed `std::context` argument access,
   source `has_arg`, and root alias behavior.
 - `std-io-byte-slice.ari`: source `std::io` byte-slice output over the raw

@@ -1,0 +1,39 @@
+// Covers Option-returning byte access and empty pop on source String handles.
+fn byte_or(value: std::Option[u8], fallback: i64) -> i64 {
+  match value {
+    std::Some(byte) => {
+      return byte as i64;
+    }
+    std::None => {
+      return fallback;
+    }
+  }
+}
+
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var text = std::string::new(ref mut zone, 3);
+
+  let empty_score =
+    byte_or(text.try_first(), 1) +
+    byte_or(text.try_last(), 2) +
+    byte_or(text.try_get(0), 3) +
+    byte_or(text.try_get(0 - 1), 4) +
+    byte_or(text.try_pop(), 5);
+
+  text.push(65u8);
+  text.push(66u8);
+  text.push(67u8);
+
+  let value_score =
+    byte_or(text.try_first(), 0) +
+    byte_or(text.try_last(), 0) +
+    byte_or(text.try_get(1), 0) +
+    byte_or(text.try_get(3), 6) +
+    byte_or(text.try_pop(), 0) +
+    byte_or(text.try_last(), 0);
+
+  let total = empty_score + value_score + text.len();
+  zone::destroy(zone);
+  return total % 256;
+}

@@ -31,6 +31,7 @@ prelude-slice-metadata.ari
 prelude-slice-option-access.ari
 std-string-append-u64.ari
 std-string-ascii-helpers.ari
+std-string-try-byte-access.ari
 std-context-args.ari
 std-io-byte-slice.ari
 std-input-byte-option.ari

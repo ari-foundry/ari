@@ -222,6 +222,10 @@ method std::string::String::trim|check-prelude std-string-ascii-helpers borrowed
 method std::string::String::trim_end|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
 method std::string::String::trim_start|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
 method std::string::String::truncate|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
+method std::string::String::try_first|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
+method std::string::String::try_get|check-prelude std-string-try-byte-access Option-returning out-of-range byte access; docs/stdlib/modules/string.md
+method std::string::String::try_last|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
+method std::string::String::try_pop|check-prelude std-string-try-byte-access Option-returning empty pop; docs/stdlib/modules/string.md
 method std::vec::Vec[T]::as_mut_ptr|check-prelude std-vec-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_ptr|check-prelude std-vec-as-ptr borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::as_slice|check-prelude std-vec-as-slice; docs/dev/test-matrix.md Explicit memory zones row

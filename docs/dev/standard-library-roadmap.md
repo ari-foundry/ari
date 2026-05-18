@@ -37,8 +37,8 @@ The current `std` package already provides:
 - source handles for `Box`, `String`, and `Vec`
 - `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access, and
   `Option`-returning element access helpers
-- `std::string::String` byte search, comparison, ASCII trim, and whole-string
-  ASCII parsing helpers
+- `std::string::String` empty-safe byte access, byte search, comparison,
+  ASCII trim, and whole-string ASCII parsing helpers
 - range/iterator traits and the `std::vec::Iter` implementation
 - comparison, formatting, and conversion trait surfaces, plus source
   comparison value helpers: `min`, `max`, `clamp`, and `is_between`

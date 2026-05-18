@@ -74,15 +74,39 @@ pub impl std::string::String {
     return ptr_load(self.raw.data);
   }
 
+  fn try_first(self: ref Self) -> std::Option[u8] {
+    if self.raw.len == 0 {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(ptr_load(self.raw.data));
+  }
+
   fn last(self: ref Self) -> u8 {
     std::assert(self.raw.len > 0);
     return ptr_load(ptr_add(self.raw.data, self.raw.len - 1));
+  }
+
+  fn try_last(self: ref Self) -> std::Option[u8] {
+    if self.raw.len == 0 {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(ptr_load(ptr_add(self.raw.data, self.raw.len - 1)));
   }
 
   fn get(self: ref Self, index: i64) -> u8 {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);
     return ptr_load(ptr_add(self.raw.data, index));
+  }
+
+  fn try_get(self: ref Self, index: i64) -> std::Option[u8] {
+    if index < 0 {
+      return std::None<u8>();
+    }
+    if index >= self.raw.len {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(ptr_load(ptr_add(self.raw.data, index)));
   }
 
   fn set(self: ref mut Self, index: i64, value: u8) -> void {
@@ -249,6 +273,13 @@ pub impl std::string::String {
     std::assert(self.raw.len > 0);
     self.raw.len = self.raw.len - 1;
     return ptr_load(ptr_add(self.raw.data, self.raw.len));
+  }
+
+  fn try_pop(self: ref mut Self) -> std::Option[u8] {
+    if self.is_empty() {
+      return std::None<u8>();
+    }
+    return std::Some<u8>(self.pop());
   }
 
   fn insert(self: ref mut Self, index: i64, value: u8) -> void {

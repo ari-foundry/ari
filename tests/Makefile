@@ -387,6 +387,14 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent5first"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-first-last.ll
 	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent4last"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-first-last.ll
 	grep -F -q 'define i8 @"_ARNv4impl19std__string__String8inherent3get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-string-handle.ll
+	$(TARGET) tests/cases/standard-library/ok/std-string-try-byte-access.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
+	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent9try_first"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
+	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent8try_last"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
+	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent7try_get"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
+	grep -F -q 'define i64 @"_ARNv4impl19std__string__String8inherent7try_pop"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-try-byte-access.ll
+	$(TARGET) tests/cases/standard-library/ok/std-string-try-byte-access.ari -o $(BUILD_DIR)/prelude/std-string-try-byte-access.elf
+	$(BUILD_DIR)/prelude/std-string-try-byte-access.elf; code=$$?; test $$code -eq 98
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-try-byte-access.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-try-byte-access.elf; $(BUILD_DIR)/prelude/std-string-try-byte-access.elf; code=$$?; test $$code -eq 98; fi
 	grep -F -q 'define ptr @"_ARNv4impl19std__string__String8inherent6as_ptr"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent7push_in' $(BUILD_DIR)/prelude/std-string-handle.ll
 	grep -q '_ARNv4impl19std__string__String8inherent8as_slice' $(BUILD_DIR)/prelude/std-string-handle.ll

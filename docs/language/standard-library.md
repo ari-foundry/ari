@@ -33,7 +33,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::mem` | Layout and raw pointer helpers. | `size_of`, `align_of`, `ptr_offset`, `ptr_add`, `ptr_load`, `ptr_store`, `replace`, `swap`. | Compiler-lowered where layout or typed pointer semantics are required. |
 | `std::zone` | Explicit allocation capability. | `create`, byte `alloc`, typed `alloc[T]`, `alloc_array[T]`, `new[T]`, `promote[T]`, `reset`, `destroy`, `allocation_zone`. | Runtime-backed with ownership/provenance checks in sema plus source raw array allocation. |
 | `std::boxed` | Zone-backed single-value owner handle. | `Box[T]`, `new`, `Box::new`, `get`, `set`, `replace`, `take`, `try_take`, `clear`, `put_in`, `copy_to`, `as_ref`, `as_mut`, `swap`, raw pointer access. | Implemented as an explicit-zone seed for future smart-pointer work. |
-| `std::string` | Zone-backed owned byte string seed. | `String`, `RawString`, capacity constructors, copy helpers, byte get/set/search, growth, append helpers, ASCII `trim`/parse helpers, `as_slice`, `as_ptr`. | Implemented as a byte string. Full text/Unicode policy is still future work. |
+| `std::string` | Zone-backed owned byte string seed. | `String`, `RawString`, capacity constructors, copy helpers, byte get/set/search, `try_get`, `try_pop`, growth, append helpers, ASCII `trim`/parse helpers, `as_slice`, `as_ptr`. | Implemented as a byte string. Full text/Unicode policy is still future work. |
 | `std::ascii` | ASCII-only byte and slice helpers for byte strings and parsers. | `is_digit`, `is_alpha`, `is_alphanumeric`, `is_blank`, `is_whitespace`, `is_control`, `is_printable`, `is_graphic`, `is_punctuation`, `is_hex_digit`, `to_lower`, `to_upper`, `digit_value`, `hex_value`, `trim`, `parse_decimal`, `parse_hex`. | Implemented in Ari source; not a Unicode or locale-aware text API. |
 | `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked and `Option` element access, mutation, growth, copy, slice view, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
 | `std::iter` | Iteration traits and range constructors. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`. | Range lowering and `std::vec::Iter` are implemented; general iterator protocols are still growing. |
@@ -163,7 +163,8 @@ value.copy_to(ref mut zone)
 ```
 
 The non-`try` accessors assert on bad indexes. `try_first`, `try_last`, and
-`try_get` return `Option[T]` and are the better choice for normal control flow.
+`try_get` return `Option[T]` for generic collections and `Option[u8]` for
+`String`; they are the better choice for normal control flow.
 
 `std::vec::Vec[T]` mutating methods include `push`, `pop`, `try_pop`, `set`,
 `replace`, `swap`, `insert`, `remove`, `truncate`, `clear`, `reserve`,
@@ -171,7 +172,7 @@ The non-`try` accessors assert on bad indexes. `try_first`, `try_last`, and
 forms where applicable.
 
 `std::string::String` mutating methods are byte-oriented and include `push`,
-`pop`, `set`, `replace`, `insert`, `truncate`, `clear`, `reserve`,
+`pop`, `try_pop`, `set`, `replace`, `insert`, `truncate`, `clear`, `reserve`,
 `reserve_extra`, `extend_from_slice`, `resize`, `append_string`,
 `append_i64`, `append_u64`, `append_bool`, `append_f32`, `append_f64`, and
 the explicit-zone `_in` forms.
