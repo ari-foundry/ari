@@ -8,6 +8,8 @@ under `lib/std/`.
 
 - [Overview](overview.md): library purpose, module map, and design rules.
 - [API Reference](api-reference.md): current public APIs grouped by module.
+- [Module Guides](modules/README.md): focused notes for individual standard
+  library modules.
 - [Library Development](library-development.md): how to add or change a
   standard library API.
 - [Testing](testing.md): test names, check targets, and coverage expectations.

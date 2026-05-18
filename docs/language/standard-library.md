@@ -34,6 +34,7 @@ hooks because the current language cannot express those primitives directly.
 | `std::zone` | Explicit allocation capability. | `create`, byte `alloc`, typed `alloc[T]`, `new[T]`, `promote[T]`, `reset`, `destroy`, `allocation_zone`. | Runtime-backed with ownership/provenance checks in sema. |
 | `std::boxed` | Zone-backed single-value owner handle. | `Box[T]`, `new`, `Box::new`, `get`, `set`, `replace`, `take`, `try_take`, `clear`, `put_in`, `copy_to`, `as_ref`, `as_mut`, `swap`, raw pointer access. | Implemented as an explicit-zone seed for future smart-pointer work. |
 | `std::string` | Zone-backed owned byte string seed. | `String`, `RawString`, capacity constructors, copy helpers, byte get/set/search, growth, append helpers, `as_slice`, `as_ptr`. | Implemented as a byte string. Full text/Unicode policy is still future work. |
+| `std::ascii` | ASCII-only byte helpers for byte strings and parsers. | `is_digit`, `is_alpha`, `is_alphanumeric`, `is_whitespace`, `is_hex_digit`, `to_lower`, `to_upper`, `digit_value`, `hex_value`. | Implemented in Ari source; not a Unicode or locale-aware text API. |
 | `std::vec` | Zone-backed growable sequence seed. | `Vec[T]`, `RawVec[T]`, `Iter[T]`, constructors, metadata, checked element access, mutation, growth, copy, slice view, raw pointer access, iterator support. | Implemented as explicit-zone source `Vec`; root bare `Vec[T]` is still the compiler-known local vector type. |
 | `std::iter` | Iteration traits and range constructors. | `range`, `range_inclusive`, `Iterator[T]`, `IntoIterator[T]`, `Iterable[T]`. | Range lowering and `std::vec::Iter` are implemented; general iterator protocols are still growing. |
 | `std::fmt` | Formatting traits. | `Debug`, `Display::format_in`. | Trait surface is present; formatting macros still use compiler lowering. |
@@ -78,6 +79,7 @@ Use this table when writing code from docs alone:
 | Store a small local literal sequence. | Bare `Vec[T]` from `[a, b, c]` | This is compiler-known local vector storage, not `std::vec::Vec[T]`. Empty `[]` needs an expected type. |
 | Store a growable source collection. | `std::vec::new<T>(ref mut zone, capacity)` | Common tracked locals can call `push`, `insert`, `reserve`, and related methods without spelling the zone again. |
 | Store owned byte text. | `std::string::from_string(ref mut zone, "text")` or `std::string::new(ref mut zone, capacity)` | The handle stores bytes, not a full Unicode text abstraction yet. |
+| Classify or convert ASCII bytes. | `ascii::is_digit`, `ascii::to_lower`, `ascii::hex_value` | Takes `u8`. Digit parsers return `Option[i64]`; non-ASCII text policy is future work. |
 | Store one zone-backed value. | `std::boxed::new<T>(ref mut zone, value)` or `Box!(T, ref mut zone, value)` | `take()` empties the handle; `try_take()` returns `Option[T]`. |
 | Allocate raw memory. | `zone::alloc`, `zone::alloc<T>`, `zone::new<T>` | Raw allocation does not run destructors or make memory safe by itself. |
 | Inspect layout or raw memory. | `size_of<T>`, `align_of<T>`, `ptr_add`, `ptr_load`, `ptr_store` | Use only for scalar and supported Ari-layout aggregate values. |
@@ -196,7 +198,7 @@ small source APIs with focused tests before becoming a larger design promise.
 | Foundation | Programs need stable ADTs, traits, assertions, and low-level helpers before higher-level APIs can be trusted. | `std`, `std::option`, `std::result`, `std::cmp`, `std::convert`, `std::mem`. |
 | Allocation | Ari's memory model is explicit, so allocation must be visible and capability-based. | `std::zone`, future allocator traits, future scoped scratch helpers. |
 | Collections | Most programs need growable storage and borrowed views. | `std::vec`, `std::boxed`, future maps/sets/deques after generic aggregate monomorphization matures. |
-| Text And Formatting | Diagnostics, CLI tools, and user programs need owned text and formatting. | `std::string`, `std::fmt`, formatting macros. |
+| Text And Formatting | Diagnostics, CLI tools, and user programs need owned text, byte helpers, and formatting. | `std::string`, `std::ascii`, `std::fmt`, formatting macros. |
 | IO And Process Context | Programs need arguments, stdin/stdout, and eventually files and environment access. | `std::io`, `std::input`, `std::context`, future `std::fs`, `std::env`, `std::process`. |
 | Iteration | Collections and ranges need a shared loop protocol. | `std::iter`, collection iterators. |
 | Numerics | Systems programs need reliable arithmetic helpers beyond operators. | `std::math`, future integer checked/wrapping helpers, bit utilities. |

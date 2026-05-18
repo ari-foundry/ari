@@ -10,6 +10,17 @@
 
 enum std::Option[T]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
 enum std::Result[T, E]|prelude Option/Result tests; docs/dev/test-matrix.md Prelude and Generics rows
+fn std::ascii::digit_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::hex_value|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_alpha|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_alphanumeric|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_digit|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_hex_digit|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_lower|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_upper|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::is_whitespace|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::to_lower|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
+fn std::ascii::to_upper|std ascii byte helper tests; docs/stdlib/api-reference.md ASCII section
 fn std::assert|prelude assertion tests and macros; docs/dev/test-matrix.md Prelude row
 fn std::assert_eq_bool|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
 fn std::assert_eq_i64|prelude assertion macro tests; docs/dev/test-matrix.md Prelude row
@@ -188,6 +199,7 @@ method std::vec::Vec[T]::starts_with|check-prelude std-vec-slice-compare borrowe
 method std::vec::Vec[T]::swap|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::truncate|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::try_pop|check-prelude std-vec-try-pop Option-returning empty pop; docs/dev/test-matrix.md Explicit memory zones and Prelude rows
+module std::ascii|module load and std ascii byte helper tests; docs/stdlib/overview.md module map
 module std::boxed|module load and boxed handle tests; docs/dev/test-matrix.md Modules and Explicit memory zones rows
 module std::cmp|prelude trait surface tests; docs/dev/test-matrix.md Front-end surfaces row
 module std::context|context runtime tests; docs/dev/test-matrix.md Context runtime row

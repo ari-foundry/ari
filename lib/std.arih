@@ -156,6 +156,8 @@ pub mod convert;
 
 pub mod math;
 
+pub mod ascii;
+
 pub struct Range[T] {
   start: T,
   end: T,

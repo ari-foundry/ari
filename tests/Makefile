@@ -220,6 +220,13 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4math3gcd' $(BUILD_DIR)/prelude/std-math-integer-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/std-math-integer-helpers.ari -o $(BUILD_DIR)/prelude/std-math-integer-helpers.elf
 	$(BUILD_DIR)/prelude/std-math-integer-helpers.elf; code=$$?; test $$code -eq 140
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-byte-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
+	grep -q '_ARNv3std5ascii8is_digit' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
+	grep -q '_ARNv3std5ascii8to_lower' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
+	grep -q '_ARNv3std5ascii11digit_value' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
+	grep -q '_ARNv3std5ascii9hex_value' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
+	$(TARGET) tests/cases/standard-library/ok/std-ascii-byte-helpers.ari -o $(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf
+	$(BUILD_DIR)/prelude/std-ascii-byte-helpers.elf; code=$$?; test $$code -eq 177
 	$(TARGET) tests/cases/standard-library/ok/prelude-explicit-move.ari -o $(BUILD_DIR)/prelude/prelude-explicit-move.elf
 	$(BUILD_DIR)/prelude/prelude-explicit-move.elf; code=$$?; test $$code -eq 32
 	$(TARGET) tests/cases/standard-library/ok/std-mem-value-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-mem-value-helpers.ll
@@ -625,6 +632,8 @@ check-prelude: $(TARGET)
 	grep -q 'import	std	std::convert	convert	lib/std/convert.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'source	std::math	lib/std/math.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'import	std	std::math	math	lib/std/math.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'source	std::ascii	lib/std/ascii.arih	0' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
+	grep -q 'import	std	std::ascii	ascii	lib/std/ascii.arih	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'item	std::io	extern-ari-fn	std::io::write_i64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'item	std::io	extern-ari-fn	std::io::write_u64	1' $(BUILD_DIR)/prelude/prelude-header-explicit-std.arimeta
 	grep -q 'call i64 @"ari_builtin_write_i64"' $(BUILD_DIR)/prelude/prelude-header-explicit-std.ll

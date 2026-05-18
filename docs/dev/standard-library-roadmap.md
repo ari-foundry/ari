@@ -34,6 +34,7 @@ The current `std` package already provides:
 - range/iterator traits and the `std::vec::Iter` implementation
 - comparison, formatting, and conversion trait surfaces
 - `std::math` integer helpers implemented in Ari source with natural names
+- `std::ascii` byte classification, case conversion, and digit parsing helpers
 
 This baseline is useful, but it is still a seed. Some APIs are compiler hooks
 with source declarations, and some names exist mainly so user code can start
@@ -137,6 +138,7 @@ Likely compiler work:
 | `std::zone` | More scoped allocation helpers. | Reset/destroy provenance and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
 | `std::string` | Decide byte-string vs text-string naming and add small utility helpers. | Search, growth, append, copy, and after-reset tests. | Formatting/string runtime hooks. |
+| `std::ascii` | Add slice-level parser helpers only while the byte-oriented policy remains explicit. | Byte helper behavior, source symbol checks, and future parser edge cases. | None for scalar helpers; parser helpers may need better slice iteration ergonomics. |
 | `std::vec` | Iterator/adaptor growth and root/source Vec unification plan. | Method, iterator, borrow, owner-drop, and same-zone tests. | Iterator lowering and generic aggregate monomorphization. |
 | `std::iter` | Adapter traits after collection iterators are stable. | Direct iterator, `IntoIterator`, and refutable-pattern diagnostics. | General iterator protocol lowering. |
 | `std::fmt` | Source trait impls for common values. | `format_in!`, `Display`, unsupported-type diagnostics. | Macro-to-trait lowering cleanup. |

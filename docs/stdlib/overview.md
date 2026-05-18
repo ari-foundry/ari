@@ -27,6 +27,7 @@ hiding allocation, ownership, or backend behavior.
 | `std::zone` | Explicit allocation capability. | `create`, `alloc`, `alloc<T>`, `new<T>`, `promote<T>`, `reset`, `destroy`. |
 | `std::boxed` | Zone-backed single-value owner. | `Box[T]`, `new`, `get`, `set`, `take`, `try_take`, `copy_to`. |
 | `std::string` | Zone-backed owned byte string. | `String`, `new`, `from_string`, `push`, `append_i64_in`, `as_slice`. |
+| `std::ascii` | Source-only ASCII byte helpers. | `is_digit`, `is_alpha`, `is_whitespace`, `to_lower`, `hex_value`. |
 | `std::vec` | Zone-backed growable sequence. | `Vec[T]`, `new<T>`, `push`, `push_in`, `get`, `as_slice`, `iter`. |
 | `std::iter` | Range and iterator traits. | `range`, `range_inclusive`, `Iterator`, `IntoIterator`. |
 | `std::fmt` | Formatting trait surface. | `Display::format_in`, `Debug`. |
@@ -54,6 +55,10 @@ that need backend or checker knowledge:
 - layout queries and typed pointer operations in `std::mem`.
 - formatting macros, because they inspect literal format strings.
 - provenance checks for zone-backed handles and raw pointers.
+
+`std::ascii` is an example of the preferred path: it is ordinary Ari source
+because byte classification, case conversion, and digit parsing need no
+compiler knowledge.
 
 When adding new library code, first ask whether it can be written in Ari source
 using existing modules. If yes, keep it in `lib/std/`. Add compiler support

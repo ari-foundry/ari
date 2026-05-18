@@ -219,6 +219,29 @@ math::gcd(left, right)
 `pow` requires a non-negative exponent and asserts that precondition at
 runtime. These helpers intentionally do not define overflow semantics yet.
 
+## ASCII
+
+`std::ascii` contains byte-oriented helpers for ASCII-only text and parser
+code. All classification and case helpers take `u8` values and use natural
+names because the module path already says the policy:
+
+```ari
+ascii::is_digit(byte)
+ascii::is_lower(byte)
+ascii::is_upper(byte)
+ascii::is_alpha(byte)
+ascii::is_alphanumeric(byte)
+ascii::is_whitespace(byte)
+ascii::is_hex_digit(byte)
+ascii::to_lower(byte)
+ascii::to_upper(byte)
+ascii::digit_value(byte)
+ascii::hex_value(byte)
+```
+
+`digit_value` and `hex_value` return `Option[i64]`. Non-digit input returns
+`None[i64]()`.
+
 ## Choosing The Right Collection
 
 Use bare `Vec[T]` literals like `[1, 2, 3]` for small local compiler-known

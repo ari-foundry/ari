@@ -1,0 +1,69 @@
+// Byte-oriented ASCII helpers for std::string::String and Slice[u8] code.
+// These functions intentionally stay source-only and use natural names; the
+// module name carries the byte/text policy while the signatures stay explicit.
+pub fn is_digit(value: u8) -> bool {
+  return value >= (48 as u8) && value <= (57 as u8);
+}
+
+pub fn is_lower(value: u8) -> bool {
+  return value >= (97 as u8) && value <= (122 as u8);
+}
+
+pub fn is_upper(value: u8) -> bool {
+  return value >= (65 as u8) && value <= (90 as u8);
+}
+
+pub fn is_alpha(value: u8) -> bool {
+  return is_lower(value) || is_upper(value);
+}
+
+pub fn is_alphanumeric(value: u8) -> bool {
+  return is_alpha(value) || is_digit(value);
+}
+
+pub fn is_whitespace(value: u8) -> bool {
+  return value == (32 as u8) ||
+         value == (9 as u8) ||
+         value == (10 as u8) ||
+         value == (13 as u8);
+}
+
+pub fn is_hex_digit(value: u8) -> bool {
+  return is_digit(value) ||
+         (value >= (65 as u8) && value <= (70 as u8)) ||
+         (value >= (97 as u8) && value <= (102 as u8));
+}
+
+pub fn to_lower(value: u8) -> u8 {
+  if is_upper(value) {
+    return ((value as i64) + 32) as u8;
+  }
+  return value;
+}
+
+pub fn to_upper(value: u8) -> u8 {
+  if is_lower(value) {
+    return ((value as i64) - 32) as u8;
+  }
+  return value;
+}
+
+pub fn digit_value(value: u8) -> std::Option[i64] {
+  if is_digit(value) {
+    return std::Some<i64>((value as i64) - 48);
+  }
+  return std::None<i64>();
+}
+
+pub fn hex_value(value: u8) -> std::Option[i64] {
+  if is_digit(value) {
+    return digit_value(value);
+  }
+  if value >= (65 as u8) && value <= (70 as u8) {
+    return std::Some<i64>(((value as i64) - 65) + 10);
+  }
+  if value >= (97 as u8) && value <= (102 as u8) {
+    return std::Some<i64>(((value as i64) - 97) + 10);
+  }
+  return std::None<i64>();
+}

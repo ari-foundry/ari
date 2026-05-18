@@ -12,8 +12,8 @@ roadmap remains in `docs/dev/standard-library-roadmap.md`.
 - Keep this `docs/stdlib/` folder current with every public API.
 
 Current source families: `option`, `result`, `mem`, `zone`, `boxed`,
-`string`, `vec`, `iter`, `fmt`, `cmp`, `convert`, `context`, `input`, `io`,
-and the first `math` integer helper slice.
+`string`, `ascii`, `vec`, `iter`, `fmt`, `cmp`, `convert`, `context`,
+`input`, `io`, and the first `math` integer helper slice.
 
 ## Phase 2: Pull More Behavior Into Ari Source
 
@@ -30,6 +30,8 @@ and the first `math` integer helper slice.
   iterator adapters, then maps/sets/deques.
 - Keep `std::string::String` byte-oriented until a Unicode/text policy is
   designed.
+- Keep ASCII-only helpers in `std::ascii` so byte-oriented behavior is explicit
+  at call sites.
 
 ## Phase 4: Numerics
 

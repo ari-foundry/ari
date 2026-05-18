@@ -1,0 +1,20 @@
+# Standard Library Module Guides
+
+This folder holds focused guides for individual `std` modules. Use these pages
+when the compact API reference is not enough and you need the purpose, current
+limits, examples, and test files for one module.
+
+## Available Guides
+
+- [std::ascii](ascii.md): source-only ASCII byte classification, case
+  conversion, and digit parsing helpers.
+
+## Guide Shape
+
+Each module guide should answer:
+
+- why the module exists
+- what the current APIs do
+- which behavior is intentionally not promised yet
+- which tests cover the public surface
+- what compiler work would be needed for the next larger slice
