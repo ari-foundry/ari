@@ -198,10 +198,13 @@ that storage borrowed while the view is live and cleans the remaining owned
 slots when the hidden storage leaves scope. Ownership-carrying enum payload
 moves from direct temporary constructor matches are supported, and direct
 constructor enum values stored in locals or assigned to whole locals now track
-only the active `own i64`/`own u64` payload slot for move/drop checking.
-Runtime-dependent stored enum values, parameters, returns, `Slice[T]` owner
-paths, and unknown-length value vector suffix owner paths remain tied to the
-later owned-payload/dynamic-owner ABI work.
+only the active `own i64`/`own u64` payload slot for move/drop checking. When an
+ownership-carrying aggregate enum value comes from a runtime-dependent source,
+such as a parameter or aggregate-returning call, `drop value;` is supported as a
+whole-value cleanup: Ari checks the runtime tag and drops only the active owning
+payload slots. Runtime-dependent payload-slot moves, `Slice[T]` owner paths, and
+unknown-length value vector suffix owner paths remain tied to the later
+owned-payload/dynamic-owner ABI work.
 For non-owning values, function parameter patterns support
 `ref PATTERN: T`, `ref mut PATTERN: T`, `&PATTERN: T`, and `&mut PATTERN: T`
 for the same name, wildcard, tuple, fixed-array, struct, and `Slice[T]`

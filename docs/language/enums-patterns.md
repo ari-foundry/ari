@@ -122,10 +122,13 @@ the arm exits. Direct constructor values stored in locals or assigned to whole
 locals also seed tag-aware payload ownership for the known active case: a
 fieldless case such as `None` has no live payload owner, while `Some(own i64)`
 must be dropped or moved before the local exits, and `value.0` can move the
-active owned payload from a direct-constructor local. Runtime-dependent stored
-enum values, parameters, and returned enum values still need the planned full
-owner-path model. Fixed-capacity vector payload slots can also be destructured
-with
+active owned payload from a direct-constructor local. Runtime-dependent
+aggregate enum values, including parameters and values received from
+aggregate-returning calls, can be explicitly dropped as whole values; the
+lowered cleanup tests the tag and drops only the active owning payload slots.
+Runtime-dependent payload-slot moves such as `value.0` still need the planned
+full owner-path model. Fixed-capacity vector payload slots can also be
+destructured with
 exact array-style element patterns such as `Values([first, second])`; the match
 arm checks the vector's current runtime length before extracting the inline data
 slots. If one payload position mixes

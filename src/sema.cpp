@@ -9858,6 +9858,99 @@ private:
         return matches.front();
     }
 
+    std::vector<EnumCaseInfo> aggregate_enum_cases_for_type(SourceLocation loc, const IrType& type) {
+        auto enum_found = enums_.find(type.name);
+        if (enum_found == enums_.end()) {
+            fail(loc, "internal error: unknown enum type '" + type.name + "' while lowering owner cleanup");
+        }
+
+        std::vector<EnumCaseInfo> cases;
+        cases.reserve(enum_found->second.cases.size());
+        for (const auto& item : enum_found->second.cases) {
+            auto case_found = enum_cases_.find(item.qualified_name);
+            if (case_found == enum_cases_.end()) {
+                fail(loc,
+                     "internal error: unknown enum case '" + item.qualified_name +
+                         "' while lowering owner cleanup");
+            }
+            EnumCaseInfo case_info = enum_case_for_match_value(loc, case_found->second, type);
+            if (case_info.enum_name != enum_found->second.name) {
+                fail(loc,
+                     "internal error: enum case '" + item.qualified_name +
+                         "' does not belong to '" + type.name + "' while lowering owner cleanup");
+            }
+            cases.push_back(std::move(case_info));
+        }
+        return cases;
+    }
+
+    IrExprPtr make_enum_tag_equals_expr(SourceLocation loc, DropValueFactory make_value, std::uint32_t tag) {
+        return make_bool_binary_expr(
+            loc,
+            IrBinaryOp::Eq,
+            make_enum_tag_expr(loc, make_value()),
+            make_integer_literal(loc, i64_type(loc), tag)
+        );
+    }
+
+    IrStmtPtr make_if_stmt(SourceLocation loc, IrExprPtr condition, std::vector<IrStmtPtr> then_body) {
+        auto stmt = std::make_unique<IrStmt>();
+        stmt->kind = IrStmtKind::If;
+        stmt->loc = loc;
+        stmt->condition = std::move(condition);
+        set_ir_stmt_then_body(*stmt, std::move(then_body));
+        return stmt;
+    }
+
+    void append_tracked_aggregate_enum_payload_drop_stmts(SourceLocation loc,
+                                                          const IrType& type,
+                                                          DropValueFactory make_value,
+                                                          std::vector<IrStmtPtr>& statements,
+                                                          const LocalInfo* tracked_local,
+                                                          const std::string& path) {
+        for (std::size_t i = 1; i < type.field_types.size(); ++i) {
+            const IrType& field_type = type.field_types[i];
+            if (!is_owner_type(field_type)) continue;
+            std::string field_path = local_owned_field_path(path, i);
+            DropValueFactory make_field = [this, loc, make_value, i, field_type]() {
+                return make_field_value_expr(loc, make_value, i, field_type);
+            };
+            append_drop_stmts_for_value(loc, field_type, make_field, statements, tracked_local, field_path);
+        }
+    }
+
+    void append_runtime_aggregate_enum_payload_drop_stmts(SourceLocation loc,
+                                                          const IrType& type,
+                                                          DropValueFactory make_value,
+                                                          std::vector<IrStmtPtr>& statements) {
+        for (const EnumCaseInfo& case_info : aggregate_enum_cases_for_type(loc, type)) {
+            std::vector<IrStmtPtr> then_body;
+            for (std::size_t payload_index = 0; payload_index < case_info.payloads.size(); ++payload_index) {
+                const IrType& payload_type = case_info.payloads[payload_index];
+                if (!is_owner_type(payload_type)) continue;
+
+                std::size_t field_index = payload_index + 1;
+                if (field_index >= type.field_types.size()) {
+                    fail(loc,
+                         "internal error: enum payload slot " + std::to_string(payload_index) +
+                             " is missing while lowering owner cleanup");
+                }
+
+                const IrType& field_type = type.field_types[field_index];
+                DropValueFactory make_field = [this, loc, make_value, field_index, field_type]() {
+                    return make_field_value_expr(loc, make_value, field_index, field_type);
+                };
+                append_drop_stmts_for_value(loc, field_type, make_field, then_body);
+            }
+
+            if (then_body.empty()) continue;
+            statements.push_back(make_if_stmt(
+                loc,
+                make_enum_tag_equals_expr(loc, make_value, case_info.tag),
+                std::move(then_body)));
+        }
+    }
+
     void append_drop_stmts_for_value(SourceLocation loc,
                                      const IrType& type,
                                      DropValueFactory make_value,
@@ -9880,14 +9973,16 @@ private:
         }
 
         if (has_aggregate_enum_layout(type)) {
-            for (std::size_t i = 1; i < type.field_types.size(); ++i) {
-                const IrType& field_type = type.field_types[i];
-                if (!is_owner_type(field_type)) continue;
-                std::string field_path = local_owned_field_path(path, i);
-                DropValueFactory make_field = [this, loc, make_value, i, field_type]() {
-                    return make_field_value_expr(loc, make_value, i, field_type);
-                };
-                append_drop_stmts_for_value(loc, field_type, make_field, statements, tracked_local, field_path);
+            if (tracked_local && local_has_tracked_owned_fields(*tracked_local)) {
+                append_tracked_aggregate_enum_payload_drop_stmts(
+                    loc,
+                    type,
+                    make_value,
+                    statements,
+                    tracked_local,
+                    path);
+            } else {
+                append_runtime_aggregate_enum_payload_drop_stmts(loc, type, make_value, statements);
             }
             return;
         }

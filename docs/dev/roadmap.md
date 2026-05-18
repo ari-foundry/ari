@@ -21,10 +21,12 @@ near-term deliverable.
    `own i64`/`own u64` payloads, and direct constructor locals / whole-local
    assignments now seed tag-aware active payload slots for drop checking and
    direct payload-slot moves.
-   Remaining work is the full payload-slot ownership model for runtime-dependent
-   stored locals, parameter, and returned enum values, including branch-merged
-   tag states, partial-move cleanup, and
-   `@repr(C)` layout rules for owned payload-bearing public enums.
+   Runtime-dependent stored locals, parameters, and call/return results can also
+   be explicitly dropped as whole values; cleanup tests the runtime tag and
+   drops only the active owning payload slots.
+   Remaining work is path-level ownership for runtime-dependent payload-slot
+   moves, branch-merged tag states, partial-move cleanup, and `@repr(C)` layout
+   rules for owned payload-bearing public enums.
    Label: `owner-enum-payload-paths`.
 2. Add owner-aware `Slice[T]` element paths.
    Treat `Slice[own T]` as a non-owning view while still preserving borrow and

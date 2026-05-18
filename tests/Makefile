@@ -2737,6 +2737,13 @@ check-variables: $(TARGET)
 	$(BUILD_DIR)/variables/stored-owned-enum-payload-drop.elf; code=$$?; test $$code -eq 44
 	if $(TARGET) tests/errors/stored-owned-enum-payload-undropped.ari -o $(BUILD_DIR)/variables/stored-owned-enum-payload-undropped.elf >$(BUILD_DIR)/variables/stored-owned-enum-payload-undropped.err 2>&1; then exit 1; fi
 	grep -q "owning binding 'item' must be moved or dropped before return" $(BUILD_DIR)/variables/stored-owned-enum-payload-undropped.err
+	$(TARGET) tests/ok/drop-runtime-owned-enum-payload.ari --emit-llvm $(BUILD_DIR)/variables/drop-runtime-owned-enum-payload.ll
+	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-runtime-owned-enum-payload.ll) -eq 2
+	grep -q "icmp eq i64" $(BUILD_DIR)/variables/drop-runtime-owned-enum-payload.ll
+	$(TARGET) tests/ok/drop-runtime-owned-enum-payload.ari -o $(BUILD_DIR)/variables/drop-runtime-owned-enum-payload.elf
+	$(BUILD_DIR)/variables/drop-runtime-owned-enum-payload.elf; code=$$?; test $$code -eq 42
+	if $(TARGET) tests/errors/drop-runtime-owned-enum-payload-undropped.ari -o $(BUILD_DIR)/variables/drop-runtime-owned-enum-payload-undropped.elf >$(BUILD_DIR)/variables/drop-runtime-owned-enum-payload-undropped.err 2>&1; then exit 1; fi
+	grep -q "owning binding 'item' must be moved or dropped before return" $(BUILD_DIR)/variables/drop-runtime-owned-enum-payload-undropped.err
 	$(TARGET) tests/ok/drop-statement-payloads.ari --emit-llvm $(BUILD_DIR)/variables/drop-statement-payloads.ll
 	test $$(grep -c 'call void @"_ARNv4impl3i649std__Drop4drop"' $(BUILD_DIR)/variables/drop-statement-payloads.ll) -eq 3
 	$(TARGET) tests/ok/local-state-mutation-api.ari --emit-llvm $(BUILD_DIR)/variables/local-state-mutation-api.ll

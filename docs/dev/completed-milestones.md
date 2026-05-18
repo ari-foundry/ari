@@ -266,6 +266,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   paths. Fieldless cases such as `None` do not require a payload drop, and
   moving or dropping a stored payload-bearing case uses the active payload
   owner path.
+- Runtime-dependent aggregate enum locals, parameters, and call/return results
+  with owner-carrying payload slots can be explicitly dropped as whole values.
+  The lowered cleanup reads the runtime tag and only calls payload destructors
+  for the active case.
 - Aggregate enum payload slots can store plain Ari-layout tuple, fixed-array,
   struct, and explicit fixed-capacity `Vec[T; N]` payload values inline. Match
   payload bindings and direct payload slot access expose the full aggregate
