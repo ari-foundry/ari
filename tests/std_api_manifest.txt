@@ -185,6 +185,7 @@ method std::Result[T,E]::unwrap|check-prelude prelude-option-result-unwrap; docs
 method std::Result[T,E]::unwrap_err|check-prelude prelude-option-result-unwrap; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::unwrap_or|check-prelude prelude-option-result-methods; docs/dev/test-matrix.md Prelude row
 method std::Result[T,E]::unwrap_or_else|check-prelude prelude-option-result-conversions; docs/stdlib/api-reference.md Option and Result section
+method std::Result[std::Option[T],E]::transpose|check-prelude prelude-result-transpose; docs/stdlib/api-reference.md Option and Result section
 method std::Slice[T]::copy_to|check-prelude prelude-slice-copy-to borrowed receiver and target reset tests; docs/dev/test-matrix.md Prelude and Explicit memory zones rows
 method std::boxed::Box[T]::as_mut|check-prelude std-boxed-as-ref-mut mutable value borrow with conflict diagnostic; docs/dev/test-matrix.md Explicit memory zones row
 method std::boxed::Box[T]::as_mut_ptr|check-prelude std-boxed-as-mut-ptr mutable borrowed receiver with reset invalidation; docs/dev/test-matrix.md Explicit memory zones row

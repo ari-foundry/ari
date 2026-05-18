@@ -1,0 +1,27 @@
+fn result_some() -> Result[Option[i64], i32] {
+  return Ok<Option[i64], i32>(Some(17));
+}
+
+fn result_none() -> Result[Option[i64], i32] {
+  return Ok<Option[i64], i32>(None<i64>());
+}
+
+fn result_err() -> Result[Option[i64], i32] {
+  return Err<Option[i64], i32>(9i32);
+}
+
+fn main() -> i64 {
+  let transposed_some = result_some().transpose().unwrap().unwrap_or(0);
+  let transposed_none = match result_none().transpose() {
+    Some(_) => 0,
+    None => 11;
+  };
+  let transposed_err = match result_err().transpose().unwrap() {
+    Ok(_) => 0,
+    Err(error) => (error as i64) + 30;
+  };
+
+  let total = transposed_some + transposed_none + transposed_err;
+  assert_eq_i64(total, 67);
+  return total;
+}

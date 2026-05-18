@@ -222,7 +222,7 @@ Or-pattern alternatives must bind the same names with compatible types.
 | panic placeholders | `panic!()`, `todo!()`, `unreachable!()` |
 | optional value | `Option[T]`, `Some(value)`, `None<T>()` |
 | result value | `Result[T, E]`, `Ok<T, E>(value)`, `Err<T, E>(error)` |
-| optional/result helpers | Option: `.is_some()`, `.is_none()`, `.flatten()` for nested options, `.transpose()` for optional results; Result: `.is_ok()`, `.is_err()`; both: `.unwrap_or(fallback)`, `.map<U>(fn)`, `.and_then<U>(fn)` |
+| optional/result helpers | Option: `.is_some()`, `.is_none()`, `.flatten()` for nested options, `.transpose()` for optional results; Result: `.is_ok()`, `.is_err()`, `.transpose()` for result-wrapped options; both: `.unwrap_or(fallback)`, `.map<U>(fn)`, `.and_then<U>(fn)` |
 | process args | `arg_count()`, `arg(index)`, `has_arg(index)`, `context::argc()`, `context::arg(index)`, `context::has_arg(index)` |
 | input | `input::try_read_byte()`, `input()`, `read_line()`, `input_owned(ref mut zone)` |
 | raw IO | `io::write_i64`, `io::write_u64`, `io::write_bool`, `io::write_byte`, `io::write_bytes`, `io::newline` |

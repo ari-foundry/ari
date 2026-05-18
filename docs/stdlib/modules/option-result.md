@@ -72,12 +72,16 @@ value.map_err<F>(op)
 value.and_then<U>(op)
 value.or<F>(fallback)
 value.or_else<F>(op)
+value.transpose()
 ```
 
 `ok` keeps the success payload as `Option[T]`. `err` keeps the error payload as
 `Option[E]`. `unwrap_or_else` receives the error and returns a fallback success
 value. `or` uses an already-built fallback `Result[T, F]` when the receiver is
 `Err`; `or_else` builds that fallback lazily from the original error.
+`transpose` is available on `Result[Option[T], E]` values. It turns
+`Ok(Some(T))` into `Some(Ok(T))`, `Ok(None<T>())` into `None<Result[T, E]>()`,
+and `Err(E)` into `Some(Err(E))`.
 
 `is_ok_and` consumes the `Result[T, E]` and predicates the success payload.
 `is_err_and` consumes it and predicates the error payload.
@@ -108,6 +112,7 @@ tests/cases/standard-library/ok/prelude-option-result-methods.ari
 tests/cases/standard-library/ok/prelude-option-result-predicates.ari
 tests/cases/standard-library/ok/prelude-option-flatten.ari
 tests/cases/standard-library/ok/prelude-option-transpose.ari
+tests/cases/standard-library/ok/prelude-result-transpose.ari
 tests/cases/standard-library/ok/prelude-option-result-combinators.ari
 tests/cases/standard-library/ok/prelude-option-result-conversions.ari
 tests/cases/standard-library/ok/prelude-option-result-unwrap.ari

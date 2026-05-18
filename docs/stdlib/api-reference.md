@@ -192,6 +192,7 @@ value.map_err<F>(op)
 value.and_then<U>(op)
 value.or<F>(fallback)
 value.or_else<F>(op)
+value.transpose()
 ```
 
 Use `is_some_and`, `is_none_or`, `is_ok_and`, and `is_err_and` when a branch
@@ -205,7 +206,9 @@ fallback is expensive or should only run on the missing/error branch. Use
 `Result`-returning flow. Use `ok` and `err` when a `Result` should be projected
 back into an `Option`. Use `Result::or` when a fallback `Result` is already
 available; use `Result::or_else` when the fallback should be built from the
-error only on the `Err` branch.
+error only on the `Err` branch. `Result::transpose` is available on
+`Result[Option[T], E]` and turns fallible optional work back into optional
+fallible work.
 
 ## Slice, Vec, String, And Box
 
