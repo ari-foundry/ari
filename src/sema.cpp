@@ -3162,8 +3162,15 @@ private:
         }
 
         if (expr.kind == ExprKind::Unary && expr.op == TokenKind::Star) {
+            const Expr& pointer_expr = *expr_operand(expr);
+            const Expr* pointer_source = &pointer_expr;
+            if (pointer_expr.kind == ExprKind::Call &&
+                is_prelude_pointer_add_function_name(pointer_expr.name) &&
+                !pointer_expr.args.empty()) {
+                pointer_source = pointer_expr.args[0].get();
+            }
             std::optional<BorrowReturnOperandPathHint> base =
-                borrow_return_operand_path_hint(*expr_operand(expr), param_name, type);
+                borrow_return_operand_path_hint(*pointer_source, param_name, type);
             if (!base || !is_raw_pointer_type(base->type)) return std::nullopt;
             return BorrowReturnOperandPathHint{
                 base->path,
@@ -9253,6 +9260,37 @@ private:
         }
 
         return false;
+    }
+
+    bool try_build_tracked_pointer_add_access(const Expr& expr, TrackedAggregateAccess& out) {
+        if (expr.kind != ExprKind::Call ||
+            !is_prelude_pointer_add_function_name(expr.name) ||
+            expr.args.size() != 2) {
+            return false;
+        }
+
+        TrackedAggregateAccess base;
+        if (!try_build_tracked_aggregate_access(*expr.args[0], base)) return false;
+        if (!is_raw_pointer_type(base.type)) return false;
+
+        IrExprPtr pointer = check_expr(expr);
+        if (!is_raw_pointer_type(pointer->type)) return false;
+
+        out.base_name = std::move(base.base_name);
+        out.base_type = std::move(base.base_type);
+        out.type = pointer->type;
+        out.path = std::move(base.path);
+        out.expr = std::move(pointer);
+        out.has_final_field_mutability = false;
+        out.final_field_mutable = true;
+        out.final_field_label.clear();
+        out.final_container_name.clear();
+        return true;
+    }
+
+    bool try_build_tracked_pointer_borrow_operand(const Expr& expr, TrackedAggregateAccess& out) {
+        if (try_build_tracked_aggregate_access(expr, out)) return true;
+        return try_build_tracked_pointer_add_access(expr, out);
     }
 
     ReferenceBindingSubject hidden_reference_binding_subject(const std::string& name,
@@ -18141,7 +18179,7 @@ private:
         }
 
         TrackedAggregateAccess pointer_access;
-        if (!try_build_tracked_aggregate_access(*expr_operand(deref_expr), pointer_access)) {
+        if (!try_build_tracked_pointer_borrow_operand(*expr_operand(deref_expr), pointer_access)) {
             fail(expr.loc,
                  "borrow expression requires a local binding, field access, tuple index, "
                  "constant aggregate index, or raw pointer dereference rooted in one of those");

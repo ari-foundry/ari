@@ -114,6 +114,18 @@ pub impl[T] std::vec::Vec[T] {
     return ptr_load(ptr_add(self.raw.data, index));
   }
 
+  fn get_ref(self: ref Self, index: i64) -> ref T {
+    std::assert(index >= 0);
+    std::assert(index < self.raw.len);
+    return ref *ptr_add(self.raw.data, index);
+  }
+
+  fn get_mut(self: ref mut Self, index: i64) -> ref mut T {
+    std::assert(index >= 0);
+    std::assert(index < self.raw.len);
+    return ref mut *ptr_add(self.raw.data, index);
+  }
+
   fn set(self: ref mut Self, index: i64, value: T) -> void {
     std::assert(index >= 0);
     std::assert(index < self.raw.len);

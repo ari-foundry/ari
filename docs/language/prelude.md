@@ -80,7 +80,7 @@ The source handle currently exposes element methods: `len`, `capacity`,
 `push_in(ref mut zone, value)`, grow-only same-zone `reserve`,
 `reserve_extra(ref mut zone, additional)`, `pop`, `try_pop`, `insert`,
 `insert_in(ref mut zone, index, value)`, `remove`, `clear`, `truncate`,
-`contains`, `index_of`, `count`, `equals(Slice[T])`,
+`get_ref`, `get_mut`, `contains`, `index_of`, `count`, `equals(Slice[T])`,
 `starts_with(Slice[T])`, `ends_with(Slice[T])`,
 `extend_from_slice_in(ref mut zone, values)`,
 `resize_in(ref mut zone, length, value)`, `copy_to(ref mut zone)`,
@@ -89,9 +89,11 @@ top-level `std::vec::from_slice_in<T>(ref mut zone, values)`, `as_ptr()`,
 `push_in`, `insert_in`,
 `extend_from_slice_in`, and `resize_in` use the same explicit zone capability
 to grow the buffer. Metadata, checked reads, search, Slice comparison,
-`copy_to(ref mut zone)`, `as_ptr()`, and `iter()` borrow the handle receiver
-instead of copying it. `copy_to(ref mut zone)` copies the current elements into
-a new handle tied to the target zone. `as_ptr()` returns the stored element
+`copy_to(ref mut zone)`, `get_ref(index)`, `as_ptr()`, and `iter()` borrow the
+handle receiver instead of copying it. `get_ref(index)` returns a shared borrow
+of the indexed element, while `get_mut(index)` returns a mutable element borrow
+through a mutable receiver. `copy_to(ref mut zone)` copies the current elements
+into a new handle tied to the target zone. `as_ptr()` returns the stored element
 pointer with the source zone provenance preserved, and `as_mut_ptr()` exposes
 the same pointer through a mutable receiver. `iter()` returns a tracked
 `std::vec::Iter<T>` that implements `Iterator[T]`, and the Vec handle also
@@ -647,7 +649,7 @@ read/write/replace, push/pop, grow-on-demand
 `reserve(ref mut Zone, capacity)`, `reserve_extra(ref mut Zone, additional)`,
 grow-on-demand `insert_in(ref mut Zone, index, value)`,
 `resize_in(ref mut Zone, length, value)`, insert/remove, truncate/clear, swap,
-simple linear search, and
+borrowed element views through `get_ref` / `get_mut`, simple linear search, and
 `extend_from_slice_in(ref mut Zone, Slice<T>)`, and `vec.as_slice()` creates a
 mutable `Slice[T]` view over the same zone-backed buffer. `copy_to(ref mut
 Zone)` copies the current elements into a new handle tied to the target zone,
@@ -659,8 +661,8 @@ mutable receiver; both are rejected after that zone is reset or destroyed.
 `iter()`
 returns a tracked `std::vec::Iter<T>`, and `std::vec::Vec<T>` implements
 `IntoIterator[T]` so `for value in vec` uses the same iterator lowering.
-Metadata, checked read, search, iterator, target-zone copy, and raw-pointer
-methods borrow the source handle receiver instead of copying it.
+Metadata, checked read, element-borrow, search, iterator, target-zone copy, and
+raw-pointer methods borrow the source handle receiver instead of copying it.
 `reserve`, `reserve_extra`, `push_in`, `insert_in`, `extend_from_slice_in`,
 and `resize_in` must receive the same zone that created the handle; they copy
 existing elements into a larger zone allocation when growth is needed and keep
@@ -737,10 +739,12 @@ push/pop, same-zone `push_in` growth, same-zone grow-only `reserve`,
 `try_pop`, insert/remove, swap,
 same-zone `reserve_extra`, same-zone `insert_in` growth, same-zone
 `extend_from_slice_in` growth, same-zone `resize_in` growth, truncate/clear,
-simple search, `Slice[T]` exact/prefix/suffix checks, target-zone `copy_to`,
-and `as_slice` calls over the stored raw handle. Read-only metadata, checked
-reads, search, Slice comparison, `copy_to`, and `as_ptr` borrow that source
-handle receiver. The resulting `Slice[T]` and its `as_ptr()` pointer keep the
+element borrow views, simple search, `Slice[T]` exact/prefix/suffix checks,
+target-zone `copy_to`, and `as_slice` calls over the stored raw handle.
+Read-only metadata, checked reads, `get_ref`, search, Slice comparison,
+`copy_to`, and `as_ptr` borrow that source handle receiver. `get_mut` takes a
+mutable receiver borrow and returns a mutable element borrow. The resulting
+`Slice[T]` and its `as_ptr()` pointer keep the
 same zone provenance, so using either after `zone::reset` or `zone::destroy`
 is rejected. `as_ptr()` / `as_mut_ptr()` raw pointers and copied Vec handles
 track their source or target zone respectively. Mutating overwrite/shrink

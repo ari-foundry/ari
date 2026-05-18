@@ -382,6 +382,9 @@ check-prelude: $(TARGET)
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent8index_of"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent8contains"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
 	grep -F -q 'define i64 @"_ARNv4impl18std__vec__Vec_i64_8inherent5count"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-fixed-ops.ll
+	$(TARGET) tests/ok/std-vec-get-ref-mut.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-get-ref-mut.ll
+	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent7get_ref"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-get-ref-mut.ll
+	grep -F -q 'define ptr @"_ARNv4impl18std__vec__Vec_i64_8inherent7get_mut"(ptr %arg0, i64 %arg1)' $(BUILD_DIR)/prelude/std-vec-get-ref-mut.ll
 	$(TARGET) tests/ok/std-vec-slice-compare.ari --emit-llvm $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent11starts_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
 	grep -F -q 'define i1 @"_ARNv4impl18std__vec__Vec_i64_8inherent9ends_with"(ptr %arg0, { ptr, i64 } %arg1)' $(BUILD_DIR)/prelude/std-vec-slice-compare.ll
@@ -554,6 +557,7 @@ check-prelude: $(TARGET)
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-string-implicit-zone.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-implicit-zone.elf; $(BUILD_DIR)/prelude/std-string-implicit-zone.elf; code=$$?; test $$code -eq 142; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-metadata-methods.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; $(BUILD_DIR)/prelude/std-vec-metadata-methods.elf; code=$$?; test $$code -eq 12; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-fixed-ops.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; $(BUILD_DIR)/prelude/std-vec-fixed-ops.elf; code=$$?; test $$code -eq 118; fi
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-get-ref-mut.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-get-ref-mut.elf; $(BUILD_DIR)/prelude/std-vec-get-ref-mut.elf; code=$$?; test $$code -eq 30; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-slice-compare.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; $(BUILD_DIR)/prelude/std-vec-slice-compare.elf; code=$$?; test $$code -eq 221; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-replace.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-replace.elf; $(BUILD_DIR)/prelude/std-vec-replace.elf; code=$$?; test $$code -eq 22; fi
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/ok/std-vec-as-slice.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-vec-as-slice.elf; $(BUILD_DIR)/prelude/std-vec-as-slice.elf; code=$$?; test $$code -eq 99; fi
@@ -626,6 +630,8 @@ check-prelude: $(TARGET)
 	grep -q "Box! expects Box!(T, ref mut zone, value)" $(BUILD_DIR)/prelude/std-boxed-macro-new-shape.err
 	if $(TARGET) tests/errors/std-vec-metadata-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'vec' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-metadata-after-reset.err
+	if $(TARGET) tests/errors/std-vec-get-ref-mut-conflict.ari -o $(BUILD_DIR)/prelude/std-vec-get-ref-mut-conflict.elf >$(BUILD_DIR)/prelude/std-vec-get-ref-mut-conflict.err 2>&1; then exit 1; fi
+	grep -q "cannot mutably borrow already borrowed binding 'vec'" $(BUILD_DIR)/prelude/std-vec-get-ref-mut-conflict.err
 	if $(TARGET) tests/errors/std-vec-if-handle-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'chosen' after zone 'zone' was reset or destroyed" $(BUILD_DIR)/prelude/std-vec-if-handle-after-reset.err
 	if $(TARGET) tests/errors/std-vec-push-after-reset.ari -o $(BUILD_DIR)/prelude/std-vec-push-after-reset.elf >$(BUILD_DIR)/prelude/std-vec-push-after-reset.err 2>&1; then exit 1; fi

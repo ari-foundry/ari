@@ -1,0 +1,22 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var vec = Vec!(i64, ref mut zone, 2);
+  vec.push(5);
+  vec.push(7);
+
+  let before = {
+    let view: ref i64 = vec.get_ref(1);
+    let raw = view as ptr i64;
+    ptr_load(raw)
+  };
+
+  {
+    let unique: ref mut i64 = vec.get_mut(0);
+    let unique_raw = unique as ptr i64;
+    ptr_store(unique_raw, 23);
+  }
+
+  let after = vec.get(0);
+  zone::destroy(zone);
+  return before + after;
+}

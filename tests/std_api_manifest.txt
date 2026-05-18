@@ -160,6 +160,8 @@ method std::vec::Vec[T]::equals|check-prelude std-vec-slice-compare borrowed rec
 method std::vec::Vec[T]::extend_from_slice_in|check-prelude std-vec-extend-from-slice-in; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::first|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::get|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::get_mut|check-prelude std-vec-get-ref-mut mutable element borrow view; docs/dev/test-matrix.md Explicit memory zones row
+method std::vec::Vec[T]::get_ref|check-prelude std-vec-get-ref-mut shared element borrow view; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::index_of|check-prelude std-vec-fixed-ops borrowed receiver; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::insert|check-prelude std-vec-fixed-ops; docs/dev/test-matrix.md Explicit memory zones row
 method std::vec::Vec[T]::insert_in|check-prelude std-vec-insert-in; docs/dev/test-matrix.md Explicit memory zones row

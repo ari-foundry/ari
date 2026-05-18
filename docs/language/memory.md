@@ -500,8 +500,9 @@ capacity-growing source Vec or String operation. Read-only
 `std::string::String` and `std::vec::Vec<T>` handle methods
 borrow the receiver, so metadata, checked endpoint/indexed reads, source
 string/Vec search, source string exact/prefix/suffix checks, target-zone copy,
-and read-only raw-pointer recovery do not copy the handle itself. Mutable raw
-Vec pointer recovery borrows the source handle mutably.
+read-only Vec element borrow views, and read-only raw-pointer recovery do not
+copy the handle itself. Mutable Vec element and raw-pointer recovery borrow the
+source handle mutably.
 Dropping a tracked source `std::vec::Vec<T>`
 consumes the handle and drops each current element, while overwrite and shrink
 helpers drop removed elements before reducing the live length. The explicit

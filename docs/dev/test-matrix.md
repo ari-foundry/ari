@@ -371,6 +371,9 @@ Checklist:
       linear-search methods over its zone-backed buffer, with borrowed receiver
       lowering for read/search methods and value-drop removal for overwrite or
       shrink operations
+- [x] source `std::vec::Vec<T>` exposes `get_ref(index)` and `get_mut(index)`
+      element borrow views through tracked pointer-offset borrows, with
+      conservative receiver borrow conflict tracking
 - [x] source `std::vec::Vec<T>` exposes `equals(Slice<T>)`,
       `starts_with(Slice<T>)`, and `ends_with(Slice<T>)` over borrowed
       Slice views with borrowed receiver lowering

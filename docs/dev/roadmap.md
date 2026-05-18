@@ -26,8 +26,8 @@ near-term deliverable.
    method returns, and extern signatures still need the runtime-capacity ABI.
    Source `std::Vec[T]`/`std::vec::Vec[T]` already follows the explicit-zone
    handle policy for allocation, same-zone growth, `Vec!` construction sugar,
-   Drop of live elements, tracked `Slice` views, and `as_ptr()` /
-   `as_mut_ptr()` raw element-buffer views.
+   Drop of live elements, tracked `Slice` views, `get_ref()` / `get_mut()`
+   element borrows, and `as_ptr()` / `as_mut_ptr()` raw element-buffer views.
    Source `Box[T]`/`std::Box[T]` already follows the explicit-zone handle
    policy, including `Box!(T, ref mut Zone, value)` construction sugar and
    tracked `as_ref()` / `as_mut()` value borrows plus `as_ptr()` /

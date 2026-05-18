@@ -1,0 +1,13 @@
+fn main() -> i64 {
+  var zone = zone::create(64);
+  var vec = Vec!(i64, ref mut zone, 2);
+  vec.push(5);
+  vec.push(7);
+
+  let shared = vec.get_ref(0);
+  let unique = vec.get_mut(1);
+  let shared_raw = shared as ptr i64;
+  let unique_raw = unique as ptr i64;
+
+  return ptr_load(shared_raw) + ptr_load(unique_raw);
+}

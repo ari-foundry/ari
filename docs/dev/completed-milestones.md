@@ -160,6 +160,8 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
   addition to tracked raw pointer views.
 - Source `std::vec::Vec[T]` exposes tracked `as_ptr()` and `as_mut_ptr()`
   raw element-buffer views.
+- Source `std::vec::Vec[T]` exposes `get_ref(index)` and `get_mut(index)`
+  element borrow views over the zone-backed buffer.
 - Source Vec and String growth can infer the tracked receiver's source zone for
   common same-zone operations without adding an ambient heap.
 - Host zone allocation metadata is fixed for the 0.x ABI: every non-empty
