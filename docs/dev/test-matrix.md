@@ -135,6 +135,12 @@ Checklist:
       object with a small C helper
 - [x] inspect LLVM object aggregate export symbols with an unresolved
       `extern "C"` helper relocation
+- [x] emit LLVM objects as PIC library artifacts with shared-library visibility
+      rules, so private Ari helpers and Ari-owned runtime helpers are hidden
+- [x] emit matching C headers and LLVM objects in one invocation, including
+      generated tuple/enum/vector C wrapper types and explicit export symbols
+- [x] emit LLVM objects after module-cache IR replay and inspect cached generic
+      dependency body symbols in the resulting object
 - [x] compile a shared library with `--shared`
 - [x] emit hidden LLVM visibility for private Ari helpers under `--shared`
 - [x] inspect linked shared-library dynamic symbols for public/exported-only

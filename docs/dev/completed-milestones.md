@@ -328,6 +328,10 @@ a second task list; use [Roadmap](roadmap.md) for unfinished work and
 - LLVM object fixtures now cover direct by-value `@repr(C)` aggregate exports
   that also reference unresolved `extern "C"` helpers, so symbol tables and
   relocation records stay checked as the library ABI surface grows.
+- LLVM object output is library-ready by default: `--emit-obj` emits PIC with
+  shared-library visibility rules, can write matching C headers in the same
+  invocation, and is covered for module-cache IR replay into relocatable object
+  symbol tables.
 - `forget name;` is implemented as an explicit owner-resolution surface for
   live and `maybe-unavailable` owners. It consumes the static owner state
   without lowering destructor calls, letting maybe-zero loop exits be resolved

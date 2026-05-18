@@ -237,8 +237,9 @@ int run(int argc, char** argv) {
         write_text_file(c_header_output, header);
         std::cout << "wrote " << c_header_output << " (C header)\n";
     }
+    const bool object_library_output = !object_output.empty();
     LlvmEmitOptions llvm_options;
-    llvm_options.shared_library = shared_library;
+    llvm_options.shared_library = shared_library || object_library_output;
     llvm_options.target_triple = target.triple;
     std::string llvm = emit_llvm_ir(ir, llvm_options);
     std::string llvm_path = llvm_output.empty() ? output + ".ll" : llvm_output;
@@ -249,8 +250,11 @@ int run(int argc, char** argv) {
     }
 
     std::string command = shell_quote(llvm_compiler) + " ";
-    if (!object_output.empty()) command += "-c ";
-    if (shared_library) command += "-shared -fPIC ";
+    if (object_library_output) {
+        command += "-c -fPIC ";
+    } else if (shared_library) {
+        command += "-shared -fPIC ";
+    }
     if (!target_triple.empty()) command += shell_quote("--target=" + target.triple) + " ";
     command += shell_quote(llvm_path) + " -o " + shell_quote(object_output.empty() ? output : object_output);
     if (object_output.empty()) {

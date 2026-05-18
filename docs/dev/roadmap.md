@@ -21,9 +21,8 @@ No active near-term compiler work is queued right now. Add the next concrete
 
 ## Backend Work
 
-1. Keep LLVM object output library-ready.
-   Preserve explicit symbol names, C-header compatibility, and module-cache
-   replay behavior for object files produced with `--emit-obj`.
+No active backend work is queued right now. Add the next concrete 0.x-sized
+backend slice here when it is ready to implement.
 
 ## Bootstrap Direction
 
@@ -43,4 +42,5 @@ No active near-term compiler work is queued right now. Add the next concrete
 - ambient global heap as a language primitive
 - non-local ownership for bare root `Vec[T]` without an explicit allocation
   capability
-- adding a second backend before the LLVM path is library-ready
+- adding a second backend during the current 0.x compiler/library stabilization
+  work

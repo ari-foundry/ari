@@ -1520,6 +1520,14 @@ check-modules: $(TARGET)
 	grep -q "with unknown generic argument 'Z'" $(BUILD_DIR)/modules/package-cache-generics-arg-tampered.err
 	$(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics.aricache -o $(BUILD_DIR)/modules/package-cache-generics.elf
 	$(BUILD_DIR)/modules/package-cache-generics.elf; code=$$?; test $$code -eq 16
+	$(TARGET) -Itests/packages tests/ok/package-cache-generics-main.ari --use-module-cache $(BUILD_DIR)/modules/package-cache-generics.aricache --emit-obj $(BUILD_DIR)/modules/package-cache-generics.o
+	readelf -h $(BUILD_DIR)/modules/package-cache-generics.o >$(BUILD_DIR)/modules/package-cache-generics-object.header
+	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/modules/package-cache-generics-object.header
+	readelf -sW $(BUILD_DIR)/modules/package-cache-generics.o >$(BUILD_DIR)/modules/package-cache-generics-object.sym
+	test $$(grep -c '_ARNv14cache_generics15identity__G_i64' $(BUILD_DIR)/modules/package-cache-generics-object.sym) -eq 1
+	test $$(grep -c '_ARNv4impl29cache_generics__CacheBox_i64_8inherent3new' $(BUILD_DIR)/modules/package-cache-generics-object.sym) -eq 1
+	test $$(grep -c '_ARNv4impl29cache_generics__CacheBox_i64_8inherent14replace__G_i64' $(BUILD_DIR)/modules/package-cache-generics-object.sym) -eq 1
+	test $$(grep -c '_ARNv4impl29cache_generics__CacheBox_i64_8inherent4take' $(BUILD_DIR)/modules/package-cache-generics-object.sym) -eq 1
 	$(TARGET) -Itests/packages tests/ok/package-cache-host-literals-main.ari --emit-module-cache $(BUILD_DIR)/modules/package-cache-host-literals.aricache --emit-llvm $(BUILD_DIR)/modules/package-cache-host-literals-cache.ll
 	grep -q "ari-ast-decls-v0" $(BUILD_DIR)/modules/package-cache-host-literals.aricache
 	grep -q "6:string;5:cache;" $(BUILD_DIR)/modules/package-cache-host-literals.aricache
@@ -2068,6 +2076,15 @@ check-meta: $(TARGET)
 	grep -q 'define i64 @"ari_take_maybe"({ i32, i64 } %arg0)' $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
 	grep -q 'define { i32, i64 } @"ari_make_maybe"(i64 %arg0)' $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
 	grep -q 'define { i64, \[1 x i64\] } @"_ARNv23echo__G_Vec_i64__cap_1_"({ i64, \[1 x i64\] } %arg0)' $(BUILD_DIR)/meta/c-header-generated-aggregates.ll
+	$(TARGET) tests/ok/c-header-generated-aggregates.ari --emit-c-header $(BUILD_DIR)/meta/c-header-generated-aggregates-object.h --emit-obj $(BUILD_DIR)/meta/c-header-generated-aggregates.o
+	grep -q 'int64_t ari_take_tuple(AriTuple_i64_i64 arg0);' $(BUILD_DIR)/meta/c-header-generated-aggregates-object.h
+	grep -q 'AriEnum_MaybeWide ari_make_maybe(int64_t arg0);' $(BUILD_DIR)/meta/c-header-generated-aggregates-object.h
+	readelf -h $(BUILD_DIR)/meta/c-header-generated-aggregates.o >$(BUILD_DIR)/meta/c-header-generated-aggregates-object.header
+	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/meta/c-header-generated-aggregates-object.header
+	readelf -sW $(BUILD_DIR)/meta/c-header-generated-aggregates.o >$(BUILD_DIR)/meta/c-header-generated-aggregates-object.sym
+	grep -q 'ari_take_tuple' $(BUILD_DIR)/meta/c-header-generated-aggregates-object.sym
+	grep -q 'ari_make_maybe' $(BUILD_DIR)/meta/c-header-generated-aggregates-object.sym
+	grep -q '_ARNv23echo__G_Vec_i64__cap_1_' $(BUILD_DIR)/meta/c-header-generated-aggregates-object.sym
 	$(TARGET) tests/ok/library-export.ari --emit-obj $(BUILD_DIR)/meta/library-export.o
 	readelf -h $(BUILD_DIR)/meta/library-export.o >$(BUILD_DIR)/meta/library-export-object.header
 	grep -q 'Type:[[:space:]]*REL' $(BUILD_DIR)/meta/library-export-object.header
@@ -2092,6 +2109,12 @@ check-meta: $(TARGET)
 	grep -q 'define i64 @"_ARNv10public_api"' $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define i64 @"ari_named_private"' $(BUILD_DIR)/meta/shared-visibility.ll
 	grep -q 'define hidden i64 @ari_builtin_write_i64' $(BUILD_DIR)/meta/shared-visibility.ll
+	$(TARGET) tests/ok/shared-visibility.ari --emit-obj $(BUILD_DIR)/meta/shared-visibility.o
+	readelf -sW $(BUILD_DIR)/meta/shared-visibility.o >$(BUILD_DIR)/meta/shared-visibility-object.sym
+	grep -Eq 'HIDDEN[[:space:]]+[0-9]+[[:space:]]+_ARNv6helper' $(BUILD_DIR)/meta/shared-visibility-object.sym
+	grep -Eq 'DEFAULT[[:space:]]+[0-9]+[[:space:]]+_ARNv10public_api' $(BUILD_DIR)/meta/shared-visibility-object.sym
+	grep -Eq 'DEFAULT[[:space:]]+[0-9]+[[:space:]]+ari_named_private' $(BUILD_DIR)/meta/shared-visibility-object.sym
+	grep -Eq 'HIDDEN[[:space:]]+[0-9]+[[:space:]]+ari_builtin_write_i64' $(BUILD_DIR)/meta/shared-visibility-object.sym
 	if command -v $(LLVM_CC) >/dev/null 2>&1 && command -v nm >/dev/null 2>&1; then $(TARGET) tests/ok/shared-visibility.ari --shared --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/meta/shared-visibility.so; nm -D $(BUILD_DIR)/meta/shared-visibility.so >$(BUILD_DIR)/meta/shared-visibility.sym; grep -q '_ARNv10public_api' $(BUILD_DIR)/meta/shared-visibility.sym; grep -q 'ari_named_private' $(BUILD_DIR)/meta/shared-visibility.sym; if grep -Eq '_ARNv6helper|_ARNv4main|ari_builtin_' $(BUILD_DIR)/meta/shared-visibility.sym; then exit 1; fi; fi
 	$(TARGET) tests/ok/shared-visibility.ari --emit-llvm $(BUILD_DIR)/meta/shared-visibility-exe.ll
 	grep -q 'define i64 @"_ARNv6helper"' $(BUILD_DIR)/meta/shared-visibility-exe.ll

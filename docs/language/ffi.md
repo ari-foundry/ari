@@ -262,8 +262,11 @@ hidden LLVM visibility, and Ari-owned runtime helpers are hidden as internal
 implementation details.
 Relocatable LLVM object output records explicit export/no-mangle names in its
 symbol table, including by-value aggregate exports, and can additionally
-reference imported `extern "C"` symbols through relocations. Direct executable
-output still rejects unresolved imported symbols.
+reference imported `extern "C"` symbols through relocations. `--emit-obj` is
+treated as a library artifact: it is emitted as PIC, hides private Ari helpers
+and Ari-owned runtime helpers, can be paired with `--emit-c-header`, and keeps
+module-cache replayed dependency bodies available to the object emitter. Direct
+executable output still rejects unresolved imported symbols.
 
 ## Type Mapping
 

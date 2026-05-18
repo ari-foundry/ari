@@ -62,9 +62,13 @@ keep the previous default visibility.
 
 Sema caps functions and calls at 65,535 parameters/arguments. Public functions
 and explicit `@export`/`@no_mangle` functions keep their requested symbol names
-in LLVM IR, shared-library output, and LLVM object output. Object fixtures cover
-both scalar exports and direct by-value aggregate exports that also reference
-unresolved `extern "C"` helpers.
+in LLVM IR, shared-library output, and LLVM object output. Object output is a
+library artifact: it is produced as PIC, uses the same hidden/private visibility
+rules as `--shared`, can be emitted together with a C header, and preserves
+module-cache IR replay exactly enough for cached dependency bodies to appear in
+the object symbol table. Object fixtures cover scalar exports, generated
+aggregate C-header wrappers, cached generic dependency replay, and direct
+by-value aggregate exports that also reference unresolved `extern "C"` helpers.
 
 ## Prelude IO, Input, And Stops
 
@@ -110,8 +114,8 @@ The LLVM backend still intentionally rejects or does not ABI-lower:
 - raw pointer operations outside scalar and plain Ari-layout aggregate local layouts
 - imported C aggregate calls beyond classifier-approved `@repr(C)` structs
 
-## Next Backend Work
+## Future Direction
 
-1. Keep LLVM object output aligned with the library ABI surface as imported and
-   exported aggregate wrappers grow.
-2. Move compiler-known prelude stubs toward Ari source modules where possible.
+No active backend work is queued in the roadmap right now. A likely future
+cleanup is to move compiler-known prelude stubs toward Ari source modules where
+possible.
