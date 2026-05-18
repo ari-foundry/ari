@@ -38,7 +38,7 @@ The current `std` package already provides:
 - `Slice[T]` and `std::vec::Vec[T]` metadata, asserting element access, and
   `Option`-returning element access helpers
 - `std::string::String` empty-safe byte access, byte search, comparison,
-  ASCII trim, and whole-string ASCII parsing helpers
+  borrowed and owned ASCII trim helpers, and whole-string ASCII parsing helpers
 - range/iterator traits and the `std::vec::Iter` implementation
 - comparison, formatting, and conversion trait surfaces, plus source
   comparison value helpers: `min`, `max`, `clamp`, and `is_between`
@@ -151,7 +151,7 @@ Likely compiler work:
 | `std::mem` | Safer copy/fill helpers for copyable values. | Scalar, aggregate, and owner-rejection tests. | Layout service and ownership-aware raw memory checks. |
 | `std::zone` | Scoped allocation helpers after the raw `alloc_array<T>` buffer helper. | Reset/destroy provenance, raw array allocation, and escape diagnostics. | Zone lifetime/state merge rules. |
 | `std::boxed` | Clarify final unique-owner direction. | Empty-handle, drop, same-zone, and pointer-provenance tests. | Generic drop and allocation-zone wrapper tracking. |
-| `std::string` | Add copying trim variants and signed/checked parsers only after text and numeric policies are documented. | Search, growth, append, copy, ASCII trim/parse, and after-reset tests. | Formatting/string runtime hooks. |
+| `std::string` | Add signed/checked parsers only after text and numeric policies are documented. | Search, growth, append, copy, ASCII trim/parse, owned trim copy, and after-reset tests. | Formatting/string runtime hooks. |
 | `std::ascii` | Add prefix parsers only after a result shape for consumed byte counts is chosen. | Byte classification behavior, slice trimming/parsing, source symbol checks, and future parser edge cases. | None for current whole-slice helpers; prefix parsers may need tuple/result ergonomics. |
 | `std::vec` | Iterator/adaptor growth and root/source Vec unification plan after safe accessors. | Method, `try_*` access, iterator, borrow, owner-drop, and same-zone tests. | Iterator lowering and generic aggregate monomorphization. |
 | `std::iter` | Adapter traits after collection iterators are stable. | Direct iterator, `IntoIterator`, and refutable-pattern diagnostics. | General iterator protocol lowering. |

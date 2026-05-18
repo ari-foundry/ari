@@ -29,6 +29,10 @@ test:
 - `std-string-append-u64.ari`: source `std::string` formatting helper.
 - `std-string-ascii-helpers.ari`: source `std::string` borrowed ASCII trim
   views and whole-string parsing behavior.
+- `std-string-trim-copy.ari`: source `std::string` owned ASCII trim copies
+  into a target zone, including source-zone reset behavior.
+- `std-string-trim-to-after-target-reset.ari`: negative target-zone
+  provenance diagnostic for copied trim results.
 - `std-string-try-byte-access.ari`: source `std::string` Option-returning
   byte access and empty pop behavior.
 - `std-context-args.ari`: runtime-backed `std::context` argument access,

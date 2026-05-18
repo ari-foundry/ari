@@ -38,11 +38,18 @@ Copies also require a target zone:
 ```ari
 std::string::copy_to(ref text, ref mut zone)
 text.copy_to(ref mut zone)
+text.trim_start_to(ref mut zone)
+text.trim_end_to(ref mut zone)
+text.trim_to(ref mut zone)
 ```
 
 The returned handle is tied to the target zone. Ari's checker rejects use of a
 tracked string, its raw pointer, or derived views after that zone is reset or
 destroyed.
+
+The `trim_*_to` and `trim_to` methods first make the same ASCII-trimmed view as
+`trim_start`, `trim_end`, or `trim`, then copy that view into the target zone.
+Use them when the trimmed bytes must outlive the source zone.
 
 ## Metadata, Bytes, And Views
 
@@ -148,17 +155,22 @@ They compare exact byte values and do not perform case folding or decoding.
 
 ```ari
 text.trim_start()
+text.trim_start_to(ref mut zone)
 text.trim_end()
+text.trim_end_to(ref mut zone)
 text.trim()
+text.trim_to(ref mut zone)
 text.parse_decimal()
 text.parse_hex()
 ```
 
 The trim methods return borrowed `Slice[u8]` views into the same storage; they
-do not allocate or copy. The parse methods require the entire string to be a
-valid decimal or hexadecimal ASCII integer and return `Option[i64]`. Empty
-input, whitespace, or invalid bytes return `None<i64>()`. To accept surrounding
-ASCII whitespace, trim first and parse the returned slice with `std::ascii`:
+do not allocate or copy. The `*_to` forms return owned `String` copies in a
+target zone, so the copied handle remains usable after the source zone is reset
+or destroyed. The parse methods require the entire string to be a valid decimal
+or hexadecimal ASCII integer and return `Option[i64]`. Empty input, whitespace,
+or invalid bytes return `None<i64>()`. To accept surrounding ASCII whitespace,
+trim first and parse the returned slice with `std::ascii`:
 
 ```ari
 let view = text.trim();
@@ -199,9 +211,16 @@ tests/cases/standard-library/ok/std-string-search.ari
 tests/cases/standard-library/ok/std-string-prefix-suffix.ari
 tests/cases/standard-library/ok/std-string-equals.ari
 tests/cases/standard-library/ok/std-string-ascii-helpers.ari
+tests/cases/standard-library/ok/std-string-trim-copy.ari
 tests/cases/standard-library/ok/std-string-grow.ari
 tests/cases/standard-library/ok/std-string-append.ari
 tests/cases/standard-library/ok/std-string-from-slice-in.ari
+```
+
+Focused diagnostics include:
+
+```text
+tests/cases/standard-library/errors/std-string-trim-to-after-target-reset.ari
 ```
 
 `make check-prelude` compiles these to LLVM, checks representative symbols and
@@ -213,7 +232,6 @@ methods are tracked in `tests/std_api_manifest.txt` and checked by
 
 Potential next slices:
 
-- copying trim variants that return new `String` values in a target zone
 - signed and overflow-checked parsers after numeric policy is documented
 - a deliberate text/Unicode module instead of expanding ASCII byte helpers
 - broader formatter integration as `Display` and `Debug` dispatch mature

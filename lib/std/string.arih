@@ -416,9 +416,17 @@ pub impl std::string::String {
     return std::ascii::trim_start(view);
   }
 
+  fn trim_start_to(self: ref Self, target: ref mut Zone) -> std::string::String {
+    return std::string::from_slice_in(target, self.trim_start());
+  }
+
   fn trim_end(self: ref Self) -> super::Slice[u8] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::trim_end(view);
+  }
+
+  fn trim_end_to(self: ref Self, target: ref mut Zone) -> std::string::String {
+    return std::string::from_slice_in(target, self.trim_end());
   }
 
   // String is currently a byte-string handle, so these helpers deliberately
@@ -426,6 +434,10 @@ pub impl std::string::String {
   fn trim(self: ref Self) -> super::Slice[u8] {
     let view = super::Slice<u8> { data: self.raw.data, len: self.raw.len };
     return std::ascii::trim(view);
+  }
+
+  fn trim_to(self: ref Self, target: ref mut Zone) -> std::string::String {
+    return std::string::from_slice_in(target, self.trim());
   }
 
   fn parse_decimal(self: ref Self) -> std::Option[i64] {

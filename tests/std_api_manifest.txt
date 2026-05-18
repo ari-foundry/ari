@@ -220,7 +220,10 @@ method std::string::String::set|check-prelude std-string-handle tests; docs/dev/
 method std::string::String::starts_with|check-prelude std-string-prefix-suffix borrowed receiver Slice[u8] tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::trim|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
 method std::string::String::trim_end|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
+method std::string::String::trim_end_to|check-prelude std-string-trim-copy owned ASCII trim-end copy in target zone; docs/stdlib/modules/string.md
 method std::string::String::trim_start|check-prelude std-string-ascii-helpers borrowed ASCII trim view; docs/stdlib/api-reference.md String section
+method std::string::String::trim_start_to|check-prelude std-string-trim-copy owned ASCII trim-start copy in target zone; docs/stdlib/modules/string.md
+method std::string::String::trim_to|check-prelude std-string-trim-copy owned ASCII trim copy in target zone; docs/stdlib/modules/string.md
 method std::string::String::truncate|check-prelude std-string-handle tests; docs/dev/test-matrix.md Explicit memory zones row
 method std::string::String::try_first|check-prelude std-string-try-byte-access Option-returning empty-safe byte access; docs/stdlib/modules/string.md
 method std::string::String::try_get|check-prelude std-string-try-byte-access Option-returning out-of-range byte access; docs/stdlib/modules/string.md

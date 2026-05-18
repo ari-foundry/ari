@@ -314,8 +314,11 @@ text.append_bool_in(ref mut zone, value)
 text.append_f32_in(ref mut zone, value, precision)
 text.append_f64_in(ref mut zone, value, precision)
 text.trim_start()
+text.trim_start_to(ref mut zone)
 text.trim_end()
+text.trim_end_to(ref mut zone)
 text.trim()
+text.trim_to(ref mut zone)
 text.parse_decimal()
 text.parse_hex()
 text.as_slice()
@@ -326,9 +329,11 @@ text.copy_to(ref mut zone)
 `String` stores bytes, so `trim_start`, `trim_end`, `trim`,
 `parse_decimal`, and `parse_hex` intentionally reuse `std::ascii` behavior.
 The `try_*` byte accessors return `Option[u8]` for empty or out-of-range
-access. The trim methods return borrowed `Slice[u8]` views. The parse methods
-require the whole string to be valid and return `Option[i64]`; trim first when
-leading or trailing ASCII whitespace should be ignored.
+access. The plain trim methods return borrowed `Slice[u8]` views, while
+`trim_start_to`, `trim_end_to`, and `trim_to` copy the trimmed bytes into a
+target zone and return owned `String` handles. The parse methods require the
+whole string to be valid and return `Option[i64]`; trim first when leading or
+trailing ASCII whitespace should be ignored.
 
 `std::boxed::Box[T]` is a zone-backed single-value owner:
 

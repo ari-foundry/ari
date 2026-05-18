@@ -417,6 +417,13 @@ check-prelude: $(TARGET)
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__string__String8inherent13parse_decimal"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	grep -F -q 'define { i32, i64 } @"_ARNv4impl19std__string__String8inherent9parse_hex"(ptr %arg0)' $(BUILD_DIR)/prelude/std-string-ascii-helpers.ll
 	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-ascii-helpers.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; $(BUILD_DIR)/prelude/std-string-ascii-helpers.elf; code=$$?; test $$code -eq 186; fi
+	$(TARGET) tests/cases/standard-library/ok/std-string-trim-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-trim-copy.ll
+	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent13trim_start_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
+	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent11trim_end_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
+	grep -F -q 'define { { ptr, i64, i64 } } @"_ARNv4impl19std__string__String8inherent7trim_to"(ptr %arg0, ptr %arg1)' $(BUILD_DIR)/prelude/std-string-trim-copy.ll
+	$(TARGET) tests/cases/standard-library/ok/std-string-trim-copy.ari -o $(BUILD_DIR)/prelude/std-string-trim-copy.elf
+	$(BUILD_DIR)/prelude/std-string-trim-copy.elf; code=$$?; test $$code -eq 131
+	if command -v $(LLVM_CC) >/dev/null 2>&1; then $(TARGET) tests/cases/standard-library/ok/std-string-trim-copy.ari --llvm-cc $(LLVM_CC) -o $(BUILD_DIR)/prelude/std-string-trim-copy.elf; $(BUILD_DIR)/prelude/std-string-trim-copy.elf; code=$$?; test $$code -eq 131; fi
 	$(TARGET) tests/cases/standard-library/ok/std-string-from-copy.ari --emit-llvm $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -q 'ari_builtin_string_from_string' $(BUILD_DIR)/prelude/std-string-from-copy.ll
 	grep -F -q 'define { { ptr, i64, i64 } } @ari_builtin_string_copy_to(ptr %value.slot, ptr %target.slot)' $(BUILD_DIR)/prelude/std-string-from-copy.ll
@@ -853,6 +860,8 @@ check-prelude: $(TARGET)
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-copy-to-method-after-target-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/std-string-from-slice-in-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.err 2>&1; then exit 1; fi
 	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-from-slice-in-after-target-reset.err
+	if $(TARGET) tests/cases/standard-library/errors/std-string-trim-to-after-target-reset.ari -o $(BUILD_DIR)/prelude/std-string-trim-to-after-target-reset.elf >$(BUILD_DIR)/prelude/std-string-trim-to-after-target-reset.err 2>&1; then exit 1; fi
+	grep -q "cannot use zone pointer 'copied' after zone 'target' was reset or destroyed" $(BUILD_DIR)/prelude/std-string-trim-to-after-target-reset.err
 	if $(TARGET) tests/cases/standard-library/errors/std-string-push-in-different-zone.ari -o $(BUILD_DIR)/prelude/std-string-push-in-different-zone.elf >$(BUILD_DIR)/prelude/std-string-push-in-different-zone.err 2>&1; then exit 1; fi
 	grep -q "std::string::String.push_in zone argument must match the string allocation zone" $(BUILD_DIR)/prelude/std-string-push-in-different-zone.err
 	if $(TARGET) tests/cases/standard-library/errors/std-string-implicit-zone-untracked.ari -o $(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.elf >$(BUILD_DIR)/prelude/std-string-implicit-zone-untracked.err 2>&1; then exit 1; fi

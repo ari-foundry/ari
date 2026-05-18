@@ -1,0 +1,36 @@
+// Covers owned String copies made from ASCII trim views into a target zone.
+fn main() -> i64 {
+  var source = zone::create(64);
+  var target = zone::create(64);
+
+  var bytes: Vec[u8] = [32u8, 9u8, 97u8, 114u8, 105u8, 10u8, 13u8];
+  var blank_bytes: Vec[u8] = [32u8, 9u8, 10u8];
+  var text = std::string::from_slice_in(ref mut source, bytes.as_slice());
+  var blank = std::string::from_slice_in(ref mut source, blank_bytes.as_slice());
+
+  var start = text.trim_start_to(ref mut target);
+  var end = text.trim_end_to(ref mut target);
+  var trimmed = text.trim_to(ref mut target);
+  var blank_trimmed = blank.trim_to(ref mut target);
+
+  zone::reset(ref mut source);
+
+  let score =
+    start.len() +
+    start.capacity() +
+    (start.get(0) as i64) +
+    (start.last() as i64) +
+    end.len() +
+    end.capacity() +
+    (end.first() as i64) +
+    (end.last() as i64) +
+    trimmed.len() +
+    trimmed.capacity() +
+    (trimmed.get(1) as i64) +
+    blank_trimmed.len() +
+    blank_trimmed.capacity();
+
+  zone::destroy(target);
+  zone::destroy(source);
+  return score % 256;
+}
