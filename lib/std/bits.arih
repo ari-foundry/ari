@@ -105,8 +105,8 @@ pub fn align_up(value: u64, alignment: u64) -> u64 {
   return (value + mask) & ~mask;
 }
 
-// Bit-scan helpers use simple source loops for now. Future intrinsic-backed
-// implementations should preserve these names and edge-case results.
+// Bit scans and byte-order helpers use simple source loops for now. Future
+// intrinsic-backed implementations should preserve these names and edge cases.
 pub fn count_ones(value: u64) -> i64 {
   var current = value;
   var total = 0;
@@ -119,8 +119,24 @@ pub fn count_ones(value: u64) -> i64 {
   return total;
 }
 
+pub fn population_count(value: u64) -> i64 {
+  return count_ones(value);
+}
+
 pub fn count_zeros(value: u64) -> i64 {
   return 64 - count_ones(value);
+}
+
+pub fn byte_swap(value: u64) -> u64 {
+  var current = value;
+  var output = 0u64;
+  var index = 0;
+  while index < 8 {
+    output = (output << 8) | (current & 255u64);
+    current = current >> 8;
+    index = index + 1;
+  }
+  return output;
 }
 
 pub fn trailing_zeros(value: u64) -> i64 {

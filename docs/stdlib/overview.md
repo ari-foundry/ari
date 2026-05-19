@@ -50,8 +50,8 @@ hiding allocation, ownership, or backend behavior.
 | `std::cmp` | Comparison traits and helpers. | `Ord`, `min`, `max`, `clamp`, `is_between`. |
 | `std::algo` | Source algorithms over borrowed slices. | `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, `dedup`. |
 | `std::convert` | Explicit conversion trait names and helpers. | `From`, `Into`, `TryFrom`, `TryInto`, `identity`, `from`, `into`. |
-| `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked add/sub/neg/abs, saturating add/sub/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
-| `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, and zero/one-run bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`, `leading_ones`. |
+| `std::math` | Source-only numeric helpers. | `abs`, `sign`, sign/parity predicates, checked/wrapping/overflowing/saturating add policy, checked/saturating sub/neg/abs, `pow`, floor/ceil division, `gcd`, `lcm`. |
+| `std::bits` | Source-only bit-mask, rotation, power-of-two, low-mask, alignment, byte-swap, population-count, and zero/one-run bit-scan helpers. | `is_set`, `set`, `rotate_left`, `bit_width`, `low_mask`, `align_up`, `byte_swap`, `population_count`, `leading_ones`. |
 
 ## Allocation Rules
 
@@ -119,9 +119,10 @@ metadata, asserting `first`/`last`/`get` for programmer errors, and
 `Option`.
 
 `std::bits` follows the same rule for current `u64` mask, rotation,
-power-of-two, low-mask, alignment, and source-loop zero/one-run bit-scan
-helpers. Future intrinsic-backed implementations may need compiler support,
-but the public edge-case behavior should stay source-defined.
+power-of-two, low-mask, alignment, byte-swap, population-count, and source-loop
+zero/one-run bit-scan helpers. Future intrinsic-backed implementations may
+need compiler support, but the public edge-case behavior should stay
+source-defined.
 
 `std::cmp` is also source-first. Its current helpers build on the minimal
 `Ord[T]::lt` method so generic code can select, clamp, or range-check values

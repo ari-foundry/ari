@@ -429,11 +429,15 @@ Checklist:
 - [x] source `std::bits` exposes `leading_ones` and `trailing_ones` as
       complement pairs to the zero-run bit-scan helpers, including `0u64` and
       `~0u64` edge cases
+- [x] source `std::bits` exposes `byte_swap` and `population_count` with
+      focused byte-order and alias tests
 - [x] source `std::math` exposes natural sign predicate names
       `is_positive`, `is_negative`, and `is_zero` without type suffixes, while
       keeping the current concrete `i64` signatures
 - [x] source `std::math` exposes checked and saturating add/sub/neg/abs helpers
       with `Option[i64]` overflow reporting and edge-case saturation behavior
+- [x] source `std::math` exposes wrapping add and overflowing add result
+      helpers without adding public type suffixes
 - [x] runtime-backed `std::thread` exposes function-pointer spawn/join,
       cooperative yield, duration sleep, hosted available parallelism, runtime
       thread ids, invalid-handle checks, and source handle wrappers

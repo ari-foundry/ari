@@ -36,6 +36,8 @@ math::checked_add(left, right)
 math::checked_sub(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
+math::wrapping_add(left, right)
+math::overflowing_add(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_neg(value)
@@ -46,8 +48,21 @@ The `checked_*` helpers return `std::Option[i64]`: `Some(value)` when the
 operation is representable, and `None<i64>()` when it would overflow or
 underflow. The `saturating_*` helpers clamp to the nearest `i64` bound instead:
 positive overflow becomes `9223372036854775807`, and negative overflow becomes
-`-9223372036854775808`. This gives Ari source code a documented spelling for
-integer edge cases before the compiler grows dedicated overflow intrinsics.
+`-9223372036854775808`.
+
+`wrapping_add` returns the two's-complement wrapped result. `overflowing_add`
+returns an `Overflowing` value with `value()` and `overflowed()` accessors, so a
+caller can keep the wrapped result and still branch on the overflow flag:
+
+```ari
+let sum = math::overflowing_add(left, right);
+if sum.overflowed() {
+  return sum.value();
+}
+```
+
+This gives Ari source code documented spellings for integer edge cases before
+the compiler grows dedicated overflow intrinsics for every integer width.
 
 Power and divisor helpers:
 
@@ -74,11 +89,12 @@ normalizes negative inputs and returns `0` when either input is `0`.
 
 ## Limits
 
-The checked and saturating add/sub/neg/abs helpers define their `i64` overflow
-behavior. Other helpers still use ordinary `i64` arithmetic internally, so keep
-their inputs in a range where intermediate values are meaningful for your
-program. Future slices will add wrapping operations and checked multiplication
-once the compiler has a stronger intrinsic story.
+The checked, wrapping, overflowing, and saturating helpers define their `i64`
+overflow behavior. Other helpers still use ordinary `i64` arithmetic
+internally, so keep their inputs in a range where intermediate values are
+meaningful for your program. Future slices should add checked multiplication
+and then widen these natural names through numeric traits once the compiler has
+a stronger intrinsic story.
 
 Use `std::bits` for bit masks, rotations, power-of-two rounding, low-bit masks,
 alignment helpers, and bit scans. Use plain operators for ordinary arithmetic
@@ -106,6 +122,7 @@ The focused behavior test is:
 tests/cases/standard-library/ok/math/std-math-integer-helpers.ari
 tests/cases/standard-library/ok/math/std-math-division-rounding.ari
 tests/cases/standard-library/ok/math/std-math-checked-saturating.ari
+tests/cases/standard-library/ok/math/std-math-wrapping-overflowing.ari
 ```
 
 `make check-prelude` emits LLVM for those files, checks the public helper

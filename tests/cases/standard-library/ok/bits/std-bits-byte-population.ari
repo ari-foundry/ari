@@ -1,0 +1,23 @@
+// Covers byte-order reversal and the population_count alias in std::bits.
+fn main() -> i64 {
+  var score = 0;
+
+  if bits::byte_swap(0x0011223344556677u64) == 0x7766554433221100u64 {
+    score = score + 1;
+  }
+  if bits::byte_swap(0u64) == 0u64 {
+    score = score + 1;
+  }
+  if bits::byte_swap(~0u64) == ~0u64 {
+    score = score + 1;
+  }
+  if bits::population_count(0b101101u64) == 4 {
+    score = score + 1;
+  }
+  if bits::population_count(~0u64) == 64 {
+    score = score + 1;
+  }
+
+  assert_eq_i64(score, 5);
+  return score;
+}

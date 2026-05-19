@@ -562,6 +562,12 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4math14saturating_abs' $(BUILD_DIR)/prelude/std-math-checked-saturating.ll
 	$(TARGET) tests/cases/standard-library/ok/math/std-math-checked-saturating.ari -o $(BUILD_DIR)/prelude/std-math-checked-saturating.elf
 	$(BUILD_DIR)/prelude/std-math-checked-saturating.elf; code=$$?; test $$code -eq 20
+	$(TARGET) tests/cases/standard-library/ok/math/std-math-wrapping-overflowing.ari --emit-llvm $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
+	grep -q '_ARNv3std4math12wrapping_add' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
+	grep -q '_ARNv3std4math15overflowing_add' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
+	grep -q 'std__math__Overflowing' $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.ll
+	$(TARGET) tests/cases/standard-library/ok/math/std-math-wrapping-overflowing.ari -o $(BUILD_DIR)/prelude/std-math-wrapping-overflowing.elf
+	$(BUILD_DIR)/prelude/std-math-wrapping-overflowing.elf; code=$$?; test $$code -eq 6
 	$(TARGET) tests/cases/standard-library/ok/ascii/std-ascii-byte-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8is_digit' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
 	grep -q '_ARNv3std5ascii8to_lower' $(BUILD_DIR)/prelude/std-ascii-byte-helpers.ll
@@ -662,6 +668,11 @@ check-prelude: $(TARGET)
 	grep -q '_ARNv3std4bits13trailing_ones' $(BUILD_DIR)/prelude/std-bits-one-run-helpers.ll
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-one-run-helpers.ari -o $(BUILD_DIR)/prelude/std-bits-one-run-helpers.elf
 	$(BUILD_DIR)/prelude/std-bits-one-run-helpers.elf; code=$$?; test $$code -eq 158
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-byte-population.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-byte-population.ll
+	grep -q '_ARNv3std4bits9byte_swap' $(BUILD_DIR)/prelude/std-bits-byte-population.ll
+	grep -q '_ARNv3std4bits16population_count' $(BUILD_DIR)/prelude/std-bits-byte-population.ll
+	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-byte-population.ari -o $(BUILD_DIR)/prelude/std-bits-byte-population.elf
+	$(BUILD_DIR)/prelude/std-bits-byte-population.elf; code=$$?; test $$code -eq 5
 	$(TARGET) tests/cases/standard-library/ok/bits/std-bits-width-helpers.ari --emit-llvm $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
 	grep -q '_ARNv3std4bits9bit_width' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll
 	grep -q '_ARNv3std4bits18floor_power_of_two' $(BUILD_DIR)/prelude/std-bits-width-helpers.ll

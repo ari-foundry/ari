@@ -74,6 +74,7 @@ fn std::bits::align_down|std bits mask helper tests; docs/stdlib/api-reference.m
 fn std::bits::align_up|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::any_set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::bit_width|std bits width helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::byte_swap|std bits byte/population tests; docs/stdlib/modules/bits.md
 fn std::bits::ceil_power_of_two|std bits width helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::clear|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::count_ones|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
@@ -84,6 +85,7 @@ fn std::bits::is_set|std bits mask helper tests; docs/stdlib/api-reference.md Bi
 fn std::bits::leading_ones|std bits one-run helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::leading_zeros|std bits scan helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::low_mask|std bits width helper tests; docs/stdlib/api-reference.md Bits section
+fn std::bits::population_count|std bits byte/population tests; docs/stdlib/modules/bits.md
 fn std::bits::rotate_left|std bits rotate helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::rotate_right|std bits rotate helper tests; docs/stdlib/api-reference.md Bits section
 fn std::bits::set|std bits mask helper tests; docs/stdlib/api-reference.md Bits section
@@ -282,12 +284,14 @@ fn std::math::is_positive|std math integer helper tests; docs/stdlib/api-referen
 fn std::math::is_zero|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::lcm|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::mod_floor|std math division rounding tests; docs/stdlib/api-reference.md Math section
+fn std::math::overflowing_add|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 fn std::math::pow|std math integer helper tests; docs/stdlib/api-reference.md Math section
 fn std::math::saturating_abs|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::saturating_add|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::saturating_neg|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::saturating_sub|std math checked/saturating tests; docs/stdlib/modules/math.md
 fn std::math::sign|std math integer helper tests; docs/stdlib/api-reference.md Math section
+fn std::math::wrapping_add|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 fn std::mem::align_of[T]|layout query tests; docs/dev/test-matrix.md C FFI row
 fn std::mem::copy_bytes|std mem byte operation tests; docs/stdlib/modules/mem.md
 fn std::mem::move_bytes|std mem byte operation tests; docs/stdlib/modules/mem.md
@@ -705,6 +709,8 @@ method std::iter::Enumerated[T]::index|check-prelude std-iter-adapters enumerate
 method std::iter::Enumerated[T]::value|check-prelude std-iter-adapters enumerate value accessor; docs/stdlib/modules/iter.md
 method std::iter::Zipped[T,U]::left|check-prelude std-iter-adapters zip left accessor; docs/stdlib/modules/iter.md
 method std::iter::Zipped[T,U]::right|check-prelude std-iter-adapters zip right accessor; docs/stdlib/modules/iter.md
+method std::math::Overflowing::overflowed|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
+method std::math::Overflowing::value|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 method std::net::IpAddr::is_loopback|check-prelude std-net-addresses generic IP loopback predicate; docs/stdlib/modules/net.md
 method std::net::IpAddr::is_unspecified|check-prelude std-net-addresses generic IP unspecified predicate; docs/stdlib/modules/net.md
 method std::net::IpAddr::is_v4|check-prelude std-net-addresses generic IPv4 family predicate; docs/stdlib/modules/net.md
@@ -955,6 +961,7 @@ struct std::iter::Skip[I, T]|check-prelude std-iter-adapters lazy skip adapter s
 struct std::iter::Take[I, T]|check-prelude std-iter-adapters lazy take adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Zip[I, J, T, U]|check-prelude std-iter-adapters lazy zip adapter state; docs/stdlib/modules/iter.md
 struct std::iter::Zipped[T, U]|check-prelude std-iter-adapters zip item wrapper; docs/stdlib/modules/iter.md
+struct std::math::Overflowing|std math wrapping/overflowing tests; docs/stdlib/modules/math.md
 struct std::net::IpAddr|std net generic IP address tests; docs/stdlib/modules/net.md
 struct std::net::Ipv4Addr|std net IPv4 address tests; docs/stdlib/modules/net.md
 struct std::net::Ipv6Addr|std net IPv6 address tests; docs/stdlib/modules/net.md

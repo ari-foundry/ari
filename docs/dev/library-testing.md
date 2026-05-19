@@ -236,6 +236,8 @@ identifies the exact case:
   rounding and paired floor remainder behavior.
 - `std-math-checked-saturating.ari`: source `std::math` checked
   add/sub/neg/abs and saturating add/sub/neg/abs overflow policy behavior.
+- `std-math-wrapping-overflowing.ari`: source `std::math` wrapping add and
+  overflowing add result/accessor behavior.
 - `std-ascii-class-helpers.ari`: source `std::ascii` extended byte
   classification behavior.
 - `std-ascii-case-compare.ari`: source `std::ascii` borrowed-slice
@@ -256,6 +258,8 @@ identifies the exact case:
   one-run bit-scan behavior.
 - `std-bits-width-helpers.ari`: source `std::bits` u64 bit-width,
   power-of-two rounding, and low-mask behavior.
+- `std-bits-byte-population.ari`: source `std::bits` u64 byte-swap behavior
+  and the `population_count` alias.
 - `std-zone-alloc-array.ari`: source `std::zone` typed raw array allocation,
   root re-export, zero-count null return, and raw pointer load/store behavior.
 - `std-boxed-as-ptr-after-reset.ari`: negative zone provenance diagnostic.

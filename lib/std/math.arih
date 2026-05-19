@@ -8,6 +8,21 @@ fn i64_max() -> i64 {
   return 9223372036854775807;
 }
 
+pub struct Overflowing {
+  value: i64,
+  overflowed: bool,
+}
+
+pub impl std::math::Overflowing {
+  fn value(self: ref Self) -> i64 {
+    return self.value;
+  }
+
+  fn overflowed(self: ref Self) -> bool {
+    return self.overflowed;
+  }
+}
+
 pub fn abs(value: i64) -> i64 {
   if value < 0 {
     return 0 - value;
@@ -85,6 +100,32 @@ pub fn checked_abs(value: i64) -> std::Option[i64] {
     return std::None<i64>();
   }
   return std::Some<i64>(abs(value));
+}
+
+pub fn wrapping_add(left: i64, right: i64) -> i64 {
+  match checked_add(left, right) {
+    std::Some(value) => {
+      return value;
+    }
+    std::None => {}
+  }
+
+  // Compute the wrapped result without depending on undefined signed overflow.
+  if right > 0 {
+    return i64_min() + (right - (i64_max() - left) - 1);
+  }
+  return i64_max() - ((i64_min() - left) - right - 1);
+}
+
+pub fn overflowing_add(left: i64, right: i64) -> std::math::Overflowing {
+  match checked_add(left, right) {
+    std::Some(value) => {
+      return Overflowing { value: value, overflowed: false };
+    }
+    std::None => {}
+  }
+
+  return Overflowing { value: wrapping_add(left, right), overflowed: true };
 }
 
 pub fn saturating_add(left: i64, right: i64) -> i64 {

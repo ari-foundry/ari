@@ -62,8 +62,9 @@ sorted iterators, growable `Deque`, fixed `RingBuffer`, zone-backed
 `LinkedList`, and `BinaryHeap`/`PriorityQueue` priority containers, and the
 first `parse` whole-input integer/bool/decimal-float parsers, `encoding`
 ASCII/UTF-8/UTF-16 validation plus hex/base64 codecs, and `math` sign,
-checked/saturating arithmetic, division-rounding and `bits` numeric helper
-slices, including zero/one-run bit scans.
+checked/wrapping/overflowing/saturating arithmetic, division-rounding and
+`bits` numeric helper slices, including byte-swap, population-count, and
+zero/one-run bit scans.
 
 ## Essential Library Families
 
@@ -86,7 +87,7 @@ work. Each one should land in small tested slices with natural API names.
 | `std::iter` | Compose sequence processing without forcing every operation onto each collection type. | Current `range`, `range_inclusive`, `Iterator`, `IntoIterator`, lazy `map`, `filter`, `take`, `skip`, `enumerate`, `zip`, eager `fold`, `reduce`, and zone-backed `collect`; future captured closures, richer adapter inference, and collect targets beyond `std::vec::Vec[T]`. |
 | `std::algo` | Provide familiar algorithms over borrowed slices without forcing every helper onto `Slice[T]` itself. | Current `sort`, `sort_by`, `stable_sort`, `stable_sort_by`, `binary_search`, `is_sorted`, `reverse`, `rotate_left`, `rotate_right`, `partition`, `min`, `max`, `clamp`, `swap`, `fill`, `copy`, and `dedup`; future faster sorting and move-aware algorithm contracts. |
 | `std::hash` | Provide deterministic non-cryptographic hashing without tying hash policy to one collection type. | Current `Hasher`, `Hash[T]`, `new`, `reset`, `finish`, `write`, `value`, `bytes`, primitive write helpers, and `collections::hash_i64` compatibility; future aggregate/derive impls and trait-driven hash collection constructors. |
-| `std::math` | Provide arithmetic helpers whose names communicate policy better than raw operators. | Current natural `i64` sign/parity helpers, checked add/sub/neg/abs, saturating add/sub/neg/abs, powers, floor/ceil division, `gcd`, and `lcm`; future wrapping operations, checked multiplication, generic numeric traits, and floating helpers. |
+| `std::math` | Provide arithmetic helpers whose names communicate policy better than raw operators. | Current natural `i64` sign/parity helpers, checked add/sub/neg/abs, wrapping/overflowing/saturating add, saturating sub/neg/abs, powers, floor/ceil division, `gcd`, and `lcm`; future checked multiplication, generic numeric traits, and floating helpers. |
 | `std::parse` | Parse whole byte-slice values with names that read naturally at call sites. | Current ASCII-trimmed `integer`, `boolean`, `is_float`, `float_or`, and panicking `float`; future overflow policy, richer parse errors, and `Option[f64]`/`Result[f64,E]` after float enum payloads are supported. |
 | `std::encoding` | Validate text encodings and convert bytes to portable text forms. | Current `is_ascii`, `utf8_count`, `is_utf8`, `utf16_count`, `is_utf16`, lowercase hex encode/decode, and standard base64 encode/decode; future URL-safe/MIME base64 variants, fallible `String` decoders after zone-backed enum payloads, and optional compression policy in a separate module. |
 | `std::error` | Give recoverable failures a shared vocabulary instead of bools and sentinel integers. | Current `Kind`, compact `Error`, POSIX `from_errno`, `from_raw`, `raw`, `kind`, `code`, predicate helpers, root `Error`/`ErrorKind` aliases, and `Result[T, i64]` bridge; future direct `Result[T, Error]`, Windows error mapping, owned messages, and conversions from fs/io/net/process wrappers. |
@@ -139,13 +140,13 @@ work. Each one should land in small tested slices with natural API names.
 - Expand `std::math` from i64 signatures to generic numeric helpers when the
   language has the right trait vocabulary. Preserve the existing natural names
   for signs, sign predicates, parity, checked/saturating add/sub/neg/abs,
-  powers, division rounding, and divisor helpers.
+  wrapping/overflowing add, powers, division rounding, and divisor helpers.
 - Expand `std::bits` from u64 signatures to generic integer mask, rotation,
-  power-of-two, low-mask, and bit-scan helpers when the same trait vocabulary
-  exists.
-- Add wrapping operations, checked multiplication, and policy-specific parser
-  overflow handling after compiler intrinsics and diagnostics make those
-  operations reliable across integer widths.
+  power-of-two, low-mask, byte-swap, population-count, and bit-scan helpers
+  when the same trait vocabulary exists.
+- Add checked multiplication and policy-specific parser overflow handling after
+  compiler intrinsics and diagnostics make those operations reliable across
+  integer widths.
 - Add floating helpers only where LLVM lowering and runtime behavior are
   stable.
 

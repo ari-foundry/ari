@@ -105,11 +105,13 @@ std-convert-value-helpers.ari
 std-math-integer-helpers.ari
 std-math-division-rounding.ari
 std-math-checked-saturating.ari
+std-math-wrapping-overflowing.ari
 std-ascii-case-compare.ari
 std-ascii-case-search.ari
 std-ascii-class-helpers.ari
 std-ascii-prefix-parsers.ari
 std-ascii-slice-helpers.ari
+std-bits-byte-population.ari
 std-bits-rotate-helpers.ari
 std-bits-scan-helpers.ari
 std-bits-one-run-helpers.ari

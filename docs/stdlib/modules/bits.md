@@ -65,13 +65,15 @@ bits set and asserts that `width` is between `0` and `64`.
 `align_down` and `align_up` assert that `alignment` is a non-zero power of two.
 They do not define overflow behavior for `value + alignment - 1`; a future
 numeric-policy slice should add `u64` checked/wrapping alignment variants after
-the first `i64` checked/saturating helpers in `std::math`.
+the first `i64` checked/wrapping/saturating helpers in `std::math`.
 
-Bit scan helpers:
+Bit scan and byte-order helpers:
 
 ```ari
 bits::count_ones(value)
+bits::population_count(value)
 bits::count_zeros(value)
+bits::byte_swap(value)
 bits::leading_zeros(value)
 bits::trailing_zeros(value)
 bits::leading_ones(value)
@@ -79,11 +81,14 @@ bits::trailing_ones(value)
 ```
 
 `count_ones` and `count_zeros` count set and unset bits across the whole
-64-bit value. `leading_zeros` and `trailing_zeros` return `64` for `0u64`.
-`leading_ones` and `trailing_ones` count contiguous one bits from the high or
-low end; they return `0` for `0u64` and `64` for `~0u64`. The current
-implementation is a straightforward Ari source loop; future intrinsic-backed
-lowering should preserve the same edge-case behavior.
+64-bit value. `population_count` is the same operation with the more explicit
+hardware/algorithm name, so code can use whichever spelling reads best.
+`byte_swap` reverses the eight bytes in a `u64` and is useful for endian-aware
+codecs or binary file formats. `leading_zeros` and `trailing_zeros` return
+`64` for `0u64`. `leading_ones` and `trailing_ones` count contiguous one bits
+from the high or low end; they return `0` for `0u64` and `64` for `~0u64`.
+The current implementation is a straightforward Ari source loop; future
+intrinsic-backed lowering should preserve the same edge-case behavior.
 
 ## Example
 
@@ -109,6 +114,7 @@ tests/cases/standard-library/ok/bits/std-bits-rotate-helpers.ari
 tests/cases/standard-library/ok/bits/std-bits-scan-helpers.ari
 tests/cases/standard-library/ok/bits/std-bits-one-run-helpers.ari
 tests/cases/standard-library/ok/bits/std-bits-width-helpers.ari
+tests/cases/standard-library/ok/bits/std-bits-byte-population.ari
 ```
 
 `make check-prelude` compiles them to LLVM, checks representative public
@@ -125,5 +131,6 @@ Potential next slices:
   documented
 - generic integer traits so `u8`, `u16`, `u32`, `u64`, and signed variants can
   share the same public names
-- optional intrinsic-backed implementations for the existing bit scan helpers
-  after the source contract and generic integer policy are stable
+- optional intrinsic-backed implementations for the existing bit scan,
+  population count, and byte-swap helpers after the source contract and generic
+  integer policy are stable

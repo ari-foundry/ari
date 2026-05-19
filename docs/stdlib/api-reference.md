@@ -1360,6 +1360,8 @@ math::checked_add(left, right)
 math::checked_sub(left, right)
 math::checked_neg(value)
 math::checked_abs(value)
+math::wrapping_add(left, right)
+math::overflowing_add(left, right)
 math::saturating_add(left, right)
 math::saturating_sub(left, right)
 math::saturating_neg(value)
@@ -1382,9 +1384,12 @@ values. `lcm` returns `0` when either input is `0`.
 
 `checked_add`, `checked_sub`, `checked_neg`, and `checked_abs` return
 `Option[i64]`, using `None<i64>()` for overflow or underflow. Their
-`saturating_*` counterparts clamp to the nearest `i64` bound. Other math
-helpers still use ordinary `i64` arithmetic internally, so wrapping operations
-and checked multiplication remain future numeric-policy work.
+`saturating_*` counterparts clamp to the nearest `i64` bound. `wrapping_add`
+returns the two's-complement wrapped result. `overflowing_add` returns an
+`Overflowing` value with `value()` and `overflowed()` accessors, keeping the
+wrapped result and the overflow flag together. Other math helpers still use
+ordinary `i64` arithmetic internally, so checked multiplication and generic
+cross-width helpers remain future numeric-policy work.
 
 ## Bits
 
@@ -1407,7 +1412,9 @@ bits::low_mask(width)
 bits::align_down(value, alignment)
 bits::align_up(value, alignment)
 bits::count_ones(value)
+bits::population_count(value)
 bits::count_zeros(value)
+bits::byte_swap(value)
 bits::leading_zeros(value)
 bits::trailing_zeros(value)
 bits::leading_ones(value)
@@ -1425,7 +1432,8 @@ trailing ones.
 `bit_width` returns the number of bits needed to represent a value,
 `floor_power_of_two` and `ceil_power_of_two` round to nearby powers of two, and
 `low_mask(width)` returns a mask with the lowest `width` bits set. `low_mask`
-accepts widths from 0 through 64.
+accepts widths from 0 through 64. `population_count` is an explicit alias for
+`count_ones`, and `byte_swap` reverses the eight bytes in a `u64`.
 
 ## ASCII
 

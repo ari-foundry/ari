@@ -88,10 +88,11 @@ limits, examples, and test files for one module.
 - [std::encoding](encoding.md): ASCII, UTF-8, and UTF-16 validation/counting
   plus lowercase hex and standard base64 encode/decode helpers.
 - [std::math](math.md): source-only `i64` arithmetic helpers for signs,
-  predicates, checked/saturating overflow policy, powers, division rounding,
-  greatest common divisor, and least common multiple.
+  predicates, checked/wrapping/overflowing/saturating overflow policy, powers,
+  division rounding, greatest common divisor, and least common multiple.
 - [std::bits](bits.md): source-only `u64` bit-mask, rotation, power-of-two,
-  low-mask, alignment, and zero/one-run bit-scan helpers.
+  low-mask, alignment, byte-swap, population-count, and zero/one-run bit-scan
+  helpers.
 
 ## Guide Shape
 
