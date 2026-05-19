@@ -45,6 +45,21 @@ let fixed: [u8, 3] = "lib";
 ascii::parse_decimal("123");
 ```
 
+String literals also act as borrowed `Slice[u8]` receivers for read-only slice
+helpers. This keeps everyday byte checks close to other modern standard
+libraries without forcing `std::string::bytes(...)` noise:
+
+```ari
+"hello".len()
+"hello".starts_with("he")
+"hello".find("ll")
+"hello".slice(1, 4).equals("ell")
+```
+
+The view length stops before the first embedded NUL byte, matching the existing
+literal-to-`Slice[u8]` boundary. Use an owned `String`, `Vec[u8]`, or explicit
+byte storage when embedded NUL bytes are data rather than a C-string boundary.
+
 Avoid using `String` as a general text policy. UTF-8 helpers operate on Unicode
 scalar values and byte offsets. Unicode normalization, grapheme iteration,
 encoding conversion, and locale-sensitive case conversion are future library

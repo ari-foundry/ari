@@ -8,6 +8,16 @@ vector, a `std::vec::Vec[T]`, or a byte-oriented `String`.
 The API is intentionally natural and unsuffixed. The type parameter tells Ari
 which element type is being used, so call sites should read like
 `view.find(needle)`, `view.chunks(4)`, and `view.compare(other)`.
+For byte-oriented APIs, a string literal can be used directly as a
+`Slice[u8]` value or receiver:
+
+```ari
+"ari".starts_with("ar")
+"ari".slice(1, 3).equals("ri")
+```
+
+That receiver form is read-only and uses the literal's borrowed static bytes,
+with the same first-NUL length rule as literal-to-`Slice[u8]` coercion.
 
 ## Access And Search
 

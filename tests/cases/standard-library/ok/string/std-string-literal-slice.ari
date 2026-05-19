@@ -1,6 +1,6 @@
-// Covers natural string-literal coercion into borrowed Slice[u8] parameters
-// and locals, so byte-oriented APIs do not require std::string::bytes(...) at
-// every call site.
+// Covers natural string-literal coercion into borrowed Slice[u8] parameters,
+// receiver calls, and locals, so byte-oriented APIs do not require
+// std::string::bytes(...) at every call site.
 fn main() -> i64 {
   let truth: Slice[u8] = "true";
   assert_eq_i64(truth.len(), 4);
@@ -9,6 +9,20 @@ fn main() -> i64 {
 
   let nul_terminated_view: Slice[u8] = "\x00hidden";
   assert_eq_i64(nul_terminated_view.len(), 0);
+
+  assert_eq_i64("hello".len(), 5);
+  assert_eq_i64(len("hello"), 5);
+  assert(!"hello".is_empty());
+  assert("".is_empty());
+  assert_eq_i64("hello".first() as i64, 'h' as i64);
+  assert_eq_i64("hello".last() as i64, 'o' as i64);
+  assert("hello".contains('e'));
+  assert_eq_i64("hello".find("ll"), 2);
+  assert("hello".starts_with("he"));
+  assert("hello".ends_with("lo"));
+  assert("hello".equals("hello"));
+  assert("hello".slice(1, 4).equals("ell"));
+  assert("hello".split_at(2).right().equals("llo"));
 
   assert_eq_i64(std::ascii::parse_decimal("123").unwrap_or(0), 123);
   assert_eq_i64(ascii::parse_hex("1Af").unwrap_or(0), 431);

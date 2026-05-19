@@ -160,8 +160,18 @@ String literals coerce to byte-oriented containers when such a type is
 expected. A borrowed parser can take `"true"` as `Slice[u8]`, and local byte
 storage can be initialized as `var bytes: Vec[u8] = "true";` or
 `let fixed: [u8, 4] = "true";`. `std::string::bytes(text)` is still available
-when code wants to name that boundary explicitly. Literals can also flow into
-typed borrowed boundary views when the expected type is clear:
+when code wants to name that boundary explicitly. A literal can also be used as
+a read-only `Slice[u8]` receiver, so byte-slice helpers can be written in the
+natural form:
+
+```ari
+"hello".len()
+"hello".starts_with("he")
+"hello".slice(1, 4).equals("ell")
+```
+
+Literals can also flow into typed borrowed boundary views when the expected
+type is clear:
 `std::string::Utf8`, `std::string::OsStr`, `std::path::PathBytes`, and
 `std::c::CStr`. Direct `Utf8` literals are checked for valid UTF-8 during
 semantic analysis.

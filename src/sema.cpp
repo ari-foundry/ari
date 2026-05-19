@@ -16958,6 +16958,14 @@ private:
         return make_slice_view_expr(loc, std::move(data), std::move(length), expected);
     }
 
+    IrExprPtr make_string_literal_u8_slice_expr(SourceLocation loc,
+                                                const std::string& value) const {
+        return make_string_literal_slice_expr(
+            loc,
+            value,
+            make_prelude_slice_type(loc, integer_type(IrPrimitiveKind::U8, loc)));
+    }
+
     IrExprPtr make_string_literal_byte_sequence_expr(SourceLocation loc,
                                                      const std::string& value,
                                                      const IrType& expected) const {
@@ -21844,6 +21852,9 @@ private:
     }
 
     IrExprPtr check_collection_len_expr(SourceLocation loc, const Expr& source) {
+        if (source.kind == ExprKind::String) {
+            return make_integer_literal(loc, i64_type(loc), string_literal_slice_len(source.string_value));
+        }
         IrExprPtr operand = check_aggregate_access_operand(source);
         VectorKnownLength known_vec_length =
             vector_known_length_from_source_expr(operand->type, source, *operand);
@@ -21852,6 +21863,10 @@ private:
 
     IrExprPtr check_collection_is_empty_method_call(const Expr& expr) {
         require_collection_is_empty_method_shape(expr.loc, expr_type_args(expr).size(), expr.args.size());
+        const Expr& receiver_source = *expr_operand(expr);
+        if (receiver_source.kind == ExprKind::String) {
+            return make_bool_literal_expr(expr.loc, string_literal_slice_len(receiver_source.string_value) == 0);
+        }
         IrExprPtr operand = check_aggregate_access_operand(*expr_operand(expr));
         VectorKnownLength known_vec_length =
             vector_known_length_from_source_expr(operand->type, *expr_operand(expr), *operand);
@@ -22338,6 +22353,7 @@ private:
     }
 
     bool is_collection_len_method_receiver(const Expr& expr) {
+        if (expr.kind == ExprKind::String) return true;
         if (expr.kind == ExprKind::Vector) return true;
         if (expr.kind == ExprKind::Name) {
             const LocalInfo* local = find_local_slot(expr.name);
@@ -22364,6 +22380,7 @@ private:
     }
 
     bool is_builtin_collection_is_empty_method_receiver(const Expr& expr) {
+        if (expr.kind == ExprKind::String) return true;
         if (expr.kind == ExprKind::Vector) return true;
         if (expr.kind == ExprKind::Name) {
             const LocalInfo* local = find_local_slot(expr.name);
@@ -23588,7 +23605,15 @@ private:
                 }
             }
         }
-        if (!receiver) receiver = check_expr(receiver_source);
+        if (!receiver) {
+            if (receiver_source.kind == ExprKind::String) {
+                receiver = make_string_literal_u8_slice_expr(
+                    receiver_source.loc,
+                    receiver_source.string_value);
+            } else {
+                receiver = check_expr(receiver_source);
+            }
+        }
         if (receiver->type.primitive == IrPrimitiveKind::TraitObject) {
             if (receiver->type.qualifier == TypeQualifier::Own &&
                 receiver->kind != IrExprKind::Local) {

@@ -1399,8 +1399,12 @@ c.is_empty()
 
 String literals coerce to borrowed `Slice[u8]` values when a byte-slice API
 expects one, so calls such as `ascii::parse_decimal("123")` and
-`text.find("needle")` are valid. They can also initialize local byte storage:
-`var bytes: Vec[u8] = "true";` and `let fixed: [u8, 4] = "true";`.
+`text.find("needle")` are valid. They can also act as read-only
+`Slice[u8]` receivers, so `"hello".starts_with("he")`,
+`"hello".find("ll")`, and `"hello".slice(1, 4).equals("ell")` use the same
+borrowed slice vocabulary as named views. They can also initialize local byte
+storage: `var bytes: Vec[u8] = "true";` and
+`let fixed: [u8, 4] = "true";`.
 `std::string::bytes(text)` returns the same kind of view without the trailing
 NUL when code wants to name the boundary explicitly. Single-quoted byte
 character literals such as `'t'`, `'\n'`, and `'\x74'` are `u8`, so local byte
